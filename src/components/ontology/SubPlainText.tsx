@@ -1,6 +1,12 @@
 import LockIcon from "@mui/icons-material/Lock";
 import { Box, Button, TextField, Tooltip, Typography } from "@mui/material";
-import { collection, doc, getDoc, getFirestore, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getFirestore,
+  updateDoc,
+} from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 
 import MarkdownRender from "../Markdown/MarkdownRender";
@@ -43,12 +49,16 @@ const SubPlainText = ({
   const editTitleSubOntology = ({ parentData, newTitle, id }: any) => {
     for (let type in parentData.subOntologies) {
       for (let category in parentData.subOntologies[type] || {}) {
-        if ((parentData.subOntologies[type][category].ontologies || []).length > 0) {
-          const subOntologyIdx = parentData.subOntologies[type][category].ontologies.findIndex(
-            (sub: any) => sub.id === id
-          );
+        if (
+          (parentData.subOntologies[type][category].ontologies || []).length > 0
+        ) {
+          const subOntologyIdx = parentData.subOntologies[type][
+            category
+          ].ontologies.findIndex((sub: any) => sub.id === id);
           if (subOntologyIdx !== -1) {
-            parentData.subOntologies[type][category].ontologies[subOntologyIdx].title = newTitle;
+            parentData.subOntologies[type][category].ontologies[
+              subOntologyIdx
+            ].title = newTitle;
           }
         }
       }
@@ -62,9 +72,11 @@ const SubPlainText = ({
   }, [editOntology, openOntology]);
 
   const editSaveText = async () => {
-    setEditMode(edit => !edit);
+    setEditMode((edit) => !edit);
     if (editMode) {
-      const ontologyDoc = await getDoc(doc(collection(db, "ontology"), openOntology.id));
+      const ontologyDoc = await getDoc(
+        doc(collection(db, "ontology"), openOntology.id)
+      );
       if (ontologyDoc.exists()) {
         const ontologyData = ontologyDoc.data();
 
@@ -73,8 +85,12 @@ const SubPlainText = ({
           for (let parentId of openOntology?.parents || []) {
             const parentRef = doc(collection(db, "ontology"), parentId);
             const parentDoc = await getDoc(parentRef);
-            const parentData = parentDoc.data();
-            editTitleSubOntology({ parentData, newTitle: openOntology.title, id: openOntology.id });
+            const parentData: any = parentDoc.data();
+            editTitleSubOntology({
+              parentData,
+              newTitle: openOntology.title,
+              id: openOntology.id,
+            });
             await updateDoc(parentRef, parentData);
           }
         }
@@ -129,7 +145,9 @@ const SubPlainText = ({
     <Box>
       {type !== "title" && (
         <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Typography sx={{ fontSize: "19px" }}>{capitalizeFirstLetter(type)}:</Typography>
+          <Typography sx={{ fontSize: "19px" }}>
+            {capitalizeFirstLetter(type)}:
+          </Typography>
           {lockedOntology[type] && user.uname !== lockedOntology[type].uname ? (
             <Tooltip title={"Locked"} sx={{ ml: "5px" }}>
               <LockIcon />
@@ -154,7 +172,13 @@ const SubPlainText = ({
           InputProps={{
             style: { fontSize: type === "title" ? "30px" : "" },
             endAdornment: (
-              <Box style={{ marginRight: "18px", cursor: "pointer", display: "flex" }}>
+              <Box
+                style={{
+                  marginRight: "18px",
+                  cursor: "pointer",
+                  display: "flex",
+                }}
+              >
                 {type === "title" && (
                   <Tooltip title={"Save"}>
                     <Button onClick={editSaveText} sx={{ ml: "5px" }}>
@@ -181,11 +205,21 @@ const SubPlainText = ({
           onFocus={handleFocus}
         />
       ) : (
-        <Box style={{ display: "flex", alignItems: "center", marginBottom: "15px" }}>
-          <MarkdownRender text={text} sx={{ fontSize: type === "title" ? "30px" : "" }} />
+        <Box
+          style={{
+            display: "flex",
+            alignItems: "center",
+            marginBottom: "15px",
+          }}
+        >
+          <MarkdownRender
+            text={text}
+            sx={{ fontSize: type === "title" ? "30px" : "" }}
+          />
           {type === "title" && !openOntology.locked && (
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              {lockedOntology[type] && user.uname !== lockedOntology[type].uname ? (
+              {lockedOntology[type] &&
+              user.uname !== lockedOntology[type].uname ? (
                 <Tooltip title={"Locked"} sx={{ ml: "5px" }}>
                   <LockIcon />
                 </Tooltip>

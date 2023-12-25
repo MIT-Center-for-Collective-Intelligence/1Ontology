@@ -67,8 +67,6 @@ const SignUpPage: NextPageWithLayout = () => {
   const router = useRouter();
   const [, { handleError }] = useAuth();
   const { enqueueSnackbar } = useSnackbar();
-  const minDate = getDateBySubstractYears(100);
-  const maxDate = getDateBySubstractYears(10);
 
   const mutateSignUp = useMutation<any, unknown, SignUpData>(signUp, {
     onSuccess: async (data, variables) => {
@@ -104,6 +102,7 @@ const SignUpPage: NextPageWithLayout = () => {
     username: "",
     password: "",
     theme: "Dark",
+    passwordConfirmation: "",
   };
 
   const validationSchema = yup.object({

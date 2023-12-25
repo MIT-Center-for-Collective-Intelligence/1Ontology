@@ -41,25 +41,6 @@ export const SignUpBasicInfo = ({
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
     formikProps;
 
-  // useEffect(() => {
-  //   const getFirstTagChecked = () => {
-  //     const tagSelected = Object.values(allTags).find(cur => cur.checked);
-  //     if (!tagSelected) return;
-
-  //     setFieldValue("tagId", tagSelected.nodeId);
-  //     setFieldValue("tag", tagSelected.title);
-  //   };
-
-  //   getFirstTagChecked();
-  // }, [allTags, setFieldValue]);
-
-  const getDisplayNameValue = () => {
-    if (values.chooseUname) return values.username || "Your Username";
-    return values.firstName || values.lastName
-      ? ToUpperCaseEveryWord(values.firstName + " " + values.lastName)
-      : "Your Full Name";
-  };
-
   return (
     <Box data-testid="signup-form-step-1">
       <TextField

@@ -23,8 +23,8 @@ const SignInPage: NextPageWithLayout = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const initialValues: SignInFormValues = {
-    email: "ouhrac@gmail.com",
-    password: "onecademy",
+    email: "",
+    password: "",
   };
 
   const validationSchema = yup.object({

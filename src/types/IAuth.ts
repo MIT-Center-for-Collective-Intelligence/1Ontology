@@ -154,6 +154,7 @@ export interface SignUpFormValues {
   username: string;
   password: string;
   theme: "Light" | "Dark";
+  passwordConfirmation: string;
 }
 
 export interface SignUpData extends Omit<User, "userId" | "role"> {
