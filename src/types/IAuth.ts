@@ -78,6 +78,7 @@ export interface AuthState {
   readonly user: User | null;
   readonly settings: UserSettings;
   readonly isLoading: boolean;
+  readonly emailVerified: boolean;
 }
 
 export type AuthActions = {
@@ -100,6 +101,7 @@ export type AuthLoginSuccessAction = {
   payload: {
     user: User;
     theme: UserTheme;
+    emailVerified: boolean
   };
 };
 

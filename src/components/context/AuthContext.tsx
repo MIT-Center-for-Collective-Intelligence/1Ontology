@@ -50,7 +50,11 @@ const AuthProvider: FC<Props> = ({ children, store }) => {
   );
 
   const loadUser = useCallback(
-    async (userId: string, claims: { [key: string]: boolean }) => {
+    async (
+      userId: string,
+      claims: { [key: string]: boolean },
+      emailVerified: boolean
+    ) => {
       try {
         const { user, theme } = await retrieveAuthenticatedUser(userId, claims);
         if (!user) {
@@ -63,6 +67,7 @@ const AuthProvider: FC<Props> = ({ children, store }) => {
             payload: {
               user,
               theme,
+              emailVerified
             },
           });
         } else {
@@ -88,7 +93,7 @@ const AuthProvider: FC<Props> = ({ children, store }) => {
           ? "STUDENT"
           : null;
         //sign in
-        loadUser(user.uid, res.claims);
+        loadUser(user.uid, res.claims, user.emailVerified);
       } else {
         //sign out
         dispatch({ type: "logoutSuccess" });

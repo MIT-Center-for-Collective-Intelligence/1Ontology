@@ -58,6 +58,8 @@ import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import withAuthUser from " @components/components/hoc/withAuthUser";
 import { useAuth } from " @components/components/context/AuthContext";
+import { useRouter } from "next/router";
+import DagViewSimplified from " @components/components/ontology/DagViewSimplified";
 
 type IOntologyPath = {
   id: string;
@@ -188,7 +190,8 @@ const INITIAL_VALUES: {
 
 const CIOntology = () => {
   const db = getFirestore();
-  const [{ user }] = useAuth();
+  const [{ emailVerified, user }] = useAuth();
+  const router = useRouter();
   const isMobile = useMediaQuery("(max-width:599px)");
   const [ontologies, setOntologies] = useState<any>([]);
   const [openOntology, setOpenOntology] = useState<any>(null);
@@ -202,6 +205,7 @@ const CIOntology = () => {
   const [editingComment, setEditingComment] = useState("");
   const [lockedOntology, setLockedOntology] = useState<any>({});
   const [value, setValue] = useState<number>(1);
+  const [viewValue, setViewValue] = useState<number>(0);
   const [searchValue, setSearchValue] = useState("");
   const fuse = new Fuse(ontologies, { keys: ["title"] });
   const headerRef = useRef<HTMLHeadElement | null>(null);
@@ -285,6 +289,14 @@ const CIOntology = () => {
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      if (!emailVerified) {
+        router.replace("/signin");
+      }
+    }
+  }, [user, emailVerified]);
 
   useEffect(() => {
     const mainOntologies = ontologies.filter(
@@ -737,6 +749,11 @@ const CIOntology = () => {
   const handleChange = (event: any, newValue: number) => {
     setValue(newValue);
   };
+
+  const handleViewChange = (event: any, newValue: number) => {
+    setViewValue(newValue);
+  };
+
   const findOntologyPath = useCallback(
     ({ mainOntologies, path, eachOntologyPath }: any) => {
       for (let ontlogy of mainOntologies) {
@@ -821,11 +838,31 @@ const CIOntology = () => {
                 width: "1600px",
               }}
             >
-              <Box sx={{ pb: "190px" }}>
-                <TreeViewSimplified
-                  mainSpecializations={mainSpecializations}
-                  openMainCategory={openMainCategory}
-                />
+              <Box sx={{ pb: "190px", width: "100%" }}>
+                <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                  <Tabs
+                    value={viewValue}
+                    onChange={handleViewChange}
+                    aria-label="basic tabs example"
+                    sx={{ width: "23%" }}
+                    variant="fullWidth"
+                  >
+                    <Tab label="Tree View" {...a11yProps(0)} />
+                    <Tab label="DAG View" {...a11yProps(1)} />
+                  </Tabs>
+                </Box>
+                <TabPanel value={viewValue} index={0}>
+                  <TreeViewSimplified
+                    mainSpecializations={mainSpecializations}
+                    openMainCategory={openMainCategory}
+                  />
+                </TabPanel>
+                <TabPanel value={viewValue} index={1}>
+                  <DagViewSimplified
+                    mainSpecializations={mainSpecializations}
+                    openMainCategory={openMainCategory}
+                  />
+                </TabPanel>
               </Box>
             </Box>
           </Section>

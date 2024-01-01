@@ -1,4 +1,5 @@
 // import "./global.css";
+import './custom-tree.css';
 
 import { CacheProvider } from "@emotion/react";
 import CssBaseline from "@mui/material/CssBaseline";
