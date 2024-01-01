@@ -1,6 +1,6 @@
 import { useAuth } from " @components/components/context/AuthContext";
 import AuthLayout from " @components/components/layouts/AuthLayout";
-import { signIn } from " @components/lib/firestoreClient/auth";
+import { resetPassword } from " @components/lib/firestoreClient/auth";
 import { getFirebaseFriendlyError } from " @components/lib/utils/firebaseErrors";
 import ROUTES from " @components/lib/utils/routes";
 import { NextPageWithLayout } from " @components/types/IAuth";
@@ -14,19 +14,17 @@ import React, { ReactNode, useState } from "react";
 
 import * as yup from "yup";
 
-interface SignInFormValues {
+interface ForgotPasswordFormValues {
   email: string;
-  password: string;
 }
 
-const SignInPage: NextPageWithLayout = () => {
+const ForgotPage: NextPageWithLayout = () => {
   const [, { handleError }] = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const [isLoading, setIsLoading] = useState(false);
 
-  const initialValues: SignInFormValues = {
+  const initialValues: ForgotPasswordFormValues = {
     email: "",
-    password: "",
   };
 
   const validationSchema = yup.object({
@@ -36,19 +34,19 @@ const SignInPage: NextPageWithLayout = () => {
       .required(
         "Your email address provided by your academic/research institutions is required!"
       ),
-    password: yup.string().required("A secure password is required!"),
   });
-  const handleSignIn = async ({ email, password }: SignInFormValues) => {
+  const handleSignIn = async ({ email }: ForgotPasswordFormValues) => {
     try {
       setIsLoading(true);
-      const returnR = await signIn(email, password);
-      if (!returnR.emailVerified) {
-        enqueueSnackbar("Please verify your email first.", {
-          variant: "error",
+      await resetPassword(email);
+      enqueueSnackbar(
+        "We have sent an email for reset the password to your email address.",
+        {
+          variant: "success",
           autoHideDuration: 10000,
-        });
-        setIsLoading(false);
-      }
+        }
+      );
+      setIsLoading(false);
     } catch (error) {
       const errorMessage = getFirebaseFriendlyError(error as FirebaseError);
       setIsLoading(false);
@@ -65,10 +63,10 @@ const SignInPage: NextPageWithLayout = () => {
   return (
     <Box sx={{ p: { xs: "8px", md: "24px", width: "100%" }, my: "92px" }}>
       <Typography variant="h1" sx={{ mb: "8px" }}>
-        Log in
+        Reset Password
       </Typography>
       <Typography variant="body1" sx={{ mb: "32px" }}>
-        You can follow/pin nodes and earn points after logging in
+        You can reset password here!
       </Typography>
       <form data-testid="signin-form" onSubmit={formik.handleSubmit}>
         <TextField
@@ -85,28 +83,13 @@ const SignInPage: NextPageWithLayout = () => {
           fullWidth
           sx={{ mb: "24px" }}
         />
-        <TextField
-          id="password"
-          name="password"
-          label="Password"
-          type="password"
-          value={formik.values.password}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          variant="outlined"
-          error={
-            Boolean(formik.errors.password) && Boolean(formik.touched.password)
-          }
-          helperText={formik.errors.password}
-          fullWidth
-        />
         <Box
           sx={{
             textAlign: "center",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            my: "32px",
+            mt: "10px",
           }}
         >
           <LoadingButton
@@ -116,12 +99,12 @@ const SignInPage: NextPageWithLayout = () => {
             type="submit"
             variant="contained"
             fullWidth
-            sx={{ borderRadius: "26px", width: "90px" }}
+            sx={{ borderRadius: "26px", width: "150px" }}
           >
-            LOG IN
+            Send Email
           </LoadingButton>
-          <NextLink href={ROUTES.forgotPassword} passHref>
-            <Button sx={{ my: "20px" }}>Forgot Password?</Button>
+          <NextLink href={ROUTES.signIn} passHref>
+            <Button sx={{ my: "20px" }}>Sign In</Button>
           </NextLink>
         </Box>
       </form>
@@ -129,8 +112,8 @@ const SignInPage: NextPageWithLayout = () => {
   );
 };
 
-SignInPage.getLayout = (page: ReactNode) => {
+ForgotPage.getLayout = (page: ReactNode) => {
   return <AuthLayout>{page}</AuthLayout>;
 };
 
-export default SignInPage;
+export default ForgotPage;

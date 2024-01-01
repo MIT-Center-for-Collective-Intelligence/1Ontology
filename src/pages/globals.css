@@ -2916,3 +2916,35 @@ right: 5px; */
 .reply-box:hover > .message-buttons {
   display: block;
 }
+
+/* Tree */
+.rd3dag-tree-container {
+  width: 100%;
+  height: 100%;
+}
+
+.rd3dag-grabbable {
+  cursor: move; /* fallback if grab cursor is unsupported */
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+}
+.rd3dag-grabbable:active {
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+}
+
+.node__root > circle {
+  fill: red;
+}
+
+.node__branch > circle {
+  fill: yellow;
+}
+
+.node__leaf > circle {
+  fill: green;
+  /* Let's also make the radius of leaf nodes larger */
+  r: 40;
+}

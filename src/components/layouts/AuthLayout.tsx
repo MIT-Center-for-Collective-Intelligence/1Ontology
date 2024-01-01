@@ -12,6 +12,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useState,
 } from "react";
 
 import darkModeLibraryImage from "../../../public/darkModeLibraryBackground.jpg";
@@ -34,12 +35,13 @@ type Props = {
 };
 
 const AuthLayout: FC<Props> = ({ children }) => {
-  const [{ isAuthenticated, isAuthInitialized, settings }] = useAuth();
+  const [{ emailVerified, isAuthenticated, isAuthInitialized, settings }] =
+    useAuth();
   const router = useRouter();
   const isEqualOrBiggerThanMedium = useMediaQuery("(min-width:600px)");
 
   const redirectToApp = useCallback(() => {
-    const redirectTo =
+    let redirectTo =
       router.query.from && router.query.from.length > 0
         ? (router.query.from as string)
         : ROUTES.ciontology;
@@ -48,11 +50,13 @@ const AuthLayout: FC<Props> = ({ children }) => {
 
   useEffect(() => {
     if (isAuthenticated && isAuthInitialized) {
-      redirectToApp();
+      if (emailVerified) {
+        redirectToApp();
+      }
     }
-  }, [isAuthenticated, isAuthInitialized, redirectToApp]);
+  }, [isAuthenticated, isAuthInitialized, redirectToApp, emailVerified]);
 
-  if (!isAuthInitialized || isAuthenticated) {
+  if (!isAuthInitialized || (isAuthenticated && emailVerified)) {
     return <FullPageLogoLoading />;
   }
 
@@ -168,11 +172,11 @@ const AuthLayout: FC<Props> = ({ children }) => {
                   <Image
                     src={logoMIT}
                     alt="School of Information"
-                    height={41}
-                    width={47}
+                    height={100}
+                    width={150}
                   />
                 </a>
-                <a
+                {/* <a
                   rel="noreferrer"
                   target="_blank"
                   href="https://www.honor.education/"
@@ -197,7 +201,7 @@ const AuthLayout: FC<Props> = ({ children }) => {
                     height={41}
                     width={49}
                   />
-                </a>
+                </a> */}
               </Box>
               <Box sx={{ zIndex: 1 }}>
                 <Typography textAlign={"center"} variant="h1">
