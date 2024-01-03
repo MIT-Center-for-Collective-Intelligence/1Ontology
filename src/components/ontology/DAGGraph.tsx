@@ -2,120 +2,96 @@ import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import dagreD3 from "dagre-d3";
 
-const DAGGraph = ({ data }) => {
+const DAGGraph = ({ ontologies }: any) => {
   const svgRef = useRef(null);
   const [expandedNodes, setExpandedNodes] = useState(new Set());
+  const [zoomState, setZoomState] = useState<any>(null);
 
-  // Define handleNodeClick outside of useEffect
-  const handleNodeClick = (nodeData) => {
-    console.log({ nodeData, expandedNodes });
-    const nodeId = nodeData;
-
-    if (expandedNodes.has(nodeId)) {
-      expandedNodes.delete(nodeId);
+  const handleNodeClick = (ontologyId: any) => {
+    if (expandedNodes.has(ontologyId)) {
+      expandedNodes.delete(ontologyId);
     } else {
-      expandedNodes.add(nodeId);
+      expandedNodes.add(ontologyId);
     }
-    setExpandedNodes(new Set(expandedNodes)); // Update state to trigger useEffect
+    setExpandedNodes(new Set(expandedNodes));
   };
 
-  // Define processNode outside of useEffect
-  const processNode = (node, path, g) => {
-    const nodeId = path.join("-");
-    if (!g.hasNode(nodeId)) {
-      g.setNode(nodeId, {
-        label: node.title,
-        class: node.isCategory ? "category" : "specialization",
+  const onDrawOntology = (ontology: any, graph: any) => {
+    const nodeId = ontology?.id || "";
+    if (!graph.hasNode(nodeId)) {
+      graph.setNode(nodeId, {
+        label: ontology.title,
+        style:
+          "fill: white; stroke: black; stroke-width: 2px; cursor: pointer;",
+        labelStyle: "fill: black;",
       });
     }
-
     if (expandedNodes.has(nodeId)) {
-      Object.entries(node.specializations || {}).forEach(
-        ([category, child]) => {
-          const childPath = path.concat(category);
-          const childId = childPath.join("-");
-          if (!g.hasNode(childId)) {
-            processNode(child, childPath, g);
-            g.setEdge(nodeId, childId);
-          }
-        }
-      );
-    } else {
-      // Remove child nodes and edges
-      Object.keys(node.specializations || {}).forEach((category) => {
-        const childId = path.concat(category).join("-");
-        if (g.hasNode(childId)) {
-          g.removeNode(childId);
-        }
-      });
+      const subOntologies: any = Object.values(ontology.specializations || {});
+      for (let subOntology of subOntologies) {
+        onDrawOntology(subOntology, graph);
+        graph.setEdge(nodeId, subOntology.id, {
+          curve: d3.curveBasis,
+          style: "stroke: #00ff00; stroke-opacity: 1; fill: none;",
+          arrowheadStyle: "fill: #00ff00",
+          minlen: 2,
+        });
+      }
     }
   };
 
   useEffect(() => {
-    if (!data) return;
+    const graph: any = new dagreD3.graphlib.Graph().setGraph({
+      rankdir: "LR",
+    });
+    d3.select("#graphGroup").selectAll("*").remove();
+    if (!Object.keys(ontologies).length) return;
+    const render: any = new dagreD3.render();
 
-    const g = new dagreD3.graphlib.Graph().setGraph({ rankdir: "LR" });
-    g.setDefaultEdgeLabel(() => ({}));
+    const svg = d3.select("svg");
+    const svgGroup: any = svg.append("g");
 
-    // Custom node rendering
-    const render = new dagreD3.render();
-    render.shapes().rect = (parent, bbox, node) => {
-      // Custom shape
-      const w = 150;
-      const h = 50;
-      parent
-        .insert("rect", ":first-child")
-        .attr("rx", 5)
-        .attr("ry", 5)
-        .attr("width", w)
-        .attr("height", h)
-        .attr("style", "fill: #fff; stroke: #333");
-      node.width = w;
-      node.height = h;
-      node.intersect = function (point) {
-        return dagreD3.intersect.rect(node, point);
-      };
-      return parent;
-    };
+    for (let ontology of Object.values(ontologies)) {
+      onDrawOntology(ontology, graph);
+    }
 
-    const svg = d3.select(svgRef.current);
-    const inner = svg.select("g").empty() ? svg.append("g") : svg.select("g");
+    render(svgGroup, graph);
 
-    Object.values(data).forEach((rootNode) =>
-      processNode(rootNode, [rootNode.id], g)
-    );
-    render(inner, g);
-
-    // Apply arrow markers to edges
-    inner.selectAll("g.edgePath path").attr("marker-end", "url(#arrow)");
-
-    const zoom = d3
-      .zoom()
-      .on("zoom", (event) => inner.attr("transform", event.transform));
-    svg.call(zoom);
-
+    const zoom: any = d3.zoom().on("zoom", function (d) {
+      svgGroup.attr("transform", d3.zoomTransform(this));
+      setZoomState(d3.zoomTransform(this));
+    });
     svg.selectAll("g.node").on("click", function () {
       const nodeData = d3.select(this).datum();
       handleNodeClick(nodeData);
     });
-  }, [data, expandedNodes]);
+    svg.call(zoom);
+    if (zoomState) {
+      svgGroup.attr("transform", zoomState);
+    }
+    const svgWidth = (window.innerWidth * 70) / 100;
+    const svgHeight = 600;
+    const graphWidth = graph.graph().width + 50;
+    const graphHeight = graph.graph().height + 50;
+
+    const zoomScale = Math.min(svgWidth / graphWidth, svgHeight / graphHeight);
+    const translateX = (svgWidth - graphWidth * zoomScale) / 6;
+    const translateY = (svgHeight - graphHeight * zoomScale) / 2;
+    if (!zoomState) {
+      svg.call(
+        zoom.transform,
+        d3.zoomIdentity.translate(translateX, translateY).scale(zoomScale)
+      );
+    }
+    return () => {
+      d3.select("#graphGroup").selectAll("*").remove();
+    };
+  }, [ontologies, expandedNodes]);
 
   return (
     <>
-      <style>
-        {`
-          .edgePath path {
-            stroke: green;
-            fill: none;
-          }
-        `}
-      </style>
-      <svg
-        ref={svgRef}
-        width="100%"
-        height="1000"
-        style={{ border: "1px solid black" }}
-      />
+      {" "}
+      <svg id="graphGroup" ref={svgRef} width="100%" height="1000" />
     </>
   );
 };
