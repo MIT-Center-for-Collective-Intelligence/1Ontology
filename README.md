@@ -92,7 +92,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Contact
 
-MIT Center for Collective Intelligence - [email](mailto:your-email@mit.edu)
+MIT Center for Collective Intelligence - [email](mailto:oneweb@umich.edu)
 
 Project Link: [https://github.com/your*username*/1Ontology](https://github.com/your_username_/1Ontology)
 
