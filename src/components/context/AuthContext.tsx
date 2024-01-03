@@ -1,3 +1,47 @@
+/* 
+# AuthContext.tsx
+
+`AuthContext.tsx` is a TypeScript file that serves as a critical component in managing authentication state within a React application. The file contains the implementation of an `AuthProvider` component, along with associated hooks (`useAuthState`, `useAuthDispatch`, and `useAuth`) to facilitate state management and interaction with Firebase authentication services.
+
+## Components and Hooks
+
+### AuthProvider Component
+
+The `AuthProvider` component is a Functional Component (FC) that takes in children and an optional `store` prop, providing a context for managing authentication state throughout the application. It initializes a context for the authentication state (`AuthStateContext`) and authentication actions (`AuthDispatchContext`). The component utilizes the `useReducer` hook to manage state transitions based on dispatched actions.
+
+#### Props:
+
+- `children`: ReactNode - Child components within the AuthProvider.
+- `store`: AuthState - Optional initial state for the authentication context.
+
+#### Error Handling
+
+The component defines a `handleError` function using the `useCallback` hook, allowing for consistent error handling. It displays error messages using the `notistack` library and has the capability to report errors to Google Cloud (TODO).
+
+#### User Loading
+
+The `loadUser` function asynchronously loads user details, including user data and theme, and updates the state accordingly. It handles scenarios where the user is not found and triggers a logout if necessary.
+
+### useEffect
+
+The `useEffect` hook within `AuthProvider` sets up listeners for authentication state changes using Firebase's `onAuthStateChanged`. It performs actions based on whether a user is authenticated or not, including loading user details and updating the state accordingly.
+
+### useContext Hooks
+
+The file provides three custom hooks for interacting with the authentication context:
+
+- `useAuthState`: Retrieves the current authentication state.
+- `useAuthDispatch`: Retrieves the authentication dispatch actions.
+- `useAuth`: Combines `useAuthState` and `useAuthDispatch` for a convenient tuple result.
+
+## Usage
+
+To use the authentication context in a component, wrap it with the `AuthProvider`:
+
+
+import { AuthProvider } from './path/to/AppHeader';
+*/
+
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useSnackbar } from "notistack";
 import {
@@ -50,7 +94,11 @@ const AuthProvider: FC<Props> = ({ children, store }) => {
   );
 
   const loadUser = useCallback(
-    async (userId: string, claims: { [key: string]: boolean }) => {
+    async (
+      userId: string,
+      claims: { [key: string]: boolean },
+      emailVerified: boolean
+    ) => {
       try {
         const { user, theme } = await retrieveAuthenticatedUser(userId, claims);
         if (!user) {
@@ -63,6 +111,7 @@ const AuthProvider: FC<Props> = ({ children, store }) => {
             payload: {
               user,
               theme,
+              emailVerified,
             },
           });
         } else {
@@ -88,7 +137,7 @@ const AuthProvider: FC<Props> = ({ children, store }) => {
           ? "STUDENT"
           : null;
         //sign in
-        loadUser(user.uid, res.claims);
+        loadUser(user.uid, res.claims, user.emailVerified);
       } else {
         //sign out
         dispatch({ type: "logoutSuccess" });

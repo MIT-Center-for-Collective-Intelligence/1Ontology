@@ -12,6 +12,7 @@ export const INITIAL_STATE: AuthState = {
     theme: "Dark",
   },
   isLoading: false,
+  emailVerified: false
 };
 
 function authReducer(state: AuthState, action: DispatchAuthActions): AuthState {
@@ -30,7 +31,7 @@ function authReducer(state: AuthState, action: DispatchAuthActions): AuthState {
         ...action.payload,
         isAuthenticated: true,
         settings: {
-          theme: action.payload.theme,
+          theme: action.payload.theme || "Dark",
         },
         isAuthInitialized: true,
       };

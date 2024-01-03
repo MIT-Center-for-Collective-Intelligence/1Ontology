@@ -1,3 +1,55 @@
+/* # AuthLayout.tsx
+
+`AuthLayout.tsx` is a TypeScript file that defines the `AuthLayout` component, which serves as the layout for authentication-related pages in a web application. It utilizes the Material-UI library for UI components and Next.js for server-side rendering.
+
+## Dependencies
+
+- `@mui/material`: Material-UI library components for styling.
+- `@mui/system`: Material-UI system components.
+- `next/image`: Next.js component for optimizing and serving images.
+- `next/link`: Next.js component for client-side navigation.
+- `next/router`: Next.js utility for handling client-side routing.
+- `react`: JavaScript library for building user interfaces.
+
+## Context and State Management
+
+The component uses React context (`createContext`) to manage the state and actions related to the authentication layout. It includes a `useAuth` hook to access authentication-related information.
+
+## Background Images
+
+The layout includes background images based on the selected theme (Dark or Light) using Material-UI's Box component. The images (`darkModeLibraryImage` and `lightModeLibraryImage`) are loaded from the `public` directory.
+
+## Initialization and Redirection
+
+The component checks for authentication initialization and email verification status. If authenticated and email verified, it redirects the user to the specified route using Next.js router.
+
+## Conditional Rendering
+
+The layout renders differently based on the screen size (`useMediaQuery`). The left panel with additional content is displayed only on screens equal to or larger than 600px (`isEqualOrBiggerThanMedium`).
+
+## Left Panel (Large Screens)
+
+- Displays a background image (`darkModeLibraryImage`) with a filter for brightness.
+- Includes logos (MIT, Honor, Google Cloud) with external links.
+- Displays a welcome message, description, and sign-in/sign-up buttons.
+
+## Right Panel
+
+- Displays the main content area, which includes sign-in/sign-up buttons for small screens.
+- Renders children components within a container with a maximum width of 400px.
+
+## Hooks and Providers
+
+- `useAuthDispatch`: Custom hook to access the `AuthLayoutContext` and its actions.
+- `useAuthLayout`: Custom hook for setting the background image using the `setBackground` action.
+
+## Export
+
+Exports the `AuthLayout` component as the default export.
+
+For more details and usage, refer to the source code.
+ */
+
 import { Button, Typography, useMediaQuery } from "@mui/material";
 import { Box } from "@mui/system";
 import Image from "next/image";
@@ -12,6 +64,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useState,
 } from "react";
 
 import darkModeLibraryImage from "../../../public/darkModeLibraryBackground.jpg";
@@ -34,12 +87,13 @@ type Props = {
 };
 
 const AuthLayout: FC<Props> = ({ children }) => {
-  const [{ isAuthenticated, isAuthInitialized, settings }] = useAuth();
+  const [{ emailVerified, isAuthenticated, isAuthInitialized, settings }] =
+    useAuth();
   const router = useRouter();
   const isEqualOrBiggerThanMedium = useMediaQuery("(min-width:600px)");
 
   const redirectToApp = useCallback(() => {
-    const redirectTo =
+    let redirectTo =
       router.query.from && router.query.from.length > 0
         ? (router.query.from as string)
         : ROUTES.ciontology;
@@ -48,11 +102,13 @@ const AuthLayout: FC<Props> = ({ children }) => {
 
   useEffect(() => {
     if (isAuthenticated && isAuthInitialized) {
-      redirectToApp();
+      if (emailVerified) {
+        redirectToApp();
+      }
     }
-  }, [isAuthenticated, isAuthInitialized, redirectToApp]);
+  }, [isAuthenticated, isAuthInitialized, redirectToApp, emailVerified]);
 
-  if (!isAuthInitialized || isAuthenticated) {
+  if (!isAuthInitialized || (isAuthenticated && emailVerified)) {
     return <FullPageLogoLoading />;
   }
 
@@ -168,11 +224,11 @@ const AuthLayout: FC<Props> = ({ children }) => {
                   <Image
                     src={logoMIT}
                     alt="School of Information"
-                    height={41}
-                    width={47}
+                    height={100}
+                    width={150}
                   />
                 </a>
-                <a
+                {/* <a
                   rel="noreferrer"
                   target="_blank"
                   href="https://www.honor.education/"
@@ -197,7 +253,7 @@ const AuthLayout: FC<Props> = ({ children }) => {
                     height={41}
                     width={49}
                   />
-                </a>
+                </a> */}
               </Box>
               <Box sx={{ zIndex: 1 }}>
                 <Typography textAlign={"center"} variant="h1">

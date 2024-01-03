@@ -4,7 +4,7 @@ import { FirebaseError } from "firebase/app";
 import { useFormik } from "formik";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode } from "react";
 import { useMutation } from "react-query";
 import * as yup from "yup";
 
@@ -15,10 +15,7 @@ import {
   SignUpFormValues,
 } from " @components/types/IAuth";
 import { useAuth } from " @components/components/context/AuthContext";
-import {
-  sendVerificationEmail,
-  signIn,
-} from " @components/lib/firestoreClient/auth";
+import { sendVerificationEmail } from " @components/lib/firestoreClient/auth";
 import { SignUpBasicInfo } from " @components/components/Auth/SignUpBasicInfo";
 import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
 import { collection, doc, getFirestore, setDoc } from "firebase/firestore";
@@ -71,8 +68,7 @@ const SignUpPage: NextPageWithLayout = () => {
   const mutateSignUp = useMutation<any, unknown, SignUpData>(signUp, {
     onSuccess: async (data, variables) => {
       try {
-        await signIn(variables.email, variables.password);
-        router.push(ROUTES.home);
+        router.push(ROUTES.signIn);
         await sendVerificationEmail();
         enqueueSnackbar(
           "We have sent an email with a confirmation link to your email address.",

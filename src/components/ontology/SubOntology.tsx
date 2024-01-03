@@ -1,5 +1,87 @@
+/* 
+# SubOntology Component
+
+The `SubOntology` component is responsible for rendering a single sub-ontology item within the application. It provides functionality for navigating to the sub-ontology's details, as well as deleting the sub-ontology from the database.
+
+## Props
+
+The component accepts the following props:
+
+- `subOntology`: The sub-ontology object to be displayed.
+- `openOntology`: The currently open ontology object.
+- `sx`: Style object for customizing the appearance of the component.
+- `type`: The type of the sub-ontology.
+- `setOpenOntology`: Function to update the currently open ontology.
+- `saveSubOntology`: Function to save the sub-ontology.
+- `setSnackbarMessage`: Function to display a message in a snackbar.
+- `category`: The category of the sub-ontology.
+- `ontologyPath`: The path of ontologies leading to the current sub-ontology.
+- `updateUserDoc`: Function to update the user document with the new ontology path.
+- `recordLogs`: Function to record logs for actions performed.
+- `updateInheritance`: Function to update inheritance of the ontology.
+
+## Usage
+
+The `SubOntology` component is used within the application to display a list of sub-ontologies. It provides an interactive link to navigate to the sub-ontology's details and a delete button to remove the sub-ontology from the database.
+
+## Functions
+
+### linkNavigation
+
+Handles the navigation to the sub-ontology's details by updating the user document with the new ontology path.
+
+### removeSubOntology
+
+Removes the sub-ontology from the parent ontology's sub-ontologies list.
+
+### deleteSubOntologyEditable
+
+Handles the deletion of the sub-ontology. It confirms the action with the user, updates the parent ontology, and records the action in logs.
+
+## Rendering
+
+The component renders a `Box` containing a `Link` for the sub-ontology title and a `Button` for the delete action. A `Tooltip` is used to provide additional information for the delete button.
+
+## ConfirmDialog
+
+A `ConfirmDialog` component is used to confirm the deletion action with the user before proceeding.
+
+## Example
+
+```jsx
+<SubOntology
+  subOntology={subOntologyData}
+  openOntology={openOntologyData}
+  sx={customStyles}
+  type="Specializations"
+  setOpenOntology={handleSetOpenOntology}
+  saveSubOntology={handleSaveSubOntology}
+  setSnackbarMessage={handleSetSnackbarMessage}
+  category="CategoryName"
+  ontologyPath={ontologyPathData}
+  updateUserDoc={handleUpdateUserDoc}
+  recordLogs={handleRecordLogs}
+  updateInheritance={handleUpdateInheritance}
+/>
+```
+
+## Source Code
+
+The source code for the `SubOntology` component is located in the `SubOntology.tsx` file within the project repository.
+
+---
+
+This documentation provides an overview of the `SubOntology` component's functionality and usage within the application. For more detailed information, refer to the source code and comments within the `SubOntology.tsx` file. */
+
+
+
+
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
-import { IOntology, ISubOntology } from " @components/types/IOntology";
+import {
+  IOntology,
+  IOntologyPath,
+  ISubOntology,
+} from " @components/types/IOntology";
 import { Box, Button, Link, Tooltip } from "@mui/material";
 import {
   collection,
@@ -12,15 +94,22 @@ import {
 type ISubOntologyProps = {
   subOntology: ISubOntology;
   openOntology: IOntology;
-  sx: any;
+  sx: { [key: string]: any };
   type: string;
   setOpenOntology: (openOntology: any) => void;
   saveSubOntology: any;
   setSnackbarMessage: (message: any) => void;
   category: string;
-  ontologyPath: any;
-  updateUserDoc: any;
-  recordLogs: any;
+  ontologyPath: IOntologyPath[];
+  updateUserDoc: (ontologyPath: string[]) => void;
+  recordLogs: (logs: any) => void;
+  updateInheritance: (parameters: {
+    updatedOntology: IOntology;
+    updatedField: string;
+    type: "subOntologies" | "plainText";
+    newValue: any;
+    ancestorTitle: string;
+  }) => void;
 };
 
 const SubOntology = ({
@@ -32,13 +121,14 @@ const SubOntology = ({
   ontologyPath,
   updateUserDoc,
   recordLogs,
+  updateInheritance,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
 
   const linkNavigation = async () => {
-    await updateUserDoc([
-      ...ontologyPath.map((p: { id: string; title: string }) => p.id),
+    updateUserDoc([
+      ...ontologyPath.map((p: { id: string }) => p.id),
       subOntology.id,
     ]);
     // handleLinkNavigation({ id: subOntology.id, title: subOntology.title });
@@ -73,7 +163,7 @@ const SubOntology = ({
           doc(collection(db, "ontology"), openOntology.id)
         );
         if (ontologyDoc.exists()) {
-          const ontologyData = ontologyDoc.data();
+          const ontologyData: any = ontologyDoc.data();
           const subOntologyIdx = (
             ontologyData?.subOntologies[type][category]?.ontologies || []
           ).findIndex((sub: any) => sub.id === subOntology.id);
@@ -109,6 +199,15 @@ const SubOntology = ({
 
             if (type === "Specializations") {
               await updateDoc(subOntologyDoc.ref, { deleted: true });
+            }
+            if (type !== "Specializations") {
+              updateInheritance({
+                updatedOntology: { ...ontologyData, id: ontologyDoc.id },
+                updatedField: type,
+                type: "subOntologies",
+                newValue: ontologyData.subOntologies[type],
+                ancestorTitle: ontologyData.title,
+              });
             }
             await recordLogs({
               action: "Deleted a field",
