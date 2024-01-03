@@ -2948,3 +2948,40 @@ right: 5px; */
   /* Let's also make the radius of leaf nodes larger */
   r: 40;
 }
+
+g.type-PO>rect {
+  fill: #4caf50;
+}
+
+g.type-NO>rect {
+  fill: #cc0119;
+}
+g.type-DF>rect {
+  fill: #1976d2;
+}
+g.type-ST>rect {
+  fill: #3e2723;
+}
+
+.type-ST text,
+.type-NO text,
+.type-PO text,
+.type-DF text {
+  fill: white;
+}
+
+.node rect {
+  stroke: #ecf3ed;
+  fill: #fff;
+  stroke-width: 1.5px;
+}
+
+.edgePath path.path {
+  stroke: transparent;
+  fill: transparent;
+  stroke-width: 1.3px;
+}
+
+text.custom-text-color {
+  fill: #000000; 
+}
