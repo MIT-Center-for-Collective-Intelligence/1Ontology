@@ -340,7 +340,7 @@ const CIOntology = () => {
     const handleHashChange = async () => {
       if (window.location.hash) {
         setOntologyPath(getPath(window.location.hash.split("#") || []));
-        await updateUserDoc(window.location.hash.split("#"));
+        updateUserDoc(window.location.hash.split("#"));
       }
     };
     window.addEventListener("hashchange", handleHashChange);
@@ -886,6 +886,7 @@ const CIOntology = () => {
       }
     }
   };
+  console.log(ontologyPath);
   return (
     <Box sx={{ display: "flex", flexDirection: "column" }}>
       <Container style={{ height: "100%", marginTop: "80px" }}>
