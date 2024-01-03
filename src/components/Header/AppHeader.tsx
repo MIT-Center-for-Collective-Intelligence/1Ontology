@@ -91,7 +91,7 @@ const AppHeader = forwardRef(({ onSwitchSection }: AppHeaderProps, ref) => {
           backdropFilter: "saturate(180%) blur(10px)",
           position: "sticky",
           top: "0",
-          zIndex: "22",
+          // zIndex: "22",
         }}
       >
         <Stack

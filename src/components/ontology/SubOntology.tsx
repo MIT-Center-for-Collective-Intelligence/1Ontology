@@ -21,6 +21,13 @@ type ISubOntologyProps = {
   ontologyPath: any;
   updateUserDoc: any;
   recordLogs: any;
+  updateInhiretance: (parameters: {
+    updatedOntology: IOntology;
+    updatedField: string;
+    type: "subOntologies" | "plainText";
+    newValue: any;
+    ancestorTitle: string;
+  }) => void;
 };
 
 const SubOntology = ({
@@ -32,6 +39,7 @@ const SubOntology = ({
   ontologyPath,
   updateUserDoc,
   recordLogs,
+  updateInhiretance,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
@@ -73,7 +81,7 @@ const SubOntology = ({
           doc(collection(db, "ontology"), openOntology.id)
         );
         if (ontologyDoc.exists()) {
-          const ontologyData = ontologyDoc.data();
+          const ontologyData: any = ontologyDoc.data();
           const subOntologyIdx = (
             ontologyData?.subOntologies[type][category]?.ontologies || []
           ).findIndex((sub: any) => sub.id === subOntology.id);
@@ -109,6 +117,15 @@ const SubOntology = ({
 
             if (type === "Specializations") {
               await updateDoc(subOntologyDoc.ref, { deleted: true });
+            }
+            if (type !== "Specializations") {
+              updateInhiretance({
+                updatedOntology: { ...ontologyData, id: ontologyDoc.id },
+                updatedField: type,
+                type: "subOntologies",
+                newValue: ontologyData.subOntologies[type],
+                ancestorTitle: ontologyData.title,
+              });
             }
             await recordLogs({
               action: "Deleted a field",

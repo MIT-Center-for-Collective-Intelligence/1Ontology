@@ -1,4 +1,10 @@
-export type ISubOntology = { title: string; id: string; category?: string; editMode?: boolean; new?: boolean };
+export type ISubOntology = {
+  title: string;
+  id: string;
+  category?: string;
+  editMode?: boolean;
+  new?: boolean;
+};
 
 export type ISubOntologyCategory = {
   [category: string]: { ontologies: ISubOntology[] };
@@ -14,6 +20,15 @@ export type IOntologyTypes =
   | "incentive"
   | "reward";
 
+export type InheritanceType = {
+  [key: string]: { ref: string; title: string };
+};
+
+export type OntologyInheritance = {
+  inheritance: {
+    [type: string]: InheritanceType;
+  };
+};
 export type IOntology = {
   deleted: boolean;
   id: string;
@@ -21,19 +36,12 @@ export type IOntology = {
   title: string;
   description: string;
   comments: { message: string; sender: string; editMode?: boolean }[];
-  tags: string[];
-  notes: { note: string; sender: string }[];
-  contributors: string[];
-  actors: ISubOntology[];
-  preconditions: ISubOntology[];
-  postconditions: ISubOntology[];
-  evaluations: ISubOntology[];
-  processes: ISubOntology[];
-  specializations: ISubOntology[];
-  editMode: boolean;
+  editMode?: boolean;
   parents?: string[];
   type?: IOntologyTypes;
-};
+  plainText: { [key: string]: string };
+  subOntologies: { [key: string]: any };
+} & OntologyInheritance;
 
 export type IOntologyCommon = {
   title: string;
@@ -75,7 +83,10 @@ export type IProcesse = IOntologyCommon & {
     "Performance prediction models": string;
     notes: string;
   };
-  subOntologies: { Role: ISubOntologyCategory; Specializations: ISubOntologyCategory };
+  subOntologies: {
+    Role: ISubOntologyCategory;
+    Specializations: ISubOntologyCategory;
+  };
 };
 
 export type IEvaluation = IOntologyCommon & {
