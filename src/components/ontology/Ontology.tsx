@@ -768,7 +768,7 @@ const Ontology = ({
             ...ontologyPath.slice(0, -1).map((path: any) => path.id),
           ]);
           await updateDoc(ontologyDoc.ref, { deleted: true });
-          await recordLogs({
+          recordLogs({
             action: "Deleted Ontology",
             ontology: ontologyDoc.id,
           });
@@ -778,6 +778,7 @@ const Ontology = ({
       console.error(error);
     }
   };
+
   return (
     <Box
       sx={{
@@ -905,6 +906,16 @@ const Ontology = ({
                       >
                         Add Category
                       </Button>
+                    )}
+                    {(openOntology.inheritance || {}).subOntoogies[type]
+                      ?.ref && (
+                      <Typography sx={{ color: "grey" }}>
+                        {"("}
+                        {"Inherited from "}
+                        {(openOntology.inheritance || {}).subOntoogies[type]
+                          ?.title || ""}
+                        {")"}
+                      </Typography>
                     )}
                   </Box>
                   {["Role", "Specializations", "Actor"].includes(type) ? (
