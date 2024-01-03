@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 import React, { useEffect, useState } from "react";
 
 type ITreeViewSimplifiedProps = {
-  onOpenOntologyTree: (category: string, path: string[]) => void;
+  onOpenOntologyTree: (ontologyId: string, path: string[]) => void;
 };
 const TreeViewSimplified = ({
   mainSpecializations,
@@ -70,7 +70,7 @@ const TreeViewSimplified = ({
                 onClick={() => {
                   if (!mainSpecializations[category].isCategory)
                     onOpenOntologyTree(
-                      category,
+                      mainSpecializations[category].id,
                       mainSpecializations[category]?.path || []
                     );
                 }}
