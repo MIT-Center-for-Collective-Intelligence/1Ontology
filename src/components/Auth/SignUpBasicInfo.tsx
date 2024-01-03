@@ -1,3 +1,45 @@
+/* # SignUpBasicInfo.tsx
+
+## Overview
+
+`SignUpBasicInfo.tsx` is a React component in the 1Ontology project, responsible for handling the user's basic information during the signup process. This component is built using Material-UI components and Formik for form management.
+
+## Features
+
+- **User Input Fields**: Collects user's first name, last name, email, username, and password.
+- **Form Validation**: Uses Formik to handle form state and validation, ensuring user input is correct and prompt for errors.
+- **Theme Switcher**: Allows users to toggle between light and dark themes.
+- **Suspense for Lazy Loading**: React Suspense is used to handle the loading state for modal components, which are currently commented out.
+
+## Component Structure
+
+1. **Text Fields**: For capturing user details like first name, last name, email, username, and password.
+2. **Theme Toggle**: A switch to toggle between light and dark themes.
+3. **Form Validation**: Utilizes Formik for managing form state and validation.
+4. **Lazy Loading Modals**: Placeholder for future modals like Cookie Policy, GDPR Policy, etc., using React Suspense.
+
+## Usage
+
+This component is to be used in the signup flow for new users. It collects essential information and offers an interactive, user-friendly experience for setting up an account.
+
+## Code Explanation
+
+- **Material-UI Components**: Utilizes various Material-UI components like `TextField`, `FormGroup`, `FormControlLabel`, `Switch`, `Backdrop`, and `CircularProgress`.
+- **Formik Integration**: The component receives `formikProps` as props to manage form state and validation.
+- **State Management for Modals**: Uses React state hooks to manage the visibility of various policy modals.
+- **Theme Toggling**: Implements a switch to toggle the theme of the application, integrated with the application's context.
+
+## Future Enhancements
+
+- **Modals Integration**: Integration of modals such as Informed Consent, GDPR Policy, Privacy Policy, etc., for legal compliance and user information.
+- **Refactor and Optimization**: Potential refactor for better performance and code readability.
+
+## Contributing
+
+Contributions to enhance or improve the `SignUpBasicInfo.tsx` component are welcome. Please adhere to the project's coding standards and contribute guidelines when submitting pull requests.
+
+ */
+
 import {
   Backdrop,
   Box,
