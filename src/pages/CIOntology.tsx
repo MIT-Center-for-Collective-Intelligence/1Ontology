@@ -983,21 +983,21 @@ const CIOntology = () => {
 
   return (
     <>
-      <Container style={{ height: "100%", marginTop: "80px" }}>
+      <Container style={{ marginTop: "80px" }}>
         {!isMobile && (
           <Section minSize={0} defaultSize={350}>
             <Tabs
               value={viewValue}
               onChange={handleViewChange}
-              sx={{ width: "500px", ml: "5px" }}
+              sx={{ width: "100%", ml: "15px" }}
             >
-              <Tab label="Tree View" {...a11yProps(0)} />
-              <Tab label="DAG View" {...a11yProps(1)} />
+              <Tab label="Tree View" {...a11yProps(0)} sx={{ width: "50%" }} />
+              <Tab label="DAG View" {...a11yProps(1)} sx={{ width: "50%" }} />
             </Tabs>
             <Box sx={{ overflow: "auto", height: "94vh" }}>
-              <TabPanel value={viewValue} index={0}>
+              <TabPanel value={viewValue} index={0} sx={{ mt: "5px" }}>
                 <TreeViewSimplified
-                  mainSpecializations={treeVisualisation}
+                  treeVisualisation={treeVisualisation}
                   onOpenOntologyTree={onOpenOntologyTree}
                 />
               </TabPanel>
@@ -1307,22 +1307,22 @@ const CIOntology = () => {
             </Box>
           </Section>
         )}
-      </Container>
-      {ConfirmDialog}
-      <SneakMessage
-        newMessage={snackbarMessage}
-        setNewMessage={setSnackbarMessage}
-      />
-      <Box sx={{ position: "absolute", top: 0, width: "100%" }}>
-        <AppHeaderMemoized
-          ref={headerRef}
-          page="ONE_CADEMY"
-          mitpage={true}
-          sections={[]}
-          selectedSectionId={""}
-          onSwitchSection={() => {}}
+        {ConfirmDialog}
+        <SneakMessage
+          newMessage={snackbarMessage}
+          setNewMessage={setSnackbarMessage}
         />
-      </Box>
+        <Box sx={{ position: "absolute", top: 0, width: "100%" }}>
+          <AppHeaderMemoized
+            ref={headerRef}
+            page="ONE_CADEMY"
+            mitpage={true}
+            sections={[]}
+            selectedSectionId={""}
+            onSwitchSection={() => {}}
+          />
+        </Box>
+      </Container>
     </>
   );
 };
