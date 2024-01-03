@@ -225,47 +225,52 @@ const CIOntology = () => {
   };
   const getSpecializationsTree = ({ mainOntologies, path }: any) => {
     let _mainSpecializations: any = {};
-    for (let ontlogy of mainOntologies) {
-      _mainSpecializations[ontlogy.title] = {
-        id: ontlogy.id,
-        path: [...path, ontlogy.id],
-        isCategory: !!ontlogy.category,
+    for (let ontology of mainOntologies) {
+      _mainSpecializations[ontology.title] = {
+        id: ontology.id,
+        path: [...path, ontology.id],
+        isCategory: !!ontology.category,
+        title: ontology.title,
         specializations: {},
       };
-      for (let category in ontlogy?.subOntologies?.Specializations) {
+      for (let category in ontology?.subOntologies?.Specializations) {
         const specializations =
           ontologies.filter((onto: any) => {
-            const arrayOntologies = ontlogy?.subOntologies?.Specializations[
+            const arrayOntologies = ontology?.subOntologies?.Specializations[
               category
             ]?.ontologies.map((o: any) => o.id);
             return arrayOntologies.includes(onto.id);
           }) || [];
 
         if (category === "main") {
-          _mainSpecializations[ontlogy.title] = {
-            id: ontlogy.id,
-            path: [...path, ontlogy.id],
-            isCategory: !!ontlogy.category,
+          _mainSpecializations[ontology.title] = {
+            id: ontology.id,
+            path: [...path, ontology.id],
+            isCategory: !!ontology.category,
+            title: ontology.title,
             specializations: {
-              ...(_mainSpecializations[ontlogy.title]?.specializations || {}),
+              ...(_mainSpecializations[ontology.title]?.specializations || {}),
               ...getSpecializationsTree({
                 mainOntologies: specializations,
-                path: [...path, ontlogy.id],
+                path: [...path, ontology.id],
               }),
             },
           };
         } else {
-          _mainSpecializations[ontlogy.title] = {
-            id: ontlogy.id,
-            path: [...path, ontlogy.id],
+          _mainSpecializations[ontology.title] = {
+            id: ontology.id,
+            path: [...path, ontology.id],
+            title: ontology.title,
+            c: ontology.category,
             specializations: {
-              ...(_mainSpecializations[ontlogy.title]?.specializations || {}),
+              ...(_mainSpecializations[ontology.title]?.specializations || {}),
               [category]: {
                 isCategory: true,
                 id: newId(db),
+                title: category,
                 specializations: getSpecializationsTree({
                   mainOntologies: specializations,
-                  path: [...path, ontlogy.id],
+                  path: [...path, ontology.id],
                 }),
               },
             },
@@ -800,34 +805,85 @@ const CIOntology = () => {
       console.error(error);
     }
   };
-  console.log({ mainSpecializations });
+
+  const updateInhiretance = ({
+    updatedOntology,
+    updatedField,
+    type,
+    newValue,
+    ancestorTitle,
+  }: {
+    updatedOntology: IOntology;
+    updatedField: string;
+    type: "subOntologies" | "plainText";
+    newValue: any;
+    ancestorTitle: string;
+  }) => {
+    const parentId = updatedOntology.id;
+    const children: { ontologies: { id: string; title: string }[] }[] =
+      Object.values(updatedOntology.subOntologies.Specializations);
+    let childOntologies: string[] = [];
+    // get all the children (specializations) in an array of strings
+
+    for (let child of children) {
+      childOntologies = [
+        ...childOntologies,
+        ...child.ontologies.map((c) => c.id),
+      ];
+    }
+
+    //loop through all the children and upadte the corresponding feild
+    for (let ontoId of childOntologies) {
+      const onotologyIdx = ontologies.findIndex(
+        (o: IOntology) => o.id == ontoId
+      );
+      if (onotologyIdx !== -1) {
+        const currentOntology: IOntology = ontologies[onotologyIdx];
+        const ontoRef = doc(collection(db, "ontology"), ontoId);
+
+        if (currentOntology.inheritance) {
+          if (updatedField === "title") {
+            for (let type in currentOntology.inheritance) {
+              const inheritanceType = currentOntology.inheritance[type];
+              for (let field in inheritanceType) {
+                const inheritance: { ref: string; title: string } =
+                  currentOntology.inheritance[type][field];
+                if (inheritance.ref && inheritance.ref == parentId) {
+                  inheritance.title = ancestorTitle;
+                }
+              }
+            }
+          } else {
+            const inheritance = currentOntology.inheritance[type][updatedField];
+            if (inheritance.ref && inheritance.ref == parentId) {
+              inheritance.title = ancestorTitle;
+              // if the modified field was title we only need to update the
+
+              if (updatedField == "description") {
+                currentOntology[updatedField] = newValue;
+              } else {
+                currentOntology[type][updatedField] = newValue;
+              }
+            }
+          }
+          updateDoc(ontoRef, currentOntology);
+          //recursive call to the children of the currentOntology
+          // dont mind calling this if the currentOntology doesn't have children
+          updateInhiretance({
+            updatedOntology: currentOntology,
+            updatedField,
+            type,
+            newValue,
+            ancestorTitle,
+          });
+        }
+      }
+    }
+  };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column" }}>
-      <AppHeaderMemoized
-        ref={headerRef}
-        page="ONE_CADEMY"
-        mitpage={true}
-        sections={[]}
-        selectedSectionId={""}
-        onSwitchSection={() => {}}
-      />
-      <Box
-        sx={{
-          width: "100vw",
-          height: "100vh",
-          position: "fixed",
-          filter: "brightness(1.95)",
-          zIndex: -2,
-          backgroundColor: (theme) =>
-            theme.palette.mode === "dark"
-              ? theme.palette.common.notebookMainBlack
-              : theme.palette.common.gray50,
-          overflow: "hidden",
-        }}
-      />
-
-      <Container style={{ height: "100%" }}>
+      <Container style={{ height: "100%", marginTop: "80px" }}>
         {!isMobile && (
           <Section minSize={0} defaultSize={350}>
             <Box
@@ -860,7 +916,7 @@ const CIOntology = () => {
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
                   <DAGGraph
-                    data={mainSpecializations}
+                    ontologies={mainSpecializations}
                     // openMainCategory={openMainCategory}
                   />
                 </TabPanel>
@@ -931,6 +987,7 @@ const CIOntology = () => {
                 setEditOntology={setEditOntology}
                 lockedOntology={lockedOntology}
                 recordLogs={recordLogs}
+                updateInhiretance={updateInhiretance}
               />
             )}
           </Box>
@@ -1166,6 +1223,16 @@ const CIOntology = () => {
         newMessage={snackbarMessage}
         setNewMessage={setSnackbarMessage}
       />
+      <Box sx={{ position: "absolute", top: 0, width: "100%" }}>
+        <AppHeaderMemoized
+          ref={headerRef}
+          page="ONE_CADEMY"
+          mitpage={true}
+          sections={[]}
+          selectedSectionId={""}
+          onSwitchSection={() => {}}
+        />
+      </Box>
     </Box>
   );
 };

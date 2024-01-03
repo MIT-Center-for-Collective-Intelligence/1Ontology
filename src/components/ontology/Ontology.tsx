@@ -38,6 +38,7 @@ import SubOntology from "./SubOntology";
 import SubPlainText from "./SubPlainText";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import { IOntology } from " @components/types/IOntology";
 
 type IOntologyProps = {
   openOntology: any;
@@ -57,6 +58,13 @@ type IOntologyProps = {
   setEditOntology: any;
   lockedOntology: any;
   recordLogs: any;
+  updateInhiretance: (parameters: {
+    updatedOntology: IOntology;
+    updatedField: string;
+    type: "subOntologies" | "plainText";
+    newValue: any;
+    ancestorTitle: string;
+  }) => void;
 };
 
 const ORDER_SUBONTOLOGIES: any = {
@@ -129,6 +137,7 @@ const Ontology = ({
   lockedOntology,
   user,
   recordLogs,
+  updateInhiretance,
 }: IOntologyProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -217,6 +226,35 @@ const Ontology = ({
     }
   };
 
+  const getInheritance = (
+    fields: string[],
+    ancestorTitle: string
+  ): {
+    [key: string]: {
+      ref: string;
+      title: string;
+    };
+  } => {
+    const inheritance: {
+      [key: string]: {
+        ref: string;
+        title: string;
+      };
+    } = {};
+    fields
+      .filter((f) => f !== "Specializations")
+      .forEach(
+        (p) =>
+          (inheritance[p] = {
+            ref: openOntology.id,
+            title: openOntology.inheritance
+              ? openOntology.inheritance[p]?.title || ancestorTitle
+              : ancestorTitle,
+          })
+      );
+    return inheritance;
+  };
+
   const addNewSpecialisation = async (type: string, category: string) => {
     try {
       const ontologyParentRef = doc(
@@ -235,6 +273,27 @@ const Ontology = ({
       newOntology.parents = [openOntology.id];
       newOntology.title = `New ${ontologyParent.title}`;
       newOntology.id = newOntologyRef.id;
+      newOntology.inheritance = {
+        plainText: {
+          ...getInheritance(
+            Object.keys(newOntology.plainText),
+            ontologyParent.title
+          ),
+          description: {
+            ref: openOntology.id,
+            title: openOntology.inheritance
+              ? openOntology.inheritance["description"]?.title ||
+                ontologyParent.title
+              : ontologyParent.title,
+          },
+        },
+        subOntoogies: {
+          ...getInheritance(
+            Object.keys(newOntology.subOntologies),
+            ontologyParent.title
+          ),
+        },
+      };
 
       if (!ontologyParent.subOntologies[type].hasOwnProperty(category)) {
         ontologyParent.subOntologies[type] = {
@@ -367,7 +426,7 @@ const Ontology = ({
         doc(collection(db, "ontology"), openOntology.id)
       );
       if (!ontologyDoc.exists()) return;
-      const ontologyData = ontologyDoc.data();
+      const ontologyData: any = ontologyDoc.data();
       const newSubOntologies =
         type === "Specializations"
           ? [...ontologyData.subOntologies[type][selectedCategory].ontologies]
@@ -401,8 +460,23 @@ const Ontology = ({
           ontologies: newSubOntologies,
         },
       };
+      if (ontologyData.inheritance) {
+        ontologyData.inheritance.subOntologies[type] = {
+          ref: null,
+          title: "",
+        };
+      }
 
       await updateDoc(ontologyDoc.ref, ontologyData);
+      if (type !== "Specializations") {
+        updateInhiretance({
+          updatedOntology: { ...ontologyData, id: openOntology.id },
+          updatedField: type,
+          type: "subOntologies",
+          newValue: ontologyData.subOntologies[type],
+          ancestorTitle: ontologyData.title,
+        });
+      }
       handleClose();
     } catch (error) {
       console.error(error);
@@ -733,6 +807,7 @@ const Ontology = ({
 
       <Box sx={{ display: "flex", flexDirection: "column" }}>
         <SubPlainText
+          updateInhiretance={updateInhiretance}
           recordLogs={recordLogs}
           user={user}
           lockedOntology={lockedOntology[openOntology.id] || {}}
@@ -747,6 +822,7 @@ const Ontology = ({
           deleteSubOntologyEditable={deleteSubOntologyEditable}
         />
         <SubPlainText
+          updateInhiretance={updateInhiretance}
           recordLogs={recordLogs}
           user={user}
           lockedOntology={lockedOntology[openOntology.id] || {}}
@@ -758,7 +834,6 @@ const Ontology = ({
           setOpenOntology={setOpenOntology}
         />
       </Box>
-      <hr style={{ color: "#A5A5A5" }} />
 
       <Box key={openOntology.id} sx={{ mb: "15px" }}>
         <Box
@@ -941,6 +1016,9 @@ const Ontology = ({
                                                           updateUserDoc={
                                                             updateUserDoc
                                                           }
+                                                          updateInhiretance={
+                                                            updateInhiretance
+                                                          }
                                                         />
                                                       </ListItem>
                                                     )}
@@ -1034,6 +1112,7 @@ const Ontology = ({
                                           category={category}
                                           ontologyPath={ontologyPath}
                                           updateUserDoc={updateUserDoc}
+                                          updateInhiretance={updateInhiretance}
                                         />
                                       </li>
                                     );
@@ -1050,6 +1129,7 @@ const Ontology = ({
               ) : (
                 <Box key={type}>
                   <SubPlainText
+                    updateInhiretance={updateInhiretance}
                     recordLogs={recordLogs}
                     user={user}
                     lockedOntology={lockedOntology[openOntology.id] || {}}
