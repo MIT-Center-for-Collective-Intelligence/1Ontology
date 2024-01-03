@@ -88,13 +88,13 @@ Contributions are what make the open-source community such an amazing place to l
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the Apache-2.0 license. See `LICENSE` for more information.
 
 ## Contact
 
 MIT Center for Collective Intelligence - [email](mailto:oneweb@umich.edu)
 
-Project Link: [https://github.com/your*username*/1Ontology](https://github.com/your_username_/1Ontology)
+Project Link: [https://github.com/ImanYZ/1Ontology](https://github.com/ImanYZ/1Ontology)
 
 ## Acknowledgments
 
