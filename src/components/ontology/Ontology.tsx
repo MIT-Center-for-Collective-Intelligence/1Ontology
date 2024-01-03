@@ -206,7 +206,7 @@ type IOntologyProps = {
   setEditOntology: (state: string) => void;
   lockedOntology: ILockecOntology;
   recordLogs: (logs: any) => void;
-  updateInhiretance: (parameters: {
+  updateInheritance: (parameters: {
     updatedOntology: IOntology;
     updatedField: string;
     type: "subOntologies" | "plainText";
@@ -285,7 +285,7 @@ const Ontology = ({
   lockedOntology,
   user,
   recordLogs,
-  updateInhiretance,
+  updateInheritance,
 }: IOntologyProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -618,7 +618,7 @@ const Ontology = ({
 
       await updateDoc(ontologyDoc.ref, ontologyData);
       if (type !== "Specializations") {
-        updateInhiretance({
+        updateInheritance({
           updatedOntology: { ...ontologyData, id: openOntology.id },
           updatedField: type,
           type: "subOntologies",
@@ -957,7 +957,7 @@ const Ontology = ({
 
       <Box sx={{ display: "flex", flexDirection: "column" }}>
         <SubPlainText
-          updateInhiretance={updateInhiretance}
+          updateInheritance={updateInheritance}
           recordLogs={recordLogs}
           user={user}
           lockedOntology={lockedOntology[openOntology.id] || {}}
@@ -972,7 +972,7 @@ const Ontology = ({
           deleteSubOntologyEditable={deleteSubOntologyEditable}
         />
         <SubPlainText
-          updateInhiretance={updateInhiretance}
+          updateInheritance={updateInheritance}
           recordLogs={recordLogs}
           user={user}
           lockedOntology={lockedOntology[openOntology.id] || {}}
@@ -1170,8 +1170,8 @@ const Ontology = ({
                                                         updateUserDoc={
                                                           updateUserDoc
                                                         }
-                                                        updateInhiretance={
-                                                          updateInhiretance
+                                                        updateInheritance={
+                                                          updateInheritance
                                                         }
                                                       />
                                                     </ListItem>
@@ -1264,7 +1264,7 @@ const Ontology = ({
                                         category={category}
                                         ontologyPath={ontologyPath}
                                         updateUserDoc={updateUserDoc}
-                                        updateInhiretance={updateInhiretance}
+                                        updateInheritance={updateInheritance}
                                       />
                                     </li>
                                   );
@@ -1281,7 +1281,7 @@ const Ontology = ({
             ) : (
               <Box key={type}>
                 <SubPlainText
-                  updateInhiretance={updateInhiretance}
+                  updateInheritance={updateInheritance}
                   recordLogs={recordLogs}
                   user={user}
                   lockedOntology={lockedOntology[openOntology.id] || {}}

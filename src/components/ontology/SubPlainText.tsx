@@ -138,7 +138,7 @@ type ISubOntologyProps = {
   user: any;
   recordLogs: (logs: any) => void;
   deleteSubOntologyEditable?: () => void;
-  updateInhiretance: (parameters: {
+  updateInheritance: (parameters: {
     updatedOntology: IOntology;
     updatedField: string;
     type: "subOntologies" | "plainText";
@@ -158,7 +158,7 @@ const SubPlainText = ({
   user,
   recordLogs,
   deleteSubOntologyEditable = () => {},
-  updateInhiretance,
+  updateInheritance,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const [editMode, setEditMode] = useState(false);
@@ -239,7 +239,7 @@ const SubPlainText = ({
 
         //need to call this to update the children according to the Inhiretance
         //Title doesn't have Inhiretance
-        updateInhiretance({
+        updateInheritance({
           updatedField: type,
           type: "plainText",
           newValue: newValue,

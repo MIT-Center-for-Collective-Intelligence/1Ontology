@@ -18,7 +18,7 @@ The component accepts the following props:
 - `ontologyPath`: The path of ontologies leading to the current sub-ontology.
 - `updateUserDoc`: Function to update the user document with the new ontology path.
 - `recordLogs`: Function to record logs for actions performed.
-- `updateInhiretance`: Function to update inheritance of the ontology.
+- `updateInheritance`: Function to update inheritance of the ontology.
 
 ## Usage
 
@@ -61,7 +61,7 @@ A `ConfirmDialog` component is used to confirm the deletion action with the user
   ontologyPath={ontologyPathData}
   updateUserDoc={handleUpdateUserDoc}
   recordLogs={handleRecordLogs}
-  updateInhiretance={handleUpdateInheritance}
+  updateInheritance={handleUpdateInheritance}
 />
 ```
 
@@ -103,7 +103,7 @@ type ISubOntologyProps = {
   ontologyPath: IOntologyPath[];
   updateUserDoc: (ontologyPath: string[]) => void;
   recordLogs: (logs: any) => void;
-  updateInhiretance: (parameters: {
+  updateInheritance: (parameters: {
     updatedOntology: IOntology;
     updatedField: string;
     type: "subOntologies" | "plainText";
@@ -121,7 +121,7 @@ const SubOntology = ({
   ontologyPath,
   updateUserDoc,
   recordLogs,
-  updateInhiretance,
+  updateInheritance,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
@@ -201,7 +201,7 @@ const SubOntology = ({
               await updateDoc(subOntologyDoc.ref, { deleted: true });
             }
             if (type !== "Specializations") {
-              updateInhiretance({
+              updateInheritance({
                 updatedOntology: { ...ontologyData, id: ontologyDoc.id },
                 updatedField: type,
                 type: "subOntologies",
