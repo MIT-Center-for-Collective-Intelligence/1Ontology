@@ -13,6 +13,7 @@ import { useSnackbar } from "notistack";
 import React, { ReactNode, useState } from "react";
 
 import * as yup from "yup";
+import { getAuth, signOut } from "firebase/auth";
 
 interface SignInFormValues {
   email: string;
@@ -48,6 +49,8 @@ const SignInPage: NextPageWithLayout = () => {
           autoHideDuration: 10000,
         });
         setIsLoading(false);
+        await signOut(getAuth());
+        return;
       }
     } catch (error) {
       const errorMessage = getFirebaseFriendlyError(error as FirebaseError);

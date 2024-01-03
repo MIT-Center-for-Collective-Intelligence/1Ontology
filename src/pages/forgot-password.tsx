@@ -1,17 +1,16 @@
 import { useAuth } from " @components/components/context/AuthContext";
 import AuthLayout from " @components/components/layouts/AuthLayout";
-import { resetPassword } from " @components/lib/firestoreClient/auth";
 import { getFirebaseFriendlyError } from " @components/lib/utils/firebaseErrors";
 import ROUTES from " @components/lib/utils/routes";
 import { NextPageWithLayout } from " @components/types/IAuth";
 import { LoadingButton } from "@mui/lab";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { FirebaseError } from "firebase/app";
+import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 import { useFormik } from "formik";
 import NextLink from "next/link";
 import { useSnackbar } from "notistack";
 import React, { ReactNode, useState } from "react";
-
 import * as yup from "yup";
 
 interface ForgotPasswordFormValues {
@@ -19,6 +18,7 @@ interface ForgotPasswordFormValues {
 }
 
 const ForgotPage: NextPageWithLayout = () => {
+  const auth = getAuth();
   const [, { handleError }] = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +38,8 @@ const ForgotPage: NextPageWithLayout = () => {
   const handleSignIn = async ({ email }: ForgotPasswordFormValues) => {
     try {
       setIsLoading(true);
-      await resetPassword(email);
+
+      await sendPasswordResetEmail(auth, email);
       enqueueSnackbar(
         "We have sent an email for reset the password to your email address.",
         {
@@ -46,12 +47,15 @@ const ForgotPage: NextPageWithLayout = () => {
           autoHideDuration: 10000,
         }
       );
-      setIsLoading(false);
     } catch (error) {
-      const errorMessage = getFirebaseFriendlyError(error as FirebaseError);
-      setIsLoading(false);
-      handleError({ error, errorMessage });
+      const err = error as FirebaseError;
+      const errorStrig = getFirebaseFriendlyError(err);
+      handleError({
+        error,
+        errorMessage: `${errorStrig} Check if your email address is correct. `,
+      });
     }
+    setIsLoading(false);
   };
 
   const formik = useFormik({
