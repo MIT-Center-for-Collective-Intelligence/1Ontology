@@ -10,6 +10,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import MarkdownRender from "../Markdown/MarkdownRender";
+import { IOntology } from " @components/types/IOntology";
 
 type ISubOntologyProps = {
   openOntology: any;
@@ -24,6 +25,13 @@ type ISubOntologyProps = {
   user: any;
   recordLogs: any;
   deleteSubOntologyEditable?: any;
+  updateInhiretance: (parameters: {
+    updatedOntology: IOntology;
+    updatedField: string;
+    type: "subOntologies" | "plainText";
+    newValue: any;
+    ancestorTitle: string;
+  }) => void;
 };
 const SubPlainText = ({
   text,
@@ -37,6 +45,7 @@ const SubPlainText = ({
   user,
   recordLogs,
   deleteSubOntologyEditable = () => {},
+  updateInhiretance,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const [editMode, setEditMode] = useState(false);
@@ -78,7 +87,7 @@ const SubPlainText = ({
         doc(collection(db, "ontology"), openOntology.id)
       );
       if (ontologyDoc.exists()) {
-        const ontologyData = ontologyDoc.data();
+        const ontologyData: any = ontologyDoc.data();
 
         if (type === "title") {
           setEditOntology(null);
@@ -96,6 +105,7 @@ const SubPlainText = ({
         }
         let previousValue = "";
         let newValue = "";
+
         if (["description", "title"].includes(type)) {
           previousValue = ontologyData[type];
           newValue = openOntology[type];
@@ -105,7 +115,25 @@ const SubPlainText = ({
           newValue = openOntology.plainText[type];
           ontologyData.plainText[type] = openOntology.plainText[type] || "";
         }
+        if (type !== "title" && ontologyData.inheritance) {
+          ontologyData.inheritance.plainText[type] = {
+            ref: null,
+            title: "",
+          };
+        }
+
         await updateDoc(ontologyDoc.ref, ontologyData);
+
+        //need to call this to update the children according to the Inhiretance
+        //Title doesn't have Inhiretance
+        updateInhiretance({
+          updatedField: type,
+          type: "plainText",
+          newValue: newValue,
+          updatedOntology: { ...ontologyData, id: openOntology.id },
+          ancestorTitle: ontologyData.title,
+        });
+
         await addLock(openOntology.id, type, "remove");
         await recordLogs({
           action: "Edited a field",
