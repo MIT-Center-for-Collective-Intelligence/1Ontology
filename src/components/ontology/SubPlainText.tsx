@@ -197,6 +197,17 @@ const SubPlainText = ({
               </Button>
             </Tooltip>
           )}
+          {(openOntology.inheritance || {}).plainText &&
+            (openOntology.inheritance || {}).plainText[type]?.ref && (
+              <Typography sx={{ color: "grey" }}>
+                {"("}
+                {"Inherited from "}
+                {'"'}
+                {(openOntology.inheritance || {}).plainText[type]?.title}
+                {'"'}
+                {")"}
+              </Typography>
+            )}
         </Box>
       )}
       {editMode ? (

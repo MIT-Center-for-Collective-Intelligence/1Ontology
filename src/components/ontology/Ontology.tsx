@@ -907,16 +907,19 @@ const Ontology = ({
                         Add Category
                       </Button>
                     )}
-                    {(openOntology.inheritance || {}).subOntoogies[type]
-                      ?.ref && (
-                      <Typography sx={{ color: "grey" }}>
-                        {"("}
-                        {"Inherited from "}
-                        {(openOntology.inheritance || {}).subOntoogies[type]
-                          ?.title || ""}
-                        {")"}
-                      </Typography>
-                    )}
+                    {(openOntology.inheritance || {}).subOntoogies &&
+                      (openOntology.inheritance || {}).subOntoogies[type]
+                        ?.ref && (
+                        <Typography sx={{ color: "grey" }}>
+                          {"("}
+                          {"Inherited from "}
+                          {'"'}
+                          {(openOntology.inheritance || {}).subOntoogies[type]
+                            ?.title || ""}
+                          {'"'}
+                          {")"}
+                        </Typography>
+                      )}
                   </Box>
                   {["Role", "Specializations", "Actor"].includes(type) ? (
                     <DragDropContext
