@@ -105,7 +105,7 @@ const DAGGraph = ({
     const nodeId = ontology?.id || "";
     if (!graph.hasNode(nodeId)) {
       graph.setNode(nodeId, {
-        label: ontology.isCategory ? ontology.title : "ontology.title",
+        label: ontology.title,
         style: `fill: ${
           ontology.isCategory ? "#40cc28" : "white"
         }; stroke: black; stroke-width: 2px; cursor: pointer;`,

@@ -1,3 +1,106 @@
+/* # SubPlainText Component
+
+The `SubPlainText` component is a React component used for displaying and editing plain text fields within an ontology. It supports markdown rendering and integrates with Firebase Firestore for data persistence.
+
+## Features
+
+- Editable text fields with markdown support.
+- Firestore integration for data retrieval and updates.
+- Inheritance handling for ontology fields.
+- Locking mechanism to prevent concurrent edits.
+- Logging of edit actions for audit trails.
+- Deletion of sub-ontologies.
+
+## Props
+
+The component accepts the following props:
+
+- `text`: The text content to be displayed or edited.
+- `type`: The type of the text field (e.g., 'title', 'description').
+- `openOntology`: The current ontology object being viewed or edited.
+- `setOpenOntology`: Function to update the state of the current ontology.
+- `editOntology`: The ID of the ontology being edited, if any.
+- `setEditOntology`: Function to set the ID of the ontology being edited.
+- `lockedOntology`: An object containing information about locked ontologies to prevent concurrent edits.
+- `addLock`: Function to add or remove a lock on an ontology field.
+- `user`: The current user object.
+- `recordLogs`: Function to record logs for edit actions.
+- `deleteSubOntologyEditable`: Function to delete a sub-ontology.
+- `updateInheritance`: Function to update the inheritance of ontology fields.
+
+## Usage
+
+To use the `SubPlainText` component, import it into your React application and provide the necessary props as shown in the example below:
+
+```jsx
+import SubPlainText from './SubPlainText';
+
+// ... within your component's render method or function component body
+<SubPlainText
+  text={yourTextContent}
+  type="description"
+  openOntology={yourCurrentOntology}
+  setOpenOntology={yourSetOpenOntologyFunction}
+  editOntology={yourEditOntologyId}
+  setEditOntology={yourSetEditOntologyFunction}
+  lockedOntology={yourLockedOntologyObject}
+  addLock={yourAddLockFunction}
+  user={yourCurrentUser}
+  recordLogs={yourRecordLogsFunction}
+  deleteSubOntologyEditable={yourDeleteSubOntologyEditableFunction}
+  updateInheritance={yourUpdateInheritanceFunction}
+/>
+```
+
+## Component Structure
+
+The component consists of the following main parts:
+
+- A `TextField` component for editing the text, which appears when the `editMode` state is `true`.
+- A `MarkdownRender` component for displaying the text content with markdown formatting.
+- Buttons for toggling `editMode`, saving changes, and deleting the ontology.
+- Lock icons and tooltips to indicate when a field is locked for editing.
+
+## Editing Flow
+
+1. The user clicks the "Edit" button, which sets `editMode` to `true`.
+2. The `TextField` component becomes editable, allowing the user to make changes.
+3. The user clicks the "Save" button, which triggers the `onSaveTextChange` function.
+4. The function updates the Firestore document with the new text and toggles `editMode` to `false`.
+5. If the text field has inheritance, the `updateInheritance` function is called to propagate changes to child ontologies.
+
+## Locking Mechanism
+
+The component uses a locking mechanism to prevent concurrent edits. When a user starts editing a field, a lock is added to the `lockedOntology` object. Other users will see a lock icon indicating that the field is currently being edited. Once the user saves or cancels the edit, the lock is removed.
+
+## Logging
+
+The `recordLogs` function is called whenever a user saves changes to a field. It records the action, field type, previous value, and new value for audit purposes.
+
+## Deletion
+
+The `handleDeleteOntology` function is called when the user clicks the "Delete" button. It triggers the `deleteSubOntologyEditable` function to remove the sub-ontology from the database.
+
+## Styling
+
+The component uses Material-UI components and styles for a consistent look and feel. Custom styles are applied using the `sx` prop.
+
+## Dependencies
+
+- `@mui/icons-material`
+- `@mui/material`
+- `firebase/firestore`
+- `react`
+- `MarkdownRender` (a custom component for rendering markdown)
+
+## Importing Types
+
+The component imports the `IOntology` and `ILockedOntology` types from `@components/types/IOntology` for TypeScript type checking.
+
+---
+
+This documentation provides an overview of the `SubPlainText` component's functionality and usage within a React application that manages ontologies. For more detailed information on the implementation and integration with Firebase Firestore, refer to the source code and associated services. */
+
 import LockIcon from "@mui/icons-material/Lock";
 import { Box, Button, TextField, Tooltip, Typography } from "@mui/material";
 import {
