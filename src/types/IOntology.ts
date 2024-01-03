@@ -1,4 +1,12 @@
-export type ISubOntology = { title: string; id: string; category?: string; editMode?: boolean; new?: boolean };
+import { Timestamp } from "firebase/firestore";
+
+export type ISubOntology = {
+  title: string;
+  id: string;
+  category?: string;
+  editMode?: boolean;
+  new?: boolean;
+};
 
 export type ISubOntologyCategory = {
   [category: string]: { ontologies: ISubOntology[] };
@@ -14,6 +22,19 @@ export type IOntologyTypes =
   | "incentive"
   | "reward";
 
+export type IOntologyPath = {
+  id: string;
+  title: string;
+};
+export type InheritanceType = {
+  [key: string]: { ref: string; title: string };
+};
+
+export type OntologyInheritance = {
+  inheritance: {
+    [type: string]: InheritanceType;
+  };
+};
 export type IOntology = {
   deleted: boolean;
   id: string;
@@ -21,19 +42,15 @@ export type IOntology = {
   title: string;
   description: string;
   comments: { message: string; sender: string; editMode?: boolean }[];
-  tags: string[];
-  notes: { note: string; sender: string }[];
-  contributors: string[];
-  actors: ISubOntology[];
-  preconditions: ISubOntology[];
-  postconditions: ISubOntology[];
-  evaluations: ISubOntology[];
-  processes: ISubOntology[];
-  specializations: ISubOntology[];
-  editMode: boolean;
+  editMode?: boolean;
   parents?: string[];
   type?: IOntologyTypes;
-};
+  plainText: { [key: string]: string };
+  subOntologies: { [key: string]: any };
+  ontologyType?: string;
+  locked?: boolean;
+  category?: boolean;
+} & OntologyInheritance;
 
 export type IOntologyCommon = {
   title: string;
@@ -75,7 +92,10 @@ export type IProcesse = IOntologyCommon & {
     "Performance prediction models": string;
     notes: string;
   };
-  subOntologies: { Role: ISubOntologyCategory; Specializations: ISubOntologyCategory };
+  subOntologies: {
+    Role: ISubOntologyCategory;
+    Specializations: ISubOntologyCategory;
+  };
 };
 
 export type IEvaluation = IOntologyCommon & {
@@ -155,4 +175,36 @@ export type IOntologyLock = {
   uname: string;
   ontology: string;
   field: string;
+};
+
+export type TreeVisual = {
+  [key: string]: {
+    id: string;
+    isCategory: boolean;
+    path: string[];
+    title: string;
+    specializations: TreeVisual;
+  };
+};
+
+export type ILockecOntology = {
+  [id: string]: {
+    [field: string]: {
+      id: string;
+      uname: string;
+      ontology: string;
+      field: string;
+      deleted: boolean;
+      createdAt: Timestamp;
+    };
+  };
+};
+
+export type MainSpecializations = {
+  [key: string]: {
+    id: string;
+    path: string[];
+    title: string;
+    specializations: MainSpecializations;
+  };
 };

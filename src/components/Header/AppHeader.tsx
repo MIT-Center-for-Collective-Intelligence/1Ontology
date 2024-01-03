@@ -1,3 +1,38 @@
+/* # AppHeader.tsx
+
+## Overview
+This file contains the implementation of the application header component (`AppHeader`) in TypeScript, which serves as the top navigation bar for the project. It includes features such as theming, user authentication, and a profile menu.
+
+## Dependencies
+- `@mui/icons-material`: Material-UI icons for DarkMode, LightMode, and Logout.
+- `@mui/material`: Material-UI components for UI elements.
+- `@mui/system`: Material-UI system for styling.
+- `firebase/auth`: Firebase authentication module.
+- `next/image`: Next.js Image component for optimized image loading.
+- `next/router`: Next.js router for navigation.
+- `react`: React library for building user interfaces.
+
+## Constants
+- `HEADER_HEIGHT`: Constant defining the height of the header.
+- `HEADER_HEIGHT_MOBILE`: Constant defining the height of the header on mobile devices.
+- `orangeDark` and `orange900`: Constants defining color values.
+
+## Types
+- `HeaderPage`: Type representing possible pages for the header.
+- `AppHeaderProps`: Props interface for the `AppHeader` component.
+
+## Components
+### AppHeader Component
+- The `AppHeader` component is a functional component that serves as the application header.
+- It takes various props such as `page`, `sections`, `selectedSectionId`, `onSwitchSection`, `mitpage`, and `tutorPage`.
+- It includes theming functionality, user authentication, and a profile menu.
+- The header is styled using Material-UI components and includes a dynamic logo based on the theme.
+
+### Usage
+```tsx
+import AppHeader from 'path/to/AppHeader';
+*/
+
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -91,7 +126,7 @@ const AppHeader = forwardRef(({ onSwitchSection }: AppHeaderProps, ref) => {
           backdropFilter: "saturate(180%) blur(10px)",
           position: "sticky",
           top: "0",
-          zIndex: "22",
+          // zIndex: "22",
         }}
       >
         <Stack

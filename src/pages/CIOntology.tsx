@@ -1,3 +1,97 @@
+/* 
+## Overview
+
+The `CIOntology` component is a complex React component that serves as the main interface for managing and visualizing ontologies within a collaborative platform. It integrates with Firebase Firestore for data persistence, provides search functionality using Fuse.js, and offers a rich user interface with Material-UI components.
+
+## Features
+
+- **Ontology Management**: Users can create, update, and delete ontology entities.
+- **Real-time Updates**: Leveraging Firebase's `onSnapshot` to listen for real-time updates to ontologies.
+- **Search Functionality**: Implements search using Fuse.js to quickly find ontology entities.
+- **Responsive Design**: Adapts to different screen sizes using `useMediaQuery`.
+- **TreeView and DAG Visualization**: Offers two modes of visualizing ontologies - a simplified tree view and a directed acyclic graph (DAG) view.
+- **Comments Section**: Allows users to add, edit, and delete comments on ontology entities.
+- **Markdown Support**: Includes a Markdown cheatsheet and renders comments as Markdown.
+
+## Dependencies
+
+- `@column-resizer/react`: For resizable layout sections.
+- `@mui/material`: Material-UI components for the user interface.
+- `firebase/firestore`: Firestore database for storing ontologies and related data.
+- `fuse.js`: For fuzzy search capabilities.
+- `moment`: For date manipulation and formatting.
+- `react`: Core React library.
+- `next/router`: For routing in Next.js applications.
+
+## Component Structure
+
+- **Container**: Wraps the entire layout, providing a margin at the top.
+- **Section**: Represents a resizable section of the layout.
+- **Bar**: A draggable bar for resizing adjacent sections.
+- **Tabs**: For switching between different views (Tree View, DAG View, Search, Comments, Markdown Cheatsheet).
+- **TreeViewSimplified**: A component for rendering the tree view of ontologies.
+- **DAGGraph**: A component for rendering the DAG view of ontologies.
+- **Ontology**: A component for displaying and editing a single ontology entity.
+- **MarkdownRender**: Renders Markdown content.
+- **AppHeaderMemoized**: The application header component.
+
+## Usage
+
+The `CIOntology` component is designed to be used within a Next.js application and requires authentication context provided by `withAuthUser`.
+
+## Code Snippets
+
+### Firestore Data Fetching
+
+```tsx
+useEffect(() => {
+  const ontologyQuery = query(
+    collection(db, "ontology"),
+    where("deleted", "==", false)
+  );
+  const unsubscribeOntology = onSnapshot(ontologyQuery, (snapshot) => {
+    // Handle document changes
+  });
+  return () => unsubscribeOntology();
+}, [db]);
+```
+
+### Search Functionality
+
+```tsx
+const fuse = new Fuse(ontologies, { keys: ["title"] });
+
+const searchWithFuse = (query: string): any => {
+  if (!query) {
+    return [];
+  }
+  return fuse
+    .search(query)
+    .map((result) => result.item)
+    .filter((item: any) => !item.deleted);
+};
+```
+
+### Comment Handling
+
+```tsx
+const handleSendComment = async () => {
+  // Logic to add a new comment to an ontology
+};
+
+const deleteComment = async (commentId: string) => {
+  // Logic to delete a comment from an ontology
+};
+
+const editComment = async (comment: any) => {
+  // Logic to edit an existing comment on an ontology
+};
+```
+
+## Contributing
+
+Contributions to the `CIOntology` component are welcome. Please ensure you follow the project's coding standards and submit a pull request with a detailed description of your changes. */
+
 import { Bar, Container, Section } from "@column-resizer/react";
 import SearchIcon from "@mui/icons-material/Search";
 import SendIcon from "@mui/icons-material/Send";
@@ -20,6 +114,7 @@ import {
 } from "@mui/material";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import {
+  Timestamp,
   collection,
   doc,
   getDoc,
@@ -44,11 +139,15 @@ import {
   IEvaluation,
   IGroup,
   IIncentive,
+  ILockecOntology,
   IOntology,
+  IOntologyPath,
   IProcesse,
   IReward,
   IRole,
   ISubOntology,
+  MainSpecializations,
+  TreeVisual,
 } from " @components/types/IOntology";
 import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
 import MarkdownRender from " @components/components/Markdown/MarkdownRender";
@@ -58,11 +157,9 @@ import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import withAuthUser from " @components/components/hoc/withAuthUser";
 import { useAuth } from " @components/components/context/AuthContext";
+import { useRouter } from "next/router";
+import DAGGraph from " @components/components/ontology/DAGGraph";
 
-type IOntologyPath = {
-  id: string;
-  title: string;
-};
 const INITIAL_VALUES: {
   [key: string]:
     | IActivity
@@ -188,24 +285,30 @@ const INITIAL_VALUES: {
 
 const CIOntology = () => {
   const db = getFirestore();
-  const [{ user }] = useAuth();
+  const [{ emailVerified, user }] = useAuth();
+  const router = useRouter();
   const isMobile = useMediaQuery("(max-width:599px)");
-  const [ontologies, setOntologies] = useState<any>([]);
+
+  const [ontologies, setOntologies] = useState<IOntology[]>([]);
   const [openOntology, setOpenOntology] = useState<any>(null);
   const [ontologyPath, setOntologyPath] = useState<IOntologyPath[]>([]);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
-  const [mainSpecializations, setMainSpecializations] = useState<any>({});
-  const [editOntology, setEditOntology] = useState<any>(null);
+  const [treeVisualisation, setTreeVisualisation] = useState<TreeVisual>({});
+  const [editOntology, setEditOntology] = useState<string>("");
   const [newComment, setNewComment] = useState("");
   const [updateComment, setUpdateComment] = useState("");
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [editingComment, setEditingComment] = useState("");
-  const [lockedOntology, setLockedOntology] = useState<any>({});
+  const [lockedOntology, setLockedOntology] = useState<ILockecOntology>({});
   const [value, setValue] = useState<number>(1);
+  const [viewValue, setViewValue] = useState<number>(0);
   const [searchValue, setSearchValue] = useState("");
   const fuse = new Fuse(ontologies, { keys: ["title"] });
   const headerRef = useRef<HTMLHeadElement | null>(null);
-
+  const [expandedOntologies, setExpandedOntologies] = useState<Set<string>>(
+    new Set()
+  );
+  const [dagreZoomState, setDagreZoomState] = useState<any>(null);
   const getPath = (newPath: string[]) => {
     const ontologyPath = [];
     for (let path of newPath) {
@@ -221,47 +324,52 @@ const CIOntology = () => {
   };
   const getSpecializationsTree = ({ mainOntologies, path }: any) => {
     let _mainSpecializations: any = {};
-    for (let ontlogy of mainOntologies) {
-      _mainSpecializations[ontlogy.title] = {
-        id: ontlogy.id,
-        path: [...path, ontlogy.id],
-        isCategory: !!ontlogy.category,
+    for (let ontology of mainOntologies) {
+      _mainSpecializations[ontology.title] = {
+        id: ontology.id,
+        path: [...path, ontology.id],
+        isCategory: !!ontology.category,
+        title: ontology.title,
         specializations: {},
       };
-      for (let category in ontlogy?.subOntologies?.Specializations) {
+      for (let category in ontology?.subOntologies?.Specializations) {
         const specializations =
           ontologies.filter((onto: any) => {
-            const arrayOntologies = ontlogy?.subOntologies?.Specializations[
+            const arrayOntologies = ontology?.subOntologies?.Specializations[
               category
             ]?.ontologies.map((o: any) => o.id);
             return arrayOntologies.includes(onto.id);
           }) || [];
 
         if (category === "main") {
-          _mainSpecializations[ontlogy.title] = {
-            id: ontlogy.id,
-            path: [...path, ontlogy.id],
-            isCategory: !!ontlogy.category,
+          _mainSpecializations[ontology.title] = {
+            id: ontology.id,
+            path: [...path, ontology.id],
+            isCategory: !!ontology.category,
+            title: ontology.title,
             specializations: {
-              ...(_mainSpecializations[ontlogy.title]?.specializations || {}),
+              ...(_mainSpecializations[ontology.title]?.specializations || {}),
               ...getSpecializationsTree({
                 mainOntologies: specializations,
-                path: [...path, ontlogy.id],
+                path: [...path, ontology.id],
               }),
             },
           };
         } else {
-          _mainSpecializations[ontlogy.title] = {
-            id: ontlogy.id,
-            path: [...path, ontlogy.id],
+          _mainSpecializations[ontology.title] = {
+            id: ontology.id,
+            path: [...path, ontology.id],
+            title: ontology.title,
+            c: ontology.category,
             specializations: {
-              ...(_mainSpecializations[ontlogy.title]?.specializations || {}),
+              ...(_mainSpecializations[ontology.title]?.specializations || {}),
               [category]: {
                 isCategory: true,
                 id: newId(db),
+                title: category,
                 specializations: getSpecializationsTree({
                   mainOntologies: specializations,
-                  path: [...path, ontlogy.id],
+                  path: [...path, ontology.id],
                 }),
               },
             },
@@ -287,6 +395,14 @@ const CIOntology = () => {
   };
 
   useEffect(() => {
+    if (user) {
+      if (!emailVerified) {
+        router.replace("/signin");
+      }
+    }
+  }, [user, emailVerified]);
+
+  useEffect(() => {
     const mainOntologies = ontologies.filter(
       (ontology: any) => ontology.category
     );
@@ -305,7 +421,7 @@ const CIOntology = () => {
     });
     // __mainSpecializations = addMissingCategories({ __mainSpecializations });
     /* ------------------  */
-    setMainSpecializations(__mainSpecializations);
+    setTreeVisualisation(__mainSpecializations);
   }, [ontologies]);
 
   const updateTheUrl = (path: IOntologyPath[]) => {
@@ -318,7 +434,7 @@ const CIOntology = () => {
     const handleHashChange = async () => {
       if (window.location.hash) {
         setOntologyPath(getPath(window.location.hash.split("#") || []));
-        await updateUserDoc(window.location.hash.split("#"));
+        updateUserDoc(window.location.hash.split("#"));
       }
     };
     window.addEventListener("hashchange", handleHashChange);
@@ -360,21 +476,21 @@ const CIOntology = () => {
     );
     const unsubscribeOntology = onSnapshot(ontologyQuery, (snapshot) => {
       const docChanges = snapshot.docChanges();
-      setLockedOntology((lockedOntologies: any) => {
-        let _lockedOntologies = { ...lockedOntologies };
+      setLockedOntology((lockedOntology: ILockecOntology) => {
+        let _lockedOntology = { ...lockedOntology };
         for (let change of docChanges) {
           const changeData: any = change.doc.data();
 
           if (
             change.type === "removed" &&
-            _lockedOntologies.hasOwnProperty(changeData.ontology)
+            _lockedOntology.hasOwnProperty(changeData.ontology)
           ) {
-            delete _lockedOntologies[changeData.ontology][changeData.field];
+            delete _lockedOntology[changeData.ontology][changeData.field];
           } else if (change.type === "added") {
-            _lockedOntologies = {
-              ..._lockedOntologies,
+            _lockedOntology = {
+              ..._lockedOntology,
               [changeData.ontology]: {
-                ..._lockedOntologies[changeData.ontology],
+                ..._lockedOntology[changeData.ontology],
                 [changeData.field]: {
                   id: change.doc.id,
                   ...changeData,
@@ -383,7 +499,7 @@ const CIOntology = () => {
             };
           }
         }
-        return _lockedOntologies;
+        return _lockedOntology;
       });
     });
     return () => unsubscribeOntology();
@@ -424,18 +540,18 @@ const CIOntology = () => {
 
   const getParent = (type: string) => {
     if (type === "Evaluation") {
-      return mainSpecializations["WHY: Evaluation"].id;
+      return treeVisualisation["WHY: Evaluation"].id;
     } else if (type === "Actor") {
-      return mainSpecializations["WHO: Actors"].id;
+      return treeVisualisation["WHO: Actors"].id;
     } else if (type === "Process") {
-      return mainSpecializations["HOW: Processes"].id;
+      return treeVisualisation["HOW: Processes"].id;
     }
   };
 
   const handleLinkNavigation = useCallback(
     async (path: { id: string; title: string }, type: string) => {
       try {
-        if (!user) return;
+        if (!user || !openOntology) return;
         if (
           ontologies
             .filter((ontology: any) => ontology.category)
@@ -578,21 +694,21 @@ const CIOntology = () => {
     }
   };
 
-  const openMainCategory = useCallback(
-    async (category: string, path: string[]) => {
+  const onOpenOntologyTree = useCallback(
+    async (ontologyId: string, path: string[]) => {
       if (!user) return;
       const ontologyIdx = ontologies.findIndex(
-        (onto: any) => onto.title === category
+        (onto: any) => onto.id === ontologyId
       );
-      let _path = [...path];
-      if (ontologyIdx !== -1) {
+
+      if (ontologyIdx !== -1 && !ontologies[ontologyIdx].category) {
         setOpenOntology(ontologies[ontologyIdx]);
         await recordLogs({
           action: "Clicked tree-view",
           itemClicked: ontologies[ontologyIdx].id,
         });
+        await updateUserDoc(path);
       }
-      await updateUserDoc([..._path]);
     },
     [ontologies, user]
   );
@@ -605,19 +721,19 @@ const CIOntology = () => {
     });
   };
 
-  const getClasses = (mainSpecializations: any) => {
-    let _mainSpecializations: any = {};
-    for (let category in mainSpecializations) {
-      _mainSpecializations = {
-        ..._mainSpecializations,
-        ...mainSpecializations[category].specializations,
+  const getMainSpecialisations = (treeVisualisation: TreeVisual) => {
+    let mainSpecializations: MainSpecializations = {};
+    for (let category in treeVisualisation) {
+      mainSpecializations = {
+        ...mainSpecializations,
+        ...treeVisualisation[category].specializations,
       };
     }
-    _mainSpecializations = {
-      ..._mainSpecializations,
-      ...(_mainSpecializations["Actor"]?.specializations || {}),
+    mainSpecializations = {
+      ...mainSpecializations,
+      ...(mainSpecializations["Actor"]?.specializations || {}),
     };
-    return _mainSpecializations;
+    return mainSpecializations;
   };
 
   const searchWithFuse = (query: string): any => {
@@ -636,7 +752,7 @@ const CIOntology = () => {
 
   const handleSendComment = async () => {
     try {
-      if (!user) return;
+      if (!user || !openOntology) return;
       const ontologyDoc = await getDoc(
         doc(collection(db, "ontology"), openOntology.id)
       );
@@ -676,6 +792,7 @@ const CIOntology = () => {
 
   const deleteComment = async (commentId: string) => {
     try {
+      if (!openOntology) return;
       if (editingComment === commentId) {
         setEditingComment("");
         setUpdateComment("");
@@ -708,7 +825,7 @@ const CIOntology = () => {
   };
   const editComment = async (comment: any) => {
     try {
-      if (comment.id === editingComment) {
+      if (comment.id === editingComment && openOntology) {
         const ontologyDoc = await getDoc(
           doc(collection(db, "ontology"), openOntology.id)
         );
@@ -737,6 +854,11 @@ const CIOntology = () => {
   const handleChange = (event: any, newValue: number) => {
     setValue(newValue);
   };
+
+  const handleViewChange = (event: any, newValue: number) => {
+    setViewValue(newValue);
+  };
+
   const findOntologyPath = useCallback(
     ({ mainOntologies, path, eachOntologyPath }: any) => {
       for (let ontlogy of mainOntologies) {
@@ -784,49 +906,130 @@ const CIOntology = () => {
     }
   };
 
-  return (
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
-      <AppHeaderMemoized
-        ref={headerRef}
-        page="ONE_CADEMY"
-        mitpage={true}
-        sections={[]}
-        selectedSectionId={""}
-        onSwitchSection={() => {}}
-      />
-      <Box
-        sx={{
-          width: "100vw",
-          height: "100vh",
-          position: "fixed",
-          filter: "brightness(1.95)",
-          zIndex: -2,
-          backgroundColor: (theme) =>
-            theme.palette.mode === "dark"
-              ? theme.palette.common.notebookMainBlack
-              : theme.palette.common.gray50,
-          overflow: "hidden",
-        }}
-      />
+  /**
+   * Recursively updates the inheritance-related fields in a hierarchy of ontologies.
+   *
+   * @param updatedOntology - The root ontology that needs to be updated.
+   * @param updatedField - The field that is being updated (e.g., "title", "description").
+   * @param type - The type of ontology being updated ("subOntologies" or "plainText").
+   * @param newValue - The new value for the specified field.
+   * @param ancestorTitle - The new title for the ancestor ontology.
+   */
+  const updateInheritance = ({
+    updatedOntology,
+    updatedField,
+    type,
+    newValue,
+    ancestorTitle,
+  }: {
+    updatedOntology: IOntology;
+    updatedField: string;
+    type: "subOntologies" | "plainText";
+    newValue: any;
+    ancestorTitle: string;
+  }) => {
+    // Get the ID of the current ontology and initialize an array to store child ontology IDs.
+    const parentId = updatedOntology.id;
+    const children: { ontologies: { id: string; title: string }[] }[] =
+      Object.values(updatedOntology.subOntologies.Specializations);
+    let childOntologies: string[] = [];
 
-      <Container style={{ height: "100%" }}>
+    // Get all the children (specializations) in an array of strings.
+    for (let child of children) {
+      childOntologies = [
+        ...childOntologies,
+        ...child.ontologies.map((c) => c.id),
+      ];
+    }
+
+    // Loop through all the children and update the corresponding field.
+    for (let ontoId of childOntologies) {
+      const ontologyIdx = ontologies.findIndex(
+        (o: IOntology) => o.id == ontoId
+      );
+
+      // Check if the child ontology exists in the ontologies array.
+      if (ontologyIdx !== -1) {
+        const currentOntology: IOntology = ontologies[ontologyIdx];
+        const ontoRef = doc(collection(db, "ontology"), ontoId);
+
+        // Check if the current ontology has inheritance information.
+        if (currentOntology.inheritance) {
+          if (updatedField === "title") {
+            // Update the ancestor title in the inheritance information.
+            for (let inheritanceType in currentOntology.inheritance) {
+              const inheritanceFields =
+                currentOntology.inheritance[inheritanceType];
+              for (let field in inheritanceFields) {
+                const inheritance: { ref: string; title: string } =
+                  inheritanceFields[field];
+                if (inheritance.ref && inheritance.ref == parentId) {
+                  inheritance.title = ancestorTitle;
+                }
+              }
+            }
+          } else {
+            // Update the specified field in the inheritance information.
+            const inheritance = currentOntology.inheritance[type][updatedField];
+            if (inheritance.ref && inheritance.ref == parentId) {
+              inheritance.title = ancestorTitle;
+
+              // If the modified field was "description," update the corresponding field in the ontology.
+              if (updatedField == "description") {
+                currentOntology[updatedField] = newValue;
+              } else {
+                currentOntology[type][updatedField] = newValue;
+              }
+            }
+          }
+
+          // Update the ontology document in the Firestore database.
+          updateDoc(ontoRef, currentOntology);
+
+          // Recursive call to update the children of the current ontology.
+          // It is safe to call this even if the current ontology doesn't have children.
+          updateInheritance({
+            updatedOntology: currentOntology,
+            updatedField,
+            type,
+            newValue,
+            ancestorTitle,
+          });
+        }
+      }
+    }
+  };
+
+  return (
+    <>
+      <Container style={{ marginTop: "80px" }}>
         {!isMobile && (
           <Section minSize={0} defaultSize={350}>
-            <Box
-              sx={{
-                height: "100vh",
-                overflow: "auto",
-                overflowY: "auto",
-                overflowX: "auto",
-                width: "1600px",
-              }}
+            <Tabs
+              value={viewValue}
+              onChange={handleViewChange}
+              sx={{ width: "100%", ml: "15px" }}
             >
-              <Box sx={{ pb: "190px" }}>
+              <Tab label="Tree View" {...a11yProps(0)} sx={{ width: "50%" }} />
+              <Tab label="DAG View" {...a11yProps(1)} sx={{ width: "50%" }} />
+            </Tabs>
+            <Box sx={{ overflow: "auto", height: "94vh" }}>
+              <TabPanel value={viewValue} index={0} sx={{ mt: "5px" }}>
                 <TreeViewSimplified
-                  mainSpecializations={mainSpecializations}
-                  openMainCategory={openMainCategory}
+                  treeVisualisation={treeVisualisation}
+                  onOpenOntologyTree={onOpenOntologyTree}
                 />
-              </Box>
+              </TabPanel>
+              <TabPanel value={viewValue} index={1}>
+                <DAGGraph
+                  treeVisualisation={treeVisualisation}
+                  setExpandedOntologies={setExpandedOntologies}
+                  expandedOntologies={expandedOntologies}
+                  setDagreZoomState={setDagreZoomState}
+                  dagreZoomState={dagreZoomState}
+                  onOpenOntologyTree={onOpenOntologyTree}
+                />
+              </TabPanel>
             </Box>
           </Section>
         )}
@@ -885,7 +1088,7 @@ const CIOntology = () => {
                 setSnackbarMessage={setSnackbarMessage}
                 updateUserDoc={updateUserDoc}
                 user={user}
-                mainSpecializations={getClasses(mainSpecializations)}
+                mainSpecializations={getMainSpecialisations(treeVisualisation)}
                 ontologies={ontologies}
                 addNewOntology={addNewOntology}
                 INITIAL_VALUES={INITIAL_VALUES}
@@ -893,6 +1096,7 @@ const CIOntology = () => {
                 setEditOntology={setEditOntology}
                 lockedOntology={lockedOntology}
                 recordLogs={recordLogs}
+                updateInheritance={updateInheritance}
               />
             )}
           </Box>
@@ -1122,13 +1326,23 @@ const CIOntology = () => {
             </Box>
           </Section>
         )}
+        {ConfirmDialog}
+        <SneakMessage
+          newMessage={snackbarMessage}
+          setNewMessage={setSnackbarMessage}
+        />
+        <Box sx={{ position: "absolute", top: 0, width: "100%" }}>
+          <AppHeaderMemoized
+            ref={headerRef}
+            page="ONE_CADEMY"
+            mitpage={true}
+            sections={[]}
+            selectedSectionId={""}
+            onSwitchSection={() => {}}
+          />
+        </Box>
       </Container>
-      {ConfirmDialog}
-      <SneakMessage
-        newMessage={snackbarMessage}
-        setNewMessage={setSnackbarMessage}
-      />
-    </Box>
+    </>
   );
 };
 export default withAuthUser({
