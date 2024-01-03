@@ -38,26 +38,63 @@ import SubOntology from "./SubOntology";
 import SubPlainText from "./SubPlainText";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
-import { IOntology } from " @components/types/IOntology";
+import {
+  IActivity,
+  IActor,
+  IEvaluation,
+  IGroup,
+  IIncentive,
+  ILockecOntology,
+  IOntology,
+  IOntologyPath,
+  IProcesse,
+  IReward,
+  IRole,
+  ISubOntology,
+  MainSpecializations,
+} from " @components/types/IOntology";
 
 type IOntologyProps = {
-  openOntology: any;
-  setOpenOntology: (ontology: any) => void;
-  handleLinkNavigation: any;
-  setOntologyPath: any;
-  ontologyPath: any;
-  saveSubOntology: any;
+  openOntology: IOntology;
+  setOpenOntology: (ontology: IOntology) => void;
+  handleLinkNavigation: (
+    path: { id: string; title: string },
+    type: string
+  ) => void;
+  setOntologyPath: (state: IOntologyPath[]) => void;
+  ontologyPath: IOntologyPath[];
+  saveSubOntology: (
+    subOntology: ISubOntology,
+    type: string,
+    id: string
+  ) => void;
   setSnackbarMessage: (message: string) => void;
   updateUserDoc: (ids: string[]) => void;
   user: any;
-  mainSpecializations: any;
-  ontologies: any;
-  addNewOntology: any;
-  INITIAL_VALUES: any;
-  editOntology: any;
-  setEditOntology: any;
-  lockedOntology: any;
-  recordLogs: any;
+  mainSpecializations: MainSpecializations;
+  ontologies: IOntology[];
+  addNewOntology: ({
+    id,
+    newOntology,
+  }: {
+    id: string;
+    newOntology: any;
+  }) => void;
+  INITIAL_VALUES: {
+    [key: string]:
+      | IActivity
+      | IActor
+      | IProcesse
+      | IEvaluation
+      | IRole
+      | IIncentive
+      | IReward
+      | IGroup;
+  };
+  editOntology: string;
+  setEditOntology: (state: string) => void;
+  lockedOntology: ILockecOntology;
+  recordLogs: (logs: any) => void;
   updateInhiretance: (parameters: {
     updatedOntology: IOntology;
     updatedField: string;
@@ -67,7 +104,7 @@ type IOntologyProps = {
   }) => void;
 };
 
-const ORDER_SUBONTOLOGIES: any = {
+const ORDER_SUBONTOLOGIES: { [key: string]: string[] } = {
   Activity: [
     "Actor",
     "Preconditions",
@@ -247,9 +284,10 @@ const Ontology = ({
         (p) =>
           (inheritance[p] = {
             ref: openOntology.id,
-            title: openOntology.inheritance
-              ? openOntology.inheritance[p]?.title || ancestorTitle
-              : ancestorTitle,
+            title: (openOntology.inheritance &&
+            openOntology.inheritance[p]?.title
+              ? openOntology.inheritance[p]?.title
+              : ancestorTitle) as string,
           })
       );
     return inheritance;
@@ -311,7 +349,7 @@ const Ontology = ({
         ...ontologyPath.map((path: any) => path.id),
         newOntologyRef.id,
       ]);
-      await addNewOntology({ id: newOntologyRef.id, newOntology });
+      addNewOntology({ id: newOntologyRef.id, newOntology });
       await updateDoc(ontologyParentRef, ontologyParent);
     } catch (error) {
       console.error(error);
@@ -439,7 +477,7 @@ const Ontology = ({
         const indexFound = newSubOntologies.findIndex(
           (onto) => onto.id === checkd
         );
-        if (indexFound === -1) {
+        if (indexFound === -1 && findOntology) {
           newSubOntologies.push({
             id: checkd,
             title: findOntology.title,
@@ -832,6 +870,7 @@ const Ontology = ({
           type={"description"}
           setSnackbarMessage={setSnackbarMessage}
           setOpenOntology={setOpenOntology}
+          setEditOntology={setEditOntology}
         />
       </Box>
 
@@ -841,209 +880,62 @@ const Ontology = ({
             paddingLeft: "10px",
           }}
         >
-          {(ORDER_SUBONTOLOGIES[openOntology?.ontologyType] || []).map(
-            (type: string) =>
-              Object.keys(openOntology.subOntologies).includes(type) ? (
-                <Box key={type} sx={{ display: "grid", mt: "5px" }}>
-                  <Box>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <Typography sx={{ fontSize: "19px" }}>
-                        {capitalizeFirstLetter(type)}:
-                      </Typography>
-                      <Tooltip title={""}>
-                        <Button
-                          onClick={() => showList(type, "main")}
-                          sx={{ ml: "5px" }}
-                        >
-                          {" "}
-                          {type !== "Specializations" ? "Select" : "Add"} {type}{" "}
-                        </Button>
-                      </Tooltip>
-                      {["Specializations", "Role", "Actor"].includes(type) && (
-                        <Button
-                          onClick={() => {
-                            setOpenAddCategory(true);
-                            setType(type);
-                          }}
-                          sx={{ ml: "5px" }}
-                        >
-                          Add Category
-                        </Button>
-                      )}
-                    </Box>
-                    {["Role", "Specializations", "Actor"].includes(type) ? (
-                      <DragDropContext
-                        onDragEnd={(e: any) => handleSorting(e, type)}
+          {(
+            ORDER_SUBONTOLOGIES[openOntology?.ontologyType as string] || []
+          ).map((type: string) =>
+            Object.keys(openOntology.subOntologies).includes(type) ? (
+              <Box key={type} sx={{ display: "grid", mt: "5px" }}>
+                <Box>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Typography sx={{ fontSize: "19px" }}>
+                      {capitalizeFirstLetter(type)}:
+                    </Typography>
+                    <Tooltip title={""}>
+                      <Button
+                        onClick={() => showList(type, "main")}
+                        sx={{ ml: "5px" }}
                       >
-                        <ul>
-                          {Object.keys(openOntology?.subOntologies[type])
-                            .sort((a, b) => {
-                              if (a === "main") return -1;
-                              if (b === "main") return 1;
-                              return a.localeCompare(b); // Alphabetical order for other keys
-                            })
-                            .map((category: any) => {
-                              const subOntologies =
-                                openOntology?.subOntologies[type][category]
-                                  ?.ontologies || [];
-                              const showGap =
-                                Object.keys(
-                                  openOntology?.subOntologies[type]
-                                ).filter(
-                                  (c) =>
-                                    (
-                                      openOntology?.subOntologies[type][c]
-                                        ?.ontologies || []
-                                    ).length > 0 && c !== "main"
-                                ).length > 0;
-                              return (
-                                <Box
-                                  key={category}
-                                  id={category} /* sx={{ ml: "15px" }} */
-                                >
-                                  {category !== "main" && (
-                                    <li key={category}>
-                                      <Box
-                                        sx={{
-                                          display: "flex",
-                                          alignItems: "center",
-                                        }}
-                                      >
-                                        <Typography sx={{ fontWeight: "bold" }}>
-                                          {category}
-                                        </Typography>{" "}
-                                        :{" "}
-                                        <Button
-                                          onClick={() =>
-                                            showList(type, category)
-                                          }
-                                          sx={{ ml: "5px" }}
-                                        >
-                                          {" "}
-                                          {type !== "Specializations"
-                                            ? "Select"
-                                            : "Add"}{" "}
-                                          {type}{" "}
-                                        </Button>
-                                        <Button
-                                          onClick={() =>
-                                            handleEditCategory(type, category)
-                                          }
-                                          sx={{ ml: "5px" }}
-                                        >
-                                          {" "}
-                                          Edit
-                                        </Button>
-                                        <Button
-                                          onClick={() =>
-                                            deleteCategory(type, category)
-                                          }
-                                          sx={{ ml: "5px" }}
-                                        >
-                                          {" "}
-                                          Delete
-                                        </Button>
-                                      </Box>
-                                    </li>
-                                  )}
-
-                                  {(subOntologies.length > 0 || showGap) && (
-                                    <List>
-                                      <Droppable
-                                        droppableId={category}
-                                        type="CATEGORY"
-                                      >
-                                        {(provided: any, snapshot: any) => (
-                                          <Box
-                                            {...provided.droppableProps}
-                                            ref={provided.innerRef}
-                                            style={{
-                                              backgroundColor:
-                                                snapshot.isDraggingOver
-                                                  ? DESIGN_SYSTEM_COLORS.gray250
-                                                  : "",
-                                              // minHeight: /* subOntologies.length > 0 ?  */ "25px" /*  : "" */,
-                                              userSelect: "none",
-                                            }}
-                                          >
-                                            {subOntologies.map(
-                                              (
-                                                subOntology: any,
-                                                index: any
-                                              ) => {
-                                                return (
-                                                  <Draggable
-                                                    key={subOntology.id}
-                                                    draggableId={subOntology.id}
-                                                    index={index}
-                                                  >
-                                                    {(provided: any) => (
-                                                      <ListItem
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
-                                                        sx={{ m: 0, p: 0 }}
-                                                      >
-                                                        <ListItemIcon>
-                                                          <DragIndicatorIcon />
-                                                        </ListItemIcon>
-                                                        <SubOntology
-                                                          recordLogs={
-                                                            recordLogs
-                                                          }
-                                                          setSnackbarMessage={
-                                                            setSnackbarMessage
-                                                          }
-                                                          saveSubOntology={
-                                                            saveSubOntology
-                                                          }
-                                                          openOntology={
-                                                            openOntology
-                                                          }
-                                                          setOpenOntology={
-                                                            setOpenOntology
-                                                          }
-                                                          sx={{ mt: "15px" }}
-                                                          key={openOntology.id}
-                                                          subOntology={
-                                                            subOntology
-                                                          }
-                                                          type={type}
-                                                          category={category}
-                                                          ontologyPath={
-                                                            ontologyPath
-                                                          }
-                                                          updateUserDoc={
-                                                            updateUserDoc
-                                                          }
-                                                          updateInhiretance={
-                                                            updateInhiretance
-                                                          }
-                                                        />
-                                                      </ListItem>
-                                                    )}
-                                                  </Draggable>
-                                                );
-                                              }
-                                            )}
-                                            {provided.placeholder}
-                                          </Box>
-                                        )}
-                                      </Droppable>
-                                    </List>
-                                  )}
-                                </Box>
-                              );
-                            })}
-                        </ul>
-                      </DragDropContext>
-                    ) : (
+                        {" "}
+                        {type !== "Specializations" ? "Select" : "Add"} {type}{" "}
+                      </Button>
+                    </Tooltip>
+                    {["Specializations", "Role", "Actor"].includes(type) && (
+                      <Button
+                        onClick={() => {
+                          setOpenAddCategory(true);
+                          setType(type);
+                        }}
+                        sx={{ ml: "5px" }}
+                      >
+                        Add Category
+                      </Button>
+                    )}
+                  </Box>
+                  {["Role", "Specializations", "Actor"].includes(type) ? (
+                    <DragDropContext
+                      onDragEnd={(e: any) => handleSorting(e, type)}
+                    >
                       <ul>
-                        {Object.keys(openOntology?.subOntologies[type]).map(
-                          (category: any) => {
+                        {Object.keys(openOntology?.subOntologies[type])
+                          .sort((a, b) => {
+                            if (a === "main") return -1;
+                            if (b === "main") return 1;
+                            return a.localeCompare(b); // Alphabetical order for other keys
+                          })
+                          .map((category: any) => {
                             const subOntologies =
                               openOntology?.subOntologies[type][category]
                                 ?.ontologies || [];
+                            const showGap =
+                              Object.keys(
+                                openOntology?.subOntologies[type]
+                              ).filter(
+                                (c) =>
+                                  (
+                                    openOntology?.subOntologies[type][c]
+                                      ?.ontologies || []
+                                  ).length > 0 && c !== "main"
+                              ).length > 0;
                             return (
                               <Box
                                 key={category}
@@ -1093,55 +985,195 @@ const Ontology = ({
                                   </li>
                                 )}
 
-                                <ul>
-                                  {subOntologies.map((subOntology: any) => {
-                                    return (
-                                      <li key={subOntology.id}>
-                                        <SubOntology
-                                          recordLogs={recordLogs}
-                                          setSnackbarMessage={
-                                            setSnackbarMessage
-                                          }
-                                          saveSubOntology={saveSubOntology}
-                                          openOntology={openOntology}
-                                          setOpenOntology={setOpenOntology}
-                                          sx={{ mt: "15px" }}
-                                          key={openOntology.id}
-                                          subOntology={subOntology}
-                                          type={type}
-                                          category={category}
-                                          ontologyPath={ontologyPath}
-                                          updateUserDoc={updateUserDoc}
-                                          updateInhiretance={updateInhiretance}
-                                        />
-                                      </li>
-                                    );
-                                  })}
-                                </ul>
+                                {(subOntologies.length > 0 || showGap) && (
+                                  <List>
+                                    <Droppable
+                                      droppableId={category}
+                                      type="CATEGORY"
+                                    >
+                                      {(provided: any, snapshot: any) => (
+                                        <Box
+                                          {...provided.droppableProps}
+                                          ref={provided.innerRef}
+                                          style={{
+                                            backgroundColor:
+                                              snapshot.isDraggingOver
+                                                ? DESIGN_SYSTEM_COLORS.gray250
+                                                : "",
+                                            // minHeight: /* subOntologies.length > 0 ?  */ "25px" /*  : "" */,
+                                            userSelect: "none",
+                                          }}
+                                        >
+                                          {subOntologies.map(
+                                            (subOntology: any, index: any) => {
+                                              return (
+                                                <Draggable
+                                                  key={subOntology.id}
+                                                  draggableId={subOntology.id}
+                                                  index={index}
+                                                >
+                                                  {(provided: any) => (
+                                                    <ListItem
+                                                      ref={provided.innerRef}
+                                                      {...provided.draggableProps}
+                                                      {...provided.dragHandleProps}
+                                                      sx={{ m: 0, p: 0 }}
+                                                    >
+                                                      <ListItemIcon>
+                                                        <DragIndicatorIcon />
+                                                      </ListItemIcon>
+                                                      <SubOntology
+                                                        recordLogs={recordLogs}
+                                                        setSnackbarMessage={
+                                                          setSnackbarMessage
+                                                        }
+                                                        saveSubOntology={
+                                                          saveSubOntology
+                                                        }
+                                                        openOntology={
+                                                          openOntology
+                                                        }
+                                                        setOpenOntology={
+                                                          setOpenOntology
+                                                        }
+                                                        sx={{ mt: "15px" }}
+                                                        key={openOntology.id}
+                                                        subOntology={
+                                                          subOntology
+                                                        }
+                                                        type={type}
+                                                        category={category}
+                                                        ontologyPath={
+                                                          ontologyPath
+                                                        }
+                                                        updateUserDoc={
+                                                          updateUserDoc
+                                                        }
+                                                        updateInhiretance={
+                                                          updateInhiretance
+                                                        }
+                                                      />
+                                                    </ListItem>
+                                                  )}
+                                                </Draggable>
+                                              );
+                                            }
+                                          )}
+                                          {provided.placeholder}
+                                        </Box>
+                                      )}
+                                    </Droppable>
+                                  </List>
+                                )}
                               </Box>
                             );
-                          }
-                        )}
+                          })}
                       </ul>
-                    )}
-                  </Box>
+                    </DragDropContext>
+                  ) : (
+                    <ul>
+                      {Object.keys(openOntology?.subOntologies[type]).map(
+                        (category: any) => {
+                          const subOntologies =
+                            openOntology?.subOntologies[type][category]
+                              ?.ontologies || [];
+                          return (
+                            <Box
+                              key={category}
+                              id={category} /* sx={{ ml: "15px" }} */
+                            >
+                              {category !== "main" && (
+                                <li key={category}>
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <Typography sx={{ fontWeight: "bold" }}>
+                                      {category}
+                                    </Typography>{" "}
+                                    :{" "}
+                                    <Button
+                                      onClick={() => showList(type, category)}
+                                      sx={{ ml: "5px" }}
+                                    >
+                                      {" "}
+                                      {type !== "Specializations"
+                                        ? "Select"
+                                        : "Add"}{" "}
+                                      {type}{" "}
+                                    </Button>
+                                    <Button
+                                      onClick={() =>
+                                        handleEditCategory(type, category)
+                                      }
+                                      sx={{ ml: "5px" }}
+                                    >
+                                      {" "}
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      onClick={() =>
+                                        deleteCategory(type, category)
+                                      }
+                                      sx={{ ml: "5px" }}
+                                    >
+                                      {" "}
+                                      Delete
+                                    </Button>
+                                  </Box>
+                                </li>
+                              )}
+
+                              <ul>
+                                {subOntologies.map((subOntology: any) => {
+                                  return (
+                                    <li key={subOntology.id}>
+                                      <SubOntology
+                                        recordLogs={recordLogs}
+                                        setSnackbarMessage={setSnackbarMessage}
+                                        saveSubOntology={saveSubOntology}
+                                        openOntology={openOntology}
+                                        setOpenOntology={setOpenOntology}
+                                        sx={{ mt: "15px" }}
+                                        key={openOntology.id}
+                                        subOntology={subOntology}
+                                        type={type}
+                                        category={category}
+                                        ontologyPath={ontologyPath}
+                                        updateUserDoc={updateUserDoc}
+                                        updateInhiretance={updateInhiretance}
+                                      />
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </Box>
+                          );
+                        }
+                      )}
+                    </ul>
+                  )}
                 </Box>
-              ) : (
-                <Box key={type}>
-                  <SubPlainText
-                    updateInhiretance={updateInhiretance}
-                    recordLogs={recordLogs}
-                    user={user}
-                    lockedOntology={lockedOntology[openOntology.id] || {}}
-                    addLock={addLock}
-                    text={openOntology.plainText[type]}
-                    openOntology={openOntology}
-                    type={type}
-                    setSnackbarMessage={setSnackbarMessage}
-                    setOpenOntology={setOpenOntology}
-                  />
-                </Box>
-              )
+              </Box>
+            ) : (
+              <Box key={type}>
+                <SubPlainText
+                  updateInhiretance={updateInhiretance}
+                  recordLogs={recordLogs}
+                  user={user}
+                  lockedOntology={lockedOntology[openOntology.id] || {}}
+                  addLock={addLock}
+                  text={openOntology.plainText[type]}
+                  openOntology={openOntology}
+                  type={type}
+                  setSnackbarMessage={setSnackbarMessage}
+                  setOpenOntology={setOpenOntology}
+                  setEditOntology={setEditOntology}
+                />
+              </Box>
+            )
           )}
         </Box>
       </Box>

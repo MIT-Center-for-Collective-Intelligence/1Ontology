@@ -1,5 +1,9 @@
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
-import { IOntology, ISubOntology } from " @components/types/IOntology";
+import {
+  IOntology,
+  IOntologyPath,
+  ISubOntology,
+} from " @components/types/IOntology";
 import { Box, Button, Link, Tooltip } from "@mui/material";
 import {
   collection,
@@ -12,15 +16,15 @@ import {
 type ISubOntologyProps = {
   subOntology: ISubOntology;
   openOntology: IOntology;
-  sx: any;
+  sx: { [key: string]: any };
   type: string;
   setOpenOntology: (openOntology: any) => void;
   saveSubOntology: any;
   setSnackbarMessage: (message: any) => void;
   category: string;
-  ontologyPath: any;
-  updateUserDoc: any;
-  recordLogs: any;
+  ontologyPath: IOntologyPath[];
+  updateUserDoc: (ontologyPath: string[]) => void;
+  recordLogs: (logs: any) => void;
   updateInhiretance: (parameters: {
     updatedOntology: IOntology;
     updatedField: string;
@@ -45,8 +49,8 @@ const SubOntology = ({
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
 
   const linkNavigation = async () => {
-    await updateUserDoc([
-      ...ontologyPath.map((p: { id: string; title: string }) => p.id),
+    updateUserDoc([
+      ...ontologyPath.map((p: { id: string }) => p.id),
       subOntology.id,
     ]);
     // handleLinkNavigation({ id: subOntology.id, title: subOntology.title });

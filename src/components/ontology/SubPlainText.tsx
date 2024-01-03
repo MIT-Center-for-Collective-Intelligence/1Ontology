@@ -1,6 +1,7 @@
 import LockIcon from "@mui/icons-material/Lock";
 import { Box, Button, TextField, Tooltip, Typography } from "@mui/material";
 import {
+  Timestamp,
   collection,
   doc,
   getDoc,
@@ -10,21 +11,30 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import MarkdownRender from "../Markdown/MarkdownRender";
-import { IOntology } from " @components/types/IOntology";
+import { ILockecOntology, IOntology } from " @components/types/IOntology";
 
 type ISubOntologyProps = {
-  openOntology: any;
-  setOpenOntology: any;
+  openOntology: IOntology;
+  setOpenOntology: (state: any) => void;
   type: string;
   setSnackbarMessage: (message: any) => void;
   text: string;
-  editOntology?: any;
-  setEditOntology?: any;
-  lockedOntology?: any;
-  addLock: any;
+  editOntology?: string | null;
+  setEditOntology: (state: string) => void;
+  lockedOntology: {
+    [field: string]: {
+      id: string;
+      uname: string;
+      ontology: string;
+      field: string;
+      deleted: boolean;
+      createdAt: Timestamp;
+    };
+  };
+  addLock: (ontology: string, field: string, type: string) => void;
   user: any;
-  recordLogs: any;
-  deleteSubOntologyEditable?: any;
+  recordLogs: (logs: any) => void;
+  deleteSubOntologyEditable?: () => void;
   updateInhiretance: (parameters: {
     updatedOntology: IOntology;
     updatedField: string;
@@ -90,7 +100,7 @@ const SubPlainText = ({
         const ontologyData: any = ontologyDoc.data();
 
         if (type === "title") {
-          setEditOntology(null);
+          setEditOntology("");
           for (let parentId of openOntology?.parents || []) {
             const parentRef = doc(collection(db, "ontology"), parentId);
             const parentDoc = await getDoc(parentRef);
@@ -108,8 +118,8 @@ const SubPlainText = ({
 
         if (["description", "title"].includes(type)) {
           previousValue = ontologyData[type];
-          newValue = openOntology[type];
-          ontologyData[type] = openOntology[type];
+          newValue = openOntology[(type as "description", "title")];
+          ontologyData[type] = openOntology[(type as "description", "title")];
         } else {
           previousValue = ontologyData.plainText[type];
           newValue = openOntology.plainText[type];
@@ -148,10 +158,10 @@ const SubPlainText = ({
   };
 
   const handleEditText = (e: any) => {
-    setOpenOntology((openOntology: any) => {
-      const _openOntology = { ...openOntology };
+    setOpenOntology((openOntology: IOntology) => {
+      const _openOntology: IOntology = { ...openOntology };
       if (["description", "title"].includes(type)) {
-        _openOntology[type] = e.target.value;
+        _openOntology[type as "description" | "title"] = e.target.value;
       } else {
         _openOntology.plainText[type] = e.target.value;
       }

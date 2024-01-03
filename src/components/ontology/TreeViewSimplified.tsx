@@ -5,7 +5,13 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import React, { useEffect, useState } from "react";
 
-const TreeViewSimplified = ({ mainSpecializations, openMainCategory }: any) => {
+type ITreeViewSimplifiedProps = {
+  onOpenOntologyTree: (category: string, path: string[]) => void;
+};
+const TreeViewSimplified = ({
+  mainSpecializations,
+  onOpenOntologyTree,
+}: any) => {
   const [expandedNodes, setExpandedNodes] = useState<any>([]);
 
   useEffect(() => {
@@ -16,11 +22,13 @@ const TreeViewSimplified = ({ mainSpecializations, openMainCategory }: any) => {
   const calculateExpandedNodes = (specializations: any) => {
     const updatedExpandedNodes: any = [];
 
-    Object.keys(specializations).forEach(category => {
+    Object.keys(specializations).forEach((category) => {
       updatedExpandedNodes.push(specializations[category]?.id || category);
 
       if (Object.keys(specializations[category].specializations).length > 0) {
-        const childExpandedNodes = calculateExpandedNodes(specializations[category].specializations);
+        const childExpandedNodes = calculateExpandedNodes(
+          specializations[category].specializations
+        );
         updatedExpandedNodes.push(...childExpandedNodes);
       }
     });
@@ -38,23 +46,38 @@ const TreeViewSimplified = ({ mainSpecializations, openMainCategory }: any) => {
       multiSelect
       sx={{ flexGrow: 1 }}
     >
-      {Object.keys(mainSpecializations).map(category => (
+      {Object.keys(mainSpecializations).map((category) => (
         <TreeItem
           key={mainSpecializations[category]?.id || category}
           nodeId={mainSpecializations[category]?.id || category}
           label={
-            <Box sx={{ display: "flex", alignItems: "center", height: "30px", p: "17px", pl: "0px", mt: "5px" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                height: "30px",
+                p: "17px",
+                pl: "0px",
+                mt: "5px",
+              }}
+            >
               <Typography
                 sx={{
-                  fontWeight: mainSpecializations[category].isCategory ? "bold" : "",
+                  fontWeight: mainSpecializations[category].isCategory
+                    ? "bold"
+                    : "",
                 }}
                 onClick={() => {
                   if (!mainSpecializations[category].isCategory)
-                    openMainCategory(category, mainSpecializations[category]?.path || []);
+                    onOpenOntologyTree(
+                      category,
+                      mainSpecializations[category]?.path || []
+                    );
                 }}
               >
                 {!mainSpecializations[category].isCategory
-                  ? category.split(" ").splice(0, 3).join(" ") + (category.split(" ").length > 3 ? "..." : "")
+                  ? category.split(" ").splice(0, 3).join(" ") +
+                    (category.split(" ").length > 3 ? "..." : "")
                   : category}
               </Typography>
             </Box>
@@ -68,10 +91,13 @@ const TreeViewSimplified = ({ mainSpecializations, openMainCategory }: any) => {
             mr: "7px",
           }}
         >
-          {Object.keys(mainSpecializations[category].specializations).length > 0 && (
+          {Object.keys(mainSpecializations[category].specializations).length >
+            0 && (
             <TreeViewSimplified
-              mainSpecializations={mainSpecializations[category].specializations}
-              openMainCategory={openMainCategory}
+              mainSpecializations={
+                mainSpecializations[category].specializations
+              }
+              onOpenOntologyTree={onOpenOntologyTree}
             />
           )}
         </TreeItem>

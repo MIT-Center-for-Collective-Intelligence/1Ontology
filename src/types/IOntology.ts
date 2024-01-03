@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export type ISubOntology = {
   title: string;
   id: string;
@@ -20,6 +22,10 @@ export type IOntologyTypes =
   | "incentive"
   | "reward";
 
+export type IOntologyPath = {
+  id: string;
+  title: string;
+};
 export type InheritanceType = {
   [key: string]: { ref: string; title: string };
 };
@@ -41,6 +47,8 @@ export type IOntology = {
   type?: IOntologyTypes;
   plainText: { [key: string]: string };
   subOntologies: { [key: string]: any };
+  ontologyType?: string;
+  locked?: boolean;
 } & OntologyInheritance;
 
 export type IOntologyCommon = {
@@ -166,4 +174,36 @@ export type IOntologyLock = {
   uname: string;
   ontology: string;
   field: string;
+};
+
+export type TreeVisual = {
+  [key: string]: {
+    id: string;
+    isCategory: boolean;
+    path: string[];
+    title: string;
+    specializations: TreeVisual;
+  };
+};
+
+export type ILockecOntology = {
+  [id: string]: {
+    [field: string]: {
+      id: string;
+      uname: string;
+      ontology: string;
+      field: string;
+      deleted: boolean;
+      createdAt: Timestamp;
+    };
+  };
+};
+
+export type MainSpecializations = {
+  [key: string]: {
+    id: string;
+    path: string[];
+    title: string;
+    specializations: MainSpecializations;
+  };
 };

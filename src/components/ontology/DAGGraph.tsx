@@ -1,19 +1,30 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import dagreD3 from "dagre-d3";
+import { TreeVisual } from " @components/types/IOntology";
 
-const DAGGraph = ({ ontologies }: any) => {
+type IDAGGraphProps = {
+  treeVisualisation: TreeVisual;
+  setExpandedOntologies: (state: Set<string>) => void;
+  expandedOntologies: Set<string>;
+};
+
+const DAGGraph = ({
+  treeVisualisation,
+  expandedOntologies,
+  setExpandedOntologies,
+}: IDAGGraphProps) => {
   const svgRef = useRef(null);
-  const [expandedNodes, setExpandedNodes] = useState(new Set());
+
   const [zoomState, setZoomState] = useState<any>(null);
 
-  const handleNodeClick = (ontologyId: any) => {
-    if (expandedNodes.has(ontologyId)) {
-      expandedNodes.delete(ontologyId);
+  const handleNodeClick = (ontologyId: string) => {
+    if (expandedOntologies.has(ontologyId)) {
+      expandedOntologies.delete(ontologyId);
     } else {
-      expandedNodes.add(ontologyId);
+      expandedOntologies.add(ontologyId);
     }
-    setExpandedNodes(new Set(expandedNodes));
+    setExpandedOntologies(new Set(expandedOntologies));
   };
 
   const onDrawOntology = (ontology: any, graph: any) => {
@@ -26,7 +37,7 @@ const DAGGraph = ({ ontologies }: any) => {
         labelStyle: "fill: black;",
       });
     }
-    if (expandedNodes.has(nodeId)) {
+    if (expandedOntologies.has(nodeId)) {
       const subOntologies: any = Object.values(ontology.specializations || {});
       for (let subOntology of subOntologies) {
         onDrawOntology(subOntology, graph);
@@ -45,13 +56,13 @@ const DAGGraph = ({ ontologies }: any) => {
       rankdir: "LR",
     });
     d3.select("#graphGroup").selectAll("*").remove();
-    if (!Object.keys(ontologies).length) return;
-    const render: any = new dagreD3.render();
+    if (!Object.keys(treeVisualisation).length) return;
+    const render = new dagreD3.render();
 
     const svg = d3.select("svg");
     const svgGroup: any = svg.append("g");
 
-    for (let ontology of Object.values(ontologies)) {
+    for (let ontology of Object.values(treeVisualisation)) {
       onDrawOntology(ontology, graph);
     }
 
@@ -62,8 +73,8 @@ const DAGGraph = ({ ontologies }: any) => {
       setZoomState(d3.zoomTransform(this));
     });
     svg.selectAll("g.node").on("click", function () {
-      const nodeData = d3.select(this).datum();
-      handleNodeClick(nodeData);
+      const ontologyId = d3.select(this).datum() as string;
+      handleNodeClick(ontologyId);
     });
     svg.call(zoom);
     if (zoomState) {
@@ -86,7 +97,7 @@ const DAGGraph = ({ ontologies }: any) => {
     return () => {
       d3.select("#graphGroup").selectAll("*").remove();
     };
-  }, [ontologies, expandedNodes]);
+  }, [treeVisualisation, expandedOntologies]);
 
   return (
     <>
