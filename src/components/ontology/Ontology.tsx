@@ -436,7 +436,7 @@ const Ontology = ({
               : ontologyParent.title,
           },
         },
-        subOntoogies: {
+        subOntologies: {
           ...getInheritance(
             Object.keys(newOntology.subOntologies),
             ontologyParent.title
@@ -1018,14 +1018,14 @@ const Ontology = ({
                         Add Category
                       </Button>
                     )}
-                    {(openOntology.inheritance || {}).subOntoogies &&
-                      (openOntology.inheritance || {}).subOntoogies[type]
+                    {(openOntology.inheritance || {}).subOntologies &&
+                      (openOntology.inheritance || {}).subOntologies[type]
                         ?.ref && (
                         <Typography sx={{ color: "grey" }}>
                           {"("}
                           {"Inherited from "}
                           {'"'}
-                          {(openOntology.inheritance || {}).subOntoogies[type]
+                          {(openOntology.inheritance || {}).subOntologies[type]
                             ?.title || ""}
                           {'"'}
                           {")"}
