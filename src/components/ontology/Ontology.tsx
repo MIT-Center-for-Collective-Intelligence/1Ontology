@@ -1,3 +1,114 @@
+/* # Ontology Component Documentation
+
+The `Ontology` component is a complex React component that is part of a larger application, likely dealing with the management and visualization of ontologies in a hierarchical structure. This component interacts with a Firestore database to perform CRUD operations on ontology data and provides a user interface for these operations.
+
+## Overview
+
+The `Ontology` component allows users to:
+
+- View and edit the title and description of an ontology.
+- Manage sub-ontologies and their categories.
+- Clone existing ontologies.
+- Add new specializations to ontologies.
+- Select and save sub-ontologies.
+- Delete ontologies and categories.
+- Lock and unlock ontology fields for editing.
+- Drag and drop sub-ontologies to reorganize them.
+
+## Dependencies
+
+The component imports several libraries and components:
+
+- Material-UI components for UI elements.
+- Firebase Firestore for database operations.
+- `react-beautiful-dnd` for drag-and-drop functionality.
+- Custom hooks and types from the project's internal structure.
+
+## Props
+
+The `Ontology` component accepts the following props:
+
+- `openOntology`: The current ontology object being viewed or edited.
+- `setOpenOntology`: Function to update the current ontology.
+- `saveSubOntology`: Function to save a sub-ontology.
+- `setSnackbarMessage`: Function to display messages to the user.
+- `updateUserDoc`: Function to update the user document in the database.
+- `mainSpecializations`: Object containing main specializations data.
+- `ontologies`: Array of ontology objects.
+- `addNewOntology`: Function to add a new ontology.
+- `ontologyPath`: Array representing the path of the current ontology in the hierarchy.
+- `editOntology`: String indicating the ontology being edited.
+- `setEditOntology`: Function to set the ontology being edited.
+- `lockedOntology`: Object containing information about locked ontologies.
+- `recordLogs`: Function to record logs of actions.
+- `updateInheritance`: Function to update inheritance data.
+
+## Component Structure
+
+The component is structured into several parts:
+
+- Dialogs for adding categories and selecting sub-ontologies.
+- `SubPlainText` components for editing the title and description.
+- A list of sub-ontologies that can be managed through UI elements like buttons and checkboxes.
+- A `TreeView` component to visualize the ontology hierarchy.
+- Drag-and-drop context for reordering sub-ontologies.
+
+## Functions
+
+The component includes several functions for handling various actions:
+
+- `cloneOntology`: Clones an existing ontology.
+- `getInheritance`: Retrieves inheritance data for an ontology.
+- `addNewSpecialisation`: Adds a new specialization to an ontology.
+- `showList`: Displays a list of sub-ontologies for selection.
+- `handleCloning`: Handles the cloning of an ontology.
+- `TreeViewSimplified`: Renders a simplified tree view of the ontology hierarchy.
+- `handleSave`: Saves changes made to the ontology.
+- `addCategory`: Adds a new category to the ontology.
+- `getCurrentSpecializations`: Retrieves the current specializations for the ontology.
+- `handleNewSpec`: Handles the addition of a new specialization.
+- `handleEditCategory`: Handles the editing of a category.
+- `deleteCategory`: Deletes a category from the ontology.
+- `addLock`: Adds or removes a lock on an ontology field.
+- `handleSorting`: Handles the sorting of sub-ontologies.
+- `removeSubOntology`: Removes a sub-ontology from the ontology data.
+- `deleteSubOntologyEditable`: Deletes an editable sub-ontology.
+
+## Usage
+
+To use the `Ontology` component, it must be provided with the necessary props, including the current ontology data, functions for updating the state, and any additional configuration required for interacting with the Firestore database.
+
+## Example
+
+```jsx
+<Ontology
+  openOntology={currentOntology}
+  setOpenOntology={setCurrentOntology}
+  saveSubOntology={handleSaveSubOntology}
+  setSnackbarMessage={showSnackbarMessage}
+  updateUserDoc={updateUserDocument}
+  mainSpecializations={specializationsData}
+  ontologies={ontologyList}
+  addNewOntology={handleAddNewOntology}
+  ontologyPath={currentOntologyPath}
+  editOntology={ontologyBeingEdited}
+  setEditOntology={setOntologyBeingEdited}
+  lockedOntology={lockedOntologies}
+  recordLogs={logActions}
+  updateInheritance={handleUpdateInheritance}
+/>
+```
+
+## Notes
+
+- The component assumes a specific data structure for ontologies and their relationships.
+- The Firestore database structure and security rules should be configured to work with this component.
+- The component includes commented-out imports and state variables that may be part of the larger application context.
+- The `ORDER_SUBONTOLOGIES` object defines the order in which sub-ontologies should be displayed.
+
+## Conclusion
+
+The `Ontology` component is a key part of an application that manages ontological data. It provides a rich set of features for interacting with ontologies and their hierarchical structure, making it a powerful tool for users who need to manage complex data relationships. */
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
