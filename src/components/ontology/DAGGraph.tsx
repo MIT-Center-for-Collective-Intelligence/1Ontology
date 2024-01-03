@@ -7,16 +7,18 @@ type IDAGGraphProps = {
   treeVisualisation: TreeVisual;
   setExpandedOntologies: (state: Set<string>) => void;
   expandedOntologies: Set<string>;
+  setDagreZoomState: any;
+  dagreZoomState: any;
 };
 
 const DAGGraph = ({
   treeVisualisation,
   expandedOntologies,
   setExpandedOntologies,
+  setDagreZoomState,
+  dagreZoomState,
 }: IDAGGraphProps) => {
   const svgRef = useRef(null);
-
-  const [zoomState, setZoomState] = useState<any>(null);
 
   const handleNodeClick = (ontologyId: string) => {
     if (expandedOntologies.has(ontologyId)) {
@@ -70,15 +72,15 @@ const DAGGraph = ({
 
     const zoom: any = d3.zoom().on("zoom", function (d) {
       svgGroup.attr("transform", d3.zoomTransform(this));
-      setZoomState(d3.zoomTransform(this));
+      setDagreZoomState(d3.zoomTransform(this));
     });
     svg.selectAll("g.node").on("click", function () {
       const ontologyId = d3.select(this).datum() as string;
       handleNodeClick(ontologyId);
     });
     svg.call(zoom);
-    if (zoomState) {
-      svgGroup.attr("transform", zoomState);
+    if (dagreZoomState) {
+      svgGroup.attr("transform", dagreZoomState);
     }
     const svgWidth = (window.innerWidth * 70) / 100;
     const svgHeight = 600;
@@ -87,8 +89,8 @@ const DAGGraph = ({
 
     const zoomScale = Math.min(svgWidth / graphWidth, svgHeight / graphHeight);
     const translateX = (svgWidth - graphWidth * zoomScale) / 6;
-    const translateY = (svgHeight - graphHeight * zoomScale) / 2;
-    if (!zoomState) {
+    const translateY = svgHeight - graphHeight * zoomScale;
+    if (!dagreZoomState) {
       svg.call(
         zoom.transform,
         d3.zoomIdentity.translate(translateX, translateY).scale(zoomScale)
