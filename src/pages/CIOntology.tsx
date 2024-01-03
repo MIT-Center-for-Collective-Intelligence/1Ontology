@@ -214,7 +214,7 @@ const CIOntology = () => {
   const [expandedOntologies, setExpandedOntologies] = useState<Set<string>>(
     new Set()
   );
-
+  const [dagreZoomState, setDagreZoomState] = useState<any>(null);
   const getPath = (newPath: string[]) => {
     const ontologyPath = [];
     for (let path of newPath) {
@@ -925,6 +925,8 @@ const CIOntology = () => {
                     treeVisualisation={treeVisualisation}
                     setExpandedOntologies={setExpandedOntologies}
                     expandedOntologies={expandedOntologies}
+                    setDagreZoomState={setDagreZoomState}
+                    dagreZoomState={dagreZoomState}
                   />
                 </TabPanel>
               </Box>
