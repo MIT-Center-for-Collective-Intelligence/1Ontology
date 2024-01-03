@@ -131,7 +131,7 @@ const SubPlainText = ({
             title: "",
           };
         }
-        console.log({ ontologyData });
+
         await updateDoc(ontologyDoc.ref, ontologyData);
 
         //need to call this to update the children according to the Inhiretance

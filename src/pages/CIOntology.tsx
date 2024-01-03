@@ -886,7 +886,7 @@ const CIOntology = () => {
       }
     }
   };
-  console.log(ontologyPath);
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column" }}>
       <Container style={{ height: "100%", marginTop: "80px" }}>
