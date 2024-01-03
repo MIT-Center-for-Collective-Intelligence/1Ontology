@@ -1,3 +1,24 @@
+/* # ThemeContext.tsx
+
+## Overview
+`ThemeContext.tsx` is a TypeScript file that provides a theme management context for a React application. It utilizes Firebase for real-time user status tracking and integrates with Material-UI (MUI) for theming.
+
+## Dependencies
+- **Firebase**: The Firebase SDK is used for user authentication and real-time database functionality.
+- **Material-UI (MUI)**: The Material-UI library is used for creating and managing the application's theme.
+
+## Components
+
+### ThemeProvider Component
+The `ThemeProvider` component is a functional component that wraps the entire application, providing a context for theme-related functionality.
+
+#### Props
+- `children`: ReactNode - The child components to be wrapped by the theme provider.
+
+
+
+*/
+
 import { uuidv4 } from "@firebase/util";
 import { createTheme } from "@mui/material/styles";
 import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
