@@ -59,7 +59,7 @@ import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import withAuthUser from " @components/components/hoc/withAuthUser";
 import { useAuth } from " @components/components/context/AuthContext";
 import { useRouter } from "next/router";
-import DagViewSimplified from " @components/components/ontology/DagViewSimplified";
+import DAGGraph from " @components/components/ontology/DAGGraph";
 
 type IOntologyPath = {
   id: string;
@@ -800,6 +800,7 @@ const CIOntology = () => {
       console.error(error);
     }
   };
+  console.log({ mainSpecializations });
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column" }}>
@@ -858,9 +859,9 @@ const CIOntology = () => {
                   />
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
-                  <DagViewSimplified
-                    mainSpecializations={mainSpecializations}
-                    openMainCategory={openMainCategory}
+                  <DAGGraph
+                    data={mainSpecializations}
+                    // openMainCategory={openMainCategory}
                   />
                 </TabPanel>
               </Box>
