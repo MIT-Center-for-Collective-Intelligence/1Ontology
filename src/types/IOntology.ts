@@ -49,6 +49,7 @@ export type IOntology = {
   subOntologies: { [key: string]: any };
   ontologyType?: string;
   locked?: boolean;
+  category?: boolean;
 } & OntologyInheritance;
 
 export type IOntologyCommon = {

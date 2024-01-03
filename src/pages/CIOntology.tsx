@@ -1,3 +1,97 @@
+/* 
+## Overview
+
+The `CIOntology` component is a complex React component that serves as the main interface for managing and visualizing ontologies within a collaborative platform. It integrates with Firebase Firestore for data persistence, provides search functionality using Fuse.js, and offers a rich user interface with Material-UI components.
+
+## Features
+
+- **Ontology Management**: Users can create, update, and delete ontology entities.
+- **Real-time Updates**: Leveraging Firebase's `onSnapshot` to listen for real-time updates to ontologies.
+- **Search Functionality**: Implements search using Fuse.js to quickly find ontology entities.
+- **Responsive Design**: Adapts to different screen sizes using `useMediaQuery`.
+- **TreeView and DAG Visualization**: Offers two modes of visualizing ontologies - a simplified tree view and a directed acyclic graph (DAG) view.
+- **Comments Section**: Allows users to add, edit, and delete comments on ontology entities.
+- **Markdown Support**: Includes a Markdown cheatsheet and renders comments as Markdown.
+
+## Dependencies
+
+- `@column-resizer/react`: For resizable layout sections.
+- `@mui/material`: Material-UI components for the user interface.
+- `firebase/firestore`: Firestore database for storing ontologies and related data.
+- `fuse.js`: For fuzzy search capabilities.
+- `moment`: For date manipulation and formatting.
+- `react`: Core React library.
+- `next/router`: For routing in Next.js applications.
+
+## Component Structure
+
+- **Container**: Wraps the entire layout, providing a margin at the top.
+- **Section**: Represents a resizable section of the layout.
+- **Bar**: A draggable bar for resizing adjacent sections.
+- **Tabs**: For switching between different views (Tree View, DAG View, Search, Comments, Markdown Cheatsheet).
+- **TreeViewSimplified**: A component for rendering the tree view of ontologies.
+- **DAGGraph**: A component for rendering the DAG view of ontologies.
+- **Ontology**: A component for displaying and editing a single ontology entity.
+- **MarkdownRender**: Renders Markdown content.
+- **AppHeaderMemoized**: The application header component.
+
+## Usage
+
+The `CIOntology` component is designed to be used within a Next.js application and requires authentication context provided by `withAuthUser`.
+
+## Code Snippets
+
+### Firestore Data Fetching
+
+```tsx
+useEffect(() => {
+  const ontologyQuery = query(
+    collection(db, "ontology"),
+    where("deleted", "==", false)
+  );
+  const unsubscribeOntology = onSnapshot(ontologyQuery, (snapshot) => {
+    // Handle document changes
+  });
+  return () => unsubscribeOntology();
+}, [db]);
+```
+
+### Search Functionality
+
+```tsx
+const fuse = new Fuse(ontologies, { keys: ["title"] });
+
+const searchWithFuse = (query: string): any => {
+  if (!query) {
+    return [];
+  }
+  return fuse
+    .search(query)
+    .map((result) => result.item)
+    .filter((item: any) => !item.deleted);
+};
+```
+
+### Comment Handling
+
+```tsx
+const handleSendComment = async () => {
+  // Logic to add a new comment to an ontology
+};
+
+const deleteComment = async (commentId: string) => {
+  // Logic to delete a comment from an ontology
+};
+
+const editComment = async (comment: any) => {
+  // Logic to edit an existing comment on an ontology
+};
+```
+
+## Contributing
+
+Contributions to the `CIOntology` component are welcome. Please ensure you follow the project's coding standards and submit a pull request with a detailed description of your changes. */
+
 import { Bar, Container, Section } from "@column-resizer/react";
 import SearchIcon from "@mui/icons-material/Search";
 import SendIcon from "@mui/icons-material/Send";
@@ -601,20 +695,20 @@ const CIOntology = () => {
   };
 
   const onOpenOntologyTree = useCallback(
-    async (category: string, path: string[]) => {
+    async (ontologyId: string, path: string[]) => {
       if (!user) return;
       const ontologyIdx = ontologies.findIndex(
-        (onto: any) => onto.title === category
+        (onto: any) => onto.id === ontologyId
       );
-      let _path = [...path];
-      if (ontologyIdx !== -1) {
+
+      if (ontologyIdx !== -1 && !ontologies[ontologyIdx].category) {
         setOpenOntology(ontologies[ontologyIdx]);
         await recordLogs({
           action: "Clicked tree-view",
           itemClicked: ontologies[ontologyIdx].id,
         });
+        await updateUserDoc(path);
       }
-      await updateUserDoc([..._path]);
     },
     [ontologies, user]
   );
@@ -888,48 +982,35 @@ const CIOntology = () => {
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
+    <>
       <Container style={{ height: "100%", marginTop: "80px" }}>
         {!isMobile && (
           <Section minSize={0} defaultSize={350}>
-            <Box
-              sx={{
-                height: "100vh",
-                overflow: "auto",
-                overflowY: "auto",
-                overflowX: "auto",
-                width: "1600px",
-              }}
+            <Tabs
+              value={viewValue}
+              onChange={handleViewChange}
+              sx={{ width: "500px", ml: "5px" }}
             >
-              <Box sx={{ pb: "190px", width: "100%" }}>
-                <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                  <Tabs
-                    value={viewValue}
-                    onChange={handleViewChange}
-                    aria-label="basic tabs example"
-                    sx={{ width: "23%" }}
-                    variant="fullWidth"
-                  >
-                    <Tab label="Tree View" {...a11yProps(0)} />
-                    <Tab label="DAG View" {...a11yProps(1)} />
-                  </Tabs>
-                </Box>
-                <TabPanel value={viewValue} index={0}>
-                  <TreeViewSimplified
-                    mainSpecializations={treeVisualisation}
-                    onOpenOntologyTree={onOpenOntologyTree}
-                  />
-                </TabPanel>
-                <TabPanel value={viewValue} index={1}>
-                  <DAGGraph
-                    treeVisualisation={treeVisualisation}
-                    setExpandedOntologies={setExpandedOntologies}
-                    expandedOntologies={expandedOntologies}
-                    setDagreZoomState={setDagreZoomState}
-                    dagreZoomState={dagreZoomState}
-                  />
-                </TabPanel>
-              </Box>
+              <Tab label="Tree View" {...a11yProps(0)} />
+              <Tab label="DAG View" {...a11yProps(1)} />
+            </Tabs>
+            <Box sx={{ overflow: "auto", height: "94vh" }}>
+              <TabPanel value={viewValue} index={0}>
+                <TreeViewSimplified
+                  mainSpecializations={treeVisualisation}
+                  onOpenOntologyTree={onOpenOntologyTree}
+                />
+              </TabPanel>
+              <TabPanel value={viewValue} index={1}>
+                <DAGGraph
+                  treeVisualisation={treeVisualisation}
+                  setExpandedOntologies={setExpandedOntologies}
+                  expandedOntologies={expandedOntologies}
+                  setDagreZoomState={setDagreZoomState}
+                  dagreZoomState={dagreZoomState}
+                  onOpenOntologyTree={onOpenOntologyTree}
+                />
+              </TabPanel>
             </Box>
           </Section>
         )}
@@ -1242,7 +1323,7 @@ const CIOntology = () => {
           onSwitchSection={() => {}}
         />
       </Box>
-    </Box>
+    </>
   );
 };
 export default withAuthUser({
