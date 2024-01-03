@@ -874,12 +874,8 @@ const Ontology = ({
         />
       </Box>
 
-      <Box key={openOntology.id} sx={{ mb: "15px" }}>
-        <Box
-          style={{
-            paddingLeft: "10px",
-          }}
-        >
+      <Box key={openOntology.id} sx={{ mb: "15px", mt: "25px" }}>
+        <Box>
           {(
             ORDER_SUBONTOLOGIES[openOntology?.ontologyType as string] || []
           ).map((type: string) =>

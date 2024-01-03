@@ -90,7 +90,7 @@ const SubPlainText = ({
     }
   }, [editOntology, openOntology]);
 
-  const editSaveText = async () => {
+  const onSaveTextChange = async () => {
     setEditMode((edit) => !edit);
     if (editMode) {
       const ontologyDoc = await getDoc(
@@ -118,8 +118,8 @@ const SubPlainText = ({
 
         if (["description", "title"].includes(type)) {
           previousValue = ontologyData[type];
-          newValue = openOntology[(type as "description", "title")];
-          ontologyData[type] = openOntology[(type as "description", "title")];
+          newValue = openOntology[type as "description" | "title"];
+          ontologyData[type] = openOntology[type as "description" | "title"];
         } else {
           previousValue = ontologyData.plainText[type];
           newValue = openOntology.plainText[type];
@@ -131,7 +131,7 @@ const SubPlainText = ({
             title: "",
           };
         }
-
+        console.log({ ontologyData });
         await updateDoc(ontologyDoc.ref, ontologyData);
 
         //need to call this to update the children according to the Inhiretance
@@ -144,8 +144,8 @@ const SubPlainText = ({
           ancestorTitle: ontologyData.title,
         });
 
-        await addLock(openOntology.id, type, "remove");
-        await recordLogs({
+        addLock(openOntology.id, type, "remove");
+        recordLogs({
           action: "Edited a field",
           field: type,
           previousValue,
@@ -192,7 +192,7 @@ const SubPlainText = ({
             </Tooltip>
           ) : (
             <Tooltip title={editMode ? "Save" : "Edit"}>
-              <Button onClick={editSaveText} sx={{ ml: "5px" }}>
+              <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
                 {editMode ? "Save" : "Edit"}
               </Button>
             </Tooltip>
@@ -219,7 +219,7 @@ const SubPlainText = ({
               >
                 {type === "title" && (
                   <Tooltip title={"Save"}>
-                    <Button onClick={editSaveText} sx={{ ml: "5px" }}>
+                    <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
                       {editMode ? "Save" : "Edit"}
                     </Button>
                   </Tooltip>
@@ -263,7 +263,7 @@ const SubPlainText = ({
                 </Tooltip>
               ) : (
                 <Tooltip title={editMode ? "Save" : "Edit"}>
-                  <Button onClick={editSaveText} sx={{ ml: "5px" }}>
+                  <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
                     {editMode ? "Save" : "Edit"}
                   </Button>
                 </Tooltip>
