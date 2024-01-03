@@ -906,7 +906,16 @@ const CIOntology = () => {
     }
   };
 
-  const updateInhiretance = ({
+  /**
+   * Recursively updates the inheritance-related fields in a hierarchy of ontologies.
+   *
+   * @param updatedOntology - The root ontology that needs to be updated.
+   * @param updatedField - The field that is being updated (e.g., "title", "description").
+   * @param type - The type of ontology being updated ("subOntologies" or "plainText").
+   * @param newValue - The new value for the specified field.
+   * @param ancestorTitle - The new title for the ancestor ontology.
+   */
+  const updateInheritance = ({
     updatedOntology,
     updatedField,
     type,
@@ -919,12 +928,13 @@ const CIOntology = () => {
     newValue: any;
     ancestorTitle: string;
   }) => {
+    // Get the ID of the current ontology and initialize an array to store child ontology IDs.
     const parentId = updatedOntology.id;
     const children: { ontologies: { id: string; title: string }[] }[] =
       Object.values(updatedOntology.subOntologies.Specializations);
     let childOntologies: string[] = [];
-    // get all the children (specializations) in an array of strings
 
+    // Get all the children (specializations) in an array of strings.
     for (let child of children) {
       childOntologies = [
         ...childOntologies,
@@ -932,33 +942,39 @@ const CIOntology = () => {
       ];
     }
 
-    //loop through all the children and upadte the corresponding feild
+    // Loop through all the children and update the corresponding field.
     for (let ontoId of childOntologies) {
-      const onotologyIdx = ontologies.findIndex(
+      const ontologyIdx = ontologies.findIndex(
         (o: IOntology) => o.id == ontoId
       );
-      if (onotologyIdx !== -1) {
-        const currentOntology: IOntology = ontologies[onotologyIdx];
+
+      // Check if the child ontology exists in the ontologies array.
+      if (ontologyIdx !== -1) {
+        const currentOntology: IOntology = ontologies[ontologyIdx];
         const ontoRef = doc(collection(db, "ontology"), ontoId);
 
+        // Check if the current ontology has inheritance information.
         if (currentOntology.inheritance) {
           if (updatedField === "title") {
-            for (let type in currentOntology.inheritance) {
-              const inheritanceType = currentOntology.inheritance[type];
-              for (let field in inheritanceType) {
+            // Update the ancestor title in the inheritance information.
+            for (let inheritanceType in currentOntology.inheritance) {
+              const inheritanceFields =
+                currentOntology.inheritance[inheritanceType];
+              for (let field in inheritanceFields) {
                 const inheritance: { ref: string; title: string } =
-                  currentOntology.inheritance[type][field];
+                  inheritanceFields[field];
                 if (inheritance.ref && inheritance.ref == parentId) {
                   inheritance.title = ancestorTitle;
                 }
               }
             }
           } else {
+            // Update the specified field in the inheritance information.
             const inheritance = currentOntology.inheritance[type][updatedField];
             if (inheritance.ref && inheritance.ref == parentId) {
               inheritance.title = ancestorTitle;
-              // if the modified field was title we only need to update the
 
+              // If the modified field was "description," update the corresponding field in the ontology.
               if (updatedField == "description") {
                 currentOntology[updatedField] = newValue;
               } else {
@@ -966,10 +982,13 @@ const CIOntology = () => {
               }
             }
           }
+
+          // Update the ontology document in the Firestore database.
           updateDoc(ontoRef, currentOntology);
-          //recursive call to the children of the currentOntology
-          // dont mind calling this if the currentOntology doesn't have children
-          updateInhiretance({
+
+          // Recursive call to update the children of the current ontology.
+          // It is safe to call this even if the current ontology doesn't have children.
+          updateInheritance({
             updatedOntology: currentOntology,
             updatedField,
             type,
@@ -1077,7 +1096,7 @@ const CIOntology = () => {
                 setEditOntology={setEditOntology}
                 lockedOntology={lockedOntology}
                 recordLogs={recordLogs}
-                updateInhiretance={updateInhiretance}
+                updateInheritance={updateInheritance}
               />
             )}
           </Box>
