@@ -84,7 +84,7 @@ export type IActor = IOntologyCommon & {
   };
 };
 
-export type IProcesse = IOntologyCommon & {
+export type IProcess = IOntologyCommon & {
   plainText: {
     "Type of Process": string;
     Subactivities: string;
@@ -187,7 +187,7 @@ export type TreeVisual = {
   };
 };
 
-export type ILockecOntology = {
+export type ILockedOntology = {
   [id: string]: {
     [field: string]: {
       id: string;
