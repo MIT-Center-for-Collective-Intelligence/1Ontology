@@ -1,3 +1,11 @@
+/* 
+The `Colors` type is an object type where each property is a string. This type is used to define a color palette for a design system. Each property represents a color in the design system and its value is expected to be a string, which will typically be a hexadecimal color code.
+
+The `DESIGN_SYSTEM_COLORS` constant is an object that implements the `Colors` type. This object provides specific color codes for each color in the design system. The colors are divided into several categories such as primary colors, notebook colors, and secondary colors. Each category has a range of colors, from light to dark, represented by increasing numbers (e.g., `gray25` is lighter than `gray50`).
+
+For example, `baseWhite` is defined as `#FFFFFF`, which is the hexadecimal code for white. Similarly, `primary25` is defined as `#FFF2EA`, which could be a very light shade of the primary color in the design system.
+
+This color palette can be used throughout a project to maintain consistency in the UI design. By referring to colors by their property names, it's easier to manage and update the color scheme of the project. For instance, if you want to change the color `primary500`, you only need to update it in `DESIGN_SYSTEM_COLORS`, and the change will be reflected everywhere `primary500` is used. */
 export type Colors = {
   // ------------------------- primary colors
   // base

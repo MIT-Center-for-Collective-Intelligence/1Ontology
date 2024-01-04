@@ -1,3 +1,8 @@
+/*
+  FullPageLogoLoading component renders a full-page loading screen with a centered logo.
+  It utilizes Material-UI's Box and Next.js Image components for layout and image rendering.
+  Uncomment the CircularProgress component if you want to display a loading spinner.
+*/
 import { Box } from "@mui/material";
 // import CircularProgress from "@mui/material/CircularProgress";
 import Image from "next/image";

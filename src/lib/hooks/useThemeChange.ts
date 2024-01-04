@@ -1,3 +1,8 @@
+/* Custom React hook for handling user theme changes and updating Firestore database with theme preferences and change logs.
+ Utilizes Firebase's Firestore for data storage and the AuthContext for user authentication. 
+ The hook provides a function, handleThemeSwitch, which toggles between "Dark" and "Light" themes, updates the user document, 
+ and logs the change in a separate collection. */
+
 // Import necessary modules and components
 
 import { useAuth } from " @components/components/context/AuthContext";
