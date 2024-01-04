@@ -1059,7 +1059,7 @@ const CIOntology = () => {
           } else {
             // Update the specified field in the inheritance information.
             const inheritance = currentOntology.inheritance[type][updatedField];
-            if (inheritance.ref && inheritance.ref == parentId) {
+            if (inheritance && inheritance?.ref && inheritance.ref == parentId) {
               inheritance.title = ancestorTitle;
 
               // If the modified field was "description," update the corresponding field in the ontology.
