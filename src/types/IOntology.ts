@@ -1,3 +1,22 @@
+/* This code defines a set of TypeScript types and interfaces that are used to describe the structure of data related to ontologies. Ontologies are a way to represent knowledge as a set of concepts within a domain and the relationships between those concepts.
+
+- `ISubOntology`: Represents a sub-ontology with properties like title, id, category, editMode and new.
+- `ISubOntologyCategory`: Represents a category of sub-ontologies.
+- `IOntologyTypes`: Represents the possible types of an ontology.
+- `IOntologyPath`: Represents the path of an ontology with properties like id and title.
+- `InheritanceType`: Represents the inheritance type of an ontology.
+- `OntologyInheritance`: Represents the inheritance of an ontology.
+- `IOntology`: Represents an ontology with properties like id, title, description, comments, editMode, parents, type, plainText, subOntologies, ontologyType, locked and category.
+- `IOntologyCommon`: Represents common properties of an ontology.
+- `IActivity`, `IActor`, `IProcess`, `IEvaluation`, `IRole`, `IIncentive`, `IReward`, `IGroup`: Represents specific types of ontologies with their specific properties.
+- `IUserOntology`: Represents a user's ontology with properties like id, uname, ontology, field, previous, new, correct, wrong and visible.
+- `IOntologyLock`: Represents a lock on an ontology with properties like uname, ontology and field.
+- `TreeVisual`: Represents a visual tree of an ontology.
+- `ILockedOntology`: Represents a locked ontology with properties like id, uname, ontology, field, deleted and createdAt.
+- `MainSpecializations`: Represents the main specializations of an ontology.
+
+These types and interfaces are likely used in a larger application that deals with the creation, editing, and viewing of ontologies. */
+
 import { Timestamp } from "firebase/firestore";
 
 export type ISubOntology = {
