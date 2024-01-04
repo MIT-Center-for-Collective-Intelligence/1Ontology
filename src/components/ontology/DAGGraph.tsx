@@ -78,7 +78,7 @@ type IDAGGraphProps = {
   expandedOntologies: Set<string>;
   setDagreZoomState: any;
   dagreZoomState: any;
-  onOpenOntologyTree: (ontologyId: string, path: string[]) => void;
+  onOpenOntologyDagre: (ontologyId: string) => void;
 };
 
 const DAGGraph = ({
@@ -87,12 +87,12 @@ const DAGGraph = ({
   setExpandedOntologies,
   setDagreZoomState,
   dagreZoomState,
-  onOpenOntologyTree,
+  onOpenOntologyDagre,
 }: IDAGGraphProps) => {
   const svgRef = useRef(null);
 
   const handleNodeClick = (ontologyId: string) => {
-    onOpenOntologyTree(ontologyId, []);
+    onOpenOntologyDagre(ontologyId);
     if (expandedOntologies.has(ontologyId)) {
       expandedOntologies.delete(ontologyId);
     } else {
@@ -107,9 +107,9 @@ const DAGGraph = ({
       graph.setNode(nodeId, {
         label: ontology.title,
         style: `fill: ${
-          ontology.isCategory ? "#40cc28" : "white"
+          ontology.isCategory ? "orange" : "white"
         }; stroke: black; stroke-width: 2px; cursor: pointer;`,
-        labelStyle: "fill: black;",
+        labelStyle: "fill: black; cursor: pointer;",
       });
     }
     if (expandedOntologies.has(nodeId)) {
@@ -118,8 +118,8 @@ const DAGGraph = ({
         onDrawOntology(subOntology, graph);
         graph.setEdge(nodeId, subOntology.id, {
           curve: d3.curveBasis,
-          style: "stroke: #ff8a33; stroke-opacity: 1; fill: none;",
-          arrowheadStyle: "fill: #ff8a33",
+          style: "stroke: orange; stroke-opacity: 1; fill: none;",
+          arrowheadStyle: "fill: orange",
           minlen: 2,
         });
       }
