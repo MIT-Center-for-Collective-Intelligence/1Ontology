@@ -1,3 +1,30 @@
+
+/* This is a React component for a "Forgot Password" page. It uses Firebase for authentication, Formik for form handling, and Material UI for styling. Here's a breakdown of the code:
+
+1. **Imports**: The code begins by importing necessary modules and components. These include Firebase authentication functions, Formik for form handling, Material UI components for UI, and other custom components and utilities.
+
+2. **Interface**: An interface `ForgotPasswordFormValues` is defined to type-check the form values. It expects an `email` string.
+
+3. **Component Definition**: The `ForgotPage` component is defined as a functional component. It uses Firebase's `getAuth` function to initialize an instance of Firebase Auth.
+
+4. **Hooks**: Several hooks are used within the component:
+   - `useAuth` is a custom hook that provides authentication-related functions and state.
+   - `useSnackbar` is a hook from the `notistack` library that provides functions to display snackbars (temporary little messages) to the user.
+   - `useState` is a React hook that's used to manage the loading state of the form.
+   - `useFormik` is a hook from the Formik library that provides functions and state for form handling.
+
+5. **Form Handling**: The `handleSignIn` function is defined to handle form submission. It sends a password reset email to the provided email address and handles any errors that occur.
+
+6. **Formik Setup**: Formik is set up with initial form values, a validation schema (using Yup), and the `handleSignIn` function as the form submission handler.
+
+7. **Rendering**: The component returns a form with a text field for the email address and a submit button. It uses Material UI components for styling. The form is wrapped in a `Box` component for layout and spacing.
+
+8. **Layout**: The `getLayout` function is defined to wrap the page in an `AuthLayout` component. This is a common pattern for applying a consistent layout across multiple pages.
+
+9. **Export**: Finally, the `ForgotPage` component is exported for use in other parts of the application.
+
+This code assumes that you have set up Firebase authentication, Formik, Material UI, and the `notistack` library in your project. It also assumes that you have defined the `useAuth` hook, `AuthLayout` component, and other imported modules in your codebase.
+ */
 import { useAuth } from " @components/components/context/AuthContext";
 import AuthLayout from " @components/components/layouts/AuthLayout";
 import { getFirebaseFriendlyError } from " @components/lib/utils/firebaseErrors";

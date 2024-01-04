@@ -1,3 +1,5 @@
+// Import necessary modules and components
+
 import { useAuth } from " @components/components/context/AuthContext";
 import {
   collection,
@@ -9,18 +11,33 @@ import {
 } from "firebase/firestore";
 import { useCallback } from "react";
 
+// Custom hook for handling theme changes
 const useThemeChange = () => {
+  // Initialize Firestore database instance
   const db = getFirestore();
+
+  // Destructure user and settings from authentication context
   const [{ user, settings }, { dispatch }] = useAuth();
 
+  // Callback function for changing a user attribute (e.g., theme)
   const changeAttr = useCallback(
     () => async (newValue: any) => {
+      // Check if user is logged in
       if (!user) return;
-      const userRef = doc(db, "users", user.uname);
-      await updateDoc(userRef, { ["theme"]: newValue });
-      let userLogCollection = "userThemeLog";
 
+      // Reference to the user document in Firestore
+      const userRef = doc(db, "users", user.uname);
+
+      // Update the theme attribute in the user document
+      await updateDoc(userRef, { ["theme"]: newValue });
+
+      // Define the collection for user theme change logs
+      const userLogCollection = "userThemeLog";
+
+      // Reference to a new document in the user theme change log collection
       const userLogRef = doc(collection(db, userLogCollection));
+
+      // Set document with user theme change details
       await setDoc(userLogRef, {
         uname: user.uname,
         ["theme"]: newValue,
@@ -29,18 +46,27 @@ const useThemeChange = () => {
     },
     [db, user]
   );
+
+  // Callback function for handling theme switch event
   const handleThemeSwitch = useCallback(
     (event: any) => {
       event.preventDefault();
+
+      // Determine the new theme based on the current theme
       const newTheme = settings.theme === "Dark" ? "Light" : "Dark";
+
+      // Call the changeAttr callback to update the theme
       changeAttr()(newTheme);
-      // setTheme(newTheme);
+
+      // Dispatch an action to update the theme in the local state
       dispatch({ type: "setTheme", payload: newTheme });
     },
     [changeAttr, dispatch, settings.theme]
   );
 
+  // Return the handleThemeSwitch function for use in components
   return [handleThemeSwitch];
 };
 
+// Export the useThemeChange hook
 export default useThemeChange;
