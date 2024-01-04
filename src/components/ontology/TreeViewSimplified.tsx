@@ -62,6 +62,12 @@ const TreeViewSimplified = ({
                 pl: "0px",
                 mt: "9px",
               }}
+              onClick={() => {
+                onOpenOntologyTree(
+                  treeVisualisation[category].id,
+                  treeVisualisation[category]?.path || []
+                );
+              }}
             >
               <Typography
                 sx={{
@@ -69,12 +75,6 @@ const TreeViewSimplified = ({
                     ? "bold"
                     : "",
                   color: treeVisualisation[category].isCategory ? "orange" : "",
-                }}
-                onClick={() => {
-                  onOpenOntologyTree(
-                    treeVisualisation[category].id,
-                    treeVisualisation[category]?.path || []
-                  );
                 }}
               >
                 {!treeVisualisation[category].isCategory

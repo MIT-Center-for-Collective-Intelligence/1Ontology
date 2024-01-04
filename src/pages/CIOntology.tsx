@@ -134,17 +134,9 @@ import SneakMessage from " @components/components/ontology/SneakMessage";
 import Ontology from " @components/components/ontology/Ontology";
 import TreeViewSimplified from " @components/components/ontology/TreeViewSimplified";
 import {
-  IActivity,
-  IActor,
-  IEvaluation,
-  IGroup,
-  IIncentive,
-  ILockecOntology,
+  ILockedOntology,
   IOntology,
   IOntologyPath,
-  IProcesse,
-  IReward,
-  IRole,
   ISubOntology,
   MainSpecializations,
   TreeVisual,
@@ -159,129 +151,8 @@ import withAuthUser from " @components/components/hoc/withAuthUser";
 import { useAuth } from " @components/components/context/AuthContext";
 import { useRouter } from "next/router";
 import DAGGraph from " @components/components/ontology/DAGGraph";
-
-const INITIAL_VALUES: {
-  [key: string]:
-    | IActivity
-    | IActor
-    | IProcesse
-    | IEvaluation
-    | IRole
-    | IIncentive
-    | IReward
-    | IGroup;
-} = {
-  Activity: {
-    title: "",
-    description: "",
-    plainText: {
-      notes: "",
-      Preconditions: "",
-      Postconditions: "",
-    },
-    subOntologies: {
-      Actor: {},
-      Process: {},
-      Specializations: {},
-      "Evaluation Dimension": {},
-    },
-    ontologyType: "Activity",
-  },
-  Actor: {
-    title: "",
-    description: "",
-    plainText: {
-      "Type of actor": "",
-      notes: "",
-      Abilities: "",
-    },
-    subOntologies: {
-      Specializations: {},
-    },
-    ontologyType: "Actor",
-  },
-  Process: {
-    title: "",
-    description: "",
-    plainText: {
-      "Type of Process": "",
-      notes: "",
-      Subactivities: "",
-      Dependencies: "",
-      "Performance prediction models": "",
-    },
-    subOntologies: { Role: {}, Specializations: {} },
-    ontologyType: "Process",
-  },
-  "Evaluation Dimension": {
-    title: "",
-    description: "",
-    plainText: {
-      "Evaluation type": "",
-      notes: "",
-      "Measurement units": "",
-      "Direction of desirability": "",
-      "Criteria for acceptability": "",
-    },
-    subOntologies: {
-      Specializations: {},
-    },
-    ontologyType: "Evaluation Dimension",
-  },
-  Role: {
-    title: "",
-    description: "",
-    subOntologies: { Actor: {}, Specializations: {}, Incentive: {} },
-    plainText: {
-      "Role type": "",
-      Units: "",
-      "Capabilities required": "",
-      notes: "",
-    },
-    ontologyType: "Role",
-  },
-  Reward: {
-    title: "",
-    description: "",
-    subOntologies: { Specializations: {} },
-    plainText: {
-      Units: "",
-      "Reward type": "",
-    },
-    ontologyType: "Reward",
-  },
-  Incentive: {
-    title: "",
-    description: "",
-    subOntologies: {
-      Specializations: {},
-      "Evaluation Dimension": {},
-      Reward: {},
-    },
-    plainText: {
-      "Reward function": "",
-      "Capabilities required": "",
-      notes: "",
-    },
-    ontologyType: "Incentive",
-  },
-  Group: {
-    title: "",
-    description: "",
-    plainText: {
-      "Type of actor": "",
-      Abilities: "",
-      "List of individuals in group": "",
-      "Number of individuals in group": "",
-      notes: "",
-    },
-    subOntologies: {
-      Specializations: {},
-      Individual: {},
-    },
-    ontologyType: "Group",
-  },
-};
+import { formatFirestoreTimestampWithMoment } from " @components/lib/utils/utils";
+import { ONTOLOGY_TYPES } from "./CONSTANTS";
 
 const CIOntology = () => {
   const db = getFirestore();
@@ -299,7 +170,7 @@ const CIOntology = () => {
   const [updateComment, setUpdateComment] = useState("");
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [editingComment, setEditingComment] = useState("");
-  const [lockedOntology, setLockedOntology] = useState<ILockecOntology>({});
+  const [lockedOntology, setLockedOntology] = useState<ILockedOntology>({});
   const [value, setValue] = useState<number>(1);
   const [viewValue, setViewValue] = useState<number>(0);
   const [searchValue, setSearchValue] = useState("");
@@ -309,30 +180,66 @@ const CIOntology = () => {
     new Set()
   );
   const [dagreZoomState, setDagreZoomState] = useState<any>(null);
+
+  useEffect(() => {
+    // Check if a user is logged in
+    if (user) {
+      // Check if the user's email is verified
+      if (!emailVerified) {
+        // If the email is not verified, redirect to the sign-in page
+        router.replace("/signin");
+      }
+    }
+  }, [user, emailVerified]);
+
+  /**
+   * Constructs a path based on the provided array of ontology IDs.
+   * @param newPath - An array of ontology IDs representing the desired path.
+   * @returns An array containing objects with 'id' and 'title' properties, representing the ontology path.
+   */
   const getPath = (newPath: string[]) => {
+    // Initialize an empty array to store the constructed ontology path
     const ontologyPath = [];
+
+    // Iterate through each ontology ID in the provided array
     for (let path of newPath) {
+      // Find the index of the ontology with the current ID in the 'ontologies' array
       const ontologyIdx = ontologies.findIndex((onto: any) => onto.id === path);
+
+      // Check if the ontology with the current ID was found
       if (ontologyIdx !== -1) {
+        // If found, add an object to the ontologyPath array with 'id' and 'title' properties
         ontologyPath.push({
           id: path,
           title: ontologies[ontologyIdx].title,
         });
       }
+      // If not found, the ontology with the current ID is skipped in the final path
     }
+
+    // Return the constructed ontology path
     return ontologyPath;
   };
+
+  // Function to generate a tree structure of specializations based on main ontologies
   const getSpecializationsTree = ({ mainOntologies, path }: any) => {
-    let _mainSpecializations: any = {};
+    // Object to store the main specializations tree
+    let newSpecializationsTree: any = {};
+
+    // Iterate through each main ontology
     for (let ontology of mainOntologies) {
-      _mainSpecializations[ontology.title] = {
+      // Create an entry for the current ontology in the main specializations tree
+      newSpecializationsTree[ontology.title] = {
         id: ontology.id,
         path: [...path, ontology.id],
         isCategory: !!ontology.category,
         title: ontology.title,
         specializations: {},
       };
+
+      // Iterate through each category in the Specializations sub-ontologies
       for (let category in ontology?.subOntologies?.Specializations) {
+        // Filter ontologies based on the current category
         const specializations =
           ontologies.filter((onto: any) => {
             const arrayOntologies = ontology?.subOntologies?.Specializations[
@@ -341,14 +248,17 @@ const CIOntology = () => {
             return arrayOntologies.includes(onto.id);
           }) || [];
 
+        // Check if the category is the main category
         if (category === "main") {
-          _mainSpecializations[ontology.title] = {
+          // If main, update the main specializations entry with recursive call
+          newSpecializationsTree[ontology.title] = {
             id: ontology.id,
             path: [...path, ontology.id],
             isCategory: !!ontology.category,
             title: ontology.title,
             specializations: {
-              ...(_mainSpecializations[ontology.title]?.specializations || {}),
+              ...(newSpecializationsTree[ontology.title]?.specializations ||
+                {}),
               ...getSpecializationsTree({
                 mainOntologies: specializations,
                 path: [...path, ontology.id],
@@ -356,16 +266,18 @@ const CIOntology = () => {
             },
           };
         } else {
-          _mainSpecializations[ontology.title] = {
+          // If not main, create a new entry for the category
+          newSpecializationsTree[ontology.title] = {
             id: ontology.id,
             path: [...path, ontology.id],
             title: ontology.title,
             c: ontology.category,
             specializations: {
-              ...(_mainSpecializations[ontology.title]?.specializations || {}),
+              ...(newSpecializationsTree[ontology.title]?.specializations ||
+                {}),
               [category]: {
                 isCategory: true,
-                id: newId(db),
+                id: newId(db), // Assuming newId and db are defined elsewhere
                 title: category,
                 specializations: getSpecializationsTree({
                   mainOntologies: specializations,
@@ -377,7 +289,9 @@ const CIOntology = () => {
         }
       }
     }
-    return _mainSpecializations;
+
+    // Return the main specializations tree
+    return newSpecializationsTree;
   };
 
   const recordLogs = async (logs: any) => {
@@ -395,17 +309,12 @@ const CIOntology = () => {
   };
 
   useEffect(() => {
-    if (user) {
-      if (!emailVerified) {
-        router.replace("/signin");
-      }
-    }
-  }, [user, emailVerified]);
-
-  useEffect(() => {
+    // Filter ontologies to get only those with a defined category
     const mainOntologies = ontologies.filter(
       (ontology: any) => ontology.category
     );
+
+    // Sort main ontologies based on a predefined order
     mainOntologies.sort((a: any, b: any) => {
       const order = [
         "WHAT: Activities",
@@ -415,13 +324,15 @@ const CIOntology = () => {
       ];
       return order.indexOf(a.title) - order.indexOf(b.title);
     });
-    let __mainSpecializations = getSpecializationsTree({
+
+    // Generate a tree structure of specializations from the sorted main ontologies
+    let treeOfSpecialisations = getSpecializationsTree({
       mainOntologies,
       path: [],
     });
-    // __mainSpecializations = addMissingCategories({ __mainSpecializations });
-    /* ------------------  */
-    setTreeVisualisation(__mainSpecializations);
+
+    // Set the generated tree structure for visualization
+    setTreeVisualisation(treeOfSpecialisations);
   }, [ontologies]);
 
   const updateTheUrl = (path: IOntologyPath[]) => {
@@ -431,62 +342,100 @@ const CIOntology = () => {
   };
 
   useEffect(() => {
+    // Function to handle changes in the URL hash
     const handleHashChange = async () => {
+      // Check if there is a hash in the URL
       if (window.location.hash) {
-        setOntologyPath(getPath(window.location.hash.split("#") || []));
+        // Call updateUserDoc with the hash split into an array
         updateUserDoc(window.location.hash.split("#"));
       }
     };
+
+    // Add an event listener to the window for hash changes
     window.addEventListener("hashchange", handleHashChange);
 
+    // Call handleHashChange immediately to handle any initial hash
     handleHashChange();
+
+    // Clean up the event listener when the component is unmounted
     return () => {
       window.removeEventListener("hashchange", handleHashChange);
     };
   }, []);
 
   useEffect(() => {
+    // Check if user or ontologies are not available, then return early
     if (!user) return;
     if (!ontologies.length) return;
 
+    // Query the database for the user based on userId
     const userQuery = query(
       collection(db, "users"),
       where("userId", "==", user.userId)
     );
+
+    // Set up a snapshot listener for changes in the user data
     const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
+      // Get the first document change from the snapshot
       const docChange = snapshot.docChanges()[0];
+
+      // Get the data from the document change
       const dataChange = docChange.doc.data();
+
+      // Set the ontologyPath in the component state
       setOntologyPath(getPath(dataChange?.ontologyPath || []));
+
+      // Update the URL based on the ontologyPath
       updateTheUrl(getPath(dataChange?.ontologyPath || []));
+
+      // Get the last ontology in the ontologyPath or an empty string if none
       const lastOntology = dataChange?.ontologyPath?.reverse()[0] || "";
+
+      // Find the index of the last ontology in the ontologies array
       const ontologyIdx = ontologies.findIndex(
         (ontology: any) => ontology.id === lastOntology
       );
+
+      // If the ontology is found, set it as the open ontology in the component state
       if (ontologies[ontologyIdx]) setOpenOntology(ontologies[ontologyIdx]);
     });
 
+    // Cleanup function: Unsubscribe from the user data snapshot listener
     return () => unsubscribeUser();
   }, [db, user, ontologies]);
 
   useEffect(() => {
+    // Check if a user is logged in
     if (!user) return;
+
+    // Define the ontology query
     const ontologyQuery = query(
       collection(db, "ontologyLock"),
       where("deleted", "==", false)
     );
+
+    // Subscribe to changes in the ontologyLock collection
     const unsubscribeOntology = onSnapshot(ontologyQuery, (snapshot) => {
+      // Get the document changes in the snapshot
       const docChanges = snapshot.docChanges();
-      setLockedOntology((lockedOntology: ILockecOntology) => {
+
+      // Update the lockedOntology state based on the document changes
+      setLockedOntology((lockedOntology: ILockedOntology) => {
         let _lockedOntology = { ...lockedOntology };
+
+        // Iterate through each document change
         for (let change of docChanges) {
           const changeData: any = change.doc.data();
 
+          // Handle removed documents
           if (
             change.type === "removed" &&
             _lockedOntology.hasOwnProperty(changeData.ontology)
           ) {
             delete _lockedOntology[changeData.ontology][changeData.field];
-          } else if (change.type === "added") {
+          }
+          // Handle added documents
+          else if (change.type === "added") {
             _lockedOntology = {
               ..._lockedOntology,
               [changeData.ontology]: {
@@ -499,45 +448,75 @@ const CIOntology = () => {
             };
           }
         }
+
+        // Return the updated lockedOntology state
         return _lockedOntology;
       });
     });
+
+    // Unsubscribe from the ontologyLock collection when the component is unmounted
     return () => unsubscribeOntology();
+
+    // Dependency array includes user and db, meaning the effect will re-run if user or db changes
   }, [user, db]);
 
+  /* 
+ // TO:DO: Load only the data that the user is currently navigating through, 
+ to optimize for performance when the database get's larger
+ */
   useEffect(() => {
+    // Create a query for the "ontology" collection where "deleted" is false
     const ontologyQuery = query(
       collection(db, "ontology"),
       where("deleted", "==", false)
     );
+
+    // Set up a snapshot listener to track changes in the ontology collection
     const unsubscribeOntology = onSnapshot(ontologyQuery, (snapshot) => {
+      // Get the changes (added, modified, removed) in the snapshot
       const docChanges = snapshot.docChanges();
 
+      // Update the state based on the changes in the ontology collection
       setOntologies((ontologies: IOntology[]) => {
         const _ontologies = [...ontologies];
+
+        // Loop through each change in the snapshot
         for (let change of docChanges) {
           const changeData: any = change.doc.data();
 
+          // Find the index of the document in the current state
           const previousIdx = _ontologies.findIndex(
             (d) => d.id === change.doc.id
           );
+
+          // Check the type of change and update the state accordingly
           if (change.type === "removed" && previousIdx !== -1) {
+            // If the document is removed, remove it from the state
             _ontologies.splice(previousIdx, 1);
           } else if (previousIdx !== -1) {
+            // If the document is modified, update its data in the state
             _ontologies[previousIdx] = { id: change.doc.id, ...changeData };
           } else {
+            // If the document is added, add it to the state
             _ontologies.push({
               id: change.doc.id,
               ...changeData,
             });
           }
         }
+
+        // Return the updated state
         return _ontologies;
       });
     });
+
+    // Unsubscribe from the snapshot listener when the component is unmounted
     return () => unsubscribeOntology();
+
+    // TO:DO: Load only the data that the user is currently navigating through, optimize for performance
   }, [db]);
 
+  // Function to get the parent ID based on the ontology type
   const getParent = (type: string) => {
     if (type === "Evaluation") {
       return treeVisualisation["WHY: Evaluation"].id;
@@ -548,10 +527,14 @@ const CIOntology = () => {
     }
   };
 
+  // Callback function to handle navigation when a link is clicked
   const handleLinkNavigation = useCallback(
     async (path: { id: string; title: string }, type: string) => {
       try {
+        // Check if user is logged in and ontology is open
         if (!user || !openOntology) return;
+
+        // Check if the clicked ontology is already in the ontologies list
         if (
           ontologies
             .filter((ontology: any) => ontology.category)
@@ -559,23 +542,28 @@ const CIOntology = () => {
             .includes(path.title)
         )
           return;
+
+        // Find index of the clicked ontology in the ontologies array
         const ontologyIndex = ontologies.findIndex(
           (ontology: any) => ontology.id === path.id
         );
 
+        // Update the open ontology or add a new ontology if not in the list
         if (ontologyIndex !== -1) {
           setOpenOntology(ontologies[ontologyIndex]);
         } else {
-          const parent = getParent(INITIAL_VALUES[type].ontologyType);
+          const parent = getParent(ONTOLOGY_TYPES[type].ontologyType);
           const parentSet: any = new Set([openOntology.id, parent]);
           const parents = [...parentSet];
-          const newOntology = INITIAL_VALUES[type];
+          const newOntology = ONTOLOGY_TYPES[type];
           addNewOntology({
             id: path.id,
             newOntology: { parents, ...newOntology },
           });
           setOpenOntology({ id: path.id, ...newOntology, parents });
         }
+
+        // Update ontology path and user document
         let _ontologyPath = [...ontologyPath];
         const pathIdx = _ontologyPath.findIndex((p: any) => p.id === path.id);
         if (pathIdx !== -1) {
@@ -592,16 +580,22 @@ const CIOntology = () => {
     [ontologies, ontologyPath]
   );
 
+  // Function to update the user document with the current ontology path
   const updateUserDoc = async (ontologyPath: string[]) => {
     if (!user) return;
-    // ontologyPath = ontologyPath.filter((path: string) => !!path.trim());
+
+    // Query to get the user document
     const userQuery = query(
       collection(db, "users"),
       where("userId", "==", user.userId)
     );
     const userDocs = await getDocs(userQuery);
     const userDoc = userDocs.docs[0];
+
+    // Update the user document with the ontology path
     await updateDoc(userDoc.ref, { ontologyPath });
+
+    // Record logs if ontology path is not empty
     if (ontologyPath.length > 0) {
       await recordLogs({
         action: "Opened a page",
@@ -610,15 +604,23 @@ const CIOntology = () => {
     }
   };
 
+  // Callback function to add a new ontology to the database
   const addNewOntology = useCallback(
     async ({ id, newOntology }: { id: string; newOntology: any }) => {
       try {
+        // Reference to the new ontology document
         const newOntologyRef = doc(collection(db, "ontology"), id);
+
+        // Set the document with the new ontology data
         await setDoc(newOntologyRef, { ...newOntology, deleted: false });
+
+        // Record logs for the created ontology
         await recordLogs({
           action: "Created a field",
-          feild: newOntology.ontologyType,
+          field: newOntology.ontologyType,
         });
+
+        // Set the newly created ontology as editable
         setEditOntology(id);
       } catch (error) {
         console.error(error);
@@ -627,42 +629,72 @@ const CIOntology = () => {
     [ontologies]
   );
 
+  // This function adds a sub-ontology to a parent ontology in a Firestore database.
+  // It takes the type and id of the sub-ontology as parameters.
+
   const addSubOntologyToParent = async (type: string, id: string) => {
+    // Get the ID of the parent ontology based on the provided type.
     const parentId = getParent(type);
+
+    // Check if a parent ID exists.
     if (parentId) {
+      // Find the parent ontology in the ontologies array.
       const parent: any = ontologies.find(
         (ontology: any) => ontology.id === parentId
       );
+
+      // Get a reference to the parent ontology in Firestore.
       const ontologyRef = doc(collection(db, "ontology"), parentId);
+
+      // Extract the Specializations array from the parent ontology.
       const specializations = parent.subOntologies.Specializations;
+
+      // Find the index of the sub-ontology in the Specializations array.
       const specializationIdx = parent.subOntologies.Specializations.findIndex(
         (spcial: any) => spcial.id === id
       );
+
+      // If the sub-ontology is not already in the array, add it.
       if (specializationIdx === -1) {
         specializations.push({
           id,
           title: "",
         });
       }
+
+      // Update the Specializations array in the parent ontology.
       parent.subOntologies.Specializations = specializations;
+
+      // Update the parent ontology in Firestore with the modified data.
       await updateDoc(ontologyRef, parent);
     }
   };
 
+  // Function to save a sub-ontology with given parameters
   const saveSubOntology = async (
-    subOntology: ISubOntology,
-    type: string,
-    id: string
+    subOntology: ISubOntology, // The sub-ontology object to be saved
+    type: string, // The type of sub-ontology (e.g., "Specializations" or "Evaluation Dimensions")
+    id: string // The ID of the parent ontology to which the sub-ontology belongs
   ) => {
     try {
+      // Check if the parent ontology is open; if not, return
       if (!openOntology) return;
+
+      // Reference to the parent ontology document in the database
       const ontologyParentRef = doc(collection(db, "ontology"), id);
+      // Retrieve the parent ontology document
       const ontologyParentDoc = await getDoc(ontologyParentRef);
+      // Extract data from the parent ontology document
       const ontologyParent: any = ontologyParentDoc.data();
+      // If the parent ontology does not exist, return
       if (!ontologyParent) return;
+
+      // Find the index of the sub-ontology within the specified type in the parent ontology
       const idx = ontologyParent.subOntologies[type].findIndex(
         (sub: ISubOntology) => sub.id === subOntology.id
       );
+
+      // If the sub-ontology is not found, add it; otherwise, update its title
       if (idx === -1) {
         ontologyParent.subOntologies[type].push({
           title: subOntology.title,
@@ -671,12 +703,21 @@ const CIOntology = () => {
       } else {
         ontologyParent[type][idx].title = subOntology.title;
       }
+
+      // Reference to the new sub-ontology document in the database
       const newOntologyRef = doc(collection(db, "ontology"), subOntology.id);
+      // Retrieve the new sub-ontology document
       const newOntologyDoc = await getDoc(newOntologyRef);
+
+      // If the new sub-ontology document exists, update its title
       if (newOntologyDoc.exists()) {
         await updateDoc(newOntologyRef, { title: subOntology.title });
       }
+
+      // Update the parent ontology document with the modified data
       await updateDoc(ontologyParentRef, ontologyParent);
+
+      // Determine the sub-ontology type for navigation purposes
       let subOntologyType = type;
       if (type === "Specializations") {
         subOntologyType = ontologyParent.ontologyType;
@@ -684,80 +725,161 @@ const CIOntology = () => {
       if (type === "Evaluation Dimensions") {
         subOntologyType = "Evaluation";
       }
+
+      // Trigger a navigation function with the sub-ontology details and type
       handleLinkNavigation(
         { id: subOntology.id, title: subOntology.title },
         subOntologyType
       );
+
+      // Add the sub-ontology to its parent in the ontology hierarchy
       await addSubOntologyToParent(subOntologyType, subOntology.id);
     } catch (error) {
+      // Log any errors that occur during the execution of the function
       console.error(error);
     }
   };
 
-  const onOpenOntologyTree = useCallback(
-    async (ontologyId: string, path: string[]) => {
+  // Define a callback function to handle the opening of the ontology DAGRE view.
+  const onOpenOntologyDagre = useCallback(
+    async (ontologyId: string) => {
+      // Check if a user is logged in, if not, exit the function.
       if (!user) return;
+
+      // Find the index of the ontology with the specified ID in the ontologies array.
       const ontologyIdx = ontologies.findIndex(
         (onto: any) => onto.id === ontologyId
       );
 
+      // Filter out main ontologies (ontologies with a category).
+      const mainOntologies = ontologies.filter(
+        (ontology: any) => ontology.category
+      );
+
+      // Initialize an object to store the path of each ontology in the DAGRE view.
+      let eachOntologyPath = findOntologyPath({
+        mainOntologies,
+        path: [],
+        eachOntologyPath: {},
+      });
+
+      // Check if the ontology with the specified ID exists and is not a main ontology (no category).
       if (ontologyIdx !== -1 && !ontologies[ontologyIdx].category) {
+        // Set the opened ontology as the currently selected ontology.
         setOpenOntology(ontologies[ontologyIdx]);
+
+        // Record logs for the action of opening the DAGRE view for the ontology.
         await recordLogs({
-          action: "Clicked tree-view",
+          action: "opened dagre-view",
           itemClicked: ontologies[ontologyIdx].id,
         });
-        await updateUserDoc(path);
+
+        // Update the user document with the ontology path.
+        await updateUserDoc([
+          ...(eachOntologyPath[ontologyId] || [ontologyId]),
+        ]);
       }
     },
+    // Dependency array includes ontologies and user, ensuring the function re-renders when these values change.
     [ontologies, user]
   );
+// Function to handle opening ontology tree
+const onOpenOntologyTree = useCallback(
+  async (ontologyId: string, path: string[]) => {
+    // Check if user is logged in
+    if (!user) return;
 
-  const orderComments = () => {
-    return (openOntology?.comments || []).sort((a: any, b: any) => {
-      const timestampA: any = a.createdAt.toDate();
-      const timestampB: any = b.createdAt.toDate();
-      return timestampA - timestampB;
-    });
-  };
+    // Find the index of the ontology in the ontologies array
+    const ontologyIdx = ontologies.findIndex(
+      (onto: any) => onto.id === ontologyId
+    );
 
-  const getMainSpecialisations = (treeVisualisation: TreeVisual) => {
-    let mainSpecializations: MainSpecializations = {};
-    for (let category in treeVisualisation) {
-      mainSpecializations = {
-        ...mainSpecializations,
-        ...treeVisualisation[category].specializations,
-      };
+    // Check if ontology exists and has a category
+    if (ontologyIdx !== -1 && !ontologies[ontologyIdx].category) {
+      // Set the currently open ontology
+      setOpenOntology(ontologies[ontologyIdx]);
+
+      // Record logs for the action of clicking the tree-view
+      await recordLogs({
+        action: "clicked tree-view",
+        itemClicked: ontologies[ontologyIdx].id,
+      });
+
+      // Update user document with the path
+      await updateUserDoc(path);
     }
+  },
+  [ontologies, user]
+);
+
+// Function to order comments based on their creation timestamp
+const orderComments = () => {
+  return (openOntology?.comments || []).sort((a: any, b: any) => {
+    const timestampA: any = a.createdAt.toDate();
+    const timestampB: any = b.createdAt.toDate();
+    return timestampA - timestampB;
+  });
+};
+
+// Function to retrieve main specializations from tree visualization data
+const getMainSpecialisations = (treeVisualisation: TreeVisual) => {
+  let mainSpecializations: MainSpecializations = {};
+
+  // Loop through categories in tree visualization
+  for (let category in treeVisualisation) {
     mainSpecializations = {
       ...mainSpecializations,
-      ...(mainSpecializations["Actor"]?.specializations || {}),
+      ...treeVisualisation[category].specializations,
     };
-    return mainSpecializations;
+  }
+
+  // Include specializations for "Actor" category
+  mainSpecializations = {
+    ...mainSpecializations,
+    ...(mainSpecializations["Actor"]?.specializations || {}),
   };
 
-  const searchWithFuse = (query: string): any => {
-    if (!query) {
-      return [];
-    }
-    recordLogs({
-      action: "Searched",
-      query,
-    });
-    return fuse
-      .search(query)
-      .map((result) => result.item)
-      .filter((item: any) => !item.deleted);
-  };
+  return mainSpecializations;
+};
 
+// Function to perform a search using Fuse.js library
+const searchWithFuse = (query: string): any => {
+  // Return an empty array if the query is empty
+  if (!query) {
+    return [];
+  }
+
+  // Record logs for the search action
+  recordLogs({
+    action: "Searched",
+    query,
+  });
+
+  // Perform search using Fuse.js, filter out deleted items
+  return fuse
+    .search(query)
+    .map((result) => result.item)
+    .filter((item: any) => !item.deleted);
+};
+
+
+  // This function handles the process of sending a new comment to an ontology.
   const handleSendComment = async () => {
     try {
+      // Check if user or openOntology is not available, exit the function.
       if (!user || !openOntology) return;
+
+      // Retrieve the document for the current ontology using its ID.
       const ontologyDoc = await getDoc(
         doc(collection(db, "ontology"), openOntology.id)
       );
+      // Extract existing ontology data or default to an empty object.
       const ontologyData = ontologyDoc.data();
+
+      // Extract existing comments from the ontology data or initialize as an empty array.
       const comments = ontologyData?.comments || [];
+
+      // Add a new comment to the comments array.
       comments.push({
         id: newId(db),
         content: newComment,
@@ -766,38 +888,39 @@ const CIOntology = () => {
         senderUname: user.uname,
         createdAt: new Date(),
       });
+
+      // Update the ontology document with the new comments array.
       await updateDoc(ontologyDoc.ref, { comments });
+
+      // Record the comment action in the application logs.
       await recordLogs({
         action: "Commented",
         comment: newComment,
         ontology: ontologyDoc.id,
       });
+
+      // Clear the newComment state after successfully sending the comment.
       setNewComment("");
     } catch (error) {
+      // Handle any errors that may occur during the process and log them.
       console.error(error);
     }
   };
-  function formatFirestoreTimestampWithMoment(timestamp: any) {
-    const firestoreTimestamp = timestamp.toDate();
-    const now = moment();
-    const momentTimestamp = moment(firestoreTimestamp);
-    const hoursAgo = now.diff(momentTimestamp, "hours");
 
-    if (hoursAgo < 1) {
-      return momentTimestamp.format("h:mm A") + " Today";
-    } else {
-      return momentTimestamp.format("h:mm A MMM D, YYYY");
-    }
-  }
-
+  // Function to delete a comment by its ID
   const deleteComment = async (commentId: string) => {
     try {
+      // Check if there is an open ontology
       if (!openOntology) return;
+
+      // If the comment being edited matches the comment to delete, reset editing state and return
       if (editingComment === commentId) {
         setEditingComment("");
         setUpdateComment("");
         return;
       }
+
+      // Confirm deletion with the user
       if (
         await confirmIt(
           "Are you sure you want to delete the comment?",
@@ -805,14 +928,21 @@ const CIOntology = () => {
           "Keep Comment"
         )
       ) {
+        // Retrieve the ontology document from the database
         const ontologyDoc = await getDoc(
           doc(collection(db, "ontology"), openOntology.id)
         );
         const ontologyData = ontologyDoc.data();
+
+        // Retrieve and filter out the comment to be deleted
         let comments = ontologyData?.comments || [];
         const removedComment = comments.filter((c: any) => c.id === commentId);
         comments = comments.filter((c: any) => c.id !== commentId);
+
+        // Update the ontology document with the modified comments
         await updateDoc(ontologyDoc.ref, { comments });
+
+        // Record the deletion action in the logs
         await recordLogs({
           action: "Comment Deleted",
           comment: removedComment,
@@ -823,34 +953,48 @@ const CIOntology = () => {
       console.error(error);
     }
   };
+
+  // Function to edit a comment
   const editComment = async (comment: any) => {
     try {
+      // Check if there is an open ontology and the comment matches the editing state
       if (comment.id === editingComment && openOntology) {
+        // Retrieve the ontology document from the database
         const ontologyDoc = await getDoc(
           doc(collection(db, "ontology"), openOntology.id)
         );
         const ontologyData = ontologyDoc.data();
+
+        // Retrieve and update the comment content
         let comments = ontologyData?.comments || [];
         const commentIdx = comments.findIndex((c: any) => c.id == comment.id);
+
+        // Record the modification action in the logs
         recordLogs({
           action: "Comment Modified",
           previousValue: comments[commentIdx].content,
           newValue: updateComment,
         });
+
+        // Update the comment content and reset the editing state
         comments[commentIdx].content = updateComment;
         setEditingComment("");
         await updateDoc(ontologyDoc.ref, { comments });
 
+        // Reset additional state variables
         setUpdateComment("");
         setNewComment("");
         return;
       }
+
+      // If not in editing state, set the comment as the one being edited
       setEditingComment(comment.id);
       setUpdateComment(comment.content);
     } catch (error) {
       console.error(error);
     }
   };
+
   const handleChange = (event: any, newValue: number) => {
     setValue(newValue);
   };
@@ -859,47 +1003,65 @@ const CIOntology = () => {
     setViewValue(newValue);
   };
 
+  // This function finds the path of an ontology in a nested structure of mainOntologies and their subOntologies.
   const findOntologyPath = useCallback(
     ({ mainOntologies, path, eachOntologyPath }: any) => {
-      for (let ontlogy of mainOntologies) {
-        eachOntologyPath[ontlogy.id] = [...path, ontlogy.id];
+      // Loop through each main ontology
+      for (let ontology of mainOntologies) {
+        // Update the path for the current ontology
+        eachOntologyPath[ontology.id] = [...path, ontology.id];
 
-        for (let category in ontlogy?.subOntologies?.Specializations) {
+        // Loop through categories in the subOntologies of the current ontology
+        for (let category in ontology?.subOntologies?.Specializations) {
+          // Filter ontologies based on their inclusion in the Specializations of the current category
           const specializations =
             ontologies.filter((onto: any) => {
-              const arrayOntologies = ontlogy?.subOntologies?.Specializations[
+              const arrayOntologies = ontology?.subOntologies?.Specializations[
                 category
               ]?.ontologies.map((o: any) => o.id);
               return arrayOntologies.includes(onto.id);
             }) || [];
+
+          // Recursively call the findOntologyPath function for the filtered specializations
           eachOntologyPath = findOntologyPath({
             mainOntologies: specializations,
-            path: [...path, ontlogy.id],
+            path: [...path, ontology.id],
             eachOntologyPath,
           });
         }
       }
 
+      // Return the accumulated ontology paths
       return eachOntologyPath;
     },
     [ontologies]
   );
 
+  // This function is called when a search result ontology is clicked.
   const openSearchOntology = (ontology: any) => {
     try {
+      // Set the clicked ontology as the open ontology
       setOpenOntology(ontology);
+
+      // Record the click action in logs
       recordLogs({
         action: "Search result clicked",
         clicked: ontology.id,
       });
+
+      // Filter main ontologies based on the presence of a category
       const mainOntologies = ontologies.filter(
         (ontology: any) => ontology.category
       );
+
+      // Initialize eachOntologyPath with an empty object and find the ontology path
       let eachOntologyPath = findOntologyPath({
         mainOntologies,
         path: [],
         eachOntologyPath: {},
       });
+
+      // Update the user document with the ontology path
       updateUserDoc([...(eachOntologyPath[ontology.id] || [ontology.id])]);
     } catch (error) {
       console.error(error);
@@ -971,7 +1133,11 @@ const CIOntology = () => {
           } else {
             // Update the specified field in the inheritance information.
             const inheritance = currentOntology.inheritance[type][updatedField];
-            if (inheritance.ref && inheritance.ref == parentId) {
+            if (
+              inheritance &&
+              inheritance?.ref &&
+              inheritance.ref == parentId
+            ) {
               inheritance.title = ancestorTitle;
 
               // If the modified field was "description," update the corresponding field in the ontology.
@@ -1027,7 +1193,7 @@ const CIOntology = () => {
                   expandedOntologies={expandedOntologies}
                   setDagreZoomState={setDagreZoomState}
                   dagreZoomState={dagreZoomState}
-                  onOpenOntologyTree={onOpenOntologyTree}
+                  onOpenOntologyDagre={onOpenOntologyDagre}
                 />
               </TabPanel>
             </Box>
@@ -1091,7 +1257,7 @@ const CIOntology = () => {
                 mainSpecializations={getMainSpecialisations(treeVisualisation)}
                 ontologies={ontologies}
                 addNewOntology={addNewOntology}
-                INITIAL_VALUES={INITIAL_VALUES}
+                ONTOLOGY_TYPES={ONTOLOGY_TYPES}
                 editOntology={editOntology}
                 setEditOntology={setEditOntology}
                 lockedOntology={lockedOntology}
