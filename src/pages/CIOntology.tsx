@@ -627,42 +627,72 @@ const CIOntology = () => {
     [ontologies]
   );
 
+  // This function adds a sub-ontology to a parent ontology in a Firestore database.
+  // It takes the type and id of the sub-ontology as parameters.
+
   const addSubOntologyToParent = async (type: string, id: string) => {
+    // Get the ID of the parent ontology based on the provided type.
     const parentId = getParent(type);
+
+    // Check if a parent ID exists.
     if (parentId) {
+      // Find the parent ontology in the ontologies array.
       const parent: any = ontologies.find(
         (ontology: any) => ontology.id === parentId
       );
+
+      // Get a reference to the parent ontology in Firestore.
       const ontologyRef = doc(collection(db, "ontology"), parentId);
+
+      // Extract the Specializations array from the parent ontology.
       const specializations = parent.subOntologies.Specializations;
+
+      // Find the index of the sub-ontology in the Specializations array.
       const specializationIdx = parent.subOntologies.Specializations.findIndex(
         (spcial: any) => spcial.id === id
       );
+
+      // If the sub-ontology is not already in the array, add it.
       if (specializationIdx === -1) {
         specializations.push({
           id,
           title: "",
         });
       }
+
+      // Update the Specializations array in the parent ontology.
       parent.subOntologies.Specializations = specializations;
+
+      // Update the parent ontology in Firestore with the modified data.
       await updateDoc(ontologyRef, parent);
     }
   };
 
+  // Function to save a sub-ontology with given parameters
   const saveSubOntology = async (
-    subOntology: ISubOntology,
-    type: string,
-    id: string
+    subOntology: ISubOntology, // The sub-ontology object to be saved
+    type: string, // The type of sub-ontology (e.g., "Specializations" or "Evaluation Dimensions")
+    id: string // The ID of the parent ontology to which the sub-ontology belongs
   ) => {
     try {
+      // Check if the parent ontology is open; if not, return
       if (!openOntology) return;
+
+      // Reference to the parent ontology document in the database
       const ontologyParentRef = doc(collection(db, "ontology"), id);
+      // Retrieve the parent ontology document
       const ontologyParentDoc = await getDoc(ontologyParentRef);
+      // Extract data from the parent ontology document
       const ontologyParent: any = ontologyParentDoc.data();
+      // If the parent ontology does not exist, return
       if (!ontologyParent) return;
+
+      // Find the index of the sub-ontology within the specified type in the parent ontology
       const idx = ontologyParent.subOntologies[type].findIndex(
         (sub: ISubOntology) => sub.id === subOntology.id
       );
+
+      // If the sub-ontology is not found, add it; otherwise, update its title
       if (idx === -1) {
         ontologyParent.subOntologies[type].push({
           title: subOntology.title,
@@ -671,12 +701,21 @@ const CIOntology = () => {
       } else {
         ontologyParent[type][idx].title = subOntology.title;
       }
+
+      // Reference to the new sub-ontology document in the database
       const newOntologyRef = doc(collection(db, "ontology"), subOntology.id);
+      // Retrieve the new sub-ontology document
       const newOntologyDoc = await getDoc(newOntologyRef);
+
+      // If the new sub-ontology document exists, update its title
       if (newOntologyDoc.exists()) {
         await updateDoc(newOntologyRef, { title: subOntology.title });
       }
+
+      // Update the parent ontology document with the modified data
       await updateDoc(ontologyParentRef, ontologyParent);
+
+      // Determine the sub-ontology type for navigation purposes
       let subOntologyType = type;
       if (type === "Specializations") {
         subOntologyType = ontologyParent.ontologyType;
@@ -684,15 +723,64 @@ const CIOntology = () => {
       if (type === "Evaluation Dimensions") {
         subOntologyType = "Evaluation";
       }
+
+      // Trigger a navigation function with the sub-ontology details and type
       handleLinkNavigation(
         { id: subOntology.id, title: subOntology.title },
         subOntologyType
       );
+
+      // Add the sub-ontology to its parent in the ontology hierarchy
       await addSubOntologyToParent(subOntologyType, subOntology.id);
     } catch (error) {
+      // Log any errors that occur during the execution of the function
       console.error(error);
     }
   };
+
+  // Define a callback function to handle the opening of the ontology DAGRE view.
+  const onOpenOntologyDagre = useCallback(
+    async (ontologyId: string) => {
+      // Check if a user is logged in, if not, exit the function.
+      if (!user) return;
+
+      // Find the index of the ontology with the specified ID in the ontologies array.
+      const ontologyIdx = ontologies.findIndex(
+        (onto: any) => onto.id === ontologyId
+      );
+
+      // Filter out main ontologies (ontologies with a category).
+      const mainOntologies = ontologies.filter(
+        (ontology: any) => ontology.category
+      );
+
+      // Initialize an object to store the path of each ontology in the DAGRE view.
+      let eachOntologyPath = findOntologyPath({
+        mainOntologies,
+        path: [],
+        eachOntologyPath: {},
+      });
+
+      // Check if the ontology with the specified ID exists and is not a main ontology (no category).
+      if (ontologyIdx !== -1 && !ontologies[ontologyIdx].category) {
+        // Set the opened ontology as the currently selected ontology.
+        setOpenOntology(ontologies[ontologyIdx]);
+
+        // Record logs for the action of opening the DAGRE view for the ontology.
+        await recordLogs({
+          action: "opened dagre-view",
+          itemClicked: ontologies[ontologyIdx].id,
+        });
+
+        // Update the user document with the ontology path.
+        await updateUserDoc([
+          ...(eachOntologyPath[ontologyId] || [ontologyId]),
+        ]);
+      }
+    },
+    // Dependency array includes ontologies and user, ensuring the function re-renders when these values change.
+    [ontologies, user]
+  );
 
   const onOpenOntologyTree = useCallback(
     async (ontologyId: string, path: string[]) => {
@@ -704,7 +792,7 @@ const CIOntology = () => {
       if (ontologyIdx !== -1 && !ontologies[ontologyIdx].category) {
         setOpenOntology(ontologies[ontologyIdx]);
         await recordLogs({
-          action: "Clicked tree-view",
+          action: "clicked tree-view",
           itemClicked: ontologies[ontologyIdx].id,
         });
         await updateUserDoc(path);
@@ -1027,7 +1115,7 @@ const CIOntology = () => {
                   expandedOntologies={expandedOntologies}
                   setDagreZoomState={setDagreZoomState}
                   dagreZoomState={dagreZoomState}
-                  onOpenOntologyTree={onOpenOntologyTree}
+                  onOpenOntologyDagre={onOpenOntologyDagre}
                 />
               </TabPanel>
             </Box>

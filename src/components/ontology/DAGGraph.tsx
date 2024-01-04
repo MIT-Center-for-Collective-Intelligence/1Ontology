@@ -78,7 +78,7 @@ type IDAGGraphProps = {
   expandedOntologies: Set<string>;
   setDagreZoomState: any;
   dagreZoomState: any;
-  onOpenOntologyTree: (ontologyId: string, path: string[]) => void;
+  onOpenOntologyDagre: (ontologyId: string) => void;
 };
 
 const DAGGraph = ({
@@ -87,12 +87,12 @@ const DAGGraph = ({
   setExpandedOntologies,
   setDagreZoomState,
   dagreZoomState,
-  onOpenOntologyTree,
+  onOpenOntologyDagre,
 }: IDAGGraphProps) => {
   const svgRef = useRef(null);
 
   const handleNodeClick = (ontologyId: string) => {
-    onOpenOntologyTree(ontologyId, []);
+    onOpenOntologyDagre(ontologyId);
     if (expandedOntologies.has(ontologyId)) {
       expandedOntologies.delete(ontologyId);
     } else {
