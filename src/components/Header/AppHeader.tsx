@@ -24,7 +24,6 @@ This file contains the implementation of the application header component (`AppH
 ## Components
 ### AppHeader Component
 - The `AppHeader` component is a functional component that serves as the application header.
-- It takes various props such as `page`, `sections`, `selectedSectionId`, `onSwitchSection`, `mitpage`, and `tutorPage`.
 - It includes theming functionality, user authentication, and a profile menu.
 - The header is styled using Material-UI components and includes a dynamic logo based on the theme.
 
@@ -63,17 +62,7 @@ export const orange900 = "#E56200";
 
 export type HeaderPage = "ONE_CADEMY" | "ONE_ASSISTANT" | "COMMUNITIES";
 
-type AppHeaderProps = {
-  page: HeaderPage;
-  sections: any;
-  selectedSectionId: string;
-  onSwitchSection: (sectionId: string) => void;
-  mitpage?: boolean;
-  tutorPage?: boolean;
-  // preUrl?: string;
-};
-
-const AppHeader = forwardRef(({ onSwitchSection }: AppHeaderProps, ref) => {
+const AppHeader = forwardRef(({}, ref) => {
   const [{ isAuthenticated, user }] = useAuth();
   const [handleThemeSwitch] = useThemeChange();
   const theme = useTheme();

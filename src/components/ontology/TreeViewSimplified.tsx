@@ -9,40 +9,20 @@ import React, { useEffect, useState } from "react";
 type ITreeViewSimplifiedProps = {
   onOpenOntologyTree: (ontologyId: string, path: string[]) => void;
   treeVisualisation: TreeVisual;
+  expandedOntologiesTree: any;
 };
 const TreeViewSimplified = ({
   treeVisualisation,
   onOpenOntologyTree,
+  expandedOntologiesTree,
 }: ITreeViewSimplifiedProps) => {
-  const [expandedNodes, setExpandedNodes] = useState<any>([]);
 
-  useEffect(() => {
-    const updatedExpandedNodes = calculateExpandedNodes(treeVisualisation);
-    setExpandedNodes(updatedExpandedNodes);
-  }, [treeVisualisation]);
-
-  const calculateExpandedNodes = (specializations: any) => {
-    const updatedExpandedNodes: any = [];
-
-    Object.keys(specializations).forEach((category) => {
-      updatedExpandedNodes.push(specializations[category]?.id || category);
-
-      if (Object.keys(specializations[category].specializations).length > 0) {
-        const childExpandedNodes = calculateExpandedNodes(
-          specializations[category].specializations
-        );
-        updatedExpandedNodes.push(...childExpandedNodes);
-      }
-    });
-
-    return updatedExpandedNodes;
-  };
 
   return (
     <TreeView
       defaultCollapseIcon={<ExpandMoreIcon />}
       defaultExpandIcon={<ChevronRightIcon />}
-      defaultExpanded={expandedNodes}
+      defaultExpanded={expandedOntologiesTree}
       disabledItemsFocusable={false}
       defaultEndIcon={<div style={{ width: 24 }} />}
       multiSelect
@@ -98,6 +78,7 @@ const TreeViewSimplified = ({
             <TreeViewSimplified
               treeVisualisation={treeVisualisation[category].specializations}
               onOpenOntologyTree={onOpenOntologyTree}
+              expandedOntologiesTree={expandedOntologiesTree}
             />
           )}
         </TreeItem>
