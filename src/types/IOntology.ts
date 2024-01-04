@@ -44,6 +44,7 @@ export type IOntologyTypes =
 export type IOntologyPath = {
   id: string;
   title: string;
+  category?:boolean;
 };
 export type InheritanceType = {
   [key: string]: { ref: string; title: string };

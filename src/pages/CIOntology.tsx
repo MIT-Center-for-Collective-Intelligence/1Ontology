@@ -180,7 +180,7 @@ const CIOntology = () => {
     new Set()
   );
   const [dagreZoomState, setDagreZoomState] = useState<any>(null);
-  const [expandedOntologiesTree, setExpandedOntologiesTree] = useState<any>([]);
+
   useEffect(() => {
     // Check if a user is logged in
     if (user) {
@@ -791,10 +791,10 @@ const CIOntology = () => {
       // Check if user is logged in
       if (!user) return;
       //update the expanded state
-      setExpandedOntologiesTree((prevExpanded: string[]) => [
-        ...prevExpanded,
-        ontologyId,
-      ]);
+      setExpandedOntologies((prevExpanded: Set<string>) => {
+        prevExpanded.add(ontologyId);
+        return prevExpanded;
+      });
       // Find the index of the ontology in the ontologies array
       const ontologyIdx = ontologies.findIndex(
         (onto: any) => onto.id === ontologyId
@@ -1189,7 +1189,7 @@ const CIOntology = () => {
                 <TreeViewSimplified
                   treeVisualisation={treeVisualisation}
                   onOpenOntologyTree={onOpenOntologyTree}
-                  expandedOntologiesTree={expandedOntologiesTree}
+                  expandedOntologies={expandedOntologies}
                 />
               </TabPanel>
               <TabPanel value={viewValue} index={1}>
@@ -1238,10 +1238,15 @@ const CIOntology = () => {
             <Breadcrumbs sx={{ ml: "40px" }}>
               {ontologyPath.map((path) => (
                 <Link
-                  underline="hover"
+                  underline={path.category ? "none" : "hover"}
                   key={path.id}
                   onClick={() => handleLinkNavigation(path, "")}
-                  sx={{ cursor: "pointer" }}
+                  sx={{
+                    cursor: !path.category ? "pointer" : "",
+                    ":hover": {
+                      cursor: !path.category ? "pointer" : "",
+                    },
+                  }}
                 >
                   {path.title.split(" ").splice(0, 3).join(" ") +
                     (path.title.split(" ").length > 3 ? "..." : "")}

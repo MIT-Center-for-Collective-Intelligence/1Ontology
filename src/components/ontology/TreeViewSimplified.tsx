@@ -9,20 +9,18 @@ import React, { useEffect, useState } from "react";
 type ITreeViewSimplifiedProps = {
   onOpenOntologyTree: (ontologyId: string, path: string[]) => void;
   treeVisualisation: TreeVisual;
-  expandedOntologiesTree: any;
+  expandedOntologies: any;
 };
 const TreeViewSimplified = ({
   treeVisualisation,
   onOpenOntologyTree,
-  expandedOntologiesTree,
+  expandedOntologies,
 }: ITreeViewSimplifiedProps) => {
-
-
   return (
     <TreeView
       defaultCollapseIcon={<ExpandMoreIcon />}
       defaultExpandIcon={<ChevronRightIcon />}
-      defaultExpanded={expandedOntologiesTree}
+      defaultExpanded={Array.from(expandedOntologies)}
       disabledItemsFocusable={false}
       defaultEndIcon={<div style={{ width: 24 }} />}
       multiSelect
@@ -78,7 +76,7 @@ const TreeViewSimplified = ({
             <TreeViewSimplified
               treeVisualisation={treeVisualisation[category].specializations}
               onOpenOntologyTree={onOpenOntologyTree}
-              expandedOntologiesTree={expandedOntologiesTree}
+              expandedOntologies={expandedOntologies}
             />
           )}
         </TreeItem>
