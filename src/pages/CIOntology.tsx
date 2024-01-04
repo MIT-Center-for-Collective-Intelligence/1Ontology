@@ -152,7 +152,8 @@ import { useAuth } from " @components/components/context/AuthContext";
 import { useRouter } from "next/router";
 import DAGGraph from " @components/components/ontology/DAGGraph";
 import { formatFirestoreTimestampWithMoment } from " @components/lib/utils/utils";
-import { ONTOLOGY_TYPES } from "./CONSTANTS";
+import { ONTOLOGY_TYPES } from " @components/lib/CONSTANTS";
+
 
 const CIOntology = () => {
   const db = getFirestore();
