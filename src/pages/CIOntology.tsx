@@ -433,7 +433,7 @@ const CIOntology = () => {
   useEffect(() => {
     const handleHashChange = async () => {
       if (window.location.hash) {
-        setOntologyPath(getPath(window.location.hash.split("#") || []));
+        // setOntologyPath(getPath(window.location.hash.split("#") || []));
         updateUserDoc(window.location.hash.split("#"));
       }
     };
