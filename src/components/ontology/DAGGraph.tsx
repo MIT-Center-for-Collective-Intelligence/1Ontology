@@ -107,7 +107,7 @@ const DAGGraph = ({
       graph.setNode(nodeId, {
         label: ontology.title,
         style: `fill: ${
-          ontology.isCategory ? "#40cc28" : "white"
+          ontology.isCategory ? "orange" : "white"
         }; stroke: black; stroke-width: 2px; cursor: pointer;`,
         labelStyle: "fill: black;",
       });
@@ -118,8 +118,8 @@ const DAGGraph = ({
         onDrawOntology(subOntology, graph);
         graph.setEdge(nodeId, subOntology.id, {
           curve: d3.curveBasis,
-          style: "stroke: #ff8a33; stroke-opacity: 1; fill: none;",
-          arrowheadStyle: "fill: #ff8a33",
+          style: "stroke: orange; stroke-opacity: 1; fill: none;",
+          arrowheadStyle: "fill: orange",
           minlen: 2,
         });
       }
