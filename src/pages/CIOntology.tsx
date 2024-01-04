@@ -1179,7 +1179,15 @@ const CIOntology = () => {
             <Tabs
               value={viewValue}
               onChange={handleViewChange}
-              sx={{ width: "100%", ml: "15px" }}
+              sx={{
+                width: "100%",
+                borderColor: "divider",
+                borderBottom: 1,
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? DESIGN_SYSTEM_COLORS.notebookG450
+                    : DESIGN_SYSTEM_COLORS.gray300,
+              }}
             >
               <Tab label="Tree View" {...a11yProps(0)} sx={{ width: "50%" }} />
               <Tab label="DAG View" {...a11yProps(1)} sx={{ width: "50%" }} />
