@@ -109,7 +109,7 @@ const DAGGraph = ({
         style: `fill: ${
           ontology.isCategory ? "orange" : "white"
         }; stroke: black; stroke-width: 2px; cursor: pointer;`,
-        labelStyle: "fill: black;",
+        labelStyle: "fill: black; cursor: pointer;",
       });
     }
     if (expandedOntologies.has(nodeId)) {
