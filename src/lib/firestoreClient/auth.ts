@@ -1,3 +1,4 @@
+// Importing necessary modules and functions
 import { User, UserTheme } from " @components/types/IAuth";
 import axios from "axios";
 import {
@@ -18,24 +19,29 @@ import {
   where,
 } from "firebase/firestore";
 
+// Function to sign up a new user with email and password
 export const signUp = async (name: string, email: string, password: string) => {
   const newUser = await createUserWithEmailAndPassword(
     getAuth(),
     email,
     password
   );
+  // Updating the profile with the user's name
   await updateProfile(newUser.user, { displayName: name });
 };
 
+// Function to sign in a user with email and password
 export const signIn = async (email: string, password: string) => {
   const userCredential = await signInWithEmailAndPassword(
     getAuth(),
     email,
     password
   );
+  // Returning the signed in user
   return userCredential.user;
 };
 
+// Function to send a verification email to the user
 export const sendVerificationEmail = async () => {
   const auth = getAuth();
   if (auth.currentUser) {
@@ -43,9 +49,9 @@ export const sendVerificationEmail = async () => {
   }
 };
 
-// creating a new id token for current user on firebase auth database
-// add token as authorization for every request to the server
-// validate if user is a valid user
+// Function to create a new id token for the current user on firebase auth database
+// This token is added as authorization for every request to the server
+// This validates if the user is a valid user
 export const idToken = async () => {
   const userToken = await getAuth().currentUser?.getIdToken(
     /* forceRefresh */ true
@@ -53,22 +59,24 @@ export const idToken = async () => {
   axios.defaults.headers.common["authorization"] = userToken || "";
 };
 
+// Function to reset the password of a user
 export const resetPassword = async (email: string) => {
   await sendPasswordResetEmail(getAuth(), email);
 };
 
+// Function to log out a user
 export const logout = async () => {
   await signOut(getAuth());
 };
 
+// Function to get the id token of a user
 export const getIdToken = async (): Promise<string | undefined> => {
   const auth = getAuth();
   const token = auth.currentUser?.getIdToken(/* forceRefresh */ true);
   return token;
-  // const userToken = await this.auth.currentUser.getIdToken(/* forceRefresh */ true);
-  // axios.defaults.headers.common["Authorization"] = userToken;
 };
 
+// Function to retrieve an authenticated user
 export const retrieveAuthenticatedUser = async (
   userId: string,
   claims: { [key: string]: boolean }
@@ -93,6 +101,7 @@ export const retrieveAuthenticatedUser = async (
     theme = userData.theme;
   }
 
+  // Returning the user and theme
   return {
     user,
     theme,

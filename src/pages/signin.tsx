@@ -1,3 +1,23 @@
+/* 
+This is a React component for a sign-in page. It uses Formik for form handling, Yup for form validation, and Firebase for authentication. 
+
+1. The `SignInFormValues` interface is defined to specify the shape of the form values.
+
+2. The `SignInPage` component is defined. It uses the `useAuth` hook to get the `handleError` function, and the `useSnackbar` hook to display notifications to the user.
+
+3. The `initialValues` object is defined to set the initial values of the form fields.
+
+4. The `validationSchema` object is defined using Yup to specify the validation rules for the form fields.
+
+5. The `handleSignIn` function is defined to handle the form submission. It calls the `signIn` function with the form values, checks if the user's email is verified, and handles any errors that occur.
+
+6. The `formik` object is created using the `useFormik` hook with the `initialValues`, `validationSchema`, and `onSubmit` function.
+
+7. The component returns a form with two text fields for the email and password, and a submit button. The form uses the `formik` object for handling the form state and events.
+
+8. The `getLayout` function is defined on the component to specify the layout to be used for this page. It wraps the page in the `AuthLayout` component.
+
+9. The `SignInPage` component is exported as the default export of the module.*/
 import { useAuth } from " @components/components/context/AuthContext";
 import AuthLayout from " @components/components/layouts/AuthLayout";
 import { signIn } from " @components/lib/firestoreClient/auth";
