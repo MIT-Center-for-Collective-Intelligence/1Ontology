@@ -55,7 +55,7 @@ Before you begin, ensure you have the following installed:
 
 1. Clone the repository
    ```sh
-   git clone https://github.com/your_username_/1Ontology.git
+   git clone https://github.com/ImanYZ/1Ontology.git
    ```
 2. Navigate to the project directory
    ```sh
