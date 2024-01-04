@@ -1,3 +1,22 @@
+/*  `getDesignTokens` is a theme configuration for a Material UI application. It defines the color palette, typography, and component styles for both light and dark modes. 
+
+1. `OldColors` and `Colors` are type definitions for the color palette. `OldColors` is the old color scheme, and `Colors` is the new color scheme. 
+
+2. `common` is an object that combines the old and new color schemes. 
+
+3. `systemFont` is an array that defines the font family for the application.
+
+4. `getDesignTokens` is a function that returns the theme configuration based on the mode (light or dark). It defines the primary, secondary, light, warning, divider, and background colors, text colors, spacing, and typography for the theme.
+
+5. `getThemedComponents` is a function that returns the styles for various Material UI components based on the theme. It includes styles for buttons, app bars, tooltips, selects, dividers, card content, chips, toggle button groups, toggle buttons, form control labels, tabs, and paper.
+
+6. `getMetaThemeColor` is a function that returns the meta theme color based on the mode (light or dark).
+
+7. `darkTheme` and `lightTheme` are created by calling `createTheme` with the design tokens for the dark and light modes, respectively.
+
+8. `brandingDarkTheme` and `brandingLightTheme` are created by merging the dark and light themes with the themed components for the dark and light themes, respectively. 
+ `getDesignTokens` allows for a consistent look and feel across the application, and makes it easy to switch between light and dark modes. */
+ 
 import { alpha, createTheme } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { Theme, ThemeOptions } from "@mui/material/styles";

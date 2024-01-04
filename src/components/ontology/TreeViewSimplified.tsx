@@ -1,3 +1,22 @@
+/*  This is a React component named `TreeViewSimplified` that is used to display a tree view of ontologies. It uses Material UI's `TreeView` and `TreeItem` components to create the tree structure.
+
+Here's a breakdown of the code:
+
+1. Import necessary modules and components: This includes React, Material UI components, and custom components and types.
+
+2. Define the props for the `TreeViewSimplified` component: The component expects three props - `onOpenOntologyTree` (a function that is called when a tree item is clicked), `treeVisualisation` (an object that represents the tree structure), and `expandedOntologies` (an array that contains the ids of the expanded tree items).
+
+3. Define the `TreeViewSimplified` component: This component returns a `TreeView` component. The `TreeView` component has several props such as `defaultCollapseIcon`, `defaultExpandIcon`, `defaultExpanded`, `disabledItemsFocusable`, `defaultEndIcon`, `multiSelect`, and `sx`.
+
+4. Map over the `treeVisualisation` object: For each key in the `treeVisualisation` object, a `TreeItem` component is created. The `TreeItem` component has a `nodeId` prop (which is the id of the tree item), a `label` prop (which is a `Box` component that contains a `Typography` component that displays the tree item's label), and an `sx` prop (which is used to style the `TreeItem` component).
+
+5. Handle click events: When the `Box` component is clicked, the `onOpenOntologyTree` function is called with the id of the tree item and its path.
+
+6. Check if the tree item has children: If the tree item has children (i.e., if the `specializations` object has keys), a recursive call to `TreeViewSimplified` is made with the `specializations` object, the `onOpenOntologyTree` function, and the `expandedOntologies` array.
+
+7. Export the `TreeViewSimplified` component: This allows the component to be used in other parts of the application.*/
+
+
 import { TreeVisual } from " @components/types/IOntology";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";

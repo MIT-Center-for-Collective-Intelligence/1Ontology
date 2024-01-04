@@ -1,3 +1,8 @@
+/* This code defines an authentication reducer and associated actions for managing user authentication state.
+ It includes initial state, handles login/logout actions, sets user theme, and toggles HTML classes based on the selected theme. 
+ The reducer follows a switch-case structure to handle different action types.
+  The toggleThemeHTML function updates the HTML body class based on the selected theme. */
+
 // Importing necessary types from the specified path
 import {
   AuthState,
