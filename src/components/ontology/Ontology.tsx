@@ -569,196 +569,198 @@ const Ontology = ({
     }
   };
 
-// This function handles the cloning of an ontology.
-const handleCloning = async (ontology: any) => {
-  // Call the asynchronous function to clone the ontology with the given ID.
-  const newCloneId = await cloneOntology(ontology.id);
+  // This function handles the cloning of an ontology.
+  const handleCloning = async (ontology: any) => {
+    // Call the asynchronous function to clone the ontology with the given ID.
+    const newCloneId = await cloneOntology(ontology.id);
 
-  // Update the user document by appending the new clone's ID to the ontology path.
-  updateUserDoc([...ontology.path, newCloneId]);
+    // Update the user document by appending the new clone's ID to the ontology path.
+    updateUserDoc([...ontology.path, newCloneId]);
 
-  // Close the modal or perform any necessary cleanup.
-  handleClose();
-};
-
-const handleSave = async () => {
-  try {
-    // Get the ontology document from the database
-    const ontologyDoc = await getDoc(
-      doc(collection(db, "ontology"), openOntology.id)
-    );
-
-    // If the ontology document does not exist, return early
-    if (!ontologyDoc.exists()) return;
-
-    // Extract existing ontology data from the document
-    const ontologyData: any = ontologyDoc.data();
-
-    // Initialize a new array for storing updated sub-ontologies
-    const newSubOntologies =
-      type === "Specializations"
-        ? [...ontologyData.subOntologies[type][selectedCategory].ontologies]
-        : [];
-
-    // Iterate through checkedSpecializations to update newSubOntologies
-    for (let checkd of checkedSpecializations) {
-      // Find the ontology object from the ontologies array
-      const findOntology = ontologies.find(
-        (ontology: any) => ontology.id === checkd
-      );
-
-      // Check if the ontology is not already present in newSubOntologies
-      const indexFound = newSubOntologies.findIndex(
-        (onto) => onto.id === checkd
-      );
-      if (indexFound === -1 && findOntology) {
-        // Add the ontology to newSubOntologies if not present
-        newSubOntologies.push({
-          id: checkd,
-          title: findOntology.title,
-        });
-      }
-    }
-
-    // If type is "Specializations", update main ontologies
-    if (type === "Specializations") {
-      ontologyData.subOntologies[type]["main"].ontologies =
-        ontologyData.subOntologies[type]["main"].ontologies.filter(
-          (ontology: any) =>
-            newSubOntologies.findIndex((o) => o.id === ontology.id) === -1
-        );
-    }
-
-    // Update the ontology data with the new subOntologies
-    ontologyData.subOntologies[type] = {
-      ...(ontologyData.subOntologies[type] || {}),
-      [selectedCategory]: {
-        ontologies: newSubOntologies,
-      },
-    };
-
-    // If inheritance is present, reset the subOntologies field
-    if (ontologyData.inheritance) {
-      ontologyData.inheritance.subOntologies[type] = {
-        ref: null,
-        title: "",
-      };
-    }
-
-    // Update the ontology document in the database
-    await updateDoc(ontologyDoc.ref, ontologyData);
-
-    // If type is not "Specializations", update the inheritance
-    if (type !== "Specializations") {
-      updateInheritance({
-        updatedOntology: { ...ontologyData, id: openOntology.id },
-        updatedField: type,
-        type: "subOntologies",
-        newValue: ontologyData.subOntologies[type],
-        ancestorTitle: ontologyData.title,
-      });
-    }
-
-    // Close the modal or perform any other necessary actions
+    // Close the modal or perform any necessary cleanup.
     handleClose();
-  } catch (error) {
-    // Handle any errors that occur during the process
-    console.error(error);
-  }
-};
+  };
 
-const addCatgory = useCallback(async () => {
-  try {
-    // Check if newCategory is provided
-    if (!newCategory) return;
+  const handleSave = async () => {
+    try {
+      // Get the ontology document from the database
+      const ontologyDoc = await getDoc(
+        doc(collection(db, "ontology"), openOntology.id)
+      );
 
-    // Fetch the ontology document based on the openOntology.id
-    const ontologyDoc = await getDoc(doc(collection(db, "ontology"), openOntology.id));
+      // If the ontology document does not exist, return early
+      if (!ontologyDoc.exists()) return;
 
-    // Check if the ontology document exists
-    if (ontologyDoc.exists()) {
-      // Retrieve ontology data from the document
-      const ontologyData = ontologyDoc.data();
+      // Extract existing ontology data from the document
+      const ontologyData: any = ontologyDoc.data();
 
-      // If editCategory is provided, update existing category
-      if (editCategory) {
-        // Log the action of editing a category
-        await recordLogs({
-          action: "Edited a category",
-          previousValue: editCategory.category,
-          newValue: newCategory,
-          ontology: ontologyDoc.id,
-          feild: editCategory.type,
-        });
+      // Initialize a new array for storing updated sub-ontologies
+      const newSubOntologies =
+        type === "Specializations"
+          ? [...ontologyData.subOntologies[type][selectedCategory].ontologies]
+          : [];
 
-        // Update ontologyData for the edited category
-        ontologyData.subOntologies[editCategory.type][newCategory] =
-          ontologyData.subOntologies[editCategory.type][editCategory.category];
-        delete ontologyData.subOntologies[editCategory.type][editCategory.category];
-      } else {
-        // If it's a new category, create it
-        if (!ontologyData?.subOntologies[type]?.hasOwnProperty(newCategory)) {
-          ontologyData.subOntologies[type] = {
-            ...(ontologyData?.subOntologies[type] || {}),
-            [newCategory]: {
-              ontologies: [],
-            },
-          };
+      // Iterate through checkedSpecializations to update newSubOntologies
+      for (let checkd of checkedSpecializations) {
+        // Find the ontology object from the ontologies array
+        const findOntology = ontologies.find(
+          (ontology: any) => ontology.id === checkd
+        );
+
+        // Check if the ontology is not already present in newSubOntologies
+        const indexFound = newSubOntologies.findIndex(
+          (onto) => onto.id === checkd
+        );
+        if (indexFound === -1 && findOntology) {
+          // Add the ontology to newSubOntologies if not present
+          newSubOntologies.push({
+            id: checkd,
+            title: findOntology.title,
+          });
         }
-
-        // Log the action of creating a new category
-        await recordLogs({
-          action: "Created a category",
-          category: newCategory,
-          ontology: ontologyDoc.id,
-          feild: type,
-        });
       }
 
-      // Update the ontology document with the modified data
+      // If type is "Specializations", update main ontologies
+      if (type === "Specializations") {
+        ontologyData.subOntologies[type]["main"].ontologies =
+          ontologyData.subOntologies[type]["main"].ontologies.filter(
+            (ontology: any) =>
+              newSubOntologies.findIndex((o) => o.id === ontology.id) === -1
+          );
+      }
+
+      // Update the ontology data with the new subOntologies
+      ontologyData.subOntologies[type] = {
+        ...(ontologyData.subOntologies[type] || {}),
+        [selectedCategory]: {
+          ontologies: newSubOntologies,
+        },
+      };
+
+      // If inheritance is present, reset the subOntologies field
+      if (ontologyData.inheritance) {
+        ontologyData.inheritance.subOntologies[type] = {
+          ref: null,
+          title: "",
+        };
+      }
+
+      // Update the ontology document in the database
       await updateDoc(ontologyDoc.ref, ontologyData);
 
-      // Close the add category modal
-      handleCloseAddCategory();
+      // If type is not "Specializations", update the inheritance
+      if (type !== "Specializations") {
+        updateInheritance({
+          updatedOntology: { ...ontologyData, id: openOntology.id },
+          updatedField: type,
+          type: "subOntologies",
+          newValue: ontologyData.subOntologies[type],
+          ancestorTitle: ontologyData.title,
+        });
+      }
+
+      // Close the modal or perform any other necessary actions
+      handleClose();
+    } catch (error) {
+      // Handle any errors that occur during the process
+      console.error(error);
     }
-  } catch (error) {
-    // Log any errors that occur during the process
-    console.error(error);
-  }
-}, [newCategory]);
+  };
 
+  const addCatgory = useCallback(async () => {
+    try {
+      // Check if newCategory is provided
+      if (!newCategory) return;
 
-const getCurrentSpecializations = () => {
-  
-  // Create an empty object to store main specializations
-  const _mainSpecializations: any = {};
+      // Fetch the ontology document based on the openOntology.id
+      const ontologyDoc = await getDoc(
+        doc(collection(db, "ontology"), openOntology.id)
+      );
 
-  // Filter ontologies based on a condition
-  const _specializations = ontologies.filter((onto: any) => {
-    
+      // Check if the ontology document exists
+      if (ontologyDoc.exists()) {
+        // Retrieve ontology data from the document
+        const ontologyData = ontologyDoc.data();
+
+        // If editCategory is provided, update existing category
+        if (editCategory) {
+          // Log the action of editing a category
+          await recordLogs({
+            action: "Edited a category",
+            previousValue: editCategory.category,
+            newValue: newCategory,
+            ontology: ontologyDoc.id,
+            feild: editCategory.type,
+          });
+
+          // Update ontologyData for the edited category
+          ontologyData.subOntologies[editCategory.type][newCategory] =
+            ontologyData.subOntologies[editCategory.type][
+              editCategory.category
+            ];
+          delete ontologyData.subOntologies[editCategory.type][
+            editCategory.category
+          ];
+        } else {
+          // If it's a new category, create it
+          if (!ontologyData?.subOntologies[type]?.hasOwnProperty(newCategory)) {
+            ontologyData.subOntologies[type] = {
+              ...(ontologyData?.subOntologies[type] || {}),
+              [newCategory]: {
+                ontologies: [],
+              },
+            };
+          }
+
+          // Log the action of creating a new category
+          await recordLogs({
+            action: "Created a category",
+            category: newCategory,
+            ontology: ontologyDoc.id,
+            feild: type,
+          });
+        }
+
+        // Update the ontology document with the modified data
+        await updateDoc(ontologyDoc.ref, ontologyData);
+
+        // Close the add category modal
+        handleCloseAddCategory();
+      }
+    } catch (error) {
+      // Log any errors that occur during the process
+      console.error(error);
+    }
+  }, [newCategory]);
+
+  const getCurrentSpecializations = () => {
+    // Create an empty object to store main specializations
+    const _mainSpecializations: any = {};
+
+    // Filter ontologies based on a condition
+    const _specializations = ontologies.filter((onto: any) => {
       // Find the index of ontology in the main specializations list
       const findIdx = (
-          openOntology?.subOntologies?.Specializations["main"]?.ontologies || []
+        openOntology?.subOntologies?.Specializations["main"]?.ontologies || []
       ).findIndex((o: any) => o.id === onto.id);
 
       // Include ontology in the filtered list if found in the main specializations list
       return findIdx !== -1;
-  });
+    });
 
-  // Loop through the filtered specializations
-  for (let specialization of _specializations) {
-    
+    // Loop through the filtered specializations
+    for (let specialization of _specializations) {
       // Add each specialization to the _mainSpecializations object
       _mainSpecializations[specialization.title] = {
-          id: specialization.id,
-          path: [],
-          specializations: {},
+        id: specialization.id,
+        path: [],
+        specializations: {},
       };
-  }
+    }
 
-  // Return the final object containing main specializations
-  return _mainSpecializations;
-};
+    // Return the final object containing main specializations
+    return _mainSpecializations;
+  };
 
   const handleNewSpecialization = async () => {
     if (type === "Specializations") {
@@ -808,125 +810,128 @@ const getCurrentSpecializations = () => {
     }
   };
 
-// This function adds or removes a lock for a specific user on a given ontology field.
+  // This function adds or removes a lock for a specific user on a given ontology field.
 
-const addLock = async (ontology: string, field: string, type: string) => {
-  try {
-    // Check if a user is authenticated before proceeding
-    if (!user) return;
+  const addLock = async (ontology: string, field: string, type: string) => {
+    try {
+      // Check if a user is authenticated before proceeding
+      if (!user) return;
 
-    // If the type is 'add', create a new lock and add it to the 'ontologyLock' collection
-    if (type == "add") {
-      // Create a new lock object with user information, ontology, field, and timestamp
-      const newLock = {
-        uname: user?.uname,
-        ontology,
-        field,
-        deleted: false,
-        createdAt: new Date(),
-      };
+      // If the type is 'add', create a new lock and add it to the 'ontologyLock' collection
+      if (type == "add") {
+        // Create a new lock object with user information, ontology, field, and timestamp
+        const newLock = {
+          uname: user?.uname,
+          ontology,
+          field,
+          deleted: false,
+          createdAt: new Date(),
+        };
 
-      // Get a reference to the 'ontologyLock' collection
-      const ontologyDocref = doc(collection(db, "ontologyLock"));
+        // Get a reference to the 'ontologyLock' collection
+        const ontologyDocref = doc(collection(db, "ontologyLock"));
 
-      // Set the document with the new lock information
-      await setDoc(ontologyDocref, newLock);
-    } else {
-      // If the type is not 'add', remove existing locks for the specified ontology, field, and user
-      const locksDocs = await getDocs(
-        query(
-          collection(db, "ontologyLock"),
-          where("field", "==", field),
-          where("ontology", "==", ontology),
-          where("uname", "==", user?.uname)
-        )
-      );
-
-      // Iterate through each lock document and delete it
-      for (let lockDoc of locksDocs.docs) {
-        await deleteDoc(lockDoc.ref);
-      }
-    }
-  } catch (error) {
-    // Handle any errors that occur during the process
-    console.error(error);
-  }
-};
-
-// Function to handle sorting of draggable items
-const handleSorting = async (result: any, subType: string) => {
-  try {
-    // Destructure properties from the result object
-    const { source, destination, draggableId, type } = result;
-
-    // If there is no destination, no sorting needed
-    if (!destination) {
-      return;
-    }
-
-    // Check if the type of sorting is for a CATEGORY
-    if (type === "CATEGORY") {
-      // Extract the source and destination category IDs
-      const sourceCategory = source.droppableId; // The source category
-      const destinationCategory = destination.droppableId; // The destination category
-
-      // Ensure valid source and destination categories and they are not the same
-      if (
-        sourceCategory &&
-        destinationCategory &&
-        sourceCategory !== destinationCategory
-      ) {
-        // Retrieve ontology document from the database
-        const ontologyDoc = await getDoc(
-          doc(collection(db, "ontology"), openOntology.id)
+        // Set the document with the new lock information
+        await setDoc(ontologyDocref, newLock);
+      } else {
+        // If the type is not 'add', remove existing locks for the specified ontology, field, and user
+        const locksDocs = await getDocs(
+          query(
+            collection(db, "ontologyLock"),
+            where("field", "==", field),
+            where("ontology", "==", ontology),
+            where("uname", "==", user?.uname)
+          )
         );
 
-        // Check if ontology document exists
-        if (ontologyDoc.exists()) {
-          // Extract ontology data from the document
-          const ontologyData = ontologyDoc.data();
-
-          // Get the sub-ontologies and specializations related to the provided subType
-          const specializations = ontologyData.subOntologies[subType];
-
-          // Find the index of the draggable item in the source category
-          const ontoIdx = specializations[sourceCategory].ontologies.findIndex(
-            (onto: any) => onto.id === draggableId
-          );
-
-          // If the draggable item is found in the source category
-          if (ontoIdx !== -1) {
-            // Move the item to the destination category
-            specializations[destinationCategory].ontologies.push(
-              specializations[sourceCategory].ontologies[ontoIdx]
-            );
-
-            // Remove the item from the source category
-            specializations[sourceCategory].ontologies.splice(ontoIdx, 1);
-          }
-
-          // Update the ontology data with the modified specializations
-          ontologyData.subOntologies[subType] = specializations;
-
-          // Update the ontology document in the database
-          await updateDoc(ontologyDoc.ref, ontologyData);
-
-          // Record a log of the sorting action
-          await recordLogs({
-            action: "Moved a field to a category",
-            field: subType,
-            sourceCategory: sourceCategory === "main" ? "outside" : sourceCategory,
-            destinationCategory: destinationCategory === "main" ? "outside" : destinationCategory,
-          });
+        // Iterate through each lock document and delete it
+        for (let lockDoc of locksDocs.docs) {
+          await deleteDoc(lockDoc.ref);
         }
       }
+    } catch (error) {
+      // Handle any errors that occur during the process
+      console.error(error);
     }
-  } catch (error) {
-    // Log any errors that occur during the sorting process
-    console.error(error);
-  }
-};
+  };
 
+  // Function to handle sorting of draggable items
+  const handleSorting = async (result: any, subType: string) => {
+    try {
+      // Destructure properties from the result object
+      const { source, destination, draggableId, type } = result;
+
+      // If there is no destination, no sorting needed
+      if (!destination) {
+        return;
+      }
+
+      // Check if the type of sorting is for a CATEGORY
+      if (type === "CATEGORY") {
+        // Extract the source and destination category IDs
+        const sourceCategory = source.droppableId; // The source category
+        const destinationCategory = destination.droppableId; // The destination category
+
+        // Ensure valid source and destination categories and they are not the same
+        if (
+          sourceCategory &&
+          destinationCategory &&
+          sourceCategory !== destinationCategory
+        ) {
+          // Retrieve ontology document from the database
+          const ontologyDoc = await getDoc(
+            doc(collection(db, "ontology"), openOntology.id)
+          );
+
+          // Check if ontology document exists
+          if (ontologyDoc.exists()) {
+            // Extract ontology data from the document
+            const ontologyData = ontologyDoc.data();
+
+            // Get the sub-ontologies and specializations related to the provided subType
+            const specializations = ontologyData.subOntologies[subType];
+
+            // Find the index of the draggable item in the source category
+            const ontoIdx = specializations[
+              sourceCategory
+            ].ontologies.findIndex((onto: any) => onto.id === draggableId);
+
+            // If the draggable item is found in the source category
+            if (ontoIdx !== -1) {
+              // Move the item to the destination category
+              specializations[destinationCategory].ontologies.push(
+                specializations[sourceCategory].ontologies[ontoIdx]
+              );
+
+              // Remove the item from the source category
+              specializations[sourceCategory].ontologies.splice(ontoIdx, 1);
+            }
+
+            // Update the ontology data with the modified specializations
+            ontologyData.subOntologies[subType] = specializations;
+
+            // Update the ontology document in the database
+            await updateDoc(ontologyDoc.ref, ontologyData);
+
+            // Record a log of the sorting action
+            await recordLogs({
+              action: "Moved a field to a category",
+              field: subType,
+              sourceCategory:
+                sourceCategory === "main" ? "outside" : sourceCategory,
+              destinationCategory:
+                destinationCategory === "main"
+                  ? "outside"
+                  : destinationCategory,
+            });
+          }
+        }
+      }
+    } catch (error) {
+      // Log any errors that occur during the sorting process
+      console.error(error);
+    }
+  };
 
   /**
    * Removes a sub-ontology with the specified ID from the given ontology data.
@@ -1348,13 +1353,18 @@ const handleSorting = async (result: any, subType: string) => {
                                       droppableId={category}
                                       type="CATEGORY"
                                     >
+                                      {/* //snapshot.isDraggingOver */}
                                       {(provided: any, snapshot: any) => (
                                         <Box
                                           {...provided.droppableProps}
                                           ref={provided.innerRef}
-                                          style={{
-                                            backgroundColor:
-                                              snapshot.isDraggingOver
+                                          sx={{
+                                            backgroundColor: (theme) =>
+                                              theme.palette.mode === "dark"
+                                                ? snapshot.isDraggingOver
+                                                  ? DESIGN_SYSTEM_COLORS.notebookG450
+                                                  : ""
+                                                : snapshot.isDraggingOver
                                                 ? DESIGN_SYSTEM_COLORS.gray250
                                                 : "",
                                             // minHeight: /* subOntologies.length > 0 ?  */ "25px" /*  : "" */,
