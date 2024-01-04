@@ -101,30 +101,41 @@ const DAGGraph = ({
     setExpandedOntologies(new Set(expandedOntologies));
   };
 
-  const onDrawOntology = (ontology: any, graph: any) => {
-    const nodeId = ontology?.id || "";
-    if (!graph.hasNode(nodeId)) {
-      graph.setNode(nodeId, {
-        label: ontology.title,
-        style: `fill: ${
-          ontology.isCategory ? "orange" : "white"
-        }; stroke: black; stroke-width: 2px; cursor: pointer;`,
-        labelStyle: "fill: black; cursor: pointer;",
+// This function is responsible for drawing ontologies on a graph based on the provided ontology data.
+// It takes an ontology object and a graph object as parameters.
+const onDrawOntology = (ontology: any, graph: any) => {
+  // Extract the nodeId from the ontology or set it as an empty string if not available.
+  const nodeId = ontology?.id || "";
+
+  // Check if the graph already has a node with the current nodeId.
+  if (!graph.hasNode(nodeId)) {
+    // If the node doesn't exist, add it to the graph with specified properties.
+    graph.setNode(nodeId, {
+      label: ontology.title, // Use ontology title as the label for the node.
+      style: `fill: ${ontology.isCategory ? "orange" : "white"}; stroke: black; stroke-width: 2px; cursor: pointer;`, // Set node style based on ontology category.
+      labelStyle: "fill: black; cursor: pointer;", // Set style for the node label.
+    });
+  }
+
+  // Check if the current ontology node is expanded (based on the global set of expandedOntologies).
+  if (expandedOntologies.has(nodeId)) {
+    // If expanded, iterate through sub-ontologies and draw edges connecting them to the current node.
+    const subOntologies: any = Object.values(ontology.specializations || {});
+    for (let subOntology of subOntologies) {
+      // Recursively call the onDrawOntology function for each sub-ontology.
+      onDrawOntology(subOntology, graph);
+
+      // Add an edge between the current node and the sub-ontology node with specified properties.
+      graph.setEdge(nodeId, subOntology.id, {
+        curve: d3.curveBasis, // Use a B-spline curve for the edge.
+        style: "stroke: orange; stroke-opacity: 1; fill: none;", // Set style for the edge.
+        arrowheadStyle: "fill: orange", // Set style for the arrowhead.
+        minlen: 2, // Set minimum length for the edge.
       });
     }
-    if (expandedOntologies.has(nodeId)) {
-      const subOntologies: any = Object.values(ontology.specializations || {});
-      for (let subOntology of subOntologies) {
-        onDrawOntology(subOntology, graph);
-        graph.setEdge(nodeId, subOntology.id, {
-          curve: d3.curveBasis,
-          style: "stroke: orange; stroke-opacity: 1; fill: none;",
-          arrowheadStyle: "fill: orange",
-          minlen: 2,
-        });
-      }
-    }
-  };
+  }
+};
+
 
   useEffect(() => {
     const graph: any = new dagreD3.graphlib.Graph().setGraph({

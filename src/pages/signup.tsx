@@ -1,3 +1,23 @@
+/* This is a sign-up page component for a Next.js application using Firebase for authentication and Firestore for data storage. It uses Material UI for styling, Formik for form handling, Yup for form validation, and React Query for data fetching.
+
+1. The `signUp` function is used to create a new user in Firebase and Firestore. It takes user data as an argument, creates a new user in Firebase using the `createUserWithEmailAndPassword` function, and then creates a new document in the Firestore 'users' collection with the same user data.
+
+2. The `SignUpPage` component is the main component of the file. It uses the `useRouter` hook from Next.js to navigate between pages, the `useAuth` hook to handle authentication errors, and the `useSnackbar` hook to display notifications.
+
+3. The `mutateSignUp` mutation is used to call the `signUp` function when the form is submitted. If the mutation is successful, it navigates to the sign-in page and sends a verification email to the user. If the mutation fails, it handles the error and displays a notification.
+
+4. The `initialValues` object and `validationSchema` object are used to set the initial values and validation rules for the form.
+
+5. The `handleSignUp` function is used to submit the form. It takes the form values as an argument, creates a user object, and calls the `mutateSignUp` mutation with the user object.
+
+6. The `formik` object is created using the `useFormik` hook. It takes the initial values, validation schema, and submit handler as arguments.
+
+7. The component returns a form with a `SignUpBasicInfo` component for the form fields and a submit button. The form uses the `formik` object for form handling.
+
+8. The `getLayout` function is used to wrap the page in an `AuthLayout` component. This is a common pattern in Next.js for applying a layout to a page.
+
+9. The component is exported as the default export of the module. */
+
 import { LoadingButton } from "@mui/lab";
 import { Box, Typography } from "@mui/material";
 import { FirebaseError } from "firebase/app";

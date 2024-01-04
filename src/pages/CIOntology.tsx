@@ -212,6 +212,7 @@ const CIOntology = () => {
         ontologyPath.push({
           id: path,
           title: ontologies[ontologyIdx].title,
+          category: ontologies[ontologyIdx].category,
         });
       }
       // If not found, the ontology with the current ID is skipped in the final path
@@ -783,85 +784,89 @@ const CIOntology = () => {
     // Dependency array includes ontologies and user, ensuring the function re-renders when these values change.
     [ontologies, user]
   );
-// Function to handle opening ontology tree
-const onOpenOntologyTree = useCallback(
-  async (ontologyId: string, path: string[]) => {
-    // Check if user is logged in
-    if (!user) return;
 
-    // Find the index of the ontology in the ontologies array
-    const ontologyIdx = ontologies.findIndex(
-      (onto: any) => onto.id === ontologyId
-    );
-
-    // Check if ontology exists and has a category
-    if (ontologyIdx !== -1 && !ontologies[ontologyIdx].category) {
-      // Set the currently open ontology
-      setOpenOntology(ontologies[ontologyIdx]);
-
-      // Record logs for the action of clicking the tree-view
-      await recordLogs({
-        action: "clicked tree-view",
-        itemClicked: ontologies[ontologyIdx].id,
+  // Function to handle opening ontology tree
+  const onOpenOntologyTree = useCallback(
+    async (ontologyId: string, path: string[]) => {
+      // Check if user is logged in
+      if (!user) return;
+      //update the expanded state
+      setExpandedOntologies((prevExpanded: Set<string>) => {
+        prevExpanded.add(ontologyId);
+        return prevExpanded;
       });
+      // Find the index of the ontology in the ontologies array
+      const ontologyIdx = ontologies.findIndex(
+        (onto: any) => onto.id === ontologyId
+      );
 
-      // Update user document with the path
-      await updateUserDoc(path);
-    }
-  },
-  [ontologies, user]
-);
+      // Check if ontology exists and has a category
+      if (ontologyIdx !== -1 && !ontologies[ontologyIdx].category) {
+        // Set the currently open ontology
+        setOpenOntology(ontologies[ontologyIdx]);
 
-// Function to order comments based on their creation timestamp
-const orderComments = () => {
-  return (openOntology?.comments || []).sort((a: any, b: any) => {
-    const timestampA: any = a.createdAt.toDate();
-    const timestampB: any = b.createdAt.toDate();
-    return timestampA - timestampB;
-  });
-};
+        // Record logs for the action of clicking the tree-view
+        await recordLogs({
+          action: "clicked tree-view",
+          itemClicked: ontologies[ontologyIdx].id,
+        });
 
-// Function to retrieve main specializations from tree visualization data
-const getMainSpecialisations = (treeVisualisation: TreeVisual) => {
-  let mainSpecializations: MainSpecializations = {};
+        // Update user document with the path
+        await updateUserDoc(path);
+      }
+    },
+    [ontologies, user]
+  );
 
-  // Loop through categories in tree visualization
-  for (let category in treeVisualisation) {
-    mainSpecializations = {
-      ...mainSpecializations,
-      ...treeVisualisation[category].specializations,
-    };
-  }
-
-  // Include specializations for "Actor" category
-  mainSpecializations = {
-    ...mainSpecializations,
-    ...(mainSpecializations["Actor"]?.specializations || {}),
+  // Function to order comments based on their creation timestamp
+  const orderComments = () => {
+    return (openOntology?.comments || []).sort((a: any, b: any) => {
+      const timestampA: any = a.createdAt.toDate();
+      const timestampB: any = b.createdAt.toDate();
+      return timestampA - timestampB;
+    });
   };
 
-  return mainSpecializations;
-};
+  // Function to retrieve main specializations from tree visualization data
+  const getMainSpecialisations = (treeVisualisation: TreeVisual) => {
+    let mainSpecializations: MainSpecializations = {};
 
-// Function to perform a search using Fuse.js library
-const searchWithFuse = (query: string): any => {
-  // Return an empty array if the query is empty
-  if (!query) {
-    return [];
-  }
+    // Loop through categories in tree visualization
+    for (let category in treeVisualisation) {
+      mainSpecializations = {
+        ...mainSpecializations,
+        ...treeVisualisation[category].specializations,
+      };
+    }
 
-  // Record logs for the search action
-  recordLogs({
-    action: "Searched",
-    query,
-  });
+    // Include specializations for "Actor" category
+    mainSpecializations = {
+      ...mainSpecializations,
+      ...(mainSpecializations["Actor"]?.specializations || {}),
+    };
 
-  // Perform search using Fuse.js, filter out deleted items
-  return fuse
-    .search(query)
-    .map((result) => result.item)
-    .filter((item: any) => !item.deleted);
-};
+    return mainSpecializations;
+  };
 
+  // Function to perform a search using Fuse.js library
+  const searchWithFuse = (query: string): any => {
+    // Return an empty array if the query is empty
+    if (!query) {
+      return [];
+    }
+
+    // Record logs for the search action
+    recordLogs({
+      action: "Searched",
+      query,
+    });
+
+    // Perform search using Fuse.js, filter out deleted items
+    return fuse
+      .search(query)
+      .map((result) => result.item)
+      .filter((item: any) => !item.deleted);
+  };
 
   // This function handles the process of sending a new comment to an ontology.
   const handleSendComment = async () => {
@@ -1174,7 +1179,15 @@ const searchWithFuse = (query: string): any => {
             <Tabs
               value={viewValue}
               onChange={handleViewChange}
-              sx={{ width: "100%", ml: "15px" }}
+              sx={{
+                width: "100%",
+                borderColor: "divider",
+                borderBottom: 1,
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? DESIGN_SYSTEM_COLORS.notebookG450
+                    : DESIGN_SYSTEM_COLORS.gray300,
+              }}
             >
               <Tab label="Tree View" {...a11yProps(0)} sx={{ width: "50%" }} />
               <Tab label="DAG View" {...a11yProps(1)} sx={{ width: "50%" }} />
@@ -1184,6 +1197,7 @@ const searchWithFuse = (query: string): any => {
                 <TreeViewSimplified
                   treeVisualisation={treeVisualisation}
                   onOpenOntologyTree={onOpenOntologyTree}
+                  expandedOntologies={expandedOntologies}
                 />
               </TabPanel>
               <TabPanel value={viewValue} index={1}>
@@ -1232,10 +1246,15 @@ const searchWithFuse = (query: string): any => {
             <Breadcrumbs sx={{ ml: "40px" }}>
               {ontologyPath.map((path) => (
                 <Link
-                  underline="hover"
+                  underline={path.category ? "none" : "hover"}
                   key={path.id}
                   onClick={() => handleLinkNavigation(path, "")}
-                  sx={{ cursor: "pointer" }}
+                  sx={{
+                    cursor: !path.category ? "pointer" : "",
+                    ":hover": {
+                      cursor: !path.category ? "pointer" : "",
+                    },
+                  }}
                 >
                   {path.title.split(" ").splice(0, 3).join(" ") +
                     (path.title.split(" ").length > 3 ? "..." : "")}
@@ -1498,14 +1517,7 @@ const searchWithFuse = (query: string): any => {
           setNewMessage={setSnackbarMessage}
         />
         <Box sx={{ position: "absolute", top: 0, width: "100%" }}>
-          <AppHeaderMemoized
-            ref={headerRef}
-            page="ONE_CADEMY"
-            mitpage={true}
-            sections={[]}
-            selectedSectionId={""}
-            onSwitchSection={() => {}}
-          />
+          <AppHeaderMemoized ref={headerRef} />
         </Box>
       </Container>
     </>

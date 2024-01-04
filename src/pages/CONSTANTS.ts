@@ -11,6 +11,8 @@ import {
 
 
 // TO-DO: Consider storing this data in the database to identify ontology types in the project
+
+
 // Defining an object to hold initial values for various ontology types
 export const ONTOLOGY_TYPES: {
   [key: string]:
