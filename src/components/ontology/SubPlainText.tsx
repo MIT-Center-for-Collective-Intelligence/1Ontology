@@ -98,8 +98,7 @@ The component uses Material-UI components and styles for a consistent look and f
 The component imports the `IOntology` and `ILockedOntology` types from `@components/types/IOntology` for TypeScript type checking.
 
 ---
-
-This documentation provides an overview of the `SubPlainText` component's functionality and usage within a React application that manages ontologies. For more detailed information on the implementation and integration with Firebase Firestore, refer to the source code and associated services. */
+ */
 
 import LockIcon from "@mui/icons-material/Lock";
 import { Box, Button, TextField, Tooltip, Typography } from "@mui/material";
@@ -114,7 +113,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import MarkdownRender from "../Markdown/MarkdownRender";
-import { ILockecOntology, IOntology } from " @components/types/IOntology";
+import { IOntology } from " @components/types/IOntology";
 
 type ISubOntologyProps = {
   openOntology: IOntology;

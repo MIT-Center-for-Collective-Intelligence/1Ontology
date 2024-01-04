@@ -155,10 +155,10 @@ import {
   IEvaluation,
   IGroup,
   IIncentive,
-  ILockecOntology,
+  ILockedOntology,
   IOntology,
   IOntologyPath,
-  IProcesse,
+  IProcess,
   IReward,
   IRole,
   ISubOntology,
@@ -191,11 +191,11 @@ type IOntologyProps = {
     id: string;
     newOntology: any;
   }) => void;
-  INITIAL_VALUES: {
+  ONTOLOGY_TYPES: {
     [key: string]:
       | IActivity
       | IActor
-      | IProcesse
+      | IProcess
       | IEvaluation
       | IRole
       | IIncentive
@@ -204,7 +204,7 @@ type IOntologyProps = {
   };
   editOntology: string;
   setEditOntology: (state: string) => void;
-  lockedOntology: ILockecOntology;
+  lockedOntology: ILockedOntology;
   recordLogs: (logs: any) => void;
   updateInheritance: (parameters: {
     updatedOntology: IOntology;
@@ -308,13 +308,8 @@ const Ontology = ({
   const [selectedCategory, setSelectedCategory] = useState("");
   const [checkedSpecializations, setCheckedSpecializations] = useState<any>([]);
   const [editCategory, setEditCategory] = useState<any>(null);
-
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
-
   const db = getFirestore();
-  // const {
-  //   palette: { mode },
-  // } = useTheme();
 
   const capitalizeFirstLetter = (word: string) => {
     if (word === "Role") {
@@ -338,22 +333,44 @@ const Ontology = ({
     });
   };
 
+  // This asynchronous function clones an ontology identified by its ID.
   const cloneOntology = async (ontologyId: string) => {
     try {
+      // Retrieve the document of the original ontology from Firestore.
       const ontologyDoc = await getDoc(
         doc(collection(db, "ontology"), ontologyId)
       );
+
+      // If the ontology document doesn't exist, return early.
       if (!ontologyDoc.exists()) return;
+
+      // Extract data from the original ontology document.
       const ontologyData = ontologyDoc.data();
+
+      // Create a reference for the new ontology document in Firestore.
       const newOntologyRef = doc(collection(db, "ontology"));
+
+      // Prepare the data for the new ontology by copying existing data.
       const newOntology: any = {
         ...ontologyDoc.data(),
       };
+
+      // Set a new ID for the cloned ontology.
       newOntology.id = newOntologyRef.id;
+
+      // Update the parents array to include the ID of the original ontology.
       newOntology.parents = [ontologyDoc.id];
+
+      // Modify the title to indicate that it is a new ontology.
       newOntology.title = `New ${ontologyData.title}`;
+
+      // Initialize an empty Specializations object for sub-ontologies.
       newOntology.subOntologies.Specializations = {};
+
+      // Remove the 'locked' property from the new ontology.
       delete newOntology.locked;
+
+      // Update the original ontology to include the reference to the new ontology in its sub-ontologies.
       ontologyData.subOntologies.Specializations = {
         ["main"]: {
           ontologies: [
@@ -366,103 +383,174 @@ const Ontology = ({
           ],
         },
       };
+
+      // Update the original ontology document in Firestore with the modified data.
       await updateDoc(ontologyDoc.ref, ontologyData);
+
+      // Create a new document in Firestore for the cloned ontology with the modified data.
       await setDoc(newOntologyRef, newOntology);
+
+      // Return the ID of the newly created ontology.
       return newOntologyRef.id;
     } catch (error) {
+      // Log any errors that occur during the cloning process.
       console.error(error);
     }
   };
 
+  /**
+   * getInheritance function retrieves inheritance information for specified fields
+   *
+   * @param {string[]} fields - Array of fields for which inheritance is to be determined
+   * @param {string} ancestorTitle - Default title to be used if specific inheritance title is not available
+   *
+   * @returns {Object} - Object containing inheritance information for each field
+   */
   const getInheritance = (
     fields: string[],
-    ancestorTitle: string
+    type: "plainText" | "subOntologies",
+    parentOntoloogy: IOntology
   ): {
     [key: string]: {
       ref: string;
       title: string;
     };
   } => {
+    // Initialize an empty object to store inheritance information
     const inheritance: {
       [key: string]: {
         ref: string;
         title: string;
       };
     } = {};
-    fields
-      .filter((f) => f !== "Specializations")
-      .forEach(
-        (p) =>
-          (inheritance[p] = {
-            ref: openOntology.id,
-            title: (openOntology.inheritance &&
-            openOntology.inheritance[p]?.title
-              ? openOntology.inheritance[p]?.title
-              : ancestorTitle) as string,
-          })
-      );
+    const ancestorId = parentOntoloogy.id;
+    const ancestorTitle = parentOntoloogy.title;
+    // Iterate through each field, excluding "Specializations"
+    for (let field of fields) {
+      if (field === "Specializations") continue;
+      let inheritanceRef: { ref: string; title: string } = {
+        ref: ancestorId,
+        title: ancestorTitle,
+      };
+      if (
+        parentOntoloogy.inheritance &&
+        parentOntoloogy.inheritance[type] &&
+        parentOntoloogy.inheritance[type][field]?.ref
+      ) {
+        inheritanceRef = {
+          ref: parentOntoloogy.inheritance[type][field]?.ref,
+          title: parentOntoloogy.inheritance[type][field]?.title,
+        };
+      }
+      inheritance[field] = { ...inheritanceRef };
+    }
+    // Return the final inheritance object
     return inheritance;
   };
 
+  // Function to add a new specialization to the ontology
   const addNewSpecialisation = async (type: string, category: string) => {
     try {
+      // Get a reference to the parent ontology document
       const ontologyParentRef = doc(
         collection(db, "ontology"),
         openOntology.id
       );
+
+      // Retrieve the parent ontology document
       const ontologyParentDoc = await getDoc(ontologyParentRef);
-      const ontologyParent: any = ontologyParentDoc.data();
+
+      // Extract data from the parent ontology document
+      const parentOntology: any = {
+        ...ontologyParentDoc.data(),
+        id: ontologyParentDoc.id,
+      };
+
+      // Check if the parent ontology document exists
       if (!ontologyParentDoc.exists()) return;
+
+      // Create a new ontology document reference
       const newOntologyRef = doc(collection(db, "ontology"));
 
+      // Clone the parent ontology data
       const newOntology = { ...ontologyParentDoc.data() };
+
+      // Initialize the Specializations sub-ontology
       newOntology.subOntologies.Specializations = {};
+
+      // Remove unnecessary fields from the new ontology
       delete newOntology.locked;
       delete newOntology.cat;
+
+      // Set the parents and title for the new ontology
       newOntology.parents = [openOntology.id];
-      newOntology.title = `New ${ontologyParent.title}`;
+      newOntology.title = `New ${parentOntology.title}`;
       newOntology.id = newOntologyRef.id;
+
+      let descriptionInheritance: { ref: string; title: string } = {
+        ref: parentOntology.id,
+        title: parentOntology.title,
+      };
+      if (
+        parentOntology.inheritance &&
+        parentOntology.inheritance.plainText["description"]?.ref
+      ) {
+        descriptionInheritance = {
+          ref: parentOntology.inheritance.plainText["description"]?.ref,
+          title: parentOntology.inheritance.plainText["description"]?.title,
+        };
+      }
+      // Build the inheritance object for the new ontology
       newOntology.inheritance = {
         plainText: {
           ...getInheritance(
             Object.keys(newOntology.plainText),
-            ontologyParent.title
+            "plainText",
+            parentOntology
           ),
           description: {
-            ref: openOntology.id,
-            title: openOntology.inheritance
-              ? openOntology.inheritance["description"]?.title ||
-                ontologyParent.title
-              : ontologyParent.title,
+            ...descriptionInheritance,
           },
         },
         subOntologies: {
           ...getInheritance(
             Object.keys(newOntology.subOntologies),
-            ontologyParent.title
+            "subOntologies",
+            parentOntology
           ),
         },
       };
 
-      if (!ontologyParent.subOntologies[type].hasOwnProperty(category)) {
-        ontologyParent.subOntologies[type] = {
-          ...ontologyParent.subOntologies[type],
+      // Check if the specified type and category exist in the parent ontology
+      if (!parentOntology.subOntologies[type].hasOwnProperty(category)) {
+        // If not, create the specified type and category
+        parentOntology.subOntologies[type] = {
+          ...parentOntology.subOntologies[type],
           [category]: {
             ontologies: [],
           },
         };
       }
-      ontologyParent.subOntologies[type][category].ontologies.push({
-        title: `New ${ontologyParent.title}`,
+
+      // Add the new ontology to the specified type and category
+      parentOntology.subOntologies[type][category].ontologies.push({
+        title: `New ${parentOntology.title}`,
         id: newOntologyRef.id,
       });
+
+      // Update the user document with the ontology path
       updateUserDoc([
         ...ontologyPath.map((path: any) => path.id),
         newOntologyRef.id,
       ]);
+
+      // Add the new ontology to the database
       addNewOntology({ id: newOntologyRef.id, newOntology });
-      await updateDoc(ontologyParentRef, ontologyParent);
+
+      // Update the parent ontology document in the database
+      await updateDoc(ontologyParentRef, parentOntology);
     } catch (error) {
+      // Handle errors by logging to the console
       console.error(error);
     }
   };
@@ -486,88 +574,6 @@ const Ontology = ({
     updateUserDoc([...ontology.path, newCloneId]);
     handleClose();
   };
-
-  const TreeViewSimplified = useCallback(
-    ({ mainSpecializations, clone }: any) => {
-      const expanded = [];
-      for (let category of Object.keys(mainSpecializations)) {
-        expanded.push(mainSpecializations[category].id);
-      }
-      return (
-        <TreeView
-          defaultCollapseIcon={<ExpandMoreIcon />}
-          defaultExpandIcon={<ChevronRightIcon />}
-          sx={{
-            "& .Mui-selected": {
-              backgroundColor: "transparent",
-            },
-          }}
-          defaultExpanded={[...expanded]}
-        >
-          {Object.keys(mainSpecializations).map((category) => (
-            <TreeItem
-              key={mainSpecializations[category]?.id || category}
-              nodeId={mainSpecializations[category]?.id || category}
-              sx={{ mt: "5px" }}
-              label={
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    height: "auto",
-                    minHeight: "50px",
-                    mt: "5px",
-                  }}
-                >
-                  {!mainSpecializations[category].isCategory && (
-                    <Checkbox
-                      checked={checkedSpecializations.includes(
-                        mainSpecializations[category]?.id
-                      )}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        checkSpecialization(mainSpecializations[category].id);
-                      }}
-                      name={mainSpecializations[category].id}
-                    />
-                  )}
-                  <Typography>
-                    {category.split(" ").splice(0, 3).join(" ") +
-                      (category.split(" ").length > 3 ? "..." : "")}
-                  </Typography>
-                  {clone && !mainSpecializations[category].isCategory && (
-                    <Button
-                      variant="outlined"
-                      sx={{ m: "9px" }}
-                      onClick={() =>
-                        handleCloning(mainSpecializations[category])
-                      }
-                    >
-                      New{" "}
-                      {category.split(" ").splice(0, 3).join(" ") +
-                        (category.split(" ").length > 3 ? "..." : "")}{" "}
-                      Specialization
-                    </Button>
-                  )}
-                </Box>
-              }
-            >
-              {Object.keys(mainSpecializations[category].specializations)
-                .length > 0 && (
-                <TreeViewSimplified
-                  mainSpecializations={
-                    mainSpecializations[category].specializations
-                  }
-                  clone={clone}
-                />
-              )}
-            </TreeItem>
-          ))}
-        </TreeView>
-      );
-    },
-    [mainSpecializations, checkedSpecializations]
-  );
 
   const handleSave = async () => {
     try {
@@ -699,7 +705,7 @@ const Ontology = ({
     return _mainSpecializations;
   };
 
-  const handleNewSpec = async () => {
+  const handleNewSpecialization = async () => {
     if (type === "Specializations") {
       await addNewSpecialisation(type, selectedCategory);
       handleClose();
@@ -829,16 +835,28 @@ const Ontology = ({
     }
   };
 
+  /**
+   * Removes a sub-ontology with the specified ID from the given ontology data.
+   * @param {Object} params - An object containing ontologyData and id.
+   * @param {Object} ontologyData - The main ontology data object.
+   * @param {string} id - The ID of the sub-ontology to be removed.
+   */
   const removeSubOntology = ({ ontologyData, id }: any) => {
+    // Iterate over the types of sub-ontologies in the main ontology data.
     for (let type in ontologyData.subOntologies) {
+      // Iterate over the categories within each type of sub-ontology.
       for (let category in ontologyData.subOntologies[type] || {}) {
+        // Check if there are ontologies present in the current category.
         if (
           (ontologyData.subOntologies[type][category].ontologies || []).length >
           0
         ) {
+          // Find the index of the sub-ontology with the specified ID within the ontologies array.
           const subOntologyIdx = ontologyData.subOntologies[type][
             category
           ].ontologies.findIndex((sub: any) => sub.id === id);
+
+          // If the sub-ontology with the specified ID is found, remove it from the array.
           if (subOntologyIdx !== -1) {
             ontologyData.subOntologies[type][category].ontologies.splice(
               subOntologyIdx,
@@ -849,9 +867,14 @@ const Ontology = ({
       }
     }
   };
+
+  // Asynchronous function to handle the deletion of a sub-ontology
   const deleteSubOntologyEditable = async () => {
     try {
+      // Log a message indicating the start of the function
       console.info("deleteSubOntologyEditable");
+
+      // Confirm deletion with the user using a custom confirmation dialog
       if (
         await confirmIt(
           "Are you sure you want to delete the Ontology?",
@@ -859,26 +882,48 @@ const Ontology = ({
           "Keep Ontology"
         )
       ) {
+        // Retrieve the document reference of the ontology to be deleted
         const ontologyDoc = await getDoc(
           doc(collection(db, "ontology"), openOntology.id)
         );
+
+        // Check if the ontology document exists
         if (ontologyDoc.exists()) {
+          // Retrieve ontology data from the document
           const ontologyData = ontologyDoc.data();
+
+          // Extract the parent IDs from the ontology data
           const parents = ontologyData?.parents || [];
+
+          // Iterate through each parent ID
           for (let parent of parents) {
+            // Retrieve the document reference of the parent ontology
             const parentDoc = await getDoc(
               doc(collection(db, "ontology"), parent)
             );
+
+            // Check if the parent ontology document exists
             if (parentDoc.exists()) {
+              // Retrieve data of the parent ontology
               const ontologyData = parentDoc.data();
+
+              // Remove the reference to the sub-ontology from the parent
               removeSubOntology({ ontologyData, id: ontologyDoc.id });
+
+              // Update the parent ontology document with the modified data
               await updateDoc(parentDoc.ref, ontologyData);
             }
           }
+
+          // Update the user document by removing the deleted ontology's ID
           updateUserDoc([
             ...ontologyPath.slice(0, -1).map((path: any) => path.id),
           ]);
+
+          // Mark the ontology as deleted by updating its document
           await updateDoc(ontologyDoc.ref, { deleted: true });
+
+          // Record a log entry for the deletion action
           recordLogs({
             action: "Deleted Ontology",
             ontology: ontologyDoc.id,
@@ -886,9 +931,106 @@ const Ontology = ({
         }
       }
     } catch (error) {
+      // Log any errors that occur during the execution of the function
       console.error(error);
     }
   };
+
+  // TreeViewSimplifiedForSelecting is a functional component created using React's useCallback hook
+  const TreeViewSimplifiedForSelecting = useCallback(
+    // Destructure the props, including mainSpecializations and clone
+    ({ mainSpecializations, clone }: any) => {
+      // Initialize an array to store initially expanded categories
+      const expanded = [];
+
+      // Iterate through categories and add their IDs to the expanded array
+      for (let category of Object.keys(mainSpecializations)) {
+        expanded.push(mainSpecializations[category].id);
+      }
+
+      // Return the TreeView component with specified configurations
+      return (
+        <TreeView
+          defaultCollapseIcon={<ExpandMoreIcon />}
+          defaultExpandIcon={<ChevronRightIcon />}
+          sx={{
+            "& .Mui-selected": {
+              backgroundColor: "transparent",
+            },
+          }}
+          defaultExpanded={[...expanded]}
+        >
+          {/* Iterate through categories and create TreeItem components */}
+          {Object.keys(mainSpecializations).map((category) => (
+            <TreeItem
+              key={mainSpecializations[category]?.id || category}
+              nodeId={mainSpecializations[category]?.id || category}
+              sx={{ mt: "5px" }}
+              label={
+                // Customized label using Box, Checkbox, Typography, and Button components
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    height: "auto",
+                    minHeight: "50px",
+                    mt: "5px",
+                  }}
+                >
+                  {/* Render Checkbox only if it's not a category */}
+                  {!mainSpecializations[category].isCategory && (
+                    <Checkbox
+                      checked={checkedSpecializations.includes(
+                        mainSpecializations[category]?.id
+                      )}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        checkSpecialization(mainSpecializations[category].id);
+                      }}
+                      name={mainSpecializations[category].id}
+                    />
+                  )}
+                  {/* Display category name with ellipsis if more than 3 words */}
+                  <Typography>
+                    {category.split(" ").splice(0, 3).join(" ") +
+                      (category.split(" ").length > 3 ? "..." : "")}
+                  </Typography>
+                  {/* Render a Button for cloning if clone prop is true */}
+                  {clone && !mainSpecializations[category].isCategory && (
+                    <Button
+                      variant="outlined"
+                      sx={{ m: "9px" }}
+                      onClick={() =>
+                        handleCloning(mainSpecializations[category])
+                      }
+                    >
+                      New{" "}
+                      {category.split(" ").splice(0, 3).join(" ") +
+                        (category.split(" ").length > 3 ? "..." : "")}{" "}
+                      Specialization
+                    </Button>
+                  )}
+                </Box>
+              }
+            >
+              {/* Recursive call to TreeViewSimplifiedForSelecting for nested specializations */}
+              {Object.keys(mainSpecializations[category].specializations)
+                .length > 0 && (
+                <TreeViewSimplifiedForSelecting
+                  mainSpecializations={
+                    mainSpecializations[category].specializations
+                  }
+                  clone={clone}
+                />
+              )}
+            </TreeItem>
+          ))}
+        </TreeView>
+      );
+    },
+    // Dependencies for the useCallback hook
+    [mainSpecializations, checkedSpecializations]
+  );
 
   return (
     <Box
@@ -900,7 +1042,7 @@ const Ontology = ({
       <Dialog onClose={handleClose} open={open}>
         <DialogContent>
           <Box sx={{ height: "auto", width: "500px" }}>
-            <TreeViewSimplified
+            <TreeViewSimplifiedForSelecting
               mainSpecializations={
                 type === "Specializations"
                   ? getCurrentSpecializations()
@@ -911,7 +1053,7 @@ const Ontology = ({
           </Box>
         </DialogContent>
         <DialogActions sx={{ justifyContent: "center" }}>
-          <Button onClick={handleNewSpec}>Add new {type}</Button>
+          <Button onClick={handleNewSpecialization}>Add new {type}</Button>
           <Button onClick={handleSave} color="primary">
             Save
           </Button>
@@ -991,6 +1133,7 @@ const Ontology = ({
           {(
             ORDER_SUBONTOLOGIES[openOntology?.ontologyType as string] || []
           ).map((type: string) =>
+            // if it' a subOntologies we need to render it as one otherwise it's a Plain Text
             Object.keys(openOntology.subOntologies).includes(type) ? (
               <Box key={type} sx={{ display: "grid", mt: "5px" }}>
                 <Box>
@@ -1279,21 +1422,23 @@ const Ontology = ({
                 </Box>
               </Box>
             ) : (
-              <Box key={type}>
-                <SubPlainText
-                  updateInheritance={updateInheritance}
-                  recordLogs={recordLogs}
-                  user={user}
-                  lockedOntology={lockedOntology[openOntology.id] || {}}
-                  addLock={addLock}
-                  text={openOntology.plainText[type]}
-                  openOntology={openOntology}
-                  type={type}
-                  setSnackbarMessage={setSnackbarMessage}
-                  setOpenOntology={setOpenOntology}
-                  setEditOntology={setEditOntology}
-                />
-              </Box>
+              Object.keys(openOntology.plainText).includes(type) && (
+                <Box key={type}>
+                  <SubPlainText
+                    updateInheritance={updateInheritance}
+                    recordLogs={recordLogs}
+                    user={user}
+                    lockedOntology={lockedOntology[openOntology.id] || {}}
+                    addLock={addLock}
+                    text={openOntology.plainText[type]}
+                    openOntology={openOntology}
+                    type={type}
+                    setSnackbarMessage={setSnackbarMessage}
+                    setOpenOntology={setOpenOntology}
+                    setEditOntology={setEditOntology}
+                  />
+                </Box>
+              )
             )
           )}
         </Box>
