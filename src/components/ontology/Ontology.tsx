@@ -11,7 +11,7 @@ The `Ontology` component allows users to:
 - Clone existing ontologies.
 - Add new specializations to ontologies.
 - Select and save sub-ontologies.
-- Delete ontologies and categories.
+- Delete documents(nodes) and categories.
 - Lock and unlock ontology fields for editing.
 - Drag and drop sub-ontologies to reorganize them.
 
@@ -975,9 +975,9 @@ const Ontology = ({
       // Confirm deletion with the user using a custom confirmation dialog
       if (
         await confirmIt(
-          "Are you sure you want to delete the Ontology?",
-          "Delete Ontology",
-          "Keep Ontology"
+          "Are you sure you want to delete this Document?",
+          "Delete Document",
+          "Keep Document"
         )
       ) {
         // Retrieve the document reference of the ontology to be deleted
