@@ -1129,13 +1129,7 @@ const Ontology = () => {
               inheritance.ref == parentId
             ) {
               inheritance.title = ancestorTitle;
-
-              // If the modified field was "description," update the corresponding field in the ontology.
-              if (updatedField == "description") {
-                currentOntology[updatedField] = newValue;
-              } else {
-                currentOntology[type][updatedField] = newValue;
-              }
+              currentOntology[type][updatedField] = newValue;
             }
           }
 
