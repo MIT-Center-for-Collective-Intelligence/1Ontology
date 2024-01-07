@@ -40,6 +40,7 @@ import { SignUpBasicInfo } from " @components/components/Auth/SignUpBasicInfo";
 import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
 import { collection, doc, getFirestore, setDoc } from "firebase/firestore";
 import ROUTES from " @components/lib/utils/routes";
+import { USERS } from " @components/lib/firestoreClient/collections";
 
 const getDateBySubstractYears = (years: number, date = new Date()) => {
   date.setFullYear(date.getFullYear() - years);
@@ -71,7 +72,7 @@ const signUp = (data: any) => {
         blocked: false,
         userId: uid,
       };
-      const newUserRef = doc(collection(db, "users"), data.uname);
+      const newUserRef = doc(collection(db, USERS), data.uname);
       await setDoc(newUserRef, newUser);
       resolve("User signed up successfully");
     } catch (error) {

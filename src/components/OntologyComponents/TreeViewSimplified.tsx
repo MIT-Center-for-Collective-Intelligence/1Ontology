@@ -17,7 +17,7 @@ Here's a breakdown of the code:
 7. Export the `TreeViewSimplified` component: This allows the component to be used in other parts of the application.*/
 
 
-import { TreeVisual } from " @components/types/IOntology";
+import { TreeVisual } from " @components/types/INode";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { TreeItem, TreeView } from "@mui/lab";

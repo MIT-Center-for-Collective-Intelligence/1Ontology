@@ -52,68 +52,68 @@ const ThemeProvider: FC<Props> = ({ children }) => {
   const [{ user, settings }] = useAuth();
   const auth = getAuth();
   const db = getDatabase();
-  useEffect(() => {
-    const unsubscribeRefs: {
-      auth: () => void;
-      activityTimer: NodeJS.Timer | null;
-    } = {
-      auth: () => {},
-      activityTimer: null,
-    };
-    // Fetch the current user's ID from Firebase Authentication.
-    if (user) {
-      goOnline(db);
-      const sessionId = uuidv4();
-      var uname = user?.uname;
-      // Create a reference to this user's specific status node.
-      // This is where we will store data about being online/offline.
-      const userStatusDatabaseRef = ref(db, "/status/" + uname);
-      //var userStatusFirestoreRef = doc(firestoreDb, "/status/" + uname);
-      // We'll create two constants which we will write to
-      // the Realtime database when this device is offline
-      // or online.
-      let isOfflineForDatabase = {
-        sessionId,
-        state: "offline",
-        last_changed: serverTimestamp(),
-      };
-      let isOnlineForDatabase = {
-        sessionId,
-        state: "online",
-        last_changed: serverTimestamp(),
-      };
-      // Create a reference to the special '.info/connected' path in
-      // Realtime Database. This path returns `true` when connected
-      // and `false` when disconnected.
-      const infRef = ref(db, ".info/connected");
-      onValue(infRef, (snapshot) => {
-        if (snapshot.val() == false) {
-          set(userStatusDatabaseRef, isOfflineForDatabase);
-          return;
-        }
-        onDisconnect(userStatusDatabaseRef)
-          .set(isOfflineForDatabase)
-          .then(() => {
-            set(userStatusDatabaseRef, isOnlineForDatabase);
-          });
-      });
+  // useEffect(() => {
+  //   const unsubscribeRefs: {
+  //     auth: () => void;
+  //     activityTimer: NodeJS.Timer | null;
+  //   } = {
+  //     auth: () => {},
+  //     activityTimer: null,
+  //   };
+  //   // Fetch the current user's ID from Firebase Authentication.
+  //   if (user) {
+  //     goOnline(db);
+  //     const sessionId = uuidv4();
+  //     var uname = user?.uname;
+  //     // Create a reference to this user's specific status node.
+  //     // This is where we will store data about being online/offline.
+  //     const userStatusDatabaseRef = ref(db, "/status/" + uname);
+  //     //var userStatusFirestoreRef = doc(firestoreDb, "/status/" + uname);
+  //     // We'll create two constants which we will write to
+  //     // the Realtime database when this device is offline
+  //     // or online.
+  //     let isOfflineForDatabase = {
+  //       sessionId,
+  //       state: "offline",
+  //       last_changed: serverTimestamp(),
+  //     };
+  //     let isOnlineForDatabase = {
+  //       sessionId,
+  //       state: "online",
+  //       last_changed: serverTimestamp(),
+  //     };
+  //     // Create a reference to the special '.info/connected' path in
+  //     // Realtime Database. This path returns `true` when connected
+  //     // and `false` when disconnected.
+  //     const infRef = ref(db, ".info/connected");
+  //     onValue(infRef, (snapshot) => {
+  //       if (snapshot.val() == false) {
+  //         set(userStatusDatabaseRef, isOfflineForDatabase);
+  //         return;
+  //       }
+  //       onDisconnect(userStatusDatabaseRef)
+  //         .set(isOfflineForDatabase)
+  //         .then(() => {
+  //           set(userStatusDatabaseRef, isOnlineForDatabase);
+  //         });
+  //     });
 
-      unsubscribeRefs.auth = onAuthStateChanged(auth, (user) => {
-        if (!user) {
-          goOffline(db);
-        }
-      });
+  //     unsubscribeRefs.auth = onAuthStateChanged(auth, (user) => {
+  //       if (!user) {
+  //         goOffline(db);
+  //       }
+  //     });
 
-      unsubscribeRefs.activityTimer = setInterval(async () => {
-        set(userStatusDatabaseRef, isOnlineForDatabase);
-      }, 120 * 1000);
-    }
+  //     unsubscribeRefs.activityTimer = setInterval(async () => {
+  //       set(userStatusDatabaseRef, isOnlineForDatabase);
+  //     }, 120 * 1000);
+  //   }
 
-    return () => {
-      unsubscribeRefs.auth();
-      // unsubscribeRefs.activityTimer && clearInterval(unsubscribeRefs.activityTimer);
-    };
-  }, [user]);
+  //   return () => {
+  //     unsubscribeRefs.auth();
+  //     // unsubscribeRefs.activityTimer && clearInterval(unsubscribeRefs.activityTimer);
+  //   };
+  // }, [user]);
 
   const getMUIModeTheme = (theme?: UserTheme) => {
     if (theme === "Dark") return "dark";

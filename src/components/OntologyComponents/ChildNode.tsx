@@ -49,7 +49,7 @@ A `ConfirmDialog` component is used to confirm the deletion action with the user
 ## Example
 
 ```jsx
-<SubOntology
+<ChildNode
   subOntology={subOntologyData}
   openOntology={openOntologyData}
   sx={customStyles}
@@ -76,12 +76,13 @@ This documentation provides an overview of the `SubOntology` component's functio
 
 
 
+import { NODES } from " @components/lib/firestoreClient/collections";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import {
-  IOntology,
-  IOntologyPath,
+  INode,
+  INodePath,
   ISubOntology,
-} from " @components/types/IOntology";
+} from " @components/types/INode";
 import { Box, Button, Link, Tooltip } from "@mui/material";
 import {
   collection,
@@ -93,18 +94,18 @@ import {
 
 type ISubOntologyProps = {
   subOntology: ISubOntology;
-  openOntology: IOntology;
+  openOntology: INode;
   sx: { [key: string]: any };
   type: string;
   setOpenOntology: (openOntology: any) => void;
   saveSubOntology: any;
   setSnackbarMessage: (message: any) => void;
   category: string;
-  ontologyPath: IOntologyPath[];
+  ontologyPath: INodePath[];
   updateUserDoc: (ontologyPath: string[]) => void;
   recordLogs: (logs: any) => void;
   updateInheritance: (parameters: {
-    updatedOntology: IOntology;
+    updatedNode: INode;
     updatedField: string;
     type: "subOntologies" | "plainText";
     newValue: any;
@@ -112,7 +113,7 @@ type ISubOntologyProps = {
   }) => void;
 };
 
-const SubOntology = ({
+const ChildNode = ({
   subOntology,
   sx,
   type,
@@ -160,7 +161,7 @@ const SubOntology = ({
         await confirmIt("Are you sure you want to delete?", "Delete", "Keep")
       ) {
         const ontologyDoc = await getDoc(
-          doc(collection(db, "ontology"), openOntology.id)
+          doc(collection(db, NODES), openOntology.id)
         );
         if (ontologyDoc.exists()) {
           const ontologyData: any = ontologyDoc.data();
@@ -174,7 +175,7 @@ const SubOntology = ({
             );
           }
           const subOntologyDoc = await getDoc(
-            doc(collection(db, "ontology"), subOntology.id)
+            doc(collection(db, NODES), subOntology.id)
           );
 
           if (subOntologyDoc.exists()) {
@@ -183,7 +184,7 @@ const SubOntology = ({
             if (type === "Specializations") {
               for (let parent of parents) {
                 const ontologyDoc = await getDoc(
-                  doc(collection(db, "ontology"), parent)
+                  doc(collection(db, NODES), parent)
                 );
                 if (ontologyDoc.exists()) {
                   const ontologyData = ontologyDoc.data();
@@ -202,7 +203,7 @@ const SubOntology = ({
             }
             if (type !== "Specializations") {
               updateInheritance({
-                updatedOntology: { ...ontologyData, id: ontologyDoc.id },
+                updatedNode: { ...ontologyData, id: ontologyDoc.id },
                 updatedField: type,
                 type: "subOntologies",
                 newValue: ontologyData.subOntologies[type],
@@ -264,4 +265,4 @@ const SubOntology = ({
   );
 };
 
-export default SubOntology;
+export default ChildNode;

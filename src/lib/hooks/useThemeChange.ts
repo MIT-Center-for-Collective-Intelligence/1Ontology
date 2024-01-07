@@ -15,6 +15,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { useCallback } from "react";
+import { LOGS, USERS } from "../firestoreClient/collections";
 
 // Custom hook for handling theme changes
 const useThemeChange = () => {
@@ -29,22 +30,19 @@ const useThemeChange = () => {
     () => async (newValue: any) => {
       // Check if user is logged in
       if (!user) return;
-
       // Reference to the user document in Firestore
-      const userRef = doc(db, "users", user.uname);
+      const userRef = doc(db, USERS, user.uname);
 
       // Update the theme attribute in the user document
       await updateDoc(userRef, { ["theme"]: newValue });
 
-      // Define the collection for user theme change logs
-      const userLogCollection = "userThemeLog";
-
       // Reference to a new document in the user theme change log collection
-      const userLogRef = doc(collection(db, userLogCollection));
+      const logRef = doc(collection(db, LOGS));
 
       // Set document with user theme change details
-      await setDoc(userLogRef, {
+      await setDoc(logRef, {
         uname: user.uname,
+        action: "theme change",
         ["theme"]: newValue,
         createdAt: Timestamp.fromDate(new Date()),
       });

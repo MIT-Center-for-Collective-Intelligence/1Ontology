@@ -7,7 +7,7 @@ import {
   IProcess,
   IReward,
   IRole,
-} from " @components/types/IOntology";
+} from " @components/types/INode";
 
 
 // TO-DO: Consider storing this data in the database to identify ontology types in the project

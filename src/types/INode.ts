@@ -2,15 +2,15 @@
 
 - `ISubOntology`: Represents a sub-ontology with properties like title, id, category, editMode and new.
 - `ISubOntologyCategory`: Represents a category of sub-ontologies.
-- `IOntologyTypes`: Represents the possible types of an ontology.
-- `IOntologyPath`: Represents the path of an ontology with properties like id and title.
+- `INodeTypes`: Represents the possible types of an ontology.
+- `INodePath`: Represents the path of an ontology with properties like id and title.
 - `InheritanceType`: Represents the inheritance type of an ontology.
 - `OntologyInheritance`: Represents the inheritance of an ontology.
-- `IOntology`: Represents an ontology with properties like id, title, description, comments, editMode, parents, type, plainText, subOntologies, ontologyType, locked and category.
-- `IOntologyCommon`: Represents common properties of an ontology.
+- `INode`: Represents an ontology with properties like id, title, description, comments, editMode, parents, type, plainText, subOntologies, ontologyType, locked and category.
+- `INodeCommon`: Represents common properties of an ontology.
 - `IActivity`, `IActor`, `IProcess`, `IEvaluation`, `IRole`, `IIncentive`, `IReward`, `IGroup`: Represents specific types of ontologies with their specific properties.
 - `IUserOntology`: Represents a user's ontology with properties like id, uname, ontology, field, previous, new, correct, wrong and visible.
-- `IOntologyLock`: Represents a lock on an ontology with properties like uname, ontology and field.
+- `INodeLock`: Represents a lock on an ontology with properties like uname, ontology and field.
 - `TreeVisual`: Represents a visual tree of an ontology.
 - `ILockedOntology`: Represents a locked ontology with properties like id, uname, ontology, field, deleted and createdAt.
 - `MainSpecializations`: Represents the main specializations of an ontology.
@@ -31,7 +31,7 @@ export type ISubOntologyCategory = {
   [category: string]: { ontologies: ISubOntology[] };
 };
 
-export type IOntologyTypes =
+export type INodeTypes =
   | "activity"
   | "actor"
   | "processe"
@@ -41,7 +41,7 @@ export type IOntologyTypes =
   | "incentive"
   | "reward";
 
-export type IOntologyPath = {
+export type INodePath = {
   id: string;
   title: string;
   category?:boolean;
@@ -55,7 +55,7 @@ export type OntologyInheritance = {
     [type: string]: InheritanceType;
   };
 };
-export type IOntology = {
+export type INode = {
   deleted: boolean;
   id: string;
   node?: string | null;
@@ -64,7 +64,7 @@ export type IOntology = {
   comments: { message: string; sender: string; editMode?: boolean }[];
   editMode?: boolean;
   parents?: string[];
-  type?: IOntologyTypes;
+  type?: INodeTypes;
   plainText: { [key: string]: string };
   subOntologies: { [key: string]: any };
   ontologyType?: string;
@@ -72,14 +72,14 @@ export type IOntology = {
   category?: boolean;
 } & OntologyInheritance;
 
-export type IOntologyCommon = {
+export type INodeCommon = {
   title: string;
   description: string;
   ontologyType: string;
   locked?: boolean;
 };
 
-export type IActivity = IOntologyCommon & {
+export type IActivity = INodeCommon & {
   plainText: {
     Preconditions: string;
     Postconditions: string;
@@ -93,7 +93,7 @@ export type IActivity = IOntologyCommon & {
   };
 };
 
-export type IActor = IOntologyCommon & {
+export type IActor = INodeCommon & {
   plainText: {
     "Type of actor": string;
     Abilities: string;
@@ -104,7 +104,7 @@ export type IActor = IOntologyCommon & {
   };
 };
 
-export type IProcess = IOntologyCommon & {
+export type IProcess = INodeCommon & {
   plainText: {
     "Type of Process": string;
     Subactivities: string;
@@ -118,7 +118,7 @@ export type IProcess = IOntologyCommon & {
   };
 };
 
-export type IEvaluation = IOntologyCommon & {
+export type IEvaluation = INodeCommon & {
   plainText: {
     "Evaluation type": string;
     "Measurement units": string;
@@ -131,7 +131,7 @@ export type IEvaluation = IOntologyCommon & {
   };
 };
 
-export type IRole = IOntologyCommon & {
+export type IRole = INodeCommon & {
   plainText: {
     "Role type": string;
     Units: string;
@@ -145,7 +145,7 @@ export type IRole = IOntologyCommon & {
   };
 };
 
-export type IIncentive = IOntologyCommon & {
+export type IIncentive = INodeCommon & {
   plainText: {
     "Reward function": string;
     "Capabilities required": string;
@@ -158,7 +158,7 @@ export type IIncentive = IOntologyCommon & {
   };
 };
 
-export type IReward = IOntologyCommon & {
+export type IReward = INodeCommon & {
   plainText: {
     "Reward type": string;
     Units: string;
@@ -167,7 +167,7 @@ export type IReward = IOntologyCommon & {
     Specializations: ISubOntologyCategory;
   };
 };
-export type IGroup = IOntologyCommon & {
+export type IGroup = INodeCommon & {
   plainText: {
     "Type of actor": string;
     Abilities: string;
@@ -191,7 +191,7 @@ export type IUserOntology = {
   wrong: boolean;
   visible: boolean;
 };
-export type IOntologyLock = {
+export type INodeLock = {
   uname: string;
   ontology: string;
   field: string;

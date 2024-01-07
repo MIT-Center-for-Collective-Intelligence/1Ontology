@@ -18,6 +18,7 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import { USERS } from "./collections";
 
 // Function to sign up a new user with email and password
 export const signUp = async (name: string, email: string, password: string) => {
@@ -84,11 +85,15 @@ export const retrieveAuthenticatedUser = async (
   let user: User | null = null;
   let theme: UserTheme = "Dark";
   const db = getFirestore();
-  const nodesRef = collection(db, "users");
-  const q = query(nodesRef, where("userId", "==", userId), limit(1));
+  const q = query(
+    collection(db, USERS),
+    where("userId", "==", userId),
+    limit(1)
+  );
   const userDoc = await getDocs(q);
   if (userDoc.size !== 0) {
     const userData = userDoc.docs[0].data();
+    console.log(userData);
     user = {
       userId,
       imageUrl: userData.imageUrl,
