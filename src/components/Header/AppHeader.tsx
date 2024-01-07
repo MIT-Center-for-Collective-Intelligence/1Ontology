@@ -188,7 +188,7 @@ const AppHeader = forwardRef(
               function error(err) {
                 setIsUploading(false);
                 confirmIt(
-                  "There is an error with uploading your picture. Please upload your profile picture again! If the problem persists, please try another picture.",
+                  "There is an error with uploading your picture. Please try again! If the problem persists, try another picture.",
                   "Ok",
                   ""
                 );
