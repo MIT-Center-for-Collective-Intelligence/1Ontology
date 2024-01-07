@@ -163,41 +163,41 @@ const Text = ({
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const [editMode, setEditMode] = useState(false);
+  const [copyValue, setCopyValue] = useState(openOntology.plainText[type]);
   const textFieldRef = useRef<any>(null);
 
   const capitalizeFirstLetter = (word: string) => {
     return word.charAt(0).toUpperCase() + word.slice(1);
   };
 
-// This function is responsible for editing the title of a sub-ontology.
-// It takes an object with three parameters: parentData, newTitle, and id.
+  // This function is responsible for editing the title of a sub-ontology.
+  // It takes an object with three parameters: parentData, newTitle, and id.
 
-const editTitleSubOntology = ({ parentData, newTitle, id }: any) => {
-  // Iterate over the types of sub-ontologies in the parentData.
-  for (let type in parentData.subOntologies) {
-    // Iterate over the categories within each type of sub-ontology.
-    for (let category in parentData.subOntologies[type] || {}) {
-      // Check if the current category has ontologies defined.
-      if (
-        (parentData.subOntologies[type][category].ontologies || []).length > 0
-      ) {
-        // Find the index of the sub-ontology with the given id within the current category.
-        const subOntologyIdx = parentData.subOntologies[type][
-          category
-        ].ontologies.findIndex((sub: any) => sub.id === id);
+  const editTitleChildNode = ({ parentData, newTitle, id }: any) => {
+    // Iterate over the types of sub-ontologies in the parentData.
+    for (let type in parentData.subOntologies) {
+      // Iterate over the categories within each type of sub-ontology.
+      for (let category in parentData.subOntologies[type] || {}) {
+        // Check if the current category has ontologies defined.
+        if (
+          (parentData.subOntologies[type][category].ontologies || []).length > 0
+        ) {
+          // Find the index of the sub-ontology with the given id within the current category.
+          const subOntologyIdx = parentData.subOntologies[type][
+            category
+          ].ontologies.findIndex((sub: any) => sub.id === id);
 
-        // If the sub-ontology with the specified id is found in the current category.
-        if (subOntologyIdx !== -1) {
-          // Update the title of the sub-ontology with the new title.
-          parentData.subOntologies[type][category].ontologies[
-            subOntologyIdx
-          ].title = newTitle;
+          // If the sub-ontology with the specified id is found in the current category.
+          if (subOntologyIdx !== -1) {
+            // Update the title of the sub-ontology with the new title.
+            parentData.subOntologies[type][category].ontologies[
+              subOntologyIdx
+            ].title = newTitle;
+          }
         }
       }
     }
-  }
-};
-
+  };
 
   useEffect(() => {
     if (type === "title" && editOntology) {
@@ -212,28 +212,26 @@ const editTitleSubOntology = ({ parentData, newTitle, id }: any) => {
     // Check if the edit mode is true
     if (editMode) {
       // Fetch the ontology document from the database
-      const ontologyDoc = await getDoc(
-        doc(collection(db, NODES), openOntology.id)
-      );
+      const nodeDoc = await getDoc(doc(collection(db, NODES), openOntology.id));
 
       // Check if the ontology document exists
-      if (ontologyDoc.exists()) {
+      if (nodeDoc.exists()) {
         // Extract ontology data from the document
-        const ontologyData: any = ontologyDoc.data();
+        const nodeData: any = nodeDoc.data();
 
         // If the field being edited is the "title"
         if (type === "title") {
           // Reset the editOntology state
           setEditOntology("");
-          
+
           // Update titles of sub-ontologies for each parent ontology
           for (let parentId of openOntology?.parents || []) {
             const parentRef = doc(collection(db, NODES), parentId);
             const parentDoc = await getDoc(parentRef);
             const parentData: any = parentDoc.data();
-            
+
             // Call a function to edit the title of sub-ontology
-            editTitleSubOntology({
+            editTitleChildNode({
               parentData,
               newTitle: openOntology.title,
               id: openOntology.id,
@@ -247,28 +245,21 @@ const editTitleSubOntology = ({ parentData, newTitle, id }: any) => {
         let previousValue = "";
         let newValue = "";
 
-        // If the field being edited is "description" or "title"
-        if (["description", "title"].includes(type)) {
-          previousValue = ontologyData[type];
-          newValue = openOntology[type as "description" | "title"];
-          ontologyData[type] = openOntology[type as "description" | "title"];
-        } else {
-          // If the field being edited is not "description" or "title"
-          previousValue = ontologyData.plainText[type];
-          newValue = openOntology.plainText[type];
-          ontologyData.plainText[type] = openOntology.plainText[type] || "";
-        }
+        // If the field being edited is not "description" or "title"
+        previousValue = nodeData.plainText[type];
+        newValue = openOntology.plainText[type];
+        nodeData.plainText[type] = openOntology.plainText[type] || "";
 
         // If the field is not "title" and the ontology has inheritance
-        if (type !== "title" && ontologyData.inheritance) {
-          ontologyData.inheritance.plainText[type] = {
+        if (type !== "title" && nodeData.inheritance) {
+          nodeData.inheritance.plainText[type] = {
             ref: null,
             title: "",
           };
         }
 
         // Update the ontology document in the database
-        await updateDoc(ontologyDoc.ref, ontologyData);
+        await updateDoc(nodeDoc.ref, nodeData);
 
         // Update the children according to inheritance
         // (Title doesn't have inheritance, so it's excluded)
@@ -276,8 +267,8 @@ const editTitleSubOntology = ({ parentData, newTitle, id }: any) => {
           updatedField: type,
           type: "plainText",
           newValue: newValue,
-          updatedNode: { ...ontologyData, id: openOntology.id },
-          ancestorTitle: ontologyData.title,
+          updatedNode: { ...nodeData, id: openOntology.id },
+          ancestorTitle: nodeData.title,
         });
 
         // Add a lock for the edited ontology
@@ -293,48 +284,35 @@ const editTitleSubOntology = ({ parentData, newTitle, id }: any) => {
       }
     } else {
       // If edit mode is false, add a lock for the ontology
-      await addLock(openOntology.id, type, "add");
+      addLock(openOntology.id, type, "add");
     }
   };
 
-// Define a function to handle text edits, taking an event as a parameter (assumed to be a React event)
-const handleEditText = (e: any) => {
-  // Update the state using the setOpenOntology function, which receives the current state
-  setOpenOntology((openOntology: INode) => {
-    // Create a copy of the current state to avoid direct mutation
-    const _openOntology: INode = { ...openOntology };
+  // Define a function to handle text edits, taking an event as a parameter (assumed to be a React event)
+  const handleEditText = (e: any) => {
+    // Update the state using the setOpenOntology function, which receives the current state
+    setCopyValue(e.target.value);
+  };
 
-    // Check if the 'type' property is either 'description' or 'title'
-    if (["description", "title"].includes(type)) {
-      // If so, update the corresponding property in the copied state with the new text value from the event
-      _openOntology[type as "description" | "title"] = e.target.value;
-    } else {
-      // If 'type' is not 'description' or 'title', assume it is a property in the 'plainText' object
-      // Update the corresponding property in the 'plainText' object with the new text value from the event
-      _openOntology.plainText[type] = e.target.value;
+  // Function to handle focus events
+  const handleFocus = (event: any) => {
+    // Check if the type is "title" and the current ontology being edited matches the open ontology
+    if (type === "title" && editOntology === openOntology.id) {
+      // If conditions are met, select the text in the target element
+      event.target.select();
     }
+  };
 
-    // Return the updated state, which will be set by setOpenOntology
-    return _openOntology;
-  });
-};
-
-// Function to handle focus events
-const handleFocus = (event: any) => {
-  // Check if the type is "title" and the current ontology being edited matches the open ontology
-  if (type === "title" && editOntology === openOntology.id) {
-    // If conditions are met, select the text in the target element
-    event.target.select();
-  }
-};
-
-// Function to handle the deletion of an ontology
-const handleDeleteOntology = () => {
-  // Call the function to delete the editable sub-ontology
-  deleteSubOntologyEditable();
-};
-
-
+  // Function to handle the deletion of an ontology
+  const handleDeleteOntology = () => {
+    // Call the function to delete the editable sub-ontology
+    deleteSubOntologyEditable();
+  };
+  const onCancelTextChange = () => {
+    setCopyValue(openOntology.plainText[type]);
+    setEditMode((edit) => !edit);
+    addLock(openOntology.id, type, "remove");
+  };
   return (
     <Box>
       {type !== "title" && (
@@ -347,11 +325,20 @@ const handleDeleteOntology = () => {
               <LockIcon />
             </Tooltip>
           ) : (
-            <Tooltip title={editMode ? "Save" : "Edit"}>
-              <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
-                {editMode ? "Save" : "Edit"}
-              </Button>
-            </Tooltip>
+            <Box>
+              <Tooltip title={editMode ? "Save" : "Edit"}>
+                <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
+                  {editMode ? "Save" : "Edit"}
+                </Button>
+              </Tooltip>
+              {editMode && (
+                <Tooltip title={"Cancel"}>
+                  <Button onClick={onCancelTextChange} sx={{ ml: "5px" }}>
+                    {"Cancel"}
+                  </Button>
+                </Tooltip>
+              )}
+            </Box>
           )}
           {(openOntology.inheritance || {}).plainText &&
             (openOntology.inheritance || {}).plainText[type]?.ref && (
@@ -371,7 +358,7 @@ const handleDeleteOntology = () => {
           placeholder={type}
           variant="standard"
           fullWidth
-          value={text}
+          value={copyValue}
           multiline
           onChange={handleEditText}
           InputProps={{
@@ -385,11 +372,20 @@ const handleDeleteOntology = () => {
                 }}
               >
                 {type === "title" && (
-                  <Tooltip title={"Save"}>
-                    <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
-                      {editMode ? "Save" : "Edit"}
-                    </Button>
-                  </Tooltip>
+                  <Box sx={{ display: "flex" }}>
+                    <Tooltip title={"Save"}>
+                      <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
+                        {editMode ? "Save" : "Edit"}
+                      </Button>
+                    </Tooltip>
+                    {editMode && (
+                      <Tooltip title={"Cancel"}>
+                        <Button onClick={onCancelTextChange} sx={{ ml: "5px" }}>
+                          {"Cancel"}
+                        </Button>
+                      </Tooltip>
+                    )}
+                  </Box>
                 )}
               </Box>
             ),
@@ -429,11 +425,13 @@ const handleDeleteOntology = () => {
                   <LockIcon />
                 </Tooltip>
               ) : (
-                <Tooltip title={editMode ? "Save" : "Edit"}>
-                  <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
-                    {editMode ? "Save" : "Edit"}
-                  </Button>
-                </Tooltip>
+                <Box>
+                  <Tooltip title={editMode ? "Save" : "Edit"}>
+                    <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
+                      {editMode ? "Save" : "Edit"}
+                    </Button>
+                  </Tooltip>
+                </Box>
               )}
               <Tooltip title={"Delete Ontology"} sx={{ ml: "5px" }}>
                 <Button onClick={handleDeleteOntology} sx={{ ml: "5px" }}>

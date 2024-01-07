@@ -93,7 +93,6 @@ export const retrieveAuthenticatedUser = async (
   const userDoc = await getDocs(q);
   if (userDoc.size !== 0) {
     const userData = userDoc.docs[0].data();
-    console.log(userData);
     user = {
       userId,
       imageUrl: userData.imageUrl,
