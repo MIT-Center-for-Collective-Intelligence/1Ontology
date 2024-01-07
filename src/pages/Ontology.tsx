@@ -1123,7 +1123,9 @@ const Ontology = () => {
                   <Link
                     underline={path.category ? "none" : "hover"}
                     key={path.id}
-                    onClick={() => handleLinkNavigation(path, "")}
+                    onClick={() => {
+                      if (!path.category) handleLinkNavigation(path, "");
+                    }}
                     sx={{
                       cursor: !path.category ? "pointer" : "",
                       ":hover": {
