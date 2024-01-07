@@ -134,14 +134,12 @@ const Text = ({
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const [editMode, setEditMode] = useState(false);
-  const [copyValue, setCopyValue] = useState(
-    currentVisibleNode.plainText[type]
-  );
+  const [copyValue, setCopyValue] = useState("");
   const textFieldRef = useRef<any>(null);
 
   useEffect(() => {
     setCopyValue(currentVisibleNode.plainText[type]);
-  }, [currentVisibleNode]);
+  }, [currentVisibleNode, type, editMode]);
   const capitalizeFirstLetter = (word: string) => {
     return word.charAt(0).toUpperCase() + word.slice(1);
   };
@@ -157,15 +155,14 @@ const Text = ({
         // Check if the current category has ontologies defined.
         if ((parentData.children[type][category] || []).length > 0) {
           // Find the index of the sub-ontology with the given id within the current category.
-          const subOntologyIdx = parentData.children[type][category].findIndex(
+          const childIdx = parentData.children[type][category].findIndex(
             (sub: any) => sub.id === id
           );
 
           // If the sub-ontology with the specified id is found in the current category.
-          if (subOntologyIdx !== -1) {
+          if (childIdx !== -1) {
             // Update the title of the sub-ontology with the new title.
-            parentData.children[type][category][subOntologyIdx].title =
-              newTitle;
+            parentData.children[type][category][childIdx].title = newTitle;
           }
         }
       }
@@ -180,7 +177,6 @@ const Text = ({
 
   const onSaveTextChange = async () => {
     // Toggle the edit mode
-    setEditMode((edit) => !edit);
 
     // Check if the edit mode is true
     if (editMode) {
@@ -193,7 +189,9 @@ const Text = ({
       if (nodeDoc.exists()) {
         // Extract ontology data from the document
         const nodeData: any = nodeDoc.data();
-
+        // If the field being edited is not "description" or "title"
+        let previousValue = nodeData.plainText[type] || "";
+        let newValue = copyValue;
         // If the field being edited is the "title"
         if (type === "title") {
           // Reset the editNode state
@@ -208,25 +206,22 @@ const Text = ({
             // Call a function to edit the title of sub-ontology
             editTitleChildNode({
               parentData,
-              newTitle: currentVisibleNode.title,
+              newTitle: newValue,
               id: currentVisibleNode.id,
             });
 
             // Update the parent ontology in the database
-            await updateDoc(parentRef, parentData);
+            updateDoc(parentRef, parentData);
           }
         }
 
-        let previousValue = "";
-        let newValue = "";
+        nodeData.plainText[type] = copyValue || "";
 
-        // If the field being edited is not "description" or "title"
-        previousValue = nodeData.plainText[type];
-        newValue = currentVisibleNode.plainText[type];
-        nodeData.plainText[type] = currentVisibleNode.plainText[type] || "";
-
-        // If the field is not "title" and the ontology has inheritance
-        if (type !== "title" && nodeData.inheritance) {
+        if (
+          type !== "title" &&
+          nodeData.inheritance &&
+          previousValue.trim() !== newValue.trim()
+        ) {
           nodeData.inheritance.plainText[type] = {
             ref: null,
             title: "",
@@ -257,9 +252,11 @@ const Text = ({
           newValue,
         });
       }
+      setEditMode((edit) => !edit);
     } else {
       // If edit mode is false, add a lock for the ontology
       addLock(currentVisibleNode.id, type, "add");
+      setEditMode(true);
     }
   };
 

@@ -175,7 +175,7 @@ const Ontology = () => {
         // If found, add an object to the ontologyPath array with 'id' and 'title' properties
         ontologyPath.push({
           id: path,
-          title: nodes[nodeIdx].title,
+          title: nodes[nodeIdx].plainText.title,
           category: nodes[nodeIdx].category,
         });
       }
@@ -192,12 +192,13 @@ const Ontology = () => {
     let newSpecializationsTree: any = {};
     // Iterate through each main nodes
     for (let node of _nodes) {
+      const nodeTitle = node.plainText.title;
       // Create an entry for the current ontology in the main specializations tree
-      newSpecializationsTree[node.title] = {
+      newSpecializationsTree[nodeTitle] = {
         id: node.id,
         path: [...path, node.id],
         isCategory: !!node.category,
-        title: node.title,
+        title: nodeTitle,
         specializations: {},
       };
 
@@ -215,25 +216,25 @@ const Ontology = () => {
         // Check if the category is the main category
         if (category === "main") {
           // If main, update the main specializations entry with recursive call
-          newSpecializationsTree[node.title] = {
+          newSpecializationsTree[nodeTitle] = {
             id: node.id,
             path: [...path, node.id],
             isCategory: !!node.category,
-            title: node.title,
+            title: nodeTitle,
             specializations: {
-              ...(newSpecializationsTree[node.title]?.specializations || {}),
+              ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
               ...getSpecializationsTree(specializations, [...path, node.id]),
             },
           };
         } else {
           // If not main, create a new entry for the category
-          newSpecializationsTree[node.title] = {
+          newSpecializationsTree[nodeTitle] = {
             id: node.id,
             path: [...path, node.id],
-            title: node.title,
+            title: nodeTitle,
             c: node.category,
             specializations: {
-              ...(newSpecializationsTree[node.title]?.specializations || {}),
+              ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
               [category]: {
                 isCategory: true,
                 id: newId(db), // Assuming newId and db are defined elsewhere
@@ -272,14 +273,16 @@ const Ontology = () => {
     const mainCategories = nodes.filter((node: any) => node.category);
 
     // Sort main ontologies based on a predefined order
-    mainCategories.sort((a: any, b: any) => {
+    mainCategories.sort((nodeA: any, nodeB: any) => {
       const order = [
         "WHAT: Activities",
         "WHO: Actors",
         "HOW: Processes",
         "WHY: Evaluation",
       ];
-      return order.indexOf(a.title) - order.indexOf(b.title);
+      const nodeATitle = nodeA.plainText.title;
+      const nodeBTitle = nodeA.plainText.title;
+      return order.indexOf(nodeATitle) - order.indexOf(nodeBTitle);
     });
     // Generate a tree structure of specializations from the sorted main ontologies
     let treeOfSpecialisations = getSpecializationsTree(mainCategories, []);
@@ -560,9 +563,12 @@ const Ontology = () => {
       try {
         // Reference to the new ontology document
         const newOntologyRef = doc(collection(db, NODES), id);
-
         // Set the document with the new ontology data
-        await setDoc(newOntologyRef, { ...newNode, deleted: false });
+        await setDoc(newOntologyRef, {
+          ...newNode,
+          deleted: false,
+          createdAt: new Date(),
+        });
 
         // Record logs for the created ontology
         await recordLogs({
@@ -614,77 +620,7 @@ const Ontology = () => {
       parent.children.Specializations = specializations;
 
       // Update the parent ontology in Firestore with the modified data.
-      await updateDoc(nodeRef, parent);
-    }
-  };
-
-  // Function to save a sub-ontology with given parameters
-  const saveChildNode = async (
-    subOntology: IChildNode, // The sub-ontology object to be saved
-    type: string, // The type of sub-ontology (e.g., "Specializations" or "Evaluation Dimensions")
-    id: string // The ID of the parent ontology to which the sub-ontology belongs
-  ) => {
-    try {
-      // Check if the parent ontology is open; if not, return
-      if (!currentVisibleNode) return;
-
-      // Reference to the parent ontology document in the database
-      const nodeParentRef = doc(collection(db, NODES), id);
-      // Retrieve the parent ontology document
-      const nodeParentDoc = await getDoc(nodeParentRef);
-      // Extract data from the parent ontology document
-      const nodeParent: any = nodeParentDoc.data();
-      // If the parent ontology does not exist, return
-      if (!nodeParent) return;
-
-      // Find the index of the sub-ontology within the specified type in the parent ontology
-      const idx = nodeParent.children[type].findIndex(
-        (child: IChildNode) => child.id === subOntology.id
-      );
-
-      // If the sub-ontology is not found, add it; otherwise, update its title
-      if (idx === -1) {
-        nodeParent.children[type].push({
-          title: subOntology.title,
-          id: subOntology.id,
-        });
-      } else {
-        nodeParent[type][idx].title = subOntology.title;
-      }
-
-      // Reference to the new sub-ontology document in the database
-      const newOntologyRef = doc(collection(db, NODES), subOntology.id);
-      // Retrieve the new sub-ontology document
-      const newOntologyDoc = await getDoc(newOntologyRef);
-
-      // If the new sub-ontology document exists, update its title
-      if (newOntologyDoc.exists()) {
-        await updateDoc(newOntologyRef, { title: subOntology.title });
-      }
-
-      // Update the parent ontology document with the modified data
-      await updateDoc(nodeParentRef, nodeParent);
-
-      // Determine the sub-ontology type for navigation purposes
-      let childNodeType = type;
-      if (type === "Specializations") {
-        childNodeType = nodeParent.nodeType;
-      }
-      if (type === "Evaluation Dimensions") {
-        childNodeType = "Evaluation";
-      }
-
-      // Trigger a navigation function with the sub-ontology details and type
-      handleLinkNavigation(
-        { id: subOntology.id, title: subOntology.title },
-        childNodeType
-      );
-
-      // Add the sub-ontology to its parent in the ontology hierarchy
-      await addChildToParentNode(childNodeType, subOntology.id);
-    } catch (error) {
-      // Log any errors that occur during the execution of the function
-      console.error(error);
+      await updateDoc(nodeRef, { ...parent, updatedAt: new Date() });
     }
   };
 
@@ -949,12 +885,12 @@ const Ontology = () => {
     setViewValue(newValue);
   };
 
-  // This function finds the path of an ontology in a nested structure of mainNodes and their children.
+  // This function finds the path of a node in a nested structure of mainNodes and their children.
   const findOntologyPath = useCallback(
     ({ mainNodes, path, currentPath }: any) => {
-      // Loop through each main ontology
+      // Loop through each main node
       for (let ontology of mainNodes) {
-        // Update the path for the current ontology
+        // Update the path for the current node
         currentPath[ontology.id] = [...path, ontology.id];
 
         // Loop through categories in the children of the current ontology
@@ -1207,7 +1143,6 @@ const Ontology = () => {
                   handleLinkNavigation={handleLinkNavigation}
                   setOntologyPath={setOntologyPath}
                   ontologyPath={ontologyPath}
-                  saveChildNode={saveChildNode}
                   setSnackbarMessage={setSnackbarMessage}
                   updateUserDoc={updateUserDoc}
                   user={user}

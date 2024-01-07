@@ -139,7 +139,6 @@ type INodeProps = {
   ) => void;
   setOntologyPath: (state: INodePath[]) => void;
   ontologyPath: INodePath[];
-  saveChildNode: (subOntology: IChildNode, type: string, id: string) => void;
   setSnackbarMessage: (message: string) => void;
   updateUserDoc: (ids: string[]) => void;
   user: any;
@@ -227,7 +226,6 @@ const ORDER_CHILDREN: { [key: string]: string[] } = {
 const Node = ({
   currentVisibleNode,
   setCurrentVisibleNode,
-  saveChildNode,
   setSnackbarMessage,
   updateUserDoc,
   mainSpecializations,
@@ -291,55 +289,55 @@ const Node = ({
   const cloneNode = async (nodeId: string): Promise<string | undefined> => {
     try {
       // Retrieve the document of the original node from Firestore.
-      const nodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
+      const parentNodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
 
       // If the node document doesn't exist, return early.
-      if (!nodeDoc.exists()) return undefined;
+      if (!parentNodeDoc.exists()) return undefined;
 
       // Extract data from the original node document.
-      const nodeData = nodeDoc.data();
+      const parentNodeData = parentNodeDoc.data();
 
       // Create a reference for the new node document in Firestore.
       const newNodeRef = doc(collection(db, NODES));
 
       // Prepare the data for the new node by copying existing data.
       const newNode: any = {
-        ...nodeDoc.data(),
+        ...parentNodeDoc.data(),
       };
 
       // Set a new ID for the cloned node.
       newNode.id = newNodeRef.id;
 
       // Update the parents array to include the ID of the original node.
-      newNode.parents = [nodeDoc.id];
+      newNode.parents = [parentNodeDoc.id];
 
       // Modify the title to indicate that it is a new node.
-      newNode.title = `New ${nodeData.title}`;
+      newNode.plainText.title = `New ${parentNodeData.plainText.title}`;
 
-      // Initialize an empty Specializations object for sub-ontologies.
-      newNode.children.Specializations = {};
+      // Initialize an empty Specializations object for children.
+      newNode.children.Specializations = { main: [] };
 
       // Remove the 'locked' property from the new node.
       delete newNode.locked;
 
-      // Update the original node to include the reference to the new node in its sub-ontologies.
-      nodeData.children.Specializations = {
-        ["main"]: {
-          ontologies: [
-            ...(nodeData.children?.Specializations["main"] || []),
-            {
-              id: newNodeRef.id,
-              title: `New ${nodeData.title}`,
-            },
-          ],
-        },
+      // Update the original node to include the reference to the new node in its children.
+      parentNodeData.children.Specializations = {
+        ["main"]: [
+          ...(parentNodeData.children?.Specializations["main"] || []),
+          {
+            id: newNodeRef.id,
+            title: `New ${parentNodeData.plainText.title}`,
+          },
+        ],
       };
-
       // Update the original node document in Firestore with the modified data.
-      await updateDoc(nodeDoc.ref, nodeData);
+      await updateDoc(parentNodeDoc.ref, {
+        ...parentNodeData,
+        updatedAt: new Date(),
+      });
 
-      // Create a new document in Firestore for the cloned node with the modified data.
-      await setDoc(newNodeRef, newNode);
+      // // Create a new document in Firestore for the cloned node with the modified data.
+      await setDoc(newNodeRef, { ...newNode, createdAt: new Date() });
 
       // Return the ID of the newly created node.
       return newNodeRef.id;
@@ -424,7 +422,7 @@ const Node = ({
       const newNode = { ...nodeParentDoc.data() };
 
       // Initialize the Specializations sub-node
-      newNode.children.Specializations = {};
+      newNode.children.Specializations = { main: [] };
 
       // Remove unnecessary fields from the new node
       delete newNode.locked;
@@ -432,22 +430,9 @@ const Node = ({
 
       // Set the parents and title for the new node
       newNode.parents = [currentVisibleNode.id];
-      newNode.title = `New ${parentNode.title}`;
+      newNode.plainText.title = `New ${parentNode.plainText.title}`;
       newNode.id = newNodeRef.id;
 
-      let descriptionInheritance: { ref: string; title: string } = {
-        ref: parentNode.id,
-        title: parentNode.title,
-      };
-      if (
-        parentNode.inheritance &&
-        parentNode.inheritance.plainText["description"]?.ref
-      ) {
-        descriptionInheritance = {
-          ref: parentNode.inheritance.plainText["description"]?.ref,
-          title: parentNode.inheritance.plainText["description"]?.title,
-        };
-      }
       // Build the inheritance object for the new node
       newNode.inheritance = {
         plainText: {
@@ -456,9 +441,6 @@ const Node = ({
             "plainText",
             parentNode
           ),
-          description: {
-            ...descriptionInheritance,
-          },
         },
         children: {
           ...getInheritance(
@@ -489,9 +471,10 @@ const Node = ({
         ...ontologyPath.map((path: any) => path.id),
         newNodeRef.id,
       ]);
-
+      console.log({ newNode });
       // Add the new node to the database
       addNewNode({ id: newNodeRef.id, newNode });
+      console.log({ parentNode });
       // Update the parent node document in the database
       await updateDoc(nodeParentRef, parentNode);
     } catch (error) {
@@ -534,78 +517,76 @@ const Node = ({
     // Close the modal or perform any necessary cleanup.
     handleClose();
   };
-
-  const handleSave = async () => {
+  console.log(checkedSpecializations);
+  const handleSaveChildrenChanges = async () => {
     try {
       // Get the node document from the database
-      const ontologyDoc = await getDoc(
+      const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );
 
       // If the node document does not exist, return early
-      if (!ontologyDoc.exists()) return;
+      if (!nodeDoc.exists()) return;
 
       // Extract existing node data from the document
-      const ontologyData: any = ontologyDoc.data();
+      const nodeData: any = nodeDoc.data();
 
-      // Initialize a new array for storing updated sub-ontologies
-      const newchildren =
+      // Initialize a new array for storing updated children
+      const oldChildren =
         type === "Specializations"
-          ? [...ontologyData.children[type][selectedCategory]]
+          ? [...nodeData.children[type][selectedCategory]]
           : [];
 
       // Iterate through checkedSpecializations to update newchildren
       for (let checkd of checkedSpecializations) {
-        // Find the node object from the ontologies array
-        const findOntology = nodes.find((node: any) => node.id === checkd);
+        // Find the node object from the children array
+        const findNode = nodes.find((node: INode) => node.id === checkd);
 
         // Check if the node is not already present in newchildren
-        const indexFound = newchildren.findIndex((onto) => onto.id === checkd);
-        if (indexFound === -1 && findOntology) {
+        const indexFound = oldChildren.findIndex((onto) => onto.id === checkd);
+        if (indexFound === -1 && findNode) {
           // Add the node to newchildren if not present
-          newchildren.push({
+          oldChildren.push({
             id: checkd,
-            title: findOntology.title,
+            title: findNode.plainText.title,
           });
         }
       }
 
-      // If type is "Specializations", update main ontologies
+      // If type is "Specializations", update main children
       if (type === "Specializations") {
-        ontologyData.children[type]["main"] = ontologyData.children[type][
+        nodeData.children[type]["main"] = nodeData.children[type][
           "main"
         ].filter(
-          (node: any) => newchildren.findIndex((o) => o.id === node.id) === -1
+          (node: any) => oldChildren.findIndex((o) => o.id === node.id) === -1
         );
       }
 
       // Update the node data with the new children
-      ontologyData.children[type] = {
-        ...(ontologyData.children[type] || {}),
-        [selectedCategory]: {
-          ontologies: newchildren,
-        },
+      nodeData.children[type] = {
+        ...(nodeData.children[type] || {}),
+        [selectedCategory]: oldChildren,
       };
 
       // If inheritance is present, reset the children field
-      if (ontologyData.inheritance) {
-        ontologyData.inheritance.children[type] = {
+      if (nodeData.inheritance) {
+        nodeData.inheritance.children[type] = {
           ref: null,
           title: "",
         };
       }
-
+      console.log(nodeData);
       // Update the node document in the database
-      await updateDoc(ontologyDoc.ref, ontologyData);
+      await updateDoc(nodeDoc.ref, nodeData);
 
       // If type is not "Specializations", update the inheritance
       if (type !== "Specializations") {
         updateInheritance({
-          updatedNode: { ...ontologyData, id: currentVisibleNode.id },
+          updatedNode: { ...nodeData, id: currentVisibleNode.id },
           updatedField: type,
           type: "children",
-          newValue: ontologyData.children[type],
-          ancestorTitle: ontologyData.title,
+          newValue: nodeData.children[type],
+          ancestorTitle: nodeData.title,
         });
       }
 
@@ -623,14 +604,14 @@ const Node = ({
       if (!newCategory) return;
 
       // Fetch the node document based on the currentVisibleNode.id
-      const ontologyDoc = await getDoc(
+      const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );
 
       // Check if the node document exists
-      if (ontologyDoc.exists()) {
+      if (nodeDoc.exists()) {
         // Retrieve node data from the document
-        const ontologyData = ontologyDoc.data();
+        const ontologyData = nodeDoc.data();
 
         // If editCategory is provided, update existing category
         if (editCategory) {
@@ -639,7 +620,7 @@ const Node = ({
             action: "Edited a category",
             previousValue: editCategory.category,
             newValue: newCategory,
-            node: ontologyDoc.id,
+            node: nodeDoc.id,
             feild: editCategory.type,
           });
 
@@ -654,9 +635,7 @@ const Node = ({
           if (!ontologyData?.children[type]?.hasOwnProperty(newCategory)) {
             ontologyData.children[type] = {
               ...(ontologyData?.children[type] || {}),
-              [newCategory]: {
-                ontologies: [],
-              },
+              [newCategory]: [],
             };
           }
 
@@ -664,13 +643,13 @@ const Node = ({
           recordLogs({
             action: "Created a category",
             category: newCategory,
-            node: ontologyDoc.id,
+            node: nodeDoc.id,
             feild: type,
           });
         }
 
         // Update the node document with the modified data
-        await updateDoc(ontologyDoc.ref, ontologyData);
+        await updateDoc(nodeDoc.ref, ontologyData);
 
         // Close the add category modal
         handleCloseAddCategory();
@@ -831,7 +810,7 @@ const Node = ({
             // Extract node data from the document
             const nodeData = nodeDoc.data();
 
-            // Get the sub-ontologies and specializations related to the provided subType
+            // Get the children and specializations related to the provided subType
             const specializations = nodeData.children[subType];
 
             // Find the index of the draggable item in the source category
@@ -883,13 +862,13 @@ const Node = ({
    * @param {string} id - The ID of the child-node to be removed.
    */
   const removeChildNode = (parentNode: INode, childId: string) => {
-    // Iterate over the types of sub-ontologies in the main node data.
+    // Iterate over the types of children in the main node data.
     for (let type in parentNode.children) {
       // Iterate over the categories within each type of child-node.
       for (let category in parentNode.children[type] || {}) {
-        // Check if there are ontologies present in the current category.
+        // Check if there are children present in the current category.
         if ((parentNode.children[type][category] || []).length > 0) {
-          // Find the index of the child-node with the specified ID within the ontologies array.
+          // Find the index of the child-node with the specified ID within the children array.
           const subOntologyIdx = parentNode.children[type][category].findIndex(
             (sub: any) => sub.id === childId
           );
@@ -1089,7 +1068,7 @@ const Node = ({
         </DialogContent>
         <DialogActions sx={{ justifyContent: "center" }}>
           <Button onClick={handleNewSpecialization}>Add new {type}</Button>
-          <Button onClick={handleSave} color="primary">
+          <Button onClick={handleSaveChildrenChanges} color="primary">
             Save
           </Button>
           <Button onClick={handleClose} color="primary">
@@ -1139,7 +1118,7 @@ const Node = ({
           user={user}
           lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
           addLock={addLock}
-          text={currentVisibleNode.title}
+          text={currentVisibleNode.plainText.title}
           currentVisibleNode={currentVisibleNode}
           type={"title"}
           setSnackbarMessage={setSnackbarMessage}
@@ -1154,7 +1133,7 @@ const Node = ({
           user={user}
           lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
           addLock={addLock}
-          text={currentVisibleNode.description}
+          text={currentVisibleNode.plainText.description}
           currentVisibleNode={currentVisibleNode}
           type={"description"}
           setSnackbarMessage={setSnackbarMessage}
@@ -1335,9 +1314,6 @@ const Node = ({
                                                           setSnackbarMessage={
                                                             setSnackbarMessage
                                                           }
-                                                          saveChildNode={
-                                                            saveChildNode
-                                                          }
                                                           currentVisibleNode={
                                                             currentVisibleNode
                                                           }
@@ -1443,7 +1419,6 @@ const Node = ({
                                           setSnackbarMessage={
                                             setSnackbarMessage
                                           }
-                                          saveChildNode={saveChildNode}
                                           currentVisibleNode={
                                             currentVisibleNode
                                           }
