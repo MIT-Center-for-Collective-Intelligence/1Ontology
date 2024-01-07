@@ -54,6 +54,7 @@ import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import ROUTES from " @components/lib/utils/routes";
 import { useAuth } from "../context/AuthContext";
 import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
+import { USERS } from " @components/lib/firestoreClient/collections";
 
 export const HEADER_HEIGHT = 80;
 export const HEADER_HEIGHT_MOBILE = 72;
@@ -114,7 +115,7 @@ const AppHeader = forwardRef(
     );
     const toggleRightPanel = useCallback(() => {
       if (!user?.uname) return;
-      const userRef = doc(collection(db, "users"), user.uname);
+      const userRef = doc(collection(db, USERS), user.uname);
       updateDoc(userRef, {
         rightPanel: !rightPanelVisible,
       });

@@ -35,7 +35,7 @@ The `Ontology` component accepts the following props:
 - `updateUserDoc`: Function to update the user document in the database.
 - `mainSpecializations`: Object containing main specializations data.
 - `ontologies`: Array of ontology objects.
-- `addNewOntology`: Function to add a new ontology.
+- `addNewNode`: Function to add a new ontology.
 - `ontologyPath`: Array representing the path of the current ontology in the hierarchy.
 - `editOntology`: String indicating the ontology being edited.
 - `setEditOntology`: Function to set the ontology being edited.
@@ -48,7 +48,7 @@ The `Ontology` component accepts the following props:
 The component is structured into several parts:
 
 - Dialogs for adding categories and selecting sub-ontologies.
-- `SubPlainText` components for editing the title and description.
+- `Text` components for editing the title and description.
 - A list of sub-ontologies that can be managed through UI elements like buttons and checkboxes.
 - A `TreeView` component to visualize the ontology hierarchy.
 - Drag-and-drop context for reordering sub-ontologies.
@@ -89,7 +89,7 @@ To use the `Ontology` component, it must be provided with the necessary props, i
   updateUserDoc={updateUserDocument}
   mainSpecializations={specializationsData}
   ontologies={ontologyList}
-  addNewOntology={handleAddNewOntology}
+  addNewNode={handleaddNewNode}
   ontologyPath={currentOntologyPath}
   editOntology={ontologyBeingEdited}
   setEditOntology={setOntologyBeingEdited}
@@ -145,8 +145,7 @@ import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 // import useConfirmDialog from "@/hooks/useConfirmDialog";
 // import { DESIGN_SYSTEM_COLORS } from "@/lib/theme/colors";
 
-import SubOntology from "./SubOntology";
-import SubPlainText from "./SubPlainText";
+import Text from "./Text";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import {
@@ -156,24 +155,26 @@ import {
   IGroup,
   IIncentive,
   ILockedOntology,
-  IOntology,
-  IOntologyPath,
+  INode,
+  INodePath,
   IProcess,
   IReward,
   IRole,
   ISubOntology,
   MainSpecializations,
-} from " @components/types/IOntology";
+} from " @components/types/INode";
+import { LOCKS, NODES } from " @components/lib/firestoreClient/collections";
+import ChildNode from "./ChildNode";
 
 type INodeProps = {
-  openOntology: IOntology;
-  setOpenOntology: (ontology: IOntology) => void;
+  openOntology: INode;
+  setOpenOntology: (ontology: INode) => void;
   handleLinkNavigation: (
     path: { id: string; title: string },
     type: string
   ) => void;
-  setOntologyPath: (state: IOntologyPath[]) => void;
-  ontologyPath: IOntologyPath[];
+  setOntologyPath: (state: INodePath[]) => void;
+  ontologyPath: INodePath[];
   saveSubOntology: (
     subOntology: ISubOntology,
     type: string,
@@ -183,14 +184,8 @@ type INodeProps = {
   updateUserDoc: (ids: string[]) => void;
   user: any;
   mainSpecializations: MainSpecializations;
-  ontologies: IOntology[];
-  addNewOntology: ({
-    id,
-    newOntology,
-  }: {
-    id: string;
-    newOntology: any;
-  }) => void;
+  ontologies: INode[];
+  addNewNode: ({ id, newNode }: { id: string; newNode: any }) => void;
   ONTOLOGY_TYPES: {
     [key: string]:
       | IActivity
@@ -207,7 +202,7 @@ type INodeProps = {
   lockedOntology: ILockedOntology;
   recordLogs: (logs: any) => void;
   updateInheritance: (parameters: {
-    updatedOntology: IOntology;
+    updatedNode: INode;
     updatedField: string;
     type: "subOntologies" | "plainText";
     newValue: any;
@@ -277,7 +272,7 @@ const Node = ({
   updateUserDoc,
   mainSpecializations,
   ontologies,
-  addNewOntology,
+  addNewNode,
   // INITIAL_VALUES,
   ontologyPath,
   editOntology,
@@ -334,64 +329,62 @@ const Node = ({
   };
 
   // This asynchronous function clones an ontology identified by its ID.
-  const cloneOntology = async (ontologyId: string) => {
+  const cloneNode = async (ontologyId: string) => {
     try {
       // Retrieve the document of the original ontology from Firestore.
-      const ontologyDoc = await getDoc(
-        doc(collection(db, "ontology"), ontologyId)
-      );
+      const nodeDoc = await getDoc(doc(collection(db, NODES), ontologyId));
 
       // If the ontology document doesn't exist, return early.
-      if (!ontologyDoc.exists()) return;
+      if (!nodeDoc.exists()) return;
 
       // Extract data from the original ontology document.
-      const ontologyData = ontologyDoc.data();
+      const nodeData = nodeDoc.data();
 
       // Create a reference for the new ontology document in Firestore.
-      const newOntologyRef = doc(collection(db, "ontology"));
+      const newNodeRef = doc(collection(db, NODES));
 
       // Prepare the data for the new ontology by copying existing data.
-      const newOntology: any = {
-        ...ontologyDoc.data(),
+      const newNode: any = {
+        ...nodeDoc.data(),
       };
 
       // Set a new ID for the cloned ontology.
-      newOntology.id = newOntologyRef.id;
+      newNode.id = newNodeRef.id;
 
       // Update the parents array to include the ID of the original ontology.
-      newOntology.parents = [ontologyDoc.id];
+      newNode.parents = [nodeDoc.id];
 
       // Modify the title to indicate that it is a new ontology.
-      newOntology.title = `New ${ontologyData.title}`;
+      newNode.title = `New ${nodeData.title}`;
 
       // Initialize an empty Specializations object for sub-ontologies.
-      newOntology.subOntologies.Specializations = {};
+      newNode.subOntologies.Specializations = {};
 
       // Remove the 'locked' property from the new ontology.
-      delete newOntology.locked;
+      delete newNode.locked;
 
       // Update the original ontology to include the reference to the new ontology in its sub-ontologies.
-      ontologyData.subOntologies.Specializations = {
+      nodeData.subOntologies.Specializations = {
         ["main"]: {
           ontologies: [
-            ...(ontologyData.subOntologies?.Specializations["main"]
-              ?.ontologies || []),
+            ...(nodeData.subOntologies?.Specializations["main"]?.ontologies ||
+              []),
             {
-              id: newOntologyRef.id,
-              title: `New ${ontologyData.title}`,
+              id: newNodeRef.id,
+              title: `New ${nodeData.title}`,
             },
           ],
         },
       };
 
       // Update the original ontology document in Firestore with the modified data.
-      await updateDoc(ontologyDoc.ref, ontologyData);
+      await updateDoc(nodeDoc.ref, nodeData);
 
       // Create a new document in Firestore for the cloned ontology with the modified data.
-      await setDoc(newOntologyRef, newOntology);
+      await setDoc(newNodeRef, newNode);
 
       // Return the ID of the newly created ontology.
-      return newOntologyRef.id;
+      return newNodeRef.id;
     } catch (error) {
       // Log any errors that occur during the cloning process.
       console.error(error);
@@ -409,7 +402,7 @@ const Node = ({
   const getInheritance = (
     fields: string[],
     type: "plainText" | "subOntologies",
-    parentOntoloogy: IOntology
+    parentNode: INode
   ): {
     [key: string]: {
       ref: string;
@@ -423,8 +416,8 @@ const Node = ({
         title: string;
       };
     } = {};
-    const ancestorId = parentOntoloogy.id;
-    const ancestorTitle = parentOntoloogy.title;
+    const ancestorId = parentNode.id;
+    const ancestorTitle = parentNode.title;
     // Iterate through each field, excluding "Specializations"
     for (let field of fields) {
       if (field === "Specializations") continue;
@@ -433,13 +426,13 @@ const Node = ({
         title: ancestorTitle,
       };
       if (
-        parentOntoloogy.inheritance &&
-        parentOntoloogy.inheritance[type] &&
-        parentOntoloogy.inheritance[type][field]?.ref
+        parentNode.inheritance &&
+        parentNode.inheritance[type] &&
+        parentNode.inheritance[type][field]?.ref
       ) {
         inheritanceRef = {
-          ref: parentOntoloogy.inheritance[type][field]?.ref,
-          title: parentOntoloogy.inheritance[type][field]?.title,
+          ref: parentNode.inheritance[type][field]?.ref,
+          title: parentNode.inheritance[type][field]?.title,
         };
       }
       inheritance[field] = { ...inheritanceRef };
@@ -452,16 +445,13 @@ const Node = ({
   const addNewSpecialisation = async (type: string, category: string) => {
     try {
       // Get a reference to the parent ontology document
-      const ontologyParentRef = doc(
-        collection(db, "ontology"),
-        openOntology.id
-      );
+      const ontologyParentRef = doc(collection(db, NODES), openOntology.id);
 
       // Retrieve the parent ontology document
       const ontologyParentDoc = await getDoc(ontologyParentRef);
 
       // Extract data from the parent ontology document
-      const parentOntology: any = {
+      const parentNode: any = {
         ...ontologyParentDoc.data(),
         id: ontologyParentDoc.id,
       };
@@ -470,43 +460,43 @@ const Node = ({
       if (!ontologyParentDoc.exists()) return;
 
       // Create a new ontology document reference
-      const newOntologyRef = doc(collection(db, "ontology"));
+      const newNodeRef = doc(collection(db, NODES));
 
       // Clone the parent ontology data
-      const newOntology = { ...ontologyParentDoc.data() };
+      const newNode = { ...ontologyParentDoc.data() };
 
       // Initialize the Specializations sub-ontology
-      newOntology.subOntologies.Specializations = {};
+      newNode.subOntologies.Specializations = {};
 
       // Remove unnecessary fields from the new ontology
-      delete newOntology.locked;
-      delete newOntology.cat;
+      delete newNode.locked;
+      delete newNode.cat;
 
       // Set the parents and title for the new ontology
-      newOntology.parents = [openOntology.id];
-      newOntology.title = `New ${parentOntology.title}`;
-      newOntology.id = newOntologyRef.id;
+      newNode.parents = [openOntology.id];
+      newNode.title = `New ${parentNode.title}`;
+      newNode.id = newNodeRef.id;
 
       let descriptionInheritance: { ref: string; title: string } = {
-        ref: parentOntology.id,
-        title: parentOntology.title,
+        ref: parentNode.id,
+        title: parentNode.title,
       };
       if (
-        parentOntology.inheritance &&
-        parentOntology.inheritance.plainText["description"]?.ref
+        parentNode.inheritance &&
+        parentNode.inheritance.plainText["description"]?.ref
       ) {
         descriptionInheritance = {
-          ref: parentOntology.inheritance.plainText["description"]?.ref,
-          title: parentOntology.inheritance.plainText["description"]?.title,
+          ref: parentNode.inheritance.plainText["description"]?.ref,
+          title: parentNode.inheritance.plainText["description"]?.title,
         };
       }
       // Build the inheritance object for the new ontology
-      newOntology.inheritance = {
+      newNode.inheritance = {
         plainText: {
           ...getInheritance(
-            Object.keys(newOntology.plainText),
+            Object.keys(newNode.plainText),
             "plainText",
-            parentOntology
+            parentNode
           ),
           description: {
             ...descriptionInheritance,
@@ -514,18 +504,18 @@ const Node = ({
         },
         subOntologies: {
           ...getInheritance(
-            Object.keys(newOntology.subOntologies),
+            Object.keys(newNode.subOntologies),
             "subOntologies",
-            parentOntology
+            parentNode
           ),
         },
       };
 
       // Check if the specified type and category exist in the parent ontology
-      if (!parentOntology.subOntologies[type].hasOwnProperty(category)) {
+      if (!parentNode.subOntologies[type].hasOwnProperty(category)) {
         // If not, create the specified type and category
-        parentOntology.subOntologies[type] = {
-          ...parentOntology.subOntologies[type],
+        parentNode.subOntologies[type] = {
+          ...parentNode.subOntologies[type],
           [category]: {
             ontologies: [],
           },
@@ -533,22 +523,22 @@ const Node = ({
       }
 
       // Add the new ontology to the specified type and category
-      parentOntology.subOntologies[type][category].ontologies.push({
-        title: `New ${parentOntology.title}`,
-        id: newOntologyRef.id,
+      parentNode.subOntologies[type][category].ontologies.push({
+        title: `New ${parentNode.title}`,
+        id: newNodeRef.id,
       });
 
       // Update the user document with the ontology path
       updateUserDoc([
         ...ontologyPath.map((path: any) => path.id),
-        newOntologyRef.id,
+        newNodeRef.id,
       ]);
 
       // Add the new ontology to the database
-      addNewOntology({ id: newOntologyRef.id, newOntology });
+      addNewNode({ id: newNodeRef.id, newNode });
 
       // Update the parent ontology document in the database
-      await updateDoc(ontologyParentRef, parentOntology);
+      await updateDoc(ontologyParentRef, parentNode);
     } catch (error) {
       // Handle errors by logging to the console
       console.error(error);
@@ -572,7 +562,7 @@ const Node = ({
   // This function handles the cloning of an ontology.
   const handleCloning = async (ontology: any) => {
     // Call the asynchronous function to clone the ontology with the given ID.
-    const newCloneId = await cloneOntology(ontology.id);
+    const newCloneId = await cloneNode(ontology.id);
 
     // Update the user document by appending the new clone's ID to the ontology path.
     updateUserDoc([...ontology.path, newCloneId]);
@@ -585,7 +575,7 @@ const Node = ({
     try {
       // Get the ontology document from the database
       const ontologyDoc = await getDoc(
-        doc(collection(db, "ontology"), openOntology.id)
+        doc(collection(db, NODES), openOntology.id)
       );
 
       // If the ontology document does not exist, return early
@@ -651,7 +641,7 @@ const Node = ({
       // If type is not "Specializations", update the inheritance
       if (type !== "Specializations") {
         updateInheritance({
-          updatedOntology: { ...ontologyData, id: openOntology.id },
+          updatedNode: { ...ontologyData, id: openOntology.id },
           updatedField: type,
           type: "subOntologies",
           newValue: ontologyData.subOntologies[type],
@@ -674,7 +664,7 @@ const Node = ({
 
       // Fetch the ontology document based on the openOntology.id
       const ontologyDoc = await getDoc(
-        doc(collection(db, "ontology"), openOntology.id)
+        doc(collection(db, NODES), openOntology.id)
       );
 
       // Check if the ontology document exists
@@ -685,7 +675,7 @@ const Node = ({
         // If editCategory is provided, update existing category
         if (editCategory) {
           // Log the action of editing a category
-          await recordLogs({
+          recordLogs({
             action: "Edited a category",
             previousValue: editCategory.category,
             newValue: newCategory,
@@ -713,7 +703,7 @@ const Node = ({
           }
 
           // Log the action of creating a new category
-          await recordLogs({
+          recordLogs({
             action: "Created a category",
             category: newCategory,
             ontology: ontologyDoc.id,
@@ -789,7 +779,7 @@ const Node = ({
       )
     ) {
       const ontologyDoc = await getDoc(
-        doc(collection(db, "ontology"), openOntology.id)
+        doc(collection(db, NODES), openOntology.id)
       );
       if (ontologyDoc.exists()) {
         const ontologyData = ontologyDoc.data();
@@ -829,7 +819,7 @@ const Node = ({
         };
 
         // Get a reference to the 'ontologyLock' collection
-        const ontologyDocref = doc(collection(db, "ontologyLock"));
+        const ontologyDocref = doc(collection(db, LOCKS));
 
         // Set the document with the new lock information
         await setDoc(ontologyDocref, newLock);
@@ -837,9 +827,9 @@ const Node = ({
         // If the type is not 'add', remove existing locks for the specified ontology, field, and user
         const locksDocs = await getDocs(
           query(
-            collection(db, "ontologyLock"),
+            collection(db, LOCKS),
             where("field", "==", field),
-            where("ontology", "==", ontology),
+            where(NODES, "==", ontology),
             where("uname", "==", user?.uname)
           )
         );
@@ -880,7 +870,7 @@ const Node = ({
         ) {
           // Retrieve ontology document from the database
           const ontologyDoc = await getDoc(
-            doc(collection(db, "ontology"), openOntology.id)
+            doc(collection(db, NODES), openOntology.id)
           );
 
           // Check if ontology document exists
@@ -982,7 +972,7 @@ const Node = ({
       ) {
         // Retrieve the document reference of the ontology to be deleted
         const ontologyDoc = await getDoc(
-          doc(collection(db, "ontology"), openOntology.id)
+          doc(collection(db, NODES), openOntology.id)
         );
 
         // Check if the ontology document exists
@@ -996,9 +986,7 @@ const Node = ({
           // Iterate through each parent ID
           for (let parent of parents) {
             // Retrieve the document reference of the parent ontology
-            const parentDoc = await getDoc(
-              doc(collection(db, "ontology"), parent)
-            );
+            const parentDoc = await getDoc(doc(collection(db, NODES), parent));
 
             // Check if the parent ontology document exists
             if (parentDoc.exists()) {
@@ -1196,7 +1184,7 @@ const Node = ({
       </Dialog>
 
       <Box sx={{ display: "flex", flexDirection: "column" }}>
-        <SubPlainText
+        <Text
           updateInheritance={updateInheritance}
           recordLogs={recordLogs}
           user={user}
@@ -1211,7 +1199,7 @@ const Node = ({
           setEditOntology={setEditOntology}
           deleteSubOntologyEditable={deleteSubOntologyEditable}
         />
-        <SubPlainText
+        <Text
           updateInheritance={updateInheritance}
           recordLogs={recordLogs}
           user={user}
@@ -1389,7 +1377,7 @@ const Node = ({
                                                       <ListItemIcon>
                                                         <DragIndicatorIcon />
                                                       </ListItemIcon>
-                                                      <SubOntology
+                                                      <ChildNode
                                                         recordLogs={recordLogs}
                                                         setSnackbarMessage={
                                                           setSnackbarMessage
@@ -1497,7 +1485,7 @@ const Node = ({
                                 {subOntologies.map((subOntology: any) => {
                                   return (
                                     <li key={subOntology.id}>
-                                      <SubOntology
+                                      <ChildNode
                                         recordLogs={recordLogs}
                                         setSnackbarMessage={setSnackbarMessage}
                                         saveSubOntology={saveSubOntology}
@@ -1527,7 +1515,7 @@ const Node = ({
             ) : (
               Object.keys(openOntology.plainText).includes(type) && (
                 <Box key={type}>
-                  <SubPlainText
+                  <Text
                     updateInheritance={updateInheritance}
                     recordLogs={recordLogs}
                     user={user}

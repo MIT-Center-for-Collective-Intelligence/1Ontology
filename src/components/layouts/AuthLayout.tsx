@@ -96,7 +96,7 @@ const AuthLayout: FC<Props> = ({ children }) => {
     let redirectTo =
       router.query.from && router.query.from.length > 0
         ? (router.query.from as string)
-        : ROUTES.ciontology;
+        : ROUTES.home;
     router.replace(redirectTo);
   }, [router]);
 

@@ -1,6 +1,6 @@
-/* # SubPlainText Component
+/* # Text Component
 
-The `SubPlainText` component is a React component used for displaying and editing plain text fields within an ontology. It supports markdown rendering and integrates with Firebase Firestore for data persistence.
+The `Text` component is a React component used for displaying and editing plain text fields within an ontology. It supports markdown rendering and integrates with Firebase Firestore for data persistence.
 
 ## Features
 
@@ -30,13 +30,13 @@ The component accepts the following props:
 
 ## Usage
 
-To use the `SubPlainText` component, import it into your React application and provide the necessary props as shown in the example below:
+To use the `Text` component, import it into your React application and provide the necessary props as shown in the example below:
 
 ```jsx
-import SubPlainText from './SubPlainText';
+import Text from './Text';
 
 // ... within your component's render method or function component body
-<SubPlainText
+<Text
   text={yourTextContent}
   type="description"
   openOntology={yourCurrentOntology}
@@ -95,7 +95,7 @@ The component uses Material-UI components and styles for a consistent look and f
 
 ## Importing Types
 
-The component imports the `IOntology` and `ILockedOntology` types from `@components/types/IOntology` for TypeScript type checking.
+The component imports the `INode` and `ILockedOntology` types from `@components/types/INode` for TypeScript type checking.
 
 ---
  */
@@ -113,10 +113,12 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import MarkdownRender from "../Markdown/MarkdownRender";
-import { IOntology } from " @components/types/IOntology";
+
+import { NODES } from " @components/lib/firestoreClient/collections";
+import { INode } from " @components/types/INode";
 
 type ISubOntologyProps = {
-  openOntology: IOntology;
+  openOntology: INode;
   setOpenOntology: (state: any) => void;
   type: string;
   setSnackbarMessage: (message: any) => void;
@@ -138,14 +140,14 @@ type ISubOntologyProps = {
   recordLogs: (logs: any) => void;
   deleteSubOntologyEditable?: () => void;
   updateInheritance: (parameters: {
-    updatedOntology: IOntology;
+    updatedNode: INode;
     updatedField: string;
     type: "subOntologies" | "plainText";
     newValue: any;
     ancestorTitle: string;
   }) => void;
 };
-const SubPlainText = ({
+const Text = ({
   text,
   type,
   openOntology,
@@ -211,7 +213,7 @@ const editTitleSubOntology = ({ parentData, newTitle, id }: any) => {
     if (editMode) {
       // Fetch the ontology document from the database
       const ontologyDoc = await getDoc(
-        doc(collection(db, "ontology"), openOntology.id)
+        doc(collection(db, NODES), openOntology.id)
       );
 
       // Check if the ontology document exists
@@ -226,7 +228,7 @@ const editTitleSubOntology = ({ parentData, newTitle, id }: any) => {
           
           // Update titles of sub-ontologies for each parent ontology
           for (let parentId of openOntology?.parents || []) {
-            const parentRef = doc(collection(db, "ontology"), parentId);
+            const parentRef = doc(collection(db, NODES), parentId);
             const parentDoc = await getDoc(parentRef);
             const parentData: any = parentDoc.data();
             
@@ -274,7 +276,7 @@ const editTitleSubOntology = ({ parentData, newTitle, id }: any) => {
           updatedField: type,
           type: "plainText",
           newValue: newValue,
-          updatedOntology: { ...ontologyData, id: openOntology.id },
+          updatedNode: { ...ontologyData, id: openOntology.id },
           ancestorTitle: ontologyData.title,
         });
 
@@ -298,9 +300,9 @@ const editTitleSubOntology = ({ parentData, newTitle, id }: any) => {
 // Define a function to handle text edits, taking an event as a parameter (assumed to be a React event)
 const handleEditText = (e: any) => {
   // Update the state using the setOpenOntology function, which receives the current state
-  setOpenOntology((openOntology: IOntology) => {
+  setOpenOntology((openOntology: INode) => {
     // Create a copy of the current state to avoid direct mutation
-    const _openOntology: IOntology = { ...openOntology };
+    const _openOntology: INode = { ...openOntology };
 
     // Check if the 'type' property is either 'description' or 'title'
     if (["description", "title"].includes(type)) {
@@ -446,4 +448,4 @@ const handleDeleteOntology = () => {
   );
 };
 
-export default SubPlainText;
+export default Text;
