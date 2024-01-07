@@ -67,6 +67,7 @@ export type User = {
   uname: string;
   email: string;
   claims: any;
+  rightPanel: boolean;
 };
 
 export type UserSettings = {
@@ -101,7 +102,7 @@ export type AuthLoginSuccessAction = {
   payload: {
     user: User;
     theme: UserTheme;
-    emailVerified: boolean
+    emailVerified: boolean;
   };
 };
 

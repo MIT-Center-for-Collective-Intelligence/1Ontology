@@ -1,7 +1,7 @@
 /* 
 ## Overview
 
-The `CIOntology` component is a complex React component that serves as the main interface for managing and visualizing ontologies within a collaborative platform. It integrates with Firebase Firestore for data persistence, provides search functionality using Fuse.js, and offers a rich user interface with Material-UI components.
+The `Ontology` component is a complex React component that serves as the main interface for managing and visualizing ontologies within a collaborative platform. It integrates with Firebase Firestore for data persistence, provides search functionality using Fuse.js, and offers a rich user interface with Material-UI components.
 
 ## Features
 
@@ -37,7 +37,7 @@ The `CIOntology` component is a complex React component that serves as the main 
 
 ## Usage
 
-The `CIOntology` component is designed to be used within a Next.js application and requires authentication context provided by `withAuthUser`.
+The `Ontology` component is designed to be used within a Next.js application and requires authentication context provided by `withAuthUser`.
 
 ## Code Snippets
 
@@ -90,9 +90,9 @@ const editComment = async (comment: any) => {
 
 ## Contributing
 
-Contributions to the `CIOntology` component are welcome. Please ensure you follow the project's coding standards and submit a pull request with a detailed description of your changes. */
+Contributions to the `Ontology` component are welcome. Please ensure you follow the project's coding standards and submit a pull request with a detailed description of your changes. */
 
-import { Bar, Container, Section } from "@column-resizer/react";
+import { Bar, Container, Resizer, Section } from "@column-resizer/react";
 import SearchIcon from "@mui/icons-material/Search";
 import SendIcon from "@mui/icons-material/Send";
 import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
@@ -100,6 +100,7 @@ import {
   Avatar,
   Box,
   Button,
+  CircularProgress,
   IconButton,
   Link,
   List,
@@ -128,11 +129,11 @@ import {
 } from "firebase/firestore";
 import Fuse from "fuse.js";
 import moment from "moment";
-import { useCallback, useEffect, useRef, useState } from "react";
-import markdownContent from "../components/ontology/Markdown-Here-Cheatsheet.md";
-import SneakMessage from " @components/components/ontology/SneakMessage";
-import Ontology from " @components/components/ontology/Ontology";
-import TreeViewSimplified from " @components/components/ontology/TreeViewSimplified";
+import { createRef, useCallback, useEffect, useRef, useState } from "react";
+import markdownContent from "../components/OntologyComponents/Markdown-Here-Cheatsheet.md";
+import SneakMessage from " @components/components/OntologyComponents/SneakMessage";
+import Node from " @components/components/OntologyComponents/Node";
+import TreeViewSimplified from " @components/components/OntologyComponents/TreeViewSimplified";
 import {
   ILockedOntology,
   IOntology,
@@ -150,19 +151,18 @@ import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import withAuthUser from " @components/components/hoc/withAuthUser";
 import { useAuth } from " @components/components/context/AuthContext";
 import { useRouter } from "next/router";
-import DAGGraph from " @components/components/ontology/DAGGraph";
+import DAGGraph from " @components/components/OntologyComponents/DAGGraph";
 import { formatFirestoreTimestampWithMoment } from " @components/lib/utils/utils";
 import { ONTOLOGY_TYPES } from " @components/lib/CONSTANTS";
 
-
-const CIOntology = () => {
+const Ontology = () => {
   const db = getFirestore();
   const [{ emailVerified, user }] = useAuth();
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:599px)");
 
-  const [ontologies, setOntologies] = useState<IOntology[]>([]);
-  const [openOntology, setOpenOntology] = useState<any>(null);
+  const [nodes, setNodes] = useState<IOntology[]>([]);
+  const [currentVisibleNode, setCurrentVisibleNode] = useState<any>(null);
   const [ontologyPath, setOntologyPath] = useState<IOntologyPath[]>([]);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
   const [treeVisualisation, setTreeVisualisation] = useState<TreeVisual>({});
@@ -175,13 +175,16 @@ const CIOntology = () => {
   const [value, setValue] = useState<number>(1);
   const [viewValue, setViewValue] = useState<number>(0);
   const [searchValue, setSearchValue] = useState("");
-  const fuse = new Fuse(ontologies, { keys: ["title"] });
+  const fuse = new Fuse(nodes, { keys: ["title"] });
   const headerRef = useRef<HTMLHeadElement | null>(null);
   const [expandedOntologies, setExpandedOntologies] = useState<Set<string>>(
     new Set()
   );
   const [dagreZoomState, setDagreZoomState] = useState<any>(null);
-
+  const [rightPanelVisible, setRightPanelVisible] = useState<any>(
+    user?.rightPanel
+  );
+  const columnResizerRef = useRef<any>();
   useEffect(() => {
     // Check if a user is logged in
     if (user) {
@@ -205,15 +208,15 @@ const CIOntology = () => {
     // Iterate through each ontology ID in the provided array
     for (let path of newPath) {
       // Find the index of the ontology with the current ID in the 'ontologies' array
-      const ontologyIdx = ontologies.findIndex((onto: any) => onto.id === path);
+      const ontologyIdx = nodes.findIndex((onto: any) => onto.id === path);
 
       // Check if the ontology with the current ID was found
       if (ontologyIdx !== -1) {
         // If found, add an object to the ontologyPath array with 'id' and 'title' properties
         ontologyPath.push({
           id: path,
-          title: ontologies[ontologyIdx].title,
-          category: ontologies[ontologyIdx].category,
+          title: nodes[ontologyIdx].title,
+          category: nodes[ontologyIdx].category,
         });
       }
       // If not found, the ontology with the current ID is skipped in the final path
@@ -243,7 +246,7 @@ const CIOntology = () => {
       for (let category in ontology?.subOntologies?.Specializations) {
         // Filter ontologies based on the current category
         const specializations =
-          ontologies.filter((onto: any) => {
+          nodes.filter((onto: any) => {
             const arrayOntologies = ontology?.subOntologies?.Specializations[
               category
             ]?.ontologies.map((o: any) => o.id);
@@ -299,12 +302,12 @@ const CIOntology = () => {
   const recordLogs = async (logs: any) => {
     try {
       if (!user) return;
-      const ontologyLogRef = doc(collection(db, "ontologyLog"));
-      await setDoc(ontologyLogRef, {
-        ...logs,
-        createdAt: new Date(),
-        doer: user?.uname,
-      });
+      // const ontologyLogRef = doc(collection(db, "ontologyLog"));
+      // await setDoc(ontologyLogRef, {
+      //   ...logs,
+      //   createdAt: new Date(),
+      //   doer: user?.uname,
+      // });
     } catch (error) {
       console.error(error);
     }
@@ -312,9 +315,7 @@ const CIOntology = () => {
 
   useEffect(() => {
     // Filter ontologies to get only those with a defined category
-    const mainOntologies = ontologies.filter(
-      (ontology: any) => ontology.category
-    );
+    const mainOntologies = nodes.filter((ontology: any) => ontology.category);
 
     // Sort main ontologies based on a predefined order
     mainOntologies.sort((a: any, b: any) => {
@@ -335,7 +336,7 @@ const CIOntology = () => {
 
     // Set the generated tree structure for visualization
     setTreeVisualisation(treeOfSpecialisations);
-  }, [ontologies]);
+  }, [nodes]);
 
   const updateTheUrl = (path: IOntologyPath[]) => {
     let newHash = "";
@@ -368,7 +369,7 @@ const CIOntology = () => {
   useEffect(() => {
     // Check if user or ontologies are not available, then return early
     if (!user) return;
-    if (!ontologies.length) return;
+    if (!nodes.length) return;
 
     // Query the database for the user based on userId
     const userQuery = query(
@@ -394,22 +395,22 @@ const CIOntology = () => {
       const lastOntology = dataChange?.ontologyPath?.reverse()[0] || "";
 
       // Find the index of the last ontology in the ontologies array
-      const ontologyIdx = ontologies.findIndex(
+      const ontologyIdx = nodes.findIndex(
         (ontology: any) => ontology.id === lastOntology
       );
 
       // If the ontology is found, set it as the open ontology in the component state
-      if (ontologies[ontologyIdx]) setOpenOntology(ontologies[ontologyIdx]);
+      if (nodes[ontologyIdx]) setCurrentVisibleNode(nodes[ontologyIdx]);
     });
 
     // Cleanup function: Unsubscribe from the user data snapshot listener
     return () => unsubscribeUser();
-  }, [db, user, ontologies]);
+  }, [db, user, nodes]);
 
   useEffect(() => {
     // Check if a user is logged in
     if (!user) return;
-
+    setRightPanelVisible(!!user?.rightPanel);
     // Define the ontology query
     const ontologyQuery = query(
       collection(db, "ontologyLock"),
@@ -479,7 +480,7 @@ const CIOntology = () => {
       const docChanges = snapshot.docChanges();
 
       // Update the state based on the changes in the ontology collection
-      setOntologies((ontologies: IOntology[]) => {
+      setNodes((ontologies: IOntology[]) => {
         const _ontologies = [...ontologies];
 
         // Loop through each change in the snapshot
@@ -534,11 +535,11 @@ const CIOntology = () => {
     async (path: { id: string; title: string }, type: string) => {
       try {
         // Check if user is logged in and ontology is open
-        if (!user || !openOntology) return;
+        if (!user || !currentVisibleNode) return;
 
         // Check if the clicked ontology is already in the ontologies list
         if (
-          ontologies
+          nodes
             .filter((ontology: any) => ontology.category)
             .map((o: any) => o.title)
             .includes(path.title)
@@ -546,23 +547,23 @@ const CIOntology = () => {
           return;
 
         // Find index of the clicked ontology in the ontologies array
-        const ontologyIndex = ontologies.findIndex(
+        const ontologyIndex = nodes.findIndex(
           (ontology: any) => ontology.id === path.id
         );
 
         // Update the open ontology or add a new ontology if not in the list
         if (ontologyIndex !== -1) {
-          setOpenOntology(ontologies[ontologyIndex]);
+          setCurrentVisibleNode(nodes[ontologyIndex]);
         } else {
           const parent = getParent(ONTOLOGY_TYPES[type].ontologyType);
-          const parentSet: any = new Set([openOntology.id, parent]);
+          const parentSet: any = new Set([currentVisibleNode.id, parent]);
           const parents = [...parentSet];
           const newOntology = ONTOLOGY_TYPES[type];
           addNewOntology({
             id: path.id,
             newOntology: { parents, ...newOntology },
           });
-          setOpenOntology({ id: path.id, ...newOntology, parents });
+          setCurrentVisibleNode({ id: path.id, ...newOntology, parents });
         }
 
         // Update ontology path and user document
@@ -579,7 +580,7 @@ const CIOntology = () => {
         console.error(error);
       }
     },
-    [ontologies, ontologyPath]
+    [nodes, ontologyPath]
   );
 
   // Function to update the user document with the current ontology path
@@ -628,7 +629,7 @@ const CIOntology = () => {
         console.error(error);
       }
     },
-    [ontologies]
+    [nodes]
   );
 
   // This function adds a sub-ontology to a parent ontology in a Firestore database.
@@ -641,7 +642,7 @@ const CIOntology = () => {
     // Check if a parent ID exists.
     if (parentId) {
       // Find the parent ontology in the ontologies array.
-      const parent: any = ontologies.find(
+      const parent: any = nodes.find(
         (ontology: any) => ontology.id === parentId
       );
 
@@ -680,7 +681,7 @@ const CIOntology = () => {
   ) => {
     try {
       // Check if the parent ontology is open; if not, return
-      if (!openOntology) return;
+      if (!currentVisibleNode) return;
 
       // Reference to the parent ontology document in the database
       const ontologyParentRef = doc(collection(db, "ontology"), id);
@@ -749,14 +750,12 @@ const CIOntology = () => {
       if (!user) return;
 
       // Find the index of the ontology with the specified ID in the ontologies array.
-      const ontologyIdx = ontologies.findIndex(
+      const ontologyIdx = nodes.findIndex(
         (onto: any) => onto.id === ontologyId
       );
 
       // Filter out main ontologies (ontologies with a category).
-      const mainOntologies = ontologies.filter(
-        (ontology: any) => ontology.category
-      );
+      const mainOntologies = nodes.filter((ontology: any) => ontology.category);
 
       // Initialize an object to store the path of each ontology in the DAGRE view.
       let eachOntologyPath = findOntologyPath({
@@ -766,14 +765,14 @@ const CIOntology = () => {
       });
 
       // Check if the ontology with the specified ID exists and is not a main ontology (no category).
-      if (ontologyIdx !== -1 && !ontologies[ontologyIdx].category) {
+      if (ontologyIdx !== -1 && !nodes[ontologyIdx].category) {
         // Set the opened ontology as the currently selected ontology.
-        setOpenOntology(ontologies[ontologyIdx]);
+        setCurrentVisibleNode(nodes[ontologyIdx]);
 
         // Record logs for the action of opening the DAGRE view for the ontology.
         await recordLogs({
           action: "opened dagre-view",
-          itemClicked: ontologies[ontologyIdx].id,
+          itemClicked: nodes[ontologyIdx].id,
         });
 
         // Update the user document with the ontology path.
@@ -783,7 +782,7 @@ const CIOntology = () => {
       }
     },
     // Dependency array includes ontologies and user, ensuring the function re-renders when these values change.
-    [ontologies, user]
+    [nodes, user]
   );
 
   // Function to handle opening ontology tree
@@ -797,31 +796,31 @@ const CIOntology = () => {
         return prevExpanded;
       });
       // Find the index of the ontology in the ontologies array
-      const ontologyIdx = ontologies.findIndex(
+      const ontologyIdx = nodes.findIndex(
         (onto: any) => onto.id === ontologyId
       );
 
       // Check if ontology exists and has a category
-      if (ontologyIdx !== -1 && !ontologies[ontologyIdx].category) {
+      if (ontologyIdx !== -1 && !nodes[ontologyIdx].category) {
         // Set the currently open ontology
-        setOpenOntology(ontologies[ontologyIdx]);
+        setCurrentVisibleNode(nodes[ontologyIdx]);
 
         // Record logs for the action of clicking the tree-view
         await recordLogs({
           action: "clicked tree-view",
-          itemClicked: ontologies[ontologyIdx].id,
+          itemClicked: nodes[ontologyIdx].id,
         });
 
         // Update user document with the path
         await updateUserDoc(path);
       }
     },
-    [ontologies, user]
+    [nodes, user]
   );
 
   // Function to order comments based on their creation timestamp
   const orderComments = () => {
-    return (openOntology?.comments || []).sort((a: any, b: any) => {
+    return (currentVisibleNode?.comments || []).sort((a: any, b: any) => {
       const timestampA: any = a.createdAt.toDate();
       const timestampB: any = b.createdAt.toDate();
       return timestampA - timestampB;
@@ -873,11 +872,11 @@ const CIOntology = () => {
   const handleSendComment = async () => {
     try {
       // Check if user or openOntology is not available, exit the function.
-      if (!user || !openOntology) return;
+      if (!user || !currentVisibleNode) return;
 
       // Retrieve the document for the current ontology using its ID.
       const ontologyDoc = await getDoc(
-        doc(collection(db, "ontology"), openOntology.id)
+        doc(collection(db, "ontology"), currentVisibleNode.id)
       );
       // Extract existing ontology data or default to an empty object.
       const ontologyData = ontologyDoc.data();
@@ -917,7 +916,7 @@ const CIOntology = () => {
   const deleteComment = async (commentId: string) => {
     try {
       // Check if there is an open ontology
-      if (!openOntology) return;
+      if (!currentVisibleNode) return;
 
       // If the comment being edited matches the comment to delete, reset editing state and return
       if (editingComment === commentId) {
@@ -936,7 +935,7 @@ const CIOntology = () => {
       ) {
         // Retrieve the ontology document from the database
         const ontologyDoc = await getDoc(
-          doc(collection(db, "ontology"), openOntology.id)
+          doc(collection(db, "ontology"), currentVisibleNode.id)
         );
         const ontologyData = ontologyDoc.data();
 
@@ -952,7 +951,7 @@ const CIOntology = () => {
         await recordLogs({
           action: "Comment Deleted",
           comment: removedComment,
-          ontology: openOntology.id,
+          ontology: currentVisibleNode.id,
         });
       }
     } catch (error) {
@@ -964,10 +963,10 @@ const CIOntology = () => {
   const editComment = async (comment: any) => {
     try {
       // Check if there is an open ontology and the comment matches the editing state
-      if (comment.id === editingComment && openOntology) {
+      if (comment.id === editingComment && currentVisibleNode) {
         // Retrieve the ontology document from the database
         const ontologyDoc = await getDoc(
-          doc(collection(db, "ontology"), openOntology.id)
+          doc(collection(db, "ontology"), currentVisibleNode.id)
         );
         const ontologyData = ontologyDoc.data();
 
@@ -1021,7 +1020,7 @@ const CIOntology = () => {
         for (let category in ontology?.subOntologies?.Specializations) {
           // Filter ontologies based on their inclusion in the Specializations of the current category
           const specializations =
-            ontologies.filter((onto: any) => {
+            nodes.filter((onto: any) => {
               const arrayOntologies = ontology?.subOntologies?.Specializations[
                 category
               ]?.ontologies.map((o: any) => o.id);
@@ -1040,14 +1039,14 @@ const CIOntology = () => {
       // Return the accumulated ontology paths
       return eachOntologyPath;
     },
-    [ontologies]
+    [nodes]
   );
 
   // This function is called when a search result ontology is clicked.
   const openSearchOntology = (ontology: any) => {
     try {
       // Set the clicked ontology as the open ontology
-      setOpenOntology(ontology);
+      setCurrentVisibleNode(ontology);
 
       // Record the click action in logs
       recordLogs({
@@ -1056,9 +1055,7 @@ const CIOntology = () => {
       });
 
       // Filter main ontologies based on the presence of a category
-      const mainOntologies = ontologies.filter(
-        (ontology: any) => ontology.category
-      );
+      const mainOntologies = nodes.filter((ontology: any) => ontology.category);
 
       // Initialize eachOntologyPath with an empty object and find the ontology path
       let eachOntologyPath = findOntologyPath({
@@ -1112,13 +1109,11 @@ const CIOntology = () => {
 
     // Loop through all the children and update the corresponding field.
     for (let ontoId of childOntologies) {
-      const ontologyIdx = ontologies.findIndex(
-        (o: IOntology) => o.id == ontoId
-      );
+      const ontologyIdx = nodes.findIndex((o: IOntology) => o.id == ontoId);
 
       // Check if the child ontology exists in the ontologies array.
       if (ontologyIdx !== -1) {
-        const currentOntology: IOntology = ontologies[ontologyIdx];
+        const currentOntology: IOntology = nodes[ontologyIdx];
         const ontoRef = doc(collection(db, "ontology"), ontoId);
 
         // Check if the current ontology has inheritance information.
@@ -1171,360 +1166,410 @@ const CIOntology = () => {
       }
     }
   };
+  useEffect(() => {
+    const controller = columnResizerRef.current;
+    if (controller) {
+      const resizer = controller.getResizer();
+      resizer.resizeSection(2, { toSize: rightPanelVisible ? 400 : 0 });
+      controller.applyResizer(resizer);
+    }
+  }, [rightPanelVisible, user]);
 
   return (
-    <>
-      <Container style={{ marginTop: "80px" }}>
-        {!isMobile && (
-          <Section minSize={0} defaultSize={350}>
-            <Tabs
-              value={viewValue}
-              onChange={handleViewChange}
-              sx={{
-                width: "100%",
-                borderColor: "divider",
-                borderBottom: 1,
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "dark"
-                    ? DESIGN_SYSTEM_COLORS.notebookG450
-                    : DESIGN_SYSTEM_COLORS.gray300,
-              }}
-            >
-              <Tab label="Tree View" {...a11yProps(0)} sx={{ width: "50%" }} />
-              <Tab label="DAG View" {...a11yProps(1)} sx={{ width: "50%" }} />
-            </Tabs>
-            <Box sx={{ overflow: "auto", height: "94vh" }}>
-              <TabPanel value={viewValue} index={0} sx={{ mt: "5px" }}>
-                <TreeViewSimplified
-                  treeVisualisation={treeVisualisation}
-                  onOpenOntologyTree={onOpenOntologyTree}
-                  expandedOntologies={expandedOntologies}
-                />
-              </TabPanel>
-              <TabPanel value={viewValue} index={1}>
-                <DAGGraph
-                  treeVisualisation={treeVisualisation}
-                  setExpandedOntologies={setExpandedOntologies}
-                  expandedOntologies={expandedOntologies}
-                  setDagreZoomState={setDagreZoomState}
-                  dagreZoomState={dagreZoomState}
-                  onOpenOntologyDagre={onOpenOntologyDagre}
-                />
-              </TabPanel>
-            </Box>
-          </Section>
-        )}
-        <Bar
-          size={2}
-          style={{
-            background: "currentColor",
-            cursor: "col-resize",
-            position: "relative",
-          }}
+    <Box>
+      {nodes.length > 0 ? (
+        <Container
+          style={{ marginTop: "80px" }}
+          columnResizerRef={columnResizerRef}
         >
-          <SettingsEthernetIcon
+          {!isMobile && (
+            <Section minSize={0} defaultSize={500}>
+              <Tabs
+                value={viewValue}
+                onChange={handleViewChange}
+                sx={{
+                  width: "100%",
+                  borderColor: "divider",
+                  borderBottom: 1,
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? DESIGN_SYSTEM_COLORS.notebookG450
+                      : DESIGN_SYSTEM_COLORS.gray300,
+                }}
+              >
+                <Tab
+                  label="Tree View"
+                  {...a11yProps(0)}
+                  sx={{ width: "50%" }}
+                />
+                <Tab label="DAG View" {...a11yProps(1)} sx={{ width: "50%" }} />
+              </Tabs>
+              <Box sx={{ overflow: "auto", height: "94vh" }}>
+                <TabPanel value={viewValue} index={0} sx={{ mt: "5px" }}>
+                  <TreeViewSimplified
+                    treeVisualisation={treeVisualisation}
+                    onOpenOntologyTree={onOpenOntologyTree}
+                    expandedOntologies={expandedOntologies}
+                  />
+                </TabPanel>
+                <TabPanel value={viewValue} index={1}>
+                  <DAGGraph
+                    treeVisualisation={treeVisualisation}
+                    setExpandedOntologies={setExpandedOntologies}
+                    expandedOntologies={expandedOntologies}
+                    setDagreZoomState={setDagreZoomState}
+                    dagreZoomState={dagreZoomState}
+                    onOpenOntologyDagre={onOpenOntologyDagre}
+                  />
+                </TabPanel>
+              </Box>
+            </Section>
+          )}
+          <Bar
+            size={2}
             style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              color: "white",
-            }}
-          />
-        </Bar>
-        <Section minSize={0}>
-          <Box
-            sx={{
-              backgroundColor: (theme) =>
-                theme.palette.mode === "dark"
-                  ? theme.palette.common.notebookMainBlack
-                  : theme.palette.common.gray50,
-              p: "20px",
-              overflow: "auto",
-              height: "94vh",
+              background: "currentColor",
+              cursor: "col-resize",
+              position: "relative",
             }}
           >
-            <Breadcrumbs sx={{ ml: "40px" }}>
-              {ontologyPath.map((path) => (
-                <Link
-                  underline={path.category ? "none" : "hover"}
-                  key={path.id}
-                  onClick={() => handleLinkNavigation(path, "")}
-                  sx={{
-                    cursor: !path.category ? "pointer" : "",
-                    ":hover": {
-                      cursor: !path.category ? "pointer" : "",
-                    },
-                  }}
-                >
-                  {path.title.split(" ").splice(0, 3).join(" ") +
-                    (path.title.split(" ").length > 3 ? "..." : "")}
-                </Link>
-              ))}
-            </Breadcrumbs>
-
-            {openOntology && (
-              <Ontology
-                openOntology={openOntology}
-                setOpenOntology={setOpenOntology}
-                handleLinkNavigation={handleLinkNavigation}
-                setOntologyPath={setOntologyPath}
-                ontologyPath={ontologyPath}
-                saveSubOntology={saveSubOntology}
-                setSnackbarMessage={setSnackbarMessage}
-                updateUserDoc={updateUserDoc}
-                user={user}
-                mainSpecializations={getMainSpecialisations(treeVisualisation)}
-                ontologies={ontologies}
-                addNewOntology={addNewOntology}
-                ONTOLOGY_TYPES={ONTOLOGY_TYPES}
-                editOntology={editOntology}
-                setEditOntology={setEditOntology}
-                lockedOntology={lockedOntology}
-                recordLogs={recordLogs}
-                updateInheritance={updateInheritance}
-              />
-            )}
-          </Box>
-        </Section>
-        <Bar
-          size={2}
-          style={{
-            background: "currentColor",
-            cursor: "col-resize",
-            position: "relative",
-          }}
-        >
-          <SettingsEthernetIcon
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              color: "white",
-            }}
-          />
-        </Bar>
-
-        {!isMobile && (
-          <Section minSize={0} defaultSize={400}>
-            <Box
-              sx={{
-                borderBottom: 1,
-                borderColor: "divider",
-                position: "sticky",
+            <SettingsEthernetIcon
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                color: "white",
               }}
-            >
-              <Tabs
-                value={value}
-                onChange={handleChange}
-                aria-label="basic tabs example"
-              >
-                <Tab label="Search" {...a11yProps(1)} />
-                <Tab label="Comments" {...a11yProps(0)} />
-                <Tab label="Markdown Cheatsheet" {...a11yProps(2)} />
-              </Tabs>
-            </Box>
+            />
+          </Bar>
+          <Section minSize={0}>
             <Box
               sx={{
-                padding: "10px",
-                height: "89vh",
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? theme.palette.common.notebookMainBlack
+                    : theme.palette.common.gray50,
+                p: "20px",
                 overflow: "auto",
-                pb: "125px",
+                height: "94vh",
               }}
             >
-              <TabPanel value={value} index={0}>
-                <Box sx={{ pl: "10px" }}>
-                  <TextField
-                    variant="standard"
-                    placeholder="Search..."
-                    value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
-                    fullWidth
-                    InputProps={{
-                      startAdornment: (
-                        <IconButton
-                          sx={{ mr: "5px", cursor: "auto" }}
-                          color="primary"
-                          edge="end"
-                        >
-                          <SearchIcon />
-                        </IconButton>
-                      ),
-                    }}
-                    autoFocus
+              <Breadcrumbs sx={{ ml: "40px" }}>
+                {ontologyPath.map((path) => (
+                  <Link
+                    underline={path.category ? "none" : "hover"}
+                    key={path.id}
+                    onClick={() => handleLinkNavigation(path, "")}
                     sx={{
-                      p: "8px",
-                      mt: "5px",
+                      cursor: !path.category ? "pointer" : "",
+                      ":hover": {
+                        cursor: !path.category ? "pointer" : "",
+                      },
                     }}
-                  />
-                  <List>
-                    {searchWithFuse(searchValue).map((ontology: any) => (
-                      <ListItem
-                        key={ontology.id}
-                        onClick={() => openSearchOntology(ontology)}
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          color: "white",
-                          cursor: "pointer",
-                          borderRadius: "4px",
-                          padding: "8px",
-                          transition: "background-color 0.3s",
-                          // border: "1px solid #ccc",
-                          mt: "5px",
-                          "&:hover": {
-                            backgroundColor: (theme) =>
-                              theme.palette.mode === "dark"
-                                ? DESIGN_SYSTEM_COLORS.notebookG450
-                                : DESIGN_SYSTEM_COLORS.gray200,
-                          },
-                        }}
-                      >
-                        <Typography>{ontology.title}</Typography>
-                      </ListItem>
-                    ))}
-                  </List>
-                </Box>
-              </TabPanel>
-              <TabPanel value={value} index={1}>
-                <Box sx={{ display: "flex", flexDirection: "column" }}>
-                  <Box>
-                    {orderComments().map((comment: any) => (
-                      <Paper key={comment.id} elevation={3} sx={{ mt: "15px" }}>
-                        <Box
-                          sx={{
-                            // mb: "15px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            p: "18px",
-                            pb: "0px",
-                          }}
-                        >
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <Avatar src={comment.senderImage} />
-                            <Box
-                              sx={{
-                                display: "flex",
-                                flexDirection: "column",
-                                ml: "5px",
-                              }}
-                            >
-                              <Typography sx={{ ml: "4px", fontSize: "14px" }}>
-                                {comment.sender}
-                              </Typography>
-                              <Typography sx={{ ml: "4px", fontSize: "12px" }}>
-                                {formatFirestoreTimestampWithMoment(
-                                  comment.createdAt
-                                )}
-                              </Typography>
-                            </Box>
-                          </Box>
+                  >
+                    {path.title.split(" ").splice(0, 3).join(" ") +
+                      (path.title.split(" ").length > 3 ? "..." : "")}
+                  </Link>
+                ))}
+              </Breadcrumbs>
 
-                          {comment.senderUname === user?.uname && (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "flex-end",
-                              }}
-                            >
-                              <Button onClick={() => editComment(comment)}>
-                                {comment.id === editingComment
-                                  ? "Save"
-                                  : "Edit"}
-                              </Button>
-                              <Button onClick={() => deleteComment(comment.id)}>
-                                {" "}
-                                {comment.id === editingComment
-                                  ? "Cancel"
-                                  : "Delete"}
-                              </Button>
-                            </Box>
-                          )}
-                        </Box>
-                        <Box>
-                          {comment.id === editingComment ? (
-                            <Box sx={{ pr: "12px", pl: "12px", pb: "18px" }}>
-                              <TextField
-                                variant="outlined"
-                                multiline
-                                fullWidth
-                                value={updateComment}
-                                onChange={(e: any) => {
-                                  setUpdateComment(e.target.value);
-                                }}
-                                autoFocus
-                              />
-                            </Box>
-                          ) : (
-                            <Box sx={{ p: "18px" }}>
-                              <MarkdownRender text={comment.content} />
-                            </Box>
-                          )}
-                        </Box>
-                      </Paper>
-                    ))}
-                    <Paper elevation={3} sx={{ mt: "15px" }}>
-                      <TextField
-                        variant="outlined"
-                        multiline
-                        fullWidth
-                        placeholder="Add a Comment..."
-                        value={newComment}
-                        onChange={(e: any) => {
-                          setNewComment(e.target.value);
-                        }}
-                        InputProps={{
-                          endAdornment: (
-                            <Tooltip title={"Share"}>
-                              <IconButton
-                                color="primary"
-                                onClick={handleSendComment}
-                                edge="end"
-                              >
-                                <SendIcon />
-                              </IconButton>
-                            </Tooltip>
-                          ),
-                        }}
-                        autoFocus
-                        sx={{
-                          p: "8px",
-                          mt: "5px",
-                        }}
-                      />
-                    </Paper>
-                  </Box>{" "}
-                </Box>
-              </TabPanel>
-              <TabPanel value={value} index={2}>
-                <Box
-                  sx={{
-                    p: "18px",
-                    backgroundColor: (theme) =>
-                      theme.palette.mode === "dark" ? "" : "gray",
-                  }}
-                >
-                  <MarkdownRender text={markdownContent} />
-                </Box>
-              </TabPanel>
+              {currentVisibleNode && (
+                <Node
+                  openOntology={currentVisibleNode}
+                  setOpenOntology={setCurrentVisibleNode}
+                  handleLinkNavigation={handleLinkNavigation}
+                  setOntologyPath={setOntologyPath}
+                  ontologyPath={ontologyPath}
+                  saveSubOntology={saveSubOntology}
+                  setSnackbarMessage={setSnackbarMessage}
+                  updateUserDoc={updateUserDoc}
+                  user={user}
+                  mainSpecializations={getMainSpecialisations(
+                    treeVisualisation
+                  )}
+                  ontologies={nodes}
+                  addNewOntology={addNewOntology}
+                  ONTOLOGY_TYPES={ONTOLOGY_TYPES}
+                  editOntology={editOntology}
+                  setEditOntology={setEditOntology}
+                  lockedOntology={lockedOntology}
+                  recordLogs={recordLogs}
+                  updateInheritance={updateInheritance}
+                />
+              )}
             </Box>
           </Section>
-        )}
-        {ConfirmDialog}
-        <SneakMessage
-          newMessage={snackbarMessage}
-          setNewMessage={setSnackbarMessage}
-        />
-        <Box sx={{ position: "absolute", top: 0, width: "100%" }}>
-          <AppHeaderMemoized ref={headerRef} />
+
+          <Bar
+            size={2}
+            style={{
+              background: "currentColor",
+              cursor: "col-resize",
+              position: "relative",
+              display: rightPanelVisible ? "block" : "none",
+            }}
+          >
+            <SettingsEthernetIcon
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                color: "white",
+              }}
+            />
+          </Bar>
+
+          {!isMobile && (
+            <Section minSize={0} defaultSize={400}>
+              <Box
+                sx={{
+                  borderBottom: 1,
+                  borderColor: "divider",
+                  position: "sticky",
+                }}
+              >
+                <Tabs
+                  value={value}
+                  onChange={handleChange}
+                  aria-label="basic tabs example"
+                >
+                  <Tab label="Search" {...a11yProps(1)} />
+                  <Tab label="Comments" {...a11yProps(0)} />
+                  <Tab label="Markdown Cheatsheet" {...a11yProps(2)} />
+                </Tabs>
+              </Box>
+              <Box
+                sx={{
+                  padding: "10px",
+                  height: "89vh",
+                  overflow: "auto",
+                  pb: "125px",
+                }}
+              >
+                <TabPanel value={value} index={0}>
+                  <Box sx={{ pl: "10px" }}>
+                    <TextField
+                      variant="standard"
+                      placeholder="Search..."
+                      value={searchValue}
+                      onChange={(e) => setSearchValue(e.target.value)}
+                      fullWidth
+                      InputProps={{
+                        startAdornment: (
+                          <IconButton
+                            sx={{ mr: "5px", cursor: "auto" }}
+                            color="primary"
+                            edge="end"
+                          >
+                            <SearchIcon />
+                          </IconButton>
+                        ),
+                      }}
+                      autoFocus
+                      sx={{
+                        p: "8px",
+                        mt: "5px",
+                      }}
+                    />
+                    <List>
+                      {searchWithFuse(searchValue).map((ontology: any) => (
+                        <ListItem
+                          key={ontology.id}
+                          onClick={() => openSearchOntology(ontology)}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            color: "white",
+                            cursor: "pointer",
+                            borderRadius: "4px",
+                            padding: "8px",
+                            transition: "background-color 0.3s",
+                            // border: "1px solid #ccc",
+                            mt: "5px",
+                            "&:hover": {
+                              backgroundColor: (theme) =>
+                                theme.palette.mode === "dark"
+                                  ? DESIGN_SYSTEM_COLORS.notebookG450
+                                  : DESIGN_SYSTEM_COLORS.gray200,
+                            },
+                          }}
+                        >
+                          <Typography>{ontology.title}</Typography>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                </TabPanel>
+                <TabPanel value={value} index={1}>
+                  <Box sx={{ display: "flex", flexDirection: "column" }}>
+                    <Box>
+                      {orderComments().map((comment: any) => (
+                        <Paper
+                          key={comment.id}
+                          elevation={3}
+                          sx={{ mt: "15px" }}
+                        >
+                          <Box
+                            sx={{
+                              // mb: "15px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              p: "18px",
+                              pb: "0px",
+                            }}
+                          >
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <Avatar src={comment.senderImage} />
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  ml: "5px",
+                                }}
+                              >
+                                <Typography
+                                  sx={{ ml: "4px", fontSize: "14px" }}
+                                >
+                                  {comment.sender}
+                                </Typography>
+                                <Typography
+                                  sx={{ ml: "4px", fontSize: "12px" }}
+                                >
+                                  {formatFirestoreTimestampWithMoment(
+                                    comment.createdAt
+                                  )}
+                                </Typography>
+                              </Box>
+                            </Box>
+
+                            {comment.senderUname === user?.uname && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "flex-end",
+                                }}
+                              >
+                                <Button onClick={() => editComment(comment)}>
+                                  {comment.id === editingComment
+                                    ? "Save"
+                                    : "Edit"}
+                                </Button>
+                                <Button
+                                  onClick={() => deleteComment(comment.id)}
+                                >
+                                  {" "}
+                                  {comment.id === editingComment
+                                    ? "Cancel"
+                                    : "Delete"}
+                                </Button>
+                              </Box>
+                            )}
+                          </Box>
+                          <Box>
+                            {comment.id === editingComment ? (
+                              <Box sx={{ pr: "12px", pl: "12px", pb: "18px" }}>
+                                <TextField
+                                  variant="outlined"
+                                  multiline
+                                  fullWidth
+                                  value={updateComment}
+                                  onChange={(e: any) => {
+                                    setUpdateComment(e.target.value);
+                                  }}
+                                  autoFocus
+                                />
+                              </Box>
+                            ) : (
+                              <Box sx={{ p: "18px" }}>
+                                <MarkdownRender text={comment.content} />
+                              </Box>
+                            )}
+                          </Box>
+                        </Paper>
+                      ))}
+                      <Paper elevation={3} sx={{ mt: "15px" }}>
+                        <TextField
+                          variant="outlined"
+                          multiline
+                          fullWidth
+                          placeholder="Add a Comment..."
+                          value={newComment}
+                          onChange={(e: any) => {
+                            setNewComment(e.target.value);
+                          }}
+                          InputProps={{
+                            endAdornment: (
+                              <Tooltip title={"Share"}>
+                                <IconButton
+                                  color="primary"
+                                  onClick={handleSendComment}
+                                  edge="end"
+                                >
+                                  <SendIcon />
+                                </IconButton>
+                              </Tooltip>
+                            ),
+                          }}
+                          autoFocus
+                          sx={{
+                            p: "8px",
+                            mt: "5px",
+                          }}
+                        />
+                      </Paper>
+                    </Box>{" "}
+                  </Box>
+                </TabPanel>
+                <TabPanel value={value} index={2}>
+                  <Box
+                    sx={{
+                      p: "18px",
+                      backgroundColor: (theme) =>
+                        theme.palette.mode === "dark" ? "" : "gray",
+                    }}
+                  >
+                    <MarkdownRender text={markdownContent} />
+                  </Box>
+                </TabPanel>
+              </Box>
+            </Section>
+          )}
+          {ConfirmDialog}
+          <SneakMessage
+            newMessage={snackbarMessage}
+            setNewMessage={setSnackbarMessage}
+          />
+        </Container>
+      ) : (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+            flexDirection: "column",
+          }}
+        >
+          <CircularProgress />
+          {/* <br /> */}
+          <Typography sx={{ mt: "5px" }}> Loading...</Typography>
         </Box>
-      </Container>
-    </>
+      )}
+      <Box sx={{ position: "absolute", top: 0, width: "100%" }}>
+        <AppHeaderMemoized
+          ref={headerRef}
+          setRightPanelVisible={setRightPanelVisible}
+          rightPanelVisible={rightPanelVisible}
+          loading={nodes.length === 0}
+        />
+      </Box>
+    </Box>
   );
 };
 export default withAuthUser({
   shouldRedirectToLogin: true,
   shouldRedirectToHomeIfAuthenticated: false,
-})(CIOntology);
+})(Ontology);
