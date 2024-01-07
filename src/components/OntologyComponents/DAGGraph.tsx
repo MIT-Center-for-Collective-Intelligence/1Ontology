@@ -120,8 +120,8 @@ const onDrawOntology = (ontology: any, graph: any) => {
   // Check if the current ontology node is expanded (based on the global set of expandedOntologies).
   if (expandedOntologies.has(nodeId)) {
     // If expanded, iterate through sub-ontologies and draw edges connecting them to the current node.
-    const subOntologies: any = Object.values(ontology.specializations || {});
-    for (let subOntology of subOntologies) {
+    const children: any = Object.values(ontology.specializations || {});
+    for (let subOntology of children) {
       // Recursively call the onDrawOntology function for each sub-ontology.
       onDrawOntology(subOntology, graph);
 

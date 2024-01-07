@@ -1,96 +1,53 @@
 /* 
-## Overview
+This React component named `Ontology` is a complex and feature-rich component that serves as a central part of an application dealing with ontological data. It provides a user interface for viewing and interacting with a hierarchical structure of ontologies, managing comments, and searching through ontology nodes. The component uses Firebase Firestore for data storage and retrieval, Fuse.js for search functionality, and Material-UI for styling and layout. It also includes markdown rendering capabilities and responsive design adjustments for mobile devices.
 
-The `Ontology` component is a complex React component that serves as the main interface for managing and visualizing ontologies within a collaborative platform. It integrates with Firebase Firestore for data persistence, provides search functionality using Fuse.js, and offers a rich user interface with Material-UI components.
+Here's a breakdown of the key parts of the component:
 
-## Features
+### Imports and Setup
+- The component imports a variety of libraries and components, including Firebase Firestore functions, Material-UI components, Fuse.js for search, and custom components like `TreeViewSimplified`, `DAGGraph`, and `MarkdownRender`.
+- It defines the `Ontology` functional component and sets up state variables for managing nodes, search results, comments, UI states, and more.
 
-- **Ontology Management**: Users can create, update, and delete ontology entities.
-- **Real-time Updates**: Leveraging Firebase's `onSnapshot` to listen for real-time updates to ontologies.
-- **Search Functionality**: Implements search using Fuse.js to quickly find ontology entities.
-- **Responsive Design**: Adapts to different screen sizes using `useMediaQuery`.
-- **TreeView and DAG Visualization**: Offers two modes of visualizing ontologies - a simplified tree view and a directed acyclic graph (DAG) view.
-- **Comments Section**: Allows users to add, edit, and delete comments on ontology entities.
-- **Markdown Support**: Includes a Markdown cheatsheet and renders comments as Markdown.
+### Authentication and Routing
+- The component checks if the user is authenticated and their email is verified. If not, it redirects to the sign-in page.
+- It uses the `useRouter` hook from Next.js to handle routing within the application.
 
-## Dependencies
+### Firestore Data Subscription
+- The component sets up Firestore subscriptions to listen for changes in nodes, user data, and locked node fields, updating the component's state accordingly.
 
-- `@column-resizer/react`: For resizable layout sections.
-- `@mui/material`: Material-UI components for the user interface.
-- `firebase/firestore`: Firestore database for storing ontologies and related data.
-- `fuse.js`: For fuzzy search capabilities.
-- `moment`: For date manipulation and formatting.
-- `react`: Core React library.
-- `next/router`: For routing in Next.js applications.
+### Ontology Path Management
+- Functions like `getPath` and `updateTheUrl` are used to construct and manage the path of the current ontology being viewed, which is reflected in the URL hash for easy sharing and navigation.
 
-## Component Structure
-
-- **Container**: Wraps the entire layout, providing a margin at the top.
-- **Section**: Represents a resizable section of the layout.
-- **Bar**: A draggable bar for resizing adjacent sections.
-- **Tabs**: For switching between different views (Tree View, DAG View, Search, Comments, Markdown Cheatsheet).
-- **TreeViewSimplified**: A component for rendering the tree view of ontologies.
-- **DAGGraph**: A component for rendering the DAG view of ontologies.
-- **Ontology**: A component for displaying and editing a single ontology entity.
-- **MarkdownRender**: Renders Markdown content.
-- **AppHeaderMemoized**: The application header component.
-
-## Usage
-
-The `Ontology` component is designed to be used within a Next.js application and requires authentication context provided by `withAuthUser`.
-
-## Code Snippets
-
-### Firestore Data Fetching
-
-```tsx
-useEffect(() => {
-  const ontologyQuery = query(
-    collection(db, NODES),
-    where("deleted", "==", false)
-  );
-  const unsubscribeOntology = onSnapshot(ontologyQuery, (snapshot) => {
-    // Handle document changes
-  });
-  return () => unsubscribeOntology();
-}, [db]);
-```
+### Ontology Tree and DAG View
+- The component provides two different visualizations for the ontology structure: a tree view and a directed acyclic graph (DAG) view. Users can switch between these views using tabs.
 
 ### Search Functionality
+- The `searchWithFuse` function uses Fuse.js to perform a search on the ontology nodes based on the user's query.
 
-```tsx
-const fuse = new Fuse(ontologies, { keys: ["title"] });
+### Comment Management
+- The component allows users to add, edit, and delete comments on ontology nodes. It uses functions like `handleSendComment`, `deleteComment`, and `editComment` to manage comment interactions.
 
-const searchWithFuse = (query: string): any => {
-  if (!query) {
-    return [];
-  }
-  return fuse
-    .search(query)
-    .map((result) => result.item)
-    .filter((item: any) => !item.deleted);
-};
-```
+### Inheritance Updates
+- The `updateInheritance` function recursively updates fields in the ontology hierarchy that are related to inheritance, ensuring that changes in parent nodes are reflected in child nodes.
 
-### Comment Handling
+### UI Components and Layout
+- The component uses Material-UI components to create a responsive layout with a header, tabs, search bar, comment section, and markdown cheatsheet.
+- It uses the `@column-resizer/react` library to allow users to resize sections of the layout.
 
-```tsx
-const handleSendComment = async () => {
-  // Logic to add a new comment to an ontology
-};
+### Effects and Callbacks
+- The component uses `useEffect` hooks to handle side effects such as data fetching, URL hash changes, and Firestore subscriptions.
+- Callback functions like `handleLinkNavigation`, `addNewNode`, and `saveChildNode` handle user interactions with the ontology structure.
 
-const deleteComment = async (commentId: string) => {
-  // Logic to delete a comment from an ontology
-};
+### Higher-Order Component (HOC)
+- The `withAuthUser` HOC is used to wrap the `Ontology` component, providing authentication checks and redirection logic.
 
-const editComment = async (comment: any) => {
-  // Logic to edit an existing comment on an ontology
-};
-```
+### Return Statement
+- The component conditionally renders the main content or a loading indicator based on whether the ontology nodes have been loaded.
+- It returns a structured layout with a header, ontology visualizations, and a right panel for search and comments.
 
-## Contributing
+### Developer Comments
+- Throughout the component, there are places where additional developer comments could be added to explain complex logic, the purpose of specific functions, and the reasoning behind certain design choices.
 
-Contributions to the `Ontology` component are welcome. Please ensure you follow the project's coding standards and submit a pull request with a detailed description of your changes. */
+This component is a key part of the application, providing a rich interface for users to interact with ontological data. It demonstrates the use of React hooks, Firestore, and third-party libraries to create a dynamic and responsive user experience. */
 
 import { Bar, Container, Resizer, Section } from "@column-resizer/react";
 import SearchIcon from "@mui/icons-material/Search";
@@ -135,10 +92,10 @@ import SneakMessage from " @components/components/OntologyComponents/SneakMessag
 import Node from " @components/components/OntologyComponents/Node";
 import TreeViewSimplified from " @components/components/OntologyComponents/TreeViewSimplified";
 import {
-  ILockedOntology,
+  ILockedNode,
   INode,
   INodePath,
-  ISubOntology,
+  IChildNode,
   MainSpecializations,
   TreeVisual,
 } from " @components/types/INode";
@@ -153,7 +110,7 @@ import { useAuth } from " @components/components/context/AuthContext";
 import { useRouter } from "next/router";
 import DAGGraph from " @components/components/OntologyComponents/DAGGraph";
 import { formatFirestoreTimestampWithMoment } from " @components/lib/utils/utils";
-import { ONTOLOGY_TYPES } from " @components/lib/CONSTANTS";
+import { NODES_TYPES } from " @components/lib/CONSTANTS";
 import {
   LOCKS,
   NODES,
@@ -176,15 +133,13 @@ const Ontology = () => {
   const [updateComment, setUpdateComment] = useState("");
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [editingComment, setEditingComment] = useState("");
-  const [lockedOntology, setLockedOntology] = useState<ILockedOntology>({});
+  const [lockedNodeFields, setlockedNodeFields] = useState<ILockedNode>({});
   const [value, setValue] = useState<number>(1);
   const [viewValue, setViewValue] = useState<number>(0);
   const [searchValue, setSearchValue] = useState("");
   const fuse = new Fuse(nodes, { keys: ["title"] });
   const headerRef = useRef<HTMLHeadElement | null>(null);
-  const [expandedOntologies, setExpandedOntologies] = useState<Set<string>>(
-    new Set()
-  );
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [dagreZoomState, setDagreZoomState] = useState<any>(null);
   const [rightPanelVisible, setRightPanelVisible] = useState<any>(
     user?.rightPanel
@@ -247,13 +202,13 @@ const Ontology = () => {
       };
 
       // Iterate through each category in the Specializations sub-ontologies
-      for (let category in node?.subOntologies?.Specializations) {
+      for (let category in node?.children?.Specializations) {
         // Filter ontologies based on the current category
         const specializations =
           nodes.filter((onto: any) => {
-            const arrayNodes = node?.subOntologies?.Specializations[
-              category
-            ]?.ontologies.map((o: any) => o.id);
+            const arrayNodes = node?.children?.Specializations[category].map(
+              (o: any) => o.id
+            );
             return arrayNodes.includes(onto.id);
           }) || [];
 
@@ -417,8 +372,8 @@ const Ontology = () => {
       const docChanges = snapshot.docChanges();
 
       // Update the lockedOntology state based on the document changes
-      setLockedOntology((lockedOntology: ILockedOntology) => {
-        let _lockedOntology = { ...lockedOntology };
+      setlockedNodeFields((lockedNode: ILockedNode) => {
+        let _lockedNode = { ...lockedNode };
 
         // Iterate through each document change
         for (let change of docChanges) {
@@ -427,16 +382,16 @@ const Ontology = () => {
           // Handle removed documents
           if (
             change.type === "removed" &&
-            _lockedOntology.hasOwnProperty(changeData.ontology)
+            _lockedNode.hasOwnProperty(changeData.ontology)
           ) {
-            delete _lockedOntology[changeData.ontology][changeData.field];
+            delete _lockedNode[changeData.ontology][changeData.field];
           }
           // Handle added documents
           else if (change.type === "added") {
-            _lockedOntology = {
-              ..._lockedOntology,
+            _lockedNode = {
+              ..._lockedNode,
               [changeData.ontology]: {
-                ..._lockedOntology[changeData.ontology],
+                ..._lockedNode[changeData.ontology],
                 [changeData.field]: {
                   id: change.doc.id,
                   ...changeData,
@@ -447,7 +402,7 @@ const Ontology = () => {
         }
 
         // Return the updated lockedOntology state
-        return _lockedOntology;
+        return _lockedNode;
       });
     });
 
@@ -547,10 +502,10 @@ const Ontology = () => {
         if (ontologyIndex !== -1) {
           setCurrentVisibleNode(nodes[ontologyIndex]);
         } else {
-          const parent = getParent(ONTOLOGY_TYPES[type].ontologyType);
+          const parent = getParent(NODES_TYPES[type].nodeType);
           const parentSet: any = new Set([currentVisibleNode.id, parent]);
           const parents = [...parentSet];
-          const newNode = ONTOLOGY_TYPES[type];
+          const newNode = NODES_TYPES[type];
           addNewNode({
             id: path.id,
             newNode: { parents, ...newNode },
@@ -612,7 +567,7 @@ const Ontology = () => {
         // Record logs for the created ontology
         await recordLogs({
           action: "Created a field",
-          field: newNode.ontologyType,
+          field: newNode.nodeType,
         });
 
         // Set the newly created ontology as editable
@@ -627,25 +582,23 @@ const Ontology = () => {
   // This function adds a sub-ontology to a parent ontology in a Firestore database.
   // It takes the type and id of the sub-ontology as parameters.
 
-  const addSubOntologyToParent = async (type: string, id: string) => {
+  const addChildToParentNode = async (type: string, id: string) => {
     // Get the ID of the parent ontology based on the provided type.
     const parentId = getParent(type);
 
     // Check if a parent ID exists.
     if (parentId) {
       // Find the parent ontology in the ontologies array.
-      const parent: any = nodes.find(
-        (ontology: any) => ontology.id === parentId
-      );
+      const parent: any = nodes.find((node: any) => node.id === parentId);
 
       // Get a reference to the parent ontology in Firestore.
-      const ontologyRef = doc(collection(db, NODES), parentId);
+      const nodeRef = doc(collection(db, NODES), parentId);
 
       // Extract the Specializations array from the parent ontology.
-      const specializations = parent.subOntologies.Specializations;
+      const specializations = parent.children.Specializations;
 
       // Find the index of the sub-ontology in the Specializations array.
-      const specializationIdx = parent.subOntologies.Specializations.findIndex(
+      const specializationIdx = parent.children.Specializations.findIndex(
         (spcial: any) => spcial.id === id
       );
 
@@ -658,16 +611,16 @@ const Ontology = () => {
       }
 
       // Update the Specializations array in the parent ontology.
-      parent.subOntologies.Specializations = specializations;
+      parent.children.Specializations = specializations;
 
       // Update the parent ontology in Firestore with the modified data.
-      await updateDoc(ontologyRef, parent);
+      await updateDoc(nodeRef, parent);
     }
   };
 
   // Function to save a sub-ontology with given parameters
-  const saveSubOntology = async (
-    subOntology: ISubOntology, // The sub-ontology object to be saved
+  const saveChildNode = async (
+    subOntology: IChildNode, // The sub-ontology object to be saved
     type: string, // The type of sub-ontology (e.g., "Specializations" or "Evaluation Dimensions")
     id: string // The ID of the parent ontology to which the sub-ontology belongs
   ) => {
@@ -676,27 +629,27 @@ const Ontology = () => {
       if (!currentVisibleNode) return;
 
       // Reference to the parent ontology document in the database
-      const ontologyParentRef = doc(collection(db, NODES), id);
+      const nodeParentRef = doc(collection(db, NODES), id);
       // Retrieve the parent ontology document
-      const ontologyParentDoc = await getDoc(ontologyParentRef);
+      const nodeParentDoc = await getDoc(nodeParentRef);
       // Extract data from the parent ontology document
-      const ontologyParent: any = ontologyParentDoc.data();
+      const nodeParent: any = nodeParentDoc.data();
       // If the parent ontology does not exist, return
-      if (!ontologyParent) return;
+      if (!nodeParent) return;
 
       // Find the index of the sub-ontology within the specified type in the parent ontology
-      const idx = ontologyParent.subOntologies[type].findIndex(
-        (sub: ISubOntology) => sub.id === subOntology.id
+      const idx = nodeParent.children[type].findIndex(
+        (child: IChildNode) => child.id === subOntology.id
       );
 
       // If the sub-ontology is not found, add it; otherwise, update its title
       if (idx === -1) {
-        ontologyParent.subOntologies[type].push({
+        nodeParent.children[type].push({
           title: subOntology.title,
           id: subOntology.id,
         });
       } else {
-        ontologyParent[type][idx].title = subOntology.title;
+        nodeParent[type][idx].title = subOntology.title;
       }
 
       // Reference to the new sub-ontology document in the database
@@ -710,25 +663,25 @@ const Ontology = () => {
       }
 
       // Update the parent ontology document with the modified data
-      await updateDoc(ontologyParentRef, ontologyParent);
+      await updateDoc(nodeParentRef, nodeParent);
 
       // Determine the sub-ontology type for navigation purposes
-      let subOntologyType = type;
+      let childNodeType = type;
       if (type === "Specializations") {
-        subOntologyType = ontologyParent.ontologyType;
+        childNodeType = nodeParent.nodeType;
       }
       if (type === "Evaluation Dimensions") {
-        subOntologyType = "Evaluation";
+        childNodeType = "Evaluation";
       }
 
       // Trigger a navigation function with the sub-ontology details and type
       handleLinkNavigation(
         { id: subOntology.id, title: subOntology.title },
-        subOntologyType
+        childNodeType
       );
 
       // Add the sub-ontology to its parent in the ontology hierarchy
-      await addSubOntologyToParent(subOntologyType, subOntology.id);
+      await addChildToParentNode(childNodeType, subOntology.id);
     } catch (error) {
       // Log any errors that occur during the execution of the function
       console.error(error);
@@ -742,29 +695,27 @@ const Ontology = () => {
       if (!user) return;
 
       // Find the index of the ontology with the specified ID in the ontologies array.
-      const ontologyIdx = nodes.findIndex(
-        (onto: any) => onto.id === ontologyId
-      );
+      const nodeIdx = nodes.findIndex((onto: any) => onto.id === ontologyId);
 
       // Filter out main ontologies (ontologies with a category).
-      const mainOntologies = nodes.filter((ontology: any) => ontology.category);
+      const mainNodes = nodes.filter((node: any) => node.category);
 
       // Initialize an object to store the path of each ontology in the DAGRE view.
       let eachOntologyPath = findOntologyPath({
-        mainOntologies,
+        mainNodes,
         path: [],
         eachOntologyPath: {},
       });
 
       // Check if the ontology with the specified ID exists and is not a main ontology (no category).
-      if (ontologyIdx !== -1 && !nodes[ontologyIdx].category) {
+      if (nodeIdx !== -1 && !nodes[nodeIdx].category) {
         // Set the opened ontology as the currently selected ontology.
-        setCurrentVisibleNode(nodes[ontologyIdx]);
+        setCurrentVisibleNode(nodes[nodeIdx]);
 
         // Record logs for the action of opening the DAGRE view for the ontology.
         await recordLogs({
           action: "opened dagre-view",
-          itemClicked: nodes[ontologyIdx].id,
+          itemClicked: nodes[nodeIdx].id,
         });
 
         // Update the user document with the ontology path.
@@ -783,24 +734,22 @@ const Ontology = () => {
       // Check if user is logged in
       if (!user) return;
       //update the expanded state
-      setExpandedOntologies((prevExpanded: Set<string>) => {
+      setExpandedNodes((prevExpanded: Set<string>) => {
         prevExpanded.add(ontologyId);
         return prevExpanded;
       });
       // Find the index of the ontology in the ontologies array
-      const ontologyIdx = nodes.findIndex(
-        (onto: any) => onto.id === ontologyId
-      );
+      const nodeIdx = nodes.findIndex((onto: any) => onto.id === ontologyId);
 
       // Check if ontology exists and has a category
-      if (ontologyIdx !== -1 && !nodes[ontologyIdx].category) {
+      if (nodeIdx !== -1 && !nodes[nodeIdx].category) {
         // Set the currently open ontology
-        setCurrentVisibleNode(nodes[ontologyIdx]);
+        setCurrentVisibleNode(nodes[nodeIdx]);
 
         // Record logs for the action of clicking the tree-view
         await recordLogs({
           action: "clicked tree-view",
-          itemClicked: nodes[ontologyIdx].id,
+          itemClicked: nodes[nodeIdx].id,
         });
 
         // Update user document with the path
@@ -957,13 +906,13 @@ const Ontology = () => {
       // Check if there is an open ontology and the comment matches the editing state
       if (comment.id === editingComment && currentVisibleNode) {
         // Retrieve the ontology document from the database
-        const ontologyDoc = await getDoc(
+        const nodeDoc = await getDoc(
           doc(collection(db, NODES), currentVisibleNode.id)
         );
-        const ontologyData = ontologyDoc.data();
+        const nodeData = nodeDoc.data();
 
         // Retrieve and update the comment content
-        let comments = ontologyData?.comments || [];
+        let comments = nodeData?.comments || [];
         const commentIdx = comments.findIndex((c: any) => c.id == comment.id);
 
         // Record the modification action in the logs
@@ -976,7 +925,7 @@ const Ontology = () => {
         // Update the comment content and reset the editing state
         comments[commentIdx].content = updateComment;
         setEditingComment("");
-        await updateDoc(ontologyDoc.ref, { comments });
+        await updateDoc(nodeDoc.ref, { comments });
 
         // Reset additional state variables
         setUpdateComment("");
@@ -1000,36 +949,36 @@ const Ontology = () => {
     setViewValue(newValue);
   };
 
-  // This function finds the path of an ontology in a nested structure of mainOntologies and their subOntologies.
+  // This function finds the path of an ontology in a nested structure of mainNodes and their children.
   const findOntologyPath = useCallback(
-    ({ mainOntologies, path, eachOntologyPath }: any) => {
+    ({ mainNodes, path, currentPath }: any) => {
       // Loop through each main ontology
-      for (let ontology of mainOntologies) {
+      for (let ontology of mainNodes) {
         // Update the path for the current ontology
-        eachOntologyPath[ontology.id] = [...path, ontology.id];
+        currentPath[ontology.id] = [...path, ontology.id];
 
-        // Loop through categories in the subOntologies of the current ontology
-        for (let category in ontology?.subOntologies?.Specializations) {
+        // Loop through categories in the children of the current ontology
+        for (let category in ontology?.children?.Specializations) {
           // Filter ontologies based on their inclusion in the Specializations of the current category
           const specializations =
             nodes.filter((onto: any) => {
-              const arrayOntologies = ontology?.subOntologies?.Specializations[
+              const arrayOntologies = ontology?.children?.Specializations[
                 category
-              ]?.ontologies.map((o: any) => o.id);
+              ].map((o: any) => o.id);
               return arrayOntologies.includes(onto.id);
             }) || [];
 
           // Recursively call the findOntologyPath function for the filtered specializations
-          eachOntologyPath = findOntologyPath({
-            mainOntologies: specializations,
+          currentPath = findOntologyPath({
+            mainNodes: specializations,
             path: [...path, ontology.id],
-            eachOntologyPath,
+            currentPath,
           });
         }
       }
 
       // Return the accumulated ontology paths
-      return eachOntologyPath;
+      return currentPath;
     },
     [nodes]
   );
@@ -1047,11 +996,11 @@ const Ontology = () => {
       });
 
       // Filter main ontologies based on the presence of a category
-      const mainOntologies = nodes.filter((ontology: any) => ontology.category);
+      const mainNodes = nodes.filter((ontology: any) => ontology.category);
 
       // Initialize eachOntologyPath with an empty object and find the ontology path
       let eachOntologyPath = findOntologyPath({
-        mainOntologies,
+        mainNodes,
         path: [],
         eachOntologyPath: {},
       });
@@ -1068,7 +1017,7 @@ const Ontology = () => {
    *
    * @param updatedNode - The root ontology that needs to be updated.
    * @param updatedField - The field that is being updated (e.g., "title", "description").
-   * @param type - The type of ontology being updated ("subOntologies" or "plainText").
+   * @param type - The type of ontology being updated ("children" or "plainText").
    * @param newValue - The new value for the specified field.
    * @param ancestorTitle - The new title for the ancestor ontology.
    */
@@ -1081,37 +1030,32 @@ const Ontology = () => {
   }: {
     updatedNode: INode;
     updatedField: string;
-    type: "subOntologies" | "plainText";
+    type: "children" | "plainText";
     newValue: any;
     ancestorTitle: string;
   }) => {
     // Get the ID of the current ontology and initialize an array to store child ontology IDs.
     const parentId = updatedNode.id;
-    const children: { ontologies: { id: string; title: string }[] }[] =
-      Object.values(updatedNode.subOntologies.Specializations);
-    let allChildren: string[] = [];
-
-    // Get all the children (specializations) in an array of strings.
-    for (let child of children) {
-      allChildren = [...allChildren, ...child.ontologies.map((c) => c.id)];
-    }
+    const children: string[] = Object.values(
+      updatedNode.children.Specializations
+    ).map((child: any) => child.id);
 
     // Loop through all the children and update the corresponding field.
-    for (let ontoId of allChildren) {
-      const ontologyIdx = nodes.findIndex((o: INode) => o.id == ontoId);
+    for (let childId of children) {
+      const ontologyIdx = nodes.findIndex((o: INode) => o.id == childId);
 
       // Check if the child ontology exists in the ontologies array.
       if (ontologyIdx !== -1) {
-        const currentOntology: INode = nodes[ontologyIdx];
-        const ontoRef = doc(collection(db, NODES), ontoId);
+        const currentNode: INode = nodes[ontologyIdx];
+        const ontoRef = doc(collection(db, NODES), childId);
 
         // Check if the current ontology has inheritance information.
-        if (currentOntology.inheritance) {
+        if (currentNode.inheritance) {
           if (updatedField === "title") {
             // Update the ancestor title in the inheritance information.
-            for (let inheritanceType in currentOntology.inheritance) {
+            for (let inheritanceType in currentNode.inheritance) {
               const inheritanceFields =
-                currentOntology.inheritance[inheritanceType];
+                currentNode.inheritance[inheritanceType];
               for (let field in inheritanceFields) {
                 const inheritance: { ref: string; title: string } =
                   inheritanceFields[field];
@@ -1122,24 +1066,24 @@ const Ontology = () => {
             }
           } else {
             // Update the specified field in the inheritance information.
-            const inheritance = currentOntology.inheritance[type][updatedField];
+            const inheritance = currentNode.inheritance[type][updatedField];
             if (
               inheritance &&
               inheritance?.ref &&
               inheritance.ref == parentId
             ) {
               inheritance.title = ancestorTitle;
-              currentOntology[type][updatedField] = newValue;
+              currentNode[type][updatedField] = newValue;
             }
           }
 
           // Update the ontology document in the Firestore database.
-          updateDoc(ontoRef, currentOntology);
+          updateDoc(ontoRef, currentNode);
 
           // Recursive call to update the children of the current ontology.
           // It is safe to call this even if the current ontology doesn't have children.
           updateInheritance({
-            updatedNode: currentOntology,
+            updatedNode: currentNode,
             updatedField,
             type,
             newValue,
@@ -1191,14 +1135,14 @@ const Ontology = () => {
                   <TreeViewSimplified
                     treeVisualisation={treeVisualisation}
                     onOpenOntologyTree={onOpenOntologyTree}
-                    expandedOntologies={expandedOntologies}
+                    expandedOntologies={expandedNodes}
                   />
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
                   <DAGGraph
                     treeVisualisation={treeVisualisation}
-                    setExpandedOntologies={setExpandedOntologies}
-                    expandedOntologies={expandedOntologies}
+                    setExpandedOntologies={setExpandedNodes}
+                    expandedOntologies={expandedNodes}
                     setDagreZoomState={setDagreZoomState}
                     dagreZoomState={dagreZoomState}
                     onOpenOntologyDagre={onOpenOntologyDagre}
@@ -1258,24 +1202,24 @@ const Ontology = () => {
 
               {currentVisibleNode && (
                 <Node
-                  openOntology={currentVisibleNode}
-                  setOpenOntology={setCurrentVisibleNode}
+                  currentVisibleNode={currentVisibleNode}
+                  setCurrentVisibleNode={setCurrentVisibleNode}
                   handleLinkNavigation={handleLinkNavigation}
                   setOntologyPath={setOntologyPath}
                   ontologyPath={ontologyPath}
-                  saveSubOntology={saveSubOntology}
+                  saveChildNode={saveChildNode}
                   setSnackbarMessage={setSnackbarMessage}
                   updateUserDoc={updateUserDoc}
                   user={user}
                   mainSpecializations={getMainSpecialisations(
                     treeVisualisation
                   )}
-                  ontologies={nodes}
+                  nodes={nodes}
                   addNewNode={addNewNode}
-                  ONTOLOGY_TYPES={ONTOLOGY_TYPES}
-                  editOntology={editNode}
+                  NODES_TYPES={NODES_TYPES}
+                  editNode={editNode}
                   setEditOntology={setEditNode}
-                  lockedOntology={lockedOntology}
+                  lockedNodeFields={lockedNodeFields}
                   recordLogs={recordLogs}
                   updateInheritance={updateInheritance}
                 />

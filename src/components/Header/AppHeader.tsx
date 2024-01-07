@@ -72,7 +72,6 @@ import {
   uploadBytesResumable,
 } from "firebase/storage";
 import { isValidHttpUrl } from " @components/lib/utils/utils";
-import PercentageLoader from "./PercentageLoader";
 export const HEADER_HEIGHT = 80;
 export const HEADER_HEIGHT_MOBILE = 72;
 
@@ -132,7 +131,6 @@ const AppHeader = forwardRef(
           const storage = getStorage();
           const auth = getAuth();
           const userId = user?.userId;
-          console.log({ user });
           const userAuthObj = auth.currentUser;
           if (!userAuthObj) return;
 
@@ -201,7 +199,6 @@ const AppHeader = forwardRef(
                   imageGeneratedUrl,
                   "_430x1300"
                 );
-                console.log(imageGeneratedUrl);
                 await updateUserImage(imageGeneratedUrl);
                 setIsUploading(false);
                 setPercentageUploaded(100);
@@ -273,7 +270,6 @@ const AppHeader = forwardRef(
         return !prev;
       });
     }, [rightPanelVisible]);
-    console.log({ percentageUploaded });
     return (
       <>
         <Box

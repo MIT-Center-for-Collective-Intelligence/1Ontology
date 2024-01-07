@@ -1,25 +1,8 @@
-/* This code defines a set of TypeScript types and interfaces that are used to describe the structure of data related to ontologies. Ontologies are a way to represent knowledge as a set of concepts within a domain and the relationships between those concepts.
-
-- `ISubOntology`: Represents a sub-ontology with properties like title, id, category, editMode and new.
-- `ISubOntologyCategory`: Represents a category of sub-ontologies.
-- `INodeTypes`: Represents the possible types of an ontology.
-- `INodePath`: Represents the path of an ontology with properties like id and title.
-- `InheritanceType`: Represents the inheritance type of an ontology.
-- `OntologyInheritance`: Represents the inheritance of an ontology.
-- `INode`: Represents an ontology with properties like id, title, description, comments, editMode, parents, type, plainText, subOntologies, ontologyType, locked and category.
-- `INodeCommon`: Represents common properties of an ontology.
-- `IActivity`, `IActor`, `IProcess`, `IEvaluation`, `IRole`, `IIncentive`, `IReward`, `IGroup`: Represents specific types of ontologies with their specific properties.
-- `IUserOntology`: Represents a user's ontology with properties like id, uname, ontology, field, previous, new, correct, wrong and visible.
-- `INodeLock`: Represents a lock on an ontology with properties like uname, ontology and field.
-- `TreeVisual`: Represents a visual tree of an ontology.
-- `ILockedOntology`: Represents a locked ontology with properties like id, uname, ontology, field, deleted and createdAt.
-- `MainSpecializations`: Represents the main specializations of an ontology.
-
-These types and interfaces are likely used in a larger application that deals with the creation, editing, and viewing of ontologies. */
+/**/
 
 import { Timestamp } from "firebase/firestore";
 
-export type ISubOntology = {
+export type IChildNode = {
   title: string;
   id: string;
   category?: string;
@@ -28,7 +11,7 @@ export type ISubOntology = {
 };
 
 export type ISubOntologyCategory = {
-  [category: string]: { ontologies: ISubOntology[] };
+  [category: string]: { id: string; title: string }[];
 };
 
 export type INodeTypes =
@@ -44,7 +27,7 @@ export type INodeTypes =
 export type INodePath = {
   id: string;
   title: string;
-  category?:boolean;
+  category?: boolean;
 };
 export type InheritanceType = {
   [key: string]: { ref: string; title: string };
@@ -66,8 +49,8 @@ export type INode = {
   parents?: string[];
   type?: INodeTypes;
   plainText: { [key: string]: string };
-  subOntologies: { [key: string]: any };
-  ontologyType?: string;
+  children: { [key: string]: any };
+  nodeType?: string;
   locked?: boolean;
   category?: boolean;
 } & OntologyInheritance;
@@ -75,7 +58,7 @@ export type INode = {
 export type INodeCommon = {
   title: string;
   description: string;
-  ontologyType: string;
+  nodeType: string;
   locked?: boolean;
 };
 
@@ -85,7 +68,7 @@ export type IActivity = INodeCommon & {
     Postconditions: string;
     notes: string;
   };
-  subOntologies: {
+  children: {
     Actor: ISubOntologyCategory;
     Process: ISubOntologyCategory;
     Specializations: ISubOntologyCategory;
@@ -99,7 +82,7 @@ export type IActor = INodeCommon & {
     Abilities: string;
     notes: string;
   };
-  subOntologies: {
+  children: {
     Specializations: ISubOntologyCategory;
   };
 };
@@ -112,7 +95,7 @@ export type IProcess = INodeCommon & {
     "Performance prediction models": string;
     notes: string;
   };
-  subOntologies: {
+  children: {
     Role: ISubOntologyCategory;
     Specializations: ISubOntologyCategory;
   };
@@ -126,7 +109,7 @@ export type IEvaluation = INodeCommon & {
     "Criteria for acceptability": string;
     notes: string;
   };
-  subOntologies: {
+  children: {
     Specializations: ISubOntologyCategory;
   };
 };
@@ -138,7 +121,7 @@ export type IRole = INodeCommon & {
     "Capabilities required": string;
     notes: string;
   };
-  subOntologies: {
+  children: {
     Specializations: ISubOntologyCategory;
     Incentive: ISubOntologyCategory;
     Actor: ISubOntologyCategory;
@@ -151,7 +134,7 @@ export type IIncentive = INodeCommon & {
     "Capabilities required": string;
     notes: string;
   };
-  subOntologies: {
+  children: {
     "Evaluation Dimension": ISubOntologyCategory;
     Specializations: ISubOntologyCategory;
     Reward: ISubOntologyCategory;
@@ -163,7 +146,7 @@ export type IReward = INodeCommon & {
     "Reward type": string;
     Units: string;
   };
-  subOntologies: {
+  children: {
     Specializations: ISubOntologyCategory;
   };
 };
@@ -175,7 +158,7 @@ export type IGroup = INodeCommon & {
     "Number of individuals in group": string;
     notes: string;
   };
-  subOntologies: {
+  children: {
     Specializations: ISubOntologyCategory;
     Individual: ISubOntologyCategory;
   };
@@ -183,18 +166,13 @@ export type IGroup = INodeCommon & {
 export type IUserOntology = {
   id: string;
   uname: string;
-  ontology: string;
+  node: string;
   field: string;
   previous: string;
   new: string;
   correct: boolean;
   wrong: boolean;
   visible: boolean;
-};
-export type INodeLock = {
-  uname: string;
-  ontology: string;
-  field: string;
 };
 
 export type TreeVisual = {
@@ -207,12 +185,12 @@ export type TreeVisual = {
   };
 };
 
-export type ILockedOntology = {
+export type ILockedNode = {
   [id: string]: {
     [field: string]: {
       id: string;
       uname: string;
-      ontology: string;
+      node: string;
       field: string;
       deleted: boolean;
       createdAt: Timestamp;

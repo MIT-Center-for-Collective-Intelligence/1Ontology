@@ -1,88 +1,79 @@
 /* 
-# SubOntology Component
+## Overview
 
-The `SubOntology` component is responsible for rendering a single sub-ontology item within the application. It provides functionality for navigating to the sub-ontology's details, as well as deleting the sub-ontology from the database.
+The `ChildNode` component is a React component that displays a child node within a larger ontology structure. It provides functionality for navigating to the child node, updating the user's current path within the ontology, and deleting the child node from the ontology.
 
 ## Props
 
 The component accepts the following props:
 
-- `subOntology`: The sub-ontology object to be displayed.
-- `openOntology`: The currently open ontology object.
-- `sx`: Style object for customizing the appearance of the component.
-- `type`: The type of the sub-ontology.
-- `setOpenOntology`: Function to update the currently open ontology.
-- `saveSubOntology`: Function to save the sub-ontology.
-- `setSnackbarMessage`: Function to display a message in a snackbar.
-- `category`: The category of the sub-ontology.
-- `ontologyPath`: The path of ontologies leading to the current sub-ontology.
-- `updateUserDoc`: Function to update the user document with the new ontology path.
-- `recordLogs`: Function to record logs for actions performed.
-- `updateInheritance`: Function to update inheritance of the ontology.
-
-## Usage
-
-The `SubOntology` component is used within the application to display a list of sub-ontologies. It provides an interactive link to navigate to the sub-ontology's details and a delete button to remove the sub-ontology from the database.
+- `child`: An object representing the child node to be displayed.
+- `currentVisibleNode`: The currently visible node in the ontology.
+- `sx`: An object containing style properties to be applied to the component.
+- `type`: A string representing the type of the child node (e.g., "Specializations").
+- `setCurrentVisibleNode`: A function to update the state of the currently visible node.
+- `saveChildNode`: A function to save the child node.
+- `setSnackbarMessage`: A function to display a message in a snackbar/notification.
+- `category`: A string representing the category of the child node.
+- `ontologyPath`: An array representing the path of nodes leading to the current node.
+- `updateUserDoc`: A function to update the user's document with the new ontology path.
+- `recordLogs`: A function to record logs for certain actions.
+- `updateInheritance`: A function to update the inheritance of nodes.
 
 ## Functions
 
 ### linkNavigation
 
-Handles the navigation to the sub-ontology's details by updating the user document with the new ontology path.
+This function is called when the user clicks on the child node's link. It updates the user's current ontology path by appending the child node's ID to the existing path and then calls `updateUserDoc` to reflect this change.
 
-### removeSubOntology
+### removeChildNode
 
-Removes the sub-ontology from the parent ontology's sub-ontologies list.
+This function removes a child node from the given node's children. It iterates over the types and categories of children and removes the child node if it is found.
 
 ### deleteSubOntologyEditable
 
-Handles the deletion of the sub-ontology. It confirms the action with the user, updates the parent ontology, and records the action in logs.
+This asynchronous function is triggered when the user clicks the "Delete" button. It confirms the deletion with the user and, upon confirmation, deletes the child node from the ontology. It handles the deletion of the node from the Firestore database and updates the inheritance if necessary. It also records the deletion action in the logs.
 
 ## Rendering
 
-The component renders a `Box` containing a `Link` for the sub-ontology title and a `Button` for the delete action. A `Tooltip` is used to provide additional information for the delete button.
+The component renders a `Box` containing a `Link` and a `Button` within a `Tooltip`. The `Link` allows the user to navigate to the child node, and the `Button` provides the option to delete the child node. A `ConfirmDialog` is also included to confirm deletion actions.
 
-## ConfirmDialog
+## Usage
 
-A `ConfirmDialog` component is used to confirm the deletion action with the user before proceeding.
+The `ChildNode` component is used within a larger application that manages an ontology structure. It is likely part of a list or tree view where each node can have child nodes. The component allows users to interact with these child nodes by navigating to them or removing them from the ontology.
 
 ## Example
 
 ```jsx
 <ChildNode
-  subOntology={subOntologyData}
-  openOntology={openOntologyData}
-  sx={customStyles}
+  child={someChildNode}
+  currentVisibleNode={currentNode}
+  sx={{ margin: '10px' }}
   type="Specializations"
-  setOpenOntology={handleSetOpenOntology}
-  saveSubOntology={handleSaveSubOntology}
+  setCurrentVisibleNode={handleSetCurrentVisibleNode}
+  saveChildNode={handleSaveChildNode}
   setSnackbarMessage={handleSetSnackbarMessage}
-  category="CategoryName"
-  ontologyPath={ontologyPathData}
+  category="SomeCategory"
+  ontologyPath={currentPath}
   updateUserDoc={handleUpdateUserDoc}
   recordLogs={handleRecordLogs}
   updateInheritance={handleUpdateInheritance}
 />
 ```
 
-## Source Code
+In this example, `ChildNode` is used to display a child node with the given properties and functions to handle various interactions.
 
-The source code for the `SubOntology` component is located in the `SubOntology.tsx` file within the project repository.
+## Notes
 
----
-
-This documentation provides an overview of the `SubOntology` component's functionality and usage within the application. For more detailed information, refer to the source code and comments within the `SubOntology.tsx` file. */
-
-
-
-
+- The component assumes that the `NODES` collection and the necessary Firestore functions are correctly set up and available.
+- The `useConfirmDialog` hook is used to manage confirmation dialogs for deletion actions.
+- The component makes use of Material-UI components (`Box`, `Button`, `Link`, `Tooltip`) for styling and interaction.
+- Error handling is implemented in the `deleteSubOntologyEditable` function, but it is important to ensure that proper error handling is in place throughout the application.
+- The component does not directly mutate the state but uses provided functions to handle state changes, ensuring a unidirectional data flow.
+ */
 import { NODES } from " @components/lib/firestoreClient/collections";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
-import {
-  INode,
-  INodePath,
-  ISubOntology,
-} from " @components/types/INode";
+import { INode, INodePath, IChildNode } from " @components/types/INode";
 import { Box, Button, Link, Tooltip } from "@mui/material";
 import {
   collection,
@@ -93,12 +84,12 @@ import {
 } from "firebase/firestore";
 
 type ISubOntologyProps = {
-  subOntology: ISubOntology;
-  openOntology: INode;
+  child: IChildNode;
+  currentVisibleNode: INode;
   sx: { [key: string]: any };
   type: string;
-  setOpenOntology: (openOntology: any) => void;
-  saveSubOntology: any;
+  setCurrentVisibleNode: (currentVisibleNode: any) => void;
+  saveChildNode: any;
   setSnackbarMessage: (message: any) => void;
   category: string;
   ontologyPath: INodePath[];
@@ -107,17 +98,17 @@ type ISubOntologyProps = {
   updateInheritance: (parameters: {
     updatedNode: INode;
     updatedField: string;
-    type: "subOntologies" | "plainText";
+    type: "children" | "plainText";
     newValue: any;
     ancestorTitle: string;
   }) => void;
 };
 
 const ChildNode = ({
-  subOntology,
+  child,
   sx,
   type,
-  openOntology,
+  currentVisibleNode,
   category,
   ontologyPath,
   updateUserDoc,
@@ -128,28 +119,19 @@ const ChildNode = ({
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
 
   const linkNavigation = async () => {
-    updateUserDoc([
-      ...ontologyPath.map((p: { id: string }) => p.id),
-      subOntology.id,
-    ]);
-    // handleLinkNavigation({ id: subOntology.id, title: subOntology.title });
+    updateUserDoc([...ontologyPath.map((p: { id: string }) => p.id), child.id]);
+    // handleLinkNavigation({ id: child.id, title: child.title });
   };
 
-  const removeSubOntology = ({ ontologyData, id }: any) => {
-    for (let type in ontologyData.subOntologies) {
-      for (let category in ontologyData.subOntologies[type] || {}) {
-        if (
-          (ontologyData.subOntologies[type][category].ontologies || []).length >
-          0
-        ) {
-          const subOntologyIdx = ontologyData.subOntologies[type][
-            category
-          ].ontologies.findIndex((sub: any) => sub.id === id);
+  const removeChildNode = (nodeData: INode) => {
+    for (let type in nodeData.children) {
+      for (let category in nodeData.children[type] || {}) {
+        if ((nodeData.children[type][category] || []).length > 0) {
+          const subOntologyIdx = nodeData.children[type][category].findIndex(
+            (sub: any) => sub.id === nodeData.id
+          );
           if (subOntologyIdx !== -1) {
-            ontologyData.subOntologies[type][category].ontologies.splice(
-              subOntologyIdx,
-              1
-            );
+            nodeData.children[type][category].splice(subOntologyIdx, 1);
           }
         }
       }
@@ -160,70 +142,64 @@ const ChildNode = ({
       if (
         await confirmIt("Are you sure you want to delete?", "Delete", "Keep")
       ) {
-        const ontologyDoc = await getDoc(
-          doc(collection(db, NODES), openOntology.id)
+        const nodeDoc = await getDoc(
+          doc(collection(db, NODES), currentVisibleNode.id)
         );
-        if (ontologyDoc.exists()) {
-          const ontologyData: any = ontologyDoc.data();
+        if (nodeDoc.exists()) {
+          const nodeData: any = nodeDoc.data();
           const subOntologyIdx = (
-            ontologyData?.subOntologies[type][category]?.ontologies || []
-          ).findIndex((sub: any) => sub.id === subOntology.id);
+            nodeData?.children[type][category] || []
+          ).findIndex((sub: any) => sub.id === child.id);
           if (subOntologyIdx !== -1) {
-            ontologyData.subOntologies[type][category].ontologies.splice(
-              subOntologyIdx,
-              1
-            );
+            nodeData.children[type][category].splice(subOntologyIdx, 1);
           }
-          const subOntologyDoc = await getDoc(
-            doc(collection(db, NODES), subOntology.id)
-          );
+          const childDoc = await getDoc(doc(collection(db, NODES), child.id));
 
-          if (subOntologyDoc.exists()) {
-            const subOntologyData = subOntologyDoc.data();
-            const parents = subOntologyData?.parents || [];
+          if (childDoc.exists()) {
+            const childData = childDoc.data();
+            const parents = childData?.parents || [];
             if (type === "Specializations") {
               for (let parent of parents) {
-                const ontologyDoc = await getDoc(
+                const parentNodeDoc = await getDoc(
                   doc(collection(db, NODES), parent)
                 );
-                if (ontologyDoc.exists()) {
-                  const ontologyData = ontologyDoc.data();
-                  removeSubOntology({
-                    ontologyData,
-                    id: subOntology.id,
-                    subtype: type,
-                  });
-                  await updateDoc(ontologyDoc.ref, ontologyData);
+                if (parentNodeDoc.exists()) {
+                  const parentNodeData = {
+                    id: parentNodeDoc.id,
+                    ...parentNodeDoc.data(),
+                  } as INode;
+                  removeChildNode(parentNodeData);
+                  await updateDoc(parentNodeDoc.ref, parentNodeData);
                 }
               }
             }
 
             if (type === "Specializations") {
-              await updateDoc(subOntologyDoc.ref, { deleted: true });
+              await updateDoc(childDoc.ref, { deleted: true });
             }
             if (type !== "Specializations") {
               updateInheritance({
-                updatedNode: { ...ontologyData, id: ontologyDoc.id },
+                updatedNode: { ...nodeData, id: nodeDoc.id },
                 updatedField: type,
-                type: "subOntologies",
-                newValue: ontologyData.subOntologies[type],
-                ancestorTitle: ontologyData.title,
+                type: "children",
+                newValue: nodeData.children[type],
+                ancestorTitle: nodeData.title,
               });
             }
-            await recordLogs({
+            recordLogs({
               action: "Deleted a field",
-              field: subOntologyData.title,
-              ontology: ontologyDoc.id,
+              field: childData.title,
+              node: nodeDoc.id,
             });
           }
 
-          await updateDoc(ontologyDoc.ref, ontologyData);
+          await updateDoc(nodeDoc.ref, nodeData);
         }
-        // setOpenOntology((openOntology: any) => {
-        //   const _openOntology: any = { ...openOntology };
-        //   const subOntologyIdx = _openOntology.subOntologies[type].findIndex((sub: any) => sub.id === subOntology.id);
+        // setCurrentVisibleNode((currentVisibleNode: any) => {
+        //   const _openOntology: any = { ...currentVisibleNode };
+        //   const subOntologyIdx = _openOntology.children[type].findIndex((sub: any) => sub.id === child.id);
         //   if (subOntologyIdx !== -1) {
-        //     _openOntology.subOntologies[type].splice(subOntologyIdx, 1);
+        //     _openOntology.children[type].splice(subOntologyIdx, 1);
         //   }
         //   return _openOntology;
         // });
@@ -234,9 +210,9 @@ const ChildNode = ({
   };
 
   return (
-    <Box key={subOntology.id} sx={{ ...sx }}>
+    <Box key={child.id} sx={{ ...sx }}>
       <Box
-        key={subOntology.id}
+        key={child.id}
         style={{ display: "flex", alignItems: "center", marginBottom: "15px" }}
       >
         <Link
@@ -251,7 +227,7 @@ const ChildNode = ({
           }}
         >
           {" "}
-          {subOntology.title}
+          {child.title}
         </Link>
         <Tooltip title={"Delete"}>
           <Button onClick={deleteSubOntologyEditable} sx={{ ml: "5px" }}>

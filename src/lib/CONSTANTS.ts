@@ -14,7 +14,7 @@ import {
 
 
 // Defining an object to hold initial values for various ontology types
-export const ONTOLOGY_TYPES: {
+export const NODES_TYPES: {
   [key: string]:
     | IActivity
     | IActor
@@ -34,13 +34,13 @@ export const ONTOLOGY_TYPES: {
       Preconditions: "",
       Postconditions: "",
     },
-    subOntologies: {
+    children: {
       Actor: {},
       Process: {},
       Specializations: {},
       "Evaluation Dimension": {},
     },
-    ontologyType: "Activity",
+    nodeType: "Activity",
   },
 
   // Definition for Actor ontology type
@@ -52,10 +52,10 @@ export const ONTOLOGY_TYPES: {
       notes: "",
       Abilities: "",
     },
-    subOntologies: {
+    children: {
       Specializations: {},
     },
-    ontologyType: "Actor",
+    nodeType: "Actor",
   },
 
   // Definition for Process ontology type
@@ -69,8 +69,8 @@ export const ONTOLOGY_TYPES: {
       Dependencies: "",
       "Performance prediction models": "",
     },
-    subOntologies: { Role: {}, Specializations: {} },
-    ontologyType: "Process",
+    children: { Role: {}, Specializations: {} },
+    nodeType: "Process",
   },
 
   // Definition for Evaluation Dimension ontology type
@@ -84,43 +84,43 @@ export const ONTOLOGY_TYPES: {
       "Direction of desirability": "",
       "Criteria for acceptability": "",
     },
-    subOntologies: {
+    children: {
       Specializations: {},
     },
-    ontologyType: "Evaluation Dimension",
+    nodeType: "Evaluation Dimension",
   },
 
   // Definition for Role ontology type
   Role: {
     title: "",
     description: "",
-    subOntologies: { Actor: {}, Specializations: {}, Incentive: {} },
+    children: { Actor: {}, Specializations: {}, Incentive: {} },
     plainText: {
       "Role type": "",
       Units: "",
       "Capabilities required": "",
       notes: "",
     },
-    ontologyType: "Role",
+    nodeType: "Role",
   },
 
   // Definition for Reward ontology type
   Reward: {
     title: "",
     description: "",
-    subOntologies: { Specializations: {} },
+    children: { Specializations: {} },
     plainText: {
       Units: "",
       "Reward type": "",
     },
-    ontologyType: "Reward",
+    nodeType: "Reward",
   },
 
   // Definition for Incentive ontology type
   Incentive: {
     title: "",
     description: "",
-    subOntologies: {
+    children: {
       Specializations: {},
       "Evaluation Dimension": {},
       Reward: {},
@@ -130,7 +130,7 @@ export const ONTOLOGY_TYPES: {
       "Capabilities required": "",
       notes: "",
     },
-    ontologyType: "Incentive",
+    nodeType: "Incentive",
   },
 
   // Definition for Group ontology type
@@ -144,11 +144,11 @@ export const ONTOLOGY_TYPES: {
       "Number of individuals in group": "",
       notes: "",
     },
-    subOntologies: {
+    children: {
       Specializations: {},
       Individual: {},
     },
-    ontologyType: "Group",
+    nodeType: "Group",
   },
 };
 // TO-DO: Consider storing this data in the database to identify ontology types in the project

@@ -1,104 +1,75 @@
-/* # Text Component
-
-The `Text` component is a React component used for displaying and editing plain text fields within an ontology. It supports markdown rendering and integrates with Firebase Firestore for data persistence.
-
-## Features
-
-- Editable text fields with markdown support.
-- Firestore integration for data retrieval and updates.
-- Inheritance handling for ontology fields.
-- Locking mechanism to prevent concurrent edits.
-- Logging of edit actions for audit trails.
-- Deletion of sub-ontologies.
+/* 
+The `Text` component is a React component designed to handle the display and editing of text fields within a sub-ontology node in a Firebase Firestore database. It provides functionality for viewing text in markdown format, editing text fields, saving changes, and handling inheritance of text fields from parent nodes. Additionally, it includes features for locking fields to prevent concurrent edits and logging changes for audit purposes.
 
 ## Props
 
 The component accepts the following props:
 
+- `currentVisibleNode`: An object representing the currently visible node in the ontology.
+- `setCurrentVisibleNode`: A function to update the state of the current visible node.
+- `type`: A string indicating the type of text field (e.g., 'title', 'description').
+- `setSnackbarMessage`: A function to display a message in a snackbar/notification.
 - `text`: The text content to be displayed or edited.
-- `type`: The type of the text field (e.g., 'title', 'description').
-- `openOntology`: The current ontology object being viewed or edited.
-- `setOpenOntology`: Function to update the state of the current ontology.
-- `editOntology`: The ID of the ontology being edited, if any.
-- `setEditOntology`: Function to set the ID of the ontology being edited.
-- `lockedOntology`: An object containing information about locked ontologies to prevent concurrent edits.
-- `addLock`: Function to add or remove a lock on an ontology field.
-- `user`: The current user object.
-- `recordLogs`: Function to record logs for edit actions.
-- `deleteSubOntologyEditable`: Function to delete a sub-ontology.
-- `updateInheritance`: Function to update the inheritance of ontology fields.
+- `editNode`: An optional string representing the ID of the node being edited.
+- `setEditOntology`: A function to update the state of the ontology being edited.
+- `lockedNodeFields`: An object containing information about which fields are locked and by whom.
+- `addLock`: A function to add or remove a lock on a node field.
+- `user`: An object representing the current user.
+- `recordLogs`: A function to record actions taken by the user for logging purposes.
+- `deleteNode`: An optional function to delete the current sub-ontology.
+- `updateInheritance`: A function to update the inheritance of text fields for child nodes.
+
+## State
+
+The component maintains the following state:
+
+- `editMode`: A boolean indicating whether the component is in edit mode.
+- `copyValue`: A string holding the current value of the text field being edited.
+
+## Functions
+
+### `capitalizeFirstLetter(word: string)`
+
+Capitalizes the first letter of the given word.
+
+### `editTitleChildNode({ parentData, newTitle, id })`
+
+Updates the title of a child node within the parent node's data.
+
+### `onSaveTextChange()`
+
+Handles the saving of text changes to the Firestore database and toggles the edit mode.
+
+### `handleEditText(e)`
+
+Updates the `copyValue` state with the value from the text field.
+
+### `handleFocus(event)`
+
+Selects the text in the target element if the type is 'title' and the current node matches the node being edited.
+
+### `handleDeleteOntology()`
+
+Calls the `deleteNode` function to delete the current sub-ontology.
+
+### `onCancelTextChange()`
+
+Cancels the text change, reverts the `copyValue` to the original text, and removes the lock.
+
+## Rendering
+
+The component renders the following:
+
+- A `Typography` component displaying the field type (if not 'title').
+- A `LockIcon` if the field is locked by another user.
+- Edit and Cancel buttons to toggle edit mode and save or cancel changes.
+- A `TextField` for editing the text when in edit mode.
+- A `MarkdownRender` component to display the text in markdown format when not in edit mode.
+- A Delete button to delete the ontology if the type is 'title' and the node is not locked.
 
 ## Usage
 
-To use the `Text` component, import it into your React application and provide the necessary props as shown in the example below:
-
-```jsx
-import Text from './Text';
-
-// ... within your component's render method or function component body
-<Text
-  text={yourTextContent}
-  type="description"
-  openOntology={yourCurrentOntology}
-  setOpenOntology={yourSetOpenOntologyFunction}
-  editOntology={yourEditOntologyId}
-  setEditOntology={yourSetEditOntologyFunction}
-  lockedOntology={yourLockedOntologyObject}
-  addLock={yourAddLockFunction}
-  user={yourCurrentUser}
-  recordLogs={yourRecordLogsFunction}
-  deleteSubOntologyEditable={yourDeleteSubOntologyEditableFunction}
-  updateInheritance={yourUpdateInheritanceFunction}
-/>
-```
-
-## Component Structure
-
-The component consists of the following main parts:
-
-- A `TextField` component for editing the text, which appears when the `editMode` state is `true`.
-- A `MarkdownRender` component for displaying the text content with markdown formatting.
-- Buttons for toggling `editMode`, saving changes, and deleting the ontology.
-- Lock icons and tooltips to indicate when a field is locked for editing.
-
-## Editing Flow
-
-1. The user clicks the "Edit" button, which sets `editMode` to `true`.
-2. The `TextField` component becomes editable, allowing the user to make changes.
-3. The user clicks the "Save" button, which triggers the `onSaveTextChange` function.
-4. The function updates the Firestore document with the new text and toggles `editMode` to `false`.
-5. If the text field has inheritance, the `updateInheritance` function is called to propagate changes to child ontologies.
-
-## Locking Mechanism
-
-The component uses a locking mechanism to prevent concurrent edits. When a user starts editing a field, a lock is added to the `lockedOntology` object. Other users will see a lock icon indicating that the field is currently being edited. Once the user saves or cancels the edit, the lock is removed.
-
-## Logging
-
-The `recordLogs` function is called whenever a user saves changes to a field. It records the action, field type, previous value, and new value for audit purposes.
-
-## Deletion
-
-The `handleDeleteOntology` function is called when the user clicks the "Delete" button. It triggers the `deleteSubOntologyEditable` function to remove the sub-ontology from the database.
-
-## Styling
-
-The component uses Material-UI components and styles for a consistent look and feel. Custom styles are applied using the `sx` prop.
-
-## Dependencies
-
-- `@mui/icons-material`
-- `@mui/material`
-- `firebase/firestore`
-- `react`
-- `MarkdownRender` (a custom component for rendering markdown)
-
-## Importing Types
-
-The component imports the `INode` and `ILockedOntology` types from `@components/types/INode` for TypeScript type checking.
-
----
- */
+The `Text` component is used within a larger application to manage ontologies in a Firestore database. It provides a user-friendly interface for viewing and editing text fields, handling field locking to prevent concurrent edits, and maintaining a log of changes for auditing purposes. */
 
 import LockIcon from "@mui/icons-material/Lock";
 import { Box, Button, TextField, Tooltip, Typography } from "@mui/material";
@@ -118,31 +89,31 @@ import { NODES } from " @components/lib/firestoreClient/collections";
 import { INode } from " @components/types/INode";
 
 type ISubOntologyProps = {
-  openOntology: INode;
-  setOpenOntology: (state: any) => void;
+  currentVisibleNode: INode;
+  setCurrentVisibleNode: (state: any) => void;
   type: string;
   setSnackbarMessage: (message: any) => void;
   text: string;
-  editOntology?: string | null;
+  editNode?: string | null;
   setEditOntology: (state: string) => void;
-  lockedOntology: {
+  lockedNodeFields: {
     [field: string]: {
       id: string;
       uname: string;
-      ontology: string;
+      node: string;
       field: string;
       deleted: boolean;
       createdAt: Timestamp;
     };
   };
-  addLock: (ontology: string, field: string, type: string) => void;
+  addLock: (node: string, field: string, type: string) => void;
   user: any;
   recordLogs: (logs: any) => void;
-  deleteSubOntologyEditable?: () => void;
+  deleteNode?: () => void;
   updateInheritance: (parameters: {
     updatedNode: INode;
     updatedField: string;
-    type: "subOntologies" | "plainText";
+    type: "children" | "plainText";
     newValue: any;
     ancestorTitle: string;
   }) => void;
@@ -150,22 +121,27 @@ type ISubOntologyProps = {
 const Text = ({
   text,
   type,
-  openOntology,
-  setOpenOntology,
-  editOntology = null,
+  currentVisibleNode,
+  setCurrentVisibleNode,
+  editNode = null,
   setEditOntology,
-  lockedOntology,
+  lockedNodeFields,
   addLock,
   user,
   recordLogs,
-  deleteSubOntologyEditable = () => {},
+  deleteNode = () => {},
   updateInheritance,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const [editMode, setEditMode] = useState(false);
-  const [copyValue, setCopyValue] = useState(openOntology.plainText[type]);
+  const [copyValue, setCopyValue] = useState(
+    currentVisibleNode.plainText[type]
+  );
   const textFieldRef = useRef<any>(null);
 
+  useEffect(() => {
+    setCopyValue(currentVisibleNode.plainText[type]);
+  }, [currentVisibleNode]);
   const capitalizeFirstLetter = (word: string) => {
     return word.charAt(0).toUpperCase() + word.slice(1);
   };
@@ -175,24 +151,21 @@ const Text = ({
 
   const editTitleChildNode = ({ parentData, newTitle, id }: any) => {
     // Iterate over the types of sub-ontologies in the parentData.
-    for (let type in parentData.subOntologies) {
+    for (let type in parentData.children) {
       // Iterate over the categories within each type of sub-ontology.
-      for (let category in parentData.subOntologies[type] || {}) {
+      for (let category in parentData.children[type] || {}) {
         // Check if the current category has ontologies defined.
-        if (
-          (parentData.subOntologies[type][category].ontologies || []).length > 0
-        ) {
+        if ((parentData.children[type][category] || []).length > 0) {
           // Find the index of the sub-ontology with the given id within the current category.
-          const subOntologyIdx = parentData.subOntologies[type][
-            category
-          ].ontologies.findIndex((sub: any) => sub.id === id);
+          const subOntologyIdx = parentData.children[type][category].findIndex(
+            (sub: any) => sub.id === id
+          );
 
           // If the sub-ontology with the specified id is found in the current category.
           if (subOntologyIdx !== -1) {
             // Update the title of the sub-ontology with the new title.
-            parentData.subOntologies[type][category].ontologies[
-              subOntologyIdx
-            ].title = newTitle;
+            parentData.children[type][category][subOntologyIdx].title =
+              newTitle;
           }
         }
       }
@@ -200,10 +173,10 @@ const Text = ({
   };
 
   useEffect(() => {
-    if (type === "title" && editOntology) {
-      setEditMode(editOntology === openOntology.id);
+    if (type === "title" && editNode) {
+      setEditMode(editNode === currentVisibleNode.id);
     }
-  }, [editOntology, openOntology]);
+  }, [editNode, currentVisibleNode]);
 
   const onSaveTextChange = async () => {
     // Toggle the edit mode
@@ -212,7 +185,9 @@ const Text = ({
     // Check if the edit mode is true
     if (editMode) {
       // Fetch the ontology document from the database
-      const nodeDoc = await getDoc(doc(collection(db, NODES), openOntology.id));
+      const nodeDoc = await getDoc(
+        doc(collection(db, NODES), currentVisibleNode.id)
+      );
 
       // Check if the ontology document exists
       if (nodeDoc.exists()) {
@@ -221,11 +196,11 @@ const Text = ({
 
         // If the field being edited is the "title"
         if (type === "title") {
-          // Reset the editOntology state
+          // Reset the editNode state
           setEditOntology("");
 
           // Update titles of sub-ontologies for each parent ontology
-          for (let parentId of openOntology?.parents || []) {
+          for (let parentId of currentVisibleNode?.parents || []) {
             const parentRef = doc(collection(db, NODES), parentId);
             const parentDoc = await getDoc(parentRef);
             const parentData: any = parentDoc.data();
@@ -233,8 +208,8 @@ const Text = ({
             // Call a function to edit the title of sub-ontology
             editTitleChildNode({
               parentData,
-              newTitle: openOntology.title,
-              id: openOntology.id,
+              newTitle: currentVisibleNode.title,
+              id: currentVisibleNode.id,
             });
 
             // Update the parent ontology in the database
@@ -247,8 +222,8 @@ const Text = ({
 
         // If the field being edited is not "description" or "title"
         previousValue = nodeData.plainText[type];
-        newValue = openOntology.plainText[type];
-        nodeData.plainText[type] = openOntology.plainText[type] || "";
+        newValue = currentVisibleNode.plainText[type];
+        nodeData.plainText[type] = currentVisibleNode.plainText[type] || "";
 
         // If the field is not "title" and the ontology has inheritance
         if (type !== "title" && nodeData.inheritance) {
@@ -267,12 +242,12 @@ const Text = ({
           updatedField: type,
           type: "plainText",
           newValue: newValue,
-          updatedNode: { ...nodeData, id: openOntology.id },
+          updatedNode: { ...nodeData, id: currentVisibleNode.id },
           ancestorTitle: nodeData.title,
         });
 
         // Add a lock for the edited ontology
-        addLock(openOntology.id, type, "remove");
+        addLock(currentVisibleNode.id, type, "remove");
 
         // Record the edit action in the logs
         recordLogs({
@@ -284,20 +259,20 @@ const Text = ({
       }
     } else {
       // If edit mode is false, add a lock for the ontology
-      addLock(openOntology.id, type, "add");
+      addLock(currentVisibleNode.id, type, "add");
     }
   };
 
   // Define a function to handle text edits, taking an event as a parameter (assumed to be a React event)
   const handleEditText = (e: any) => {
-    // Update the state using the setOpenOntology function, which receives the current state
+    // Update the state using the setCurrentVisibleNode function, which receives the current state
     setCopyValue(e.target.value);
   };
 
   // Function to handle focus events
   const handleFocus = (event: any) => {
     // Check if the type is "title" and the current ontology being edited matches the open ontology
-    if (type === "title" && editOntology === openOntology.id) {
+    if (type === "title" && editNode === currentVisibleNode.id) {
       // If conditions are met, select the text in the target element
       event.target.select();
     }
@@ -306,12 +281,12 @@ const Text = ({
   // Function to handle the deletion of an ontology
   const handleDeleteOntology = () => {
     // Call the function to delete the editable sub-ontology
-    deleteSubOntologyEditable();
+    deleteNode();
   };
   const onCancelTextChange = () => {
-    setCopyValue(openOntology.plainText[type]);
+    setCopyValue(currentVisibleNode.plainText[type]);
     setEditMode((edit) => !edit);
-    addLock(openOntology.id, type, "remove");
+    addLock(currentVisibleNode.id, type, "remove");
   };
   return (
     <Box>
@@ -320,7 +295,8 @@ const Text = ({
           <Typography sx={{ fontSize: "19px" }}>
             {capitalizeFirstLetter(type)}:
           </Typography>
-          {lockedOntology[type] && user.uname !== lockedOntology[type].uname ? (
+          {lockedNodeFields[type] &&
+          user.uname !== lockedNodeFields[type].uname ? (
             <Tooltip title={"Locked"} sx={{ ml: "5px" }}>
               <LockIcon />
             </Tooltip>
@@ -340,13 +316,13 @@ const Text = ({
               )}
             </Box>
           )}
-          {(openOntology.inheritance || {}).plainText &&
-            (openOntology.inheritance || {}).plainText[type]?.ref && (
+          {(currentVisibleNode.inheritance || {}).plainText &&
+            (currentVisibleNode.inheritance || {}).plainText[type]?.ref && (
               <Typography sx={{ color: "grey" }}>
                 {"("}
                 {"Inherited from "}
                 {'"'}
-                {(openOntology.inheritance || {}).plainText[type]?.title}
+                {(currentVisibleNode.inheritance || {}).plainText[type]?.title}
                 {'"'}
                 {")"}
               </Typography>
@@ -417,10 +393,10 @@ const Text = ({
             text={text}
             sx={{ fontSize: type === "title" ? "30px" : "" }}
           />
-          {type === "title" && !openOntology.locked && (
+          {type === "title" && !currentVisibleNode.locked && (
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              {lockedOntology[type] &&
-              user.uname !== lockedOntology[type].uname ? (
+              {lockedNodeFields[type] &&
+              user.uname !== lockedNodeFields[type].uname ? (
                 <Tooltip title={"Locked"} sx={{ ml: "5px" }}>
                   <LockIcon />
                 </Tooltip>
