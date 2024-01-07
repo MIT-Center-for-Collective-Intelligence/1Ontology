@@ -35,7 +35,14 @@ import AppHeader from 'path/to/AppHeader';
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import LogoutIcon from "@mui/icons-material/Logout";
-import { Avatar, Button, Typography, useTheme } from "@mui/material";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import {
+  Avatar,
+  Button,
+  CircularProgress,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
@@ -45,17 +52,27 @@ import { Stack } from "@mui/system";
 import { getAuth } from "firebase/auth";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import React, { forwardRef, useCallback, useState } from "react";
+import React, { forwardRef, useCallback, useRef, useState } from "react";
 import mitLogo from "../../../public/CCI-logo.gif";
 import mitLogoDark from "../../../public/MIT-Logo-Dark.png";
-import { capitalizeString } from "../../lib/utils/string.utils";
+import {
+  addSuffixToUrlGMT,
+  capitalizeString,
+} from "../../lib/utils/string.utils";
 import useThemeChange from " @components/lib/hooks/useThemeChange";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import ROUTES from " @components/lib/utils/routes";
 import { useAuth } from "../context/AuthContext";
 import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
 import { USERS } from " @components/lib/firestoreClient/collections";
-
+import {
+  getDownloadURL,
+  getStorage,
+  ref as refStorage,
+  uploadBytesResumable,
+} from "firebase/storage";
+import { isValidHttpUrl } from " @components/lib/utils/utils";
+import PercentageLoader from "./PercentageLoader";
 export const HEADER_HEIGHT = 80;
 export const HEADER_HEIGHT_MOBILE = 72;
 
@@ -68,10 +85,16 @@ type AppHeaderProps = {
   setRightPanelVisible: any;
   rightPanelVisible: boolean;
   loading: boolean;
+  confirmIt: any;
 };
 const AppHeader = forwardRef(
   (
-    { setRightPanelVisible, rightPanelVisible, loading }: AppHeaderProps,
+    {
+      setRightPanelVisible,
+      rightPanelVisible,
+      loading,
+      confirmIt,
+    }: AppHeaderProps,
     ref
   ) => {
     const [{ isAuthenticated, user }] = useAuth();
@@ -79,6 +102,8 @@ const AppHeader = forwardRef(
     const theme = useTheme();
     const router = useRouter();
     const [profileMenuOpen, setProfileMenuOpen] = useState(null);
+    const [percentageUploaded, setPercentageUploaded] = useState(0);
+    const [isUploading, setIsUploading] = useState(false);
     const isProfileMenuOpen = Boolean(profileMenuOpen);
     const db = getFirestore();
     const signOut = async () => {
@@ -89,10 +114,113 @@ const AppHeader = forwardRef(
     const handleProfileMenuOpen = (event: any) => {
       setProfileMenuOpen(event.currentTarget);
     };
+    const inputEl = useRef<HTMLInputElement>(null);
 
     const handleProfileMenuClose = () => {
       setProfileMenuOpen(null);
     };
+
+    const updateUserImage = async (imageUrl: string) => {
+      const userDoc = doc(collection(db, USERS), user?.uname);
+      await updateDoc(userDoc, { imageUrl });
+    };
+
+    const handleImageChange = useCallback(
+      async (event: any) => {
+        try {
+          event.preventDefault();
+          const storage = getStorage();
+          const auth = getAuth();
+          const userId = user?.userId;
+          console.log({ user });
+          const userAuthObj = auth.currentUser;
+          if (!userAuthObj) return;
+
+          const image = event.target.files[0];
+          if (!image || !image?.type) {
+            confirmIt(
+              "Oops! Something went wrong with the image upload. Please try uploading a different image.",
+              "Ok",
+              ""
+            );
+          } else if (
+            image.type !== "image/jpg" &&
+            image.type !== "image/jpeg" &&
+            image.type !== "image/png"
+          ) {
+            confirmIt(
+              "We only accept JPG, JPEG, or PNG images. Please upload another image.",
+              "Ok",
+              ""
+            );
+          } else if (image.size > 1024 * 1024) {
+            confirmIt(
+              "We only accept file sizes less than 1MB for profile images. Please upload another image.",
+              "Ok",
+              ""
+            );
+          } else {
+            setIsUploading(true);
+
+            let bucket = "ontology-41607.appspot.com";
+            if (isValidHttpUrl(bucket)) {
+              const { hostname } = new URL(bucket);
+              bucket = hostname;
+            }
+            const rootURL = "https://storage.googleapis.com/" + bucket + "/";
+            const picturesFolder = rootURL + "Resumes/";
+            const imageNameSplit = image.name.split(".");
+            const imageExtension = imageNameSplit[imageNameSplit.length - 1];
+            let imageFileName =
+              userId + "/" + new Date().toUTCString() + "." + imageExtension;
+            const storageRef = refStorage(
+              storage,
+              picturesFolder + imageFileName
+            );
+            const task = uploadBytesResumable(storageRef, image);
+            task.on(
+              "state_changed",
+              function progress(snapshot) {
+                setPercentageUploaded(
+                  Math.ceil(
+                    (100 * snapshot.bytesTransferred) / snapshot.totalBytes
+                  )
+                );
+              },
+              function error(err) {
+                setIsUploading(false);
+                confirmIt(
+                  "There is an error with uploading your picture. Please upload your profile picture again! If the problem persists, please try another picture.",
+                  "Ok",
+                  ""
+                );
+              },
+              async function complete() {
+                let imageGeneratedUrl = await getDownloadURL(storageRef);
+                imageGeneratedUrl = addSuffixToUrlGMT(
+                  imageGeneratedUrl,
+                  "_430x1300"
+                );
+                console.log(imageGeneratedUrl);
+                await updateUserImage(imageGeneratedUrl);
+                setIsUploading(false);
+                setPercentageUploaded(100);
+              }
+            );
+          }
+          setIsUploading(false);
+        } catch (err) {
+          console.error("Image Upload Error: ", err);
+          setIsUploading(false);
+        }
+      },
+      [user]
+    );
+    const handleEditImage = useCallback(() => {
+      if (!inputEl.current) return;
+      if (false) return;
+      inputEl.current.click();
+    }, [inputEl]);
 
     const renderProfileMenu = (
       <Menu
@@ -101,14 +229,36 @@ const AppHeader = forwardRef(
         open={isProfileMenuOpen}
         onClose={handleProfileMenuClose}
       >
+        {" "}
         {isAuthenticated && user && (
           <Typography sx={{ p: "6px 16px" }}>
             {capitalizeString(user.fName ?? "")}
           </Typography>
         )}
         {isAuthenticated && user && (
+          <MenuItem sx={{ flexGrow: 3 }} onClick={handleEditImage}>
+            {isUploading ? (
+              <Box sx={{ mr: "15px" }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <CameraAltIcon sx={{ mr: "5px" }} />
+            )}
+
+            <span id="picture"> Change Photo</span>
+            <input
+              type="file"
+              ref={inputEl}
+              onChange={handleImageChange}
+              accept="image/png, image/jpg, image/jpeg"
+              hidden
+            />
+          </MenuItem>
+        )}
+        {isAuthenticated && user && (
           <MenuItem sx={{ flexGrow: 3 }} onClick={signOut}>
-            <LogoutIcon /> <span id="LogoutText">Logout</span>
+            <LogoutIcon sx={{ mr: "5px" }} />{" "}
+            <span id="LogoutText">Logout</span>
           </MenuItem>
         )}
       </Menu>
@@ -123,7 +273,7 @@ const AppHeader = forwardRef(
         return !prev;
       });
     }, [rightPanelVisible]);
-
+    console.log({ percentageUploaded });
     return (
       <>
         <Box
@@ -166,7 +316,6 @@ const AppHeader = forwardRef(
                   height: "auto",
                   borderRadius: 0,
                 }}
-                onClick={() => {}}
               />
             </Stack>
             {!loading && (

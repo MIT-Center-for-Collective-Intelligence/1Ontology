@@ -12,7 +12,7 @@ export const containsHTMLTags = (inputString: string) => {
 export const ToUpperCaseEveryWord = (text: string) => {
   return text
     .split(" ")
-    .map(cur => cur.charAt(0).toLocaleUpperCase() + cur.slice(1))
+    .map((cur) => cur.charAt(0).toLocaleUpperCase() + cur.slice(1))
     .join(" ");
 };
 
@@ -38,4 +38,18 @@ export const formatFirestoreTimestampWithMoment = (timestamp: any) => {
     // Format and return the timestamp for display (on a different day)
     return momentTimestamp.format("h:mm A MMM D, YYYY");
   }
+};
+export const isValidHttpUrl = (possibleUrl?: string) => {
+  let url;
+  if (!possibleUrl) {
+    return false;
+  }
+
+  try {
+    url = new URL(possibleUrl);
+  } catch (_) {
+    return false;
+  }
+
+  return url.protocol === "http:" || url.protocol === "https:";
 };

@@ -1546,6 +1546,7 @@ const Ontology = () => {
           setRightPanelVisible={setRightPanelVisible}
           rightPanelVisible={rightPanelVisible}
           loading={nodes.length === 0}
+          confirmIt={confirmIt}
         />
       </Box>
     </Box>
