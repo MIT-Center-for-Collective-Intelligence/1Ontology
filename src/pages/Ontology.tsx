@@ -257,12 +257,12 @@ const Ontology = () => {
   const recordLogs = async (logs: any) => {
     try {
       if (!user) return;
-      // const logRef = doc(collection(db, LOGS));
-      // await setDoc(logRef, {
-      //   ...logs,
-      //   createdAt: new Date(),
-      //   doer: user?.uname,
-      // });
+      const logRef = doc(collection(db, LOGS));
+      await setDoc(logRef, {
+        ...logs,
+        createdAt: new Date(),
+        doer: user?.uname,
+      });
     } catch (error) {
       console.error(error);
     }
