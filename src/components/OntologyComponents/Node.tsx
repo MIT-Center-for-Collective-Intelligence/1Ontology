@@ -165,7 +165,7 @@ import {
   MainSpecializations,
 } from " @components/types/IOntology";
 
-type IOntologyProps = {
+type INodeProps = {
   openOntology: IOntology;
   setOpenOntology: (ontology: IOntology) => void;
   handleLinkNavigation: (
@@ -269,7 +269,7 @@ const ORDER_SUBONTOLOGIES: { [key: string]: string[] } = {
   ],
 };
 
-const Ontology = ({
+const Node = ({
   openOntology,
   setOpenOntology,
   saveSubOntology,
@@ -286,7 +286,7 @@ const Ontology = ({
   user,
   recordLogs,
   updateInheritance,
-}: IOntologyProps) => {
+}: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
 
@@ -1551,4 +1551,4 @@ const Ontology = ({
   );
 };
 
-export default Ontology;
+export default Node;
