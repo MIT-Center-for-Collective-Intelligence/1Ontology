@@ -12,7 +12,6 @@ The component accepts the following props:
 - `sx`: An object containing style properties to be applied to the component.
 - `type`: A string representing the type of the child node (e.g., "Specializations").
 - `setCurrentVisibleNode`: A function to update the state of the currently visible node.
-- `saveChildNode`: A function to save the child node.
 - `setSnackbarMessage`: A function to display a message in a snackbar/notification.
 - `category`: A string representing the category of the child node.
 - `ontologyPath`: An array representing the path of nodes leading to the current node.
@@ -51,7 +50,6 @@ The `ChildNode` component is used within a larger application that manages an on
   sx={{ margin: '10px' }}
   type="Specializations"
   setCurrentVisibleNode={handleSetCurrentVisibleNode}
-  saveChildNode={handleSaveChildNode}
   setSnackbarMessage={handleSetSnackbarMessage}
   category="SomeCategory"
   ontologyPath={currentPath}
@@ -89,7 +87,6 @@ type ISubOntologyProps = {
   sx: { [key: string]: any };
   type: string;
   setCurrentVisibleNode: (currentVisibleNode: any) => void;
-  saveChildNode: any;
   setSnackbarMessage: (message: any) => void;
   category: string;
   ontologyPath: INodePath[];
@@ -137,10 +134,18 @@ const ChildNode = ({
       }
     }
   };
-  const deleteSubOntologyEditable = async () => {
+  const deleteChildNode = async () => {
     try {
+      const message =
+        type === "Specializations"
+          ? "delete this node"
+          : `remove this item from the list?`;
       if (
-        await confirmIt("Are you sure you want to delete?", "Delete", "Keep")
+        await confirmIt(
+          `Are you sure you want ${message}`,
+          `${type === "Specializations" ? "Delete" : "Remove"}`,
+          "Keep"
+        )
       ) {
         const nodeDoc = await getDoc(
           doc(collection(db, NODES), currentVisibleNode.id)
@@ -230,7 +235,7 @@ const ChildNode = ({
           {child.title}
         </Link>
         <Tooltip title={"Delete"}>
-          <Button onClick={deleteSubOntologyEditable} sx={{ ml: "5px" }}>
+          <Button onClick={deleteChildNode} sx={{ ml: "5px" }}>
             Delete
           </Button>
         </Tooltip>
