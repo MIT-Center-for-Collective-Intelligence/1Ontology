@@ -1,114 +1,78 @@
-/* # Ontology Component Documentation
+/* ## Overview
 
-The `Ontology` component is a complex React component that is part of a larger application, likely dealing with the management and visualization of ontologies in a hierarchical structure. This component interacts with a Firestore database to perform CRUD operations on ontology data and provides a user interface for these operations.
+The `Node` component is a complex React component that interacts with a Firestore database to manage a hierarchical structure of nodes. It allows users to view and edit nodes, add and remove specializations, clone nodes, and handle inheritance of properties between nodes. The component also supports drag-and-drop functionality for reordering nodes within the hierarchy.
 
-## Overview
+## Features
 
-The `Ontology` component allows users to:
-
-- View and edit the title and description of an ontology.
-- Manage sub-ontologies and their categories.
-- Clone existing ontologies.
-- Add new specializations to ontologies.
-- Select and save sub-ontologies.
-- Delete documents(nodes) and categories.
-- Lock and unlock ontology fields for editing.
-- Drag and drop sub-ontologies to reorganize them.
-
-## Dependencies
-
-The component imports several libraries and components:
-
-- Material-UI components for UI elements.
-- Firebase Firestore for database operations.
-- `react-beautiful-dnd` for drag-and-drop functionality.
-- Custom hooks and types from the project's internal structure.
+- **Viewing and Editing Nodes**: Display node information such as title and description, and allow users to edit these fields if they have the appropriate permissions.
+- **Specializations Management**: Add new specializations to nodes, select existing ones, and clone specializations for reuse.
+- **Inheritance Handling**: Manage inherited properties from parent nodes to ensure consistency across the hierarchy.
+- **Drag-and-Drop Sorting**: Reorder nodes within a category using a drag-and-drop interface.
+- **Category Management**: Add, edit, and delete categories within a node.
+- **Locking Mechanism**: Implement a locking system to prevent concurrent editing conflicts.
+- **Deletion of Nodes**: Safely remove nodes from the hierarchy with confirmation prompts.
+- **Logging**: Record user actions for auditing and tracking changes.
 
 ## Props
 
-The `Ontology` component accepts the following props:
+- `currentVisibleNode`: The node currently being viewed or edited.
+- `setCurrentVisibleNode`: Function to update the currently visible node.
+- `saveChildNode`: Function to save a child node.
+- `setSnackbarMessage`: Function to display a message to the user.
+- `updateUserDoc`: Function to update the user document with the current node path.
+- `mainSpecializations`: Object containing main specializations for the node.
+- `nodes`: Array of all nodes.
+- `addNewNode`: Function to add a new node to the database.
+- `ontologyPath`: Array representing the current path in the node hierarchy.
+- `editNode`: ID of the node being edited.
+- `setEditOntology`: Function to set the ID of the node being edited.
+- `lockedNodeFields`: Object containing information about which fields are locked for editing.
+- `recordLogs`: Function to record user actions.
+- `updateInheritance`: Function to update inheritance information for a node.
 
-- `openOntology`: The current ontology object being viewed or edited.
-- `setOpenOntology`: Function to update the current ontology.
-- `saveSubOntology`: Function to save a sub-ontology.
-- `setSnackbarMessage`: Function to display messages to the user.
-- `updateUserDoc`: Function to update the user document in the database.
-- `mainSpecializations`: Object containing main specializations data.
-- `ontologies`: Array of ontology objects.
-- `addNewNode`: Function to add a new ontology.
-- `ontologyPath`: Array representing the path of the current ontology in the hierarchy.
-- `editOntology`: String indicating the ontology being edited.
-- `setEditOntology`: Function to set the ontology being edited.
-- `lockedOntology`: Object containing information about locked ontologies.
-- `recordLogs`: Function to record logs of actions.
-- `updateInheritance`: Function to update inheritance data.
+## Internal State
 
-## Component Structure
-
-The component is structured into several parts:
-
-- Dialogs for adding categories and selecting sub-ontologies.
-- `Text` components for editing the title and description.
-- A list of sub-ontologies that can be managed through UI elements like buttons and checkboxes.
-- A `TreeView` component to visualize the ontology hierarchy.
-- Drag-and-drop context for reordering sub-ontologies.
+- `open`: Boolean state to control the visibility of the dialog for selecting specializations.
+- `openAddCategory`: Boolean state to control the visibility of the dialog for adding a new category.
+- `newCategory`: State to hold the name of the new category being added.
+- `type`: State to hold the type of node or category being managed.
+- `selectedCategory`: State to hold the currently selected category.
+- `checkedSpecializations`: State to hold the IDs of selected specializations.
+- `editCategory`: State to hold the category being edited.
 
 ## Functions
 
-The component includes several functions for handling various actions:
-
-- `cloneOntology`: Clones an existing ontology.
-- `getInheritance`: Retrieves inheritance data for an ontology.
-- `addNewSpecialisation`: Adds a new specialization to an ontology.
-- `showList`: Displays a list of sub-ontologies for selection.
-- `handleCloning`: Handles the cloning of an ontology.
-- `TreeViewSimplified`: Renders a simplified tree view of the ontology hierarchy.
-- `handleSave`: Saves changes made to the ontology.
-- `addCategory`: Adds a new category to the ontology.
-- `getCurrentSpecializations`: Retrieves the current specializations for the ontology.
-- `handleNewSpec`: Handles the addition of a new specialization.
+- `capitalizeFirstLetter`: Capitalizes the first letter of a word.
+- `checkSpecialization`: Toggles the selection of a specialization.
+- `cloneNode`: Clones a node and its properties.
+- `getInheritance`: Retrieves inheritance information for specified fields.
+- `addNewSpecialisation`: Adds a new specialization to a node.
+- `showList`: Displays a list of specializations or categories for selection.
+- `handleCloning`: Handles the cloning of a node.
+- `handleSave`: Saves changes made to specializations or categories.
+- `addCatgory`: Adds a new category to a node.
+- `getCurrentSpecializations`: Retrieves the current specializations for a node.
+- `handleNewSpecialization`: Handles the creation of a new specialization.
 - `handleEditCategory`: Handles the editing of a category.
-- `deleteCategory`: Deletes a category from the ontology.
-- `addLock`: Adds or removes a lock on an ontology field.
-- `handleSorting`: Handles the sorting of sub-ontologies.
-- `removeSubOntology`: Removes a sub-ontology from the ontology data.
-- `deleteSubOntologyEditable`: Deletes an editable sub-ontology.
+- `deleteCategory`: Deletes a category from a node.
+- `addLock`: Adds or removes a lock on a node field.
+- `handleSorting`: Handles the sorting of nodes within categories.
+- `removeSubOntology`: Removes a child node from a node.
+- `deleteNode`: Handles the deletion of a child node.
+- `TreeViewSimplifiedForSelecting`: Renders a simplified tree view for selecting specializations.
 
 ## Usage
 
-To use the `Ontology` component, it must be provided with the necessary props, including the current ontology data, functions for updating the state, and any additional configuration required for interacting with the Firestore database.
-
-## Example
-
-```jsx
-<Ontology
-  openOntology={currentOntology}
-  setOpenOntology={setCurrentOntology}
-  saveSubOntology={handleSaveSubOntology}
-  setSnackbarMessage={showSnackbarMessage}
-  updateUserDoc={updateUserDocument}
-  mainSpecializations={specializationsData}
-  ontologies={ontologyList}
-  addNewNode={handleaddNewNode}
-  ontologyPath={currentOntologyPath}
-  editOntology={ontologyBeingEdited}
-  setEditOntology={setOntologyBeingEdited}
-  lockedOntology={lockedOntologies}
-  recordLogs={logActions}
-  updateInheritance={handleUpdateInheritance}
-/>
-```
+The `Node` component is intended to be used within an application that requires a hierarchical structure of nodes, such as an ontology management system. It should be connected to a Firestore database and requires a set of functions and state management to interact with the database and handle user actions. 
 
 ## Notes
 
-- The component assumes a specific data structure for ontologies and their relationships.
-- The Firestore database structure and security rules should be configured to work with this component.
-- The component includes commented-out imports and state variables that may be part of the larger application context.
-- The `ORDER_SUBONTOLOGIES` object defines the order in which sub-ontologies should be displayed.
+- The component relies on several external hooks and components, such as `useConfirmDialog` and `ChildNode`, which are not included in the provided code snippet.
+- The `LOCKS` and `NODES` constants are assumed to be Firestore collection names.
+- The `DESIGN_SYSTEM_COLORS` constant is used for styling purposes and should be defined elsewhere in the application.
+- The component is designed to work with a specific data structure and may require adaptation for different use cases.
 
-## Conclusion
-
-The `Ontology` component is a key part of an application that manages ontological data. It provides a rich set of features for interacting with ontologies and their hierarchical structure, making it a powerful tool for users who need to manage complex data relationships. */
+This documentation provides a high-level overview of the `Node` component and its capabilities. For detailed implementation and integration, refer to the source code and the specific application context in which the component is used.*/
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -154,39 +118,35 @@ import {
   IEvaluation,
   IGroup,
   IIncentive,
-  ILockedOntology,
+  ILockedNode,
   INode,
   INodePath,
   IProcess,
   IReward,
   IRole,
-  ISubOntology,
+  IChildNode,
   MainSpecializations,
 } from " @components/types/INode";
 import { LOCKS, NODES } from " @components/lib/firestoreClient/collections";
 import ChildNode from "./ChildNode";
 
 type INodeProps = {
-  openOntology: INode;
-  setOpenOntology: (ontology: INode) => void;
+  currentVisibleNode: INode;
+  setCurrentVisibleNode: (node: INode) => void;
   handleLinkNavigation: (
     path: { id: string; title: string },
     type: string
   ) => void;
   setOntologyPath: (state: INodePath[]) => void;
   ontologyPath: INodePath[];
-  saveSubOntology: (
-    subOntology: ISubOntology,
-    type: string,
-    id: string
-  ) => void;
+  saveChildNode: (subOntology: IChildNode, type: string, id: string) => void;
   setSnackbarMessage: (message: string) => void;
   updateUserDoc: (ids: string[]) => void;
   user: any;
   mainSpecializations: MainSpecializations;
-  ontologies: INode[];
+  nodes: INode[];
   addNewNode: ({ id, newNode }: { id: string; newNode: any }) => void;
-  ONTOLOGY_TYPES: {
+  NODES_TYPES: {
     [key: string]:
       | IActivity
       | IActor
@@ -197,20 +157,20 @@ type INodeProps = {
       | IReward
       | IGroup;
   };
-  editOntology: string;
+  editNode: string;
   setEditOntology: (state: string) => void;
-  lockedOntology: ILockedOntology;
+  lockedNodeFields: ILockedNode;
   recordLogs: (logs: any) => void;
   updateInheritance: (parameters: {
     updatedNode: INode;
     updatedField: string;
-    type: "subOntologies" | "plainText";
+    type: "children" | "plainText";
     newValue: any;
     ancestorTitle: string;
   }) => void;
 };
 
-const ORDER_SUBONTOLOGIES: { [key: string]: string[] } = {
+const ORDER_CHILDREN: { [key: string]: string[] } = {
   Activity: [
     "Actor",
     "Preconditions",
@@ -265,19 +225,19 @@ const ORDER_SUBONTOLOGIES: { [key: string]: string[] } = {
 };
 
 const Node = ({
-  openOntology,
-  setOpenOntology,
-  saveSubOntology,
+  currentVisibleNode,
+  setCurrentVisibleNode,
+  saveChildNode,
   setSnackbarMessage,
   updateUserDoc,
   mainSpecializations,
-  ontologies,
+  nodes,
   addNewNode,
   // INITIAL_VALUES,
   ontologyPath,
-  editOntology,
+  editNode,
   setEditOntology,
-  lockedOntology,
+  lockedNodeFields,
   user,
   recordLogs,
   updateInheritance,
@@ -328,47 +288,45 @@ const Node = ({
     });
   };
 
-  // This asynchronous function clones an ontology identified by its ID.
-  const cloneNode = async (ontologyId: string) => {
+  const cloneNode = async (nodeId: string): Promise<string | undefined> => {
     try {
-      // Retrieve the document of the original ontology from Firestore.
-      const nodeDoc = await getDoc(doc(collection(db, NODES), ontologyId));
+      // Retrieve the document of the original node from Firestore.
+      const nodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
 
-      // If the ontology document doesn't exist, return early.
-      if (!nodeDoc.exists()) return;
+      // If the node document doesn't exist, return early.
+      if (!nodeDoc.exists()) return undefined;
 
-      // Extract data from the original ontology document.
+      // Extract data from the original node document.
       const nodeData = nodeDoc.data();
 
-      // Create a reference for the new ontology document in Firestore.
+      // Create a reference for the new node document in Firestore.
       const newNodeRef = doc(collection(db, NODES));
 
-      // Prepare the data for the new ontology by copying existing data.
+      // Prepare the data for the new node by copying existing data.
       const newNode: any = {
         ...nodeDoc.data(),
       };
 
-      // Set a new ID for the cloned ontology.
+      // Set a new ID for the cloned node.
       newNode.id = newNodeRef.id;
 
-      // Update the parents array to include the ID of the original ontology.
+      // Update the parents array to include the ID of the original node.
       newNode.parents = [nodeDoc.id];
 
-      // Modify the title to indicate that it is a new ontology.
+      // Modify the title to indicate that it is a new node.
       newNode.title = `New ${nodeData.title}`;
 
       // Initialize an empty Specializations object for sub-ontologies.
-      newNode.subOntologies.Specializations = {};
+      newNode.children.Specializations = {};
 
-      // Remove the 'locked' property from the new ontology.
+      // Remove the 'locked' property from the new node.
       delete newNode.locked;
 
-      // Update the original ontology to include the reference to the new ontology in its sub-ontologies.
-      nodeData.subOntologies.Specializations = {
+      // Update the original node to include the reference to the new node in its sub-ontologies.
+      nodeData.children.Specializations = {
         ["main"]: {
           ontologies: [
-            ...(nodeData.subOntologies?.Specializations["main"]?.ontologies ||
-              []),
+            ...(nodeData.children?.Specializations["main"] || []),
             {
               id: newNodeRef.id,
               title: `New ${nodeData.title}`,
@@ -377,13 +335,13 @@ const Node = ({
         },
       };
 
-      // Update the original ontology document in Firestore with the modified data.
+      // Update the original node document in Firestore with the modified data.
       await updateDoc(nodeDoc.ref, nodeData);
 
-      // Create a new document in Firestore for the cloned ontology with the modified data.
+      // Create a new document in Firestore for the cloned node with the modified data.
       await setDoc(newNodeRef, newNode);
 
-      // Return the ID of the newly created ontology.
+      // Return the ID of the newly created node.
       return newNodeRef.id;
     } catch (error) {
       // Log any errors that occur during the cloning process.
@@ -401,7 +359,7 @@ const Node = ({
    */
   const getInheritance = (
     fields: string[],
-    type: "plainText" | "subOntologies",
+    type: "plainText" | "children",
     parentNode: INode
   ): {
     [key: string]: {
@@ -441,39 +399,39 @@ const Node = ({
     return inheritance;
   };
 
-  // Function to add a new specialization to the ontology
+  // Function to add a new specialization to the node
   const addNewSpecialisation = async (type: string, category: string) => {
     try {
-      // Get a reference to the parent ontology document
-      const ontologyParentRef = doc(collection(db, NODES), openOntology.id);
+      // Get a reference to the parent node document
+      const nodeParentRef = doc(collection(db, NODES), currentVisibleNode.id);
 
-      // Retrieve the parent ontology document
-      const ontologyParentDoc = await getDoc(ontologyParentRef);
+      // Retrieve the parent node document
+      const nodeParentDoc = await getDoc(nodeParentRef);
 
-      // Extract data from the parent ontology document
+      // Extract data from the parent node document
       const parentNode: any = {
-        ...ontologyParentDoc.data(),
-        id: ontologyParentDoc.id,
+        ...nodeParentDoc.data(),
+        id: nodeParentDoc.id,
       };
 
-      // Check if the parent ontology document exists
-      if (!ontologyParentDoc.exists()) return;
+      // Check if the parent node document exists
+      if (!nodeParentDoc.exists()) return;
 
-      // Create a new ontology document reference
+      // Create a new node document reference
       const newNodeRef = doc(collection(db, NODES));
 
-      // Clone the parent ontology data
-      const newNode = { ...ontologyParentDoc.data() };
+      // Clone the parent node data
+      const newNode = { ...nodeParentDoc.data() };
 
-      // Initialize the Specializations sub-ontology
-      newNode.subOntologies.Specializations = {};
+      // Initialize the Specializations sub-node
+      newNode.children.Specializations = {};
 
-      // Remove unnecessary fields from the new ontology
+      // Remove unnecessary fields from the new node
       delete newNode.locked;
       delete newNode.cat;
 
-      // Set the parents and title for the new ontology
-      newNode.parents = [openOntology.id];
+      // Set the parents and title for the new node
+      newNode.parents = [currentVisibleNode.id];
       newNode.title = `New ${parentNode.title}`;
       newNode.id = newNodeRef.id;
 
@@ -490,7 +448,7 @@ const Node = ({
           title: parentNode.inheritance.plainText["description"]?.title,
         };
       }
-      // Build the inheritance object for the new ontology
+      // Build the inheritance object for the new node
       newNode.inheritance = {
         plainText: {
           ...getInheritance(
@@ -502,45 +460,43 @@ const Node = ({
             ...descriptionInheritance,
           },
         },
-        subOntologies: {
+        children: {
           ...getInheritance(
-            Object.keys(newNode.subOntologies),
-            "subOntologies",
+            Object.keys(newNode.children),
+            "children",
             parentNode
           ),
         },
       };
 
-      // Check if the specified type and category exist in the parent ontology
-      if (!parentNode.subOntologies[type].hasOwnProperty(category)) {
+      // Check if the specified type and category exist in the parent node
+      if (!parentNode.children[type].hasOwnProperty(category)) {
         // If not, create the specified type and category
-        parentNode.subOntologies[type] = {
-          ...parentNode.subOntologies[type],
-          [category]: {
-            ontologies: [],
-          },
+        parentNode.children[type] = {
+          ...parentNode.children[type],
+          [category]: [],
         };
       }
 
-      // Add the new ontology to the specified type and category
-      parentNode.subOntologies[type][category].ontologies.push({
+      // Add the new node to the specified type and category
+      parentNode.children[type][category].push({
         title: `New ${parentNode.title}`,
         id: newNodeRef.id,
       });
 
-      // Update the user document with the ontology path
+      // Update the user document with the path
       updateUserDoc([
         ...ontologyPath.map((path: any) => path.id),
         newNodeRef.id,
       ]);
 
-      // Add the new ontology to the database
+      // Add the new node to the database
       addNewNode({ id: newNodeRef.id, newNode });
-
-      // Update the parent ontology document in the database
-      await updateDoc(ontologyParentRef, parentNode);
+      // Update the parent node document in the database
+      await updateDoc(nodeParentRef, parentNode);
     } catch (error) {
       // Handle errors by logging to the console
+      confirmIt("Sorry there was an Error please try again!", "Ok", "");
       console.error(error);
     }
   };
@@ -551,7 +507,7 @@ const Node = ({
       setType(type);
       setSelectedCategory(category);
       const specializations = (
-        openOntology.subOntologies[type][category]?.ontologies || []
+        currentVisibleNode.children[type][category] || []
       ).map((onto: any) => onto.id);
       setCheckedSpecializations(specializations || []);
     } else {
@@ -559,13 +515,21 @@ const Node = ({
     }
   };
 
-  // This function handles the cloning of an ontology.
-  const handleCloning = async (ontology: any) => {
-    // Call the asynchronous function to clone the ontology with the given ID.
-    const newCloneId = await cloneNode(ontology.id);
-
-    // Update the user document by appending the new clone's ID to the ontology path.
-    updateUserDoc([...ontology.path, newCloneId]);
+  // This function handles the cloning of an node.
+  const handleCloning = async (node: {
+    id: string;
+    path: string[];
+    title: string;
+    specializations: MainSpecializations;
+  }) => {
+    // Call the asynchronous function to clone the node with the given ID.
+    const newCloneId: string | undefined = await cloneNode(node.id);
+    const newPath = [...node.path];
+    if (newCloneId) {
+      newPath.push(newCloneId);
+    }
+    // Update the user document by appending the new clone's ID to the node path.
+    updateUserDoc([...newPath]);
 
     // Close the modal or perform any necessary cleanup.
     handleClose();
@@ -573,37 +537,33 @@ const Node = ({
 
   const handleSave = async () => {
     try {
-      // Get the ontology document from the database
+      // Get the node document from the database
       const ontologyDoc = await getDoc(
-        doc(collection(db, NODES), openOntology.id)
+        doc(collection(db, NODES), currentVisibleNode.id)
       );
 
-      // If the ontology document does not exist, return early
+      // If the node document does not exist, return early
       if (!ontologyDoc.exists()) return;
 
-      // Extract existing ontology data from the document
+      // Extract existing node data from the document
       const ontologyData: any = ontologyDoc.data();
 
       // Initialize a new array for storing updated sub-ontologies
-      const newSubOntologies =
+      const newchildren =
         type === "Specializations"
-          ? [...ontologyData.subOntologies[type][selectedCategory].ontologies]
+          ? [...ontologyData.children[type][selectedCategory]]
           : [];
 
-      // Iterate through checkedSpecializations to update newSubOntologies
+      // Iterate through checkedSpecializations to update newchildren
       for (let checkd of checkedSpecializations) {
-        // Find the ontology object from the ontologies array
-        const findOntology = ontologies.find(
-          (ontology: any) => ontology.id === checkd
-        );
+        // Find the node object from the ontologies array
+        const findOntology = nodes.find((node: any) => node.id === checkd);
 
-        // Check if the ontology is not already present in newSubOntologies
-        const indexFound = newSubOntologies.findIndex(
-          (onto) => onto.id === checkd
-        );
+        // Check if the node is not already present in newchildren
+        const indexFound = newchildren.findIndex((onto) => onto.id === checkd);
         if (indexFound === -1 && findOntology) {
-          // Add the ontology to newSubOntologies if not present
-          newSubOntologies.push({
+          // Add the node to newchildren if not present
+          newchildren.push({
             id: checkd,
             title: findOntology.title,
           });
@@ -612,39 +572,39 @@ const Node = ({
 
       // If type is "Specializations", update main ontologies
       if (type === "Specializations") {
-        ontologyData.subOntologies[type]["main"].ontologies =
-          ontologyData.subOntologies[type]["main"].ontologies.filter(
-            (ontology: any) =>
-              newSubOntologies.findIndex((o) => o.id === ontology.id) === -1
-          );
+        ontologyData.children[type]["main"] = ontologyData.children[type][
+          "main"
+        ].filter(
+          (node: any) => newchildren.findIndex((o) => o.id === node.id) === -1
+        );
       }
 
-      // Update the ontology data with the new subOntologies
-      ontologyData.subOntologies[type] = {
-        ...(ontologyData.subOntologies[type] || {}),
+      // Update the node data with the new children
+      ontologyData.children[type] = {
+        ...(ontologyData.children[type] || {}),
         [selectedCategory]: {
-          ontologies: newSubOntologies,
+          ontologies: newchildren,
         },
       };
 
-      // If inheritance is present, reset the subOntologies field
+      // If inheritance is present, reset the children field
       if (ontologyData.inheritance) {
-        ontologyData.inheritance.subOntologies[type] = {
+        ontologyData.inheritance.children[type] = {
           ref: null,
           title: "",
         };
       }
 
-      // Update the ontology document in the database
+      // Update the node document in the database
       await updateDoc(ontologyDoc.ref, ontologyData);
 
       // If type is not "Specializations", update the inheritance
       if (type !== "Specializations") {
         updateInheritance({
-          updatedNode: { ...ontologyData, id: openOntology.id },
+          updatedNode: { ...ontologyData, id: currentVisibleNode.id },
           updatedField: type,
-          type: "subOntologies",
-          newValue: ontologyData.subOntologies[type],
+          type: "children",
+          newValue: ontologyData.children[type],
           ancestorTitle: ontologyData.title,
         });
       }
@@ -662,14 +622,14 @@ const Node = ({
       // Check if newCategory is provided
       if (!newCategory) return;
 
-      // Fetch the ontology document based on the openOntology.id
+      // Fetch the node document based on the currentVisibleNode.id
       const ontologyDoc = await getDoc(
-        doc(collection(db, NODES), openOntology.id)
+        doc(collection(db, NODES), currentVisibleNode.id)
       );
 
-      // Check if the ontology document exists
+      // Check if the node document exists
       if (ontologyDoc.exists()) {
-        // Retrieve ontology data from the document
+        // Retrieve node data from the document
         const ontologyData = ontologyDoc.data();
 
         // If editCategory is provided, update existing category
@@ -679,23 +639,21 @@ const Node = ({
             action: "Edited a category",
             previousValue: editCategory.category,
             newValue: newCategory,
-            ontology: ontologyDoc.id,
+            node: ontologyDoc.id,
             feild: editCategory.type,
           });
 
           // Update ontologyData for the edited category
-          ontologyData.subOntologies[editCategory.type][newCategory] =
-            ontologyData.subOntologies[editCategory.type][
-              editCategory.category
-            ];
-          delete ontologyData.subOntologies[editCategory.type][
+          ontologyData.children[editCategory.type][newCategory] =
+            ontologyData.children[editCategory.type][editCategory.category];
+          delete ontologyData.children[editCategory.type][
             editCategory.category
           ];
         } else {
           // If it's a new category, create it
-          if (!ontologyData?.subOntologies[type]?.hasOwnProperty(newCategory)) {
-            ontologyData.subOntologies[type] = {
-              ...(ontologyData?.subOntologies[type] || {}),
+          if (!ontologyData?.children[type]?.hasOwnProperty(newCategory)) {
+            ontologyData.children[type] = {
+              ...(ontologyData?.children[type] || {}),
               [newCategory]: {
                 ontologies: [],
               },
@@ -706,12 +664,12 @@ const Node = ({
           recordLogs({
             action: "Created a category",
             category: newCategory,
-            ontology: ontologyDoc.id,
+            node: ontologyDoc.id,
             feild: type,
           });
         }
 
-        // Update the ontology document with the modified data
+        // Update the node document with the modified data
         await updateDoc(ontologyDoc.ref, ontologyData);
 
         // Close the add category modal
@@ -727,14 +685,13 @@ const Node = ({
     // Create an empty object to store main specializations
     const _mainSpecializations: any = {};
 
-    // Filter ontologies based on a condition
-    const _specializations = ontologies.filter((onto: any) => {
-      // Find the index of ontology in the main specializations list
+    const _specializations = nodes.filter((onto: any) => {
+      // Find the index of node in the main specializations list
       const findIdx = (
-        openOntology?.subOntologies?.Specializations["main"]?.ontologies || []
+        currentVisibleNode?.children?.Specializations["main"] || []
       ).findIndex((o: any) => o.id === onto.id);
 
-      // Include ontology in the filtered list if found in the main specializations list
+      // Include node in the filtered list if found in the main specializations list
       return findIdx !== -1;
     });
 
@@ -778,58 +735,54 @@ const Node = ({
         "Keep Category"
       )
     ) {
-      const ontologyDoc = await getDoc(
-        doc(collection(db, NODES), openOntology.id)
+      const nodeDoc = await getDoc(
+        doc(collection(db, NODES), currentVisibleNode.id)
       );
-      if (ontologyDoc.exists()) {
-        const ontologyData = ontologyDoc.data();
-        ontologyData.subOntologies[type]["main"] = {
-          ontologies: [
-            ...(ontologyData.subOntologies[type]["main"]?.ontologies || []),
-            ...ontologyData.subOntologies[type][category].ontologies,
-          ],
-        };
-        delete ontologyData.subOntologies[type][category];
-        await updateDoc(ontologyDoc.ref, ontologyData);
-        await recordLogs({
+      if (nodeDoc.exists()) {
+        const nodeData = nodeDoc.data();
+        nodeData.children[type]["main"] = [
+          ...(nodeData.children[type]["main"] || []),
+          ...nodeData.children[type][category],
+        ];
+
+        delete nodeData.children[type][category];
+        await updateDoc(nodeDoc.ref, nodeData);
+        recordLogs({
           action: "Deleted a category",
           category,
-          ontology: ontologyDoc.id,
+          node: nodeDoc.id,
         });
       }
     }
   };
 
-  // This function adds or removes a lock for a specific user on a given ontology field.
+  // This function adds or removes a lock for a specific user on a given node field.
 
-  const addLock = async (ontology: string, field: string, type: string) => {
+  const addLock = async (node: string, field: string, type: string) => {
     try {
       // Check if a user is authenticated before proceeding
       if (!user) return;
 
       // If the type is 'add', create a new lock and add it to the 'ontologyLock' collection
       if (type == "add") {
-        // Create a new lock object with user information, ontology, field, and timestamp
+        // Create a new lock object with user information, node, field, and timestamp
         const newLock = {
           uname: user?.uname,
-          ontology,
+          node,
           field,
           deleted: false,
           createdAt: new Date(),
         };
 
-        // Get a reference to the 'ontologyLock' collection
-        const ontologyDocref = doc(collection(db, LOCKS));
-
         // Set the document with the new lock information
-        await setDoc(ontologyDocref, newLock);
+        await setDoc(doc(collection(db, LOCKS)), newLock);
       } else {
-        // If the type is not 'add', remove existing locks for the specified ontology, field, and user
+        // If the type is not 'add', remove existing locks for the specified node, field, and user
         const locksDocs = await getDocs(
           query(
             collection(db, LOCKS),
             where("field", "==", field),
-            where(NODES, "==", ontology),
+            where("node", "==", node),
             where("uname", "==", user?.uname)
           )
         );
@@ -868,40 +821,40 @@ const Node = ({
           destinationCategory &&
           sourceCategory !== destinationCategory
         ) {
-          // Retrieve ontology document from the database
-          const ontologyDoc = await getDoc(
-            doc(collection(db, NODES), openOntology.id)
+          // Retrieve node document from the database
+          const nodeDoc = await getDoc(
+            doc(collection(db, NODES), currentVisibleNode.id)
           );
 
-          // Check if ontology document exists
-          if (ontologyDoc.exists()) {
-            // Extract ontology data from the document
-            const ontologyData = ontologyDoc.data();
+          // Check if node document exists
+          if (nodeDoc.exists()) {
+            // Extract node data from the document
+            const nodeData = nodeDoc.data();
 
             // Get the sub-ontologies and specializations related to the provided subType
-            const specializations = ontologyData.subOntologies[subType];
+            const specializations = nodeData.children[subType];
 
             // Find the index of the draggable item in the source category
-            const ontoIdx = specializations[
-              sourceCategory
-            ].ontologies.findIndex((onto: any) => onto.id === draggableId);
+            const nodeIdx = specializations[sourceCategory].findIndex(
+              (onto: any) => onto.id === draggableId
+            );
 
             // If the draggable item is found in the source category
-            if (ontoIdx !== -1) {
+            if (nodeIdx !== -1) {
               // Move the item to the destination category
-              specializations[destinationCategory].ontologies.push(
-                specializations[sourceCategory].ontologies[ontoIdx]
+              specializations[destinationCategory].push(
+                specializations[sourceCategory][nodeIdx]
               );
 
               // Remove the item from the source category
-              specializations[sourceCategory].ontologies.splice(ontoIdx, 1);
+              specializations[sourceCategory].splice(nodeIdx, 1);
             }
 
-            // Update the ontology data with the modified specializations
-            ontologyData.subOntologies[subType] = specializations;
+            // Update the node data with the modified specializations
+            nodeData.children[subType] = specializations;
 
-            // Update the ontology document in the database
-            await updateDoc(ontologyDoc.ref, ontologyData);
+            // Update the node document in the database
+            await updateDoc(nodeDoc.ref, nodeData);
 
             // Record a log of the sorting action
             await recordLogs({
@@ -924,95 +877,92 @@ const Node = ({
   };
 
   /**
-   * Removes a sub-ontology with the specified ID from the given ontology data.
+   * Removes a child-node with the specified ID from the given node data.
    * @param {Object} params - An object containing ontologyData and id.
-   * @param {Object} ontologyData - The main ontology data object.
-   * @param {string} id - The ID of the sub-ontology to be removed.
+   * @param {Object} ontologyData - The main node data object.
+   * @param {string} id - The ID of the child-node to be removed.
    */
-  const removeSubOntology = ({ ontologyData, id }: any) => {
-    // Iterate over the types of sub-ontologies in the main ontology data.
-    for (let type in ontologyData.subOntologies) {
-      // Iterate over the categories within each type of sub-ontology.
-      for (let category in ontologyData.subOntologies[type] || {}) {
+  const removeChildNode = (parentNode: INode, childId: string) => {
+    // Iterate over the types of sub-ontologies in the main node data.
+    for (let type in parentNode.children) {
+      // Iterate over the categories within each type of child-node.
+      for (let category in parentNode.children[type] || {}) {
         // Check if there are ontologies present in the current category.
-        if (
-          (ontologyData.subOntologies[type][category].ontologies || []).length >
-          0
-        ) {
-          // Find the index of the sub-ontology with the specified ID within the ontologies array.
-          const subOntologyIdx = ontologyData.subOntologies[type][
-            category
-          ].ontologies.findIndex((sub: any) => sub.id === id);
+        if ((parentNode.children[type][category] || []).length > 0) {
+          // Find the index of the child-node with the specified ID within the ontologies array.
+          const subOntologyIdx = parentNode.children[type][category].findIndex(
+            (sub: any) => sub.id === childId
+          );
 
-          // If the sub-ontology with the specified ID is found, remove it from the array.
+          // If the child-node with the specified ID is found, remove it from the array.
           if (subOntologyIdx !== -1) {
-            ontologyData.subOntologies[type][category].ontologies.splice(
-              subOntologyIdx,
-              1
-            );
+            parentNode.children[type][category].splice(subOntologyIdx, 1);
           }
         }
       }
     }
+    return parentNode;
   };
 
-  // Asynchronous function to handle the deletion of a sub-ontology
-  const deleteSubOntologyEditable = async () => {
+  // Asynchronous function to handle the deletion of a child-node
+  const deleteNode = async () => {
     try {
-      // Log a message indicating the start of the function
-      console.info("deleteSubOntologyEditable");
-
       // Confirm deletion with the user using a custom confirmation dialog
       if (
         await confirmIt(
-          "Are you sure you want to delete this Document?",
-          "Delete Document",
-          "Keep Document"
+          "Are you sure you want to delete this Node?",
+          "Delete Node",
+          "Keep Node"
         )
       ) {
-        // Retrieve the document reference of the ontology to be deleted
-        const ontologyDoc = await getDoc(
-          doc(collection(db, NODES), openOntology.id)
+        // Retrieve the document reference of the node to be deleted
+        const nodeDoc = await getDoc(
+          doc(collection(db, NODES), currentVisibleNode.id)
         );
 
-        // Check if the ontology document exists
-        if (ontologyDoc.exists()) {
-          // Retrieve ontology data from the document
-          const ontologyData = ontologyDoc.data();
+        // Check if the node document exists
+        if (nodeDoc.exists()) {
+          // Retrieve node data from the document
+          const nodeData = nodeDoc.data();
 
-          // Extract the parent IDs from the ontology data
-          const parents = ontologyData?.parents || [];
+          // Extract the parent IDs from the node data
+          const parents = nodeData?.parents || [];
 
           // Iterate through each parent ID
           for (let parent of parents) {
-            // Retrieve the document reference of the parent ontology
-            const parentDoc = await getDoc(doc(collection(db, NODES), parent));
+            // Retrieve the document reference of the parent node
+            const parentNodeDoc = await getDoc(
+              doc(collection(db, NODES), parent)
+            );
 
-            // Check if the parent ontology document exists
-            if (parentDoc.exists()) {
-              // Retrieve data of the parent ontology
-              const ontologyData = parentDoc.data();
+            // Check if the parent node document exists
+            if (parentNodeDoc.exists()) {
+              // Retrieve data of the parent node
+              let parentNodeData = parentNodeDoc.data() as INode;
 
-              // Remove the reference to the sub-ontology from the parent
-              removeSubOntology({ ontologyData, id: ontologyDoc.id });
+              // Remove the reference to the child-node from the parent
+              parentNodeData = removeChildNode(
+                parentNodeData,
+                currentVisibleNode.id
+              );
 
-              // Update the parent ontology document with the modified data
-              await updateDoc(parentDoc.ref, ontologyData);
+              // Update the parent node document with the modified data
+              await updateDoc(parentNodeDoc.ref, parentNodeData);
             }
           }
 
-          // Update the user document by removing the deleted ontology's ID
+          // Update the user document by removing the deleted node's ID
           updateUserDoc([
             ...ontologyPath.slice(0, -1).map((path: any) => path.id),
           ]);
 
-          // Mark the ontology as deleted by updating its document
-          await updateDoc(ontologyDoc.ref, { deleted: true });
+          // Mark the node as deleted by updating its document
+          await updateDoc(nodeDoc.ref, { deleted: true });
 
           // Record a log entry for the deletion action
           recordLogs({
-            action: "Deleted Ontology",
-            ontology: ontologyDoc.id,
+            action: "Deleted Node",
+            node: nodeDoc.id,
           });
         }
       }
@@ -1117,7 +1067,6 @@ const Node = ({
     // Dependencies for the useCallback hook
     [mainSpecializations, checkedSpecializations]
   );
-
   return (
     <Box
       sx={{
@@ -1188,104 +1137,254 @@ const Node = ({
           updateInheritance={updateInheritance}
           recordLogs={recordLogs}
           user={user}
-          lockedOntology={lockedOntology[openOntology.id] || {}}
+          lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
           addLock={addLock}
-          text={openOntology.title}
-          openOntology={openOntology}
+          text={currentVisibleNode.title}
+          currentVisibleNode={currentVisibleNode}
           type={"title"}
           setSnackbarMessage={setSnackbarMessage}
-          setOpenOntology={setOpenOntology}
-          editOntology={editOntology}
+          setCurrentVisibleNode={setCurrentVisibleNode}
+          editNode={editNode}
           setEditOntology={setEditOntology}
-          deleteSubOntologyEditable={deleteSubOntologyEditable}
+          deleteNode={deleteNode}
         />
         <Text
           updateInheritance={updateInheritance}
           recordLogs={recordLogs}
           user={user}
-          lockedOntology={lockedOntology[openOntology.id] || {}}
+          lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
           addLock={addLock}
-          text={openOntology.description}
-          openOntology={openOntology}
+          text={currentVisibleNode.description}
+          currentVisibleNode={currentVisibleNode}
           type={"description"}
           setSnackbarMessage={setSnackbarMessage}
-          setOpenOntology={setOpenOntology}
+          setCurrentVisibleNode={setCurrentVisibleNode}
           setEditOntology={setEditOntology}
         />
       </Box>
 
-      <Box key={openOntology.id} sx={{ mb: "15px", mt: "25px" }}>
+      <Box key={currentVisibleNode.id} sx={{ mb: "15px", mt: "25px" }}>
         <Box>
-          {(
-            ORDER_SUBONTOLOGIES[openOntology?.ontologyType as string] || []
-          ).map((type: string) =>
-            // if it' a subOntologies we need to render it as one otherwise it's a Plain Text
-            Object.keys(openOntology.subOntologies).includes(type) ? (
-              <Box key={type} sx={{ display: "grid", mt: "5px" }}>
-                <Box>
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Typography sx={{ fontSize: "19px" }}>
-                      {capitalizeFirstLetter(type)}:
-                    </Typography>
-                    <Tooltip title={""}>
-                      <Button
-                        onClick={() => showList(type, "main")}
-                        sx={{ ml: "5px" }}
-                      >
-                        {" "}
-                        {type !== "Specializations" ? "Select" : "Add"} {type}{" "}
-                      </Button>
-                    </Tooltip>
-                    {["Specializations", "Role", "Actor"].includes(type) && (
-                      <Button
-                        onClick={() => {
-                          setOpenAddCategory(true);
-                          setType(type);
-                        }}
-                        sx={{ ml: "5px" }}
-                      >
-                        Add Category
-                      </Button>
-                    )}
-                    {(openOntology.inheritance || {}).subOntologies &&
-                      (openOntology.inheritance || {}).subOntologies[type]
-                        ?.ref && (
-                        <Typography sx={{ color: "grey" }}>
-                          {"("}
-                          {"Inherited from "}
-                          {'"'}
-                          {(openOntology.inheritance || {}).subOntologies[type]
-                            ?.title || ""}
-                          {'"'}
-                          {")"}
-                        </Typography>
+          {(ORDER_CHILDREN[currentVisibleNode?.nodeType as string] || []).map(
+            (type: string) =>
+              // if it' a children we need to render it as one otherwise it's a Plain Text
+              Object.keys(currentVisibleNode.children).includes(type) ? (
+                <Box key={type} sx={{ display: "grid", mt: "5px" }}>
+                  <Box>
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <Typography sx={{ fontSize: "19px" }}>
+                        {capitalizeFirstLetter(type)}:
+                      </Typography>
+                      <Tooltip title={""}>
+                        <Button
+                          onClick={() => showList(type, "main")}
+                          sx={{ ml: "5px" }}
+                        >
+                          {" "}
+                          {type !== "Specializations" ? "Select" : "Add"} {type}{" "}
+                        </Button>
+                      </Tooltip>
+                      {["Specializations", "Role", "Actor"].includes(type) && (
+                        <Button
+                          onClick={() => {
+                            setOpenAddCategory(true);
+                            setType(type);
+                          }}
+                          sx={{ ml: "5px" }}
+                        >
+                          Add Category
+                        </Button>
                       )}
-                  </Box>
-                  {["Role", "Specializations", "Actor"].includes(type) ? (
-                    <DragDropContext
-                      onDragEnd={(e: any) => handleSorting(e, type)}
-                    >
+                      {(currentVisibleNode.inheritance || {}).children &&
+                        (currentVisibleNode.inheritance || {}).children[type]
+                          ?.ref && (
+                          <Typography sx={{ color: "grey" }}>
+                            {"("}
+                            {"Inherited from "}
+                            {'"'}
+                            {(currentVisibleNode.inheritance || {}).children[
+                              type
+                            ]?.title || ""}
+                            {'"'}
+                            {")"}
+                          </Typography>
+                        )}
+                    </Box>
+                    {["Role", "Specializations", "Actor"].includes(type) ? (
+                      <DragDropContext
+                        onDragEnd={(e: any) => handleSorting(e, type)}
+                      >
+                        <ul>
+                          {Object.keys(currentVisibleNode?.children[type])
+                            .sort((a, b) => {
+                              if (a === "main") return -1;
+                              if (b === "main") return 1;
+                              return a.localeCompare(b); // Alphabetical order for other keys
+                            })
+                            .map((category: any) => {
+                              const children =
+                                currentVisibleNode?.children[type][category] ||
+                                [];
+                              const showGap =
+                                Object.keys(
+                                  currentVisibleNode?.children[type]
+                                ).filter(
+                                  (c) =>
+                                    (
+                                      currentVisibleNode?.children[type][c] ||
+                                      []
+                                    ).length > 0 && c !== "main"
+                                ).length > 0;
+                              return (
+                                <Box
+                                  key={category}
+                                  id={category} /* sx={{ ml: "15px" }} */
+                                >
+                                  {category !== "main" && (
+                                    <li key={category}>
+                                      <Box
+                                        sx={{
+                                          display: "flex",
+                                          alignItems: "center",
+                                        }}
+                                      >
+                                        <Typography sx={{ fontWeight: "bold" }}>
+                                          {category}
+                                        </Typography>{" "}
+                                        :{" "}
+                                        <Button
+                                          onClick={() =>
+                                            showList(type, category)
+                                          }
+                                          sx={{ ml: "5px" }}
+                                        >
+                                          {" "}
+                                          {type !== "Specializations"
+                                            ? "Select"
+                                            : "Add"}{" "}
+                                          {type}{" "}
+                                        </Button>
+                                        <Button
+                                          onClick={() =>
+                                            handleEditCategory(type, category)
+                                          }
+                                          sx={{ ml: "5px" }}
+                                        >
+                                          {" "}
+                                          Edit
+                                        </Button>
+                                        <Button
+                                          onClick={() =>
+                                            deleteCategory(type, category)
+                                          }
+                                          sx={{ ml: "5px" }}
+                                        >
+                                          {" "}
+                                          Delete
+                                        </Button>
+                                      </Box>
+                                    </li>
+                                  )}
+
+                                  {(children.length > 0 || showGap) && (
+                                    <List>
+                                      <Droppable
+                                        droppableId={category}
+                                        type="CATEGORY"
+                                      >
+                                        {/* //snapshot.isDraggingOver */}
+                                        {(provided: any, snapshot: any) => (
+                                          <Box
+                                            {...provided.droppableProps}
+                                            ref={provided.innerRef}
+                                            sx={{
+                                              backgroundColor: (theme) =>
+                                                theme.palette.mode === "dark"
+                                                  ? snapshot.isDraggingOver
+                                                    ? DESIGN_SYSTEM_COLORS.notebookG450
+                                                    : ""
+                                                  : snapshot.isDraggingOver
+                                                  ? DESIGN_SYSTEM_COLORS.gray250
+                                                  : "",
+                                              // minHeight: /* children.length > 0 ?  */ "25px" /*  : "" */,
+                                              userSelect: "none",
+                                            }}
+                                          >
+                                            {children.map(
+                                              (child: any, index: any) => {
+                                                return (
+                                                  <Draggable
+                                                    key={child.id}
+                                                    draggableId={child.id}
+                                                    index={index}
+                                                  >
+                                                    {(provided: any) => (
+                                                      <ListItem
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        {...provided.dragHandleProps}
+                                                        sx={{ m: 0, p: 0 }}
+                                                      >
+                                                        <ListItemIcon>
+                                                          <DragIndicatorIcon />
+                                                        </ListItemIcon>
+                                                        <ChildNode
+                                                          recordLogs={
+                                                            recordLogs
+                                                          }
+                                                          setSnackbarMessage={
+                                                            setSnackbarMessage
+                                                          }
+                                                          saveChildNode={
+                                                            saveChildNode
+                                                          }
+                                                          currentVisibleNode={
+                                                            currentVisibleNode
+                                                          }
+                                                          setCurrentVisibleNode={
+                                                            setCurrentVisibleNode
+                                                          }
+                                                          sx={{ mt: "15px" }}
+                                                          key={
+                                                            currentVisibleNode.id
+                                                          }
+                                                          child={child}
+                                                          type={type}
+                                                          category={category}
+                                                          ontologyPath={
+                                                            ontologyPath
+                                                          }
+                                                          updateUserDoc={
+                                                            updateUserDoc
+                                                          }
+                                                          updateInheritance={
+                                                            updateInheritance
+                                                          }
+                                                        />
+                                                      </ListItem>
+                                                    )}
+                                                  </Draggable>
+                                                );
+                                              }
+                                            )}
+                                            {provided.placeholder}
+                                          </Box>
+                                        )}
+                                      </Droppable>
+                                    </List>
+                                  )}
+                                </Box>
+                              );
+                            })}
+                        </ul>
+                      </DragDropContext>
+                    ) : (
                       <ul>
-                        {Object.keys(openOntology?.subOntologies[type])
-                          .sort((a, b) => {
-                            if (a === "main") return -1;
-                            if (b === "main") return 1;
-                            return a.localeCompare(b); // Alphabetical order for other keys
-                          })
-                          .map((category: any) => {
-                            const subOntologies =
-                              openOntology?.subOntologies[type][category]
-                                ?.ontologies || [];
-                            const showGap =
-                              Object.keys(
-                                openOntology?.subOntologies[type]
-                              ).filter(
-                                (c) =>
-                                  (
-                                    openOntology?.subOntologies[type][c]
-                                      ?.ontologies || []
-                                  ).length > 0 && c !== "main"
-                              ).length > 0;
+                        {Object.keys(currentVisibleNode?.children[type]).map(
+                          (category: any) => {
+                            const children =
+                              currentVisibleNode?.children[type][category] ||
+                              [];
                             return (
                               <Box
                                 key={category}
@@ -1335,202 +1434,64 @@ const Node = ({
                                   </li>
                                 )}
 
-                                {(subOntologies.length > 0 || showGap) && (
-                                  <List>
-                                    <Droppable
-                                      droppableId={category}
-                                      type="CATEGORY"
-                                    >
-                                      {/* //snapshot.isDraggingOver */}
-                                      {(provided: any, snapshot: any) => (
-                                        <Box
-                                          {...provided.droppableProps}
-                                          ref={provided.innerRef}
-                                          sx={{
-                                            backgroundColor: (theme) =>
-                                              theme.palette.mode === "dark"
-                                                ? snapshot.isDraggingOver
-                                                  ? DESIGN_SYSTEM_COLORS.notebookG450
-                                                  : ""
-                                                : snapshot.isDraggingOver
-                                                ? DESIGN_SYSTEM_COLORS.gray250
-                                                : "",
-                                            // minHeight: /* subOntologies.length > 0 ?  */ "25px" /*  : "" */,
-                                            userSelect: "none",
-                                          }}
-                                        >
-                                          {subOntologies.map(
-                                            (subOntology: any, index: any) => {
-                                              return (
-                                                <Draggable
-                                                  key={subOntology.id}
-                                                  draggableId={subOntology.id}
-                                                  index={index}
-                                                >
-                                                  {(provided: any) => (
-                                                    <ListItem
-                                                      ref={provided.innerRef}
-                                                      {...provided.draggableProps}
-                                                      {...provided.dragHandleProps}
-                                                      sx={{ m: 0, p: 0 }}
-                                                    >
-                                                      <ListItemIcon>
-                                                        <DragIndicatorIcon />
-                                                      </ListItemIcon>
-                                                      <ChildNode
-                                                        recordLogs={recordLogs}
-                                                        setSnackbarMessage={
-                                                          setSnackbarMessage
-                                                        }
-                                                        saveSubOntology={
-                                                          saveSubOntology
-                                                        }
-                                                        openOntology={
-                                                          openOntology
-                                                        }
-                                                        setOpenOntology={
-                                                          setOpenOntology
-                                                        }
-                                                        sx={{ mt: "15px" }}
-                                                        key={openOntology.id}
-                                                        subOntology={
-                                                          subOntology
-                                                        }
-                                                        type={type}
-                                                        category={category}
-                                                        ontologyPath={
-                                                          ontologyPath
-                                                        }
-                                                        updateUserDoc={
-                                                          updateUserDoc
-                                                        }
-                                                        updateInheritance={
-                                                          updateInheritance
-                                                        }
-                                                      />
-                                                    </ListItem>
-                                                  )}
-                                                </Draggable>
-                                              );
-                                            }
-                                          )}
-                                          {provided.placeholder}
-                                        </Box>
-                                      )}
-                                    </Droppable>
-                                  </List>
-                                )}
+                                <ul>
+                                  {children.map((child: any) => {
+                                    return (
+                                      <li key={child.id}>
+                                        <ChildNode
+                                          recordLogs={recordLogs}
+                                          setSnackbarMessage={
+                                            setSnackbarMessage
+                                          }
+                                          saveChildNode={saveChildNode}
+                                          currentVisibleNode={
+                                            currentVisibleNode
+                                          }
+                                          setCurrentVisibleNode={
+                                            setCurrentVisibleNode
+                                          }
+                                          sx={{ mt: "15px" }}
+                                          key={currentVisibleNode.id}
+                                          child={child}
+                                          type={type}
+                                          category={category}
+                                          ontologyPath={ontologyPath}
+                                          updateUserDoc={updateUserDoc}
+                                          updateInheritance={updateInheritance}
+                                        />
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
                               </Box>
                             );
-                          })}
+                          }
+                        )}
                       </ul>
-                    </DragDropContext>
-                  ) : (
-                    <ul>
-                      {Object.keys(openOntology?.subOntologies[type]).map(
-                        (category: any) => {
-                          const subOntologies =
-                            openOntology?.subOntologies[type][category]
-                              ?.ontologies || [];
-                          return (
-                            <Box
-                              key={category}
-                              id={category} /* sx={{ ml: "15px" }} */
-                            >
-                              {category !== "main" && (
-                                <li key={category}>
-                                  <Box
-                                    sx={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                    }}
-                                  >
-                                    <Typography sx={{ fontWeight: "bold" }}>
-                                      {category}
-                                    </Typography>{" "}
-                                    :{" "}
-                                    <Button
-                                      onClick={() => showList(type, category)}
-                                      sx={{ ml: "5px" }}
-                                    >
-                                      {" "}
-                                      {type !== "Specializations"
-                                        ? "Select"
-                                        : "Add"}{" "}
-                                      {type}{" "}
-                                    </Button>
-                                    <Button
-                                      onClick={() =>
-                                        handleEditCategory(type, category)
-                                      }
-                                      sx={{ ml: "5px" }}
-                                    >
-                                      {" "}
-                                      Edit
-                                    </Button>
-                                    <Button
-                                      onClick={() =>
-                                        deleteCategory(type, category)
-                                      }
-                                      sx={{ ml: "5px" }}
-                                    >
-                                      {" "}
-                                      Delete
-                                    </Button>
-                                  </Box>
-                                </li>
-                              )}
-
-                              <ul>
-                                {subOntologies.map((subOntology: any) => {
-                                  return (
-                                    <li key={subOntology.id}>
-                                      <ChildNode
-                                        recordLogs={recordLogs}
-                                        setSnackbarMessage={setSnackbarMessage}
-                                        saveSubOntology={saveSubOntology}
-                                        openOntology={openOntology}
-                                        setOpenOntology={setOpenOntology}
-                                        sx={{ mt: "15px" }}
-                                        key={openOntology.id}
-                                        subOntology={subOntology}
-                                        type={type}
-                                        category={category}
-                                        ontologyPath={ontologyPath}
-                                        updateUserDoc={updateUserDoc}
-                                        updateInheritance={updateInheritance}
-                                      />
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            </Box>
-                          );
-                        }
-                      )}
-                    </ul>
-                  )}
+                    )}
+                  </Box>
                 </Box>
-              </Box>
-            ) : (
-              Object.keys(openOntology.plainText).includes(type) && (
-                <Box key={type}>
-                  <Text
-                    updateInheritance={updateInheritance}
-                    recordLogs={recordLogs}
-                    user={user}
-                    lockedOntology={lockedOntology[openOntology.id] || {}}
-                    addLock={addLock}
-                    text={openOntology.plainText[type]}
-                    openOntology={openOntology}
-                    type={type}
-                    setSnackbarMessage={setSnackbarMessage}
-                    setOpenOntology={setOpenOntology}
-                    setEditOntology={setEditOntology}
-                  />
-                </Box>
+              ) : (
+                Object.keys(currentVisibleNode.plainText).includes(type) && (
+                  <Box key={type}>
+                    <Text
+                      updateInheritance={updateInheritance}
+                      recordLogs={recordLogs}
+                      user={user}
+                      lockedNodeFields={
+                        lockedNodeFields[currentVisibleNode.id] || {}
+                      }
+                      addLock={addLock}
+                      text={currentVisibleNode.plainText[type]}
+                      currentVisibleNode={currentVisibleNode}
+                      type={type}
+                      setSnackbarMessage={setSnackbarMessage}
+                      setCurrentVisibleNode={setCurrentVisibleNode}
+                      setEditOntology={setEditOntology}
+                    />
+                  </Box>
+                )
               )
-            )
           )}
         </Box>
       </Box>
