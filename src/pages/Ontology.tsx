@@ -113,6 +113,7 @@ import { formatFirestoreTimestampWithMoment } from " @components/lib/utils/utils
 import { NODES_TYPES } from " @components/lib/CONSTANTS";
 import {
   LOCKS,
+  LOGS,
   NODES,
   USERS,
 } from " @components/lib/firestoreClient/collections";
