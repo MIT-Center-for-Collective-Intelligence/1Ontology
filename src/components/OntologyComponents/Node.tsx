@@ -373,7 +373,7 @@ const Node = ({
       };
     } = {};
     const ancestorId = parentNode.id;
-    const ancestorTitle = parentNode.title;
+    const ancestorTitle = parentNode.plainText.title;
     // Iterate through each field, excluding "Specializations"
     for (let field of fields) {
       if (field === "Specializations") continue;
@@ -462,7 +462,7 @@ const Node = ({
 
       // Add the new node to the specified type and category
       parentNode.children[type][category].push({
-        title: `New ${parentNode.title}`,
+        title: `New ${parentNode.plainText.title}`,
         id: newNodeRef.id,
       });
 
@@ -471,10 +471,8 @@ const Node = ({
         ...ontologyPath.map((path: any) => path.id),
         newNodeRef.id,
       ]);
-      console.log({ newNode });
       // Add the new node to the database
       addNewNode({ id: newNodeRef.id, newNode });
-      console.log({ parentNode });
       // Update the parent node document in the database
       await updateDoc(nodeParentRef, parentNode);
     } catch (error) {
@@ -517,7 +515,6 @@ const Node = ({
     // Close the modal or perform any necessary cleanup.
     handleClose();
   };
-  console.log(checkedSpecializations);
   const handleSaveChildrenChanges = async () => {
     try {
       // Get the node document from the database
@@ -575,7 +572,6 @@ const Node = ({
           title: "",
         };
       }
-      console.log(nodeData);
       // Update the node document in the database
       await updateDoc(nodeDoc.ref, nodeData);
 
@@ -1046,6 +1042,7 @@ const Node = ({
     // Dependencies for the useCallback hook
     [mainSpecializations, checkedSpecializations]
   );
+
   return (
     <Box
       sx={{

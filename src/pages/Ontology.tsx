@@ -491,15 +491,15 @@ const Ontology = () => {
         // Check if the clicked ontology is already in the ontologies list
         if (
           nodes
-            .filter((ontology: any) => ontology.category)
-            .map((o: any) => o.title)
+            .filter((node: any) => node.category)
+            .map((node: any) => node.plainText.title)
             .includes(path.title)
         )
           return;
 
         // Find index of the clicked ontology in the ontologies array
         const ontologyIndex = nodes.findIndex(
-          (ontology: any) => ontology.id === path.id
+          (node: INode) => node.id === path.id
         );
 
         // Update the open ontology or add a new ontology if not in the list
