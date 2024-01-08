@@ -325,7 +325,7 @@ const AppHeader = forwardRef(
                   onClick={toggleRightPanel}
                   variant={rightPanelVisible ? "contained" : "outlined"}
                 >
-                  {rightPanelVisible ? "Hide Left Panel" : "Show Left Panel"}
+                  {rightPanelVisible ? "Hide Right Panel" : "Show Right Panel"}
                 </Button>
                 <Tooltip title="Change theme">
                   <IconButton onClick={handleThemeSwitch} size="small">
