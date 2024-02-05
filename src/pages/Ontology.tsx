@@ -138,7 +138,7 @@ const Ontology = () => {
   const [value, setValue] = useState<number>(1);
   const [viewValue, setViewValue] = useState<number>(0);
   const [searchValue, setSearchValue] = useState("");
-  const fuse = new Fuse(nodes, { keys: ["title"] });
+  const fuse = new Fuse(nodes, { keys: ["plainText.title"] });
   const headerRef = useRef<HTMLHeadElement | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [dagreZoomState, setDagreZoomState] = useState<any>(null);
@@ -888,52 +888,53 @@ const Ontology = () => {
 
   // This function finds the path of a node in a nested structure of mainNodes and their children.
   const findOntologyPath = useCallback(
-    ({ mainNodes, path, currentPath }: any) => {
+    ({ mainNodes, path, eachOntologyPath }: any) => {
       // Loop through each main node
-      for (let ontology of mainNodes) {
+      for (let node of mainNodes) {
         // Update the path for the current node
-        currentPath[ontology.id] = [...path, ontology.id];
 
-        // Loop through categories in the children of the current ontology
-        for (let category in ontology?.children?.Specializations) {
-          // Filter ontologies based on their inclusion in the Specializations of the current category
+        eachOntologyPath[node.id] = [...path, node.id];
+
+        // Loop through categories in the children of the current node
+        for (let category in node?.children?.Specializations) {
+          // Filter nodes based on their inclusion in the Specializations of the current category
           const specializations =
             nodes.filter((onto: any) => {
-              const arrayOntologies = ontology?.children?.Specializations[
-                category
-              ].map((o: any) => o.id);
-              return arrayOntologies.includes(onto.id);
+              const arrayNodes = node?.children?.Specializations[category].map(
+                (n: any) => n.id
+              );
+              return arrayNodes.includes(onto.id);
             }) || [];
 
           // Recursively call the findOntologyPath function for the filtered specializations
-          currentPath = findOntologyPath({
+          eachOntologyPath = findOntologyPath({
             mainNodes: specializations,
-            path: [...path, ontology.id],
-            currentPath,
+            path: [...path, node.id],
+            eachOntologyPath,
           });
         }
       }
 
       // Return the accumulated ontology paths
-      return currentPath;
+      return eachOntologyPath;
     },
     [nodes]
   );
 
-  // This function is called when a search result ontology is clicked.
-  const openSearchOntology = (ontology: any) => {
+  // This function is called when a search result node is clicked.
+  const openSearchedNode = (node: any) => {
     try {
-      // Set the clicked ontology as the open ontology
-      setCurrentVisibleNode(ontology);
+      // Set the clicked node as the open ontology
+      setCurrentVisibleNode(node);
 
       // Record the click action in logs
       recordLogs({
         action: "Search result clicked",
-        clicked: ontology.id,
+        clicked: node.id,
       });
 
-      // Filter main ontologies based on the presence of a category
-      const mainNodes = nodes.filter((ontology: any) => ontology.category);
+      // Filter main nodes based on the presence of a category
+      const mainNodes = nodes.filter((node: any) => node.category);
 
       // Initialize eachOntologyPath with an empty object and find the ontology path
       let eachOntologyPath = findOntologyPath({
@@ -943,7 +944,7 @@ const Ontology = () => {
       });
 
       // Update the user document with the ontology path
-      updateUserDoc([...(eachOntologyPath[ontology.id] || [ontology.id])]);
+      updateUserDoc([...(eachOntologyPath[node.id] || [node.id])]);
     } catch (error) {
       console.error(error);
     }
@@ -1238,10 +1239,10 @@ const Ontology = () => {
                       }}
                     />
                     <List>
-                      {searchWithFuse(searchValue).map((ontology: any) => (
+                      {searchWithFuse(searchValue).map((node: any) => (
                         <ListItem
-                          key={ontology.id}
-                          onClick={() => openSearchOntology(ontology)}
+                          key={node.id}
+                          onClick={() => openSearchedNode(node)}
                           sx={{
                             display: "flex",
                             alignItems: "center",
@@ -1260,7 +1261,7 @@ const Ontology = () => {
                             },
                           }}
                         >
-                          <Typography>{ontology.title}</Typography>
+                          <Typography>{node.plainText.title}</Typography>
                         </ListItem>
                       ))}
                     </List>

@@ -74,10 +74,7 @@ const TreeViewSimplified = ({
                   color: treeVisualisation[category].isCategory ? "orange" : "",
                 }}
               >
-                {!treeVisualisation[category].isCategory
-                  ? category.split(" ").splice(0, 3).join(" ") +
-                    (category.split(" ").length > 3 ? "..." : "")
-                  : category}
+                {category}
               </Typography>
             </Box>
           }
