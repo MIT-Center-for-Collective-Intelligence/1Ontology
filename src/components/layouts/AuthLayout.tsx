@@ -224,7 +224,6 @@ const AuthLayout: FC<Props> = ({ children }) => {
                   <Image
                     src={logoMIT}
                     alt="School of Information"
-                    height={100}
                     width={150}
                   />
                 </a>
