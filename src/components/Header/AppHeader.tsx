@@ -103,6 +103,7 @@ const AppHeader = forwardRef(
     const [profileMenuOpen, setProfileMenuOpen] = useState(null);
     const [percentageUploaded, setPercentageUploaded] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
+    const [profileImage, setProfileImage] = useState(user?.imageUrl);
     const isProfileMenuOpen = Boolean(profileMenuOpen);
     const db = getFirestore();
     const signOut = async () => {
@@ -166,7 +167,7 @@ const AppHeader = forwardRef(
               bucket = hostname;
             }
             const rootURL = "https://storage.googleapis.com/" + bucket + "/";
-            const picturesFolder = rootURL + "Resumes/";
+            const picturesFolder = rootURL + "profilePicture/";
             const imageNameSplit = image.name.split(".");
             const imageExtension = imageNameSplit[imageNameSplit.length - 1];
             let imageFileName =
@@ -195,12 +196,14 @@ const AppHeader = forwardRef(
               },
               async function complete() {
                 let imageGeneratedUrl = await getDownloadURL(storageRef);
-                imageGeneratedUrl = addSuffixToUrlGMT(
-                  imageGeneratedUrl,
-                  "_430x1300"
-                );
+                // imageGeneratedUrl = addSuffixToUrlGMT(
+                //   imageGeneratedUrl,
+                //   "_430x1300"
+                // );
+                setProfileImage(imageGeneratedUrl)
                 await updateUserImage(imageGeneratedUrl);
                 setIsUploading(false);
+                setProfileMenuOpen(null);
                 setPercentageUploaded(100);
               }
             );
@@ -353,7 +356,7 @@ const AppHeader = forwardRef(
                         aria-expanded={isProfileMenuOpen ? "true" : undefined}
                       >
                         <Image
-                          src={user.imageUrl || ""}
+                          src={profileImage || ""}
                           alt={user.fName}
                           width={26}
                           height={26}

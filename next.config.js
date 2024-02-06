@@ -2,7 +2,7 @@ module.exports = {
   output: "standalone",
   reactStrictMode: false,
   images: {
-    domains: ["storage.googleapis.com"],
+    domains: ["firebasestorage.googleapis.com", "storage.googleapis.com"],
   },
   webpack(config) {
     config.module.rules.push({
