@@ -52,7 +52,13 @@ import { Stack } from "@mui/system";
 import { getAuth } from "firebase/auth";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import React, { forwardRef, useCallback, useRef, useState } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import mitLogo from "../../../public/CCI-logo.gif";
 import mitLogoDark from "../../../public/MIT-Logo-Dark.png";
 import {
@@ -103,9 +109,15 @@ const AppHeader = forwardRef(
     const [profileMenuOpen, setProfileMenuOpen] = useState(null);
     const [percentageUploaded, setPercentageUploaded] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
-    const [profileImage, setProfileImage] = useState(user?.imageUrl);
+    const [profileImage, setProfileImage] = useState("");
     const isProfileMenuOpen = Boolean(profileMenuOpen);
     const db = getFirestore();
+
+    useEffect(() => {
+      if (user?.imageUrl) {
+        setProfileImage(user.imageUrl);
+      }
+    }, [user]);
     const signOut = async () => {
       router.push(ROUTES.signIn);
       getAuth().signOut();
@@ -200,7 +212,7 @@ const AppHeader = forwardRef(
                 //   imageGeneratedUrl,
                 //   "_430x1300"
                 // );
-                setProfileImage(imageGeneratedUrl)
+                setProfileImage(imageGeneratedUrl);
                 await updateUserImage(imageGeneratedUrl);
                 setIsUploading(false);
                 setProfileMenuOpen(null);
