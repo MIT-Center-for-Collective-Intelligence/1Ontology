@@ -117,6 +117,7 @@ import {
   NODES,
   USERS,
 } from " @components/lib/firestoreClient/collections";
+import { getChildrenIds } from " @components/lib/utils/children.utils";
 
 const Ontology = () => {
   const db = getFirestore();
@@ -972,28 +973,27 @@ const Ontology = () => {
     newValue: any;
     ancestorTitle: string;
   }) => {
-    // Get the ID of the current ontology and initialize an array to store child ontology IDs.
+    // Get the ID of the current node and initialize an array to store child node IDs.
     const parentId = updatedNode.id;
-    const children: string[] = Object.values(
+    const children: string[] = getChildrenIds(
       updatedNode.children.Specializations
-    ).map((child: any) => child.id);
+    );
 
     // Loop through all the children and update the corresponding field.
     for (let childId of children) {
-      const ontologyIdx = nodes.findIndex((o: INode) => o.id == childId);
+      const childNodeIdx = nodes.findIndex((o: INode) => o.id == childId);
 
-      // Check if the child ontology exists in the ontologies array.
-      if (ontologyIdx !== -1) {
-        const currentNode: INode = nodes[ontologyIdx];
+      // Check if the child node exists in the nodes array (check if the child node wasn't deleted).
+      if (childNodeIdx !== -1) {
+        const currentChildNode: INode = nodes[childNodeIdx];
         const ontoRef = doc(collection(db, NODES), childId);
-
-        // Check if the current ontology has inheritance information.
-        if (currentNode.inheritance) {
+        // Check if the current node has inheritance information.
+        if (currentChildNode.inheritance) {
           if (updatedField === "title") {
             // Update the ancestor title in the inheritance information.
-            for (let inheritanceType in currentNode.inheritance) {
+            for (let inheritanceType in currentChildNode.inheritance) {
               const inheritanceFields =
-                currentNode.inheritance[inheritanceType];
+                currentChildNode.inheritance[inheritanceType];
               for (let field in inheritanceFields) {
                 const inheritance: { ref: string; title: string } =
                   inheritanceFields[field];
@@ -1004,24 +1004,23 @@ const Ontology = () => {
             }
           } else {
             // Update the specified field in the inheritance information.
-            const inheritance = currentNode.inheritance[type][updatedField];
-            if (
-              inheritance &&
-              inheritance?.ref &&
-              inheritance.ref == parentId
-            ) {
+            const inheritance =
+              currentChildNode.inheritance[type][updatedField];
+            // Propagate the inheritance if the child has an inheritance on this field.
+            //
+            if (inheritance && inheritance?.ref) {
               inheritance.title = ancestorTitle;
-              currentNode[type][updatedField] = newValue;
+              currentChildNode[type][updatedField] = newValue;
             }
           }
 
-          // Update the ontology document in the Firestore database.
-          updateDoc(ontoRef, currentNode);
+          // Update the node document in the Firestore database.
+          updateDoc(ontoRef, currentChildNode);
 
-          // Recursive call to update the children of the current ontology.
-          // It is safe to call this even if the current ontology doesn't have children.
+          // Recursive call to update the children of the current node.
+          // It is safe to call this even if the current node doesn't have children.
           updateInheritance({
-            updatedNode: currentNode,
+            updatedNode: currentChildNode,
             updatedField,
             type,
             newValue,
@@ -1039,6 +1038,8 @@ const Ontology = () => {
       controller.applyResizer(resizer);
     }
   }, [rightPanelVisible, user]);
+
+  // console.log({ currentVisibleNode });
   return (
     <Box>
       {nodes.length > 0 ? (
