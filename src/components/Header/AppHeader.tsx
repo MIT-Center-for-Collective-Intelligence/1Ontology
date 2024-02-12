@@ -40,6 +40,7 @@ import {
   Avatar,
   Button,
   CircularProgress,
+  LinearProgress,
   Typography,
   useTheme,
 } from "@mui/material";
@@ -72,6 +73,7 @@ import {
   uploadBytesResumable,
 } from "firebase/storage";
 import { isValidHttpUrl } from " @components/lib/utils/utils";
+import { NO_IMAGE_USER } from " @components/lib/CONSTANTS";
 export const HEADER_HEIGHT = 80;
 export const HEADER_HEIGHT_MOBILE = 72;
 
@@ -200,7 +202,7 @@ const AppHeader = forwardRef(
                 //   imageGeneratedUrl,
                 //   "_430x1300"
                 // );
-                setProfileImage(imageGeneratedUrl)
+                setProfileImage(imageGeneratedUrl);
                 await updateUserImage(imageGeneratedUrl);
                 setIsUploading(false);
                 setProfileMenuOpen(null);
@@ -208,7 +210,6 @@ const AppHeader = forwardRef(
               }
             );
           }
-          setIsUploading(false);
         } catch (err) {
           console.error("Image Upload Error: ", err);
           setIsUploading(false);
@@ -216,6 +217,7 @@ const AppHeader = forwardRef(
       },
       [user]
     );
+
     const handleEditImage = useCallback(() => {
       if (!inputEl.current) return;
       if (false) return;
@@ -239,7 +241,7 @@ const AppHeader = forwardRef(
           <MenuItem sx={{ flexGrow: 3 }} onClick={handleEditImage}>
             {isUploading ? (
               <Box sx={{ mr: "15px" }}>
-                <CircularProgress />
+                <LinearProgress sx={{ width: "25px" }} />
               </Box>
             ) : (
               <CameraAltIcon sx={{ mr: "5px" }} />
@@ -273,6 +275,7 @@ const AppHeader = forwardRef(
         return !prev;
       });
     }, [rightPanelVisible]);
+
     return (
       <>
         <Box
@@ -356,7 +359,7 @@ const AppHeader = forwardRef(
                         aria-expanded={isProfileMenuOpen ? "true" : undefined}
                       >
                         <Image
-                          src={profileImage || ""}
+                          src={user.imageUrl || NO_IMAGE_USER}
                           alt={user.fName}
                           width={26}
                           height={26}
