@@ -105,7 +105,7 @@ const AppHeader = forwardRef(
     const [profileMenuOpen, setProfileMenuOpen] = useState(null);
     const [percentageUploaded, setPercentageUploaded] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
-    const [profileImage, setProfileImage] = useState(user?.imageUrl);
+    const [profileImage, setProfileImage] = useState("");
     const isProfileMenuOpen = Boolean(profileMenuOpen);
     const db = getFirestore();
     const signOut = async () => {
@@ -346,30 +346,9 @@ const AppHeader = forwardRef(
                 {isAuthenticated && user && (
                   <Tooltip title={capitalizeString(user.fName ?? "")}>
                     <IconButton onClick={handleProfileMenuOpen}>
-                      <Box
-                        sx={{
-                          width: "26px",
-                          height: "26px",
-                          borderRadius: "30px",
-                          color: (theme) => theme.palette.common.gray,
-                        }}
-                        aria-haspopup="true"
-                        aria-controls="lock-menu"
-                        aria-label={`${user.fName}'s Account`}
-                        aria-expanded={isProfileMenuOpen ? "true" : undefined}
-                      >
-                        <Image
-                          src={user.imageUrl || NO_IMAGE_USER}
-                          alt={user.fName}
-                          width={26}
-                          height={26}
-                          quality={40}
-                          objectFit="cover"
-                          style={{
-                            borderRadius: "30px",
-                          }}
-                        />
-                      </Box>
+                      <Avatar
+                        src={profileImage || user.imageUrl || NO_IMAGE_USER}
+                      />
                     </IconButton>
                   </Tooltip>
                 )}
