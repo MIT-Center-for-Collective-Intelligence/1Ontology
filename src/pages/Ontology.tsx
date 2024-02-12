@@ -110,7 +110,7 @@ import { useAuth } from " @components/components/context/AuthContext";
 import { useRouter } from "next/router";
 import DAGGraph from " @components/components/OntologyComponents/DAGGraph";
 import { formatFirestoreTimestampWithMoment } from " @components/lib/utils/utils";
-import { NODES_TYPES } from " @components/lib/CONSTANTS";
+import { NODES_TYPES, NO_IMAGE_USER } from " @components/lib/CONSTANTS";
 import {
   LOCKS,
   LOGS,
@@ -146,7 +146,33 @@ const Ontology = () => {
   const [rightPanelVisible, setRightPanelVisible] = useState<any>(
     user?.rightPanel
   );
+  const [users, setUsers] = useState<{ [key: string]: string }>({});
+
   const columnResizerRef = useRef<any>();
+
+  useEffect(() => {
+    if (!db) return;
+    const q = query(collection(db, USERS));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docChanges = snapshot.docChanges();
+      setUsers((prev) => {
+        const updatedUsers = { ...prev }; // Create a copy of the previous state
+        docChanges.forEach((change) => {
+          const userData = change.doc.data();
+          const userId = change.doc.id;
+          if (change.type === "added" || change.type === "modified") {
+            updatedUsers[userId] = userData.imageUrl;
+          } else if (change.type === "removed") {
+            delete updatedUsers[userId];
+          }
+        });
+        return updatedUsers;
+      });
+    });
+    return () => unsubscribe();
+  }, [db]);
+
   useEffect(() => {
     // Check if a user is logged in
     if (user) {
@@ -1039,7 +1065,6 @@ const Ontology = () => {
     }
   }, [rightPanelVisible, user]);
 
-  // console.log({ currentVisibleNode });
   return (
     <Box>
       {nodes.length > 0 ? (
@@ -1288,7 +1313,11 @@ const Ontology = () => {
                             }}
                           >
                             <Box sx={{ display: "flex", alignItems: "center" }}>
-                              <Avatar src={comment.senderImage} />
+                              <Avatar
+                                src={
+                                  users[comment.senderUname] || NO_IMAGE_USER
+                                }
+                              />
                               <Box
                                 sx={{
                                   display: "flex",

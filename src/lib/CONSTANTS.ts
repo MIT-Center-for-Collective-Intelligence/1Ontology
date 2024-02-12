@@ -9,9 +9,7 @@ import {
   IRole,
 } from " @components/types/INode";
 
-
 // TO-DO: Consider storing this data in the database to identify ontology types in the project
-
 
 // Defining an object to hold initial values for various ontology types
 export const NODES_TYPES: {
@@ -152,3 +150,6 @@ export const NODES_TYPES: {
   },
 };
 // TO-DO: Consider storing this data in the database to identify ontology types in the project
+
+export const NO_IMAGE_USER =
+  "https://firebasestorage.googleapis.com/v0/b/ontology-41607.appspot.com/o/profilePicture%2Fno-img.png?alt=media&token=c784a749-6c29-4f7d-9495-f1dc8d948ae3";
