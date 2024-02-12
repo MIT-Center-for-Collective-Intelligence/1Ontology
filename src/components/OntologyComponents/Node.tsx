@@ -594,7 +594,7 @@ const Node = ({
     }
   };
 
-  const addCatgory = useCallback(async () => {
+  const addNewCategory = useCallback(async () => {
     try {
       // Check if newCategory is provided
       if (!newCategory) return;
@@ -628,20 +628,24 @@ const Node = ({
           ];
         } else {
           // If it's a new category, create it
-          if (!ontologyData?.children[type]?.hasOwnProperty(newCategory)) {
+          if (
+            !ontologyData?.children[type]?.hasOwnProperty(newCategory.trim())
+          ) {
             ontologyData.children[type] = {
               ...(ontologyData?.children[type] || {}),
               [newCategory]: [],
             };
+            // Log the action of creating a new category
+            recordLogs({
+              action: "Created a category",
+              category: newCategory,
+              node: nodeDoc.id,
+              field: type,
+            });
+          } else {
+            confirmIt("This category has already been added.", "Ok", "");
+            return;
           }
-
-          // Log the action of creating a new category
-          recordLogs({
-            action: "Created a category",
-            category: newCategory,
-            node: nodeDoc.id,
-            feild: type,
-          });
         }
 
         // Update the node document with the modified data
@@ -1099,7 +1103,7 @@ const Node = ({
           </Box>
         </DialogContent>
         <DialogActions sx={{ justifyContent: "center" }}>
-          <Button onClick={addCatgory} color="primary">
+          <Button onClick={addNewCategory} color="primary">
             {editCategory ? "Save" : "Add"}
           </Button>
           <Button onClick={handleCloseAddCategory} color="primary">
