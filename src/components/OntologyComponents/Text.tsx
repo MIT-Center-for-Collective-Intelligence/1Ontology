@@ -144,24 +144,24 @@ const Text = ({
     return word.charAt(0).toUpperCase() + word.slice(1);
   };
 
-  // This function is responsible for editing the title of a sub-ontology.
-  // It takes an object with three parameters: parentData, newTitle, and id.
+  // This function is responsible for editing the title of a childe node.
+  // It takes an object with three parameters: parentData (parentNode), newTitle, and id.
 
   const editTitleChildNode = ({ parentData, newTitle, id }: any) => {
-    // Iterate over the types of sub-ontologies in the parentData.
+    // Iterate over the types of children in the parentData.
     for (let type in parentData.children) {
-      // Iterate over the categories within each type of sub-ontology.
+      // Iterate over the categories within each type of childe node.
       for (let category in parentData.children[type] || {}) {
         // Check if the current category has ontologies defined.
         if ((parentData.children[type][category] || []).length > 0) {
-          // Find the index of the sub-ontology with the given id within the current category.
+          // Find the index of the childe node with the given id within the current category.
           const childIdx = parentData.children[type][category].findIndex(
             (sub: any) => sub.id === id
           );
 
-          // If the sub-ontology with the specified id is found in the current category.
+          // If the childe node with the specified id is found in the current category.
           if (childIdx !== -1) {
-            // Update the title of the sub-ontology with the new title.
+            // Update the title of the childe node with the new title.
             parentData.children[type][category][childIdx].title = newTitle;
           }
         }
@@ -180,14 +180,14 @@ const Text = ({
 
     // Check if the edit mode is true
     if (editMode) {
-      // Fetch the ontology document from the database
+      // Fetch the node document from the database
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );
 
-      // Check if the ontology document exists
+      // Check if the node document exists
       if (nodeDoc.exists()) {
-        // Extract ontology data from the document
+        // Extract node data from the document
         const nodeData: any = nodeDoc.data();
         // If the field being edited is not "description" or "title"
         let previousValue = nodeData.plainText[type] || "";
@@ -197,20 +197,20 @@ const Text = ({
           // Reset the editNode state
           setEditOntology("");
 
-          // Update titles of sub-ontologies for each parent ontology
+          // Update titles of children for each parent node
           for (let parentId of currentVisibleNode?.parents || []) {
             const parentRef = doc(collection(db, NODES), parentId);
             const parentDoc = await getDoc(parentRef);
             const parentData: any = parentDoc.data();
 
-            // Call a function to edit the title of sub-ontology
+            // Call a function to edit the title of children
             editTitleChildNode({
               parentData,
               newTitle: newValue,
               id: currentVisibleNode.id,
             });
 
-            // Update the parent ontology in the database
+            // Update the parent node in the database
             updateDoc(parentRef, parentData);
           }
         }
@@ -228,7 +228,7 @@ const Text = ({
           };
         }
 
-        // Update the ontology document in the database
+        // Update the node document in the database
         await updateDoc(nodeDoc.ref, nodeData);
 
         // Update the children according to inheritance
@@ -238,10 +238,10 @@ const Text = ({
           type: "plainText",
           newValue: newValue,
           updatedNode: { ...nodeData, id: currentVisibleNode.id },
-          ancestorTitle: nodeData.title,
+          ancestorTitle: nodeData.plainText.title,
         });
 
-        // Add a lock for the edited ontology
+        // Add a lock for the edited node
         addLock(currentVisibleNode.id, type, "remove");
 
         // Record the edit action in the logs
@@ -254,7 +254,7 @@ const Text = ({
       }
       setEditMode((edit) => !edit);
     } else {
-      // If edit mode is false, add a lock for the ontology
+      // If edit mode is false, add a lock for the node
       addLock(currentVisibleNode.id, type, "add");
       setEditMode(true);
     }
