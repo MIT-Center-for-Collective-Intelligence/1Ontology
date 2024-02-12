@@ -129,7 +129,7 @@ const Ontology = () => {
   const [currentVisibleNode, setCurrentVisibleNode] = useState<any>(null);
   const [ontologyPath, setOntologyPath] = useState<INodePath[]>([]);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
-  const [treeVisualisation, setTreeVisualisation] = useState<TreeVisual>({});
+  const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
   const [editNode, setEditNode] = useState<string>("");
   const [newComment, setNewComment] = useState("");
   const [updateComment, setUpdateComment] = useState("");
@@ -265,7 +265,7 @@ const Ontology = () => {
               ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
               [category]: {
                 isCategory: true,
-                id: newId(db), // Assuming newId and db are defined elsewhere
+                id: `${node.id}${category}`, // Assuming newId and db are defined elsewhere
                 title: category,
                 specializations: getSpecializationsTree(specializations, [
                   ...path,
@@ -297,10 +297,10 @@ const Ontology = () => {
   };
 
   useEffect(() => {
-    // Filter ontologies to get only those with a defined category
+    // Filter nodes to get only those with a defined category
     const mainCategories = nodes.filter((node: any) => node.category);
 
-    // Sort main ontologies based on a predefined order
+    // Sort main nodes based on a predefined order
     mainCategories.sort((nodeA: any, nodeB: any) => {
       const order = [
         "WHAT: Activities",
@@ -312,11 +312,11 @@ const Ontology = () => {
       const nodeBTitle = nodeA.plainText.title;
       return order.indexOf(nodeATitle) - order.indexOf(nodeBTitle);
     });
-    // Generate a tree structure of specializations from the sorted main ontologies
-    let treeOfSpecialisations = getSpecializationsTree(mainCategories, []);
+    // Generate a tree structure of specializations from the sorted main nodes
+    let treeOfSpecializations = getSpecializationsTree(mainCategories, []);
 
     // Set the generated tree structure for visualization
-    setTreeVisualisation(treeOfSpecialisations);
+    setTreeVisualization(treeOfSpecializations);
   }, [nodes]);
   const updateTheUrl = (path: INodePath[]) => {
     let newHash = "";
@@ -500,11 +500,11 @@ const Ontology = () => {
   // Function to get the parent ID based on the ontology type
   const getParent = (type: string) => {
     if (type === "Evaluation") {
-      return treeVisualisation["WHY: Evaluation"].id;
+      return treeVisualization["WHY: Evaluation"].id;
     } else if (type === "Actor") {
-      return treeVisualisation["WHO: Actors"].id;
+      return treeVisualization["WHO: Actors"].id;
     } else if (type === "Process") {
-      return treeVisualisation["HOW: Processes"].id;
+      return treeVisualization["HOW: Processes"].id;
     }
   };
 
@@ -692,22 +692,27 @@ const Ontology = () => {
     [nodes, user]
   );
 
-  // Function to handle opening ontology tree
-  const onOpenOntologyTree = useCallback(
-    async (ontologyId: string, path: string[]) => {
+  // Function to handle opening node tree
+  const onOpenNodesTree = useCallback(
+    async (nodeId: string, path: string[]) => {
       // Check if user is logged in
       if (!user) return;
       //update the expanded state
       setExpandedNodes((prevExpanded: Set<string>) => {
-        prevExpanded.add(ontologyId);
-        return prevExpanded;
+        const newExpanded = new Set(prevExpanded); // Create a new set to avoid mutating the previous state
+        if (newExpanded.has(nodeId)) {
+          newExpanded.delete(nodeId); // Remove the nodeId if it exists
+        } else {
+          newExpanded.add(nodeId); // Otherwise, add it
+        }
+        return newExpanded;
       });
-      // Find the index of the ontology in the ontologies array
-      const nodeIdx = nodes.findIndex((onto: any) => onto.id === ontologyId);
+      // Find the index of the node in the ontologies array
+      const nodeIdx = nodes.findIndex((onto: any) => onto.id === nodeId);
 
-      // Check if ontology exists and has a category
+      // Check if node exists and has a category
       if (nodeIdx !== -1 && !nodes[nodeIdx].category) {
-        // Set the currently open ontology
+        // Set the currently open node
         setCurrentVisibleNode(nodes[nodeIdx]);
 
         // Record logs for the action of clicking the tree-view
@@ -733,14 +738,14 @@ const Ontology = () => {
   };
 
   // Function to retrieve main specializations from tree visualization data
-  const getMainSpecialisations = (treeVisualisation: TreeVisual) => {
+  const getMainSpecializations = (treeVisualization: TreeVisual) => {
     let mainSpecializations: MainSpecializations = {};
 
     // Loop through categories in tree visualization
-    for (let category in treeVisualisation) {
+    for (let category in treeVisualization) {
       mainSpecializations = {
         ...mainSpecializations,
-        ...treeVisualisation[category].specializations,
+        ...treeVisualization[category].specializations,
       };
     }
 
@@ -1097,14 +1102,14 @@ const Ontology = () => {
               <Box sx={{ overflow: "auto", height: "94vh" }}>
                 <TabPanel value={viewValue} index={0} sx={{ mt: "5px" }}>
                   <TreeViewSimplified
-                    treeVisualisation={treeVisualisation}
-                    onOpenOntologyTree={onOpenOntologyTree}
+                    treeVisualization={treeVisualization}
+                    onOpenNodesTree={onOpenNodesTree}
                     expandedOntologies={expandedNodes}
                   />
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
                   <DAGGraph
-                    treeVisualisation={treeVisualisation}
+                    treeVisualization={treeVisualization}
                     setExpandedOntologies={setExpandedNodes}
                     expandedOntologies={expandedNodes}
                     setDagreZoomState={setDagreZoomState}
@@ -1176,8 +1181,8 @@ const Ontology = () => {
                   setSnackbarMessage={setSnackbarMessage}
                   updateUserDoc={updateUserDoc}
                   user={user}
-                  mainSpecializations={getMainSpecialisations(
-                    treeVisualisation
+                  mainSpecializations={getMainSpecializations(
+                    treeVisualization
                   )}
                   nodes={nodes}
                   addNewNode={addNewNode}

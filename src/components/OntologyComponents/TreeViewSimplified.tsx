@@ -16,7 +16,6 @@ Here's a breakdown of the code:
 
 7. Export the `TreeViewSimplified` component: This allows the component to be used in other parts of the application.*/
 
-
 import { TreeVisual } from " @components/types/INode";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -26,15 +25,16 @@ import Typography from "@mui/material/Typography";
 import React, { useEffect, useState } from "react";
 
 type ITreeViewSimplifiedProps = {
-  onOpenOntologyTree: (ontologyId: string, path: string[]) => void;
-  treeVisualisation: TreeVisual;
+  onOpenNodesTree: (ontologyId: string, path: string[]) => void;
+  treeVisualization: TreeVisual;
   expandedOntologies: any;
 };
 const TreeViewSimplified = ({
-  treeVisualisation,
-  onOpenOntologyTree,
+  treeVisualization,
+  onOpenNodesTree,
   expandedOntologies,
 }: ITreeViewSimplifiedProps) => {
+
   return (
     <TreeView
       defaultCollapseIcon={<ExpandMoreIcon />}
@@ -45,10 +45,10 @@ const TreeViewSimplified = ({
       multiSelect
       sx={{ flexGrow: 1 }}
     >
-      {Object.keys(treeVisualisation).map((category) => (
+      {Object.keys(treeVisualization).map((category) => (
         <TreeItem
-          key={treeVisualisation[category]?.id || category}
-          nodeId={treeVisualisation[category]?.id || category}
+          key={treeVisualization[category]?.id || category}
+          nodeId={treeVisualization[category]?.id || category}
           label={
             <Box
               sx={{
@@ -60,18 +60,18 @@ const TreeViewSimplified = ({
                 mt: "9px",
               }}
               onClick={() => {
-                onOpenOntologyTree(
-                  treeVisualisation[category].id,
-                  treeVisualisation[category]?.path || []
+                onOpenNodesTree(
+                  treeVisualization[category].id,
+                  treeVisualization[category]?.path || []
                 );
               }}
             >
               <Typography
                 sx={{
-                  fontWeight: treeVisualisation[category].isCategory
+                  fontWeight: treeVisualization[category].isCategory
                     ? "bold"
                     : "",
-                  color: treeVisualisation[category].isCategory ? "orange" : "",
+                  color: treeVisualization[category].isCategory ? "orange" : "",
                 }}
               >
                 {category}
@@ -87,11 +87,11 @@ const TreeViewSimplified = ({
             mr: "7px",
           }}
         >
-          {Object.keys(treeVisualisation[category].specializations).length >
+          {Object.keys(treeVisualization[category].specializations).length >
             0 && (
             <TreeViewSimplified
-              treeVisualisation={treeVisualisation[category].specializations}
-              onOpenOntologyTree={onOpenOntologyTree}
+              treeVisualization={treeVisualization[category].specializations}
+              onOpenNodesTree={onOpenNodesTree}
               expandedOntologies={expandedOntologies}
             />
           )}

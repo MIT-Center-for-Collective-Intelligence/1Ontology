@@ -73,7 +73,7 @@ import dagreD3 from "dagre-d3";
 import { TreeVisual } from " @components/types/INode";
 
 type IDAGGraphProps = {
-  treeVisualisation: TreeVisual;
+  treeVisualization: TreeVisual;
   setExpandedOntologies: (state: Set<string>) => void;
   expandedOntologies: Set<string>;
   setDagreZoomState: any;
@@ -82,7 +82,7 @@ type IDAGGraphProps = {
 };
 
 const DAGGraph = ({
-  treeVisualisation,
+  treeVisualization,
   expandedOntologies,
   setExpandedOntologies,
   setDagreZoomState,
@@ -142,13 +142,13 @@ const onDrawOntology = (ontology: any, graph: any) => {
       rankdir: "LR",
     });
     d3.select("#graphGroup").selectAll("*").remove();
-    if (!Object.keys(treeVisualisation).length) return;
+    if (!Object.keys(treeVisualization).length) return;
     const render = new dagreD3.render();
 
     const svg = d3.select("svg");
     const svgGroup: any = svg.append("g");
 
-    for (let ontology of Object.values(treeVisualisation)) {
+    for (let ontology of Object.values(treeVisualization)) {
       onDrawOntology(ontology, graph);
     }
 
@@ -183,7 +183,7 @@ const onDrawOntology = (ontology: any, graph: any) => {
     return () => {
       d3.select("#graphGroup").selectAll("*").remove();
     };
-  }, [treeVisualisation, expandedOntologies]);
+  }, [treeVisualization, expandedOntologies]);
 
   return (
     <>
