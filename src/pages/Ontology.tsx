@@ -150,6 +150,10 @@ const Ontology = () => {
 
   const columnResizerRef = useRef<any>();
 
+  //last interaction date from the user
+  const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
+    new Date(Date.now())
+  );
   useEffect(() => {
     if (!db) return;
     const q = query(collection(db, USERS));
@@ -1070,6 +1074,36 @@ const Ontology = () => {
     }
   }, [rightPanelVisible, user]);
 
+  useEffect(() => {
+    const handleUserActivity = () => {
+      setLastInteractionDate(new Date(Date.now()));
+    };
+
+    window.addEventListener("mousemove", handleUserActivity);
+    window.addEventListener("keydown", handleUserActivity);
+
+    return () => {
+      window.removeEventListener("mousemove", handleUserActivity);
+      window.removeEventListener("keydown", handleUserActivity);
+    };
+  }, []);
+
+  useEffect(() => {
+    const checkIfDifferentDay = () => {
+      const today = new Date();
+      if (
+        today.getDate() !== lastInteractionDate.getDate() ||
+        today.getMonth() !== lastInteractionDate.getMonth() ||
+        today.getFullYear() !== lastInteractionDate.getFullYear()
+      ) {
+        window.location.reload();
+      }
+    };
+
+    const intervalId = setInterval(checkIfDifferentDay, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [lastInteractionDate]);
   return (
     <Box>
       {nodes.length > 0 ? (
