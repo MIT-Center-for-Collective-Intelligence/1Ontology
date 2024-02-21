@@ -10,7 +10,7 @@ export type IChildNode = {
   new?: boolean;
 };
 
-export type ISubOntologyCategory = {
+export type IChildCategory = {
   [category: string]: { id: string; title: string }[];
 };
 
@@ -69,10 +69,10 @@ export type IActivity = INodeCommon & {
     notes: string;
   };
   children: {
-    Actor: ISubOntologyCategory;
-    Process: ISubOntologyCategory;
-    Specializations: ISubOntologyCategory;
-    "Evaluation Dimension": ISubOntologyCategory;
+    Actor: IChildCategory;
+    Process: IChildCategory;
+    Specializations: IChildCategory;
+    "Evaluation Dimension": IChildCategory;
   };
 };
 
@@ -83,7 +83,7 @@ export type IActor = INodeCommon & {
     notes: string;
   };
   children: {
-    Specializations: ISubOntologyCategory;
+    Specializations: IChildCategory;
   };
 };
 
@@ -96,8 +96,8 @@ export type IProcess = INodeCommon & {
     notes: string;
   };
   children: {
-    Role: ISubOntologyCategory;
-    Specializations: ISubOntologyCategory;
+    Role: IChildCategory;
+    Specializations: IChildCategory;
   };
 };
 
@@ -110,7 +110,7 @@ export type IEvaluation = INodeCommon & {
     notes: string;
   };
   children: {
-    Specializations: ISubOntologyCategory;
+    Specializations: IChildCategory;
   };
 };
 
@@ -122,9 +122,9 @@ export type IRole = INodeCommon & {
     notes: string;
   };
   children: {
-    Specializations: ISubOntologyCategory;
-    Incentive: ISubOntologyCategory;
-    Actor: ISubOntologyCategory;
+    Specializations: IChildCategory;
+    Incentive: IChildCategory;
+    Actor: IChildCategory;
   };
 };
 
@@ -135,9 +135,9 @@ export type IIncentive = INodeCommon & {
     notes: string;
   };
   children: {
-    "Evaluation Dimension": ISubOntologyCategory;
-    Specializations: ISubOntologyCategory;
-    Reward: ISubOntologyCategory;
+    "Evaluation Dimension": IChildCategory;
+    Specializations: IChildCategory;
+    Reward: IChildCategory;
   };
 };
 
@@ -147,7 +147,7 @@ export type IReward = INodeCommon & {
     Units: string;
   };
   children: {
-    Specializations: ISubOntologyCategory;
+    Specializations: IChildCategory;
   };
 };
 export type IGroup = INodeCommon & {
@@ -159,11 +159,11 @@ export type IGroup = INodeCommon & {
     notes: string;
   };
   children: {
-    Specializations: ISubOntologyCategory;
-    Individual: ISubOntologyCategory;
+    Specializations: IChildCategory;
+    Individual: IChildCategory;
   };
 };
-export type IUserOntology = {
+export type IUserNode = {
   id: string;
   uname: string;
   node: string;

@@ -1,5 +1,5 @@
 /* 
-The `Text` component is a React component designed to handle the display and editing of text fields within a sub-ontology node in a Firebase Firestore database. It provides functionality for viewing text in markdown format, editing text fields, saving changes, and handling inheritance of text fields from parent nodes. Additionally, it includes features for locking fields to prevent concurrent edits and logging changes for audit purposes.
+The `Text` component is a React component designed to handle the display and editing of text fields within a children node in a Firebase Firestore database. It provides functionality for viewing text in markdown format, editing text fields, saving changes, and handling inheritance of text fields from parent nodes. Additionally, it includes features for locking fields to prevent concurrent edits and logging changes for audit purposes.
 
 ## Props
 
@@ -11,12 +11,12 @@ The component accepts the following props:
 - `setSnackbarMessage`: A function to display a message in a snackbar/notification.
 - `text`: The text content to be displayed or edited.
 - `editNode`: An optional string representing the ID of the node being edited.
-- `setEditOntology`: A function to update the state of the ontology being edited.
+- `setEditOntology`: A function to update the state of the node being edited.
 - `lockedNodeFields`: An object containing information about which fields are locked and by whom.
 - `addLock`: A function to add or remove a lock on a node field.
 - `user`: An object representing the current user.
 - `recordLogs`: A function to record actions taken by the user for logging purposes.
-- `deleteNode`: An optional function to delete the current sub-ontology.
+- `deleteNode`: An optional function to delete the current children.
 - `updateInheritance`: A function to update the inheritance of text fields for child nodes.
 
 ## State
@@ -50,7 +50,7 @@ Selects the text in the target element if the type is 'title' and the current no
 
 ### `handleDeleteOntology()`
 
-Calls the `deleteNode` function to delete the current sub-ontology.
+Calls the `deleteNode` function to delete the current children.
 
 ### `onCancelTextChange()`
 
@@ -65,7 +65,7 @@ The component renders the following:
 - Edit and Cancel buttons to toggle edit mode and save or cancel changes.
 - A `TextField` for editing the text when in edit mode.
 - A `MarkdownRender` component to display the text in markdown format when not in edit mode.
-- A Delete button to delete the ontology if the type is 'title' and the node is not locked.
+- A Delete button to delete the node if the type is 'title' and the node is not locked.
 
 ## Usage
 
@@ -95,7 +95,7 @@ type ISubOntologyProps = {
   setSnackbarMessage: (message: any) => void;
   text: string;
   editNode?: string | null;
-  setEditOntology: (state: string) => void;
+  setEditNode: (state: string) => void;
   lockedNodeFields: {
     [field: string]: {
       id: string;
@@ -124,7 +124,7 @@ const Text = ({
   currentVisibleNode,
   setCurrentVisibleNode,
   editNode = null,
-  setEditOntology,
+  setEditNode,
   lockedNodeFields,
   addLock,
   user,
@@ -195,7 +195,7 @@ const Text = ({
         // If the field being edited is the "title"
         if (type === "title") {
           // Reset the editNode state
-          setEditOntology("");
+          setEditNode("");
 
           // Update titles of children for each parent node
           for (let parentId of currentVisibleNode?.parents || []) {
@@ -268,16 +268,16 @@ const Text = ({
 
   // Function to handle focus events
   const handleFocus = (event: any) => {
-    // Check if the type is "title" and the current ontology being edited matches the open ontology
+    // Check if the type is "title" and the current node being edited matches the open node
     if (type === "title" && editNode === currentVisibleNode.id) {
       // If conditions are met, select the text in the target element
       event.target.select();
     }
   };
 
-  // Function to handle the deletion of an ontology
+  // Function to handle the deletion of an node
   const handleDeleteOntology = () => {
-    // Call the function to delete the editable sub-ontology
+    // Call the function to delete the editable children
     deleteNode();
   };
   const onCancelTextChange = () => {

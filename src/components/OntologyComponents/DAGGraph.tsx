@@ -12,7 +12,7 @@ The component accepts the following props:
 - `expandedOntologies`: A `Set` containing the IDs of ontologies that are currently expanded.
 - `setDagreZoomState`: A function to update the zoom state of the DAG.
 - `dagreZoomState`: The current zoom state of the DAG.
-- `onOpenOntologyTree`: A function that is called when a node is clicked, with the ontology ID and path as arguments.
+- `onOpenOntologyTree`: A function that is called when a node is clicked, with the node ID and path as arguments.
 
 ## Usage
 
@@ -74,68 +74,79 @@ import { TreeVisual } from " @components/types/INode";
 
 type IDAGGraphProps = {
   treeVisualization: TreeVisual;
-  setExpandedOntologies: (state: Set<string>) => void;
-  expandedOntologies: Set<string>;
+  setExpandedNodes: (state: Set<string>) => void;
+  expandedNodes: Set<string>;
   setDagreZoomState: any;
   dagreZoomState: any;
-  onOpenOntologyDagre: (ontologyId: string) => void;
+  onOpenNodeDagre: (ontologyId: string) => void;
+  currentVisibleNode: any;
 };
 
 const DAGGraph = ({
   treeVisualization,
-  expandedOntologies,
-  setExpandedOntologies,
+  expandedNodes,
+  setExpandedNodes,
   setDagreZoomState,
   dagreZoomState,
-  onOpenOntologyDagre,
+  onOpenNodeDagre,
+  currentVisibleNode,
 }: IDAGGraphProps) => {
   const svgRef = useRef(null);
 
-  const handleNodeClick = (ontologyId: string) => {
-    onOpenOntologyDagre(ontologyId);
-    if (expandedOntologies.has(ontologyId)) {
-      expandedOntologies.delete(ontologyId);
+  const handleNodeClick = (nodeId: string) => {
+    onOpenNodeDagre(nodeId);
+    if (expandedNodes.has(nodeId)) {
+      expandedNodes.delete(nodeId);
     } else {
-      expandedOntologies.add(ontologyId);
+      expandedNodes.add(nodeId);
     }
-    setExpandedOntologies(new Set(expandedOntologies));
+    setExpandedNodes(new Set(expandedNodes));
   };
+  console.log(currentVisibleNode);
+  // This function is responsible for drawing nodes on a graph based on the provided node data.
+  // It takes an node object and a graph object as parameters.
+  const onDrawNode = (node: any, graph: any) => {
+    // Extract the nodeId from the node or set it as an empty string if not available.
+    const nodeId = node?.id || "";
 
-// This function is responsible for drawing ontologies on a graph based on the provided ontology data.
-// It takes an ontology object and a graph object as parameters.
-const onDrawOntology = (ontology: any, graph: any) => {
-  // Extract the nodeId from the ontology or set it as an empty string if not available.
-  const nodeId = ontology?.id || "";
-
-  // Check if the graph already has a node with the current nodeId.
-  if (!graph.hasNode(nodeId)) {
-    // If the node doesn't exist, add it to the graph with specified properties.
-    graph.setNode(nodeId, {
-      label: ontology.title, // Use ontology title as the label for the node.
-      style: `fill: ${ontology.isCategory ? "orange" : "white"}; stroke: black; stroke-width: 2px; cursor: pointer;`, // Set node style based on ontology category.
-      labelStyle: "fill: black; cursor: pointer;", // Set style for the node label.
-    });
-  }
-
-  // Check if the current ontology node is expanded (based on the global set of expandedOntologies).
-  if (expandedOntologies.has(nodeId)) {
-    // If expanded, iterate through sub-ontologies and draw edges connecting them to the current node.
-    const children: any = Object.values(ontology.specializations || {});
-    for (let subOntology of children) {
-      // Recursively call the onDrawOntology function for each sub-ontology.
-      onDrawOntology(subOntology, graph);
-
-      // Add an edge between the current node and the sub-ontology node with specified properties.
-      graph.setEdge(nodeId, subOntology.id, {
-        curve: d3.curveBasis, // Use a B-spline curve for the edge.
-        style: "stroke: orange; stroke-opacity: 1; fill: none;", // Set style for the edge.
-        arrowheadStyle: "fill: orange", // Set style for the arrowhead.
-        minlen: 2, // Set minimum length for the edge.
+    // Check if the graph already has a node with the current nodeId.
+    if (!graph.hasNode(nodeId)) {
+      // If the node doesn't exist, add it to the graph with specified properties.
+      graph.setNode(nodeId, {
+        label: node.title, // Use node title as the label for the node.
+        style: `fill: ${
+          currentVisibleNode?.id === nodeId
+            ? "green"
+            : node.isCategory
+            ? "orange"
+            : "white"
+        }; stroke: ${
+          currentVisibleNode?.id === nodeId ? "white" : "black"
+        }; stroke-width: 2px; cursor: pointer;`, // Set node style based on node category.
+        labelStyle: `fill: ${
+          currentVisibleNode?.id === nodeId ? "white" : "black"
+        }; cursor: pointer;`, // Set style for the node label.
       });
     }
-  }
-};
 
+    // Check if the current node  is expanded (based on the global set of expandedOntologies).
+    if (expandedNodes.has(nodeId)) {
+      // If expanded, iterate through sub-ontologies and draw edges connecting them to the current node.
+      const children: any = Object.values(node.specializations || {});
+      for (let childNode of children) {
+        // Recursively call the onDrawNode function for each child-node.
+        onDrawNode(childNode, graph);
+
+        // Add an edge between the current node and the child-node  with specified properties.
+        graph.setEdge(nodeId, childNode.id, {
+          curve: d3.curveBasis, // Use a B-spline curve for the edge.
+          style: "stroke: orange; stroke-opacity: 1; fill: none;", // Set style for the edge.
+          arrowheadStyle: "fill: orange", // Set style for the arrowhead.
+          minlen: 2, // Set minimum length for the edge.
+        });
+      }
+    }
+  };
 
   useEffect(() => {
     const graph: any = new dagreD3.graphlib.Graph().setGraph({
@@ -148,8 +159,8 @@ const onDrawOntology = (ontology: any, graph: any) => {
     const svg = d3.select("svg");
     const svgGroup: any = svg.append("g");
 
-    for (let ontology of Object.values(treeVisualization)) {
-      onDrawOntology(ontology, graph);
+    for (let node of Object.values(treeVisualization)) {
+      onDrawNode(node, graph);
     }
 
     render(svgGroup, graph);
@@ -183,7 +194,7 @@ const onDrawOntology = (ontology: any, graph: any) => {
     return () => {
       d3.select("#graphGroup").selectAll("*").remove();
     };
-  }, [treeVisualization, expandedOntologies]);
+  }, [treeVisualization, expandedNodes]);
 
   return (
     <>
