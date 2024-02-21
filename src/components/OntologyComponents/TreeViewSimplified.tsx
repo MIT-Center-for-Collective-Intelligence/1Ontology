@@ -16,7 +16,7 @@ Here's a breakdown of the code:
 
 7. Export the `TreeViewSimplified` component: This allows the component to be used in other parts of the application.*/
 
-import { TreeVisual } from " @components/types/INode";
+import { INodePath, TreeVisual } from " @components/types/INode";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { TreeItem, TreeView } from "@mui/lab";
@@ -25,7 +25,7 @@ import Typography from "@mui/material/Typography";
 import React, { useEffect, useState } from "react";
 
 type ITreeViewSimplifiedProps = {
-  onOpenNodesTree: (ontologyId: string, path: string[]) => void;
+  onOpenNodesTree: (nodeId: string) => void;
   treeVisualization: TreeVisual;
   expandedNodes: any;
   currentVisibleNode: any;
@@ -36,6 +36,7 @@ const TreeViewSimplified = ({
   expandedNodes,
   currentVisibleNode,
 }: ITreeViewSimplifiedProps) => {
+
   return (
     <TreeView
       defaultCollapseIcon={<ExpandMoreIcon />}
@@ -56,15 +57,16 @@ const TreeViewSimplified = ({
                 display: "flex",
                 alignItems: "center",
                 height: "30px",
-                p: "17px",
-                pl: "0px",
-                mt: "9px",
+                p: "25px",
+                pl: "9px",
+                borderRadius: "15px",
+                backgroundColor:
+                  currentVisibleNode?.id === treeVisualization[category].id
+                    ? "#87D37C"
+                    : "",
               }}
               onClick={() => {
-                onOpenNodesTree(
-                  treeVisualization[category].id,
-                  treeVisualization[category]?.path || []
-                );
+                onOpenNodesTree(treeVisualization[category].id);
               }}
             >
               <Typography
@@ -80,7 +82,7 @@ const TreeViewSimplified = ({
             </Box>
           }
           sx={{
-            borderRadius: "8px",
+            borderRadius: "15px",
             // border: "1px solid #ccc",
             backgroundColor: "transparent",
             mt: "8px",

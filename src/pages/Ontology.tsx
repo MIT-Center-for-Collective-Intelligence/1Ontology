@@ -147,7 +147,9 @@ const Ontology = () => {
     user?.rightPanel
   );
   const [users, setUsers] = useState<{ [key: string]: string }>({});
-
+  const [eachOntologyPath, setEachOntologyPath] = useState<{
+    [key: string]: any;
+  }>({});
   const columnResizerRef = useRef<any>();
 
   //last interaction date from the user
@@ -188,36 +190,6 @@ const Ontology = () => {
     }
   }, [user, emailVerified]);
 
-  /**
-   * Constructs a path based on the provided array of node IDs.
-   * @param newPath - An array of node IDs representing the desired path.
-   * @returns An array containing objects with 'id' and 'title' properties, representing the ontology path.
-   */
-  const getPath = (newPath: string[]) => {
-    // Initialize an empty array to store the constructed ontology path
-    const ontologyPath = [];
-
-    // Iterate through each node ID in the provided array
-    for (let path of newPath) {
-      // Find the index of the node with the current ID in the 'ontologies' array
-      const nodeIdx = nodes.findIndex((onto: any) => onto.id === path);
-
-      // Check if the node with the current ID was found
-      if (nodeIdx !== -1) {
-        // If found, add an object to the ontologyPath array with 'id' and 'title' properties
-        ontologyPath.push({
-          id: path,
-          title: nodes[nodeIdx].plainText.title,
-          category: nodes[nodeIdx].category,
-        });
-      }
-      // If not found, the node with the current ID is skipped in the final path
-    }
-
-    // Return the constructed ontology path
-    return ontologyPath;
-  };
-
   // Function to generate a tree structure of specializations based on main nodes
   const getSpecializationsTree = (_nodes: any, path: any) => {
     // Object to store the main specializations tree
@@ -227,7 +199,7 @@ const Ontology = () => {
       const nodeTitle = node.plainText.title;
       // Create an entry for the current node in the main specializations tree
       newSpecializationsTree[nodeTitle] = {
-        id: node.id,
+        id: node.category ? `${node.id}-${nodeTitle.trim()}` : node.id,
         path: [...path, node.id],
         isCategory: !!node.category,
         title: nodeTitle,
@@ -236,7 +208,7 @@ const Ontology = () => {
 
       // Iterate through each category in the Specializations child-nodes
       for (let category in node?.children?.Specializations) {
-        // Filter ontologies based on the current category
+        // Filter nodes based on the current category
         const specializations =
           nodes.filter((onto: any) => {
             const arrayNodes = node?.children?.Specializations[category].map(
@@ -249,7 +221,7 @@ const Ontology = () => {
         if (category === "main") {
           // If main, update the main specializations entry with recursive call
           newSpecializationsTree[nodeTitle] = {
-            id: node.id,
+            id: node.category ? `${node.id}-${nodeTitle.trim()}` : node.id,
             path: [...path, node.id],
             isCategory: !!node.category,
             title: nodeTitle,
@@ -269,7 +241,7 @@ const Ontology = () => {
               ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
               [category]: {
                 isCategory: true,
-                id: `${node.id}${category}`, // Assuming newId and db are defined elsewhere
+                id: `${node.id}-${category.trim()}`, // Assuming newId and db are defined elsewhere
                 title: category,
                 specializations: getSpecializationsTree(specializations, [
                   ...path,
@@ -334,7 +306,9 @@ const Ontology = () => {
       // Check if there is a hash in the URL
       if (window.location.hash) {
         // Call updateUserDoc with the hash split into an array
-        updateUserDoc(window.location.hash.split("#"));
+        const visibleNodeId = window.location.hash.split("#").reverse()[0];
+
+        updateUserDoc(eachOntologyPath[visibleNodeId]);
       }
     };
 
@@ -348,8 +322,21 @@ const Ontology = () => {
     return () => {
       window.removeEventListener("hashchange", handleHashChange);
     };
-  }, []);
+  }, [eachOntologyPath]);
 
+  const initializeExpanded = (ontologyPath: INodePath[]) => {
+    const newExpandedSet: Set<string> = new Set();
+    for (let node of ontologyPath) {
+      newExpandedSet.add(node.id);
+    }
+    setExpandedNodes(newExpandedSet);
+  };
+  useEffect(() => {
+    setViewValue(1);
+    setTimeout(() => {
+      setViewValue(0);
+    }, 1000);
+  }, [user]);
   useEffect(() => {
     // Check if user or nodes are not available
     if (!user) return;
@@ -370,16 +357,18 @@ const Ontology = () => {
       const dataChange = docChange.doc.data();
 
       // Set the ontologyPath in the component state
-      setOntologyPath(getPath(dataChange?.ontologyPath || []));
+      setOntologyPath(dataChange?.ontologyPath || []);
 
+      //update the expanded nodes state
+      initializeExpanded(dataChange?.ontologyPath || []);
       // Update the URL based on the ontologyPath
-      updateTheUrl(getPath(dataChange?.ontologyPath || []));
+      updateTheUrl(dataChange?.ontologyPath || []);
 
       // Get the last ontology in the ontologyPath or an empty string if none
-      const lastNode = dataChange?.ontologyPath?.reverse()[0] || "";
+      const lastNode = [...dataChange?.ontologyPath]?.reverse()[0] || "";
 
       // Find the index of the last ontology in the nodes array
-      const nodeIdx = nodes.findIndex((node: any) => node.id === lastNode);
+      const nodeIdx = nodes.findIndex((node: any) => node.id === lastNode.id);
 
       // If the node is found, set it as the open node in the component state
       if (nodes[nodeIdx]) setCurrentVisibleNode(nodes[nodeIdx]);
@@ -553,7 +542,7 @@ const Ontology = () => {
           _ontologyPath.push(path);
         }
 
-        await updateUserDoc([..._ontologyPath.map((onto) => onto.id)]);
+        await updateUserDoc([..._ontologyPath]);
       } catch (error) {
         console.error(error);
       }
@@ -562,7 +551,7 @@ const Ontology = () => {
   );
 
   // Function to update the user document with the current ontology path
-  const updateUserDoc = async (ontologyPath: string[]) => {
+  const updateUserDoc = async (ontologyPath: INodePath[]) => {
     if (!user) return;
 
     // Query to get the user document
@@ -574,14 +563,17 @@ const Ontology = () => {
     const userDoc = userDocs.docs[0];
 
     // Update the user document with the ontology path
-    await updateDoc(userDoc.ref, { ontologyPath });
 
-    // Record logs if ontology path is not empty
-    if (ontologyPath.length > 0) {
-      await recordLogs({
-        action: "Opened a page",
-        page: ontologyPath[ontologyPath.length - 1],
-      });
+    if (ontologyPath) {
+      await updateDoc(userDoc.ref, { ontologyPath });
+
+      // Record logs if ontology path is not empty
+      if (ontologyPath.length > 0) {
+        await recordLogs({
+          action: "Opened a page",
+          page: ontologyPath[ontologyPath.length - 1],
+        });
+      }
     }
   };
 
@@ -651,7 +643,7 @@ const Ontology = () => {
       await updateDoc(nodeRef, { ...parent, updatedAt: new Date() });
     }
   };
-  console.log(expandedNodes);
+
   // Define a callback function to handle the opening of the ontology DAGRE view.
   const onOpenNodeDagre = useCallback(
     async (nodeId: string) => {
@@ -660,16 +652,6 @@ const Ontology = () => {
 
       // Find the index of the node with the specified ID in the ontologies array.
       const nodeIdx = nodes.findIndex((onto: any) => onto.id === nodeId);
-
-      // Filter out main ontologies (ontologies with a category).
-      const mainNodes = nodes.filter((node: any) => node.category);
-
-      // Initialize an object to store the path of each node in the DAGRE view.
-      let eachOntologyPath = findOntologyPath({
-        mainNodes,
-        path: [],
-        eachOntologyPath: {},
-      });
 
       // Check if the node with the specified ID exists and is not a main node (no category).
       if (nodeIdx !== -1 && !nodes[nodeIdx].category) {
@@ -683,7 +665,15 @@ const Ontology = () => {
         });
 
         // Update the user document with the ontology path.
-        await updateUserDoc([...(eachOntologyPath[nodeId] || [nodeId])]);
+        await updateUserDoc([
+          ...(eachOntologyPath[nodeId] || [
+            {
+              id: nodeId,
+              title: nodes[nodeIdx].plainText.title,
+              category: nodes[nodeIdx].category,
+            },
+          ]),
+        ]);
       }
     },
     // Dependency array includes ontologies and user, ensuring the function re-renders when these values change.
@@ -692,8 +682,9 @@ const Ontology = () => {
 
   // Function to handle opening node tree
   const onOpenNodesTree = useCallback(
-    async (nodeId: string, path: string[]) => {
+    async (nodeId: string) => {
       // Check if user is logged in
+
       if (!user) return;
       //update the expanded state
       setExpandedNodes((prevExpanded: Set<string>) => {
@@ -720,10 +711,11 @@ const Ontology = () => {
         });
 
         // Update user document with the path
+        const path = eachOntologyPath[nodeId] || [];
         await updateUserDoc(path);
       }
     },
-    [nodes, user]
+    [nodes, user, eachOntologyPath]
   );
 
   // Function to order comments based on their creation timestamp
@@ -920,26 +912,53 @@ const Ontology = () => {
   const findOntologyPath = useCallback(
     ({ mainNodes, path, eachOntologyPath }: any) => {
       // Loop through each main node
+
       for (let node of mainNodes) {
         // Update the path for the current node
 
-        eachOntologyPath[node.id] = [...path, node.id];
+        eachOntologyPath[node.id] = [
+          ...path,
+          {
+            title: node.plainText.title,
+            id: !!node.category
+              ? `${node.id}-${node.plainText.title.trim()}`
+              : node.id,
+            category: !!node.category,
+          },
+        ];
 
         // Loop through categories in the children of the current node
+
         for (let category in node?.children?.Specializations) {
           // Filter nodes based on their inclusion in the Specializations of the current category
-          const specializations =
-            nodes.filter((onto: any) => {
-              const arrayNodes = node?.children?.Specializations[category].map(
-                (n: any) => n.id
-              );
-              return arrayNodes.includes(onto.id);
+          const childrenIds = node?.children?.Specializations[category].map(
+            (n: any) => n.id
+          );
+          const children =
+            nodes.filter((node: any) => {
+              return childrenIds.includes(node.id);
             }) || [];
 
+          const subPath = [...path];
+
+          subPath.push({
+            title: node.plainText.title,
+            id: !!node.category
+              ? `${node.id}-${node.plainText.title.trim()}`
+              : node.id,
+            category: !!node.category,
+          });
+          if (category !== "main") {
+            subPath.push({
+              title: category,
+              id: `${node.id}-${category.trim()}`,
+              category: true,
+            });
+          }
           // Recursively call the findOntologyPath function for the filtered specializations
           eachOntologyPath = findOntologyPath({
-            mainNodes: specializations,
-            path: [...path, node.id],
+            mainNodes: children,
+            path: [...subPath],
             eachOntologyPath,
           });
         }
@@ -951,6 +970,18 @@ const Ontology = () => {
     [nodes]
   );
 
+  useEffect(() => {
+    if (nodes.length > 0) {
+      const mainNodes = nodes.filter((node: any) => node.category);
+      // Initialize eachOntologyPath with an empty object and find the ontology path
+      let eachOntologyPath = findOntologyPath({
+        mainNodes,
+        path: [],
+        eachOntologyPath: {},
+      });
+      setEachOntologyPath(eachOntologyPath);
+    }
+  }, [nodes]);
   // This function is called when a search result node is clicked.
   const openSearchedNode = (node: any) => {
     try {
@@ -963,18 +994,12 @@ const Ontology = () => {
         clicked: node.id,
       });
 
-      // Filter main nodes based on the presence of a category
-      const mainNodes = nodes.filter((node: any) => node.category);
-
-      // Initialize eachOntologyPath with an empty object and find the ontology path
-      let eachOntologyPath = findOntologyPath({
-        mainNodes,
-        path: [],
-        eachOntologyPath: {},
-      });
-
       // Update the user document with the ontology path
-      updateUserDoc([...(eachOntologyPath[node.id] || [node.id])]);
+      updateUserDoc([
+        ...(eachOntologyPath[node.id] || [
+          { title: node.title, id: node.id, category: node.category },
+        ]),
+      ]);
     } catch (error) {
       console.error(error);
     }
@@ -1098,6 +1123,12 @@ const Ontology = () => {
 
     return () => clearInterval(intervalId);
   }, [lastInteractionDate]);
+
+  const navigateToNode = async (nodeId: string) => {
+    updateUserDoc(eachOntologyPath[nodeId] || []);
+    const node = nodes.find((n) => n.id === nodeId);
+  };
+
   return (
     <Box>
       {nodes.length > 0 ? (
@@ -1193,6 +1224,7 @@ const Ontology = () => {
                       ":hover": {
                         cursor: !path.category ? "pointer" : "",
                       },
+                      color: path.category ? "grey" : "",
                     }}
                   >
                     {path.title.split(" ").splice(0, 3).join(" ") +
@@ -1222,6 +1254,8 @@ const Ontology = () => {
                   lockedNodeFields={lockedNodeFields}
                   recordLogs={recordLogs}
                   updateInheritance={updateInheritance}
+                  navigateToNode={navigateToNode}
+                  eachOntologyPath={eachOntologyPath}
                 />
               )}
             </Box>
