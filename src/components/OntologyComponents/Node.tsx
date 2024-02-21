@@ -140,7 +140,7 @@ type INodeProps = {
   setOntologyPath: (state: INodePath[]) => void;
   ontologyPath: INodePath[];
   setSnackbarMessage: (message: string) => void;
-  updateUserDoc: (ids: string[]) => void;
+  updateUserDoc: (ontologyPath: INodePath[]) => void;
   user: any;
   mainSpecializations: MainSpecializations;
   nodes: INode[];
@@ -167,6 +167,8 @@ type INodeProps = {
     newValue: any;
     ancestorTitle: string;
   }) => void;
+  navigateToNode: (nodeId: string) => void;
+  eachOntologyPath: { [key: string]: any };
 };
 
 const ORDER_CHILDREN: { [key: string]: string[] } = {
@@ -239,6 +241,8 @@ const Node = ({
   user,
   recordLogs,
   updateInheritance,
+  navigateToNode,
+  eachOntologyPath,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -286,13 +290,15 @@ const Node = ({
     });
   };
 
-  const cloneNode = async (nodeId: string): Promise<string | undefined> => {
+  const cloneNode = async (
+    nodeId: string
+  ): Promise<{ newCloneId: string; newCloneTitle: string }> => {
     try {
       // Retrieve the document of the original node from Firestore.
       const parentNodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
 
       // If the node document doesn't exist, return early.
-      if (!parentNodeDoc.exists()) return undefined;
+      if (!parentNodeDoc.exists()) return { newCloneId: "", newCloneTitle: "" };
 
       // Extract data from the original node document.
       const parentNodeData = parentNodeDoc.data();
@@ -340,10 +346,22 @@ const Node = ({
       await setDoc(newNodeRef, { ...newNode, createdAt: new Date() });
 
       // Return the ID of the newly created node.
-      return newNodeRef.id;
+      return {
+        newCloneId: newNodeRef.id,
+        newCloneTitle: newNode.plainText.title,
+      };
     } catch (error) {
       // Log any errors that occur during the cloning process.
+      confirmIt(
+        "There was an error while creating the new node, please try again",
+        "OK",
+        ""
+      );
       console.error(error);
+      return {
+        newCloneId: "",
+        newCloneTitle: "",
+      };
     }
   };
 
@@ -398,7 +416,7 @@ const Node = ({
   };
 
   // Function to add a new specialization to the node
-  const addNewSpecialisation = async (type: string, category: string) => {
+  const addNewSpecialization = async (type: string, category: string) => {
     try {
       // Get a reference to the parent node document
       const nodeParentRef = doc(collection(db, NODES), currentVisibleNode.id);
@@ -468,8 +486,8 @@ const Node = ({
 
       // Update the user document with the path
       updateUserDoc([
-        ...ontologyPath.map((path: any) => path.id),
-        newNodeRef.id,
+        ...ontologyPath,
+        { id: newNodeRef.id, title: newNode.plainText.title, category: false },
       ]);
       // Add the new node to the database
       addNewNode({ id: newNodeRef.id, newNode });
@@ -492,7 +510,7 @@ const Node = ({
       ).map((onto: any) => onto.id);
       setCheckedSpecializations(specializations || []);
     } else {
-      await addNewSpecialisation(type, category);
+      await addNewSpecialization(type, category);
     }
   };
 
@@ -504,13 +522,16 @@ const Node = ({
     specializations: MainSpecializations;
   }) => {
     // Call the asynchronous function to clone the node with the given ID.
-    const newCloneId: string | undefined = await cloneNode(node.id);
-    const newPath = [...node.path];
+    const {
+      newCloneId,
+      newCloneTitle,
+    }: { newCloneId: string; newCloneTitle: string } = await cloneNode(node.id);
+    const newPath = eachOntologyPath[node.id];
     if (newCloneId) {
-      newPath.push(newCloneId);
+      // Update the user document by appending the new clone's ID to the node path.
+      newPath.push({ id: newCloneId, title: newCloneTitle, category: false });
+      updateUserDoc([...newPath]);
     }
-    // Update the user document by appending the new clone's ID to the node path.
-    updateUserDoc([...newPath]);
 
     // Close the modal or perform any necessary cleanup.
     handleClose();
@@ -690,7 +711,7 @@ const Node = ({
 
   const handleNewSpecialization = async () => {
     if (type === "Specializations") {
-      await addNewSpecialisation(type, selectedCategory);
+      await addNewSpecialization(type, selectedCategory);
       handleClose();
     } else {
       await handleCloning(mainSpecializations[type]);
@@ -931,9 +952,7 @@ const Node = ({
           }
 
           // Update the user document by removing the deleted node's ID
-          updateUserDoc([
-            ...ontologyPath.slice(0, -1).map((path: any) => path.id),
-          ]);
+          updateUserDoc([...ontologyPath.slice(0, -1)]);
 
           // Mark the node as deleted by updating its document
           await updateDoc(nodeDoc.ref, { deleted: true });
@@ -1309,6 +1328,9 @@ const Node = ({
                                                           <DragIndicatorIcon />
                                                         </ListItemIcon>
                                                         <ChildNode
+                                                          navigateToNode={
+                                                            navigateToNode
+                                                          }
                                                           recordLogs={
                                                             recordLogs
                                                           }
@@ -1328,12 +1350,6 @@ const Node = ({
                                                           child={child}
                                                           type={type}
                                                           category={category}
-                                                          ontologyPath={
-                                                            ontologyPath
-                                                          }
-                                                          updateUserDoc={
-                                                            updateUserDoc
-                                                          }
                                                           updateInheritance={
                                                             updateInheritance
                                                           }
@@ -1416,6 +1432,7 @@ const Node = ({
                                     return (
                                       <li key={child.id}>
                                         <ChildNode
+                                          navigateToNode={navigateToNode}
                                           recordLogs={recordLogs}
                                           setSnackbarMessage={
                                             setSnackbarMessage
@@ -1431,8 +1448,6 @@ const Node = ({
                                           child={child}
                                           type={type}
                                           category={category}
-                                          ontologyPath={ontologyPath}
-                                          updateUserDoc={updateUserDoc}
                                           updateInheritance={updateInheritance}
                                         />
                                       </li>

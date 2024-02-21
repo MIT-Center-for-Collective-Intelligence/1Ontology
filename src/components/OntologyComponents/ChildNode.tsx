@@ -21,9 +21,6 @@ The component accepts the following props:
 
 ## Functions
 
-### linkNavigation
-
-This function is called when the user clicks on the child node's link. It updates the user's current ontology path by appending the child node's ID to the existing path and then calls `updateUserDoc` to reflect this change.
 
 ### removeChildNode
 
@@ -53,7 +50,6 @@ The `ChildNode` component is used within a larger application that manages an on
   setSnackbarMessage={handleSetSnackbarMessage}
   category="SomeCategory"
   ontologyPath={currentPath}
-  updateUserDoc={handleUpdateUserDoc}
   recordLogs={handleRecordLogs}
   updateInheritance={handleUpdateInheritance}
 />
@@ -89,8 +85,6 @@ type ISubOntologyProps = {
   setCurrentVisibleNode: (currentVisibleNode: any) => void;
   setSnackbarMessage: (message: any) => void;
   category: string;
-  ontologyPath: INodePath[];
-  updateUserDoc: (ontologyPath: string[]) => void;
   recordLogs: (logs: any) => void;
   updateInheritance: (parameters: {
     updatedNode: INode;
@@ -99,6 +93,7 @@ type ISubOntologyProps = {
     newValue: any;
     ancestorTitle: string;
   }) => void;
+  navigateToNode: (nodeID: string) => void;
 };
 
 const ChildNode = ({
@@ -107,19 +102,15 @@ const ChildNode = ({
   type,
   currentVisibleNode,
   category,
-  ontologyPath,
-  updateUserDoc,
   recordLogs,
   updateInheritance,
+  navigateToNode,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
-
-  const linkNavigation = async () => {
-    updateUserDoc([...ontologyPath.map((p: { id: string }) => p.id), child.id]);
-    // handleLinkNavigation({ id: child.id, title: child.title });
+  const handleNavigateToNode = () => {
+    navigateToNode(child.id);
   };
-
   const removeChildNode = (nodeData: INode) => {
     for (let type in nodeData.children) {
       for (let category in nodeData.children[type] || {}) {
@@ -222,7 +213,7 @@ const ChildNode = ({
       >
         <Link
           underline="hover"
-          onClick={linkNavigation}
+          onClick={handleNavigateToNode}
           sx={{
             cursor: "pointer",
             color: (theme) =>

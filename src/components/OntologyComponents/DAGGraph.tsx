@@ -102,10 +102,11 @@ const DAGGraph = ({
     }
     setExpandedNodes(new Set(expandedNodes));
   };
-  console.log(currentVisibleNode);
+
   // This function is responsible for drawing nodes on a graph based on the provided node data.
   // It takes an node object and a graph object as parameters.
   const onDrawNode = (node: any, graph: any) => {
+
     // Extract the nodeId from the node or set it as an empty string if not available.
     const nodeId = node?.id || "";
 
@@ -116,22 +117,20 @@ const DAGGraph = ({
         label: node.title, // Use node title as the label for the node.
         style: `fill: ${
           currentVisibleNode?.id === nodeId
-            ? "green"
+            ? "#87D37C"
             : node.isCategory
             ? "orange"
             : "white"
         }; stroke: ${
           currentVisibleNode?.id === nodeId ? "white" : "black"
         }; stroke-width: 2px; cursor: pointer;`, // Set node style based on node category.
-        labelStyle: `fill: ${
-          currentVisibleNode?.id === nodeId ? "white" : "black"
-        }; cursor: pointer;`, // Set style for the node label.
+        labelStyle: `fill: ${"black"}; cursor: pointer;`, // Set style for the node label.
       });
     }
 
-    // Check if the current node  is expanded (based on the global set of expandedOntologies).
+    // Check if the current node  is expanded (based on the global set of expandedNodes).
     if (expandedNodes.has(nodeId)) {
-      // If expanded, iterate through sub-ontologies and draw edges connecting them to the current node.
+      // If expanded, iterate through children and draw edges connecting them to the current node.
       const children: any = Object.values(node.specializations || {});
       for (let childNode of children) {
         // Recursively call the onDrawNode function for each child-node.
