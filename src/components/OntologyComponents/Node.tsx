@@ -157,7 +157,7 @@ type INodeProps = {
       | IGroup;
   };
   editNode: string;
-  setEditOntology: (state: string) => void;
+  setEditNode: (state: string) => void;
   lockedNodeFields: ILockedNode;
   recordLogs: (logs: any) => void;
   updateInheritance: (parameters: {
@@ -234,7 +234,7 @@ const Node = ({
   // INITIAL_VALUES,
   ontologyPath,
   editNode,
-  setEditOntology,
+  setEditNode,
   lockedNodeFields,
   user,
   recordLogs,
@@ -1125,7 +1125,7 @@ const Node = ({
           setSnackbarMessage={setSnackbarMessage}
           setCurrentVisibleNode={setCurrentVisibleNode}
           editNode={editNode}
-          setEditOntology={setEditOntology}
+          setEditNode={setEditNode}
           deleteNode={deleteNode}
         />
         <Text
@@ -1139,7 +1139,7 @@ const Node = ({
           type={"description"}
           setSnackbarMessage={setSnackbarMessage}
           setCurrentVisibleNode={setCurrentVisibleNode}
-          setEditOntology={setEditOntology}
+          setEditNode={setEditNode}
         />
       </Box>
 
@@ -1463,7 +1463,7 @@ const Node = ({
                       type={type}
                       setSnackbarMessage={setSnackbarMessage}
                       setCurrentVisibleNode={setCurrentVisibleNode}
-                      setEditOntology={setEditOntology}
+                      setEditNode={setEditNode}
                     />
                   </Box>
                 )

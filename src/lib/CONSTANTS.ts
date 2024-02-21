@@ -9,9 +9,9 @@ import {
   IRole,
 } from " @components/types/INode";
 
-// TO-DO: Consider storing this data in the database to identify ontology types in the project
+// TO-DO: Consider storing this data in the database to identify node types in the project
 
-// Defining an object to hold initial values for various ontology types
+// Defining an object to hold initial values for various node types
 export const NODES_TYPES: {
   [key: string]:
     | IActivity
@@ -23,7 +23,7 @@ export const NODES_TYPES: {
     | IReward
     | IGroup;
 } = {
-  // Definition for Activity ontology type
+  // Definition for Activity node type
   Activity: {
     title: "",
     description: "",
@@ -41,7 +41,7 @@ export const NODES_TYPES: {
     nodeType: "Activity",
   },
 
-  // Definition for Actor ontology type
+  // Definition for Actor node type
   Actor: {
     title: "",
     description: "",
@@ -56,7 +56,7 @@ export const NODES_TYPES: {
     nodeType: "Actor",
   },
 
-  // Definition for Process ontology type
+  // Definition for Process node type
   Process: {
     title: "",
     description: "",
@@ -71,7 +71,7 @@ export const NODES_TYPES: {
     nodeType: "Process",
   },
 
-  // Definition for Evaluation Dimension ontology type
+  // Definition for Evaluation Dimension node type
   "Evaluation Dimension": {
     title: "",
     description: "",
@@ -88,7 +88,7 @@ export const NODES_TYPES: {
     nodeType: "Evaluation Dimension",
   },
 
-  // Definition for Role ontology type
+  // Definition for Role node type
   Role: {
     title: "",
     description: "",
@@ -102,7 +102,7 @@ export const NODES_TYPES: {
     nodeType: "Role",
   },
 
-  // Definition for Reward ontology type
+  // Definition for Reward node type
   Reward: {
     title: "",
     description: "",
@@ -114,7 +114,7 @@ export const NODES_TYPES: {
     nodeType: "Reward",
   },
 
-  // Definition for Incentive ontology type
+  // Definition for Incentive node type
   Incentive: {
     title: "",
     description: "",
@@ -131,7 +131,7 @@ export const NODES_TYPES: {
     nodeType: "Incentive",
   },
 
-  // Definition for Group ontology type
+  // Definition for Group node type
   Group: {
     title: "",
     description: "",
@@ -149,7 +149,7 @@ export const NODES_TYPES: {
     nodeType: "Group",
   },
 };
-// TO-DO: Consider storing this data in the database to identify ontology types in the project
+// TO-DO: Consider storing this data in the database to identify node types in the project
 
 export const NO_IMAGE_USER =
   "https://firebasestorage.googleapis.com/v0/b/ontology-41607.appspot.com/o/profilePicture%2Fno-img.png?alt=media&token=c784a749-6c29-4f7d-9495-f1dc8d948ae3";
