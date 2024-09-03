@@ -87,6 +87,7 @@ import MarkdownRender from "../Markdown/MarkdownRender";
 
 import { NODES } from " @components/lib/firestoreClient/collections";
 import { INode } from " @components/types/INode";
+import { DISPLAY } from " @components/lib/CONSTANTS";
 
 type ISubOntologyProps = {
   currentVisibleNode: INode;
@@ -117,6 +118,7 @@ type ISubOntologyProps = {
     newValue: any;
     ancestorTitle: string;
   }) => void;
+  disabled?: boolean;
 };
 const Text = ({
   text,
@@ -131,6 +133,7 @@ const Text = ({
   recordLogs,
   deleteNode = () => {},
   updateInheritance,
+  disabled,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const [editMode, setEditMode] = useState(false);
@@ -290,7 +293,7 @@ const Text = ({
       {type !== "title" && (
         <Box sx={{ display: "flex", alignItems: "center" }}>
           <Typography sx={{ fontSize: "19px" }}>
-            {capitalizeFirstLetter(type)}:
+            {capitalizeFirstLetter(DISPLAY[type] ? DISPLAY[type] : type)}:
           </Typography>
           {lockedNodeFields[type] &&
           user.uname !== lockedNodeFields[type].uname ? (
@@ -299,11 +302,13 @@ const Text = ({
             </Tooltip>
           ) : (
             <Box>
-              <Tooltip title={editMode ? "Save" : "Edit"}>
-                <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
-                  {editMode ? "Save" : "Edit"}
-                </Button>
-              </Tooltip>
+              {!disabled && (
+                <Tooltip title={editMode ? "Save" : "Edit"}>
+                  <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
+                    {editMode ? "Save" : "Edit"}
+                  </Button>
+                </Tooltip>
+              )}
               {editMode && (
                 <Tooltip title={"Cancel"}>
                   <Button onClick={onCancelTextChange} sx={{ ml: "5px" }}>

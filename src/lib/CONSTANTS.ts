@@ -24,132 +24,254 @@ export const NODES_TYPES: {
     | IGroup;
 } = {
   // Definition for Activity node type
-  Activity: {
-    title: "",
-    description: "",
+  activity: {
     plainText: {
+      title: "",
+      description: "",
       notes: "",
-      Preconditions: "",
-      Postconditions: "",
+      preConditions: "",
+      postConditions: "",
     },
     children: {
-      Actor: {},
-      Process: {},
-      Specializations: {},
-      "Evaluation Dimension": {},
+      actor: {},
+      process: {},
+      evaluationDimension: {},
+      dependents: {},
+      dependencies: {},
+      specializations: {},
+      generalizations: {},
     },
-    nodeType: "Activity",
+    nodeType: "activity",
   },
 
   // Definition for Actor node type
-  Actor: {
-    title: "",
-    description: "",
+  actor: {
     plainText: {
-      "Type of actor": "",
+      title: "",
+      description: "",
+      typeOfActor: "",
+      abilities: "",
       notes: "",
-      Abilities: "",
     },
     children: {
-      Specializations: {},
+      specializations: {},
+      generalizations: {},
     },
-    nodeType: "Actor",
+    nodeType: "actor",
   },
 
   // Definition for Process node type
-  Process: {
-    title: "",
-    description: "",
+  process: {
     plainText: {
-      "Type of Process": "",
+      title: "",
+      description: "",
+      typeOfProcess: "",
       notes: "",
-      Subactivities: "",
-      Dependencies: "",
-      "Performance prediction models": "",
+      subActivities: "",
+      dependencies: "",
+      performancePredictionModels: "",
     },
-    children: { Role: {}, Specializations: {} },
-    nodeType: "Process",
+    children: {
+      role: {},
+      specializations: {},
+      generalizations: {},
+    },
+    nodeType: "process",
   },
 
   // Definition for Evaluation Dimension node type
-  "Evaluation Dimension": {
-    title: "",
-    description: "",
+  evaluationDimension: {
     plainText: {
-      "Evaluation type": "",
+      title: "",
+      description: "",
+      evaluationType: "",
+      measurementUnits: "",
+      directionOfDesirability: "",
+      criteriaForAcceptability: "",
       notes: "",
-      "Measurement units": "",
-      "Direction of desirability": "",
-      "Criteria for acceptability": "",
     },
     children: {
-      Specializations: {},
+      specializations: {},
+      generalizations: {},
     },
-    nodeType: "Evaluation Dimension",
+    nodeType: "evaluationDimension",
   },
 
   // Definition for Role node type
-  Role: {
-    title: "",
-    description: "",
-    children: { Actor: {}, Specializations: {}, Incentive: {} },
+  role: {
     plainText: {
-      "Role type": "",
-      Units: "",
-      "Capabilities required": "",
+      title: "",
+      description: "",
+      roleType: "",
+      units: "",
+      capabilitiesRequired: "",
       notes: "",
     },
-    nodeType: "Role",
+    children: {
+      actor: {},
+      specializations: {},
+      incentive: {},
+      generalizations: {},
+    },
+    nodeType: "role",
   },
 
   // Definition for Reward node type
-  Reward: {
-    title: "",
-    description: "",
-    children: { Specializations: {} },
+  reward: {
     plainText: {
-      Units: "",
-      "Reward type": "",
+      title: "",
+      description: "",
+      units: "",
+      rewardType: "",
     },
-    nodeType: "Reward",
+    children: {
+      specializations: {},
+      generalizations: {},
+    },
+    nodeType: "reward",
   },
 
   // Definition for Incentive node type
-  Incentive: {
-    title: "",
-    description: "",
-    children: {
-      Specializations: {},
-      "Evaluation Dimension": {},
-      Reward: {},
-    },
+  incentive: {
     plainText: {
-      "Reward function": "",
-      "Capabilities required": "",
+      title: "",
+      description: "",
+      rewardFunction: "",
+      capabilitiesRequired: "",
       notes: "",
     },
-    nodeType: "Incentive",
+    children: {
+      specializations: {},
+      evaluationDimension: {},
+      generalizations: {},
+      reward: {},
+    },
+    nodeType: "incentive",
   },
 
   // Definition for Group node type
-  Group: {
-    title: "",
-    description: "",
+  group: {
     plainText: {
-      "Type of actor": "",
-      Abilities: "",
-      "List of individuals in group": "",
-      "Number of individuals in group": "",
+      title: "",
+      description: "",
+      typeOfActor: "",
+      abilities: "",
+      listOfIndividualsInGroup: "",
+      numberOfIndividualsInGroup: "",
       notes: "",
     },
     children: {
-      Specializations: {},
-      Individual: {},
+      individual: {},
+      specializations: {},
+      generalizations: {},
     },
-    nodeType: "Group",
+    nodeType: "group",
   },
 };
 // TO-DO: Consider storing this data in the database to identify node types in the project
+
+export const ORDER_CHILDREN: { [key: string]: string[] } = {
+  activity: [
+    "actor",
+    "dependents",
+    "dependencies",
+    "preConditions",
+    "postConditions",
+    "evaluationDimension",
+    "process",
+    "specializations",
+    "generalizations",
+    "notes",
+    "root",
+  ],
+  actor: [
+    "typeOfActor",
+    "abilities",
+    "specializations",
+    "generalizations",
+    "notes",
+    "root",
+  ],
+  process: [
+    "typeOfProcess",
+    "role",
+    "subActivities",
+    "dependencies",
+    "performancePredictionModels",
+    "specializations",
+    "generalizations",
+    "notes",
+    "root",
+  ],
+  role: [
+    "roleType",
+    "actor",
+    "incentive",
+    "capabilitiesRequired",
+    "specializations",
+    "generalizations",
+  ],
+  evaluationDimension: [
+    "evaluationType",
+    "measurementUnits",
+    "directionOfDesirability",
+    "criteriaForAcceptability",
+    "specializations",
+    "generalizations",
+    "notes",
+    "root",
+  ],
+  incentive: [
+    "evaluationDimension",
+    "reward",
+    "rewardFunction",
+    "specializations",
+    "generalizations",
+    "notes",
+    "root",
+  ],
+  reward: [
+    "rewardType",
+    "units",
+    "specializations",
+    "generalizations",
+    "notes",
+    "root",
+  ],
+  group: [
+    "typeOfActor",
+    "abilities",
+    "individual",
+    "numberOfIndividualsInGroup",
+    "listOfIndividualsInGroup",
+    "specializations",
+    "generalizations",
+    "notes",
+    "root",
+  ],
+};
+
+export const DISPLAY: {
+  [key: string]: string;
+} = {
+  numberOfIndividualsInGroup: "Number Of Individuals In Group",
+  listOfIndividualsInGroup: "List Of Individuals In Group",
+  capabilitiesRequired: "Capabilities Required",
+  evaluationDimension: "Evaluation Dimension",
+  performancePredictionModels: "Performance Prediction Models",
+  roleType: "Role Type",
+  measurementUnits: "Measurement Units",
+  typeOfProcess: "Type Of Process",
+  typeOfActor: "Type Of Actor",
+  directionOfDesirability: "Direction Of Desirability",
+  criteriaForAcceptability: "Criteria For Acceptability",
+  evaluationType: "Evaluation Type",
+  rewardType: "Reward Type",
+  preConditions: "Pre Conditions",
+  postConditions: "Post Conditions",
+  subActivities: "Sub Activities",
+  rewardFunction: "Reward Function",
+};
 
 export const NO_IMAGE_USER =
   "https://firebasestorage.googleapis.com/v0/b/ontology-41607.appspot.com/o/profilePicture%2Fno-img.png?alt=media&token=c784a749-6c29-4f7d-9495-f1dc8d948ae3";
