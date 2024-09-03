@@ -358,10 +358,7 @@ const AppHeader = forwardRef(
                 alignItems="center"
                 spacing={"8px"}
               >
-                <Button
-                  onClick={() => handleDownload()}
-                  variant={rightPanelVisible ? "contained" : "outlined"}
-                >
+                <Button onClick={() => handleDownload()} variant="outlined">
                   Download as JSON
                 </Button>
                 <Button
