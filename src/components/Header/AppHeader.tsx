@@ -64,8 +64,14 @@ import useThemeChange from " @components/lib/hooks/useThemeChange";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import ROUTES from " @components/lib/utils/routes";
 import { useAuth } from "../context/AuthContext";
-import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
-import { USERS } from " @components/lib/firestoreClient/collections";
+import {
+  collection,
+  doc,
+  getDocs,
+  getFirestore,
+  updateDoc,
+} from "firebase/firestore";
+import { NODES, USERS } from " @components/lib/firestoreClient/collections";
 import {
   getDownloadURL,
   getStorage,
@@ -276,6 +282,31 @@ const AppHeader = forwardRef(
       });
     }, [rightPanelVisible]);
 
+    const handleDownload = useCallback(async () => {
+      try {
+        const nodesCollection = collection(db, NODES);
+        const querySnapshot = await getDocs(nodesCollection);
+
+        const data = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "nodes-data.json";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (error) {
+        console.error("Error downloading JSON: ", error);
+      }
+    }, [db, user]);
+
     return (
       <>
         <Box
@@ -327,6 +358,12 @@ const AppHeader = forwardRef(
                 alignItems="center"
                 spacing={"8px"}
               >
+                <Button
+                  onClick={() => handleDownload()}
+                  variant={rightPanelVisible ? "contained" : "outlined"}
+                >
+                  Download as JSON
+                </Button>
                 <Button
                   onClick={toggleRightPanel}
                   variant={rightPanelVisible ? "contained" : "outlined"}
