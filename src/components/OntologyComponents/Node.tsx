@@ -82,9 +82,15 @@ import {
   Checkbox,
   DialogActions,
   DialogContent,
+  FormControl,
+  InputLabel,
   List,
   ListItem,
   ListItemIcon,
+  MenuItem,
+  Modal,
+  Paper,
+  Select,
   TextField,
   Tooltip,
   Typography,
@@ -103,7 +109,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 
 // import useConfirmDialog from "@/hooks/useConfirmDialog";
@@ -129,6 +135,13 @@ import {
 } from " @components/types/INode";
 import { LOCKS, NODES } from " @components/lib/firestoreClient/collections";
 import ChildNode from "./ChildNode";
+import {
+  DISPLAY,
+  NODES_TYPES,
+  ORDER_CHILDREN,
+} from " @components/lib/CONSTANTS";
+import TreeViewSimplified from "./TreeViewSimplified";
+import { SearchBox } from "../SearchBox/SearchBox";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -145,17 +158,6 @@ type INodeProps = {
   mainSpecializations: MainSpecializations;
   nodes: INode[];
   addNewNode: ({ id, newNode }: { id: string; newNode: any }) => void;
-  NODES_TYPES: {
-    [key: string]:
-      | IActivity
-      | IActor
-      | IProcess
-      | IEvaluation
-      | IRole
-      | IIncentive
-      | IReward
-      | IGroup;
-  };
   editNode: string;
   setEditNode: (state: string) => void;
   lockedNodeFields: ILockedNode;
@@ -169,60 +171,6 @@ type INodeProps = {
   }) => void;
   navigateToNode: (nodeId: string) => void;
   eachOntologyPath: { [key: string]: any };
-};
-
-const ORDER_CHILDREN: { [key: string]: string[] } = {
-  Activity: [
-    "Actor",
-    "Preconditions",
-    "Postconditions",
-    "Evaluation Dimension",
-    "Process",
-    "Specializations",
-    "Notes",
-  ],
-  Actor: ["Type of actor", "Abilities", "Specializations", "Notes"],
-  Process: [
-    "Type of Process",
-    "Role",
-    "Subactivities",
-    "Dependencies",
-    "Performance prediction models",
-    "Specializations",
-    "Notes",
-  ],
-  Role: [
-    "Role type",
-    "Actor",
-    "Incentive",
-    "Capabilities required",
-    "Specializations",
-  ],
-  "Evaluation Dimension": [
-    "Evaluation type",
-    "Measurement units",
-    "Direction of desirability",
-    "Criteria for acceptability",
-    "Specializations",
-    "Notes",
-  ],
-  Incentive: [
-    "Evaluation Dimension",
-    "Reward",
-    "Reward function",
-    "Specializations",
-    "Notes",
-  ],
-  Reward: ["Reward type", "Units", "Specializations", "Notes"],
-  Group: [
-    "Type of actor",
-    "Abilities",
-    "Individual",
-    "Number of individuals in group",
-    "List of individuals in group",
-    "Specializations",
-    "Notes",
-  ],
 };
 
 const Node = ({
@@ -247,10 +195,10 @@ const Node = ({
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
 
-  const [open, setOpen] = useState(false);
+  const [openSelectModel, setOpenSelectModel] = useState(false);
   const handleClose = () => {
     setCheckedSpecializations([]);
-    setOpen(false);
+    setOpenSelectModel(false);
     setSelectedCategory("");
   };
   const [openAddCategory, setOpenAddCategory] = useState(false);
@@ -266,13 +214,33 @@ const Node = ({
   const [checkedSpecializations, setCheckedSpecializations] = useState<any>([]);
   const [editCategory, setEditCategory] = useState<any>(null);
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
+  const [rootTitle, setRootTitle] = useState("");
+  const [searchValue, setSearchValue] = useState("");
+  const [newFieldType, setNewFieldType] = useState("");
+  const [openAddField, setOpenAddField] = useState(false);
   const db = getFirestore();
 
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+
+  const getRooTitle = async (nodeId: string) => {
+    if (nodeId) {
+      const nodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
+      const nodeData = nodeDoc.data();
+      if (nodeData) {
+        return setRootTitle(nodeData.plainText.title);
+      }
+    }
+    setRootTitle("");
+  };
+  useEffect(() => {
+    getRooTitle(currentVisibleNode.root);
+  }, [currentVisibleNode.root]);
+
   const capitalizeFirstLetter = (word: string) => {
-    if (word === "Role") {
+    if (word === "role") {
       return "Roles";
     }
-    if (word === "Individual") {
+    if (word === "individual") {
       return "Type of individuals in group";
     }
     return word.charAt(0).toUpperCase() + word.slice(1);
@@ -316,7 +284,6 @@ const Node = ({
 
       // Update the parents array to include the ID of the original node.
       newNode.parents = [parentNodeDoc.id];
-
       // Modify the title to indicate that it is a new node.
       newNode.plainText.title = `New ${parentNodeData.plainText.title}`;
 
@@ -440,7 +407,7 @@ const Node = ({
       const newNode = { ...nodeParentDoc.data() };
 
       // Initialize the Specializations sub-node
-      newNode.children.Specializations = { main: [] };
+      newNode.children.specializations = { main: [] };
 
       // Remove unnecessary fields from the new node
       delete newNode.locked;
@@ -448,6 +415,15 @@ const Node = ({
 
       // Set the parents and title for the new node
       newNode.parents = [currentVisibleNode.id];
+      newNode.children.generalizations = {
+        main: [
+          {
+            id: currentVisibleNode.id,
+            title: currentVisibleNode.plainText.title,
+          },
+        ],
+      };
+      newNode.root = currentVisibleNode.root || "";
       newNode.plainText.title = `New ${parentNode.plainText.title}`;
       newNode.id = newNodeRef.id;
 
@@ -501,17 +477,14 @@ const Node = ({
   };
 
   const showList = async (type: string, category: string) => {
-    if (type !== "Specializations") {
-      setOpen(true);
-      setType(type);
-      setSelectedCategory(category);
-      const specializations = (
-        currentVisibleNode.children[type][category] || []
-      ).map((onto: any) => onto.id);
-      setCheckedSpecializations(specializations || []);
-    } else {
-      await addNewSpecialization(type, category);
-    }
+    // const _type = currentVisibleNode.nodeType;
+    setOpenSelectModel(true);
+    setType(type);
+    setSelectedCategory(category);
+    const specializations = (
+      (currentVisibleNode.children[type] || {})[category] || []
+    ).map((onto: any) => onto.id);
+    setCheckedSpecializations(specializations || []);
   };
 
   // This function handles the cloning of an node.
@@ -681,36 +654,8 @@ const Node = ({
     }
   }, [newCategory]);
 
-  const getCurrentSpecializations = () => {
-    // Create an empty object to store main specializations
-    const _mainSpecializations: any = {};
-
-    const _specializations = nodes.filter((onto: any) => {
-      // Find the index of node in the main specializations list
-      const findIdx = (
-        currentVisibleNode?.children?.Specializations["main"] || []
-      ).findIndex((o: any) => o.id === onto.id);
-
-      // Include node in the filtered list if found in the main specializations list
-      return findIdx !== -1;
-    });
-
-    // Loop through the filtered specializations
-    for (let specialization of _specializations) {
-      // Add each specialization to the _mainSpecializations object
-      _mainSpecializations[specialization.title] = {
-        id: specialization.id,
-        path: [],
-        specializations: {},
-      };
-    }
-
-    // Return the final object containing main specializations
-    return _mainSpecializations;
-  };
-
   const handleNewSpecialization = async () => {
-    if (type === "Specializations") {
+    if (type === "specializations") {
       await addNewSpecialization(type, selectedCategory);
       handleClose();
     } else {
@@ -970,101 +915,34 @@ const Node = ({
     }
   };
 
-  // TreeViewSimplifiedForSelecting is a functional component created using React's useCallback hook
-  const TreeViewSimplifiedForSelecting = useCallback(
-    // Destructure the props, including mainSpecializations and clone
-    ({ mainSpecializations, clone }: any) => {
-      // Initialize an array to store initially expanded categories
-      const expanded = [];
-
-      // Iterate through categories and add their IDs to the expanded array
-      for (let category of Object.keys(mainSpecializations)) {
-        expanded.push(mainSpecializations[category].id);
-      }
-
-      // Return the TreeView component with specified configurations
+  const selectFromTree = () => {
+    if (type === "dependents" || type === "dependencies") {
+      return mainSpecializations["act"]?.specializations || {};
+    } else if (type === "specializations" || type === "generalizations") {
       return (
-        <TreeView
-          defaultCollapseIcon={<ExpandMoreIcon />}
-          defaultExpandIcon={<ChevronRightIcon />}
-          sx={{
-            "& .Mui-selected": {
-              backgroundColor: "transparent",
-            },
-          }}
-          defaultExpanded={[...expanded]}
-        >
-          {/* Iterate through categories and create TreeItem components */}
-          {Object.keys(mainSpecializations).map((category) => (
-            <TreeItem
-              key={mainSpecializations[category]?.id || category}
-              nodeId={mainSpecializations[category]?.id || category}
-              sx={{ mt: "5px" }}
-              label={
-                // Customized label using Box, Checkbox, Typography, and Button components
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    height: "auto",
-                    minHeight: "50px",
-                    mt: "5px",
-                  }}
-                >
-                  {/* Render Checkbox only if it's not a category */}
-                  {!mainSpecializations[category].isCategory && (
-                    <Checkbox
-                      checked={checkedSpecializations.includes(
-                        mainSpecializations[category]?.id
-                      )}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        checkSpecialization(mainSpecializations[category].id);
-                      }}
-                      name={mainSpecializations[category].id}
-                    />
-                  )}
-                  {/* Display category name with ellipsis if more than 3 words */}
-                  <Typography>
-                    {category.split(" ").splice(0, 3).join(" ") +
-                      (category.split(" ").length > 3 ? "..." : "")}
-                  </Typography>
-                  {/* Render a Button for cloning if clone prop is true */}
-                  {clone && !mainSpecializations[category].isCategory && (
-                    <Button
-                      variant="outlined"
-                      sx={{ m: "9px" }}
-                      onClick={() =>
-                        handleCloning(mainSpecializations[category])
-                      }
-                    >
-                      New{" "}
-                      {category.split(" ").splice(0, 3).join(" ") +
-                        (category.split(" ").length > 3 ? "..." : "")}{" "}
-                      Specialization
-                    </Button>
-                  )}
-                </Box>
-              }
-            >
-              {/* Recursive call to TreeViewSimplifiedForSelecting for nested specializations */}
-              {Object.keys(mainSpecializations[category].specializations)
-                .length > 0 && (
-                <TreeViewSimplifiedForSelecting
-                  mainSpecializations={
-                    mainSpecializations[category].specializations
-                  }
-                  clone={clone}
-                />
-              )}
-            </TreeItem>
-          ))}
-        </TreeView>
+        mainSpecializations[rootTitle.toLowerCase()]?.specializations || {}
       );
+    } else {
+      return mainSpecializations[type]?.specializations || {};
+    }
+  };
+  const handleToggle = useCallback(
+    (nodeId: string) => {
+      setExpandedNodes((prevExpanded: Set<string>) => {
+        const newExpanded = new Set(prevExpanded);
+        if (newExpanded.has(nodeId)) {
+          newExpanded.delete(nodeId);
+        } else {
+          newExpanded.add(nodeId);
+        }
+        return newExpanded;
+      });
     },
-    // Dependencies for the useCallback hook
-    [mainSpecializations, checkedSpecializations]
+    [setExpandedNodes]
   );
+
+  /* "root": "T
+  of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. The user should not be able to modify the value of this field. Please automatically specify it by tracing the generalizations of this descendent activity back to reach one of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. So, obviously the root of the node 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward' itself and its direct specializations would be empty string because they are already roots."*/
 
   return (
     <Box
@@ -1073,25 +951,143 @@ const Node = ({
         mb: "90px",
       }}
     >
-      <Dialog onClose={handleClose} open={open}>
+      <Modal
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+        }}
+        open={openSelectModel}
+        onClose={handleClose}
+      >
+        <Box
+          sx={{
+            width: "80%",
+            maxHeight: "80vh",
+            backgroundColor: "white",
+            overflowY: "auto",
+            borderRadius: 2,
+            boxShadow: 24,
+            "&::-webkit-scrollbar": {
+              width: "12px",
+            },
+            "&::-webkit-scrollbar-track": {
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#28282a" : "white",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: "#888",
+              borderRadius: "10px",
+              border: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "3px solid #28282a"
+                  : "3px solid white",
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              background: DESIGN_SYSTEM_COLORS.orange400,
+            },
+          }}
+        >
+          <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>
+            <Box sx={{ mt: 1, display: "flex", alignItems: "center" }}>
+              <Typography>
+                Check the Box for the{" "}
+                <strong style={{ color: "orange" }}>{type}</strong> that you
+                want to add:
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <SearchBox
+                  setSearchValue={setSearchValue}
+                  label={"Search ..."}
+                />
+              </Box>
+            </Box>
+          </Paper>
+          <TreeViewSimplified
+            treeVisualization={selectFromTree()}
+            expandedNodes={expandedNodes}
+            onOpenNodesTree={handleToggle}
+            checkSpecialization={checkSpecialization}
+            checkedSpecializations={checkedSpecializations}
+            handleCloning={handleCloning}
+            clone={true}
+            stopPropagation={currentVisibleNode.id}
+          />
+          <Paper
+            sx={{
+              display: "flex",
+              position: "sticky",
+              bottom: "0px",
+              p: 3,
+              justifyContent: "center",
+              gap: "8px",
+            }}
+          >
+            {type !== "dependents" &&
+              type !== "dependencies" &&
+              type !== "generalizations" && (
+                <Button variant="contained" onClick={handleNewSpecialization}>
+                  Add new {type}
+                </Button>
+              )}
+            <Button
+              variant="contained"
+              onClick={handleSaveChildrenChanges}
+              color="primary"
+            >
+              Save
+            </Button>
+            <Button variant="contained" onClick={handleClose} color="primary">
+              Cancel
+            </Button>
+          </Paper>
+        </Box>
+      </Modal>
+      <Dialog
+        onClose={() => {
+          setOpenAddField(false);
+        }}
+        open={openAddField}
+      >
         <DialogContent>
           <Box sx={{ height: "auto", width: "500px" }}>
-            <TreeViewSimplifiedForSelecting
-              mainSpecializations={
-                type === "Specializations"
-                  ? getCurrentSpecializations()
-                  : mainSpecializations[type]?.specializations || {}
-              }
-              clone={type !== "Specializations"}
-            />
+            <FormControl fullWidth margin="normal" sx={{ width: "500px" }}>
+              <InputLabel id="difficulty-label">Difficulty</InputLabel>
+              <Select
+                labelId="difficulty-label"
+                value={newFieldType}
+                onChange={(event) => setNewFieldType(event.target.value)}
+                label="Difficulty"
+                MenuProps={{
+                  sx: {
+                    zIndex: "9999",
+                  },
+                }}
+              >
+                {[
+                  "String",
+                  "Number",
+                  "Boolean",
+                  "Activity",
+                  "Actor",
+                  "Evaluation Dimension",
+                  "Incentive",
+                  "Reward",
+                ].map((item) => (
+                  <MenuItem key={item} value="easy">
+                    {item}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
         </DialogContent>
         <DialogActions sx={{ justifyContent: "center" }}>
-          <Button onClick={handleNewSpecialization}>Add new {type}</Button>
-          <Button onClick={handleSaveChildrenChanges} color="primary">
-            Save
+          <Button onClick={addNewCategory} color="primary">
+            {editCategory ? "Save" : "Add"}
           </Button>
-          <Button onClick={handleClose} color="primary">
+          <Button onClick={handleCloseAddCategory} color="primary">
             Cancel
           </Button>
         </DialogActions>
@@ -1167,12 +1163,16 @@ const Node = ({
           {(ORDER_CHILDREN[currentVisibleNode?.nodeType as string] || []).map(
             (type: string) =>
               // if it' a children we need to render it as one otherwise it's a Plain Text
-              Object.keys(currentVisibleNode.children).includes(type) ? (
+              type in
+              NODES_TYPES[currentVisibleNode?.nodeType as string].children ? (
                 <Box key={type} sx={{ display: "grid", mt: "5px" }}>
                   <Box>
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                       <Typography sx={{ fontSize: "19px" }}>
-                        {capitalizeFirstLetter(type)}:
+                        {capitalizeFirstLetter(
+                          DISPLAY[type] ? DISPLAY[type] : type
+                        )}
+                        :
                       </Typography>
                       <Tooltip title={""}>
                         <Button
@@ -1180,10 +1180,10 @@ const Node = ({
                           sx={{ ml: "5px" }}
                         >
                           {" "}
-                          {type !== "Specializations" ? "Select" : "Add"} {type}{" "}
+                          {type !== "specializations" ? "Select" : "Add"} {type}{" "}
                         </Button>
                       </Tooltip>
-                      {["Specializations", "Role", "Actor"].includes(type) && (
+                      {["specializations", "role", "actor"].includes(type) && (
                         <Button
                           onClick={() => {
                             setOpenAddCategory(true);
@@ -1209,12 +1209,12 @@ const Node = ({
                           </Typography>
                         )}
                     </Box>
-                    {["Role", "Specializations", "Actor"].includes(type) ? (
+                    {["role", "specializations", "actor"].includes(type) ? (
                       <DragDropContext
                         onDragEnd={(e: any) => handleSorting(e, type)}
                       >
                         <ul>
-                          {Object.keys(currentVisibleNode?.children[type])
+                          {Object.keys(currentVisibleNode?.children[type] || {})
                             .sort((a, b) => {
                               if (a === "main") return -1;
                               if (b === "main") return 1;
@@ -1258,7 +1258,7 @@ const Node = ({
                                           sx={{ ml: "5px" }}
                                         >
                                           {" "}
-                                          {type !== "Specializations"
+                                          {type !== "specializations"
                                             ? "Select"
                                             : "Add"}{" "}
                                           {type}{" "}
@@ -1373,117 +1373,129 @@ const Node = ({
                       </DragDropContext>
                     ) : (
                       <ul>
-                        {Object.keys(currentVisibleNode?.children[type]).map(
-                          (category: any) => {
-                            const children =
-                              currentVisibleNode?.children[type][category] ||
-                              [];
-                            return (
-                              <Box
-                                key={category}
-                                id={category} /* sx={{ ml: "15px" }} */
-                              >
-                                {category !== "main" && (
-                                  <li key={category}>
-                                    <Box
-                                      sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                      }}
+                        {Object.keys(
+                          currentVisibleNode?.children[type] || {}
+                        ).map((category: any) => {
+                          const children =
+                            currentVisibleNode?.children[type][category] || [];
+                          return (
+                            <Box
+                              key={category}
+                              id={category} /* sx={{ ml: "15px" }} */
+                            >
+                              {category !== "main" && (
+                                <li key={category}>
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <Typography sx={{ fontWeight: "bold" }}>
+                                      {category}
+                                    </Typography>{" "}
+                                    :{" "}
+                                    <Button
+                                      onClick={() => showList(type, category)}
+                                      sx={{ ml: "5px" }}
                                     >
-                                      <Typography sx={{ fontWeight: "bold" }}>
-                                        {category}
-                                      </Typography>{" "}
-                                      :{" "}
-                                      <Button
-                                        onClick={() => showList(type, category)}
-                                        sx={{ ml: "5px" }}
-                                      >
-                                        {" "}
-                                        {type !== "Specializations"
-                                          ? "Select"
-                                          : "Add"}{" "}
-                                        {type}{" "}
-                                      </Button>
-                                      <Button
-                                        onClick={() =>
-                                          handleEditCategory(type, category)
-                                        }
-                                        sx={{ ml: "5px" }}
-                                      >
-                                        {" "}
-                                        Edit
-                                      </Button>
-                                      <Button
-                                        onClick={() =>
-                                          deleteCategory(type, category)
-                                        }
-                                        sx={{ ml: "5px" }}
-                                      >
-                                        {" "}
-                                        Delete
-                                      </Button>
-                                    </Box>
-                                  </li>
-                                )}
+                                      {" "}
+                                      {type !== "Specializations"
+                                        ? "Select"
+                                        : "Add"}{" "}
+                                      {type}{" "}
+                                    </Button>
+                                    <Button
+                                      onClick={() =>
+                                        handleEditCategory(type, category)
+                                      }
+                                      sx={{ ml: "5px" }}
+                                    >
+                                      {" "}
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      onClick={() =>
+                                        deleteCategory(type, category)
+                                      }
+                                      sx={{ ml: "5px" }}
+                                    >
+                                      {" "}
+                                      Delete
+                                    </Button>
+                                  </Box>
+                                </li>
+                              )}
 
-                                <ul>
-                                  {children.map((child: any) => {
-                                    return (
-                                      <li key={child.id}>
-                                        <ChildNode
-                                          navigateToNode={navigateToNode}
-                                          recordLogs={recordLogs}
-                                          setSnackbarMessage={
-                                            setSnackbarMessage
-                                          }
-                                          currentVisibleNode={
-                                            currentVisibleNode
-                                          }
-                                          setCurrentVisibleNode={
-                                            setCurrentVisibleNode
-                                          }
-                                          sx={{ mt: "15px" }}
-                                          key={currentVisibleNode.id}
-                                          child={child}
-                                          type={type}
-                                          category={category}
-                                          updateInheritance={updateInheritance}
-                                        />
-                                      </li>
-                                    );
-                                  })}
-                                </ul>
-                              </Box>
-                            );
-                          }
-                        )}
+                              <ul>
+                                {children.map((child: any) => {
+                                  return (
+                                    <li key={child.id}>
+                                      <ChildNode
+                                        navigateToNode={navigateToNode}
+                                        recordLogs={recordLogs}
+                                        setSnackbarMessage={setSnackbarMessage}
+                                        currentVisibleNode={currentVisibleNode}
+                                        setCurrentVisibleNode={
+                                          setCurrentVisibleNode
+                                        }
+                                        sx={{ mt: "15px" }}
+                                        key={currentVisibleNode.id}
+                                        child={child}
+                                        type={type}
+                                        category={category}
+                                        updateInheritance={updateInheritance}
+                                      />
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </Box>
+                          );
+                        })}
                       </ul>
                     )}
                   </Box>
                 </Box>
+              ) : type in
+                NODES_TYPES[currentVisibleNode?.nodeType as string]
+                  .plainText ? (
+                <Box key={type}>
+                  <Text
+                    updateInheritance={updateInheritance}
+                    recordLogs={recordLogs}
+                    user={user}
+                    lockedNodeFields={
+                      lockedNodeFields[currentVisibleNode.id] || {}
+                    }
+                    addLock={addLock}
+                    text={currentVisibleNode.plainText[type]}
+                    currentVisibleNode={currentVisibleNode}
+                    type={type}
+                    setSnackbarMessage={setSnackbarMessage}
+                    setCurrentVisibleNode={setCurrentVisibleNode}
+                    setEditNode={setEditNode}
+                  />
+                </Box>
               ) : (
-                Object.keys(currentVisibleNode.plainText).includes(type) && (
-                  <Box key={type}>
-                    <Text
-                      updateInheritance={updateInheritance}
-                      recordLogs={recordLogs}
-                      user={user}
-                      lockedNodeFields={
-                        lockedNodeFields[currentVisibleNode.id] || {}
-                      }
-                      addLock={addLock}
-                      text={currentVisibleNode.plainText[type]}
-                      currentVisibleNode={currentVisibleNode}
-                      type={type}
-                      setSnackbarMessage={setSnackbarMessage}
-                      setCurrentVisibleNode={setCurrentVisibleNode}
-                      setEditNode={setEditNode}
-                    />
+                rootTitle && (
+                  <Box sx={{ display: "flex", gap: "15px" }}>
+                    {" "}
+                    <Typography>Root:</Typography>
+                    <Typography>{rootTitle}</Typography>
                   </Box>
                 )
               )
           )}
+
+          <Box
+            sx={{ mt: "19px" }}
+            onClick={() => {
+              setOpenAddField(true);
+            }}
+          >
+            <Button variant="contained">Add new Field</Button>
+          </Box>
         </Box>
       </Box>
       {ConfirmDialog}

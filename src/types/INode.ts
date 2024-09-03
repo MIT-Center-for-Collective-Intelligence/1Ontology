@@ -17,12 +17,12 @@ export type IChildCategory = {
 export type INodeTypes =
   | "activity"
   | "actor"
-  | "processe"
-  | "role"
-  | "evaluation"
+  | "process"
+  | "evaluationDimension"
   | "role"
   | "incentive"
-  | "reward";
+  | "reward"
+  | "group";
 
 export type INodePath = {
   id: string;
@@ -39,128 +39,146 @@ export type OntologyInheritance = {
   };
 };
 export type INode = {
-  deleted: boolean;
   id: string;
-  node?: string | null;
-  title: string;
-  description: string;
+  deleted: boolean;
   comments: { message: string; sender: string; editMode?: boolean }[];
   editMode?: boolean;
-  parents?: string[];
-  type?: INodeTypes;
   plainText: { [key: string]: string };
   children: { [key: string]: any };
-  nodeType?: string;
+  nodeType?: INodeTypes;
   locked?: boolean;
   category?: boolean;
+  root: string;
+  parents: string[];
 } & OntologyInheritance;
 
-export type INodeCommon = {
-  title: string;
-  description: string;
-  nodeType: string;
-  locked?: boolean;
-};
-
-export type IActivity = INodeCommon & {
+export type IActivity = {
+  nodeType: INodeTypes;
   plainText: {
-    Preconditions: string;
-    Postconditions: string;
+    preConditions: string;
+    postConditions: string;
     notes: string;
+    title: string;
+    description: string;
   };
   children: {
-    Actor: IChildCategory;
-    Process: IChildCategory;
-    Specializations: IChildCategory;
-    "Evaluation Dimension": IChildCategory;
-  };
-};
-
-export type IActor = INodeCommon & {
-  plainText: {
-    "Type of actor": string;
-    Abilities: string;
-    notes: string;
-  };
-  children: {
-    Specializations: IChildCategory;
+    actor: IChildCategory;
+    process: IChildCategory;
+    specializations: IChildCategory;
+    evaluationDimension: IChildCategory;
+    dependents: IChildCategory;
+    dependencies: IChildCategory;
+    generalizations: IChildCategory;
   };
 };
 
-export type IProcess = INodeCommon & {
+export type IActor = {
+  nodeType: INodeTypes;
   plainText: {
-    "Type of Process": string;
-    Subactivities: string;
-    Dependencies: string;
-    "Performance prediction models": string;
+    typeOfActor: string;
+    abilities: string;
     notes: string;
+    title: string;
+    description: string;
   };
   children: {
-    Role: IChildCategory;
-    Specializations: IChildCategory;
+    generalizations: IChildCategory;
+    specializations: IChildCategory;
   };
 };
 
-export type IEvaluation = INodeCommon & {
+export type IProcess = {
+  nodeType: INodeTypes;
   plainText: {
-    "Evaluation type": string;
-    "Measurement units": string;
-    "Direction of desirability": string;
-    "Criteria for acceptability": string;
+    typeOfProcess: string;
+    subActivities: string;
+    dependencies: string;
+    performancePredictionModels: string;
     notes: string;
+    title: string;
+    description: string;
   };
   children: {
-    Specializations: IChildCategory;
+    role: IChildCategory;
+    specializations: IChildCategory;
+    generalizations: IChildCategory;
   };
 };
 
-export type IRole = INodeCommon & {
+export type IEvaluation = {
+  nodeType: INodeTypes;
   plainText: {
-    "Role type": string;
-    Units: string;
-    "Capabilities required": string;
+    evaluationType: string;
+    measurementUnits: string;
+    directionOfDesirability: string;
+    criteriaForAcceptability: string;
     notes: string;
+    title: string;
+    description: string;
   };
   children: {
-    Specializations: IChildCategory;
-    Incentive: IChildCategory;
-    Actor: IChildCategory;
+    specializations: IChildCategory;
+    generalizations: IChildCategory;
   };
 };
 
-export type IIncentive = INodeCommon & {
+export type IRole = {
+  nodeType: INodeTypes;
   plainText: {
-    "Reward function": string;
-    "Capabilities required": string;
+    roleType: string;
+    units: string;
+    capabilitiesRequired: string;
     notes: string;
+    title: string;
+    description: string;
   };
   children: {
-    "Evaluation Dimension": IChildCategory;
-    Specializations: IChildCategory;
-    Reward: IChildCategory;
+    specializations: IChildCategory;
+    incentive: IChildCategory;
+    actor: IChildCategory;
   };
 };
 
-export type IReward = INodeCommon & {
+export type IIncentive = {
+  nodeType: INodeTypes;
   plainText: {
-    "Reward type": string;
-    Units: string;
+    rewardFunction: string;
+    capabilitiesRequired: string;
+    notes: string;
+    title: string;
+    description: string;
   };
   children: {
-    Specializations: IChildCategory;
+    evaluationDimension: IChildCategory;
+    specializations: IChildCategory;
+    reward: IChildCategory;
   };
 };
-export type IGroup = INodeCommon & {
+
+export type IReward = {
+  nodeType: INodeTypes;
   plainText: {
-    "Type of actor": string;
-    Abilities: string;
-    "List of individuals in group": string;
-    "Number of individuals in group": string;
-    notes: string;
+    rewardType: string;
+    units: string;
   };
   children: {
-    Specializations: IChildCategory;
-    Individual: IChildCategory;
+    specializations: IChildCategory;
+  };
+};
+export type IGroup = {
+  nodeType: INodeTypes;
+  plainText: {
+    typeOfActor: string;
+    abilities: string;
+    listOfIndividualsInGroup: string;
+    numberOfIndividualsInGroup: string;
+    notes: string;
+    title: string;
+    description: string;
+  };
+  children: {
+    specializations: IChildCategory;
+    individual: IChildCategory;
   };
 };
 export type IUserNode = {

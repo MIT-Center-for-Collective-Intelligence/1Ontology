@@ -207,11 +207,11 @@ const Ontology = () => {
       };
 
       // Iterate through each category in the Specializations child-nodes
-      for (let category in node?.children?.Specializations) {
+      for (let category in node.children.specializations) {
         // Filter nodes based on the current category
         const specializations =
           nodes.filter((onto: any) => {
-            const arrayNodes = node?.children?.Specializations[category].map(
+            const arrayNodes = node?.children?.specializations[category].map(
               (o: any) => o.id
             );
             return arrayNodes.includes(onto.id);
@@ -278,12 +278,7 @@ const Ontology = () => {
 
     // Sort main nodes based on a predefined order
     mainCategories.sort((nodeA: any, nodeB: any) => {
-      const order = [
-        "WHAT: Activities",
-        "WHO: Actors",
-        "HOW: Processes",
-        "WHY: Evaluation",
-      ];
+      const order = ["WHAT: Activities", "WHO: Actors", "WHY: Evaluation"];
       const nodeATitle = nodeA.plainText.title;
       const nodeBTitle = nodeA.plainText.title;
       return order.indexOf(nodeATitle) - order.indexOf(nodeBTitle);
@@ -494,9 +489,9 @@ const Ontology = () => {
       return treeVisualization["WHY: Evaluation"].id;
     } else if (type === "Actor") {
       return treeVisualization["WHO: Actors"].id;
-    } else if (type === "Process") {
+    } /* else if (type === "Process") {
       return treeVisualization["HOW: Processes"].id;
-    }
+    } */
   };
 
   // Callback function to handle navigation when a link is clicked
@@ -621,10 +616,10 @@ const Ontology = () => {
       const nodeRef = doc(collection(db, NODES), parentId);
 
       // Extract the Specializations array from the parent node.
-      const specializations = parent.children.Specializations;
+      const specializations = parent.children.specializations;
 
       // Find the index of the child-node in the Specializations array.
-      const specializationIdx = parent.children.Specializations.findIndex(
+      const specializationIdx = parent.children.specializations.findIndex(
         (spcial: any) => spcial.id === id
       );
 
@@ -637,7 +632,7 @@ const Ontology = () => {
       }
 
       // Update the Specializations array in the parent node.
-      parent.children.Specializations = specializations;
+      parent.children.specializations = specializations;
 
       // Update the parent node in Firestore with the modified data.
       await updateDoc(nodeRef, { ...parent, updatedAt: new Date() });
@@ -742,11 +737,22 @@ const Ontology = () => {
     // Include specializations for "Actor" category
     mainSpecializations = {
       ...mainSpecializations,
-      ...(mainSpecializations["Actor"]?.specializations || {}),
+      ...(mainSpecializations["actor"]?.specializations || {}),
     };
-
+    for (let type in mainSpecializations) {
+      mainSpecializations[type.toLowerCase()] = mainSpecializations[type];
+      delete mainSpecializations[type];
+    }
     return mainSpecializations;
   };
+  useEffect(() => {
+    if (!searchValue) return;
+    // Record logs for the search action
+    recordLogs({
+      action: "Searched",
+      query,
+    });
+  }, [searchValue]);
 
   // Function to perform a search using Fuse.js library
   const searchWithFuse = (query: string): any => {
@@ -754,12 +760,6 @@ const Ontology = () => {
     if (!query) {
       return [];
     }
-
-    // Record logs for the search action
-    recordLogs({
-      action: "Searched",
-      query,
-    });
 
     // Perform search using Fuse.js, filter out deleted items
     return fuse
@@ -929,9 +929,9 @@ const Ontology = () => {
 
         // Loop through categories in the children of the current node
 
-        for (let category in node?.children?.Specializations) {
+        for (let category in node?.children?.specializations) {
           // Filter nodes based on their inclusion in the Specializations of the current category
-          const childrenIds = node?.children?.Specializations[category].map(
+          const childrenIds = node?.children?.specializations[category].map(
             (n: any) => n.id
           );
           const children =
@@ -1030,7 +1030,7 @@ const Ontology = () => {
     // Get the ID of the current node and initialize an array to store child node IDs.
     const parentId = updatedNode.id;
     const children: string[] = getChildrenIds(
-      updatedNode.children.Specializations
+      updatedNode.children.specializations
     );
 
     // Loop through all the children and update the corresponding field.
@@ -1248,7 +1248,6 @@ const Ontology = () => {
                   )}
                   nodes={nodes}
                   addNewNode={addNewNode}
-                  NODES_TYPES={NODES_TYPES}
                   editNode={editNode}
                   setEditNode={setEditNode}
                   lockedNodeFields={lockedNodeFields}
