@@ -1133,7 +1133,7 @@ const Ontology = () => {
     <Box>
       {nodes.length > 0 ? (
         <Container
-          style={{ marginTop: "80px" }}
+          style={{ marginTop: "80px", height: "calc(100vh - 80px)" }}
           columnResizerRef={columnResizerRef}
         >
           {!isMobile && (
@@ -1158,7 +1158,7 @@ const Ontology = () => {
                 />
                 <Tab label="DAG View" {...a11yProps(1)} sx={{ width: "50%" }} />
               </Tabs>
-              <Box sx={{ overflow: "auto", height: "94vh" }}>
+              <Box sx={{ overflow: "auto" }}>
                 <TabPanel value={viewValue} index={0} sx={{ mt: "5px" }}>
                   <TreeViewSimplified
                     treeVisualization={treeVisualization}
