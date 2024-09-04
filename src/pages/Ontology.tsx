@@ -1490,8 +1490,6 @@ const Ontology = () => {
                   <Box
                     sx={{
                       p: "18px",
-                      backgroundColor: (theme) =>
-                        theme.palette.mode === "dark" ? "" : "gray",
                     }}
                   >
                     <MarkdownRender text={markdownContent} />

@@ -29,6 +29,7 @@ import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
 import remarkMath from "remark-math";
 import { containsHTMLTags } from " @components/lib/utils/utils";
+import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 
 type Props = {
   text: string;
@@ -59,7 +60,17 @@ const MarkdownRender: FC<Props> = ({
         ),
         a: ({ ...props }) => {
           return (
-            <Link href={props.href} target="_blank" rel="noopener">
+            <Link
+              sx={{
+                color: (theme) =>
+                  theme.palette.mode === "light"
+                    ? DESIGN_SYSTEM_COLORS.orange500
+                    : undefined,
+              }}
+              href={props.href}
+              target="_blank"
+              rel="noopener"
+            >
               {props.children}
             </Link>
           );
