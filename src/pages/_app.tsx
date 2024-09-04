@@ -1,4 +1,3 @@
-
 /* This is a Next.js application that uses several libraries and tools to provide a robust and feature-rich environment. Here's a breakdown of the code:
 
 1. **Imports**: The code begins by importing several libraries and components. These include Next.js, React, React Query, Emotion (for CSS-in-JS styling), Material UI, and several custom components and utilities.
@@ -33,9 +32,8 @@
 
 16. **Export**: Finally, the `App` component is exported as the default export of the module. */
 
-
 // import "./global.css";
-import './custom-tree.css';
+import "./custom-tree.css";
 
 import { CacheProvider } from "@emotion/react";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -53,6 +51,7 @@ import { ThemeProvider } from " @components/components/context/ThemeContext";
 // import { initFirebaseClientSDK } from " @components/lib/firestoreClient/firestoreClient.config";
 import { createEmotionCache } from " @components/lib/theme/createEmotionCache";
 import { initializeFirestore } from " @components/lib/firestoreClient/firestoreClient.config";
+import { LastDeploymentProvider } from " @components/components/context/LastDeploymentContext";
 
 const clientSideEmotionCache = createEmotionCache();
 
@@ -96,11 +95,13 @@ const App = (props: AppPropsWithLayout) => {
               maxSnack={3}
             >
               <AuthProvider>
-                <ThemeProvider>
-                  <CssBaseline />
-                  {getLayout(<Component {...pageProps} />)}
-                  <div id="portal"></div>
-                </ThemeProvider>
+                <LastDeploymentProvider>
+                  <ThemeProvider>
+                    <CssBaseline />
+                    {getLayout(<Component {...pageProps} />)}
+                    <div id="portal"></div>
+                  </ThemeProvider>
+                </LastDeploymentProvider>
               </AuthProvider>
             </SnackbarProvider>
           </CacheProvider>
