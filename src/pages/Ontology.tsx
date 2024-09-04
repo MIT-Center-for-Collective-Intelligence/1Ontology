@@ -118,6 +118,7 @@ import {
   USERS,
 } from " @components/lib/firestoreClient/collections";
 import { getChildrenIds } from " @components/lib/utils/children.utils";
+import { Post } from " @components/lib/mapApi";
 
 const Ontology = () => {
   const db = getFirestore();
@@ -156,6 +157,7 @@ const Ontology = () => {
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
     new Date(Date.now())
   );
+
   useEffect(() => {
     if (!db) return;
     const q = query(collection(db, USERS));
@@ -1158,7 +1160,7 @@ const Ontology = () => {
                 />
                 <Tab label="DAG View" {...a11yProps(1)} sx={{ width: "50%" }} />
               </Tabs>
-              <Box sx={{ overflow: "auto" }}>
+              <Box sx={{ overflow: "auto", height: "100%" }}>
                 <TabPanel value={viewValue} index={0} sx={{ mt: "5px" }}>
                   <TreeViewSimplified
                     treeVisualization={treeVisualization}
