@@ -159,42 +159,6 @@ const Ontology = () => {
   );
 
   useEffect(() => {
-    if (!user) return;
-    //if (process.env.NODE_ENV === "development") return;
-    const checkIfDifferentDay = async () => {
-      const userRef = doc(db, "users", user?.uname);
-      const userDoc = await getDoc(userRef);
-      if (!userDoc.exists()) {
-        console.error("User document does not exist");
-        return;
-      }
-      const userData = userDoc.data();
-      const lastDeployment: any = await Post("/getLastDeployment", {
-        repoName: "1Ontology",
-      });
-      const lastCommitTimestamp = new Date(lastDeployment.lastCommitTime);
-      const lastUserReload = userData?.lastReload
-        ? userData?.lastReload.toDate()
-        : lastCommitTimestamp;
-      const lastCommitTime = lastCommitTimestamp.getTime() + 1000 * 60 * 30;
-      const today = new Date();
-      if (
-        today.getDate() !== lastInteractionDate.getDate() ||
-        today.getMonth() !== lastInteractionDate.getMonth() ||
-        today.getFullYear() !== lastInteractionDate.getFullYear() ||
-        (lastCommitTime > lastUserReload.getTime() &&
-          today.getTime() > lastCommitTime)
-      ) {
-        await updateDoc(userRef, { lastReload: today });
-        window.location.reload();
-      }
-    };
-
-    const intervalId = setInterval(checkIfDifferentDay, 1000 * 60 * 5);
-
-    return () => clearInterval(intervalId);
-  }, [user, lastInteractionDate]);
-  useEffect(() => {
     if (!db) return;
     const q = query(collection(db, USERS));
 
