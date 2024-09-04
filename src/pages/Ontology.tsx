@@ -118,6 +118,7 @@ import {
   USERS,
 } from " @components/lib/firestoreClient/collections";
 import { getChildrenIds } from " @components/lib/utils/children.utils";
+import { Post } from " @components/lib/mapApi";
 
 const Ontology = () => {
   const db = getFirestore();
@@ -156,6 +157,43 @@ const Ontology = () => {
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
     new Date(Date.now())
   );
+
+  useEffect(() => {
+    if (!user) return;
+    //if (process.env.NODE_ENV === "development") return;
+    const checkIfDifferentDay = async () => {
+      const userRef = doc(db, "users", user?.uname);
+      const userDoc = await getDoc(userRef);
+      if (!userDoc.exists()) {
+        console.error("User document does not exist");
+        return;
+      }
+      const userData = userDoc.data();
+      const lastDeployment: any = await Post("/getLastDeployment", {
+        repoName: "1Ontology",
+      });
+      const lastCommitTimestamp = new Date(lastDeployment.lastCommitTime);
+      const lastUserReload = userData?.lastReload
+        ? userData?.lastReload.toDate()
+        : lastCommitTimestamp;
+      const lastCommitTime = lastCommitTimestamp.getTime() + 1000 * 60 * 30;
+      const today = new Date();
+      if (
+        today.getDate() !== lastInteractionDate.getDate() ||
+        today.getMonth() !== lastInteractionDate.getMonth() ||
+        today.getFullYear() !== lastInteractionDate.getFullYear() ||
+        (lastCommitTime > lastUserReload.getTime() &&
+          today.getTime() > lastCommitTime)
+      ) {
+        await updateDoc(userRef, { lastReload: today });
+        window.location.reload();
+      }
+    };
+
+    const intervalId = setInterval(checkIfDifferentDay, 1000 * 60 * 5);
+
+    return () => clearInterval(intervalId);
+  }, [user, lastInteractionDate]);
   useEffect(() => {
     if (!db) return;
     const q = query(collection(db, USERS));
@@ -1158,7 +1196,7 @@ const Ontology = () => {
                 />
                 <Tab label="DAG View" {...a11yProps(1)} sx={{ width: "50%" }} />
               </Tabs>
-              <Box sx={{ overflow: "auto" }}>
+              <Box sx={{ overflow: "auto", height: "100%" }}>
                 <TabPanel value={viewValue} index={0} sx={{ mt: "5px" }}>
                   <TreeViewSimplified
                     treeVisualization={treeVisualization}
