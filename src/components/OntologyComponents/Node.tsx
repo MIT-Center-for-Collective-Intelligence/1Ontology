@@ -5,7 +5,7 @@ The `Node` component is a complex React component that interacts with a Firestor
 ## Features
 
 - **Viewing and Editing Nodes**: Display node information such as title and description, and allow users to edit these fields if they have the appropriate permissions.
-- **Specializations Management**: Add new specializations to nodes, select existing ones, and clone specializations for reuse.
+- **specializations Management**: Add new specializations to nodes, select existing ones, and clone specializations for reuse.
 - **Inheritance Handling**: Manage inherited properties from parent nodes to ensure consistency across the hierarchy.
 - **Drag-and-Drop Sorting**: Reorder nodes within a category using a drag-and-drop interface.
 - **Category Management**: Add, edit, and delete categories within a node.
@@ -84,6 +84,7 @@ import {
   DialogContent,
   FormControl,
   InputLabel,
+  Link,
   List,
   ListItem,
   ListItemIcon,
@@ -91,6 +92,8 @@ import {
   Modal,
   Paper,
   Select,
+  Tab,
+  Tabs,
   TextField,
   Tooltip,
   Typography,
@@ -110,8 +113,7 @@ import {
   where,
 } from "firebase/firestore";
 import React, { useCallback, useEffect, useState } from "react";
-import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
-
+import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
 // import useConfirmDialog from "@/hooks/useConfirmDialog";
 // import { DESIGN_SYSTEM_COLORS } from "@/lib/theme/colors";
 
@@ -119,29 +121,19 @@ import Text from "./Text";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import {
-  IActivity,
-  IActor,
-  IEvaluation,
-  IGroup,
-  IIncentive,
   ILockedNode,
   INode,
   INodePath,
-  IProcess,
-  IReward,
-  IRole,
-  IChildNode,
   MainSpecializations,
 } from " @components/types/INode";
 import { LOCKS, NODES } from " @components/lib/firestoreClient/collections";
 import ChildNode from "./ChildNode";
-import {
-  DISPLAY,
-  NODES_TYPES,
-  ORDER_CHILDREN,
-} from " @components/lib/CONSTANTS";
+import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import TreeViewSimplified from "./TreeViewSimplified";
 import { SearchBox } from "../SearchBox/SearchBox";
+import NodeBody from "../NodBody/NodeBody";
+import LinksSide from "../Generalizations/LinksSide";
+import LinksSideParts from "../Parts/LinksSideParts";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -164,10 +156,7 @@ type INodeProps = {
   recordLogs: (logs: any) => void;
   updateInheritance: (parameters: {
     updatedNode: INode;
-    updatedField: string;
-    type: "children" | "plainText";
-    newValue: any;
-    ancestorTitle: string;
+    updatedProperty: string;
   }) => void;
   navigateToNode: (nodeId: string) => void;
   eachOntologyPath: { [key: string]: any };
@@ -216,8 +205,12 @@ const Node = ({
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [rootTitle, setRootTitle] = useState("");
   const [searchValue, setSearchValue] = useState("");
-  const [newFieldType, setNewFieldType] = useState("");
+  const [newFieldType, setNewFieldType] = useState("String");
   const [openAddField, setOpenAddField] = useState(false);
+  const [newFieldTitle, setNewFieldTitle] = useState("");
+  const [saveType, setSaveType] = useState("");
+  const [viewValue, setViewValue] = useState<number>(0);
+
   const db = getFirestore();
 
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
@@ -225,9 +218,9 @@ const Node = ({
   const getRooTitle = async (nodeId: string) => {
     if (nodeId) {
       const nodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
-      const nodeData = nodeDoc.data();
+      const nodeData = nodeDoc.data() as INode;
       if (nodeData) {
-        return setRootTitle(nodeData.plainText.title);
+        return setRootTitle(nodeData.title);
       }
     }
     setRootTitle("");
@@ -269,13 +262,13 @@ const Node = ({
       if (!parentNodeDoc.exists()) return { newCloneId: "", newCloneTitle: "" };
 
       // Extract data from the original node document.
-      const parentNodeData = parentNodeDoc.data();
+      const parentNodeData = parentNodeDoc.data() as INode;
 
       // Create a reference for the new node document in Firestore.
       const newNodeRef = doc(collection(db, NODES));
 
       // Prepare the data for the new node by copying existing data.
-      const newNode: any = {
+      const newNode = {
         ...parentNodeDoc.data(),
       };
 
@@ -285,24 +278,20 @@ const Node = ({
       // Update the parents array to include the ID of the original node.
       newNode.parents = [parentNodeDoc.id];
       // Modify the title to indicate that it is a new node.
-      newNode.plainText.title = `New ${parentNodeData.plainText.title}`;
+      newNode.title = `New ${parentNodeData.title}`;
 
-      // Initialize an empty Specializations object for children.
-      newNode.children.Specializations = { main: [] };
+      // Initialize an empty specializations object for children.
+      newNode.specializations = { main: [] };
 
       // Remove the 'locked' property from the new node.
       delete newNode.locked;
 
       // Update the original node to include the reference to the new node in its children.
-      parentNodeData.children.Specializations = {
-        ["main"]: [
-          ...(parentNodeData.children?.Specializations["main"] || []),
-          {
-            id: newNodeRef.id,
-            title: `New ${parentNodeData.plainText.title}`,
-          },
-        ],
-      };
+      parentNodeData?.specializations["main"].push({
+        id: newNodeRef.id,
+        title: `New ${parentNodeData.title}`,
+      });
+
       // Update the original node document in Firestore with the modified data.
       await updateDoc(parentNodeDoc.ref, {
         ...parentNodeData,
@@ -315,7 +304,7 @@ const Node = ({
       // Return the ID of the newly created node.
       return {
         newCloneId: newNodeRef.id,
-        newCloneTitle: newNode.plainText.title,
+        newCloneTitle: newNode.title,
       };
     } catch (error) {
       // Log any errors that occur during the cloning process.
@@ -332,58 +321,8 @@ const Node = ({
     }
   };
 
-  /**
-   * getInheritance function retrieves inheritance information for specified fields
-   *
-   * @param {string[]} fields - Array of fields for which inheritance is to be determined
-   * @param {string} ancestorTitle - Default title to be used if specific inheritance title is not available
-   *
-   * @returns {Object} - Object containing inheritance information for each field
-   */
-  const getInheritance = (
-    fields: string[],
-    type: "plainText" | "children",
-    parentNode: INode
-  ): {
-    [key: string]: {
-      ref: string;
-      title: string;
-    };
-  } => {
-    // Initialize an empty object to store inheritance information
-    const inheritance: {
-      [key: string]: {
-        ref: string;
-        title: string;
-      };
-    } = {};
-    const ancestorId = parentNode.id;
-    const ancestorTitle = parentNode.plainText.title;
-    // Iterate through each field, excluding "Specializations"
-    for (let field of fields) {
-      if (field === "Specializations") continue;
-      let inheritanceRef: { ref: string; title: string } = {
-        ref: ancestorId,
-        title: ancestorTitle,
-      };
-      if (
-        parentNode.inheritance &&
-        parentNode.inheritance[type] &&
-        parentNode.inheritance[type][field]?.ref
-      ) {
-        inheritanceRef = {
-          ref: parentNode.inheritance[type][field]?.ref,
-          title: parentNode.inheritance[type][field]?.title,
-        };
-      }
-      inheritance[field] = { ...inheritanceRef };
-    }
-    // Return the final inheritance object
-    return inheritance;
-  };
-
   // Function to add a new specialization to the node
-  const addNewSpecialization = async (type: string, category: string) => {
+  const addNewSpecialization = async (category: string) => {
     try {
       // Get a reference to the parent node document
       const nodeParentRef = doc(collection(db, NODES), currentVisibleNode.id);
@@ -392,10 +331,10 @@ const Node = ({
       const nodeParentDoc = await getDoc(nodeParentRef);
 
       // Extract data from the parent node document
-      const parentNode: any = {
+      const parentNode = {
         ...nodeParentDoc.data(),
         id: nodeParentDoc.id,
-      };
+      } as INode;
 
       // Check if the parent node document exists
       if (!nodeParentDoc.exists()) return;
@@ -404,66 +343,51 @@ const Node = ({
       const newNodeRef = doc(collection(db, NODES));
 
       // Clone the parent node data
-      const newNode = { ...nodeParentDoc.data() };
+      const newNode = {
+        ...nodeParentDoc.data(),
+        // Initialize the specializations sub-node
+        specializations: { main: [] },
 
-      // Initialize the Specializations sub-node
-      newNode.children.specializations = { main: [] };
-
-      // Remove unnecessary fields from the new node
-      delete newNode.locked;
-      delete newNode.cat;
-
-      // Set the parents and title for the new node
-      newNode.parents = [currentVisibleNode.id];
-      newNode.children.generalizations = {
-        main: [
-          {
-            id: currentVisibleNode.id,
-            title: currentVisibleNode.plainText.title,
-          },
-        ],
-      };
-      newNode.root = currentVisibleNode.root || "";
-      newNode.plainText.title = `New ${parentNode.plainText.title}`;
-      newNode.id = newNodeRef.id;
-
-      // Build the inheritance object for the new node
-      newNode.inheritance = {
-        plainText: {
-          ...getInheritance(
-            Object.keys(newNode.plainText),
-            "plainText",
-            parentNode
-          ),
+        // Set the parents and title for the new node
+        generalizations: {
+          main: [
+            {
+              id: currentVisibleNode.id,
+              title: currentVisibleNode.title,
+            },
+          ],
         },
-        children: {
-          ...getInheritance(
-            Object.keys(newNode.children),
-            "children",
-            parentNode
-          ),
-        },
-      };
-
-      // Check if the specified type and category exist in the parent node
-      if (!parentNode.children[type].hasOwnProperty(category)) {
-        // If not, create the specified type and category
-        parentNode.children[type] = {
-          ...parentNode.children[type],
-          [category]: [],
-        };
-      }
-
-      // Add the new node to the specified type and category
-      parentNode.children[type][category].push({
-        title: `New ${parentNode.plainText.title}`,
+        root: currentVisibleNode.root || "",
+        title: `New ${parentNode.title}`,
         id: newNodeRef.id,
-      });
+      };
+      if ("locked" in newNode) {
+        delete newNode.locked;
+      }
+      // Check if the specified type and category exist in the parent node
+      if (!parentNode.specializations.hasOwnProperty(category)) {
+        // If not, create the specified type and category
+        parentNode.specializations = {
+          ...parentNode.specializations,
+          [category]: [
+            {
+              title: `New ${parentNode.title}`,
+              id: newNodeRef.id,
+            },
+          ],
+        };
+      } else {
+        // Add the new node to the specified type and category
+        parentNode.specializations[category].push({
+          title: `New ${parentNode.title}`,
+          id: newNodeRef.id,
+        });
+      }
 
       // Update the user document with the path
       updateUserDoc([
         ...ontologyPath,
-        { id: newNodeRef.id, title: newNode.plainText.title, category: false },
+        { id: newNodeRef.id, title: newNode.title, category: false },
       ]);
       // Add the new node to the database
       addNewNode({ id: newNodeRef.id, newNode });
@@ -476,13 +400,22 @@ const Node = ({
     }
   };
 
-  const showList = async (type: string, category: string) => {
+  const showList = async (property: string, category: string) => {
+    let newType = property;
+    if (
+      currentVisibleNode?.propertyType &&
+      currentVisibleNode.propertyType[property]
+    ) {
+      setSaveType(property);
+      newType = currentVisibleNode.propertyType[property];
+    }
+
     // const _type = currentVisibleNode.nodeType;
     setOpenSelectModel(true);
-    setType(type);
+    setType(newType);
     setSelectedCategory(category);
     const specializations = (
-      (currentVisibleNode.children[type] || {})[category] || []
+      (currentVisibleNode.properties[property] || {})[category] || []
     ).map((onto: any) => onto.id);
     setCheckedSpecializations(specializations || []);
   };
@@ -509,13 +442,14 @@ const Node = ({
     // Close the modal or perform any necessary cleanup.
     handleClose();
   };
+
   const handleSaveChildrenChanges = async () => {
     try {
       // Get the node document from the database
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );
-
+      const _type = saveType || type;
       // If the node document does not exist, return early
       if (!nodeDoc.exists()) return;
 
@@ -524,29 +458,33 @@ const Node = ({
 
       // Initialize a new array for storing updated children
       const oldChildren =
-        type === "Specializations"
-          ? [...nodeData.children[type][selectedCategory]]
+        _type === "specializations"
+          ? [...nodeData.children[_type][selectedCategory]]
           : [];
 
+      if (_type === "generalizations") {
+        return;
+      }
+
       // Iterate through checkedSpecializations to update newchildren
-      for (let checkd of checkedSpecializations) {
+      for (let checked of checkedSpecializations) {
         // Find the node object from the children array
-        const findNode = nodes.find((node: INode) => node.id === checkd);
+        const findNode = nodes.find((node: INode) => node.id === checked);
 
         // Check if the node is not already present in newchildren
-        const indexFound = oldChildren.findIndex((onto) => onto.id === checkd);
+        const indexFound = oldChildren.findIndex((onto) => onto.id === checked);
         if (indexFound === -1 && findNode) {
           // Add the node to newchildren if not present
           oldChildren.push({
-            id: checkd,
-            title: findNode.plainText.title,
+            id: checked,
+            title: findNode.title,
           });
         }
       }
 
-      // If type is "Specializations", update main children
-      if (type === "Specializations") {
-        nodeData.children[type]["main"] = nodeData.children[type][
+      // If _type is "specializations", update main children
+      if (_type === "specializations") {
+        nodeData.children[_type]["main"] = nodeData.children[_type][
           "main"
         ].filter(
           (node: any) => oldChildren.findIndex((o) => o.id === node.id) === -1
@@ -554,14 +492,14 @@ const Node = ({
       }
 
       // Update the node data with the new children
-      nodeData.children[type] = {
-        ...(nodeData.children[type] || {}),
+      nodeData.children[_type] = {
+        ...(nodeData.children[_type] || {}),
         [selectedCategory]: oldChildren,
       };
 
       // If inheritance is present, reset the children field
       if (nodeData.inheritance) {
-        nodeData.inheritance.children[type] = {
+        nodeData.inheritance.children[_type] = {
           ref: null,
           title: "",
         };
@@ -569,14 +507,11 @@ const Node = ({
       // Update the node document in the database
       await updateDoc(nodeDoc.ref, nodeData);
 
-      // If type is not "Specializations", update the inheritance
-      if (type !== "Specializations") {
+      // If _type is not "specializations", update the inheritance
+      if (_type !== "specializations") {
         updateInheritance({
           updatedNode: { ...nodeData, id: currentVisibleNode.id },
-          updatedField: type,
-          type: "children",
-          newValue: nodeData.children[type],
-          ancestorTitle: nodeData.title,
+          updatedProperty: _type,
         });
       }
 
@@ -655,14 +590,10 @@ const Node = ({
   }, [newCategory]);
 
   const handleNewSpecialization = async () => {
-    if (type === "specializations") {
-      await addNewSpecialization(type, selectedCategory);
-      handleClose();
-    } else {
-      await handleCloning(mainSpecializations[type]);
-      handleClose();
-    }
+    await addNewSpecialization(selectedCategory);
+    handleClose();
   };
+
   const handleEditCategory = (type: string, category: string) => {
     setNewCategory(category);
     setOpenAddCategory(true);
@@ -802,7 +733,7 @@ const Node = ({
             await updateDoc(nodeDoc.ref, nodeData);
 
             // Record a log of the sorting action
-            await recordLogs({
+            recordLogs({
               action: "Moved a field to a category",
               field: subType,
               sourceCategory:
@@ -829,19 +760,19 @@ const Node = ({
    */
   const removeChildNode = (parentNode: INode, childId: string) => {
     // Iterate over the types of children in the main node data.
-    for (let type in parentNode.children) {
+    for (let type in parentNode.specializations) {
       // Iterate over the categories within each type of child-node.
-      for (let category in parentNode.children[type] || {}) {
+      for (let category in parentNode.specializations || {}) {
         // Check if there are children present in the current category.
-        if ((parentNode.children[type][category] || []).length > 0) {
+        if ((parentNode.specializations[category] || []).length > 0) {
           // Find the index of the child-node with the specified ID within the children array.
-          const subOntologyIdx = parentNode.children[type][category].findIndex(
+          const specializationIdx = parentNode.specializations[type].findIndex(
             (sub: any) => sub.id === childId
           );
 
           // If the child-node with the specified ID is found, remove it from the array.
-          if (subOntologyIdx !== -1) {
-            parentNode.children[type][category].splice(subOntologyIdx, 1);
+          if (specializationIdx !== -1) {
+            parentNode.specializations[type].splice(specializationIdx, 1);
           }
         }
       }
@@ -919,6 +850,7 @@ const Node = ({
     if (type === "dependents" || type === "dependencies") {
       return mainSpecializations["act"]?.specializations || {};
     } else if (type === "specializations" || type === "generalizations") {
+      // delete mainSpecializations[]
       return (
         mainSpecializations[rootTitle.toLowerCase()]?.specializations || {}
       );
@@ -940,6 +872,70 @@ const Node = ({
     },
     [setExpandedNodes]
   );
+  const addNewProperty = async (
+    newProperty: string,
+    newPropertyType: string
+  ) => {
+    try {
+      if (!newProperty.trim() || !newPropertyType.trim()) return;
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+      const properties = currentVisibleNode.properties;
+      const propertyType = currentVisibleNode.propertyType;
+      propertyType[newProperty] = newPropertyType.toLowerCase();
+
+      if (newPropertyType.toLowerCase() === "string") {
+        properties[newProperty] = "";
+      } else {
+        properties[newProperty] = {
+          main: [],
+        };
+      }
+      await updateDoc(nodeRef, {
+        properties,
+        propertyType,
+      });
+
+      setOpenAddField(false);
+    } catch (error) {
+      setOpenAddField(false);
+      console.error(error);
+    }
+  };
+
+  const removeProperty = async (property: string) => {
+    if (
+      await confirmIt(
+        `Are sure you want delete the field ${property}?`,
+        "Delete",
+        "Keep"
+      )
+    ) {
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+      const properties = currentVisibleNode.properties;
+      const propertyType = currentVisibleNode.propertyType;
+      delete properties[property];
+      await updateDoc(nodeRef, { propertyType, properties });
+    }
+  };
+  const filterNode = (
+    children: string[],
+    plainText: string[],
+    types: string[]
+  ) => {
+    const _types = types.map((p) => p.toLowerCase());
+    const _children = children
+      .map((t) => t.toLowerCase())
+      .filter((t: string) => !_types.includes(t.toLowerCase()));
+    const _plainText = plainText
+      .map((t) => t.toLowerCase())
+      .filter(
+        (t: string) =>
+          !_types.includes(t.toLowerCase()) &&
+          !["title", "description"].includes(t)
+      );
+
+    return [..._children, ..._plainText];
+  };
 
   /* "root": "T
   of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. The user should not be able to modify the value of this field. Please automatically specify it by tracing the generalizations of this descendent activity back to reach one of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. So, obviously the root of the node 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward' itself and its direct specializations would be empty string because they are already roots."*/
@@ -947,7 +943,8 @@ const Node = ({
   return (
     <Box
       sx={{
-        padding: "40px 40px 40px 40px",
+        // padding: "40px 40px 40px 40px",
+        pt: "40px",
         mb: "90px",
       }}
     >
@@ -956,45 +953,29 @@ const Node = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          backgroundColor: "transparent",
+          // backgroundColor: "rgba(0, 0, 0, 0.5)",
         }}
         open={openSelectModel}
         onClose={handleClose}
       >
         <Box
           sx={{
-            width: "80%",
             maxHeight: "80vh",
-            backgroundColor: "white",
             overflowY: "auto",
             borderRadius: 2,
             boxShadow: 24,
-            "&::-webkit-scrollbar": {
-              width: "12px",
-            },
-            "&::-webkit-scrollbar-track": {
-              background: (theme) =>
-                theme.palette.mode === "dark" ? "#28282a" : "white",
-            },
-            "&::-webkit-scrollbar-thumb": {
-              backgroundColor: "#888",
-              borderRadius: "10px",
-              border: (theme) =>
-                theme.palette.mode === "dark"
-                  ? "3px solid #28282a"
-                  : "3px solid white",
-            },
-            "&::-webkit-scrollbar-thumb:hover": {
-              background: DESIGN_SYSTEM_COLORS.orange400,
-            },
+            ...SCROLL_BAR_STYLE,
           }}
         >
           <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>
-            <Box sx={{ mt: 1, display: "flex", alignItems: "center" }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography>
                 Check the Box for the{" "}
-                <strong style={{ color: "orange" }}>{type}</strong> that you
-                want to add:
+                <strong style={{ color: "orange" }}>
+                  {capitalizeFirstLetter(DISPLAY[type] ? DISPLAY[type] : type)}
+                </strong>{" "}
+                that you want to add:
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <SearchBox
@@ -1004,16 +985,18 @@ const Node = ({
               </Box>
             </Box>
           </Paper>
-          <TreeViewSimplified
-            treeVisualization={selectFromTree()}
-            expandedNodes={expandedNodes}
-            onOpenNodesTree={handleToggle}
-            checkSpecialization={checkSpecialization}
-            checkedSpecializations={checkedSpecializations}
-            handleCloning={handleCloning}
-            clone={true}
-            stopPropagation={currentVisibleNode.id}
-          />
+          <Paper>
+            <TreeViewSimplified
+              treeVisualization={selectFromTree()}
+              expandedNodes={expandedNodes}
+              onOpenNodesTree={handleToggle}
+              checkSpecialization={checkSpecialization}
+              checkedSpecializations={checkedSpecializations}
+              handleCloning={handleCloning}
+              clone={true}
+              stopPropagation={currentVisibleNode.id}
+            />
+          </Paper>
           <Paper
             sx={{
               display: "flex",
@@ -1024,13 +1007,11 @@ const Node = ({
               gap: "8px",
             }}
           >
-            {type !== "dependents" &&
-              type !== "dependencies" &&
-              type !== "generalizations" && (
-                <Button variant="contained" onClick={handleNewSpecialization}>
-                  Add new {type}
-                </Button>
-              )}
+            {type === "specializations" && (
+              <Button variant="contained" onClick={handleNewSpecialization}>
+                Add new
+              </Button>
+            )}
             <Button
               variant="contained"
               onClick={handleSaveChildrenChanges}
@@ -1053,7 +1034,7 @@ const Node = ({
         <DialogContent>
           <Box sx={{ height: "auto", width: "500px" }}>
             <FormControl fullWidth margin="normal" sx={{ width: "500px" }}>
-              <InputLabel id="difficulty-label">Difficulty</InputLabel>
+              <InputLabel id="difficulty-label">Type</InputLabel>
               <Select
                 labelId="difficulty-label"
                 value={newFieldType}
@@ -1067,27 +1048,46 @@ const Node = ({
               >
                 {[
                   "String",
-                  "Number",
-                  "Boolean",
+                  // "Number",
+                  // "Boolean",
                   "Activity",
                   "Actor",
                   "Evaluation Dimension",
                   "Incentive",
                   "Reward",
                 ].map((item) => (
-                  <MenuItem key={item} value="easy">
+                  <MenuItem key={item} value={item}>
                     {item}
                   </MenuItem>
                 ))}
               </Select>
+              <TextField
+                label="New Property"
+                sx={{ mt: "14px" }}
+                value={newFieldTitle}
+                onChange={(event) => setNewFieldTitle(event.target.value)}
+                InputLabelProps={{
+                  style: { color: "grey" },
+                }}
+              />
             </FormControl>
           </Box>
         </DialogContent>
         <DialogActions sx={{ justifyContent: "center" }}>
-          <Button onClick={addNewCategory} color="primary">
+          <Button
+            onClick={() => addNewProperty(newFieldTitle, newFieldType)}
+            color="primary"
+            disabled={!newFieldType || !newFieldTitle}
+          >
             {editCategory ? "Save" : "Add"}
           </Button>
-          <Button onClick={handleCloseAddCategory} color="primary">
+          <Button
+            onClick={() => {
+              setOpenAddField(false);
+              setNewFieldTitle("");
+            }}
+            color="primary"
+          >
             Cancel
           </Button>
         </DialogActions>
@@ -1127,377 +1127,217 @@ const Node = ({
         </DialogActions>
       </Dialog>
 
-      <Box sx={{ display: "flex", flexDirection: "column" }}>
-        <Text
-          updateInheritance={updateInheritance}
-          recordLogs={recordLogs}
-          user={user}
-          lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
-          addLock={addLock}
-          text={currentVisibleNode.plainText.title}
-          currentVisibleNode={currentVisibleNode}
-          type={"title"}
-          setSnackbarMessage={setSnackbarMessage}
-          setCurrentVisibleNode={setCurrentVisibleNode}
-          editNode={editNode}
-          setEditNode={setEditNode}
-          deleteNode={deleteNode}
-        />
-        <Text
-          updateInheritance={updateInheritance}
-          recordLogs={recordLogs}
-          user={user}
-          lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
-          addLock={addLock}
-          text={currentVisibleNode.plainText.description}
-          currentVisibleNode={currentVisibleNode}
-          type={"description"}
-          setSnackbarMessage={setSnackbarMessage}
-          setCurrentVisibleNode={setCurrentVisibleNode}
-          setEditNode={setEditNode}
-        />
-      </Box>
-
-      <Box key={currentVisibleNode.id} sx={{ mb: "15px", mt: "25px" }}>
-        <Box>
-          {(ORDER_CHILDREN[currentVisibleNode?.nodeType as string] || []).map(
-            (type: string) =>
-              // if it' a children we need to render it as one otherwise it's a Plain Text
-              type in
-              NODES_TYPES[currentVisibleNode?.nodeType as string].children ? (
-                <Box key={type} sx={{ display: "grid", mt: "5px" }}>
-                  <Box>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <Typography sx={{ fontSize: "19px" }}>
-                        {capitalizeFirstLetter(
-                          DISPLAY[type] ? DISPLAY[type] : type
-                        )}
-                        :
-                      </Typography>
-                      <Tooltip title={""}>
-                        <Button
-                          onClick={() => showList(type, "main")}
-                          sx={{ ml: "5px" }}
-                        >
-                          {" "}
-                          {type !== "specializations" ? "Select" : "Add"} {type}{" "}
-                        </Button>
-                      </Tooltip>
-                      {["specializations", "role", "actor"].includes(type) && (
-                        <Button
-                          onClick={() => {
-                            setOpenAddCategory(true);
-                            setType(type);
-                          }}
-                          sx={{ ml: "5px" }}
-                        >
-                          Add Category
-                        </Button>
-                      )}
-                      {(currentVisibleNode.inheritance || {}).children &&
-                        (currentVisibleNode.inheritance || {}).children[type]
-                          ?.ref && (
-                          <Typography sx={{ color: "grey" }}>
-                            {"("}
-                            {"Inherited from "}
-                            {'"'}
-                            {(currentVisibleNode.inheritance || {}).children[
-                              type
-                            ]?.title || ""}
-                            {'"'}
-                            {")"}
-                          </Typography>
-                        )}
-                    </Box>
-                    {["role", "specializations", "actor"].includes(type) ? (
-                      <DragDropContext
-                        onDragEnd={(e: any) => handleSorting(e, type)}
-                      >
-                        <ul>
-                          {Object.keys(currentVisibleNode?.children[type] || {})
-                            .sort((a, b) => {
-                              if (a === "main") return -1;
-                              if (b === "main") return 1;
-                              return a.localeCompare(b); // Alphabetical order for other keys
-                            })
-                            .map((category: any) => {
-                              const children =
-                                currentVisibleNode?.children[type][category] ||
-                                [];
-                              const showGap =
-                                Object.keys(
-                                  currentVisibleNode?.children[type]
-                                ).filter(
-                                  (c) =>
-                                    (
-                                      currentVisibleNode?.children[type][c] ||
-                                      []
-                                    ).length > 0 && c !== "main"
-                                ).length > 0;
-                              return (
-                                <Box
-                                  key={category}
-                                  id={category} /* sx={{ ml: "15px" }} */
-                                >
-                                  {category !== "main" && (
-                                    <li key={category}>
-                                      <Box
-                                        sx={{
-                                          display: "flex",
-                                          alignItems: "center",
-                                        }}
-                                      >
-                                        <Typography sx={{ fontWeight: "bold" }}>
-                                          {category}
-                                        </Typography>{" "}
-                                        :{" "}
-                                        <Button
-                                          onClick={() =>
-                                            showList(type, category)
-                                          }
-                                          sx={{ ml: "5px" }}
-                                        >
-                                          {" "}
-                                          {type !== "specializations"
-                                            ? "Select"
-                                            : "Add"}{" "}
-                                          {type}{" "}
-                                        </Button>
-                                        <Button
-                                          onClick={() =>
-                                            handleEditCategory(type, category)
-                                          }
-                                          sx={{ ml: "5px" }}
-                                        >
-                                          {" "}
-                                          Edit
-                                        </Button>
-                                        <Button
-                                          onClick={() =>
-                                            deleteCategory(type, category)
-                                          }
-                                          sx={{ ml: "5px" }}
-                                        >
-                                          {" "}
-                                          Delete
-                                        </Button>
-                                      </Box>
-                                    </li>
-                                  )}
-
-                                  {(children.length > 0 || showGap) && (
-                                    <List>
-                                      <Droppable
-                                        droppableId={category}
-                                        type="CATEGORY"
-                                      >
-                                        {/* //snapshot.isDraggingOver */}
-                                        {(provided: any, snapshot: any) => (
-                                          <Box
-                                            {...provided.droppableProps}
-                                            ref={provided.innerRef}
-                                            sx={{
-                                              backgroundColor: (theme) =>
-                                                theme.palette.mode === "dark"
-                                                  ? snapshot.isDraggingOver
-                                                    ? DESIGN_SYSTEM_COLORS.notebookG450
-                                                    : ""
-                                                  : snapshot.isDraggingOver
-                                                  ? DESIGN_SYSTEM_COLORS.gray250
-                                                  : "",
-                                              // minHeight: /* children.length > 0 ?  */ "25px" /*  : "" */,
-                                              userSelect: "none",
-                                            }}
-                                          >
-                                            {children.map(
-                                              (child: any, index: any) => {
-                                                return (
-                                                  <Draggable
-                                                    key={child.id}
-                                                    draggableId={child.id}
-                                                    index={index}
-                                                  >
-                                                    {(provided: any) => (
-                                                      <ListItem
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
-                                                        sx={{ m: 0, p: 0 }}
-                                                      >
-                                                        <ListItemIcon>
-                                                          <DragIndicatorIcon />
-                                                        </ListItemIcon>
-                                                        <ChildNode
-                                                          navigateToNode={
-                                                            navigateToNode
-                                                          }
-                                                          recordLogs={
-                                                            recordLogs
-                                                          }
-                                                          setSnackbarMessage={
-                                                            setSnackbarMessage
-                                                          }
-                                                          currentVisibleNode={
-                                                            currentVisibleNode
-                                                          }
-                                                          setCurrentVisibleNode={
-                                                            setCurrentVisibleNode
-                                                          }
-                                                          sx={{ mt: "15px" }}
-                                                          key={
-                                                            currentVisibleNode.id
-                                                          }
-                                                          child={child}
-                                                          type={type}
-                                                          category={category}
-                                                          updateInheritance={
-                                                            updateInheritance
-                                                          }
-                                                        />
-                                                      </ListItem>
-                                                    )}
-                                                  </Draggable>
-                                                );
-                                              }
-                                            )}
-                                            {provided.placeholder}
-                                          </Box>
-                                        )}
-                                      </Droppable>
-                                    </List>
-                                  )}
-                                </Box>
-                              );
-                            })}
-                        </ul>
-                      </DragDropContext>
-                    ) : (
-                      <ul>
-                        {Object.keys(
-                          currentVisibleNode?.children[type] || {}
-                        ).map((category: any) => {
-                          const children =
-                            currentVisibleNode?.children[type][category] || [];
-                          return (
-                            <Box
-                              key={category}
-                              id={category} /* sx={{ ml: "15px" }} */
-                            >
-                              {category !== "main" && (
-                                <li key={category}>
-                                  <Box
-                                    sx={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                    }}
-                                  >
-                                    <Typography sx={{ fontWeight: "bold" }}>
-                                      {category}
-                                    </Typography>{" "}
-                                    :{" "}
-                                    <Button
-                                      onClick={() => showList(type, category)}
-                                      sx={{ ml: "5px" }}
-                                    >
-                                      {" "}
-                                      {type !== "Specializations"
-                                        ? "Select"
-                                        : "Add"}{" "}
-                                      {type}{" "}
-                                    </Button>
-                                    <Button
-                                      onClick={() =>
-                                        handleEditCategory(type, category)
-                                      }
-                                      sx={{ ml: "5px" }}
-                                    >
-                                      {" "}
-                                      Edit
-                                    </Button>
-                                    <Button
-                                      onClick={() =>
-                                        deleteCategory(type, category)
-                                      }
-                                      sx={{ ml: "5px" }}
-                                    >
-                                      {" "}
-                                      Delete
-                                    </Button>
-                                  </Box>
-                                </li>
-                              )}
-
-                              <ul>
-                                {children.map((child: any) => {
-                                  return (
-                                    <li key={child.id}>
-                                      <ChildNode
-                                        navigateToNode={navigateToNode}
-                                        recordLogs={recordLogs}
-                                        setSnackbarMessage={setSnackbarMessage}
-                                        currentVisibleNode={currentVisibleNode}
-                                        setCurrentVisibleNode={
-                                          setCurrentVisibleNode
-                                        }
-                                        sx={{ mt: "15px" }}
-                                        key={currentVisibleNode.id}
-                                        child={child}
-                                        type={type}
-                                        category={category}
-                                        updateInheritance={updateInheritance}
-                                      />
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            </Box>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </Box>
-                </Box>
-              ) : type in
-                NODES_TYPES[currentVisibleNode?.nodeType as string]
-                  .plainText ? (
-                <Box key={type}>
-                  <Text
-                    updateInheritance={updateInheritance}
-                    recordLogs={recordLogs}
-                    user={user}
-                    lockedNodeFields={
-                      lockedNodeFields[currentVisibleNode.id] || {}
-                    }
-                    addLock={addLock}
-                    text={currentVisibleNode.plainText[type]}
-                    currentVisibleNode={currentVisibleNode}
-                    type={type}
-                    setSnackbarMessage={setSnackbarMessage}
-                    setCurrentVisibleNode={setCurrentVisibleNode}
-                    setEditNode={setEditNode}
-                  />
-                </Box>
-              ) : (
-                rootTitle && (
-                  <Box sx={{ display: "flex", gap: "15px" }}>
-                    {" "}
-                    <Typography>Root:</Typography>
-                    <Typography>{rootTitle}</Typography>
-                  </Box>
-                )
-              )
-          )}
-
-          <Box
-            sx={{ mt: "19px" }}
-            onClick={() => {
-              setOpenAddField(true);
+      <Box sx={{ display: "flex", gap: "10px", width: "100%" }}>
+        <Paper sx={{ width: "500px" }} elevation={9}>
+          <Tabs
+            value={viewValue}
+            onChange={(event: any, newValue: number) => {
+              setViewValue(newValue);
+            }}
+            aria-label="basic tabs example"
+          >
+            <Tab label="Generalizations" {...a11yProps(0)} />
+            <Tab label="Part of" {...a11yProps(1)} />
+          </Tabs>
+          <TabPanel
+            value={viewValue}
+            index={0}
+            sx={{
+              mt: "5px",
             }}
           >
-            <Button variant="contained">Add new Field</Button>
+            <LinksSide
+              properties={currentVisibleNode?.properties?.generalizations || {}}
+              currentVisibleNode={currentVisibleNode}
+              showList={showList}
+              setOpenAddCategory={setOpenAddCategory}
+              setType={setType}
+              handleSorting={handleSorting}
+              handleEditCategory={handleEditCategory}
+              deleteCategory={deleteCategory}
+              navigateToNode={navigateToNode}
+              recordLogs={recordLogs}
+              setSnackbarMessage={setSnackbarMessage}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              updateInheritance={updateInheritance}
+              relationType={"generalizations"}
+            />
+          </TabPanel>
+          <TabPanel
+            value={viewValue}
+            index={1}
+            sx={{
+              mt: "5px",
+            }}
+          >
+            <LinksSideParts
+              properties={currentVisibleNode?.properties?.partOf || {}}
+              currentVisibleNode={currentVisibleNode}
+              showList={showList}
+              setOpenAddCategory={setOpenAddCategory}
+              setType={setType}
+              handleSorting={handleSorting}
+              handleEditCategory={handleEditCategory}
+              deleteCategory={deleteCategory}
+              navigateToNode={navigateToNode}
+              recordLogs={recordLogs}
+              setSnackbarMessage={setSnackbarMessage}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              updateInheritance={updateInheritance}
+              relationType={"partOf"}
+            />
+          </TabPanel>
+        </Paper>
+
+        <Paper
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            p: "17px",
+            width: "100%",
+          }}
+          elevation={6}
+        >
+          <Box sx={{ mb: "19px" }}>
+            <Text
+              updateInheritance={updateInheritance}
+              recordLogs={recordLogs}
+              user={user}
+              lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
+              addLock={addLock}
+              text={currentVisibleNode.title}
+              currentVisibleNode={currentVisibleNode}
+              property={"title"}
+              setSnackbarMessage={setSnackbarMessage}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              editNode={editNode}
+              setEditNode={setEditNode}
+              deleteNode={deleteNode}
+            />
           </Box>
-        </Box>
+          {rootTitle && (
+            <Box sx={{ display: "flex", gap: "15px", mb: "15px" }}>
+              {" "}
+              <Typography sx={{ fontSize: "19px", fontWeight: "bold" }}>
+                Root:
+              </Typography>
+              <Link
+                underline="hover"
+                onClick={() => {
+                  navigateToNode(currentVisibleNode.root);
+                }}
+                sx={{
+                  cursor: "pointer",
+                  color: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? theme.palette.common.gray50
+                      : theme.palette.common.notebookMainBlack,
+                  mt: "1px",
+                }}
+              >
+                {" "}
+                {rootTitle}
+              </Link>
+            </Box>
+          )}
+
+          <Text
+            updateInheritance={updateInheritance}
+            recordLogs={recordLogs}
+            user={user}
+            lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
+            addLock={addLock}
+            text={currentVisibleNode.properties.description}
+            currentVisibleNode={currentVisibleNode}
+            property={"description"}
+            setSnackbarMessage={setSnackbarMessage}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            setEditNode={setEditNode}
+          />
+
+          <NodeBody
+            currentVisibleNode={currentVisibleNode}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            recordLogs={recordLogs}
+            updateInheritance={updateInheritance}
+            showList={showList}
+            handleEditCategory={handleEditCategory}
+            deleteCategory={deleteCategory}
+            handleSorting={handleSorting}
+            navigateToNode={navigateToNode}
+            setSnackbarMessage={setSnackbarMessage}
+            setOpenAddCategory={setOpenAddCategory}
+            setType={setType}
+            setEditNode={setEditNode}
+            setOpenAddField={setOpenAddField}
+            removeProperty={removeProperty}
+            addLock={addLock}
+            lockedNodeFields={lockedNodeFields}
+            user={user}
+          />
+        </Paper>
+        <Paper elevation={9}>
+          <Tabs
+            value={viewValue}
+            onChange={(event: any, newValue: number) => {
+              setViewValue(newValue);
+            }}
+            aria-label="basic tabs example"
+          >
+            <Tab label="Generalizations" {...a11yProps(0)} />
+            <Tab label="Parts" {...a11yProps(1)} />
+          </Tabs>
+          <TabPanel
+            value={viewValue}
+            index={0}
+            sx={{
+              mt: "5px",
+            }}
+          >
+            <LinksSide
+              properties={currentVisibleNode?.specializations || {}}
+              currentVisibleNode={currentVisibleNode}
+              showList={showList}
+              setOpenAddCategory={setOpenAddCategory}
+              setType={setType}
+              handleSorting={handleSorting}
+              handleEditCategory={handleEditCategory}
+              deleteCategory={deleteCategory}
+              navigateToNode={navigateToNode}
+              recordLogs={recordLogs}
+              setSnackbarMessage={setSnackbarMessage}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              updateInheritance={updateInheritance}
+              relationType={"specializations"}
+            />
+          </TabPanel>
+          <TabPanel
+            value={viewValue}
+            index={1}
+            sx={{
+              mt: "5px",
+            }}
+          >
+            <LinksSideParts
+              properties={currentVisibleNode?.properties?.parts || {}}
+              currentVisibleNode={currentVisibleNode}
+              showList={showList}
+              setOpenAddCategory={setOpenAddCategory}
+              setType={setType}
+              handleSorting={handleSorting}
+              handleEditCategory={handleEditCategory}
+              deleteCategory={deleteCategory}
+              navigateToNode={navigateToNode}
+              recordLogs={recordLogs}
+              setSnackbarMessage={setSnackbarMessage}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              updateInheritance={updateInheritance}
+              relationType={"parts"}
+            />
+          </TabPanel>
+        </Paper>
       </Box>
+
       {ConfirmDialog}
     </Box>
   );

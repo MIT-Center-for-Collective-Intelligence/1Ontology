@@ -80,6 +80,7 @@ import {
   getDoc,
   getFirestore,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 
@@ -92,7 +93,7 @@ import { DISPLAY } from " @components/lib/CONSTANTS";
 type ISubOntologyProps = {
   currentVisibleNode: INode;
   setCurrentVisibleNode: (state: any) => void;
-  type: string;
+  property: string;
   setSnackbarMessage: (message: any) => void;
   text: string;
   editNode?: string | null;
@@ -113,16 +114,14 @@ type ISubOntologyProps = {
   deleteNode?: () => void;
   updateInheritance: (parameters: {
     updatedNode: INode;
-    updatedField: string;
-    type: "children" | "plainText";
-    newValue: any;
-    ancestorTitle: string;
+    updatedProperty: string;
   }) => void;
   disabled?: boolean;
+  removeField?: any;
 };
 const Text = ({
   text,
-  type,
+  property,
   currentVisibleNode,
   setCurrentVisibleNode,
   editNode = null,
@@ -134,6 +133,7 @@ const Text = ({
   deleteNode = () => {},
   updateInheritance,
   disabled,
+  removeField,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const [editMode, setEditMode] = useState(false);
@@ -141,8 +141,12 @@ const Text = ({
   const textFieldRef = useRef<any>(null);
 
   useEffect(() => {
-    setCopyValue(currentVisibleNode.plainText[type]);
-  }, [currentVisibleNode, type, editMode]);
+    setCopyValue(
+      property === "title"
+        ? currentVisibleNode.title
+        : currentVisibleNode.properties[property]
+    );
+  }, [currentVisibleNode, property, editMode]);
   const capitalizeFirstLetter = (word: string) => {
     return word.charAt(0).toUpperCase() + word.slice(1);
   };
@@ -150,30 +154,8 @@ const Text = ({
   // This function is responsible for editing the title of a childe node.
   // It takes an object with three parameters: parentData (parentNode), newTitle, and id.
 
-  const editTitleChildNode = ({ parentData, newTitle, id }: any) => {
-    // Iterate over the types of children in the parentData.
-    for (let type in parentData.children) {
-      // Iterate over the categories within each type of childe node.
-      for (let category in parentData.children[type] || {}) {
-        // Check if the current category has ontologies defined.
-        if ((parentData.children[type][category] || []).length > 0) {
-          // Find the index of the childe node with the given id within the current category.
-          const childIdx = parentData.children[type][category].findIndex(
-            (sub: any) => sub.id === id
-          );
-
-          // If the childe node with the specified id is found in the current category.
-          if (childIdx !== -1) {
-            // Update the title of the childe node with the new title.
-            parentData.children[type][category][childIdx].title = newTitle;
-          }
-        }
-      }
-    }
-  };
-
   useEffect(() => {
-    if (type === "title" && editNode) {
+    if (property === "title" && editNode) {
       setEditMode(editNode === currentVisibleNode.id);
     }
   }, [editNode, currentVisibleNode]);
@@ -191,44 +173,28 @@ const Text = ({
       // Check if the node document exists
       if (nodeDoc.exists()) {
         // Extract node data from the document
-        const nodeData: any = nodeDoc.data();
+        const nodeData = nodeDoc.data() as INode;
         // If the field being edited is not "description" or "title"
-        let previousValue = nodeData.plainText[type] || "";
+        let previousValue = nodeData.properties[property] || "";
         let newValue = copyValue;
         // If the field being edited is the "title"
-        if (type === "title") {
+        if (property === "title") {
           // Reset the editNode state
           setEditNode("");
-
-          // Update titles of children for each parent node
-          for (let parentId of currentVisibleNode?.parents || []) {
-            const parentRef = doc(collection(db, NODES), parentId);
-            const parentDoc = await getDoc(parentRef);
-            const parentData: any = parentDoc.data();
-
-            // Call a function to edit the title of children
-            editTitleChildNode({
-              parentData,
-              newTitle: newValue,
-              id: currentVisibleNode.id,
-            });
-
-            // Update the parent node in the database
-            updateDoc(parentRef, parentData);
-          }
+        }
+        if (property === "title") {
+          nodeData.title = copyValue || "";
+        } else {
+          nodeData.properties[property] = copyValue || "";
         }
 
-        nodeData.plainText[type] = copyValue || "";
-
         if (
-          type !== "title" &&
+          property !== "title" &&
           nodeData.inheritance &&
           previousValue.trim() !== newValue.trim()
         ) {
-          nodeData.inheritance.plainText[type] = {
-            ref: null,
-            title: "",
-          };
+          nodeData.inheritance[property].ref = null;
+          nodeData.inheritance[property].title = "";
         }
 
         // Update the node document in the database
@@ -236,21 +202,20 @@ const Text = ({
 
         // Update the children according to inheritance
         // (Title doesn't have inheritance, so it's excluded)
-        updateInheritance({
-          updatedField: type,
-          type: "plainText",
-          newValue: newValue,
-          updatedNode: { ...nodeData, id: currentVisibleNode.id },
-          ancestorTitle: nodeData.plainText.title,
-        });
+        if (property !== "title") {
+          updateInheritance({
+            updatedNode: { ...nodeData, id: currentVisibleNode.id },
+            updatedProperty: property,
+          });
+        }
 
         // Add a lock for the edited node
-        addLock(currentVisibleNode.id, type, "remove");
+        addLock(currentVisibleNode.id, property, "remove");
 
         // Record the edit action in the logs
         recordLogs({
           action: "Edited a field",
-          field: type,
+          field: property,
           previousValue,
           newValue,
         });
@@ -258,7 +223,7 @@ const Text = ({
       setEditMode((edit) => !edit);
     } else {
       // If edit mode is false, add a lock for the node
-      addLock(currentVisibleNode.id, type, "add");
+      addLock(currentVisibleNode.id, property, "add");
       setEditMode(true);
     }
   };
@@ -272,7 +237,7 @@ const Text = ({
   // Function to handle focus events
   const handleFocus = (event: any) => {
     // Check if the type is "title" and the current node being edited matches the open node
-    if (type === "title" && editNode === currentVisibleNode.id) {
+    if (property === "title" && editNode === currentVisibleNode.id) {
       // If conditions are met, select the text in the target element
       event.target.select();
     }
@@ -284,19 +249,22 @@ const Text = ({
     deleteNode();
   };
   const onCancelTextChange = () => {
-    setCopyValue(currentVisibleNode.plainText[type]);
+    setCopyValue(currentVisibleNode.properties[property]);
     setEditMode((edit) => !edit);
-    addLock(currentVisibleNode.id, type, "remove");
+    addLock(currentVisibleNode.id, property, "remove");
   };
   return (
     <Box>
-      {type !== "title" && (
+      {property !== "title" && (
         <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Typography sx={{ fontSize: "19px" }}>
-            {capitalizeFirstLetter(DISPLAY[type] ? DISPLAY[type] : type)}:
+          <Typography sx={{ fontSize: "19px", fontWeight: "500" }}>
+            {capitalizeFirstLetter(
+              DISPLAY[property] ? DISPLAY[property] : property
+            )}
+            :
           </Typography>
-          {lockedNodeFields[type] &&
-          user.uname !== lockedNodeFields[type].uname ? (
+          {lockedNodeFields[property] &&
+          user.uname !== lockedNodeFields[property].uname ? (
             <Tooltip title={"Locked"} sx={{ ml: "5px" }}>
               <LockIcon />
             </Tooltip>
@@ -316,15 +284,27 @@ const Text = ({
                   </Button>
                 </Tooltip>
               )}
+              {!["title", "description"].includes(property) && (
+                <Button
+                  onClick={() => {
+                    if (removeField) {
+                      removeField(property, false);
+                    }
+                  }}
+                  sx={{ ml: "5px" }}
+                >
+                  Delete
+                </Button>
+              )}
             </Box>
           )}
-          {(currentVisibleNode.inheritance || {}).plainText &&
-            (currentVisibleNode.inheritance || {}).plainText[type]?.ref && (
-              <Typography sx={{ color: "grey" }}>
+          {(currentVisibleNode.inheritance || {}) &&
+            (currentVisibleNode.inheritance || {})[property]?.ref && (
+              <Typography sx={{ color: "grey", fontSize: "14px", ml: "auto" }}>
                 {"("}
                 {"Inherited from "}
                 {'"'}
-                {(currentVisibleNode.inheritance || {}).plainText[type]?.title}
+                {(currentVisibleNode.inheritance || {})[property]?.title}
                 {'"'}
                 {")"}
               </Typography>
@@ -333,14 +313,13 @@ const Text = ({
       )}
       {editMode ? (
         <TextField
-          placeholder={type}
-          variant="standard"
+          placeholder={"Type something..."}
           fullWidth
           value={copyValue}
           multiline
           onChange={handleEditText}
           InputProps={{
-            style: { fontSize: type === "title" ? "30px" : "" },
+            style: { fontSize: property === "title" ? "30px" : "" },
             endAdornment: (
               <Box
                 style={{
@@ -349,7 +328,7 @@ const Text = ({
                   display: "flex",
                 }}
               >
-                {type === "title" && (
+                {property === "title" && (
                   <Box sx={{ display: "flex" }}>
                     <Tooltip title={"Save"}>
                       <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
@@ -393,12 +372,12 @@ const Text = ({
         >
           <MarkdownRender
             text={text}
-            sx={{ fontSize: type === "title" ? "30px" : "" }}
+            sx={{ fontSize: property === "title" ? "30px" : "" }}
           />
-          {type === "title" && !currentVisibleNode.locked && (
+          {property === "title" && !currentVisibleNode.locked && (
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              {lockedNodeFields[type] &&
-              user.uname !== lockedNodeFields[type].uname ? (
+              {lockedNodeFields[property] &&
+              user.uname !== lockedNodeFields[property].uname ? (
                 <Tooltip title={"Locked"} sx={{ ml: "5px" }}>
                   <LockIcon />
                 </Tooltip>

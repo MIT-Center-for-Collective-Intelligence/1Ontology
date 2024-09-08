@@ -72,7 +72,8 @@ import {
 } from "@mui/material";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import {
-  Timestamp,
+  DocumentReference,
+  WriteBatch,
   collection,
   doc,
   getDoc,
@@ -83,10 +84,10 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import Fuse from "fuse.js";
-import moment from "moment";
-import { createRef, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import markdownContent from "../components/OntologyComponents/Markdown-Here-Cheatsheet.md";
 import SneakMessage from " @components/components/OntologyComponents/SneakMessage";
 import Node from " @components/components/OntologyComponents/Node";
@@ -95,7 +96,6 @@ import {
   ILockedNode,
   INode,
   INodePath,
-  IChildNode,
   MainSpecializations,
   TreeVisual,
 } from " @components/types/INode";
@@ -108,23 +108,27 @@ import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import withAuthUser from " @components/components/hoc/withAuthUser";
 import { useAuth } from " @components/components/context/AuthContext";
 import { useRouter } from "next/router";
-import DAGGraph from " @components/components/OntologyComponents/DAGGraph";
+import DagGraph from " @components/components/OntologyComponents/DAGGraph";
 import { formatFirestoreTimestampWithMoment } from " @components/lib/utils/utils";
-import { NODES_TYPES, NO_IMAGE_USER } from " @components/lib/CONSTANTS";
+import { NO_IMAGE_USER, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import {
   LOCKS,
   LOGS,
   NODES,
   USERS,
 } from " @components/lib/firestoreClient/collections";
-import { getChildrenIds } from " @components/lib/utils/children.utils";
+import {
+  getBrowser,
+  getOperatingSystem,
+} from " @components/lib/firestoreClient/errors.firestore";
+import Inheritance from " @components/components/Inheritance/Inheritance";
+import useSelectDialog from " @components/lib/hooks/useSelectDialog";
 
 const Ontology = () => {
   const db = getFirestore();
   const [{ emailVerified, user }] = useAuth();
   const router = useRouter();
-  const isMobile = useMediaQuery("(max-width:599px)");
-
+  const isMobile = useMediaQuery("(max-width:599px)") && true;
   const [nodes, setNodes] = useState<INode[]>([]);
   const [currentVisibleNode, setCurrentVisibleNode] = useState<any>(null);
   const [ontologyPath, setOntologyPath] = useState<INodePath[]>([]);
@@ -134,6 +138,7 @@ const Ontology = () => {
   const [newComment, setNewComment] = useState("");
   const [updateComment, setUpdateComment] = useState("");
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
+  const { selectIt, selectDialog } = useSelectDialog();
   const [editingComment, setEditingComment] = useState("");
   const [lockedNodeFields, setLockedNodeFields] = useState<ILockedNode>({});
   const [value, setValue] = useState<number>(1);
@@ -144,7 +149,7 @@ const Ontology = () => {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [dagreZoomState, setDagreZoomState] = useState<any>(null);
   const [rightPanelVisible, setRightPanelVisible] = useState<any>(
-    user?.rightPanel
+    !!user?.rightPanel
   );
   const [users, setUsers] = useState<{ [key: string]: string }>({});
   const [eachOntologyPath, setEachOntologyPath] = useState<{
@@ -196,7 +201,7 @@ const Ontology = () => {
     let newSpecializationsTree: any = {};
     // Iterate through each main nodes
     for (let node of _nodes) {
-      const nodeTitle = node.plainText.title;
+      const nodeTitle = node.title;
       // Create an entry for the current node in the main specializations tree
       newSpecializationsTree[nodeTitle] = {
         id: node.category ? `${node.id}-${nodeTitle.trim()}` : node.id,
@@ -206,12 +211,12 @@ const Ontology = () => {
         specializations: {},
       };
 
-      // Iterate through each category in the Specializations child-nodes
-      for (let category in node.children.specializations) {
+      // Iterate through each category in the specializations child-nodes
+      for (let category in node.specializations) {
         // Filter nodes based on the current category
         const specializations =
           nodes.filter((onto: any) => {
-            const arrayNodes = node?.children?.specializations[category].map(
+            const arrayNodes = node?.specializations[category].map(
               (o: any) => o.id
             );
             return arrayNodes.includes(onto.id);
@@ -266,11 +271,31 @@ const Ontology = () => {
         ...logs,
         createdAt: new Date(),
         doer: user?.uname,
+        operatingSystem: getOperatingSystem(),
+        browser: getBrowser(),
       });
     } catch (error) {
       console.error(error);
     }
   };
+  useEffect(() => {
+    if (!user) return;
+    if (!nodes.length) return;
+
+    const userQuery = query(
+      collection(db, LOGS),
+      where("__name__", "==", "00EWFECw1PnBRPy4wZVt")
+    );
+
+    const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
+      const docChange = snapshot.docChanges()[0];
+      if (docChange.type !== "added") {
+        window.location.reload();
+      }
+    });
+
+    return () => unsubscribeUser();
+  }, [db, user, nodes]);
 
   useEffect(() => {
     // Filter nodes to get only those with a defined category
@@ -279,8 +304,8 @@ const Ontology = () => {
     // Sort main nodes based on a predefined order
     mainCategories.sort((nodeA: any, nodeB: any) => {
       const order = ["WHAT: Activities", "WHO: Actors", "WHY: Evaluation"];
-      const nodeATitle = nodeA.plainText.title;
-      const nodeBTitle = nodeA.plainText.title;
+      const nodeATitle = nodeA.title;
+      const nodeBTitle = nodeA.title;
       return order.indexOf(nodeATitle) - order.indexOf(nodeBTitle);
     });
     // Generate a tree structure of specializations from the sorted main nodes
@@ -355,7 +380,9 @@ const Ontology = () => {
       setOntologyPath(dataChange?.ontologyPath || []);
 
       //update the expanded nodes state
-      initializeExpanded(dataChange?.ontologyPath || []);
+      if (docChange.type === "added") {
+        initializeExpanded(dataChange?.ontologyPath || []);
+      }
       // Update the URL based on the ontologyPath
       updateTheUrl(dataChange?.ontologyPath || []);
 
@@ -504,8 +531,8 @@ const Ontology = () => {
         // Check if the clicked node is already in the nodes list
         if (
           nodes
-            .filter((node: any) => node.category)
-            .map((node: any) => node.plainText.title)
+            .filter((node: INode) => node.category)
+            .map((node: INode) => node.title)
             .includes(path.title)
         )
           return;
@@ -516,7 +543,7 @@ const Ontology = () => {
         // Update the open node or add a new node if not in the list
         if (nodeIndex !== -1) {
           setCurrentVisibleNode(nodes[nodeIndex]);
-        } else {
+        } /* else {
           const parent = getParent(NODES_TYPES[type].nodeType);
           const parentSet: any = new Set([currentVisibleNode.id, parent]);
           const parents = [...parentSet];
@@ -526,7 +553,7 @@ const Ontology = () => {
             newNode: { parents, ...newNode },
           });
           setCurrentVisibleNode({ id: path.id, ...newNode, parents });
-        }
+        } */
 
         // Update ontology path and user document
         let _ontologyPath = [...ontologyPath];
@@ -558,7 +585,6 @@ const Ontology = () => {
     const userDoc = userDocs.docs[0];
 
     // Update the user document with the ontology path
-
     if (ontologyPath) {
       await updateDoc(userDoc.ref, { ontologyPath });
 
@@ -615,10 +641,10 @@ const Ontology = () => {
       // Get a reference to the parent node in Firestore.
       const nodeRef = doc(collection(db, NODES), parentId);
 
-      // Extract the Specializations array from the parent node.
+      // Extract the specializations array from the parent node.
       const specializations = parent.children.specializations;
 
-      // Find the index of the child-node in the Specializations array.
+      // Find the index of the child-node in the specializations array.
       const specializationIdx = parent.children.specializations.findIndex(
         (spcial: any) => spcial.id === id
       );
@@ -631,7 +657,7 @@ const Ontology = () => {
         });
       }
 
-      // Update the Specializations array in the parent node.
+      // Update the specializations array in the parent node.
       parent.children.specializations = specializations;
 
       // Update the parent node in Firestore with the modified data.
@@ -664,8 +690,8 @@ const Ontology = () => {
           ...(eachOntologyPath[nodeId] || [
             {
               id: nodeId,
-              title: nodes[nodeIdx].plainText.title,
-              category: nodes[nodeIdx].category,
+              title: nodes[nodeIdx].title,
+              category: !!nodes[nodeIdx].category,
             },
           ]),
         ]);
@@ -910,7 +936,15 @@ const Ontology = () => {
 
   // This function finds the path of a node in a nested structure of mainNodes and their children.
   const findOntologyPath = useCallback(
-    ({ mainNodes, path, eachOntologyPath }: any) => {
+    ({
+      mainNodes,
+      path,
+      eachOntologyPath,
+    }: {
+      mainNodes: INode[];
+      path: any;
+      eachOntologyPath: any;
+    }) => {
       // Loop through each main node
 
       for (let node of mainNodes) {
@@ -919,19 +953,17 @@ const Ontology = () => {
         eachOntologyPath[node.id] = [
           ...path,
           {
-            title: node.plainText.title,
-            id: !!node.category
-              ? `${node.id}-${node.plainText.title.trim()}`
-              : node.id,
+            title: node.title,
+            id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
             category: !!node.category,
           },
         ];
 
         // Loop through categories in the children of the current node
 
-        for (let category in node?.children?.specializations) {
-          // Filter nodes based on their inclusion in the Specializations of the current category
-          const childrenIds = node?.children?.specializations[category].map(
+        for (let category in node.specializations) {
+          // Filter nodes based on their inclusion in the specializations of the current category
+          const childrenIds = node.specializations[category].map(
             (n: any) => n.id
           );
           const children =
@@ -942,10 +974,8 @@ const Ontology = () => {
           const subPath = [...path];
 
           subPath.push({
-            title: node.plainText.title,
-            id: !!node.category
-              ? `${node.id}-${node.plainText.title.trim()}`
-              : node.id,
+            title: node.title,
+            id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
             category: !!node.category,
           });
           if (category !== "main") {
@@ -1005,85 +1035,133 @@ const Ontology = () => {
     }
   };
 
-  /**
-   * Recursively updates the inheritance-related fields in a hierarchy of ontologies.
-   *
-   * @param updatedNode - The root node that needs to be updated.
-   * @param updatedField - The field that is being updated (e.g., "title", "description").
-   * @param type - The type of node being updated ("children" or "plainText").
-   * @param newValue - The new value for the specified field.
-   * @param ancestorTitle - The new title for the ancestor node.
-   */
-  const updateInheritance = ({
-    updatedNode,
-    updatedField,
-    type,
-    newValue,
-    ancestorTitle,
-  }: {
+  interface UpdateInheritanceParams {
     updatedNode: INode;
-    updatedField: string;
-    type: "children" | "plainText";
-    newValue: any;
-    ancestorTitle: string;
-  }) => {
-    // Get the ID of the current node and initialize an array to store child node IDs.
-    const parentId = updatedNode.id;
-    const children: string[] = getChildrenIds(
-      updatedNode.children.specializations
-    );
+    updatedProperty: string;
+  }
 
-    // Loop through all the children and update the corresponding field.
-    for (let childId of children) {
-      const childNodeIdx = nodes.findIndex((o: INode) => o.id == childId);
+  // Function to handle inheritance
+  const updateInheritance = async ({
+    updatedNode,
+    updatedProperty,
+  }: UpdateInheritanceParams): Promise<void> => {
+    const batch = writeBatch(db);
+    // Recursively update specializations
+    await recursivelyUpdateSpecializations({
+      nodeId: updatedNode.id,
+      updatedProperty,
+      batch,
+      newValue: updatedNode.properties[updatedProperty],
+    });
+    // Commit all updates as a batch
+    await batch.commit();
+  };
 
-      // Check if the child node exists in the nodes array (check if the child node wasn't deleted).
-      if (childNodeIdx !== -1) {
-        const currentChildNode: INode = nodes[childNodeIdx];
-        const ontoRef = doc(collection(db, NODES), childId);
-        // Check if the current node has inheritance information.
-        if (currentChildNode.inheritance) {
-          if (updatedField === "title") {
-            // Update the ancestor title in the inheritance information.
-            for (let inheritanceType in currentChildNode.inheritance) {
-              const inheritanceFields =
-                currentChildNode.inheritance[inheritanceType];
-              for (let field in inheritanceFields) {
-                const inheritance: { ref: string; title: string } =
-                  inheritanceFields[field];
-                if (inheritance.ref && inheritance.ref == parentId) {
-                  inheritance.title = ancestorTitle;
-                }
-              }
-            }
-          } else {
-            // Update the specified field in the inheritance information.
-            const inheritance =
-              currentChildNode.inheritance[type][updatedField];
-            // Propagate the inheritance if the child has an inheritance on this field.
-            //
-            if (inheritance && inheritance?.ref) {
-              inheritance.title = ancestorTitle;
-              currentChildNode[type][updatedField] = newValue;
-            }
-          }
+  // Helper function to recursively update specializations
+  const recursivelyUpdateSpecializations = async ({
+    nodeId,
+    updatedProperty,
+    batch,
+    nestedCall = false,
+    newValue,
+    inheritanceType,
+  }: {
+    nodeId: string;
+    updatedProperty: string;
+    batch: WriteBatch;
+    nestedCall?: boolean;
+    newValue: string;
+    inheritanceType?:
+      | "inheritUnlessAlreadyOverRidden"
+      | "alwaysInherit"
+      | "inheritAfterReview";
+  }): Promise<void> => {
+    debugger;
+    // Fetch node data from Firestore
+    const nodeRef = doc(collection(db, NODES), nodeId);
+    const nodeSnapshot = await getDoc(nodeRef);
+    const nodeData = nodeSnapshot.data() as INode;
+    debugger;
+    if (!nodeData || !nodeData.properties.hasOwnProperty(updatedProperty))
+      return;
 
-          // Update the node document in the Firestore database.
-          updateDoc(ontoRef, currentChildNode);
+    // Get the inheritance type for the updated property
+    const inheritance = nodeData.inheritance[updatedProperty];
 
-          // Recursive call to update the children of the current node.
-          // It is safe to call this even if the current node doesn't have children.
-          updateInheritance({
-            updatedNode: currentChildNode,
-            updatedField,
-            type,
-            newValue,
-            ancestorTitle,
-          });
-        }
-      }
+    if (
+      (inheritanceType &&
+        (inheritanceType === "alwaysInherit" ||
+          inheritanceType === "inheritAfterReview")) ||
+      (inheritanceType === "inheritUnlessAlreadyOverRidden" &&
+        nodeData.inheritance[updatedProperty]?.ref && // TODO: check if it's parent that's been modified
+        nestedCall)
+    ) {
+      updateProperty(batch, nodeRef, updatedProperty, newValue);
+      return;
+    }
+
+    if (inheritance?.inheritanceType === "neverInherit") {
+      return;
+    }
+    let specializations = Object.values(nodeData.specializations).flat() as {
+      id: string;
+      title: string;
+    }[];
+
+    if (inheritance?.inheritanceType === "inheritAfterReview") {
+      specializations = (await selectIt(
+        <Box>
+          <Typography>
+            Select the specialization that you want to inherits the change that
+            you have made for <strong>{updatedProperty}</strong>,
+          </Typography>
+          <Typography>{"After you're done click continue."}</Typography>
+        </Box>,
+        specializations,
+        "Continue",
+        ""
+      )) as {
+        id: string;
+        title: string;
+      }[];
+    }
+    for (const specialization of specializations) {
+      await recursivelyUpdateSpecializations({
+        nodeId: specialization.id,
+        updatedProperty,
+        batch,
+        nestedCall: true,
+        newValue,
+        inheritanceType: inheritance.inheritanceType,
+      });
     }
   };
+
+  // Function to update a property in Firestore using a batch commit
+  const updateProperty = (
+    batch: WriteBatch,
+    nodeRef: DocumentReference,
+    updatedProperty: string,
+    newValue: any
+  ): void => {
+    const updateData = {
+      [`properties.${updatedProperty}`]: newValue,
+    };
+    batch.update(nodeRef, updateData);
+  };
+
+  // Pseudo-function to simulate a modal for user review (replace with actual implementation)
+  function showModalForReview(
+    nodeData: INode,
+    updatedProperty: string
+  ): Promise<boolean> {
+    return new Promise((resolve) => {
+      // Simulate a user review process
+
+      setTimeout(() => resolve(true), 1000); // Automatically approve after 1 second (for simulation)
+    });
+  }
+
   useEffect(() => {
     const controller = columnResizerRef.current;
     if (controller) {
@@ -1133,11 +1211,19 @@ const Ontology = () => {
     <Box>
       {nodes.length > 0 ? (
         <Container
-          style={{ marginTop: "80px", height: "calc(100vh - 80px)" }}
+          style={{
+            marginTop: "80px",
+            height: "calc(100vh - 80px)",
+            display: "flex",
+          }}
           columnResizerRef={columnResizerRef}
         >
           {!isMobile && (
-            <Section minSize={0} defaultSize={500}>
+            <Section
+              minSize={0}
+              defaultSize={500}
+              style={{ display: "flex", flexDirection: "column" }}
+            >
               <Tabs
                 value={viewValue}
                 onChange={handleViewChange}
@@ -1154,12 +1240,29 @@ const Ontology = () => {
                 <Tab
                   label="Tree View"
                   {...a11yProps(0)}
-                  sx={{ width: "50%" }}
+                  sx={{ width: "50%", fontSize: "20px" }}
                 />
-                <Tab label="DAG View" {...a11yProps(1)} sx={{ width: "50%" }} />
+                <Tab
+                  label="DAG View"
+                  {...a11yProps(1)}
+                  sx={{ width: "50%", fontSize: "20px" }}
+                />
               </Tabs>
-              <Box sx={{ overflow: "auto" }}>
-                <TabPanel value={viewValue} index={0} sx={{ mt: "5px" }}>
+
+              <Box
+                sx={{
+                  flexGrow: 1,
+                  overflow: "auto",
+                  ...SCROLL_BAR_STYLE,
+                }}
+              >
+                <TabPanel
+                  value={viewValue}
+                  index={0}
+                  sx={{
+                    mt: "5px",
+                  }}
+                >
                   <TreeViewSimplified
                     treeVisualization={treeVisualization}
                     onOpenNodesTree={onOpenNodesTree}
@@ -1168,7 +1271,7 @@ const Ontology = () => {
                   />
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
-                  <DAGGraph
+                  <DagGraph
                     treeVisualization={treeVisualization}
                     setExpandedNodes={setExpandedNodes}
                     expandedNodes={expandedNodes}
@@ -1181,6 +1284,7 @@ const Ontology = () => {
               </Box>
             </Section>
           )}
+
           <Bar
             size={2}
             style={{
@@ -1190,12 +1294,15 @@ const Ontology = () => {
             }}
           >
             <SettingsEthernetIcon
-              style={{
+              sx={{
                 position: "absolute",
                 top: "50%",
                 left: "50%",
                 transform: "translate(-50%, -50%)",
-                color: "white",
+                color: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? theme.palette.common.gray50
+                    : theme.palette.common.notebookMainBlack,
               }}
             />
           </Bar>
@@ -1209,6 +1316,7 @@ const Ontology = () => {
                 p: "20px",
                 overflow: "auto",
                 height: "94vh",
+                ...SCROLL_BAR_STYLE,
               }}
             >
               <Breadcrumbs sx={{ ml: "40px" }}>
@@ -1296,7 +1404,8 @@ const Ontology = () => {
                 >
                   <Tab label="Search" {...a11yProps(1)} />
                   <Tab label="Comments" {...a11yProps(0)} />
-                  <Tab label="Markdown Cheatsheet" {...a11yProps(2)} />
+                  <Tab label="Inheritance" {...a11yProps(2)} />
+                  <Tab label="Markdown Cheatsheet" {...a11yProps(3)} />
                 </Tabs>
               </Box>
               <Box
@@ -1305,6 +1414,7 @@ const Ontology = () => {
                   height: "89vh",
                   overflow: "auto",
                   pb: "125px",
+                  ...SCROLL_BAR_STYLE,
                 }}
               >
                 <TabPanel value={value} index={0}>
@@ -1362,12 +1472,17 @@ const Ontology = () => {
                   </Box>
                 </TabPanel>
                 <TabPanel value={value} index={1}>
-                  <Box sx={{ display: "flex", flexDirection: "column" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
                     <Box>
                       {orderComments().map((comment: any) => (
                         <Paper
                           key={comment.id}
-                          elevation={3}
+                          elevation={6}
                           sx={{ mt: "15px" }}
                         >
                           <Box
@@ -1487,9 +1602,13 @@ const Ontology = () => {
                   </Box>
                 </TabPanel>
                 <TabPanel value={value} index={2}>
+                  <Inheritance selectedNode={currentVisibleNode} />
+                </TabPanel>
+                <TabPanel value={value} index={3}>
                   <Box
                     sx={{
                       p: "18px",
+                      ...SCROLL_BAR_STYLE,
                     }}
                   >
                     <MarkdownRender text={markdownContent} />
@@ -1499,6 +1618,7 @@ const Ontology = () => {
             </Section>
           )}
           {ConfirmDialog}
+          {selectDialog}
           <SneakMessage
             newMessage={snackbarMessage}
             setNewMessage={setSnackbarMessage}

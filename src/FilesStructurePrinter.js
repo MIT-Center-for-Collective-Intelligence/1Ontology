@@ -28,4 +28,3 @@ function createJsonStructure(files) {
 
 const fileList = getFiles(".");
 const jsonStructure = createJsonStructure(fileList);
-console.log(JSON.stringify(jsonStructure, null, 2));
