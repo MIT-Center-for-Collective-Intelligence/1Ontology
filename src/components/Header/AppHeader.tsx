@@ -53,7 +53,13 @@ import { Stack } from "@mui/system";
 import { getAuth } from "firebase/auth";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import React, { forwardRef, useCallback, useRef, useState } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import mitLogo from "../../../public/CCI-logo.gif";
 import mitLogoDark from "../../../public/MIT-Logo-Dark.png";
 import {
@@ -271,16 +277,17 @@ const AppHeader = forwardRef(
         )}
       </Menu>
     );
-    const toggleRightPanel = useCallback(() => {
+    const toggleRightPanel = () => {
+      setRightPanelVisible((prev: boolean) => !prev);
+    };
+
+    useEffect(() => {
       if (!user?.uname) return;
       const userRef = doc(collection(db, USERS), user.uname);
       updateDoc(userRef, {
         rightPanel: !rightPanelVisible,
       });
-      setRightPanelVisible((prev: boolean) => {
-        return !prev;
-      });
-    }, [rightPanelVisible]);
+    }, [user, rightPanelVisible]);
 
     const handleDownload = useCallback(async () => {
       try {

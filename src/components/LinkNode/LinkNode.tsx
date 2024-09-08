@@ -81,7 +81,7 @@ type ISubOntologyProps = {
   child: IChildNode;
   currentVisibleNode: INode;
   sx: { [key: string]: any };
-  type: string;
+  property: string;
   setCurrentVisibleNode: (currentVisibleNode: any) => void;
   setSnackbarMessage: (message: any) => void;
   category: string;
@@ -89,17 +89,14 @@ type ISubOntologyProps = {
   updateInheritance: (parameters: {
     updatedNode: INode;
     updatedField: string;
-    type: "children" | "plainText";
-    newValue: any;
-    ancestorTitle: string;
   }) => void;
   navigateToNode: (nodeID: string) => void;
 };
 
-const ChildNode = ({
+const LinkNode = ({
   child,
   sx,
-  type,
+  property,
   currentVisibleNode,
   category,
   recordLogs,
@@ -111,29 +108,13 @@ const ChildNode = ({
   const handleNavigateToNode = () => {
     navigateToNode(child.id);
   };
-  const removeChildNode = (nodeData: INode) => {
-    for (let category in nodeData.specializations || {}) {
-      if ((nodeData.specializations[category] || []).length > 0) {
-        const specializationIdx = nodeData.specializations[category].findIndex(
-          (specialization: { id: string; title: string }) =>
-            specialization.id === child.id
-        );
-        if (specializationIdx !== -1) {
-          nodeData.specializations[category].splice(specializationIdx, 1);
-        }
-      }
-    }
-  };
+
   const deleteChildNode = async () => {
     try {
-      const message =
-        type === "specializations"
-          ? "delete this node"
-          : `remove this item from the list?`;
       if (
         await confirmIt(
-          `Are you sure you want ${message}`,
-          `${type === "specializations" ? "Delete" : "Remove"}`,
+          `Are you sure you want remove this item from the list?`,
+          `Remove`,
           "Keep"
         )
       ) {
@@ -142,48 +123,22 @@ const ChildNode = ({
         );
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as INode;
-          const specializationIdx = (
-            nodeData?.specializations[category] || []
+          const linkIdx = (
+            nodeData?.properties[property][category] || []
           ).findIndex((sub: any) => sub.id === child.id);
-          if (specializationIdx !== -1) {
-            nodeData.specializations[category].splice(specializationIdx, 1);
+          if (linkIdx !== -1) {
+            nodeData.properties[property][category].splice(linkIdx, 1);
           }
           const childDoc = await getDoc(doc(collection(db, NODES), child.id));
 
           if (childDoc.exists()) {
             const childData = childDoc.data() as INode;
-            const generalizations = childData?.generalizations || [];
-            //remove the node from the list of specializations of it's parents (generalizations)
-            if (type === "specializations") {
-              for (let { id: parent } of Object.values(
-                generalizations
-              ).flat()) {
-                const parentNodeDoc = await getDoc(
-                  doc(collection(db, NODES), parent)
-                );
-                if (parentNodeDoc.exists()) {
-                  const parentNodeData = {
-                    id: parentNodeDoc.id,
-                    ...parentNodeDoc.data(),
-                  } as INode;
-                  removeChildNode(parentNodeData);
-                  await updateDoc(parentNodeDoc.ref, parentNodeData);
-                }
-              }
-            }
 
-            if (type === "specializations") {
-              await updateDoc(childDoc.ref, { deleted: true });
-            }
-            /*if (type !== "specializations") {
-              updateInheritance({
-                updatedNode: { ...nodeData, id: nodeDoc.id },
-                updatedField: type,
-                type: "children",
-                newValue: nodeData.specializations,
-                ancestorTitle: nodeData.title,
-              });
-            } */
+            updateInheritance({
+              updatedNode: { ...nodeData, id: nodeDoc.id },
+              updatedField: property,
+            });
+
             recordLogs({
               action: "Deleted a field",
               field: childData.title,
@@ -193,14 +148,6 @@ const ChildNode = ({
 
           await updateDoc(nodeDoc.ref, nodeData);
         }
-        // setCurrentVisibleNode((currentVisibleNode: any) => {
-        //   const _openOntology: any = { ...currentVisibleNode };
-        //   const subOntologyIdx = _openOntology.specializations.findIndex((sub: any) => sub.id === child.id);
-        //   if (subOntologyIdx !== -1) {
-        //     _openOntology.specializations.splice(subOntologyIdx, 1);
-        //   }
-        //   return _openOntology;
-        // });
       }
     } catch (error) {
       console.error(error);
@@ -237,4 +184,4 @@ const ChildNode = ({
   );
 };
 
-export default ChildNode;
+export default LinkNode;
