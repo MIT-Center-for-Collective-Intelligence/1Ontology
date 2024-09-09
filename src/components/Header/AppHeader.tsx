@@ -102,6 +102,7 @@ type AppHeaderProps = {
   rightPanelVisible: boolean;
   loading: boolean;
   confirmIt: any;
+  setSidebarView: any;
 };
 const AppHeader = forwardRef(
   (
@@ -110,6 +111,7 @@ const AppHeader = forwardRef(
       rightPanelVisible,
       loading,
       confirmIt,
+      setSidebarView,
     }: AppHeaderProps,
     ref
   ) => {
@@ -281,7 +283,7 @@ const AppHeader = forwardRef(
       </Menu>
     );
     const toggleRightPanel = () => {
-      setRightPanelVisible((prev: boolean) => !prev);
+      setRightPanelVisible(!rightPanelVisible);
     };
 
     useEffect(() => {
@@ -344,6 +346,10 @@ const AppHeader = forwardRef(
       }
     }, [db, user]);
 
+    const displayInheritanceSettings = () => {
+      setRightPanelVisible(true);
+      setSidebarView(2);
+    };
     return (
       <>
         <Box
@@ -395,6 +401,9 @@ const AppHeader = forwardRef(
                 alignItems="center"
                 spacing={"8px"}
               >
+                <Button onClick={displayInheritanceSettings} variant="outlined">
+                  Manage inheritance
+                </Button>
                 <Button onClick={() => handleDownload()} variant="outlined">
                   Download as JSON
                 </Button>

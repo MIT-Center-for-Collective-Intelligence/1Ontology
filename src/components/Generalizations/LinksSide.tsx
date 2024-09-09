@@ -51,13 +51,6 @@ const LinksSide = ({
   nodes,
 }: ILinksSideProps) => {
   const properties = currentVisibleNode[relationType];
-  console.log(
-    "Object.values(properties).flat()",
-    Object.values(properties).flat(),
-    relationType,
-    relationType !== "specializations" ||
-      Object.values(properties).flat().length !== 1
-  );
   const getNumOfGeneralizations = (id: string) => {
     const index = nodes.findIndex((d) => d.id === id);
     return index !== -1

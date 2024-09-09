@@ -343,12 +343,21 @@ const Node = ({
 
       // Create a new node document reference
       const newNodeRef = doc(collection(db, NODES));
-
+      const inheritance = JSON.parse(
+        JSON.stringify({ ...parentNode.inheritance })
+      );
+      for (let property in inheritance) {
+        if (!inheritance[property].ref) {
+          inheritance[property].ref = nodeParentDoc.id;
+          inheritance[property].title = parentNode.title;
+        }
+      }
       // Clone the parent node data
-      const newNode: INode = {
+      const newNode = {
         ...nodeParentDoc.data(),
         // Initialize the specializations sub-node
         specializations: { main: [] },
+        inheritance,
         comments: [],
         // Set the parents and title for the new node
         generalizations: {
@@ -363,12 +372,7 @@ const Node = ({
         title: `New ${parentNode.title}`,
         id: newNodeRef.id,
       };
-      for (let property in newNode.inheritance) {
-        if (!newNode.inheritance[property].ref) {
-          newNode.inheritance[property].ref = nodeParentDoc.id;
-          newNode.inheritance[property].title = parentNode.title;
-        }
-      }
+
       if ("locked" in newNode) {
         delete newNode.locked;
       }
@@ -800,13 +804,30 @@ const Node = ({
           "Keep Node"
         )
       ) {
+        const specializations = Object.values(
+          currentVisibleNode.specializations
+        ).flat();
+        if (specializations.length > 0) {
+          if (
+            specializations.some((spc: { id: string }) => {
+              const idx = nodes.findIndex((n) => n.id === spc.id);
+              return Object.values(nodes[idx].generalizations).length === 1;
+            })
+          ) {
+            await confirmIt(
+              "To delete a Node you need to delete it's specializations or move them under a different generalization",
+              "Ok",
+              ""
+            );
+            return;
+          }
+        }
         // Retrieve the document reference of the node to be deleted
         const nodeDoc = await getDoc(
           doc(collection(db, NODES), currentVisibleNode.id)
         );
-
-        // Check if the node document exists
         if (nodeDoc.exists()) {
+          // Check if the node document exists
           // Retrieve node data from the document
           const nodeData = nodeDoc.data() as INode;
 
@@ -916,7 +937,10 @@ const Node = ({
   const removeProperty = async (property: string) => {
     if (
       await confirmIt(
-        `Are sure you want delete the field ${property}?`,
+        <Typography>
+          Are sure you want delete the property{" "}
+          <strong>{DISPLAY[property] || property}</strong>?
+        </Typography>,
         "Delete",
         "Keep"
       )
@@ -1059,8 +1083,8 @@ const Node = ({
               >
                 {[
                   "String",
-                  // "Number",
-                  // "Boolean",
+                  /* "Number",
+                  "Boolean", */
                   "Activity",
                   "Actor",
                   "Evaluation Dimension",
@@ -1254,43 +1278,19 @@ const Node = ({
             >
               <Tab
                 sx={{ width: "50%" }}
-                label="Specializations"
+                label="Generalizations"
                 {...a11yProps(0)}
               />
               <Tab
                 sx={{ width: "50%" }}
-                label="Generalizations"
+                label="Specializations"
                 {...a11yProps(1)}
               />
             </Tabs>
+
             <TabPanel
               value={viewValueSpecialization}
               index={0}
-              sx={{
-                mt: "5px",
-              }}
-            >
-              <LinksSide
-                properties={currentVisibleNode?.specializations || {}}
-                currentVisibleNode={currentVisibleNode}
-                showList={showList}
-                setOpenAddCategory={setOpenAddCategory}
-                setType={setType}
-                handleSorting={handleSorting}
-                handleEditCategory={handleEditCategory}
-                deleteCategory={deleteCategory}
-                navigateToNode={navigateToNode}
-                recordLogs={recordLogs}
-                setSnackbarMessage={setSnackbarMessage}
-                setCurrentVisibleNode={setCurrentVisibleNode}
-                updateInheritance={updateInheritance}
-                relationType={"specializations"}
-                nodes={nodes}
-              />
-            </TabPanel>
-            <TabPanel
-              value={viewValueSpecialization}
-              index={1}
               sx={{
                 mt: "5px",
               }}
@@ -1315,6 +1315,31 @@ const Node = ({
                 nodes={nodes}
               />
             </TabPanel>
+            <TabPanel
+              value={viewValueSpecialization}
+              index={1}
+              sx={{
+                mt: "5px",
+              }}
+            >
+              <LinksSide
+                properties={currentVisibleNode?.specializations || {}}
+                currentVisibleNode={currentVisibleNode}
+                showList={showList}
+                setOpenAddCategory={setOpenAddCategory}
+                setType={setType}
+                handleSorting={handleSorting}
+                handleEditCategory={handleEditCategory}
+                deleteCategory={deleteCategory}
+                navigateToNode={navigateToNode}
+                recordLogs={recordLogs}
+                setSnackbarMessage={setSnackbarMessage}
+                setCurrentVisibleNode={setCurrentVisibleNode}
+                updateInheritance={updateInheritance}
+                relationType={"specializations"}
+                nodes={nodes}
+              />
+            </TabPanel>
           </Paper>
           <Paper elevation={9} sx={{ width: "100%" }}>
             <Tabs
@@ -1327,13 +1352,37 @@ const Node = ({
               }}
               aria-label="basic tabs example"
             >
-              <Tab sx={{ width: "50%" }} label="Parts" {...a11yProps(0)} />
-              <Tab sx={{ width: "50%" }} label="Is Part of" {...a11yProps(1)} />
+              <Tab sx={{ width: "50%" }} label="Is Part of" {...a11yProps(0)} />
+              <Tab sx={{ width: "50%" }} label="Parts" {...a11yProps(1)} />
             </Tabs>
 
             <TabPanel
               value={viewValue}
               index={0}
+              sx={{
+                mt: "5px",
+              }}
+            >
+              <LinksSideParts
+                properties={currentVisibleNode?.properties?.isPartOf || {}}
+                currentVisibleNode={currentVisibleNode}
+                showList={showList}
+                setOpenAddCategory={setOpenAddCategory}
+                setType={setType}
+                handleSorting={handleSorting}
+                handleEditCategory={handleEditCategory}
+                deleteCategory={deleteCategory}
+                navigateToNode={navigateToNode}
+                recordLogs={recordLogs}
+                setSnackbarMessage={setSnackbarMessage}
+                setCurrentVisibleNode={setCurrentVisibleNode}
+                updateInheritance={updateInheritance}
+                relationType={"isPartOf"}
+              />
+            </TabPanel>
+            <TabPanel
+              value={viewValue}
+              index={1}
               sx={{
                 mt: "5px",
                 width: "100%",
@@ -1354,30 +1403,6 @@ const Node = ({
                 setCurrentVisibleNode={setCurrentVisibleNode}
                 updateInheritance={updateInheritance}
                 relationType={"parts"}
-              />
-            </TabPanel>
-            <TabPanel
-              value={viewValue}
-              index={1}
-              sx={{
-                mt: "5px",
-              }}
-            >
-              <LinksSideParts
-                properties={currentVisibleNode?.properties?.isPartOf || {}}
-                currentVisibleNode={currentVisibleNode}
-                showList={showList}
-                setOpenAddCategory={setOpenAddCategory}
-                setType={setType}
-                handleSorting={handleSorting}
-                handleEditCategory={handleEditCategory}
-                deleteCategory={deleteCategory}
-                navigateToNode={navigateToNode}
-                recordLogs={recordLogs}
-                setSnackbarMessage={setSnackbarMessage}
-                setCurrentVisibleNode={setCurrentVisibleNode}
-                updateInheritance={updateInheritance}
-                relationType={"isPartOf"}
               />
             </TabPanel>
           </Paper>
