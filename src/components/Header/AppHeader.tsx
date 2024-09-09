@@ -18,7 +18,6 @@ This file contains the implementation of the application header component (`AppH
 - `orangeDark` and `orange900`: Constants defining color values.
 
 ## Types
-- `HeaderPage`: Type representing possible pages for the header.
 - `AppHeaderProps`: Props interface for the `AppHeader` component.
 
 ## Components
@@ -75,6 +74,7 @@ import {
   doc,
   getDocs,
   getFirestore,
+  onSnapshot,
   query,
   updateDoc,
   where,
@@ -94,8 +94,6 @@ export const HEADER_HEIGHT_MOBILE = 72;
 
 export const orangeDark = "#FF6D00";
 export const orange900 = "#E56200";
-
-export type HeaderPage = "ONE_CADEMY" | "ONE_ASSISTANT" | "COMMUNITIES";
 
 type AppHeaderProps = {
   setRightPanelVisible: any;
@@ -125,6 +123,9 @@ const AppHeader = forwardRef(
     const [profileImage, setProfileImage] = useState("");
     const isProfileMenuOpen = Boolean(profileMenuOpen);
     const db = getFirestore();
+
+    const [usersNodesViews, setUsersNodesViews] = useState<any>({});
+
     const signOut = async () => {
       router.push(ROUTES.signIn);
       getAuth().signOut();
@@ -143,6 +144,43 @@ const AppHeader = forwardRef(
       const userDoc = doc(collection(db, USERS), user?.uname);
       await updateDoc(userDoc, { imageUrl });
     };
+    useEffect(() => {
+      const usersCollectionRef = collection(db, "users");
+
+      const unsubscribe = onSnapshot(usersCollectionRef, (snapshot) => {
+        setUsersNodesViews((prevUsersNodesViews: any) => {
+          const updatedUsersData = { ...prevUsersNodesViews };
+
+          snapshot.docChanges().forEach((change) => {
+            const doc = change.doc;
+            const userId = doc.id;
+            const data = doc.data();
+            const ontologyPath = data.ontologyPath;
+
+            if (
+              (change.type === "added" || change.type === "modified") &&
+              ontologyPath &&
+              data.imageUrl !==
+                "https://storage.googleapis.com/onecademy-1.appspot.com/ProfilePictures/no-img.png"
+            ) {
+              updatedUsersData[userId] = {
+                node: ontologyPath.at(-1),
+                imageUrl: data.imageUrl,
+                fName: data.fName,
+              };
+            } else if (change.type === "removed") {
+              delete updatedUsersData[userId];
+            }
+          });
+
+          return updatedUsersData;
+        });
+      });
+
+      return () => unsubscribe();
+    }, []);
+
+    console.log(usersNodesViews, "usersNodesViews");
 
     const handleImageChange = useCallback(
       async (event: any) => {
@@ -394,6 +432,13 @@ const AppHeader = forwardRef(
                 }}
               />
             </Stack>
+            <Box sx={{ display: "flex" }}>
+              {Object.values(usersNodesViews).map((c: any) => (
+                <Tooltip key={c.fName} title={c.node.title}>
+                  <Avatar src={c.imageUrl} />
+                </Tooltip>
+              ))}
+            </Box>
             {!loading && (
               <Stack
                 direction={"row"}
