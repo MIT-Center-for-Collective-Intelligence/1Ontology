@@ -64,7 +64,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     <Box>
       <Box>
         {Object.keys(currentVisibleNode.properties).map((property: string) =>
-          currentVisibleNode.propertyType[property] !== "string" ? (
+          currentVisibleNode.propertyType[property] === "object" ? (
             <Box key={property} sx={{ display: "grid", mt: "5px" }}>
               <Paper key={property} sx={{ p: 2, mt: "4px" }} elevation={3}>
                 <Box sx={{ display: "flex", alignItems: "center" }}>

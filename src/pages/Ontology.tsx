@@ -141,7 +141,7 @@ const Ontology = () => {
   const { selectIt, selectDialog } = useSelectDialog();
   const [editingComment, setEditingComment] = useState("");
   const [lockedNodeFields, setLockedNodeFields] = useState<ILockedNode>({});
-  const [value, setValue] = useState<number>(1);
+  const [sidebarView, setSidebarView] = useState<number>(1);
   const [viewValue, setViewValue] = useState<number>(0);
   const [searchValue, setSearchValue] = useState("");
   const fuse = new Fuse(nodes, { keys: ["plainText.title"] });
@@ -266,7 +266,6 @@ const Ontology = () => {
 
   const recordLogs = async (logs: any) => {
     try {
-      return;
       if (!user) return;
       const logRef = doc(collection(db, LOGS));
       await setDoc(logRef, {
@@ -929,7 +928,7 @@ const Ontology = () => {
   };
 
   const handleChange = (event: any, newValue: number) => {
-    setValue(newValue);
+    setSidebarView(newValue);
   };
 
   const handleViewChange = (event: any, newValue: number) => {
@@ -1054,6 +1053,7 @@ const Ontology = () => {
       updatedProperty,
       batch,
       newValue: updatedNode.properties[updatedProperty],
+      generalizationId: updatedNode.id,
     });
     // Commit all updates as a batch
     await batch.commit();
@@ -1067,6 +1067,7 @@ const Ontology = () => {
     nestedCall = false,
     newValue,
     inheritanceType,
+    generalizationId,
   }: {
     nodeId: string;
     updatedProperty: string;
@@ -1077,6 +1078,7 @@ const Ontology = () => {
       | "inheritUnlessAlreadyOverRidden"
       | "alwaysInherit"
       | "inheritAfterReview";
+    generalizationId: string;
   }): Promise<void> => {
     debugger;
     // Fetch node data from Firestore
@@ -1095,7 +1097,7 @@ const Ontology = () => {
         (inheritanceType === "alwaysInherit" ||
           inheritanceType === "inheritAfterReview")) ||
       (inheritanceType === "inheritUnlessAlreadyOverRidden" &&
-        nodeData.inheritance[updatedProperty]?.ref && // TODO: check if it's parent that's been modified
+        nodeData.inheritance[updatedProperty]?.ref === generalizationId && // TODO: check if it's parent that's been modified
         nestedCall)
     ) {
       updateProperty(batch, nodeRef, updatedProperty, newValue);
@@ -1135,6 +1137,7 @@ const Ontology = () => {
         nestedCall: true,
         newValue,
         inheritanceType: inheritance.inheritanceType,
+        generalizationId,
       });
     }
   };
@@ -1400,7 +1403,7 @@ const Ontology = () => {
                 }}
               >
                 <Tabs
-                  value={value}
+                  value={sidebarView}
                   onChange={handleChange}
                   aria-label="basic tabs example"
                 >
@@ -1419,7 +1422,7 @@ const Ontology = () => {
                   ...SCROLL_BAR_STYLE,
                 }}
               >
-                <TabPanel value={value} index={0}>
+                <TabPanel value={sidebarView} index={0}>
                   <Box sx={{ pl: "10px" }}>
                     <TextField
                       variant="standard"
@@ -1473,7 +1476,7 @@ const Ontology = () => {
                     </List>
                   </Box>
                 </TabPanel>
-                <TabPanel value={value} index={1}>
+                <TabPanel value={sidebarView} index={1}>
                   <Box
                     sx={{
                       display: "flex",
@@ -1603,10 +1606,10 @@ const Ontology = () => {
                     </Box>{" "}
                   </Box>
                 </TabPanel>
-                <TabPanel value={value} index={2}>
+                <TabPanel value={sidebarView} index={2}>
                   <Inheritance selectedNode={currentVisibleNode} />
                 </TabPanel>
-                <TabPanel value={value} index={3}>
+                <TabPanel value={sidebarView} index={3}>
                   <Box
                     sx={{
                       p: "18px",
@@ -1648,6 +1651,7 @@ const Ontology = () => {
           rightPanelVisible={rightPanelVisible}
           loading={nodes.length === 0}
           confirmIt={confirmIt}
+          setSidebarView={setSidebarView}
         />
       </Box>
     </Box>

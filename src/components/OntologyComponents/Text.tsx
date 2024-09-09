@@ -243,11 +243,6 @@ const Text = ({
     }
   };
 
-  // Function to handle the deletion of an node
-  const handleDeleteOntology = () => {
-    // Call the function to delete the editable children
-    deleteNode();
-  };
   const onCancelTextChange = () => {
     setCopyValue(currentVisibleNode.properties[property]);
     setEditMode((edit) => !edit);
@@ -390,8 +385,8 @@ const Text = ({
                   </Tooltip>
                 </Box>
               )}
-              <Tooltip title={"Delete Ontology"} sx={{ ml: "5px" }}>
-                <Button onClick={handleDeleteOntology} sx={{ ml: "5px" }}>
+              <Tooltip title={"Delete Node"} sx={{ ml: "5px" }}>
+                <Button onClick={deleteNode} sx={{ ml: "5px" }}>
                   Delete
                 </Button>
               </Tooltip>
