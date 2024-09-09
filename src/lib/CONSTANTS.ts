@@ -27,7 +27,7 @@ export const DISPLAY: {
   subActivities: "Sub Activities",
   rewardFunction: "Reward Function",
   parts: "Parts",
-  partOf: "Part of",
+  isPartOf: "Is Part of",
 };
 
 export const NO_IMAGE_USER =

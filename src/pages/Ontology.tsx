@@ -265,6 +265,7 @@ const Ontology = () => {
 
   const recordLogs = async (logs: any) => {
     try {
+      return;
       if (!user) return;
       const logRef = doc(collection(db, LOGS));
       await setDoc(logRef, {

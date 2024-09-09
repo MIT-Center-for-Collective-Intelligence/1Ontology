@@ -30,7 +30,7 @@ type ILinksSideProps = {
   setSnackbarMessage: any;
   setCurrentVisibleNode: any;
   updateInheritance: any;
-  relationType: "parts" | "partOf";
+  relationType: "parts" | "isPartOf";
 };
 
 const LinksSideParts = ({

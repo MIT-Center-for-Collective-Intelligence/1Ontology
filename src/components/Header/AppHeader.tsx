@@ -75,7 +75,9 @@ import {
   doc,
   getDocs,
   getFirestore,
+  query,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { NODES, USERS } from " @components/lib/firestoreClient/collections";
 import {
@@ -86,6 +88,7 @@ import {
 } from "firebase/storage";
 import { isValidHttpUrl } from " @components/lib/utils/utils";
 import { NO_IMAGE_USER } from " @components/lib/CONSTANTS";
+import { INode } from " @components/types/INode";
 export const HEADER_HEIGHT = 80;
 export const HEADER_HEIGHT_MOBILE = 72;
 
@@ -289,15 +292,42 @@ const AppHeader = forwardRef(
       });
     }, [user, rightPanelVisible]);
 
+    const getStructureForJSON = (data: INode) => {
+      const getTitles = (property: any) => {
+        return Object.values(property)
+          .flat()
+          .map((prop: any) => prop.title);
+      };
+
+      const { properties } = data;
+      for (let property in properties) {
+        if (typeof properties[property] !== "string") {
+          properties[property] = getTitles(properties[property]);
+        }
+      }
+      return {
+        title: data.title,
+        generalizations: getTitles(data.generalizations),
+        specializations: getTitles(data.specializations),
+        parts: [],
+        isPartOf: [],
+        ...properties,
+      };
+    };
+
     const handleDownload = useCallback(async () => {
       try {
-        const nodesCollection = collection(db, NODES);
+        const nodesCollection = query(
+          collection(db, NODES),
+          where("deleted", "==", false)
+        );
         const querySnapshot = await getDocs(nodesCollection);
 
-        const data = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const data = querySnapshot.docs.map((doc) =>
+          getStructureForJSON({
+            ...doc.data(),
+          } as INode)
+        );
 
         const blob = new Blob([JSON.stringify(data, null, 2)], {
           type: "application/json",

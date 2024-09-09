@@ -94,6 +94,7 @@ type ISubOntologyProps = {
     ancestorTitle: string;
   }) => void;
   navigateToNode: (nodeID: string) => void;
+  deleteVisible?: boolean;
 };
 
 const ChildNode = ({
@@ -105,6 +106,7 @@ const ChildNode = ({
   recordLogs,
   updateInheritance,
   navigateToNode,
+  deleteVisible = true,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
@@ -128,12 +130,12 @@ const ChildNode = ({
     try {
       const message =
         type === "specializations"
-          ? "delete this node"
+          ? "Unlink this node"
           : `remove this item from the list?`;
       if (
         await confirmIt(
           `Are you sure you want ${message}`,
-          `${type === "specializations" ? "Delete" : "Remove"}`,
+          `${type === "specializations" ? "Unlink" : "Remove"}`,
           "Keep"
         )
       ) {
@@ -148,59 +150,8 @@ const ChildNode = ({
           if (specializationIdx !== -1) {
             nodeData.specializations[category].splice(specializationIdx, 1);
           }
-          const childDoc = await getDoc(doc(collection(db, NODES), child.id));
-
-          if (childDoc.exists()) {
-            const childData = childDoc.data() as INode;
-            const generalizations = childData?.generalizations || [];
-            //remove the node from the list of specializations of it's parents (generalizations)
-            if (type === "specializations") {
-              for (let { id: parent } of Object.values(
-                generalizations
-              ).flat()) {
-                const parentNodeDoc = await getDoc(
-                  doc(collection(db, NODES), parent)
-                );
-                if (parentNodeDoc.exists()) {
-                  const parentNodeData = {
-                    id: parentNodeDoc.id,
-                    ...parentNodeDoc.data(),
-                  } as INode;
-                  removeChildNode(parentNodeData);
-                  await updateDoc(parentNodeDoc.ref, parentNodeData);
-                }
-              }
-            }
-
-            if (type === "specializations") {
-              await updateDoc(childDoc.ref, { deleted: true });
-            }
-            /*if (type !== "specializations") {
-              updateInheritance({
-                updatedNode: { ...nodeData, id: nodeDoc.id },
-                updatedField: type,
-                type: "children",
-                newValue: nodeData.specializations,
-                ancestorTitle: nodeData.title,
-              });
-            } */
-            recordLogs({
-              action: "Deleted a field",
-              field: childData.title,
-              node: nodeDoc.id,
-            });
-          }
-
           await updateDoc(nodeDoc.ref, nodeData);
         }
-        // setCurrentVisibleNode((currentVisibleNode: any) => {
-        //   const _openOntology: any = { ...currentVisibleNode };
-        //   const subOntologyIdx = _openOntology.specializations.findIndex((sub: any) => sub.id === child.id);
-        //   if (subOntologyIdx !== -1) {
-        //     _openOntology.specializations.splice(subOntologyIdx, 1);
-        //   }
-        //   return _openOntology;
-        // });
       }
     } catch (error) {
       console.error(error);
@@ -229,7 +180,7 @@ const ChildNode = ({
           {" "}
           {child.title}
         </Link>
-        <Button onClick={deleteChildNode}>Delete</Button>
+        {deleteVisible && <Button onClick={deleteChildNode}>Unlink</Button>}
       </Box>
 
       {ConfirmDialog}

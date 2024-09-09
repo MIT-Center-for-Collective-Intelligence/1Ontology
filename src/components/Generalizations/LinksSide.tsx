@@ -30,6 +30,7 @@ type ILinksSideProps = {
   setCurrentVisibleNode: any;
   updateInheritance: any;
   relationType: "generalizations" | "specializations";
+  nodes: INode[];
 };
 
 const LinksSide = ({
@@ -46,9 +47,22 @@ const LinksSide = ({
   setCurrentVisibleNode,
   updateInheritance,
   relationType,
+  nodes,
 }: ILinksSideProps) => {
   const properties = currentVisibleNode[relationType];
-
+  console.log(
+    "Object.values(properties).flat()",
+    Object.values(properties).flat(),
+    relationType,
+    relationType !== "specializations" ||
+      Object.values(properties).flat().length !== 1
+  );
+  const getNumOfGeneralizations = (id: string) => {
+    const index = nodes.findIndex((d) => d.id === id);
+    return index !== -1
+      ? Object.values(nodes[index]?.generalizations || {}).flat().length
+      : 0;
+  };
   return (
     <Box sx={{ p: "13px", width: "500px" /* , height: "100vh" */ }}>
       <Box>
@@ -82,12 +96,12 @@ const LinksSide = ({
 
         {/* List of categories within the property */}
         <DragDropContext onDragEnd={(e) => handleSorting(e, relationType)}>
-          <ul style={{ padding: 0 }}>
+          <ul style={{ padding: "15px", paddingTop: 0 }}>
             {Object.keys(properties)
               .sort((a, b) =>
                 a === "main" ? -1 : b === "main" ? 1 : a.localeCompare(b)
               )
-              .map((category: string) => {
+              .map((category: string, index: number) => {
                 const children: {
                   id: string;
                   title: string;
@@ -108,7 +122,12 @@ const LinksSide = ({
                             }
                           }
                         >
-                          <Typography sx={{ fontWeight: "bold" }}>
+                          <Typography
+                            sx={{
+                              fontWeight: "bold",
+                              pt: index !== 0 ? "25px" : "",
+                            }}
+                          >
                             {category} :
                           </Typography>{" "}
                           <Button
@@ -178,6 +197,14 @@ const LinksSide = ({
                                         type={relationType}
                                         category={category}
                                         updateInheritance={updateInheritance}
+                                        deleteVisible={
+                                          relationType !== "generalizations" &&
+                                          Object.values(properties).flat()
+                                            .length !== 1 &&
+                                          relationType === "specializations" &&
+                                          getNumOfGeneralizations(child.id) !==
+                                            1
+                                        }
                                       />
                                     </ListItem>
                                   )}
