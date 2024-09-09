@@ -161,6 +161,7 @@ const Ontology = () => {
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
     new Date(Date.now())
   );
+
   useEffect(() => {
     if (!db) return;
     const q = query(collection(db, USERS));
