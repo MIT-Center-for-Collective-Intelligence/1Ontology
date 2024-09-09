@@ -61,7 +61,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   user,
 }) => {
   return (
-    <Box sx={{ mb: "15px", mt: "25px" }}>
+    <Box>
       <Box>
         {Object.keys(currentVisibleNode.properties).map((property: string) =>
           currentVisibleNode.propertyType[property] !== "string" ? (

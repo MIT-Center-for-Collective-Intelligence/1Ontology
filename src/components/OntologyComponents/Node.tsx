@@ -210,6 +210,8 @@ const Node = ({
   const [newFieldTitle, setNewFieldTitle] = useState("");
   const [saveType, setSaveType] = useState("");
   const [viewValue, setViewValue] = useState<number>(0);
+  const [viewValueSpecialization, setViewValueSpecialization] =
+    useState<number>(0);
 
   const db = getFirestore();
 
@@ -343,11 +345,11 @@ const Node = ({
       const newNodeRef = doc(collection(db, NODES));
 
       // Clone the parent node data
-      const newNode = {
+      const newNode: INode = {
         ...nodeParentDoc.data(),
         // Initialize the specializations sub-node
         specializations: { main: [] },
-
+        comments: [],
         // Set the parents and title for the new node
         generalizations: {
           main: [
@@ -361,6 +363,12 @@ const Node = ({
         title: `New ${parentNode.title}`,
         id: newNodeRef.id,
       };
+      for (let property in newNode.inheritance) {
+        if (!newNode.inheritance[property].ref) {
+          newNode.inheritance[property].ref = nodeParentDoc.id;
+          newNode.inheritance[property].title = parentNode.title;
+        }
+      }
       if ("locked" in newNode) {
         delete newNode.locked;
       }
@@ -392,6 +400,7 @@ const Node = ({
       // Add the new node to the database
       addNewNode({ id: newNodeRef.id, newNode });
       // Update the parent node document in the database
+      setOpenSelectModel(true);
       await updateDoc(nodeParentRef, parentNode);
     } catch (error) {
       // Handle errors by logging to the console
@@ -799,16 +808,18 @@ const Node = ({
         // Check if the node document exists
         if (nodeDoc.exists()) {
           // Retrieve node data from the document
-          const nodeData = nodeDoc.data();
+          const nodeData = nodeDoc.data() as INode;
 
           // Extract the parent IDs from the node data
-          const parents = nodeData?.parents || [];
+          const generalizations = Object.values(
+            nodeData?.generalizations
+          ).flat();
 
           // Iterate through each parent ID
-          for (let parent of parents) {
+          for (let { id: parentId } of generalizations) {
             // Retrieve the document reference of the parent node
             const parentNodeDoc = await getDoc(
-              doc(collection(db, NODES), parent)
+              doc(collection(db, NODES), parentId)
             );
 
             // Check if the parent node document exists
@@ -1127,68 +1138,14 @@ const Node = ({
         </DialogActions>
       </Dialog>
 
-      <Box sx={{ display: "flex", gap: "10px", width: "100%" }}>
-        <Paper sx={{ width: "500px" }} elevation={9}>
-          <Tabs
-            value={viewValue}
-            onChange={(event: any, newValue: number) => {
-              setViewValue(newValue);
-            }}
-            aria-label="basic tabs example"
-          >
-            <Tab label="Generalizations" {...a11yProps(0)} />
-            <Tab label="Part of" {...a11yProps(1)} />
-          </Tabs>
-          <TabPanel
-            value={viewValue}
-            index={0}
-            sx={{
-              mt: "5px",
-            }}
-          >
-            <LinksSide
-              properties={currentVisibleNode?.properties?.generalizations || {}}
-              currentVisibleNode={currentVisibleNode}
-              showList={showList}
-              setOpenAddCategory={setOpenAddCategory}
-              setType={setType}
-              handleSorting={handleSorting}
-              handleEditCategory={handleEditCategory}
-              deleteCategory={deleteCategory}
-              navigateToNode={navigateToNode}
-              recordLogs={recordLogs}
-              setSnackbarMessage={setSnackbarMessage}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              updateInheritance={updateInheritance}
-              relationType={"generalizations"}
-            />
-          </TabPanel>
-          <TabPanel
-            value={viewValue}
-            index={1}
-            sx={{
-              mt: "5px",
-            }}
-          >
-            <LinksSideParts
-              properties={currentVisibleNode?.properties?.partOf || {}}
-              currentVisibleNode={currentVisibleNode}
-              showList={showList}
-              setOpenAddCategory={setOpenAddCategory}
-              setType={setType}
-              handleSorting={handleSorting}
-              handleEditCategory={handleEditCategory}
-              deleteCategory={deleteCategory}
-              navigateToNode={navigateToNode}
-              recordLogs={recordLogs}
-              setSnackbarMessage={setSnackbarMessage}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              updateInheritance={updateInheritance}
-              relationType={"partOf"}
-            />
-          </TabPanel>
-        </Paper>
-
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+          width: "100%",
+        }}
+      >
         <Paper
           sx={{
             display: "flex",
@@ -1240,7 +1197,6 @@ const Node = ({
               </Link>
             </Box>
           )}
-
           <Text
             updateInheritance={updateInheritance}
             recordLogs={recordLogs}
@@ -1254,7 +1210,17 @@ const Node = ({
             setCurrentVisibleNode={setCurrentVisibleNode}
             setEditNode={setEditNode}
           />
+        </Paper>
 
+        <Paper
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            p: "17px",
+            width: "100%",
+          }}
+          elevation={6}
+        >
           <NodeBody
             currentVisibleNode={currentVisibleNode}
             setCurrentVisibleNode={setCurrentVisibleNode}
@@ -1276,66 +1242,146 @@ const Node = ({
             user={user}
           />
         </Paper>
-        <Paper elevation={9}>
-          <Tabs
-            value={viewValue}
-            onChange={(event: any, newValue: number) => {
-              setViewValue(newValue);
-            }}
-            aria-label="basic tabs example"
-          >
-            <Tab label="Generalizations" {...a11yProps(0)} />
-            <Tab label="Parts" {...a11yProps(1)} />
-          </Tabs>
-          <TabPanel
-            value={viewValue}
-            index={0}
-            sx={{
-              mt: "5px",
-            }}
-          >
-            <LinksSide
-              properties={currentVisibleNode?.specializations || {}}
-              currentVisibleNode={currentVisibleNode}
-              showList={showList}
-              setOpenAddCategory={setOpenAddCategory}
-              setType={setType}
-              handleSorting={handleSorting}
-              handleEditCategory={handleEditCategory}
-              deleteCategory={deleteCategory}
-              navigateToNode={navigateToNode}
-              recordLogs={recordLogs}
-              setSnackbarMessage={setSnackbarMessage}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              updateInheritance={updateInheritance}
-              relationType={"specializations"}
-            />
-          </TabPanel>
-          <TabPanel
-            value={viewValue}
-            index={1}
-            sx={{
-              mt: "5px",
-            }}
-          >
-            <LinksSideParts
-              properties={currentVisibleNode?.properties?.parts || {}}
-              currentVisibleNode={currentVisibleNode}
-              showList={showList}
-              setOpenAddCategory={setOpenAddCategory}
-              setType={setType}
-              handleSorting={handleSorting}
-              handleEditCategory={handleEditCategory}
-              deleteCategory={deleteCategory}
-              navigateToNode={navigateToNode}
-              recordLogs={recordLogs}
-              setSnackbarMessage={setSnackbarMessage}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              updateInheritance={updateInheritance}
-              relationType={"parts"}
-            />
-          </TabPanel>
-        </Paper>
+        <Box sx={{ display: "flex", gap: "9px" }}>
+          <Paper elevation={9} sx={{ width: "100%" }}>
+            <Tabs
+              value={viewValueSpecialization}
+              onChange={(event: any, newValue: number) => {
+                setViewValueSpecialization(newValue);
+              }}
+              sx={{ width: "100%" }}
+              aria-label="basic tabs example"
+            >
+              <Tab
+                sx={{ width: "50%" }}
+                label="Specializations"
+                {...a11yProps(0)}
+              />
+              <Tab
+                sx={{ width: "50%" }}
+                label="Generalizations"
+                {...a11yProps(1)}
+              />
+            </Tabs>
+            <TabPanel
+              value={viewValueSpecialization}
+              index={0}
+              sx={{
+                mt: "5px",
+              }}
+            >
+              <LinksSide
+                properties={currentVisibleNode?.specializations || {}}
+                currentVisibleNode={currentVisibleNode}
+                showList={showList}
+                setOpenAddCategory={setOpenAddCategory}
+                setType={setType}
+                handleSorting={handleSorting}
+                handleEditCategory={handleEditCategory}
+                deleteCategory={deleteCategory}
+                navigateToNode={navigateToNode}
+                recordLogs={recordLogs}
+                setSnackbarMessage={setSnackbarMessage}
+                setCurrentVisibleNode={setCurrentVisibleNode}
+                updateInheritance={updateInheritance}
+                relationType={"specializations"}
+                nodes={nodes}
+              />
+            </TabPanel>
+            <TabPanel
+              value={viewValueSpecialization}
+              index={1}
+              sx={{
+                mt: "5px",
+              }}
+            >
+              <LinksSide
+                properties={
+                  currentVisibleNode?.properties?.generalizations || {}
+                }
+                currentVisibleNode={currentVisibleNode}
+                showList={showList}
+                setOpenAddCategory={setOpenAddCategory}
+                setType={setType}
+                handleSorting={handleSorting}
+                handleEditCategory={handleEditCategory}
+                deleteCategory={deleteCategory}
+                navigateToNode={navigateToNode}
+                recordLogs={recordLogs}
+                setSnackbarMessage={setSnackbarMessage}
+                setCurrentVisibleNode={setCurrentVisibleNode}
+                updateInheritance={updateInheritance}
+                relationType={"generalizations"}
+                nodes={nodes}
+              />
+            </TabPanel>
+          </Paper>
+          <Paper elevation={9} sx={{ width: "100%" }}>
+            <Tabs
+              value={viewValue}
+              onChange={(event: any, newValue: number) => {
+                setViewValue(newValue);
+              }}
+              sx={{
+                width: "100%",
+              }}
+              aria-label="basic tabs example"
+            >
+              <Tab sx={{ width: "50%" }} label="Parts" {...a11yProps(0)} />
+              <Tab sx={{ width: "50%" }} label="Is Part of" {...a11yProps(1)} />
+            </Tabs>
+
+            <TabPanel
+              value={viewValue}
+              index={0}
+              sx={{
+                mt: "5px",
+                width: "100%",
+              }}
+            >
+              <LinksSideParts
+                properties={currentVisibleNode?.properties?.parts || {}}
+                currentVisibleNode={currentVisibleNode}
+                showList={showList}
+                setOpenAddCategory={setOpenAddCategory}
+                setType={setType}
+                handleSorting={handleSorting}
+                handleEditCategory={handleEditCategory}
+                deleteCategory={deleteCategory}
+                navigateToNode={navigateToNode}
+                recordLogs={recordLogs}
+                setSnackbarMessage={setSnackbarMessage}
+                setCurrentVisibleNode={setCurrentVisibleNode}
+                updateInheritance={updateInheritance}
+                relationType={"parts"}
+              />
+            </TabPanel>
+            <TabPanel
+              value={viewValue}
+              index={1}
+              sx={{
+                mt: "5px",
+              }}
+            >
+              <LinksSideParts
+                properties={currentVisibleNode?.properties?.isPartOf || {}}
+                currentVisibleNode={currentVisibleNode}
+                showList={showList}
+                setOpenAddCategory={setOpenAddCategory}
+                setType={setType}
+                handleSorting={handleSorting}
+                handleEditCategory={handleEditCategory}
+                deleteCategory={deleteCategory}
+                navigateToNode={navigateToNode}
+                recordLogs={recordLogs}
+                setSnackbarMessage={setSnackbarMessage}
+                setCurrentVisibleNode={setCurrentVisibleNode}
+                updateInheritance={updateInheritance}
+                relationType={"isPartOf"}
+              />
+            </TabPanel>
+          </Paper>
+        </Box>
       </Box>
 
       {ConfirmDialog}

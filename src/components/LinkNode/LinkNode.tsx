@@ -176,7 +176,7 @@ const LinkNode = ({
           {" "}
           {child.title}
         </Link>
-        <Button onClick={deleteChildNode}>Delete</Button>
+        <Button onClick={deleteChildNode}>Unlink</Button>
       </Box>
 
       {ConfirmDialog}
