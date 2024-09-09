@@ -14,6 +14,7 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
 import { INode } from " @components/types/INode";
 import ChildNode from "../OntologyComponents/ChildNode";
+import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 
 type ILinksSideProps = {
   properties: { [key: string]: any };
@@ -161,11 +162,17 @@ const LinksSide = ({
                               {...provided.droppableProps}
                               ref={provided.innerRef}
                               sx={{
-                                backgroundColor: snapshot.isDraggingOver
-                                  ? "#f0f0f0"
-                                  : "",
+                                backgroundColor: (theme) =>
+                                  theme.palette.mode === "dark"
+                                    ? snapshot.isDraggingOver
+                                      ? DESIGN_SYSTEM_COLORS.notebookG450
+                                      : ""
+                                    : snapshot.isDraggingOver
+                                    ? DESIGN_SYSTEM_COLORS.gray250
+                                    : "",
                                 borderRadius: "25px",
                                 userSelect: "none",
+                                p: 0.3,
                               }}
                             >
                               {children.map((child, index) => (
@@ -179,7 +186,7 @@ const LinksSide = ({
                                       ref={provided.innerRef}
                                       {...provided.draggableProps}
                                       {...provided.dragHandleProps}
-                                      sx={{ m: 0, p: 0 }}
+                                      sx={{ m: 0, p: 0, mt: "14px" }}
                                     >
                                       <ListItemIcon sx={{ minWidth: 0 }}>
                                         <DragIndicatorIcon />
