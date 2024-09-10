@@ -2985,3 +2985,7 @@ g.type-ST>rect {
 text.custom-text-color {
   fill: #000000; 
 }
+
+.reply-box:hover > .message-buttons {
+  display: block;
+}
