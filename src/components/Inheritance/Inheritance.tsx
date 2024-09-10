@@ -57,7 +57,9 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode }) => {
 
   return (
     <Box sx={{ padding: 2 }}>
-      <Typography>Inheritance for {selectedNode.title}</Typography>
+      <Typography sx={{ fontSize: "20px", mb: "14px", fontWeight: "bold" }}>
+      Update Inheritance for {selectedNode.title}
+      </Typography>
       {Object.entries(selectedNode.inheritance).map(([key, inheritance]) => (
         <Box key={key} sx={{ marginBottom: 3 }}>
           <FormControl component="fieldset">
@@ -78,7 +80,10 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode }) => {
                   value: "inheritUnlessAlreadyOverRidden",
                   label: "Inherit Unless Already Overridden",
                 },
-                { value: "inheritAfterReview", label: "Inherit After Review" },
+                {
+                  value: "inheritAfterReview",
+                  label: "Inherit After Review",
+                },
               ].map(({ value, label }) => (
                 <FormControlLabel
                   key={value}

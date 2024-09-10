@@ -63,7 +63,7 @@ The `Node` component is a complex React component that interacts with a Firestor
 
 ## Usage
 
-The `Node` component is intended to be used within an application that requires a hierarchical structure of nodes, such as an ontology management system. It should be connected to a Firestore database and requires a set of functions and state management to interact with the database and handle user actions. 
+The `Node` component is intended to be used within an application that requires a hierarchical structure of nodes, such as an ontology management system. It should be connected to a Firestore database and requires a set of functions and state management to interact with the database and handle user actions.
 
 ## Notes
 
@@ -112,7 +112,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
 // import useConfirmDialog from "@/hooks/useConfirmDialog";
 // import { DESIGN_SYSTEM_COLORS } from "@/lib/theme/colors";
@@ -127,13 +127,14 @@ import {
   MainSpecializations,
 } from " @components/types/INode";
 import { LOCKS, NODES } from " @components/lib/firestoreClient/collections";
-import ChildNode from "./ChildNode";
+
 import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import TreeViewSimplified from "./TreeViewSimplified";
 import { SearchBox } from "../SearchBox/SearchBox";
 import NodeBody from "../NodBody/NodeBody";
 import LinksSide from "../Generalizations/LinksSide";
 import LinksSideParts from "../Parts/LinksSideParts";
+import { getTitle } from " @components/lib/utils/string.utils";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -160,6 +161,7 @@ type INodeProps = {
   }) => void;
   navigateToNode: (nodeId: string) => void;
   eachOntologyPath: { [key: string]: any };
+  searchWithFuse: any;
 };
 
 const Node = ({
@@ -180,6 +182,7 @@ const Node = ({
   updateInheritance,
   navigateToNode,
   eachOntologyPath,
+  searchWithFuse,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -289,6 +292,10 @@ const Node = ({
       delete newNode.locked;
 
       // Update the original node to include the reference to the new node in its children.
+
+      if (!parentNodeData?.specializations.hasOwnProperty("main")) {
+        parentNodeData.specializations["main"] = [];
+      }
       parentNodeData?.specializations["main"].push({
         id: newNodeRef.id,
         title: `New ${parentNodeData.title}`,
@@ -427,10 +434,29 @@ const Node = ({
     setOpenSelectModel(true);
     setType(newType);
     setSelectedCategory(category);
-    const specializations = (
-      (currentVisibleNode.properties[property] || {})[category] || []
-    ).map((onto: any) => onto.id);
-    setCheckedSpecializations(specializations || []);
+    let children = [];
+    if (property === "specializations" || property === "generalizations") {
+      children = ((currentVisibleNode[property] || {})[category] || []).map(
+        (onto: any) => onto.id
+      );
+    } else {
+      children = (
+        (currentVisibleNode.properties[property] || {})[category] || []
+      ).map((onto: any) => onto.id);
+    }
+
+    setCheckedSpecializations(children);
+  };
+  const selectFromTree = () => {
+    if (
+      ["parts", "isPartOf", "specializations", "generalizations"].includes(type)
+    ) {
+      return (
+        mainSpecializations[rootTitle.toLowerCase()]?.specializations || {}
+      );
+    } else {
+      return mainSpecializations[type]?.specializations || {};
+    }
   };
 
   // This function handles the cloning of an node.
@@ -445,15 +471,14 @@ const Node = ({
       newCloneId,
       newCloneTitle,
     }: { newCloneId: string; newCloneTitle: string } = await cloneNode(node.id);
-    const newPath = eachOntologyPath[node.id];
-    if (newCloneId) {
-      // Update the user document by appending the new clone's ID to the node path.
-      newPath.push({ id: newCloneId, title: newCloneTitle, category: false });
-      updateUserDoc([...newPath]);
-    }
+    // const newPath = eachOntologyPath[node.id];
+    // if (newCloneId) {
+    //   // Update the user document by appending the new clone's ID to the node path.
+    //   newPath.push({ id: newCloneId, title: newCloneTitle, category: false });
+    //   updateUserDoc([...newPath]);
+    // }
 
     // Close the modal or perform any necessary cleanup.
-    handleClose();
   };
 
   const handleSaveChildrenChanges = async () => {
@@ -462,7 +487,7 @@ const Node = ({
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );
-      const _type = saveType || type;
+      const property = saveType || type;
       // If the node document does not exist, return early
       if (!nodeDoc.exists()) return;
 
@@ -470,15 +495,16 @@ const Node = ({
       const nodeData: any = nodeDoc.data();
 
       // Initialize a new array for storing updated children
-      const oldChildren =
-        _type === "specializations"
-          ? [...nodeData.children[_type][selectedCategory]]
-          : [];
-
-      if (_type === "generalizations") {
-        return;
+      let oldChildren = [];
+      console.log("property ==>", property);
+      if (property === "specializations" || property === "generalizations") {
+        oldChildren = [...nodeData[property][selectedCategory]];
+      } else {
+        oldChildren = [
+          ...((nodeData.properties[property] || {})[selectedCategory] || []),
+        ];
       }
-
+      console.log("checkedSpecializations ==>", checkedSpecializations);
       // Iterate through checkedSpecializations to update newchildren
       for (let checked of checkedSpecializations) {
         // Find the node object from the children array
@@ -495,36 +521,51 @@ const Node = ({
         }
       }
 
-      // If _type is "specializations", update main children
-      if (_type === "specializations") {
-        nodeData.children[_type]["main"] = nodeData.children[_type][
-          "main"
-        ].filter(
-          (node: any) => oldChildren.findIndex((o) => o.id === node.id) === -1
+      oldChildren = oldChildren.filter((onto) =>
+        checkedSpecializations.includes(onto.id)
+      );
+
+      console.log("oldChildren", oldChildren);
+      if (property === "generalizations" && oldChildren.length === 0) {
+        await confirmIt(
+          "You cannot remove all the generalizations for this node make sure it at least link to one generalization",
+          "Ok",
+          ""
         );
+        return;
       }
-
-      // Update the node data with the new children
-      nodeData.children[_type] = {
-        ...(nodeData.children[_type] || {}),
-        [selectedCategory]: oldChildren,
-      };
-
+      // If _type is "specializations", update main children
+      console.log("selectedCategory", selectedCategory);
+      if (property === "specializations" || property === "generalizations") {
+        nodeData[property][selectedCategory] = oldChildren;
+      } else {
+        if (!nodeData.properties[property]) {
+          nodeData.properties[property] = { [selectedCategory]: oldChildren };
+        } else {
+          nodeData.properties[property][selectedCategory] = oldChildren;
+        }
+      }
+      console.log("nodeData", nodeData, property);
       // If inheritance is present, reset the children field
-      if (nodeData.inheritance) {
-        nodeData.inheritance.children[_type] = {
-          ref: null,
-          title: "",
-        };
+      if (
+        nodeData.inheritance &&
+        property !== "specializations" &&
+        property !== "generalizations" &&
+        property !== "parts" &&
+        property !== "isPartOf" &&
+        nodeData.inheritance[property]
+      ) {
+        nodeData.inheritance[property].ref = null;
+        nodeData.inheritance[property].title = "";
       }
       // Update the node document in the database
       await updateDoc(nodeDoc.ref, nodeData);
 
       // If _type is not "specializations", update the inheritance
-      if (_type !== "specializations") {
+      if (property !== "specializations" && property !== "generalizations") {
         updateInheritance({
           updatedNode: { ...nodeData, id: currentVisibleNode.id },
-          updatedProperty: _type,
+          updatedProperty: property,
         });
       }
 
@@ -771,28 +812,55 @@ const Node = ({
    * @param {Object} ontologyData - The main node data object.
    * @param {string} id - The ID of the child-node to be removed.
    */
-  const removeChildNode = (parentNode: INode, childId: string) => {
-    // Iterate over the types of children in the main node data.
-    for (let type in parentNode.specializations) {
-      // Iterate over the categories within each type of child-node.
-      for (let category in parentNode.specializations || {}) {
-        // Check if there are children present in the current category.
-        if ((parentNode.specializations[category] || []).length > 0) {
-          // Find the index of the child-node with the specified ID within the children array.
-          const specializationIdx = parentNode.specializations[type].findIndex(
-            (sub: any) => sub.id === childId
-          );
+  const removeSpecializationNode = (
+    generalizationNode: INode,
+    specializationId: string
+  ) => {
+    // Iterate over the categories within each type of child-node.
+    for (let category in generalizationNode.specializations || {}) {
+      // Check if there are children present in the current category.
+      if ((generalizationNode.specializations[category] || []).length > 0) {
+        // Find the index of the child-node with the specified ID within the children array.
+        const specializationIdx = generalizationNode.specializations[
+          type
+        ].findIndex((sub: any) => sub.id === specializationId);
 
-          // If the child-node with the specified ID is found, remove it from the array.
-          if (specializationIdx !== -1) {
-            parentNode.specializations[type].splice(specializationIdx, 1);
-          }
+        // If the child-node with the specified ID is found, remove it from the array.
+        if (specializationIdx !== -1) {
+          generalizationNode.specializations[type].splice(specializationIdx, 1);
         }
       }
     }
-    return parentNode;
+    return generalizationNode;
   };
+  /**
+   * Removes a child-node with the specified ID from the given node data.
+   * @param {Object} params - An object containing ontologyData and id.
+   * @param {Object} ontologyData - The main node data object.
+   * @param {string} id - The ID of the child-node to be removed.
+   */
+  const removeGeneralizationNode = (
+    specializationNode: INode,
+    generalizationId: string
+  ) => {
+    // Iterate over the categories within each type of child-node.
+    for (let category in specializationNode.generalizations || {}) {
+      // Check if there are children present in the current category.
+      if ((specializationNode.generalizations[category] || []).length > 0) {
+        // Find the index of the child-node with the specified ID within the children array.
+        const specializationIdx = specializationNode.generalizations[
+          type
+        ].findIndex((sub: any) => sub.id === generalizationId);
 
+        // If the child-node with the specified ID is found, remove it from the array.
+        if (specializationIdx !== -1) {
+          specializationNode.generalizations[type].splice(specializationIdx, 1);
+        }
+      }
+    }
+
+    return specializationNode;
+  };
   // Asynchronous function to handle the deletion of a child-node
   const deleteNode = async () => {
     try {
@@ -807,6 +875,7 @@ const Node = ({
         const specializations = Object.values(
           currentVisibleNode.specializations
         ).flat();
+
         if (specializations.length > 0) {
           if (
             specializations.some((spc: { id: string }) => {
@@ -837,25 +906,47 @@ const Node = ({
           ).flat();
 
           // Iterate through each parent ID
-          for (let { id: parentId } of generalizations) {
+          for (let { id: generalizationId } of generalizations) {
             // Retrieve the document reference of the parent node
-            const parentNodeDoc = await getDoc(
-              doc(collection(db, NODES), parentId)
+            const generalizationDoc = await getDoc(
+              doc(collection(db, NODES), generalizationId)
             );
 
             // Check if the parent node document exists
-            if (parentNodeDoc.exists()) {
+            if (generalizationDoc.exists()) {
               // Retrieve data of the parent node
-              let parentNodeData = parentNodeDoc.data() as INode;
+              let generalizationData = generalizationDoc.data() as INode;
 
               // Remove the reference to the child-node from the parent
-              parentNodeData = removeChildNode(
-                parentNodeData,
+              generalizationData = removeSpecializationNode(
+                generalizationData,
                 currentVisibleNode.id
               );
 
               // Update the parent node document with the modified data
-              await updateDoc(parentNodeDoc.ref, parentNodeData);
+              await updateDoc(generalizationDoc.ref, generalizationData);
+            }
+          }
+
+          for (let { id: specializationId } of specializations) {
+            // Retrieve the document reference of the parent node
+            const specializationDoc = await getDoc(
+              doc(collection(db, NODES), specializationId)
+            );
+
+            // Check if the parent node document exists
+            if (specializationDoc.exists()) {
+              // Retrieve data of the parent node
+              let specializationNode = specializationDoc.data() as INode;
+
+              // Remove the reference to the child-node from the parent
+              specializationNode = removeGeneralizationNode(
+                specializationNode,
+                currentVisibleNode.id
+              );
+
+              // Update the parent node document with the modified data
+              await updateDoc(specializationDoc.ref, specializationNode);
             }
           }
 
@@ -878,18 +969,6 @@ const Node = ({
     }
   };
 
-  const selectFromTree = () => {
-    if (type === "dependents" || type === "dependencies") {
-      return mainSpecializations["act"]?.specializations || {};
-    } else if (type === "specializations" || type === "generalizations") {
-      // delete mainSpecializations[]
-      return (
-        mainSpecializations[rootTitle.toLowerCase()]?.specializations || {}
-      );
-    } else {
-      return mainSpecializations[type]?.specializations || {};
-    }
-  };
   const handleToggle = useCallback(
     (nodeId: string) => {
       setExpandedNodes((prevExpanded: Set<string>) => {
@@ -971,6 +1050,9 @@ const Node = ({
 
     return [..._children, ..._plainText];
   };
+  const searchResults = useMemo(() => {
+    return searchWithFuse(searchValue, currentVisibleNode.nodeType);
+  }, [searchValue]);
 
   /* "root": "T
   of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. The user should not be able to modify the value of this field. Please automatically specify it by tracing the generalizations of this descendent activity back to reach one of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. So, obviously the root of the node 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward' itself and its direct specializations would be empty string because they are already roots."*/
@@ -1021,16 +1103,59 @@ const Node = ({
             </Box>
           </Paper>
           <Paper>
-            <TreeViewSimplified
-              treeVisualization={selectFromTree()}
-              expandedNodes={expandedNodes}
-              onOpenNodesTree={handleToggle}
-              checkSpecialization={checkSpecialization}
-              checkedSpecializations={checkedSpecializations}
-              handleCloning={handleCloning}
-              clone={true}
-              stopPropagation={currentVisibleNode.id}
-            />
+            {searchValue ? (
+              <Box>
+                {" "}
+                {searchResults.map((node: any) => (
+                  <ListItem
+                    key={node.id}
+                    onClick={() => {}}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      color: "white",
+                      cursor: "pointer",
+                      borderRadius: "4px",
+                      padding: "8px",
+                      transition: "background-color 0.3s",
+                      // border: "1px solid #ccc",
+                      mt: "5px",
+                      "&:hover": {
+                        backgroundColor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? DESIGN_SYSTEM_COLORS.notebookG450
+                            : DESIGN_SYSTEM_COLORS.gray200,
+                      },
+                    }}
+                  >
+                    {" "}
+                    <Checkbox
+                      checked={checkedSpecializations.includes(node.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        checkSpecialization(node.id);
+                      }}
+                      name={node.id}
+                    />
+                    <Typography>{node.title}</Typography>
+                  </ListItem>
+                ))}
+              </Box>
+            ) : (
+              <TreeViewSimplified
+                treeVisualization={selectFromTree()}
+                expandedNodes={expandedNodes}
+                onOpenNodesTree={handleToggle}
+                checkSpecialization={checkSpecialization}
+                checkedSpecializations={checkedSpecializations}
+                handleCloning={handleCloning}
+                clone={true}
+                stopPropagation={currentVisibleNode.id}
+              />
+            )}
           </Paper>
           <Paper
             sx={{
@@ -1080,6 +1205,7 @@ const Node = ({
                     zIndex: "9999",
                   },
                 }}
+                sx={{ borderRadius: "20px" }}
               >
                 {[
                   "String",
@@ -1113,6 +1239,8 @@ const Node = ({
             onClick={() => addNewProperty(newFieldTitle, newFieldType)}
             color="primary"
             disabled={!newFieldType || !newFieldTitle}
+            variant="contained"
+            sx={{ borderRadius: "25px" }}
           >
             {editCategory ? "Save" : "Add"}
           </Button>
@@ -1122,6 +1250,8 @@ const Node = ({
               setNewFieldTitle("");
             }}
             color="primary"
+            variant="contained"
+            sx={{ borderRadius: "25px" }}
           >
             Cancel
           </Button>
@@ -1179,22 +1309,40 @@ const Node = ({
           }}
           elevation={6}
         >
+          {!currentVisibleNode.locked && (
+            <Box sx={{ mb: "5px", ml: "auto" }}>
+              <Button
+                onClick={deleteNode}
+                variant="contained"
+                sx={{ borderRadius: "25px" }}
+              >
+                Delete Node
+              </Button>
+            </Box>
+          )}
           <Box sx={{ mb: "19px" }}>
-            <Text
-              updateInheritance={updateInheritance}
-              recordLogs={recordLogs}
-              user={user}
-              lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
-              addLock={addLock}
-              text={currentVisibleNode.title}
-              currentVisibleNode={currentVisibleNode}
-              property={"title"}
-              setSnackbarMessage={setSnackbarMessage}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              editNode={editNode}
-              setEditNode={setEditNode}
-              deleteNode={deleteNode}
-            />
+            {currentVisibleNode.locked ? (
+              <Typography sx={{ fontSize: "34px" }}>
+                {currentVisibleNode.title}
+              </Typography>
+            ) : (
+              <Text
+                nodes={nodes}
+                updateInheritance={updateInheritance}
+                recordLogs={recordLogs}
+                user={user}
+                lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
+                addLock={addLock}
+                text={currentVisibleNode.title}
+                currentVisibleNode={currentVisibleNode}
+                property={"title"}
+                setSnackbarMessage={setSnackbarMessage}
+                setCurrentVisibleNode={setCurrentVisibleNode}
+                editNode={editNode}
+                setEditNode={setEditNode}
+                confirmIt={confirmIt}
+              />
+            )}
           </Box>
           {rootTitle && (
             <Box sx={{ display: "flex", gap: "15px", mb: "15px" }}>
@@ -1222,6 +1370,7 @@ const Node = ({
             </Box>
           )}
           <Text
+            nodes={nodes}
             updateInheritance={updateInheritance}
             recordLogs={recordLogs}
             user={user}
@@ -1264,6 +1413,7 @@ const Node = ({
             addLock={addLock}
             lockedNodeFields={lockedNodeFields}
             user={user}
+            nodes={nodes}
           />
         </Paper>
         <Box sx={{ display: "flex", gap: "9px" }}>
@@ -1276,7 +1426,11 @@ const Node = ({
               variant="fullWidth"
               sx={{
                 background: (theme) =>
-                  theme.palette.mode === "dark" ? "#242425" : "#E9ECF0",
+                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                color: "black",
+                ".MuiTab-root.Mui-selected": {
+                  color: "#ff6d00",
+                },
               }}
               aria-label="basic tabs example"
             >
@@ -1354,7 +1508,10 @@ const Node = ({
               variant="fullWidth"
               sx={{
                 background: (theme) =>
-                  theme.palette.mode === "dark" ? "#242425" : "#E9ECF0",
+                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                ".MuiTab-root.Mui-selected": {
+                  color: "#ff6d00",
+                },
               }}
               aria-label="basic tabs example"
             >
@@ -1369,6 +1526,18 @@ const Node = ({
                 mt: "5px",
               }}
             >
+              {currentVisibleNode.inheritance?.["isPartOf"]?.ref && (
+                <Typography
+                  sx={{ color: "grey", fontSize: "14px", ml: "15px" }}
+                >
+                  {'(Inherited from "'}
+                  {getTitle(
+                    nodes,
+                    currentVisibleNode.inheritance["isPartOf"].ref || ""
+                  )}
+                  {'")'}
+                </Typography>
+              )}
               <LinksSideParts
                 properties={currentVisibleNode?.properties?.isPartOf || {}}
                 currentVisibleNode={currentVisibleNode}
@@ -1383,7 +1552,8 @@ const Node = ({
                 setSnackbarMessage={setSnackbarMessage}
                 setCurrentVisibleNode={setCurrentVisibleNode}
                 updateInheritance={updateInheritance}
-                relationType={"isPartOf"}
+                property={"isPartOf"}
+                nodes={nodes}
               />
             </TabPanel>
             <TabPanel
@@ -1394,6 +1564,18 @@ const Node = ({
                 width: "100%",
               }}
             >
+              {currentVisibleNode.inheritance?.["parts"]?.ref && (
+                <Typography
+                  sx={{ color: "grey", fontSize: "14px", ml: "15px" }}
+                >
+                  {'(Inherited from "'}
+                  {getTitle(
+                    nodes,
+                    currentVisibleNode.inheritance["parts"].ref || ""
+                  )}
+                  {'")'}
+                </Typography>
+              )}
               <LinksSideParts
                 properties={currentVisibleNode?.properties?.parts || {}}
                 currentVisibleNode={currentVisibleNode}
@@ -1408,7 +1590,8 @@ const Node = ({
                 setSnackbarMessage={setSnackbarMessage}
                 setCurrentVisibleNode={setCurrentVisibleNode}
                 updateInheritance={updateInheritance}
-                relationType={"parts"}
+                property={"parts"}
+                nodes={nodes}
               />
             </TabPanel>
           </Paper>

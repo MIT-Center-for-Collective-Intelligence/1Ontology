@@ -11,10 +11,14 @@ import {
 } from "@mui/material";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
+import {
+  capitalizeFirstLetter,
+  getTitle,
+} from " @components/lib/utils/string.utils";
 import { INode } from " @components/types/INode";
-import ChildNode from "../OntologyComponents/ChildNode";
 import { DISPLAY } from " @components/lib/CONSTANTS";
+import LinkNode from "../LinkNode/LinkNode";
+import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 
 type ILinksSideProps = {
   properties: { [key: string]: any };
@@ -30,7 +34,8 @@ type ILinksSideProps = {
   setSnackbarMessage: any;
   setCurrentVisibleNode: any;
   updateInheritance: any;
-  relationType: "parts" | "isPartOf";
+  property: "parts" | "isPartOf";
+  nodes: INode[];
 };
 
 const LinksSideParts = ({
@@ -46,9 +51,10 @@ const LinksSideParts = ({
   setSnackbarMessage,
   setCurrentVisibleNode,
   updateInheritance,
-  relationType,
+  property,
+  nodes,
 }: ILinksSideProps) => {
-  const properties = currentVisibleNode.properties[relationType] || {};
+  const properties = currentVisibleNode.properties[property] || {};
 
   return (
     <Box sx={{ p: "13px" /* , height: "100vh" */ }}>
@@ -61,18 +67,18 @@ const LinksSideParts = ({
           }}
         >
           <Button
-            onClick={() => showList(relationType, "main")}
+            onClick={() => showList(property, "main")}
             sx={{ px: 1, py: 0 }}
             variant="outlined"
           >
             {"Select "}
-            {capitalizeFirstLetter(DISPLAY[relationType])}
+            {capitalizeFirstLetter(DISPLAY[property])}
           </Button>
 
           <Button
             onClick={() => {
               setOpenAddCategory(true);
-              setType(relationType);
+              setType(property);
             }}
             sx={{ px: 1, py: 0 }}
             variant="outlined"
@@ -82,7 +88,7 @@ const LinksSideParts = ({
         </Box>
 
         {/* List of categories within the property */}
-        <DragDropContext onDragEnd={(e) => handleSorting(e, relationType)}>
+        <DragDropContext onDragEnd={(e) => handleSorting(e, property)}>
           <ul style={{ padding: 0 }}>
             {Object.keys(properties)
               .sort((a, b) =>
@@ -112,22 +118,18 @@ const LinksSideParts = ({
                           <Typography sx={{ fontWeight: "bold" }}>
                             {category} :
                           </Typography>{" "}
-                          <Button
-                            onClick={() => showList(relationType, category)}
-                          >
-                            {"Select"} {relationType}
+                          <Button onClick={() => showList(property, category)}>
+                            {"Select"} {property}
                           </Button>
                           <Button
                             onClick={() =>
-                              handleEditCategory(relationType, category)
+                              handleEditCategory(property, category)
                             }
                           >
                             Edit
                           </Button>
                           <Button
-                            onClick={() =>
-                              deleteCategory(relationType, category)
-                            }
+                            onClick={() => deleteCategory(property, category)}
                           >
                             Delete
                           </Button>
@@ -144,7 +146,7 @@ const LinksSideParts = ({
                               ref={provided.innerRef}
                               sx={{
                                 backgroundColor: snapshot.isDraggingOver
-                                  ? "#f0f0f0"
+                                  ? DESIGN_SYSTEM_COLORS.gray250
                                   : "",
                                 borderRadius: "25px",
                                 userSelect: "none",
@@ -166,7 +168,7 @@ const LinksSideParts = ({
                                       <ListItemIcon sx={{ minWidth: 0 }}>
                                         <DragIndicatorIcon />
                                       </ListItemIcon>
-                                      <ChildNode
+                                      <LinkNode
                                         navigateToNode={navigateToNode}
                                         recordLogs={recordLogs}
                                         setSnackbarMessage={setSnackbarMessage}
@@ -174,11 +176,15 @@ const LinksSideParts = ({
                                         setCurrentVisibleNode={
                                           setCurrentVisibleNode
                                         }
-                                        sx={{}}
+                                        sx={{ pl: 1 }}
                                         child={child}
-                                        type={relationType}
+                                        property={property}
                                         category={category}
                                         updateInheritance={updateInheritance}
+                                        title={
+                                          getTitle(nodes, child.id) ||
+                                          child.title
+                                        }
                                       />
                                     </ListItem>
                                   )}
