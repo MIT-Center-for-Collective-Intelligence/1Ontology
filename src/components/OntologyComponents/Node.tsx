@@ -1273,7 +1273,11 @@ const Node = ({
               onChange={(event: any, newValue: number) => {
                 setViewValueSpecialization(newValue);
               }}
-              sx={{ width: "100%" }}
+              variant="fullWidth"
+              sx={{
+                background: (theme) =>
+                  theme.palette.mode === "dark" ? "#242425" : "#E9ECF0",
+              }}
               aria-label="basic tabs example"
             >
               <Tab
@@ -1347,8 +1351,10 @@ const Node = ({
               onChange={(event: any, newValue: number) => {
                 setViewValue(newValue);
               }}
+              variant="fullWidth"
               sx={{
-                width: "100%",
+                background: (theme) =>
+                  theme.palette.mode === "dark" ? "#242425" : "#E9ECF0",
               }}
               aria-label="basic tabs example"
             >
