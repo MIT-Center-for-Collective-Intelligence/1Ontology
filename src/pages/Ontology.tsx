@@ -123,6 +123,35 @@ import {
 } from " @components/lib/firestoreClient/errors.firestore";
 import Inheritance from " @components/components/Inheritance/Inheritance";
 import useSelectDialog from " @components/lib/hooks/useSelectDialog";
+import Chat from " @components/components/Chat/Chat";
+import { IChat } from " @components/types/IChat";
+import {
+  chatChange,
+  getMessagesSnapshot,
+} from " @components/client/firestore/messages.firestore";
+
+const synchronizeStuff = (prev: (any & { id: string })[], change: any) => {
+  const docType = change.type;
+  const curData = change.data as any & { id: string };
+
+  const prevIdx = prev.findIndex(
+    (m: any & { id: string }) => m.id === curData.id
+  );
+  if (docType === "added" && prevIdx === -1) {
+    prev.push(curData);
+  }
+  if (docType === "modified" && prevIdx !== -1) {
+    prev[prevIdx] = curData;
+  }
+
+  if (docType === "removed" && prevIdx !== -1) {
+    prev.splice(prevIdx, 1);
+  }
+  prev.sort(
+    (a, b) => a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime()
+  );
+  return prev;
+};
 
 const Ontology = () => {
   const db = getFirestore();
@@ -142,6 +171,7 @@ const Ontology = () => {
   const [editingComment, setEditingComment] = useState("");
   const [lockedNodeFields, setLockedNodeFields] = useState<ILockedNode>({});
   const [sidebarView, setSidebarView] = useState<number>(1);
+  const [selectedChatTab, setSelectedChatTab] = useState<number>(1);
   const [viewValue, setViewValue] = useState<number>(0);
   const [searchValue, setSearchValue] = useState("");
   const fuse = new Fuse(nodes, { keys: ["plainText.title"] });
@@ -151,16 +181,73 @@ const Ontology = () => {
   const [rightPanelVisible, setRightPanelVisible] = useState<any>(
     !!user?.rightPanel
   );
-  const [users, setUsers] = useState<{ [key: string]: string }>({});
+  const [users, setUsers] = useState<
+    { id: string; display: string; imageUrl: string }[]
+  >([]);
   const [eachOntologyPath, setEachOntologyPath] = useState<{
     [key: string]: any;
   }>({});
   const columnResizerRef = useRef<any>();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [firstLoad, setFirstLoad] = useState<boolean>(true);
+  const [nodeMessages, setNodeMessages] = useState<IChat[]>([]);
+  const [technicalMessages, setTechnicalMessages] = useState<IChat[]>([]);
+  const [otherMessages, setOtherMessages] = useState<IChat[]>([]);
 
   //last interaction date from the user
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
     new Date(Date.now())
   );
+  useEffect(() => {
+    if (!user) return;
+    if (!currentVisibleNode?.id) return;
+    setIsLoading(true);
+    setNodeMessages([]);
+    const onSynchronize = (changes: chatChange[]) => {
+      setNodeMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
+      setIsLoading(false);
+    };
+    const killSnapshot = getMessagesSnapshot(
+      db,
+      { nodeId: currentVisibleNode?.id, type: "node", lastVisible: null },
+      onSynchronize
+    );
+    return () => killSnapshot();
+  }, [db, user, currentVisibleNode]);
+
+  useEffect(() => {
+    if (!user) return;
+    setIsLoading(true);
+    setTechnicalMessages([]);
+    const onSynchronize = (changes: chatChange[]) => {
+      setTechnicalMessages((prev) =>
+        changes.reduce(synchronizeStuff, [...prev])
+      );
+      setIsLoading(false);
+    };
+    const killSnapshot = getMessagesSnapshot(
+      db,
+      { type: "technical", lastVisible: null },
+      onSynchronize
+    );
+    return () => killSnapshot();
+  }, [db, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    setIsLoading(true);
+    setOtherMessages([]);
+    const onSynchronize = (changes: chatChange[]) => {
+      setOtherMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
+      setIsLoading(false);
+    };
+    const killSnapshot = getMessagesSnapshot(
+      db,
+      { type: "other", lastVisible: null },
+      onSynchronize
+    );
+    return () => killSnapshot();
+  }, [db, user]);
 
   useEffect(() => {
     if (!db) return;
@@ -169,14 +256,19 @@ const Ontology = () => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docChanges = snapshot.docChanges();
       setUsers((prev) => {
-        const updatedUsers = { ...prev }; // Create a copy of the previous state
+        let updatedUsers = [...prev]; // Create a copy of the previous state
         docChanges.forEach((change) => {
           const userData = change.doc.data();
-          const userId = change.doc.id;
-          if (change.type === "added" || change.type === "modified") {
-            updatedUsers[userId] = userData.imageUrl;
+          if (change.type === "added") {
+            updatedUsers.push({
+              id: userData.uname,
+              display: `${userData.fName} ${userData.lName}`,
+              imageUrl: userData.imageUrl,
+            });
           } else if (change.type === "removed") {
-            delete updatedUsers[userId];
+            updatedUsers = updatedUsers.filter(
+              (user) => user.id !== userData.uname
+            );
           }
         });
         return updatedUsers;
@@ -931,6 +1023,10 @@ const Ontology = () => {
     setSidebarView(newValue);
   };
 
+  const handleChatTabsChange = (event: any, newValue: number) => {
+    setSelectedChatTab(newValue);
+  };
+
   const handleViewChange = (event: any, newValue: number) => {
     setViewValue(newValue);
   };
@@ -1403,12 +1499,14 @@ const Ontology = () => {
                 }}
               >
                 <Tabs
+                  id="right-panel-tabs"
                   value={sidebarView}
                   onChange={handleChange}
                   aria-label="basic tabs example"
+                  variant="scrollable"
                 >
                   <Tab label="Search" {...a11yProps(1)} />
-                  <Tab label="Comments" {...a11yProps(0)} />
+                  <Tab label="Chat" {...a11yProps(0)} />
                   <Tab label="Inheritance" {...a11yProps(2)} />
                   <Tab label="Markdown Cheatsheet" {...a11yProps(3)} />
                 </Tabs>
@@ -1477,13 +1575,64 @@ const Ontology = () => {
                   </Box>
                 </TabPanel>
                 <TabPanel value={sidebarView} index={1}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                    }}
-                  >
+                  <Box sx={{}}>
+                    <Tabs
+                      id="chat-tabs"
+                      value={selectedChatTab}
+                      onChange={handleChatTabsChange}
+                      aria-label="basic tabs example"
+                      variant="fullWidth"
+                      sx={{
+                        background: (theme) =>
+                          theme.palette.mode === "dark" ? "#242425" : "#E9ECF0",
+                      }}
+                    >
+                      <Tab label="This node" {...a11yProps(0)} />
+                      <Tab label="Technical" {...a11yProps(1)} />
+                      <Tab label="Others" {...a11yProps(2)} />
+                    </Tabs>
                     <Box>
+                      <TabPanel value={selectedChatTab} index={0}>
+                        {currentVisibleNode?.id && (
+                          <Chat
+                            user={user}
+                            messages={nodeMessages}
+                            setMessages={setNodeMessages}
+                            type="node"
+                            nodeId={currentVisibleNode?.id}
+                            users={users}
+                            firstLoad={true}
+                            isLoading={isLoading}
+                            confirmIt={confirmIt}
+                          />
+                        )}
+                      </TabPanel>
+                      <TabPanel value={selectedChatTab} index={1}>
+                        <Chat
+                          user={user}
+                          messages={technicalMessages}
+                          setMessages={setTechnicalMessages}
+                          type="technical"
+                          users={users}
+                          firstLoad={true}
+                          isLoading={isLoading}
+                          confirmIt={confirmIt}
+                        />
+                      </TabPanel>
+                      <TabPanel value={selectedChatTab} index={2}>
+                        <Chat
+                          user={user}
+                          messages={otherMessages}
+                          setMessages={setOtherMessages}
+                          type="other"
+                          users={users}
+                          firstLoad={true}
+                          isLoading={isLoading}
+                          confirmIt={confirmIt}
+                        />
+                      </TabPanel>
+                    </Box>
+                    {/* <Box>
                       {orderComments().map((comment: any) => (
                         <Paper
                           key={comment.id}
@@ -1603,7 +1752,7 @@ const Ontology = () => {
                           }}
                         />
                       </Paper>
-                    </Box>{" "}
+                    </Box>{" "} */}
                   </Box>
                 </TabPanel>
                 <TabPanel value={sidebarView} index={2}>
