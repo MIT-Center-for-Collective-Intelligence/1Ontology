@@ -87,7 +87,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import Fuse from "fuse.js";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import markdownContent from "../components/OntologyComponents/Markdown-Here-Cheatsheet.md";
 import SneakMessage from " @components/components/OntologyComponents/SneakMessage";
 import Node from " @components/components/OntologyComponents/Node";
@@ -96,6 +96,7 @@ import {
   ILockedNode,
   INode,
   INodePath,
+  INodeTypes,
   MainSpecializations,
   TreeVisual,
 } from " @components/types/INode";
@@ -174,13 +175,11 @@ const Ontology = () => {
   const [selectedChatTab, setSelectedChatTab] = useState<number>(1);
   const [viewValue, setViewValue] = useState<number>(0);
   const [searchValue, setSearchValue] = useState("");
-  const fuse = new Fuse(nodes, { keys: ["plainText.title"] });
+  const fuse = new Fuse(nodes, { keys: ["title"] });
   const headerRef = useRef<HTMLHeadElement | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [dagreZoomState, setDagreZoomState] = useState<any>(null);
-  const [rightPanelVisible, setRightPanelVisible] = useState<any>(
-    !!user?.rightPanel
-  );
+  const [rightPanelVisible, setRightPanelVisible] = useState<any>(false);
   const [users, setUsers] = useState<
     { id: string; display: string; imageUrl: string }[]
   >([]);
@@ -360,12 +359,23 @@ const Ontology = () => {
     try {
       if (!user) return;
       const logRef = doc(collection(db, LOGS));
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+
+      const doerCreate = `${user?.uname}-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
       await setDoc(logRef, {
         ...logs,
         createdAt: new Date(),
         doer: user?.uname,
         operatingSystem: getOperatingSystem(),
         browser: getBrowser(),
+        doerCreate,
       });
     } catch (error) {
       console.error(error);
@@ -496,7 +506,6 @@ const Ontology = () => {
   useEffect(() => {
     // Check if a user is logged in
     if (!user) return;
-    setRightPanelVisible(!!user?.rightPanel);
     // Define the ontologyLock query
     const nodeLocksQuery = query(
       collection(db, LOCKS),
@@ -874,7 +883,7 @@ const Ontology = () => {
   }, [searchValue]);
 
   // Function to perform a search using Fuse.js library
-  const searchWithFuse = (query: string): any => {
+  const searchWithFuse = (query: string, nodeType?: INodeTypes): INode[] => {
     // Return an empty array if the query is empty
     if (!query) {
       return [];
@@ -884,8 +893,15 @@ const Ontology = () => {
     return fuse
       .search(query)
       .map((result) => result.item)
-      .filter((item: any) => !item.deleted);
+      .filter(
+        (item: INode) =>
+          !item.deleted && (!nodeType || nodeType === item.nodeType)
+      );
   };
+
+  const searchResults = useMemo(() => {
+    return searchWithFuse(searchValue);
+  }, [searchValue]);
 
   // This function handles the process of sending a new comment to a node.
   const handleSendComment = async () => {
@@ -1142,17 +1158,29 @@ const Ontology = () => {
     updatedNode,
     updatedProperty,
   }: UpdateInheritanceParams): Promise<void> => {
-    const batch = writeBatch(db);
-    // Recursively update specializations
-    await recursivelyUpdateSpecializations({
-      nodeId: updatedNode.id,
-      updatedProperty,
-      batch,
-      newValue: updatedNode.properties[updatedProperty],
-      generalizationId: updatedNode.id,
-    });
-    // Commit all updates as a batch
-    await batch.commit();
+    try {
+      const batch = writeBatch(db);
+      if (updatedNode.inheritance[updatedProperty].ref) {
+        updatedNode.inheritance[updatedProperty].ref = null;
+        const ref = doc(collection(db, NODES), updatedNode.id);
+        await updateDoc(ref, {
+          inheritance: updatedNode.inheritance,
+        });
+      }
+      // Recursively update specializations
+      await recursivelyUpdateSpecializations({
+        nodeId: updatedNode.id,
+        updatedProperty,
+        batch,
+        newValue: updatedNode.properties[updatedProperty],
+        generalizationId: updatedNode.id,
+        generalizationTitle: updatedNode.title,
+      });
+      // Commit all updates as a batch
+      await batch.commit();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   // Helper function to recursively update specializations
@@ -1164,6 +1192,7 @@ const Ontology = () => {
     newValue,
     inheritanceType,
     generalizationId,
+    generalizationTitle,
   }: {
     nodeId: string;
     updatedProperty: string;
@@ -1172,32 +1201,32 @@ const Ontology = () => {
     newValue: string;
     inheritanceType?:
       | "inheritUnlessAlreadyOverRidden"
-      | "alwaysInherit"
-      | "inheritAfterReview";
+      | "inheritAfterReview"
+      | "alwaysInherit";
     generalizationId: string;
+    generalizationTitle: string;
   }): Promise<void> => {
-    debugger;
     // Fetch node data from Firestore
     const nodeRef = doc(collection(db, NODES), nodeId);
     const nodeSnapshot = await getDoc(nodeRef);
     const nodeData = nodeSnapshot.data() as INode;
-    debugger;
+
     if (!nodeData || !nodeData.properties.hasOwnProperty(updatedProperty))
       return;
 
     // Get the inheritance type for the updated property
     const inheritance = nodeData.inheritance[updatedProperty];
-
-    if (
-      (inheritanceType &&
-        (inheritanceType === "alwaysInherit" ||
-          inheritanceType === "inheritAfterReview")) ||
+    const canInherit =
       (inheritanceType === "inheritUnlessAlreadyOverRidden" &&
-        nodeData.inheritance[updatedProperty]?.ref === generalizationId && // TODO: check if it's parent that's been modified
-        nestedCall)
-    ) {
-      updateProperty(batch, nodeRef, updatedProperty, newValue);
-      return;
+        inheritance.ref) ||
+      inheritanceType === "alwaysInherit";
+
+    if (nestedCall && canInherit) {
+      await updateProperty(batch, nodeRef, updatedProperty, newValue, {
+        title: "",
+        ref: generalizationId,
+        inheritanceType: inheritance.inheritanceType,
+      });
     }
 
     if (inheritance?.inheritanceType === "neverInherit") {
@@ -1225,6 +1254,9 @@ const Ontology = () => {
         title: string;
       }[];
     }
+    if (specializations.length <= 0) {
+      return;
+    }
     for (const specialization of specializations) {
       await recursivelyUpdateSpecializations({
         nodeId: specialization.id,
@@ -1234,37 +1266,33 @@ const Ontology = () => {
         newValue,
         inheritanceType: inheritance.inheritanceType,
         generalizationId,
+        generalizationTitle,
       });
     }
   };
 
   // Function to update a property in Firestore using a batch commit
-  const updateProperty = (
-    batch: WriteBatch,
+  const updateProperty = async (
+    batch: any,
     nodeRef: DocumentReference,
     updatedProperty: string,
-    newValue: any
-  ): void => {
+    newValue: any,
+    inheritanceRef: { title: string; ref: string; inheritanceType: string }
+  ) => {
     const updateData = {
       [`properties.${updatedProperty}`]: newValue,
+      [`inheritance.${updatedProperty}`]: inheritanceRef,
     };
     batch.update(nodeRef, updateData);
+    if (batch._mutations.length > 10) {
+      await batch.commit();
+      batch = writeBatch(db);
+    }
   };
-
-  // Pseudo-function to simulate a modal for user review (replace with actual implementation)
-  function showModalForReview(
-    nodeData: INode,
-    updatedProperty: string
-  ): Promise<boolean> {
-    return new Promise((resolve) => {
-      // Simulate a user review process
-
-      setTimeout(() => resolve(true), 1000); // Automatically approve after 1 second (for simulation)
-    });
-  }
 
   useEffect(() => {
     const controller = columnResizerRef.current;
+
     if (controller) {
       const resizer = controller.getResizer();
       resizer.resizeSection(2, { toSize: rightPanelVisible ? 400 : 0 });
@@ -1323,65 +1351,76 @@ const Ontology = () => {
             <Section
               minSize={0}
               defaultSize={500}
-              style={{ display: "flex", flexDirection: "column" }}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+              }}
             >
-              <Tabs
-                value={viewValue}
-                onChange={handleViewChange}
-                sx={{
-                  width: "100%",
-                  borderColor: "divider",
-                  borderBottom: 1,
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "dark"
-                      ? DESIGN_SYSTEM_COLORS.notebookG450
-                      : DESIGN_SYSTEM_COLORS.gray300,
-                }}
-              >
-                <Tab
-                  label="Tree View"
-                  {...a11yProps(0)}
-                  sx={{ width: "50%", fontSize: "20px" }}
-                />
-                <Tab
-                  label="DAG View"
-                  {...a11yProps(1)}
-                  sx={{ width: "50%", fontSize: "20px" }}
-                />
-              </Tabs>
-
               <Box
                 sx={{
-                  flexGrow: 1,
-                  overflow: "auto",
-                  ...SCROLL_BAR_STYLE,
+                  backgroundColor: (theme: any) =>
+                    theme.palette.mode === "dark" ? "#303134" : "white",
                 }}
               >
-                <TabPanel
+                <Tabs
                   value={viewValue}
-                  index={0}
+                  onChange={handleViewChange}
                   sx={{
-                    mt: "5px",
+                    width: "100%",
+                    borderColor: "divider",
+
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                    ".MuiTab-root.Mui-selected": {
+                      color: "#ff6d00",
+                    },
                   }}
                 >
-                  <TreeViewSimplified
-                    treeVisualization={treeVisualization}
-                    onOpenNodesTree={onOpenNodesTree}
-                    expandedNodes={expandedNodes}
-                    currentVisibleNode={currentVisibleNode}
+                  <Tab
+                    label="Tree View"
+                    {...a11yProps(0)}
+                    sx={{ width: "50%", fontSize: "20px" }}
                   />
-                </TabPanel>
-                <TabPanel value={viewValue} index={1}>
-                  <DagGraph
-                    treeVisualization={treeVisualization}
-                    setExpandedNodes={setExpandedNodes}
-                    expandedNodes={expandedNodes}
-                    setDagreZoomState={setDagreZoomState}
-                    dagreZoomState={dagreZoomState}
-                    onOpenNodeDagre={onOpenNodeDagre}
-                    currentVisibleNode={currentVisibleNode}
+                  <Tab
+                    label="DAG View"
+                    {...a11yProps(1)}
+                    sx={{ width: "50%", fontSize: "20px" }}
                   />
-                </TabPanel>
+                </Tabs>
+
+                <Box
+                  sx={{
+                    flexGrow: 1,
+                    overflow: "auto",
+                    ...SCROLL_BAR_STYLE,
+                  }}
+                >
+                  <TabPanel
+                    value={viewValue}
+                    index={0}
+                    sx={{
+                      mt: "5px",
+                    }}
+                  >
+                    <TreeViewSimplified
+                      treeVisualization={treeVisualization}
+                      onOpenNodesTree={onOpenNodesTree}
+                      expandedNodes={expandedNodes}
+                      currentVisibleNode={currentVisibleNode}
+                    />
+                  </TabPanel>
+                  <TabPanel value={viewValue} index={1}>
+                    <DagGraph
+                      treeVisualization={treeVisualization}
+                      setExpandedNodes={setExpandedNodes}
+                      expandedNodes={expandedNodes}
+                      setDagreZoomState={setDagreZoomState}
+                      dagreZoomState={dagreZoomState}
+                      onOpenNodeDagre={onOpenNodeDagre}
+                      currentVisibleNode={currentVisibleNode}
+                    />
+                  </TabPanel>
+                </Box>
               </Box>
             </Section>
           )}
@@ -1420,7 +1459,7 @@ const Ontology = () => {
                 ...SCROLL_BAR_STYLE,
               }}
             >
-              <Breadcrumbs sx={{ ml: "40px" }}>
+              <Breadcrumbs sx={{ ml: "40px", mt: "14px" }}>
                 {ontologyPath.map((path) => (
                   <Link
                     underline={path.category ? "none" : "hover"}
@@ -1433,7 +1472,13 @@ const Ontology = () => {
                       ":hover": {
                         cursor: !path.category ? "pointer" : "",
                       },
-                      color: path.category ? "grey" : "",
+                      fontSize: path.category ? "15px" : "20px",
+                      color: path.category
+                        ? "orange"
+                        : (theme) =>
+                            theme.palette.mode === "dark"
+                              ? theme.palette.common.white
+                              : theme.palette.common.black,
                     }}
                   >
                     {path.title.split(" ").splice(0, 3).join(" ") +
@@ -1464,6 +1509,7 @@ const Ontology = () => {
                   updateInheritance={updateInheritance}
                   navigateToNode={navigateToNode}
                   eachOntologyPath={eachOntologyPath}
+                  searchWithFuse={searchWithFuse}
                 />
               )}
             </Box>
@@ -1479,160 +1525,175 @@ const Ontology = () => {
             }}
           >
             <SettingsEthernetIcon
-              style={{
+              sx={{
                 position: "absolute",
                 top: "50%",
                 left: "50%",
                 transform: "translate(-50%, -50%)",
-                color: "white",
+                color: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? theme.palette.common.gray50
+                    : theme.palette.common.notebookMainBlack,
               }}
             />
           </Bar>
 
           {!isMobile && (
             <Section minSize={0} defaultSize={400}>
-              <Box
-                sx={{
-                  borderBottom: 1,
-                  borderColor: "divider",
-                  position: "sticky",
-                }}
-              >
-                <Tabs
-                  id="right-panel-tabs"
-                  value={sidebarView}
-                  onChange={handleChange}
-                  aria-label="basic tabs example"
-                  variant="scrollable"
+              <Box sx={{ width: "100%" }}>
+                <Box
+                  sx={{
+                    borderColor: "divider",
+                    position: "sticky",
+                  }}
                 >
-                  <Tab label="Search" {...a11yProps(1)} />
-                  <Tab label="Chat" {...a11yProps(0)} />
-                  <Tab label="Inheritance" {...a11yProps(2)} />
-                  <Tab label="Markdown Cheatsheet" {...a11yProps(3)} />
-                </Tabs>
-              </Box>
-              <Box
-                sx={{
-                  padding: "10px",
-                  height: "89vh",
-                  overflow: "auto",
-                  pb: "125px",
-                  ...SCROLL_BAR_STYLE,
-                }}
-              >
-                <TabPanel value={sidebarView} index={0}>
-                  <Box sx={{ pl: "10px" }}>
-                    <TextField
-                      variant="standard"
-                      placeholder="Search..."
-                      value={searchValue}
-                      onChange={(e) => setSearchValue(e.target.value)}
-                      fullWidth
-                      InputProps={{
-                        startAdornment: (
-                          <IconButton
-                            sx={{ mr: "5px", cursor: "auto" }}
-                            color="primary"
-                            edge="end"
+                  <Tabs
+                    id="right-panel-tabs"
+                    value={sidebarView}
+                    onChange={handleChange}
+                    aria-label="basic tabs example"
+                    variant="scrollable"
+                    sx={{
+                      background: (theme) =>
+                        theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                      ".MuiTab-root.Mui-selected": {
+                        color: "#ff6d00",
+                      },
+                    }}
+                  >
+                    <Tab label="Search" {...a11yProps(1)} />
+                    <Tab label="Chat" {...a11yProps(0)} />
+                    <Tab label="Inheritance" {...a11yProps(2)} />
+                    <Tab label="Markdown Cheatsheet" {...a11yProps(3)} />
+                  </Tabs>
+                </Box>
+                <Box
+                  sx={{
+                    // padding: "10px",
+                    height: "89vh",
+                    overflow: "auto",
+                    pb: "125px",
+                    backgroundColor: (theme: any) =>
+                      theme.palette.mode === "dark" ? "#303134" : "white",
+                    ...SCROLL_BAR_STYLE,
+                  }}
+                >
+                  <TabPanel value={sidebarView} index={0}>
+                    <Box sx={{ pl: "10px" }}>
+                      <TextField
+                        variant="standard"
+                        placeholder="Search..."
+                        value={searchValue}
+                        onChange={(e) => setSearchValue(e.target.value)}
+                        fullWidth
+                        InputProps={{
+                          startAdornment: (
+                            <IconButton
+                              sx={{ mr: "5px", cursor: "auto" }}
+                              color="primary"
+                              edge="end"
+                            >
+                              <SearchIcon />
+                            </IconButton>
+                          ),
+                        }}
+                        autoFocus
+                        sx={{
+                          p: "8px",
+                          mt: "5px",
+                        }}
+                      />
+                      <List>
+                        {searchResults.map((node: any) => (
+                          <ListItem
+                            key={node.id}
+                            onClick={() => openSearchedNode(node)}
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              color: "white",
+                              cursor: "pointer",
+                              borderRadius: "4px",
+                              padding: "8px",
+                              transition: "background-color 0.3s",
+                              // border: "1px solid #ccc",
+                              mt: "5px",
+                              "&:hover": {
+                                backgroundColor: (theme) =>
+                                  theme.palette.mode === "dark"
+                                    ? DESIGN_SYSTEM_COLORS.notebookG450
+                                    : DESIGN_SYSTEM_COLORS.gray200,
+                              },
+                            }}
                           >
-                            <SearchIcon />
-                          </IconButton>
-                        ),
-                      }}
-                      autoFocus
-                      sx={{
-                        p: "8px",
-                        mt: "5px",
-                      }}
-                    />
-                    <List>
-                      {searchWithFuse(searchValue).map((node: any) => (
-                        <ListItem
-                          key={node.id}
-                          onClick={() => openSearchedNode(node)}
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            color: "white",
-                            cursor: "pointer",
-                            borderRadius: "4px",
-                            padding: "8px",
-                            transition: "background-color 0.3s",
-                            // border: "1px solid #ccc",
-                            mt: "5px",
-                            "&:hover": {
-                              backgroundColor: (theme) =>
-                                theme.palette.mode === "dark"
-                                  ? DESIGN_SYSTEM_COLORS.notebookG450
-                                  : DESIGN_SYSTEM_COLORS.gray200,
-                            },
-                          }}
-                        >
-                          <Typography>{node.plainText.title}</Typography>
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
-                </TabPanel>
-                <TabPanel value={sidebarView} index={1}>
-                  <Box sx={{}}>
-                    <Tabs
-                      id="chat-tabs"
-                      value={selectedChatTab}
-                      onChange={handleChatTabsChange}
-                      aria-label="basic tabs example"
-                      variant="fullWidth"
-                      sx={{
-                        background: (theme) =>
-                          theme.palette.mode === "dark" ? "#242425" : "#E9ECF0",
-                      }}
-                    >
-                      <Tab label="This node" {...a11yProps(0)} />
-                      <Tab label="Technical" {...a11yProps(1)} />
-                      <Tab label="Others" {...a11yProps(2)} />
-                    </Tabs>
-                    <Box>
-                      <TabPanel value={selectedChatTab} index={0}>
-                        {currentVisibleNode?.id && (
+                            <Typography>{node.title}</Typography>
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Box>
+                  </TabPanel>
+                  <TabPanel value={sidebarView} index={1}>
+                    <Box sx={{}}>
+                      <Tabs
+                        id="chat-tabs"
+                        value={selectedChatTab}
+                        onChange={handleChatTabsChange}
+                        aria-label="basic tabs example"
+                        variant="fullWidth"
+                        sx={{
+                          background: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "#242425"
+                              : "#E9ECF0",
+                        }}
+                      >
+                        <Tab label="This node" {...a11yProps(0)} />
+                        <Tab label="Technical" {...a11yProps(1)} />
+                        <Tab label="Others" {...a11yProps(2)} />
+                      </Tabs>
+                      <Box>
+                        <TabPanel value={selectedChatTab} index={0}>
+                          <TextField fullWidth />
+                          {currentVisibleNode?.id && (
+                            <Chat
+                              user={user}
+                              messages={nodeMessages}
+                              setMessages={setNodeMessages}
+                              type="node"
+                              nodeId={currentVisibleNode?.id}
+                              users={users}
+                              firstLoad={true}
+                              isLoading={isLoading}
+                              confirmIt={confirmIt}
+                            />
+                          )}
+                        </TabPanel>
+                        <TabPanel value={selectedChatTab} index={1}>
                           <Chat
                             user={user}
-                            messages={nodeMessages}
-                            setMessages={setNodeMessages}
-                            type="node"
-                            nodeId={currentVisibleNode?.id}
+                            messages={technicalMessages}
+                            setMessages={setTechnicalMessages}
+                            type="technical"
                             users={users}
                             firstLoad={true}
                             isLoading={isLoading}
                             confirmIt={confirmIt}
                           />
-                        )}
-                      </TabPanel>
-                      <TabPanel value={selectedChatTab} index={1}>
-                        <Chat
-                          user={user}
-                          messages={technicalMessages}
-                          setMessages={setTechnicalMessages}
-                          type="technical"
-                          users={users}
-                          firstLoad={true}
-                          isLoading={isLoading}
-                          confirmIt={confirmIt}
-                        />
-                      </TabPanel>
-                      <TabPanel value={selectedChatTab} index={2}>
-                        <Chat
-                          user={user}
-                          messages={otherMessages}
-                          setMessages={setOtherMessages}
-                          type="other"
-                          users={users}
-                          firstLoad={true}
-                          isLoading={isLoading}
-                          confirmIt={confirmIt}
-                        />
-                      </TabPanel>
-                    </Box>
-                    {/* <Box>
+                        </TabPanel>
+                        <TabPanel value={selectedChatTab} index={2}>
+                          <Chat
+                            user={user}
+                            messages={otherMessages}
+                            setMessages={setOtherMessages}
+                            type="other"
+                            users={users}
+                            firstLoad={true}
+                            isLoading={isLoading}
+                            confirmIt={confirmIt}
+                          />
+                        </TabPanel>
+                      </Box>
+                      {/* <Box>
                       {orderComments().map((comment: any) => (
                         <Paper
                           key={comment.id}
@@ -1753,21 +1814,22 @@ const Ontology = () => {
                         />
                       </Paper>
                     </Box>{" "} */}
-                  </Box>
-                </TabPanel>
-                <TabPanel value={sidebarView} index={2}>
-                  <Inheritance selectedNode={currentVisibleNode} />
-                </TabPanel>
-                <TabPanel value={sidebarView} index={3}>
-                  <Box
-                    sx={{
-                      p: "18px",
-                      ...SCROLL_BAR_STYLE,
-                    }}
-                  >
-                    <MarkdownRender text={markdownContent} />
-                  </Box>
-                </TabPanel>
+                    </Box>
+                  </TabPanel>
+                  <TabPanel value={sidebarView} index={2}>
+                    <Inheritance selectedNode={currentVisibleNode} />
+                  </TabPanel>
+                  <TabPanel value={sidebarView} index={3}>
+                    <Box
+                      sx={{
+                        p: "18px",
+                        ...SCROLL_BAR_STYLE,
+                      }}
+                    >
+                      <MarkdownRender text={markdownContent} />
+                    </Box>
+                  </TabPanel>
+                </Box>
               </Box>
             </Section>
           )}

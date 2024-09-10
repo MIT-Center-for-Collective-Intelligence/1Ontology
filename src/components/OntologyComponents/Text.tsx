@@ -78,7 +78,9 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   getFirestore,
+  query,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -89,6 +91,7 @@ import MarkdownRender from "../Markdown/MarkdownRender";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import { INode } from " @components/types/INode";
 import { DISPLAY } from " @components/lib/CONSTANTS";
+import { getTitle } from " @components/lib/utils/string.utils";
 
 type ISubOntologyProps = {
   currentVisibleNode: INode;
@@ -111,13 +114,15 @@ type ISubOntologyProps = {
   addLock: (node: string, field: string, type: string) => void;
   user: any;
   recordLogs: (logs: any) => void;
-  deleteNode?: () => void;
+
   updateInheritance: (parameters: {
     updatedNode: INode;
     updatedProperty: string;
   }) => void;
   disabled?: boolean;
   removeField?: any;
+  confirmIt?: any;
+  nodes: INode[];
 };
 const Text = ({
   text,
@@ -130,108 +135,106 @@ const Text = ({
   addLock,
   user,
   recordLogs,
-  deleteNode = () => {},
   updateInheritance,
   disabled,
   removeField,
+  confirmIt,
+  nodes,
 }: ISubOntologyProps) => {
   const db = getFirestore();
-  const [editMode, setEditMode] = useState(false);
-  const [copyValue, setCopyValue] = useState("");
   const textFieldRef = useRef<any>(null);
+  const [currentValue, setCurrentValue] = useState("");
 
-  useEffect(() => {
-    setCopyValue(
-      property === "title"
-        ? currentVisibleNode.title
-        : currentVisibleNode.properties[property]
-    );
-  }, [currentVisibleNode, property, editMode]);
   const capitalizeFirstLetter = (word: string) => {
     return word.charAt(0).toUpperCase() + word.slice(1);
   };
-
+  useEffect(() => {
+    setCurrentValue(text);
+  }, [text]);
   // This function is responsible for editing the title of a childe node.
   // It takes an object with three parameters: parentData (parentNode), newTitle, and id.
 
-  useEffect(() => {
-    if (property === "title" && editNode) {
-      setEditMode(editNode === currentVisibleNode.id);
-    }
-  }, [editNode, currentVisibleNode]);
-
-  const onSaveTextChange = async () => {
+  const onSaveTextChange = async (copyValue: string) => {
     // Toggle the edit mode
-
-    // Check if the edit mode is true
-    if (editMode) {
-      // Fetch the node document from the database
-      const nodeDoc = await getDoc(
-        doc(collection(db, NODES), currentVisibleNode.id)
+    // Fetch the node document from the database
+    setCurrentValue(copyValue);
+    const nodeDoc = await getDoc(
+      doc(collection(db, NODES), currentVisibleNode.id)
+    );
+    if (property === "title") {
+      const nodeDocs = await getDocs(
+        query(collection(db, NODES), where("title", "==", copyValue))
       );
+      if (
+        nodeDocs.docs.length > 0 &&
+        nodeDocs.docs[0].id !== currentVisibleNode.id &&
+        confirmIt
+      ) {
+        await confirmIt(
+          "A node with this title already exists. Please choose a different title.",
+          "OK",
+          ""
+        );
+        return;
+      }
+    }
 
-      // Check if the node document exists
-      if (nodeDoc.exists()) {
-        // Extract node data from the document
-        const nodeData = nodeDoc.data() as INode;
-        // If the field being edited is not "description" or "title"
-        let previousValue = nodeData.properties[property] || "";
-        let newValue = copyValue;
-        // If the field being edited is the "title"
-        if (property === "title") {
-          // Reset the editNode state
-          setEditNode("");
-        }
-        if (property === "title") {
-          nodeData.title = copyValue || "";
-        } else {
-          nodeData.properties[property] = copyValue || "";
-        }
+    // Check if the node document exists
+    if (nodeDoc.exists()) {
+      // Extract node data from the document
+      const nodeData = nodeDoc.data() as INode;
+      // If the field being edited is not "description" or "title"
+      let previousValue = nodeData.properties[property] || "";
+      let newValue = copyValue;
+      // If the field being edited is the "title"
+      if (property === "title") {
+        // Reset the editNode state
+        setEditNode("");
+      }
+      if (property === "title") {
+        nodeData.title = copyValue || "";
+      } else {
+        nodeData.properties[property] = copyValue || "";
+      }
 
-        if (
-          property !== "title" &&
-          nodeData.inheritance &&
-          previousValue.trim() !== newValue.trim()
-        ) {
-          nodeData.inheritance[property].ref = null;
-          nodeData.inheritance[property].title = "";
-        }
+      if (
+        property !== "title" &&
+        nodeData.inheritance &&
+        previousValue.trim() !== newValue.trim()
+      ) {
+        nodeData.inheritance[property].ref = null;
+        nodeData.inheritance[property].title = "";
+      }
 
-        // Update the node document in the database
-        await updateDoc(nodeDoc.ref, nodeData);
+      // Update the node document in the database
+      await updateDoc(nodeDoc.ref, nodeData);
 
-        // Update the children according to inheritance
-        // (Title doesn't have inheritance, so it's excluded)
-        if (property !== "title") {
-          updateInheritance({
-            updatedNode: { ...nodeData, id: currentVisibleNode.id },
-            updatedProperty: property,
-          });
-        }
-
-        // Add a lock for the edited node
-        addLock(currentVisibleNode.id, property, "remove");
-
-        // Record the edit action in the logs
-        recordLogs({
-          action: "Edited a field",
-          field: property,
-          previousValue,
-          newValue,
+      // Update the children according to inheritance
+      // (Title doesn't have inheritance, so it's excluded)
+      if (property !== "title") {
+        updateInheritance({
+          updatedNode: { ...nodeData, id: currentVisibleNode.id },
+          updatedProperty: property,
         });
       }
-      setEditMode((edit) => !edit);
-    } else {
-      // If edit mode is false, add a lock for the node
-      addLock(currentVisibleNode.id, property, "add");
-      setEditMode(true);
+
+      // Add a lock for the edited node
+      addLock(currentVisibleNode.id, property, "remove");
+
+      // Record the edit action in the logs
+      recordLogs({
+        action: "Edited a field",
+        field: property,
+        previousValue,
+        newValue,
+      });
     }
   };
 
   // Define a function to handle text edits, taking an event as a parameter (assumed to be a React event)
   const handleEditText = (e: any) => {
     // Update the state using the setCurrentVisibleNode function, which receives the current state
-    setCopyValue(e.target.value);
+    onSaveTextChange(e.target.value);
   };
 
   // Function to handle focus events
@@ -243,11 +246,6 @@ const Text = ({
     }
   };
 
-  const onCancelTextChange = () => {
-    setCopyValue(currentVisibleNode.properties[property]);
-    setEditMode((edit) => !edit);
-    addLock(currentVisibleNode.id, property, "remove");
-  };
   return (
     <Box>
       {property !== "title" && (
@@ -265,20 +263,6 @@ const Text = ({
             </Tooltip>
           ) : (
             <Box>
-              {!disabled && (
-                <Tooltip title={editMode ? "Save" : "Edit"}>
-                  <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
-                    {editMode ? "Save" : "Edit"}
-                  </Button>
-                </Tooltip>
-              )}
-              {editMode && (
-                <Tooltip title={"Cancel"}>
-                  <Button onClick={onCancelTextChange} sx={{ ml: "5px" }}>
-                    {"Cancel"}
-                  </Button>
-                </Tooltip>
-              )}
               {!["title", "description"].includes(property) && (
                 <Button
                   onClick={() => {
@@ -294,106 +278,52 @@ const Text = ({
             </Box>
           )}
           {(currentVisibleNode.inheritance || {}) &&
-            (currentVisibleNode.inheritance || {})[property]?.ref && (
+            (currentVisibleNode.inheritance || {})[property]?.ref &&
+            nodes && (
               <Typography sx={{ color: "grey", fontSize: "14px", ml: "auto" }}>
                 {"("}
                 {"Inherited from "}
                 {'"'}
-                {(currentVisibleNode.inheritance || {})[property]?.title}
+                {getTitle(
+                  nodes,
+                  currentVisibleNode.inheritance[property].ref || ""
+                )}
                 {'"'}
                 {")"}
               </Typography>
             )}
         </Box>
       )}
-      {editMode ? (
-        <TextField
-          placeholder={"Type something..."}
-          fullWidth
-          value={copyValue}
-          multiline
-          onChange={handleEditText}
-          InputProps={{
-            style: { fontSize: property === "title" ? "30px" : "" },
-            endAdornment: (
-              <Box
-                style={{
-                  marginRight: "18px",
-                  cursor: "pointer",
-                  display: "flex",
-                }}
-              >
-                {property === "title" && (
-                  <Box sx={{ display: "flex" }}>
-                    <Tooltip title={"Save"}>
-                      <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
-                        {editMode ? "Save" : "Edit"}
-                      </Button>
-                    </Tooltip>
-                    {editMode && (
-                      <Tooltip title={"Cancel"}>
-                        <Button onClick={onCancelTextChange} sx={{ ml: "5px" }}>
-                          {"Cancel"}
-                        </Button>
-                      </Tooltip>
-                    )}
-                  </Box>
-                )}
-              </Box>
-            ),
-          }}
-          sx={{
-            fontWeight: 400,
-            fontSize: {
-              xs: "14px",
-              md: "16px",
-            },
-            marginBottom: "5px",
-            width: "100%",
-            display: "block",
-          }}
-          focused={editMode}
-          autoFocus
-          inputRef={textFieldRef}
-          onFocus={handleFocus}
-        />
-      ) : (
-        <Box
-          style={{
-            display: "flex",
-            alignItems: "center",
-            marginBottom: "15px",
-          }}
-        >
-          <MarkdownRender
-            text={text}
-            sx={{ fontSize: property === "title" ? "30px" : "" }}
-          />
-          {property === "title" && !currentVisibleNode.locked && (
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              {lockedNodeFields[property] &&
-              user.uname !== lockedNodeFields[property].uname ? (
-                <Tooltip title={"Locked"} sx={{ ml: "5px" }}>
-                  <LockIcon />
-                </Tooltip>
-              ) : (
-                <Box>
-                  <Tooltip title={editMode ? "Save" : "Edit"}>
-                    <Button onClick={onSaveTextChange} sx={{ ml: "5px" }}>
-                      {editMode ? "Save" : "Edit"}
-                    </Button>
-                  </Tooltip>
-                </Box>
-              )}
-              <Tooltip title={"Delete Node"} sx={{ ml: "5px" }}>
-                <Button onClick={deleteNode} sx={{ ml: "5px" }}>
-                  Delete
-                </Button>
-              </Tooltip>
-            </Box>
-          )}
-        </Box>
-      )}
+
+      <TextField
+        placeholder={"Type something..."}
+        fullWidth
+        value={
+          currentValue ||
+          (property === "title"
+            ? currentVisibleNode.title
+            : currentVisibleNode.properties[property])
+        }
+        multiline
+        minRows={property !== "title" ? 2 : 0}
+        onChange={handleEditText}
+        InputProps={{
+          style: { fontSize: property === "title" ? "30px" : "" },
+        }}
+        sx={{
+          fontWeight: 400,
+          fontSize: {
+            xs: "14px",
+            md: "16px",
+          },
+          marginBottom: "5px",
+          width: "100%",
+          display: "block",
+        }}
+        autoFocus
+        inputRef={textFieldRef}
+        onFocus={handleFocus}
+      />
     </Box>
   );
 };

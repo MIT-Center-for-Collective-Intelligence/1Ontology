@@ -80,7 +80,7 @@ import {
 type ISubOntologyProps = {
   child: IChildNode;
   currentVisibleNode: INode;
-  sx: { [key: string]: any };
+  sx?: { [key: string]: any };
   property: string;
   setCurrentVisibleNode: (currentVisibleNode: any) => void;
   setSnackbarMessage: (message: any) => void;
@@ -88,9 +88,10 @@ type ISubOntologyProps = {
   recordLogs: (logs: any) => void;
   updateInheritance: (parameters: {
     updatedNode: INode;
-    updatedField: string;
+    updatedProperty: string;
   }) => void;
   navigateToNode: (nodeID: string) => void;
+  title: string;
 };
 
 const LinkNode = ({
@@ -102,6 +103,7 @@ const LinkNode = ({
   recordLogs,
   updateInheritance,
   navigateToNode,
+  title,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
@@ -136,7 +138,7 @@ const LinkNode = ({
 
             updateInheritance({
               updatedNode: { ...nodeData, id: nodeDoc.id },
-              updatedField: property,
+              updatedProperty: property,
             });
 
             recordLogs({
@@ -174,9 +176,14 @@ const LinkNode = ({
           }}
         >
           {" "}
-          {child.title}
+          {title}
         </Link>
-        <Button onClick={deleteChildNode}>Unlink</Button>
+        <Button
+          sx={{ ml: "8px", borderRadius: "25px" }}
+          onClick={deleteChildNode}
+        >
+          Unlink
+        </Button>
       </Box>
 
       {ConfirmDialog}

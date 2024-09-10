@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
+import { capitalizeFirstLetter, getTitle } from " @components/lib/utils/string.utils";
 import { INode } from " @components/types/INode";
 import ChildNode from "../OntologyComponents/ChildNode";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
@@ -204,6 +204,10 @@ const LinksSide = ({
                                           relationType === "specializations" &&
                                           getNumOfGeneralizations(child.id) !==
                                             1
+                                        }
+                                        title={
+                                          getTitle(nodes, child.id) ||
+                                          child.title
                                         }
                                       />
                                     </ListItem>

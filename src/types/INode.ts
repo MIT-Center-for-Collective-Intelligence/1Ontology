@@ -45,23 +45,27 @@ export type INode = {
   comments: { message: string; sender: string; editMode?: boolean }[];
   properties: { [key: string]: any };
   inheritance: {
-    [key: string]: InheritanceType;
+    [key: string]: {
+      ref: string | null;
+      title: string;
+      inheritanceType:
+        | "neverInherit"
+        | "alwaysInherit"
+        | "inheritUnlessAlreadyOverRidden"
+        | "inheritAfterReview";
+    };
   };
   specializations: {
-    [key: string]: [
-      {
-        id: string;
-        title: string;
-      }
-    ];
+    [key: string]: {
+      id: string;
+      title: string;
+    }[];
   };
   generalizations: {
-    [key: string]: [
-      {
-        id: string;
-        title: string;
-      }
-    ];
+    [key: string]: {
+      id: string;
+      title: string;
+    }[];
   };
   root: string;
   parents: string[];

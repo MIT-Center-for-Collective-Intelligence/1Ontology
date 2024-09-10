@@ -16,6 +16,7 @@ type ITreeViewSimplifiedProps = {
   clone?: boolean;
   sx?: any;
   stopPropagation?: string;
+  searchValue?: string;
 };
 
 const TreeViewSimplified = ({
@@ -29,6 +30,7 @@ const TreeViewSimplified = ({
   clone,
   sx,
   stopPropagation,
+  searchValue,
 }: ITreeViewSimplifiedProps) => {
   const [expanded, setExpanded] = useState<string[]>([]);
 
