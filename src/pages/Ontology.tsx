@@ -130,6 +130,7 @@ import {
   chatChange,
   getMessagesSnapshot,
 } from " @components/client/firestore/messages.firestore";
+import { saveMessagingDeviceToken } from " @components/lib/firestoreClient/messaging";
 
 const synchronizeStuff = (prev: (any & { id: string })[], change: any) => {
   const docType = change.type;
@@ -197,6 +198,12 @@ const Ontology = () => {
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
     new Date(Date.now())
   );
+
+  useEffect(() => {
+    if (!user) return;
+    saveMessagingDeviceToken(user.userId);
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
     if (!currentVisibleNode?.id) return;

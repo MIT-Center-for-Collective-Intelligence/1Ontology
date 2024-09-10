@@ -75,6 +75,14 @@ const App = (props: AppPropsWithLayout) => {
 
   const getLayout = Component.getLayout ?? ((page: any) => page);
 
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/firebase-messaging-sw.js").catch(function (error) {
+        console.error("Service Worker registration failed: ", error);
+      });
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>

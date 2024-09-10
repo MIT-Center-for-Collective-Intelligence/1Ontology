@@ -14,11 +14,13 @@ import {
 import { getStorage } from "firebase/storage";
 import React, { useCallback, useRef, useState } from "react";
 import { Mention, MentionsInput } from "react-mentions";
-//import { useUploadImage } from "@/hooks/useUploadImage";
+
 //import { isValidHttpUrl } from "@/lib/utils/utils";
 import { MentionUser } from "./MentionUser";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import { IChat } from " @components/types/IChat";
+import { useUploadImage } from " @components/hooks/useUploadImage";
+import { isValidHttpUrl } from " @components/lib/utils/utils";
 
 type ChatInputProps = {
   user: any;
@@ -61,38 +63,38 @@ const ChatInput = ({
     editing?.imageUrls || []
   );
   const [inputValue, setInputValue] = useState<string>(editing?.text || "");
-  //   const { isUploading, percentageUploaded, uploadImage } = useUploadImage({
-  //     storage,
-  //   });
+    const { isUploading, percentageUploaded, uploadImage } = useUploadImage({
+      storage,
+    });
 
-  //   const uploadImageClicked = useCallback(() => {
-  //     fileInputRef?.current?.click();
-  //   }, [fileInputRef]);
+    const uploadImageClicked = useCallback(() => {
+      fileInputRef?.current?.click();
+    }, [fileInputRef]);
 
-  //   const onUploadImage = useCallback(
-  //     (event: any) => {
-  //       try {
-  //         let bucket: string = process.env.NEXT_PUBLIC_STORAGE_BUCKET as string;
-  //         if (isValidHttpUrl(bucket)) {
-  //           const { hostname } = new URL(bucket);
-  //           bucket = hostname;
-  //         }
-  //         const path = "https://storage.googleapis.com/" + bucket + `/nodes-comment-images/${user.userId}`;
-  //         let imageFileName = new Date().toUTCString();
-  //         uploadImage({ event, path, imageFileName }).then(
-  //           (url: string) => {
-  //             setImageUrls((prev: string[]) => [...prev, url]);
-  //           },
-  //           (message: any) => {
-  //             confirmIt(message, "ok", "");
-  //           }
-  //         );
-  //       } catch (error) {
-  //         confirmIt("Sorry, Your image could't get uploaded", "ok", "");
-  //       }
-  //     },
-  //     [setImageUrls, user]
-  //   );
+    const onUploadImage = useCallback(
+      (event: any) => {
+        try {
+          let bucket: string = "ontology-41607.appspot.com";
+          if (isValidHttpUrl(bucket)) {
+            const { hostname } = new URL(bucket);
+            bucket = hostname;
+          }
+          const path = "https://storage.googleapis.com/" + bucket + `/ontology-chat-images/${user.userId}`;
+          let imageFileName = new Date().toUTCString();
+          uploadImage({ event, path, imageFileName }).then(
+            (url: string) => {
+              setImageUrls((prev: string[]) => [...prev, url]);
+            },
+            (message: any) => {
+              confirmIt(message, "ok", "");
+            }
+          );
+        } catch (error) {
+          confirmIt("Sorry, Your image could't get uploaded", "ok", "");
+        }
+      },
+      [setImageUrls, user]
+    );
   return (
     <Box
       sx={{
@@ -264,7 +266,7 @@ const ChatInput = ({
             justifyContent: "space-between",
           }}
         >
-          {/* <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
             
 
             <input type="file" ref={fileInputRef} onChange={(e: any) => onUploadImage(e)} hidden />
@@ -292,7 +294,7 @@ const ChatInput = ({
                 </Tooltip>
               )}
             </Box>
-          </Box> */}
+          </Box>
           <Box sx={{ display: "flex", gap: "10px" }}>
             {onClose && (
               <Button

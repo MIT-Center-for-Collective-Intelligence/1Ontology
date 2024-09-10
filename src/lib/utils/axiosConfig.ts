@@ -37,7 +37,6 @@ function getErrorMessage(error: any) {
 
 // Create an instance of axios with custom configuration (headers in this case)
 const adapter = axios.create({
-  baseURL: 'https://1cademy.com/api/',
   headers: {
     Accept: "application/json",
   },

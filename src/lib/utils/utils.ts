@@ -108,3 +108,15 @@ export const shortenNumber = function (number: number, maxPlaces: any, forcePlac
   }
   return annotate(number, maxPlaces, forcePlaces, abbr);
 };
+
+export const imageLoaded = async (imageUrl: any) => {
+  return new Promise(resolve => {
+    fetch(imageUrl).then(res => {
+      if (res.status === 200) {
+        resolve(true);
+      } else {
+        resolve(imageLoaded(imageUrl));
+      }
+    });
+  });
+};

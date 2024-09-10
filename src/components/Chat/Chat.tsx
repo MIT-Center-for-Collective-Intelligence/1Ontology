@@ -1,4 +1,3 @@
-//import CloseIcon from "@mui/icons-material/Close";
 import {
   Box,
   Button,
@@ -26,7 +25,6 @@ import dynamic from "next/dynamic";
 import React, { useEffect, useRef, useState } from "react";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import OptimizedAvatar from "./OptimizedAvatar";
-//import { Post } from "@/lib/mapApi";
 // import { NotFoundNotification } from "../Sidebar/SidebarV2/NotificationSidebar";
 import { MessageButtons } from "./MessageButtons";
 import MessageInput from "./MessageInput";
@@ -34,6 +32,7 @@ import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import { IChat } from " @components/types/IChat";
 import { Emoticons } from "./Emoticons";
+import { Post } from " @components/lib/mapApi";
 const DynamicMemoEmojiPicker = dynamic(() => import("./EmojiPicker"), {
   loading: () => <p>Loading...</p>,
   ssr: false,
@@ -75,6 +74,7 @@ const Chat = ({
   const [isRecording] = useState<boolean>(false);
   const [recordingType] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
+  const [width, setWidth] = useState<number>(0);
   const commentRef = useRef<{
     comment: any;
   }>({
@@ -83,6 +83,24 @@ const Chat = ({
   const [anchorEl, setAnchorEl] = useState(null);
   const openPicker = Boolean(anchorEl);
   const scrolling = useRef<any>();
+
+
+  useEffect(() => {
+    const element = document.getElementById('right-panel-tabs');
+    if (element) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          setWidth(entry.target.clientWidth);
+        }
+      });
+
+      resizeObserver.observe(element);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+  }, []);
 
   const toggleEmojiPicker = (event: any, comment?: IChat) => {
     commentRef.current.comment = comment || null;
@@ -219,16 +237,12 @@ const Chat = ({
       createdAt: new Date(),
     };
     await addDoc(getMessageRef(), commentData);
-    // Post("/comment/sendNotification", {
-    //   subject: "New comment",
-    //   comment: { ...commentData, id: docRef.id },
-    //   nodeId:
-    //     commentSidebarInfo.type === "node"
-    //       ? commentSidebarInfo.id
-    //       : commentSidebarInfo.proposal.node,
-    //   commentSidebarInfo,
-    //   members: users,
-    // });
+    Post("/sendNotifications", {
+      subject: `New Message From ${user.fName + " " + user.lName}`,
+      body: text,
+      sender:user.uname,
+      members: users,
+    });
     //scrollToBottom();
   };
 
@@ -259,16 +273,12 @@ const Chat = ({
     await updateDoc(commentRef, {
       totalReplies: increment(1),
     });
-    // Post("/comment/sendNotification", {
-    //   subject: "Reply",
-    //   comment: { ...reply, id: docRef.id },
-    //   nodeId:
-    //     commentSidebarInfo.type === "node"
-    //       ? commentSidebarInfo.id
-    //       : commentSidebarInfo.proposal.node,
-    //   commentSidebarInfo,
-    //   members: users,
-    // });
+    Post("/sendNotifications", {
+      subject: `Reply by ${user.fName + " " + user.lName}`,
+      body: text,
+      sender:user.uname,
+      members: users,
+    });
   };
 
   const editMessage = async (
@@ -802,7 +812,7 @@ const Chat = ({
             // >
             //   <NotFoundNotification title="Start Commenting" description="" />
             // </Box>
-            <Box>{renderMessages()}</Box>
+            <Box sx={{px:2}}>{renderMessages()}</Box>
           )}
         </Box>
         <Box
@@ -810,8 +820,8 @@ const Chat = ({
             position: "fixed",
             bottom: "13px",
             mt: "15px",
-
-            width: (document?.getElementById("right-panel-tabs")?.clientWidth || 0) - 20,
+            pl:2,
+            width: width - 10,
           }}
         >
           <MessageInput
