@@ -19,6 +19,7 @@ import {
   query,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import moment from "moment";
 import dynamic from "next/dynamic";
@@ -144,6 +145,7 @@ const Chat = ({
         reactions: arrayUnion({ user: user?.uname, emoji }),
       });
     }
+    createNotifications(emoji, message.text);
   };
 
   const removeReaction = async (message: IChat, emoji: string) => {
@@ -217,6 +219,31 @@ const Chat = ({
     return messageRef;
   };
 
+  const createNotifications = async (title: string, body: string) => {
+    const batch = writeBatch(db);
+    for (const userData of users) {
+      if (userData.uname === user.uname) continue;
+      const notificationData = {
+        title: title,
+        body: body,
+        user: userData.uname,
+        sender: user.uname,
+        senderDetail: {
+          uname: user.uname,
+          fullname: user.fName + " " + user.lName,
+          imageUrl: user.imageUrl,
+          uid: user.userId,
+        },
+        seen: false,
+        type: type,
+        createdAt: new Date(),
+      };
+      const notificationRef = doc(collection(db, "notifications"));
+      batch.set(notificationRef, notificationData);
+    }
+    await batch.commit();
+  };
+
   const addMessage = async (text: string, imageUrls: string[]) => {
     if (!user?.uname) return;
     const commentData = {
@@ -238,23 +265,16 @@ const Chat = ({
       createdAt: new Date(),
     };
     await addDoc(getMessageRef(), commentData);
-    // Post("/comment/sendNotification", {
-    //   subject: "New comment",
-    //   comment: { ...commentData, id: docRef.id },
-    //   nodeId:
-    //     commentSidebarInfo.type === "node"
-    //       ? commentSidebarInfo.id
-    //       : commentSidebarInfo.proposal.node,
-    //   commentSidebarInfo,
-    //   members: users,
-    // });
-    //scrollToBottom();
+    createNotifications(
+      `New Message from ${user.fName + " " + user.lName}`,
+      text
+    );
   };
 
   const addReply = async (
     text: string,
     imageUrls: string[],
-    commentId: string
+    messageId: string
   ) => {
     if (!user?.uname) return;
     const reply = {
@@ -272,22 +292,14 @@ const Chat = ({
       deleted: false,
       createdAt: new Date(),
     };
-    const commentRef = getMessageDocRef(commentId);
-    const replyRef = collection(commentRef, "replies");
+    const messageRef = getMessageDocRef(messageId);
+    const replyRef = collection(messageRef, "replies");
     const docRef = await addDoc(replyRef, reply);
-    await updateDoc(commentRef, {
+    await updateDoc(messageRef, {
       totalReplies: increment(1),
     });
-    // Post("/comment/sendNotification", {
-    //   subject: "Reply",
-    //   comment: { ...reply, id: docRef.id },
-    //   nodeId:
-    //     commentSidebarInfo.type === "node"
-    //       ? commentSidebarInfo.id
-    //       : commentSidebarInfo.proposal.node,
-    //   commentSidebarInfo,
-    //   members: users,
-    // });
+
+    createNotifications(`Reply by ${user.fName + " " + user.lName}`, text);
   };
 
   const editMessage = async (

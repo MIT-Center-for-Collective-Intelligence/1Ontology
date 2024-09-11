@@ -13,38 +13,29 @@ import {
 
 export type SnapshotChangesTypes = "added" | "modified" | "removed";
 
-export type chatChange = {
+export type notificationChange = {
   data: IChat & { id: string };
   type: SnapshotChangesTypes;
 };
 
-export const getMessagesSnapshot = (
+export const getNotificationsSnapshot = (
   db: Firestore,
   data: {
     lastVisible: any;
-    nodeId?: string;
-    type: string;
+    uname: string;
   },
-  callback: (changes: chatChange[]) => void
+  callback: (changes: notificationChange[]) => void
 ): Unsubscribe => {
-  const { nodeId, type } = data;
+  const { uname } = data;
   //const pageSize = 15;
 
-  const messagesRef = collection(db, "messages");
+  const messagesRef = collection(db, "notifications");
 
-  let q = query(
+  const q = query(
     messagesRef,
-    where("type", "==", type),
-    where("deleted", "==", false)
+    where("user", "==", uname),
+    where("seen", "==", false)
   );
-
-  if (type === "node") {
-    q = query(
-      messagesRef,
-      where("nodeId", "==", nodeId),
-      where("deleted", "==", false)
-    );
-  }
 
   //   if (lastVisible) {
   //     q = query(
@@ -60,14 +51,16 @@ export const getMessagesSnapshot = (
   const killSnapshot = onSnapshot(q, (snapshot) => {
     const docChanges = snapshot.docChanges();
 
-    const actionTrackDocuments: chatChange[] = docChanges.map((change) => {
-      const document = change.doc.data() as IChat;
-      return {
-        type: change.type,
-        data: { ...document, id: change.doc.id },
-        doc: change.doc,
-      };
-    });
+    const actionTrackDocuments: notificationChange[] = docChanges.map(
+      (change) => {
+        const document = change.doc.data() as IChat;
+        return {
+          type: change.type,
+          data: { ...document, id: change.doc.id },
+          doc: change.doc,
+        };
+      }
+    );
     callback(actionTrackDocuments);
   });
   return killSnapshot;
