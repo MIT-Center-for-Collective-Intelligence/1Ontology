@@ -17,6 +17,7 @@ type ITreeViewSimplifiedProps = {
   sx?: any;
   stopPropagation?: string;
   searchValue?: string;
+  sendNode?: (nodeId: string, title: string) => void;
 };
 
 const TreeViewSimplified = ({
@@ -31,6 +32,7 @@ const TreeViewSimplified = ({
   sx,
   stopPropagation,
   searchValue,
+  sendNode,
 }: ITreeViewSimplifiedProps) => {
   const [expanded, setExpanded] = useState<string[]>([]);
 
@@ -65,6 +67,7 @@ const TreeViewSimplified = ({
                   currentVisibleNode?.id === treeVisualization[category].id
                     ? "#87D37C"
                     : "",
+                justifyContent: sendNode ? "space-between" : undefined,
               }}
               onClick={(e) => {
                 onOpenNodesTree(treeVisualization[category].id);
@@ -122,6 +125,16 @@ const TreeViewSimplified = ({
                   </span>
                 </Button>
               )}
+              {sendNode && !treeVisualization[category].isCategory && (
+                <Button
+                  variant="outlined"
+                  onClick={() =>
+                    sendNode(treeVisualization[category]?.id || "", category)
+                  }
+                >
+                  Send
+                </Button>
+              )}
             </Box>
           }
           sx={{
@@ -156,6 +169,7 @@ const TreeViewSimplified = ({
                 checkedSpecializations={checkedSpecializations}
                 handleCloning={handleCloning}
                 clone={clone}
+                sendNode={sendNode}
               />
             )}
         </TreeItem>

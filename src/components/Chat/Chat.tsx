@@ -1,4 +1,3 @@
-//import CloseIcon from "@mui/icons-material/Close";
 import {
   Box,
   Button,
@@ -26,7 +25,6 @@ import dynamic from "next/dynamic";
 import React, { useEffect, useRef, useState } from "react";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import OptimizedAvatar from "./OptimizedAvatar";
-//import { Post } from "@/lib/mapApi";
 // import { NotFoundNotification } from "../Sidebar/SidebarV2/NotificationSidebar";
 import { MessageButtons } from "./MessageButtons";
 import MessageInput from "./MessageInput";
@@ -34,6 +32,7 @@ import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import { IChat } from " @components/types/IChat";
 import { Emoticons } from "./Emoticons";
+import LinkIcon from "@mui/icons-material/Link";
 const DynamicMemoEmojiPicker = dynamic(() => import("./EmojiPicker"), {
   loading: () => <p>Loading...</p>,
   ssr: false,
@@ -52,6 +51,7 @@ type ChatProps = {
   //onlineUsers: { [uname: string]: boolean };
   type: string;
   nodeId?: string;
+  setOpenSelectModel: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const Chat = ({
@@ -67,6 +67,7 @@ const Chat = ({
   // onlineUsers,
   type,
   nodeId,
+  setOpenSelectModel,
 }: ChatProps) => {
   const db = getFirestore();
   const [showReplies, setShowReplies] = useState<string | null>(null);
@@ -75,6 +76,7 @@ const Chat = ({
   const [isRecording] = useState<boolean>(false);
   const [recordingType] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
+  const [width, setWidth] = useState<number>(0);
   const commentRef = useRef<{
     comment: any;
   }>({
@@ -83,6 +85,23 @@ const Chat = ({
   const [anchorEl, setAnchorEl] = useState(null);
   const openPicker = Boolean(anchorEl);
   const scrolling = useRef<any>();
+
+  useEffect(() => {
+    const element = document.getElementById("right-panel-tabs");
+    if (element) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          setWidth(entry.target.clientWidth);
+        }
+      });
+
+      resizeObserver.observe(element);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+  }, []);
 
   const toggleEmojiPicker = (event: any, comment?: IChat) => {
     commentRef.current.comment = comment || null;
@@ -607,14 +626,57 @@ const Chat = ({
                         lineHeight: "24px",
                       }}
                     >
-                      <MarkdownRender
-                        text={message.text}
-                        sx={{
-                          fontSize: "16px",
-                          fontWeight: 400,
-                          letterSpacing: "inherit",
-                        }}
-                      />
+                      {message.messageType === "node" ? (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                            p: "10px",
+                            borderRadius: "8px",
+                            background: (theme) =>
+                              theme.palette.mode === "dark"
+                                ? message.sender === "You"
+                                  ? DESIGN_SYSTEM_COLORS.notebookG600
+                                  : DESIGN_SYSTEM_COLORS.notebookO800
+                                : message.sender === "You"
+                                ? DESIGN_SYSTEM_COLORS.gray100
+                                : DESIGN_SYSTEM_COLORS.orange50,
+                            mb: "10px",
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: "30px",
+                              height: "30px",
+                              borderRadius: "50%",
+                              background: DESIGN_SYSTEM_COLORS.primary600,
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                            }}
+                          >
+                            <LinkIcon
+                              sx={{
+                                color: DESIGN_SYSTEM_COLORS.gray25,
+                              }}
+                            />
+                          </Box>
+                          <Typography sx={{ fontWeight: "500" }}>
+                            {message.text?.substr(0, 40)}
+                            {message.text?.length > 40 ? "..." : ""}
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <MarkdownRender
+                          text={message.text}
+                          sx={{
+                            fontSize: "16px",
+                            fontWeight: 400,
+                            letterSpacing: "inherit",
+                          }}
+                        />
+                      )}
 
                       <Box
                         sx={{
@@ -802,7 +864,7 @@ const Chat = ({
             // >
             //   <NotFoundNotification title="Start Commenting" description="" />
             // </Box>
-            <Box>{renderMessages()}</Box>
+            <Box sx={{ px: 2 }}>{renderMessages()}</Box>
           )}
         </Box>
         <Box
@@ -810,8 +872,8 @@ const Chat = ({
             position: "fixed",
             bottom: "13px",
             mt: "15px",
-
-            width: (document?.getElementById("right-panel-tabs")?.clientWidth || 0) - 20,
+            pl: 2,
+            width: width - 10,
           }}
         >
           <MessageInput
@@ -825,6 +887,7 @@ const Chat = ({
             users={users}
             confirmIt={confirmIt}
             setEditing={setEditing}
+            setOpenSelectModel={setOpenSelectModel}
           />
         </Box>
       </Box>

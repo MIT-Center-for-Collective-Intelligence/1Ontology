@@ -54,7 +54,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import SendIcon from "@mui/icons-material/Send";
 import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
 import {
-  Avatar,
   Box,
   Button,
   CircularProgress,
@@ -62,6 +61,7 @@ import {
   Link,
   List,
   ListItem,
+  Modal,
   Paper,
   Tab,
   Tabs,
@@ -74,6 +74,7 @@ import Breadcrumbs from "@mui/material/Breadcrumbs";
 import {
   DocumentReference,
   WriteBatch,
+  addDoc,
   collection,
   doc,
   getDoc,
@@ -129,7 +130,8 @@ import { IChat } from " @components/types/IChat";
 import {
   chatChange,
   getMessagesSnapshot,
-} from " @components/client/firestore/messages.firestore";
+} from "../client/firestore/messages.firestore";
+import { SearchBox } from " @components/components/SearchBox/SearchBox";
 
 const synchronizeStuff = (prev: (any & { id: string })[], change: any) => {
   const docType = change.type;
@@ -192,6 +194,7 @@ const Ontology = () => {
   const [nodeMessages, setNodeMessages] = useState<IChat[]>([]);
   const [technicalMessages, setTechnicalMessages] = useState<IChat[]>([]);
   const [otherMessages, setOtherMessages] = useState<IChat[]>([]);
+  const [openSelectModel, setOpenSelectModel] = useState(false);
 
   //last interaction date from the user
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
@@ -1336,6 +1339,38 @@ const Ontology = () => {
     const node = nodes.find((n) => n.id === nodeId);
   };
 
+  const handleClose = useCallback(() => {
+    setOpenSelectModel(false);
+  }, [setOpenSelectModel]);
+
+  const sendNode = useCallback(
+    async (nodeId: string, title: string) => {
+      if (!user) return;
+      const messageData = {
+        nodeId: "",
+        text: title,
+        sender: user.uname,
+        senderDetail: {
+          uname: user.uname,
+          fullname: user.fName + " " + user.lName,
+          imageUrl: user.imageUrl,
+          uid: user.userId,
+        },
+        imageUrls: [],
+        reactions: [],
+        edited: false,
+        deleted: false,
+        totalReplies: 0,
+        type: ["node", "technical", "other"][selectedChatTab],
+        messageType: "node",
+        sharedNodeId: nodeId,
+        createdAt: new Date(),
+      };
+      await addDoc(collection(db, "messages"), messageData);
+    },
+    [selectedChatTab]
+  );
+
   return (
     <Box>
       {nodes.length > 0 ? (
@@ -1643,8 +1678,11 @@ const Ontology = () => {
                         sx={{
                           background: (theme) =>
                             theme.palette.mode === "dark"
-                              ? "#242425"
-                              : "#E9ECF0",
+                              ? "#000000"
+                              : "#c3c3c3",
+                          ".MuiTab-root.Mui-selected": {
+                            color: "#ff6d00",
+                          },
                         }}
                       >
                         <Tab label="This node" {...a11yProps(0)} />
@@ -1653,7 +1691,6 @@ const Ontology = () => {
                       </Tabs>
                       <Box>
                         <TabPanel value={selectedChatTab} index={0}>
-                          <TextField fullWidth />
                           {currentVisibleNode?.id && (
                             <Chat
                               user={user}
@@ -1665,6 +1702,7 @@ const Ontology = () => {
                               firstLoad={true}
                               isLoading={isLoading}
                               confirmIt={confirmIt}
+                              setOpenSelectModel={setOpenSelectModel}
                             />
                           )}
                         </TabPanel>
@@ -1678,6 +1716,7 @@ const Ontology = () => {
                             firstLoad={true}
                             isLoading={isLoading}
                             confirmIt={confirmIt}
+                            setOpenSelectModel={setOpenSelectModel}
                           />
                         </TabPanel>
                         <TabPanel value={selectedChatTab} index={2}>
@@ -1690,6 +1729,7 @@ const Ontology = () => {
                             firstLoad={true}
                             isLoading={isLoading}
                             confirmIt={confirmIt}
+                            setOpenSelectModel={setOpenSelectModel}
                           />
                         </TabPanel>
                       </Box>
@@ -1865,6 +1905,80 @@ const Ontology = () => {
           setSidebarView={setSidebarView}
         />
       </Box>
+
+      <Modal
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "transparent",
+          // backgroundColor: "rgba(0, 0, 0, 0.5)",
+        }}
+        open={openSelectModel}
+        onClose={handleClose}
+      >
+        <Box
+          sx={{
+            maxHeight: "80vh",
+            overflowY: "auto",
+            borderRadius: 2,
+            boxShadow: 24,
+            ...SCROLL_BAR_STYLE,
+          }}
+        >
+          <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <SearchBox
+                  setSearchValue={setSearchValue}
+                  label={"Search ..."}
+                />
+              </Box>
+            </Box>
+          </Paper>
+          <Paper>
+            {searchValue ? (
+              <Box>
+                {" "}
+                {searchResults.map((node: any) => (
+                  <ListItem
+                    key={node.id}
+                    onClick={() => {}}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      color: "white",
+                      cursor: "pointer",
+                      borderRadius: "4px",
+                      padding: "8px",
+                      transition: "background-color 0.3s",
+                      // border: "1px solid #ccc",
+                      mt: "5px",
+                      "&:hover": {
+                        backgroundColor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? DESIGN_SYSTEM_COLORS.notebookG450
+                            : DESIGN_SYSTEM_COLORS.gray200,
+                      },
+                    }}
+                  >
+                    {" "}
+                    <Typography>{node.title}</Typography>
+                    <Button variant="outlined">Send</Button>
+                  </ListItem>
+                ))}
+              </Box>
+            ) : (
+              <TreeViewSimplified
+                treeVisualization={treeVisualization}
+                expandedNodes={expandedNodes}
+                onOpenNodesTree={onOpenNodesTree}
+                sendNode={sendNode}
+              />
+            )}
+          </Paper>
+        </Box>
+      </Modal>
     </Box>
   );
 };
