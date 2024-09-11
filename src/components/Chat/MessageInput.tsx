@@ -15,8 +15,6 @@ import {
 import { getStorage } from "firebase/storage";
 import React, { useCallback, useRef, useState } from "react";
 import { Mention, MentionsInput } from "react-mentions";
-
-//import { isValidHttpUrl } from "@/lib/utils/utils";
 import { MentionUser } from "./MentionUser";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import { IChat } from " @components/types/IChat";

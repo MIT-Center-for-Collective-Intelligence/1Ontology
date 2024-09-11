@@ -1,3 +1,5 @@
+import { INode } from " @components/types/INode";
+
 // Function to capitalize the first letter of a string
 export function capitalizeFirstLetter(str: string): string {
   const capitalized = str.charAt(0).toUpperCase() + str.slice(1);
@@ -8,7 +10,7 @@ export function capitalizeFirstLetter(str: string): string {
 export const capitalizeString = (str: string): string => {
   return str
     .split(" ")
-    .map(cur => capitalizeFirstLetter(cur))
+    .map((cur) => capitalizeFirstLetter(cur))
     .join(" ");
 };
 
@@ -24,12 +26,18 @@ export const ellipsisString = (text: string, length: number) => {
 };
 
 // Function to split a string into chunks based on a maximum number of characters
-export const getTextSplittedByCharacter = (text: string, character: string): string => {
+export const getTextSplittedByCharacter = (
+  text: string,
+  character: string
+): string => {
   return Array.from(text).join(character);
 };
 
 // Function to split a sentence into chunks based on a maximum number of characters
-export function splitSentenceIntoChunks(sentence: string, maxCharacters = 100): string[] {
+export function splitSentenceIntoChunks(
+  sentence: string,
+  maxCharacters = 100
+): string[] {
   const words: string[] = sentence.split(" ");
   const chunks: string[] = [];
   let currentChunk: string = "";
@@ -49,3 +57,10 @@ export function splitSentenceIntoChunks(sentence: string, maxCharacters = 100): 
 
   return chunks;
 }
+
+export const getTitle = (nodes: INode[], id: string) => {
+  const nodeIdx = nodes.findIndex((n) => n.id === id);
+  if (nodeIdx !== -1) {
+    return nodes[nodeIdx].title;
+  }
+};

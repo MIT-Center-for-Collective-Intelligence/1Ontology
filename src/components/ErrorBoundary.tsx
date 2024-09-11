@@ -127,6 +127,7 @@ import React, { ReactNode } from "react";
 import { addClientErrorLog } from " @components/lib/firestoreClient/errors.firestore";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import { CustomError } from " @components/lib/utils/customError";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 type ErrorBoundaryProps = { children: ReactNode };
 type ErrorBoundaryState = { hasError: boolean };
@@ -150,8 +151,12 @@ class ErrorBoundary extends React.Component<
   componentDidCatch(error: CustomError, errorInfo: React.ErrorInfo) {
     // You can use your own error logging service here
     console.error("|>", { error, errorInfo });
-    addClientErrorLog(this.db, { ...error.options, ...errorInfo });
+    addClientErrorLog(this.db, {
+      ...error.options,
+      ...errorInfo,
+    });
   }
+
   render() {
     // Check if the error is thrown
     if (this.state.hasError) {

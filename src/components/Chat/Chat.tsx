@@ -32,7 +32,6 @@ import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import { IChat } from " @components/types/IChat";
 import { Emoticons } from "./Emoticons";
-import { Post } from " @components/lib/mapApi";
 import LinkIcon from "@mui/icons-material/Link";
 const DynamicMemoEmojiPicker = dynamic(() => import("./EmojiPicker"), {
   loading: () => <p>Loading...</p>,
@@ -239,12 +238,16 @@ const Chat = ({
       createdAt: new Date(),
     };
     await addDoc(getMessageRef(), commentData);
-    Post("/sendNotifications", {
-      subject: `New Message From ${user.fName + " " + user.lName}`,
-      body: text,
-      sender: user.uname,
-      members: users,
-    });
+    // Post("/comment/sendNotification", {
+    //   subject: "New comment",
+    //   comment: { ...commentData, id: docRef.id },
+    //   nodeId:
+    //     commentSidebarInfo.type === "node"
+    //       ? commentSidebarInfo.id
+    //       : commentSidebarInfo.proposal.node,
+    //   commentSidebarInfo,
+    //   members: users,
+    // });
     //scrollToBottom();
   };
 
@@ -275,12 +278,16 @@ const Chat = ({
     await updateDoc(commentRef, {
       totalReplies: increment(1),
     });
-    Post("/sendNotifications", {
-      subject: `Reply by ${user.fName + " " + user.lName}`,
-      body: text,
-      sender: user.uname,
-      members: users,
-    });
+    // Post("/comment/sendNotification", {
+    //   subject: "Reply",
+    //   comment: { ...reply, id: docRef.id },
+    //   nodeId:
+    //     commentSidebarInfo.type === "node"
+    //       ? commentSidebarInfo.id
+    //       : commentSidebarInfo.proposal.node,
+    //   commentSidebarInfo,
+    //   members: users,
+    // });
   };
 
   const editMessage = async (

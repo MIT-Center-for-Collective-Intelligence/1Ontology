@@ -40,8 +40,18 @@ const useThemeChange = () => {
       const logRef = doc(collection(db, LOGS));
 
       // Set document with user theme change details
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+
+      const doerCreate = `${user?.uname}-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
       await setDoc(logRef, {
-        uname: user.uname,
+        doer: user.uname,
+        doerCreate,
         action: "theme change",
         ["theme"]: newValue,
         createdAt: Timestamp.fromDate(new Date()),

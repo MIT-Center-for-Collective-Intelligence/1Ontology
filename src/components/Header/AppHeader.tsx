@@ -18,7 +18,6 @@ This file contains the implementation of the application header component (`AppH
 - `orangeDark` and `orange900`: Constants defining color values.
 
 ## Types
-- `HeaderPage`: Type representing possible pages for the header.
 - `AppHeaderProps`: Props interface for the `AppHeader` component.
 
 ## Components
@@ -53,7 +52,13 @@ import { Stack } from "@mui/system";
 import { getAuth } from "firebase/auth";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import React, { forwardRef, useCallback, useRef, useState } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import mitLogo from "../../../public/CCI-logo.gif";
 import mitLogoDark from "../../../public/MIT-Logo-Dark.png";
 import {
@@ -64,8 +69,17 @@ import useThemeChange from " @components/lib/hooks/useThemeChange";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import ROUTES from " @components/lib/utils/routes";
 import { useAuth } from "../context/AuthContext";
-import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
-import { USERS } from " @components/lib/firestoreClient/collections";
+import {
+  collection,
+  doc,
+  getDocs,
+  getFirestore,
+  onSnapshot,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { NODES, USERS } from " @components/lib/firestoreClient/collections";
 import {
   getDownloadURL,
   getStorage,
@@ -74,19 +88,19 @@ import {
 } from "firebase/storage";
 import { isValidHttpUrl } from " @components/lib/utils/utils";
 import { NO_IMAGE_USER } from " @components/lib/CONSTANTS";
+import { INode } from " @components/types/INode";
 export const HEADER_HEIGHT = 80;
 export const HEADER_HEIGHT_MOBILE = 72;
 
 export const orangeDark = "#FF6D00";
 export const orange900 = "#E56200";
 
-export type HeaderPage = "ONE_CADEMY" | "ONE_ASSISTANT" | "COMMUNITIES";
-
 type AppHeaderProps = {
   setRightPanelVisible: any;
   rightPanelVisible: boolean;
   loading: boolean;
   confirmIt: any;
+  setSidebarView: any;
 };
 const AppHeader = forwardRef(
   (
@@ -95,6 +109,7 @@ const AppHeader = forwardRef(
       rightPanelVisible,
       loading,
       confirmIt,
+      setSidebarView,
     }: AppHeaderProps,
     ref
   ) => {
@@ -108,6 +123,9 @@ const AppHeader = forwardRef(
     const [profileImage, setProfileImage] = useState("");
     const isProfileMenuOpen = Boolean(profileMenuOpen);
     const db = getFirestore();
+
+    const [usersNodesViews, setUsersNodesViews] = useState<any>({});
+
     const signOut = async () => {
       router.push(ROUTES.signIn);
       getAuth().signOut();
@@ -126,6 +144,43 @@ const AppHeader = forwardRef(
       const userDoc = doc(collection(db, USERS), user?.uname);
       await updateDoc(userDoc, { imageUrl });
     };
+    useEffect(() => {
+      const usersCollectionRef = collection(db, "users");
+
+      const unsubscribe = onSnapshot(usersCollectionRef, (snapshot) => {
+        setUsersNodesViews((prevUsersNodesViews: any) => {
+          const updatedUsersData = { ...prevUsersNodesViews };
+
+          snapshot.docChanges().forEach((change) => {
+            const doc = change.doc;
+            const userId = doc.id;
+            const data = doc.data();
+            const ontologyPath = data.ontologyPath;
+
+            if (
+              (change.type === "added" || change.type === "modified") &&
+              ontologyPath &&
+              data.imageUrl !==
+                "https://storage.googleapis.com/onecademy-1.appspot.com/ProfilePictures/no-img.png"
+            ) {
+              updatedUsersData[userId] = {
+                node: ontologyPath.at(-1),
+                imageUrl: data.imageUrl,
+                fName: data.fName,
+              };
+            } else if (change.type === "removed") {
+              delete updatedUsersData[userId];
+            }
+          });
+
+          return updatedUsersData;
+        });
+      });
+
+      return () => unsubscribe();
+    }, []);
+
+    console.log(usersNodesViews, "usersNodesViews");
 
     const handleImageChange = useCallback(
       async (event: any) => {
@@ -265,17 +320,74 @@ const AppHeader = forwardRef(
         )}
       </Menu>
     );
-    const toggleRightPanel = useCallback(() => {
+    const toggleRightPanel = () => {
+      setRightPanelVisible(!rightPanelVisible);
+    };
+
+    useEffect(() => {
       if (!user?.uname) return;
       const userRef = doc(collection(db, USERS), user.uname);
       updateDoc(userRef, {
         rightPanel: !rightPanelVisible,
       });
-      setRightPanelVisible((prev: boolean) => {
-        return !prev;
-      });
-    }, [rightPanelVisible]);
+    }, [user, rightPanelVisible]);
 
+    const getStructureForJSON = (data: INode) => {
+      const getTitles = (property: any) => {
+        return Object.values(property)
+          .flat()
+          .map((prop: any) => prop.title);
+      };
+
+      const { properties } = data;
+      for (let property in properties) {
+        if (typeof properties[property] !== "string") {
+          properties[property] = getTitles(properties[property]);
+        }
+      }
+      return {
+        title: data.title,
+        generalizations: getTitles(data.generalizations),
+        specializations: getTitles(data.specializations),
+        parts: [],
+        isPartOf: [],
+        ...properties,
+      };
+    };
+
+    const handleDownload = useCallback(async () => {
+      try {
+        const nodesCollection = query(
+          collection(db, NODES),
+          where("deleted", "==", false)
+        );
+        const querySnapshot = await getDocs(nodesCollection);
+
+        const data = querySnapshot.docs.map((doc) =>
+          getStructureForJSON({
+            ...doc.data(),
+          } as INode)
+        );
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "nodes-data.json";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (error) {
+        console.error("Error downloading JSON: ", error);
+      }
+    }, [db, user]);
+
+    const displayInheritanceSettings = () => {
+      setRightPanelVisible(true);
+      setSidebarView(2);
+    };
     return (
       <>
         <Box
@@ -320,6 +432,13 @@ const AppHeader = forwardRef(
                 }}
               />
             </Stack>
+            <Box sx={{ display: "flex" }}>
+              {Object.values(usersNodesViews).map((c: any) => (
+                <Tooltip key={c.fName} title={c.node.title}>
+                  <Avatar src={c.imageUrl} />
+                </Tooltip>
+              ))}
+            </Box>
             {!loading && (
               <Stack
                 direction={"row"}
@@ -327,6 +446,12 @@ const AppHeader = forwardRef(
                 alignItems="center"
                 spacing={"8px"}
               >
+                <Button onClick={displayInheritanceSettings} variant="outlined">
+                  Manage inheritance
+                </Button>
+                <Button onClick={() => handleDownload()} variant="outlined">
+                  Download as JSON
+                </Button>
                 <Button
                   onClick={toggleRightPanel}
                   variant={rightPanelVisible ? "contained" : "outlined"}

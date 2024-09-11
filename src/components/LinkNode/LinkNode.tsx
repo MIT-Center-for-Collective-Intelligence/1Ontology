@@ -80,34 +80,29 @@ import {
 type ISubOntologyProps = {
   child: IChildNode;
   currentVisibleNode: INode;
-  sx: { [key: string]: any };
-  type: string;
+  sx?: { [key: string]: any };
+  property: string;
   setCurrentVisibleNode: (currentVisibleNode: any) => void;
   setSnackbarMessage: (message: any) => void;
   category: string;
   recordLogs: (logs: any) => void;
   updateInheritance: (parameters: {
     updatedNode: INode;
-    updatedField: string;
-    type: "children" | "plainText";
-    newValue: any;
-    ancestorTitle: string;
+    updatedProperty: string;
   }) => void;
   navigateToNode: (nodeID: string) => void;
-  deleteVisible?: boolean;
   title: string;
 };
 
-const ChildNode = ({
+const LinkNode = ({
   child,
   sx,
-  type,
+  property,
   currentVisibleNode,
   category,
   recordLogs,
   updateInheritance,
   navigateToNode,
-  deleteVisible = true,
   title,
 }: ISubOntologyProps) => {
   const db = getFirestore();
@@ -118,42 +113,42 @@ const ChildNode = ({
 
   const deleteChildNode = async () => {
     try {
-      const message =
-        type === "specializations"
-          ? "Unlink this node"
-          : `remove this item from the list?`;
       if (
-        await confirmIt(`Are you sure you want ${message}`, "Unlink", "Keep")
+        await confirmIt(
+          `Are you sure you want remove this item from the list?`,
+          `Remove`,
+          "Keep"
+        )
       ) {
         const nodeDoc = await getDoc(
           doc(collection(db, NODES), currentVisibleNode.id)
         );
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as INode;
-          const specializationIdx = (
-            nodeData?.specializations[category] || []
+          const linkIdx = (
+            nodeData?.properties[property][category] || []
           ).findIndex((sub: any) => sub.id === child.id);
-          if (specializationIdx !== -1) {
-            nodeData.specializations[category].splice(specializationIdx, 1);
+          if (linkIdx !== -1) {
+            nodeData.properties[property][category].splice(linkIdx, 1);
           }
-          await updateDoc(nodeDoc.ref, nodeData);
+          const childDoc = await getDoc(doc(collection(db, NODES), child.id));
 
-          const specializationDoc = await getDoc(
-            doc(collection(db, NODES), child.id)
-          );
-          if (specializationDoc.exists()) {
-            const specializationData = specializationDoc.data() as INode;
-            const generalizationIdx = (
-              specializationData?.generalizations[category] || []
-            ).findIndex((sub: any) => sub.id === child.id);
-            if (generalizationIdx !== -1) {
-              specializationData.generalizations[category].splice(
-                generalizationIdx,
-                1
-              );
-            }
-            await updateDoc(specializationDoc.ref, specializationData);
+          if (childDoc.exists()) {
+            const childData = childDoc.data() as INode;
+
+            updateInheritance({
+              updatedNode: { ...nodeData, id: nodeDoc.id },
+              updatedProperty: property,
+            });
+
+            recordLogs({
+              action: "Deleted a field",
+              field: childData.title,
+              node: nodeDoc.id,
+            });
           }
+
+          await updateDoc(nodeDoc.ref, nodeData);
         }
       }
     } catch (error) {
@@ -183,14 +178,12 @@ const ChildNode = ({
           {" "}
           {title}
         </Link>
-        {deleteVisible && (
-          <Button
-            sx={{ ml: "4px", borderRadius: "25px" }}
-            onClick={deleteChildNode}
-          >
-            Unlink
-          </Button>
-        )}
+        <Button
+          sx={{ ml: "8px", borderRadius: "25px" }}
+          onClick={deleteChildNode}
+        >
+          Unlink
+        </Button>
       </Box>
 
       {ConfirmDialog}
@@ -198,4 +191,4 @@ const ChildNode = ({
   );
 };
 
-export default ChildNode;
+export default LinkNode;

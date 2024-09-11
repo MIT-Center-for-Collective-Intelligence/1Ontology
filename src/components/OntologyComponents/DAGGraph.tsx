@@ -72,7 +72,7 @@ import * as d3 from "d3";
 import dagreD3 from "dagre-d3";
 import { TreeVisual } from " @components/types/INode";
 
-type IDAGGraphProps = {
+type IDagGraphProps = {
   treeVisualization: TreeVisual;
   setExpandedNodes: (state: Set<string>) => void;
   expandedNodes: Set<string>;
@@ -82,7 +82,7 @@ type IDAGGraphProps = {
   currentVisibleNode: any;
 };
 
-const DAGGraph = ({
+const DagGraph = ({
   treeVisualization,
   expandedNodes,
   setExpandedNodes,
@@ -90,7 +90,7 @@ const DAGGraph = ({
   dagreZoomState,
   onOpenNodeDagre,
   currentVisibleNode,
-}: IDAGGraphProps) => {
+}: IDagGraphProps) => {
   const svgRef = useRef(null);
 
   const handleNodeClick = (nodeId: string) => {
@@ -106,7 +106,6 @@ const DAGGraph = ({
   // This function is responsible for drawing nodes on a graph based on the provided node data.
   // It takes an node object and a graph object as parameters.
   const onDrawNode = (node: any, graph: any) => {
-
     // Extract the nodeId from the node or set it as an empty string if not available.
     const nodeId = node?.id || "";
 
@@ -119,12 +118,15 @@ const DAGGraph = ({
           currentVisibleNode?.id === nodeId
             ? "#87D37C"
             : node.isCategory
-            ? "orange"
+            ? "#ffbe48"
             : "white"
         }; stroke: ${
           currentVisibleNode?.id === nodeId ? "white" : "black"
-        }; stroke-width: 2px; cursor: pointer;`, // Set node style based on node category.
+        }; stroke-width: 0.1px; cursor: pointer;`, // Set node style based on node category.
         labelStyle: `fill: ${"black"}; cursor: pointer;`, // Set style for the node label.
+        shape: "rect", // Set the shape to rectangle
+        rx: 25, // Horizontal radius for rounded corners
+        ry: 25, // Vertical radius for rounded corners
       });
     }
 
@@ -151,31 +153,39 @@ const DAGGraph = ({
     const graph: any = new dagreD3.graphlib.Graph().setGraph({
       rankdir: "LR",
     });
+
+    // Clear previous graph content
     d3.select("#graphGroup").selectAll("*").remove();
+
+    // If treeVisualization is empty, stop execution
     if (!Object.keys(treeVisualization).length) return;
+
     const render = new dagreD3.render();
 
     const svg = d3.select("svg");
     const svgGroup: any = svg.append("g");
 
+    // Draw the nodes
     for (let node of Object.values(treeVisualization)) {
       onDrawNode(node, graph);
     }
 
+    // Render the graph
     render(svgGroup, graph);
 
-    const zoom: any = d3.zoom().on("zoom", function (d) {
-      svgGroup.attr("transform", d3.zoomTransform(this));
-      setDagreZoomState(d3.zoomTransform(this));
+    const zoom: any = d3.zoom().on("zoom", function (event) {
+      svgGroup.attr("transform", event.transform);
+      setDagreZoomState(event.transform); // Save zoom state
     });
+
+    // Handle node click
     svg.selectAll("g.node").on("click", function () {
       const ontologyId = d3.select(this).datum() as string;
       handleNodeClick(ontologyId);
     });
+
     svg.call(zoom);
-    if (dagreZoomState) {
-      svgGroup.attr("transform", dagreZoomState);
-    }
+
     const svgWidth = (window.innerWidth * 70) / 100;
     const svgHeight = 290;
     const graphWidth = graph.graph().width + 50;
@@ -184,12 +194,19 @@ const DAGGraph = ({
     const zoomScale = Math.min(svgWidth / graphWidth, svgHeight / graphHeight);
     const translateX = (svgWidth - graphWidth * zoomScale) / 20;
     const translateY = 150;
-    if (!dagreZoomState) {
+
+    // Restore zoom state if it exists
+    if (dagreZoomState) {
+      svg.call(zoom.transform, dagreZoomState);
+    } else {
+      // Apply initial zoom only if there is no existing zoom state
       svg.call(
         zoom.transform,
         d3.zoomIdentity.translate(translateX, translateY).scale(zoomScale)
       );
     }
+
+    // Cleanup function to remove graph on unmount
     return () => {
       d3.select("#graphGroup").selectAll("*").remove();
     };
@@ -203,4 +220,4 @@ const DAGGraph = ({
   );
 };
 
-export default DAGGraph;
+export default DagGraph;
