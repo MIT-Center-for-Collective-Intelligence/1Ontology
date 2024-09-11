@@ -6,7 +6,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
-export const NODES = "userLogs";
+export const NODES = "nodes";
 export const LOGS = "logs";
 export const CLIENT_ERRORS = "clientErrors";
 export const USERS = "users";
