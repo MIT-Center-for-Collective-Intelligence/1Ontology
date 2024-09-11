@@ -92,6 +92,9 @@ import { NODES } from " @components/lib/firestoreClient/collections";
 import { INode } from " @components/types/INode";
 import { DISPLAY } from " @components/lib/CONSTANTS";
 import { getTitle } from " @components/lib/utils/string.utils";
+import * as Y from "yjs";
+import { WebrtcProvider } from "y-webrtc";
+import { useAuth } from "../context/AuthContext";
 
 type ISubOntologyProps = {
   currentVisibleNode: INode;
@@ -143,14 +146,70 @@ const Text = ({
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const textFieldRef = useRef<any>(null);
+
   const [currentValue, setCurrentValue] = useState("");
+  const [cursors, setCursors] = useState<{
+    [key: string]: { position: number; name: string };
+  }>({});
+
+  const textAreaRef = useRef<any>(null);
+
+  useEffect(() => {
+    const ydoc = new Y.Doc();
+    const provider = new WebrtcProvider(
+      `${currentVisibleNode.id}-${property}`,
+      ydoc
+    );
+
+    const yText = ydoc.getText("textarea");
+    const yCursors = ydoc.getMap("cursors");
+
+    setCurrentValue(yText.toString());
+
+    yText.observe(() => {
+      setCurrentValue(yText.toString());
+    });
+
+    // Update cursors and notify users editing
+    yCursors.observe(() => {
+      const newCursors = yCursors.toJSON();
+      setCursors(newCursors);
+    });
+
+    const handleInput = (event: any) => {
+      const value = event.target.value;
+      yText.delete(0, yText.length);
+      yText.insert(0, value);
+    };
+
+    const updateCursor = () => {
+      const cursorPosition = textAreaRef.current?.selectionStart || 0;
+      yCursors.set(user.uname, { position: cursorPosition, name: user.uname });
+    };
+
+    if (textAreaRef.current) {
+      textAreaRef.current.addEventListener("input", handleInput);
+      textAreaRef.current.addEventListener("mouseup", updateCursor);
+      textAreaRef.current.addEventListener("keydown", updateCursor);
+    }
+
+    return () => {
+      if (textAreaRef.current) {
+        textAreaRef.current.removeEventListener("input", handleInput);
+        textAreaRef.current.removeEventListener("mouseup", updateCursor);
+        textAreaRef.current.removeEventListener("keydown", updateCursor);
+      }
+      provider.destroy();
+    };
+  }, [text]);
 
   const capitalizeFirstLetter = (word: string) => {
     return word.charAt(0).toUpperCase() + word.slice(1);
   };
+
   useEffect(() => {
     setCurrentValue(text);
-  }, [text]);
+  }, []);
   // This function is responsible for editing the title of a childe node.
   // It takes an object with three parameters: parentData (parentNode), newTitle, and id.
 
@@ -294,8 +353,8 @@ const Text = ({
             )}
         </Box>
       )}
-
       <TextField
+        ref={textAreaRef}
         placeholder={"Type something..."}
         fullWidth
         value={
