@@ -33,4 +33,6 @@ export type IChat = {
   updatedAt?: Timestamp;
   deleted: boolean;
   totalReplies?: number;
+  messageType?:string
+  sharedNodeId?:string
 };
