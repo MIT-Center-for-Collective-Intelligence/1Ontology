@@ -73,6 +73,7 @@ import {
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import {
   DocumentReference,
+  Timestamp,
   WriteBatch,
   addDoc,
   collection,
@@ -1309,6 +1310,12 @@ const Ontology = () => {
   useEffect(() => {
     const handleUserActivity = () => {
       setLastInteractionDate(new Date(Date.now()));
+      if (user) {
+        const userDocRef = doc(collection(db, USERS), user.uname);
+        updateDoc(userDocRef, {
+          lastInteracted: Timestamp.now(),
+        });
+      }
     };
 
     window.addEventListener("mousemove", handleUserActivity);

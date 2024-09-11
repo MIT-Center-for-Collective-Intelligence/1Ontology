@@ -64,12 +64,14 @@ import mitLogoDark from "../../../public/MIT-Logo-Dark.png";
 import {
   addSuffixToUrlGMT,
   capitalizeString,
+  timeAgo,
 } from "../../lib/utils/string.utils";
 import useThemeChange from " @components/lib/hooks/useThemeChange";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import ROUTES from " @components/lib/utils/routes";
 import { useAuth } from "../context/AuthContext";
 import {
+  Timestamp,
   collection,
   doc,
   getDocs,
@@ -89,6 +91,7 @@ import {
 import { isValidHttpUrl } from " @components/lib/utils/utils";
 import { NO_IMAGE_USER } from " @components/lib/CONSTANTS";
 import { INode } from " @components/types/INode";
+import OptimizedAvatar from "../Chat/OptimizedAvatar";
 export const HEADER_HEIGHT = 80;
 export const HEADER_HEIGHT_MOBILE = 72;
 
@@ -144,10 +147,20 @@ const AppHeader = forwardRef(
       const userDoc = doc(collection(db, USERS), user?.uname);
       await updateDoc(userDoc, { imageUrl });
     };
-    useEffect(() => {
-      const usersCollectionRef = collection(db, "users");
 
-      const unsubscribe = onSnapshot(usersCollectionRef, (snapshot) => {
+    useEffect(() => {
+      // Calculate the timestamp for 10 minutes ago
+      const tenMinutesAgo = Timestamp.fromMillis(
+        new Date().getTime() - 10 * 60 * 1000
+      );
+
+      // Use a query with a where clause to filter users who interacted within the last 10 minutes
+      const usersQuery = query(
+        collection(db, "users"),
+        where("lastInteracted", ">=", tenMinutesAgo)
+      );
+
+      const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
         setUsersNodesViews((prevUsersNodesViews: any) => {
           const updatedUsersData = { ...prevUsersNodesViews };
 
@@ -159,14 +172,14 @@ const AppHeader = forwardRef(
 
             if (
               (change.type === "added" || change.type === "modified") &&
-              ontologyPath &&
-              data.imageUrl !==
-                "https://storage.googleapis.com/onecademy-1.appspot.com/ProfilePictures/no-img.png"
+              ontologyPath
             ) {
               updatedUsersData[userId] = {
                 node: ontologyPath.at(-1),
                 imageUrl: data.imageUrl,
                 fName: data.fName,
+                lName: data.lName,
+                lastInteracted: timeAgo(data.lastInteracted),
               };
             } else if (change.type === "removed") {
               delete updatedUsersData[userId];
@@ -434,8 +447,27 @@ const AppHeader = forwardRef(
             </Stack>
             <Box sx={{ display: "flex" }}>
               {Object.values(usersNodesViews).map((c: any) => (
-                <Tooltip key={c.fName} title={c.node.title}>
-                  <Avatar src={c.imageUrl} />
+                <Tooltip
+                  key={`${c.fName} ${c.lName}`}
+                  title={
+                    <Box>
+                      <strong>{`${c.fName} ${c.lName}`}</strong>{" "}
+                      {`viewed ${c.node.title} ${c.lastInteracted}`}
+                    </Box>
+                  }
+                >
+                  <Box>
+                    <OptimizedAvatar
+                      alt={`${c.fName} ${c.lName}`}
+                      imageUrl={c.imageUrl || ""}
+                      size={30}
+                      sx={{ border: "none" }}
+                    />
+                    <Box
+                      sx={{ background: "#12B76A", fontSize: "1px" }}
+                      className="UserStatusOnlineIcon"
+                    />
+                  </Box>
                 </Tooltip>
               ))}
             </Box>
