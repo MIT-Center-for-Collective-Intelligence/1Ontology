@@ -33,6 +33,18 @@ export type IChat = {
   updatedAt?: Timestamp;
   deleted: boolean;
   totalReplies?: number;
-  messageType?:string
-  sharedNodeId?:string
+  messageType?: string;
+  sharedNodeId?: string;
+};
+
+export type INotification = {
+  id: string;
+  title: string;
+  body:string;
+  user: string;
+  sender: string;
+  senderDetail: senderDetail;
+  createdAt: Timestamp;
+  type: string;
+  seen: boolean;
 };

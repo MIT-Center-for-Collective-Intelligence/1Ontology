@@ -49,11 +49,11 @@ Here's a breakdown of the key parts of the component:
 
 This component is a key part of the application, providing a rich interface for users to interact with ontological data. It demonstrates the use of React hooks, Firestore, and third-party libraries to create a dynamic and responsive user experience. */
 
-import { Bar, Container, Resizer, Section } from "@column-resizer/react";
+import { Bar, Container, Section } from "@column-resizer/react";
 import SearchIcon from "@mui/icons-material/Search";
-import SendIcon from "@mui/icons-material/Send";
 import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
 import {
+  Badge,
   Box,
   Button,
   CircularProgress,
@@ -66,7 +66,6 @@ import {
   Tab,
   Tabs,
   TextField,
-  Tooltip,
   Typography,
   useMediaQuery,
 } from "@mui/material";
@@ -112,8 +111,7 @@ import withAuthUser from " @components/components/hoc/withAuthUser";
 import { useAuth } from " @components/components/context/AuthContext";
 import { useRouter } from "next/router";
 import DagGraph from " @components/components/OntologyComponents/DAGGraph";
-import { formatFirestoreTimestampWithMoment } from " @components/lib/utils/utils";
-import { NO_IMAGE_USER, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
+import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import {
   LOCKS,
   LOGS,
@@ -127,12 +125,14 @@ import {
 import Inheritance from " @components/components/Inheritance/Inheritance";
 import useSelectDialog from " @components/lib/hooks/useSelectDialog";
 import Chat from " @components/components/Chat/Chat";
-import { IChat } from " @components/types/IChat";
+import { IChat, INotification } from " @components/types/IChat";
 import {
   chatChange,
   getMessagesSnapshot,
 } from "../client/firestore/messages.firestore";
 import { SearchBox } from " @components/components/SearchBox/SearchBox";
+import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
+import { Notification } from " @components/components/Chat/Notification";
 
 const synchronizeStuff = (prev: (any & { id: string })[], change: any) => {
   const docType = change.type;
@@ -184,7 +184,7 @@ const Ontology = () => {
   const [dagreZoomState, setDagreZoomState] = useState<any>(null);
   const [rightPanelVisible, setRightPanelVisible] = useState<any>(false);
   const [users, setUsers] = useState<
-    { id: string; display: string; imageUrl: string }[]
+    { uname: string; fullName: string; imageUrl: string }[]
   >([]);
   const [eachOntologyPath, setEachOntologyPath] = useState<{
     [key: string]: any;
@@ -196,6 +196,7 @@ const Ontology = () => {
   const [technicalMessages, setTechnicalMessages] = useState<IChat[]>([]);
   const [otherMessages, setOtherMessages] = useState<IChat[]>([]);
   const [openSelectModel, setOpenSelectModel] = useState(false);
+  const [notifications, setNotifications] = useState<INotification[]>([]);
 
   //last interaction date from the user
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
@@ -253,31 +254,34 @@ const Ontology = () => {
   }, [db, user]);
 
   useEffect(() => {
-    if (!db) return;
-    const q = query(collection(db, USERS));
+    if (!user) return;
+    setNotifications([]);
+    const onSynchronize = (changes: chatChange[]) => {
+      setNotifications((prev) => changes.reduce(synchronizeStuff, [...prev]));
+    };
+    const killSnapshot = getNotificationsSnapshot(
+      db,
+      { uname: user.uname, lastVisible: null },
+      onSynchronize
+    );
+    return () => killSnapshot();
+  }, [db, user]);
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docChanges = snapshot.docChanges();
-      setUsers((prev) => {
-        let updatedUsers = [...prev]; // Create a copy of the previous state
-        docChanges.forEach((change) => {
-          const userData = change.doc.data();
-          if (change.type === "added") {
-            updatedUsers.push({
-              id: userData.uname,
-              display: `${userData.fName} ${userData.lName}`,
-              imageUrl: userData.imageUrl,
-            });
-          } else if (change.type === "removed") {
-            updatedUsers = updatedUsers.filter(
-              (user) => user.id !== userData.uname
-            );
-          }
+  useEffect(() => {
+    (async () => {
+      if (!db) return;
+      const usersQuery = query(collection(db, USERS));
+      const usersDocs = await getDocs(usersQuery);
+      const _users: any = [];
+      usersDocs.docs.forEach((userDoc: any) => {
+        _users.push({
+          uname: userDoc.data().uname,
+          fullName: `${userDoc.data().fName} ${userDoc.data().lName}`,
+          imageUrl: userDoc.data().imageUrl,
         });
-        return updatedUsers;
       });
-    });
-    return () => unsubscribe();
+      setUsers(_users);
+    })();
   }, [db]);
 
   useEffect(() => {
@@ -1684,7 +1688,7 @@ const Ontology = () => {
                         value={selectedChatTab}
                         onChange={handleChatTabsChange}
                         aria-label="basic tabs example"
-                        variant="fullWidth"
+                        variant="scrollable"
                         sx={{
                           background: (theme) =>
                             theme.palette.mode === "dark"
@@ -1698,6 +1702,27 @@ const Ontology = () => {
                         <Tab label="This node" {...a11yProps(0)} />
                         <Tab label="Technical" {...a11yProps(1)} />
                         <Tab label="Others" {...a11yProps(2)} />
+                        <Tab
+                          label={
+                            <Box
+                              sx={{
+                                display: "flex",
+                                gap: "20px",
+                                alignItems: "center",
+                                width: "120px",
+                              }}
+                            >
+                              <Typography>{"Notifications"}</Typography>
+                              {notifications.length > 0 && (
+                                <Badge
+                                  color="error"
+                                  badgeContent={notifications.length}
+                                />
+                              )}
+                            </Box>
+                          }
+                          {...a11yProps(3)}
+                        />
                       </Tabs>
                       <Box>
                         <TabPanel value={selectedChatTab} index={0}>
@@ -1740,6 +1765,13 @@ const Ontology = () => {
                             isLoading={isLoading}
                             confirmIt={confirmIt}
                             setOpenSelectModel={setOpenSelectModel}
+                          />
+                        </TabPanel>
+                        <TabPanel value={selectedChatTab} index={3}>
+                          <Notification
+                            user={user}
+                            notifications={notifications}
+                            openMessage={() => {}}
                           />
                         </TabPanel>
                       </Box>
