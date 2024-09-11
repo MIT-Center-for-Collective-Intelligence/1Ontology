@@ -57,11 +57,13 @@ import {
   Avatar,
   Box,
   Button,
+  Checkbox,
   CircularProgress,
   IconButton,
   Link,
   List,
   ListItem,
+  Modal,
   Paper,
   Tab,
   Tabs,
@@ -73,6 +75,9 @@ import {
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import {
   Timestamp,
+  DocumentReference,
+  WriteBatch,
+  addDoc,
   collection,
   doc,
   getDoc,
@@ -110,7 +115,11 @@ import { useAuth } from " @components/components/context/AuthContext";
 import { useRouter } from "next/router";
 import DAGGraph from " @components/components/OntologyComponents/DAGGraph";
 import { formatFirestoreTimestampWithMoment } from " @components/lib/utils/utils";
-import { NODES_TYPES, NO_IMAGE_USER } from " @components/lib/CONSTANTS";
+import {
+  DISPLAY,
+  NO_IMAGE_USER,
+  SCROLL_BAR_STYLE,
+} from " @components/lib/CONSTANTS";
 import {
   LOCKS,
   LOGS,
@@ -118,6 +127,45 @@ import {
   USERS,
 } from " @components/lib/firestoreClient/collections";
 import { getChildrenIds } from " @components/lib/utils/children.utils";
+import {
+  getBrowser,
+  getOperatingSystem,
+} from " @components/lib/firestoreClient/errors.firestore";
+import Inheritance from " @components/components/Inheritance/Inheritance";
+import useSelectDialog from " @components/lib/hooks/useSelectDialog";
+import Chat from " @components/components/Chat/Chat";
+import { IChat } from " @components/types/IChat";
+import {
+  chatChange,
+  getMessagesSnapshot,
+} from " @components/client/firestore/messages.firestore";
+import { saveMessagingDeviceToken } from " @components/lib/firestoreClient/messaging";
+import { SearchBox } from " @components/components/SearchBox/SearchBox";
+import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
+import { Post } from " @components/lib/mapApi";
+
+const synchronizeStuff = (prev: (any & { id: string })[], change: any) => {
+  const docType = change.type;
+  const curData = change.data as any & { id: string };
+
+  const prevIdx = prev.findIndex(
+    (m: any & { id: string }) => m.id === curData.id
+  );
+  if (docType === "added" && prevIdx === -1) {
+    prev.push(curData);
+  }
+  if (docType === "modified" && prevIdx !== -1) {
+    prev[prevIdx] = curData;
+  }
+
+  if (docType === "removed" && prevIdx !== -1) {
+    prev.splice(prevIdx, 1);
+  }
+  prev.sort(
+    (a, b) => a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime()
+  );
+  return prev;
+};
 
 const Ontology = () => {
   const db = getFirestore();
@@ -151,6 +199,12 @@ const Ontology = () => {
     [key: string]: any;
   }>({});
   const columnResizerRef = useRef<any>();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [firstLoad, setFirstLoad] = useState<boolean>(true);
+  const [nodeMessages, setNodeMessages] = useState<IChat[]>([]);
+  const [technicalMessages, setTechnicalMessages] = useState<IChat[]>([]);
+  const [otherMessages, setOtherMessages] = useState<IChat[]>([]);
+  const [openSelectModel, setOpenSelectModel] = useState(false);
 
   //last interaction date from the user
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
@@ -1129,6 +1183,40 @@ const Ontology = () => {
     const node = nodes.find((n) => n.id === nodeId);
   };
 
+  const handleClose = useCallback(() => {
+    setOpenSelectModel(false);
+  }, [setOpenSelectModel]);
+
+  const sendNode = useCallback(async (nodeId: string, title: string) => {
+    if (!user) return;
+    const messageData = {
+      nodeId: nodeId || "",
+      text: title,
+      sender: user.uname,
+      senderDetail: {
+        uname: user.uname,
+        fullname: user.fName + " " + user.lName,
+        imageUrl: user.imageUrl,
+        uid: user.userId,
+      },
+      imageUrls: [],
+      reactions: [],
+      edited: false,
+      deleted: false,
+      totalReplies: 0,
+      type: ["node", "technical", "other"][selectedChatTab],
+      messageType: "node",
+      createdAt: new Date(),
+    };
+    await addDoc(collection(db, "messages"), messageData);
+    Post("/sendNotifications", {
+      subject: `New Message From ${user.fName + " " + user.lName}`,
+      body: title,
+      sender: user.uname,
+      members: users,
+    });
+  }, []);
+
   return (
     <Box>
       {nodes.length > 0 ? (
@@ -1530,6 +1618,80 @@ const Ontology = () => {
           confirmIt={confirmIt}
         />
       </Box>
+
+      <Modal
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "transparent",
+          // backgroundColor: "rgba(0, 0, 0, 0.5)",
+        }}
+        open={openSelectModel}
+        onClose={handleClose}
+      >
+        <Box
+          sx={{
+            maxHeight: "80vh",
+            overflowY: "auto",
+            borderRadius: 2,
+            boxShadow: 24,
+            ...SCROLL_BAR_STYLE,
+          }}
+        >
+          <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <SearchBox
+                  setSearchValue={setSearchValue}
+                  label={"Search ..."}
+                />
+              </Box>
+            </Box>
+          </Paper>
+          <Paper>
+            {searchValue ? (
+              <Box>
+                {" "}
+                {searchResults.map((node: any) => (
+                  <ListItem
+                    key={node.id}
+                    onClick={() => {}}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      color: "white",
+                      cursor: "pointer",
+                      borderRadius: "4px",
+                      padding: "8px",
+                      transition: "background-color 0.3s",
+                      // border: "1px solid #ccc",
+                      mt: "5px",
+                      "&:hover": {
+                        backgroundColor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? DESIGN_SYSTEM_COLORS.notebookG450
+                            : DESIGN_SYSTEM_COLORS.gray200,
+                      },
+                    }}
+                  >
+                    {" "}
+                    <Typography>{node.title}</Typography>
+                    <Button variant="outlined">Send</Button>
+                  </ListItem>
+                ))}
+              </Box>
+            ) : (
+              <TreeViewSimplified
+                treeVisualization={treeVisualization}
+                expandedNodes={expandedNodes}
+                onOpenNodesTree={onOpenNodesTree}
+                sendNode={sendNode}
+              />
+            )}
+          </Paper>
+        </Box>
+      </Modal>
     </Box>
   );
 };
