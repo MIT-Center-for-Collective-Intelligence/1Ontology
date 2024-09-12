@@ -34,6 +34,7 @@ import MarkdownRender from "../Markdown/MarkdownRender";
 import { IChat } from " @components/types/IChat";
 import { Emoticons } from "./Emoticons";
 import LinkIcon from "@mui/icons-material/Link";
+import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 const DynamicMemoEmojiPicker = dynamic(() => import("./EmojiPicker"), {
   loading: () => <p>Loading...</p>,
   ssr: false,
@@ -53,6 +54,7 @@ type ChatProps = {
   type: string;
   nodeId?: string;
   setOpenSelectModel: React.Dispatch<React.SetStateAction<boolean>>;
+  recordLogs: (logs: any) => void;
 };
 
 const Chat = ({
@@ -69,6 +71,7 @@ const Chat = ({
   type,
   nodeId,
   setOpenSelectModel,
+  recordLogs,
 }: ChatProps) => {
   const db = getFirestore();
   const [showReplies, setShowReplies] = useState<string | null>(null);
@@ -145,7 +148,16 @@ const Chat = ({
         reactions: arrayUnion({ user: user?.uname, emoji }),
       });
     }
-    createNotifications(emoji, message.text);
+    createNotifications(
+      emoji,
+      message.text,
+      message?.parentMessage || message?.id
+    );
+
+    recordLogs({
+      action: `Reacted on a ${message.parentMessage ? "reply" : "message"}`,
+      messageId: message?.parentMessage || message?.id,
+    });
   };
 
   const removeReaction = async (message: IChat, emoji: string) => {
@@ -176,6 +188,12 @@ const Chat = ({
         reactions: arrayRemove({ user: user?.uname, emoji }),
       });
     }
+    recordLogs({
+      action: `Removed reaction from a ${
+        message.parentMessage ? "reply" : "message"
+      }`,
+      messageId: message?.parentMessage || message?.id,
+    });
   };
 
   const toggleReaction = (message: IChat, emoji: string) => {
@@ -219,7 +237,11 @@ const Chat = ({
     return messageRef;
   };
 
-  const createNotifications = async (title: string, body: string) => {
+  const createNotifications = async (
+    title: string,
+    body: string,
+    entityId: string
+  ) => {
     const batch = writeBatch(db);
     for (const userData of users) {
       if (userData.uname === user.uname) continue;
@@ -234,6 +256,8 @@ const Chat = ({
           imageUrl: user.imageUrl,
           uid: user.userId,
         },
+        entityId: entityId,
+        notificationType: "message",
         seen: false,
         type: type,
         createdAt: new Date(),
@@ -264,11 +288,17 @@ const Chat = ({
       type: type,
       createdAt: new Date(),
     };
-    await addDoc(getMessageRef(), commentData);
+    const docRef = await addDoc(getMessageRef(), commentData);
     createNotifications(
       `New Message from ${user.fName + " " + user.lName}`,
-      text
+      text,
+      docRef.id
     );
+    recordLogs({
+      action: "Send a message",
+      text,
+      messageId: docRef.id,
+    });
   };
 
   const addReply = async (
@@ -299,7 +329,17 @@ const Chat = ({
       totalReplies: increment(1),
     });
 
-    createNotifications(`Reply by ${user.fName + " " + user.lName}`, text);
+    createNotifications(
+      `Reply by ${user.fName + " " + user.lName}`,
+      text,
+      messageId
+    );
+
+    recordLogs({
+      action: "Replied on a message",
+      text,
+      messageId: messageId,
+    });
   };
 
   const editMessage = async (
@@ -327,6 +367,10 @@ const Chat = ({
       await updateDoc(commentRef, {
         deleted: true,
       });
+      recordLogs({
+        action: "Deleted a message",
+        messageId: messageId,
+      });
     }
   };
 
@@ -343,6 +387,12 @@ const Chat = ({
       imageUrls,
       edited: true,
       editedAt: new Date(),
+    });
+    recordLogs({
+      action: "Edited a reply",
+      messageId: messageId,
+      replyId: replyId,
+      text,
     });
   };
 
@@ -361,6 +411,11 @@ const Chat = ({
       });
       await updateDoc(commentRef, {
         totalReplies: increment(-1),
+      });
+      recordLogs({
+        action: "Deleted a reply",
+        messageId: messageId,
+        replyId: replyId,
       });
     }
   };
@@ -540,6 +595,7 @@ const Chat = ({
         {messages.map((message) => (
           <CSSTransition key={message.id} timeout={500} classNames="comment">
             <Box
+              id={`message-${message.id}`}
               sx={{
                 display: "flex",
                 gap: "10px",
@@ -863,19 +919,52 @@ const Chat = ({
               ))}
             </Box>
           )}
-          {!firstLoad && messages.length === 0 ? (
-            <></>
+          {messages.length === 0 ? (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                marginTop: "40%",
+              }}
+            >
+              <Box
+                sx={{ height: "100%", display: "grid", placeItems: "center" }}
+              >
+                <Box>
+                  <Box
+                    sx={{
+                      width: { xs: "250px", sm: "300px" },
+                      height: { xs: "250px", sm: "200px" },
+                      "& .rive-canvas": {
+                        height: "100%",
+                      },
+                    }}
+                  >
+                    <RiveComponentMemoized
+                      src="/rive/notification.riv"
+                      animations={"Timeline 1"}
+                      artboard="New Artboard"
+                      autoplay={true}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    />
+                  </Box>
+                  <Typography
+                    fontWeight={"500"}
+                    fontSize={"18px"}
+                    textAlign={"center"}
+                    maxWidth={"300px"}
+                  >
+                    Messages not found
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
           ) : (
-            // <Box
-            //   sx={{
-            //     mt: "40%",
-            //     display: "flex",
-            //     alignItems: "center",
-            //     justifyContent: "center",
-            //   }}
-            // >
-            //   <NotFoundNotification title="Start Commenting" description="" />
-            // </Box>
             <Box sx={{ px: 2 }}>{renderMessages()}</Box>
           )}
         </Box>

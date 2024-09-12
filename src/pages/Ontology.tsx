@@ -1323,6 +1323,33 @@ const Ontology = () => {
     },
     [selectedChatTab]
   );
+
+  const openNotification = useCallback(
+    (notificationId: string, messageId: string, type: string) => {
+      const notificationRef = doc(db, "notifications", notificationId);
+      updateDoc(notificationRef, {
+        seen: true,
+      });
+      recordLogs({
+        action: "Opened a notification",
+        notificationId,
+        page: ontologyPath[ontologyPath.length - 1],
+      });
+      setSelectedChatTab(["node", "technical", "other"].indexOf(type));
+      setTimeout(() => {
+        const element = document.getElementById(`message-${messageId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          element.style.border = `solid 1px ${DESIGN_SYSTEM_COLORS.orange400}`;
+          setTimeout(() => {
+            element.style.border = "none";
+          }, 1000);
+        }
+      }, 1000);
+    },
+    [db, user]
+  );
+
   return (
     <Box>
       {Object.keys(nodes).length > 0 ? (
@@ -1677,6 +1704,7 @@ const Ontology = () => {
                               isLoading={isLoading}
                               confirmIt={confirmIt}
                               setOpenSelectModel={setOpenSelectModel}
+                              recordLogs={recordLogs}
                             />
                           )}
                         </TabPanel>
@@ -1691,6 +1719,7 @@ const Ontology = () => {
                             isLoading={isLoading}
                             confirmIt={confirmIt}
                             setOpenSelectModel={setOpenSelectModel}
+                            recordLogs={recordLogs}
                           />
                         </TabPanel>
                         <TabPanel value={selectedChatTab} index={2}>
@@ -1704,13 +1733,14 @@ const Ontology = () => {
                             isLoading={isLoading}
                             confirmIt={confirmIt}
                             setOpenSelectModel={setOpenSelectModel}
+                            recordLogs={recordLogs}
                           />
                         </TabPanel>
                         <TabPanel value={selectedChatTab} index={3}>
                           <Notification
                             user={user}
                             notifications={notifications}
-                            openMessage={() => {}}
+                            openNotification={openNotification}
                           />
                         </TabPanel>
                       </Box>
