@@ -730,7 +730,7 @@ const Node = ({
   };
 
   // Function to handle sorting of draggable items
-  const handleSorting = async (result: any, subType: string) => {
+  const handleSorting = async (result: any, property: string) => {
     try {
       // Destructure properties from the result object
       const { source, destination, draggableId, type } = result;
@@ -741,64 +741,73 @@ const Node = ({
       }
 
       // Check if the type of sorting is for a CATEGORY
-      if (type === "CATEGORY") {
-        // Extract the source and destination category IDs
-        const sourceCategory = source.droppableId; // The source category
-        const destinationCategory = destination.droppableId; // The destination category
 
-        // Ensure valid source and destination categories and they are not the same
-        if (
-          sourceCategory &&
-          destinationCategory &&
-          sourceCategory !== destinationCategory
-        ) {
-          // Retrieve node document from the database
-          const nodeDoc = await getDoc(
-            doc(collection(db, NODES), currentVisibleNode.id)
+      // Extract the source and destination category IDs
+      const sourceCategory = source.droppableId; // The source category
+      const destinationCategory = destination.droppableId; // The destination category
+
+      // Ensure valid source and destination categories and they are not the same
+      if (
+        sourceCategory &&
+        destinationCategory &&
+        sourceCategory !== destinationCategory
+      ) {
+        // Retrieve node document from the database
+        const nodeDoc = await getDoc(
+          doc(collection(db, NODES), currentVisibleNode.id)
+        );
+
+        // Check if node document exists
+        if (nodeDoc.exists()) {
+          // Extract node data from the document
+          const nodeData = nodeDoc.data();
+          let propertyValue = null;
+          if (
+            property === "specializations" ||
+            property === "generalizations"
+          ) {
+            // Get the children and specializations related to the provided subType
+            propertyValue = nodeData[property];
+          } else {
+            propertyValue = nodeData.properties[property];
+          }
+          // Find the index of the draggable item in the source category
+          const nodeIdx = propertyValue[sourceCategory].findIndex(
+            (onto: any) => onto.id === draggableId
           );
 
-          // Check if node document exists
-          if (nodeDoc.exists()) {
-            // Extract node data from the document
-            const nodeData = nodeDoc.data();
-
-            // Get the children and specializations related to the provided subType
-            const specializations = nodeData.children[subType];
-
-            // Find the index of the draggable item in the source category
-            const nodeIdx = specializations[sourceCategory].findIndex(
-              (onto: any) => onto.id === draggableId
+          // If the draggable item is found in the source category
+          if (nodeIdx !== -1) {
+            // Move the item to the destination category
+            propertyValue[destinationCategory].push(
+              propertyValue[sourceCategory][nodeIdx]
             );
 
-            // If the draggable item is found in the source category
-            if (nodeIdx !== -1) {
-              // Move the item to the destination category
-              specializations[destinationCategory].push(
-                specializations[sourceCategory][nodeIdx]
-              );
-
-              // Remove the item from the source category
-              specializations[sourceCategory].splice(nodeIdx, 1);
-            }
-
-            // Update the node data with the modified specializations
-            nodeData.children[subType] = specializations;
-
-            // Update the node document in the database
-            await updateDoc(nodeDoc.ref, nodeData);
-
-            // Record a log of the sorting action
-            recordLogs({
-              action: "Moved a field to a category",
-              field: subType,
-              sourceCategory:
-                sourceCategory === "main" ? "outside" : sourceCategory,
-              destinationCategory:
-                destinationCategory === "main"
-                  ? "outside"
-                  : destinationCategory,
-            });
+            // Remove the item from the source category
+            propertyValue[sourceCategory].splice(nodeIdx, 1);
           }
+          if (
+            property === "specializations" ||
+            property === "generalizations"
+          ) {
+            // Get the children and specializations related to the provided subType
+            nodeData[property] = propertyValue;
+          } else {
+            nodeData.properties[property] = propertyValue;
+          }
+
+          // Update the node document in the database
+          await updateDoc(nodeDoc.ref, nodeData);
+
+          // Record a log of the sorting action
+          recordLogs({
+            action: "Moved a field to a category",
+            field: property,
+            sourceCategory:
+              sourceCategory === "main" ? "outside" : sourceCategory,
+            destinationCategory:
+              destinationCategory === "main" ? "outside" : destinationCategory,
+          });
         }
       }
     } catch (error) {
@@ -1306,6 +1315,7 @@ const Node = ({
             flexDirection: "column",
             p: "17px",
             width: "100%",
+            borderRadius: "25px",
           }}
           elevation={6}
         >
@@ -1345,83 +1355,121 @@ const Node = ({
             )}
           </Box>
           {rootTitle && (
-            <Box sx={{ display: "flex", gap: "15px", mb: "15px" }}>
-              {" "}
-              <Typography sx={{ fontSize: "19px", fontWeight: "bold" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: "15px",
+                mb: "15px",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: "19px",
+                  fontWeight: "bold",
+                  color: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? theme.palette.common.gray50
+                      : theme.palette.common.notebookMainBlack,
+                }}
+              >
                 Root:
               </Typography>
               <Link
                 underline="hover"
-                onClick={() => {
-                  navigateToNode(currentVisibleNode.root);
-                }}
+                onClick={() => navigateToNode(currentVisibleNode.root)}
                 sx={{
                   cursor: "pointer",
                   color: (theme) =>
                     theme.palette.mode === "dark"
                       ? theme.palette.common.gray50
                       : theme.palette.common.notebookMainBlack,
-                  mt: "1px",
+                  "&:hover": {
+                    textDecoration: "underline",
+                    color: "orange",
+                  },
                 }}
               >
-                {" "}
                 {rootTitle}
               </Link>
             </Box>
           )}
+        </Paper>
+        <Paper
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            borderRadius: "25px",
 
-          <Box>
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+            width: "100%",
+          }}
+          elevation={6}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+
+              p: 3,
+              borderTopRightRadius: "25px",
+              borderTopLeftRadius: "25px",
+            }}
+          >
+            <Typography
+              sx={{ fontSize: "20px", fontWeight: "500", mb: "13px" }}
+            >
+              Description:
+            </Typography>
+            {currentVisibleNode.inheritance?.description?.ref && (
               <Typography
-                sx={{ fontSize: "20px", fontWeight: "500", mb: "13px" }}
+                sx={{
+                  color: (theme) =>
+                    theme.palette.mode === "dark" ? "white" : "black",
+                  fontSize: "14px",
+                  ml: "auto",
+                }}
               >
-                Description:
-              </Typography>
-              {currentVisibleNode.inheritance?.description?.ref && (
-                <Typography
-                  sx={{ color: "grey", fontSize: "14px", ml: "auto" }}
-                >
-                  {'(Inherited from "'}
-                  {getTitle(
-                    nodes,
-                    currentVisibleNode.inheritance.description.ref || ""
-                  )}
-                  {'")'}
-                </Typography>
-              )}
-            </Box>
-
-            <Text
-              nodes={nodes}
-              updateInheritance={updateInheritance}
-              recordLogs={recordLogs}
-              user={user}
-              lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
-              addLock={addLock}
-              text={
-                getPropertyValue(
+                {'(Inherited from "'}
+                {getTitle(
                   nodes,
-                  currentVisibleNode.inheritance.description.ref,
-                  "description"
-                ) || currentVisibleNode.properties.description
-              }
-              currentVisibleNode={currentVisibleNode}
-              property={"description"}
-              setSnackbarMessage={setSnackbarMessage}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              setEditNode={setEditNode}
-            />
+                  currentVisibleNode.inheritance.description.ref || ""
+                )}
+                {'")'}
+              </Typography>
+            )}
           </Box>
+
+          <Text
+            nodes={nodes}
+            updateInheritance={updateInheritance}
+            recordLogs={recordLogs}
+            user={user}
+            lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
+            addLock={addLock}
+            text={
+              getPropertyValue(
+                nodes,
+                currentVisibleNode.inheritance.description.ref,
+                "description"
+              ) || currentVisibleNode.properties.description
+            }
+            currentVisibleNode={currentVisibleNode}
+            property={"description"}
+            setSnackbarMessage={setSnackbarMessage}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            setEditNode={setEditNode}
+          />
         </Paper>
 
-        <Paper
+        <Box
           sx={{
             display: "flex",
             flexDirection: "column",
             p: "17px",
             width: "100%",
           }}
-          elevation={6}
         >
           <NodeBody
             currentVisibleNode={currentVisibleNode}
@@ -1444,9 +1492,9 @@ const Node = ({
             user={user}
             nodes={nodes}
           />
-        </Paper>
+        </Box>
         <Box sx={{ display: "flex", gap: "9px" }}>
-          <Paper elevation={9} sx={{ width: "100%" }}>
+          <Paper elevation={9} sx={{ width: "100%", borderRadius: "30px" }}>
             <Tabs
               value={viewValueSpecialization}
               onChange={(event: any, newValue: number) => {
@@ -1464,12 +1512,12 @@ const Node = ({
               aria-label="basic tabs example"
             >
               <Tab
-                sx={{ width: "50%" }}
+                sx={{ width: "50%", fontSize: "20px", borderRadius: "30px" }}
                 label="Generalizations"
                 {...a11yProps(0)}
               />
               <Tab
-                sx={{ width: "50%" }}
+                sx={{ width: "50%", fontSize: "20px" }}
                 label="Specializations"
                 {...a11yProps(1)}
               />
@@ -1528,7 +1576,7 @@ const Node = ({
               />
             </TabPanel>
           </Paper>
-          <Paper elevation={9} sx={{ width: "100%" }}>
+          <Paper elevation={9} sx={{ width: "100%", borderRadius: "25px" }}>
             <Tabs
               value={viewValue}
               onChange={(event: any, newValue: number) => {
@@ -1544,8 +1592,16 @@ const Node = ({
               }}
               aria-label="basic tabs example"
             >
-              <Tab sx={{ width: "50%" }} label="Is Part of" {...a11yProps(0)} />
-              <Tab sx={{ width: "50%" }} label="Parts" {...a11yProps(1)} />
+              <Tab
+                sx={{ width: "50%", fontSize: "20px" }}
+                label="Is Part of"
+                {...a11yProps(0)}
+              />
+              <Tab
+                sx={{ width: "50%", fontSize: "20px" }}
+                label="Parts"
+                {...a11yProps(1)}
+              />
             </Tabs>
 
             <TabPanel

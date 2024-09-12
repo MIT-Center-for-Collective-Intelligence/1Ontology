@@ -80,43 +80,70 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           )
           .sort()
           .map((property: string) => (
-            <Paper key={property} sx={{ p: 4, mt: "4px" }} elevation={3}>
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Typography sx={{ fontSize: "20px", fontWeight: "500" }}>
+            <Paper
+              key={property}
+              sx={{ mt: "4px", borderRadius: "25px", mb: "15px" }}
+              elevation={3}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  background: (theme) =>
+                    theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+
+                  p: 3,
+                  borderTopRightRadius: "25px",
+                  borderTopLeftRadius: "25px",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: "20px",
+                    fontWeight: "500",
+
+                    fontFamily: "Roboto, sans-serif",
+                  }}
+                >
                   {capitalizeFirstLetter(
                     DISPLAY[property] ? DISPLAY[property] : property
                   )}
                   :
                 </Typography>
+                <Box sx={{ display: "flex", ml: "15px", gap: "15px" }}>
+                  {currentVisibleNode.propertyType[property] !== "string" && (
+                    <Button
+                      variant="outlined"
+                      onClick={() => showList(property, "main")}
+                      sx={{ borderRadius: "25px" }}
+                    >
+                      {property !== "specializations" ? "Select" : "Add"}{" "}
+                      {capitalizeFirstLetter(
+                        DISPLAY[property] ? DISPLAY[property] : property
+                      )}
+                    </Button>
+                  )}
+                  {currentVisibleNode.propertyType[property] !== "string" && (
+                    <Button
+                      variant="outlined"
+                      onClick={() => {
+                        setOpenAddCategory(true);
+                        setType(property);
+                      }}
+                      sx={{ borderRadius: "25px" }}
+                    >
+                      Add Category
+                    </Button>
+                  )}
+                  <Button
+                    variant="outlined"
+                    onClick={() => removeProperty(property)}
+                    sx={{ borderRadius: "25px" }}
+                  >
+                    Delete
+                  </Button>
+                </Box>
 
-                {currentVisibleNode.propertyType[property] !== "string" && (
-                  <Button
-                    onClick={() => showList(property, "main")}
-                    sx={{ ml: "5px" }}
-                  >
-                    {property !== "specializations" ? "Select" : "Add"}{" "}
-                    {capitalizeFirstLetter(
-                      DISPLAY[property] ? DISPLAY[property] : property
-                    )}
-                  </Button>
-                )}
-                {currentVisibleNode.propertyType[property] !== "string" && (
-                  <Button
-                    onClick={() => {
-                      setOpenAddCategory(true);
-                      setType(property);
-                    }}
-                    sx={{ ml: "5px" }}
-                  >
-                    Add Category
-                  </Button>
-                )}
-                <Button
-                  onClick={() => removeProperty(property)}
-                  sx={{ ml: "5px" }}
-                >
-                  Delete
-                </Button>
                 <Box
                   sx={{
                     display: "flex",
@@ -127,7 +154,13 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                   }}
                 >
                   {currentVisibleNode.inheritance?.[property]?.ref && (
-                    <Typography sx={{ color: "grey", fontSize: "14px" }}>
+                    <Typography
+                      sx={{
+                        color: (theme) =>
+                          theme.palette.mode === "dark" ? "white" : "black",
+                        fontSize: "14px",
+                      }}
+                    >
                       {'(Inherited from "'}
                       {getTitle(
                         nodes,
@@ -179,7 +212,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                   )}
                 </Box>
               </Box>
-              <Box>
+              <Box sx={{ p: "13px" }}>
                 {currentVisibleNode.propertyType[property] !== "string" &&
                 property !== "parts" &&
                 property !== "isPartOf" ? (

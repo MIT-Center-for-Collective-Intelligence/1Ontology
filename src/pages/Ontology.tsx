@@ -1510,7 +1510,9 @@ const Ontology = () => {
                     </Box>
                   </TabPanel>
                   <TabPanel value={sidebarView} index={2}>
-                    <Inheritance selectedNode={currentVisibleNode} />
+                    {currentVisibleNode && (
+                      <Inheritance selectedNode={currentVisibleNode} />
+                    )}
                   </TabPanel>
                   <TabPanel value={sidebarView} index={3}>
                     <Box

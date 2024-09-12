@@ -88,7 +88,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import { INode } from " @components/types/INode";
 import * as Y from "yjs";
-import { WebrtcProvider } from "y-webrtc";
+// import { WebrtcProvider } from "y-webrtc";
+import { WebsocketProvider } from "y-websocket";
+import { useTheme } from "@emotion/react";
 
 type ISubOntologyProps = {
   currentVisibleNode: INode;
@@ -139,26 +141,36 @@ const Text = ({
   nodes,
 }: ISubOntologyProps) => {
   const db = getFirestore();
-  const textFieldRef = useRef<any>(null);
+  const theme: any = useTheme();
+  const cursorOverlayRef = useRef<HTMLDivElement | null>(null);
 
   const [currentValue, setCurrentValue] = useState("");
   const [cursors, setCursors] = useState<{
-    [key: string]: { position: number; name: string };
+    [key: string]: { position: number; color: string; name: string };
   }>({});
+  const localClientId = useRef(user.uname);
 
   const textAreaRef = useRef<any>(null);
 
   useEffect(() => {
     const ydoc = new Y.Doc();
-    const provider = new WebrtcProvider(
+
+    const provider = new WebsocketProvider(
+      "wss://demos.yjs.dev/ws",
       `${currentVisibleNode.id}-${property}`,
       ydoc
     );
-
     const yText = ydoc.getText("textarea");
     const yCursors = ydoc.getMap("cursors");
-
-    setCurrentValue(yText.toString() || text);
+    // Initialize yText if it's empty
+    const initialText =
+      property === "title"
+        ? currentVisibleNode.title
+        : currentVisibleNode.properties[property] || "";
+    /*    if (yText.toString().length === 0) {
+      yText.insert(0, initialText); // Insert initial text
+    } */
+    setCurrentValue(initialText);
 
     yText.observe(() => {
       setCurrentValue(yText.toString());
@@ -174,17 +186,30 @@ const Text = ({
       const value = event.target.value;
       yText.delete(0, yText.length);
       yText.insert(0, value);
+      setCurrentValue(yText.toString());
+      onSaveTextChange(yText.toString());
     };
 
     const updateCursor = () => {
       const cursorPosition = textAreaRef.current?.selectionStart || 0;
-      yCursors.set(user.uname, { position: cursorPosition, name: user.uname });
+      const currentCursor: any = yCursors.get(localClientId.current) || {};
+      if (!currentCursor.color) {
+        currentCursor.color = user.color;
+      }
+      yCursors.set(user.uname, {
+        position: cursorPosition,
+        name: `${user.fName} ${user.lName}`,
+        color: currentCursor.color,
+      });
     };
-
+    const handleBlur = () => {
+      yCursors.delete(localClientId.current);
+    };
     if (textAreaRef.current) {
       textAreaRef.current.addEventListener("input", handleInput);
       textAreaRef.current.addEventListener("mouseup", updateCursor);
       textAreaRef.current.addEventListener("keydown", updateCursor);
+      textAreaRef.current.addEventListener("blur", handleBlur);
     }
 
     return () => {
@@ -192,6 +217,7 @@ const Text = ({
         textAreaRef.current.removeEventListener("input", handleInput);
         textAreaRef.current.removeEventListener("mouseup", updateCursor);
         textAreaRef.current.removeEventListener("keydown", updateCursor);
+        textAreaRef.current.addEventListener("blur", handleBlur);
       }
       provider.destroy();
     };
@@ -279,12 +305,6 @@ const Text = ({
     [currentVisibleNode.id]
   );
 
-  // Define a function to handle text edits, taking an event as a parameter (assumed to be a React event)
-  const handleEditText = (e: any) => {
-    // Update the state using the setCurrentVisibleNode function, which receives the current state
-    onSaveTextChange(e.target.value);
-  };
-
   // Function to handle focus events
   const handleFocus = (event: any) => {
     // Check if the type is "title" and the current node being edited matches the open node
@@ -293,35 +313,151 @@ const Text = ({
       event.target.select();
     }
   };
+  const getCursorPositionStyles = (position: number) => {
+    const textArea = textAreaRef.current;
+    if (!textArea) return {};
+    const text = textArea.value.substring(0, position);
+    const lines = text.split("\n").filter((n: string) => !!n);
+    const computedStyle = window.getComputedStyle(textArea);
+    let lineHeight = parseFloat(computedStyle.lineHeight);
+
+    if (isNaN(lineHeight)) {
+      const fontSize = parseFloat(computedStyle.fontSize);
+      lineHeight = fontSize * 1.2;
+    }
+
+    const row = lines.length - 1;
+    const col = lines[row]?.length;
+
+    const scrollX = textArea.scrollLeft;
+    const scrollY = textArea.scrollTop;
+
+    const fontSize = parseFloat(window.getComputedStyle(textArea).fontSize);
+    const charWidth = fontSize * 0.4958;
+
+    return {
+      top: row * lineHeight - scrollY,
+      left: col * charWidth - scrollX + 12,
+    };
+  };
 
   return (
-    <Box>
-      <TextField
+    <Box style={{ position: "relative", width: "100%", padding: "14px" }}>
+      <textarea
         ref={textAreaRef}
-        placeholder={"Type something..."}
-        fullWidth
         value={currentValue}
-        multiline
-        minRows={property !== "title" ? 2 : 0}
-        onChange={handleEditText}
-        InputProps={{
-          style: { fontSize: property === "title" ? "30px" : "" },
-        }}
-        sx={{
-          fontWeight: 400,
-          fontSize: {
-            xs: "14px",
-            md: "16px",
-          },
-          marginBottom: "5px",
+        placeholder="Type something..."
+        style={{
           width: "100%",
-          display: "block",
+          minHeight: property === "title" ? "5px" : "90px",
+          padding: "15px",
+          borderRadius: "10px",
+          // border: "2px solid #4CAF50",
+          outline: "none",
+          fontSize: property === "title" ? "29px" : "16px",
+          fontFamily: "'Roboto', sans-serif",
+          color: theme.palette.mode === "dark" ? "white" : "black",
+          backgroundColor: theme.palette.mode === "dark" ? "#25262a" : "",
+          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+          transition: "border-color 0.3s, box-shadow 0.3s",
+          whiteSpace: "pre-wrap",
+          resize: "none",
+          zIndex: 1,
+          position: "relative",
         }}
-        autoFocus
-        inputRef={textFieldRef}
-        onFocus={handleFocus}
       />
+
+      {/* Overlay for rendering cursors */}
+      <div
+        ref={cursorOverlayRef}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          pointerEvents: "none", // Prevent the overlay from blocking input
+        }}
+      >
+        {Object.keys(cursors).map((clientId) => {
+          if (clientId === localClientId.current) return null;
+
+          const cursor = cursors[clientId];
+          const cursorStyles = getCursorPositionStyles(cursor.position);
+
+          return (
+            <div
+              key={clientId}
+              style={{
+                position: "absolute",
+                top: cursorStyles.top,
+                left: cursorStyles.left,
+                zIndex: 2,
+                pointerEvents: "none",
+              }}
+            >
+              <div
+                style={{
+                  position: "relative",
+                  bottom: "100%",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  backgroundColor: cursor.color,
+                  color: "#fff",
+                  padding: "5px",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  whiteSpace: "nowrap",
+                  zIndex: 3,
+                }}
+              >
+                {cursor.name}
+              </div>
+              <div
+                style={{
+                  position: "absolute",
+                  transform: "translateX(8%)",
+                  backgroundColor: cursor.color,
+                  height: "20px",
+                  width: "4px",
+                  borderRadius: "2px",
+                  zIndex: 2,
+                  marginBottom: "14px",
+                  animation: "blink 1s step-end infinite",
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
     </Box>
+    // <Box>
+    //   <TextField
+    //     ref={textAreaRef}
+    //     placeholder={"Type something..."}
+    //     fullWidth
+    //     value={currentValue}
+    //     multiline
+    //     minRows={property !== "title" ? 2 : 0}
+    //     onChange={handleEditText}
+    //     InputProps={{
+    //       style: { fontSize: property === "title" ? "30px" : "" },
+    //     }}
+    //     sx={{
+    //       fontWeight: 400,
+    //       fontSize: {
+    //         xs: "14px",
+    //         md: "16px",
+    //       },
+    //       marginBottom: "5px",
+    //       width: "100%",
+    //       display: "block",
+    //     }}
+    //     autoFocus
+    //     inputRef={textFieldRef}
+    //     onFocus={handleFocus}
+    //   />
+    // </Box>
   );
 };
 

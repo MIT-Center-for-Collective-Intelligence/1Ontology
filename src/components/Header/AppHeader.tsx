@@ -450,7 +450,9 @@ const AppHeader = forwardRef(
                   title={
                     <Box>
                       <strong>{`${c.fName} ${c.lName}`}</strong>{" "}
-                      {`last interacted with ${c.node.title} ${c.lastInteracted}`}
+                      {`last interacted with ${c.node?.title || ""} ${
+                        c.lastInteracted
+                      }`}
                     </Box>
                   }
                 >

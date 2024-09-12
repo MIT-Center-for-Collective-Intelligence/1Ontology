@@ -107,14 +107,17 @@ const LinksSide = ({
                     (c) => (properties[c] || []).length > 0 && c !== "main"
                   ).length > 0;
                 return (
-                  <Box key={category} id={category}>
+                  <Box key={category} id={category} sx={{ width: "500px" }}>
                     {category !== "main" && (
                       <li>
                         <Box
                           sx={
                             {
-                              /*    display: "flex",
-                            alignItems: "center", */
+                              // mt: "15px",
+                              /*     display: "flex",
+                            alignItems: "center",
+                            alignContent: "center",
+                            textAlign: "center", */
                             }
                           }
                         >
@@ -122,32 +125,46 @@ const LinksSide = ({
                             sx={{
                               fontWeight: "bold",
                               pt: index !== 0 ? "25px" : "",
+                              mb: "14px",
                             }}
                           >
                             {category} :
                           </Typography>{" "}
-                          <Button
-                            onClick={() => showList(relationType, category)}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              gap: "14px",
+                            }}
                           >
-                            {relationType === "specializations"
-                              ? "Select"
-                              : "Add "}{" "}
-                            {capitalizeFirstLetter(relationType)}
-                          </Button>
-                          <Button
-                            onClick={() =>
-                              handleEditCategory(relationType, category)
-                            }
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            onClick={() =>
-                              deleteCategory(relationType, category)
-                            }
-                          >
-                            Delete
-                          </Button>
+                            <Button
+                              sx={{ borderRadius: "25px" }}
+                              variant="outlined"
+                              onClick={() => showList(relationType, category)}
+                            >
+                              {relationType === "specializations"
+                                ? "Select"
+                                : "Add "}{" "}
+                              {capitalizeFirstLetter(relationType)}
+                            </Button>
+                            <Button
+                              sx={{ borderRadius: "25px" }}
+                              variant="outlined"
+                              onClick={() =>
+                                handleEditCategory(relationType, category)
+                              }
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              sx={{ borderRadius: "25px" }}
+                              variant="outlined"
+                              onClick={() =>
+                                deleteCategory(relationType, category)
+                              }
+                            >
+                              Delete
+                            </Button>
+                          </Box>
                         </Box>
                       </li>
                     )}
