@@ -40,11 +40,13 @@ export type IChat = {
 export type INotification = {
   id: string;
   title: string;
-  body:string;
+  body: string;
   user: string;
   sender: string;
   senderDetail: senderDetail;
   createdAt: Timestamp;
   type: string;
+  notificationType: string;
+  entityId: string;
   seen: boolean;
 };

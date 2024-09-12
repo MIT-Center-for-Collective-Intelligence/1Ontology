@@ -2,58 +2,83 @@ import { Paper, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { doc, getFirestore, updateDoc } from "firebase/firestore";
-import { useCallback } from "react";
+import { getFirestore } from "firebase/firestore";
 import OptimizedAvatar from "./OptimizedAvatar";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import { INotification } from " @components/types/IChat";
+import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 
 dayjs.extend(relativeTime);
 type CommentsProps = {
   user: any;
   notifications: any;
-  openMessage: (messageId: string) => void;
+  openNotification: (
+    notificationId: string,
+    messageId: string,
+    type: string
+  ) => void;
 };
 export const Notification = ({
-  user,
   notifications,
-  openMessage,
+  openNotification,
 }: CommentsProps) => {
   const db = getFirestore();
-
-  const markAsRead = useCallback(
-    async (notificationId: string) => {
-      const notificationRef = doc(db, "notifications", notificationId);
-      updateDoc(notificationRef, {
-        seen: true,
-      });
-    },
-    [user]
-  );
-
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: "4px", p: 2 }}>
       {!notifications.length && (
-        <></>
-        // <Box
-        //   sx={{
-        //     display: "flex",
-        //     flexDirection: "column",
-        //     alignItems: "center",
-        //     justifyContent: "center",
-        //     marginTop: "40%",
-        //   }}
-        // >
-        //   <NotFoundNotification
-        //     title="No Comments For Read"
-        //     description=""
-        //   />
-        // </Box>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: "40%",
+          }}
+        >
+          <Box sx={{ height: "100%", display: "grid", placeItems: "center" }}>
+            <Box>
+              <Box
+                sx={{
+                  width: { xs: "250px", sm: "300px" },
+                  height: { xs: "250px", sm: "200px" },
+                  "& .rive-canvas": {
+                    height: "100%",
+                  },
+                }}
+              >
+                <RiveComponentMemoized
+                  src="/rive/notification.riv"
+                  animations={"Timeline 1"}
+                  artboard="New Artboard"
+                  autoplay={true}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                  }}
+                />
+              </Box>
+              <Typography
+                fontWeight={"500"}
+                fontSize={"18px"}
+                textAlign={"center"}
+                maxWidth={"300px"}
+              >
+                Notifications not found
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
       )}
       {notifications.map((notification: INotification, idx: number) => (
         <Paper
           className="direct-channel"
-          onClick={() => markAsRead(notification.id)}
+          onClick={() =>
+            openNotification(
+              notification.id,
+              notification.entityId,
+              notification.type
+            )
+          }
           key={idx}
           elevation={3}
           sx={{
@@ -98,7 +123,7 @@ export const Notification = ({
               }}
             >
               <OptimizedAvatar
-                alt={notification.senderDetail?.fullname}
+                alt={notification.senderDetail?.fullname || ""}
                 imageUrl={notification.senderDetail?.imageUrl}
                 size={40}
                 sx={{ border: "none" }}
