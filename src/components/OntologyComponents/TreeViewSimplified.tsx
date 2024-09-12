@@ -50,130 +50,134 @@ const TreeViewSimplified = ({
       defaultEndIcon={<div style={{ width: 24 }} />}
       sx={{ flexGrow: 1 }}
     >
-      {Object.keys(treeVisualization).map((category) => (
-        <TreeItem
-          key={treeVisualization[category]?.id || category}
-          nodeId={treeVisualization[category]?.id || category}
-          label={
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                height: "30px",
-                p: "25px",
-                pl: "9px",
-                borderRadius: "25px",
-                backgroundColor:
-                  currentVisibleNode?.id === treeVisualization[category].id
-                    ? "#87D37C"
-                    : "",
-                justifyContent: sendNode ? "space-between" : undefined,
-              }}
-              onClick={(e) => {
-                onOpenNodesTree(treeVisualization[category].id);
-              }}
-            >
-              {!treeVisualization[category].isCategory && clone && (
-                <Checkbox
-                  checked={checkedSpecializations.includes(
-                    treeVisualization[category]?.id
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    checkSpecialization(treeVisualization[category].id);
-                  }}
-                  name={treeVisualization[category].id}
-                />
-              )}
-              <Typography
+      {Object.keys(treeVisualization)
+        .sort()
+        .map((category) => (
+          <TreeItem
+            key={treeVisualization[category]?.id || category}
+            nodeId={treeVisualization[category]?.id || category}
+            label={
+              <Box
                 sx={{
-                  fontWeight: treeVisualization[category].isCategory
-                    ? "bold"
-                    : "",
-                  color:
+                  display: "flex",
+                  alignItems: "center",
+                  height: "30px",
+                  p: "25px",
+                  pl: "9px",
+                  borderRadius: "25px",
+                  backgroundColor:
                     currentVisibleNode?.id === treeVisualization[category].id
-                      ? "black"
-                      : treeVisualization[category].isCategory
-                      ? "orange"
+                      ? "#87D37C"
                       : "",
-
-                  ...sx,
+                  justifyContent: sendNode ? "space-between" : undefined,
+                }}
+                onClick={(e) => {
+                  onOpenNodesTree(treeVisualization[category].id);
                 }}
               >
-                {category}
-              </Typography>
+                {!treeVisualization[category].isCategory && clone && (
+                  <Checkbox
+                    checked={checkedSpecializations.includes(
+                      treeVisualization[category]?.id
+                    )}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      checkSpecialization(treeVisualization[category].id);
+                    }}
+                    name={treeVisualization[category].id}
+                  />
+                )}
+                <Typography
+                  sx={{
+                    fontWeight: treeVisualization[category].isCategory
+                      ? "bold"
+                      : "",
+                    color:
+                      currentVisibleNode?.id === treeVisualization[category].id
+                        ? "black"
+                        : treeVisualization[category].isCategory
+                        ? "orange"
+                        : "",
 
-              {clone && !treeVisualization[category].isCategory && (
-                <Button
-                  variant="outlined"
-                  sx={{ m: "9px" }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCloning(treeVisualization[category]);
+                    ...sx,
                   }}
                 >
-                  <span style={{ color: "green", paddingInline: "10px" }}>
-                    New
-                  </span>
-                  {category.split(" ").splice(0, 3).join(" ") +
-                    (category.split(" ").length > 3 ? "..." : "")}{" "}
-                  <span style={{ color: "green", paddingInline: "10px" }}>
-                    {"Specialization "}
-                  </span>
-                </Button>
-              )}
-              {sendNode && !treeVisualization[category].isCategory && (
-                <Button
-                  variant="outlined"
-                  onClick={() =>
-                    sendNode(treeVisualization[category]?.id || "", category)
-                  }
-                >
-                  Send
-                </Button>
-              )}
-            </Box>
-          }
-          sx={{
-            // borderRadius: "25px",.Mui-expanded
-            /*            backgroundColor:
+                  {category}
+                </Typography>
+
+                {clone && !treeVisualization[category].isCategory && (
+                  <Button
+                    variant="outlined"
+                    sx={{ m: "9px" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCloning(treeVisualization[category]);
+                    }}
+                  >
+                    <span style={{ color: "green", paddingInline: "10px" }}>
+                      New
+                    </span>
+                    {category.split(" ").splice(0, 3).join(" ") +
+                      (category.split(" ").length > 3 ? "..." : "")}{" "}
+                    <span style={{ color: "green", paddingInline: "10px" }}>
+                      {"Specialization "}
+                    </span>
+                  </Button>
+                )}
+                {sendNode && !treeVisualization[category].isCategory && (
+                  <Button
+                    variant="outlined"
+                    onClick={() =>
+                      sendNode(treeVisualization[category]?.id || "", category)
+                    }
+                  >
+                    Send
+                  </Button>
+                )}
+              </Box>
+            }
+            sx={{
+              // borderRadius: "25px",.Mui-expanded
+              /*            backgroundColor:
               currentVisibleNode?.id === treeVisualization[category].id
                 ? "#87D37C"
                 : "", */
-            // "& .MuiTreeItem-root": {
-            //   backgroundColor: "#f0f0f0",
-            // },
-            "&.MuiTreeItem-content.Mui-selected": {
-              backgroundColor: "red",
-            },
-            "&.Mui-selected": {
-              backgroundColor: "red",
-            },
-            /*  "&.MuiTreeItem-content": {
+              // "& .MuiTreeItem-root": {
+              //   backgroundColor: "#f0f0f0",
+              // },
+              "&.MuiTreeItem-content.Mui-selected": {
+                backgroundColor: "red",
+              },
+              "&.Mui-selected": {
+                backgroundColor: "red",
+              },
+              /*  "&.MuiTreeItem-content": {
               // borderRadius: "25px",
             }, */
-          }}
-        >
-          {Object.keys(treeVisualization[category].specializations).length >
-            0 &&
-            stopPropagation !== treeVisualization[category].id && (
-              <TreeViewSimplified
-                treeVisualization={treeVisualization[category].specializations}
-                onOpenNodesTree={onOpenNodesTree}
-                expandedNodes={expandedNodes}
-                currentVisibleNode={currentVisibleNode}
-                checkSpecialization={checkSpecialization}
-                checkedSpecializations={checkedSpecializations}
-                handleCloning={handleCloning}
-                clone={clone}
-                sendNode={sendNode}
-              />
-            )}
-        </TreeItem>
-      ))}
+            }}
+          >
+            {Object.keys(treeVisualization[category].specializations).length >
+              0 &&
+              stopPropagation !== treeVisualization[category].id && (
+                <TreeViewSimplified
+                  treeVisualization={
+                    treeVisualization[category].specializations
+                  }
+                  onOpenNodesTree={onOpenNodesTree}
+                  expandedNodes={expandedNodes}
+                  currentVisibleNode={currentVisibleNode}
+                  checkSpecialization={checkSpecialization}
+                  checkedSpecializations={checkedSpecializations}
+                  handleCloning={handleCloning}
+                  clone={clone}
+                  sendNode={sendNode}
+                />
+              )}
+          </TreeItem>
+        ))}
     </TreeView>
   );
 };

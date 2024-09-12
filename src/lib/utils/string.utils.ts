@@ -91,6 +91,6 @@ export const timeAgo = (timestamp: Timestamp) => {
   } else if (minutes > 0) {
     return minutes === 1 ? "1 minute ago" : `${minutes} minutes ago`;
   } else {
-    return "Just now";
+    return "";
   }
 };

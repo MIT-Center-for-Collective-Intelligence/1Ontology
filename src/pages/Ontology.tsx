@@ -133,6 +133,10 @@ import {
 import { SearchBox } from " @components/components/SearchBox/SearchBox";
 import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
 import { Notification } from " @components/components/Chat/Notification";
+interface UpdateInheritanceParams {
+  updatedNode: INode;
+  updatedProperty: string;
+}
 
 const synchronizeStuff = (prev: (any & { id: string })[], change: any) => {
   const docType = change.type;
@@ -163,7 +167,9 @@ const Ontology = () => {
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:599px)") && true;
   const [nodes, setNodes] = useState<{ [id: string]: INode }>({});
-  const [currentVisibleNode, setCurrentVisibleNode] = useState<any>(null);
+  const [currentVisibleNode, setCurrentVisibleNode] = useState<INode | null>(
+    null
+  );
   const [ontologyPath, setOntologyPath] = useState<INodePath[]>([]);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
   const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
@@ -191,7 +197,6 @@ const Ontology = () => {
   }>({});
   const columnResizerRef = useRef<any>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [firstLoad, setFirstLoad] = useState<boolean>(true);
   const [nodeMessages, setNodeMessages] = useState<IChat[]>([]);
   const [technicalMessages, setTechnicalMessages] = useState<IChat[]>([]);
   const [otherMessages, setOtherMessages] = useState<IChat[]>([]);
@@ -202,6 +207,18 @@ const Ontology = () => {
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
     new Date(Date.now())
   );
+
+  useEffect(() => {
+    // Check if a user is logged in
+    if (user) {
+      // Check if the user's email is verified
+      if (!emailVerified) {
+        // If the email is not verified, redirect to the sign-in page
+        router.replace("/signin");
+      }
+    }
+  }, [user, emailVerified]);
+
   useEffect(() => {
     if (!user) return;
     if (!currentVisibleNode?.id) return;
@@ -284,19 +301,317 @@ const Ontology = () => {
     })();
   }, [db]);
 
-  useEffect(() => {
-    // Check if a user is logged in
-    if (user) {
-      // Check if the user's email is verified
-      if (!emailVerified) {
-        // If the email is not verified, redirect to the sign-in page
-        router.replace("/signin");
-      }
-    }
-  }, [user, emailVerified]);
+  const recordLogs = async (logs: any) => {
+    try {
+      if (!user) return;
+      const logRef = doc(collection(db, LOGS));
 
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+
+      const doerCreate = `${user?.uname}-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
+      await setDoc(logRef, {
+        ...logs,
+        createdAt: new Date(),
+        doer: user?.uname,
+        operatingSystem: getOperatingSystem(),
+        browser: getBrowser(),
+        doerCreate,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    if (!nodes.length) return;
+
+    const userQuery = query(
+      collection(db, LOGS),
+      where("__name__", "==", "00EWFECw1PnBRPy4wZVt")
+    );
+
+    const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
+      const docChange = snapshot.docChanges()[0];
+      if (docChange.type !== "added") {
+        window.location.reload();
+      }
+    });
+
+    return () => unsubscribeUser();
+  }, [db, user, nodes]);
+
+  const updateTheUrl = (path: INodePath[]) => {
+    let newHash = "";
+    path.forEach((p: any) => (newHash = newHash + `#${p.id.trim()}`));
+    window.location.hash = newHash;
+  };
+
+  useEffect(() => {
+    // Function to handle changes in the URL hash
+    const handleHashChange = async () => {
+      // Check if there is a hash in the URL
+      if (window.location.hash) {
+        // Call updateUserDoc with the hash split into an array
+        const visibleNodeId = window.location.hash.split("#").reverse()[0];
+
+        updateUserDoc(eachOntologyPath[visibleNodeId]);
+      }
+    };
+
+    // Add an event listener to the window for hash changes
+    window.addEventListener("hashchange", handleHashChange);
+
+    // Call handleHashChange immediately to handle any initial hash
+    handleHashChange();
+
+    // Clean up the event listener when the component is unmounted
+    return () => {
+      window.removeEventListener("hashchange", handleHashChange);
+    };
+  }, [eachOntologyPath]);
+
+  useEffect(() => {
+    setViewValue(1);
+    setTimeout(() => {
+      setViewValue(0);
+    }, 200);
+  }, [user]);
+
+  useEffect(() => {
+    if (!searchValue) return;
+    // Record logs for the search action
+    recordLogs({
+      action: "Searched",
+      query,
+    });
+  }, [searchValue]);
+
+  // Function to perform a search using Fuse.js library
+  const searchWithFuse = (query: string, nodeType?: INodeTypes): INode[] => {
+    // Return an empty array if the query is empty
+    if (!query) {
+      return [];
+    }
+
+    // Perform search using Fuse.js, filter out deleted items
+    return fuse
+      .search(query)
+      .map((result) => result.item)
+      .filter(
+        (item: INode) =>
+          !item.deleted && (!nodeType || nodeType === item.nodeType)
+      );
+  };
+  const searchResults = useMemo(() => {
+    return searchWithFuse(searchValue);
+  }, [searchValue]);
+
+  const handleChange = (event: any, newValue: number) =>
+    setSidebarView(newValue);
+
+  const handleChatTabsChange = (event: any, newValue: number) =>
+    setSelectedChatTab(newValue);
+
+  const handleViewChange = (event: any, newValue: number) =>
+    setViewValue(newValue);
+
+  // This function finds the path of a node in a nested structure of mainNodes and their children.
+  const findOntologyPath = useCallback(
+    ({
+      mainNodes,
+      path,
+      eachOntologyPath,
+    }: {
+      mainNodes: INode[];
+      path: any;
+      eachOntologyPath: any;
+    }) => {
+      // Loop through each main node
+
+      for (let node of mainNodes) {
+        // Update the path for the current node
+
+        eachOntologyPath[node.id] = [
+          ...path,
+          {
+            title: node.title,
+            id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
+            category: !!node.category,
+          },
+        ];
+
+        // Loop through categories in the children of the current node
+
+        for (let category in node.specializations) {
+          // Filter nodes based on their inclusion in the specializations of the current category
+          const childrenIds = node.specializations[category].map(
+            (n: any) => n.id
+          );
+          const children = [];
+
+          for (let childId of childrenIds) {
+            children.push(nodes[childId]);
+          }
+
+          const subPath = [...path];
+
+          subPath.push({
+            title: node.title,
+            id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
+            category: !!node.category,
+          });
+          if (category !== "main") {
+            subPath.push({
+              title: category,
+              id: `${node.id}-${category.trim()}`,
+              category: true,
+            });
+          }
+          // Recursively call the findOntologyPath function for the filtered specializations
+          eachOntologyPath = findOntologyPath({
+            mainNodes: children,
+            path: [...subPath],
+            eachOntologyPath,
+          });
+        }
+      }
+
+      // Return the accumulated ontology paths
+      return eachOntologyPath;
+    },
+    [nodes]
+  );
+  useEffect(() => {
+    const mainNodes = Object.values(nodes).filter((node: any) => node.category);
+    if (mainNodes.length > 0) {
+      // Initialize eachOntologyPath with an empty object and find the ontology path
+      let eachOntologyPath = findOntologyPath({
+        mainNodes,
+        path: [],
+        eachOntologyPath: {},
+      });
+      setEachOntologyPath(eachOntologyPath);
+    }
+  }, [nodes]);
+  useEffect(() => {
+    const controller = columnResizerRef.current;
+
+    if (controller) {
+      const resizer = controller.getResizer();
+      resizer.resizeSection(2, { toSize: rightPanelVisible ? 400 : 0 });
+      controller.applyResizer(resizer);
+    }
+  }, [rightPanelVisible, user]);
+
+  useEffect(() => {
+    const handleUserActivity = () => {
+      setLastInteractionDate(new Date(Date.now()));
+      if (user) {
+        const userDocRef = doc(collection(db, USERS), user.uname);
+        updateDoc(userDocRef, {
+          lastInteracted: Timestamp.now(),
+        });
+      }
+    };
+
+    window.addEventListener("mousemove", handleUserActivity);
+    window.addEventListener("keydown", handleUserActivity);
+
+    return () => {
+      window.removeEventListener("mousemove", handleUserActivity);
+      window.removeEventListener("keydown", handleUserActivity);
+    };
+  }, [user]);
+
+  useEffect(() => {
+    const checkIfDifferentDay = () => {
+      const today = new Date();
+      if (
+        today.getDate() !== lastInteractionDate.getDate() ||
+        today.getMonth() !== lastInteractionDate.getMonth() ||
+        today.getFullYear() !== lastInteractionDate.getFullYear()
+      ) {
+        window.location.reload();
+      }
+    };
+
+    const intervalId = setInterval(checkIfDifferentDay, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [lastInteractionDate]);
+
+  const navigateToNode = async (nodeId: string) => {
+    updateUserDoc(eachOntologyPath[nodeId] || []);
+  };
+
+  const handleClose = useCallback(() => {
+    setOpenSelectModel(false);
+  }, [setOpenSelectModel]);
+
+  const sendNode = useCallback(
+    async (nodeId: string, title: string) => {
+      if (!user) return;
+      const messageData = {
+        nodeId: "",
+        text: title,
+        sender: user.uname,
+        senderDetail: {
+          uname: user.uname,
+          fullname: user.fName + " " + user.lName,
+          imageUrl: user.imageUrl,
+          uid: user.userId,
+        },
+        imageUrls: [],
+        reactions: [],
+        edited: false,
+        deleted: false,
+        totalReplies: 0,
+        type: ["node", "technical", "other"][selectedChatTab],
+        messageType: "node",
+        sharedNodeId: nodeId,
+        createdAt: new Date(),
+      };
+      await addDoc(collection(db, "messages"), messageData);
+    },
+    [selectedChatTab]
+  );
+
+  const openNotification = useCallback(
+    (notificationId: string, messageId: string, type: string) => {
+      const notificationRef = doc(db, "notifications", notificationId);
+      updateDoc(notificationRef, {
+        seen: true,
+      });
+      recordLogs({
+        action: "Opened a notification",
+        notificationId,
+        page: ontologyPath[ontologyPath.length - 1],
+      });
+      setSelectedChatTab(["node", "technical", "other"].indexOf(type));
+      setTimeout(() => {
+        const element = document.getElementById(`message-${messageId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          element.style.border = `solid 1px ${DESIGN_SYSTEM_COLORS.orange400}`;
+          setTimeout(() => {
+            element.style.border = "none";
+          }, 1000);
+        }
+      }, 1000);
+    },
+    [db, user]
+  );
+
+  /* ------- ------- ------- */
   // Function to generate a tree structure of specializations based on main nodes
-  const getSpecializationsTree = (_nodes: any, path: any) => {
+  const getSpecializationsTree = (_nodes: INode[], path: any) => {
     // Object to store the main specializations tree
     let newSpecializationsTree: any = {};
     // Iterate through each main nodes
@@ -363,115 +678,6 @@ const Ontology = () => {
     return newSpecializationsTree;
   };
 
-  const recordLogs = async (logs: any) => {
-    try {
-      if (!user) return;
-      const logRef = doc(collection(db, LOGS));
-
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, "0");
-      const day = String(now.getDate()).padStart(2, "0");
-      const hours = String(now.getHours()).padStart(2, "0");
-      const minutes = String(now.getMinutes()).padStart(2, "0");
-      const seconds = String(now.getSeconds()).padStart(2, "0");
-
-      const doerCreate = `${user?.uname}-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
-      await setDoc(logRef, {
-        ...logs,
-        createdAt: new Date(),
-        doer: user?.uname,
-        operatingSystem: getOperatingSystem(),
-        browser: getBrowser(),
-        doerCreate,
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  useEffect(() => {
-    if (!user) return;
-    if (!nodes.length) return;
-
-    const userQuery = query(
-      collection(db, LOGS),
-      where("__name__", "==", "00EWFECw1PnBRPy4wZVt")
-    );
-
-    const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
-      const docChange = snapshot.docChanges()[0];
-      if (docChange.type !== "added") {
-        window.location.reload();
-      }
-    });
-
-    return () => unsubscribeUser();
-  }, [db, user, nodes]);
-
-  useEffect(() => {
-    // Filter nodes to get only those with a defined category
-    const mainCategories = Object.values(nodes).filter(
-      (node: INode) => node.category
-    );
-
-    // Sort main nodes based on a predefined order
-    mainCategories.sort((nodeA: any, nodeB: any) => {
-      const order = ["WHAT: Activities", "WHO: Actors", "WHY: Evaluation"];
-      const nodeATitle = nodeA.title;
-      const nodeBTitle = nodeA.title;
-      return order.indexOf(nodeATitle) - order.indexOf(nodeBTitle);
-    });
-    // Generate a tree structure of specializations from the sorted main nodes
-    let treeOfSpecializations = getSpecializationsTree(mainCategories, []);
-
-    // Set the generated tree structure for visualization
-    setTreeVisualization(treeOfSpecializations);
-  }, [nodes]);
-
-  const updateTheUrl = (path: INodePath[]) => {
-    let newHash = "";
-    path.forEach((p: any) => (newHash = newHash + `#${p.id.trim()}`));
-    window.location.hash = newHash;
-  };
-
-  useEffect(() => {
-    // Function to handle changes in the URL hash
-    const handleHashChange = async () => {
-      // Check if there is a hash in the URL
-      if (window.location.hash) {
-        // Call updateUserDoc with the hash split into an array
-        const visibleNodeId = window.location.hash.split("#").reverse()[0];
-
-        updateUserDoc(eachOntologyPath[visibleNodeId]);
-      }
-    };
-
-    // Add an event listener to the window for hash changes
-    window.addEventListener("hashchange", handleHashChange);
-
-    // Call handleHashChange immediately to handle any initial hash
-    handleHashChange();
-
-    // Clean up the event listener when the component is unmounted
-    return () => {
-      window.removeEventListener("hashchange", handleHashChange);
-    };
-  }, [eachOntologyPath]);
-
-  const initializeExpanded = (ontologyPath: INodePath[]) => {
-    const newExpandedSet: Set<string> = new Set();
-    for (let node of ontologyPath) {
-      newExpandedSet.add(node.id);
-    }
-    setExpandedNodes(newExpandedSet);
-  };
-  useEffect(() => {
-    setViewValue(1);
-    setTimeout(() => {
-      setViewValue(0);
-    }, 1000);
-  }, [user]);
-
   useEffect(() => {
     // Check if user or nodes are not available
     if (!user) return;
@@ -497,82 +703,21 @@ const Ontology = () => {
       //update the expanded nodes state
       if (docChange.type === "added") {
         initializeExpanded(dataChange?.ontologyPath || []);
+        // Get the last ontology in the ontologyPath or an empty string if none
+        const lastNode = dataChange?.ontologyPath
+          ? [...dataChange?.ontologyPath]?.reverse()[0] || ""
+          : "";
+        // If the node is found, set it as the open node in the component state
+        if (nodes[lastNode.id]) setCurrentVisibleNode(nodes[lastNode.id]);
       }
       // Update the URL based on the ontologyPath
       updateTheUrl(dataChange?.ontologyPath || []);
-
-      // Get the last ontology in the ontologyPath or an empty string if none
-      const lastNode = dataChange?.ontologyPath
-        ? [...dataChange?.ontologyPath]?.reverse()[0] || ""
-        : "";
-
-      // If the node is found, set it as the open node in the component state
-      if (nodes[lastNode.id]) setCurrentVisibleNode(nodes[lastNode.id]);
     });
 
     // Cleanup function: Unsubscribe from the user data snapshot listener
     return () => unsubscribeUser();
   }, [db, user, nodes]);
 
-  useEffect(() => {
-    // Check if a user is logged in
-    if (!user) return;
-    // Define the ontologyLock query
-    const nodeLocksQuery = query(
-      collection(db, LOCKS),
-      where("deleted", "==", false)
-    );
-
-    // Subscribe to changes in the nodeLock collection
-    const unsubscribeNodeLocks = onSnapshot(nodeLocksQuery, (snapshot) => {
-      // Get the document changes in the snapshot
-      const docChanges = snapshot.docChanges();
-
-      // Update the lockedNode state based on the document changes
-      setLockedNodeFields((lockedNode: ILockedNode) => {
-        let _lockedNode = { ...lockedNode };
-
-        // Iterate through each document change
-        for (let change of docChanges) {
-          const changeData: any = change.doc.data();
-
-          // Handle removed documents
-          if (
-            change.type === "removed" &&
-            _lockedNode.hasOwnProperty(changeData.node)
-          ) {
-            delete _lockedNode[changeData.node][changeData.field];
-          }
-          // Handle added documents
-          else if (change.type === "added") {
-            _lockedNode = {
-              ..._lockedNode,
-              [changeData.node]: {
-                ..._lockedNode[changeData.node],
-                [changeData.field]: {
-                  id: change.doc.id,
-                  ...changeData,
-                },
-              },
-            };
-          }
-        }
-
-        // Return the updated lockedNodeFields state
-        return _lockedNode;
-      });
-    });
-
-    // Unsubscribe from the ontologyLock collection when the component is unmounted
-    return () => unsubscribeNodeLocks();
-
-    // Dependency array includes user and db, meaning the effect will re-run if user or db changes
-  }, [user, db]);
-
-  /* 
- // TO:DO: Load only the data that the user is currently navigating through, 
- to optimize for performance when the database get's larger
- */
   useEffect(() => {
     // Create a query for the NODES collection where "deleted" is false
     const nodesQuery = query(
@@ -610,19 +755,34 @@ const Ontology = () => {
 
     // Unsubscribe from the snapshot listener when the component is unmounted
     return () => unsubscribeNodes();
-
-    // TO:DO: Load only the data that the user is currently navigating through, optimize for performance
   }, [db]);
 
-  // Function to get the parent ID based on the node type
-  const getParent = (type: string) => {
-    if (type === "Evaluation") {
-      return treeVisualization["WHY: Evaluation"].id;
-    } else if (type === "Actor") {
-      return treeVisualization["WHO: Actors"].id;
-    } /* else if (type === "Process") {
-      return treeVisualization["HOW: Processes"].id;
-    } */
+  useEffect(() => {
+    // Filter nodes to get only those with a defined category
+    const mainCategories = Object.values(nodes).filter(
+      (node: INode) => node.category
+    );
+
+    // Sort main nodes based on a predefined order
+    mainCategories.sort((nodeA: any, nodeB: any) => {
+      const order = ["WHAT: Activities", "WHO: Actors", "WHY: Evaluation"];
+      const nodeATitle = nodeA.title;
+      const nodeBTitle = nodeB.title;
+      return order.indexOf(nodeATitle) - order.indexOf(nodeBTitle);
+    });
+    // Generate a tree structure of specializations from the sorted main nodes
+    let treeOfSpecializations = getSpecializationsTree(mainCategories, []);
+
+    // Set the generated tree structure for visualization
+    setTreeVisualization(treeOfSpecializations);
+  }, [nodes]);
+
+  const initializeExpanded = (ontologyPath: INodePath[]) => {
+    const newExpandedSet: Set<string> = new Set();
+    for (let node of ontologyPath) {
+      newExpandedSet.add(node.id);
+    }
+    setExpandedNodes(newExpandedSet);
   };
 
   // Callback function to handle navigation when a link is clicked
@@ -631,31 +791,9 @@ const Ontology = () => {
       try {
         // Check if user is logged in and node is open
         if (!user || !currentVisibleNode) return;
-
-        /*   // Check if the clicked node is already in the nodes list
-        if (
-          nodes
-            .filter((node: INode) => node.category)
-            .map((node: INode) => node.title)
-            .includes(path.title)
-        )
-          return; */
-
-        // Update the open node or add a new node if not in the list
         if (nodes[path.id]) {
           setCurrentVisibleNode(nodes[path.id]);
-        } /* else {
-          const parent = getParent(NODES_TYPES[type].nodeType);
-          const parentSet: any = new Set([currentVisibleNode.id, parent]);
-          const parents = [...parentSet];
-          const newNode = NODES_TYPES[type];
-          addNewNode({
-            id: path.id,
-            newNode: { parents, ...newNode },
-          });
-          setCurrentVisibleNode({ id: path.id, ...newNode, parents });
-        } */
-
+        }
         // Update ontology path and user document
         let _ontologyPath = [...ontologyPath];
         const pathIdx = _ontologyPath.findIndex((p: any) => p.id === path.id);
@@ -790,15 +928,6 @@ const Ontology = () => {
     [nodes, user, eachOntologyPath]
   );
 
-  // Function to order comments based on their creation timestamp
-  const orderComments = () => {
-    return (currentVisibleNode?.comments || []).sort((a: any, b: any) => {
-      const timestampA: any = a.createdAt.toDate();
-      const timestampB: any = b.createdAt.toDate();
-      return timestampA - timestampB;
-    });
-  };
-
   // Function to retrieve main specializations from tree visualization data
   const getMainSpecializations = (treeVisualization: TreeVisual) => {
     let mainSpecializations: MainSpecializations = {};
@@ -822,259 +951,7 @@ const Ontology = () => {
     }
     return mainSpecializations;
   };
-  useEffect(() => {
-    if (!searchValue) return;
-    // Record logs for the search action
-    recordLogs({
-      action: "Searched",
-      query,
-    });
-  }, [searchValue]);
 
-  // Function to perform a search using Fuse.js library
-  const searchWithFuse = (query: string, nodeType?: INodeTypes): INode[] => {
-    // Return an empty array if the query is empty
-    if (!query) {
-      return [];
-    }
-
-    // Perform search using Fuse.js, filter out deleted items
-    return fuse
-      .search(query)
-      .map((result) => result.item)
-      .filter(
-        (item: INode) =>
-          !item.deleted && (!nodeType || nodeType === item.nodeType)
-      );
-  };
-
-  const searchResults = useMemo(() => {
-    return searchWithFuse(searchValue);
-  }, [searchValue]);
-
-  // This function handles the process of sending a new comment to a node.
-  const handleSendComment = async () => {
-    try {
-      // Check if user or currentVisibleNode is not available, exit the function.
-      if (!user || !currentVisibleNode) return;
-
-      // Retrieve the document for the  currentVisibleNode using its ID.
-      const nodeDoc = await getDoc(
-        doc(collection(db, NODES), currentVisibleNode.id)
-      );
-      // Extract existing node data or default to an empty object.
-      const nodeData = nodeDoc.data();
-
-      // Extract existing comments from the node data or initialize as an empty array.
-      const comments = nodeData?.comments || [];
-
-      // Add a new comment to the comments array.
-      comments.push({
-        id: newId(db),
-        content: newComment,
-        sender: (user.fName || "") + " " + user.lName,
-        senderImage: user.imageUrl,
-        senderUname: user.uname,
-        createdAt: new Date(),
-      });
-
-      // Update the node document with the new comments array.
-      await updateDoc(nodeDoc.ref, { comments });
-
-      // Record the comment action in the application logs.
-      await recordLogs({
-        action: "Commented",
-        comment: newComment,
-        node: nodeDoc.id,
-      });
-
-      // Clear the newComment state after successfully sending the comment.
-      setNewComment("");
-    } catch (error) {
-      // Handle any errors that may occur during the process and log them.
-      console.error(error);
-    }
-  };
-
-  // Function to delete a comment by its ID
-  const deleteComment = async (commentId: string) => {
-    try {
-      // Check if there is an open node
-      if (!currentVisibleNode) return;
-
-      // If the comment being edited matches the comment to delete, reset editing state and return
-      if (editingComment === commentId) {
-        setEditingComment("");
-        setUpdateComment("");
-        return;
-      }
-
-      // Confirm deletion with the user
-      if (
-        await confirmIt(
-          "Are you sure you want to delete the comment?",
-          "Delete Comment",
-          "Keep Comment"
-        )
-      ) {
-        // Retrieve the node document from the database
-        const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id)
-        );
-        const nodeData = nodeDoc.data();
-
-        // Retrieve and filter out the comment to be deleted
-        let comments = nodeData?.comments || [];
-        const removedComment = comments.filter((c: any) => c.id === commentId);
-        comments = comments.filter((c: any) => c.id !== commentId);
-
-        // Update the node document with the modified comments
-        await updateDoc(nodeDoc.ref, { comments });
-
-        // Record the deletion action in the logs
-        await recordLogs({
-          action: "Comment Deleted",
-          comment: removedComment,
-          node: currentVisibleNode.id,
-        });
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  // Function to edit a comment
-  const editComment = async (comment: any) => {
-    try {
-      // Check if there is an open node and the comment matches the editing state
-      if (comment.id === editingComment && currentVisibleNode) {
-        // Retrieve the node document from the database
-        const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id)
-        );
-        const nodeData = nodeDoc.data();
-
-        // Retrieve and update the comment content
-        let comments = nodeData?.comments || [];
-        const commentIdx = comments.findIndex((c: any) => c.id == comment.id);
-
-        // Record the modification action in the logs
-        recordLogs({
-          action: "Comment Modified",
-          previousValue: comments[commentIdx].content,
-          newValue: updateComment,
-        });
-
-        // Update the comment content and reset the editing state
-        comments[commentIdx].content = updateComment;
-        setEditingComment("");
-        await updateDoc(nodeDoc.ref, { comments });
-
-        // Reset additional state variables
-        setUpdateComment("");
-        setNewComment("");
-        return;
-      }
-
-      // If not in editing state, set the comment as the one being edited
-      setEditingComment(comment.id);
-      setUpdateComment(comment.content);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleChange = (event: any, newValue: number) => {
-    setSidebarView(newValue);
-  };
-
-  const handleChatTabsChange = (event: any, newValue: number) => {
-    setSelectedChatTab(newValue);
-  };
-
-  const handleViewChange = (event: any, newValue: number) => {
-    setViewValue(newValue);
-  };
-
-  // This function finds the path of a node in a nested structure of mainNodes and their children.
-  const findOntologyPath = useCallback(
-    ({
-      mainNodes,
-      path,
-      eachOntologyPath,
-    }: {
-      mainNodes: INode[];
-      path: any;
-      eachOntologyPath: any;
-    }) => {
-      // Loop through each main node
-
-      for (let node of mainNodes) {
-        // Update the path for the current node
-
-        eachOntologyPath[node.id] = [
-          ...path,
-          {
-            title: node.title,
-            id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
-            category: !!node.category,
-          },
-        ];
-
-        // Loop through categories in the children of the current node
-
-        for (let category in node.specializations) {
-          // Filter nodes based on their inclusion in the specializations of the current category
-          const childrenIds = node.specializations[category].map(
-            (n: any) => n.id
-          );
-          const children = [];
-
-          for (let childId of childrenIds) {
-            children.push(nodes[childId]);
-          }
-
-          const subPath = [...path];
-
-          subPath.push({
-            title: node.title,
-            id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
-            category: !!node.category,
-          });
-          if (category !== "main") {
-            subPath.push({
-              title: category,
-              id: `${node.id}-${category.trim()}`,
-              category: true,
-            });
-          }
-          // Recursively call the findOntologyPath function for the filtered specializations
-          eachOntologyPath = findOntologyPath({
-            mainNodes: children,
-            path: [...subPath],
-            eachOntologyPath,
-          });
-        }
-      }
-
-      // Return the accumulated ontology paths
-      return eachOntologyPath;
-    },
-    [nodes]
-  );
-
-  useEffect(() => {
-    const mainNodes = Object.values(nodes).filter((node: any) => node.category);
-    if (mainNodes.length > 0) {
-      // Initialize eachOntologyPath with an empty object and find the ontology path
-      let eachOntologyPath = findOntologyPath({
-        mainNodes,
-        path: [],
-        eachOntologyPath: {},
-      });
-      setEachOntologyPath(eachOntologyPath);
-    }
-  }, [nodes]);
   // This function is called when a search result node is clicked.
   const openSearchedNode = (node: any) => {
     try {
@@ -1097,11 +974,6 @@ const Ontology = () => {
       console.error(error);
     }
   };
-
-  interface UpdateInheritanceParams {
-    updatedNode: INode;
-    updatedProperty: string;
-  }
 
   // Function to handle inheritance
   const updateInheritance = async ({
@@ -1240,115 +1112,6 @@ const Ontology = () => {
       batch = writeBatch(db);
     }
   };
-
-  useEffect(() => {
-    const controller = columnResizerRef.current;
-
-    if (controller) {
-      const resizer = controller.getResizer();
-      resizer.resizeSection(2, { toSize: rightPanelVisible ? 400 : 0 });
-      controller.applyResizer(resizer);
-    }
-  }, [rightPanelVisible, user]);
-
-  useEffect(() => {
-    const handleUserActivity = () => {
-      setLastInteractionDate(new Date(Date.now()));
-      if (user) {
-        const userDocRef = doc(collection(db, USERS), user.uname);
-        updateDoc(userDocRef, {
-          lastInteracted: Timestamp.now(),
-        });
-      }
-    };
-
-    window.addEventListener("mousemove", handleUserActivity);
-    window.addEventListener("keydown", handleUserActivity);
-
-    return () => {
-      window.removeEventListener("mousemove", handleUserActivity);
-      window.removeEventListener("keydown", handleUserActivity);
-    };
-  }, [user]);
-
-  useEffect(() => {
-    const checkIfDifferentDay = () => {
-      const today = new Date();
-      if (
-        today.getDate() !== lastInteractionDate.getDate() ||
-        today.getMonth() !== lastInteractionDate.getMonth() ||
-        today.getFullYear() !== lastInteractionDate.getFullYear()
-      ) {
-        window.location.reload();
-      }
-    };
-
-    const intervalId = setInterval(checkIfDifferentDay, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [lastInteractionDate]);
-
-  const navigateToNode = async (nodeId: string) => {
-    updateUserDoc(eachOntologyPath[nodeId] || []);
-  };
-
-  const handleClose = useCallback(() => {
-    setOpenSelectModel(false);
-  }, [setOpenSelectModel]);
-
-  const sendNode = useCallback(
-    async (nodeId: string, title: string) => {
-      if (!user) return;
-      const messageData = {
-        nodeId: "",
-        text: title,
-        sender: user.uname,
-        senderDetail: {
-          uname: user.uname,
-          fullname: user.fName + " " + user.lName,
-          imageUrl: user.imageUrl,
-          uid: user.userId,
-        },
-        imageUrls: [],
-        reactions: [],
-        edited: false,
-        deleted: false,
-        totalReplies: 0,
-        type: ["node", "technical", "other"][selectedChatTab],
-        messageType: "node",
-        sharedNodeId: nodeId,
-        createdAt: new Date(),
-      };
-      await addDoc(collection(db, "messages"), messageData);
-    },
-    [selectedChatTab]
-  );
-
-  const openNotification = useCallback(
-    (notificationId: string, messageId: string, type: string) => {
-      const notificationRef = doc(db, "notifications", notificationId);
-      updateDoc(notificationRef, {
-        seen: true,
-      });
-      recordLogs({
-        action: "Opened a notification",
-        notificationId,
-        page: ontologyPath[ontologyPath.length - 1],
-      });
-      setSelectedChatTab(["node", "technical", "other"].indexOf(type));
-      setTimeout(() => {
-        const element = document.getElementById(`message-${messageId}`);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
-          element.style.border = `solid 1px ${DESIGN_SYSTEM_COLORS.orange400}`;
-          setTimeout(() => {
-            element.style.border = "none";
-          }, 1000);
-        }
-      }, 1000);
-    },
-    [db, user]
-  );
 
   return (
     <Box>

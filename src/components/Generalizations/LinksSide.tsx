@@ -74,7 +74,7 @@ const LinksSide = ({
             sx={{ px: 1, py: 0 }}
             variant="outlined"
           >
-            {relationType === "specializations" ? "Select" : "Add "}
+            {relationType === "specializations" ? "Select " : "Add "}
             {capitalizeFirstLetter(relationType)}
           </Button>
 
