@@ -134,7 +134,10 @@ import { SearchBox } from "../SearchBox/SearchBox";
 import NodeBody from "../NodBody/NodeBody";
 import LinksSide from "../Generalizations/LinksSide";
 import LinksSideParts from "../Parts/LinksSideParts";
-import { getTitle } from " @components/lib/utils/string.utils";
+import {
+  getPropertyValue,
+  getTitle,
+} from " @components/lib/utils/string.utils";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -149,7 +152,7 @@ type INodeProps = {
   updateUserDoc: (ontologyPath: INodePath[]) => void;
   user: any;
   mainSpecializations: MainSpecializations;
-  nodes: INode[];
+  nodes: { [id: string]: INode };
   addNewNode: ({ id, newNode }: { id: string; newNode: any }) => void;
   editNode: string;
   setEditNode: (state: string) => void;
@@ -214,7 +217,7 @@ const Node = ({
   const [saveType, setSaveType] = useState("");
   const [viewValue, setViewValue] = useState<number>(0);
   const [viewValueSpecialization, setViewValueSpecialization] =
-    useState<number>(0);
+    useState<number>(1);
 
   const db = getFirestore();
 
@@ -496,7 +499,7 @@ const Node = ({
 
       // Initialize a new array for storing updated children
       let oldChildren = [];
-      console.log("property ==>", property);
+
       if (property === "specializations" || property === "generalizations") {
         oldChildren = [...nodeData[property][selectedCategory]];
       } else {
@@ -504,11 +507,10 @@ const Node = ({
           ...((nodeData.properties[property] || {})[selectedCategory] || []),
         ];
       }
-      console.log("checkedSpecializations ==>", checkedSpecializations);
       // Iterate through checkedSpecializations to update newchildren
       for (let checked of checkedSpecializations) {
         // Find the node object from the children array
-        const findNode = nodes.find((node: INode) => node.id === checked);
+        const findNode = nodes[checked];
 
         // Check if the node is not already present in newchildren
         const indexFound = oldChildren.findIndex((onto) => onto.id === checked);
@@ -525,7 +527,6 @@ const Node = ({
         checkedSpecializations.includes(onto.id)
       );
 
-      console.log("oldChildren", oldChildren);
       if (property === "generalizations" && oldChildren.length === 0) {
         await confirmIt(
           "You cannot remove all the generalizations for this node make sure it at least link to one generalization",
@@ -535,7 +536,7 @@ const Node = ({
         return;
       }
       // If _type is "specializations", update main children
-      console.log("selectedCategory", selectedCategory);
+
       if (property === "specializations" || property === "generalizations") {
         nodeData[property][selectedCategory] = oldChildren;
       } else {
@@ -545,7 +546,7 @@ const Node = ({
           nodeData.properties[property][selectedCategory] = oldChildren;
         }
       }
-      console.log("nodeData", nodeData, property);
+
       // If inheritance is present, reset the children field
       if (
         nodeData.inheritance &&
@@ -879,8 +880,7 @@ const Node = ({
         if (specializations.length > 0) {
           if (
             specializations.some((spc: { id: string }) => {
-              const idx = nodes.findIndex((n) => n.id === spc.id);
-              return Object.values(nodes[idx].generalizations).length === 1;
+              return Object.values(nodes[spc.id].generalizations).length === 1;
             })
           ) {
             await confirmIt(
@@ -1369,20 +1369,49 @@ const Node = ({
               </Link>
             </Box>
           )}
-          <Text
-            nodes={nodes}
-            updateInheritance={updateInheritance}
-            recordLogs={recordLogs}
-            user={user}
-            lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
-            addLock={addLock}
-            text={currentVisibleNode.properties.description}
-            currentVisibleNode={currentVisibleNode}
-            property={"description"}
-            setSnackbarMessage={setSnackbarMessage}
-            setCurrentVisibleNode={setCurrentVisibleNode}
-            setEditNode={setEditNode}
-          />
+
+          <Box>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Typography
+                sx={{ fontSize: "20px", fontWeight: "500", mb: "13px" }}
+              >
+                Description:
+              </Typography>
+              {currentVisibleNode.inheritance?.description?.ref && (
+                <Typography
+                  sx={{ color: "grey", fontSize: "14px", ml: "auto" }}
+                >
+                  {'(Inherited from "'}
+                  {getTitle(
+                    nodes,
+                    currentVisibleNode.inheritance.description.ref || ""
+                  )}
+                  {'")'}
+                </Typography>
+              )}
+            </Box>
+
+            <Text
+              nodes={nodes}
+              updateInheritance={updateInheritance}
+              recordLogs={recordLogs}
+              user={user}
+              lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
+              addLock={addLock}
+              text={
+                getPropertyValue(
+                  nodes,
+                  currentVisibleNode.inheritance.description.ref,
+                  "description"
+                ) || currentVisibleNode.properties.description
+              }
+              currentVisibleNode={currentVisibleNode}
+              property={"description"}
+              setSnackbarMessage={setSnackbarMessage}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              setEditNode={setEditNode}
+            />
+          </Box>
         </Paper>
 
         <Paper

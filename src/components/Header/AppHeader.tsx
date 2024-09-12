@@ -193,8 +193,6 @@ const AppHeader = forwardRef(
       return () => unsubscribe();
     }, []);
 
-    console.log(usersNodesViews, "usersNodesViews");
-
     const handleImageChange = useCallback(
       async (event: any) => {
         try {
@@ -452,7 +450,7 @@ const AppHeader = forwardRef(
                   title={
                     <Box>
                       <strong>{`${c.fName} ${c.lName}`}</strong>{" "}
-                      {`viewed ${c.node.title} ${c.lastInteracted}`}
+                      {`last interacted with ${c.node.title} ${c.lastInteracted}`}
                     </Box>
                   }
                 >
@@ -460,7 +458,7 @@ const AppHeader = forwardRef(
                     <OptimizedAvatar
                       alt={`${c.fName} ${c.lName}`}
                       imageUrl={c.imageUrl || ""}
-                      size={30}
+                      size={40}
                       sx={{ border: "none" }}
                     />
                     <Box

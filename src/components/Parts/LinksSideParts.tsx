@@ -35,7 +35,7 @@ type ILinksSideProps = {
   setCurrentVisibleNode: any;
   updateInheritance: any;
   property: "parts" | "isPartOf";
-  nodes: INode[];
+  nodes: { [id: string]: INode };
 };
 
 const LinksSideParts = ({

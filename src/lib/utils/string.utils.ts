@@ -59,10 +59,19 @@ export function splitSentenceIntoChunks(
   return chunks;
 }
 
-export const getTitle = (nodes: INode[], id: string) => {
-  const nodeIdx = nodes.findIndex((n) => n.id === id);
-  if (nodeIdx !== -1) {
-    return nodes[nodeIdx].title;
+export const getTitle = (nodes: { [id: string]: INode }, id: string) => {
+  if (nodes[id]) {
+    return nodes[id].title;
+  }
+};
+
+export const getPropertyValue = (
+  nodes: { [id: string]: INode },
+  id: string | null,
+  property: string
+) => {
+  if (id && nodes[id] && nodes[id].properties[property]) {
+    return nodes[id].properties[property];
   }
 };
 

@@ -14,9 +14,17 @@ type Props = {
   sx?: SxProps<Theme>;
 };
 
-const DEFAULT_AVATAR =  "https://storage.googleapis.com/onecademy-1.appspot.com/ProfilePictures/no-img.png";
+const DEFAULT_AVATAR =
+  "https://storage.googleapis.com/onecademy-1.appspot.com/ProfilePictures/no-img.png";
 
-const OptimizedAvatar: FC<Props> = ({ imageUrl, alt, size, onClick, quality = 50, sx }) => {
+const OptimizedAvatar: FC<Props> = ({
+  imageUrl,
+  alt,
+  size,
+  onClick,
+  quality = 50,
+  sx,
+}) => {
   const [hasError, setHasError] = useState(false);
 
   return (
@@ -31,18 +39,25 @@ const OptimizedAvatar: FC<Props> = ({ imageUrl, alt, size, onClick, quality = 50
         position: "relative",
         borderRadius: "50%",
         cursor: "pointer",
-        border: theme =>
+        border: (theme) =>
           `solid 1px ${
-            theme.palette.mode === "dark" ? DESIGN_SYSTEM_COLORS.notebookG600 : DESIGN_SYSTEM_COLORS.gray50
+            theme.palette.mode === "dark"
+              ? DESIGN_SYSTEM_COLORS.notebookG600
+              : DESIGN_SYSTEM_COLORS.gray50
           }`,
-        ":hover": { ...(onClick && { border: `solid 1px ${DESIGN_SYSTEM_COLORS.primary600}` }) },
+        ":hover": {
+          ...(onClick && {
+            border: `solid 1px ${DESIGN_SYSTEM_COLORS.primary600}`,
+          }),
+        },
         ...sx,
       }}
     >
       {hasError || !imageUrl || imageUrl === DEFAULT_AVATAR ? (
         <Avatar
           sx={{
-            background: "linear-gradient(143.7deg, #FDC830 15.15%, #F37335 83.11%);",
+            background:
+              "linear-gradient(143.7deg, #FDC830 15.15%, #F37335 83.11%);",
             fontWeight: "500",
             fontSize: `${(size - 8) / 2}px`,
             color: common.white,
@@ -52,18 +67,20 @@ const OptimizedAvatar: FC<Props> = ({ imageUrl, alt, size, onClick, quality = 50
         >
           {alt
             .split(" ")
-            .map(c => c[0])
+            .map((c) => c[0])
             .join("")
             .toUpperCase()}
         </Avatar>
       ) : (
-        <Image
+        <Avatar
           src={imageUrl}
           alt={alt}
-          width={size}
-          height={size}
-          quality={quality}
-          objectFit="cover"
+          sx={{
+            width: `${size}px`,
+            height: `${size}px`,
+            quality: quality,
+            objectFit: "cover",
+          }}
           style={{ borderRadius: "50%" }}
           onError={() => setHasError(true)}
         />

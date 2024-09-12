@@ -162,7 +162,7 @@ const Ontology = () => {
   const [{ emailVerified, user }] = useAuth();
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:599px)") && true;
-  const [nodes, setNodes] = useState<INode[]>([]);
+  const [nodes, setNodes] = useState<{ [id: string]: INode }>({});
   const [currentVisibleNode, setCurrentVisibleNode] = useState<any>(null);
   const [ontologyPath, setOntologyPath] = useState<INodePath[]>([]);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
@@ -178,7 +178,7 @@ const Ontology = () => {
   const [selectedChatTab, setSelectedChatTab] = useState<number>(1);
   const [viewValue, setViewValue] = useState<number>(0);
   const [searchValue, setSearchValue] = useState("");
-  const fuse = new Fuse(nodes, { keys: ["title"] });
+  const fuse = new Fuse(Object.values(nodes), { keys: ["title"] });
   const headerRef = useRef<HTMLHeadElement | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [dagreZoomState, setDagreZoomState] = useState<any>(null);
@@ -314,13 +314,13 @@ const Ontology = () => {
       // Iterate through each category in the specializations child-nodes
       for (let category in node.specializations) {
         // Filter nodes based on the current category
-        const specializations =
-          nodes.filter((onto: any) => {
-            const arrayNodes = node?.specializations[category].map(
-              (o: any) => o.id
-            );
-            return arrayNodes.includes(onto.id);
-          }) || [];
+        const specializations = [];
+        const arrayNodes = node?.specializations[category].map(
+          (o: any) => o.id
+        );
+        for (let nId of arrayNodes) {
+          specializations.push(nodes[nId]);
+        }
 
         // Check if the category is the main category
         if (category === "main") {
@@ -410,7 +410,9 @@ const Ontology = () => {
 
   useEffect(() => {
     // Filter nodes to get only those with a defined category
-    const mainCategories = nodes.filter((node: any) => node.category);
+    const mainCategories = Object.values(nodes).filter(
+      (node: INode) => node.category
+    );
 
     // Sort main nodes based on a predefined order
     mainCategories.sort((nodeA: any, nodeB: any) => {
@@ -425,6 +427,7 @@ const Ontology = () => {
     // Set the generated tree structure for visualization
     setTreeVisualization(treeOfSpecializations);
   }, [nodes]);
+
   const updateTheUrl = (path: INodePath[]) => {
     let newHash = "";
     path.forEach((p: any) => (newHash = newHash + `#${p.id.trim()}`));
@@ -468,10 +471,11 @@ const Ontology = () => {
       setViewValue(0);
     }, 1000);
   }, [user]);
+
   useEffect(() => {
     // Check if user or nodes are not available
     if (!user) return;
-    if (!nodes.length) return;
+    if (!Object.keys(nodes).length) return;
 
     // Query the database for the user based on userId
     const userQuery = query(
@@ -502,11 +506,8 @@ const Ontology = () => {
         ? [...dataChange?.ontologyPath]?.reverse()[0] || ""
         : "";
 
-      // Find the index of the last ontology in the nodes array
-      const nodeIdx = nodes.findIndex((node: any) => node.id === lastNode.id);
-
       // If the node is found, set it as the open node in the component state
-      if (nodes[nodeIdx]) setCurrentVisibleNode(nodes[nodeIdx]);
+      if (nodes[lastNode.id]) setCurrentVisibleNode(nodes[lastNode.id]);
     });
 
     // Cleanup function: Unsubscribe from the user data snapshot listener
@@ -585,29 +586,20 @@ const Ontology = () => {
       const docChanges = snapshot.docChanges();
 
       // Update the state based on the changes in the nodes collection
-      setNodes((nodes: INode[]) => {
-        const _nodes = [...nodes];
+      setNodes((nodes: { [id: string]: INode }) => {
+        const _nodes = { ...nodes }; // Clone the existing nodes object
 
         // Loop through each change in the snapshot
         for (let change of docChanges) {
           const changeData: any = change.doc.data();
+          const nodeId = change.doc.id;
 
-          // Find the index of the document in the current state
-          const previousIdx = _nodes.findIndex((d) => d.id === change.doc.id);
-
-          // Check the type of change and update the state accordingly
-          if (change.type === "removed" && previousIdx !== -1) {
-            // If the document is removed, remove it from the state
-            _nodes.splice(previousIdx, 1);
-          } else if (previousIdx !== -1) {
-            // If the document is modified, update its data in the state
-            _nodes[previousIdx] = { id: change.doc.id, ...changeData };
+          if (change.type === "removed" && _nodes[nodeId]) {
+            // If the document is removed, delete it from the state
+            delete _nodes[nodeId];
           } else {
-            // If the document is added, add it to the state
-            _nodes.push({
-              id: change.doc.id,
-              ...changeData,
-            });
+            // If the document is added or modified, add/update its data in the state
+            _nodes[nodeId] = { id: nodeId, ...changeData };
           }
         }
 
@@ -640,21 +632,18 @@ const Ontology = () => {
         // Check if user is logged in and node is open
         if (!user || !currentVisibleNode) return;
 
-        // Check if the clicked node is already in the nodes list
+        /*   // Check if the clicked node is already in the nodes list
         if (
           nodes
             .filter((node: INode) => node.category)
             .map((node: INode) => node.title)
             .includes(path.title)
         )
-          return;
-
-        // Find index of the clicked node in the nodes array
-        const nodeIndex = nodes.findIndex((node: INode) => node.id === path.id);
+          return; */
 
         // Update the open node or add a new node if not in the list
-        if (nodeIndex !== -1) {
-          setCurrentVisibleNode(nodes[nodeIndex]);
+        if (nodes[path.id]) {
+          setCurrentVisibleNode(nodes[path.id]);
         } /* else {
           const parent = getParent(NODES_TYPES[type].nodeType);
           const parentSet: any = new Set([currentVisibleNode.id, parent]);
@@ -687,18 +676,10 @@ const Ontology = () => {
   // Function to update the user document with the current ontology path
   const updateUserDoc = async (ontologyPath: INodePath[]) => {
     if (!user) return;
-
-    // Query to get the user document
-    const userQuery = query(
-      collection(db, USERS),
-      where("userId", "==", user.userId)
-    );
-    const userDocs = await getDocs(userQuery);
-    const userDoc = userDocs.docs[0];
-
+    const userRef = doc(collection(db, USERS), user.uname);
     // Update the user document with the ontology path
     if (ontologyPath) {
-      await updateDoc(userDoc.ref, { ontologyPath });
+      await updateDoc(userRef, { ontologyPath });
 
       // Record logs if ontology path is not empty
       if (ontologyPath.length > 0) {
@@ -738,45 +719,6 @@ const Ontology = () => {
     [nodes]
   );
 
-  // This function adds a child-node to a parent node in a Firestore database.
-  // It takes the type and id of the child-node as parameters.
-
-  const addChildToParentNode = async (type: string, id: string) => {
-    // Get the ID of the parent node based on the provided type.
-    const parentId = getParent(type);
-
-    // Check if a parent ID exists.
-    if (parentId) {
-      // Find the parent node in the ontologies array.
-      const parent: any = nodes.find((node: any) => node.id === parentId);
-
-      // Get a reference to the parent node in Firestore.
-      const nodeRef = doc(collection(db, NODES), parentId);
-
-      // Extract the specializations array from the parent node.
-      const specializations = parent.children.specializations;
-
-      // Find the index of the child-node in the specializations array.
-      const specializationIdx = parent.children.specializations.findIndex(
-        (spcial: any) => spcial.id === id
-      );
-
-      // If the child-node is not already in the array, add it.
-      if (specializationIdx === -1) {
-        specializations.push({
-          id,
-          title: "",
-        });
-      }
-
-      // Update the specializations array in the parent node.
-      parent.children.specializations = specializations;
-
-      // Update the parent node in Firestore with the modified data.
-      await updateDoc(nodeRef, { ...parent, updatedAt: new Date() });
-    }
-  };
-
   // Define a callback function to handle the opening of the ontology DAGRE view.
   const onOpenNodeDagre = useCallback(
     async (nodeId: string) => {
@@ -784,17 +726,16 @@ const Ontology = () => {
       if (!user) return;
 
       // Find the index of the node with the specified ID in the ontologies array.
-      const nodeIdx = nodes.findIndex((onto: any) => onto.id === nodeId);
 
       // Check if the node with the specified ID exists and is not a main node (no category).
-      if (nodeIdx !== -1 && !nodes[nodeIdx].category) {
+      if (nodes[nodeId] && !nodes[nodeId].category) {
         // Set the currentVisibleNode as the currently selected node.
-        setCurrentVisibleNode(nodes[nodeIdx]);
+        setCurrentVisibleNode(nodes[nodeId]);
 
         // Record logs for the action of opening the DAGRE view for the node.
         await recordLogs({
           action: "opened dagre-view",
-          itemClicked: nodes[nodeIdx].id,
+          itemClicked: nodes[nodeId].id,
         });
 
         // Update the user document with the ontology path.
@@ -802,8 +743,8 @@ const Ontology = () => {
           ...(eachOntologyPath[nodeId] || [
             {
               id: nodeId,
-              title: nodes[nodeIdx].title,
-              category: !!nodes[nodeIdx].category,
+              title: nodes[nodeId].title,
+              category: !!nodes[nodeId].category,
             },
           ]),
         ]);
@@ -829,18 +770,16 @@ const Ontology = () => {
         }
         return newExpanded;
       });
-      // Find the index of the node in the ontologies array
-      const nodeIdx = nodes.findIndex((onto: any) => onto.id === nodeId);
 
       // Check if node exists and has a category
-      if (nodeIdx !== -1 && !nodes[nodeIdx].category) {
+      if (nodes[nodeId] && !nodes[nodeId].category) {
         // Set the currently open node
-        setCurrentVisibleNode(nodes[nodeIdx]);
+        setCurrentVisibleNode(nodes[nodeId]);
 
         // Record logs for the action of clicking the tree-view
         await recordLogs({
           action: "clicked tree-view",
-          itemClicked: nodes[nodeIdx].id,
+          itemClicked: nodes[nodeId].id,
         });
 
         // Update user document with the path
@@ -1089,10 +1028,11 @@ const Ontology = () => {
           const childrenIds = node.specializations[category].map(
             (n: any) => n.id
           );
-          const children =
-            nodes.filter((node: any) => {
-              return childrenIds.includes(node.id);
-            }) || [];
+          const children = [];
+
+          for (let childId of childrenIds) {
+            children.push(nodes[childId]);
+          }
 
           const subPath = [...path];
 
@@ -1124,8 +1064,8 @@ const Ontology = () => {
   );
 
   useEffect(() => {
-    if (nodes.length > 0) {
-      const mainNodes = nodes.filter((node: any) => node.category);
+    const mainNodes = Object.values(nodes).filter((node: any) => node.category);
+    if (mainNodes.length > 0) {
       // Initialize eachOntologyPath with an empty object and find the ontology path
       let eachOntologyPath = findOntologyPath({
         mainNodes,
@@ -1329,7 +1269,7 @@ const Ontology = () => {
       window.removeEventListener("mousemove", handleUserActivity);
       window.removeEventListener("keydown", handleUserActivity);
     };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const checkIfDifferentDay = () => {
@@ -1350,7 +1290,6 @@ const Ontology = () => {
 
   const navigateToNode = async (nodeId: string) => {
     updateUserDoc(eachOntologyPath[nodeId] || []);
-    const node = nodes.find((n) => n.id === nodeId);
   };
 
   const handleClose = useCallback(() => {
@@ -1384,10 +1323,9 @@ const Ontology = () => {
     },
     [selectedChatTab]
   );
-
   return (
     <Box>
-      {nodes.length > 0 ? (
+      {Object.keys(nodes).length > 0 ? (
         <Container
           style={{
             marginTop: "80px",
@@ -1439,6 +1377,7 @@ const Ontology = () => {
 
                 <Box
                   sx={{
+                    height: "85vh",
                     flexGrow: 1,
                     overflow: "auto",
                     ...SCROLL_BAR_STYLE,
@@ -1775,127 +1714,6 @@ const Ontology = () => {
                           />
                         </TabPanel>
                       </Box>
-                      {/* <Box>
-                      {orderComments().map((comment: any) => (
-                        <Paper
-                          key={comment.id}
-                          elevation={6}
-                          sx={{ mt: "15px" }}
-                        >
-                          <Box
-                            sx={{
-                              // mb: "15px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              p: "18px",
-                              pb: "0px",
-                            }}
-                          >
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
-                              <Avatar
-                                src={
-                                  users[comment.senderUname] || NO_IMAGE_USER
-                                }
-                              />
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  ml: "5px",
-                                }}
-                              >
-                                <Typography
-                                  sx={{ ml: "4px", fontSize: "14px" }}
-                                >
-                                  {comment.sender}
-                                </Typography>
-                                <Typography
-                                  sx={{ ml: "4px", fontSize: "12px" }}
-                                >
-                                  {formatFirestoreTimestampWithMoment(
-                                    comment.createdAt
-                                  )}
-                                </Typography>
-                              </Box>
-                            </Box>
-
-                            {comment.senderUname === user?.uname && (
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  justifyContent: "flex-end",
-                                }}
-                              >
-                                <Button onClick={() => editComment(comment)}>
-                                  {comment.id === editingComment
-                                    ? "Save"
-                                    : "Edit"}
-                                </Button>
-                                <Button
-                                  onClick={() => deleteComment(comment.id)}
-                                >
-                                  {" "}
-                                  {comment.id === editingComment
-                                    ? "Cancel"
-                                    : "Delete"}
-                                </Button>
-                              </Box>
-                            )}
-                          </Box>
-                          <Box>
-                            {comment.id === editingComment ? (
-                              <Box sx={{ pr: "12px", pl: "12px", pb: "18px" }}>
-                                <TextField
-                                  variant="outlined"
-                                  multiline
-                                  fullWidth
-                                  value={updateComment}
-                                  onChange={(e: any) => {
-                                    setUpdateComment(e.target.value);
-                                  }}
-                                  autoFocus
-                                />
-                              </Box>
-                            ) : (
-                              <Box sx={{ p: "18px" }}>
-                                <MarkdownRender text={comment.content} />
-                              </Box>
-                            )}
-                          </Box>
-                        </Paper>
-                      ))}
-                      <Paper elevation={3} sx={{ mt: "15px" }}>
-                        <TextField
-                          variant="outlined"
-                          multiline
-                          fullWidth
-                          placeholder="Add a Comment..."
-                          value={newComment}
-                          onChange={(e: any) => {
-                            setNewComment(e.target.value);
-                          }}
-                          InputProps={{
-                            endAdornment: (
-                              <Tooltip title={"Share"}>
-                                <IconButton
-                                  color="primary"
-                                  onClick={handleSendComment}
-                                  edge="end"
-                                >
-                                  <SendIcon />
-                                </IconButton>
-                              </Tooltip>
-                            ),
-                          }}
-                          autoFocus
-                          sx={{
-                            p: "8px",
-                            mt: "5px",
-                          }}
-                        />
-                      </Paper>
-                    </Box>{" "} */}
                     </Box>
                   </TabPanel>
                   <TabPanel value={sidebarView} index={2}>
@@ -1942,7 +1760,7 @@ const Ontology = () => {
           ref={headerRef}
           setRightPanelVisible={setRightPanelVisible}
           rightPanelVisible={rightPanelVisible}
-          loading={nodes.length === 0}
+          loading={false}
           confirmIt={confirmIt}
           setSidebarView={setSidebarView}
         />

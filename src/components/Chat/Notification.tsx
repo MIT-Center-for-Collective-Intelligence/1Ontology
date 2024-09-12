@@ -98,7 +98,7 @@ export const Notification = ({
               }}
             >
               <OptimizedAvatar
-                alt={notification.senderDetail?.fullname}
+                alt={notification.senderDetail?.fullname || ""}
                 imageUrl={notification.senderDetail?.imageUrl}
                 size={40}
                 sx={{ border: "none" }}

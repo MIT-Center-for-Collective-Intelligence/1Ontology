@@ -11,7 +11,10 @@ import {
 } from "@mui/material";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { capitalizeFirstLetter, getTitle } from " @components/lib/utils/string.utils";
+import {
+  capitalizeFirstLetter,
+  getTitle,
+} from " @components/lib/utils/string.utils";
 import { INode } from " @components/types/INode";
 import ChildNode from "../OntologyComponents/ChildNode";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
@@ -31,7 +34,7 @@ type ILinksSideProps = {
   setCurrentVisibleNode: any;
   updateInheritance: any;
   relationType: "generalizations" | "specializations";
-  nodes: INode[];
+  nodes: { [id: string]: INode };
 };
 
 const LinksSide = ({
@@ -52,9 +55,8 @@ const LinksSide = ({
 }: ILinksSideProps) => {
   const properties = currentVisibleNode[relationType];
   const getNumOfGeneralizations = (id: string) => {
-    const index = nodes.findIndex((d) => d.id === id);
-    return index !== -1
-      ? Object.values(nodes[index]?.generalizations || {}).flat().length
+    return nodes[id]
+      ? Object.values(nodes[id]?.generalizations || {}).flat().length
       : 0;
   };
   return (
@@ -72,7 +74,7 @@ const LinksSide = ({
             sx={{ px: 1, py: 0 }}
             variant="outlined"
           >
-            {"Add "}
+            {relationType === "specializations" ? "Select" : "Add "}
             {capitalizeFirstLetter(relationType)}
           </Button>
 
@@ -127,7 +129,10 @@ const LinksSide = ({
                           <Button
                             onClick={() => showList(relationType, category)}
                           >
-                            {"Select"} {relationType}
+                            {relationType === "specializations"
+                              ? "Select"
+                              : "Add "}{" "}
+                            {capitalizeFirstLetter(relationType)}
                           </Button>
                           <Button
                             onClick={() =>

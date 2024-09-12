@@ -102,6 +102,7 @@ export const retrieveAuthenticatedUser = async (
       email: userData.email,
       claims,
       rightPanel: userData.rightPanel,
+      ...userData,
     };
     theme = userData.theme;
   }
