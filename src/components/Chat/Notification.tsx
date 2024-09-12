@@ -15,7 +15,8 @@ type CommentsProps = {
   openNotification: (
     notificationId: string,
     messageId: string,
-    type: string
+    type: string,
+    nodeId?: string
   ) => void;
 };
 export const Notification = ({
@@ -76,7 +77,8 @@ export const Notification = ({
             openNotification(
               notification.id,
               notification.entityId,
-              notification.type
+              notification.type,
+              notification?.nodeId
             )
           }
           key={idx}

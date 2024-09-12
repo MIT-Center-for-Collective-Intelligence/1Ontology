@@ -1376,7 +1376,12 @@ const Ontology = () => {
   );
 
   const openNotification = useCallback(
-    (notificationId: string, messageId: string, type: string) => {
+    (
+      notificationId: string,
+      messageId: string,
+      type: string,
+      nodeId?: string
+    ) => {
       const notificationRef = doc(db, "notifications", notificationId);
       updateDoc(notificationRef, {
         seen: true,
@@ -1386,17 +1391,26 @@ const Ontology = () => {
         notificationId,
         page: ontologyPath[ontologyPath.length - 1],
       });
-      setSelectedChatTab(["node", "technical", "other"].indexOf(type));
-      setTimeout(() => {
-        const element = document.getElementById(`message-${messageId}`);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
-          element.style.border = `solid 1px ${DESIGN_SYSTEM_COLORS.orange400}`;
-          setTimeout(() => {
-            element.style.border = "none";
-          }, 1000);
+      if (type === "node") {
+        const nodeIdx = nodes.findIndex((onto: any) => onto.id === nodeId);
+        if (nodeIdx !== -1) {
+          setCurrentVisibleNode(nodes[nodeIdx]);
         }
-      }, 1000);
+      }
+      setSelectedChatTab(["node", "technical", "other"].indexOf(type));
+      setTimeout(
+        () => {
+          const element = document.getElementById(`message-${messageId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+            element.style.border = `solid 1px ${DESIGN_SYSTEM_COLORS.orange400}`;
+            setTimeout(() => {
+              element.style.border = "none";
+            }, 1000);
+          }
+        },
+        type === "node" ? 2000 : 1000
+      );
     },
     [db, user]
   );
