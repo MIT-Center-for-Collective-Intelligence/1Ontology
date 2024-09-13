@@ -58,20 +58,30 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode }) => {
   return (
     <Box sx={{ padding: 2 }}>
       <Typography sx={{ fontSize: "20px", mb: "14px", fontWeight: "bold" }}>
-      Update Inheritance for {selectedNode.title}
+        Update Inheritance for {selectedNode.title}
       </Typography>
       {Object.entries(selectedNode.inheritance).map(([key, inheritance]) => (
         <Box key={key} sx={{ marginBottom: 3 }}>
           <FormControl component="fieldset">
             <FormLabel
               component="legend"
-              sx={{ fontSize: "20px", fontWeight: "bold" }}
+              sx={{
+                fontSize: "20px",
+                fontWeight: "bold",
+                ml: "15px",
+                mb: "13px",
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark" ? "#242425" : "#D0D5D1",
+                p: "10px",
+                borderRadius: "25px",
+              }}
             >
               {capitalizeFirstLetter(DISPLAY[key] ? DISPLAY[key] : key)}
             </FormLabel>
             <RadioGroup
               value={inheritanceState[key]}
               onChange={(e) => handleInheritanceChange(key, e)}
+              sx={{ ml: "15px" }}
             >
               {[
                 { value: "neverInherit", label: "Never Inherit" },
@@ -79,10 +89,6 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode }) => {
                 {
                   value: "inheritUnlessAlreadyOverRidden",
                   label: "Inherit Unless Already Overridden",
-                },
-                {
-                  value: "inheritAfterReview",
-                  label: "Inherit After Review",
                 },
               ].map(({ value, label }) => (
                 <FormControlLabel

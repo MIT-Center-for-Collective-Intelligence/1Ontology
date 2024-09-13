@@ -73,6 +73,7 @@ import {
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import {
   DocumentReference,
+  Timestamp,
   WriteBatch,
   addDoc,
   collection,
@@ -524,7 +525,9 @@ const Ontology = () => {
       updateTheUrl(dataChange?.ontologyPath || []);
 
       // Get the last ontology in the ontologyPath or an empty string if none
-      const lastNode = [...dataChange?.ontologyPath]?.reverse()[0] || "";
+      const lastNode = dataChange?.ontologyPath
+        ? [...dataChange?.ontologyPath]?.reverse()[0] || ""
+        : "";
 
       // Find the index of the last ontology in the nodes array
       const nodeIdx = nodes.findIndex((node: any) => node.id === lastNode.id);
@@ -1272,11 +1275,12 @@ const Ontology = () => {
     }[];
 
     if (inheritance?.inheritanceType === "inheritAfterReview") {
-      specializations = (await selectIt(
-        <Box>
+      /*   specializations = (await selectIt(
+        <Box sx={{ mb: "15px" }}>
           <Typography>
-            Select the specialization that you want to inherits the change that
-            you have made for <strong>{updatedProperty}</strong>,
+            Select which of the following specializations should inherit the
+            change that you just made to the property{" "}
+            <strong>{updatedProperty}</strong>,
           </Typography>
           <Typography>{"After you're done click continue."}</Typography>
         </Box>,
@@ -1286,7 +1290,7 @@ const Ontology = () => {
       )) as {
         id: string;
         title: string;
-      }[];
+      }[]; */
     }
     if (specializations.length <= 0) {
       return;
@@ -1337,6 +1341,12 @@ const Ontology = () => {
   useEffect(() => {
     const handleUserActivity = () => {
       setLastInteractionDate(new Date(Date.now()));
+      if (user) {
+        const userDocRef = doc(collection(db, USERS), user.uname);
+        updateDoc(userDocRef, {
+          lastInteracted: Timestamp.now(),
+        });
+      }
     };
 
     window.addEventListener("mousemove", handleUserActivity);
