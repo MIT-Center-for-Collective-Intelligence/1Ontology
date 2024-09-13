@@ -48,5 +48,6 @@ export type INotification = {
   type: string;
   notificationType: string;
   entityId: string;
+  nodeId?: string;
   seen: boolean;
 };

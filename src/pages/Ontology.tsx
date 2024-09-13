@@ -63,6 +63,7 @@ import {
   ListItem,
   Modal,
   Paper,
+  Popper,
   Tab,
   Tabs,
   TextField,
@@ -193,8 +194,11 @@ const Ontology = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [firstLoad, setFirstLoad] = useState<boolean>(true);
   const [nodeMessages, setNodeMessages] = useState<IChat[]>([]);
-  const [technicalMessages, setTechnicalMessages] = useState<IChat[]>([]);
-  const [otherMessages, setOtherMessages] = useState<IChat[]>([]);
+  const [bugReportMessages, setBugReportMessages] = useState<IChat[]>([]);
+  const [featureRequestMessages, setFeatureRequestMessages] = useState<IChat[]>(
+    []
+  );
+  const [helpMessages, setHelpMessages] = useState<IChat[]>([]);
   const [openSelectModel, setOpenSelectModel] = useState(false);
   const [notifications, setNotifications] = useState<INotification[]>([]);
 
@@ -202,6 +206,11 @@ const Ontology = () => {
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
     new Date(Date.now())
   );
+  const [anchor, setAnchor] = useState<null | HTMLElement>(null);
+
+  const [openNotificationSection, setOpenNotificationSection] =
+    useState<boolean>(false);
+
   useEffect(() => {
     if (!user) return;
     if (!currentVisibleNode?.id) return;
@@ -222,16 +231,16 @@ const Ontology = () => {
   useEffect(() => {
     if (!user) return;
     setIsLoading(true);
-    setTechnicalMessages([]);
+    setBugReportMessages([]);
     const onSynchronize = (changes: chatChange[]) => {
-      setTechnicalMessages((prev) =>
+      setBugReportMessages((prev) =>
         changes.reduce(synchronizeStuff, [...prev])
       );
       setIsLoading(false);
     };
     const killSnapshot = getMessagesSnapshot(
       db,
-      { type: "technical", lastVisible: null },
+      { type: "bug_report", lastVisible: null },
       onSynchronize
     );
     return () => killSnapshot();
@@ -240,14 +249,32 @@ const Ontology = () => {
   useEffect(() => {
     if (!user) return;
     setIsLoading(true);
-    setOtherMessages([]);
+    setFeatureRequestMessages([]);
     const onSynchronize = (changes: chatChange[]) => {
-      setOtherMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
+      setFeatureRequestMessages((prev) =>
+        changes.reduce(synchronizeStuff, [...prev])
+      );
       setIsLoading(false);
     };
     const killSnapshot = getMessagesSnapshot(
       db,
-      { type: "other", lastVisible: null },
+      { type: "feature_request", lastVisible: null },
+      onSynchronize
+    );
+    return () => killSnapshot();
+  }, [db, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    setIsLoading(true);
+    setHelpMessages([]);
+    const onSynchronize = (changes: chatChange[]) => {
+      setHelpMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
+      setIsLoading(false);
+    };
+    const killSnapshot = getMessagesSnapshot(
+      db,
+      { type: "help", lastVisible: null },
       onSynchronize
     );
     return () => killSnapshot();
@@ -1386,7 +1413,12 @@ const Ontology = () => {
   );
 
   const openNotification = useCallback(
-    (notificationId: string, messageId: string, type: string) => {
+    (
+      notificationId: string,
+      messageId: string,
+      type: string,
+      nodeId?: string
+    ) => {
       const notificationRef = doc(db, "notifications", notificationId);
       updateDoc(notificationRef, {
         seen: true,
@@ -1396,19 +1428,40 @@ const Ontology = () => {
         notificationId,
         page: ontologyPath[ontologyPath.length - 1],
       });
-      setSelectedChatTab(["node", "technical", "other"].indexOf(type));
-      setTimeout(() => {
-        const element = document.getElementById(`message-${messageId}`);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
-          element.style.border = `solid 1px ${DESIGN_SYSTEM_COLORS.orange400}`;
-          setTimeout(() => {
-            element.style.border = "none";
-          }, 1000);
+      if (type === "node") {
+        const nodeIdx = nodes.findIndex((onto: any) => onto.id === nodeId);
+        if (nodeIdx !== -1) {
+          setCurrentVisibleNode(nodes[nodeIdx]);
         }
-      }, 1000);
+      }
+      setSelectedChatTab(
+        ["node", "bug_report", "feature_request", "help"].indexOf(type)
+      );
+      setOpenNotificationSection(false);
+      setAnchor(null);
+      setTimeout(
+        () => {
+          const element = document.getElementById(`message-${messageId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+            element.style.border = `solid 1px ${DESIGN_SYSTEM_COLORS.orange400}`;
+            setTimeout(() => {
+              element.style.border = "none";
+            }, 1000);
+          }
+        },
+        type === "node" ? 2000 : 1000
+      );
     },
     [db, user]
+  );
+
+  const handleNotificationPopup = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      setAnchor(anchor ? null : event.currentTarget);
+      setOpenNotificationSection(!openNotificationSection);
+    },
+    [anchor, openNotificationSection]
   );
 
   return (
@@ -1726,29 +1779,9 @@ const Ontology = () => {
                         }}
                       >
                         <Tab label="This node" {...a11yProps(0)} />
-                        <Tab label="Technical" {...a11yProps(1)} />
-                        <Tab label="Others" {...a11yProps(2)} />
-                        <Tab
-                          label={
-                            <Box
-                              sx={{
-                                display: "flex",
-                                gap: "20px",
-                                alignItems: "center",
-                                width: "120px",
-                              }}
-                            >
-                              <Typography>{"Notifications"}</Typography>
-                              {notifications.length > 0 && (
-                                <Badge
-                                  color="error"
-                                  badgeContent={notifications.length}
-                                />
-                              )}
-                            </Box>
-                          }
-                          {...a11yProps(3)}
-                        />
+                        <Tab label="Bug Reports" {...a11yProps(1)} />
+                        <Tab label="Feature Requests" {...a11yProps(2)} />
+                        <Tab label="Help" {...a11yProps(3)} />
                       </Tabs>
                       <Box>
                         <TabPanel value={selectedChatTab} index={0}>
@@ -1771,9 +1804,9 @@ const Ontology = () => {
                         <TabPanel value={selectedChatTab} index={1}>
                           <Chat
                             user={user}
-                            messages={technicalMessages}
-                            setMessages={setTechnicalMessages}
-                            type="technical"
+                            messages={bugReportMessages}
+                            setMessages={setBugReportMessages}
+                            type="bug_report"
                             users={users}
                             firstLoad={true}
                             isLoading={isLoading}
@@ -1785,9 +1818,9 @@ const Ontology = () => {
                         <TabPanel value={selectedChatTab} index={2}>
                           <Chat
                             user={user}
-                            messages={otherMessages}
-                            setMessages={setOtherMessages}
-                            type="other"
+                            messages={featureRequestMessages}
+                            setMessages={setFeatureRequestMessages}
+                            type="feature_request"
                             users={users}
                             firstLoad={true}
                             isLoading={isLoading}
@@ -1797,10 +1830,17 @@ const Ontology = () => {
                           />
                         </TabPanel>
                         <TabPanel value={selectedChatTab} index={3}>
-                          <Notification
+                          <Chat
                             user={user}
-                            notifications={notifications}
-                            openNotification={openNotification}
+                            messages={helpMessages}
+                            setMessages={setHelpMessages}
+                            type="help"
+                            users={users}
+                            firstLoad={true}
+                            isLoading={isLoading}
+                            confirmIt={confirmIt}
+                            setOpenSelectModel={setOpenSelectModel}
+                            recordLogs={recordLogs}
                           />
                         </TabPanel>
                       </Box>
@@ -1974,8 +2014,31 @@ const Ontology = () => {
           loading={nodes.length === 0}
           confirmIt={confirmIt}
           setSidebarView={setSidebarView}
+          handleNotificationPopup={handleNotificationPopup}
+          notifications={notifications}
         />
       </Box>
+
+      <Popper
+        sx={{
+          backgroundColor: (theme) =>
+            theme.palette.mode === "dark" ? "#3a3b3c" : "#d0d5dd",
+          width: "400px",
+          p: 2,
+          height: "420px",
+          overflowY: "auto",
+        }}
+        placeholder={""}
+        open={openNotificationSection}
+        anchorEl={anchor}
+        placement="bottom-end"
+      >
+        <Notification
+          user={user}
+          notifications={notifications}
+          openNotification={openNotification}
+        />
+      </Popper>
 
       <Modal
         sx={{
