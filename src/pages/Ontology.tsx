@@ -191,7 +191,13 @@ const Ontology = () => {
   const [dagreZoomState, setDagreZoomState] = useState<any>(null);
   const [rightPanelVisible, setRightPanelVisible] = useState<any>(false);
   const [users, setUsers] = useState<
-    { uname: string; fullName: string; imageUrl: string }[]
+    {
+      id: string;
+      display: string;
+      uname: string;
+      fullName: string;
+      imageUrl: string;
+    }[]
   >([]);
   const [eachOntologyPath, setEachOntologyPath] = useState<{
     [key: string]: any;
@@ -318,6 +324,8 @@ const Ontology = () => {
       const _users: any = [];
       usersDocs.docs.forEach((userDoc: any) => {
         _users.push({
+          id: userDoc.data().uname,
+          display: `${userDoc.data().fName} ${userDoc.data().lName}`,
           uname: userDoc.data().uname,
           fullName: `${userDoc.data().fName} ${userDoc.data().lName}`,
           imageUrl: userDoc.data().imageUrl,
@@ -1656,8 +1664,7 @@ const Ontology = () => {
           p: 2,
           height: "420px",
           overflowY: "auto",
-          borderRadius: "25px",
-          zIndex:999
+          zIndex: 999,
         }}
         placeholder={""}
         open={openNotificationSection}
