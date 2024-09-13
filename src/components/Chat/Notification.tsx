@@ -15,8 +15,16 @@ type CommentsProps = {
   openNotification: (
     notificationId: string,
     messageId: string,
-    type: string
+    type: string,
+    nodeId?: string
   ) => void;
+};
+
+const notificationTypes: { [key: string]: string } = {
+  node: "Node",
+  bug_report: "Bug Report",
+  feature_request: "Feature Request",
+  help: "Help",
 };
 export const Notification = ({
   notifications,
@@ -32,7 +40,7 @@ export const Notification = ({
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            marginTop: "40%",
+            marginTop: "20%",
           }}
         >
           <Box sx={{ height: "100%", display: "grid", placeItems: "center" }}>
@@ -76,7 +84,8 @@ export const Notification = ({
             openNotification(
               notification.id,
               notification.entityId,
-              notification.type
+              notification.type,
+              notification?.nodeId
             )
           }
           key={idx}
@@ -180,7 +189,7 @@ export const Notification = ({
                     color: DESIGN_SYSTEM_COLORS.orange400,
                   }}
                 >
-                  For {notification.type} tab
+                  {notificationTypes[notification.type]}
                 </Typography>
               </Box>
             </Box>

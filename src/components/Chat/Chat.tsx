@@ -258,6 +258,7 @@ const Chat = ({
         },
         entityId: entityId,
         notificationType: "message",
+        nodeId: nodeId || "",
         seen: false,
         type: type,
         createdAt: new Date(),

@@ -35,8 +35,10 @@ import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import NotificationsIcon from "@mui/icons-material/Notifications";
 import {
   Avatar,
+  Badge,
   Button,
   CircularProgress,
   LinearProgress,
@@ -91,6 +93,7 @@ import {
 import { isValidHttpUrl } from " @components/lib/utils/utils";
 import { NO_IMAGE_USER } from " @components/lib/CONSTANTS";
 import { INode } from " @components/types/INode";
+import { INotification } from " @components/types/IChat";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 export const HEADER_HEIGHT = 80;
 export const HEADER_HEIGHT_MOBILE = 72;
@@ -104,6 +107,8 @@ type AppHeaderProps = {
   loading: boolean;
   confirmIt: any;
   setSidebarView: any;
+  handleNotificationPopup: (event: React.MouseEvent<HTMLElement>) => void;
+  notifications: INotification[];
 };
 const AppHeader = forwardRef(
   (
@@ -113,6 +118,8 @@ const AppHeader = forwardRef(
       loading,
       confirmIt,
       setSidebarView,
+      handleNotificationPopup,
+      notifications,
     }: AppHeaderProps,
     ref
   ) => {
@@ -490,6 +497,18 @@ const AppHeader = forwardRef(
                 >
                   {rightPanelVisible ? "Hide Right Panel" : "Show Right Panel"}
                 </Button>
+                <IconButton onClick={handleNotificationPopup}>
+                  <>
+                    {notifications.length > 0 && (
+                      <Badge
+                        sx={{ position: "absolute", right: 10, top: 10 }}
+                        color="error"
+                        badgeContent={notifications.length}
+                      />
+                    )}
+                    <NotificationsIcon />
+                  </>
+                </IconButton>
                 <Tooltip title="Change theme">
                   <IconButton onClick={handleThemeSwitch} size="small">
                     {theme.palette.mode === "dark" ? (

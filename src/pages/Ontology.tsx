@@ -63,6 +63,7 @@ import {
   ListItem,
   Modal,
   Paper,
+  Popper,
   Tab,
   Tabs,
   TextField,
@@ -198,8 +199,11 @@ const Ontology = () => {
   const columnResizerRef = useRef<any>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [nodeMessages, setNodeMessages] = useState<IChat[]>([]);
-  const [technicalMessages, setTechnicalMessages] = useState<IChat[]>([]);
-  const [otherMessages, setOtherMessages] = useState<IChat[]>([]);
+  const [bugReportMessages, setBugReportMessages] = useState<IChat[]>([]);
+  const [featureRequestMessages, setFeatureRequestMessages] = useState<IChat[]>(
+    []
+  );
+  const [helpMessages, setHelpMessages] = useState<IChat[]>([]);
   const [openSelectModel, setOpenSelectModel] = useState(false);
   const [notifications, setNotifications] = useState<INotification[]>([]);
 
@@ -218,6 +222,10 @@ const Ontology = () => {
       }
     }
   }, [user, emailVerified]);
+  const [anchor, setAnchor] = useState<null | HTMLElement>(null);
+
+  const [openNotificationSection, setOpenNotificationSection] =
+    useState<boolean>(false);
 
   useEffect(() => {
     if (!user) return;
@@ -239,16 +247,16 @@ const Ontology = () => {
   useEffect(() => {
     if (!user) return;
     setIsLoading(true);
-    setTechnicalMessages([]);
+    setBugReportMessages([]);
     const onSynchronize = (changes: chatChange[]) => {
-      setTechnicalMessages((prev) =>
+      setBugReportMessages((prev) =>
         changes.reduce(synchronizeStuff, [...prev])
       );
       setIsLoading(false);
     };
     const killSnapshot = getMessagesSnapshot(
       db,
-      { type: "technical", lastVisible: null },
+      { type: "bug_report", lastVisible: null },
       onSynchronize
     );
     return () => killSnapshot();
@@ -257,14 +265,32 @@ const Ontology = () => {
   useEffect(() => {
     if (!user) return;
     setIsLoading(true);
-    setOtherMessages([]);
+    setFeatureRequestMessages([]);
     const onSynchronize = (changes: chatChange[]) => {
-      setOtherMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
+      setFeatureRequestMessages((prev) =>
+        changes.reduce(synchronizeStuff, [...prev])
+      );
       setIsLoading(false);
     };
     const killSnapshot = getMessagesSnapshot(
       db,
-      { type: "other", lastVisible: null },
+      { type: "feature_request", lastVisible: null },
+      onSynchronize
+    );
+    return () => killSnapshot();
+  }, [db, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    setIsLoading(true);
+    setHelpMessages([]);
+    const onSynchronize = (changes: chatChange[]) => {
+      setHelpMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
+      setIsLoading(false);
+    };
+    const killSnapshot = getMessagesSnapshot(
+      db,
+      { type: "help", lastVisible: null },
       onSynchronize
     );
     return () => killSnapshot();
@@ -546,68 +572,6 @@ const Ontology = () => {
 
     return () => clearInterval(intervalId);
   }, [lastInteractionDate]);
-
-  const navigateToNode = async (nodeId: string) => {
-    updateUserDoc(eachOntologyPath[nodeId] || []);
-  };
-
-  const handleClose = useCallback(() => {
-    setOpenSelectModel(false);
-  }, [setOpenSelectModel]);
-
-  const sendNode = useCallback(
-    async (nodeId: string, title: string) => {
-      if (!user) return;
-      const messageData = {
-        nodeId: "",
-        text: title,
-        sender: user.uname,
-        senderDetail: {
-          uname: user.uname,
-          fullname: user.fName + " " + user.lName,
-          imageUrl: user.imageUrl,
-          uid: user.userId,
-        },
-        imageUrls: [],
-        reactions: [],
-        edited: false,
-        deleted: false,
-        totalReplies: 0,
-        type: ["node", "technical", "other"][selectedChatTab],
-        messageType: "node",
-        sharedNodeId: nodeId,
-        createdAt: new Date(),
-      };
-      await addDoc(collection(db, "messages"), messageData);
-    },
-    [selectedChatTab]
-  );
-
-  const openNotification = useCallback(
-    (notificationId: string, messageId: string, type: string) => {
-      const notificationRef = doc(db, "notifications", notificationId);
-      updateDoc(notificationRef, {
-        seen: true,
-      });
-      recordLogs({
-        action: "Opened a notification",
-        notificationId,
-        page: ontologyPath[ontologyPath.length - 1],
-      });
-      setSelectedChatTab(["node", "technical", "other"].indexOf(type));
-      setTimeout(() => {
-        const element = document.getElementById(`message-${messageId}`);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
-          element.style.border = `solid 1px ${DESIGN_SYSTEM_COLORS.orange400}`;
-          setTimeout(() => {
-            element.style.border = "none";
-          }, 1000);
-        }
-      }, 1000);
-    },
-    [db, user]
-  );
 
   /* ------- ------- ------- */
   // Function to generate a tree structure of specializations based on main nodes
@@ -1113,6 +1077,138 @@ const Ontology = () => {
     }
   };
 
+  useEffect(() => {
+    const controller = columnResizerRef.current;
+
+    if (controller) {
+      const resizer = controller.getResizer();
+      resizer.resizeSection(2, { toSize: rightPanelVisible ? 400 : 0 });
+      controller.applyResizer(resizer);
+    }
+  }, [rightPanelVisible, user]);
+
+  useEffect(() => {
+    const handleUserActivity = () => {
+      setLastInteractionDate(new Date(Date.now()));
+      if (user) {
+        const userDocRef = doc(collection(db, USERS), user.uname);
+        updateDoc(userDocRef, {
+          lastInteracted: Timestamp.now(),
+        });
+      }
+    };
+
+    window.addEventListener("mousemove", handleUserActivity);
+    window.addEventListener("keydown", handleUserActivity);
+
+    return () => {
+      window.removeEventListener("mousemove", handleUserActivity);
+      window.removeEventListener("keydown", handleUserActivity);
+    };
+  }, []);
+
+  useEffect(() => {
+    const checkIfDifferentDay = () => {
+      const today = new Date();
+      if (
+        today.getDate() !== lastInteractionDate.getDate() ||
+        today.getMonth() !== lastInteractionDate.getMonth() ||
+        today.getFullYear() !== lastInteractionDate.getFullYear()
+      ) {
+        window.location.reload();
+      }
+    };
+
+    const intervalId = setInterval(checkIfDifferentDay, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [lastInteractionDate]);
+
+  const navigateToNode = async (nodeId: string) => {
+    updateUserDoc(eachOntologyPath[nodeId] || []);
+  };
+
+  const handleClose = useCallback(() => {
+    setOpenSelectModel(false);
+  }, [setOpenSelectModel]);
+
+  const sendNode = useCallback(
+    async (nodeId: string, title: string) => {
+      if (!user) return;
+      const messageData = {
+        nodeId: "",
+        text: title,
+        sender: user.uname,
+        senderDetail: {
+          uname: user.uname,
+          fullname: user.fName + " " + user.lName,
+          imageUrl: user.imageUrl,
+          uid: user.userId,
+        },
+        imageUrls: [],
+        reactions: [],
+        edited: false,
+        deleted: false,
+        totalReplies: 0,
+        type: ["node", "technical", "other"][selectedChatTab],
+        messageType: "node",
+        sharedNodeId: nodeId,
+        createdAt: new Date(),
+      };
+      await addDoc(collection(db, "messages"), messageData);
+    },
+    [selectedChatTab]
+  );
+
+  const openNotification = useCallback(
+    (
+      notificationId: string,
+      messageId: string,
+      type: string,
+      nodeId?: string
+    ) => {
+      const notificationRef = doc(db, "notifications", notificationId);
+      updateDoc(notificationRef, {
+        seen: true,
+      });
+      recordLogs({
+        action: "Opened a notification",
+        notificationId,
+        page: ontologyPath[ontologyPath.length - 1],
+      });
+      if (type === "node" && nodeId) {
+        setCurrentVisibleNode(nodes[nodeId]);
+      }
+      setSelectedChatTab(
+        ["node", "bug_report", "feature_request", "help"].indexOf(type)
+      );
+      setOpenNotificationSection(false);
+      setAnchor(null);
+      setTimeout(
+        () => {
+          const element = document.getElementById(`message-${messageId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+            element.style.border = `solid 1px ${DESIGN_SYSTEM_COLORS.orange400}`;
+            setTimeout(() => {
+              element.style.border = "none";
+            }, 1000);
+          }
+        },
+        type === "node" ? 2000 : 1000
+      );
+    },
+    [db, user]
+  );
+
+  const handleNotificationPopup = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      setAnchor(anchor ? null : event.currentTarget);
+      setOpenNotificationSection(!openNotificationSection);
+    },
+    [anchor, openNotificationSection]
+  );
+
   return (
     <Box>
       {Object.keys(nodes).length > 0 ? (
@@ -1429,29 +1525,9 @@ const Ontology = () => {
                         }}
                       >
                         <Tab label="This node" {...a11yProps(0)} />
-                        <Tab label="Technical" {...a11yProps(1)} />
-                        <Tab label="Others" {...a11yProps(2)} />
-                        <Tab
-                          label={
-                            <Box
-                              sx={{
-                                display: "flex",
-                                gap: "20px",
-                                alignItems: "center",
-                                width: "120px",
-                              }}
-                            >
-                              <Typography>{"Notifications"}</Typography>
-                              {notifications.length > 0 && (
-                                <Badge
-                                  color="error"
-                                  badgeContent={notifications.length}
-                                />
-                              )}
-                            </Box>
-                          }
-                          {...a11yProps(3)}
-                        />
+                        <Tab label="Bug Reports" {...a11yProps(1)} />
+                        <Tab label="Feature Requests" {...a11yProps(2)} />
+                        <Tab label="Help" {...a11yProps(3)} />
                       </Tabs>
                       <Box>
                         <TabPanel value={selectedChatTab} index={0}>
@@ -1474,9 +1550,9 @@ const Ontology = () => {
                         <TabPanel value={selectedChatTab} index={1}>
                           <Chat
                             user={user}
-                            messages={technicalMessages}
-                            setMessages={setTechnicalMessages}
-                            type="technical"
+                            messages={bugReportMessages}
+                            setMessages={setBugReportMessages}
+                            type="bug_report"
                             users={users}
                             firstLoad={true}
                             isLoading={isLoading}
@@ -1488,9 +1564,9 @@ const Ontology = () => {
                         <TabPanel value={selectedChatTab} index={2}>
                           <Chat
                             user={user}
-                            messages={otherMessages}
-                            setMessages={setOtherMessages}
-                            type="other"
+                            messages={featureRequestMessages}
+                            setMessages={setFeatureRequestMessages}
+                            type="feature_request"
                             users={users}
                             firstLoad={true}
                             isLoading={isLoading}
@@ -1500,10 +1576,17 @@ const Ontology = () => {
                           />
                         </TabPanel>
                         <TabPanel value={selectedChatTab} index={3}>
-                          <Notification
+                          <Chat
                             user={user}
-                            notifications={notifications}
-                            openNotification={openNotification}
+                            messages={helpMessages}
+                            setMessages={setHelpMessages}
+                            type="help"
+                            users={users}
+                            firstLoad={true}
+                            isLoading={isLoading}
+                            confirmIt={confirmIt}
+                            setOpenSelectModel={setOpenSelectModel}
+                            recordLogs={recordLogs}
                           />
                         </TabPanel>
                       </Box>
@@ -1558,8 +1641,33 @@ const Ontology = () => {
           loading={false}
           confirmIt={confirmIt}
           setSidebarView={setSidebarView}
+          handleNotificationPopup={handleNotificationPopup}
+          notifications={notifications}
         />
       </Box>
+
+      <Popper
+        sx={{
+          backgroundColor: (theme) =>
+            theme.palette.mode === "dark" ? "#3a3b3c" : "#d0d5dd",
+          width: "400px",
+          p: 2,
+          height: "420px",
+          overflowY: "auto",
+        }}
+        placeholder={""}
+        open={openNotificationSection}
+        anchorEl={anchor}
+        placement="bottom-end"
+        onPointerEnterCapture={undefined}
+        onPointerLeaveCapture={undefined}
+      >
+        <Notification
+          user={user}
+          notifications={notifications}
+          openNotification={openNotification}
+        />
+      </Popper>
 
       <Modal
         sx={{
