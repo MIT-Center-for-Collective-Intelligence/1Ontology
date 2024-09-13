@@ -170,7 +170,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     </Typography>
                   )}
                   {Object.values(currentVisibleNode.generalizations).flat()
-                    .length > 1 && (
+                    .length > 10 && (
                     <FormControl
                       sx={{
                         m: 1,

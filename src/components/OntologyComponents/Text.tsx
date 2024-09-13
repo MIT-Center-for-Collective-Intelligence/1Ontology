@@ -157,18 +157,17 @@ const Text = ({
 
     const provider = new WebsocketProvider(
       "wss://demos.yjs.dev/ws",
-      `${currentVisibleNode.id}-${property}`,
+      `${currentVisibleNode.id}-${property}-new`,
       ydoc
     );
     const yText = ydoc.getText("textarea");
     const yCursors = ydoc.getMap("cursors");
     // Initialize yText if it's empty
-    const initialText =
-      property === "title"
-        ? currentVisibleNode.title
-        : currentVisibleNode.properties[property] || "";
+    const initialText = text;
+    yText.delete(0, yText.length); // Delete all existing content
+    // yText.insert(0, initialText); // Insert the new initialText
     /*    if (yText.toString().length === 0) {
-      yText.insert(0, initialText); // Insert initial text
+
     } */
     setCurrentValue(initialText);
 
@@ -343,13 +342,15 @@ const Text = ({
 
   return (
     <Box style={{ position: "relative", width: "100%", padding: "14px" }}>
-      <textarea
-        ref={textAreaRef}
+      <TextField
+        // ref={textAreaRef}
+        multiline
         value={currentValue}
         placeholder="Type something..."
         style={{
           width: "100%",
-          minHeight: property === "title" ? "5px" : "90px",
+          height: "auto",
+          minHeight: property === "title" ? "5px" : "100px",
           padding: "15px",
           borderRadius: "10px",
           // border: "2px solid #4CAF50",
@@ -357,9 +358,9 @@ const Text = ({
           fontSize: property === "title" ? "29px" : "16px",
           fontFamily: "'Roboto', sans-serif",
           color: theme.palette.mode === "dark" ? "white" : "black",
-          backgroundColor: theme.palette.mode === "dark" ? "#25262a" : "",
-          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-          transition: "border-color 0.3s, box-shadow 0.3s",
+          // backgroundColor: theme.palette.mode === "dark" ? "#25262a" : "",
+          // boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+          // transition: "border-color 0.3s, box-shadow 0.3s",
           whiteSpace: "pre-wrap",
           resize: "none",
           zIndex: 1,
@@ -368,7 +369,7 @@ const Text = ({
       />
 
       {/* Overlay for rendering cursors */}
-      <div
+      {/* <div
         ref={cursorOverlayRef}
         style={{
           position: "absolute",
@@ -429,7 +430,7 @@ const Text = ({
             </div>
           );
         })}
-      </div>
+      </div> */}
     </Box>
     // <Box>
     //   <TextField
