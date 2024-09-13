@@ -248,58 +248,49 @@ const Ontology = () => {
       onSynchronize
     );
     return () => killSnapshot();
-  }, [db, user, currentVisibleNode]);
+  }, [db, user, currentVisibleNode?.id]);
 
   useEffect(() => {
     if (!user) return;
-    setIsLoading(true);
     setBugReportMessages([]);
+    setFeatureRequestMessages([]);
+    setHelpMessages([]);
     const onSynchronize = (changes: chatChange[]) => {
       setBugReportMessages((prev) =>
         changes.reduce(synchronizeStuff, [...prev])
       );
-      setIsLoading(false);
     };
     const killSnapshot = getMessagesSnapshot(
       db,
       { type: "bug_report", lastVisible: null },
       onSynchronize
     );
-    return () => killSnapshot();
-  }, [db, user]);
 
-  useEffect(() => {
-    if (!user) return;
-    setIsLoading(true);
-    setFeatureRequestMessages([]);
-    const onSynchronize = (changes: chatChange[]) => {
+    const onFeatureRequestSynchronize = (changes: chatChange[]) => {
       setFeatureRequestMessages((prev) =>
         changes.reduce(synchronizeStuff, [...prev])
       );
-      setIsLoading(false);
     };
-    const killSnapshot = getMessagesSnapshot(
+    const killFeatureRequestSnapshot = getMessagesSnapshot(
       db,
       { type: "feature_request", lastVisible: null },
-      onSynchronize
+      onFeatureRequestSynchronize
     );
-    return () => killSnapshot();
-  }, [db, user]);
 
-  useEffect(() => {
-    if (!user) return;
-    setIsLoading(true);
-    setHelpMessages([]);
-    const onSynchronize = (changes: chatChange[]) => {
+    const onHelSynchronize = (changes: chatChange[]) => {
       setHelpMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
-      setIsLoading(false);
     };
-    const killSnapshot = getMessagesSnapshot(
+    const killHelpSnapshot = getMessagesSnapshot(
       db,
       { type: "help", lastVisible: null },
-      onSynchronize
+      onHelSynchronize
     );
-    return () => killSnapshot();
+
+    return () => {
+      killSnapshot();
+      killFeatureRequestSnapshot();
+      killHelpSnapshot();
+    };
   }, [db, user]);
 
   useEffect(() => {
@@ -1563,7 +1554,7 @@ const Ontology = () => {
                             type="bug_report"
                             users={users}
                             firstLoad={true}
-                            isLoading={isLoading}
+                            isLoading={false}
                             confirmIt={confirmIt}
                             setOpenSelectModel={setOpenSelectModel}
                             recordLogs={recordLogs}
@@ -1577,7 +1568,7 @@ const Ontology = () => {
                             type="feature_request"
                             users={users}
                             firstLoad={true}
-                            isLoading={isLoading}
+                            isLoading={false}
                             confirmIt={confirmIt}
                             setOpenSelectModel={setOpenSelectModel}
                             recordLogs={recordLogs}
@@ -1591,7 +1582,7 @@ const Ontology = () => {
                             type="help"
                             users={users}
                             firstLoad={true}
-                            isLoading={isLoading}
+                            isLoading={false}
                             confirmIt={confirmIt}
                             setOpenSelectModel={setOpenSelectModel}
                             recordLogs={recordLogs}
