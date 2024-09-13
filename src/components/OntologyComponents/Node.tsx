@@ -740,27 +740,17 @@ const Node = ({
         return;
       }
 
-      // Check if the type of sorting is for a CATEGORY
-
       // Extract the source and destination category IDs
       const sourceCategory = source.droppableId; // The source category
       const destinationCategory = destination.droppableId; // The destination category
 
       // Ensure valid source and destination categories and they are not the same
-      if (
-        sourceCategory &&
-        destinationCategory &&
-        sourceCategory !== destinationCategory
-      ) {
-        // Retrieve node document from the database
-        const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id)
-        );
+      if (sourceCategory && destinationCategory) {
+        // Retrieve node document from the anodes object
+        const nodeData = { ...currentVisibleNode };
 
-        // Check if node document exists
-        if (nodeDoc.exists()) {
-          // Extract node data from the document
-          const nodeData = nodeDoc.data();
+        // Ensure nodeData exists
+        if (nodeData) {
           let propertyValue = null;
           if (
             property === "specializations" ||
@@ -771,6 +761,7 @@ const Node = ({
           } else {
             propertyValue = nodeData.properties[property];
           }
+
           // Find the index of the draggable item in the source category
           const nodeIdx = propertyValue[sourceCategory].findIndex(
             (onto: any) => onto.id === draggableId
@@ -778,26 +769,34 @@ const Node = ({
 
           // If the draggable item is found in the source category
           if (nodeIdx !== -1) {
-            // Move the item to the destination category
-            propertyValue[destinationCategory].push(
-              propertyValue[sourceCategory][nodeIdx]
-            );
+            const moveValue = propertyValue[sourceCategory][nodeIdx];
 
             // Remove the item from the source category
             propertyValue[sourceCategory].splice(nodeIdx, 1);
+
+            // Move the item to the destination category
+            propertyValue[destinationCategory].splice(
+              destination.index,
+              0,
+              moveValue
+            );
+            console.log(JSON.stringify(nodeData, null, 2));
+            setCurrentVisibleNode(nodeData);
           }
+          // Update the nodeData with the new property values
+          const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
           if (
             property === "specializations" ||
             property === "generalizations"
           ) {
-            // Get the children and specializations related to the provided subType
-            nodeData[property] = propertyValue;
+            updateDoc(nodeRef, {
+              [property]: propertyValue,
+            });
           } else {
-            nodeData.properties[property] = propertyValue;
+            updateDoc(nodeRef, {
+              [`properties.${property}`]: propertyValue,
+            });
           }
-
-          // Update the node document in the database
-          await updateDoc(nodeDoc.ref, nodeData);
 
           // Record a log of the sorting action
           recordLogs({
@@ -832,12 +831,15 @@ const Node = ({
       if ((generalizationNode.specializations[category] || []).length > 0) {
         // Find the index of the child-node with the specified ID within the children array.
         const specializationIdx = generalizationNode.specializations[
-          type
+          category
         ].findIndex((sub: any) => sub.id === specializationId);
 
         // If the child-node with the specified ID is found, remove it from the array.
         if (specializationIdx !== -1) {
-          generalizationNode.specializations[type].splice(specializationIdx, 1);
+          generalizationNode.specializations[category].splice(
+            specializationIdx,
+            1
+          );
         }
       }
     }
@@ -1040,25 +1042,7 @@ const Node = ({
       await updateDoc(nodeRef, { propertyType, properties });
     }
   };
-  const filterNode = (
-    children: string[],
-    plainText: string[],
-    types: string[]
-  ) => {
-    const _types = types.map((p) => p.toLowerCase());
-    const _children = children
-      .map((t) => t.toLowerCase())
-      .filter((t: string) => !_types.includes(t.toLowerCase()));
-    const _plainText = plainText
-      .map((t) => t.toLowerCase())
-      .filter(
-        (t: string) =>
-          !_types.includes(t.toLowerCase()) &&
-          !["title", "description"].includes(t)
-      );
 
-    return [..._children, ..._plainText];
-  };
   const searchResults = useMemo(() => {
     return searchWithFuse(searchValue, currentVisibleNode.nodeType);
   }, [searchValue]);
@@ -1309,30 +1293,54 @@ const Node = ({
           width: "100%",
         }}
       >
+        {" "}
+        {!currentVisibleNode.locked && (
+          <Box sx={{ mb: "5px", ml: "auto" }}>
+            <Button
+              onClick={deleteNode}
+              variant="contained"
+              sx={{ borderRadius: "25px" }}
+            >
+              Delete Node
+            </Button>
+          </Box>
+        )}
         <Paper
           sx={{
             display: "flex",
             flexDirection: "column",
-            p: "17px",
             width: "100%",
             borderRadius: "25px",
           }}
           elevation={6}
         >
-          {!currentVisibleNode.locked && (
-            <Box sx={{ mb: "5px", ml: "auto" }}>
-              <Button
-                onClick={deleteNode}
-                variant="contained"
-                sx={{ borderRadius: "25px" }}
-              >
-                Delete Node
-              </Button>
-            </Box>
-          )}
-          <Box sx={{ mb: "19px" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+
+              p: 3,
+              pb: 0.5,
+              borderTopRightRadius: "25px",
+              borderTopLeftRadius: "25px",
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: "20px",
+                fontWeight: "500",
+                mb: "13px",
+              }}
+            >
+              Node Title:
+            </Typography>
+          </Box>
+
+          <Box>
             {currentVisibleNode.locked ? (
-              <Typography sx={{ fontSize: "34px" }}>
+              <Typography sx={{ fontSize: "34px", p: "19px" }}>
                 {currentVisibleNode.title}
               </Typography>
             ) : (
@@ -1354,46 +1362,47 @@ const Node = ({
               />
             )}
           </Box>
-          {rootTitle && (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: "15px",
-                mb: "15px",
-              }}
-            >
-              <Typography
+          <Box sx={{ display: "flex", px: "19px", mb: "15px" }}>
+            {rootTitle && (
+              <Box
                 sx={{
-                  fontSize: "19px",
-                  fontWeight: "bold",
-                  color: (theme) =>
-                    theme.palette.mode === "dark"
-                      ? theme.palette.common.gray50
-                      : theme.palette.common.notebookMainBlack,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "15px",
                 }}
               >
-                Root:
-              </Typography>
-              <Link
-                underline="hover"
-                onClick={() => navigateToNode(currentVisibleNode.root)}
-                sx={{
-                  cursor: "pointer",
-                  color: (theme) =>
-                    theme.palette.mode === "dark"
-                      ? theme.palette.common.gray50
-                      : theme.palette.common.notebookMainBlack,
-                  "&:hover": {
-                    textDecoration: "underline",
-                    color: "orange",
-                  },
-                }}
-              >
-                {rootTitle}
-              </Link>
-            </Box>
-          )}
+                <Typography
+                  sx={{
+                    fontSize: "19px",
+                    fontWeight: "bold",
+                    color: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? theme.palette.common.gray50
+                        : theme.palette.common.notebookMainBlack,
+                  }}
+                >
+                  Root:
+                </Typography>
+                <Link
+                  underline="hover"
+                  onClick={() => navigateToNode(currentVisibleNode.root)}
+                  sx={{
+                    cursor: "pointer",
+                    color: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? theme.palette.common.gray50
+                        : theme.palette.common.notebookMainBlack,
+                    "&:hover": {
+                      textDecoration: "underline",
+                      color: "orange",
+                    },
+                  }}
+                >
+                  {rootTitle}
+                </Link>
+              </Box>
+            )}
+          </Box>
         </Paper>
         <Paper
           sx={{
@@ -1462,12 +1471,11 @@ const Node = ({
             setEditNode={setEditNode}
           />
         </Paper>
-
         <Box
           sx={{
             display: "flex",
             flexDirection: "column",
-            p: "17px",
+            // p: "17px",
             width: "100%",
           }}
         >
@@ -1624,7 +1632,15 @@ const Node = ({
                 </Typography>
               )}
               <LinksSideParts
-                properties={currentVisibleNode?.properties?.isPartOf || {}}
+                properties={
+                  getPropertyValue(
+                    nodes,
+                    currentVisibleNode.inheritance.isPartOf.ref,
+                    "isPartOf"
+                  ) ||
+                  currentVisibleNode?.properties?.isPartOf ||
+                  {}
+                }
                 currentVisibleNode={currentVisibleNode}
                 showList={showList}
                 setOpenAddCategory={setOpenAddCategory}
@@ -1662,7 +1678,15 @@ const Node = ({
                 </Typography>
               )}
               <LinksSideParts
-                properties={currentVisibleNode?.properties?.parts || {}}
+                properties={
+                  getPropertyValue(
+                    nodes,
+                    currentVisibleNode.inheritance.parts.ref,
+                    "parts"
+                  ) ||
+                  currentVisibleNode?.properties?.parts ||
+                  {}
+                }
                 currentVisibleNode={currentVisibleNode}
                 showList={showList}
                 setOpenAddCategory={setOpenAddCategory}

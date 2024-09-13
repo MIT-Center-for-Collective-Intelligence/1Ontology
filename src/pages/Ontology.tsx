@@ -90,7 +90,7 @@ import {
 } from "firebase/firestore";
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import markdownContent from "../components/OntologyComponents/Markdown-Here-Cheatsheet.md";
+// import markdownContent from "../components/OntologyComponents/Markdown-Here-Cheatsheet.md";
 import SneakMessage from " @components/components/OntologyComponents/SneakMessage";
 import Node from " @components/components/OntologyComponents/Node";
 import TreeViewSimplified from " @components/components/OntologyComponents/TreeViewSimplified";
@@ -356,7 +356,6 @@ const Ontology = () => {
 
   useEffect(() => {
     if (!user) return;
-    if (!nodes.length) return;
 
     const userQuery = query(
       collection(db, LOGS),
@@ -1126,6 +1125,9 @@ const Ontology = () => {
 
   const navigateToNode = async (nodeId: string) => {
     updateUserDoc(eachOntologyPath[nodeId] || []);
+    if (nodes[nodeId]) {
+      setCurrentVisibleNode(nodes[nodeId]);
+    }
   };
 
   const handleClose = useCallback(() => {
@@ -1604,7 +1606,7 @@ const Ontology = () => {
                         ...SCROLL_BAR_STYLE,
                       }}
                     >
-                      <MarkdownRender text={markdownContent} />
+                      {/* <MarkdownRender text={markdownContent} /> */}
                     </Box>
                   </TabPanel>
                 </Box>
@@ -1654,6 +1656,7 @@ const Ontology = () => {
           p: 2,
           height: "420px",
           overflowY: "auto",
+          borderRadius: "25px",
         }}
         placeholder={""}
         open={openNotificationSection}
