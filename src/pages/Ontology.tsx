@@ -1654,6 +1654,7 @@ const Ontology = () => {
           p: 2,
           height: "420px",
           overflowY: "auto",
+          zIndex:999
         }}
         placeholder={""}
         open={openNotificationSection}
