@@ -689,8 +689,8 @@ const Node = ({
     }
   }, [newCategory]);
 
-  const handleNewSpecialization = async () => {
-    await addNewSpecialization(selectedCategory);
+  const handleNewSpecialization = async (category?: string) => {
+    await addNewSpecialization(category || selectedCategory);
     handleClose();
   };
 
@@ -1042,8 +1042,18 @@ const Node = ({
           }
 
           // Update the user document by removing the deleted node's ID
-          updateUserDoc([...ontologyPath.slice(0, -1)]);
-
+          let _ontologyPath = [...ontologyPath];
+          if (_ontologyPath.at(-2)?.category) {
+            _ontologyPath = _ontologyPath.slice(0, -2);
+          } else {
+            _ontologyPath = _ontologyPath.slice(0, -1);
+          }
+          console.log("_ontologyPath", _ontologyPath);
+          const lastNodeId: string = ontologyPath.at(-1)?.id || "";
+          if (lastNodeId && nodes[lastNodeId]) {
+            setCurrentVisibleNode(nodes[lastNodeId]);
+          }
+          updateUserDoc([..._ontologyPath]);
           // Mark the node as deleted by updating its document
           await updateDoc(nodeDoc.ref, { deleted: true });
 
@@ -1245,7 +1255,10 @@ const Node = ({
             }}
           >
             {selectedProperty === "specializations" && (
-              <Button variant="contained" onClick={handleNewSpecialization}>
+              <Button
+                variant="contained"
+                onClick={() => handleNewSpecialization()}
+              >
                 Add new
               </Button>
             )}
@@ -1681,6 +1694,7 @@ const Node = ({
                 setCurrentVisibleNode={setCurrentVisibleNode}
                 updateInheritance={updateInheritance}
                 relationType={"specializations"}
+                handleNewSpecialization={handleNewSpecialization}
                 nodes={nodes}
               />
             </TabPanel>
@@ -1705,12 +1719,56 @@ const Node = ({
             >
               <Tab
                 sx={{ width: "50%", fontSize: "20px" }}
-                label="Is Part of"
+                label={
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Typography
+                      sx={{
+                        color: viewValue === 0 ? "#ff6d00" : "",
+                        fontSize: "20px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Is Part of
+                    </Typography>
+                    {currentVisibleNode.inheritance?.["isPartOf"]?.ref && (
+                      <Typography sx={{ fontSize: "14px", ml: "15px" }}>
+                        {'(Inherited from "'}
+                        {getTitle(
+                          nodes,
+                          currentVisibleNode.inheritance["isPartOf"].ref || ""
+                        )}
+                        {'")'}
+                      </Typography>
+                    )}
+                  </Box>
+                }
                 {...a11yProps(0)}
               />
               <Tab
                 sx={{ width: "50%", fontSize: "20px" }}
-                label="Parts"
+                label={
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Typography
+                      sx={{
+                        color: viewValue === 1 ? "#ff6d00" : "",
+                        fontSize: "20px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Parts
+                    </Typography>
+                    {currentVisibleNode.inheritance?.["parts"]?.ref && (
+                      <Typography sx={{ fontSize: "14px", ml: "15px" }}>
+                        {'(Inherited from "'}
+                        {getTitle(
+                          nodes,
+                          currentVisibleNode.inheritance["parts"].ref || ""
+                        )}
+                        {'")'}
+                      </Typography>
+                    )}
+                  </Box>
+                }
                 {...a11yProps(1)}
               />
             </Tabs>
@@ -1722,19 +1780,6 @@ const Node = ({
                 mt: "5px",
               }}
             >
-              {currentVisibleNode.inheritance?.["isPartOf"]?.ref && (
-                <Typography
-                  sx={{ color: "grey", fontSize: "14px", ml: "15px" }}
-                >
-                  {'(Inherited from "'}
-                  {getTitle(
-                    nodes,
-                    currentVisibleNode.inheritance["isPartOf"].ref || ""
-                  )}
-                  {'")'}
-                </Typography>
-              )}
-
               <LinksSideParts
                 properties={
                   getPropertyValue(
@@ -1767,19 +1812,6 @@ const Node = ({
                 width: "100%",
               }}
             >
-              {currentVisibleNode.inheritance?.["parts"]?.ref && (
-                <Typography
-                  sx={{ color: "grey", fontSize: "14px", ml: "15px" }}
-                >
-                  {'(Inherited from "'}
-                  {getTitle(
-                    nodes,
-                    currentVisibleNode.inheritance["parts"].ref || ""
-                  )}
-                  {'")'}
-                </Typography>
-              )}
-
               <LinksSideParts
                 properties={
                   getPropertyValue(

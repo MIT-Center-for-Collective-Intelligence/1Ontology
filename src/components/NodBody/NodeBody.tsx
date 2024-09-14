@@ -13,6 +13,7 @@ import {
   Select,
   OutlinedInput,
   MenuItem,
+  useTheme,
 } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
@@ -71,6 +72,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   user,
   nodes,
 }) => {
+  const theme = useTheme();
+  const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#c5cddb";
   return (
     <Box>
       <Box>
@@ -121,7 +124,10 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     <Button
                       variant="outlined"
                       onClick={() => showList(property, "main")}
-                      sx={{ borderRadius: "25px" }}
+                      sx={{
+                        borderRadius: "25px",
+                        backgroundColor: BUTTON_COLOR,
+                      }}
                     >
                       {property !== "specializations" ? "Select" : "Add"}{" "}
                       {capitalizeFirstLetter(
@@ -136,7 +142,10 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                         setOpenAddCategory(true);
                         setType(property);
                       }}
-                      sx={{ borderRadius: "25px" }}
+                      sx={{
+                        borderRadius: "25px",
+                        backgroundColor: BUTTON_COLOR,
+                      }}
                     >
                       Add Category
                     </Button>
@@ -144,7 +153,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                   <Button
                     variant="outlined"
                     onClick={() => removeProperty(property)}
-                    sx={{ borderRadius: "25px" }}
+                    sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
                   >
                     Delete
                   </Button>
@@ -228,7 +237,10 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 {currentVisibleNode.propertyType[property] !== "string" &&
                 property !== "parts" &&
                 property !== "isPartOf" ? (
-                  <Box key={property} sx={{ display: "grid", mt: "5px" }}>
+                  <Box
+                    key={property}
+                    sx={{ display: "grid", mt: "5px", px: "15px" }}
+                  >
                     <DragDropContext
                       onDragEnd={(e) => handleSorting(e, property)}
                     >
@@ -424,8 +436,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         onClick={() => {
           setOpenAddField(true);
         }}
-        variant="contained"
-        sx={{ borderRadius: "25px", mb: "5px" }}
+        variant="outlined"
+        sx={{ borderRadius: "25px", mb: "5px", backgroundColor: BUTTON_COLOR }}
       >
         Add New Property
       </Button>

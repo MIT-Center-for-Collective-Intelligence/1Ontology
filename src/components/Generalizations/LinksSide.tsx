@@ -8,6 +8,7 @@ import {
   ListItemIcon,
   Tooltip,
   Paper,
+  useTheme,
 } from "@mui/material";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
@@ -35,6 +36,7 @@ type ILinksSideProps = {
   updateInheritance: any;
   relationType: "generalizations" | "specializations";
   nodes: { [id: string]: INode };
+  handleNewSpecialization?: any;
 };
 
 const LinksSide = ({
@@ -52,7 +54,11 @@ const LinksSide = ({
   updateInheritance,
   relationType,
   nodes,
+  handleNewSpecialization,
 }: ILinksSideProps) => {
+  const theme = useTheme();
+  const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
+
   const properties = currentVisibleNode[relationType];
   const getNumOfGeneralizations = (id: string) => {
     return nodes[id]
@@ -71,19 +77,28 @@ const LinksSide = ({
         >
           <Button
             onClick={() => showList(relationType, "main")}
-            sx={{ px: 1, py: 0 }}
+            sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
             variant="outlined"
           >
             {relationType === "specializations" ? "Select " : "Add "}
             {capitalizeFirstLetter(relationType)}
           </Button>
 
+          {relationType === "specializations" && (
+            <Button
+              onClick={handleNewSpecialization}
+              sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
+              variant="outlined"
+            >
+              Add Specialization
+            </Button>
+          )}
           <Button
             onClick={() => {
               setOpenAddCategory(true);
               setType(relationType);
             }}
-            sx={{ px: 1, py: 0 }}
+            sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
             variant="outlined"
           >
             Add Category
@@ -137,7 +152,10 @@ const LinksSide = ({
                             }}
                           >
                             <Button
-                              sx={{ borderRadius: "25px" }}
+                              sx={{
+                                borderRadius: "25px",
+                                backgroundColor: BUTTON_COLOR,
+                              }}
                               variant="outlined"
                               onClick={() => showList(relationType, category)}
                             >
@@ -146,8 +164,25 @@ const LinksSide = ({
                                 : "Add "}{" "}
                               {capitalizeFirstLetter(relationType)}
                             </Button>
+                            {relationType === "specializations" && (
+                              <Button
+                                onClick={() => {
+                                  handleNewSpecialization(category);
+                                }}
+                                sx={{
+                                  borderRadius: "25px",
+                                  backgroundColor: BUTTON_COLOR,
+                                }}
+                                variant="outlined"
+                              >
+                                Add Specialization
+                              </Button>
+                            )}
                             <Button
-                              sx={{ borderRadius: "25px" }}
+                              sx={{
+                                borderRadius: "25px",
+                                backgroundColor: BUTTON_COLOR,
+                              }}
                               variant="outlined"
                               onClick={() =>
                                 handleEditCategory(relationType, category)
@@ -156,7 +191,10 @@ const LinksSide = ({
                               Edit
                             </Button>
                             <Button
-                              sx={{ borderRadius: "25px" }}
+                              sx={{
+                                borderRadius: "25px",
+                                backgroundColor: BUTTON_COLOR,
+                              }}
                               variant="outlined"
                               onClick={() =>
                                 deleteCategory(relationType, category)

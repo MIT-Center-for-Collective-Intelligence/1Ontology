@@ -8,6 +8,7 @@ import {
   ListItemIcon,
   Tooltip,
   Paper,
+  useTheme,
 } from "@mui/material";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
@@ -55,6 +56,8 @@ const LinksSideParts = ({
   property,
   nodes,
 }: ILinksSideProps) => {
+  const theme = useTheme();
+  const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   return (
     <Box sx={{ p: "13px" /* , height: "100vh" */ }}>
       <Box>
@@ -67,7 +70,7 @@ const LinksSideParts = ({
         >
           <Button
             onClick={() => showList(property, "main")}
-            sx={{ px: 1, py: 0 }}
+            sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
             variant="outlined"
           >
             {"Select "}
@@ -79,7 +82,7 @@ const LinksSideParts = ({
               setOpenAddCategory(true);
               setType(property);
             }}
-            sx={{ px: 1, py: 0 }}
+            sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
             variant="outlined"
           >
             Add Category

@@ -68,7 +68,7 @@ In this example, `ChildNode` is used to display a child node with the given prop
 import { NODES } from " @components/lib/firestoreClient/collections";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import { INode, INodePath, IChildNode } from " @components/types/INode";
-import { Box, Button, Link, Tooltip } from "@mui/material";
+import { Box, Button, Link, Tooltip, useTheme } from "@mui/material";
 import {
   collection,
   doc,
@@ -106,6 +106,8 @@ const LinkNode = ({
   title,
 }: ISubOntologyProps) => {
   const db = getFirestore();
+  const theme = useTheme();
+  const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const handleNavigateToNode = () => {
     navigateToNode(child.id);
@@ -180,7 +182,12 @@ const LinkNode = ({
           {title}
         </Link>
         <Button
-          sx={{ ml: "8px", borderRadius: "25px" }}
+          sx={{
+            ml: "8px",
+            borderRadius: "25px",
+            backgroundColor: BUTTON_COLOR,
+          }}
+          variant="outlined"
           onClick={deleteChildNode}
         >
           Unlink
