@@ -134,6 +134,7 @@ import {
 import { SearchBox } from " @components/components/SearchBox/SearchBox";
 import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
 import { Notification } from " @components/components/Chat/Notification";
+import TextFieldCollab from " @components/components/OntologyComponents/TextEditor";
 interface UpdateInheritanceParams {
   updatedNode: INode;
   updatedProperty: string;
@@ -460,6 +461,9 @@ const Ontology = () => {
       // Loop through each main node
 
       for (let node of mainNodes) {
+        if (!node) {
+          continue;
+        }
         // Update the path for the current node
 
         eachOntologyPath[node.id] = [
@@ -577,7 +581,11 @@ const Ontology = () => {
     // Object to store the main specializations tree
     let newSpecializationsTree: any = {};
     // Iterate through each main nodes
+
     for (let node of _nodes) {
+      if (!node) {
+        continue;
+      }
       const nodeTitle = node.title;
       // Create an entry for the current node in the main specializations tree
       newSpecializationsTree[nodeTitle] = {
@@ -1655,6 +1663,7 @@ const Ontology = () => {
           p: 2,
           height: "420px",
           overflowY: "auto",
+          borderRadius: "25px",
           zIndex: 999,
         }}
         placeholder={""}

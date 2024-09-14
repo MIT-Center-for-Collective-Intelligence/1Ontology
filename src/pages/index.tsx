@@ -2,7 +2,5 @@
 import Ontology from "./Ontology";
 export default Ontology;
 
-// import TextFieldCollab from " @components/components/OntologyComponents/TextEditor";
 
-// // import TextFieldCollab from "./TextFieldCollab";
-// export default TextFieldCollab;
+

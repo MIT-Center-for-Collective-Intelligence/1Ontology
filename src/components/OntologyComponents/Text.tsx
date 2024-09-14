@@ -341,26 +341,28 @@ const Text = ({
   };
 
   return (
-    <Box style={{ position: "relative", width: "100%", padding: "14px" }}>
+    <Box style={{ position: "relative", width: "100%", borderRadius: "25px" }}>
       <TextField
-        // ref={textAreaRef}
+        ref={textAreaRef}
         multiline
+        minRows={2}
         value={currentValue}
         placeholder="Type something..."
-        style={{
+        InputProps={{
+          sx: {
+            padding: "15px",
+            borderBottomRightRadius: "25px",
+            borderBottomLeftRadius: "25px",
+            fontSize: "19px",
+          },
+        }}
+        sx={{
           width: "100%",
           height: "auto",
-          minHeight: property === "title" ? "5px" : "100px",
-          padding: "15px",
-          borderRadius: "10px",
-          // border: "2px solid #4CAF50",
           outline: "none",
           fontSize: property === "title" ? "29px" : "16px",
           fontFamily: "'Roboto', sans-serif",
           color: theme.palette.mode === "dark" ? "white" : "black",
-          // backgroundColor: theme.palette.mode === "dark" ? "#25262a" : "",
-          // boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-          // transition: "border-color 0.3s, box-shadow 0.3s",
           whiteSpace: "pre-wrap",
           resize: "none",
           zIndex: 1,

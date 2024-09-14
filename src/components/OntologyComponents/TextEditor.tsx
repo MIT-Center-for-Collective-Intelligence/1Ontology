@@ -1,125 +1,83 @@
-// import React, { useEffect, useRef, useState } from "react";
-// import Quill from "quill";
+"use client";
+
+import { useEffect } from "react";
+import Editor, { useMonaco } from "@monaco-editor/react";
+
+// import BetterWebSocket from "partysocket/ws";
+// import YPartyKitProvider from "y-partykit/provider";
+// import { MonacoBinding } from "y-monaco";
 // import * as Y from "yjs";
-// import { WebsocketProvider } from "y-websocket";
-// import { QuillBinding } from "y-quill";
-// import "quill/dist/quill.snow.css";
-// import { Box } from "@mui/material";
 
-// const getRandomColor = () => {
-//   return "red";
-// };
-// const user = `user-${Math.floor(Math.random() * 1000)}`;
+export default function EditorPage() {
+  const monaco = useMonaco();
 
-// const TextFieldCollab = () => {
-//   const editorRef = useRef<HTMLDivElement | null>(null);
-//   const [cursors, setCursors] = useState<{
-//     [key: string]: { position: number; selectionStart: number; selectionEnd: number; color: string };
-//   }>({});
-//   const localClientId = useRef(user);
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     if (typeof window !== "undefined") {
+  //       if (monaco) {
+  //         // create a yew yjs doc
+  //         const ydoc = new Y.Doc();
+  //         // establish partykit as your websocket provider
+  //         const provider = new YPartyKitProvider(
+  //           "wss://demos.yjs.dev/ws",
+  //           "nextjs-monaco-demo",
+  //           ydoc,
+  //           {
+  //             // @ts-expect-error TODO: fix this
+  //             WebSocketPolyfill: BetterWebSocket,
+  //           }
+  //         );
+  //         // send a readiness check to partykit
+  //         provider.ws?.send("it's happening!");
+  //         // get the text from the monaco editor
+  //         const yDocTextMonaco = ydoc.getText("monaco");
+  //         // get the monaco editor
+  //         const editor = monaco.editor.getEditors()[0];
+  //         console.log(monaco.editor.getEditors(), "monaco.editor");
+  //         // create the monaco binding to the yjs doc
+  //         if (editor) {
+  //           new MonacoBinding(
+  //             yDocTextMonaco,
+  //             editor.getModel()!,
+  //             // @ts-expect-error TODO: fix this
+  //             new Set([editor]),
+  //             provider.awareness
+  //           );
+  //         }
 
-//   useEffect(() => {
-//     // Initialize Y.js document and provider
-//     const ydoc = new Y.Doc();
-//     const provider = new WebsocketProvider(
-//       "wss://demos.yjs.dev/ws",
-//       "TextFieldCollabQuill",
-//       ydoc
-//     );
+  //         // enable a button to connect and disconnect from partykit
+  //         const connectButton = document.getElementById("y-connect-button")!;
+  //         connectButton.addEventListener("click", () => {
+  //           if (provider.shouldConnect) {
+  //             provider.disconnect();
+  //             connectButton.textContent = "🎈 Connect";
+  //           } else {
+  //             provider.connect();
+  //             connectButton.textContent = "👋 Disconnect";
+  //           }
+  //         });
+  //       }
+  //     }
+  //   }, 3000);
+  // }, [monaco]);
 
-//     const yText = ydoc.getText("quillText");
-//     const yCursors = ydoc.getMap("quillCursors");
-
-//     // Initialize Quill editor
-//     const quill = new Quill(editorRef.current!, {
-//       theme: "snow", // You can change the theme to "bubble" or other supported themes
-//     });
-
-//     // Bind Quill to Y.js text for collaboration
-//     new QuillBinding(yText, quill);
-
-//     // Update local state when text changes
-//     quill.on("text-change", () => {
-//       const currentRange = quill.getSelection();
-//       if (currentRange) {
-//         updateCursor(currentRange.index, currentRange.length);
-//       }
-//     });
-
-//     // Observe and render cursors of other users
-//     yCursors.observe(() => {
-//       const newCursors = yCursors.toJSON();
-//       setCursors(newCursors);
-//     });
-
-//     // Function to update cursor and selection in the Yjs map
-//     const updateCursor = (index: number, length: number) => {
-//       const selectionStart = index;
-//       const selectionEnd = index + length;
-
-//       const currentCursor: any = yCursors.get(localClientId.current) || {};
-//       if (!currentCursor.color) {
-//         currentCursor.color = getRandomColor();
-//       }
-//       yCursors.set(localClientId.current, {
-//         position: index,
-//         selectionStart,
-//         selectionEnd,
-//         color: currentCursor.color,
-//       });
-//     };
-
-//     // Remove cursor when the user leaves or loses focus
-//     const handleBlur = () => {
-//       yCursors.delete(localClientId.current);
-//     };
-
-//     quill.on("selection-change", (range) => {
-//       if (!range) {
-//         handleBlur();
-//       }
-//     });
-
-//     return () => {
-//       provider.destroy();
-//     };
-//   }, []);
-
-//   // Helper function to render the selections of other users
-//   const renderCursors = () => {
-//     return Object.keys(cursors).map((clientId) => {
-//       if (clientId === localClientId.current) return null;
-
-//       const cursor = cursors[clientId];
-//       const selectionStart = cursor.selectionStart;
-//       const selectionEnd = cursor.selectionEnd;
-//       const color = cursor.color;
-
-//       // Visualize the selection with a background color
-//       return (
-//         <div key={clientId} style={{ position: "relative" }}>
-//           <div
-//             style={{
-//               backgroundColor: color,
-//               opacity: 0.3,
-//               position: "absolute",
-//               zIndex: 1,
-//               // Additional styles based on selection can be added here
-//             }}
-//           >
-//             {/* You can add additional styling or text here */}
-//           </div>
-//         </div>
-//       );
-//     });
-//   };
-
-//   return (
-//     <Box style={{ width: "100%", padding: "14px", position: "relative" }}>
-//       <div ref={editorRef} style={{ height: "300px" }} />
-//       {renderCursors()}
-//     </Box>
-//   );
-// };
-
-// export default TextFieldCollab;
+  return (
+    <section
+      style={{ height: "500px" }}
+      className="min-h-screen items-center justify-center mx-auto max-w-2xl space-y-2 m-5"
+    >
+      <Editor
+        theme="vs-dark"
+        defaultLanguage="javascript"
+        defaultValue="// what good shall we do this day?"
+        className="bg-background h-[720px] shadow-lg"
+      />
+      <button
+        id="y-connect-button"
+        className="px-4 py-3 bg-neutral-200 rounded font-medium hover:bg-neutral-300 transition duration-300 dark:bg-neutral-500 dark:hover:bg-neutral-600"
+      >
+        👋 Disconnect
+      </button>
+    </section>
+  );
+}
