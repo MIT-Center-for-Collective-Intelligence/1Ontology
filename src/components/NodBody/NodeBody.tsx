@@ -82,7 +82,13 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           .map((property: string) => (
             <Paper
               key={property}
-              sx={{ mt: "4px", borderRadius: "25px", mb: "15px" }}
+              sx={{
+                mt: "4px",
+                borderRadius: "25px",
+                borderTopRightRadius: "25px",
+                borderTopLeftRadius: "25px",
+                mb: "15px",
+              }}
               elevation={3}
             >
               <Box
@@ -212,7 +218,13 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                   )}
                 </Box>
               </Box>
-              <Box sx={{ p: "13px" }}>
+              <Box
+                sx={
+                  {
+                    /*  p: "13px"  */
+                  }
+                }
+              >
                 {currentVisibleNode.propertyType[property] !== "string" &&
                 property !== "parts" &&
                 property !== "isPartOf" ? (
@@ -413,9 +425,9 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           setOpenAddField(true);
         }}
         variant="contained"
-        sx={{ borderRadius: "25px", mt: "14px" }}
+        sx={{ borderRadius: "25px", mb: "5px" }}
       >
-        Add Property
+        Add New Property
       </Button>
     </Box>
   );

@@ -39,6 +39,7 @@ type ILinksSideProps = {
 };
 
 const LinksSideParts = ({
+  properties,
   currentVisibleNode,
   showList,
   setOpenAddCategory,
@@ -54,8 +55,6 @@ const LinksSideParts = ({
   property,
   nodes,
 }: ILinksSideProps) => {
-  const properties = currentVisibleNode.properties[property] || {};
-
   return (
     <Box sx={{ p: "13px" /* , height: "100vh" */ }}>
       <Box>
@@ -89,7 +88,7 @@ const LinksSideParts = ({
 
         {/* List of categories within the property */}
         <DragDropContext onDragEnd={(e) => handleSorting(e, property)}>
-          <ul style={{ padding: 0 }}>
+          <ul style={{ paddingLeft: 7 }}>
             {Object.keys(properties)
               .sort((a, b) =>
                 a === "main" ? -1 : b === "main" ? 1 : a.localeCompare(b)
@@ -146,7 +145,10 @@ const LinksSideParts = ({
                               ref={provided.innerRef}
                               sx={{
                                 backgroundColor: snapshot.isDraggingOver
-                                  ? DESIGN_SYSTEM_COLORS.gray250
+                                  ? (theme) =>
+                                      theme.palette.mode === "light"
+                                        ? DESIGN_SYSTEM_COLORS.gray250
+                                        : DESIGN_SYSTEM_COLORS.notebookG400
                                   : "",
                                 borderRadius: "25px",
                                 userSelect: "none",
