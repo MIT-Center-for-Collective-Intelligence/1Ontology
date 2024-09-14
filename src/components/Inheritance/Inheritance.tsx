@@ -8,49 +8,122 @@ import {
   Box,
   Typography,
 } from "@mui/material";
-import { INode } from " @components/types/INode";
+import { INode, InheritanceType } from " @components/types/INode";
 import { DISPLAY } from " @components/lib/CONSTANTS";
 import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import { updateDocSimple } from " @components/lib/firestoreClient/collections";
-import { getFirestore } from "firebase/firestore";
+import {
+  NODES,
+  updateDocSimple,
+} from " @components/lib/firestoreClient/collections";
+import {
+  collection,
+  doc,
+  getFirestore,
+  updateDoc,
+  writeBatch,
+} from "firebase/firestore";
 
 type InheritanceProps = {
   selectedNode: INode;
+  nodes: { [id: string]: INode };
 };
 
-const Inheritance: React.FC<InheritanceProps> = ({ selectedNode }) => {
+const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
   const [inheritanceState, setInheritanceState] = useState<{
-    [key: string]: string;
+    [key: string]: InheritanceType;
   }>(
-    Object.keys(selectedNode.inheritance).reduce((acc, key) => {
+    Object.keys(selectedNode.inheritance).reduce((acc: any, key) => {
       acc[key] = selectedNode.inheritance[key].inheritanceType;
       return acc;
-    }, {} as { [key: string]: string })
+    }, {} as { [key: string]: InheritanceType })
   );
 
   const db = getFirestore();
 
   useEffect(() => {
     setInheritanceState(
-      Object.keys(selectedNode.inheritance).reduce((acc, key) => {
+      Object.keys(selectedNode.inheritance).reduce((acc: any, key) => {
         acc[key] = selectedNode.inheritance[key].inheritanceType;
         return acc;
-      }, {} as { [key: string]: string })
+      }, {} as { [key: string]: InheritanceType })
     );
   }, [selectedNode]);
 
+  const updateSpecializationsInheritance = async (
+    specializations: { id: string; title: string }[],
+    batch: any,
+    property: string,
+    newValue: string | InheritanceType,
+    ref: string
+  ) => {
+    try {
+      console.log("specializations", specializations);
+      for (let specialization of specializations) {
+        const specializationData = nodes[specialization.id];
+        const nodeRef = doc(collection(db, NODES), specialization.id);
+        let objectUpdate: any = {
+          [`inheritance.${property}.inheritanceType`]: newValue,
+        };
+        if (newValue === "neverInherit") {
+          const referenceId = specializationData.inheritance[property].ref;
+          objectUpdate = {
+            ...objectUpdate,
+            [`inheritance.${property}.ref`]: null,
+          };
+          if (referenceId && referenceId !== null) {
+            const referenceValue = nodes[referenceId].properties[property];
+            objectUpdate = {
+              ...objectUpdate,
+              [`properties.${property}`]: referenceValue,
+              [`inheritance.${property}.ref`]: null,
+            };
+          }
+        } else {
+          objectUpdate = {
+            ...objectUpdate,
+            [`inheritance.${property}.ref`]: ref,
+          };
+        }
+
+        batch.update(nodeRef, objectUpdate);
+        if (batch._mutations.length > 100) {
+          await batch.commit();
+          batch = writeBatch(db);
+        }
+        await updateSpecializationsInheritance(
+          Object.values(nodes[specialization.id].specializations).flat(),
+          batch,
+          property,
+          newValue,
+          ref
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleInheritanceChange = useCallback(
-    (property: string, event: any) => {
-      const newInheritance = selectedNode.inheritance;
-      newInheritance[property].inheritanceType = event.target.value;
+    async (property: string, event: any) => {
+      const newInheritance = event.target.value as InheritanceType;
+      const batch = writeBatch(db);
 
-      updateDocSimple(db, selectedNode.id, {
-        inheritance: newInheritance,
+      const nodeRef = doc(collection(db, NODES), selectedNode.id);
+      updateDoc(nodeRef, {
+        [`inheritance.${property}.inheritanceType`]: newInheritance,
       });
-      const newState = { ...inheritanceState };
-      newState[property] = event.target.value;
 
+      const newState = { ...inheritanceState };
+      newState[property] = newInheritance;
       setInheritanceState(newState);
+      await updateSpecializationsInheritance(
+        Object.values(selectedNode.specializations).flat(),
+        batch,
+        property,
+        newInheritance,
+        selectedNode.id
+      );
+      await batch.commit();
     },
     [selectedNode]
   );
@@ -60,49 +133,51 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode }) => {
       <Typography sx={{ fontSize: "20px", mb: "14px", fontWeight: "bold" }}>
         Update Inheritance for {selectedNode.title}
       </Typography>
-      {Object.entries(selectedNode.inheritance).map(([key, inheritance]) => (
-        <Box key={key} sx={{ marginBottom: 3 }}>
-          <FormControl component="fieldset">
-            <FormLabel
-              component="legend"
-              sx={{
-                fontSize: "20px",
-                fontWeight: "bold",
-                ml: "15px",
-                mb: "13px",
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "dark" ? "#242425" : "#D0D5D1",
-                p: "10px",
-                borderRadius: "25px",
-              }}
-            >
-              {capitalizeFirstLetter(DISPLAY[key] ? DISPLAY[key] : key)}
-            </FormLabel>
-            <RadioGroup
-              value={inheritanceState[key]}
-              onChange={(e) => handleInheritanceChange(key, e)}
-              sx={{ ml: "15px" }}
-            >
-              {[
-                { value: "neverInherit", label: "Never Inherit" },
-                { value: "alwaysInherit", label: "Always Inherit" },
-                {
-                  value: "inheritUnlessAlreadyOverRidden",
-                  label: "Inherit Unless Already Overridden",
-                },
-              ].map(({ value, label }) => (
-                <FormControlLabel
-                  key={value}
-                  value={value}
-                  control={<Radio />}
-                  label={label}
-                  id={value}
-                />
-              ))}
-            </RadioGroup>
-          </FormControl>
-        </Box>
-      ))}
+      {Object.entries(selectedNode.inheritance)
+        .sort()
+        .map(([key, inheritance]) => (
+          <Box key={key} sx={{ marginBottom: 3 }}>
+            <FormControl component="fieldset">
+              <FormLabel
+                component="legend"
+                sx={{
+                  fontSize: "20px",
+                  fontWeight: "bold",
+                  ml: "15px",
+                  mb: "13px",
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "dark" ? "#242425" : "#D0D5D1",
+                  p: "10px",
+                  borderRadius: "25px",
+                }}
+              >
+                {capitalizeFirstLetter(DISPLAY[key] ? DISPLAY[key] : key)}
+              </FormLabel>
+              <RadioGroup
+                value={inheritanceState[key]}
+                onChange={(e) => handleInheritanceChange(key, e)}
+                sx={{ ml: "15px" }}
+              >
+                {[
+                  { value: "neverInherit", label: "Never Inherit" },
+                  { value: "alwaysInherit", label: "Always Inherit" },
+                  {
+                    value: "inheritUnlessAlreadyOverRidden",
+                    label: "Inherit Unless Already Overridden",
+                  },
+                ].map(({ value, label }) => (
+                  <FormControlLabel
+                    key={value}
+                    value={value}
+                    control={<Radio />}
+                    label={label}
+                    id={value}
+                  />
+                ))}
+              </RadioGroup>
+            </FormControl>
+          </Box>
+        ))}
     </Box>
   );
 };

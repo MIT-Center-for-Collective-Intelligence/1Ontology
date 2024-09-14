@@ -115,7 +115,7 @@ type ISubOntologyProps = {
   recordLogs: (logs: any) => void;
 
   updateInheritance: (parameters: {
-    updatedNode: INode;
+    nodeId: string;
     updatedProperty: string;
   }) => void;
   disabled?: boolean;
@@ -234,7 +234,11 @@ const Text = ({
       );
       if (property === "title") {
         const nodeDocs = await getDocs(
-          query(collection(db, NODES), where("title", "==", copyValue))
+          query(
+            collection(db, NODES),
+            where("title", "==", copyValue),
+            where("deleted", "==", false)
+          )
         );
         if (
           nodeDocs.docs.length > 0 &&
@@ -284,7 +288,7 @@ const Text = ({
         // (Title doesn't have inheritance, so it's excluded)
         if (property !== "title") {
           updateInheritance({
-            updatedNode: { ...nodeData, id: currentVisibleNode.id },
+            nodeId: currentVisibleNode.id,
             updatedProperty: property,
           });
         }

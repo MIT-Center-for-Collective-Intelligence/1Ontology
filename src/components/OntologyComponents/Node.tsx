@@ -159,7 +159,7 @@ type INodeProps = {
   lockedNodeFields: ILockedNode;
   recordLogs: (logs: any) => void;
   updateInheritance: (parameters: {
-    updatedNode: INode;
+    nodeId: string;
     updatedProperty: string;
   }) => void;
   navigateToNode: (nodeId: string) => void;
@@ -570,7 +570,7 @@ const Node = ({
       // If _type is not "specializations", update the inheritance
       if (property !== "specializations" && property !== "generalizations") {
         updateInheritance({
-          updatedNode: { ...nodeData, id: currentVisibleNode.id },
+          nodeId: currentVisibleNode.id,
           updatedProperty: property,
         });
       }
@@ -774,90 +774,114 @@ const Node = ({
   };
 
   // Function to handle sorting of draggable items
-  const handleSorting = async (result: any, property: string) => {
-    try {
-      // Destructure properties from the result object
-      const { source, destination, draggableId, type } = result;
+  const handleSorting = useCallback(
+    async (result: any, property: string) => {
+      try {
+        // Destructure properties from the result object
+        const { source, destination, draggableId, type } = result;
 
-      // If there is no destination, no sorting needed
-      if (!destination) {
-        return;
-      }
+        // If there is no destination, no sorting needed
+        if (!destination) {
+          return;
+        }
 
-      // Extract the source and destination category IDs
-      const sourceCategory = source.droppableId; // The source category
-      const destinationCategory = destination.droppableId; // The destination category
+        // Extract the source and destination category IDs
+        const sourceCategory = source.droppableId; // The source category
+        const destinationCategory = destination.droppableId; // The destination category
 
-      // Ensure valid source and destination categories and they are not the same
-      if (sourceCategory && destinationCategory) {
-        // Retrieve node document from the anodes object
-        const nodeData = { ...currentVisibleNode };
-
-        // Ensure nodeData exists
-        if (nodeData) {
-          let propertyValue = null;
+        // Ensure valid source and destination categories and they are not the same
+        if (sourceCategory && destinationCategory) {
+          // Retrieve node document from the anodes object
+          const nodeData = { ...currentVisibleNode };
           if (
-            property === "specializations" ||
-            property === "generalizations"
+            nodeData.inheritance &&
+            nodeData.inheritance[property].ref &&
+            property !== "specializations" &&
+            property !== "generalizations"
           ) {
-            // Get the children and specializations related to the provided subType
-            propertyValue = nodeData[property];
-          } else {
-            propertyValue = nodeData.properties[property];
+            const nodeId = nodeData.inheritance[property].ref;
+            const inheritedNode = nodes[nodeId as string];
+            nodeData.properties[property] = JSON.parse(
+              JSON.stringify(inheritedNode.properties[property])
+            );
           }
+          // Ensure nodeData exists
+          if (nodeData) {
+            let propertyValue = null;
+            if (
+              property === "specializations" ||
+              property === "generalizations"
+            ) {
+              // Get the children and specializations related to the provided subType
+              propertyValue = nodeData[property];
+            } else {
+              propertyValue = nodeData.properties[property];
+            }
 
-          // Find the index of the draggable item in the source category
-          const nodeIdx = propertyValue[sourceCategory].findIndex(
-            (onto: any) => onto.id === draggableId
-          );
-
-          // If the draggable item is found in the source category
-          if (nodeIdx !== -1) {
-            const moveValue = propertyValue[sourceCategory][nodeIdx];
-
-            // Remove the item from the source category
-            propertyValue[sourceCategory].splice(nodeIdx, 1);
-
-            // Move the item to the destination category
-            propertyValue[destinationCategory].splice(
-              destination.index,
-              0,
-              moveValue
+            // Find the index of the draggable item in the source category
+            const nodeIdx = propertyValue[sourceCategory].findIndex(
+              (onto: any) => onto.id === draggableId
             );
 
-            setCurrentVisibleNode(nodeData);
-          }
-          // Update the nodeData with the new property values
-          const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-          if (
-            property === "specializations" ||
-            property === "generalizations"
-          ) {
-            updateDoc(nodeRef, {
-              [property]: propertyValue,
-            });
-          } else {
-            updateDoc(nodeRef, {
-              [`properties.${property}`]: propertyValue,
-            });
-          }
+            // If the draggable item is found in the source category
+            if (nodeIdx !== -1) {
+              const moveValue = propertyValue[sourceCategory][nodeIdx];
 
-          // Record a log of the sorting action
-          recordLogs({
-            action: "Moved a field to a category",
-            field: property,
-            sourceCategory:
-              sourceCategory === "main" ? "outside" : sourceCategory,
-            destinationCategory:
-              destinationCategory === "main" ? "outside" : destinationCategory,
-          });
+              // Remove the item from the source category
+              propertyValue[sourceCategory].splice(nodeIdx, 1);
+
+              // Move the item to the destination category
+              propertyValue[destinationCategory].splice(
+                destination.index,
+                0,
+                moveValue
+              );
+
+              setCurrentVisibleNode(nodeData);
+            }
+            // Update the nodeData with the new property values
+            const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+            if (
+              property === "specializations" ||
+              property === "generalizations"
+            ) {
+              updateDoc(nodeRef, {
+                [property]: propertyValue,
+              });
+            } else {
+              if (nodeData.inheritance) {
+                nodeData.inheritance[property].ref = null;
+              }
+              updateDoc(nodeRef, {
+                [`properties.${property}`]: propertyValue,
+                [`inheritance.${property}.ref`]: null,
+              });
+              updateInheritance({
+                nodeId: currentVisibleNode.id,
+                updatedProperty: property,
+              });
+            }
+
+            // Record a log of the sorting action
+            recordLogs({
+              action: "Moved a field to a category",
+              field: property,
+              sourceCategory:
+                sourceCategory === "main" ? "outside" : sourceCategory,
+              destinationCategory:
+                destinationCategory === "main"
+                  ? "outside"
+                  : destinationCategory,
+            });
+          }
         }
+      } catch (error) {
+        // Log any errors that occur during the sorting process
+        console.error(error);
       }
-    } catch (error) {
-      // Log any errors that occur during the sorting process
-      console.error(error);
-    }
-  };
+    },
+    [currentVisibleNode, db, nodes, recordLogs]
+  );
 
   /**
    * Removes a child-node with the specified ID from the given node data.
@@ -1701,6 +1725,7 @@ const Node = ({
                   {'")'}
                 </Typography>
               )}
+
               <LinksSideParts
                 properties={
                   getPropertyValue(
@@ -1745,6 +1770,7 @@ const Node = ({
                   {'")'}
                 </Typography>
               )}
+
               <LinksSideParts
                 properties={
                   getPropertyValue(

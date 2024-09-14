@@ -87,7 +87,7 @@ type ISubOntologyProps = {
   category: string;
   recordLogs: (logs: any) => void;
   updateInheritance: (parameters: {
-    updatedNode: INode;
+    nodeId: string;
     updatedProperty: string;
   }) => void;
   navigateToNode: (nodeID: string) => void;
@@ -131,24 +131,25 @@ const LinkNode = ({
           if (linkIdx !== -1) {
             nodeData.properties[property][category].splice(linkIdx, 1);
           }
-          const childDoc = await getDoc(doc(collection(db, NODES), child.id));
+          // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
+          // const childData = childDoc.data() as INode;
+          console.log("updated links ==>");
+          await updateDoc(nodeDoc.ref, {
+            [`properties.${property}.${category}`]:
+              nodeData.properties[property][category],
+            [`inheritance.${property}.ref`]: null,
+          });
 
-          if (childDoc.exists()) {
-            const childData = childDoc.data() as INode;
+          updateInheritance({
+            nodeId: nodeDoc.id,
+            updatedProperty: property,
+          });
 
-            updateInheritance({
-              updatedNode: { ...nodeData, id: nodeDoc.id },
-              updatedProperty: property,
-            });
-
-            recordLogs({
-              action: "Deleted a field",
-              field: childData.title,
-              node: nodeDoc.id,
-            });
-          }
-
-          await updateDoc(nodeDoc.ref, nodeData);
+          recordLogs({
+            action: "unlinked a child",
+            field: child.title,
+            node: nodeDoc.id,
+          });
         }
       }
     } catch (error) {
