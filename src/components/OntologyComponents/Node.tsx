@@ -286,13 +286,19 @@ const Node = ({
       // Set a new ID for the cloned node.
       newNode.id = newNodeRef.id;
 
-      // Update the parents array to include the ID of the original node.
-      newNode.parents = [parentNodeDoc.id];
       // Modify the title to indicate that it is a new node.
       newNode.title = `New ${parentNodeData.title}`;
 
       // Initialize an empty specializations object for children.
       newNode.specializations = { main: [] };
+      newNode.generalizations = {
+        main: [
+          {
+            id: nodeId,
+            title: parentNodeData.title,
+          },
+        ],
+      };
 
       // Remove the 'locked' property from the new node.
       delete newNode.locked;
@@ -475,10 +481,13 @@ const Node = ({
     specializations: MainSpecializations;
   }) => {
     // Call the asynchronous function to clone the node with the given ID.
-    const {
+    /* const {
       newCloneId,
       newCloneTitle,
-    }: { newCloneId: string; newCloneTitle: string } = await cloneNode(node.id);
+    }: { newCloneId: string; newCloneTitle: string } = */
+
+    await cloneNode(node.id);
+
     // const newPath = eachOntologyPath[node.id];
     // if (newCloneId) {
     //   // Update the user document by appending the new clone's ID to the node path.

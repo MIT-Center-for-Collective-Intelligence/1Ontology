@@ -148,7 +148,7 @@ const Text = ({
   const [cursors, setCursors] = useState<{
     [key: string]: { position: number; color: string; name: string };
   }>({});
-  const localClientId = useRef(user.uname);
+  const localClientId = useRef(user?.uname);
 
   const textAreaRef = useRef<any>(null);
 

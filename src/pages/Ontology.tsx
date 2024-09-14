@@ -381,7 +381,9 @@ const Ontology = () => {
       if (window.location.hash) {
         // Call updateUserDoc with the hash split into an array
         const visibleNodeId = window.location.hash.split("#").reverse()[0];
-
+        if (nodes[visibleNodeId]) {
+          setCurrentVisibleNode(nodes[visibleNodeId]);
+        }
         updateUserDoc(eachOntologyPath[visibleNodeId]);
       }
     };
