@@ -49,6 +49,7 @@ interface NodeBodyProps {
   lockedNodeFields: any;
   user: any;
   nodes: { [id: string]: INode };
+  color: string;
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -71,6 +72,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   lockedNodeFields,
   user,
   nodes,
+  color,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#c5cddb";
@@ -347,7 +349,11 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                                                     ref={provided.innerRef}
                                                     {...provided.draggableProps}
                                                     {...provided.dragHandleProps}
-                                                    sx={{ m: 0, p: 0 }}
+                                                    sx={{
+                                                      m: 0,
+                                                      p: 0,
+                                                      my: "5px",
+                                                    }}
                                                   >
                                                     <ListItemIcon
                                                       sx={{ minWidth: 0 }}
@@ -425,6 +431,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       setEditNode={setEditNode}
                       removeField={removeProperty}
                       nodes={nodes}
+                      color={color}
                     />
                   )
                 )}

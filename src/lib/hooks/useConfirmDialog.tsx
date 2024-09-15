@@ -24,11 +24,16 @@ Here's a breakdown of the code:
 The hook returns an object with the `promptIt`, `confirmIt`, and `ConfirmDialog` properties, which can be used by components to display and interact with the dialog box.
  */
 
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, TextField } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  TextField,
+} from "@mui/material";
 import React, { useCallback, useState } from "react";
 import { DESIGN_SYSTEM_COLORS } from "../theme/colors";
-
-
 
 const useDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,17 +44,20 @@ const useDialog = () => {
   const [confirmation, setConfirmation] = useState("");
   const [cancel, setCancel] = useState("");
 
-  const showDialog = useCallback((message: string, prompt = false, confirmation: string, cancel: string) => {
-    setDialogMessage(message);
-    setIsOpen(true);
-    setIsPrompt(prompt);
-    setConfirmation(confirmation);
-    setCancel(cancel);
+  const showDialog = useCallback(
+    (message: string, prompt = false, confirmation: string, cancel: string) => {
+      setDialogMessage(message);
+      setIsOpen(true);
+      setIsPrompt(prompt);
+      setConfirmation(confirmation);
+      setCancel(cancel);
 
-    return new Promise(resolve => {
-      resolveRef.current = resolve;
-    });
-  }, []);
+      return new Promise((resolve) => {
+        resolveRef.current = resolve;
+      });
+    },
+    []
+  );
 
   const closeDialog = useCallback(
     (confirmed: any) => {
@@ -96,12 +104,20 @@ const useDialog = () => {
         <Button
           onClick={() => closeDialog(true)}
           variant="contained"
-          sx={{ borderRadius: "26px", backgroundColor: DESIGN_SYSTEM_COLORS.primary800 }}
+          sx={{
+            borderRadius: "26px",
+            backgroundColor: DESIGN_SYSTEM_COLORS.primary800,
+          }}
         >
           {confirmation}
         </Button>
         {!isPrompt && cancel && (
-          <Button onClick={() => closeDialog(false)} color="primary" variant="outlined" sx={{ borderRadius: "26px" }}>
+          <Button
+            onClick={() => closeDialog(false)}
+            color="primary"
+            variant="outlined"
+            sx={{ borderRadius: "26px" }}
+          >
             {cancel}
           </Button>
         )}
@@ -110,11 +126,13 @@ const useDialog = () => {
   );
 
   const promptIt = useCallback(
-    (message: string, confirmation: string, cancel: string) => showDialog(message, true, confirmation, cancel),
+    (message: string, confirmation: string, cancel: string) =>
+      showDialog(message, true, confirmation, cancel),
     [showDialog]
   );
   const confirmIt = useCallback(
-    (message: any, confirmation: string, cancel: string) => showDialog(message, false, confirmation, cancel),
+    (message: any, confirmation: string, cancel: string) =>
+      showDialog(message, false, confirmation, cancel),
     [showDialog]
   );
 

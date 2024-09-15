@@ -2,5 +2,6 @@
 import Ontology from "./Ontology";
 export default Ontology;
 
+// import ContentText from " @components/components/OntologyComponents/ContentText";
 
-
+// export default ContentText;

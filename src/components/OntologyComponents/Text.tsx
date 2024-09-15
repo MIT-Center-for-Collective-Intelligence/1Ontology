@@ -91,6 +91,7 @@ import * as Y from "yjs";
 // import { WebrtcProvider } from "y-webrtc";
 import { WebsocketProvider } from "y-websocket";
 import { useTheme } from "@emotion/react";
+import ContentText from "./ContentText";
 
 type ISubOntologyProps = {
   currentVisibleNode: INode;
@@ -122,6 +123,7 @@ type ISubOntologyProps = {
   removeField?: any;
   confirmIt?: any;
   nodes: { [id: string]: INode };
+  color: string;
 };
 const Text = ({
   text,
@@ -139,6 +141,7 @@ const Text = ({
   removeField,
   confirmIt,
   nodes,
+  color,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -148,6 +151,8 @@ const Text = ({
   const [cursors, setCursors] = useState<{
     [key: string]: { position: number; color: string; name: string };
   }>({});
+  const [editorContent, setEditorContent] = useState(text);
+
   const localClientId = useRef(user?.uname);
 
   const textAreaRef = useRef<any>(null);
@@ -316,36 +321,24 @@ const Text = ({
       event.target.select();
     }
   };
-  const getCursorPositionStyles = (position: number) => {
-    const textArea = textAreaRef.current;
-    if (!textArea) return {};
-    const text = textArea.value.substring(0, position);
-    const lines = text.split("\n").filter((n: string) => !!n);
-    const computedStyle = window.getComputedStyle(textArea);
-    let lineHeight = parseFloat(computedStyle.lineHeight);
-
-    if (isNaN(lineHeight)) {
-      const fontSize = parseFloat(computedStyle.fontSize);
-      lineHeight = fontSize * 1.2;
-    }
-
-    const row = lines.length - 1;
-    const col = lines[row]?.length;
-
-    const scrollX = textArea.scrollLeft;
-    const scrollY = textArea.scrollTop;
-
-    const fontSize = parseFloat(window.getComputedStyle(textArea).fontSize);
-    const charWidth = fontSize * 0.4958;
-
-    return {
-      top: row * lineHeight - scrollY,
-      left: col * charWidth - scrollX + 12,
-    };
-  };
 
   return (
-    <Box style={{ position: "relative", width: "100%", borderRadius: "25px" }}>
+    <Box
+      style={{
+        position: "relative",
+        width: "100%",
+        borderRadius: "25px",
+        height: "auto",
+      }}
+    >
+      {/*     <ContentText
+        uname={`${user.fName} ${user.lName}`}
+        editorContent={text}
+        setEditorContent={setEditorContent}
+        fieldId={`${currentVisibleNode.id}-${property}`}
+        color={color}
+        saveChanges={onSaveTextChange}
+      /> */}
       <TextField
         ref={textAreaRef}
         multiline

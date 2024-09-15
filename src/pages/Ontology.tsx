@@ -134,7 +134,6 @@ import {
 import { SearchBox } from " @components/components/SearchBox/SearchBox";
 import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
 import { Notification } from " @components/components/Chat/Notification";
-import TextFieldCollab from " @components/components/OntologyComponents/TextEditor";
 
 const synchronizeStuff = (prev: (any & { id: string })[], change: any) => {
   const docType = change.type;
@@ -535,26 +534,6 @@ const Ontology = () => {
       controller.applyResizer(resizer);
     }
   }, [rightPanelVisible, user]);
-
-  useEffect(() => {
-    const handleUserActivity = () => {
-      setLastInteractionDate(new Date(Date.now()));
-      if (user) {
-        const userDocRef = doc(collection(db, USERS), user.uname);
-        updateDoc(userDocRef, {
-          lastInteracted: Timestamp.now(),
-        });
-      }
-    };
-
-    window.addEventListener("mousemove", handleUserActivity);
-    window.addEventListener("keydown", handleUserActivity);
-
-    return () => {
-      window.removeEventListener("mousemove", handleUserActivity);
-      window.removeEventListener("keydown", handleUserActivity);
-    };
-  }, [user]);
 
   useEffect(() => {
     const checkIfDifferentDay = () => {
@@ -1070,23 +1049,13 @@ const Ontology = () => {
   };
 
   useEffect(() => {
-    const controller = columnResizerRef.current;
-
-    if (controller) {
-      const resizer = controller.getResizer();
-      resizer.resizeSection(2, { toSize: rightPanelVisible ? 400 : 0 });
-      controller.applyResizer(resizer);
-    }
-  }, [rightPanelVisible, user]);
-
-  useEffect(() => {
     const handleUserActivity = () => {
       setLastInteractionDate(new Date(Date.now()));
       if (user) {
         const userDocRef = doc(collection(db, USERS), user.uname);
-        updateDoc(userDocRef, {
-          lastInteracted: Timestamp.now(),
-        });
+        // updateDoc(userDocRef, {
+        //   lastInteracted: Timestamp.now(),
+        // });
       }
     };
 

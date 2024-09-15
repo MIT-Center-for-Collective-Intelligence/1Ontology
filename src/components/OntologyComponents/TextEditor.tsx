@@ -1,83 +1,95 @@
-"use client";
+import { useEffect, useRef, useState } from "react";
+import * as Y from "yjs";
+import { WebsocketProvider } from "y-websocket";
+import { QuillBinding } from "y-quill";
+import Quill from "quill";
+import QuillCursors from "quill-cursors";
+import "quill/dist/quill.snow.css"; // Import Quill's CSS
+import { Box } from "@mui/material";
 
-import { useEffect } from "react";
-// import Editor, { useMonaco } from "@monaco-editor/react";
+Quill.register("modules/cursors", QuillCursors);
 
-// import BetterWebSocket from "partysocket/ws";
-// import YPartyKitProvider from "y-partykit/provider";
-// import { MonacoBinding } from "y-monaco";
-// import * as Y from "yjs";
+const EditorPage = ({
+  uname,
+  editorContent,
+  setEditorContent,
+  fieldId,
+  color,
+  saveChanges,
+}: any) => {
+  const editorContainerRef = useRef(null);
+  const editorRef = useRef<Quill | null>(null); // Add a ref for the editor instance
+  const [initialized, setInitialized] = useState(false);
 
-export default function EditorPage() {
-  // const monaco = useMonaco();
+  useEffect(() => {
+    if (!fieldId || !uname) return;
+    const ydoc = new Y.Doc();
+    const provider = new WebsocketProvider(
+      "wss://demos.yjs.dev/ws",
+      `${fieldId}`,
+      ydoc
+    );
+    const ytext = ydoc.getText("quill");
 
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     if (typeof window !== "undefined") {
-  //       if (monaco) {
-  //         // create a yew yjs doc
-  //         const ydoc = new Y.Doc();
-  //         // establish partykit as your websocket provider
-  //         const provider = new YPartyKitProvider(
-  //           "wss://demos.yjs.dev/ws",
-  //           "nextjs-monaco-demo",
-  //           ydoc,
-  //           {
-  //             // @ts-expect-error TODO: fix this
-  //             WebSocketPolyfill: BetterWebSocket,
-  //           }
-  //         );
-  //         // send a readiness check to partykit
-  //         provider.ws?.send("it's happening!");
-  //         // get the text from the monaco editor
-  //         const yDocTextMonaco = ydoc.getText("monaco");
-  //         // get the monaco editor
-  //         const editor = monaco.editor.getEditors()[0];
-  //         console.log(monaco.editor.getEditors(), "monaco.editor");
-  //         // create the monaco binding to the yjs doc
-  //         if (editor) {
-  //           new MonacoBinding(
-  //             yDocTextMonaco,
-  //             editor.getModel()!,
-  //             // @ts-expect-error TODO: fix this
-  //             new Set([editor]),
-  //             provider.awareness
-  //           );
-  //         }
+    if (editorContainerRef.current) {
+      const editor = new Quill(editorContainerRef.current, {
+        modules: {
+          cursors: true,
+          toolbar: false,
+          history: {
+            userOnly: true,
+          },
+        },
+        placeholder: "Type something...",
+        theme: "snow",
+      });
 
-  //         // enable a button to connect and disconnect from partykit
-  //         const connectButton = document.getElementById("y-connect-button")!;
-  //         connectButton.addEventListener("click", () => {
-  //           if (provider.shouldConnect) {
-  //             provider.disconnect();
-  //             connectButton.textContent = "🎈 Connect";
-  //           } else {
-  //             provider.connect();
-  //             connectButton.textContent = "👋 Disconnect";
-  //           }
-  //         });
-  //       }
-  //     }
-  //   }, 3000);
-  // }, [monaco]);
+      editorRef.current = editor;
+
+      const binding = new QuillBinding(ytext, editor, provider.awareness);
+
+      const userInfo = {
+        name: uname,
+        color: color,
+      };
+      provider.awareness.setLocalStateField("user", userInfo);
+
+      const updateContent = () => {
+        if (saveChanges) {
+          saveChanges(editor.getText());
+        }
+      };
+
+      editor.on("text-change", updateContent);
+
+      return () => {
+        provider.disconnect();
+        provider.destroy();
+        binding.destroy();
+        editor.off("text-change", updateContent);
+      };
+    }
+  }, [uname, fieldId]);
+
+  // Optional: Handle external updates to editorContent (if needed)
+  useEffect(() => {
+    if (editorRef.current && editorContent !== editorRef.current.getText()) {
+      // editorRef.current.setText(editorContent);
+      editorRef.current.setText(""); // Clear existing text
+    }
+  }, [editorContent]);
 
   return (
-    <section
-      style={{ height: "500px" }}
-      className="min-h-screen items-center justify-center mx-auto max-w-2xl space-y-2 m-5"
-    >
-      {/*       <Editor
-        theme="vs-dark"
-        defaultLanguage="javascript"
-        defaultValue="// what good shall we do this day?"
-        className="bg-background h-[720px] shadow-lg"
-      /> */}
-      <button
-        id="y-connect-button"
-        className="px-4 py-3 bg-neutral-200 rounded font-medium hover:bg-neutral-300 transition duration-300 dark:bg-neutral-500 dark:hover:bg-neutral-600"
-      >
-        👋 Disconnect
-      </button>
-    </section>
+    <Box
+      ref={editorContainerRef}
+      sx={{
+        borderBottomRightRadius: "25px",
+        borderBottomLeftRadius: "25px",
+        minHeight: "70px",
+        fontSize: fieldId.split("-").at(-1) === "title" ? "24px" : "18px",
+      }}
+    />
   );
-}
+};
+
+export default EditorPage;

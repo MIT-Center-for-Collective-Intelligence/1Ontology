@@ -166,7 +166,27 @@ type INodeProps = {
   eachOntologyPath: { [key: string]: any };
   searchWithFuse: any;
 };
+function getRandomProminentColor() {
+  // Define a list of prominent colors
+  const prominentColors = [
+    "#FF5733", // Red-Orange
+    "#33FF57", // Green
+    "#3357FF", // Blue
+    "#FF33A1", // Pink
+    "#FFBD33", // Yellow-Orange
+    "#33FFBD", // Aqua
+    "#8D33FF", // Purple
+    "#FF5733", // Coral
+    "#FF33FF", // Magenta
+    "#FFFF33", // Bright Yellow
+  ];
 
+  // Get a random index from the list
+  const randomIndex = Math.floor(Math.random() * prominentColors.length);
+
+  // Return the color at the random index
+  return prominentColors[randomIndex];
+}
 const Node = ({
   currentVisibleNode,
   setCurrentVisibleNode,
@@ -221,7 +241,7 @@ const Node = ({
   const [viewValue, setViewValue] = useState<number>(0);
   const [viewValueSpecialization, setViewValueSpecialization] =
     useState<number>(1);
-
+  const color = getRandomProminentColor();
   const db = getFirestore();
 
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
@@ -343,8 +363,11 @@ const Node = ({
   };
 
   // Function to add a new specialization to the node
-  const addNewSpecialization = async (category: string) => {
+  const addNewSpecialization = async (category: string = "main") => {
     try {
+      if (!category) {
+        category = "main";
+      }
       // Get a reference to the parent node document
       const nodeParentRef = doc(collection(db, NODES), currentVisibleNode.id);
 
@@ -396,6 +419,7 @@ const Node = ({
         delete newNode.locked;
       }
       // Check if the specified type and category exist in the parent node
+
       if (!parentNode.specializations.hasOwnProperty(category)) {
         // If not, create the specified type and category
         parentNode.specializations = {
@@ -959,7 +983,7 @@ const Node = ({
       // Confirm deletion with the user using a custom confirmation dialog
       if (
         await confirmIt(
-          "Are you sure you want to delete this Node?",
+          `Are you sure you want to delete this Node?`,
           "Delete Node",
           "Keep Node"
         )
@@ -1510,6 +1534,7 @@ const Node = ({
                   editNode={editNode}
                   setEditNode={setEditNode}
                   confirmIt={confirmIt}
+                  color={color}
                 />
               </Box>
             )}
@@ -1580,6 +1605,7 @@ const Node = ({
               setSnackbarMessage={setSnackbarMessage}
               setCurrentVisibleNode={setCurrentVisibleNode}
               setEditNode={setEditNode}
+              color={color}
             />
           </Box>
         </Paper>
@@ -1611,6 +1637,7 @@ const Node = ({
             lockedNodeFields={lockedNodeFields}
             user={user}
             nodes={nodes}
+            color={color}
           />
         </Box>
         <Box sx={{ display: "flex", gap: "9px" }}>

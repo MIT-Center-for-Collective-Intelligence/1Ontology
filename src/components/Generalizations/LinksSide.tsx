@@ -65,6 +65,7 @@ const LinksSide = ({
       ? Object.values(nodes[id]?.generalizations || {}).flat().length
       : 0;
   };
+  console.log("properties", properties);
   return (
     <Box sx={{ p: "13px", width: "500px" /* , height: "100vh" */ }}>
       <Box>
@@ -86,7 +87,7 @@ const LinksSide = ({
 
           {relationType === "specializations" && (
             <Button
-              onClick={handleNewSpecialization}
+              onClick={() => handleNewSpecialization()}
               sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
               variant="outlined"
             >

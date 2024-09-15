@@ -307,7 +307,7 @@ const AppHeader = forwardRef(
         {" "}
         {isAuthenticated && user && (
           <Typography sx={{ p: "6px 16px" }}>
-            {capitalizeString(user.fName ?? "")}
+            {capitalizeString(`${user.fName} ${user.lName}` ?? "")}
           </Typography>
         )}
         {isAuthenticated && user && (
@@ -485,13 +485,22 @@ const AppHeader = forwardRef(
                 alignItems="center"
                 spacing={"8px"}
               >
-                <Button onClick={displayInheritanceSettings} variant="outlined">
+                <Button
+                  sx={{ borderRadius: "25px" }}
+                  onClick={displayInheritanceSettings}
+                  variant="outlined"
+                >
                   Manage inheritance
                 </Button>
-                <Button onClick={() => handleDownload()} variant="outlined">
+                <Button
+                  sx={{ borderRadius: "25px" }}
+                  onClick={() => handleDownload()}
+                  variant="outlined"
+                >
                   Download as JSON
                 </Button>
                 <Button
+                  sx={{ borderRadius: "25px" }}
                   onClick={toggleRightPanel}
                   variant={rightPanelVisible ? "contained" : "outlined"}
                 >
@@ -520,7 +529,11 @@ const AppHeader = forwardRef(
                 </Tooltip>
 
                 {isAuthenticated && user && (
-                  <Tooltip title={capitalizeString(user.fName ?? "")}>
+                  <Tooltip
+                    title={capitalizeString(
+                      `${user.fName} ${user.lName}` ?? ""
+                    )}
+                  >
                     <IconButton onClick={handleProfileMenuOpen}>
                       <Avatar
                         src={profileImage || user.imageUrl || NO_IMAGE_USER}
