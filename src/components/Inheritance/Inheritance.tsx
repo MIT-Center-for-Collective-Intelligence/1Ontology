@@ -57,7 +57,6 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
     ref: string
   ) => {
     try {
-      console.log("specializations", specializations);
       for (let specialization of specializations) {
         const specializationData = nodes[specialization.id];
         const nodeRef = doc(collection(db, NODES), specialization.id);

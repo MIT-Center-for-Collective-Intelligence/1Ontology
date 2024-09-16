@@ -307,7 +307,7 @@ const AppHeader = forwardRef(
         {" "}
         {isAuthenticated && user && (
           <Typography sx={{ p: "6px 16px" }}>
-            {capitalizeString(`${user.fName} ${user.lName}` ?? "")}
+            {capitalizeString(`${user?.fName ?? ""} ${user?.lName ?? ""}`)}
           </Typography>
         )}
         {isAuthenticated && user && (
@@ -531,7 +531,7 @@ const AppHeader = forwardRef(
                 {isAuthenticated && user && (
                   <Tooltip
                     title={capitalizeString(
-                      `${user.fName} ${user.lName}` ?? ""
+                      `${user.fName ?? ""} ${user.lName ?? ""}`
                     )}
                   >
                     <IconButton onClick={handleProfileMenuOpen}>

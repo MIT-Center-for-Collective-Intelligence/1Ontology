@@ -19,6 +19,7 @@ const EditorPage = ({
 }: any) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null); // Add a ref for the editor instance
+  const yTextRef = useRef<any>(null);
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
@@ -29,8 +30,8 @@ const EditorPage = ({
       `${fieldId}`,
       ydoc
     );
-    const ytext = ydoc.getText("quill");
-
+    const yText = ydoc.getText("quill");
+    yTextRef.current = yText;
     if (editorContainerRef.current) {
       const editor = new Quill(editorContainerRef.current, {
         modules: {
@@ -46,7 +47,7 @@ const EditorPage = ({
 
       editorRef.current = editor;
 
-      const binding = new QuillBinding(ytext, editor, provider.awareness);
+      const binding = new QuillBinding(yText, editor, provider.awareness);
 
       const userInfo = {
         name: uname,
@@ -72,12 +73,16 @@ const EditorPage = ({
   }, [uname, fieldId]);
 
   // Optional: Handle external updates to editorContent (if needed)
-  useEffect(() => {
-    if (editorRef.current && editorContent !== editorRef.current.getText()) {
-      // editorRef.current.setText(editorContent);
-      editorRef.current.setText(""); // Clear existing text
-    }
-  }, [editorContent]);
+  // useEffect(() => {
+  //   if (yTextRef.current) {
+  //     console.log("yTextRef.current", yTextRef.current.doc);
+  //     // editorRef.current.setText(editorContent);
+  //     // yTextRef.current.setText(""); // Clear existing text
+  //     const initialText = editorContent;
+  //     yTextRef.current.delete(0, 100);
+  //     yTextRef.current.insert(0, initialText);
+  //   }
+  // }, [editorContent]);
 
   return (
     <Box

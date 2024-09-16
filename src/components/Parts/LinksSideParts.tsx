@@ -190,6 +190,7 @@ const LinksSideParts = ({
                                           getTitle(nodes, child.id) ||
                                           child.title
                                         }
+                                        nodes={nodes}
                                       />
                                     </ListItem>
                                   )}

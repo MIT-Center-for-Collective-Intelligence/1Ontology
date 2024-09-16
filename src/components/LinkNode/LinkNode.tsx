@@ -92,6 +92,7 @@ type ISubOntologyProps = {
   }) => void;
   navigateToNode: (nodeID: string) => void;
   title: string;
+  nodes: any;
 };
 
 const LinkNode = ({
@@ -104,6 +105,7 @@ const LinkNode = ({
   updateInheritance,
   navigateToNode,
   title,
+  nodes,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -127,6 +129,15 @@ const LinkNode = ({
         );
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as INode;
+
+          const nodeId = nodeData.inheritance[property].ref;
+          if (nodeId) {
+            const inheritedNode = nodes[nodeId as string];
+            nodeData.properties[property] = JSON.parse(
+              JSON.stringify(inheritedNode.properties[property])
+            );
+          }
+
           const linkIdx = (
             nodeData?.properties[property][category] || []
           ).findIndex((sub: any) => sub.id === child.id);
@@ -135,7 +146,7 @@ const LinkNode = ({
           }
           // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
           // const childData = childDoc.data() as INode;
-          console.log("updated links ==>");
+
           await updateDoc(nodeDoc.ref, {
             [`properties.${property}.${category}`]:
               nodeData.properties[property][category],

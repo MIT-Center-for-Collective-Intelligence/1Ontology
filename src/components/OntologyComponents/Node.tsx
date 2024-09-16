@@ -521,6 +521,45 @@ const Node = ({
 
     // Close the modal or perform any necessary cleanup.
   };
+  const updateSpecializations = (
+    children: { id: string; title: string }[],
+    newLink: { id: string; title: string }
+  ) => {
+    for (let child of children) {
+      const childData = nodes[child.id];
+      const specializations = childData.specializations;
+      const oldSpecializations = Object.keys(specializations).flat();
+      const index = oldSpecializations.findIndex(
+        (e: any) => e.id === newLink.id
+      );
+
+      if (index === -1) {
+        specializations["main"].push(newLink);
+        const childRef = doc(collection(db, NODES), child.id);
+        updateDoc(childRef, {
+          specializations,
+        });
+      }
+    }
+  };
+  const updateGeneralizations = (
+    children: { id: string; title: string }[],
+    newLink: { id: string; title: string }
+  ) => {
+    for (let child of children) {
+      const childData = nodes[child.id];
+      const generalizations = childData.generalizations;
+      const keys = Object.keys(generalizations).flat();
+      const index = keys.findIndex((e: any) => e.id === newLink.id);
+      if (index === -1) {
+        generalizations["main"].push(newLink);
+        const childRef = doc(collection(db, NODES), child.id);
+        updateDoc(childRef, {
+          generalizations,
+        });
+      }
+    }
+  };
 
   const handleSaveChildrenChanges = async () => {
     try {
@@ -584,7 +623,18 @@ const Node = ({
           nodeData.properties[property][selectedCategory] = oldChildren;
         }
       }
-
+      if (property === "specializations") {
+        updateGeneralizations(Object.values(oldChildren).flat(), {
+          id: currentVisibleNode.id,
+          title: currentVisibleNode.title,
+        });
+      }
+      if (property === "generalizations") {
+        updateSpecializations(Object.values(oldChildren).flat(), {
+          id: currentVisibleNode.id,
+          title: currentVisibleNode.title,
+        });
+      }
       // If inheritance is present, reset the children field
       if (
         nodeData.inheritance &&
@@ -700,7 +750,17 @@ const Node = ({
             return;
           }
         }
-
+        if (
+          selectedProperty !== "specializations" ||
+          selectedProperty !== "specializations"
+        ) {
+          updateInheritance({
+            nodeId: nodeDoc.id,
+            updatedProperty: editCategory
+              ? editCategory.property
+              : selectedProperty,
+          });
+        }
         // Update the node document with the modified data
         await updateDoc(nodeDoc.ref, ontologyData);
 
@@ -1072,7 +1132,7 @@ const Node = ({
           } else {
             _ontologyPath = _ontologyPath.slice(0, -1);
           }
-          console.log("_ontologyPath", _ontologyPath);
+
           const lastNodeId: string = ontologyPath.at(-1)?.id || "";
           if (lastNodeId && nodes[lastNodeId]) {
             setCurrentVisibleNode(nodes[lastNodeId]);
@@ -1375,9 +1435,11 @@ const Node = ({
       <Dialog onClose={handleCloseAddCategory} open={openAddCategory}>
         <DialogContent>
           <Box sx={{ height: "auto", width: "500px" }}>
+            <Typography sx={{ mb: "13px", fontSize: "19px" }}>
+              {editCategory ? "Edit " : "Add "}a new Category:
+            </Typography>
             <TextField
               placeholder={`Add Category`}
-              variant="standard"
               fullWidth
               value={newCategory}
               multiline
@@ -1397,10 +1459,20 @@ const Node = ({
           </Box>
         </DialogContent>
         <DialogActions sx={{ justifyContent: "center" }}>
-          <Button onClick={addNewCategory} color="primary">
+          <Button
+            onClick={addNewCategory}
+            color="primary"
+            variant="outlined"
+            sx={{ borderRadius: "25px" }}
+          >
             {editCategory ? "Save" : "Add"}
           </Button>
-          <Button onClick={handleCloseAddCategory} color="primary">
+          <Button
+            onClick={handleCloseAddCategory}
+            color="primary"
+            variant="outlined"
+            sx={{ borderRadius: "25px" }}
+          >
             Cancel
           </Button>
         </DialogActions>

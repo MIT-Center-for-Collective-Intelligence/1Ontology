@@ -387,6 +387,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                                                           child.id
                                                         ) || child.title
                                                       }
+                                                      nodes={nodes}
                                                       sx={{ pl: 1 }}
                                                     />
                                                   </ListItem>
