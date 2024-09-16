@@ -77,16 +77,18 @@ const LinksSideParts = ({
             {capitalizeFirstLetter(DISPLAY[property])}
           </Button>
 
-          <Button
-            onClick={() => {
-              setOpenAddCategory(true);
-              setType(property);
-            }}
-            sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
-            variant="outlined"
-          >
-            Add Category
-          </Button>
+          {property !== "parts" && property !== "isPartOf" && (
+            <Button
+              onClick={() => {
+                setOpenAddCategory(true);
+                setType(property);
+              }}
+              sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
+              variant="outlined"
+            >
+              Add Category
+            </Button>
+          )}
         </Box>
 
         {/* List of categories within the property */}

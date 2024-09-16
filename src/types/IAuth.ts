@@ -68,6 +68,7 @@ export type User = {
   email: string;
   claims: any;
   rightPanel: boolean;
+  currentNode: string;
 };
 
 export type UserSettings = {

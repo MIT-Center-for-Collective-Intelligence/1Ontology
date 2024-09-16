@@ -157,75 +157,64 @@ const Text = ({
 
   const textAreaRef = useRef<any>(null);
 
-  useEffect(() => {
-    const ydoc = new Y.Doc();
+  // useEffect(() => {
+  //   console.log("text");
+  //   const ydoc = new Y.Doc();
 
-    const provider = new WebsocketProvider(
-      "wss://demos.yjs.dev/ws",
-      `${currentVisibleNode.id}-${property}-new`,
-      ydoc
-    );
-    const yText = ydoc.getText("textarea");
-    const yCursors = ydoc.getMap("cursors");
-    // Initialize yText if it's empty
-    const initialText = text;
-    yText.delete(0, yText.length); // Delete all existing content
-    // yText.insert(0, initialText); // Insert the new initialText
-    /*    if (yText.toString().length === 0) {
+  //   const provider = new WebsocketProvider(
+  //     "wss://demos.yjs.dev/ws",
+  //     `${currentVisibleNode.id}-${property}`,
+  //     ydoc
+  //   );
+  //   const yText = ydoc.getText("textarea");
+  //   const yCursors = ydoc.getMap("cursors");
+  //   // Initialize yText if it's empty
+  //   const initialText = text;
+  //   if (property === "description") {
+  //     console.log(yText.toString().length, "yText.toString().length");
+  //   }
+  //   yText.delete(0, yText.toString().length); // Delete all existing content
+  //   yText.insert(0, initialText); // Insert the new initialText
+  //   /*    if (yText.toString().length === 0) {
 
-    } */
-    setCurrentValue(initialText);
+  //   } */
+  //   setCurrentValue(initialText);
 
-    yText.observe(() => {
-      setCurrentValue(yText.toString());
-    });
+  //   yText.observe(() => {
+  //     setCurrentValue(yText.toString());
+  //   });
 
-    // Update cursors and notify users editing
-    yCursors.observe(() => {
-      const newCursors = yCursors.toJSON();
-      setCursors(newCursors);
-    });
+  //   // Update cursors and notify users editing
+  //   yCursors.observe(() => {
+  //     const newCursors = yCursors.toJSON();
+  //     setCursors(newCursors);
+  //   });
 
-    const handleInput = (event: any) => {
-      const value = event.target.value;
-      yText.delete(0, yText.length);
-      yText.insert(0, value);
-      setCurrentValue(yText.toString());
-      onSaveTextChange(yText.toString());
-    };
+  //   const handleInput = (event: any) => {
+  //     const value = event.target.value;
+  //     yText.delete(0, yText.length);
+  //     yText.insert(0, value);
+  //     setCurrentValue(yText.toString());
+  //     onSaveTextChange(yText.toString());
+  //   };
 
-    const updateCursor = () => {
-      const cursorPosition = textAreaRef.current?.selectionStart || 0;
-      const currentCursor: any = yCursors.get(localClientId.current) || {};
-      if (!currentCursor.color) {
-        currentCursor.color = user.color;
-      }
-      yCursors.set(user.uname, {
-        position: cursorPosition,
-        name: `${user.fName} ${user.lName}`,
-        color: currentCursor.color,
-      });
-    };
-    const handleBlur = () => {
-      yCursors.delete(localClientId.current);
-    };
-    if (textAreaRef.current) {
-      textAreaRef.current.addEventListener("input", handleInput);
-      textAreaRef.current.addEventListener("mouseup", updateCursor);
-      textAreaRef.current.addEventListener("keydown", updateCursor);
-      textAreaRef.current.addEventListener("blur", handleBlur);
-    }
+  //   const handleBlur = () => {
+  //     yCursors.delete(localClientId.current);
+  //   };
+  //   if (textAreaRef.current) {
+  //     textAreaRef.current.addEventListener("input", handleInput);
 
-    return () => {
-      if (textAreaRef.current) {
-        textAreaRef.current.removeEventListener("input", handleInput);
-        textAreaRef.current.removeEventListener("mouseup", updateCursor);
-        textAreaRef.current.removeEventListener("keydown", updateCursor);
-        textAreaRef.current.addEventListener("blur", handleBlur);
-      }
-      provider.destroy();
-    };
-  }, [currentVisibleNode.id]);
+  //     textAreaRef.current.addEventListener("blur", handleBlur);
+  //   }
+
+  //   return () => {
+  //     if (textAreaRef.current) {
+  //       textAreaRef.current.removeEventListener("input", handleInput);
+  //       textAreaRef.current.addEventListener("blur", handleBlur);
+  //     }
+  //     provider.destroy();
+  //   };
+  // }, [currentVisibleNode.id, text]);
 
   // This function is responsible for editing the title of a childe node.
   // It takes an object with three parameters: parentData (parentNode), newTitle, and id.
@@ -321,7 +310,10 @@ const Text = ({
       event.target.select();
     }
   };
-
+  const handleChanges = (e: any) => {
+    onSaveTextChange(e.target.value);
+    setEditorContent(e.target.value);
+  };
   return (
     <Box
       style={{
@@ -339,11 +331,13 @@ const Text = ({
         color={color}
         saveChanges={onSaveTextChange}
       /> */}
+
       <TextField
         ref={textAreaRef}
         multiline
         minRows={2}
-        value={currentValue}
+        value={editorContent}
+        onChange={handleChanges}
         placeholder="Type something..."
         InputProps={{
           sx: {

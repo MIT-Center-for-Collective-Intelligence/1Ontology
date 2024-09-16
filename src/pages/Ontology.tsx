@@ -215,6 +215,24 @@ const Ontology = () => {
   );
 
   useEffect(() => {
+    if (!user) return;
+
+    const userQuery = query(
+      collection(db, LOGS),
+      where("__name__", "==", "00EWFECw1PnBRPy4wZVt")
+    );
+
+    const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
+      const docChange = snapshot.docChanges()[0];
+      if (docChange.type !== "added") {
+        window.location.reload();
+      }
+    });
+
+    return () => unsubscribeUser();
+  }, [db, user, nodes]);
+
+  useEffect(() => {
     // Check if a user is logged in
     if (user) {
       // Check if the user's email is verified
@@ -350,30 +368,6 @@ const Ontology = () => {
   };
 
   useEffect(() => {
-    if (!user) return;
-
-    const userQuery = query(
-      collection(db, LOGS),
-      where("__name__", "==", "00EWFECw1PnBRPy4wZVt")
-    );
-
-    const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
-      const docChange = snapshot.docChanges()[0];
-      if (docChange.type !== "added") {
-        window.location.reload();
-      }
-    });
-
-    return () => unsubscribeUser();
-  }, [db, user, nodes]);
-
-  const updateTheUrl = (path: INodePath[]) => {
-    let newHash = "";
-    path.forEach((p: any) => (newHash = newHash + `#${p.id.trim()}`));
-    window.location.hash = newHash;
-  };
-
-  useEffect(() => {
     // Function to handle changes in the URL hash
     const handleHashChange = async () => {
       // Check if there is a hash in the URL
@@ -383,7 +377,6 @@ const Ontology = () => {
         if (nodes[visibleNodeId]) {
           setCurrentVisibleNode(nodes[visibleNodeId]);
         }
-        updateUserDoc(eachOntologyPath[visibleNodeId]);
       }
     };
 
@@ -626,46 +619,6 @@ const Ontology = () => {
   };
 
   useEffect(() => {
-    // Check if user or nodes are not available
-    if (!user) return;
-    if (!Object.keys(nodes).length) return;
-
-    // Query the database for the user based on userId
-    const userQuery = query(
-      collection(db, USERS),
-      where("userId", "==", user.userId)
-    );
-
-    // Set up a snapshot listener for changes in the user data
-    const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
-      // Get the first document change from the snapshot
-      const docChange = snapshot.docChanges()[0];
-
-      // Get the data from the document change
-      const dataChange = docChange.doc.data();
-
-      // Set the ontologyPath in the component state
-      setOntologyPath(dataChange?.ontologyPath || []);
-
-      //update the expanded nodes state
-      if (docChange.type === "added") {
-        initializeExpanded(dataChange?.ontologyPath || []);
-        // Get the last ontology in the ontologyPath or an empty string if none
-        const lastNode = dataChange?.ontologyPath
-          ? [...dataChange?.ontologyPath]?.reverse()[0] || ""
-          : "";
-        // If the node is found, set it as the open node in the component state
-        if (nodes[lastNode.id]) setCurrentVisibleNode(nodes[lastNode.id]);
-      }
-      // Update the URL based on the ontologyPath
-      updateTheUrl(dataChange?.ontologyPath || []);
-    });
-
-    // Cleanup function: Unsubscribe from the user data snapshot listener
-    return () => unsubscribeUser();
-  }, [db, user, nodes]);
-
-  useEffect(() => {
     // Create a query for the NODES collection where "deleted" is false
     const nodesQuery = query(
       collection(db, NODES),
@@ -724,14 +677,6 @@ const Ontology = () => {
     setTreeVisualization(treeOfSpecializations);
   }, [nodes]);
 
-  const initializeExpanded = (ontologyPath: INodePath[]) => {
-    const newExpandedSet: Set<string> = new Set();
-    for (let node of ontologyPath) {
-      newExpandedSet.add(node.id);
-    }
-    setExpandedNodes(newExpandedSet);
-  };
-
   // Callback function to handle navigation when a link is clicked
   const handleLinkNavigation = useCallback(
     async (path: { id: string; title: string }, type: string) => {
@@ -749,8 +694,6 @@ const Ontology = () => {
         } else {
           _ontologyPath.push(path);
         }
-
-        await updateUserDoc([..._ontologyPath]);
       } catch (error) {
         console.error(error);
       }
@@ -758,23 +701,53 @@ const Ontology = () => {
     [nodes, ontologyPath]
   );
 
+  console.log("user ==>", user);
+
+  useEffect(() => {
+    if (user?.currentNode && nodes[user.currentNode]) {
+      setCurrentVisibleNode(nodes[user.currentNode]);
+    }
+  }, [nodes, user?.currentNode]);
+
   // Function to update the user document with the current ontology path
-  const updateUserDoc = async (ontologyPath: INodePath[]) => {
+  const openedANode = async (currentNode: string) => {
     if (!user) return;
     const userRef = doc(collection(db, USERS), user.uname);
     // Update the user document with the ontology path
-    if (ontologyPath) {
-      await updateDoc(userRef, { ontologyPath });
 
-      // Record logs if ontology path is not empty
-      if (ontologyPath.length > 0) {
-        await recordLogs({
-          action: "Opened a page",
-          page: ontologyPath[ontologyPath.length - 1],
-        });
-      }
+    await updateDoc(userRef, { currentNode });
+
+    // Record logs if ontology path is not empty
+    if (ontologyPath.length > 0) {
+      await recordLogs({
+        action: "Opened a node",
+        node: currentNode,
+      });
     }
   };
+
+  const updateTheUrl = (path: INodePath[]) => {
+    let newHash = "";
+    path.forEach((p: any) => (newHash = newHash + `#${p.id.trim()}`));
+    window.location.hash = newHash;
+  };
+
+  const initializeExpanded = (ontologyPath: INodePath[]) => {
+    const newExpandedSet: Set<string> = new Set();
+    for (let node of ontologyPath) {
+      newExpandedSet.add(node.id);
+    }
+    setExpandedNodes(newExpandedSet);
+  };
+  useEffect(() => {
+    if (!currentVisibleNode?.id) {
+      return;
+    }
+    openedANode(currentVisibleNode.id);
+    setOntologyPath(eachOntologyPath[currentVisibleNode?.id]);
+    initializeExpanded(eachOntologyPath[currentVisibleNode?.id]);
+    updateTheUrl(eachOntologyPath[currentVisibleNode?.id]);
+  }, [currentVisibleNode?.id, eachOntologyPath]);
 
   // Callback function to add a new node to the database
   const addNewNode = useCallback(
@@ -822,17 +795,6 @@ const Ontology = () => {
           action: "opened dagre-view",
           itemClicked: nodes[nodeId].id,
         });
-
-        // Update the user document with the ontology path.
-        await updateUserDoc([
-          ...(eachOntologyPath[nodeId] || [
-            {
-              id: nodeId,
-              title: nodes[nodeId].title,
-              category: !!nodes[nodeId].category,
-            },
-          ]),
-        ]);
       }
     },
     // Dependency array includes ontologies and user, ensuring the function re-renders when these values change.
@@ -866,10 +828,6 @@ const Ontology = () => {
           action: "clicked tree-view",
           itemClicked: nodes[nodeId].id,
         });
-
-        // Update user document with the path
-        const path = eachOntologyPath[nodeId] || [];
-        await updateUserDoc(path);
       }
     },
     [nodes, user, eachOntologyPath]
@@ -910,13 +868,6 @@ const Ontology = () => {
         action: "Search result clicked",
         clicked: node.id,
       });
-
-      // Update the user document with the ontology path
-      updateUserDoc([
-        ...(eachOntologyPath[node.id] || [
-          { title: node.title, id: node.id, category: node.category },
-        ]),
-      ]);
     } catch (error) {
       console.error(error);
     }
@@ -1086,7 +1037,6 @@ const Ontology = () => {
   }, [lastInteractionDate]);
 
   const navigateToNode = async (nodeId: string) => {
-    updateUserDoc(eachOntologyPath[nodeId] || []);
     if (nodes[nodeId]) {
       setCurrentVisibleNode(nodes[nodeId]);
     }
@@ -1340,10 +1290,8 @@ const Ontology = () => {
                   currentVisibleNode={currentVisibleNode}
                   setCurrentVisibleNode={setCurrentVisibleNode}
                   handleLinkNavigation={handleLinkNavigation}
-                  setOntologyPath={setOntologyPath}
                   ontologyPath={ontologyPath}
                   setSnackbarMessage={setSnackbarMessage}
-                  updateUserDoc={updateUserDoc}
                   user={user}
                   mainSpecializations={getMainSpecializations(
                     treeVisualization

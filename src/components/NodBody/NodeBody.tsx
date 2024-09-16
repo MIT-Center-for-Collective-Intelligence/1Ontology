@@ -14,6 +14,8 @@ import {
   OutlinedInput,
   MenuItem,
   useTheme,
+  FormLabel,
+  TextField,
 } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
@@ -28,6 +30,8 @@ import { INode } from " @components/types/INode";
 import { DISPLAY } from " @components/lib/CONSTANTS";
 import Text from "../OntologyComponents/Text";
 import LinkNode from "../LinkNode/LinkNode";
+import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
+import { NODES } from " @components/lib/firestoreClient/collections";
 
 interface NodeBodyProps {
   currentVisibleNode: INode;
@@ -75,7 +79,35 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   color,
 }) => {
   const theme = useTheme();
-  const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#c5cddb";
+  const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
+  const db = getFirestore();
+
+  const changeInheritance = (event: any, property: string) => {
+    try {
+      const selectedTitle = event.target.value;
+      const selectedGeneralization = Object.values(
+        currentVisibleNode.generalizations
+      )
+        .flat()
+        .find((generalization) => generalization.title === selectedTitle);
+
+      if (selectedGeneralization) {
+        console.log(selectedGeneralization.id, "Selected generalization ID");
+        const selectedGeneralizationData = nodes[selectedGeneralization.id];
+        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+        updateDoc(nodeRef, {
+          [`inheritance.${property}.ref`]: selectedGeneralization.id,
+        });
+        updateInheritance({
+          nodeId: selectedGeneralization.id,
+          updatedProperty: property,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <Box>
       <Box>
@@ -186,46 +218,52 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       {'")'}
                     </Typography>
                   )}
+
                   {Object.values(currentVisibleNode.generalizations).flat()
-                    .length > 10 && (
-                    <FormControl
-                      sx={{
-                        m: 1,
-                        width: "130px",
-                        borderRadius: "25px",
+                    .length > 1 && (
+                    <TextField
+                      value={getTitle(
+                        nodes,
+                        currentVisibleNode.inheritance[property].ref || ""
+                      )}
+                      onChange={(e) => {
+                        changeInheritance(e, property);
+                      }}
+                      select
+                      label="Change Inheritance"
+                      sx={{ minWidth: "200px" }}
+                      InputProps={{
+                        sx: {
+                          height: "40px",
+                          padding: "0 14px",
+                          borderRadius: "25px",
+                        },
+                      }}
+                      InputLabelProps={{
+                        style: { color: "grey" },
                       }}
                     >
-                      <Select
-                        value={getTitle(
-                          nodes,
-                          currentVisibleNode.inheritance[property].ref || ""
-                        )}
-                        onChange={(event) => {
-                          console.log(event);
-                        }}
-                        sx={{ borderRadius: "25px", maxHeight: "30px" }}
-                        input={<OutlinedInput label="Name" />}
-                        MenuProps={{
-                          PaperProps: {
-                            style: {
-                              width: 50,
-                              borderRadius: "25px",
-                            },
-                          },
+                      <MenuItem
+                        value=""
+                        disabled
+                        sx={{
+                          backgroundColor: (theme) =>
+                            theme.palette.mode === "dark" ? "" : "white",
                         }}
                       >
-                        {Object.values(currentVisibleNode.generalizations)
-                          .flat()
-                          .map((generalization) => (
-                            <MenuItem
-                              key={generalization.id}
-                              value={generalization.title}
-                            >
-                              {getTitle(nodes, generalization.id || "")}
-                            </MenuItem>
-                          ))}
-                      </Select>
-                    </FormControl>
+                        Select Course
+                      </MenuItem>
+                      {Object.values(currentVisibleNode.generalizations)
+                        .flat()
+                        .map((generalization) => (
+                          <MenuItem
+                            key={generalization.id}
+                            value={generalization.title}
+                          >
+                            {getTitle(nodes, generalization.id || "")}
+                          </MenuItem>
+                        ))}
+                    </TextField>
                   )}
                 </Box>
               </Box>

@@ -259,12 +259,12 @@ const LinksSide = ({
                                         category={category}
                                         updateInheritance={updateInheritance}
                                         deleteVisible={
-                                          relationType !== "generalizations" &&
-                                          Object.values(properties).flat()
-                                            .length !== 1 &&
-                                          relationType === "specializations" &&
-                                          getNumOfGeneralizations(child.id) !==
-                                            1
+                                          (relationType === "generalizations" &&
+                                            Object.values(properties).flat()
+                                              .length !== 1) ||
+                                          (relationType === "specializations" &&
+                                            getNumOfGeneralizations(child.id) >
+                                              1)
                                         }
                                         title={
                                           getTitle(nodes, child.id) ||

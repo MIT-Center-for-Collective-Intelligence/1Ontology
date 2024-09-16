@@ -57,6 +57,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
     ref: string
   ) => {
     try {
+      let newBatch = batch;
       for (let specialization of specializations) {
         const specializationData = nodes[specialization.id];
         const nodeRef = doc(collection(db, NODES), specialization.id);
@@ -84,19 +85,25 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
           };
         }
 
-        batch.update(nodeRef, objectUpdate);
-        if (batch._mutations.length > 100) {
-          await batch.commit();
-          batch = writeBatch(db);
+        if (newBatch._committed) {
+          newBatch = writeBatch(db);
         }
-        await updateSpecializationsInheritance(
+        updateDoc(nodeRef, objectUpdate);
+
+        if (newBatch._mutations.length > 498) {
+          await newBatch.commit();
+          newBatch = writeBatch(db);
+        }
+
+        newBatch = await updateSpecializationsInheritance(
           Object.values(nodes[specialization.id].specializations).flat(),
-          batch,
+          newBatch,
           property,
           newValue,
           ref
         );
       }
+      return newBatch;
     } catch (error) {
       console.error(error);
     }
@@ -122,6 +129,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
         newInheritance,
         selectedNode.id
       );
+      console.log("Done updating");
       await batch.commit();
     },
     [selectedNode]

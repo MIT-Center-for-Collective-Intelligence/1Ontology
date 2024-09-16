@@ -184,14 +184,14 @@ const AppHeader = forwardRef(
             const doc = change.doc;
             const userId = doc.id;
             const data = doc.data();
-            const ontologyPath = data.ontologyPath;
+            const currentNode = data.currentNode;
 
             if (
               (change.type === "added" || change.type === "modified") &&
-              ontologyPath
+              currentNode
             ) {
               updatedUsersData[userId] = {
-                node: ontologyPath.at(-1),
+                node: currentNode,
                 imageUrl: data.imageUrl,
                 fName: data.fName,
                 lName: data.lName,

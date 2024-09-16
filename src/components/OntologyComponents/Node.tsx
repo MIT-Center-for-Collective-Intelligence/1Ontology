@@ -146,10 +146,9 @@ type INodeProps = {
     path: { id: string; title: string },
     type: string
   ) => void;
-  setOntologyPath: (state: INodePath[]) => void;
   ontologyPath: INodePath[];
   setSnackbarMessage: (message: string) => void;
-  updateUserDoc: (ontologyPath: INodePath[]) => void;
+
   user: any;
   mainSpecializations: MainSpecializations;
   nodes: { [id: string]: INode };
@@ -191,7 +190,6 @@ const Node = ({
   currentVisibleNode,
   setCurrentVisibleNode,
   setSnackbarMessage,
-  updateUserDoc,
   mainSpecializations,
   nodes,
   addNewNode,
@@ -439,11 +437,6 @@ const Node = ({
         });
       }
 
-      // Update the user document with the path
-      updateUserDoc([
-        ...ontologyPath,
-        { id: newNodeRef.id, title: newNode.title, category: false },
-      ]);
       // Add the new node to the database
       addNewNode({ id: newNodeRef.id, newNode });
       // Update the parent node document in the database
@@ -887,10 +880,10 @@ const Node = ({
           // Retrieve node document from the anodes object
           const nodeData = { ...currentVisibleNode };
           if (
-            nodeData.inheritance &&
-            nodeData.inheritance[property].ref &&
             property !== "specializations" &&
-            property !== "generalizations"
+            property !== "generalizations" &&
+            nodeData.inheritance &&
+            nodeData.inheritance[property].ref
           ) {
             const nodeId = nodeData.inheritance[property].ref;
             const inheritedNode = nodes[nodeId as string];
@@ -1137,7 +1130,6 @@ const Node = ({
           if (lastNodeId && nodes[lastNodeId]) {
             setCurrentVisibleNode(nodes[lastNodeId]);
           }
-          updateUserDoc([..._ontologyPath]);
           // Mark the node as deleted by updating its document
           await updateDoc(nodeDoc.ref, { deleted: true });
 
@@ -1280,7 +1272,9 @@ const Node = ({
                 {searchResults.map((node: any) => (
                   <ListItem
                     key={node.id}
-                    onClick={() => {}}
+                    onClick={() => {
+                      checkSpecialization(node.id);
+                    }}
                     sx={{
                       display: "flex",
                       alignItems: "center",
@@ -1634,9 +1628,7 @@ const Node = ({
               borderTopLeftRadius: "25px",
             }}
           >
-            <Typography
-              sx={{ fontSize: "20px", fontWeight: "500", mb: "13px" }}
-            >
+            <Typography sx={{ fontSize: "20px", fontWeight: "500" }}>
               Description:
             </Typography>
             {currentVisibleNode.inheritance?.description?.ref && (
@@ -1734,12 +1726,36 @@ const Node = ({
             >
               <Tab
                 sx={{ width: "50%", fontSize: "20px", borderRadius: "30px" }}
-                label="Generalizations"
+                label={
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Typography
+                      sx={{
+                        color: viewValueSpecialization === 0 ? "#ff6d00" : "",
+                        fontSize: "20px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Generalizations
+                    </Typography>
+                  </Box>
+                }
                 {...a11yProps(0)}
               />
               <Tab
                 sx={{ width: "50%", fontSize: "20px" }}
-                label="Specializations"
+                label={
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Typography
+                      sx={{
+                        color: viewValueSpecialization === 1 ? "#ff6d00" : "",
+                        fontSize: "20px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Specializations
+                    </Typography>
+                  </Box>
+                }
                 {...a11yProps(1)}
               />
             </Tabs>
