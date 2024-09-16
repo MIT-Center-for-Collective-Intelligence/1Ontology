@@ -187,6 +187,7 @@ const ChildNode = ({
           <Button
             sx={{ ml: "4px", borderRadius: "25px" }}
             onClick={deleteChildNode}
+            variant="outlined"
           >
             Unlink
           </Button>

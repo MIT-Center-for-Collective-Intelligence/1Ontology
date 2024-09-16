@@ -68,7 +68,7 @@ In this example, `ChildNode` is used to display a child node with the given prop
 import { NODES } from " @components/lib/firestoreClient/collections";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import { INode, INodePath, IChildNode } from " @components/types/INode";
-import { Box, Button, Link, Tooltip } from "@mui/material";
+import { Box, Button, Link, Tooltip, useTheme } from "@mui/material";
 import {
   collection,
   doc,
@@ -87,11 +87,12 @@ type ISubOntologyProps = {
   category: string;
   recordLogs: (logs: any) => void;
   updateInheritance: (parameters: {
-    updatedNode: INode;
+    nodeId: string;
     updatedProperty: string;
   }) => void;
   navigateToNode: (nodeID: string) => void;
   title: string;
+  nodes: any;
 };
 
 const LinkNode = ({
@@ -104,8 +105,11 @@ const LinkNode = ({
   updateInheritance,
   navigateToNode,
   title,
+  nodes,
 }: ISubOntologyProps) => {
   const db = getFirestore();
+  const theme = useTheme();
+  const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const handleNavigateToNode = () => {
     navigateToNode(child.id);
@@ -125,30 +129,40 @@ const LinkNode = ({
         );
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as INode;
+
+          const nodeId = nodeData.inheritance[property].ref;
+          if (nodeId) {
+            const inheritedNode = nodes[nodeId as string];
+            nodeData.properties[property] = JSON.parse(
+              JSON.stringify(inheritedNode.properties[property])
+            );
+          }
+
           const linkIdx = (
             nodeData?.properties[property][category] || []
           ).findIndex((sub: any) => sub.id === child.id);
           if (linkIdx !== -1) {
             nodeData.properties[property][category].splice(linkIdx, 1);
           }
-          const childDoc = await getDoc(doc(collection(db, NODES), child.id));
+          // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
+          // const childData = childDoc.data() as INode;
 
-          if (childDoc.exists()) {
-            const childData = childDoc.data() as INode;
+          await updateDoc(nodeDoc.ref, {
+            [`properties.${property}.${category}`]:
+              nodeData.properties[property][category],
+            [`inheritance.${property}.ref`]: null,
+          });
 
-            updateInheritance({
-              updatedNode: { ...nodeData, id: nodeDoc.id },
-              updatedProperty: property,
-            });
+          updateInheritance({
+            nodeId: nodeDoc.id,
+            updatedProperty: property,
+          });
 
-            recordLogs({
-              action: "Deleted a field",
-              field: childData.title,
-              node: nodeDoc.id,
-            });
-          }
-
-          await updateDoc(nodeDoc.ref, nodeData);
+          recordLogs({
+            action: "unlinked a child",
+            field: child.title,
+            node: nodeDoc.id,
+          });
         }
       }
     } catch (error) {
@@ -179,7 +193,12 @@ const LinkNode = ({
           {title}
         </Link>
         <Button
-          sx={{ ml: "8px", borderRadius: "25px" }}
+          sx={{
+            ml: "8px",
+            borderRadius: "25px",
+            backgroundColor: BUTTON_COLOR,
+          }}
+          variant="outlined"
           onClick={deleteChildNode}
         >
           Unlink

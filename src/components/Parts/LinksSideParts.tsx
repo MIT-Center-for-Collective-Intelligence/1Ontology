@@ -8,6 +8,7 @@ import {
   ListItemIcon,
   Tooltip,
   Paper,
+  useTheme,
 } from "@mui/material";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
@@ -39,6 +40,7 @@ type ILinksSideProps = {
 };
 
 const LinksSideParts = ({
+  properties,
   currentVisibleNode,
   showList,
   setOpenAddCategory,
@@ -54,8 +56,8 @@ const LinksSideParts = ({
   property,
   nodes,
 }: ILinksSideProps) => {
-  const properties = currentVisibleNode.properties[property] || {};
-
+  const theme = useTheme();
+  const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   return (
     <Box sx={{ p: "13px" /* , height: "100vh" */ }}>
       <Box>
@@ -68,7 +70,7 @@ const LinksSideParts = ({
         >
           <Button
             onClick={() => showList(property, "main")}
-            sx={{ px: 1, py: 0 }}
+            sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
             variant="outlined"
           >
             {"Select "}
@@ -80,7 +82,7 @@ const LinksSideParts = ({
               setOpenAddCategory(true);
               setType(property);
             }}
-            sx={{ px: 1, py: 0 }}
+            sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
             variant="outlined"
           >
             Add Category
@@ -89,7 +91,7 @@ const LinksSideParts = ({
 
         {/* List of categories within the property */}
         <DragDropContext onDragEnd={(e) => handleSorting(e, property)}>
-          <ul style={{ padding: 0 }}>
+          <ul style={{ paddingLeft: 7 }}>
             {Object.keys(properties)
               .sort((a, b) =>
                 a === "main" ? -1 : b === "main" ? 1 : a.localeCompare(b)
@@ -146,7 +148,10 @@ const LinksSideParts = ({
                               ref={provided.innerRef}
                               sx={{
                                 backgroundColor: snapshot.isDraggingOver
-                                  ? DESIGN_SYSTEM_COLORS.gray250
+                                  ? (theme) =>
+                                      theme.palette.mode === "light"
+                                        ? DESIGN_SYSTEM_COLORS.gray250
+                                        : DESIGN_SYSTEM_COLORS.notebookG400
                                   : "",
                                 borderRadius: "25px",
                                 userSelect: "none",
@@ -185,6 +190,7 @@ const LinksSideParts = ({
                                           getTitle(nodes, child.id) ||
                                           child.title
                                         }
+                                        nodes={nodes}
                                       />
                                     </ListItem>
                                   )}

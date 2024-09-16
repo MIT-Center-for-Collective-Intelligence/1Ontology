@@ -91,6 +91,7 @@ import * as Y from "yjs";
 // import { WebrtcProvider } from "y-webrtc";
 import { WebsocketProvider } from "y-websocket";
 import { useTheme } from "@emotion/react";
+import ContentText from "./ContentText";
 
 type ISubOntologyProps = {
   currentVisibleNode: INode;
@@ -115,13 +116,14 @@ type ISubOntologyProps = {
   recordLogs: (logs: any) => void;
 
   updateInheritance: (parameters: {
-    updatedNode: INode;
+    nodeId: string;
     updatedProperty: string;
   }) => void;
   disabled?: boolean;
   removeField?: any;
   confirmIt?: any;
   nodes: { [id: string]: INode };
+  color: string;
 };
 const Text = ({
   text,
@@ -139,6 +141,7 @@ const Text = ({
   removeField,
   confirmIt,
   nodes,
+  color,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -148,7 +151,9 @@ const Text = ({
   const [cursors, setCursors] = useState<{
     [key: string]: { position: number; color: string; name: string };
   }>({});
-  const localClientId = useRef(user.uname);
+  const [editorContent, setEditorContent] = useState(text);
+
+  const localClientId = useRef(user?.uname);
 
   const textAreaRef = useRef<any>(null);
 
@@ -234,7 +239,11 @@ const Text = ({
       );
       if (property === "title") {
         const nodeDocs = await getDocs(
-          query(collection(db, NODES), where("title", "==", copyValue))
+          query(
+            collection(db, NODES),
+            where("title", "==", copyValue),
+            where("deleted", "==", false)
+          )
         );
         if (
           nodeDocs.docs.length > 0 &&
@@ -284,7 +293,7 @@ const Text = ({
         // (Title doesn't have inheritance, so it's excluded)
         if (property !== "title") {
           updateInheritance({
-            updatedNode: { ...nodeData, id: currentVisibleNode.id },
+            nodeId: currentVisibleNode.id,
             updatedProperty: property,
           });
         }
@@ -312,55 +321,45 @@ const Text = ({
       event.target.select();
     }
   };
-  const getCursorPositionStyles = (position: number) => {
-    const textArea = textAreaRef.current;
-    if (!textArea) return {};
-    const text = textArea.value.substring(0, position);
-    const lines = text.split("\n").filter((n: string) => !!n);
-    const computedStyle = window.getComputedStyle(textArea);
-    let lineHeight = parseFloat(computedStyle.lineHeight);
-
-    if (isNaN(lineHeight)) {
-      const fontSize = parseFloat(computedStyle.fontSize);
-      lineHeight = fontSize * 1.2;
-    }
-
-    const row = lines.length - 1;
-    const col = lines[row]?.length;
-
-    const scrollX = textArea.scrollLeft;
-    const scrollY = textArea.scrollTop;
-
-    const fontSize = parseFloat(window.getComputedStyle(textArea).fontSize);
-    const charWidth = fontSize * 0.4958;
-
-    return {
-      top: row * lineHeight - scrollY,
-      left: col * charWidth - scrollX + 12,
-    };
-  };
 
   return (
-    <Box style={{ position: "relative", width: "100%", padding: "14px" }}>
+    <Box
+      style={{
+        position: "relative",
+        width: "100%",
+        borderRadius: "25px",
+        height: "auto",
+      }}
+    >
+      {/*    <ContentText
+        uname={`${user.fName} ${user.lName}`}
+        editorContent={text}
+        setEditorContent={setEditorContent}
+        fieldId={`${currentVisibleNode.id}-${property}`}
+        color={color}
+        saveChanges={onSaveTextChange}
+      /> */}
       <TextField
-        // ref={textAreaRef}
+        ref={textAreaRef}
         multiline
+        minRows={2}
         value={currentValue}
         placeholder="Type something..."
-        style={{
+        InputProps={{
+          sx: {
+            padding: "15px",
+            borderBottomRightRadius: "25px",
+            borderBottomLeftRadius: "25px",
+            fontSize: "19px",
+          },
+        }}
+        sx={{
           width: "100%",
           height: "auto",
-          minHeight: property === "title" ? "5px" : "100px",
-          padding: "15px",
-          borderRadius: "10px",
-          // border: "2px solid #4CAF50",
           outline: "none",
           fontSize: property === "title" ? "29px" : "16px",
           fontFamily: "'Roboto', sans-serif",
           color: theme.palette.mode === "dark" ? "white" : "black",
-          // backgroundColor: theme.palette.mode === "dark" ? "#25262a" : "",
-          // boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-          // transition: "border-color 0.3s, box-shadow 0.3s",
           whiteSpace: "pre-wrap",
           resize: "none",
           zIndex: 1,

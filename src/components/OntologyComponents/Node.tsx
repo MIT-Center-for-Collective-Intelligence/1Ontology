@@ -159,14 +159,34 @@ type INodeProps = {
   lockedNodeFields: ILockedNode;
   recordLogs: (logs: any) => void;
   updateInheritance: (parameters: {
-    updatedNode: INode;
+    nodeId: string;
     updatedProperty: string;
   }) => void;
   navigateToNode: (nodeId: string) => void;
   eachOntologyPath: { [key: string]: any };
   searchWithFuse: any;
 };
+function getRandomProminentColor() {
+  // Define a list of prominent colors
+  const prominentColors = [
+    "#FF5733", // Red-Orange
+    "#33FF57", // Green
+    "#3357FF", // Blue
+    "#FF33A1", // Pink
+    "#FFBD33", // Yellow-Orange
+    "#33FFBD", // Aqua
+    "#8D33FF", // Purple
+    "#FF5733", // Coral
+    "#FF33FF", // Magenta
+    "#FFFF33", // Bright Yellow
+  ];
 
+  // Get a random index from the list
+  const randomIndex = Math.floor(Math.random() * prominentColors.length);
+
+  // Return the color at the random index
+  return prominentColors[randomIndex];
+}
 const Node = ({
   currentVisibleNode,
   setCurrentVisibleNode,
@@ -198,16 +218,19 @@ const Node = ({
   };
   const [openAddCategory, setOpenAddCategory] = useState(false);
   const handleCloseAddCategory = () => {
-    setType("");
+    setSelectedProperty("");
     setNewCategory("");
     setOpenAddCategory(false);
     setEditCategory(null);
   };
   const [newCategory, setNewCategory] = useState("");
-  const [type, setType] = useState("");
+  const [selectedProperty, setSelectedProperty] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [checkedSpecializations, setCheckedSpecializations] = useState<any>([]);
-  const [editCategory, setEditCategory] = useState<any>(null);
+  const [editCategory, setEditCategory] = useState<{
+    property: string;
+    category: string;
+  } | null>(null);
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [rootTitle, setRootTitle] = useState("");
   const [searchValue, setSearchValue] = useState("");
@@ -218,7 +241,7 @@ const Node = ({
   const [viewValue, setViewValue] = useState<number>(0);
   const [viewValueSpecialization, setViewValueSpecialization] =
     useState<number>(1);
-
+  const color = getRandomProminentColor();
   const db = getFirestore();
 
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
@@ -283,13 +306,19 @@ const Node = ({
       // Set a new ID for the cloned node.
       newNode.id = newNodeRef.id;
 
-      // Update the parents array to include the ID of the original node.
-      newNode.parents = [parentNodeDoc.id];
       // Modify the title to indicate that it is a new node.
       newNode.title = `New ${parentNodeData.title}`;
 
       // Initialize an empty specializations object for children.
       newNode.specializations = { main: [] };
+      newNode.generalizations = {
+        main: [
+          {
+            id: nodeId,
+            title: parentNodeData.title,
+          },
+        ],
+      };
 
       // Remove the 'locked' property from the new node.
       delete newNode.locked;
@@ -334,8 +363,11 @@ const Node = ({
   };
 
   // Function to add a new specialization to the node
-  const addNewSpecialization = async (category: string) => {
+  const addNewSpecialization = async (category: string = "main") => {
     try {
+      if (!category) {
+        category = "main";
+      }
       // Get a reference to the parent node document
       const nodeParentRef = doc(collection(db, NODES), currentVisibleNode.id);
 
@@ -387,6 +419,7 @@ const Node = ({
         delete newNode.locked;
       }
       // Check if the specified type and category exist in the parent node
+
       if (!parentNode.specializations.hasOwnProperty(category)) {
         // If not, create the specified type and category
         parentNode.specializations = {
@@ -435,7 +468,7 @@ const Node = ({
 
     // const _type = currentVisibleNode.nodeType;
     setOpenSelectModel(true);
-    setType(newType);
+    setSelectedProperty(newType);
     setSelectedCategory(category);
     let children = [];
     if (property === "specializations" || property === "generalizations") {
@@ -452,13 +485,15 @@ const Node = ({
   };
   const selectFromTree = () => {
     if (
-      ["parts", "isPartOf", "specializations", "generalizations"].includes(type)
+      ["parts", "isPartOf", "specializations", "generalizations"].includes(
+        selectedProperty
+      )
     ) {
       return (
         mainSpecializations[rootTitle.toLowerCase()]?.specializations || {}
       );
     } else {
-      return mainSpecializations[type]?.specializations || {};
+      return mainSpecializations[selectedProperty]?.specializations || {};
     }
   };
 
@@ -470,10 +505,13 @@ const Node = ({
     specializations: MainSpecializations;
   }) => {
     // Call the asynchronous function to clone the node with the given ID.
-    const {
+    /* const {
       newCloneId,
       newCloneTitle,
-    }: { newCloneId: string; newCloneTitle: string } = await cloneNode(node.id);
+    }: { newCloneId: string; newCloneTitle: string } = */
+
+    await cloneNode(node.id);
+
     // const newPath = eachOntologyPath[node.id];
     // if (newCloneId) {
     //   // Update the user document by appending the new clone's ID to the node path.
@@ -483,6 +521,45 @@ const Node = ({
 
     // Close the modal or perform any necessary cleanup.
   };
+  const updateSpecializations = (
+    children: { id: string; title: string }[],
+    newLink: { id: string; title: string }
+  ) => {
+    for (let child of children) {
+      const childData = nodes[child.id];
+      const specializations = childData.specializations;
+      const oldSpecializations = Object.keys(specializations).flat();
+      const index = oldSpecializations.findIndex(
+        (e: any) => e.id === newLink.id
+      );
+
+      if (index === -1) {
+        specializations["main"].push(newLink);
+        const childRef = doc(collection(db, NODES), child.id);
+        updateDoc(childRef, {
+          specializations,
+        });
+      }
+    }
+  };
+  const updateGeneralizations = (
+    children: { id: string; title: string }[],
+    newLink: { id: string; title: string }
+  ) => {
+    for (let child of children) {
+      const childData = nodes[child.id];
+      const generalizations = childData.generalizations;
+      const keys = Object.keys(generalizations).flat();
+      const index = keys.findIndex((e: any) => e.id === newLink.id);
+      if (index === -1) {
+        generalizations["main"].push(newLink);
+        const childRef = doc(collection(db, NODES), child.id);
+        updateDoc(childRef, {
+          generalizations,
+        });
+      }
+    }
+  };
 
   const handleSaveChildrenChanges = async () => {
     try {
@@ -490,7 +567,7 @@ const Node = ({
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );
-      const property = saveType || type;
+      const property = saveType || selectedProperty;
       // If the node document does not exist, return early
       if (!nodeDoc.exists()) return;
 
@@ -546,7 +623,18 @@ const Node = ({
           nodeData.properties[property][selectedCategory] = oldChildren;
         }
       }
-
+      if (property === "specializations") {
+        updateGeneralizations(Object.values(oldChildren).flat(), {
+          id: currentVisibleNode.id,
+          title: currentVisibleNode.title,
+        });
+      }
+      if (property === "generalizations") {
+        updateSpecializations(Object.values(oldChildren).flat(), {
+          id: currentVisibleNode.id,
+          title: currentVisibleNode.title,
+        });
+      }
       // If inheritance is present, reset the children field
       if (
         nodeData.inheritance &&
@@ -565,7 +653,7 @@ const Node = ({
       // If _type is not "specializations", update the inheritance
       if (property !== "specializations" && property !== "generalizations") {
         updateInheritance({
-          updatedNode: { ...nodeData, id: currentVisibleNode.id },
+          nodeId: currentVisibleNode.id,
           updatedProperty: property,
         });
       }
@@ -601,37 +689,78 @@ const Node = ({
             previousValue: editCategory.category,
             newValue: newCategory,
             node: nodeDoc.id,
-            feild: editCategory.type,
+            property: editCategory.property,
           });
-
-          // Update ontologyData for the edited category
-          ontologyData.children[editCategory.type][newCategory] =
-            ontologyData.children[editCategory.type][editCategory.category];
-          delete ontologyData.children[editCategory.type][
-            editCategory.category
-          ];
+          if (
+            editCategory.property === "specializations" ||
+            editCategory.property === "specializations"
+          ) {
+            // Update ontologyData for the edited category
+            ontologyData[editCategory.property][newCategory] =
+              ontologyData[editCategory.property][editCategory.category];
+            delete ontologyData[editCategory.property][editCategory.category];
+          } else {
+            // Update ontologyData for the edited category
+            ontologyData.properties[editCategory.property][newCategory] =
+              ontologyData.properties[editCategory.property][
+                editCategory.category
+              ];
+            delete ontologyData.properties[editCategory.property][
+              editCategory.category
+            ];
+          }
         } else {
           // If it's a new category, create it
           if (
-            !ontologyData?.children[type]?.hasOwnProperty(newCategory.trim())
+            !ontologyData?.properties[selectedProperty]?.hasOwnProperty(
+              newCategory.trim()
+            )
           ) {
-            ontologyData.children[type] = {
-              ...(ontologyData?.children[type] || {}),
-              [newCategory]: [],
-            };
+            if (
+              selectedProperty === "specializations" ||
+              selectedProperty === "specializations"
+            ) {
+              ontologyData[selectedProperty] = {
+                ...(ontologyData[selectedProperty] || {}),
+                [newCategory]: [],
+              };
+            } else {
+              ontologyData.properties[selectedProperty] = {
+                ...(ontologyData?.properties[selectedProperty] || {}),
+                [newCategory]: [],
+              };
+            }
+
             // Log the action of creating a new category
             recordLogs({
               action: "Created a category",
               category: newCategory,
               node: nodeDoc.id,
-              field: type,
+              field: selectedProperty,
             });
           } else {
-            confirmIt("This category has already been added.", "Ok", "");
+            if (editCategory !== null) {
+              confirmIt(
+                `This category already exist under the property ${selectedProperty}`,
+                "Ok",
+                ""
+              );
+            }
+
             return;
           }
         }
-
+        if (
+          selectedProperty !== "specializations" ||
+          selectedProperty !== "specializations"
+        ) {
+          updateInheritance({
+            nodeId: nodeDoc.id,
+            updatedProperty: editCategory
+              ? editCategory.property
+              : selectedProperty,
+          });
+        }
         // Update the node document with the modified data
         await updateDoc(nodeDoc.ref, ontologyData);
 
@@ -644,21 +773,21 @@ const Node = ({
     }
   }, [newCategory]);
 
-  const handleNewSpecialization = async () => {
-    await addNewSpecialization(selectedCategory);
+  const handleNewSpecialization = async (category?: string) => {
+    await addNewSpecialization(category || selectedCategory);
     handleClose();
   };
 
-  const handleEditCategory = (type: string, category: string) => {
+  const handleEditCategory = (property: string, category: string) => {
     setNewCategory(category);
     setOpenAddCategory(true);
     setEditCategory({
-      type,
+      property,
       category,
     });
   };
 
-  const deleteCategory = async (type: string, category: string) => {
+  const deleteCategory = async (property: string, category: string) => {
     if (
       await confirmIt(
         "Are you sure you want to delete this Category?",
@@ -671,12 +800,20 @@ const Node = ({
       );
       if (nodeDoc.exists()) {
         const nodeData = nodeDoc.data();
-        nodeData.children[type]["main"] = [
-          ...(nodeData.children[type]["main"] || []),
-          ...nodeData.children[type][category],
-        ];
+        if (property === "specializations" || property === "specializations") {
+          nodeData[property]["main"] = [
+            ...(nodeData[property]["main"] || []),
+            ...nodeData[property][category],
+          ];
+          delete nodeData[property][category];
+        } else {
+          nodeData.properties[property]["main"] = [
+            ...(nodeData.properties[property]["main"] || []),
+            ...nodeData.properties[property][category],
+          ];
+          delete nodeData.properties[property][category];
+        }
 
-        delete nodeData.children[type][category];
         await updateDoc(nodeDoc.ref, nodeData);
         recordLogs({
           action: "Deleted a category",
@@ -730,90 +867,114 @@ const Node = ({
   };
 
   // Function to handle sorting of draggable items
-  const handleSorting = async (result: any, property: string) => {
-    try {
-      // Destructure properties from the result object
-      const { source, destination, draggableId, type } = result;
+  const handleSorting = useCallback(
+    async (result: any, property: string) => {
+      try {
+        // Destructure properties from the result object
+        const { source, destination, draggableId, type } = result;
 
-      // If there is no destination, no sorting needed
-      if (!destination) {
-        return;
-      }
-
-      // Extract the source and destination category IDs
-      const sourceCategory = source.droppableId; // The source category
-      const destinationCategory = destination.droppableId; // The destination category
-
-      // Ensure valid source and destination categories and they are not the same
-      if (sourceCategory && destinationCategory) {
-        // Retrieve node document from the anodes object
-        const nodeData = { ...currentVisibleNode };
-
-        // Ensure nodeData exists
-        if (nodeData) {
-          let propertyValue = null;
-          if (
-            property === "specializations" ||
-            property === "generalizations"
-          ) {
-            // Get the children and specializations related to the provided subType
-            propertyValue = nodeData[property];
-          } else {
-            propertyValue = nodeData.properties[property];
-          }
-
-          // Find the index of the draggable item in the source category
-          const nodeIdx = propertyValue[sourceCategory].findIndex(
-            (onto: any) => onto.id === draggableId
-          );
-
-          // If the draggable item is found in the source category
-          if (nodeIdx !== -1) {
-            const moveValue = propertyValue[sourceCategory][nodeIdx];
-
-            // Remove the item from the source category
-            propertyValue[sourceCategory].splice(nodeIdx, 1);
-
-            // Move the item to the destination category
-            propertyValue[destinationCategory].splice(
-              destination.index,
-              0,
-              moveValue
-            );
-            console.log(JSON.stringify(nodeData, null, 2));
-            setCurrentVisibleNode(nodeData);
-          }
-          // Update the nodeData with the new property values
-          const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-          if (
-            property === "specializations" ||
-            property === "generalizations"
-          ) {
-            updateDoc(nodeRef, {
-              [property]: propertyValue,
-            });
-          } else {
-            updateDoc(nodeRef, {
-              [`properties.${property}`]: propertyValue,
-            });
-          }
-
-          // Record a log of the sorting action
-          recordLogs({
-            action: "Moved a field to a category",
-            field: property,
-            sourceCategory:
-              sourceCategory === "main" ? "outside" : sourceCategory,
-            destinationCategory:
-              destinationCategory === "main" ? "outside" : destinationCategory,
-          });
+        // If there is no destination, no sorting needed
+        if (!destination) {
+          return;
         }
+
+        // Extract the source and destination category IDs
+        const sourceCategory = source.droppableId; // The source category
+        const destinationCategory = destination.droppableId; // The destination category
+
+        // Ensure valid source and destination categories and they are not the same
+        if (sourceCategory && destinationCategory) {
+          // Retrieve node document from the anodes object
+          const nodeData = { ...currentVisibleNode };
+          if (
+            nodeData.inheritance &&
+            nodeData.inheritance[property].ref &&
+            property !== "specializations" &&
+            property !== "generalizations"
+          ) {
+            const nodeId = nodeData.inheritance[property].ref;
+            const inheritedNode = nodes[nodeId as string];
+            nodeData.properties[property] = JSON.parse(
+              JSON.stringify(inheritedNode.properties[property])
+            );
+          }
+          // Ensure nodeData exists
+          if (nodeData) {
+            let propertyValue = null;
+            if (
+              property === "specializations" ||
+              property === "generalizations"
+            ) {
+              // Get the children and specializations related to the provided subType
+              propertyValue = nodeData[property];
+            } else {
+              propertyValue = nodeData.properties[property];
+            }
+
+            // Find the index of the draggable item in the source category
+            const nodeIdx = propertyValue[sourceCategory].findIndex(
+              (onto: any) => onto.id === draggableId
+            );
+
+            // If the draggable item is found in the source category
+            if (nodeIdx !== -1) {
+              const moveValue = propertyValue[sourceCategory][nodeIdx];
+
+              // Remove the item from the source category
+              propertyValue[sourceCategory].splice(nodeIdx, 1);
+
+              // Move the item to the destination category
+              propertyValue[destinationCategory].splice(
+                destination.index,
+                0,
+                moveValue
+              );
+
+              setCurrentVisibleNode(nodeData);
+            }
+            // Update the nodeData with the new property values
+            const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+            if (
+              property === "specializations" ||
+              property === "generalizations"
+            ) {
+              updateDoc(nodeRef, {
+                [property]: propertyValue,
+              });
+            } else {
+              if (nodeData.inheritance) {
+                nodeData.inheritance[property].ref = null;
+              }
+              updateDoc(nodeRef, {
+                [`properties.${property}`]: propertyValue,
+                [`inheritance.${property}.ref`]: null,
+              });
+              updateInheritance({
+                nodeId: currentVisibleNode.id,
+                updatedProperty: property,
+              });
+            }
+
+            // Record a log of the sorting action
+            recordLogs({
+              action: "Moved a field to a category",
+              field: property,
+              sourceCategory:
+                sourceCategory === "main" ? "outside" : sourceCategory,
+              destinationCategory:
+                destinationCategory === "main"
+                  ? "outside"
+                  : destinationCategory,
+            });
+          }
+        }
+      } catch (error) {
+        // Log any errors that occur during the sorting process
+        console.error(error);
       }
-    } catch (error) {
-      // Log any errors that occur during the sorting process
-      console.error(error);
-    }
-  };
+    },
+    [currentVisibleNode, db, nodes, recordLogs]
+  );
 
   /**
    * Removes a child-node with the specified ID from the given node data.
@@ -861,12 +1022,15 @@ const Node = ({
       if ((specializationNode.generalizations[category] || []).length > 0) {
         // Find the index of the child-node with the specified ID within the children array.
         const specializationIdx = specializationNode.generalizations[
-          type
+          selectedProperty
         ].findIndex((sub: any) => sub.id === generalizationId);
 
         // If the child-node with the specified ID is found, remove it from the array.
         if (specializationIdx !== -1) {
-          specializationNode.generalizations[type].splice(specializationIdx, 1);
+          specializationNode.generalizations[selectedProperty].splice(
+            specializationIdx,
+            1
+          );
         }
       }
     }
@@ -879,7 +1043,7 @@ const Node = ({
       // Confirm deletion with the user using a custom confirmation dialog
       if (
         await confirmIt(
-          "Are you sure you want to delete this Node?",
+          `Are you sure you want to delete this Node?`,
           "Delete Node",
           "Keep Node"
         )
@@ -962,8 +1126,18 @@ const Node = ({
           }
 
           // Update the user document by removing the deleted node's ID
-          updateUserDoc([...ontologyPath.slice(0, -1)]);
+          let _ontologyPath = [...ontologyPath];
+          if (_ontologyPath.at(-2)?.category) {
+            _ontologyPath = _ontologyPath.slice(0, -2);
+          } else {
+            _ontologyPath = _ontologyPath.slice(0, -1);
+          }
 
+          const lastNodeId: string = ontologyPath.at(-1)?.id || "";
+          if (lastNodeId && nodes[lastNodeId]) {
+            setCurrentVisibleNode(nodes[lastNodeId]);
+          }
+          updateUserDoc([..._ontologyPath]);
           // Mark the node as deleted by updating its document
           await updateDoc(nodeDoc.ref, { deleted: true });
 
@@ -1083,7 +1257,11 @@ const Node = ({
               <Typography>
                 Check the Box for the{" "}
                 <strong style={{ color: "orange" }}>
-                  {capitalizeFirstLetter(DISPLAY[type] ? DISPLAY[type] : type)}
+                  {capitalizeFirstLetter(
+                    DISPLAY[selectedProperty]
+                      ? DISPLAY[selectedProperty]
+                      : selectedProperty
+                  )}
                 </strong>{" "}
                 that you want to add:
               </Typography>
@@ -1160,8 +1338,11 @@ const Node = ({
               gap: "8px",
             }}
           >
-            {type === "specializations" && (
-              <Button variant="contained" onClick={handleNewSpecialization}>
+            {selectedProperty === "specializations" && (
+              <Button
+                variant="contained"
+                onClick={() => handleNewSpecialization()}
+              >
                 Add new
               </Button>
             )}
@@ -1254,9 +1435,11 @@ const Node = ({
       <Dialog onClose={handleCloseAddCategory} open={openAddCategory}>
         <DialogContent>
           <Box sx={{ height: "auto", width: "500px" }}>
+            <Typography sx={{ mb: "13px", fontSize: "19px" }}>
+              {editCategory ? "Edit " : "Add "}a new Category:
+            </Typography>
             <TextField
               placeholder={`Add Category`}
-              variant="standard"
               fullWidth
               value={newCategory}
               multiline
@@ -1276,10 +1459,20 @@ const Node = ({
           </Box>
         </DialogContent>
         <DialogActions sx={{ justifyContent: "center" }}>
-          <Button onClick={addNewCategory} color="primary">
+          <Button
+            onClick={addNewCategory}
+            color="primary"
+            variant="outlined"
+            sx={{ borderRadius: "25px" }}
+          >
             {editCategory ? "Save" : "Add"}
           </Button>
-          <Button onClick={handleCloseAddCategory} color="primary">
+          <Button
+            onClick={handleCloseAddCategory}
+            color="primary"
+            variant="outlined"
+            sx={{ borderRadius: "25px" }}
+          >
             Cancel
           </Button>
         </DialogActions>
@@ -1294,17 +1487,6 @@ const Node = ({
         }}
       >
         {" "}
-        {!currentVisibleNode.locked && (
-          <Box sx={{ mb: "5px", ml: "auto" }}>
-            <Button
-              onClick={deleteNode}
-              variant="contained"
-              sx={{ borderRadius: "25px" }}
-            >
-              Delete Node
-            </Button>
-          </Box>
-        )}
         <Paper
           sx={{
             display: "flex",
@@ -1336,6 +1518,68 @@ const Node = ({
             >
               Node Title:
             </Typography>
+
+            {!currentVisibleNode.locked && (
+              <Box
+                sx={{
+                  display: "flex",
+                  mb: "5px",
+                  ml: "auto",
+                  alignItems: "center",
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    px: "19px",
+                    mb: "15px",
+                    alignItems: "center",
+                    alignContent: "center",
+                  }}
+                >
+                  {rootTitle && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        mt: "5px",
+                        gap: "15px",
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: "19px",
+                          fontWeight: "bold",
+                          color: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? theme.palette.common.gray50
+                              : theme.palette.common.notebookMainBlack,
+                        }}
+                      >
+                        Root:
+                      </Typography>
+                      <Link
+                        underline="hover"
+                        onClick={() => navigateToNode(currentVisibleNode.root)}
+                        sx={{
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                          color: "orange",
+                        }}
+                      >
+                        {rootTitle}
+                      </Link>
+                    </Box>
+                  )}
+                </Box>
+                <Button
+                  onClick={deleteNode}
+                  variant="contained"
+                  sx={{ borderRadius: "25px", mb: "7px" }}
+                >
+                  Delete Node
+                </Button>
+              </Box>
+            )}
           </Box>
 
           <Box>
@@ -1344,62 +1588,26 @@ const Node = ({
                 {currentVisibleNode.title}
               </Typography>
             ) : (
-              <Text
-                nodes={nodes}
-                updateInheritance={updateInheritance}
-                recordLogs={recordLogs}
-                user={user}
-                lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
-                addLock={addLock}
-                text={currentVisibleNode.title}
-                currentVisibleNode={currentVisibleNode}
-                property={"title"}
-                setSnackbarMessage={setSnackbarMessage}
-                setCurrentVisibleNode={setCurrentVisibleNode}
-                editNode={editNode}
-                setEditNode={setEditNode}
-                confirmIt={confirmIt}
-              />
-            )}
-          </Box>
-          <Box sx={{ display: "flex", px: "19px", mb: "15px" }}>
-            {rootTitle && (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "15px",
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: "19px",
-                    fontWeight: "bold",
-                    color: (theme) =>
-                      theme.palette.mode === "dark"
-                        ? theme.palette.common.gray50
-                        : theme.palette.common.notebookMainBlack,
-                  }}
-                >
-                  Root:
-                </Typography>
-                <Link
-                  underline="hover"
-                  onClick={() => navigateToNode(currentVisibleNode.root)}
-                  sx={{
-                    cursor: "pointer",
-                    color: (theme) =>
-                      theme.palette.mode === "dark"
-                        ? theme.palette.common.gray50
-                        : theme.palette.common.notebookMainBlack,
-                    "&:hover": {
-                      textDecoration: "underline",
-                      color: "orange",
-                    },
-                  }}
-                >
-                  {rootTitle}
-                </Link>
+              <Box>
+                <Text
+                  nodes={nodes}
+                  updateInheritance={updateInheritance}
+                  recordLogs={recordLogs}
+                  user={user}
+                  lockedNodeFields={
+                    lockedNodeFields[currentVisibleNode.id] || {}
+                  }
+                  addLock={addLock}
+                  text={currentVisibleNode.title}
+                  currentVisibleNode={currentVisibleNode}
+                  property={"title"}
+                  setSnackbarMessage={setSnackbarMessage}
+                  setCurrentVisibleNode={setCurrentVisibleNode}
+                  editNode={editNode}
+                  setEditNode={setEditNode}
+                  confirmIt={confirmIt}
+                  color={color}
+                />
               </Box>
             )}
           </Box>
@@ -1449,27 +1657,29 @@ const Node = ({
               </Typography>
             )}
           </Box>
-
-          <Text
-            nodes={nodes}
-            updateInheritance={updateInheritance}
-            recordLogs={recordLogs}
-            user={user}
-            lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
-            addLock={addLock}
-            text={
-              getPropertyValue(
-                nodes,
-                currentVisibleNode.inheritance.description.ref,
-                "description"
-              ) || currentVisibleNode.properties.description
-            }
-            currentVisibleNode={currentVisibleNode}
-            property={"description"}
-            setSnackbarMessage={setSnackbarMessage}
-            setCurrentVisibleNode={setCurrentVisibleNode}
-            setEditNode={setEditNode}
-          />
+          <Box>
+            <Text
+              nodes={nodes}
+              updateInheritance={updateInheritance}
+              recordLogs={recordLogs}
+              user={user}
+              lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
+              addLock={addLock}
+              text={
+                getPropertyValue(
+                  nodes,
+                  currentVisibleNode.inheritance.description.ref,
+                  "description"
+                ) || currentVisibleNode.properties.description
+              }
+              currentVisibleNode={currentVisibleNode}
+              property={"description"}
+              setSnackbarMessage={setSnackbarMessage}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              setEditNode={setEditNode}
+              color={color}
+            />
+          </Box>
         </Paper>
         <Box
           sx={{
@@ -1491,7 +1701,7 @@ const Node = ({
             navigateToNode={navigateToNode}
             setSnackbarMessage={setSnackbarMessage}
             setOpenAddCategory={setOpenAddCategory}
-            setType={setType}
+            setType={setSelectedProperty}
             setEditNode={setEditNode}
             setOpenAddField={setOpenAddField}
             removeProperty={removeProperty}
@@ -1499,6 +1709,7 @@ const Node = ({
             lockedNodeFields={lockedNodeFields}
             user={user}
             nodes={nodes}
+            color={color}
           />
         </Box>
         <Box sx={{ display: "flex", gap: "9px" }}>
@@ -1516,6 +1727,8 @@ const Node = ({
                 ".MuiTab-root.Mui-selected": {
                   color: "#ff6d00",
                 },
+                borderTopLeftRadius: "25px",
+                borderTopRightRadius: "25px",
               }}
               aria-label="basic tabs example"
             >
@@ -1545,7 +1758,7 @@ const Node = ({
                 currentVisibleNode={currentVisibleNode}
                 showList={showList}
                 setOpenAddCategory={setOpenAddCategory}
-                setType={setType}
+                setType={setSelectedProperty}
                 handleSorting={handleSorting}
                 handleEditCategory={handleEditCategory}
                 deleteCategory={deleteCategory}
@@ -1570,7 +1783,7 @@ const Node = ({
                 currentVisibleNode={currentVisibleNode}
                 showList={showList}
                 setOpenAddCategory={setOpenAddCategory}
-                setType={setType}
+                setType={setSelectedProperty}
                 handleSorting={handleSorting}
                 handleEditCategory={handleEditCategory}
                 deleteCategory={deleteCategory}
@@ -1580,6 +1793,7 @@ const Node = ({
                 setCurrentVisibleNode={setCurrentVisibleNode}
                 updateInheritance={updateInheritance}
                 relationType={"specializations"}
+                handleNewSpecialization={handleNewSpecialization}
                 nodes={nodes}
               />
             </TabPanel>
@@ -1597,17 +1811,63 @@ const Node = ({
                 ".MuiTab-root.Mui-selected": {
                   color: "#ff6d00",
                 },
+                borderTopLeftRadius: "25px",
+                borderTopRightRadius: "25px",
               }}
               aria-label="basic tabs example"
             >
               <Tab
                 sx={{ width: "50%", fontSize: "20px" }}
-                label="Is Part of"
+                label={
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Typography
+                      sx={{
+                        color: viewValue === 0 ? "#ff6d00" : "",
+                        fontSize: "20px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Is Part of
+                    </Typography>
+                    {currentVisibleNode.inheritance?.["isPartOf"]?.ref && (
+                      <Typography sx={{ fontSize: "14px", ml: "15px" }}>
+                        {'(Inherited from "'}
+                        {getTitle(
+                          nodes,
+                          currentVisibleNode.inheritance["isPartOf"].ref || ""
+                        )}
+                        {'")'}
+                      </Typography>
+                    )}
+                  </Box>
+                }
                 {...a11yProps(0)}
               />
               <Tab
                 sx={{ width: "50%", fontSize: "20px" }}
-                label="Parts"
+                label={
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Typography
+                      sx={{
+                        color: viewValue === 1 ? "#ff6d00" : "",
+                        fontSize: "20px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Parts
+                    </Typography>
+                    {currentVisibleNode.inheritance?.["parts"]?.ref && (
+                      <Typography sx={{ fontSize: "14px", ml: "15px" }}>
+                        {'(Inherited from "'}
+                        {getTitle(
+                          nodes,
+                          currentVisibleNode.inheritance["parts"].ref || ""
+                        )}
+                        {'")'}
+                      </Typography>
+                    )}
+                  </Box>
+                }
                 {...a11yProps(1)}
               />
             </Tabs>
@@ -1619,32 +1879,18 @@ const Node = ({
                 mt: "5px",
               }}
             >
-              {currentVisibleNode.inheritance?.["isPartOf"]?.ref && (
-                <Typography
-                  sx={{ color: "grey", fontSize: "14px", ml: "15px" }}
-                >
-                  {'(Inherited from "'}
-                  {getTitle(
-                    nodes,
-                    currentVisibleNode.inheritance["isPartOf"].ref || ""
-                  )}
-                  {'")'}
-                </Typography>
-              )}
               <LinksSideParts
                 properties={
                   getPropertyValue(
                     nodes,
                     currentVisibleNode.inheritance.isPartOf.ref,
                     "isPartOf"
-                  ) ||
-                  currentVisibleNode?.properties?.isPartOf ||
-                  {}
+                  ) || currentVisibleNode?.properties?.isPartOf
                 }
                 currentVisibleNode={currentVisibleNode}
                 showList={showList}
                 setOpenAddCategory={setOpenAddCategory}
-                setType={setType}
+                setType={setSelectedProperty}
                 handleSorting={handleSorting}
                 handleEditCategory={handleEditCategory}
                 deleteCategory={deleteCategory}
@@ -1665,32 +1911,18 @@ const Node = ({
                 width: "100%",
               }}
             >
-              {currentVisibleNode.inheritance?.["parts"]?.ref && (
-                <Typography
-                  sx={{ color: "grey", fontSize: "14px", ml: "15px" }}
-                >
-                  {'(Inherited from "'}
-                  {getTitle(
-                    nodes,
-                    currentVisibleNode.inheritance["parts"].ref || ""
-                  )}
-                  {'")'}
-                </Typography>
-              )}
               <LinksSideParts
                 properties={
                   getPropertyValue(
                     nodes,
                     currentVisibleNode.inheritance.parts.ref,
                     "parts"
-                  ) ||
-                  currentVisibleNode?.properties?.parts ||
-                  {}
+                  ) || currentVisibleNode?.properties?.parts
                 }
                 currentVisibleNode={currentVisibleNode}
                 showList={showList}
                 setOpenAddCategory={setOpenAddCategory}
-                setType={setType}
+                setType={setSelectedProperty}
                 handleSorting={handleSorting}
                 handleEditCategory={handleEditCategory}
                 deleteCategory={deleteCategory}

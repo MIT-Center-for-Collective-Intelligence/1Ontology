@@ -134,10 +134,6 @@ import {
 import { SearchBox } from " @components/components/SearchBox/SearchBox";
 import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
 import { Notification } from " @components/components/Chat/Notification";
-interface UpdateInheritanceParams {
-  updatedNode: INode;
-  updatedProperty: string;
-}
 
 const synchronizeStuff = (prev: (any & { id: string })[], change: any) => {
   const docType = change.type;
@@ -384,7 +380,9 @@ const Ontology = () => {
       if (window.location.hash) {
         // Call updateUserDoc with the hash split into an array
         const visibleNodeId = window.location.hash.split("#").reverse()[0];
-
+        if (nodes[visibleNodeId]) {
+          setCurrentVisibleNode(nodes[visibleNodeId]);
+        }
         updateUserDoc(eachOntologyPath[visibleNodeId]);
       }
     };
@@ -460,6 +458,9 @@ const Ontology = () => {
       // Loop through each main node
 
       for (let node of mainNodes) {
+        if (!node) {
+          continue;
+        }
         // Update the path for the current node
 
         eachOntologyPath[node.id] = [
@@ -535,26 +536,6 @@ const Ontology = () => {
   }, [rightPanelVisible, user]);
 
   useEffect(() => {
-    const handleUserActivity = () => {
-      setLastInteractionDate(new Date(Date.now()));
-      if (user) {
-        const userDocRef = doc(collection(db, USERS), user.uname);
-        updateDoc(userDocRef, {
-          lastInteracted: Timestamp.now(),
-        });
-      }
-    };
-
-    window.addEventListener("mousemove", handleUserActivity);
-    window.addEventListener("keydown", handleUserActivity);
-
-    return () => {
-      window.removeEventListener("mousemove", handleUserActivity);
-      window.removeEventListener("keydown", handleUserActivity);
-    };
-  }, [user]);
-
-  useEffect(() => {
     const checkIfDifferentDay = () => {
       const today = new Date();
       if (
@@ -577,7 +558,11 @@ const Ontology = () => {
     // Object to store the main specializations tree
     let newSpecializationsTree: any = {};
     // Iterate through each main nodes
+
     for (let node of _nodes) {
+      if (!node) {
+        continue;
+      }
       const nodeTitle = node.title;
       // Create an entry for the current node in the main specializations tree
       newSpecializationsTree[nodeTitle] = {
@@ -936,29 +921,29 @@ const Ontology = () => {
       console.error(error);
     }
   };
-
+  interface UpdateInheritanceParams {
+    nodeId: string;
+    updatedProperty: string;
+  }
   // Function to handle inheritance
   const updateInheritance = async ({
-    updatedNode,
+    nodeId,
     updatedProperty,
   }: UpdateInheritanceParams): Promise<void> => {
     try {
       const batch = writeBatch(db);
-      if (updatedNode.inheritance[updatedProperty].ref) {
-        updatedNode.inheritance[updatedProperty].ref = null;
-        const ref = doc(collection(db, NODES), updatedNode.id);
-        await updateDoc(ref, {
-          inheritance: updatedNode.inheritance,
-        });
-      }
+
+      const nodeRef = doc(collection(db, NODES), nodeId);
+      updateDoc(nodeRef, {
+        [`inheritance.${updatedProperty}.ref`]: null,
+      });
+
       // Recursively update specializations
       await recursivelyUpdateSpecializations({
-        nodeId: updatedNode.id,
+        nodeId: nodeId,
         updatedProperty,
         batch,
-        newValue: updatedNode.properties[updatedProperty],
-        generalizationId: updatedNode.id,
-        generalizationTitle: updatedNode.title,
+        generalizationId: nodeId,
       });
       // Commit all updates as a batch
       await batch.commit();
@@ -973,22 +958,18 @@ const Ontology = () => {
     updatedProperty,
     batch,
     nestedCall = false,
-    newValue,
     inheritanceType,
     generalizationId,
-    generalizationTitle,
   }: {
     nodeId: string;
     updatedProperty: string;
     batch: WriteBatch;
     nestedCall?: boolean;
-    newValue: string;
     inheritanceType?:
       | "inheritUnlessAlreadyOverRidden"
       | "inheritAfterReview"
       | "alwaysInherit";
     generalizationId: string;
-    generalizationTitle: string;
   }): Promise<void> => {
     // Fetch node data from Firestore
     const nodeRef = doc(collection(db, NODES), nodeId);
@@ -1006,11 +987,7 @@ const Ontology = () => {
       inheritanceType === "alwaysInherit";
 
     if (nestedCall && canInherit) {
-      await updateProperty(batch, nodeRef, updatedProperty, newValue, {
-        title: "",
-        ref: generalizationId,
-        inheritanceType: inheritance.inheritanceType,
-      });
+      await updateProperty(batch, nodeRef, updatedProperty, generalizationId);
     }
 
     if (inheritance?.inheritanceType === "neverInherit") {
@@ -1048,10 +1025,8 @@ const Ontology = () => {
         updatedProperty,
         batch,
         nestedCall: true,
-        newValue,
         inheritanceType: inheritance.inheritanceType,
         generalizationId,
-        generalizationTitle,
       });
     }
   };
@@ -1061,12 +1036,10 @@ const Ontology = () => {
     batch: any,
     nodeRef: DocumentReference,
     updatedProperty: string,
-    newValue: any,
-    inheritanceRef: { title: string; ref: string; inheritanceType: string }
+    inheritanceRef: string
   ) => {
     const updateData = {
-      [`properties.${updatedProperty}`]: newValue,
-      [`inheritance.${updatedProperty}`]: inheritanceRef,
+      [`inheritance.${updatedProperty}.ref`]: inheritanceRef,
     };
     batch.update(nodeRef, updateData);
     if (batch._mutations.length > 10) {
@@ -1076,23 +1049,13 @@ const Ontology = () => {
   };
 
   useEffect(() => {
-    const controller = columnResizerRef.current;
-
-    if (controller) {
-      const resizer = controller.getResizer();
-      resizer.resizeSection(2, { toSize: rightPanelVisible ? 400 : 0 });
-      controller.applyResizer(resizer);
-    }
-  }, [rightPanelVisible, user]);
-
-  useEffect(() => {
     const handleUserActivity = () => {
       setLastInteractionDate(new Date(Date.now()));
       if (user) {
         const userDocRef = doc(collection(db, USERS), user.uname);
-        updateDoc(userDocRef, {
-          lastInteracted: Timestamp.now(),
-        });
+        // updateDoc(userDocRef, {
+        //   lastInteracted: Timestamp.now(),
+        // });
       }
     };
 
@@ -1605,7 +1568,10 @@ const Ontology = () => {
                   </TabPanel>
                   <TabPanel value={sidebarView} index={2}>
                     {currentVisibleNode && (
-                      <Inheritance selectedNode={currentVisibleNode} />
+                      <Inheritance
+                        selectedNode={currentVisibleNode}
+                        nodes={nodes}
+                      />
                     )}
                   </TabPanel>
                   <TabPanel value={sidebarView} index={3}>
@@ -1667,6 +1633,7 @@ const Ontology = () => {
           p: 2,
           height: "420px",
           overflowY: "auto",
+          borderRadius: "10px",
           zIndex: 999,
         }}
         placeholder={""}

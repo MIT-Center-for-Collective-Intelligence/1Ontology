@@ -316,7 +316,7 @@ const AppHeader = forwardRef(
         {" "}
         {isAuthenticated && user && (
           <Typography sx={{ p: "6px 16px" }}>
-            {capitalizeString(user.fName ?? "")}
+            {capitalizeString(`${user?.fName ?? ""} ${user?.lName ?? ""}`)}
           </Typography>
         )}
         {isAuthenticated && user && (
@@ -494,6 +494,7 @@ const AppHeader = forwardRef(
                 alignItems="center"
                 spacing={"8px"}
               >
+
                 <Tooltip title="Manage Inheritance">
                   <IconButton onClick={displayInheritanceSettings}>
                     <AccountTreeIcon />
@@ -553,7 +554,11 @@ const AppHeader = forwardRef(
                 </Tooltip>
 
                 {isAuthenticated && user && (
-                  <Tooltip title={capitalizeString(user.fName ?? "")}>
+                  <Tooltip
+                    title={capitalizeString(
+                      `${user.fName ?? ""} ${user.lName ?? ""}`
+                    )}
+                  >
                     <IconButton onClick={handleProfileMenuOpen}>
                       <Avatar
                         src={profileImage || user.imageUrl || NO_IMAGE_USER}
