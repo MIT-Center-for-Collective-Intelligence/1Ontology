@@ -494,7 +494,6 @@ const AppHeader = forwardRef(
                 alignItems="center"
                 spacing={"8px"}
               >
-
                 <Tooltip title="Manage Inheritance">
                   <IconButton onClick={displayInheritanceSettings}>
                     <AccountTreeIcon />
@@ -504,18 +503,6 @@ const AppHeader = forwardRef(
                 <Tooltip title="Download JSON">
                   <IconButton onClick={() => handleDownload()}>
                     <DownloadIcon />
-                  </IconButton>
-                </Tooltip>
-
-                <Tooltip
-                  title={
-                    rightPanelVisible ? "Hide Right Panel" : "Show Right Panel"
-                  }
-                >
-                  <IconButton onClick={toggleRightPanel}>
-                    <ViewSidebarIcon
-                      color={rightPanelVisible ? "primary" : "inherit"}
-                    />
                   </IconButton>
                 </Tooltip>
 
@@ -543,6 +530,19 @@ const AppHeader = forwardRef(
                     <NotificationsIcon />
                   </>
                 </IconButton>
+
+                <Tooltip
+                  title={
+                    rightPanelVisible ? "Hide Right Panel" : "Show Right Panel"
+                  }
+                >
+                  <IconButton onClick={toggleRightPanel}>
+                    <ViewSidebarIcon
+                      color={rightPanelVisible ? "primary" : "inherit"}
+                    />
+                  </IconButton>
+                </Tooltip>
+                
                 <Tooltip title="Change theme">
                   <IconButton onClick={handleThemeSwitch} size="small">
                     {theme.palette.mode === "dark" ? (
