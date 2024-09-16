@@ -36,6 +36,11 @@ import LightModeIcon from "@mui/icons-material/LightMode";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import NotificationsIcon from "@mui/icons-material/Notifications";
+import ChatIcon from "@mui/icons-material/Chat";
+import SearchIcon from "@mui/icons-material/Search";
+import ViewSidebarIcon from "@mui/icons-material/ViewSidebar";
+import DownloadIcon from "@mui/icons-material/Download";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import {
   Avatar,
   Badge,
@@ -109,6 +114,8 @@ type AppHeaderProps = {
   setSidebarView: any;
   handleNotificationPopup: (event: React.MouseEvent<HTMLElement>) => void;
   notifications: INotification[];
+  handleChat: () => void;
+  handleSearch: () => void;
 };
 const AppHeader = forwardRef(
   (
@@ -120,6 +127,8 @@ const AppHeader = forwardRef(
       setSidebarView,
       handleNotificationPopup,
       notifications,
+      handleChat,
+      handleSearch,
     }: AppHeaderProps,
     ref
   ) => {
@@ -485,27 +494,43 @@ const AppHeader = forwardRef(
                 alignItems="center"
                 spacing={"8px"}
               >
-                <Button
-                  sx={{ borderRadius: "25px" }}
-                  onClick={displayInheritanceSettings}
-                  variant="outlined"
+
+                <Tooltip title="Manage Inheritance">
+                  <IconButton onClick={displayInheritanceSettings}>
+                    <AccountTreeIcon />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip title="Download JSON">
+                  <IconButton onClick={() => handleDownload()}>
+                    <DownloadIcon />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip
+                  title={
+                    rightPanelVisible ? "Hide Right Panel" : "Show Right Panel"
+                  }
                 >
-                  Manage inheritance
-                </Button>
-                <Button
-                  sx={{ borderRadius: "25px" }}
-                  onClick={() => handleDownload()}
-                  variant="outlined"
-                >
-                  Download as JSON
-                </Button>
-                <Button
-                  sx={{ borderRadius: "25px" }}
-                  onClick={toggleRightPanel}
-                  variant={rightPanelVisible ? "contained" : "outlined"}
-                >
-                  {rightPanelVisible ? "Hide Right Panel" : "Show Right Panel"}
-                </Button>
+                  <IconButton onClick={toggleRightPanel}>
+                    <ViewSidebarIcon
+                      color={rightPanelVisible ? "primary" : "inherit"}
+                    />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip title="Open Search Tab">
+                  <IconButton onClick={handleSearch}>
+                    <SearchIcon />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip title="Open Chat Tab">
+                  <IconButton onClick={handleChat}>
+                    <ChatIcon />
+                  </IconButton>
+                </Tooltip>
+
                 <IconButton onClick={handleNotificationPopup}>
                   <>
                     {notifications.length > 0 && (

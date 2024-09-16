@@ -1173,6 +1173,16 @@ const Ontology = () => {
     [anchor, openNotificationSection]
   );
 
+  const handleSearch = useCallback(() => {
+    setSidebarView(0);
+    setRightPanelVisible(true);
+  }, [setSidebarView, setRightPanelVisible]);
+
+  const handleChat = useCallback(() => {
+    setSidebarView(1);
+    setRightPanelVisible(true);
+  }, [setSidebarView, setRightPanelVisible]);
+
   return (
     <Box>
       {Object.keys(nodes).length > 0 ? (
@@ -1610,6 +1620,8 @@ const Ontology = () => {
           setSidebarView={setSidebarView}
           handleNotificationPopup={handleNotificationPopup}
           notifications={notifications}
+          handleChat={handleChat}
+          handleSearch={handleSearch}
         />
       </Box>
 
