@@ -19,8 +19,6 @@ type ISubOntologyProps = {
   setCurrentVisibleNode: (state: any) => void;
   property: string;
   text: string;
-  setEditNode: (state: string) => void;
-  editNode?: string;
   updateInheritance: (parameters: {
     nodeId: string;
     updatedProperty: string;
@@ -29,6 +27,8 @@ type ISubOntologyProps = {
   nodes: { [id: string]: INode };
   color: string;
   recordLogs: (logs: any) => void;
+  setSelectTitle?: any;
+  selectTitle?: any;
 };
 
 const Text = ({
@@ -36,11 +36,11 @@ const Text = ({
   setCurrentVisibleNode,
   property,
   text,
-  setEditNode,
-  editNode,
   updateInheritance,
   confirmIt,
   recordLogs,
+  setSelectTitle,
+  selectTitle,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -51,13 +51,15 @@ const Text = ({
     setEditorContent(text); // Initialize editor content
   }, [currentVisibleNode.id]);
 
-  // Focus and select text in the TextField when the component loads
   useEffect(() => {
-    if (property === "title" && textAreaRef.current) {
-      textAreaRef.current.focus(); // Focus on the TextField
-      // textAreaRef.current.select(); // Select the text
+    if (selectTitle && property === "title" && textAreaRef.current) {
+      textAreaRef.current.focus();
+      setTimeout(() => {
+        const inputLength = editorContent.length;
+        textAreaRef.current.setSelectionRange(0, inputLength + 1000);
+      }, 550);
     }
-  }, [property]);
+  }, [currentVisibleNode.id, textAreaRef.current, selectTitle]);
 
   const onSaveTextChange = useCallback(
     async (copyValue: string) => {
@@ -69,7 +71,7 @@ const Text = ({
         const nodeDocs = await getDocs(
           query(
             collection(db, NODES),
-            where("title", "==", copyValue),
+            where("title", "==", copyValue.trim()),
             where("deleted", "==", false)
           )
         );
@@ -92,8 +94,8 @@ const Text = ({
         let previousValue = nodeData.properties[property] || "";
         let newValue = copyValue;
 
+        setSelectTitle(false);
         if (property === "title") {
-          setEditNode("");
           nodeData.title = copyValue || "";
         } else {
           nodeData.properties[property] = copyValue || "";
@@ -133,6 +135,10 @@ const Text = ({
     onSaveTextChange(e.target.value);
   };
 
+  const handleBlur = () => {
+    setSelectTitle(false);
+  };
+
   return (
     <Box
       style={{
@@ -143,11 +149,12 @@ const Text = ({
       }}
     >
       <TextField
-        ref={textAreaRef} // Attach the ref to the TextField
+        inputRef={textAreaRef}
         multiline
         minRows={2}
         value={editorContent}
         onChange={handleChanges}
+        onBlur={handleBlur}
         placeholder="Type something..."
         InputProps={{
           sx: {

@@ -215,6 +215,7 @@ const Ontology = () => {
     new Date(Date.now())
   );
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
+  const scrolling = useRef<any>();
 
   const [openNotificationSection, setOpenNotificationSection] =
     useState<boolean>(false);
@@ -1279,6 +1280,7 @@ const Ontology = () => {
                 ...SCROLL_BAR_STYLE,
               }}
             >
+              <Box ref={scrolling}></Box>
               <Breadcrumbs sx={{ ml: "40px", mt: "14px" }}>
                 {(ontologyPath || []).map((path) => (
                   <Link
@@ -1309,6 +1311,7 @@ const Ontology = () => {
 
               {currentVisibleNode && (
                 <Node
+                  scrolling={scrolling}
                   currentVisibleNode={currentVisibleNode}
                   setCurrentVisibleNode={setCurrentVisibleNode}
                   handleLinkNavigation={handleLinkNavigation}

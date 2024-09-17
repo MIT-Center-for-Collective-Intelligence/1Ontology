@@ -455,7 +455,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       currentVisibleNode={currentVisibleNode}
                       property={property}
                       setCurrentVisibleNode={setCurrentVisibleNode}
-                      setEditNode={setEditNode}
                       nodes={nodes}
                       color={color}
                     />

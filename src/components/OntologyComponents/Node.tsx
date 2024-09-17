@@ -112,7 +112,13 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
 // import useConfirmDialog from "@/hooks/useConfirmDialog";
 // import { DESIGN_SYSTEM_COLORS } from "@/lib/theme/colors";
@@ -140,6 +146,7 @@ import {
 } from " @components/lib/utils/string.utils";
 
 type INodeProps = {
+  scrolling: any;
   currentVisibleNode: INode;
   setCurrentVisibleNode: (node: INode) => void;
   handleLinkNavigation: (
@@ -187,6 +194,7 @@ function getRandomProminentColor() {
   return prominentColors[randomIndex];
 }
 const Node = ({
+  scrolling,
   currentVisibleNode,
   setCurrentVisibleNode,
   setSnackbarMessage,
@@ -239,9 +247,11 @@ const Node = ({
   const [viewValue, setViewValue] = useState<number>(0);
   const [viewValueSpecialization, setViewValueSpecialization] =
     useState<number>(1);
-  const color = getRandomProminentColor();
-  const db = getFirestore();
+  const [selectTitle, setSelectTitle] = useState(false);
 
+  const color = getRandomProminentColor();
+
+  const db = getFirestore();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
   const getRooTitle = async (nodeId: string) => {
@@ -426,7 +436,7 @@ const Node = ({
               },
             ],
           },
-          root: currentVisibleNode.root || "",
+          root: parentNode.root || "",
           title: newTitle,
           id: newNodeRef.id,
         };
@@ -462,6 +472,10 @@ const Node = ({
         // Update the parent node document in the database
         setOpenSelectModel(false);
         await updateDoc(nodeParentRef, parentNode);
+        setTimeout(() => {
+          scrollToTop();
+          setSelectTitle(true);
+        }, 900);
       } catch (error) {
         // Handle errors by logging to the console
         confirmIt("Sorry there was an Error please try again!", "Ok", "");
@@ -807,6 +821,12 @@ const Node = ({
       property,
       category,
     });
+  };
+
+  const scrollToTop = () => {
+    if (scrolling.current) {
+      scrolling.current.scrollIntoView({ behaviour: "smooth" });
+    }
   };
 
   const deleteCategory = async (property: string, category: string) => {
@@ -1576,12 +1596,12 @@ const Node = ({
                   nodes={nodes}
                   property={"title"}
                   text={currentVisibleNode.title}
-                  setEditNode={setEditNode}
-                  editNode={editNode}
                   confirmIt={confirmIt}
                   color={color}
                   recordLogs={recordLogs}
                   updateInheritance={updateInheritance}
+                  setSelectTitle={setSelectTitle}
+                  selectTitle={selectTitle}
                 />
               </Box>
             )}
@@ -1645,7 +1665,6 @@ const Node = ({
               currentVisibleNode={currentVisibleNode}
               property={"description"}
               setCurrentVisibleNode={setCurrentVisibleNode}
-              setEditNode={setEditNode}
               color={color}
             />
           </Box>
