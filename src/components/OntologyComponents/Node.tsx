@@ -356,6 +356,20 @@ const Node = ({
     }
   };
 
+  // Function to generate a unique title
+  const generateUniqueTitle = (title: string, existingTitles: string[]) => {
+    let uniqueTitle = title;
+    let count = 1;
+
+    // Check if the title already exists in the array of titles
+    while (existingTitles.includes(uniqueTitle)) {
+      count++;
+      uniqueTitle = `${title} ${count}`; // Append a number if the title already exists
+    }
+
+    return uniqueTitle;
+  };
+
   // Function to add a new specialization to the node
   const addNewSpecialization = useCallback(
     async (category: string = "main") => {
@@ -391,6 +405,12 @@ const Node = ({
           }
         }
         // Clone the parent node data
+        // Check if the specified type and category exist in the parent node
+        let newTitle = `New ${parentNode.title}`;
+        const specializationsTitles = Object.values(parentNode.specializations)
+          .flat()
+          .map((spec) => spec.title);
+        newTitle = generateUniqueTitle(newTitle, specializationsTitles);
         const newNode = {
           ...nodeParentDoc.data(),
           // Initialize the specializations sub-node
@@ -407,22 +427,23 @@ const Node = ({
             ],
           },
           root: currentVisibleNode.root || "",
-          title: `New ${parentNode.title}`,
+          title: newTitle,
           id: newNodeRef.id,
         };
 
         if ("locked" in newNode) {
           delete newNode.locked;
         }
-        // Check if the specified type and category exist in the parent node
 
+        // Generate a unique title based on the existing ones
+        newTitle = generateUniqueTitle(newTitle, specializationsTitles);
         if (!parentNode.specializations.hasOwnProperty(category)) {
           // If not, create the specified type and category
           parentNode.specializations = {
             ...parentNode.specializations,
             [category]: [
               {
-                title: `New ${parentNode.title}`,
+                title: newTitle,
                 id: newNodeRef.id,
               },
             ],
@@ -430,7 +451,7 @@ const Node = ({
         } else {
           // Add the new node to the specified type and category
           parentNode.specializations[category].push({
-            title: `New ${parentNode.title}`,
+            title: newTitle,
             id: newNodeRef.id,
           });
         }
@@ -439,7 +460,7 @@ const Node = ({
         addNewNode({ id: newNodeRef.id, newNode });
 
         // Update the parent node document in the database
-        setOpenSelectModel(true);
+        setOpenSelectModel(false);
         await updateDoc(nodeParentRef, parentNode);
       } catch (error) {
         // Handle errors by logging to the console
@@ -1800,7 +1821,7 @@ const Node = ({
                       Is Part of
                     </Typography>
                     {currentVisibleNode.inheritance?.["isPartOf"]?.ref && (
-                      <Typography sx={{ fontSize: "14px", ml: "15px" }}>
+                      <Typography sx={{ fontSize: "14px", ml: "9px" }}>
                         {'(Inherited from "'}
                         {getTitle(
                           nodes,
@@ -1827,7 +1848,7 @@ const Node = ({
                       Parts
                     </Typography>
                     {currentVisibleNode.inheritance?.["parts"]?.ref && (
-                      <Typography sx={{ fontSize: "14px", ml: "15px" }}>
+                      <Typography sx={{ fontSize: "14px", ml: "9px" }}>
                         {'(Inherited from "'}
                         {getTitle(
                           nodes,

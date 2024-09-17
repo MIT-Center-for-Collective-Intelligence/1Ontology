@@ -209,6 +209,7 @@ const Ontology = () => {
   const [openSelectModel, setOpenSelectModel] = useState(false);
   const [notifications, setNotifications] = useState<INotification[]>([]);
 
+  const [lastUpdate, setLastUpdate] = useState(Date.now());
   //last interaction date from the user
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
     new Date(Date.now())
@@ -1016,12 +1017,18 @@ const Ontology = () => {
 
   useEffect(() => {
     const handleUserActivity = () => {
-      setLastInteractionDate(new Date(Date.now()));
+      const currentTime = Date.now();
+      setLastInteractionDate(new Date(currentTime));
+
       if (user && user.uname !== "ouhrac") {
-        const userDocRef = doc(collection(db, USERS), user.uname);
-        updateDoc(userDocRef, {
-          lastInteracted: Timestamp.now(),
-        });
+        const timeSinceLastUpdate = currentTime - lastUpdate;
+        if (timeSinceLastUpdate >= 60000) {
+          const userDocRef = doc(collection(db, USERS), user.uname);
+          updateDoc(userDocRef, {
+            lastInteracted: Timestamp.now(),
+          });
+          setLastUpdate(currentTime);
+        }
       }
     };
 
@@ -1032,7 +1039,7 @@ const Ontology = () => {
       window.removeEventListener("mousemove", handleUserActivity);
       window.removeEventListener("keydown", handleUserActivity);
     };
-  }, [user]);
+  }, [user, lastUpdate, db]);
 
   useEffect(() => {
     const checkIfDifferentDay = () => {
