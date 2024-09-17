@@ -246,11 +246,7 @@ const Node = ({
 
   const getRooTitle = async (nodeId: string) => {
     if (nodeId) {
-      const nodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
-      const nodeData = nodeDoc.data() as INode;
-      if (nodeData) {
-        return setRootTitle(nodeData.title);
-      }
+      setRootTitle(nodes[nodeId].title);
     }
     setRootTitle("");
   };
@@ -361,93 +357,105 @@ const Node = ({
   };
 
   // Function to add a new specialization to the node
-  const addNewSpecialization = async (category: string = "main") => {
-    try {
-      if (!category) {
-        category = "main";
-      }
-      // Get a reference to the parent node document
-      const nodeParentRef = doc(collection(db, NODES), currentVisibleNode.id);
-
-      // Retrieve the parent node document
-      const nodeParentDoc = await getDoc(nodeParentRef);
-
-      // Extract data from the parent node document
-      const parentNode = {
-        ...nodeParentDoc.data(),
-        id: nodeParentDoc.id,
-      } as INode;
-
-      // Check if the parent node document exists
-      if (!nodeParentDoc.exists()) return;
-
-      // Create a new node document reference
-      const newNodeRef = doc(collection(db, NODES));
-      const inheritance = JSON.parse(
-        JSON.stringify({ ...parentNode.inheritance })
-      );
-      for (let property in inheritance) {
-        if (!inheritance[property].ref) {
-          inheritance[property].ref = nodeParentDoc.id;
-          inheritance[property].title = parentNode.title;
+  const addNewSpecialization = useCallback(
+    async (category: string = "main") => {
+      try {
+        if (!category) {
+          category = "main";
         }
-      }
-      // Clone the parent node data
-      const newNode = {
-        ...nodeParentDoc.data(),
-        // Initialize the specializations sub-node
-        specializations: { main: [] },
-        inheritance,
-        comments: [],
-        // Set the parents and title for the new node
-        generalizations: {
-          main: [
-            {
-              id: currentVisibleNode.id,
-              title: currentVisibleNode.title,
-            },
-          ],
-        },
-        root: currentVisibleNode.root || "",
-        title: `New ${parentNode.title}`,
-        id: newNodeRef.id,
-      };
 
-      if ("locked" in newNode) {
-        delete newNode.locked;
-      }
-      // Check if the specified type and category exist in the parent node
+        // Get a reference to the parent node document
+        const nodeParentRef = doc(collection(db, NODES), currentVisibleNode.id);
 
-      if (!parentNode.specializations.hasOwnProperty(category)) {
-        // If not, create the specified type and category
-        parentNode.specializations = {
-          ...parentNode.specializations,
-          [category]: [
-            {
-              title: `New ${parentNode.title}`,
-              id: newNodeRef.id,
-            },
-          ],
-        };
-      } else {
-        // Add the new node to the specified type and category
-        parentNode.specializations[category].push({
+        // Retrieve the parent node document
+        const nodeParentDoc = await getDoc(nodeParentRef);
+
+        // Extract data from the parent node document
+        const parentNode = {
+          ...nodeParentDoc.data(),
+          id: nodeParentDoc.id,
+        } as INode;
+
+        // Check if the parent node document exists
+        if (!nodeParentDoc.exists()) return;
+
+        // Create a new node document reference
+        const newNodeRef = doc(collection(db, NODES));
+        const inheritance = JSON.parse(
+          JSON.stringify({ ...parentNode.inheritance })
+        );
+        for (let property in inheritance) {
+          if (!inheritance[property].ref) {
+            inheritance[property].ref = nodeParentDoc.id;
+            inheritance[property].title = parentNode.title;
+          }
+        }
+        // Clone the parent node data
+        const newNode = {
+          ...nodeParentDoc.data(),
+          // Initialize the specializations sub-node
+          specializations: { main: [] },
+          inheritance,
+          comments: [],
+          // Set the parents and title for the new node
+          generalizations: {
+            main: [
+              {
+                id: currentVisibleNode.id,
+                title: currentVisibleNode.title,
+              },
+            ],
+          },
+          root: currentVisibleNode.root || "",
           title: `New ${parentNode.title}`,
           id: newNodeRef.id,
-        });
-      }
+        };
 
-      // Add the new node to the database
-      addNewNode({ id: newNodeRef.id, newNode });
-      // Update the parent node document in the database
-      setOpenSelectModel(true);
-      await updateDoc(nodeParentRef, parentNode);
-    } catch (error) {
-      // Handle errors by logging to the console
-      confirmIt("Sorry there was an Error please try again!", "Ok", "");
-      console.error(error);
-    }
-  };
+        if ("locked" in newNode) {
+          delete newNode.locked;
+        }
+        // Check if the specified type and category exist in the parent node
+
+        if (!parentNode.specializations.hasOwnProperty(category)) {
+          // If not, create the specified type and category
+          parentNode.specializations = {
+            ...parentNode.specializations,
+            [category]: [
+              {
+                title: `New ${parentNode.title}`,
+                id: newNodeRef.id,
+              },
+            ],
+          };
+        } else {
+          // Add the new node to the specified type and category
+          parentNode.specializations[category].push({
+            title: `New ${parentNode.title}`,
+            id: newNodeRef.id,
+          });
+        }
+
+        // Add the new node to the database
+        addNewNode({ id: newNodeRef.id, newNode });
+
+        // Update the parent node document in the database
+        setOpenSelectModel(true);
+        await updateDoc(nodeParentRef, parentNode);
+      } catch (error) {
+        // Handle errors by logging to the console
+        confirmIt("Sorry there was an Error please try again!", "Ok", "");
+        console.error(error);
+      }
+    },
+    [
+      addNewNode,
+      confirmIt,
+      currentVisibleNode.id,
+      currentVisibleNode.root,
+      currentVisibleNode.title,
+      db,
+    ]
+  );
 
   const showList = async (property: string, category: string) => {
     let newType = property;
@@ -817,48 +825,6 @@ const Node = ({
     }
   };
 
-  // This function adds or removes a lock for a specific user on a given node field.
-
-  const addLock = async (node: string, field: string, type: string) => {
-    try {
-      // Check if a user is authenticated before proceeding
-      if (!user) return;
-
-      // If the type is 'add', create a new lock and add it to the 'ontologyLock' collection
-      if (type == "add") {
-        // Create a new lock object with user information, node, field, and timestamp
-        const newLock = {
-          uname: user?.uname,
-          node,
-          field,
-          deleted: false,
-          createdAt: new Date(),
-        };
-
-        // Set the document with the new lock information
-        await setDoc(doc(collection(db, LOCKS)), newLock);
-      } else {
-        // If the type is not 'add', remove existing locks for the specified node, field, and user
-        const locksDocs = await getDocs(
-          query(
-            collection(db, LOCKS),
-            where("field", "==", field),
-            where("node", "==", node),
-            where("uname", "==", user?.uname)
-          )
-        );
-
-        // Iterate through each lock document and delete it
-        for (let lockDoc of locksDocs.docs) {
-          await deleteDoc(lockDoc.ref);
-        }
-      }
-    } catch (error) {
-      // Handle any errors that occur during the process
-      console.error(error);
-    }
-  };
-
   // Function to handle sorting of draggable items
   const handleSorting = useCallback(
     async (result: any, property: string) => {
@@ -1106,32 +1072,32 @@ const Node = ({
             if (specializationDoc.exists()) {
               // Retrieve data of the parent node
               let specializationNode = specializationDoc.data() as INode;
+              if (
+                Object.values(specializationNode.generalizations).length > 1
+              ) {
+                // Remove the reference to the child-node from the parent
+                specializationNode = removeGeneralizationNode(
+                  specializationNode,
+                  currentVisibleNode.id
+                );
 
-              // Remove the reference to the child-node from the parent
-              specializationNode = removeGeneralizationNode(
-                specializationNode,
-                currentVisibleNode.id
-              );
-
-              // Update the parent node document with the modified data
-              await updateDoc(specializationDoc.ref, specializationNode);
+                // Update the parent node document with the modified data
+                await updateDoc(specializationDoc.ref, specializationNode);
+              }
             }
           }
-
+          await updateDoc(nodeDoc.ref, { deleted: true });
           // Update the user document by removing the deleted node's ID
-          let _ontologyPath = [...ontologyPath];
-          if (_ontologyPath.at(-2)?.category) {
-            _ontologyPath = _ontologyPath.slice(0, -2);
-          } else {
-            _ontologyPath = _ontologyPath.slice(0, -1);
+          let lastNodeId: string = ontologyPath.at(-2)?.id || "";
+
+          if (ontologyPath.at(-2)?.category) {
+            lastNodeId = ontologyPath.at(-3)?.id || "";
           }
 
-          const lastNodeId: string = ontologyPath.at(-1)?.id || "";
           if (lastNodeId && nodes[lastNodeId]) {
             setCurrentVisibleNode(nodes[lastNodeId]);
           }
           // Mark the node as deleted by updating its document
-          await updateDoc(nodeDoc.ref, { deleted: true });
 
           // Record a log entry for the deletion action
           recordLogs({
@@ -1584,23 +1550,17 @@ const Node = ({
             ) : (
               <Box>
                 <Text
-                  nodes={nodes}
-                  updateInheritance={updateInheritance}
-                  recordLogs={recordLogs}
-                  user={user}
-                  lockedNodeFields={
-                    lockedNodeFields[currentVisibleNode.id] || {}
-                  }
-                  addLock={addLock}
-                  text={currentVisibleNode.title}
                   currentVisibleNode={currentVisibleNode}
-                  property={"title"}
-                  setSnackbarMessage={setSnackbarMessage}
                   setCurrentVisibleNode={setCurrentVisibleNode}
-                  editNode={editNode}
+                  nodes={nodes}
+                  property={"title"}
+                  text={currentVisibleNode.title}
                   setEditNode={setEditNode}
+                  editNode={editNode}
                   confirmIt={confirmIt}
                   color={color}
+                  recordLogs={recordLogs}
+                  updateInheritance={updateInheritance}
                 />
               </Box>
             )}
@@ -1654,9 +1614,6 @@ const Node = ({
               nodes={nodes}
               updateInheritance={updateInheritance}
               recordLogs={recordLogs}
-              user={user}
-              lockedNodeFields={lockedNodeFields[currentVisibleNode.id] || {}}
-              addLock={addLock}
               text={
                 getPropertyValue(
                   nodes,
@@ -1666,7 +1623,6 @@ const Node = ({
               }
               currentVisibleNode={currentVisibleNode}
               property={"description"}
-              setSnackbarMessage={setSnackbarMessage}
               setCurrentVisibleNode={setCurrentVisibleNode}
               setEditNode={setEditNode}
               color={color}
@@ -1697,8 +1653,6 @@ const Node = ({
             setEditNode={setEditNode}
             setOpenAddField={setOpenAddField}
             removeProperty={removeProperty}
-            addLock={addLock}
-            lockedNodeFields={lockedNodeFields}
             user={user}
             nodes={nodes}
             color={color}

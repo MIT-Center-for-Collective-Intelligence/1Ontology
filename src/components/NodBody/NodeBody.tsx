@@ -49,8 +49,6 @@ interface NodeBodyProps {
   setEditNode: any;
   setOpenAddField: any;
   removeProperty: any;
-  addLock: any;
-  lockedNodeFields: any;
   user: any;
   nodes: { [id: string]: INode };
   color: string;
@@ -72,8 +70,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   setEditNode,
   setOpenAddField,
   removeProperty,
-  addLock,
-  lockedNodeFields,
   user,
   nodes,
   color,
@@ -92,8 +88,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         .find((generalization) => generalization.title === selectedTitle);
 
       if (selectedGeneralization) {
-        console.log(selectedGeneralization.id, "Selected generalization ID");
-        const selectedGeneralizationData = nodes[selectedGeneralization.id];
         const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
         updateDoc(nodeRef, {
           [`inheritance.${property}.ref`]: selectedGeneralization.id,
@@ -451,11 +445,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     <Text
                       updateInheritance={updateInheritance}
                       recordLogs={recordLogs}
-                      user={user}
-                      lockedNodeFields={
-                        lockedNodeFields[currentVisibleNode.id] || {}
-                      }
-                      addLock={addLock}
                       text={
                         getPropertyValue(
                           nodes,
@@ -465,10 +454,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       }
                       currentVisibleNode={currentVisibleNode}
                       property={property}
-                      setSnackbarMessage={setSnackbarMessage}
                       setCurrentVisibleNode={setCurrentVisibleNode}
                       setEditNode={setEditNode}
-                      removeField={removeProperty}
                       nodes={nodes}
                       color={color}
                     />

@@ -38,7 +38,7 @@ const TreeViewSimplified = ({
 
   useEffect(() => {
     setExpanded(Array.from(expandedNodes));
-  }, []);
+  }, [expandedNodes]);
 
   return (
     <TreeView

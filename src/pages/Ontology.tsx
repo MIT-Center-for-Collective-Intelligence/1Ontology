@@ -213,6 +213,10 @@ const Ontology = () => {
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
     new Date(Date.now())
   );
+  const [anchor, setAnchor] = useState<null | HTMLElement>(null);
+
+  const [openNotificationSection, setOpenNotificationSection] =
+    useState<boolean>(false);
 
   useEffect(() => {
     if (!user) return;
@@ -242,10 +246,6 @@ const Ontology = () => {
       }
     }
   }, [user, emailVerified]);
-  const [anchor, setAnchor] = useState<null | HTMLElement>(null);
-
-  const [openNotificationSection, setOpenNotificationSection] =
-    useState<boolean>(false);
 
   useEffect(() => {
     if (!user) return;
@@ -342,7 +342,7 @@ const Ontology = () => {
 
   const recordLogs = async (logs: any) => {
     try {
-      if (!user) return;
+      if (!user || user.uname === "ouhrac") return;
       const logRef = doc(collection(db, LOGS));
 
       const now = new Date();
@@ -701,13 +701,11 @@ const Ontology = () => {
     [nodes, ontologyPath]
   );
 
-  console.log("user ==>", user);
-
   useEffect(() => {
     if (user?.currentNode && nodes[user.currentNode]) {
       setCurrentVisibleNode(nodes[user.currentNode]);
     }
-  }, [nodes, user?.currentNode]);
+  }, [user?.currentNode]);
 
   // Function to update the user document with the current ontology path
   const openedANode = async (currentNode: string) => {
@@ -718,7 +716,7 @@ const Ontology = () => {
     await updateDoc(userRef, { currentNode });
 
     // Record logs if ontology path is not empty
-    if (ontologyPath.length > 0) {
+    if (currentNode) {
       await recordLogs({
         action: "Opened a node",
         node: currentNode,
@@ -727,22 +725,31 @@ const Ontology = () => {
   };
 
   const updateTheUrl = (path: INodePath[]) => {
+    if (!path) {
+      return;
+    }
     let newHash = "";
     path.forEach((p: any) => (newHash = newHash + `#${p.id.trim()}`));
     window.location.hash = newHash;
   };
 
   const initializeExpanded = (ontologyPath: INodePath[]) => {
+    if (!ontologyPath) {
+      return;
+    }
     const newExpandedSet: Set<string> = new Set();
+
     for (let node of ontologyPath) {
       newExpandedSet.add(node.id);
     }
     setExpandedNodes(newExpandedSet);
   };
+
   useEffect(() => {
-    if (!currentVisibleNode?.id) {
+    if (!currentVisibleNode?.id || !nodes[currentVisibleNode?.id]) {
       return;
     }
+
     openedANode(currentVisibleNode.id);
     setOntologyPath(eachOntologyPath[currentVisibleNode?.id]);
     initializeExpanded(eachOntologyPath[currentVisibleNode?.id]);
@@ -764,12 +771,20 @@ const Ontology = () => {
 
         // Record logs for the created node
         await recordLogs({
-          action: "Created a field",
-          field: newNode.nodeType,
+          action: "Create a new node",
+          nodeId: id,
         });
 
         // Set the newly created node as editable
-        setEditNode(id);
+        setTimeout(() => {
+          setCurrentVisibleNode({
+            id,
+            ...newNode,
+          });
+          // setEditNode(id);
+          // console.log("nodes[id]", nodes[id]);
+          // setCurrentVisibleNode(nodes[id]);
+        }, 1000);
       } catch (error) {
         console.error(error);
       }
@@ -1002,11 +1017,11 @@ const Ontology = () => {
   useEffect(() => {
     const handleUserActivity = () => {
       setLastInteractionDate(new Date(Date.now()));
-      if (user) {
+      if (user && user.uname !== "ouhrac") {
         const userDocRef = doc(collection(db, USERS), user.uname);
-        // updateDoc(userDocRef, {
-        //   lastInteracted: Timestamp.now(),
-        // });
+        updateDoc(userDocRef, {
+          lastInteracted: Timestamp.now(),
+        });
       }
     };
 
@@ -1017,7 +1032,7 @@ const Ontology = () => {
       window.removeEventListener("mousemove", handleUserActivity);
       window.removeEventListener("keydown", handleUserActivity);
     };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const checkIfDifferentDay = () => {
@@ -1258,7 +1273,7 @@ const Ontology = () => {
               }}
             >
               <Breadcrumbs sx={{ ml: "40px", mt: "14px" }}>
-                {ontologyPath.map((path) => (
+                {(ontologyPath || []).map((path) => (
                   <Link
                     underline={path.category ? "none" : "hover"}
                     key={path.id}

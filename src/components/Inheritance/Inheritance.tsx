@@ -129,7 +129,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
         newInheritance,
         selectedNode.id
       );
-      console.log("Done updating");
+
       await batch.commit();
     },
     [selectedNode]
