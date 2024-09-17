@@ -116,6 +116,7 @@ type AppHeaderProps = {
   notifications: INotification[];
   handleChat: () => void;
   handleSearch: () => void;
+  nodes: { [nodeId: string]: INode };
 };
 const AppHeader = forwardRef(
   (
@@ -129,6 +130,7 @@ const AppHeader = forwardRef(
       notifications,
       handleChat,
       handleSearch,
+      nodes,
     }: AppHeaderProps,
     ref
   ) => {
@@ -191,7 +193,7 @@ const AppHeader = forwardRef(
               currentNode
             ) {
               updatedUsersData[userId] = {
-                node: currentNode,
+                node: nodes[currentNode]?.title || "",
                 imageUrl: data.imageUrl,
                 fName: data.fName,
                 lName: data.lName,
@@ -207,7 +209,7 @@ const AppHeader = forwardRef(
       });
 
       return () => unsubscribe();
-    }, []);
+    }, [nodes]);
 
     const handleImageChange = useCallback(
       async (event: any) => {
@@ -466,7 +468,7 @@ const AppHeader = forwardRef(
                   title={
                     <Box>
                       <strong>{`${c.fName} ${c.lName}`}</strong>{" "}
-                      {`last interacted with ${c.node?.title || ""} ${
+                      {`last interacted with ${c.node || ""} ${
                         c.lastInteracted
                       }`}
                     </Box>
@@ -542,7 +544,7 @@ const AppHeader = forwardRef(
                     />
                   </IconButton>
                 </Tooltip>
-                
+
                 <Tooltip title="Change theme">
                   <IconButton onClick={handleThemeSwitch} size="small">
                     {theme.palette.mode === "dark" ? (

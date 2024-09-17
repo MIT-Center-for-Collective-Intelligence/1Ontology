@@ -103,7 +103,7 @@ import {
   TreeVisual,
 } from " @components/types/INode";
 import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
-import MarkdownRender from " @components/components/Markdown/MarkdownRender";
+
 import AppHeaderMemoized from " @components/components/Header/AppHeader";
 import { newId } from " @components/lib/utils/newFirestoreId";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
@@ -1385,7 +1385,7 @@ const Ontology = () => {
                     <Tab label="Search" {...a11yProps(1)} />
                     <Tab label="Chat" {...a11yProps(0)} />
                     <Tab label="Inheritance" {...a11yProps(2)} />
-                    <Tab label="Markdown Cheatsheet" {...a11yProps(3)} />
+                    {/*                    <Tab label="Markdown Cheatsheet" {...a11yProps(3)} /> */}
                   </Tabs>
                 </Box>
                 <Box
@@ -1547,16 +1547,16 @@ const Ontology = () => {
                       />
                     )}
                   </TabPanel>
-                  <TabPanel value={sidebarView} index={3}>
+                  {/* <TabPanel value={sidebarView} index={3}>
                     <Box
                       sx={{
                         p: "18px",
                         ...SCROLL_BAR_STYLE,
                       }}
                     >
-                      {/* <MarkdownRender text={markdownContent} /> */}
+                      <MarkdownRender text={markdownContent} />
                     </Box>
-                  </TabPanel>
+                  </TabPanel> */}
                 </Box>
               </Box>
             </Section>
@@ -1594,6 +1594,7 @@ const Ontology = () => {
           handleNotificationPopup={handleNotificationPopup}
           notifications={notifications}
           handleChat={handleChat}
+          nodes={nodes}
           handleSearch={handleSearch}
         />
       </Box>
