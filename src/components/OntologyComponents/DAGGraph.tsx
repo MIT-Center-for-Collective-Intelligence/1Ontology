@@ -92,6 +92,7 @@ const DagGraph = ({
   currentVisibleNode,
 }: IDagGraphProps) => {
   const svgRef = useRef(null);
+  const [graph, setGraph] = useState<any>(null);
 
   const handleNodeClick = (nodeId: string) => {
     onOpenNodeDagre(nodeId);
@@ -206,11 +207,46 @@ const DagGraph = ({
       );
     }
 
+    setGraph(graph);
+
     // Cleanup function to remove graph on unmount
     return () => {
       d3.select("#graphGroup").selectAll("*").remove();
     };
   }, [treeVisualization, expandedNodes]);
+
+
+  useEffect(() => {
+    if (graph && currentVisibleNode) {
+      const nodeId = currentVisibleNode.id;
+
+      if (graph.node(nodeId)) {
+       
+        const nodePosition = graph.node(nodeId);
+      const svg = d3.select<SVGSVGElement, unknown>(svgRef.current!);
+      const svgGroup = svg.select("g");
+
+      const svgWidth = svg.node()?.clientWidth || 0;
+      const svgHeight = svg.node()?.clientHeight || 0;
+      
+      
+      const translateX = (svgWidth / 2) - nodePosition.x * 1.5; 
+      const translateY = (svgHeight / 3) - nodePosition.y * 1;
+      const scale = 1.5;
+
+      const zoomTranslate = d3.zoomIdentity
+        .translate(translateX, translateY)
+        .scale(scale);
+
+      svg.call(d3.zoom().transform as any, zoomTranslate);
+
+      svgGroup.attr(
+        "transform",
+        `translate(${translateX}, ${translateY}) scale(${scale})`
+      );
+      }
+    }
+  }, [currentVisibleNode, graph]);
 
   return (
     <>
