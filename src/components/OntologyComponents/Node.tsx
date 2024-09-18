@@ -253,6 +253,26 @@ const Node = ({
 
   const db = getFirestore();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const [width, setWidth] = useState<number>(0);
+
+
+  useEffect(() => {
+    const element = document.getElementById("node-section");
+    if (element) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          setWidth(entry.target.clientWidth);
+        }
+      });
+
+      resizeObserver.observe(element);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+  }, []);
+
 
   const getRooTitle = async (nodeId: string) => {
     if (nodeId) {
@@ -1698,7 +1718,7 @@ const Node = ({
             color={color}
           />
         </Box>
-        <Box sx={{ display: "flex", gap: "9px" }}>
+        <Box sx={{ display: "flex", gap: "15px", ...(width <= 1070 && { flexDirection: "column" }) }}>
           <Paper elevation={9} sx={{ width: "100%", borderRadius: "30px" }}>
             <Tabs
               value={viewValueSpecialization}
