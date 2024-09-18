@@ -97,6 +97,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import { Box } from "@mui/system";
@@ -172,27 +173,7 @@ type INodeProps = {
   eachOntologyPath: { [key: string]: any };
   searchWithFuse: any;
 };
-function getRandomProminentColor() {
-  // Define a list of prominent colors
-  const prominentColors = [
-    "#FF5733", // Red-Orange
-    "#33FF57", // Green
-    "#3357FF", // Blue
-    "#FF33A1", // Pink
-    "#FFBD33", // Yellow-Orange
-    "#33FFBD", // Aqua
-    "#8D33FF", // Purple
-    "#FF5733", // Coral
-    "#FF33FF", // Magenta
-    "#FFFF33", // Bright Yellow
-  ];
 
-  // Get a random index from the list
-  const randomIndex = Math.floor(Math.random() * prominentColors.length);
-
-  // Return the color at the random index
-  return prominentColors[randomIndex];
-}
 const Node = ({
   scrolling,
   currentVisibleNode,
@@ -215,6 +196,7 @@ const Node = ({
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
+  const isSmallScreen = useMediaQuery("(max-width: 600px)");
 
   const [openSelectModel, setOpenSelectModel] = useState(false);
   const handleClose = () => {
@@ -248,8 +230,6 @@ const Node = ({
   const [viewValueSpecialization, setViewValueSpecialization] =
     useState<number>(1);
   const [selectTitle, setSelectTitle] = useState(false);
-
-  const color = getRandomProminentColor();
 
   const db = getFirestore();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
@@ -1597,7 +1577,6 @@ const Node = ({
                   property={"title"}
                   text={currentVisibleNode.title}
                   confirmIt={confirmIt}
-                  color={color}
                   recordLogs={recordLogs}
                   updateInheritance={updateInheritance}
                   setSelectTitle={setSelectTitle}
@@ -1665,7 +1644,6 @@ const Node = ({
               currentVisibleNode={currentVisibleNode}
               property={"description"}
               setCurrentVisibleNode={setCurrentVisibleNode}
-              color={color}
             />
           </Box>
         </Paper>
@@ -1695,10 +1673,15 @@ const Node = ({
             removeProperty={removeProperty}
             user={user}
             nodes={nodes}
-            color={color}
           />
         </Box>
-        <Box sx={{ display: "flex", gap: "9px" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: "9px",
+            flexDirection: isSmallScreen ? "column" : "row",
+          }}
+        >
           <Paper elevation={9} sx={{ width: "100%", borderRadius: "30px" }}>
             <Tabs
               value={viewValueSpecialization}

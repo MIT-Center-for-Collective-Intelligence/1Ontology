@@ -51,7 +51,6 @@ interface NodeBodyProps {
   removeProperty: any;
   user: any;
   nodes: { [id: string]: INode };
-  color: string;
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -72,7 +71,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   removeProperty,
   user,
   nodes,
-  color,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -456,7 +454,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       property={property}
                       setCurrentVisibleNode={setCurrentVisibleNode}
                       nodes={nodes}
-                      color={color}
                     />
                   )
                 )}

@@ -25,7 +25,6 @@ type ISubOntologyProps = {
   }) => void;
   confirmIt?: any;
   nodes: { [id: string]: INode };
-  color: string;
   recordLogs: (logs: any) => void;
   setSelectTitle?: any;
   selectTitle?: any;
