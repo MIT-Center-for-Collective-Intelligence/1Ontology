@@ -214,7 +214,7 @@ const Ontology = () => {
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
     new Date(Date.now())
   );
-  const [anchor, setAnchor] = useState<null | HTMLElement>(null);
+  const [anchor, setAnchor] = useState<any>(null);
   const scrolling = useRef<any>();
 
   const [openNotificationSection, setOpenNotificationSection] =
@@ -341,6 +341,25 @@ const Ontology = () => {
       setUsers(_users);
     })();
   }, [db]);
+
+  useEffect(() => {
+    if (openNotificationSection) {
+      document.addEventListener("click", handleClickOutside);
+    } else {
+      document.removeEventListener("click", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [openNotificationSection, anchor]);
+
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    if (anchor && !anchor.contains(event.target)) {
+      setAnchor(null)
+      setOpenNotificationSection(false);
+    }
+  }, [anchor]);
 
   const recordLogs = async (logs: any) => {
     try {
@@ -1116,6 +1135,7 @@ const Ontology = () => {
       if (type === "node" && nodeId) {
         setCurrentVisibleNode(nodes[nodeId]);
       }
+      setSidebarView(1)
       setSelectedChatTab(
         ["node", "bug_report", "feature_request", "help"].indexOf(type)
       );
@@ -1361,14 +1381,14 @@ const Ontology = () => {
 
           {!isMobile && (
             <Section minSize={0} defaultSize={400}>
-              <Box sx={{ width: "100%" }}>
+              <Box id="right-panel-tabs" sx={{ width: "100%" }}>
                 <Box
                   sx={{
                     borderColor: "divider",
                     position: "sticky",
                   }}
                 >
-                  <Tabs
+                  {/* <Tabs
                     id="right-panel-tabs"
                     value={sidebarView}
                     onChange={handleChange}
@@ -1385,8 +1405,8 @@ const Ontology = () => {
                     <Tab label="Search" {...a11yProps(1)} />
                     <Tab label="Chat" {...a11yProps(0)} />
                     <Tab label="Inheritance" {...a11yProps(2)} />
-                    {/*                    <Tab label="Markdown Cheatsheet" {...a11yProps(3)} /> */}
-                  </Tabs>
+                    <Tab label="Markdown Cheatsheet" {...a11yProps(3)} />
+                  </Tabs> */}
                 </Box>
                 <Box
                   sx={{
@@ -1399,62 +1419,65 @@ const Ontology = () => {
                     ...SCROLL_BAR_STYLE,
                   }}
                 >
-                  <TabPanel value={sidebarView} index={0}>
-                    <Box sx={{ pl: "10px" }}>
-                      <TextField
-                        variant="standard"
-                        placeholder="Search..."
-                        value={searchValue}
-                        onChange={(e) => setSearchValue(e.target.value)}
-                        fullWidth
-                        InputProps={{
-                          startAdornment: (
-                            <IconButton
-                              sx={{ mr: "5px", cursor: "auto" }}
-                              color="primary"
-                              edge="end"
+                  {sidebarView === 0 && (
+                    <Box>
+                      <Box sx={{ pl: "10px" }}>
+                        <TextField
+                          variant="standard"
+                          placeholder="Search..."
+                          value={searchValue}
+                          onChange={(e) => setSearchValue(e.target.value)}
+                          fullWidth
+                          InputProps={{
+                            startAdornment: (
+                              <IconButton
+                                sx={{ mr: "5px", cursor: "auto" }}
+                                color="primary"
+                                edge="end"
+                              >
+                                <SearchIcon />
+                              </IconButton>
+                            ),
+                          }}
+                          autoFocus
+                          sx={{
+                            p: "8px",
+                            mt: "5px",
+                          }}
+                        />
+                        <List>
+                          {searchResults.map((node: any) => (
+                            <ListItem
+                              key={node.id}
+                              onClick={() => openSearchedNode(node)}
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                color: "white",
+                                cursor: "pointer",
+                                borderRadius: "4px",
+                                padding: "8px",
+                                transition: "background-color 0.3s",
+                                // border: "1px solid #ccc",
+                                mt: "5px",
+                                "&:hover": {
+                                  backgroundColor: (theme) =>
+                                    theme.palette.mode === "dark"
+                                      ? DESIGN_SYSTEM_COLORS.notebookG450
+                                      : DESIGN_SYSTEM_COLORS.gray200,
+                                },
+                              }}
                             >
-                              <SearchIcon />
-                            </IconButton>
-                          ),
-                        }}
-                        autoFocus
-                        sx={{
-                          p: "8px",
-                          mt: "5px",
-                        }}
-                      />
-                      <List>
-                        {searchResults.map((node: any) => (
-                          <ListItem
-                            key={node.id}
-                            onClick={() => openSearchedNode(node)}
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              color: "white",
-                              cursor: "pointer",
-                              borderRadius: "4px",
-                              padding: "8px",
-                              transition: "background-color 0.3s",
-                              // border: "1px solid #ccc",
-                              mt: "5px",
-                              "&:hover": {
-                                backgroundColor: (theme) =>
-                                  theme.palette.mode === "dark"
-                                    ? DESIGN_SYSTEM_COLORS.notebookG450
-                                    : DESIGN_SYSTEM_COLORS.gray200,
-                              },
-                            }}
-                          >
-                            <Typography>{node.title}</Typography>
-                          </ListItem>
-                        ))}
-                      </List>
+                              <Typography>{node.title}</Typography>
+                            </ListItem>
+                          ))}
+                        </List>
+                      </Box>
                     </Box>
-                  </TabPanel>
-                  <TabPanel value={sidebarView} index={1}>
-                    <Box sx={{}}>
+                  )}
+
+                  {sidebarView === 1 && (
+                    <Box>
                       <Tabs
                         id="chat-tabs"
                         value={selectedChatTab}
@@ -1538,15 +1561,18 @@ const Ontology = () => {
                         </TabPanel>
                       </Box>
                     </Box>
-                  </TabPanel>
-                  <TabPanel value={sidebarView} index={2}>
-                    {currentVisibleNode && (
-                      <Inheritance
-                        selectedNode={currentVisibleNode}
-                        nodes={nodes}
-                      />
-                    )}
-                  </TabPanel>
+                  )}
+
+                  {sidebarView === 2 && (
+                    <Box>
+                      {currentVisibleNode && (
+                        <Inheritance
+                          selectedNode={currentVisibleNode}
+                          nodes={nodes}
+                        />
+                      )}
+                    </Box>
+                  )}
                   {/* <TabPanel value={sidebarView} index={3}>
                     <Box
                       sx={{
@@ -1590,6 +1616,7 @@ const Ontology = () => {
           rightPanelVisible={rightPanelVisible}
           loading={false}
           confirmIt={confirmIt}
+          sidebarView={sidebarView}
           setSidebarView={setSidebarView}
           handleNotificationPopup={handleNotificationPopup}
           notifications={notifications}
