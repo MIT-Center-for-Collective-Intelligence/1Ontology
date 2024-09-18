@@ -445,7 +445,9 @@ const Ontology = () => {
       .map((result) => result.item)
       .filter(
         (item: INode) =>
-          !item.deleted && (!nodeType || nodeType === item.nodeType)
+          !item.deleted &&
+          !item.category &&
+          (!nodeType || nodeType === item.nodeType)
       );
   };
   const searchResults = useMemo(() => {
@@ -1170,14 +1172,31 @@ const Ontology = () => {
   );
 
   const handleSearch = useCallback(() => {
-    setSidebarView(0);
-    setRightPanelVisible(true);
-  }, [setSidebarView, setRightPanelVisible]);
+    if (sidebarView !== 0 || !rightPanelVisible) {
+      setSidebarView(0);
+      setRightPanelVisible(true);
+    } else {
+      setRightPanelVisible(false);
+    }
+  }, [setSidebarView, setRightPanelVisible, rightPanelVisible, sidebarView]);
 
   const handleChat = useCallback(() => {
-    setSidebarView(1);
-    setRightPanelVisible(true);
-  }, [setSidebarView, setRightPanelVisible]);
+    if (sidebarView !== 1 || !rightPanelVisible) {
+      setSidebarView(1);
+      setRightPanelVisible(true);
+    } else {
+      setRightPanelVisible(false);
+    }
+  }, [setSidebarView, setRightPanelVisible, rightPanelVisible, sidebarView]);
+
+  const displayInheritanceSettings = useCallback(() => {
+    if (sidebarView !== 2 || !rightPanelVisible) {
+      setSidebarView(2);
+      setRightPanelVisible(true);
+    } else {
+      setRightPanelVisible(false);
+    }
+  }, [setSidebarView, setRightPanelVisible, rightPanelVisible, sidebarView]);
 
   return (
     <Box>
@@ -1627,6 +1646,7 @@ const Ontology = () => {
           nodes={nodes}
           handleSearch={handleSearch}
           navigateToNode={navigateToNode}
+          displayInheritanceSettings={displayInheritanceSettings}
         />
       </Box>
 

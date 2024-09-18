@@ -120,6 +120,7 @@ type AppHeaderProps = {
   handleSearch: () => void;
   nodes: { [nodeId: string]: INode };
   navigateToNode: any;
+  displayInheritanceSettings: any;
 };
 const AppHeader = forwardRef(
   (
@@ -134,6 +135,7 @@ const AppHeader = forwardRef(
       notifications,
       handleChat,
       handleSearch,
+      displayInheritanceSettings,
       nodes,
       navigateToNode,
     }: AppHeaderProps,
@@ -422,10 +424,6 @@ const AppHeader = forwardRef(
       }
     }, [db, user]);
 
-    const displayInheritanceSettings = () => {
-      setRightPanelVisible(true);
-      setSidebarView(2);
-    };
     return (
       <>
         <Box
@@ -584,7 +582,7 @@ const AppHeader = forwardRef(
                   </>
                 </IconButton>
 
-                <Tooltip
+                {/* <Tooltip
                   title={
                     rightPanelVisible ? "Hide Right Panel" : "Show Right Panel"
                   }
@@ -594,7 +592,7 @@ const AppHeader = forwardRef(
                       color={rightPanelVisible ? "primary" : "inherit"}
                     />
                   </IconButton>
-                </Tooltip>
+                </Tooltip> */}
 
                 <Tooltip title="Change theme">
                   <IconButton onClick={handleThemeSwitch} size="small">

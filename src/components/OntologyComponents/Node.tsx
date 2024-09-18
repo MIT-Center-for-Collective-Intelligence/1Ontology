@@ -544,7 +544,7 @@ const Node = ({
     for (let child of children) {
       const childData = nodes[child.id];
       const specializations = childData.specializations;
-      const oldSpecializations = Object.keys(specializations).flat();
+      const oldSpecializations = Object.values(specializations).flat();
       const index = oldSpecializations.findIndex(
         (e: any) => e.id === newLink.id
       );
@@ -565,7 +565,7 @@ const Node = ({
     for (let child of children) {
       const childData = nodes[child.id];
       const generalizations = childData.generalizations;
-      const keys = Object.keys(generalizations).flat();
+      const keys = Object.values(generalizations).flat();
       const index = keys.findIndex((e: any) => e.id === newLink.id);
       if (index === -1) {
         generalizations["main"].push(newLink);
