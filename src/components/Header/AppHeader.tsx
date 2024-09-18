@@ -111,6 +111,7 @@ type AppHeaderProps = {
   rightPanelVisible: boolean;
   loading: boolean;
   confirmIt: any;
+  sidebarView: number;
   setSidebarView: any;
   handleNotificationPopup: (event: React.MouseEvent<HTMLElement>) => void;
   notifications: INotification[];
@@ -125,6 +126,7 @@ const AppHeader = forwardRef(
       rightPanelVisible,
       loading,
       confirmIt,
+      sidebarView,
       setSidebarView,
       handleNotificationPopup,
       notifications,
@@ -498,25 +500,43 @@ const AppHeader = forwardRef(
               >
                 <Tooltip title="Manage Inheritance">
                   <IconButton onClick={displayInheritanceSettings}>
-                    <AccountTreeIcon />
+                    <AccountTreeIcon
+                      color={
+                        rightPanelVisible && sidebarView === 2
+                          ? "primary"
+                          : "inherit"
+                      }
+                    />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip title="Open Search Tab">
+                  <IconButton onClick={handleSearch}>
+                    <SearchIcon
+                      color={
+                        rightPanelVisible && sidebarView === 0
+                          ? "primary"
+                          : "inherit"
+                      }
+                    />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip title="Open Chat Tab">
+                  <IconButton onClick={handleChat}>
+                    <ChatIcon
+                      color={
+                        rightPanelVisible && sidebarView === 1
+                          ? "primary"
+                          : "inherit"
+                      }
+                    />
                   </IconButton>
                 </Tooltip>
 
                 <Tooltip title="Download JSON">
                   <IconButton onClick={() => handleDownload()}>
                     <DownloadIcon />
-                  </IconButton>
-                </Tooltip>
-
-                <Tooltip title="Open Search Tab">
-                  <IconButton onClick={handleSearch}>
-                    <SearchIcon />
-                  </IconButton>
-                </Tooltip>
-
-                <Tooltip title="Open Chat Tab">
-                  <IconButton onClick={handleChat}>
-                    <ChatIcon />
                   </IconButton>
                 </Tooltip>
 
