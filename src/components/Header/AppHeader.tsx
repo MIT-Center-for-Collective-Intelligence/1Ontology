@@ -47,6 +47,7 @@ import {
   Button,
   CircularProgress,
   LinearProgress,
+  Link,
   Typography,
   useTheme,
 } from "@mui/material";
@@ -118,6 +119,7 @@ type AppHeaderProps = {
   handleChat: () => void;
   handleSearch: () => void;
   nodes: { [nodeId: string]: INode };
+  navigateToNode: any;
 };
 const AppHeader = forwardRef(
   (
@@ -133,6 +135,7 @@ const AppHeader = forwardRef(
       handleChat,
       handleSearch,
       nodes,
+      navigateToNode,
     }: AppHeaderProps,
     ref
   ) => {
@@ -192,10 +195,14 @@ const AppHeader = forwardRef(
 
             if (
               (change.type === "added" || change.type === "modified") &&
-              currentNode
+              currentNode &&
+              data.lastInteracted
             ) {
               updatedUsersData[userId] = {
-                node: nodes[currentNode]?.title || "",
+                node: {
+                  title: nodes[currentNode]?.title || "",
+                  id: currentNode,
+                },
                 imageUrl: data.imageUrl,
                 fName: data.fName,
                 lName: data.lName,
@@ -463,34 +470,58 @@ const AppHeader = forwardRef(
                 }}
               />
             </Stack>
-            <Box sx={{ display: "flex" }}>
+            <Box sx={{ display: "flex", gap: "-13px" }}>
               {Object.values(usersNodesViews).map((c: any) => (
                 <Tooltip
                   key={`${c.fName} ${c.lName}`}
                   title={
-                    <Box>
-                      <strong>{`${c.fName} ${c.lName}`}</strong>{" "}
-                      {`last interacted with ${c.node || ""} ${
-                        c.lastInteracted
-                      }`}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        maxWidth: "300px",
+                        whiteSpace: "normal",
+                        p: 1,
+                      }}
+                    >
+                      <strong
+                        style={{ marginRight: "4px" }}
+                      >{`${c.fName}`}</strong>
+                      <div> {"last interacted with"}</div>
+
+                      <Link
+                        underline="hover"
+                        onClick={() => navigateToNode(c.node.id)}
+                        sx={{
+                          cursor: "pointer",
+                          mx: "5px",
+                        }}
+                      >
+                        {" "}
+                        {c.node.title}
+                      </Link>
+                      <div>{c.lastInteracted}</div>
                     </Box>
                   }
                 >
-                  <Box>
+                  <Box sx={{ position: "relative", display: "inline-block" }}>
                     <OptimizedAvatar
                       alt={`${c.fName} ${c.lName}`}
                       imageUrl={c.imageUrl || ""}
                       size={40}
-                      sx={{ border: "none" }}
-                    />
-                    <Box
-                      sx={{ background: "#12B76A", fontSize: "1px" }}
-                      className="UserStatusOnlineIcon"
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        borderColor: "green",
+                      }}
                     />
                   </Box>
                 </Tooltip>
               ))}
             </Box>
+
             {!loading && (
               <Stack
                 direction={"row"}

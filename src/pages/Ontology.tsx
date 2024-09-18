@@ -354,12 +354,15 @@ const Ontology = () => {
     };
   }, [openNotificationSection, anchor]);
 
-  const handleClickOutside = useCallback((event: MouseEvent) => {
-    if (anchor && !anchor.contains(event.target)) {
-      setAnchor(null)
-      setOpenNotificationSection(false);
-    }
-  }, [anchor]);
+  const handleClickOutside = useCallback(
+    (event: MouseEvent) => {
+      if (anchor && !anchor.contains(event.target)) {
+        setAnchor(null);
+        setOpenNotificationSection(false);
+      }
+    },
+    [anchor]
+  );
 
   const recordLogs = async (logs: any) => {
     try {
@@ -1040,7 +1043,7 @@ const Ontology = () => {
       const currentTime = Date.now();
       setLastInteractionDate(new Date(currentTime));
 
-      if (user && user.uname !== "ouhrac") {
+      if (user && user.uname !== "ouhrac" && user.uname !== "SamOuhra2") {
         const timeSinceLastUpdate = currentTime - lastUpdate;
         if (timeSinceLastUpdate >= 60000) {
           const userDocRef = doc(collection(db, USERS), user.uname);
@@ -1135,7 +1138,7 @@ const Ontology = () => {
       if (type === "node" && nodeId) {
         setCurrentVisibleNode(nodes[nodeId]);
       }
-      setSidebarView(1)
+      setSidebarView(1);
       setSelectedChatTab(
         ["node", "bug_report", "feature_request", "help"].indexOf(type)
       );
@@ -1623,6 +1626,7 @@ const Ontology = () => {
           handleChat={handleChat}
           nodes={nodes}
           handleSearch={handleSearch}
+          navigateToNode={navigateToNode}
         />
       </Box>
 

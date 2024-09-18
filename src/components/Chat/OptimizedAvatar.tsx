@@ -12,6 +12,7 @@ type Props = {
   onClick?: () => void;
   quality?: number;
   sx?: SxProps<Theme>;
+  borderColor?: string;
 };
 
 const DEFAULT_AVATAR =
@@ -24,6 +25,7 @@ const OptimizedAvatar: FC<Props> = ({
   onClick,
   quality = 50,
   sx,
+  borderColor,
 }) => {
   const [hasError, setHasError] = useState(false);
 
@@ -39,12 +41,7 @@ const OptimizedAvatar: FC<Props> = ({
         position: "relative",
         borderRadius: "50%",
         cursor: "pointer",
-        border: (theme) =>
-          `solid 1px ${
-            theme.palette.mode === "dark"
-              ? DESIGN_SYSTEM_COLORS.notebookG600
-              : DESIGN_SYSTEM_COLORS.gray50
-          }`,
+        border: (theme) => `solid 2px #87d37c`,
         ":hover": {
           ...(onClick && {
             border: `solid 1px ${DESIGN_SYSTEM_COLORS.primary600}`,
