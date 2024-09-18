@@ -1311,6 +1311,7 @@ const Ontology = () => {
           </Bar>
           <Section minSize={0}>
             <Box
+              id="node-section"
               sx={{
                 backgroundColor: (theme) =>
                   theme.palette.mode === "dark"
