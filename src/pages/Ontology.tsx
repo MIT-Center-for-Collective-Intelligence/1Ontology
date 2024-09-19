@@ -904,6 +904,13 @@ const Ontology = () => {
       // Set the clicked node as the open currentVisibleNode
       setCurrentVisibleNode(node);
 
+      setTimeout(() => {
+        const element = document.getElementById("node-" + node?.id);
+        if(element){
+          element.scrollIntoView({ behavior: "smooth", block: "center" })
+        }
+      }, 800);
+
       // Record the click action in logs
       recordLogs({
         action: "Search result clicked",

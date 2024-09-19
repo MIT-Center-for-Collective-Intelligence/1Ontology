@@ -74,6 +74,7 @@ const TreeViewSimplified = ({
                 onClick={(e) => {
                   onOpenNodesTree(treeVisualization[category].id);
                 }}
+                id={`node-${treeVisualization[category]?.id}`}
               >
                 {!treeVisualization[category].isCategory && clone && (
                   <Checkbox
