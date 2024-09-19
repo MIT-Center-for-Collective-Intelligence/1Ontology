@@ -1812,13 +1812,7 @@ const Node = ({
             nodes={nodes}
           />
         </Box>
-        <Box
-          sx={{
-            display: "flex",
-            gap: "15px",
-            ...(width <= 1070 && { flexDirection: "column" }),
-          }}
-        >
+        <Box sx={{ display: "flex", gap: "15px", ...(width <= 1150 && { flexDirection: "column" }) }}>
           <Paper elevation={9} sx={{ width: "100%", borderRadius: "30px" }}>
             <Tabs
               value={viewValueSpecialization}
