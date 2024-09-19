@@ -354,12 +354,15 @@ const Ontology = () => {
     };
   }, [openNotificationSection, anchor]);
 
-  const handleClickOutside = useCallback((event: MouseEvent) => {
-    if (anchor && !anchor.contains(event.target)) {
-      setAnchor(null)
-      setOpenNotificationSection(false);
-    }
-  }, [anchor]);
+  const handleClickOutside = useCallback(
+    (event: MouseEvent) => {
+      if (anchor && !anchor.contains(event.target)) {
+        setAnchor(null);
+        setOpenNotificationSection(false);
+      }
+    },
+    [anchor]
+  );
 
   const recordLogs = async (logs: any) => {
     try {
@@ -899,6 +902,13 @@ const Ontology = () => {
       // Set the clicked node as the open currentVisibleNode
       setCurrentVisibleNode(node);
 
+      setTimeout(() => {
+        const element = document.getElementById("node-" + node?.id);
+        if(element){
+          element.scrollIntoView({ behavior: "smooth", block: "center" })
+        }
+      }, 800);
+
       // Record the click action in logs
       recordLogs({
         action: "Search result clicked",
@@ -1135,7 +1145,7 @@ const Ontology = () => {
       if (type === "node" && nodeId) {
         setCurrentVisibleNode(nodes[nodeId]);
       }
-      setSidebarView(1)
+      setSidebarView(1);
       setSelectedChatTab(
         ["node", "bug_report", "feature_request", "help"].indexOf(type)
       );

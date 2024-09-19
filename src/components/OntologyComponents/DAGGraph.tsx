@@ -229,24 +229,31 @@ const DagGraph = ({
       const svgWidth = svg.node()?.clientWidth || 0;
       const svgHeight = svg.node()?.clientHeight || 0;
       
+      const scale = 1
+      const translateX = (svgWidth / 2) - nodePosition.x * scale; 
+      const translateY = (svgHeight / 2.5) - nodePosition.y * scale;
       
-      const translateX = (svgWidth / 2) - nodePosition.x * 1.5; 
-      const translateY = (svgHeight / 3) - nodePosition.y * 1;
-      const scale = 1.5;
 
       const zoomTranslate = d3.zoomIdentity
         .translate(translateX, translateY)
         .scale(scale);
 
-      svg.call(d3.zoom().transform as any, zoomTranslate);
+      svg.transition()
+        .duration(1000)
+        .call(
+          d3.zoom().transform as any,
+          zoomTranslate
+        );
 
-      svgGroup.attr(
-        "transform",
-        `translate(${translateX}, ${translateY}) scale(${scale})`
-      );
+      svgGroup.transition()
+        .duration(1000)
+        .attr(
+          "transform",
+          `translate(${translateX}, ${translateY}) scale(${scale})`
+        );
       }
     }
-  }, [currentVisibleNode, graph]);
+  }, [currentVisibleNode?.id, graph]);
 
   return (
     <>
