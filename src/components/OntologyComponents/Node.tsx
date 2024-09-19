@@ -112,6 +112,7 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import React, {
   useCallback,
@@ -131,6 +132,7 @@ import {
   ILockedNode,
   INode,
   INodePath,
+  InheritanceType,
   MainSpecializations,
 } from " @components/types/INode";
 import { LOCKS, NODES } from " @components/lib/firestoreClient/collections";
@@ -235,7 +237,6 @@ const Node = ({
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [width, setWidth] = useState<number>(0);
 
-
   useEffect(() => {
     const element = document.getElementById("node-section");
     if (element) {
@@ -252,7 +253,6 @@ const Node = ({
       };
     }
   }, []);
-
 
   const getRooTitle = async (nodeId: string) => {
     if (nodeId) {
@@ -529,7 +529,15 @@ const Node = ({
         mainSpecializations[rootTitle.toLowerCase()]?.specializations || {}
       );
     } else {
-      return mainSpecializations[selectedProperty]?.specializations || {};
+      const propertyType = currentVisibleNode.propertyType[selectedProperty];
+
+      return (
+        mainSpecializations[
+          propertyType === "evaluationDimension"
+            ? "evaluation dimension"
+            : propertyType
+        ]?.specializations || {}
+      );
     }
   };
 
@@ -599,6 +607,8 @@ const Node = ({
 
   const handleSaveChildrenChanges = async () => {
     try {
+      // Close the modal or perform any other necessary actions
+      handleClose();
       // Get the node document from the database
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
@@ -693,12 +703,13 @@ const Node = ({
           updatedProperty: property,
         });
       }
-
-      // Close the modal or perform any other necessary actions
-      handleClose();
     } catch (error) {
       // Handle any errors that occur during the process
       console.error(error);
+      recordLogs({
+        type: "error",
+        error,
+      });
     }
   };
 
@@ -806,6 +817,10 @@ const Node = ({
     } catch (error) {
       // Log any errors that occur during the process
       console.error(error);
+      recordLogs({
+        type: "error",
+        error,
+      });
     }
   }, [newCategory]);
 
@@ -837,30 +852,40 @@ const Node = ({
         "Keep Category"
       )
     ) {
-      const nodeDoc = await getDoc(
-        doc(collection(db, NODES), currentVisibleNode.id)
-      );
-      if (nodeDoc.exists()) {
-        const nodeData = nodeDoc.data();
-        if (property === "specializations" || property === "specializations") {
-          nodeData[property]["main"] = [
-            ...(nodeData[property]["main"] || []),
-            ...nodeData[property][category],
-          ];
-          delete nodeData[property][category];
-        } else {
-          nodeData.properties[property]["main"] = [
-            ...(nodeData.properties[property]["main"] || []),
-            ...nodeData.properties[property][category],
-          ];
-          delete nodeData.properties[property][category];
-        }
+      try {
+        const nodeDoc = await getDoc(
+          doc(collection(db, NODES), currentVisibleNode.id)
+        );
+        if (nodeDoc.exists()) {
+          const nodeData = nodeDoc.data();
+          if (
+            property === "specializations" ||
+            property === "specializations"
+          ) {
+            nodeData[property]["main"] = [
+              ...(nodeData[property]["main"] || []),
+              ...nodeData[property][category],
+            ];
+            delete nodeData[property][category];
+          } else {
+            nodeData.properties[property]["main"] = [
+              ...(nodeData.properties[property]["main"] || []),
+              ...nodeData.properties[property][category],
+            ];
+            delete nodeData.properties[property][category];
+          }
 
-        await updateDoc(nodeDoc.ref, nodeData);
+          await updateDoc(nodeDoc.ref, nodeData);
+          recordLogs({
+            action: "Deleted a category",
+            category,
+            node: nodeDoc.id,
+          });
+        }
+      } catch (error) {
         recordLogs({
-          action: "Deleted a category",
-          category,
-          node: nodeDoc.id,
+          type: "error",
+          error,
         });
       }
     }
@@ -971,6 +996,10 @@ const Node = ({
       } catch (error) {
         // Log any errors that occur during the sorting process
         console.error(error);
+        recordLogs({
+          type: "error",
+          error,
+        });
       }
     },
     [currentVisibleNode, db, nodes, recordLogs]
@@ -1150,6 +1179,10 @@ const Node = ({
     } catch (error) {
       // Log any errors that occur during the execution of the function
       console.error(error);
+      recordLogs({
+        type: "error",
+        error,
+      });
     }
   };
 
@@ -1167,15 +1200,71 @@ const Node = ({
     },
     [setExpandedNodes]
   );
+
+  const updateSpecializationsInheritance = async (
+    specializations: { id: string; title: string }[],
+    batch: any,
+    property: string,
+    propertyValue: any,
+    ref: string,
+    propertyType: string
+  ) => {
+    try {
+      let newBatch = batch;
+      for (let specialization of specializations) {
+        const nodeRef = doc(collection(db, NODES), specialization.id);
+        let objectUpdate: any = {
+          [`inheritance.${property}.inheritanceType`]:
+            "inheritUnlessAlreadyOverRidden",
+          [`properties.${property}`]: propertyValue,
+          [`inheritance.${property}.ref`]: ref,
+          [`propertyType.${property}`]: propertyType,
+        };
+
+        if (newBatch._committed) {
+          newBatch = writeBatch(db);
+        }
+        updateDoc(nodeRef, objectUpdate);
+
+        if (newBatch._mutations.length > 498) {
+          await newBatch.commit();
+          newBatch = writeBatch(db);
+        }
+
+        newBatch = await updateSpecializationsInheritance(
+          Object.values(nodes[specialization.id].specializations).flat(),
+          newBatch,
+          property,
+          propertyValue,
+          ref,
+          propertyType
+        );
+      }
+      return newBatch;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const addNewProperty = async (
     newProperty: string,
     newPropertyType: string
   ) => {
     try {
+      if (newProperty in currentVisibleNode.properties) {
+        await confirmIt(
+          `The property ${newProperty} already exist under this node`,
+          "Ok",
+          ""
+        );
+        return;
+      }
       if (!newProperty.trim() || !newPropertyType.trim()) return;
       const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
       const properties = currentVisibleNode.properties;
       const propertyType = currentVisibleNode.propertyType;
+      const inheritance = currentVisibleNode.inheritance;
+
       propertyType[newProperty] = newPropertyType.toLowerCase();
 
       if (newPropertyType.toLowerCase() === "string") {
@@ -1185,12 +1274,35 @@ const Node = ({
           main: [],
         };
       }
+      inheritance[newProperty] = {
+        ref: null,
+        title: "",
+        inheritanceType: "inheritUnlessAlreadyOverRidden",
+      };
       await updateDoc(nodeRef, {
         properties,
         propertyType,
+        inheritance,
       });
-
+      setNewFieldTitle("");
       setOpenAddField(false);
+      const batch = writeBatch(db);
+      await updateSpecializationsInheritance(
+        Object.values(currentVisibleNode.specializations).flat(),
+        batch,
+        newProperty,
+        properties[newProperty],
+        currentVisibleNode.id,
+        newPropertyType.toLowerCase()
+      );
+      await batch.commit();
+
+      recordLogs({
+        action: "addNewProperty",
+        node: currentVisibleNode.id,
+        newProperty,
+        newPropertyType,
+      });
     } catch (error) {
       setOpenAddField(false);
       console.error(error);
@@ -1213,6 +1325,11 @@ const Node = ({
       const propertyType = currentVisibleNode.propertyType;
       delete properties[property];
       await updateDoc(nodeRef, { propertyType, properties });
+      recordLogs({
+        action: "removeProperty",
+        node: currentVisibleNode.id,
+        property,
+      });
     }
   };
 
@@ -1417,7 +1534,7 @@ const Node = ({
             variant="contained"
             sx={{ borderRadius: "25px" }}
           >
-            {editCategory ? "Save" : "Add"}
+            {"Add"}
           </Button>
           <Button
             onClick={() => {
@@ -1695,7 +1812,13 @@ const Node = ({
             nodes={nodes}
           />
         </Box>
-        <Box sx={{ display: "flex", gap: "15px", ...(width <= 1070 && { flexDirection: "column" }) }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: "15px",
+            ...(width <= 1070 && { flexDirection: "column" }),
+          }}
+        >
           <Paper elevation={9} sx={{ width: "100%", borderRadius: "30px" }}>
             <Tabs
               value={viewValueSpecialization}

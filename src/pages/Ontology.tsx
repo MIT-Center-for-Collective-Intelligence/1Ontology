@@ -379,6 +379,7 @@ const Ontology = () => {
 
       const doerCreate = `${user?.uname}-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
       await setDoc(logRef, {
+        type: "info",
         ...logs,
         createdAt: new Date(),
         doer: user?.uname,
@@ -454,14 +455,24 @@ const Ontology = () => {
     return searchWithFuse(searchValue);
   }, [searchValue]);
 
-  const handleChange = (event: any, newValue: number) =>
-    setSidebarView(newValue);
+  /*   const handleChange = (event: any, newValue: number) =>
+    setSidebarView(newValue); */
 
-  const handleChatTabsChange = (event: any, newValue: number) =>
+  const handleChatTabsChange = (event: any, newValue: number) => {
     setSelectedChatTab(newValue);
+    recordLogs({
+      action: "chat tab change",
+      viewType: newValue === 0 ? "Tree View" : "Dag View",
+    });
+  };
 
-  const handleViewChange = (event: any, newValue: number) =>
+  const handleViewChange = (event: any, newValue: number) => {
     setViewValue(newValue);
+    recordLogs({
+      action: "view change",
+      viewType: newValue === 0 ? "Tree View" : "Dag View",
+    });
+  };
 
   // This function finds the path of a node in a nested structure of mainNodes and their children.
   const findOntologyPath = useCallback(
@@ -474,61 +485,69 @@ const Ontology = () => {
       path: any;
       eachOntologyPath: any;
     }) => {
-      // Loop through each main node
+      try {
+        // Loop through each main node
 
-      for (let node of mainNodes) {
-        if (!node) {
-          continue;
-        }
-        // Update the path for the current node
-
-        eachOntologyPath[node.id] = [
-          ...path,
-          {
-            title: node.title,
-            id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
-            category: !!node.category,
-          },
-        ];
-
-        // Loop through categories in the children of the current node
-
-        for (let category in node.specializations) {
-          // Filter nodes based on their inclusion in the specializations of the current category
-          const childrenIds = node.specializations[category].map(
-            (n: any) => n.id
-          );
-          const children = [];
-
-          for (let childId of childrenIds) {
-            children.push(nodes[childId]);
+        for (let node of mainNodes) {
+          if (!node) {
+            continue;
           }
+          // Update the path for the current node
 
-          const subPath = [...path];
+          eachOntologyPath[node.id] = [
+            ...path,
+            {
+              title: node.title,
+              id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
+              category: !!node.category,
+            },
+          ];
 
-          subPath.push({
-            title: node.title,
-            id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
-            category: !!node.category,
-          });
-          if (category !== "main") {
+          // Loop through categories in the children of the current node
+
+          for (let category in node.specializations) {
+            // Filter nodes based on their inclusion in the specializations of the current category
+            const childrenIds = node.specializations[category].map(
+              (n: any) => n.id
+            );
+            const children = [];
+
+            for (let childId of childrenIds) {
+              children.push(nodes[childId]);
+            }
+
+            const subPath = [...path];
+
             subPath.push({
-              title: category,
-              id: `${node.id}-${category.trim()}`,
-              category: true,
+              title: node.title,
+              id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
+              category: !!node.category,
+            });
+            if (category !== "main") {
+              subPath.push({
+                title: category,
+                id: `${node.id}-${category.trim()}`,
+                category: true,
+              });
+            }
+            // Recursively call the findOntologyPath function for the filtered specializations
+            eachOntologyPath = findOntologyPath({
+              mainNodes: children,
+              path: [...subPath],
+              eachOntologyPath,
             });
           }
-          // Recursively call the findOntologyPath function for the filtered specializations
-          eachOntologyPath = findOntologyPath({
-            mainNodes: children,
-            path: [...subPath],
-            eachOntologyPath,
-          });
         }
-      }
 
-      // Return the accumulated ontology paths
-      return eachOntologyPath;
+        // Return the accumulated ontology paths
+        return eachOntologyPath;
+      } catch (error) {
+        recordLogs({
+          error,
+          at: "getSpecializationsTree",
+          type: "error",
+        });
+      }
     },
     [nodes]
   );
@@ -549,10 +568,14 @@ const Ontology = () => {
 
     if (controller) {
       const resizer = controller.getResizer();
-      resizer.resizeSection(2, { toSize: rightPanelVisible ? 400 : 0 });
+      if (rightPanelVisible) {
+        resizer.resizeSection(2, { toSize: 400 });
+      } else {
+        resizer.resizeSection(2, { toSize: 0 });
+      }
       controller.applyResizer(resizer);
     }
-  }, [rightPanelVisible, user]);
+  }, [rightPanelVisible, user, nodes]);
 
   useEffect(() => {
     const checkIfDifferentDay = () => {
@@ -807,9 +830,6 @@ const Ontology = () => {
             id,
             ...newNode,
           });
-          // setEditNode(id);
-          // console.log("nodes[id]", nodes[id]);
-          // setCurrentVisibleNode(nodes[id]);
         }, 1000);
       } catch (error) {
         console.error(error);
@@ -941,6 +961,11 @@ const Ontology = () => {
       await batch.commit();
     } catch (error) {
       console.log(error);
+      recordLogs({
+        type: "error",
+        error,
+        at: "updateInheritance",
+      });
     }
   };
 

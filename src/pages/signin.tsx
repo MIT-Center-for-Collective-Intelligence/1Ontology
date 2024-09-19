@@ -51,12 +51,7 @@ const SignInPage: NextPageWithLayout = () => {
   };
 
   const validationSchema = yup.object({
-    email: yup
-      .string()
-      .email("Invalid email address!")
-      .required(
-        "Your email address provided by your academic/research institutions is required!"
-      ),
+    email: yup.string().email("Invalid email address!"),
     password: yup.string().required("A secure password is required!"),
   });
   const handleSignIn = async ({ email, password }: SignInFormValues) => {
@@ -90,9 +85,7 @@ const SignInPage: NextPageWithLayout = () => {
       <Typography variant="h1" sx={{ mb: "8px" }}>
         Log in
       </Typography>
-      <Typography variant="body1" sx={{ mb: "32px" }}>
-        You can follow/pin nodes and earn points after logging in
-      </Typography>
+
       <form data-testid="signin-form" onSubmit={formik.handleSubmit}>
         <TextField
           id="email"

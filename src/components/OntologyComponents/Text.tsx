@@ -93,7 +93,9 @@ const Text = ({
         let previousValue = nodeData.properties[property] || "";
         let newValue = copyValue;
 
-        setSelectTitle(false);
+        if (setSelectTitle) {
+          setSelectTitle(false);
+        }
         if (property === "title") {
           nodeData.title = copyValue || "";
         } else {
@@ -135,7 +137,9 @@ const Text = ({
   };
 
   const handleBlur = () => {
-    setSelectTitle(false);
+    if (setSelectTitle) {
+      setSelectTitle(false);
+    }
   };
 
   return (

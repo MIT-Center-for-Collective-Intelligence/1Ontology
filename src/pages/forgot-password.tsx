@@ -1,4 +1,3 @@
-
 /* This is a React component for a "Forgot Password" page. It uses Firebase for authentication, Formik for form handling, and Material UI for styling. Here's a breakdown of the code:
 
 1. **Imports**: The code begins by importing necessary modules and components. These include Firebase authentication functions, Formik for form handling, Material UI components for UI, and other custom components and utilities.
@@ -55,12 +54,7 @@ const ForgotPage: NextPageWithLayout = () => {
   };
 
   const validationSchema = yup.object({
-    email: yup
-      .string()
-      .email("Invalid email address!")
-      .required(
-        "Your email address provided by your academic/research institutions is required!"
-      ),
+    email: yup.string().email("Invalid email address!"),
   });
   const handleSignIn = async ({ email }: ForgotPasswordFormValues) => {
     try {

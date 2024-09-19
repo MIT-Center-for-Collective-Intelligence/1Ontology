@@ -61,10 +61,12 @@ const TreeViewSimplified = ({
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  height: "30px",
-                  p: "25px",
+                  height: "auto",
+                  overflow: "hidden",
+                  minHeight: "fit-content",
+                  p: "10px",
                   pl: "9px",
-                  borderRadius: "25px",
+                  borderRadius: "5px",
                   backgroundColor:
                     currentVisibleNode?.id === treeVisualization[category].id
                       ? "#87D37C"

@@ -216,7 +216,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     <TextField
                       value={getTitle(
                         nodes,
-                        currentVisibleNode.inheritance[property].ref || ""
+                        currentVisibleNode.inheritance[property]?.ref || ""
                       )}
                       onChange={(e) => {
                         changeInheritance(e, property);
@@ -280,7 +280,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                         {Object.keys(
                           getPropertyValue(
                             nodes,
-                            currentVisibleNode.inheritance[property].ref,
+                            currentVisibleNode.inheritance[property]?.ref,
                             property
                           ) || currentVisibleNode.properties[property]
                         )
@@ -295,7 +295,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                             const specials =
                               getPropertyValue(
                                 nodes,
-                                currentVisibleNode.inheritance[property].ref,
+                                currentVisibleNode.inheritance[property]?.ref,
                                 property
                               ) || currentVisibleNode.properties[property];
 
