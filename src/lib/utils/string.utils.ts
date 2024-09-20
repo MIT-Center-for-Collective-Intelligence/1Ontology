@@ -98,6 +98,8 @@ export const timeAgo = (timestamp: Timestamp) => {
     return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
   } else if (minutes > 0) {
     return minutes === 1 ? "1 minute ago" : `${minutes} minutes ago`;
+  } else if (seconds > 0) {
+    return seconds === 1 ? "1 second ago" : `${seconds} seconds ago`;
   } else {
     return "";
   }

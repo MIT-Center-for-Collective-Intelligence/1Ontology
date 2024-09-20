@@ -81,18 +81,11 @@ type ISubOntologyProps = {
   child: IChildNode;
   currentVisibleNode: INode;
   sx: { [key: string]: any };
-  type: string;
+  type: "specializations" | "generalizations";
   setCurrentVisibleNode: (currentVisibleNode: any) => void;
   setSnackbarMessage: (message: any) => void;
   category: string;
   recordLogs: (logs: any) => void;
-  updateInheritance: (parameters: {
-    updatedNode: INode;
-    updatedField: string;
-    type: "children" | "plainText";
-    newValue: any;
-    ancestorTitle: string;
-  }) => void;
   navigateToNode: (nodeID: string) => void;
   deleteVisible?: boolean;
   title: string;
@@ -105,7 +98,6 @@ const ChildNode = ({
   currentVisibleNode,
   category,
   recordLogs,
-  updateInheritance,
   navigateToNode,
   deleteVisible = true,
   title,
@@ -116,44 +108,64 @@ const ChildNode = ({
     navigateToNode(child.id);
   };
 
+  const removeNodeLink = async (
+    type: "specializations" | "generalizations",
+    removeNodeId: string,
+    removeIdFrom: string
+  ) => {
+    const specOrGenDoc = await getDoc(doc(collection(db, NODES), removeIdFrom));
+    let removeFrom: "specializations" | "generalizations" = "specializations";
+
+    if (type === "specializations") {
+      removeFrom = "generalizations";
+    }
+    if (specOrGenDoc.exists()) {
+      const specOrGenData = specOrGenDoc.data() as INode;
+      for (let cat in specOrGenData[removeFrom]) {
+        const generalizationIdx = (
+          specOrGenData[removeFrom][cat] || []
+        ).findIndex((sub: any) => sub.id === removeNodeId);
+
+        if (generalizationIdx !== -1) {
+          specOrGenData[removeFrom][cat].splice(generalizationIdx, 1);
+        }
+        console.log(
+          "specializationData",
+          cat,
+          removeNodeId,
+          generalizationIdx,
+          specOrGenData[removeFrom][cat]
+        );
+      }
+      console.log("specializationData", specOrGenData, removeFrom);
+      await updateDoc(specOrGenDoc.ref, {
+        [`${removeFrom}`]: specOrGenData[removeFrom],
+      });
+    }
+  };
+
   const deleteChildNode = async () => {
     try {
-      const message =
-        type === "specializations"
-          ? "Unlink this node"
-          : `remove this item from the list?`;
       if (
-        await confirmIt(`Are you sure you want ${message}`, "Unlink", "Keep")
+        await confirmIt(
+          `Are you sure you want unlink this node?`,
+          "Unlink",
+          "Keep"
+        )
       ) {
         const nodeDoc = await getDoc(
           doc(collection(db, NODES), currentVisibleNode.id)
         );
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as INode;
-          const specializationIdx = (
-            nodeData?.specializations[category] || []
-          ).findIndex((sub: any) => sub.id === child.id);
-          if (specializationIdx !== -1) {
-            nodeData.specializations[category].splice(specializationIdx, 1);
-          }
-          await updateDoc(nodeDoc.ref, nodeData);
-
-          const specializationDoc = await getDoc(
-            doc(collection(db, NODES), child.id)
+          const specializationIdx = (nodeData[type][category] || []).findIndex(
+            (sub: any) => sub.id === child.id
           );
-          if (specializationDoc.exists()) {
-            const specializationData = specializationDoc.data() as INode;
-            const generalizationIdx = (
-              specializationData?.generalizations[category] || []
-            ).findIndex((sub: any) => sub.id === child.id);
-            if (generalizationIdx !== -1) {
-              specializationData.generalizations[category].splice(
-                generalizationIdx,
-                1
-              );
-            }
-            await updateDoc(specializationDoc.ref, specializationData);
+          if (specializationIdx !== -1) {
+            nodeData[type][category].splice(specializationIdx, 1);
           }
+          removeNodeLink(type, currentVisibleNode.id, child.id);
+          await updateDoc(nodeDoc.ref, nodeData);
         }
       }
     } catch (error) {

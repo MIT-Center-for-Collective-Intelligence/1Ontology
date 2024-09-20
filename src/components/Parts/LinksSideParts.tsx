@@ -170,7 +170,7 @@ const LinksSideParts = ({
                                       ref={provided.innerRef}
                                       {...provided.draggableProps}
                                       {...provided.dragHandleProps}
-                                      sx={{ m: 0, p: 0 }}
+                                      sx={{ my: 1, p: 0 }}
                                     >
                                       <ListItemIcon sx={{ minWidth: 0 }}>
                                         <DragIndicatorIcon />

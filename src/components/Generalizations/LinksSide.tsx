@@ -257,7 +257,6 @@ const LinksSide = ({
                                         child={child}
                                         type={relationType}
                                         category={category}
-                                        updateInheritance={updateInheritance}
                                         deleteVisible={
                                           (relationType === "generalizations" &&
                                             Object.values(properties).flat()

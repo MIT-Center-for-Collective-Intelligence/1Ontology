@@ -245,7 +245,17 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       >
                         Select Course
                       </MenuItem>
-                      {Object.values(currentVisibleNode.generalizations)
+                      {[
+                        ...Object.values(currentVisibleNode.generalizations),
+                        {
+                          id:
+                            currentVisibleNode.inheritance[property]?.ref || "",
+                          title: getTitle(
+                            nodes,
+                            currentVisibleNode.inheritance[property]?.ref || ""
+                          ),
+                        },
+                      ]
                         .flat()
                         .map((generalization) => (
                           <MenuItem
