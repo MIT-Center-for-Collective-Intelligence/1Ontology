@@ -92,6 +92,7 @@ import {
   Modal,
   Paper,
   Select,
+  Stack,
   Tab,
   Tabs,
   TextField,
@@ -1812,8 +1813,217 @@ const Node = ({
             nodes={nodes}
           />
         </Box>
-        <Box sx={{ display: "flex", gap: "15px", ...(width <= 1150 && { flexDirection: "column" }) }}>
-          <Paper elevation={9} sx={{ width: "100%", borderRadius: "30px" }}>
+        <Stack
+          direction={width < 1050 ? "column" : "row"}
+          sx={{
+            gap: 3,
+          }}
+        >
+          <Paper
+            elevation={9}
+            sx={{
+              borderRadius: "30px",
+              width: "100%",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                background: (theme) =>
+                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                p: 3,
+                borderTopRightRadius: "25px",
+                borderTopLeftRadius: "25px",
+              }}
+            >
+              <Typography
+                sx={{
+                  color: viewValueSpecialization === 0 ? "#ff6d00" : "",
+                  fontSize: "20px",
+                  fontWeight: 500,
+                  fontFamily: "Roboto, sans-serif",
+                }}
+              >
+                Generalizations:
+              </Typography>
+            </Box>
+            <LinksSide
+              properties={currentVisibleNode?.properties?.generalizations || {}}
+              currentVisibleNode={currentVisibleNode}
+              showList={showList}
+              setOpenAddCategory={setOpenAddCategory}
+              setType={setSelectedProperty}
+              handleSorting={handleSorting}
+              handleEditCategory={handleEditCategory}
+              deleteCategory={deleteCategory}
+              navigateToNode={navigateToNode}
+              recordLogs={recordLogs}
+              setSnackbarMessage={setSnackbarMessage}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              updateInheritance={updateInheritance}
+              relationType={"generalizations"}
+              nodes={nodes}
+            />
+          </Paper>
+          <Paper
+            elevation={9}
+            sx={{
+              borderRadius: "30px",
+              width: "100%",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                background: (theme) =>
+                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                p: 3,
+                borderTopRightRadius: "25px",
+                borderTopLeftRadius: "25px",
+              }}
+            >
+              <Typography
+                sx={{
+                  color: viewValueSpecialization === 0 ? "#ff6d00" : "",
+                  fontSize: "20px",
+                  fontWeight: 500,
+                  fontFamily: "Roboto, sans-serif",
+                }}
+              >
+                Specializations:
+              </Typography>
+            </Box>
+            <LinksSide
+              properties={currentVisibleNode?.specializations || {}}
+              currentVisibleNode={currentVisibleNode}
+              showList={showList}
+              setOpenAddCategory={setOpenAddCategory}
+              setType={setSelectedProperty}
+              handleSorting={handleSorting}
+              handleEditCategory={handleEditCategory}
+              deleteCategory={deleteCategory}
+              navigateToNode={navigateToNode}
+              recordLogs={recordLogs}
+              setSnackbarMessage={setSnackbarMessage}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              updateInheritance={updateInheritance}
+              relationType={"specializations"}
+              handleNewSpecialization={handleNewSpecialization}
+              nodes={nodes}
+            />
+          </Paper>
+        </Stack>
+        <Stack
+          mt={1}
+          direction={width < 1050 ? "column" : "row"}
+          sx={{
+            gap: 3,
+          }}
+        >
+          <Paper
+            elevation={9}
+            sx={{ borderRadius: "30px", minWidth: "500px", width: "100%" }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                background: (theme) =>
+                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                p: 3,
+                borderTopRightRadius: "25px",
+                borderTopLeftRadius: "25px",
+              }}
+            >
+              <Typography
+                sx={{
+                  color: viewValueSpecialization === 0 ? "#ff6d00" : "",
+                  fontSize: "20px",
+                  fontWeight: 500,
+                  fontFamily: "Roboto, sans-serif",
+                }}
+              >
+                Is Part of:
+              </Typography>
+            </Box>
+            <LinksSideParts
+              properties={
+                getPropertyValue(
+                  nodes,
+                  currentVisibleNode.inheritance.isPartOf.ref,
+                  "isPartOf"
+                ) || currentVisibleNode?.properties?.isPartOf
+              }
+              currentVisibleNode={currentVisibleNode}
+              showList={showList}
+              setOpenAddCategory={setOpenAddCategory}
+              setType={setSelectedProperty}
+              handleSorting={handleSorting}
+              handleEditCategory={handleEditCategory}
+              deleteCategory={deleteCategory}
+              navigateToNode={navigateToNode}
+              recordLogs={recordLogs}
+              setSnackbarMessage={setSnackbarMessage}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              updateInheritance={updateInheritance}
+              property={"isPartOf"}
+              nodes={nodes}
+            />
+          </Paper>
+          <Paper
+            elevation={9}
+            sx={{ borderRadius: "30px", minWidth: "500px", width: "100%" }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                background: (theme) =>
+                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                p: 3,
+                borderTopRightRadius: "25px",
+                borderTopLeftRadius: "25px",
+              }}
+            >
+              <Typography
+                sx={{
+                  color: viewValueSpecialization === 0 ? "#ff6d00" : "",
+                  fontSize: "20px",
+                  fontWeight: 500,
+                  fontFamily: "Roboto, sans-serif",
+                }}
+              >
+                Parts:
+              </Typography>
+            </Box>
+            <LinksSideParts
+              properties={
+                getPropertyValue(
+                  nodes,
+                  currentVisibleNode.inheritance.parts.ref,
+                  "parts"
+                ) || currentVisibleNode?.properties?.parts
+              }
+              currentVisibleNode={currentVisibleNode}
+              showList={showList}
+              setOpenAddCategory={setOpenAddCategory}
+              setType={setSelectedProperty}
+              handleSorting={handleSorting}
+              handleEditCategory={handleEditCategory}
+              deleteCategory={deleteCategory}
+              navigateToNode={navigateToNode}
+              recordLogs={recordLogs}
+              setSnackbarMessage={setSnackbarMessage}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              updateInheritance={updateInheritance}
+              property={"parts"}
+              nodes={nodes}
+            />
+          </Paper>
+
+          {/* <Paper elevation={9} sx={{ width: "100%", borderRadius: "30px" }}>
             <Tabs
               value={viewValueSpecialization}
               onChange={(event: any, newValue: number) => {
@@ -2059,8 +2269,8 @@ const Node = ({
                 nodes={nodes}
               />
             </TabPanel>
-          </Paper>
-        </Box>
+          </Paper> */}
+        </Stack>
       </Box>
 
       {ConfirmDialog}
