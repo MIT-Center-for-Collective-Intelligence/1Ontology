@@ -82,6 +82,7 @@ import {
   Timestamp,
   collection,
   doc,
+  getDoc,
   getDocs,
   getFirestore,
   onSnapshot,
@@ -391,7 +392,7 @@ const AppHeader = forwardRef(
         specializations: getTitles(data.specializations),
         parts: [],
         isPartOf: [],
-        ...properties,
+        // ...properties,
       };
     };
 
@@ -399,9 +400,58 @@ const AppHeader = forwardRef(
       try {
         const nodesCollection = query(
           collection(db, NODES),
-          where("deleted", "==", false)
+          where("deleted", "==", false),
+          where("root", "==", "hn9pGQNxmQe9Xod5MuKK")
         );
         const querySnapshot = await getDocs(nodesCollection);
+        let i = 0;
+        for (let nodeDoc of querySnapshot.docs) {
+          const nodeData = nodeDoc.data() as INode;
+          if (nodeData.specializations) {
+            for (let category of Object.keys(nodeData.specializations)) {
+              for (let specialization of nodeData.specializations[category]) {
+                const specNodeRef = doc(
+                  collection(db, NODES),
+                  specialization.id
+                );
+                const specNodeDoc = await getDoc(specNodeRef);
+                if (!specNodeDoc.exists()) {
+                  console.log(
+                    "Specialization not found: ",
+                    specialization.title
+                  );
+                } else {
+                  const specNodeData = specNodeDoc.data() as INode;
+                  if (specNodeData.title !== specialization.title) {
+                    console.log(
+                      "Specialization title mismatch: ",
+                      specNodeData.title,
+                      specialization.title
+                    );
+                  }
+                  if (specNodeData.generalizations) {
+                    if (
+                      !specNodeData.generalizations[nodeDoc.id] ||
+                      !specNodeData.generalizations[nodeDoc.id].length
+                    ) {
+                      console.log(
+                        "Specialization does not have generalization: ",
+                        specNodeData.title,
+                        nodeData.title
+                      );
+                    }
+                  } else {
+                    console.log("Specialization has no generalizations: ", {
+                      specialization: specNodeData.title,
+                      node: nodeData.title,
+                    });
+                  }
+                }
+              }
+            }
+          }
+          console.log("Node: ", i++);
+        }
 
         const data = querySnapshot.docs.map((doc) =>
           getStructureForJSON({
