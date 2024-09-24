@@ -406,7 +406,7 @@ const AppHeader = forwardRef(
       const querySnapshot = await getDocs(nodesCollection);
       let i = 0;
       for (let nodeDoc of querySnapshot.docs) {
-        const nodeData = nodeDoc.data() as INode;
+        const nodeData = { ...nodeDoc.data(), id: nodeDoc.id } as INode;
         if (nodeData.specializations) {
           for (let category of Object.keys(nodeData.specializations)) {
             for (let specialization of nodeData.specializations[category]) {
@@ -514,7 +514,7 @@ const AppHeader = forwardRef(
                   for (let categ of Object.keys(nodeData.properties.isPartOf)) {
                     if (
                       partNodeData.properties.isPartOf[categ].findIndex(
-                        (partOf) => partOf.id === nodeData.id
+                        (partOf: any) => partOf.id === nodeData.id
                       ) !== -1
                     ) {
                       isPartOfFound = true;
@@ -557,7 +557,7 @@ const AppHeader = forwardRef(
                   for (let categ of Object.keys(nodeData.properties.parts)) {
                     if (
                       isPartOfNodeData.properties.parts[categ].findIndex(
-                        (part) => part.id === nodeData.id
+                        (part: any) => part.id === nodeData.id
                       ) !== -1
                     ) {
                       partFound = true;
