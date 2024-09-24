@@ -50,7 +50,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
   }, [selectedNode]);
 
   const updateSpecializationsInheritance = async (
-    specializations: { id: string; title: string }[],
+    specializations: { id: string }[],
     batch: any,
     property: string,
     newValue: string | InheritanceType,

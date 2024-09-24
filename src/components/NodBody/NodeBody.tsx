@@ -76,20 +76,15 @@ const NodeBody: React.FC<NodeBodyProps> = ({
 
   const changeInheritance = (event: any, property: string) => {
     try {
-      const selectedTitle = event.target.value;
-      const selectedGeneralization = Object.values(
-        currentVisibleNode.generalizations
-      )
-        .flat()
-        .find((generalization) => generalization.title === selectedTitle);
+      const newGeneralizationId = event.target.value;
 
-      if (selectedGeneralization) {
+      if (newGeneralizationId) {
         const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
         updateDoc(nodeRef, {
-          [`inheritance.${property}.ref`]: selectedGeneralization.id,
+          [`inheritance.${property}.ref`]: newGeneralizationId,
         });
         updateInheritance({
-          nodeId: selectedGeneralization.id,
+          nodeId: currentVisibleNode.id,
           updatedProperty: property,
         });
       }
@@ -216,10 +211,9 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                   {Object.values(currentVisibleNode.generalizations).flat()
                     .length > 1 && (
                     <TextField
-                      value={getTitle(
-                        nodes,
+                      value={
                         currentVisibleNode.inheritance[property]?.ref || ""
-                      )}
+                      }
                       onChange={(e) => {
                         changeInheritance(e, property);
                       }}
@@ -262,9 +256,9 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                         .map((generalization) => (
                           <MenuItem
                             key={generalization.id}
-                            value={generalization.title}
+                            value={generalization.id}
                           >
-                            {getTitle(nodes, generalization.id || "")}
+                            {getTitle(nodes, generalization.id)}{" "}
                           </MenuItem>
                         ))}
                     </TextField>

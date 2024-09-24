@@ -413,16 +413,16 @@ const AppHeader = forwardRef(
               const specNodeRef = doc(collection(db, NODES), specialization.id);
               const specNodeDoc = await getDoc(specNodeRef);
               if (!specNodeDoc.exists()) {
-                console.log("Specialization not found: ", specialization.title);
+                console.log("Specialization not found: ", specialization?.id);
               } else {
                 const specNodeData = specNodeDoc.data() as INode;
-                if (specNodeData.title !== specialization.title) {
+                /*       if (specNodeData.title !== specialization.title) {
                   console.log(
                     "Specialization title mismatch: ",
                     specNodeData.title,
                     specialization.title
                   );
-                }
+                } */
                 if (specNodeData.generalizations) {
                   let generalizationound = false;
                   for (let categ of Object.keys(nodeData.generalizations)) {
@@ -456,16 +456,16 @@ const AppHeader = forwardRef(
               const genNodeRef = doc(collection(db, NODES), generalization.id);
               const genNodeDoc = await getDoc(genNodeRef);
               if (!genNodeDoc.exists()) {
-                console.log("Generalization not found: ", generalization.title);
+                console.log("Generalization not found: ", generalization.id);
               } else {
                 const genNodeData = genNodeDoc.data() as INode;
-                if (genNodeData.title !== generalization.title) {
+                /*         if (genNodeData.title !== generalization.title) {
                   console.log(
                     "Generalization title mismatch: ",
                     genNodeData.title,
                     generalization.title
                   );
-                }
+                } */
                 if (genNodeData.specializations) {
                   let specializationFound = false;
                   for (let categ of Object.keys(nodeData.specializations)) {
@@ -502,19 +502,19 @@ const AppHeader = forwardRef(
                 console.log("Part not found: ", part.title);
               } else {
                 const partNodeData = partNodeDoc.data() as INode;
-                if (partNodeData.title !== part.title) {
+                /*                 if (partNodeData.title !== part.title) {
                   console.log(
                     "Part title mismatch: ",
                     partNodeData.title,
                     part.title
                   );
-                }
+                } */
                 if (partNodeData.properties.isPartOf) {
                   let isPartOfFound = false;
                   for (let categ of Object.keys(nodeData.properties.isPartOf)) {
                     if (
                       partNodeData.properties.isPartOf[categ].findIndex(
-                        (partOf: any) => partOf.id === nodeData.id
+                        (partOf: { id: string }) => partOf.id === nodeData.id
                       ) !== -1
                     ) {
                       isPartOfFound = true;
@@ -545,19 +545,19 @@ const AppHeader = forwardRef(
                 console.log("IsPartOf not found: ", isPartOf.title);
               } else {
                 const isPartOfNodeData = isPartOfNodeDoc.data() as INode;
-                if (isPartOfNodeData.title !== isPartOf.title) {
+                /*                 if (isPartOfNodeData.title !== isPartOf.title) {
                   console.log(
                     "IsPartOf title mismatch: ",
                     isPartOfNodeData.title,
                     isPartOf.title
                   );
-                }
+                } */
                 if (isPartOfNodeData.properties.parts) {
                   let partFound = false;
                   for (let categ of Object.keys(nodeData.properties.parts)) {
                     if (
                       isPartOfNodeData.properties.parts[categ].findIndex(
-                        (part: any) => part.id === nodeData.id
+                        (part: { id: string }) => part.id === nodeData.id
                       ) !== -1
                     ) {
                       partFound = true;

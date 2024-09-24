@@ -108,7 +108,6 @@ const Text = ({
           previousValue.trim() !== newValue.trim()
         ) {
           nodeData.inheritance[property].ref = null;
-          nodeData.inheritance[property].title = "";
         }
 
         await updateDoc(nodeDoc.ref, nodeData);

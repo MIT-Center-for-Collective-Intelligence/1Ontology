@@ -310,7 +310,6 @@ const Node = ({
       }
       parentNodeData?.specializations["main"].push({
         id: newNodeRef.id,
-        title: `New ${parentNodeData.title}`,
       });
 
       // Update the original node document in Firestore with the modified data.
@@ -395,7 +394,7 @@ const Node = ({
         let newTitle = `New ${parentNode.title}`;
         const specializationsTitles = Object.values(parentNode.specializations)
           .flat()
-          .map((spec) => spec.title);
+          .map((spec) => nodes[spec.id].title);
         newTitle = generateUniqueTitle(newTitle, specializationsTitles);
         const newNode = {
           ...nodeParentDoc.data(),
@@ -429,7 +428,6 @@ const Node = ({
             ...parentNode.specializations,
             [category]: [
               {
-                title: newTitle,
                 id: newNodeRef.id,
               },
             ],
@@ -437,7 +435,6 @@ const Node = ({
         } else {
           // Add the new node to the specified type and category
           parentNode.specializations[category].push({
-            title: newTitle,
             id: newNodeRef.id,
           });
         }
@@ -543,8 +540,8 @@ const Node = ({
   };
 
   const updateLinks = (
-    children: { id: string; title: string }[],
-    newLink: { id: string; title: string },
+    children: { id: string }[],
+    newLink: { id: string },
     linkType: "specializations" | "generalizations"
   ) => {
     for (let child of children) {
@@ -627,7 +624,6 @@ const Node = ({
           // Add the node to newchildren if not present
           oldChildren.push({
             id: checked,
-            title: findNode.title,
           });
         }
       }
@@ -660,7 +656,6 @@ const Node = ({
           Object.values(oldChildren).flat(),
           {
             id: currentVisibleNode.id,
-            title: currentVisibleNode.title,
           },
           property === "specializations" ? "generalizations" : "specializations"
         );
@@ -1198,7 +1193,7 @@ const Node = ({
   );
 
   const updateSpecializationsInheritance = async (
-    specializations: { id: string; title: string }[],
+    specializations: { id: string }[],
     batch: any,
     property: string,
     propertyValue: any,
@@ -1272,7 +1267,6 @@ const Node = ({
       }
       inheritance[newProperty] = {
         ref: null,
-        title: "",
         inheritanceType: "inheritUnlessAlreadyOverRidden",
       };
       await updateDoc(nodeRef, {

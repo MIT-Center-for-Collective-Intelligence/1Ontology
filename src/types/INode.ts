@@ -3,7 +3,6 @@
 import { Timestamp } from "firebase/firestore";
 
 export type IChildNode = {
-  title: string;
   id: string;
   category?: string;
   editMode?: boolean;
@@ -11,7 +10,7 @@ export type IChildNode = {
 };
 
 export type IChildCategory = {
-  [category: string]: { id: string; title: string }[];
+  [category: string]: { id: string }[];
 };
 
 export type INodeTypes =
@@ -47,7 +46,6 @@ export type INode = {
   inheritance: {
     [key: string]: {
       ref: string | null;
-      title: string;
       inheritanceType:
         | "neverInherit"
         | "alwaysInherit"
@@ -58,13 +56,11 @@ export type INode = {
   specializations: {
     [key: string]: {
       id: string;
-      title: string;
     }[];
   };
   generalizations: {
     [key: string]: {
       id: string;
-      title: string;
     }[];
   };
   root: string;

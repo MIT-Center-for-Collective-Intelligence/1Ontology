@@ -63,6 +63,7 @@ export const getTitle = (nodes: { [id: string]: INode }, id: string) => {
   if (nodes[id]) {
     return nodes[id].title;
   }
+  return "";
 };
 
 export const getPropertyValue = (

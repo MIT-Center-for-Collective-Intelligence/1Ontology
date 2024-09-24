@@ -116,7 +116,6 @@ const LinksSide = ({
               .map((category: string, index: number) => {
                 const children: {
                   id: string;
-                  title: string;
                 }[] = properties[category] || [];
                 const showGap =
                   Object.keys(properties).filter(
@@ -265,10 +264,7 @@ const LinksSide = ({
                                             getNumOfGeneralizations(child.id) >
                                               1)
                                         }
-                                        title={
-                                          getTitle(nodes, child.id) ||
-                                          child.title
-                                        }
+                                        title={getTitle(nodes, child.id)}
                                       />
                                     </ListItem>
                                   )}

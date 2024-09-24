@@ -198,7 +198,7 @@ const LinkNode = ({
 
           recordLogs({
             action: "unlinked a child",
-            field: child.title,
+            childId: child.id,
             node: nodeDoc.id,
           });
         }
