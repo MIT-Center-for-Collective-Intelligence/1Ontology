@@ -73,10 +73,6 @@ The `Node` component is intended to be used within an application that requires 
 - The component is designed to work with a specific data structure and may require adaptation for different use cases.
 
 This documentation provides a high-level overview of the `Node` component and its capabilities. For detailed implementation and integration, refer to the source code and the specific application context in which the component is used.*/
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { TreeItem, TreeView } from "@mui/lab";
 import {
   Button,
   Checkbox,
@@ -85,18 +81,13 @@ import {
   FormControl,
   InputLabel,
   Link,
-  List,
   ListItem,
-  ListItemIcon,
   MenuItem,
   Modal,
   Paper,
   Select,
   Stack,
-  Tab,
-  Tabs,
   TextField,
-  Tooltip,
   Typography,
   useMediaQuery,
 } from "@mui/material";
@@ -104,25 +95,14 @@ import Dialog from "@mui/material/Dialog";
 import { Box } from "@mui/system";
 import {
   collection,
-  deleteDoc,
   doc,
   getDoc,
-  getDocs,
   getFirestore,
-  query,
   setDoc,
   updateDoc,
-  where,
   writeBatch,
 } from "firebase/firestore";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 // import useConfirmDialog from "@/hooks/useConfirmDialog";
 // import { DESIGN_SYSTEM_COLORS } from "@/lib/theme/colors";
 
@@ -133,10 +113,9 @@ import {
   ILockedNode,
   INode,
   INodePath,
-  InheritanceType,
   MainSpecializations,
 } from " @components/types/INode";
-import { LOCKS, NODES } from " @components/lib/firestoreClient/collections";
+import { NODES } from " @components/lib/firestoreClient/collections";
 
 import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import TreeViewSimplified from "./TreeViewSimplified";
@@ -164,8 +143,6 @@ type INodeProps = {
   mainSpecializations: MainSpecializations;
   nodes: { [id: string]: INode };
   addNewNode: ({ id, newNode }: { id: string; newNode: any }) => void;
-  editNode: string;
-  setEditNode: (state: string) => void;
   lockedNodeFields: ILockedNode;
   recordLogs: (logs: any) => void;
   updateInheritance: (parameters: {
@@ -187,8 +164,6 @@ const Node = ({
   addNewNode,
   // INITIAL_VALUES,
   ontologyPath,
-  editNode,
-  setEditNode,
   lockedNodeFields,
   user,
   recordLogs,
@@ -278,9 +253,9 @@ const Node = ({
   const checkSpecialization = (checkedId: string) => {
     setCheckedSpecializations((oldChecked: string[]) => {
       let _oldChecked = [...oldChecked];
-      if (_oldChecked.includes(checkedId)) {
-        _oldChecked = _oldChecked.filter((cheked) => cheked !== checkedId);
-      } else {
+      if (!_oldChecked.includes(checkedId)) {
+        /*        _oldChecked = _oldChecked.filter((cheked) => cheked !== checkedId);
+      } else { */
         _oldChecked.push(checkedId);
       }
       return _oldChecked;
@@ -566,42 +541,52 @@ const Node = ({
 
     // Close the modal or perform any necessary cleanup.
   };
-  const updateSpecializations = (
+
+  const updateLinks = (
     children: { id: string; title: string }[],
-    newLink: { id: string; title: string }
+    newLink: { id: string; title: string },
+    linkType: "specializations" | "generalizations"
   ) => {
     for (let child of children) {
       const childData = nodes[child.id];
-      const specializations = childData.specializations;
-      const oldSpecializations = Object.values(specializations).flat();
-      const index = oldSpecializations.findIndex(
-        (e: any) => e.id === newLink.id
-      );
+      const links = childData[linkType];
+      const existingLinks = Object.values(links).flat();
+      const index = existingLinks.findIndex((e: any) => e.id === newLink.id);
 
       if (index === -1) {
-        specializations["main"].push(newLink);
+        links["main"].push(newLink);
         const childRef = doc(collection(db, NODES), child.id);
         updateDoc(childRef, {
-          specializations,
+          [linkType]: links,
         });
       }
     }
   };
-  const updateGeneralizations = (
+
+  const updatePartsAndPartsOf = async (
     children: { id: string; title: string }[],
-    newLink: { id: string; title: string }
+    newLink: { id: string; title: string },
+    property: "isPartOf" | "parts"
   ) => {
     for (let child of children) {
       const childData = nodes[child.id];
-      const generalizations = childData.generalizations;
-      const keys = Object.values(generalizations).flat();
+      const propertyData = childData.properties[property];
+
+      const keys = Object.values(propertyData).flat();
       const index = keys.findIndex((e: any) => e.id === newLink.id);
       if (index === -1) {
-        generalizations["main"].push(newLink);
+        propertyData["main"].push(newLink);
         const childRef = doc(collection(db, NODES), child.id);
-        updateDoc(childRef, {
-          generalizations,
+        await updateDoc(childRef, {
+          [`properties.${property}`]: propertyData,
+          [`inheritance.${property}.ref`]: null,
         });
+        if (property === "parts") {
+          updateInheritance({
+            nodeId: child.id,
+            updatedProperty: property,
+          });
+        }
       }
     }
   };
@@ -670,18 +655,28 @@ const Node = ({
           nodeData.properties[property][selectedCategory] = oldChildren;
         }
       }
-      if (property === "specializations") {
-        updateGeneralizations(Object.values(oldChildren).flat(), {
-          id: currentVisibleNode.id,
-          title: currentVisibleNode.title,
-        });
+      if (property === "specializations" || property === "generalizations") {
+        updateLinks(
+          Object.values(oldChildren).flat(),
+          {
+            id: currentVisibleNode.id,
+            title: currentVisibleNode.title,
+          },
+          property === "specializations" ? "generalizations" : "specializations"
+        );
       }
-      if (property === "generalizations") {
-        updateSpecializations(Object.values(oldChildren).flat(), {
-          id: currentVisibleNode.id,
-          title: currentVisibleNode.title,
-        });
+
+      if (property === "parts" || property === "isPartOf") {
+        updatePartsAndPartsOf(
+          Object.values(oldChildren).flat(),
+          {
+            id: currentVisibleNode.id,
+            title: currentVisibleNode.title,
+          },
+          property === "parts" ? "isPartOf" : "parts"
+        );
       }
+
       // If inheritance is present, reset the children field
       if (
         nodeData.inheritance &&
@@ -1806,7 +1801,6 @@ const Node = ({
             setSnackbarMessage={setSnackbarMessage}
             setOpenAddCategory={setOpenAddCategory}
             setType={setSelectedProperty}
-            setEditNode={setEditNode}
             setOpenAddField={setOpenAddField}
             removeProperty={removeProperty}
             user={user}
@@ -1952,7 +1946,7 @@ const Node = ({
               properties={
                 getPropertyValue(
                   nodes,
-                  currentVisibleNode.inheritance.isPartOf.ref,
+                  currentVisibleNode.inheritance.isPartOf?.ref,
                   "isPartOf"
                 ) || currentVisibleNode?.properties?.isPartOf
               }
@@ -1997,6 +1991,16 @@ const Node = ({
               >
                 Parts:
               </Typography>
+              {currentVisibleNode.inheritance?.["parts"]?.ref && (
+                <Typography sx={{ fontSize: "14px", ml: "9px" }}>
+                  {'(Inherited from "'}
+                  {getTitle(
+                    nodes,
+                    currentVisibleNode.inheritance["parts"].ref || ""
+                  )}
+                  {'")'}
+                </Typography>
+              )}
             </Box>
             <LinksSideParts
               properties={

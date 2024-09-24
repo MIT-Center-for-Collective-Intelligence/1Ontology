@@ -129,15 +129,7 @@ const ChildNode = ({
         if (generalizationIdx !== -1) {
           specOrGenData[removeFrom][cat].splice(generalizationIdx, 1);
         }
-        console.log(
-          "specializationData",
-          cat,
-          removeNodeId,
-          generalizationIdx,
-          specOrGenData[removeFrom][cat]
-        );
       }
-      console.log("specializationData", specOrGenData, removeFrom);
       await updateDoc(specOrGenDoc.ref, {
         [`${removeFrom}`]: specOrGenData[removeFrom],
       });

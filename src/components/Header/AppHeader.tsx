@@ -208,7 +208,7 @@ const AppHeader = forwardRef(
                 imageUrl: data.imageUrl,
                 fName: data.fName,
                 lName: data.lName,
-                lastInteracted: timeAgo(data.lastInteracted),
+                lastInteracted: data.lastInteracted,
               };
             } else if (change.type === "removed") {
               delete updatedUsersData[userId];
@@ -498,7 +498,7 @@ const AppHeader = forwardRef(
                         {" "}
                         {c.node.title}
                       </Link>
-                      <div>{c.lastInteracted}</div>
+                      <div>{timeAgo(c.lastInteracted)}</div>
                     </Box>
                   }
                 >

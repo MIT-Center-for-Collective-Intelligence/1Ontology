@@ -46,7 +46,6 @@ interface NodeBodyProps {
   setSnackbarMessage: any;
   setOpenAddCategory: any;
   setType: any;
-  setEditNode: any;
   setOpenAddField: any;
   removeProperty: any;
   user: any;
@@ -66,7 +65,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   setSnackbarMessage,
   setOpenAddCategory,
   setType,
-  setEditNode,
   setOpenAddField,
   removeProperty,
   user,

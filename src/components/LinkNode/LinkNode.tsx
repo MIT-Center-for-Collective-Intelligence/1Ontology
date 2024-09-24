@@ -115,6 +115,37 @@ const LinkNode = ({
     navigateToNode(child.id);
   };
 
+  const removePartsLink = async (
+    type: "parts" | "isPartOf",
+    removeNodeId: string,
+    removeIdFrom: string
+  ) => {
+    const specOrGenDoc = await getDoc(doc(collection(db, NODES), removeIdFrom));
+    let removeFrom: "parts" | "isPartOf" = "parts";
+
+    if (type === "parts") {
+      removeFrom = "isPartOf";
+    }
+    if (specOrGenDoc.exists()) {
+      const specOrGenData = specOrGenDoc.data() as INode;
+      for (let cat in specOrGenData.properties[removeFrom]) {
+        const generalizationIdx = (
+          specOrGenData.properties[removeFrom][cat] || []
+        ).findIndex((sub: any) => sub.id === removeNodeId);
+
+        if (generalizationIdx !== -1) {
+          specOrGenData.properties[removeFrom][cat].splice(
+            generalizationIdx,
+            1
+          );
+        }
+      }
+      await updateDoc(specOrGenDoc.ref, {
+        [`properties.${removeFrom}`]: specOrGenData.properties[removeFrom],
+      });
+    }
+  };
+
   const deleteChildNode = async () => {
     try {
       if (
@@ -146,17 +177,24 @@ const LinkNode = ({
           }
           // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
           // const childData = childDoc.data() as INode;
+          if (property === "parts" || property === "isPartOf") {
+            removePartsLink(property, currentVisibleNode.id, child.id);
+          }
 
           await updateDoc(nodeDoc.ref, {
             [`properties.${property}.${category}`]:
               nodeData.properties[property][category],
-            [`inheritance.${property}.ref`]: null,
           });
+          if (property !== "isPartOf") {
+            await updateDoc(nodeDoc.ref, {
+              [`inheritance.${property}.ref`]: null,
+            });
 
-          updateInheritance({
-            nodeId: nodeDoc.id,
-            updatedProperty: property,
-          });
+            updateInheritance({
+              nodeId: nodeDoc.id,
+              updatedProperty: property,
+            });
+          }
 
           recordLogs({
             action: "unlinked a child",

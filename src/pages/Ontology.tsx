@@ -170,9 +170,6 @@ const Ontology = () => {
   const [ontologyPath, setOntologyPath] = useState<INodePath[]>([]);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
   const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
-  const [editNode, setEditNode] = useState<string>("");
-  const [newComment, setNewComment] = useState("");
-  const [updateComment, setUpdateComment] = useState("");
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const { selectIt, selectDialog } = useSelectDialog();
   const [editingComment, setEditingComment] = useState("");
@@ -926,8 +923,8 @@ const Ontology = () => {
 
       setTimeout(() => {
         const element = document.getElementById("node-" + node?.id);
-        if(element){
-          element.scrollIntoView({ behavior: "smooth", block: "center" })
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }, 800);
 
@@ -1398,8 +1395,6 @@ const Ontology = () => {
                   )}
                   nodes={nodes}
                   addNewNode={addNewNode}
-                  editNode={editNode}
-                  setEditNode={setEditNode}
                   lockedNodeFields={lockedNodeFields}
                   recordLogs={recordLogs}
                   updateInheritance={updateInheritance}
