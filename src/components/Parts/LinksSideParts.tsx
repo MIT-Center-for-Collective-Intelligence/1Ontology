@@ -35,7 +35,7 @@ type ILinksSideProps = {
   setSnackbarMessage: any;
   setCurrentVisibleNode: any;
   updateInheritance: any;
-  property: "parts" | "isPartOf";
+  property: "parts" | "isPartOf" | "actor";
   nodes: { [id: string]: INode };
 };
 

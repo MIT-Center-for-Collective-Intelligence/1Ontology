@@ -103,7 +103,11 @@ const NodeBody: React.FC<NodeBodyProps> = ({
       <Box>
         {Object.keys(currentVisibleNode.properties)
           .filter(
-            (p) => p !== "parts" && p !== "isPartOf" && p !== "description"
+            (p) =>
+              p !== "parts" &&
+              p !== "isPartOf" &&
+              p !== "description" &&
+              p.toLowerCase() !== "actor"
           )
           .sort()
           .map((property: string) => (

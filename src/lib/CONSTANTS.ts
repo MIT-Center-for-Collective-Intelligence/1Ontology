@@ -28,6 +28,7 @@ export const DISPLAY: {
   rewardFunction: "Reward Function",
   parts: "Parts",
   isPartOf: "Is Part of",
+  actor: "Actor",
 };
 
 export const NO_IMAGE_USER =

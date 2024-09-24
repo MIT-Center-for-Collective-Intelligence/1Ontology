@@ -1719,94 +1719,68 @@ const Node = ({
             )}
           </Box>
         </Paper>
-        <Paper
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            borderRadius: "25px",
-
-            width: "100%",
-          }}
-          elevation={6}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              background: (theme) =>
-                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-
-              p: 3,
-              borderTopRightRadius: "25px",
-              borderTopLeftRadius: "25px",
-            }}
+        {currentVisibleNode?.properties.hasOwnProperty("actor") && (
+          <Paper
+            elevation={9}
+            sx={{ borderRadius: "30px", minWidth: "500px", width: "100%" }}
           >
-            <Typography sx={{ fontSize: "20px", fontWeight: "500" }}>
-              Description:
-            </Typography>
-            {currentVisibleNode.inheritance?.description?.ref && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                background: (theme) =>
+                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                p: 3,
+                borderTopRightRadius: "25px",
+                borderTopLeftRadius: "25px",
+              }}
+            >
               <Typography
                 sx={{
-                  color: (theme) =>
-                    theme.palette.mode === "dark" ? "white" : "black",
-                  fontSize: "14px",
-                  ml: "auto",
+                  color: viewValueSpecialization === 0 ? "#ff6d00" : "",
+                  fontSize: "20px",
+                  fontWeight: 500,
+                  fontFamily: "Roboto, sans-serif",
                 }}
               >
-                {'(Inherited from "'}
-                {getTitle(
-                  nodes,
-                  currentVisibleNode.inheritance.description.ref || ""
-                )}
-                {'")'}
+                Actor:
               </Typography>
-            )}
-          </Box>
-          <Box>
-            <Text
-              nodes={nodes}
-              updateInheritance={updateInheritance}
-              recordLogs={recordLogs}
-              text={
+              {currentVisibleNode.inheritance?.["actor"]?.ref && (
+                <Typography sx={{ fontSize: "14px", ml: "9px" }}>
+                  {'(Inherited from "'}
+                  {getTitle(
+                    nodes,
+                    currentVisibleNode.inheritance["actor"].ref || ""
+                  )}
+                  {'")'}
+                </Typography>
+              )}
+            </Box>
+            <LinksSideParts
+              properties={
                 getPropertyValue(
                   nodes,
-                  currentVisibleNode.inheritance.description.ref,
-                  "description"
-                ) || currentVisibleNode.properties.description
+                  currentVisibleNode.inheritance.actor.ref,
+                  "actor"
+                ) || currentVisibleNode?.properties?.actor
               }
               currentVisibleNode={currentVisibleNode}
-              property={"description"}
+              showList={showList}
+              setOpenAddCategory={setOpenAddCategory}
+              setType={setSelectedProperty}
+              handleSorting={handleSorting}
+              handleEditCategory={handleEditCategory}
+              deleteCategory={deleteCategory}
+              navigateToNode={navigateToNode}
+              recordLogs={recordLogs}
+              setSnackbarMessage={setSnackbarMessage}
               setCurrentVisibleNode={setCurrentVisibleNode}
+              updateInheritance={updateInheritance}
+              property={"actor"}
+              nodes={nodes}
             />
-          </Box>
-        </Paper>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            // p: "17px",
-            width: "100%",
-          }}
-        >
-          <NodeBody
-            currentVisibleNode={currentVisibleNode}
-            setCurrentVisibleNode={setCurrentVisibleNode}
-            recordLogs={recordLogs}
-            updateInheritance={updateInheritance}
-            showList={showList}
-            handleEditCategory={handleEditCategory}
-            deleteCategory={deleteCategory}
-            handleSorting={handleSorting}
-            navigateToNode={navigateToNode}
-            setSnackbarMessage={setSnackbarMessage}
-            setOpenAddCategory={setOpenAddCategory}
-            setType={setSelectedProperty}
-            setOpenAddField={setOpenAddField}
-            removeProperty={removeProperty}
-            user={user}
-            nodes={nodes}
-          />
-        </Box>
+          </Paper>
+        )}
         <Stack
           direction={width < 1050 ? "column" : "row"}
           sx={{
@@ -2026,255 +2000,95 @@ const Node = ({
               nodes={nodes}
             />
           </Paper>
-
-          {/* <Paper elevation={9} sx={{ width: "100%", borderRadius: "30px" }}>
-            <Tabs
-              value={viewValueSpecialization}
-              onChange={(event: any, newValue: number) => {
-                setViewValueSpecialization(newValue);
-              }}
-              variant="fullWidth"
-              sx={{
-                background: (theme) =>
-                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                color: "black",
-                ".MuiTab-root.Mui-selected": {
-                  color: "#ff6d00",
-                },
-                borderTopLeftRadius: "25px",
-                borderTopRightRadius: "25px",
-              }}
-              aria-label="basic tabs example"
-            >
-              <Tab
-                sx={{ width: "50%", fontSize: "20px", borderRadius: "30px" }}
-                label={
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Typography
-                      sx={{
-                        color: viewValueSpecialization === 0 ? "#ff6d00" : "",
-                        fontSize: "20px",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Generalizations
-                    </Typography>
-                  </Box>
-                }
-                {...a11yProps(0)}
-              />
-              <Tab
-                sx={{ width: "50%", fontSize: "20px" }}
-                label={
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Typography
-                      sx={{
-                        color: viewValueSpecialization === 1 ? "#ff6d00" : "",
-                        fontSize: "20px",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Specializations
-                    </Typography>
-                  </Box>
-                }
-                {...a11yProps(1)}
-              />
-            </Tabs>
-
-            <TabPanel
-              value={viewValueSpecialization}
-              index={0}
-              sx={{
-                mt: "5px",
-              }}
-            >
-              <LinksSide
-                properties={
-                  currentVisibleNode?.properties?.generalizations || {}
-                }
-                currentVisibleNode={currentVisibleNode}
-                showList={showList}
-                setOpenAddCategory={setOpenAddCategory}
-                setType={setSelectedProperty}
-                handleSorting={handleSorting}
-                handleEditCategory={handleEditCategory}
-                deleteCategory={deleteCategory}
-                navigateToNode={navigateToNode}
-                recordLogs={recordLogs}
-                setSnackbarMessage={setSnackbarMessage}
-                setCurrentVisibleNode={setCurrentVisibleNode}
-                updateInheritance={updateInheritance}
-                relationType={"generalizations"}
-                nodes={nodes}
-              />
-            </TabPanel>
-            <TabPanel
-              value={viewValueSpecialization}
-              index={1}
-              sx={{
-                mt: "5px",
-              }}
-            >
-              <LinksSide
-                properties={currentVisibleNode?.specializations || {}}
-                currentVisibleNode={currentVisibleNode}
-                showList={showList}
-                setOpenAddCategory={setOpenAddCategory}
-                setType={setSelectedProperty}
-                handleSorting={handleSorting}
-                handleEditCategory={handleEditCategory}
-                deleteCategory={deleteCategory}
-                navigateToNode={navigateToNode}
-                recordLogs={recordLogs}
-                setSnackbarMessage={setSnackbarMessage}
-                setCurrentVisibleNode={setCurrentVisibleNode}
-                updateInheritance={updateInheritance}
-                relationType={"specializations"}
-                handleNewSpecialization={handleNewSpecialization}
-                nodes={nodes}
-              />
-            </TabPanel>
-          </Paper>
-          <Paper elevation={9} sx={{ width: "100%", borderRadius: "25px" }}>
-            <Tabs
-              value={viewValue}
-              onChange={(event: any, newValue: number) => {
-                setViewValue(newValue);
-              }}
-              variant="fullWidth"
-              sx={{
-                background: (theme) =>
-                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                ".MuiTab-root.Mui-selected": {
-                  color: "#ff6d00",
-                },
-                borderTopLeftRadius: "25px",
-                borderTopRightRadius: "25px",
-              }}
-              aria-label="basic tabs example"
-            >
-              <Tab
-                sx={{ width: "50%", fontSize: "20px" }}
-                label={
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Typography
-                      sx={{
-                        color: viewValue === 0 ? "#ff6d00" : "",
-                        fontSize: "20px",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Is Part of
-                    </Typography>
-                    {currentVisibleNode.inheritance?.["isPartOf"]?.ref && (
-                      <Typography sx={{ fontSize: "14px", ml: "9px" }}>
-                        {'(Inherited from "'}
-                        {getTitle(
-                          nodes,
-                          currentVisibleNode.inheritance["isPartOf"].ref || ""
-                        )}
-                        {'")'}
-                      </Typography>
-                    )}
-                  </Box>
-                }
-                {...a11yProps(0)}
-              />
-              <Tab
-                sx={{ width: "50%", fontSize: "20px" }}
-                label={
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Typography
-                      sx={{
-                        color: viewValue === 1 ? "#ff6d00" : "",
-                        fontSize: "20px",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Parts
-                    </Typography>
-                    {currentVisibleNode.inheritance?.["parts"]?.ref && (
-                      <Typography sx={{ fontSize: "14px", ml: "9px" }}>
-                        {'(Inherited from "'}
-                        {getTitle(
-                          nodes,
-                          currentVisibleNode.inheritance["parts"].ref || ""
-                        )}
-                        {'")'}
-                      </Typography>
-                    )}
-                  </Box>
-                }
-                {...a11yProps(1)}
-              />
-            </Tabs>
-
-            <TabPanel
-              value={viewValue}
-              index={0}
-              sx={{
-                mt: "5px",
-              }}
-            >
-              <LinksSideParts
-                properties={
-                  getPropertyValue(
-                    nodes,
-                    currentVisibleNode.inheritance.isPartOf.ref,
-                    "isPartOf"
-                  ) || currentVisibleNode?.properties?.isPartOf
-                }
-                currentVisibleNode={currentVisibleNode}
-                showList={showList}
-                setOpenAddCategory={setOpenAddCategory}
-                setType={setSelectedProperty}
-                handleSorting={handleSorting}
-                handleEditCategory={handleEditCategory}
-                deleteCategory={deleteCategory}
-                navigateToNode={navigateToNode}
-                recordLogs={recordLogs}
-                setSnackbarMessage={setSnackbarMessage}
-                setCurrentVisibleNode={setCurrentVisibleNode}
-                updateInheritance={updateInheritance}
-                property={"isPartOf"}
-                nodes={nodes}
-              />
-            </TabPanel>
-            <TabPanel
-              value={viewValue}
-              index={1}
-              sx={{
-                mt: "5px",
-                width: "100%",
-              }}
-            >
-              <LinksSideParts
-                properties={
-                  getPropertyValue(
-                    nodes,
-                    currentVisibleNode.inheritance.parts.ref,
-                    "parts"
-                  ) || currentVisibleNode?.properties?.parts
-                }
-                currentVisibleNode={currentVisibleNode}
-                showList={showList}
-                setOpenAddCategory={setOpenAddCategory}
-                setType={setSelectedProperty}
-                handleSorting={handleSorting}
-                handleEditCategory={handleEditCategory}
-                deleteCategory={deleteCategory}
-                navigateToNode={navigateToNode}
-                recordLogs={recordLogs}
-                setSnackbarMessage={setSnackbarMessage}
-                setCurrentVisibleNode={setCurrentVisibleNode}
-                updateInheritance={updateInheritance}
-                property={"parts"}
-                nodes={nodes}
-              />
-            </TabPanel>
-          </Paper> */}
         </Stack>
+        <Paper
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            borderRadius: "25px",
+
+            width: "100%",
+          }}
+          elevation={6}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+
+              p: 3,
+              borderTopRightRadius: "25px",
+              borderTopLeftRadius: "25px",
+            }}
+          >
+            <Typography sx={{ fontSize: "20px", fontWeight: "500" }}>
+              Description:
+            </Typography>
+            {currentVisibleNode.inheritance?.description?.ref && (
+              <Typography
+                sx={{
+                  color: (theme) =>
+                    theme.palette.mode === "dark" ? "white" : "black",
+                  fontSize: "14px",
+                  ml: "auto",
+                }}
+              >
+                {'(Inherited from "'}
+                {getTitle(
+                  nodes,
+                  currentVisibleNode.inheritance.description.ref || ""
+                )}
+                {'")'}
+              </Typography>
+            )}
+          </Box>
+          <Box>
+            <Text
+              nodes={nodes}
+              updateInheritance={updateInheritance}
+              recordLogs={recordLogs}
+              text={
+                getPropertyValue(
+                  nodes,
+                  currentVisibleNode.inheritance.description.ref,
+                  "description"
+                ) || currentVisibleNode.properties.description
+              }
+              currentVisibleNode={currentVisibleNode}
+              property={"description"}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+            />
+          </Box>
+        </Paper>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            // p: "17px",
+            width: "100%",
+          }}
+        >
+          <NodeBody
+            currentVisibleNode={currentVisibleNode}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            recordLogs={recordLogs}
+            updateInheritance={updateInheritance}
+            showList={showList}
+            handleEditCategory={handleEditCategory}
+            deleteCategory={deleteCategory}
+            handleSorting={handleSorting}
+            navigateToNode={navigateToNode}
+            setSnackbarMessage={setSnackbarMessage}
+            setOpenAddCategory={setOpenAddCategory}
+            setType={setSelectedProperty}
+            setOpenAddField={setOpenAddField}
+            removeProperty={removeProperty}
+            user={user}
+            nodes={nodes}
+          />
+        </Box>
       </Box>
 
       {ConfirmDialog}
