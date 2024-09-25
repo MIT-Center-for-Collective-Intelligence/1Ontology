@@ -159,6 +159,13 @@ const synchronizeStuff = (prev: (any & { id: string })[], change: any) => {
   return prev;
 };
 
+const CHAT_TABS = [
+  { id: "node", title: "This node" },
+  /*  { id: "bug_report", title: "Bug Reports" },
+  { id: "feature_request", title: "Feature Requests" },
+  { id: "help", title: "Help" }, */
+];
+
 const Ontology = () => {
   const db = getFirestore();
   const [{ emailVerified, user }] = useAuth();
@@ -176,7 +183,7 @@ const Ontology = () => {
   const [editingComment, setEditingComment] = useState("");
   const [lockedNodeFields, setLockedNodeFields] = useState<ILockedNode>({});
   const [sidebarView, setSidebarView] = useState<number>(1);
-  const [selectedChatTab, setSelectedChatTab] = useState<number>(1);
+  const [selectedChatTab, setSelectedChatTab] = useState<number>(0);
   const [viewValue, setViewValue] = useState<number>(0);
   const [searchValue, setSearchValue] = useState("");
   const fuse = new Fuse(Object.values(nodes), { keys: ["title"] });
@@ -1548,71 +1555,42 @@ const Ontology = () => {
                           },
                         }}
                       >
-                        <Tab label="This node" {...a11yProps(0)} />
+                        {CHAT_TABS.map((tab, idx) => (
+                          <Tab
+                            key={tab.id}
+                            label={tab.title}
+                            {...a11yProps(idx)}
+                          />
+                        ))}
+                        {/*     <Tab label="This node" {...a11yProps(0)} />
                         <Tab label="Bug Reports" {...a11yProps(1)} />
                         <Tab label="Feature Requests" {...a11yProps(2)} />
-                        <Tab label="Help" {...a11yProps(3)} />
+                        <Tab label="Help" {...a11yProps(3)} /> */}
                       </Tabs>
                       <Box>
-                        <TabPanel value={selectedChatTab} index={0}>
-                          {currentVisibleNode?.id && (
-                            <Chat
-                              user={user}
-                              messages={nodeMessages}
-                              setMessages={setNodeMessages}
-                              type="node"
-                              nodeId={currentVisibleNode?.id}
-                              users={users}
-                              firstLoad={true}
-                              isLoading={isLoading}
-                              confirmIt={confirmIt}
-                              setOpenSelectModel={setOpenSelectModel}
-                              recordLogs={recordLogs}
-                            />
-                          )}
-                        </TabPanel>
-                        <TabPanel value={selectedChatTab} index={1}>
-                          <Chat
-                            user={user}
-                            messages={bugReportMessages}
-                            setMessages={setBugReportMessages}
-                            type="bug_report"
-                            users={users}
-                            firstLoad={true}
-                            isLoading={false}
-                            confirmIt={confirmIt}
-                            setOpenSelectModel={setOpenSelectModel}
-                            recordLogs={recordLogs}
-                          />
-                        </TabPanel>
-                        <TabPanel value={selectedChatTab} index={2}>
-                          <Chat
-                            user={user}
-                            messages={featureRequestMessages}
-                            setMessages={setFeatureRequestMessages}
-                            type="feature_request"
-                            users={users}
-                            firstLoad={true}
-                            isLoading={false}
-                            confirmIt={confirmIt}
-                            setOpenSelectModel={setOpenSelectModel}
-                            recordLogs={recordLogs}
-                          />
-                        </TabPanel>
-                        <TabPanel value={selectedChatTab} index={3}>
-                          <Chat
-                            user={user}
-                            messages={helpMessages}
-                            setMessages={setHelpMessages}
-                            type="help"
-                            users={users}
-                            firstLoad={true}
-                            isLoading={false}
-                            confirmIt={confirmIt}
-                            setOpenSelectModel={setOpenSelectModel}
-                            recordLogs={recordLogs}
-                          />
-                        </TabPanel>
+                        {CHAT_TABS.map((tab, idx) => (
+                          <TabPanel
+                            key={tab.id}
+                            value={selectedChatTab}
+                            index={idx}
+                          >
+                            {currentVisibleNode?.id && (
+                              <Chat
+                                user={user}
+                                messages={nodeMessages}
+                                setMessages={setNodeMessages}
+                                type={tab.id}
+                                nodeId={currentVisibleNode?.id}
+                                users={users}
+                                firstLoad={true}
+                                isLoading={isLoading}
+                                confirmIt={confirmIt}
+                                setOpenSelectModel={setOpenSelectModel}
+                                recordLogs={recordLogs}
+                              />
+                            )}
+                          </TabPanel>
+                        ))}
                       </Box>
                     </Box>
                   )}
