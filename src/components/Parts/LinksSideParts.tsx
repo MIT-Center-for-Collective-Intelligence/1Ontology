@@ -188,10 +188,7 @@ const LinksSideParts = ({
                                         property={property}
                                         category={category}
                                         updateInheritance={updateInheritance}
-                                        title={
-                                          getTitle(nodes, child.id) ||
-                                          child.title
-                                        }
+                                        title={getTitle(nodes, child.id)}
                                         nodes={nodes}
                                       />
                                     </ListItem>

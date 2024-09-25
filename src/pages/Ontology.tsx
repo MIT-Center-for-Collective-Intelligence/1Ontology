@@ -116,6 +116,7 @@ import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import {
   LOCKS,
   LOGS,
+  MESSAGES,
   NODES,
   USERS,
 } from " @components/lib/firestoreClient/collections";
@@ -1124,9 +1125,9 @@ const Ontology = () => {
 
   const sendNode = useCallback(
     async (nodeId: string, title: string) => {
-      if (!user) return;
+      if (!user || !currentVisibleNode?.id) return;
       const messageData = {
-        nodeId: "",
+        nodeId: currentVisibleNode.id,
         text: title,
         sender: user.uname,
         senderDetail: {
@@ -1140,14 +1141,17 @@ const Ontology = () => {
         edited: false,
         deleted: false,
         totalReplies: 0,
-        type: ["node", "technical", "other"][selectedChatTab],
+        type: ["node", "bug_report", "feature_request", "help"][
+          selectedChatTab
+        ],
         messageType: "node",
         sharedNodeId: nodeId,
         createdAt: new Date(),
       };
-      await addDoc(collection(db, "messages"), messageData);
+
+      await addDoc(collection(db, MESSAGES), messageData);
     },
-    [selectedChatTab]
+    [selectedChatTab, currentVisibleNode?.id, user]
   );
 
   const openNotification = useCallback(
@@ -1717,6 +1721,7 @@ const Ontology = () => {
         <Box
           sx={{
             maxHeight: "80vh",
+            minWidth: "900px",
             overflowY: "auto",
             borderRadius: 2,
             boxShadow: 24,

@@ -1,3 +1,4 @@
+import { MESSAGES } from " @components/lib/firestoreClient/collections";
 import { IChat } from " @components/types/IChat";
 import {
   collection,
@@ -30,7 +31,7 @@ export const getMessagesSnapshot = (
   const { nodeId, type } = data;
   //const pageSize = 15;
 
-  const messagesRef = collection(db, "messages");
+  const messagesRef = collection(db, MESSAGES);
 
   let q = query(
     messagesRef,

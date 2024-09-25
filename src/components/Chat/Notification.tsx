@@ -117,27 +117,29 @@ export const Notification = ({
         >
           <Box
             sx={{
+              width: `40px`,
+              height: `40px`,
+              cursor: "pointer",
+              borderRadius: "50%",
+              mr: "15px",
+              mb: "auto",
+            }}
+          >
+            <OptimizedAvatar
+              alt={notification.senderDetail?.fullname || ""}
+              imageUrl={notification.senderDetail?.imageUrl}
+              size={40}
+              sx={{ border: "none" }}
+            />
+          </Box>
+          <Box
+            sx={{
               display: "flex",
               alignItems: "center",
               gap: "15px",
               width: "100%",
             }}
           >
-            <Box
-              sx={{
-                width: `40px`,
-                height: `40px`,
-                cursor: "pointer",
-                borderRadius: "50%",
-              }}
-            >
-              <OptimizedAvatar
-                alt={notification.senderDetail?.fullname || ""}
-                imageUrl={notification.senderDetail?.imageUrl}
-                size={40}
-                sx={{ border: "none" }}
-              />
-            </Box>
             <Box sx={{ width: "100%" }}>
               <Typography
                 sx={{

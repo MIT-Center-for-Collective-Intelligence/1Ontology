@@ -74,6 +74,7 @@ const TreeViewSimplified = ({
                   justifyContent: sendNode ? "space-between" : undefined,
                 }}
                 onClick={(e) => {
+                  if (sendNode || clone) return;
                   onOpenNodesTree(treeVisualization[category].id);
                 }}
                 id={`node-${treeVisualization[category]?.id}`}

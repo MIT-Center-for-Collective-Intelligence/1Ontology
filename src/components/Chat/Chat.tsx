@@ -35,6 +35,7 @@ import { IChat } from " @components/types/IChat";
 import { Emoticons } from "./Emoticons";
 import LinkIcon from "@mui/icons-material/Link";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
+import { MESSAGES } from " @components/lib/firestoreClient/collections";
 const DynamicMemoEmojiPicker = dynamic(() => import("./EmojiPicker"), {
   loading: () => <p>Loading...</p>,
   ssr: false,
@@ -228,11 +229,11 @@ const Chat = ({
   }, [showReplies]);
 
   const getMessageRef = () => {
-    let commentRef = collection(db, "messages");
+    let commentRef = collection(db, MESSAGES);
     return commentRef;
   };
   const getMessageDocRef = (messageId: string) => {
-    let messageRef = doc(db, "messages", messageId);
+    let messageRef = doc(db, MESSAGES, messageId);
 
     return messageRef;
   };
@@ -290,6 +291,7 @@ const Chat = ({
       createdAt: new Date(),
     };
     const docRef = await addDoc(getMessageRef(), commentData);
+
     createNotifications(
       `New Message from ${user.fName + " " + user.lName}`,
       text,

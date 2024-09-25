@@ -1436,33 +1436,32 @@ const Node = ({
               />
             )}
           </Paper>
-          <Paper
-            sx={{
-              display: "flex",
-              position: "sticky",
-              bottom: "0px",
-              p: 3,
-              justifyContent: "center",
-              gap: "8px",
-            }}
-          >
-            {selectedProperty === "specializations" && (
+          {/* {selectedProperty === "specializations" && (
               <Button
                 variant="contained"
                 onClick={() => handleNewSpecialization()}
               >
                 Add new
               </Button>
-            )}
+            )} */}
+          <Paper
+            sx={{
+              display: "flex",
+              position: "sticky",
+              bottom: "0px",
+              p: 3,
+              justifyContent: "space-between",
+            }}
+          >
+            <Button variant="contained" onClick={handleClose} color="primary">
+              Cancel
+            </Button>
             <Button
               variant="contained"
               onClick={handleSaveChildrenChanges}
-              color="primary"
+              color="success"
             >
               Save
-            </Button>
-            <Button variant="contained" onClick={handleClose} color="primary">
-              Cancel
             </Button>
           </Paper>
         </Box>
