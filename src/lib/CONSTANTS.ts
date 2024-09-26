@@ -12,7 +12,7 @@ export const DISPLAY: {
   numberOfIndividualsInGroup: "Number Of Individuals In Group",
   listOfIndividualsInGroup: "List Of Individuals In Group",
   capabilitiesRequired: "Capabilities Required",
-  evaluationDimension: "Evaluation Dimension",
+  evaluationDimension: "Evaluation Dimensions",
   performancePredictionModels: "Performance Prediction Models",
   roleType: "Role Type",
   measurementUnits: "Measurement Units",
@@ -28,7 +28,7 @@ export const DISPLAY: {
   rewardFunction: "Reward Function",
   parts: "Parts",
   isPartOf: "Is Part of",
-  actor: "Actor",
+  actor: "Actors",
 };
 
 export const NO_IMAGE_USER =

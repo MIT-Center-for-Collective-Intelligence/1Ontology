@@ -41,7 +41,6 @@ export type INode = {
   id: string;
   title: string;
   deleted: boolean;
-  comments: { message: string; sender: string; editMode?: boolean }[];
   properties: { [key: string]: any };
   inheritance: {
     [key: string]: {

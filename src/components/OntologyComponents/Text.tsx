@@ -52,6 +52,9 @@ const Text = ({
   useEffect(() => {
     setEditorContent(text); // Initialize editor content
     setError("");
+    if (setSelectTitle) {
+      setSelectTitle(false);
+    }
   }, [currentVisibleNode.id]);
 
   useEffect(() => {
@@ -61,7 +64,7 @@ const Text = ({
         setEditorContent("");
         // const inputLength = editorContent.length;
         // textAreaRef.current.setSelectionRange(0, inputLength + 1000);
-      }, 550);
+      }, 0);
     }
   }, [currentVisibleNode.id, textAreaRef.current, selectTitle]);
 

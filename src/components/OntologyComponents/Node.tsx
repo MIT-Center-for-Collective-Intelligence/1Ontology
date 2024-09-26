@@ -258,15 +258,10 @@ const Node = ({
     });
   };
 
-  const cloneNode = async (
-    nodeId: string
-  ): Promise<{ newCloneId: string; newCloneTitle: string }> => {
+  const cloneNode = async (nodeId: string): Promise<INode | null> => {
     try {
       // Retrieve the document of the original node from Firestore.
       const parentNodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
-
-      // If the node document doesn't exist, return early.
-      if (!parentNodeDoc.exists()) return { newCloneId: "", newCloneTitle: "" };
 
       // Extract data from the original node document.
       const parentNodeData = parentNodeDoc.data() as INode;
@@ -277,13 +272,21 @@ const Node = ({
       // Prepare the data for the new node by copying existing data.
       const newNode = {
         ...parentNodeDoc.data(),
-      };
+      } as INode;
 
       // Set a new ID for the cloned node.
       newNode.id = newNodeRef.id;
 
+      let newTitle = `New ${parentNodeData.title}`;
+      const specializationsTitles = Object.values(
+        parentNodeData.specializations
+      )
+        .flat()
+        .map((spec) => nodes[spec.id].title);
+      newTitle = generateUniqueTitle(newTitle, specializationsTitles);
+
       // Modify the title to indicate that it is a new node.
-      newNode.title = `New ${parentNodeData.title}`;
+      newNode.title = newTitle;
 
       // Initialize an empty specializations object for children.
       newNode.specializations = { main: [] };
@@ -291,7 +294,6 @@ const Node = ({
         main: [
           {
             id: nodeId,
-            title: parentNodeData.title,
           },
         ],
       };
@@ -307,13 +309,6 @@ const Node = ({
       parentNodeData?.specializations["main"].push({
         id: newNodeRef.id,
       });
-
-      // Update the original node document in Firestore with the modified data.
-      await updateDoc(parentNodeDoc.ref, {
-        ...parentNodeData,
-        updatedAt: new Date(),
-      });
-
       // // Create a new document in Firestore for the cloned node with the modified data.
       await setDoc(newNodeRef, {
         ...newNode,
@@ -321,11 +316,14 @@ const Node = ({
         createdAt: new Date(),
       });
 
+      // Update the original node document in Firestore with the modified data.
+      updateDoc(parentNodeDoc.ref, {
+        ...parentNodeData,
+        updatedAt: new Date(),
+      });
+
       // Return the ID of the newly created node.
-      return {
-        newCloneId: newNodeRef.id,
-        newCloneTitle: newNode.title,
-      };
+      return newNode;
     } catch (error) {
       // Log any errors that occur during the cloning process.
       confirmIt(
@@ -334,10 +332,7 @@ const Node = ({
         ""
       );
       console.error(error);
-      return {
-        newCloneId: "",
-        newCloneTitle: "",
-      };
+      return null;
     }
   };
 
@@ -501,48 +496,54 @@ const Node = ({
   };
 
   // This function handles the cloning of an node.
-  const handleCloning = async (node: {
-    id: string;
-    specializations: MainSpecializations;
-  }) => {
+  const handleCloning = async (node: { id: string }) => {
     // Call the asynchronous function to clone the node with the given ID.
-    const { newCloneId }: { newCloneId: string; newCloneTitle: string } =
-      await cloneNode(node.id);
+    const newNode = await cloneNode(node.id);
+    if (!newNode) return;
+    const nodeData = nodes[currentVisibleNode.id];
+    const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
 
-    // console.log("currentVisibleNode.id ==>", currentVisibleNode.id);
-    // const nodeData = nodes[currentVisibleNode.id];
-    // const nodeRef = doc(collection(db, "NODES"), currentVisibleNode.id);
+    if (
+      selectedProperty === "specializations" ||
+      selectedProperty === "generalizations"
+    ) {
+      nodeData[selectedProperty][selectedCategory || "main"].push({
+        id: newNode.id,
+      });
 
-    // if (
-    //   selectedProperty === "specializations" ||
-    //   selectedProperty === "generalizations"
-    // ) {
-    //   nodeData[selectedProperty][selectedCategory || "main"].push({
-    //     id: newCloneId,
-    //   });
+      updateDoc(nodeRef, {
+        [`${selectedProperty}`]: nodeData[selectedProperty],
+      });
+    } else {
+      if (nodeData.inheritance[selectedProperty].ref) {
+        nodeData.properties[selectedProperty] = JSON.parse(
+          JSON.stringify(
+            nodes[nodeData.inheritance[selectedProperty].ref].properties[
+              selectedProperty
+            ]
+          )
+        );
+      }
+      nodeData.properties[selectedProperty][selectedCategory || "main"].push({
+        id: newNode.id,
+      });
+      updateDoc(nodeRef, {
+        [`properties.${selectedProperty}`]:
+          nodeData.properties[selectedProperty],
+        [`inheritance.${selectedProperty}.ref`]: null,
+      });
+      updateInheritance({
+        nodeId: currentVisibleNode.id,
+        updatedProperty: selectedProperty,
+      });
+    }
 
-    //   updateDoc(nodeRef, {
-    //     [`${selectedProperty}`]: nodeData[selectedProperty],
-    //   });
-    // } else {
-    //   nodeData.properties[selectedProperty][selectedCategory || "main"].push({
-    //     id: newCloneId,
-    //   });
-    //   updateDoc(nodeRef, {
-    //     [`properties.${selectedProperty}`]:
-    //       nodeData.properties[selectedProperty],
-    //   });
-    // }
-    // setCurrentVisibleNode(nodes[newCloneId]);
-
-    // const newPath = eachOntologyPath[node.id];
-    // if (newCloneId) {
-    //   // Update the user document by appending the new clone's ID to the node path.
-    //   newPath.push({ id: newCloneId, title: newCloneTitle, category: false });
-    //   updateUserDoc([...newPath]);
-    // }
+    scrollToTop();
+    setSelectTitle(true);
+    setCurrentVisibleNode(newNode);
 
     // Close the modal or perform any necessary cleanup.
+    handleClose();
   };
 
   const updateLinks = (
@@ -1163,30 +1164,6 @@ const Node = ({
             }
           }
 
-          for (let { id: specializationId } of specializations) {
-            // Retrieve the document reference of the parent node
-            const specializationDoc = await getDoc(
-              doc(collection(db, NODES), specializationId)
-            );
-
-            // Check if the parent node document exists
-            if (specializationDoc.exists()) {
-              // Retrieve data of the parent node
-              let specializationNode = specializationDoc.data() as INode;
-              if (
-                Object.values(specializationNode.generalizations).length > 1
-              ) {
-                // Remove the reference to the child-node from the parent
-                specializationNode = removeGeneralizationNode(
-                  specializationNode,
-                  currentVisibleNode.id
-                );
-
-                // Update the parent node document with the modified data
-                await updateDoc(specializationDoc.ref, specializationNode);
-              }
-            }
-          }
           await updateDoc(nodeDoc.ref, { deleted: true });
           // Update the user document by removing the deleted node's ID
           let lastNodeId: string = ontologyPath.at(-2)?.id || "";
@@ -1459,7 +1436,7 @@ const Node = ({
                     }}
                   >
                     {" "}
-                    {user.manageLock || !node.locked ? (
+                    {user?.manageLock || !node.locked ? (
                       <Checkbox
                         checked={checkedSpecializations.includes(node.id)}
                         onClick={(e) => {
@@ -1493,7 +1470,7 @@ const Node = ({
                 handleCloning={handleCloning}
                 clone={true}
                 stopPropagation={currentVisibleNode.id}
-                manageLock={user.manageLock}
+                manageLock={user?.manageLock}
               />
             )}
           </Paper>
@@ -1818,6 +1795,68 @@ const Node = ({
             />
           </Box>
         </Paper>
+        <Paper
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            borderRadius: "25px",
+
+            width: "100%",
+          }}
+          elevation={6}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+
+              p: 3,
+              borderTopRightRadius: "25px",
+              borderTopLeftRadius: "25px",
+            }}
+          >
+            <Typography sx={{ fontSize: "20px", fontWeight: "500" }}>
+              Description:
+            </Typography>
+            {currentVisibleNode.inheritance?.description?.ref && (
+              <Typography
+                sx={{
+                  color: (theme) =>
+                    theme.palette.mode === "dark" ? "white" : "black",
+                  fontSize: "14px",
+                  ml: "auto",
+                }}
+              >
+                {'(Inherited from "'}
+                {getTitle(
+                  nodes,
+                  currentVisibleNode.inheritance.description.ref || ""
+                )}
+                {'")'}
+              </Typography>
+            )}
+          </Box>
+          <Box>
+            <Text
+              nodes={nodes}
+              updateInheritance={updateInheritance}
+              recordLogs={recordLogs}
+              text={
+                getPropertyValue(
+                  nodes,
+                  currentVisibleNode.inheritance.description.ref,
+                  "description"
+                ) || currentVisibleNode.properties.description
+              }
+              currentVisibleNode={currentVisibleNode}
+              property={"description"}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              locked={locked}
+            />
+          </Box>
+        </Paper>
         {currentVisibleNode?.properties.hasOwnProperty("actor") && (
           <Paper
             elevation={9}
@@ -1842,7 +1881,7 @@ const Node = ({
                   fontFamily: "Roboto, sans-serif",
                 }}
               >
-                Actor:
+                Actors:
               </Typography>
               {currentVisibleNode.inheritance?.["actor"]?.ref && (
                 <Typography sx={{ fontSize: "14px", ml: "9px" }}>
@@ -2105,68 +2144,6 @@ const Node = ({
             />
           </Paper>
         </Stack>
-        <Paper
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            borderRadius: "25px",
-
-            width: "100%",
-          }}
-          elevation={6}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              background: (theme) =>
-                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-
-              p: 3,
-              borderTopRightRadius: "25px",
-              borderTopLeftRadius: "25px",
-            }}
-          >
-            <Typography sx={{ fontSize: "20px", fontWeight: "500" }}>
-              Description:
-            </Typography>
-            {currentVisibleNode.inheritance?.description?.ref && (
-              <Typography
-                sx={{
-                  color: (theme) =>
-                    theme.palette.mode === "dark" ? "white" : "black",
-                  fontSize: "14px",
-                  ml: "auto",
-                }}
-              >
-                {'(Inherited from "'}
-                {getTitle(
-                  nodes,
-                  currentVisibleNode.inheritance.description.ref || ""
-                )}
-                {'")'}
-              </Typography>
-            )}
-          </Box>
-          <Box>
-            <Text
-              nodes={nodes}
-              updateInheritance={updateInheritance}
-              recordLogs={recordLogs}
-              text={
-                getPropertyValue(
-                  nodes,
-                  currentVisibleNode.inheritance.description.ref,
-                  "description"
-                ) || currentVisibleNode.properties.description
-              }
-              currentVisibleNode={currentVisibleNode}
-              property={"description"}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              locked={locked}
-            />
-          </Box>
-        </Paper>
         <Box
           sx={{
             display: "flex",
