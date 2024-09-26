@@ -184,7 +184,7 @@ const Node = ({
 
   const [openSelectModel, setOpenSelectModel] = useState(false);
   const handleClose = () => {
-    setCheckedSpecializations([]);
+    setCheckedItems([]);
     setOpenSelectModel(false);
     setSelectedCategory("");
   };
@@ -198,7 +198,7 @@ const Node = ({
   const [newCategory, setNewCategory] = useState("");
   const [selectedProperty, setSelectedProperty] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [checkedSpecializations, setCheckedSpecializations] = useState<any>([]);
+  const [checkedItems, setCheckedItems] = useState<any>([]);
   const [editCategory, setEditCategory] = useState<{
     property: string;
     category: string;
@@ -246,8 +246,8 @@ const Node = ({
     return word.charAt(0).toUpperCase() + word.slice(1);
   };
 
-  const checkSpecialization = (checkedId: string) => {
-    setCheckedSpecializations((oldChecked: string[]) => {
+  const markItemAsChecked = (checkedId: string) => {
+    setCheckedItems((oldChecked: string[]) => {
       let _oldChecked = [...oldChecked];
       if (!_oldChecked.includes(checkedId)) {
         /*        _oldChecked = _oldChecked.filter((cheked) => cheked !== checkedId);
@@ -468,7 +468,7 @@ const Node = ({
         (currentVisibleNode.properties[property] || {})[category] || []
       ).map((onto: any) => onto.id);
     }
-    setCheckedSpecializations(children);
+    setCheckedItems(children);
   };
 
   const selectFromTree = () => {
@@ -629,7 +629,7 @@ const Node = ({
         ).flat();
       }
       // Iterate through checkedSpecializations to update newchildren
-      for (let checked of checkedSpecializations) {
+      for (let checked of checkedItems) {
         // Find the node object from the children array
         const findNode = nodes[checked];
 
@@ -647,7 +647,7 @@ const Node = ({
       }
 
       oldChildren = oldChildren.filter((onto) =>
-        checkedSpecializations.includes(onto.id)
+        checkedItems.includes(onto.id)
       );
 
       if (selectedProperty === "generalizations" && oldChildren.length === 0) {
@@ -735,7 +735,7 @@ const Node = ({
       });
     }
   }, [
-    checkedSpecializations,
+    checkedItems,
     currentVisibleNode.id,
     currentVisibleNode.title,
     db,
@@ -1067,37 +1067,7 @@ const Node = ({
     }
     return generalizationNode;
   };
-  /**
-   * Removes a child-node with the specified ID from the given node data.
-   * @param {Object} params - An object containing ontologyData and id.
-   * @param {Object} ontologyData - The main node data object.
-   * @param {string} id - The ID of the child-node to be removed.
-   */
-  const removeGeneralizationNode = (
-    specializationNode: INode,
-    generalizationId: string
-  ) => {
-    // Iterate over the categories within each type of child-node.
-    for (let category in specializationNode.generalizations || {}) {
-      // Check if there are children present in the current category.
-      if ((specializationNode.generalizations[category] || []).length > 0) {
-        // Find the index of the child-node with the specified ID within the children array.
-        const specializationIdx = specializationNode.generalizations[
-          selectedProperty
-        ].findIndex((sub: any) => sub.id === generalizationId);
 
-        // If the child-node with the specified ID is found, remove it from the array.
-        if (specializationIdx !== -1) {
-          specializationNode.generalizations[selectedProperty].splice(
-            specializationIdx,
-            1
-          );
-        }
-      }
-    }
-
-    return specializationNode;
-  };
   // Asynchronous function to handle the deletion of a child-node
   const deleteNode = async () => {
     try {
@@ -1341,8 +1311,10 @@ const Node = ({
   };
 
   const searchResults = useMemo(() => {
-    return searchWithFuse(searchValue, currentVisibleNode.nodeType);
-  }, [searchValue]);
+    const propertyType =
+      currentVisibleNode.propertyType[selectedProperty] || "";
+    return searchWithFuse(searchValue, propertyType);
+  }, [searchValue, selectedProperty]);
 
   const handleLockNode = () => {
     try {
@@ -1415,7 +1387,7 @@ const Node = ({
                   <ListItem
                     key={node.id}
                     onClick={() => {
-                      checkSpecialization(node.id);
+                      markItemAsChecked(node.id);
                     }}
                     sx={{
                       display: "flex",
@@ -1438,13 +1410,13 @@ const Node = ({
                     {" "}
                     {user?.manageLock || !node.locked ? (
                       <Checkbox
-                        checked={checkedSpecializations.includes(node.id)}
+                        checked={checkedItems.includes(node.id)}
                         onClick={(e) => {
                           e.stopPropagation();
                         }}
                         onChange={(e) => {
                           e.stopPropagation();
-                          checkSpecialization(node.id);
+                          markItemAsChecked(node.id);
                         }}
                         name={node.id}
                       />
@@ -1465,8 +1437,8 @@ const Node = ({
                 treeVisualization={selectFromTree()}
                 expandedNodes={expandedNodes}
                 onOpenNodesTree={handleToggle}
-                checkSpecialization={checkSpecialization}
-                checkedSpecializations={checkedSpecializations}
+                checkSpecialization={markItemAsChecked}
+                checkedSpecializations={checkedItems}
                 handleCloning={handleCloning}
                 clone={true}
                 stopPropagation={currentVisibleNode.id}
