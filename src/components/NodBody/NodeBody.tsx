@@ -38,7 +38,7 @@ interface NodeBodyProps {
   setCurrentVisibleNode: any;
   recordLogs: any;
   updateInheritance: any;
-  showList: any;
+  showListToSelect: any;
   handleEditCategory: any;
   deleteCategory: any;
   handleSorting: any;
@@ -58,7 +58,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   setCurrentVisibleNode,
   recordLogs,
   updateInheritance,
-  showList,
+  showListToSelect,
   handleEditCategory,
   deleteCategory,
   handleSorting,
@@ -149,7 +149,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     {currentVisibleNode.propertyType[property] !== "string" && (
                       <Button
                         variant="outlined"
-                        onClick={() => showList(property, "main")}
+                        onClick={() => showListToSelect(property, "main")}
                         sx={{
                           borderRadius: "25px",
                           backgroundColor: BUTTON_COLOR,
@@ -340,7 +340,10 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                                         <Box sx={{ display: "flex" }}>
                                           <Button
                                             onClick={() =>
-                                              showList(property, category)
+                                              showListToSelect(
+                                                property,
+                                                category
+                                              )
                                             }
                                             sx={{ ml: "5px" }}
                                           >

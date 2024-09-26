@@ -622,15 +622,13 @@ const Ontology = () => {
       };
 
       // Iterate through each category in the specializations child-nodes
+
       for (let category in node.specializations) {
         // Filter nodes based on the current category
-        const specializations = [];
-        const arrayNodes = node?.specializations[category].map(
-          (o: any) => o.id
-        );
-        for (let nId of arrayNodes) {
-          specializations.push(nodes[nId]);
-        }
+        const specializations: INode[] = [];
+        node?.specializations[category].forEach((o: { id: string }) => {
+          specializations.push(nodes[o.id]);
+        });
 
         // Check if the category is the main category
         if (category === "main") {
@@ -827,6 +825,7 @@ const Ontology = () => {
         // Set the document with the new node data
         await setDoc(newNodeRef, {
           ...newNode,
+          locked: false,
           deleted: false,
           createdAt: new Date(),
         });

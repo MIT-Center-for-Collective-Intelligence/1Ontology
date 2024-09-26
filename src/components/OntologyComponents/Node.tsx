@@ -315,7 +315,11 @@ const Node = ({
       });
 
       // // Create a new document in Firestore for the cloned node with the modified data.
-      await setDoc(newNodeRef, { ...newNode, createdAt: new Date() });
+      await setDoc(newNodeRef, {
+        ...newNode,
+        locked: false,
+        createdAt: new Date(),
+      });
 
       // Return the ID of the newly created node.
       return {
@@ -455,19 +459,9 @@ const Node = ({
     ]
   );
 
-  const showList = async (property: string, category: string) => {
-    let newType = property;
-    if (
-      currentVisibleNode?.propertyType &&
-      currentVisibleNode.propertyType[property]
-    ) {
-      setSaveType(property);
-      newType = currentVisibleNode.propertyType[property];
-    }
-
-    // const _type = currentVisibleNode.nodeType;
+  const showListToSelect = async (property: string, category: string) => {
     setOpenSelectModel(true);
-    setSelectedProperty(newType);
+    setSelectedProperty(property);
     setSelectedCategory(category);
     let children = [];
     if (property === "specializations" || property === "generalizations") {
@@ -479,9 +473,9 @@ const Node = ({
         (currentVisibleNode.properties[property] || {})[category] || []
       ).map((onto: any) => onto.id);
     }
-
     setCheckedSpecializations(children);
   };
+
   const selectFromTree = () => {
     if (
       ["parts", "isPartOf", "specializations", "generalizations"].includes(
@@ -509,17 +503,37 @@ const Node = ({
   // This function handles the cloning of an node.
   const handleCloning = async (node: {
     id: string;
-    path: string[];
-    title: string;
     specializations: MainSpecializations;
   }) => {
     // Call the asynchronous function to clone the node with the given ID.
-    /* const {
-      newCloneId,
-      newCloneTitle,
-    }: { newCloneId: string; newCloneTitle: string } = */
+    const { newCloneId }: { newCloneId: string; newCloneTitle: string } =
+      await cloneNode(node.id);
 
-    await cloneNode(node.id);
+    // console.log("currentVisibleNode.id ==>", currentVisibleNode.id);
+    // const nodeData = nodes[currentVisibleNode.id];
+    // const nodeRef = doc(collection(db, "NODES"), currentVisibleNode.id);
+
+    // if (
+    //   selectedProperty === "specializations" ||
+    //   selectedProperty === "generalizations"
+    // ) {
+    //   nodeData[selectedProperty][selectedCategory || "main"].push({
+    //     id: newCloneId,
+    //   });
+
+    //   updateDoc(nodeRef, {
+    //     [`${selectedProperty}`]: nodeData[selectedProperty],
+    //   });
+    // } else {
+    //   nodeData.properties[selectedProperty][selectedCategory || "main"].push({
+    //     id: newCloneId,
+    //   });
+    //   updateDoc(nodeRef, {
+    //     [`properties.${selectedProperty}`]:
+    //       nodeData.properties[selectedProperty],
+    //   });
+    // }
+    // setCurrentVisibleNode(nodes[newCloneId]);
 
     // const newPath = eachOntologyPath[node.id];
     // if (newCloneId) {
@@ -588,7 +602,7 @@ const Node = ({
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );
-      const property = saveType || selectedProperty;
+
       // If the node document does not exist, return early
       if (!nodeDoc.exists()) return;
 
@@ -598,14 +612,20 @@ const Node = ({
       // Initialize a new array for storing updated children
       let oldChildren = [];
       let allChildren: any = [];
-      if (property === "specializations" || property === "generalizations") {
-        oldChildren = [...nodeData[property][selectedCategory]];
-        allChildren = Object.values(nodeData[property]).flat();
+      if (
+        selectedProperty === "specializations" ||
+        selectedProperty === "generalizations"
+      ) {
+        oldChildren = [...nodeData[selectedProperty][selectedCategory]];
+        allChildren = Object.values(nodeData[selectedProperty]).flat();
       } else {
         oldChildren = [
-          ...((nodeData.properties[property] || {})[selectedCategory] || []),
+          ...((nodeData.properties[selectedProperty] || {})[selectedCategory] ||
+            []),
         ];
-        allChildren = Object.values(nodeData.properties[property]).flat();
+        allChildren = Object.values(
+          nodeData.properties[selectedProperty]
+        ).flat();
       }
       // Iterate through checkedSpecializations to update newchildren
       for (let checked of checkedSpecializations) {
@@ -629,7 +649,7 @@ const Node = ({
         checkedSpecializations.includes(onto.id)
       );
 
-      if (property === "generalizations" && oldChildren.length === 0) {
+      if (selectedProperty === "generalizations" && oldChildren.length === 0) {
         await confirmIt(
           "You cannot remove all the generalizations for this node make sure it at least link to one generalization",
           "Ok",
@@ -639,60 +659,70 @@ const Node = ({
       }
       // If _type is "specializations", update main children
 
-      if (property === "specializations" || property === "generalizations") {
-        nodeData[property][selectedCategory] = oldChildren;
+      if (
+        selectedProperty === "specializations" ||
+        selectedProperty === "generalizations"
+      ) {
+        nodeData[selectedProperty][selectedCategory] = oldChildren;
       } else {
-        if (!nodeData.properties[property]) {
-          nodeData.properties[property] = { [selectedCategory]: oldChildren };
+        if (!nodeData.properties[selectedProperty]) {
+          nodeData.properties[selectedProperty] = {
+            [selectedCategory]: oldChildren,
+          };
         } else {
-          nodeData.properties[property][selectedCategory] = oldChildren;
+          nodeData.properties[selectedProperty][selectedCategory] = oldChildren;
         }
       }
-      if (property === "specializations" || property === "generalizations") {
+      if (
+        selectedProperty === "specializations" ||
+        selectedProperty === "generalizations"
+      ) {
         updateLinks(
           Object.values(oldChildren).flat(),
           {
             id: currentVisibleNode.id,
           },
-          property === "specializations" ? "generalizations" : "specializations"
+          selectedProperty === "specializations"
+            ? "generalizations"
+            : "specializations"
         );
       }
 
-      if (property === "parts" || property === "isPartOf") {
+      if (selectedProperty === "parts" || selectedProperty === "isPartOf") {
         updatePartsAndPartsOf(
           Object.values(oldChildren).flat(),
           {
             id: currentVisibleNode.id,
             title: currentVisibleNode.title,
           },
-          property === "parts" ? "isPartOf" : "parts"
+          selectedProperty === "parts" ? "isPartOf" : "parts"
         );
       }
 
       // If inheritance is present, reset the children field
       if (
         nodeData.inheritance &&
-        property !== "specializations" &&
-        property !== "generalizations" &&
-        property !== "parts" &&
-        property !== "isPartOf" &&
-        nodeData.inheritance[property]
+        selectedProperty !== "specializations" &&
+        selectedProperty !== "generalizations" &&
+        selectedProperty !== "parts" &&
+        selectedProperty !== "isPartOf" &&
+        nodeData.inheritance[selectedProperty]
       ) {
-        nodeData.inheritance[property].ref = null;
-        nodeData.inheritance[property].title = "";
+        nodeData.inheritance[selectedProperty].ref = null;
+        nodeData.inheritance[selectedProperty].title = "";
       }
       // Update the node document in the database
       await updateDoc(nodeDoc.ref, nodeData);
 
       // If _type is not "specializations", update the inheritance
       if (
-        property !== "specializations" &&
-        property !== "generalizations" &&
-        property !== "isPartOf"
+        selectedProperty !== "specializations" &&
+        selectedProperty !== "generalizations" &&
+        selectedProperty !== "isPartOf"
       ) {
         updateInheritance({
           nodeId: currentVisibleNode.id,
-          updatedProperty: property,
+          updatedProperty: selectedProperty,
         });
       }
     } catch (error) {
@@ -1834,7 +1864,7 @@ const Node = ({
                 ) || currentVisibleNode?.properties?.actor
               }
               currentVisibleNode={currentVisibleNode}
-              showList={showList}
+              showList={showListToSelect}
               setOpenAddCategory={setOpenAddCategory}
               setType={setSelectedProperty}
               handleSorting={handleSorting}
@@ -1889,7 +1919,7 @@ const Node = ({
             <LinksSide
               properties={currentVisibleNode?.properties?.generalizations || {}}
               currentVisibleNode={currentVisibleNode}
-              showList={showList}
+              showList={showListToSelect}
               setOpenAddCategory={setOpenAddCategory}
               setType={setSelectedProperty}
               handleSorting={handleSorting}
@@ -1937,7 +1967,7 @@ const Node = ({
             <LinksSide
               properties={currentVisibleNode?.specializations || {}}
               currentVisibleNode={currentVisibleNode}
-              showList={showList}
+              showList={showListToSelect}
               setOpenAddCategory={setOpenAddCategory}
               setType={setSelectedProperty}
               handleSorting={handleSorting}
@@ -1997,7 +2027,7 @@ const Node = ({
                 ) || currentVisibleNode?.properties?.isPartOf
               }
               currentVisibleNode={currentVisibleNode}
-              showList={showList}
+              showList={showListToSelect}
               setOpenAddCategory={setOpenAddCategory}
               setType={setSelectedProperty}
               handleSorting={handleSorting}
@@ -2058,7 +2088,7 @@ const Node = ({
                 ) || currentVisibleNode?.properties?.parts
               }
               currentVisibleNode={currentVisibleNode}
-              showList={showList}
+              showList={showListToSelect}
               setOpenAddCategory={setOpenAddCategory}
               setType={setSelectedProperty}
               handleSorting={handleSorting}
@@ -2150,7 +2180,7 @@ const Node = ({
             setCurrentVisibleNode={setCurrentVisibleNode}
             recordLogs={recordLogs}
             updateInheritance={updateInheritance}
-            showList={showList}
+            showListToSelect={showListToSelect}
             handleEditCategory={handleEditCategory}
             deleteCategory={deleteCategory}
             handleSorting={handleSorting}

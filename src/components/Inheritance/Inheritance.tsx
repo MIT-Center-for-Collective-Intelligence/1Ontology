@@ -11,10 +11,7 @@ import {
 import { INode, InheritanceType } from " @components/types/INode";
 import { DISPLAY } from " @components/lib/CONSTANTS";
 import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import {
-  NODES,
-  updateDocSimple,
-} from " @components/lib/firestoreClient/collections";
+import { NODES } from " @components/lib/firestoreClient/collections";
 import {
   collection,
   doc,
