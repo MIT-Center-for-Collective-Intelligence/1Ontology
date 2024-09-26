@@ -93,6 +93,7 @@ type ISubOntologyProps = {
   navigateToNode: (nodeID: string) => void;
   title: string;
   nodes: any;
+  index: number;
 };
 
 const LinkNode = ({
@@ -106,6 +107,7 @@ const LinkNode = ({
   navigateToNode,
   title,
   nodes,
+  index,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -129,16 +131,9 @@ const LinkNode = ({
     if (specOrGenDoc.exists()) {
       const specOrGenData = specOrGenDoc.data() as INode;
       for (let cat in specOrGenData.properties[removeFrom]) {
-        const generalizationIdx = (
-          specOrGenData.properties[removeFrom][cat] || []
-        ).findIndex((sub: any) => sub.id === removeNodeId);
-
-        if (generalizationIdx !== -1) {
-          specOrGenData.properties[removeFrom][cat].splice(
-            generalizationIdx,
-            1
-          );
-        }
+        specOrGenData.properties[removeFrom][cat] = specOrGenData.properties[
+          removeFrom
+        ][cat].filter((c: { id: string }) => c.id !== removeNodeId);
       }
       await updateDoc(specOrGenDoc.ref, {
         [`properties.${removeFrom}`]: specOrGenData.properties[removeFrom],
@@ -150,7 +145,7 @@ const LinkNode = ({
     try {
       if (
         await confirmIt(
-          `Are you sure you want remove this item from the list?`,
+          `Are you sure you want remove this item the list?`,
           `Remove`,
           "Keep"
         )
@@ -169,15 +164,22 @@ const LinkNode = ({
             );
           }
 
-          const linkIdx = (
-            nodeData?.properties[property][category] || []
-          ).findIndex((sub: any) => sub.id === child.id);
-          if (linkIdx !== -1) {
-            nodeData.properties[property][category].splice(linkIdx, 1);
+          if (index !== -1) {
+            nodeData.properties[property][category].splice(index, 1);
           }
+
+          const shouldBeRemovedFromParent = !(
+            Object.values(nodeData.properties[property]) as { id: string }[]
+          )
+            .flat()
+            .some((c: { id: string }) => c.id === child.id);
+
           // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
           // const childData = childDoc.data() as INode;
-          if (property === "parts" || property === "isPartOf") {
+          if (
+            (property === "parts" || property === "isPartOf") &&
+            shouldBeRemovedFromParent
+          ) {
             removePartsLink(property, currentVisibleNode.id, child.id);
           }
 
@@ -214,8 +216,8 @@ const LinkNode = ({
   };
 
   return (
-    <Box key={child.id} sx={{ ...sx }}>
-      <Box key={child.id} style={{ display: "flex", alignItems: "center" }}>
+    <Box sx={{ ...sx }}>
+      <Box style={{ display: "flex", alignItems: "center" }}>
         <Link
           underline="hover"
           onClick={handleNavigateToNode}

@@ -89,6 +89,9 @@ type ISubOntologyProps = {
   navigateToNode: (nodeID: string) => void;
   deleteVisible?: boolean;
   title: string;
+  index: number;
+  childLocked: boolean;
+  locked: boolean;
 };
 
 const ChildNode = ({
@@ -101,6 +104,9 @@ const ChildNode = ({
   navigateToNode,
   deleteVisible = true,
   title,
+  index,
+  childLocked,
+  locked,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
@@ -122,13 +128,9 @@ const ChildNode = ({
     if (specOrGenDoc.exists()) {
       const specOrGenData = specOrGenDoc.data() as INode;
       for (let cat in specOrGenData[removeFrom]) {
-        const generalizationIdx = (
-          specOrGenData[removeFrom][cat] || []
-        ).findIndex((sub: any) => sub.id === removeNodeId);
-
-        if (generalizationIdx !== -1) {
-          specOrGenData[removeFrom][cat].splice(generalizationIdx, 1);
-        }
+        specOrGenData[removeFrom][cat] = specOrGenData[removeFrom][cat].filter(
+          (c: { id: string }) => c.id !== removeNodeId
+        );
       }
       await updateDoc(specOrGenDoc.ref, {
         [`${removeFrom}`]: specOrGenData[removeFrom],
@@ -150,13 +152,18 @@ const ChildNode = ({
         );
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as INode;
-          const specializationIdx = (nodeData[type][category] || []).findIndex(
-            (sub: any) => sub.id === child.id
-          );
-          if (specializationIdx !== -1) {
-            nodeData[type][category].splice(specializationIdx, 1);
+
+          if (index !== -1) {
+            nodeData[type][category].splice(index, 1);
           }
-          removeNodeLink(type, currentVisibleNode.id, child.id);
+
+          const shouldBeRemovedFromParent = !Object.values(nodeData[type])
+            .flat()
+            .some((c: { id: string }) => c.id === child.id);
+
+          if (shouldBeRemovedFromParent) {
+            removeNodeLink(type, currentVisibleNode.id, child.id);
+          }
           await updateDoc(nodeDoc.ref, nodeData);
         }
       }
@@ -171,8 +178,8 @@ const ChildNode = ({
   };
 
   return (
-    <Box key={child.id} sx={{ ...sx }}>
-      <Box key={child.id} style={{ display: "flex", alignItems: "center" }}>
+    <Box sx={{ ...sx }}>
+      <Box style={{ display: "flex", alignItems: "center" }}>
         <Link
           underline="hover"
           onClick={handleNavigateToNode}
@@ -187,7 +194,7 @@ const ChildNode = ({
           {" "}
           {title}
         </Link>
-        {deleteVisible && (
+        {deleteVisible && !locked && !childLocked && (
           <Button
             sx={{ ml: "4px", borderRadius: "25px" }}
             onClick={deleteChildNode}

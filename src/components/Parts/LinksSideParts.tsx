@@ -37,6 +37,7 @@ type ILinksSideProps = {
   updateInheritance: any;
   property: "parts" | "isPartOf" | "actor";
   nodes: { [id: string]: INode };
+  locked: boolean;
 };
 
 const LinksSideParts = ({
@@ -55,44 +56,51 @@ const LinksSideParts = ({
   updateInheritance,
   property,
   nodes,
+  locked,
 }: ILinksSideProps) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   return (
     <Box sx={{ p: "13px" /* , height: "100vh" */ }}>
       <Box>
-        <Box
-          sx={{
-            alignItems: "center",
-            display: "flex",
-            gap: "15px",
-          }}
-        >
-          <Button
-            onClick={() => showList(property, "main")}
-            sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
-            variant="outlined"
+        {!locked && (
+          <Box
+            sx={{
+              alignItems: "center",
+              display: "flex",
+              gap: "15px",
+            }}
           >
-            {"Select "}
-            {capitalizeFirstLetter(DISPLAY[property])}
-          </Button>
-
-          {property !== "parts" && property !== "isPartOf" && (
             <Button
-              onClick={() => {
-                setOpenAddCategory(true);
-                setType(property);
-              }}
+              onClick={() => showList(property, "main")}
               sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
               variant="outlined"
             >
-              Add Category
+              {"Select "}
+              {capitalizeFirstLetter(DISPLAY[property])}
             </Button>
-          )}
-        </Box>
 
+            {property !== "parts" && property !== "isPartOf" && (
+              <Button
+                onClick={() => {
+                  setOpenAddCategory(true);
+                  setType(property);
+                }}
+                sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
+                variant="outlined"
+              >
+                Add Collection
+              </Button>
+            )}
+          </Box>
+        )}
         {/* List of categories within the property */}
-        <DragDropContext onDragEnd={(e) => handleSorting(e, property)}>
+        <DragDropContext
+          onDragEnd={(e) => {
+            if (locked) return;
+            handleSorting(e, property);
+          }}
+        >
           <ul style={{ paddingLeft: 7 }}>
             {Object.keys(properties)
               .sort((a, b) =>
@@ -161,7 +169,7 @@ const LinksSideParts = ({
                             >
                               {children.map((child, index) => (
                                 <Draggable
-                                  key={child.id}
+                                  key={child.id + index}
                                   draggableId={child.id}
                                   index={index}
                                 >
@@ -190,6 +198,7 @@ const LinksSideParts = ({
                                         updateInheritance={updateInheritance}
                                         title={getTitle(nodes, child.id)}
                                         nodes={nodes}
+                                        index={index}
                                       />
                                     </ListItem>
                                   )}

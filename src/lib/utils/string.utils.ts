@@ -66,6 +66,10 @@ export const getTitle = (nodes: { [id: string]: INode }, id: string) => {
   return "";
 };
 
+export const checkNodeLock = (nodes: { [id: string]: INode }, id: string) => {
+  return !!nodes[id]?.locked;
+};
+
 export const getPropertyValue = (
   nodes: { [id: string]: INode },
   id: string | null,

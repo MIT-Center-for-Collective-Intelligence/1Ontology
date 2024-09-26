@@ -8,7 +8,7 @@ The `Node` component is a complex React component that interacts with a Firestor
 - **specializations Management**: Add new specializations to nodes, select existing ones, and clone specializations for reuse.
 - **Inheritance Handling**: Manage inherited properties from parent nodes to ensure consistency across the hierarchy.
 - **Drag-and-Drop Sorting**: Reorder nodes within a category using a drag-and-drop interface.
-- **Category Management**: Add, edit, and delete categories within a node.
+- **Collection Management**: Add, edit, and delete categories within a node.
 - **Locking Mechanism**: Implement a locking system to prevent concurrent editing conflicts.
 - **Deletion of Nodes**: Safely remove nodes from the hierarchy with confirmation prompts.
 - **Logging**: Record user actions for auditing and tracking changes.
@@ -79,6 +79,7 @@ import {
   DialogActions,
   DialogContent,
   FormControl,
+  IconButton,
   InputLabel,
   Link,
   ListItem,
@@ -88,6 +89,7 @@ import {
   Select,
   Stack,
   TextField,
+  Tooltip,
   Typography,
   useMediaQuery,
 } from "@mui/material";
@@ -127,6 +129,8 @@ import {
   getPropertyValue,
   getTitle,
 } from " @components/lib/utils/string.utils";
+import LockIcon from "@mui/icons-material/Lock";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
 type INodeProps = {
   scrolling: any;
@@ -152,6 +156,7 @@ type INodeProps = {
   navigateToNode: (nodeId: string) => void;
   eachOntologyPath: { [key: string]: any };
   searchWithFuse: any;
+  locked: boolean;
 };
 
 const Node = ({
@@ -171,6 +176,7 @@ const Node = ({
   navigateToNode,
   eachOntologyPath,
   searchWithFuse,
+  locked,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -198,7 +204,7 @@ const Node = ({
     category: string;
   } | null>(null);
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
-  const [rootTitle, setRootTitle] = useState("");
+
   const [searchValue, setSearchValue] = useState("");
   const [newFieldType, setNewFieldType] = useState("String");
   const [openAddField, setOpenAddField] = useState(false);
@@ -229,16 +235,6 @@ const Node = ({
       };
     }
   }, []);
-
-  const getRooTitle = async (nodeId: string) => {
-    if (nodeId) {
-      setRootTitle(nodes[nodeId].title);
-    }
-    setRootTitle("");
-  };
-  useEffect(() => {
-    getRooTitle(currentVisibleNode.root);
-  }, [currentVisibleNode.root]);
 
   const capitalizeFirstLetter = (word: string) => {
     if (word === "role") {
@@ -367,16 +363,13 @@ const Node = ({
         const nodeParentRef = doc(collection(db, NODES), currentVisibleNode.id);
 
         // Retrieve the parent node document
-        const nodeParentDoc = await getDoc(nodeParentRef);
+        const nodeParentData = nodes[currentVisibleNode.id];
 
         // Extract data from the parent node document
         const parentNode = {
-          ...nodeParentDoc.data(),
-          id: nodeParentDoc.id,
+          ...nodeParentData,
+          id: currentVisibleNode.id,
         } as INode;
-
-        // Check if the parent node document exists
-        if (!nodeParentDoc.exists()) return;
 
         // Create a new node document reference
         const newNodeRef = doc(collection(db, NODES));
@@ -385,8 +378,7 @@ const Node = ({
         );
         for (let property in inheritance) {
           if (!inheritance[property].ref) {
-            inheritance[property].ref = nodeParentDoc.id;
-            inheritance[property].title = parentNode.title;
+            inheritance[property].ref = currentVisibleNode.id;
           }
         }
         // Clone the parent node data
@@ -397,7 +389,7 @@ const Node = ({
           .map((spec) => nodes[spec.id].title);
         newTitle = generateUniqueTitle(newTitle, specializationsTitles);
         const newNode = {
-          ...nodeParentDoc.data(),
+          ...nodeParentData,
           // Initialize the specializations sub-node
           specializations: { main: [] },
           inheritance,
@@ -442,13 +434,11 @@ const Node = ({
         // Add the new node to the database
         addNewNode({ id: newNodeRef.id, newNode });
 
+        scrollToTop();
+        setSelectTitle(true);
         // Update the parent node document in the database
         setOpenSelectModel(false);
         await updateDoc(nodeParentRef, parentNode);
-        setTimeout(() => {
-          scrollToTop();
-          setSelectTitle(true);
-        }, 900);
       } catch (error) {
         // Handle errors by logging to the console
         confirmIt("Sorry there was an Error please try again!", "Ok", "");
@@ -499,7 +489,9 @@ const Node = ({
       )
     ) {
       return (
-        mainSpecializations[rootTitle.toLowerCase()]?.specializations || {}
+        mainSpecializations[
+          getTitle(nodes, currentVisibleNode.root).toLowerCase()
+        ]?.specializations || {}
       );
     } else {
       const propertyType = currentVisibleNode.propertyType[selectedProperty];
@@ -588,7 +580,7 @@ const Node = ({
     }
   };
 
-  const handleSaveChildrenChanges = async () => {
+  const handleSaveChildrenChanges = useCallback(async () => {
     try {
       // Close the modal or perform any other necessary actions
       handleClose();
@@ -605,13 +597,15 @@ const Node = ({
 
       // Initialize a new array for storing updated children
       let oldChildren = [];
-
+      let allChildren: any = [];
       if (property === "specializations" || property === "generalizations") {
         oldChildren = [...nodeData[property][selectedCategory]];
+        allChildren = Object.values(nodeData[property]).flat();
       } else {
         oldChildren = [
           ...((nodeData.properties[property] || {})[selectedCategory] || []),
         ];
+        allChildren = Object.values(nodeData.properties[property]).flat();
       }
       // Iterate through checkedSpecializations to update newchildren
       for (let checked of checkedSpecializations) {
@@ -619,7 +613,10 @@ const Node = ({
         const findNode = nodes[checked];
 
         // Check if the node is not already present in newchildren
-        const indexFound = oldChildren.findIndex((onto) => onto.id === checked);
+        const indexFound = allChildren.findIndex(
+          (onto: any) => onto.id === checked
+        );
+
         if (indexFound === -1 && findNode) {
           // Add the node to newchildren if not present
           oldChildren.push({
@@ -688,7 +685,11 @@ const Node = ({
       await updateDoc(nodeDoc.ref, nodeData);
 
       // If _type is not "specializations", update the inheritance
-      if (property !== "specializations" && property !== "generalizations") {
+      if (
+        property !== "specializations" &&
+        property !== "generalizations" &&
+        property !== "isPartOf"
+      ) {
         updateInheritance({
           nodeId: currentVisibleNode.id,
           updatedProperty: property,
@@ -702,7 +703,16 @@ const Node = ({
         error,
       });
     }
-  };
+  }, [
+    checkedSpecializations,
+    currentVisibleNode.id,
+    currentVisibleNode.title,
+    db,
+    nodes,
+    saveType,
+    selectedCategory,
+    selectedProperty,
+  ]);
 
   const addNewCategory = useCallback(async () => {
     try {
@@ -838,9 +848,9 @@ const Node = ({
   const deleteCategory = async (property: string, category: string) => {
     if (
       await confirmIt(
-        "Are you sure you want to delete this Category?",
-        "Delete Category",
-        "Keep Category"
+        "Are you sure you want to delete this Collection?",
+        "Delete Collection",
+        "Keep Collection"
       )
     ) {
       try {
@@ -1327,6 +1337,17 @@ const Node = ({
     return searchWithFuse(searchValue, currentVisibleNode.nodeType);
   }, [searchValue]);
 
+  const handleLockNode = () => {
+    try {
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+      updateDoc(nodeRef, {
+        locked: !currentVisibleNode.locked,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   /* "root": "T
   of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. The user should not be able to modify the value of this field. Please automatically specify it by tracing the generalizations of this descendent activity back to reach one of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. So, obviously the root of the node 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward' itself and its direct specializations would be empty string because they are already roots."*/
 
@@ -1408,17 +1429,26 @@ const Node = ({
                     }}
                   >
                     {" "}
-                    <Checkbox
-                      checked={checkedSpecializations.includes(node.id)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        checkSpecialization(node.id);
-                      }}
-                      name={node.id}
-                    />
+                    {user.manageLock || !node.locked ? (
+                      <Checkbox
+                        checked={checkedSpecializations.includes(node.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          checkSpecialization(node.id);
+                        }}
+                        name={node.id}
+                      />
+                    ) : (
+                      <LockIcon
+                        sx={{
+                          color: "orange",
+                          mx: "15px",
+                        }}
+                      />
+                    )}
                     <Typography>{node.title}</Typography>
                   </ListItem>
                 ))}
@@ -1433,6 +1463,7 @@ const Node = ({
                 handleCloning={handleCloning}
                 clone={true}
                 stopPropagation={currentVisibleNode.id}
+                manageLock={user.manageLock}
               />
             )}
           </Paper>
@@ -1497,6 +1528,7 @@ const Node = ({
                   "Evaluation Dimension",
                   "Incentive",
                   "Reward",
+                  "Object",
                 ].map((item) => (
                   <MenuItem key={item} value={item}>
                     {item}
@@ -1543,10 +1575,10 @@ const Node = ({
         <DialogContent>
           <Box sx={{ height: "auto", width: "500px" }}>
             <Typography sx={{ mb: "13px", fontSize: "19px" }}>
-              {editCategory ? "Edit " : "Add "}a new Category:
+              {editCategory ? "Edit " : "Add "}a new Collection:
             </Typography>
             <TextField
-              placeholder={`Add Category`}
+              placeholder={`Add Collection`}
               fullWidth
               value={newCategory}
               multiline
@@ -1607,6 +1639,7 @@ const Node = ({
             sx={{
               display: "flex",
               alignItems: "center",
+              alignContent: "center",
               background: (theme) =>
                 theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
 
@@ -1626,90 +1659,133 @@ const Node = ({
               Node Title:
             </Typography>
 
-            {!currentVisibleNode.locked && (
+            <Box
+              sx={{
+                display: "flex",
+                mb: "5px",
+                ml: "auto",
+                alignItems: "center",
+              }}
+            >
               <Box
                 sx={{
                   display: "flex",
-                  mb: "5px",
-                  ml: "auto",
+                  px: "19px",
+                  mb: "15px",
                   alignItems: "center",
+                  alignContent: "center",
                 }}
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    px: "19px",
-                    mb: "15px",
-                    alignItems: "center",
-                    alignContent: "center",
-                  }}
-                >
-                  {rootTitle && (
-                    <Box
+                {getTitle(nodes, currentVisibleNode.root) && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      mt: "5px",
+                      gap: "15px",
+                    }}
+                  >
+                    <Typography
                       sx={{
-                        display: "flex",
-                        mt: "5px",
-                        gap: "15px",
+                        fontSize: "19px",
+                        fontWeight: "bold",
+                        color: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? theme.palette.common.gray50
+                            : theme.palette.common.notebookMainBlack,
                       }}
                     >
-                      <Typography
-                        sx={{
-                          fontSize: "19px",
-                          fontWeight: "bold",
-                          color: (theme) =>
-                            theme.palette.mode === "dark"
-                              ? theme.palette.common.gray50
-                              : theme.palette.common.notebookMainBlack,
-                        }}
-                      >
-                        Root:
-                      </Typography>
-                      <Link
-                        underline="hover"
-                        onClick={() => navigateToNode(currentVisibleNode.root)}
-                        sx={{
-                          cursor: "pointer",
-                          textDecoration: "underline",
-                          color: "orange",
-                        }}
-                      >
-                        {rootTitle}
-                      </Link>
-                    </Box>
+                      Root:
+                    </Typography>
+                    <Link
+                      underline="hover"
+                      onClick={() => navigateToNode(currentVisibleNode.root)}
+                      sx={{
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                        color: "orange",
+                      }}
+                    >
+                      {getTitle(nodes, currentVisibleNode.root)}
+                    </Link>
+                  </Box>
+                )}
+              </Box>
+              {(locked || user?.manageLock) && (
+                <Tooltip
+                  title={
+                    !user?.manageLock
+                      ? "This node is locked"
+                      : currentVisibleNode.locked
+                      ? "This node is locked for everyone else"
+                      : "Lock this node"
+                  }
+                >
+                  {user?.manageLock ? (
+                    <IconButton
+                      onClick={handleLockNode}
+                      sx={{
+                        borderRadius: "25px",
+                        mx: "7px",
+                        mb: "13px",
+                      }}
+                    >
+                      {currentVisibleNode.locked ? (
+                        <LockIcon
+                          sx={{
+                            color: "orange",
+                          }}
+                        />
+                      ) : (
+                        <LockOutlinedIcon
+                          sx={{
+                            color: "orange",
+                          }}
+                        />
+                      )}
+                    </IconButton>
+                  ) : currentVisibleNode.locked ? (
+                    <LockOutlinedIcon
+                      sx={{
+                        color: "orange",
+                      }}
+                    />
+                  ) : (
+                    <LockIcon
+                      sx={{
+                        color: "orange",
+                      }}
+                    />
                   )}
-                </Box>
+                </Tooltip>
+              )}
+
+              {!locked && (
                 <Button
                   onClick={deleteNode}
                   variant="contained"
                   sx={{ borderRadius: "25px", mb: "7px" }}
                 >
+                  {" "}
                   Delete Node
                 </Button>
-              </Box>
-            )}
+              )}
+            </Box>
           </Box>
 
           <Box>
-            {currentVisibleNode.locked ? (
-              <Typography sx={{ fontSize: "34px", p: "19px" }}>
-                {currentVisibleNode.title}
-              </Typography>
-            ) : (
-              <Box>
-                <Text
-                  currentVisibleNode={currentVisibleNode}
-                  setCurrentVisibleNode={setCurrentVisibleNode}
-                  nodes={nodes}
-                  property={"title"}
-                  text={currentVisibleNode.title}
-                  confirmIt={confirmIt}
-                  recordLogs={recordLogs}
-                  updateInheritance={updateInheritance}
-                  setSelectTitle={setSelectTitle}
-                  selectTitle={selectTitle}
-                />
-              </Box>
-            )}
+            <Text
+              currentVisibleNode={currentVisibleNode}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              nodes={nodes}
+              property={"title"}
+              text={currentVisibleNode.title}
+              confirmIt={confirmIt}
+              recordLogs={recordLogs}
+              updateInheritance={updateInheritance}
+              setSelectTitle={setSelectTitle}
+              selectTitle={selectTitle}
+              locked={locked}
+            />
           </Box>
         </Paper>
         {currentVisibleNode?.properties.hasOwnProperty("actor") && (
@@ -1771,6 +1847,7 @@ const Node = ({
               updateInheritance={updateInheritance}
               property={"actor"}
               nodes={nodes}
+              locked={locked}
             />
           </Paper>
         )}
@@ -1825,6 +1902,7 @@ const Node = ({
               updateInheritance={updateInheritance}
               relationType={"generalizations"}
               nodes={nodes}
+              locked={locked}
             />
           </Paper>
           <Paper
@@ -1873,6 +1951,7 @@ const Node = ({
               relationType={"specializations"}
               handleNewSpecialization={handleNewSpecialization}
               nodes={nodes}
+              locked={locked}
             />
           </Paper>
         </Stack>
@@ -1931,6 +2010,7 @@ const Node = ({
               updateInheritance={updateInheritance}
               property={"isPartOf"}
               nodes={nodes}
+              locked={locked}
             />
           </Paper>
           <Paper
@@ -1991,6 +2071,7 @@ const Node = ({
               updateInheritance={updateInheritance}
               property={"parts"}
               nodes={nodes}
+              locked={locked}
             />
           </Paper>
         </Stack>
@@ -2052,6 +2133,7 @@ const Node = ({
               currentVisibleNode={currentVisibleNode}
               property={"description"}
               setCurrentVisibleNode={setCurrentVisibleNode}
+              locked={locked}
             />
           </Box>
         </Paper>
@@ -2080,6 +2162,7 @@ const Node = ({
             removeProperty={removeProperty}
             user={user}
             nodes={nodes}
+            locked={locked}
           />
         </Box>
       </Box>

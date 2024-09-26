@@ -616,6 +616,7 @@ const Ontology = () => {
         id: node.category ? `${node.id}-${nodeTitle.trim()}` : node.id,
         path: [...path, node.id],
         isCategory: !!node.category,
+        locked: !!node.locked,
         title: nodeTitle,
         specializations: {},
       };
@@ -639,6 +640,7 @@ const Ontology = () => {
             path: [...path, node.id],
             isCategory: !!node.category,
             title: nodeTitle,
+            locked: !!node.locked,
             specializations: {
               ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
               ...getSpecializationsTree(specializations, [...path, node.id]),
@@ -651,12 +653,14 @@ const Ontology = () => {
             path: [...path, node.id],
             title: nodeTitle,
             c: node.category,
+            locked: !!node.locked,
             specializations: {
               ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
               [category]: {
                 isCategory: true,
                 id: `${node.id}-${category.trim()}`, // Assuming newId and db are defined elsewhere
                 title: category,
+                locked: !!node.locked,
                 specializations: getSpecializationsTree(specializations, [
                   ...path,
                   node.id,
@@ -815,6 +819,10 @@ const Ontology = () => {
     async ({ id, newNode }: { id: string; newNode: any }) => {
       try {
         // Reference to the new node document
+        setCurrentVisibleNode({
+          id,
+          ...newNode,
+        });
         const newNodeRef = doc(collection(db, NODES), id);
         // Set the document with the new node data
         await setDoc(newNodeRef, {
@@ -830,12 +838,6 @@ const Ontology = () => {
         });
 
         // Set the newly created node as editable
-        setTimeout(() => {
-          setCurrentVisibleNode({
-            id,
-            ...newNode,
-          });
-        }, 1000);
       } catch (error) {
         console.error(error);
       }
@@ -972,7 +974,7 @@ const Ontology = () => {
       // Commit all updates as a batch
       await batch.commit();
     } catch (error) {
-      console.log(error);
+      console.error(error);
       recordLogs({
         type: "error",
         error,
@@ -1279,12 +1281,12 @@ const Ontology = () => {
                   }}
                 >
                   <Tab
-                    label="Tree View"
+                    label="Outline"
                     {...a11yProps(0)}
                     sx={{ width: "50%", fontSize: "20px" }}
                   />
                   <Tab
-                    label="DAG View"
+                    label="Graph View"
                     {...a11yProps(1)}
                     sx={{ width: "50%", fontSize: "20px" }}
                   />
@@ -1364,7 +1366,7 @@ const Ontology = () => {
               }}
             >
               <Box ref={scrolling}></Box>
-              <Breadcrumbs sx={{ ml: "40px", mt: "14px" }}>
+              {/*               <Breadcrumbs sx={{ ml: "40px", mt: "14px" }}>
                 {(ontologyPath || []).map((path) => (
                   <Link
                     underline={path.category ? "none" : "hover"}
@@ -1390,7 +1392,7 @@ const Ontology = () => {
                       (path.title.split(" ").length > 3 ? "..." : "")}
                   </Link>
                 ))}
-              </Breadcrumbs>
+              </Breadcrumbs> */}
 
               {currentVisibleNode && (
                 <Node
@@ -1412,6 +1414,7 @@ const Ontology = () => {
                   navigateToNode={navigateToNode}
                   eachOntologyPath={eachOntologyPath}
                   searchWithFuse={searchWithFuse}
+                  locked={!!currentVisibleNode.locked && !user?.manageLock}
                 />
               )}
             </Box>
@@ -1657,6 +1660,7 @@ const Ontology = () => {
           handleSearch={handleSearch}
           navigateToNode={navigateToNode}
           displayInheritanceSettings={displayInheritanceSettings}
+          locked={!!currentVisibleNode?.locked && !user?.manageLock}
         />
       </Box>
 

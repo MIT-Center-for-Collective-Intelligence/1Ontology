@@ -956,14 +956,6 @@ const Chat = ({
                       }}
                     />
                   </Box>
-                  <Typography
-                    fontWeight={"500"}
-                    fontSize={"18px"}
-                    textAlign={"center"}
-                    maxWidth={"300px"}
-                  >
-                    Messages not found
-                  </Typography>
                 </Box>
               </Box>
             </Box>

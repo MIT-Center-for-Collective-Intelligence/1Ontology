@@ -69,6 +69,7 @@ export type User = {
   claims: any;
   rightPanel: boolean;
   currentNode: string;
+  manageLock: boolean;
 };
 
 export type UserSettings = {

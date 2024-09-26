@@ -82,7 +82,7 @@ export const retrieveAuthenticatedUser = async (
   userId: string,
   claims: { [key: string]: boolean }
 ) => {
-  let user: User | null = null;
+  let user: any = null;
   let theme: UserTheme = "Dark";
   const db = getFirestore();
   const q = query(
@@ -100,7 +100,7 @@ export const retrieveAuthenticatedUser = async (
       lName: userData.lName,
       uname: userData.uname,
       email: userData.email,
-      claims,
+      manageLock: !!claims.manageLock,
       rightPanel: userData.rightPanel,
       currentNode: userData.currentNode,
       ...userData,

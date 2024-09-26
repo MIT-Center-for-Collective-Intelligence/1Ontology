@@ -50,6 +50,7 @@ interface NodeBodyProps {
   removeProperty: any;
   user: any;
   nodes: { [id: string]: INode };
+  locked: boolean;
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -69,6 +70,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   removeProperty,
   user,
   nodes,
+  locked,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -142,45 +144,50 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                   )}
                   :
                 </Typography>
-                <Box sx={{ display: "flex", ml: "15px", gap: "15px" }}>
-                  {currentVisibleNode.propertyType[property] !== "string" && (
+                {!locked && (
+                  <Box sx={{ display: "flex", ml: "15px", gap: "15px" }}>
+                    {currentVisibleNode.propertyType[property] !== "string" && (
+                      <Button
+                        variant="outlined"
+                        onClick={() => showList(property, "main")}
+                        sx={{
+                          borderRadius: "25px",
+                          backgroundColor: BUTTON_COLOR,
+                        }}
+                      >
+                        {property !== "specializations" ? "Select" : "Add"}{" "}
+                        {capitalizeFirstLetter(
+                          DISPLAY[property] ? DISPLAY[property] : property
+                        )}
+                      </Button>
+                    )}
+                    {currentVisibleNode.propertyType[property] !== "string" && (
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          setOpenAddCategory(true);
+                          setType(property);
+                        }}
+                        sx={{
+                          borderRadius: "25px",
+                          backgroundColor: BUTTON_COLOR,
+                        }}
+                      >
+                        Add Collection
+                      </Button>
+                    )}
                     <Button
                       variant="outlined"
-                      onClick={() => showList(property, "main")}
+                      onClick={() => removeProperty(property)}
                       sx={{
                         borderRadius: "25px",
                         backgroundColor: BUTTON_COLOR,
                       }}
                     >
-                      {property !== "specializations" ? "Select" : "Add"}{" "}
-                      {capitalizeFirstLetter(
-                        DISPLAY[property] ? DISPLAY[property] : property
-                      )}
+                      Delete
                     </Button>
-                  )}
-                  {currentVisibleNode.propertyType[property] !== "string" && (
-                    <Button
-                      variant="outlined"
-                      onClick={() => {
-                        setOpenAddCategory(true);
-                        setType(property);
-                      }}
-                      sx={{
-                        borderRadius: "25px",
-                        backgroundColor: BUTTON_COLOR,
-                      }}
-                    >
-                      Add Category
-                    </Button>
-                  )}
-                  <Button
-                    variant="outlined"
-                    onClick={() => removeProperty(property)}
-                    sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
-                  >
-                    Delete
-                  </Button>
-                </Box>
+                  </Box>
+                )}
 
                 <Box
                   sx={{
@@ -239,7 +246,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                             theme.palette.mode === "dark" ? "" : "white",
                         }}
                       >
-                        Select Course
+                        Select Inheritance
                       </MenuItem>
                       {[
                         ...Object.values(currentVisibleNode.generalizations),
@@ -280,7 +287,10 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     sx={{ display: "grid", mt: "5px", px: "15px" }}
                   >
                     <DragDropContext
-                      onDragEnd={(e) => handleSorting(e, property)}
+                      onDragEnd={(e) => {
+                        if (locked) return;
+                        handleSorting(e, property);
+                      }}
                     >
                       <ul style={{ padding: 0 }}>
                         {Object.keys(
@@ -326,30 +336,37 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                                         {category}
                                       </Typography>{" "}
                                       :
-                                      <Button
-                                        onClick={() =>
-                                          showList(property, category)
-                                        }
-                                        sx={{ ml: "5px" }}
-                                      >
-                                        {"Select"} {property}
-                                      </Button>
-                                      <Button
-                                        onClick={() =>
-                                          handleEditCategory(property, category)
-                                        }
-                                        sx={{ ml: "5px" }}
-                                      >
-                                        Edit
-                                      </Button>
-                                      <Button
-                                        onClick={() =>
-                                          deleteCategory(property, category)
-                                        }
-                                        sx={{ ml: "5px" }}
-                                      >
-                                        Delete
-                                      </Button>
+                                      {!locked && (
+                                        <Box sx={{ display: "flex" }}>
+                                          <Button
+                                            onClick={() =>
+                                              showList(property, category)
+                                            }
+                                            sx={{ ml: "5px" }}
+                                          >
+                                            {"Select"} {property}
+                                          </Button>
+                                          <Button
+                                            onClick={() =>
+                                              handleEditCategory(
+                                                property,
+                                                category
+                                              )
+                                            }
+                                            sx={{ ml: "5px" }}
+                                          >
+                                            Edit
+                                          </Button>
+                                          <Button
+                                            onClick={() =>
+                                              deleteCategory(property, category)
+                                            }
+                                            sx={{ ml: "5px" }}
+                                          >
+                                            Delete
+                                          </Button>
+                                        </Box>
+                                      )}
                                     </Box>
                                   </li>
                                 )}
@@ -425,6 +442,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                                                       }
                                                       nodes={nodes}
                                                       sx={{ pl: 1 }}
+                                                      index={index}
                                                     />
                                                   </ListItem>
                                                 )}
@@ -460,6 +478,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       property={property}
                       setCurrentVisibleNode={setCurrentVisibleNode}
                       nodes={nodes}
+                      locked={locked}
                     />
                   )
                 )}
@@ -467,15 +486,21 @@ const NodeBody: React.FC<NodeBodyProps> = ({
             </Paper>
           ))}
       </Box>
-      <Button
-        onClick={() => {
-          setOpenAddField(true);
-        }}
-        variant="outlined"
-        sx={{ borderRadius: "25px", mb: "5px", backgroundColor: BUTTON_COLOR }}
-      >
-        Add New Property
-      </Button>
+      {!locked && (
+        <Button
+          onClick={() => {
+            setOpenAddField(true);
+          }}
+          variant="outlined"
+          sx={{
+            borderRadius: "25px",
+            mb: "5px",
+            backgroundColor: BUTTON_COLOR,
+          }}
+        >
+          Add New Property
+        </Button>
+      )}
     </Box>
   );
 };

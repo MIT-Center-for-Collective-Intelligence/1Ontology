@@ -122,6 +122,7 @@ type AppHeaderProps = {
   nodes: { [nodeId: string]: INode };
   navigateToNode: any;
   displayInheritanceSettings: any;
+  locked: boolean;
 };
 const AppHeader = forwardRef(
   (
@@ -139,6 +140,7 @@ const AppHeader = forwardRef(
       displayInheritanceSettings,
       nodes,
       navigateToNode,
+      locked,
     }: AppHeaderProps,
     ref
   ) => {
@@ -405,182 +407,182 @@ const AppHeader = forwardRef(
       );
       const querySnapshot = await getDocs(nodesCollection);
       let i = 0;
-      for (let nodeDoc of querySnapshot.docs) {
-        const nodeData = { ...nodeDoc.data(), id: nodeDoc.id } as INode;
-        if (nodeData.specializations) {
-          for (let category of Object.keys(nodeData.specializations)) {
-            for (let specialization of nodeData.specializations[category]) {
-              const specNodeRef = doc(collection(db, NODES), specialization.id);
-              const specNodeDoc = await getDoc(specNodeRef);
-              if (!specNodeDoc.exists()) {
-                console.log("Specialization not found: ", specialization?.id);
-              } else {
-                const specNodeData = specNodeDoc.data() as INode;
-                /*       if (specNodeData.title !== specialization.title) {
-                  console.log(
-                    "Specialization title mismatch: ",
-                    specNodeData.title,
-                    specialization.title
-                  );
-                } */
-                if (specNodeData.generalizations) {
-                  let generalizationound = false;
-                  for (let categ of Object.keys(nodeData.generalizations)) {
-                    if (
-                      specNodeData.generalizations[categ]?.findIndex(
-                        (generali) => generali.id === nodeData.id
-                      ) !== -1
-                    ) {
-                      generalizationound = true;
-                    }
-                  }
-                  if (!generalizationound) {
-                    console.log("Generalization not found: ", {
-                      specialization: specNodeData.title,
-                      node: nodeData.title,
-                    });
-                  }
-                } else {
-                  console.log("Specialization has no generalizations: ", {
-                    specialization: specNodeData.title,
-                    node: nodeData.title,
-                  });
-                }
-              }
-            }
-          }
-        }
-        if (nodeData.generalizations) {
-          for (let category of Object.keys(nodeData.generalizations)) {
-            for (let generalization of nodeData.generalizations[category]) {
-              const genNodeRef = doc(collection(db, NODES), generalization.id);
-              const genNodeDoc = await getDoc(genNodeRef);
-              if (!genNodeDoc.exists()) {
-                console.log("Generalization not found: ", generalization.id);
-              } else {
-                const genNodeData = genNodeDoc.data() as INode;
-                /*         if (genNodeData.title !== generalization.title) {
-                  console.log(
-                    "Generalization title mismatch: ",
-                    genNodeData.title,
-                    generalization.title
-                  );
-                } */
-                if (genNodeData.specializations) {
-                  let specializationFound = false;
-                  for (let categ of Object.keys(nodeData.specializations)) {
-                    if (
-                      genNodeData.specializations[categ]?.findIndex(
-                        (speciali) => speciali.id === nodeData.id
-                      ) !== -1
-                    ) {
-                      specializationFound = true;
-                    }
-                  }
-                  if (!specializationFound) {
-                    console.log("Specialization not found: ", {
-                      generalization: genNodeData.title,
-                      node: nodeData.title,
-                    });
-                  }
-                } else {
-                  console.log("Generalization has no specializations: ", {
-                    generalization: genNodeData.title,
-                    node: nodeData.title,
-                  });
-                }
-              }
-            }
-          }
-        }
-        if (nodeData.properties.parts) {
-          for (let category of Object.keys(nodeData.properties.parts)) {
-            for (let part of nodeData.properties.parts[category]) {
-              const partNodeRef = doc(collection(db, NODES), part.id);
-              const partNodeDoc = await getDoc(partNodeRef);
-              if (!partNodeDoc.exists()) {
-                console.log("Part not found: ", part.title);
-              } else {
-                const partNodeData = partNodeDoc.data() as INode;
-                /*                 if (partNodeData.title !== part.title) {
-                  console.log(
-                    "Part title mismatch: ",
-                    partNodeData.title,
-                    part.title
-                  );
-                } */
-                if (partNodeData.properties.isPartOf) {
-                  let isPartOfFound = false;
-                  for (let categ of Object.keys(nodeData.properties.isPartOf)) {
-                    if (
-                      partNodeData.properties.isPartOf[categ].findIndex(
-                        (partOf: { id: string }) => partOf.id === nodeData.id
-                      ) !== -1
-                    ) {
-                      isPartOfFound = true;
-                    }
-                  }
-                  if (!isPartOfFound) {
-                    console.log("IsPartOf not found: ", {
-                      part: partNodeData.title,
-                      node: nodeData.title,
-                    });
-                  }
-                } else {
-                  console.log("Part has no isPartOf: ", {
-                    part: partNodeData.title,
-                    node: nodeData.title,
-                  });
-                }
-              }
-            }
-          }
-        }
-        if (nodeData.properties.isPartOf) {
-          for (let category of Object.keys(nodeData.properties.isPartOf)) {
-            for (let isPartOf of nodeData.properties.isPartOf[category]) {
-              const isPartOfNodeRef = doc(collection(db, NODES), isPartOf.id);
-              const isPartOfNodeDoc = await getDoc(isPartOfNodeRef);
-              if (!isPartOfNodeDoc.exists()) {
-                console.log("IsPartOf not found: ", isPartOf.title);
-              } else {
-                const isPartOfNodeData = isPartOfNodeDoc.data() as INode;
-                /*                 if (isPartOfNodeData.title !== isPartOf.title) {
-                  console.log(
-                    "IsPartOf title mismatch: ",
-                    isPartOfNodeData.title,
-                    isPartOf.title
-                  );
-                } */
-                if (isPartOfNodeData.properties.parts) {
-                  let partFound = false;
-                  for (let categ of Object.keys(nodeData.properties.parts)) {
-                    if (
-                      isPartOfNodeData.properties.parts[categ].findIndex(
-                        (part: { id: string }) => part.id === nodeData.id
-                      ) !== -1
-                    ) {
-                      partFound = true;
-                    }
-                  }
-                  if (!partFound) {
-                    console.log("Part not found: ", {
-                      isPartOf: isPartOfNodeData.title,
-                      node: nodeData.title,
-                    });
-                  }
-                } else {
-                  console.log("IsPartOf has no parts: ", {
-                    isPartOf: isPartOfNodeData.title,
-                    node: nodeData.title,
-                  });
-                }
-              }
-            }
-          }
-        }
-        console.log("Node: ", i++);
-      }
+      // for (let nodeDoc of querySnapshot.docs) {
+      //   const nodeData = { ...nodeDoc.data(), id: nodeDoc.id } as INode;
+      //   if (nodeData.specializations) {
+      //     for (let category of Object.keys(nodeData.specializations)) {
+      //       for (let specialization of nodeData.specializations[category]) {
+      //         const specNodeRef = doc(collection(db, NODES), specialization.id);
+      //         const specNodeDoc = await getDoc(specNodeRef);
+      //         if (!specNodeDoc.exists()) {
+      //           console.log("Specialization not found: ", specialization?.id);
+      //         } else {
+      //           const specNodeData = specNodeDoc.data() as INode;
+      //           /*       if (specNodeData.title !== specialization.title) {
+      //             console.log(
+      //               "Specialization title mismatch: ",
+      //               specNodeData.title,
+      //               specialization.title
+      //             );
+      //           } */
+      //           if (specNodeData.generalizations) {
+      //             let generalizationound = false;
+      //             for (let categ of Object.keys(nodeData.generalizations)) {
+      //               if (
+      //                 specNodeData.generalizations[categ]?.findIndex(
+      //                   (generali) => generali.id === nodeData.id
+      //                 ) !== -1
+      //               ) {
+      //                 generalizationound = true;
+      //               }
+      //             }
+      //             if (!generalizationound) {
+      //               console.log("Generalization not found: ", {
+      //                 specialization: specNodeData.title,
+      //                 node: nodeData.title,
+      //               });
+      //             }
+      //           } else {
+      //             console.log("Specialization has no generalizations: ", {
+      //               specialization: specNodeData.title,
+      //               node: nodeData.title,
+      //             });
+      //           }
+      //         }
+      //       }
+      //     }
+      //   }
+      //   if (nodeData.generalizations) {
+      //     for (let category of Object.keys(nodeData.generalizations)) {
+      //       for (let generalization of nodeData.generalizations[category]) {
+      //         const genNodeRef = doc(collection(db, NODES), generalization.id);
+      //         const genNodeDoc = await getDoc(genNodeRef);
+      //         if (!genNodeDoc.exists()) {
+      //           console.log("Generalization not found: ", generalization.id);
+      //         } else {
+      //           const genNodeData = genNodeDoc.data() as INode;
+      //           /*         if (genNodeData.title !== generalization.title) {
+      //             console.log(
+      //               "Generalization title mismatch: ",
+      //               genNodeData.title,
+      //               generalization.title
+      //             );
+      //           } */
+      //           if (genNodeData.specializations) {
+      //             let specializationFound = false;
+      //             for (let categ of Object.keys(nodeData.specializations)) {
+      //               if (
+      //                 genNodeData.specializations[categ]?.findIndex(
+      //                   (speciali) => speciali.id === nodeData.id
+      //                 ) !== -1
+      //               ) {
+      //                 specializationFound = true;
+      //               }
+      //             }
+      //             if (!specializationFound) {
+      //               console.log("Specialization not found: ", {
+      //                 generalization: genNodeData.title,
+      //                 node: nodeData.title,
+      //               });
+      //             }
+      //           } else {
+      //             console.log("Generalization has no specializations: ", {
+      //               generalization: genNodeData.title,
+      //               node: nodeData.title,
+      //             });
+      //           }
+      //         }
+      //       }
+      //     }
+      //   }
+      //   if (nodeData.properties.parts) {
+      //     for (let category of Object.keys(nodeData.properties.parts)) {
+      //       for (let part of nodeData.properties.parts[category]) {
+      //         const partNodeRef = doc(collection(db, NODES), part.id);
+      //         const partNodeDoc = await getDoc(partNodeRef);
+      //         if (!partNodeDoc.exists()) {
+      //           console.log("Part not found: ", part.title);
+      //         } else {
+      //           const partNodeData = partNodeDoc.data() as INode;
+      //           /*                 if (partNodeData.title !== part.title) {
+      //             console.log(
+      //               "Part title mismatch: ",
+      //               partNodeData.title,
+      //               part.title
+      //             );
+      //           } */
+      //           if (partNodeData.properties.isPartOf) {
+      //             let isPartOfFound = false;
+      //             for (let categ of Object.keys(nodeData.properties.isPartOf)) {
+      //               if (
+      //                 partNodeData.properties.isPartOf[categ].findIndex(
+      //                   (partOf: { id: string }) => partOf.id === nodeData.id
+      //                 ) !== -1
+      //               ) {
+      //                 isPartOfFound = true;
+      //               }
+      //             }
+      //             if (!isPartOfFound) {
+      //               console.log("IsPartOf not found: ", {
+      //                 part: partNodeData.title,
+      //                 node: nodeData.title,
+      //               });
+      //             }
+      //           } else {
+      //             console.log("Part has no isPartOf: ", {
+      //               part: partNodeData.title,
+      //               node: nodeData.title,
+      //             });
+      //           }
+      //         }
+      //       }
+      //     }
+      //   }
+      //   if (nodeData.properties.isPartOf) {
+      //     for (let category of Object.keys(nodeData.properties.isPartOf)) {
+      //       for (let isPartOf of nodeData.properties.isPartOf[category]) {
+      //         const isPartOfNodeRef = doc(collection(db, NODES), isPartOf.id);
+      //         const isPartOfNodeDoc = await getDoc(isPartOfNodeRef);
+      //         if (!isPartOfNodeDoc.exists()) {
+      //           console.log("IsPartOf not found: ", isPartOf.title);
+      //         } else {
+      //           const isPartOfNodeData = isPartOfNodeDoc.data() as INode;
+      //           /*                 if (isPartOfNodeData.title !== isPartOf.title) {
+      //             console.log(
+      //               "IsPartOf title mismatch: ",
+      //               isPartOfNodeData.title,
+      //               isPartOf.title
+      //             );
+      //           } */
+      //           if (isPartOfNodeData.properties.parts) {
+      //             let partFound = false;
+      //             for (let categ of Object.keys(nodeData.properties.parts)) {
+      //               if (
+      //                 isPartOfNodeData.properties.parts[categ].findIndex(
+      //                   (part: { id: string }) => part.id === nodeData.id
+      //                 ) !== -1
+      //               ) {
+      //                 partFound = true;
+      //               }
+      //             }
+      //             if (!partFound) {
+      //               console.log("Part not found: ", {
+      //                 isPartOf: isPartOfNodeData.title,
+      //                 node: nodeData.title,
+      //               });
+      //             }
+      //           } else {
+      //             console.log("IsPartOf has no parts: ", {
+      //               isPartOf: isPartOfNodeData.title,
+      //               node: nodeData.title,
+      //             });
+      //           }
+      //         }
+      //       }
+      //     }
+      //   }
+      //   console.log("Node: ", i++);
+      // }
 
       const data = querySnapshot.docs.map((doc) =>
         getStructureForJSON({
@@ -706,17 +708,19 @@ const AppHeader = forwardRef(
                 alignItems="center"
                 spacing={"8px"}
               >
-                <Tooltip title="Manage Inheritance">
-                  <IconButton onClick={displayInheritanceSettings}>
-                    <AccountTreeIcon
-                      color={
-                        rightPanelVisible && sidebarView === 2
-                          ? "primary"
-                          : "inherit"
-                      }
-                    />
-                  </IconButton>
-                </Tooltip>
+                {!locked && (
+                  <Tooltip title="Manage Inheritance">
+                    <IconButton onClick={displayInheritanceSettings}>
+                      <AccountTreeIcon
+                        color={
+                          rightPanelVisible && sidebarView === 2
+                            ? "primary"
+                            : "inherit"
+                        }
+                      />
+                    </IconButton>
+                  </Tooltip>
+                )}
 
                 <Tooltip title="Open Search Tab">
                   <IconButton onClick={handleSearch}>

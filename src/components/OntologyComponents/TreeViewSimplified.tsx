@@ -4,6 +4,7 @@ import { Box, Typography, Checkbox, Button } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { TreeVisual } from " @components/types/INode";
+import LockIcon from "@mui/icons-material/Lock";
 
 type ITreeViewSimplifiedProps = {
   onOpenNodesTree: (nodeId: string) => void;
@@ -18,6 +19,7 @@ type ITreeViewSimplifiedProps = {
   stopPropagation?: string;
   searchValue?: string;
   sendNode?: (nodeId: string, title: string) => void;
+  manageLock?: boolean;
 };
 
 const TreeViewSimplified = ({
@@ -33,6 +35,7 @@ const TreeViewSimplified = ({
   stopPropagation,
   searchValue,
   sendNode,
+  manageLock,
 }: ITreeViewSimplifiedProps) => {
   const [expanded, setExpanded] = useState<string[]>([]);
 
@@ -80,19 +83,30 @@ const TreeViewSimplified = ({
                 id={`node-${treeVisualization[category]?.id}`}
               >
                 {!treeVisualization[category].isCategory && clone && (
-                  <Checkbox
-                    checked={checkedSpecializations.includes(
-                      treeVisualization[category]?.id
+                  <>
+                    {manageLock || !treeVisualization[category].locked ? (
+                      <Checkbox
+                        checked={checkedSpecializations.includes(
+                          treeVisualization[category]?.id
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          checkSpecialization(treeVisualization[category].id);
+                        }}
+                        name={treeVisualization[category].id}
+                      />
+                    ) : (
+                      <LockIcon
+                        sx={{
+                          color: "orange",
+                          mx: "15px",
+                        }}
+                      />
                     )}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      checkSpecialization(treeVisualization[category].id);
-                    }}
-                    name={treeVisualization[category].id}
-                  />
+                  </>
                 )}
                 <Typography
                   sx={{
@@ -112,25 +126,27 @@ const TreeViewSimplified = ({
                   {category}
                 </Typography>
 
-                {clone && !treeVisualization[category].isCategory && (
-                  <Button
-                    variant="outlined"
-                    sx={{ m: "9px" }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCloning(treeVisualization[category]);
-                    }}
-                  >
-                    <span style={{ color: "green", paddingInline: "10px" }}>
-                      New
-                    </span>
-                    {category.split(" ").splice(0, 3).join(" ") +
-                      (category.split(" ").length > 3 ? "..." : "")}{" "}
-                    <span style={{ color: "green", paddingInline: "10px" }}>
-                      {"Specialization "}
-                    </span>
-                  </Button>
-                )}
+                {clone &&
+                  !treeVisualization[category].isCategory &&
+                  !treeVisualization[category].locked && (
+                    <Button
+                      variant="outlined"
+                      sx={{ m: "9px" }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCloning(treeVisualization[category]);
+                      }}
+                    >
+                      <span style={{ color: "green", paddingInline: "10px" }}>
+                        New
+                      </span>
+                      {category.split(" ").splice(0, 3).join(" ") +
+                        (category.split(" ").length > 3 ? "..." : "")}{" "}
+                      <span style={{ color: "green", paddingInline: "10px" }}>
+                        {"Specialization "}
+                      </span>
+                    </Button>
+                  )}
                 {sendNode && !treeVisualization[category].isCategory && (
                   <Button
                     variant="outlined"
@@ -178,6 +194,7 @@ const TreeViewSimplified = ({
                   handleCloning={handleCloning}
                   clone={clone}
                   sendNode={sendNode}
+                  manageLock={manageLock}
                 />
               )}
           </TreeItem>
