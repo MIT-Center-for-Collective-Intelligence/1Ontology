@@ -67,6 +67,7 @@ In this example, `ChildNode` is used to display a child node with the given prop
  */
 import { NODES } from " @components/lib/firestoreClient/collections";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
+import { unlinkPropertyOf } from " @components/lib/utils/helpers";
 import { INode, INodePath, IChildNode } from " @components/types/INode";
 import { Box, Button, Link, Tooltip, useTheme } from "@mui/material";
 import {
@@ -117,30 +118,6 @@ const LinkNode = ({
     navigateToNode(child.id);
   };
 
-  const removePartsLink = async (
-    type: "parts" | "isPartOf",
-    removeNodeId: string,
-    removeIdFrom: string
-  ) => {
-    const specOrGenDoc = await getDoc(doc(collection(db, NODES), removeIdFrom));
-    let removeFrom: "parts" | "isPartOf" = "parts";
-
-    if (type === "parts") {
-      removeFrom = "isPartOf";
-    }
-    if (specOrGenDoc.exists()) {
-      const specOrGenData = specOrGenDoc.data() as INode;
-      for (let cat in specOrGenData.properties[removeFrom]) {
-        specOrGenData.properties[removeFrom][cat] = specOrGenData.properties[
-          removeFrom
-        ][cat].filter((c: { id: string }) => c.id !== removeNodeId);
-      }
-      await updateDoc(specOrGenDoc.ref, {
-        [`properties.${removeFrom}`]: specOrGenData.properties[removeFrom],
-      });
-    }
-  };
-
   const deleteChildNode = async () => {
     try {
       if (
@@ -176,11 +153,8 @@ const LinkNode = ({
 
           // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
           // const childData = childDoc.data() as INode;
-          if (
-            (property === "parts" || property === "isPartOf") &&
-            shouldBeRemovedFromParent
-          ) {
-            removePartsLink(property, currentVisibleNode.id, child.id);
+          if (shouldBeRemovedFromParent) {
+            unlinkPropertyOf(db, property, currentVisibleNode.id, child.id);
           }
 
           await updateDoc(nodeDoc.ref, {
@@ -199,8 +173,9 @@ const LinkNode = ({
           }
 
           recordLogs({
-            action: "unlinked a child",
-            childId: child.id,
+            action: "unlinked a node",
+            property,
+            unlinked: child.id,
             node: nodeDoc.id,
           });
         }

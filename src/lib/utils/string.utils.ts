@@ -107,3 +107,20 @@ export const timeAgo = (timestamp: Timestamp) => {
     return "a few seconds ago";
   }
 };
+
+// Function to generate a unique title
+export const generateUniqueTitle = (
+  title: string,
+  existingTitles: string[]
+) => {
+  let uniqueTitle = title;
+  let count = 1;
+
+  // Check if the title already exists in the array of titles
+  while (existingTitles.includes(uniqueTitle)) {
+    count++;
+    uniqueTitle = `${title} ${count}`; // Append a number if the title already exists
+  }
+
+  return uniqueTitle;
+};

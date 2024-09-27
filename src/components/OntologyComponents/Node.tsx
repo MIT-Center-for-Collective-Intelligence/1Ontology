@@ -105,9 +105,6 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-// import useConfirmDialog from "@/hooks/useConfirmDialog";
-// import { DESIGN_SYSTEM_COLORS } from "@/lib/theme/colors";
-
 import Text from "./Text";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
@@ -118,7 +115,6 @@ import {
   MainSpecializations,
 } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
-
 import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import TreeViewSimplified from "./TreeViewSimplified";
 import { SearchBox } from "../SearchBox/SearchBox";
@@ -126,11 +122,17 @@ import NodeBody from "../NodBody/NodeBody";
 import LinksSide from "../Generalizations/LinksSide";
 import LinksSideParts from "../Parts/LinksSideParts";
 import {
+  capitalizeFirstLetter,
+  generateUniqueTitle,
   getPropertyValue,
   getTitle,
 } from " @components/lib/utils/string.utils";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import {
+  removeIsPartOf,
+  unlinkPropertyOf,
+} from " @components/lib/utils/helpers";
 
 type INodeProps = {
   scrolling: any;
@@ -140,7 +142,6 @@ type INodeProps = {
     path: { id: string; title: string },
     type: string
   ) => void;
-  ontologyPath: INodePath[];
   setSnackbarMessage: (message: string) => void;
 
   user: any;
@@ -167,14 +168,10 @@ const Node = ({
   mainSpecializations,
   nodes,
   addNewNode,
-  // INITIAL_VALUES,
-  ontologyPath,
-  lockedNodeFields,
   user,
   recordLogs,
   updateInheritance,
   navigateToNode,
-  eachOntologyPath,
   searchWithFuse,
   locked,
 }: INodeProps) => {
@@ -184,7 +181,7 @@ const Node = ({
 
   const [openSelectModel, setOpenSelectModel] = useState(false);
   const handleClose = () => {
-    setCheckedItems([]);
+    setCheckedItems(new Set());
     setOpenSelectModel(false);
     setSelectedCategory("");
   };
@@ -198,7 +195,7 @@ const Node = ({
   const [newCategory, setNewCategory] = useState("");
   const [selectedProperty, setSelectedProperty] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [checkedItems, setCheckedItems] = useState<any>([]);
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [editCategory, setEditCategory] = useState<{
     property: string;
     category: string;
@@ -209,8 +206,6 @@ const Node = ({
   const [newFieldType, setNewFieldType] = useState("String");
   const [openAddField, setOpenAddField] = useState(false);
   const [newFieldTitle, setNewFieldTitle] = useState("");
-  const [saveType, setSaveType] = useState("");
-  const [viewValue, setViewValue] = useState<number>(0);
   const [viewValueSpecialization, setViewValueSpecialization] =
     useState<number>(1);
   const [selectTitle, setSelectTitle] = useState(false);
@@ -236,25 +231,20 @@ const Node = ({
     }
   }, []);
 
-  const capitalizeFirstLetter = (word: string) => {
-    if (word === "role") {
-      return "Roles";
-    }
-    if (word === "individual") {
-      return "Type of individuals in group";
-    }
-    return word.charAt(0).toUpperCase() + word.slice(1);
-  };
+  const searchResultsForSelection = useMemo(() => {
+    const propertyType =
+      currentVisibleNode.propertyType[selectedProperty] || "";
+    return searchWithFuse(searchValue, propertyType);
+  }, [searchValue, selectedProperty]);
 
   const markItemAsChecked = (checkedId: string) => {
-    setCheckedItems((oldChecked: string[]) => {
-      let _oldChecked = [...oldChecked];
-      if (!_oldChecked.includes(checkedId)) {
-        /*        _oldChecked = _oldChecked.filter((cheked) => cheked !== checkedId);
-      } else { */
-        _oldChecked.push(checkedId);
+    setCheckedItems((oldChecked: Set<string>) => {
+      if (oldChecked.has(checkedId)) {
+        oldChecked.delete(checkedId);
+      } else {
+        oldChecked.add(checkedId);
       }
-      return _oldChecked;
+      return oldChecked;
     });
   };
 
@@ -334,20 +324,6 @@ const Node = ({
       console.error(error);
       return null;
     }
-  };
-
-  // Function to generate a unique title
-  const generateUniqueTitle = (title: string, existingTitles: string[]) => {
-    let uniqueTitle = title;
-    let count = 1;
-
-    // Check if the title already exists in the array of titles
-    while (existingTitles.includes(uniqueTitle)) {
-      count++;
-      uniqueTitle = `${title} ${count}`; // Append a number if the title already exists
-    }
-
-    return uniqueTitle;
   };
 
   // Function to add a new specialization to the node
@@ -458,17 +434,17 @@ const Node = ({
     setOpenSelectModel(true);
     setSelectedProperty(property);
     setSelectedCategory(category);
-    let children = [];
+    let previousCheckedItems = [];
     if (property === "specializations" || property === "generalizations") {
-      children = ((currentVisibleNode[property] || {})[category] || []).map(
-        (onto: any) => onto.id
-      );
+      previousCheckedItems = (
+        (currentVisibleNode[property] || {})[category] || []
+      ).map((link: { id: string }) => link.id);
     } else {
-      children = (
+      previousCheckedItems = (
         (currentVisibleNode.properties[property] || {})[category] || []
-      ).map((onto: any) => onto.id);
+      ).map((link: { id: string }) => link.id);
     }
-    setCheckedItems(children);
+    setCheckedItems(new Set(previousCheckedItems));
   };
 
   const selectFromTree = () => {
@@ -567,9 +543,34 @@ const Node = ({
     }
   };
 
-  const updatePartsAndPartsOf = async (
+  const updatePropertyOf = async (
     children: { id: string; title: string }[],
-    newLink: { id: string; title: string },
+    newLink: { id: string },
+    property: string
+  ) => {
+    for (let child of children) {
+      const childData = nodes[child.id];
+      if (!childData.propertyOf) {
+        childData.propertyOf = {};
+      }
+      const propertyData: { [key: string]: { id: string }[] } = childData
+        .propertyOf[property] || { main: [] };
+
+      const keys = Object.values(propertyData).flat();
+      const index = keys.findIndex((e: any) => e.id === newLink.id);
+      if (index === -1) {
+        propertyData["main"].push(newLink);
+        const childRef = doc(collection(db, NODES), child.id);
+        await updateDoc(childRef, {
+          [`propertyOf.${property}`]: propertyData,
+        });
+      }
+    }
+  };
+
+  const updatePartsAndPartsOf = async (
+    children: { id: string }[],
+    newLink: { id: string },
     property: "isPartOf" | "parts"
   ) => {
     for (let child of children) {
@@ -583,7 +584,6 @@ const Node = ({
         const childRef = doc(collection(db, NODES), child.id);
         await updateDoc(childRef, {
           [`properties.${property}`]: propertyData,
-          [`inheritance.${property}.ref`]: null,
         });
         if (property === "parts") {
           updateInheritance({
@@ -595,7 +595,7 @@ const Node = ({
     }
   };
 
-  const handleSaveChildrenChanges = useCallback(async () => {
+  const handleSaveLinkChanges = useCallback(async () => {
     try {
       // Close the modal or perform any other necessary actions
       handleClose();
@@ -611,75 +611,90 @@ const Node = ({
       const nodeData: any = nodeDoc.data();
 
       // Initialize a new array for storing updated children
-      let oldChildren = [];
-      let allChildren: any = [];
+      let oldLinks = [];
+      let allLinks: any = [];
+
       if (
         selectedProperty === "specializations" ||
         selectedProperty === "generalizations"
       ) {
-        oldChildren = [...nodeData[selectedProperty][selectedCategory]];
-        allChildren = Object.values(nodeData[selectedProperty]).flat();
+        oldLinks = [...nodeData[selectedProperty][selectedCategory]];
+        allLinks = Object.values(nodeData[selectedProperty]).flat();
       } else {
-        oldChildren = [
+        oldLinks = [
           ...((nodeData.properties[selectedProperty] || {})[selectedCategory] ||
             []),
         ];
-        allChildren = Object.values(
-          nodeData.properties[selectedProperty]
-        ).flat();
+        allLinks = Object.values(nodeData.properties[selectedProperty]).flat();
       }
-      // Iterate through checkedSpecializations to update newchildren
-      for (let checked of checkedItems) {
-        // Find the node object from the children array
-        const findNode = nodes[checked];
 
-        // Check if the node is not already present in newchildren
-        const indexFound = allChildren.findIndex(
-          (onto: any) => onto.id === checked
+      // Iterate through checkedItems to add new children
+      checkedItems.forEach((checked) => {
+        // Check if the node is not already present in oldChildren
+        const indexFound = allLinks.findIndex(
+          (link: { id: string }) => link.id === checked
         );
 
-        if (indexFound === -1 && findNode) {
-          // Add the node to newchildren if not present
-          oldChildren.push({
+        if (indexFound === -1) {
+          // Add the node to oldChildren if not present
+          oldLinks.push({
             id: checked,
           });
         }
-      }
+      });
 
-      oldChildren = oldChildren.filter((onto) =>
-        checkedItems.includes(onto.id)
+      // Filter out any children that are not in the checkedItems array
+      const removedLinks = oldLinks.filter(
+        (link) => !checkedItems.has(link.id)
       );
 
-      if (selectedProperty === "generalizations" && oldChildren.length === 0) {
+      oldLinks = oldLinks.filter((link) => checkedItems.has(link.id));
+
+      // Prevent removing all generalizations
+      if (selectedProperty === "generalizations" && oldLinks.length === 0) {
         await confirmIt(
-          "You cannot remove all the generalizations for this node make sure it at least link to one generalization",
+          "You cannot remove all the generalizations for this node. Make sure it at least links to one generalization.",
           "Ok",
           ""
         );
         return;
       }
-      // If _type is "specializations", update main children
-
+      if (
+        selectedProperty !== "specializations" &&
+        selectedProperty !== "generalizations"
+      ) {
+        for (let link of removedLinks) {
+          unlinkPropertyOf(
+            db,
+            selectedProperty,
+            currentVisibleNode.id,
+            link.id
+          );
+        }
+      }
+      // Update the node data with the new children
       if (
         selectedProperty === "specializations" ||
         selectedProperty === "generalizations"
       ) {
-        nodeData[selectedProperty][selectedCategory] = oldChildren;
+        nodeData[selectedProperty][selectedCategory] = oldLinks;
       } else {
         if (!nodeData.properties[selectedProperty]) {
           nodeData.properties[selectedProperty] = {
-            [selectedCategory]: oldChildren,
+            [selectedCategory]: oldLinks,
           };
         } else {
-          nodeData.properties[selectedProperty][selectedCategory] = oldChildren;
+          nodeData.properties[selectedProperty][selectedCategory] = oldLinks;
         }
       }
+
+      // Update links for specializations/generalizations
       if (
         selectedProperty === "specializations" ||
         selectedProperty === "generalizations"
       ) {
         updateLinks(
-          Object.values(oldChildren).flat(),
+          Object.values(oldLinks).flat(),
           {
             id: currentVisibleNode.id,
           },
@@ -689,18 +704,18 @@ const Node = ({
         );
       }
 
+      // Update parts/isPartOf links
       if (selectedProperty === "parts" || selectedProperty === "isPartOf") {
         updatePartsAndPartsOf(
-          Object.values(oldChildren).flat(),
+          Object.values(oldLinks).flat(),
           {
             id: currentVisibleNode.id,
-            title: currentVisibleNode.title,
           },
           selectedProperty === "parts" ? "isPartOf" : "parts"
         );
       }
 
-      // If inheritance is present, reset the children field
+      // Reset inheritance if applicable
       if (
         nodeData.inheritance &&
         selectedProperty !== "specializations" &&
@@ -712,10 +727,27 @@ const Node = ({
         nodeData.inheritance[selectedProperty].ref = null;
         nodeData.inheritance[selectedProperty].title = "";
       }
+
+      // Update other properties if applicable
+      if (
+        selectedProperty !== "specializations" &&
+        selectedProperty !== "generalizations" &&
+        selectedProperty !== "parts" &&
+        selectedProperty !== "isPartOf"
+      ) {
+        updatePropertyOf(
+          Object.values(oldLinks).flat(),
+          {
+            id: currentVisibleNode.id,
+          },
+          selectedProperty
+        );
+      }
+
       // Update the node document in the database
       await updateDoc(nodeDoc.ref, nodeData);
 
-      // If _type is not "specializations", update the inheritance
+      // Update inheritance for non-specialization/generalization properties
       if (
         selectedProperty !== "specializations" &&
         selectedProperty !== "generalizations" &&
@@ -740,7 +772,6 @@ const Node = ({
     currentVisibleNode.title,
     db,
     nodes,
-    saveType,
     selectedCategory,
     selectedProperty,
   ]);
@@ -870,12 +901,6 @@ const Node = ({
     });
   };
 
-  const scrollToTop = () => {
-    if (scrolling.current) {
-      scrolling.current.scrollIntoView({ behaviour: "smooth" });
-    }
-  };
-
   const deleteCategory = async (property: string, category: string) => {
     if (
       await confirmIt(
@@ -957,7 +982,7 @@ const Node = ({
           }
           // Ensure nodeData exists
           if (nodeData) {
-            let propertyValue = null;
+            let propertyValue: any = null;
             if (
               property === "specializations" ||
               property === "generalizations"
@@ -1037,39 +1062,8 @@ const Node = ({
     [currentVisibleNode, db, nodes, recordLogs]
   );
 
-  /**
-   * Removes a child-node with the specified ID from the given node data.
-   * @param {Object} params - An object containing ontologyData and id.
-   * @param {Object} ontologyData - The main node data object.
-   * @param {string} id - The ID of the child-node to be removed.
-   */
-  const removeSpecializationNode = (
-    generalizationNode: INode,
-    specializationId: string
-  ) => {
-    // Iterate over the categories within each type of child-node.
-    for (let category in generalizationNode.specializations || {}) {
-      // Check if there are children present in the current category.
-      if ((generalizationNode.specializations[category] || []).length > 0) {
-        // Find the index of the child-node with the specified ID within the children array.
-        const specializationIdx = generalizationNode.specializations[
-          category
-        ].findIndex((sub: any) => sub.id === specializationId);
-
-        // If the child-node with the specified ID is found, remove it from the array.
-        if (specializationIdx !== -1) {
-          generalizationNode.specializations[category].splice(
-            specializationIdx,
-            1
-          );
-        }
-      }
-    }
-    return generalizationNode;
-  };
-
-  // Asynchronous function to handle the deletion of a child-node
-  const deleteNode = async () => {
+  //  function to handle the deletion of a Node
+  const deleteNode = useCallback(async () => {
     try {
       // Confirm deletion with the user using a custom confirmation dialog
       if (
@@ -1098,61 +1092,23 @@ const Node = ({
           }
         }
         // Retrieve the document reference of the node to be deleted
-        const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id)
-        );
-        if (nodeDoc.exists()) {
-          // Check if the node document exists
-          // Retrieve node data from the document
-          const nodeData = nodeDoc.data() as INode;
-
-          // Extract the parent IDs from the node data
-          const generalizations = Object.values(
-            nodeData?.generalizations
-          ).flat();
-
-          // Iterate through each parent ID
-          for (let { id: generalizationId } of generalizations) {
-            // Retrieve the document reference of the parent node
-            const generalizationDoc = await getDoc(
-              doc(collection(db, NODES), generalizationId)
-            );
-
-            // Check if the parent node document exists
-            if (generalizationDoc.exists()) {
-              // Retrieve data of the parent node
-              let generalizationData = generalizationDoc.data() as INode;
-
-              // Remove the reference to the child-node from the parent
-              generalizationData = removeSpecializationNode(
-                generalizationData,
-                currentVisibleNode.id
-              );
-
-              // Update the parent node document with the modified data
-              await updateDoc(generalizationDoc.ref, generalizationData);
-            }
-          }
-
-          await updateDoc(nodeDoc.ref, { deleted: true });
-          // Update the user document by removing the deleted node's ID
-          let lastNodeId: string = ontologyPath.at(-2)?.id || "";
-
-          if (ontologyPath.at(-2)?.category) {
-            lastNodeId = ontologyPath.at(-3)?.id || "";
-          }
-
-          if (lastNodeId && nodes[lastNodeId]) {
-            setCurrentVisibleNode(nodes[lastNodeId]);
-          }
-          // Mark the node as deleted by updating its document
-
-          // Record a log entry for the deletion action
-          recordLogs({
-            action: "Deleted Node",
-            node: nodeDoc.id,
-          });
+        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+        const generalizationId = Object.values(
+          currentVisibleNode.generalizations
+        ).flat()[0].id;
+        if (generalizationId && nodes[generalizationId]) {
+          setCurrentVisibleNode(nodes[generalizationId]);
         }
+        // call removeIsPartOf function to remove the node link from all the nodes where it's linked
+        removeIsPartOf(db, currentVisibleNode as INode);
+        // Update the user document by removing the deleted node's ID
+        await updateDoc(nodeRef, { deleted: true });
+
+        // Record a log entry for the deletion action
+        recordLogs({
+          action: "Deleted Node",
+          node: currentVisibleNode.id,
+        });
       }
     } catch (error) {
       // Log any errors that occur during the execution of the function
@@ -1162,7 +1118,7 @@ const Node = ({
         error,
       });
     }
-  };
+  }, [currentVisibleNode.id]);
 
   const handleToggle = useCallback(
     (nodeId: string) => {
@@ -1310,12 +1266,6 @@ const Node = ({
     }
   };
 
-  const searchResults = useMemo(() => {
-    const propertyType =
-      currentVisibleNode.propertyType[selectedProperty] || "";
-    return searchWithFuse(searchValue, propertyType);
-  }, [searchValue, selectedProperty]);
-
   const handleLockNode = () => {
     try {
       const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
@@ -1327,8 +1277,17 @@ const Node = ({
     }
   };
 
+  const scrollToTop = () => {
+    if (scrolling.current) {
+      scrolling.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
   /* "root": "T
-  of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. The user should not be able to modify the value of this field. Please automatically specify it by tracing the generalizations of this descendent activity back to reach one of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. So, obviously the root of the node 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward' itself and its direct specializations would be empty string because they are already roots."*/
+  of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'.
+  The user should not be able to modify the value of this field. Please automatically specify
+  it by tracing the generalizations of this descendent activity back to reach one of the direct specializations 
+  of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. So, obviously the root of the node 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'
+  itself and its direct specializations would be empty string because they are already roots."*/
 
   return (
     <Box
@@ -1338,264 +1297,6 @@ const Node = ({
         mb: "90px",
       }}
     >
-      <Modal
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "transparent",
-          // backgroundColor: "rgba(0, 0, 0, 0.5)",
-        }}
-        open={openSelectModel}
-        onClose={handleClose}
-      >
-        <Box
-          sx={{
-            maxHeight: "80vh",
-            overflowY: "auto",
-            borderRadius: 2,
-            boxShadow: 24,
-            ...SCROLL_BAR_STYLE,
-          }}
-        >
-          <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography>
-                Check the Box for the{" "}
-                <strong style={{ color: "orange" }}>
-                  {capitalizeFirstLetter(
-                    DISPLAY[selectedProperty]
-                      ? DISPLAY[selectedProperty]
-                      : selectedProperty
-                  )}
-                </strong>{" "}
-                that you want to add:
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <SearchBox
-                  setSearchValue={setSearchValue}
-                  label={"Search ..."}
-                />
-              </Box>
-            </Box>
-          </Paper>
-          <Paper>
-            {searchValue ? (
-              <Box>
-                {" "}
-                {searchResults.map((node: any) => (
-                  <ListItem
-                    key={node.id}
-                    onClick={() => {
-                      markItemAsChecked(node.id);
-                    }}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      color: "white",
-                      cursor: "pointer",
-                      borderRadius: "4px",
-                      padding: "8px",
-                      transition: "background-color 0.3s",
-                      // border: "1px solid #ccc",
-                      mt: "5px",
-                      "&:hover": {
-                        backgroundColor: (theme) =>
-                          theme.palette.mode === "dark"
-                            ? DESIGN_SYSTEM_COLORS.notebookG450
-                            : DESIGN_SYSTEM_COLORS.gray200,
-                      },
-                    }}
-                  >
-                    {" "}
-                    {user?.manageLock || !node.locked ? (
-                      <Checkbox
-                        checked={checkedItems.includes(node.id)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          markItemAsChecked(node.id);
-                        }}
-                        name={node.id}
-                      />
-                    ) : (
-                      <LockIcon
-                        sx={{
-                          color: "orange",
-                          mx: "15px",
-                        }}
-                      />
-                    )}
-                    <Typography>{node.title}</Typography>
-                  </ListItem>
-                ))}
-              </Box>
-            ) : (
-              <TreeViewSimplified
-                treeVisualization={selectFromTree()}
-                expandedNodes={expandedNodes}
-                onOpenNodesTree={handleToggle}
-                checkSpecialization={markItemAsChecked}
-                checkedSpecializations={checkedItems}
-                handleCloning={handleCloning}
-                clone={true}
-                stopPropagation={currentVisibleNode.id}
-                manageLock={user?.manageLock}
-              />
-            )}
-          </Paper>
-          {/* {selectedProperty === "specializations" && (
-              <Button
-                variant="contained"
-                onClick={() => handleNewSpecialization()}
-              >
-                Add new
-              </Button>
-            )} */}
-          <Paper
-            sx={{
-              display: "flex",
-              position: "sticky",
-              bottom: "0px",
-              p: 3,
-              justifyContent: "space-between",
-            }}
-          >
-            <Button variant="contained" onClick={handleClose} color="primary">
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleSaveChildrenChanges}
-              color="success"
-            >
-              Save
-            </Button>
-          </Paper>
-        </Box>
-      </Modal>
-      <Dialog
-        onClose={() => {
-          setOpenAddField(false);
-        }}
-        open={openAddField}
-      >
-        <DialogContent>
-          <Box sx={{ height: "auto", width: "500px" }}>
-            <FormControl fullWidth margin="normal" sx={{ width: "500px" }}>
-              <InputLabel id="difficulty-label">Type</InputLabel>
-              <Select
-                labelId="difficulty-label"
-                value={newFieldType}
-                onChange={(event) => setNewFieldType(event.target.value)}
-                label="Difficulty"
-                MenuProps={{
-                  sx: {
-                    zIndex: "9999",
-                  },
-                }}
-                sx={{ borderRadius: "20px" }}
-              >
-                {[
-                  "String",
-                  /* "Number",
-                  "Boolean", */
-                  "Activity",
-                  "Actor",
-                  "Evaluation Dimension",
-                  "Incentive",
-                  "Reward",
-                  "Object",
-                ].map((item) => (
-                  <MenuItem key={item} value={item}>
-                    {item}
-                  </MenuItem>
-                ))}
-              </Select>
-              <TextField
-                label="New Property"
-                sx={{ mt: "14px" }}
-                value={newFieldTitle}
-                onChange={(event) => setNewFieldTitle(event.target.value)}
-                InputLabelProps={{
-                  style: { color: "grey" },
-                }}
-              />
-            </FormControl>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center" }}>
-          <Button
-            onClick={() => addNewProperty(newFieldTitle, newFieldType)}
-            color="primary"
-            disabled={!newFieldType || !newFieldTitle}
-            variant="contained"
-            sx={{ borderRadius: "25px" }}
-          >
-            {"Add"}
-          </Button>
-          <Button
-            onClick={() => {
-              setOpenAddField(false);
-              setNewFieldTitle("");
-            }}
-            color="primary"
-            variant="contained"
-            sx={{ borderRadius: "25px" }}
-          >
-            Cancel
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog onClose={handleCloseAddCategory} open={openAddCategory}>
-        <DialogContent>
-          <Box sx={{ height: "auto", width: "500px" }}>
-            <Typography sx={{ mb: "13px", fontSize: "19px" }}>
-              {editCategory ? "Edit " : "Add "}a new Collection:
-            </Typography>
-            <TextField
-              placeholder={`Add Collection`}
-              fullWidth
-              value={newCategory}
-              multiline
-              onChange={(e: any) => setNewCategory(e.target.value)}
-              sx={{
-                fontWeight: 400,
-                fontSize: {
-                  xs: "14px",
-                  md: "16px",
-                },
-                marginBottom: "5px",
-                width: "100%",
-                display: "block",
-              }}
-              autoFocus
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center" }}>
-          <Button
-            onClick={addNewCategory}
-            color="primary"
-            variant="outlined"
-            sx={{ borderRadius: "25px" }}
-          >
-            {editCategory ? "Save" : "Add"}
-          </Button>
-          <Button
-            onClick={handleCloseAddCategory}
-            color="primary"
-            variant="outlined"
-            sx={{ borderRadius: "25px" }}
-          >
-            Cancel
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       <Box
         sx={{
           display: "flex",
@@ -1635,7 +1336,7 @@ const Node = ({
                 mb: "13px",
               }}
             >
-              Node Title:
+              Node Title: {/* {currentVisibleNode.id} */}
             </Typography>
 
             <Box
@@ -2144,6 +1845,264 @@ const Node = ({
       </Box>
 
       {ConfirmDialog}
+
+      <Modal
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "transparent",
+          // backgroundColor: "rgba(0, 0, 0, 0.5)",
+        }}
+        open={openSelectModel}
+        onClose={handleClose}
+      >
+        <Box
+          sx={{
+            maxHeight: "80vh",
+            overflowY: "auto",
+            borderRadius: 2,
+            boxShadow: 24,
+            ...SCROLL_BAR_STYLE,
+          }}
+        >
+          <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Typography>
+                Check the Box for the{" "}
+                <strong style={{ color: "orange" }}>
+                  {capitalizeFirstLetter(
+                    DISPLAY[selectedProperty]
+                      ? DISPLAY[selectedProperty]
+                      : selectedProperty
+                  )}
+                </strong>{" "}
+                that you want to add:
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <SearchBox
+                  setSearchValue={setSearchValue}
+                  label={"Search ..."}
+                />
+              </Box>
+            </Box>
+          </Paper>
+          <Paper>
+            {searchValue ? (
+              <Box>
+                {" "}
+                {searchResultsForSelection.map((node: any) => (
+                  <ListItem
+                    key={node.id}
+                    onClick={() => {
+                      markItemAsChecked(node.id);
+                    }}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      color: "white",
+                      cursor: "pointer",
+                      borderRadius: "4px",
+                      padding: "8px",
+                      transition: "background-color 0.3s",
+                      // border: "1px solid #ccc",
+                      mt: "5px",
+                      "&:hover": {
+                        backgroundColor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? DESIGN_SYSTEM_COLORS.notebookG450
+                            : DESIGN_SYSTEM_COLORS.gray200,
+                      },
+                    }}
+                  >
+                    {" "}
+                    {user?.manageLock || !node.locked ? (
+                      <Checkbox
+                        checked={checkedItems.has(node.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          markItemAsChecked(node.id);
+                        }}
+                        name={node.id}
+                      />
+                    ) : (
+                      <LockIcon
+                        sx={{
+                          color: "orange",
+                          mx: "15px",
+                        }}
+                      />
+                    )}
+                    <Typography>{node.title}</Typography>
+                  </ListItem>
+                ))}
+              </Box>
+            ) : (
+              <TreeViewSimplified
+                treeVisualization={selectFromTree()}
+                expandedNodes={expandedNodes}
+                onOpenNodesTree={handleToggle}
+                checkSpecialization={markItemAsChecked}
+                checkedItems={checkedItems}
+                handleCloning={handleCloning}
+                clone={true}
+                stopPropagation={currentVisibleNode.id}
+                manageLock={user?.manageLock}
+              />
+            )}
+          </Paper>
+          {/* {selectedProperty === "specializations" && (
+              <Button
+                variant="contained"
+                onClick={() => handleNewSpecialization()}
+              >
+                Add new
+              </Button>
+            )} */}
+          <Paper
+            sx={{
+              display: "flex",
+              position: "sticky",
+              bottom: "0px",
+              p: 3,
+              justifyContent: "space-between",
+            }}
+          >
+            <Button variant="contained" onClick={handleClose} color="primary">
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSaveLinkChanges}
+              color="success"
+            >
+              Save
+            </Button>
+          </Paper>
+        </Box>
+      </Modal>
+      <Dialog
+        onClose={() => {
+          setOpenAddField(false);
+        }}
+        open={openAddField}
+      >
+        <DialogContent>
+          <Box sx={{ height: "auto", width: "500px" }}>
+            <FormControl fullWidth margin="normal" sx={{ width: "500px" }}>
+              <InputLabel id="difficulty-label">Type</InputLabel>
+              <Select
+                labelId="difficulty-label"
+                value={newFieldType}
+                onChange={(event) => setNewFieldType(event.target.value)}
+                label="Difficulty"
+                MenuProps={{
+                  sx: {
+                    zIndex: "9999",
+                  },
+                }}
+                sx={{ borderRadius: "20px" }}
+              >
+                {[
+                  "String",
+                  /* "Number",
+                  "Boolean", */
+                  "Activity",
+                  "Object",
+                  "Actor",
+                  "Evaluation Dimension",
+                  "Incentive",
+                  "Reward",
+                ].map((item) => (
+                  <MenuItem key={item} value={item}>
+                    {item}
+                  </MenuItem>
+                ))}
+              </Select>
+              <TextField
+                label="New Property"
+                sx={{ mt: "14px" }}
+                value={newFieldTitle}
+                onChange={(event) => setNewFieldTitle(event.target.value)}
+                InputLabelProps={{
+                  style: { color: "grey" },
+                }}
+              />
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: "center" }}>
+          <Button
+            onClick={() => addNewProperty(newFieldTitle, newFieldType)}
+            color="primary"
+            disabled={!newFieldType || !newFieldTitle}
+            variant="contained"
+            sx={{ borderRadius: "25px" }}
+          >
+            {"Add"}
+          </Button>
+          <Button
+            onClick={() => {
+              setOpenAddField(false);
+              setNewFieldTitle("");
+            }}
+            color="primary"
+            variant="contained"
+            sx={{ borderRadius: "25px" }}
+          >
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog onClose={handleCloseAddCategory} open={openAddCategory}>
+        <DialogContent>
+          <Box sx={{ height: "auto", width: "500px" }}>
+            <Typography sx={{ mb: "13px", fontSize: "19px" }}>
+              {editCategory ? "Edit " : "Add "}a new Collection:
+            </Typography>
+            <TextField
+              placeholder={`Add Collection`}
+              fullWidth
+              value={newCategory}
+              multiline
+              onChange={(e: any) => setNewCategory(e.target.value)}
+              sx={{
+                fontWeight: 400,
+                fontSize: {
+                  xs: "14px",
+                  md: "16px",
+                },
+                marginBottom: "5px",
+                width: "100%",
+                display: "block",
+              }}
+              autoFocus
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: "center" }}>
+          <Button
+            onClick={addNewCategory}
+            color="primary"
+            variant="outlined"
+            sx={{ borderRadius: "25px" }}
+          >
+            {editCategory ? "Save" : "Add"}
+          </Button>
+          <Button
+            onClick={handleCloseAddCategory}
+            color="primary"
+            variant="outlined"
+            sx={{ borderRadius: "25px" }}
+          >
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

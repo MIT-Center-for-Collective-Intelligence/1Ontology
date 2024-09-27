@@ -41,7 +41,7 @@ export type INode = {
   id: string;
   title: string;
   deleted: boolean;
-  properties: { [key: string]: any };
+  properties: { [propertyName: string]: any };
   inheritance: {
     [key: string]: {
       ref: string | null;
@@ -61,6 +61,13 @@ export type INode = {
     [key: string]: {
       id: string;
     }[];
+  };
+  propertyOf?: {
+    [propertyName: string]: {
+      [collectionName: string]: {
+        id: string;
+      }[];
+    };
   };
   root: string;
   parents: string[];

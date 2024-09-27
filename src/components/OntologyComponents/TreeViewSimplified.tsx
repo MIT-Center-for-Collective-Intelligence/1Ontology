@@ -12,7 +12,7 @@ type ITreeViewSimplifiedProps = {
   expandedNodes: any;
   currentVisibleNode?: any;
   checkSpecialization?: any;
-  checkedSpecializations?: any;
+  checkedItems?: any;
   handleCloning?: any;
   clone?: boolean;
   sx?: any;
@@ -28,7 +28,7 @@ const TreeViewSimplified = ({
   expandedNodes,
   currentVisibleNode,
   checkSpecialization,
-  checkedSpecializations,
+  checkedItems,
   handleCloning,
   clone,
   sx,
@@ -86,7 +86,7 @@ const TreeViewSimplified = ({
                   <>
                     {manageLock || !treeVisualization[category].locked ? (
                       <Checkbox
-                        checked={checkedSpecializations.includes(
+                        checked={checkedItems.has(
                           treeVisualization[category]?.id
                         )}
                         onClick={(e) => {
@@ -138,12 +138,7 @@ const TreeViewSimplified = ({
                       }}
                     >
                       <span style={{ color: "green", paddingInline: "10px" }}>
-                        New
-                      </span>
-                      {category.split(" ").splice(0, 3).join(" ") +
-                        (category.split(" ").length > 3 ? "..." : "")}{" "}
-                      <span style={{ color: "green", paddingInline: "10px" }}>
-                        {"Specialization "}
+                        Add Specialization
                       </span>
                     </Button>
                   )}
@@ -190,7 +185,7 @@ const TreeViewSimplified = ({
                   expandedNodes={expandedNodes}
                   currentVisibleNode={currentVisibleNode}
                   checkSpecialization={checkSpecialization}
-                  checkedSpecializations={checkedSpecializations}
+                  checkedItems={checkedItems}
                   handleCloning={handleCloning}
                   clone={clone}
                   sendNode={sendNode}
