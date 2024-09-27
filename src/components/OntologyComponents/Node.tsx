@@ -248,83 +248,84 @@ const Node = ({
     });
   };
 
-  const cloneNode = async (nodeId: string): Promise<INode | null> => {
-    try {
-      // Retrieve the document of the original node from Firestore.
-      const parentNodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
+  const cloneNode = useCallback(
+    async (nodeId: string): Promise<INode | null> => {
+      try {
+        // Retrieve the document of the original node from Firestore.
+        const parentNodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
 
-      // Extract data from the original node document.
-      const parentNodeData = parentNodeDoc.data() as INode;
+        // Extract data from the original node document.
+        const parentNodeData = parentNodeDoc.data() as INode;
 
-      // Create a reference for the new node document in Firestore.
-      const newNodeRef = doc(collection(db, NODES));
+        // Create a reference for the new node document in Firestore.
+        const newNodeRef = doc(collection(db, NODES));
+        let newTitle = `New ${parentNodeData.title}`;
+        const specializationsTitles = Object.values(
+          parentNodeData.specializations
+        )
+          .flat()
+          .map((spec) => nodes[spec.id].title);
+        newTitle = generateUniqueTitle(newTitle, specializationsTitles);
 
-      // Prepare the data for the new node by copying existing data.
-      const newNode = {
-        ...parentNodeDoc.data(),
-      } as INode;
-
-      // Set a new ID for the cloned node.
-      newNode.id = newNodeRef.id;
-
-      let newTitle = `New ${parentNodeData.title}`;
-      const specializationsTitles = Object.values(
-        parentNodeData.specializations
-      )
-        .flat()
-        .map((spec) => nodes[spec.id].title);
-      newTitle = generateUniqueTitle(newTitle, specializationsTitles);
-
-      // Modify the title to indicate that it is a new node.
-      newNode.title = newTitle;
-
-      // Initialize an empty specializations object for children.
-      newNode.specializations = { main: [] };
-      newNode.generalizations = {
-        main: [
-          {
-            id: nodeId,
+        // Prepare the data for the new node by copying existing data.
+        const newNode: any = {
+          ...parentNodeDoc.data(),
+          id: newNodeRef.id,
+          title: newTitle,
+          specializations: { main: [] },
+          propertyOf: {
+            [selectedProperty]: {
+              main: [
+                {
+                  id: currentVisibleNode.id!,
+                },
+              ],
+            },
           },
-        ],
-      };
+          generalizations: {
+            main: [
+              {
+                id: nodeId,
+              },
+            ],
+          },
+          locked: false,
+        };
 
-      // Remove the 'locked' property from the new node.
-      delete newNode.locked;
+        if (!parentNodeData?.specializations.hasOwnProperty("main")) {
+          parentNodeData.specializations["main"] = [];
+        }
+        parentNodeData?.specializations["main"].push({
+          id: newNodeRef.id,
+        });
+        // // Create a new document in Firestore for the cloned node with the modified data.
+        await setDoc(newNodeRef, {
+          ...newNode,
+          locked: false,
+          createdAt: new Date(),
+        });
 
-      // Update the original node to include the reference to the new node in its children.
+        // Update the original node document in Firestore with the modified data.
+        updateDoc(parentNodeDoc.ref, {
+          ...parentNodeData,
+          updatedAt: new Date(),
+        });
 
-      if (!parentNodeData?.specializations.hasOwnProperty("main")) {
-        parentNodeData.specializations["main"] = [];
+        // Return the ID of the newly created node.
+        return newNode;
+      } catch (error) {
+        // Log any errors that occur during the cloning process.
+        confirmIt(
+          "There was an error while creating the new node, please try again",
+          "OK",
+          ""
+        );
+        console.error(error);
+        return null;
       }
-      parentNodeData?.specializations["main"].push({
-        id: newNodeRef.id,
-      });
-      // // Create a new document in Firestore for the cloned node with the modified data.
-      await setDoc(newNodeRef, {
-        ...newNode,
-        locked: false,
-        createdAt: new Date(),
-      });
-
-      // Update the original node document in Firestore with the modified data.
-      updateDoc(parentNodeDoc.ref, {
-        ...parentNodeData,
-        updatedAt: new Date(),
-      });
-
-      // Return the ID of the newly created node.
-      return newNode;
-    } catch (error) {
-      // Log any errors that occur during the cloning process.
-      confirmIt(
-        "There was an error while creating the new node, please try again",
-        "OK",
-        ""
-      );
-      console.error(error);
-      return null;
-    }
-  };
+    },
+    [currentVisibleNode.id]
+  );
 
   // Function to add a new specialization to the node
   const addNewSpecialization = useCallback(
@@ -378,6 +379,7 @@ const Node = ({
               },
             ],
           },
+          propertyOf: {},
           root: parentNode.root || "",
           title: newTitle,
           id: newNodeRef.id,

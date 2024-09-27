@@ -1399,7 +1399,6 @@ const Ontology = () => {
                   currentVisibleNode={currentVisibleNode}
                   setCurrentVisibleNode={setCurrentVisibleNode}
                   handleLinkNavigation={handleLinkNavigation}
-                  ontologyPath={ontologyPath}
                   setSnackbarMessage={setSnackbarMessage}
                   user={user}
                   mainSpecializations={getMainSpecializations(
