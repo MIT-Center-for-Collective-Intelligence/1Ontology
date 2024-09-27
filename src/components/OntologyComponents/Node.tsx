@@ -1723,17 +1723,14 @@ const Node = ({
                       )}
                     </IconButton>
                   ) : currentVisibleNode.locked ? (
-                    <LockOutlinedIcon
-                      sx={{
-                        color: "orange",
-                      }}
-                    />
-                  ) : (
                     <LockIcon
                       sx={{
                         color: "orange",
+                        mb: "13px",
                       }}
                     />
+                  ) : (
+                    <></>
                   )}
                 </Tooltip>
               )}
