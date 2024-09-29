@@ -89,6 +89,7 @@ import {
   Select,
   Stack,
   TextField,
+  Theme,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -111,7 +112,6 @@ import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import {
   ILockedNode,
   INode,
-  INodePath,
   MainSpecializations,
 } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
@@ -132,28 +132,20 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {
   removeIsPartOf,
   unlinkPropertyOf,
+  updateInheritance,
 } from " @components/lib/utils/helpers";
 
 type INodeProps = {
   scrolling: any;
   currentVisibleNode: INode;
   setCurrentVisibleNode: (node: INode) => void;
-  handleLinkNavigation: (
-    path: { id: string; title: string },
-    type: string
-  ) => void;
   setSnackbarMessage: (message: string) => void;
-
   user: any;
   mainSpecializations: MainSpecializations;
   nodes: { [id: string]: INode };
   addNewNode: ({ id, newNode }: { id: string; newNode: any }) => void;
   lockedNodeFields: ILockedNode;
   recordLogs: (logs: any) => void;
-  updateInheritance: (parameters: {
-    nodeId: string;
-    updatedProperty: string;
-  }) => void;
   navigateToNode: (nodeId: string) => void;
   eachOntologyPath: { [key: string]: any };
   searchWithFuse: any;
@@ -170,7 +162,7 @@ const Node = ({
   addNewNode,
   user,
   recordLogs,
-  updateInheritance,
+
   navigateToNode,
   searchWithFuse,
   locked,
@@ -513,6 +505,7 @@ const Node = ({
       updateInheritance({
         nodeId: currentVisibleNode.id,
         updatedProperty: selectedProperty,
+        db,
       });
     }
 
@@ -591,6 +584,7 @@ const Node = ({
           updateInheritance({
             nodeId: child.id,
             updatedProperty: property,
+            db,
           });
         }
       }
@@ -758,6 +752,7 @@ const Node = ({
         updateInheritance({
           nodeId: currentVisibleNode.id,
           updatedProperty: selectedProperty,
+          db,
         });
       }
     } catch (error) {
@@ -871,6 +866,7 @@ const Node = ({
             updatedProperty: editCategory
               ? editCategory.property
               : selectedProperty,
+            db,
           });
         }
         // Update the node document with the modified data
@@ -1036,6 +1032,7 @@ const Node = ({
               updateInheritance({
                 nodeId: currentVisibleNode.id,
                 updatedProperty: property,
+                db,
               });
             }
 
@@ -1322,7 +1319,7 @@ const Node = ({
               display: "flex",
               alignItems: "center",
               alignContent: "center",
-              background: (theme) =>
+              background: (theme: any) =>
                 theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
 
               p: 3,
@@ -1370,7 +1367,7 @@ const Node = ({
                       sx={{
                         fontSize: "19px",
                         fontWeight: "bold",
-                        color: (theme) =>
+                        color: (theme: Theme) =>
                           theme.palette.mode === "dark"
                             ? theme.palette.common.gray50
                             : theme.palette.common.notebookMainBlack,
@@ -1460,7 +1457,6 @@ const Node = ({
               text={currentVisibleNode.title}
               confirmIt={confirmIt}
               recordLogs={recordLogs}
-              updateInheritance={updateInheritance}
               setSelectTitle={setSelectTitle}
               selectTitle={selectTitle}
               locked={locked}
@@ -1481,7 +1477,7 @@ const Node = ({
             sx={{
               display: "flex",
               alignItems: "center",
-              background: (theme) =>
+              background: (theme: any) =>
                 theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
 
               p: 3,
@@ -1495,7 +1491,7 @@ const Node = ({
             {currentVisibleNode.inheritance?.description?.ref && (
               <Typography
                 sx={{
-                  color: (theme) =>
+                  color: (theme: Theme) =>
                     theme.palette.mode === "dark" ? "white" : "black",
                   fontSize: "14px",
                   ml: "auto",
@@ -1513,7 +1509,6 @@ const Node = ({
           <Box>
             <Text
               nodes={nodes}
-              updateInheritance={updateInheritance}
               recordLogs={recordLogs}
               text={
                 getPropertyValue(
@@ -1538,7 +1533,7 @@ const Node = ({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                background: (theme) =>
+                background: (theme: any) =>
                   theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
                 p: 3,
                 borderTopRightRadius: "25px",
@@ -1609,7 +1604,7 @@ const Node = ({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                background: (theme) =>
+                background: (theme: any) =>
                   theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
                 p: 3,
                 borderTopRightRadius: "25px",
@@ -1640,7 +1635,6 @@ const Node = ({
               recordLogs={recordLogs}
               setSnackbarMessage={setSnackbarMessage}
               setCurrentVisibleNode={setCurrentVisibleNode}
-              updateInheritance={updateInheritance}
               relationType={"generalizations"}
               nodes={nodes}
               locked={locked}
@@ -1657,7 +1651,7 @@ const Node = ({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                background: (theme) =>
+                background: (theme: any) =>
                   theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
                 p: 3,
                 borderTopRightRadius: "25px",
@@ -1688,7 +1682,6 @@ const Node = ({
               recordLogs={recordLogs}
               setSnackbarMessage={setSnackbarMessage}
               setCurrentVisibleNode={setCurrentVisibleNode}
-              updateInheritance={updateInheritance}
               relationType={"specializations"}
               handleNewSpecialization={handleNewSpecialization}
               nodes={nodes}
@@ -1711,7 +1704,7 @@ const Node = ({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                background: (theme) =>
+                background: (theme: any) =>
                   theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
                 p: 3,
                 borderTopRightRadius: "25px",
@@ -1762,7 +1755,7 @@ const Node = ({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                background: (theme) =>
+                background: (theme: any) =>
                   theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
                 p: 3,
                 borderTopRightRadius: "25px",
@@ -1910,7 +1903,7 @@ const Node = ({
                       // border: "1px solid #ccc",
                       mt: "5px",
                       "&:hover": {
-                        backgroundColor: (theme) =>
+                        backgroundColor: (theme: Theme) =>
                           theme.palette.mode === "dark"
                             ? DESIGN_SYSTEM_COLORS.notebookG450
                             : DESIGN_SYSTEM_COLORS.gray200,
@@ -1921,9 +1914,6 @@ const Node = ({
                     {user?.manageLock || !node.locked ? (
                       <Checkbox
                         checked={checkedItems.has(node.id)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
                         onChange={(e) => {
                           e.stopPropagation();
                           markItemAsChecked(node.id);
@@ -1995,9 +1985,8 @@ const Node = ({
         <DialogContent>
           <Box sx={{ height: "auto", width: "500px" }}>
             <FormControl fullWidth margin="normal" sx={{ width: "500px" }}>
-              <InputLabel id="difficulty-label">Type</InputLabel>
+              <InputLabel>Type</InputLabel>
               <Select
-                labelId="difficulty-label"
                 value={newFieldType}
                 onChange={(event) => setNewFieldType(event.target.value)}
                 label="Difficulty"
@@ -2030,7 +2019,7 @@ const Node = ({
                 value={newFieldTitle}
                 onChange={(event) => setNewFieldTitle(event.target.value)}
                 InputLabelProps={{
-                  style: { color: "grey" },
+                  sx: { color: "grey" },
                 }}
               />
             </FormControl>

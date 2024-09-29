@@ -6,15 +6,12 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  Tooltip,
-  Paper,
   useTheme,
 } from "@mui/material";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import {
   capitalizeFirstLetter,
-  checkNodeLock,
   getTitle,
 } from " @components/lib/utils/string.utils";
 import { INode } from " @components/types/INode";
@@ -34,7 +31,6 @@ type ILinksSideProps = {
   recordLogs: any;
   setSnackbarMessage: any;
   setCurrentVisibleNode: any;
-  updateInheritance: any;
   relationType: "generalizations" | "specializations";
   nodes: { [id: string]: INode };
   handleNewSpecialization?: any;
@@ -53,7 +49,6 @@ const LinksSide = ({
   recordLogs,
   setSnackbarMessage,
   setCurrentVisibleNode,
-  updateInheritance,
   relationType,
   nodes,
   handleNewSpecialization,
@@ -85,7 +80,7 @@ const LinksSide = ({
               sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
               variant="outlined"
             >
-              {relationType === "specializations" ? "Select " : "Add "}
+              {"Select"}
               {capitalizeFirstLetter(relationType)}
             </Button>
 

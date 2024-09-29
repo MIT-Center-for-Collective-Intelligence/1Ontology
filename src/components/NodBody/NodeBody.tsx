@@ -468,7 +468,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                   property !== "description" &&
                   currentVisibleNode.propertyType[property] === "string" && (
                     <Text
-                      updateInheritance={updateInheritance}
                       recordLogs={recordLogs}
                       text={
                         getPropertyValue(

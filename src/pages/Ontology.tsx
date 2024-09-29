@@ -53,12 +53,10 @@ import { Bar, Container, Section } from "@column-resizer/react";
 import SearchIcon from "@mui/icons-material/Search";
 import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
 import {
-  Badge,
   Box,
   Button,
   CircularProgress,
   IconButton,
-  Link,
   List,
   ListItem,
   Modal,
@@ -70,15 +68,11 @@ import {
   Typography,
   useMediaQuery,
 } from "@mui/material";
-import Breadcrumbs from "@mui/material/Breadcrumbs";
 import {
-  DocumentReference,
   Timestamp,
-  WriteBatch,
   addDoc,
   collection,
   doc,
-  getDoc,
   getDocs,
   getFirestore,
   onSnapshot,
@@ -86,7 +80,6 @@ import {
   setDoc,
   updateDoc,
   where,
-  writeBatch,
 } from "firebase/firestore";
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -105,7 +98,6 @@ import {
 import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
 
 import AppHeaderMemoized from " @components/components/Header/AppHeader";
-import { newId } from " @components/lib/utils/newFirestoreId";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import withAuthUser from " @components/components/hoc/withAuthUser";
@@ -114,7 +106,6 @@ import { useRouter } from "next/router";
 import DagGraph from " @components/components/OntologyComponents/DAGGraph";
 import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import {
-  LOCKS,
   LOGS,
   MESSAGES,
   NODES,
@@ -422,22 +413,6 @@ const Ontology = () => {
     };
   }, [eachOntologyPath]);
 
-  useEffect(() => {
-    setViewValue(1);
-    setTimeout(() => {
-      setViewValue(0);
-    }, 200);
-  }, [user]);
-
-  useEffect(() => {
-    if (!searchValue) return;
-    // Record logs for the search action
-    recordLogs({
-      action: "Searched",
-      query,
-    });
-  }, [searchValue]);
-
   // Function to perform a search using Fuse.js library
   const searchWithFuse = (query: string, nodeType?: INodeTypes): INode[] => {
     // Return an empty array if the query is empty
@@ -457,11 +432,12 @@ const Ontology = () => {
       );
   };
   const searchResults = useMemo(() => {
+    recordLogs({
+      action: "Searched",
+      query: searchValue,
+    });
     return searchWithFuse(searchValue);
   }, [searchValue]);
-
-  /*   const handleChange = (event: any, newValue: number) =>
-    setSidebarView(newValue); */
 
   const handleChatTabsChange = (event: any, newValue: number) => {
     setSelectedChatTab(newValue);
@@ -478,6 +454,39 @@ const Ontology = () => {
       viewType: newValue === 0 ? "Tree View" : "Dag View",
     });
   };
+
+  useEffect(() => {
+    const controller = columnResizerRef.current;
+
+    if (controller) {
+      const resizer = controller.getResizer();
+      if (rightPanelVisible) {
+        resizer.resizeSection(2, { toSize: 400 });
+      } else {
+        resizer.resizeSection(2, { toSize: 0 });
+      }
+      controller.applyResizer(resizer);
+    }
+  }, [rightPanelVisible, user, nodes]);
+
+  useEffect(() => {
+    const checkIfDifferentDay = () => {
+      const today = new Date();
+      if (
+        today.getDate() !== lastInteractionDate.getDate() ||
+        today.getMonth() !== lastInteractionDate.getMonth() ||
+        today.getFullYear() !== lastInteractionDate.getFullYear()
+      ) {
+        window.location.reload();
+      }
+    };
+
+    const intervalId = setInterval(checkIfDifferentDay, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [lastInteractionDate]);
+
+  /* ------- ------- ------- */
 
   // This function finds the path of a node in a nested structure of mainNodes and their children.
   const findOntologyPath = useCallback(
@@ -556,6 +565,7 @@ const Ontology = () => {
     },
     [nodes]
   );
+
   useEffect(() => {
     const mainNodes = Object.values(nodes).filter((node: any) => node.category);
     if (mainNodes.length > 0) {
@@ -568,38 +578,7 @@ const Ontology = () => {
       setEachOntologyPath(eachOntologyPath);
     }
   }, [nodes]);
-  useEffect(() => {
-    const controller = columnResizerRef.current;
 
-    if (controller) {
-      const resizer = controller.getResizer();
-      if (rightPanelVisible) {
-        resizer.resizeSection(2, { toSize: 400 });
-      } else {
-        resizer.resizeSection(2, { toSize: 0 });
-      }
-      controller.applyResizer(resizer);
-    }
-  }, [rightPanelVisible, user, nodes]);
-
-  useEffect(() => {
-    const checkIfDifferentDay = () => {
-      const today = new Date();
-      if (
-        today.getDate() !== lastInteractionDate.getDate() ||
-        today.getMonth() !== lastInteractionDate.getMonth() ||
-        today.getFullYear() !== lastInteractionDate.getFullYear()
-      ) {
-        window.location.reload();
-      }
-    };
-
-    const intervalId = setInterval(checkIfDifferentDay, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [lastInteractionDate]);
-
-  /* ------- ------- ------- */
   // Function to generate a tree structure of specializations based on main nodes
   const getSpecializationsTree = (_nodes: INode[], path: any) => {
     // Object to store the main specializations tree
@@ -733,30 +712,6 @@ const Ontology = () => {
     setTreeVisualization(treeOfSpecializations);
   }, [nodes]);
 
-  // Callback function to handle navigation when a link is clicked
-  const handleLinkNavigation = useCallback(
-    async (path: { id: string; title: string }, type: string) => {
-      try {
-        // Check if user is logged in and node is open
-        if (!user || !currentVisibleNode) return;
-        if (nodes[path.id]) {
-          setCurrentVisibleNode(nodes[path.id]);
-        }
-        // Update ontology path and user document
-        let _ontologyPath = [...ontologyPath];
-        const pathIdx = _ontologyPath.findIndex((p: any) => p.id === path.id);
-        if (pathIdx !== -1) {
-          _ontologyPath = _ontologyPath.slice(0, pathIdx + 1);
-        } else {
-          _ontologyPath.push(path);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    },
-    [nodes, ontologyPath]
-  );
-
   useEffect(() => {
     if (user?.currentNode && nodes[user.currentNode]) {
       setCurrentVisibleNode(nodes[user.currentNode]);
@@ -850,8 +805,6 @@ const Ontology = () => {
       // Check if a user is logged in, if not, exit the function.
       if (!user) return;
 
-      // Find the index of the node with the specified ID in the ontologies array.
-
       // Check if the node with the specified ID exists and is not a main node (no category).
       if (nodes[nodeId] && !nodes[nodeId].category) {
         // Set the currentVisibleNode as the currently selected node.
@@ -944,137 +897,6 @@ const Ontology = () => {
       });
     } catch (error) {
       console.error(error);
-    }
-  };
-  interface UpdateInheritanceParams {
-    nodeId: string;
-    updatedProperty: string;
-  }
-  // Function to handle inheritance
-  const updateInheritance = async ({
-    nodeId,
-    updatedProperty,
-  }: UpdateInheritanceParams): Promise<void> => {
-    try {
-      const batch = writeBatch(db);
-
-      const nodeRef = doc(collection(db, NODES), nodeId);
-      updateDoc(nodeRef, {
-        [`inheritance.${updatedProperty}.ref`]: null,
-      });
-
-      // Recursively update specializations
-      await recursivelyUpdateSpecializations({
-        nodeId: nodeId,
-        updatedProperty,
-        batch,
-        generalizationId: nodeId,
-      });
-      // Commit all updates as a batch
-      await batch.commit();
-    } catch (error) {
-      console.error(error);
-      recordLogs({
-        type: "error",
-        error,
-        at: "updateInheritance",
-      });
-    }
-  };
-
-  // Helper function to recursively update specializations
-  const recursivelyUpdateSpecializations = async ({
-    nodeId,
-    updatedProperty,
-    batch,
-    nestedCall = false,
-    inheritanceType,
-    generalizationId,
-  }: {
-    nodeId: string;
-    updatedProperty: string;
-    batch: WriteBatch;
-    nestedCall?: boolean;
-    inheritanceType?:
-      | "inheritUnlessAlreadyOverRidden"
-      | "inheritAfterReview"
-      | "alwaysInherit";
-    generalizationId: string;
-  }): Promise<void> => {
-    // Fetch node data from Firestore
-    const nodeRef = doc(collection(db, NODES), nodeId);
-    const nodeSnapshot = await getDoc(nodeRef);
-    const nodeData = nodeSnapshot.data() as INode;
-
-    if (!nodeData || !nodeData.properties.hasOwnProperty(updatedProperty))
-      return;
-
-    // Get the inheritance type for the updated property
-    const inheritance = nodeData.inheritance[updatedProperty];
-    const canInherit =
-      (inheritanceType === "inheritUnlessAlreadyOverRidden" &&
-        inheritance.ref) ||
-      inheritanceType === "alwaysInherit";
-
-    if (nestedCall && canInherit) {
-      await updateProperty(batch, nodeRef, updatedProperty, generalizationId);
-    }
-
-    if (inheritance?.inheritanceType === "neverInherit") {
-      return;
-    }
-    let specializations = Object.values(nodeData.specializations).flat() as {
-      id: string;
-      title: string;
-    }[];
-
-    if (inheritance?.inheritanceType === "inheritAfterReview") {
-      /*   specializations = (await selectIt(
-        <Box sx={{ mb: "15px" }}>
-          <Typography>
-            Select which of the following specializations should inherit the
-            change that you just made to the property{" "}
-            <strong>{updatedProperty}</strong>,
-          </Typography>
-          <Typography>{"After you're done click continue."}</Typography>
-        </Box>,
-        specializations,
-        "Continue",
-        ""
-      )) as {
-        id: string;
-        title: string;
-      }[]; */
-    }
-    if (specializations.length <= 0) {
-      return;
-    }
-    for (const specialization of specializations) {
-      await recursivelyUpdateSpecializations({
-        nodeId: specialization.id,
-        updatedProperty,
-        batch,
-        nestedCall: true,
-        inheritanceType: inheritance.inheritanceType,
-        generalizationId,
-      });
-    }
-  };
-
-  // Function to update a property in Firestore using a batch commit
-  const updateProperty = async (
-    batch: any,
-    nodeRef: DocumentReference,
-    updatedProperty: string,
-    inheritanceRef: string
-  ) => {
-    const updateData = {
-      [`inheritance.${updatedProperty}.ref`]: inheritanceRef,
-    };
-    batch.update(nodeRef, updateData);
-    if (batch._mutations.length > 10) {
-      await batch.commit();
-      batch = writeBatch(db);
     }
   };
 
@@ -1398,7 +1220,6 @@ const Ontology = () => {
                   scrolling={scrolling}
                   currentVisibleNode={currentVisibleNode}
                   setCurrentVisibleNode={setCurrentVisibleNode}
-                  handleLinkNavigation={handleLinkNavigation}
                   setSnackbarMessage={setSnackbarMessage}
                   user={user}
                   mainSpecializations={getMainSpecializations(
@@ -1408,7 +1229,6 @@ const Ontology = () => {
                   addNewNode={addNewNode}
                   lockedNodeFields={lockedNodeFields}
                   recordLogs={recordLogs}
-                  updateInheritance={updateInheritance}
                   navigateToNode={navigateToNode}
                   eachOntologyPath={eachOntologyPath}
                   searchWithFuse={searchWithFuse}

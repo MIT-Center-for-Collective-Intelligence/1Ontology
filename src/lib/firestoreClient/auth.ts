@@ -1,6 +1,5 @@
 // Importing necessary modules and functions
 import { User, UserTheme } from " @components/types/IAuth";
-import axios from "axios";
 import {
   createUserWithEmailAndPassword,
   getAuth,
@@ -53,12 +52,12 @@ export const sendVerificationEmail = async () => {
 // Function to create a new id token for the current user on firebase auth database
 // This token is added as authorization for every request to the server
 // This validates if the user is a valid user
-export const idToken = async () => {
-  const userToken = await getAuth().currentUser?.getIdToken(
-    /* forceRefresh */ true
-  );
-  axios.defaults.headers.common["authorization"] = userToken || "";
-};
+// export const idToken = async () => {
+//   const userToken = await getAuth().currentUser?.getIdToken(
+//     /* forceRefresh */ true
+//   );
+//   axios.defaults.headers.common["authorization"] = userToken || "";
+// };
 
 // Function to reset the password of a user
 export const resetPassword = async (email: string) => {

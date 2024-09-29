@@ -1,5 +1,13 @@
 import { INode } from " @components/types/INode";
-import { getDoc, doc, collection, updateDoc } from "firebase/firestore";
+import {
+  getDoc,
+  doc,
+  collection,
+  updateDoc,
+  DocumentReference,
+  writeBatch,
+  WriteBatch,
+} from "firebase/firestore";
 import { NODES } from "../firestoreClient/collections";
 
 export const unlinkPropertyOf = async (
@@ -110,5 +118,144 @@ export const removeIsPartOf = async (db: any, nodeData: INode) => {
       ).flat();
       await processRemoval(propertyOfElements, propertyName);
     }
+  }
+};
+
+
+
+interface UpdateInheritanceParams {
+  nodeId: string;
+  updatedProperty: string;
+  db: any;
+}
+// Function to handle inheritance
+export const updateInheritance = async ({
+  nodeId,
+  updatedProperty,
+  db,
+}: UpdateInheritanceParams): Promise<void> => {
+  try {
+    const batch = writeBatch(db);
+
+    const nodeRef = doc(collection(db, NODES), nodeId);
+    updateDoc(nodeRef, {
+      [`inheritance.${updatedProperty}.ref`]: null,
+    });
+
+    // Recursively update specializations
+    await recursivelyUpdateSpecializations({
+      nodeId: nodeId,
+      updatedProperty,
+      batch,
+      generalizationId: nodeId,
+      db,
+    });
+    // Commit all updates as a batch
+    await batch.commit();
+  } catch (error) {
+    console.error(error);
+    /*   recordLogs({
+      type: "error",
+      error,
+      at: "updateInheritance",
+    }); */
+  }
+};
+
+// Helper function to recursively update specializations
+const recursivelyUpdateSpecializations = async ({
+  nodeId,
+  updatedProperty,
+  batch,
+  nestedCall = false,
+  inheritanceType,
+  generalizationId,
+  db,
+}: {
+  nodeId: string;
+  updatedProperty: string;
+  batch: WriteBatch;
+  nestedCall?: boolean;
+  inheritanceType?:
+    | "inheritUnlessAlreadyOverRidden"
+    | "inheritAfterReview"
+    | "alwaysInherit";
+  generalizationId: string;
+  db: any;
+}): Promise<void> => {
+  // Fetch node data from Firestore
+  const nodeRef = doc(collection(db, NODES), nodeId);
+  const nodeSnapshot = await getDoc(nodeRef);
+  const nodeData = nodeSnapshot.data() as INode;
+
+  if (!nodeData || !nodeData.properties.hasOwnProperty(updatedProperty)) return;
+
+  // Get the inheritance type for the updated property
+  const inheritance = nodeData.inheritance[updatedProperty];
+  const canInherit =
+    (inheritanceType === "inheritUnlessAlreadyOverRidden" && inheritance.ref) ||
+    inheritanceType === "alwaysInherit";
+
+  if (nestedCall && canInherit) {
+    await updateProperty(batch, nodeRef, updatedProperty, generalizationId, db);
+  }
+
+  if (inheritance?.inheritanceType === "neverInherit") {
+    return;
+  }
+  let specializations = Object.values(nodeData.specializations).flat() as {
+    id: string;
+    title: string;
+  }[];
+
+  if (inheritance?.inheritanceType === "inheritAfterReview") {
+    /*   specializations = (await selectIt(
+      <Box sx={{ mb: "15px" }}>
+        <Typography>
+          Select which of the following specializations should inherit the
+          change that you just made to the property{" "}
+          <strong>{updatedProperty}</strong>,
+        </Typography>
+        <Typography>{"After you're done click continue."}</Typography>
+      </Box>,
+      specializations,
+      "Continue",
+      ""
+    )) as {
+      id: string;
+      title: string;
+    }[]; */
+  }
+  if (specializations.length <= 0) {
+    return;
+  }
+  for (const specialization of specializations) {
+    await recursivelyUpdateSpecializations({
+      nodeId: specialization.id,
+      updatedProperty,
+      batch,
+      nestedCall: true,
+      inheritanceType: inheritance.inheritanceType,
+      generalizationId,
+      db,
+    });
+  }
+};
+
+// Function to update a property in Firestore using a batch commit
+const updateProperty = async (
+  batch: any,
+  nodeRef: DocumentReference,
+  updatedProperty: string,
+  inheritanceRef: string,
+  db: any
+) => {
+  const updateData = {
+    [`inheritance.${updatedProperty}.ref`]: inheritanceRef,
+  };
+  batch.update(nodeRef, updateData);
+  if (batch._mutations.length > 10) {
+    await batch.commit();
+    batch = writeBatch(db);
   }
 };

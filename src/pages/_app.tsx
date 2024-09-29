@@ -37,10 +37,9 @@
 
 import { CacheProvider } from "@emotion/react";
 import CssBaseline from "@mui/material/CssBaseline";
-// import axios from "axios";
 import Head from "next/head";
 import { SnackbarProvider } from "notistack";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Hydrate, QueryClient, QueryClientProvider } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
 
@@ -48,14 +47,11 @@ import ErrorBoundary from " @components/components/ErrorBoundary";
 import { AppPropsWithLayout } from " @components/types/IAuth";
 import { AuthProvider } from " @components/components/context/AuthContext";
 import { ThemeProvider } from " @components/components/context/ThemeContext";
-// import { initFirebaseClientSDK } from " @components/lib/firestoreClient/firestoreClient.config";
 import { createEmotionCache } from " @components/lib/theme/createEmotionCache";
 import { initializeFirestore } from " @components/lib/firestoreClient/firestoreClient.config";
 import { LastDeploymentProvider } from " @components/components/context/LastDeploymentContext";
 
 const clientSideEmotionCache = createEmotionCache();
-
-// axios.defaults.baseURL = "/api";
 
 initializeFirestore();
 

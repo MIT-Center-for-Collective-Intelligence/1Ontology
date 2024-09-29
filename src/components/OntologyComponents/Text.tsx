@@ -13,16 +13,13 @@ import {
 import { useTheme } from "@emotion/react";
 import { INode } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
+import { updateInheritance } from " @components/lib/utils/helpers";
 
 type ISubOntologyProps = {
   currentVisibleNode: INode;
   setCurrentVisibleNode: (state: any) => void;
   property: string;
   text: string;
-  updateInheritance: (parameters: {
-    nodeId: string;
-    updatedProperty: string;
-  }) => void;
   confirmIt?: any;
   nodes: { [id: string]: INode };
   recordLogs: (logs: any) => void;
@@ -36,7 +33,6 @@ const Text = ({
   setCurrentVisibleNode,
   property,
   text,
-  updateInheritance,
   confirmIt,
   recordLogs,
   setSelectTitle,
@@ -121,6 +117,7 @@ const Text = ({
           updateInheritance({
             nodeId: currentVisibleNode.id,
             updatedProperty: property,
+            db,
           });
         }
 
