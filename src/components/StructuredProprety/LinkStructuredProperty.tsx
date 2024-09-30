@@ -21,7 +21,7 @@ import { DISPLAY } from " @components/lib/CONSTANTS";
 import LinkNode from "../LinkNode/LinkNode";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 
-type ILinksSideProps = {
+type ILinkStructuredPropertyProps = {
   properties: { [key: string]: any };
   currentVisibleNode: INode;
   showList: any;
@@ -40,7 +40,7 @@ type ILinksSideProps = {
   locked: boolean;
 };
 
-const LinksSideParts = ({
+const LinkStructuredProperty = ({
   properties,
   currentVisibleNode,
   showList,
@@ -57,7 +57,7 @@ const LinksSideParts = ({
   property,
   nodes,
   locked,
-}: ILinksSideProps) => {
+}: ILinkStructuredPropertyProps) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   return (
@@ -220,4 +220,4 @@ const LinksSideParts = ({
   );
 };
 
-export default LinksSideParts;
+export default LinkStructuredProperty;

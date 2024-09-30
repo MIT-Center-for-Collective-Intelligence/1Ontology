@@ -119,8 +119,8 @@ import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import TreeViewSimplified from "./TreeViewSimplified";
 import { SearchBox } from "../SearchBox/SearchBox";
 import NodeBody from "../NodBody/NodeBody";
-import LinksSide from "../Generalizations/LinksSide";
-import LinksSideParts from "../Parts/LinksSideParts";
+import LinkSpecGen from "../GeneralizationsSpecializations/LinkSpecGen";
+
 import {
   capitalizeFirstLetter,
   generateUniqueTitle,
@@ -134,6 +134,7 @@ import {
   unlinkPropertyOf,
   updateInheritance,
 } from " @components/lib/utils/helpers";
+import LinkStructuredProperty from "../StructuredProprety/LinkStructuredProperty";
 
 type INodeProps = {
   scrolling: any;
@@ -1561,7 +1562,7 @@ const Node = ({
                 </Typography>
               )}
             </Box>
-            <LinksSideParts
+            <LinkStructuredProperty
               properties={
                 getPropertyValue(
                   nodes,
@@ -1622,7 +1623,7 @@ const Node = ({
                 Generalizations:
               </Typography>
             </Box>
-            <LinksSide
+            <LinkSpecGen
               properties={currentVisibleNode?.properties?.generalizations || {}}
               currentVisibleNode={currentVisibleNode}
               showList={showListToSelect}
@@ -1669,7 +1670,7 @@ const Node = ({
                 Specializations:
               </Typography>
             </Box>
-            <LinksSide
+            <LinkSpecGen
               properties={currentVisibleNode?.specializations || {}}
               currentVisibleNode={currentVisibleNode}
               showList={showListToSelect}
@@ -1722,7 +1723,7 @@ const Node = ({
                 Is Part of:
               </Typography>
             </Box>
-            <LinksSideParts
+            <LinkStructuredProperty
               properties={
                 getPropertyValue(
                   nodes,
@@ -1783,7 +1784,7 @@ const Node = ({
                 </Typography>
               )}
             </Box>
-            <LinksSideParts
+            <LinkStructuredProperty
               properties={
                 getPropertyValue(
                   nodes,

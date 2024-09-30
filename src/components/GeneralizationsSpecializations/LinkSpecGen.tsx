@@ -18,7 +18,7 @@ import { INode } from " @components/types/INode";
 import ChildNode from "../OntologyComponents/ChildNode";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 
-type ILinksSideProps = {
+type ILinkSpecGenProps = {
   properties: { [key: string]: any };
   currentVisibleNode: INode;
   showList: any;
@@ -37,7 +37,7 @@ type ILinksSideProps = {
   locked: boolean;
 };
 
-const LinksSide = ({
+const LinkSpecGen = ({
   currentVisibleNode,
   showList,
   setOpenAddCategory,
@@ -53,7 +53,7 @@ const LinksSide = ({
   nodes,
   handleNewSpecialization,
   locked,
-}: ILinksSideProps) => {
+}: ILinkSpecGenProps) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
 
@@ -80,7 +80,7 @@ const LinksSide = ({
               sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
               variant="outlined"
             >
-              {"Select"}
+              {"Select "}
               {capitalizeFirstLetter(relationType)}
             </Button>
 
@@ -291,4 +291,4 @@ const LinksSide = ({
   );
 };
 
-export default LinksSide;
+export default LinkSpecGen;
