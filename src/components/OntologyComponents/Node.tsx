@@ -319,7 +319,7 @@ const Node = ({
         return null;
       }
     },
-    [currentVisibleNode.id]
+    [currentVisibleNode.id, selectedProperty, nodes]
   );
 
   // Function to add a new specialization to the node
@@ -1408,6 +1408,7 @@ const Node = ({
               property={property}
               nodes={nodes}
               locked={locked}
+              addNewSpecialization={addNewSpecialization}
             />
           ))}
         </Stack>

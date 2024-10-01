@@ -193,10 +193,10 @@ const recursivelyUpdateSpecializations = async ({
   // Get the inheritance type for the updated property
   const inheritance = nodeData.inheritance[updatedProperty];
   const canInherit =
-    (inheritanceType === "inheritUnlessAlreadyOverRidden" && inheritance.ref) ||
+    // (inheritanceType === "inheritUnlessAlreadyOverRidden" && inheritance.ref === generalizationId) ||
     inheritanceType === "alwaysInherit";
 
-  if (nestedCall && canInherit) {
+  if (nestedCall && canInherit && inheritance.ref !== generalizationId) {
     await updateProperty(batch, nodeRef, updatedProperty, generalizationId, db);
   }
 
