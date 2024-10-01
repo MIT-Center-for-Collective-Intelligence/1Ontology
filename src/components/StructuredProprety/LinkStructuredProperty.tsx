@@ -243,7 +243,7 @@ const StructuredProperty = ({
                             alignItems: 'center',
                           }}
                         >
-                          <Typography sx={{ fontWeight: 'bold' }}>
+                          <Typography sx={{ fontWeight: 'bold', mr: '13px' }}>
                             {category} :
                           </Typography>
                           {property === 'specializations' && (
