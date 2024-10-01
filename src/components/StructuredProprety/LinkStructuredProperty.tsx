@@ -133,6 +133,11 @@ const StructuredProperty = ({
     [properties, property, nodes, selectedDiffNode]
   );
 
+  const handleCategorySorting = (e: any, property: any) => {
+    console.log("event ==>", e);
+    console.log("property ==>", property);
+  };
+
   return (
     <Paper
       elevation={9}
@@ -163,7 +168,10 @@ const StructuredProperty = ({
         {currentVisibleNode?.inheritance[property]?.ref && (
           <Typography sx={{ fontSize: "14px", ml: "9px" }}>
             {'(Inherited from "'}
-            {getTitle(nodes, currentVisibleNode.inheritance[property].ref || "")}
+            {getTitle(
+              nodes,
+              currentVisibleNode.inheritance[property].ref || ""
+            )}
             {'")'}
           </Typography>
         )}
@@ -214,148 +222,225 @@ const StructuredProperty = ({
         <DragDropContext
           onDragEnd={(e) => {
             if (locked) return;
-            handleSorting(e, property);
+            if (e.type === "CATEGORY") {
+              handleCategorySorting(e, property);
+            } else {
+              handleSorting(e, property);
+            }
           }}
         >
-          <Box>
-            {Object.keys(properties || {})
-              .sort((a, b) =>
-                a === "main" ? -1 : b === "main" ? 1 : a.localeCompare(b)
-              )
-              .map((category: string) => {
-                const links: {
-                  id: string;
-                  change?: string;
-                }[] = properties[category] || [];
-
-                return (
-                  links.length > 0 && (
-                    <Paper
-                      key={category}
-                      id={category}
-                      sx={{ p: '10px', mt: '5px', borderRadius: '20px' }}
-                      elevation={category !== 'main' ? 3 : 0}
-                    >
-                      {category !== 'main' && (
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <Typography sx={{ fontWeight: 'bold', mr: '13px' }}>
-                            {category} :
-                          </Typography>
-                          {property === 'specializations' && (
-                            <Button
-                              onClick={() => addNewSpecialization(category)}
-                              sx={{
-                                borderRadius: '25px',
-                                backgroundColor: BUTTON_COLOR,
-                              }}
-                              variant='outlined'
-                            >
-                              {'Add '}
-                              {capitalizeFirstLetter(
-                                DISPLAY[property] || property
-                              )}
-                            </Button>
-                          )}
-                          <Button onClick={() => showList(property, category)}>
-                            {'Select'} {property}
-                          </Button>
-                          <Button
-                            onClick={() =>
-                              handleEditCategory(property, category)
-                            }
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            onClick={() => deleteCategory(property, category)}
-                          >
-                            Delete
-                          </Button>
-                        </Box>
-                      )}
-
-                      <List sx={{ p: 0 }}>
-                        <Droppable droppableId={category} type='CATEGORY'>
-                          {(provided, snapshot) => (
-                            <Box
-                              {...provided.droppableProps}
-                              ref={provided.innerRef}
-                              sx={{
-                                backgroundColor: snapshot.isDraggingOver
-                                  ? (theme) =>
-                                      theme.palette.mode === 'light'
-                                        ? DESIGN_SYSTEM_COLORS.gray250
-                                        : DESIGN_SYSTEM_COLORS.notebookG400
-                                  : '',
-                                borderRadius: '25px',
-                                userSelect: 'none',
-                              }}
-                            >
-                              {links.map((link, index) => (
-                                <Draggable
-                                  key={link.id + index}
-                                  draggableId={link.id}
-                                  index={index}
-                                >
-                                  {(provided) => (
-                                    <ListItem
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                      sx={{
-                                        my: 1,
-                                        p: 0,
-                                        backgroundColor:
-                                          link.change === 'added'
-                                            ? '#acf2bd'
-                                            : link.change === 'removed'
-                                            ? '#fdb8c0'
-                                            : '',
-                                      }}
-                                    >
-                                      <ListItemIcon sx={{ minWidth: 0 }}>
-                                        <DragIndicatorIcon />
-                                      </ListItemIcon>
-                                      <LinkNode
-                                        navigateToNode={navigateToNode}
-                                        recordLogs={recordLogs}
-                                        setSnackbarMessage={setSnackbarMessage}
-                                        currentVisibleNode={currentVisibleNode}
-                                        setCurrentVisibleNode={
-                                          setCurrentVisibleNode
-                                        }
-                                        sx={{ pl: 1 }}
-                                        child={link}
-                                        property={property}
-                                        category={category}
-                                        updateInheritance={updateInheritance}
-                                        title={getTitle(nodes, link.id)}
-                                        nodes={nodes}
-                                        index={index}
-                                        deleteVisible={unlinkVisible(link.id)}
-                                        linkLocked={false}
-                                        locked={locked}
-                                        user={user}
-                                      />
-                                    </ListItem>
-                                  )}
-                                </Draggable>
-                              ))}
-                              {provided.placeholder}
-                            </Box>
-                          )}
-                        </Droppable>
-                      </List>
-                    </Paper>
+          {/* Droppable for categories */}
+          <Droppable droppableId="categories" type="CATEGORY">
+            {(provided) => (
+              <Box ref={provided.innerRef} {...provided.droppableProps}>
+                {Object.keys(properties || {})
+                  .sort((a, b) =>
+                    a === "main" ? -1 : b === "main" ? 1 : a.localeCompare(b)
                   )
-                );
-              })}
-          </Box>
+                  .map((category: string, index) => {
+                    const links: {
+                      id: string;
+                      change?: string;
+                    }[] = properties[category] || [];
+
+                    return (
+                      <Draggable
+                        key={category}
+                        draggableId={category}
+                        index={index}
+                      >
+                        {(provided) => (
+                          <Paper
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            id={category}
+                            sx={{
+                              mt: "15px",
+                              borderRadius: "20px",
+                            }}
+                            elevation={category !== "main" ? 6 : 0}
+                          >
+                            {category !== "main" && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  backgroundColor: (theme) =>
+                                    theme.palette.mode === "dark"
+                                      ? "#1f232f"
+                                      : "#969faf",
+                                  borderTopLeftRadius: "25px",
+                                  borderTopRightRadius: "25px",
+                                  m: 0,
+                                  p: 2,
+                                  gap: "10px",
+                                }}
+                              >
+                                <Typography
+                                  sx={{ fontWeight: "bold", mr: "13px" }}
+                                >
+                                  {category} :
+                                </Typography>
+                                {property === "specializations" && (
+                                  <Button
+                                    onClick={() =>
+                                      addNewSpecialization(category)
+                                    }
+                                    sx={{
+                                      borderRadius: "25px",
+                                      backgroundColor: BUTTON_COLOR,
+                                    }}
+                                    variant="outlined"
+                                  >
+                                    {"Add "}
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="outlined"
+                                  onClick={() => showList(property, category)}
+                                  sx={{
+                                    borderRadius: "25px",
+                                    backgroundColor: BUTTON_COLOR,
+                                  }}
+                                >
+                                  {"Select"}
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  onClick={() =>
+                                    handleEditCategory(property, category)
+                                  }
+                                  sx={{
+                                    borderRadius: "25px",
+                                    backgroundColor: BUTTON_COLOR,
+                                  }}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  onClick={() =>
+                                    deleteCategory(property, category)
+                                  }
+                                  sx={{
+                                    borderRadius: "25px",
+                                    backgroundColor: BUTTON_COLOR,
+                                  }}
+                                >
+                                  Delete
+                                </Button>
+                              </Box>
+                            )}
+
+                            <List sx={{ p: 1 }}>
+                              <Droppable droppableId={category} type="LINK">
+                                {(provided, snapshot) => (
+                                  <Box
+                                    {...provided.droppableProps}
+                                    ref={provided.innerRef}
+                                    sx={{
+                                      backgroundColor: snapshot.isDraggingOver
+                                        ? (theme) =>
+                                            theme.palette.mode === "light"
+                                              ? DESIGN_SYSTEM_COLORS.gray250
+                                              : DESIGN_SYSTEM_COLORS.notebookG400
+                                        : "",
+                                      borderRadius: "25px",
+                                      userSelect: "none",
+                                    }}
+                                  >
+                                    {links.length > 0 ? (
+                                      links.map((link, index) => (
+                                        <Draggable
+                                          key={link.id + index}
+                                          draggableId={link.id}
+                                          index={index}
+                                        >
+                                          {(provided) => (
+                                            <ListItem
+                                              ref={provided.innerRef}
+                                              {...provided.draggableProps}
+                                              {...provided.dragHandleProps}
+                                              sx={{
+                                                my: 1,
+                                                p: 0,
+                                              }}
+                                            >
+                                              <ListItemIcon
+                                                sx={{ minWidth: 0 }}
+                                              >
+                                                <DragIndicatorIcon
+                                                  sx={{
+                                                    color:
+                                                      link.change === "added"
+                                                        ? "green"
+                                                        : link.change ===
+                                                          "removed"
+                                                        ? "red"
+                                                        : "",
+                                                  }}
+                                                />
+                                              </ListItemIcon>
+                                              <LinkNode
+                                                navigateToNode={navigateToNode}
+                                                recordLogs={recordLogs}
+                                                setSnackbarMessage={
+                                                  setSnackbarMessage
+                                                }
+                                                currentVisibleNode={
+                                                  currentVisibleNode
+                                                }
+                                                setCurrentVisibleNode={
+                                                  setCurrentVisibleNode
+                                                }
+                                                sx={{ pl: 1 }}
+                                                link={link}
+                                                property={property}
+                                                category={category}
+                                                updateInheritance={
+                                                  updateInheritance
+                                                }
+                                                title={getTitle(nodes, link.id)}
+                                                nodes={nodes}
+                                                index={index}
+                                                deleteVisible={unlinkVisible(
+                                                  link.id
+                                                )}
+                                                linkLocked={false}
+                                                locked={locked}
+                                                user={user}
+                                              />
+                                            </ListItem>
+                                          )}
+                                        </Draggable>
+                                      ))
+                                    ) : (
+                                      <Typography
+                                        variant="body2"
+                                        sx={{
+                                          p: 2,
+                                          color: "text.secondary",
+                                          textAlign: "center",
+                                        }}
+                                      >
+                                        {category === "main" ? "" : "No items"}
+                                      </Typography>
+                                    )}
+                                    {provided.placeholder}
+                                  </Box>
+                                )}
+                              </Droppable>
+                            </List>
+                          </Paper>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+                {provided.placeholder}
+              </Box>
+            )}
+          </Droppable>
         </DragDropContext>
       </Box>
     </Paper>

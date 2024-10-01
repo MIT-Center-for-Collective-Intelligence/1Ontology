@@ -49,13 +49,13 @@ const useThemeChange = () => {
       const seconds = String(now.getSeconds()).padStart(2, "0");
 
       const doerCreate = `${user?.uname}-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
-   /*    await setDoc(logRef, {
+      await setDoc(logRef, {
         doer: user.uname,
         doerCreate,
         action: "theme change",
         ["theme"]: newValue,
         createdAt: Timestamp.fromDate(new Date()),
-      }); */
+      });
     },
     [db, user]
   );

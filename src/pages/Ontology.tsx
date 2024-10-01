@@ -128,6 +128,7 @@ import { Notification } from " @components/components/Chat/Notification";
 import LogsSideBar, {
   NodeChange,
 } from " @components/components/Logs/LogsSideBar";
+import { saveNewChange } from " @components/lib/utils/helpers";
 
 const synchronizeStuff = (prev: (any & { id: string })[], change: any) => {
   const docType = change.type;
@@ -780,6 +781,7 @@ const Ontology = () => {
   const addNewNode = useCallback(
     async ({ id, newNode }: { id: string; newNode: any }) => {
       try {
+        if (!user?.uname) return;
         // Reference to the new node document
         setCurrentVisibleNode({
           id,
@@ -793,7 +795,16 @@ const Ontology = () => {
           deleted: false,
           createdAt: new Date(),
         });
-
+        saveNewChange(db, {
+          nodeId: newNodeRef.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: "",
+          previousValue: null,
+          newValue: null,
+          modifiedAt: new Date(),
+          changeType: "add node",
+          fullNode: newNode,
+        });
         // Record logs for the created node
         await recordLogs({
           action: "Create a new node",
@@ -805,7 +816,7 @@ const Ontology = () => {
         console.error(error);
       }
     },
-    [nodes]
+    [nodes, user?.uname]
   );
 
   // Define a callback function to handle the opening of the ontology DAGRE view.
@@ -1527,7 +1538,7 @@ const Ontology = () => {
           handleSearch={handleSearch}
           navigateToNode={navigateToNode}
           displayInheritanceSettings={displayInheritanceSettings}
-          // displayUserLogs={displayUserLogs}
+          displayUserLogs={displayUserLogs}
           locked={!!currentVisibleNode?.locked && !user?.manageLock}
         />
       </Box>

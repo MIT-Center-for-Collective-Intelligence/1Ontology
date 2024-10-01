@@ -154,10 +154,11 @@ const Text = ({
         }
 
         recordLogs({
-          action: "Edited a property",
+          action: "change text",
           field: property,
           previousValue,
           newValue,
+          nodeId: currentVisibleNode.id,
         });
 
         saveNewChange(db, {
@@ -167,7 +168,7 @@ const Text = ({
           previousValue,
           newValue,
           modifiedAt: new Date(),
-          changeType: "modify elements",
+          changeType: "change text",
           fullNode: currentVisibleNode,
         });
       }
@@ -267,6 +268,7 @@ const Text = ({
               whiteSpace: "pre-wrap",
               flex: 1,
               wordBreak: "break-word",
+              color: "black",
             }}
             component="div"
           >
@@ -372,7 +374,9 @@ const Text = ({
               inputRef={textAreaRef}
               multiline
               minRows={2}
-              value={selectTitle && property === "title" ? "" : editorContent || text}
+              value={
+                selectTitle && property === "title" ? "" : editorContent || text
+              }
               onChange={handleChanges}
               onBlur={handleBlur}
               placeholder="Type something..."

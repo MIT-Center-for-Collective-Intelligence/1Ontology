@@ -13,25 +13,27 @@ import { INode } from " @components/types/INode";
 import { NODES_LOGS } from " @components/lib/firestoreClient/collections";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import moment from "moment";
+import { getChangeDescription } from " @components/lib/utils/helpers";
 
 export type NodeChange = {
   nodeId: string;
   modifiedBy: string;
-  modifiedProperty: string;
+  modifiedProperty: string | null;
   previousValue: any;
   newValue: any;
   modifiedAt: Date;
   changeType:
-    | "change text"
-    | "add collection"
-    | "delete collection"
-    | "change collection name"
-    | "sort elements"
-    | "remove element"
-    | "modify elements"
-    | "add property"
-    | "remove property"
-    | "delete node";
+    | "change text" //handled
+    | "sort elements" //handled
+    | "remove element" //handled
+    | "modify elements" //handled
+    | "add property" // missing
+    | "remove property" // missing
+    | "delete node" // handled
+    | "add node" // handled
+    | "add collection" // handled
+    | "delete collection" // handled
+    | "edit collection"; // handled
   fullNode: INode;
 };
 
@@ -54,10 +56,8 @@ const LogsSideBar = ({
     setLogs({});
 
     const nodesQuery = query(
-      collection(
-        doc(collection(db, NODES_LOGS), openLogsFor?.uname),
-        "changes"
-      ),
+      collection(db, NODES_LOGS),
+      where("modifiedBy", "==", openLogsFor.uname),
       orderBy("modifiedAt", "desc")
     );
 
@@ -96,7 +96,7 @@ const LogsSideBar = ({
       {logs &&
         Object.keys(logs).map((id) => (
           <Paper
-            elevation={1}
+            elevation={3}
             sx={{ padding: 1, marginBottom: 1, m: "15px" }}
             key={id}
           >
@@ -131,8 +131,11 @@ const LogsSideBar = ({
                   {logs[id].fullNode.title}
                 </Typography>
 
-                <Typography variant="body2" sx={{ fontSize: "0.75rem" }}>
-                  {`Modified Property: ${logs[id].modifiedProperty} | Previous: ${logs[id].previousValue} | New: ${logs[id].newValue}`}
+                <Typography
+                  variant="body2"
+                  sx={{ fontSize: "14px", mt: "15px" }}
+                >
+                  {getChangeDescription(logs[id], openLogsFor?.fullname || "")}
                 </Typography>
               </Box>
             </Box>
@@ -143,7 +146,7 @@ const LogsSideBar = ({
               variant="outlined"
               sx={{ borderRadius: "25px" }}
             >
-              Compare
+              View
             </Button>
           </Paper>
         ))}

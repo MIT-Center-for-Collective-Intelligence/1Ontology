@@ -262,9 +262,46 @@ const updateProperty = async (
 
 export const saveNewChange = (db: any, data: NodeChange) => {
   if (!data.modifiedBy) return;
-  // console.log("saveNewChange", data);
-  // const changeUseRef = doc(
-  //   collection(doc(collection(db, NODES_LOGS), data.modifiedBy), "changes")
-  // );
-  // setDoc(changeUseRef, data);
+  console.log("saveNewChange", data);
+  const changeUseRef = doc(collection(db, NODES_LOGS));
+  setDoc(changeUseRef, data);
+};
+
+export const getChangeDescription = (
+  log: NodeChange,
+  modifiedByFullName: string
+): string => {
+  const {
+    modifiedProperty,
+    previousValue,
+    newValue,
+    changeType,
+    modifiedAt,
+    fullNode,
+  } = log;
+
+  switch (changeType) {
+    case "change text":
+      return `${modifiedByFullName} updated the text in "${fullNode.title}",  The property "${modifiedProperty}" was changed from "${previousValue}" to "${newValue}".`;
+    case "add collection":
+      return `${modifiedByFullName} added a new collection to "${fullNode.title}",  The collection was created with initial properties.`;
+    case "delete collection":
+      return `${modifiedByFullName} deleted a collection from "${fullNode.title}",  All related data has been removed.`;
+    case "edit collection":
+      return `${modifiedByFullName} renamed a collection in "${fullNode.title}",  It was renamed from "${previousValue}" to "${newValue}".`;
+    case "sort elements":
+      return `${modifiedByFullName} sorted elements in the collection of "${fullNode.title}", `;
+    case "remove element":
+      return `${modifiedByFullName} removed an element from "${fullNode.title}", Under the property "${modifiedProperty}".`;
+    case "modify elements":
+      return `${modifiedByFullName} modified the elements of "${fullNode.title}", changing "${modifiedProperty}" from "${previousValue}" to "${newValue}".`;
+    case "add property":
+      return `${modifiedByFullName} added a new property "${modifiedProperty}" to "${fullNode.title}",  The initial value is "${newValue}".`;
+    case "remove property":
+      return `${modifiedByFullName} removed the property "${modifiedProperty}" from "${fullNode.title}",  Its previous value was "${previousValue}".`;
+    case "delete node":
+      return `${modifiedByFullName} deleted the node "${fullNode.title}",  All associated data has been removed.`;
+    default:
+      return `${modifiedByFullName} made an unknown change to "${fullNode.title}", `;
+  }
 };

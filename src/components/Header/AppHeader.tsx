@@ -69,17 +69,12 @@ import React, {
 } from "react";
 import mitLogo from "../../../public/CCI-logo.gif";
 import mitLogoDark from "../../../public/MIT-Logo-Dark.png";
-import {
-  addSuffixToUrlGMT,
-  capitalizeString,
-  timeAgo,
-} from "../../lib/utils/string.utils";
+import { capitalizeString, timeAgo } from "../../lib/utils/string.utils";
 import useThemeChange from " @components/lib/hooks/useThemeChange";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import ROUTES from " @components/lib/utils/routes";
 import { useAuth } from "../context/AuthContext";
 import {
-  Timestamp,
   collection,
   doc,
   getDoc,
@@ -122,6 +117,7 @@ type AppHeaderProps = {
   nodes: { [nodeId: string]: INode };
   navigateToNode: any;
   displayInheritanceSettings: any;
+  displayUserLogs: any;
   locked: boolean;
 };
 const AppHeader = forwardRef(
@@ -138,6 +134,7 @@ const AppHeader = forwardRef(
       handleChat,
       handleSearch,
       displayInheritanceSettings,
+      displayUserLogs,
       nodes,
       navigateToNode,
       locked,
@@ -177,17 +174,7 @@ const AppHeader = forwardRef(
     };
 
     useEffect(() => {
-      // Calculate the timestamp for 10 minutes ago
-      const tenMinutesAgo = Timestamp.fromMillis(
-        new Date().getTime() - 10 * 60 * 1000
-      );
-
-      // Use a query with a where clause to filter users who interacted within the last 10 minutes
-      const usersQuery = query(
-        collection(db, "users"),
-        where("lastInteracted", ">=", tenMinutesAgo)
-      );
-
+      const usersQuery = query(collection(db, "users"));
       const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
         setUsersNodesViews((prevUsersNodesViews: any) => {
           const updatedUsersData = { ...prevUsersNodesViews };
@@ -200,8 +187,7 @@ const AppHeader = forwardRef(
 
             if (
               (change.type === "added" || change.type === "modified") &&
-              currentNode &&
-              data.lastInteracted
+              currentNode
             ) {
               updatedUsersData[userId] = {
                 node: {
@@ -212,6 +198,7 @@ const AppHeader = forwardRef(
                 fName: data.fName,
                 lName: data.lName,
                 lastInteracted: data.lastInteracted,
+                uname: userId,
               };
             } else if (change.type === "removed") {
               delete updatedUsersData[userId];
@@ -397,7 +384,7 @@ const AppHeader = forwardRef(
         // ...properties,
       };
     };
-
+    console.log("usersNodesViews", usersNodesViews);
     const handleDownload = useCallback(async () => {
       // try {
       const nodesCollection = query(
@@ -605,6 +592,14 @@ const AppHeader = forwardRef(
       // }
     }, [db, user]);
 
+    const viewProfileLogs = (e: any) => {
+      const userName = e.currentTarget.id;
+      displayUserLogs({
+        uname: userName,
+        imageUrl: usersNodesViews[userName].imageUrl,
+        fullname: `${usersNodesViews[userName].fName} ${usersNodesViews[userName].lName}`,
+      });
+    };
     return (
       <>
         <Box
@@ -649,10 +644,10 @@ const AppHeader = forwardRef(
                 }}
               />
             </Stack>
-            <Box sx={{ display: "flex", gap: "-13px" }}>
-              {Object.values(usersNodesViews).map((c: any) => (
+            <Box sx={{ display: "flex", gap: "5px" }}>
+              {Object.values(usersNodesViews).map((u: any) => (
                 <Tooltip
-                  key={`${c.fName} ${c.lName}`}
+                  key={`${u.fName} ${u.lName}`}
                   title={
                     <Box
                       sx={{
@@ -665,28 +660,36 @@ const AppHeader = forwardRef(
                     >
                       <strong
                         style={{ marginRight: "4px" }}
-                      >{`${c.fName}`}</strong>
-                      <div> {"last interacted with"}</div>
+                      >{`${u.fName} ${u.lName}`}</strong>
+                      {u.node.id && <div> {"last interacted with"}</div>}
 
-                      <Link
-                        underline="hover"
-                        onClick={() => navigateToNode(c.node.id)}
-                        sx={{
-                          cursor: "pointer",
-                          mx: "5px",
-                        }}
-                      >
-                        {" "}
-                        {c.node.title}
-                      </Link>
-                      <div>{timeAgo(c.lastInteracted)}</div>
+                      {u.node.id && (
+                        <Link
+                          underline="hover"
+                          onClick={() => navigateToNode(u.node.id)}
+                          sx={{
+                            cursor: "pointer",
+                            mx: "5px",
+                          }}
+                        >
+                          {" "}
+                          {u.node.title}
+                        </Link>
+                      )}
+                      {u.node.id && u.lastInteracted && (
+                        <div>{timeAgo(u.lastInteracted)}</div>
+                      )}
                     </Box>
                   }
                 >
-                  <Box sx={{ position: "relative", display: "inline-block" }}>
+                  <Box
+                    sx={{ position: "relative", display: "inline-block" }}
+                    onClick={viewProfileLogs}
+                    id={u.uname}
+                  >
                     <OptimizedAvatar
-                      alt={`${c.fName} ${c.lName}`}
-                      imageUrl={c.imageUrl || ""}
+                      alt={`${u.fName} ${u.lName}`}
+                      imageUrl={u.imageUrl || ""}
                       size={40}
                       sx={{
                         width: "100%",

@@ -7,6 +7,7 @@ export type IChildNode = {
   category?: string;
   editMode?: boolean;
   new?: boolean;
+  change?: any;
 };
 
 export type IChildCategory = {

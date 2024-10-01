@@ -130,6 +130,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {
   removeIsPartOf,
+  saveNewChange,
   unlinkPropertyOf,
   updateInheritance,
 } from " @components/lib/utils/helpers";
@@ -181,17 +182,17 @@ const Node = ({
     setSelectedCategory("");
   };
   const [openAddCategory, setOpenAddCategory] = useState(false);
-  const handleCloseAddCategory = () => {
+  const handleCloseAddCollection = () => {
     setSelectedProperty("");
-    setNewCategory("");
+    setNewCollection("");
     setOpenAddCategory(false);
     setEditCategory(null);
   };
-  const [newCategory, setNewCategory] = useState("");
+  const [newCollection, setNewCollection] = useState("");
   const [selectedProperty, setSelectedProperty] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
-  const [editCategory, setEditCategory] = useState<{
+  const [editCollection, setEditCategory] = useState<{
     property: string;
     category: string;
   } | null>(null);
@@ -199,10 +200,8 @@ const Node = ({
 
   const [searchValue, setSearchValue] = useState("");
   const [newFieldType, setNewFieldType] = useState("String");
-  const [openAddField, setOpenAddField] = useState(false);
-  const [newFieldTitle, setNewFieldTitle] = useState("");
-  const [viewValueSpecialization, setViewValueSpecialization] =
-    useState<number>(1);
+  const [openAddProprety, setOpenAddProperty] = useState(false);
+  const [newFieldTitle, setNewProperty] = useState("");
   const [selectTitle, setSelectTitle] = useState(false);
 
   const db = getFirestore();
@@ -602,6 +601,8 @@ const Node = ({
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );
+      let previousValue = null;
+      let newValue = null;
 
       // If the node document does not exist, return early
       if (!nodeDoc.exists()) return;
@@ -619,12 +620,17 @@ const Node = ({
       ) {
         oldLinks = [...nodeData[selectedProperty][selectedCategory]];
         allLinks = Object.values(nodeData[selectedProperty]).flat();
+
+        previousValue = JSON.parse(JSON.stringify(nodeData[selectedProperty]));
       } else {
         oldLinks = [
           ...((nodeData.properties[selectedProperty] || {})[selectedCategory] ||
             []),
         ];
         allLinks = Object.values(nodeData.properties[selectedProperty]).flat();
+        previousValue = JSON.parse(
+          JSON.stringify(nodeData.properties[selectedProperty])
+        );
       }
 
       // Iterate through checkedItems to add new children
@@ -677,14 +683,12 @@ const Node = ({
         selectedProperty === "generalizations"
       ) {
         nodeData[selectedProperty][selectedCategory] = oldLinks;
+        newValue = JSON.parse(JSON.stringify(nodeData[selectedProperty]));
       } else {
-        if (!nodeData.properties[selectedProperty]) {
-          nodeData.properties[selectedProperty] = {
-            [selectedCategory]: oldLinks,
-          };
-        } else {
-          nodeData.properties[selectedProperty][selectedCategory] = oldLinks;
-        }
+        nodeData.properties[selectedProperty][selectedCategory] = oldLinks;
+        newValue = JSON.parse(
+          JSON.stringify(nodeData.properties[selectedProperty])
+        );
       }
 
       // Update links for specializations/generalizations
@@ -768,6 +772,16 @@ const Node = ({
           db,
         });
       }
+      saveNewChange(db, {
+        nodeId: currentVisibleNode.id,
+        modifiedBy: user?.uname,
+        modifiedProperty: selectedProperty,
+        previousValue,
+        newValue,
+        modifiedAt: new Date(),
+        changeType: "remove element",
+        fullNode: currentVisibleNode,
+      });
     } catch (error) {
       // Handle any errors that occur during the process
       console.error(error);
@@ -786,11 +800,12 @@ const Node = ({
     selectedProperty,
   ]);
 
-  const addNewCategory = useCallback(async () => {
+  const addNewCollection = useCallback(async () => {
     try {
       // Check if newCategory is provided
-      if (!newCategory) return;
-
+      if (!newCollection) return;
+      let previousValue = null;
+      let changeType: "add collection" | "edit collection" = "edit collection";
       // Fetch the node document based on the currentVisibleNode.id
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
@@ -799,67 +814,79 @@ const Node = ({
       // Check if the node document exists
       if (nodeDoc.exists()) {
         // Retrieve node data from the document
-        const ontologyData = nodeDoc.data();
+        const nodeData = nodeDoc.data();
 
         // If editCategory is provided, update existing category
-        if (editCategory) {
+        if (editCollection) {
+          previousValue = JSON.parse(
+            JSON.stringify(nodeData[editCollection.property])
+          );
+          changeType = "edit collection";
           // Log the action of editing a category
           recordLogs({
             action: "Edited a category",
-            previousValue: editCategory.category,
-            newValue: newCategory,
+            previousValue: editCollection.category,
+            newValue: newCollection,
             node: nodeDoc.id,
-            property: editCategory.property,
+            property: editCollection.property,
           });
           if (
-            editCategory.property === "specializations" ||
-            editCategory.property === "specializations"
+            editCollection.property === "specializations" ||
+            editCollection.property === "specializations"
           ) {
             // Update ontologyData for the edited category
-            ontologyData[editCategory.property][newCategory] =
-              ontologyData[editCategory.property][editCategory.category];
-            delete ontologyData[editCategory.property][editCategory.category];
+            nodeData[editCollection.property][newCollection] =
+              nodeData[editCollection.property][editCollection.category];
+            delete nodeData[editCollection.property][editCollection.category];
           } else {
             // Update ontologyData for the edited category
-            ontologyData.properties[editCategory.property][newCategory] =
-              ontologyData.properties[editCategory.property][
-                editCategory.category
+            nodeData.properties[editCollection.property][newCollection] =
+              nodeData.properties[editCollection.property][
+                editCollection.category
               ];
-            delete ontologyData.properties[editCategory.property][
-              editCategory.category
+            delete nodeData.properties[editCollection.property][
+              editCollection.category
             ];
           }
         } else {
           // If it's a new category, create it
+          changeType = "add collection";
+
           if (
-            !ontologyData?.properties[selectedProperty]?.hasOwnProperty(
-              newCategory.trim()
+            !nodeData?.properties[selectedProperty]?.hasOwnProperty(
+              newCollection.trim()
             )
           ) {
             if (
               selectedProperty === "specializations" ||
               selectedProperty === "specializations"
             ) {
-              ontologyData[selectedProperty] = {
-                ...(ontologyData[selectedProperty] || {}),
-                [newCategory]: [],
+              previousValue = JSON.parse(
+                JSON.stringify(nodeData[selectedProperty])
+              );
+              nodeData[selectedProperty] = {
+                ...(nodeData[selectedProperty] || {}),
+                [newCollection]: [],
               };
             } else {
-              ontologyData.properties[selectedProperty] = {
-                ...(ontologyData?.properties[selectedProperty] || {}),
-                [newCategory]: [],
+              previousValue = JSON.parse(
+                JSON.stringify(nodeData.properties[selectedProperty])
+              );
+              nodeData.properties[selectedProperty] = {
+                ...(nodeData?.properties[selectedProperty] || {}),
+                [newCollection]: [],
               };
             }
 
             // Log the action of creating a new category
             recordLogs({
-              action: "Created a category",
-              category: newCategory,
+              action: "add collection",
+              category: newCollection,
               node: nodeDoc.id,
               field: selectedProperty,
             });
           } else {
-            if (editCategory !== null) {
+            if (editCollection !== null) {
               confirmIt(
                 `This category already exist under the property ${selectedProperty}`,
                 "Ok",
@@ -876,17 +903,27 @@ const Node = ({
         ) {
           updateInheritance({
             nodeId: nodeDoc.id,
-            updatedProperty: editCategory
-              ? editCategory.property
+            updatedProperty: editCollection
+              ? editCollection.property
               : selectedProperty,
             db,
           });
         }
         // Update the node document with the modified data
-        await updateDoc(nodeDoc.ref, ontologyData);
+        await updateDoc(nodeDoc.ref, nodeData);
 
+        saveNewChange(db, {
+          nodeId: currentVisibleNode.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: selectedProperty,
+          previousValue,
+          newValue: nodeData.properties[selectedProperty],
+          modifiedAt: new Date(),
+          changeType,
+          fullNode: currentVisibleNode,
+        });
         // Close the add category modal
-        handleCloseAddCategory();
+        handleCloseAddCollection();
       }
     } catch (error) {
       // Log any errors that occur during the process
@@ -896,7 +933,7 @@ const Node = ({
         error,
       });
     }
-  }, [newCategory]);
+  }, [newCollection]);
 
   const handleNewSpecialization = async (category?: string) => {
     await addNewSpecialization(category || selectedCategory);
@@ -904,7 +941,7 @@ const Node = ({
   };
 
   const handleEditCategory = (property: string, category: string) => {
-    setNewCategory(category);
+    setNewCollection(category);
     setOpenAddCategory(true);
     setEditCategory({
       property,
@@ -915,7 +952,7 @@ const Node = ({
   const deleteCategory = async (property: string, category: string) => {
     if (
       await confirmIt(
-        "Are you sure you want to delete this Collection?",
+        `Are you sure you want to delete the collection ${category}?`,
         "Delete Collection",
         "Keep Collection"
       )
@@ -925,11 +962,13 @@ const Node = ({
           doc(collection(db, NODES), currentVisibleNode.id)
         );
         if (nodeDoc.exists()) {
+          let previousValue = null;
           const nodeData = nodeDoc.data();
           if (
             property === "specializations" ||
             property === "specializations"
           ) {
+            previousValue = JSON.parse(JSON.stringify(nodeData[property]));
             nodeData[property]["main"] = [
               ...(nodeData[property]["main"] || []),
               ...nodeData[property][category],
@@ -949,6 +988,16 @@ const Node = ({
             category,
             node: nodeDoc.id,
           });
+          saveNewChange(db, {
+            nodeId: currentVisibleNode.id,
+            modifiedBy: user?.uname,
+            modifiedProperty: property,
+            previousValue,
+            newValue: nodeData.properties[property],
+            modifiedAt: new Date(),
+            changeType: "delete collection",
+            fullNode: currentVisibleNode,
+          });
         }
       } catch (error) {
         recordLogs({
@@ -965,7 +1014,7 @@ const Node = ({
       try {
         // Destructure properties from the result object
         const { source, destination, draggableId, type } = result;
-
+        let previousValue = null;
         // If there is no destination, no sorting needed
         if (!destination) {
           return;
@@ -991,6 +1040,7 @@ const Node = ({
               JSON.stringify(inheritedNode.properties[property])
             );
           }
+
           // Ensure nodeData exists
           if (nodeData) {
             let propertyValue: any = null;
@@ -999,9 +1049,13 @@ const Node = ({
               property === "generalizations"
             ) {
               // Get the children and specializations related to the provided subType
+              previousValue = JSON.parse(JSON.stringify(nodeData[property]));
               propertyValue = nodeData[property];
             } else {
               propertyValue = nodeData.properties[property];
+              previousValue = JSON.parse(
+                JSON.stringify(nodeData.properties[property])
+              );
             }
 
             // Find the index of the draggable item in the source category
@@ -1049,9 +1103,23 @@ const Node = ({
               });
             }
 
+            saveNewChange(db, {
+              nodeId: currentVisibleNode.id,
+              modifiedBy: user?.uname,
+              modifiedProperty: property,
+              previousValue,
+              newValue:
+                property === "specializations" || property === "generalizations"
+                  ? nodeData[property]
+                  : nodeData.properties[property],
+              modifiedAt: new Date(),
+              changeType: "sort elements",
+              fullNode: currentVisibleNode,
+            });
+
             // Record a log of the sorting action
             recordLogs({
-              action: "Moved a field to a category",
+              action: "sort elements",
               field: property,
               sourceCategory:
                 sourceCategory === "main" ? "outside" : sourceCategory,
@@ -1059,6 +1127,7 @@ const Node = ({
                 destinationCategory === "main"
                   ? "outside"
                   : destinationCategory,
+              nodeId: currentVisibleNode.id,
             });
           }
         }
@@ -1085,6 +1154,8 @@ const Node = ({
           "Keep Node"
         )
       ) {
+        if (!user?.uname) return;
+
         const specializations = Object.values(
           currentVisibleNode.specializations
         ).flat();
@@ -1116,6 +1187,16 @@ const Node = ({
         // Update the user document by removing the deleted node's ID
         await updateDoc(nodeRef, { deleted: true });
 
+        saveNewChange(db, {
+          nodeId: currentVisibleNode.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: null,
+          previousValue: null,
+          newValue: null,
+          modifiedAt: new Date(),
+          changeType: "delete node",
+          fullNode: currentVisibleNode,
+        });
         // Record a log entry for the deletion action
         recordLogs({
           action: "Deleted Node",
@@ -1130,7 +1211,7 @@ const Node = ({
         error,
       });
     }
-  }, [currentVisibleNode.id]);
+  }, [currentVisibleNode.id, user?.uname]);
 
   const handleToggle = useCallback(
     (nodeId: string) => {
@@ -1229,8 +1310,8 @@ const Node = ({
         propertyType,
         inheritance,
       });
-      setNewFieldTitle("");
-      setOpenAddField(false);
+      setNewProperty("");
+      setOpenAddProperty(false);
       const batch = writeBatch(db);
       await updateSpecializationsInheritance(
         Object.values(currentVisibleNode.specializations).flat(),
@@ -1243,13 +1324,13 @@ const Node = ({
       await batch.commit();
 
       recordLogs({
-        action: "addNewProperty",
+        action: "add new property",
         node: currentVisibleNode.id,
         newProperty,
         newPropertyType,
       });
     } catch (error) {
-      setOpenAddField(false);
+      setOpenAddProperty(false);
       console.error(error);
     }
   };
@@ -1462,7 +1543,7 @@ const Node = ({
             setSnackbarMessage={setSnackbarMessage}
             setOpenAddCategory={setOpenAddCategory}
             setSelectedProperty={setSelectedProperty}
-            setOpenAddField={setOpenAddField}
+            setOpenAddField={setOpenAddProperty}
             removeProperty={removeProperty}
             user={user}
             nodes={nodes}
@@ -1612,9 +1693,9 @@ const Node = ({
       </Modal>
       <Dialog
         onClose={() => {
-          setOpenAddField(false);
+          setOpenAddProperty(false);
         }}
-        open={openAddField}
+        open={openAddProprety}
       >
         <DialogContent>
           <Box sx={{ height: "auto", width: "500px" }}>
@@ -1651,7 +1732,7 @@ const Node = ({
                 label="New Property"
                 sx={{ mt: "14px" }}
                 value={newFieldTitle}
-                onChange={(event) => setNewFieldTitle(event.target.value)}
+                onChange={(event) => setNewProperty(event.target.value)}
                 InputLabelProps={{
                   sx: { color: "grey" },
                 }}
@@ -1671,8 +1752,8 @@ const Node = ({
           </Button>
           <Button
             onClick={() => {
-              setOpenAddField(false);
-              setNewFieldTitle("");
+              setOpenAddProperty(false);
+              setNewProperty("");
             }}
             color="primary"
             variant="contained"
@@ -1683,18 +1764,18 @@ const Node = ({
         </DialogActions>
       </Dialog>
 
-      <Dialog onClose={handleCloseAddCategory} open={openAddCategory}>
+      <Dialog onClose={handleCloseAddCollection} open={openAddCategory}>
         <DialogContent>
           <Box sx={{ height: "auto", width: "500px" }}>
             <Typography sx={{ mb: "13px", fontSize: "19px" }}>
-              {editCategory ? "Edit " : "Add "}a new Collection:
+              {editCollection ? "Edit " : "Add "}a new Collection:
             </Typography>
             <TextField
               placeholder={`Add Collection`}
               fullWidth
-              value={newCategory}
+              value={newCollection}
               multiline
-              onChange={(e: any) => setNewCategory(e.target.value)}
+              onChange={(e: any) => setNewCollection(e.target.value)}
               sx={{
                 fontWeight: 400,
                 fontSize: {
@@ -1711,15 +1792,15 @@ const Node = ({
         </DialogContent>
         <DialogActions sx={{ justifyContent: "center" }}>
           <Button
-            onClick={addNewCategory}
+            onClick={addNewCollection}
             color="primary"
             variant="outlined"
             sx={{ borderRadius: "25px" }}
           >
-            {editCategory ? "Save" : "Add"}
+            {editCollection ? "Save" : "Add"}
           </Button>
           <Button
-            onClick={handleCloseAddCategory}
+            onClick={handleCloseAddCollection}
             color="primary"
             variant="outlined"
             sx={{ borderRadius: "25px" }}
