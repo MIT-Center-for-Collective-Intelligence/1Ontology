@@ -40,6 +40,7 @@ type IStructuredPropertyProps = {
   nodes: { [id: string]: INode };
   locked: boolean;
   selectedDiffNode: any;
+  addNewSpecialization?: any;
 };
 
 const StructuredProperty = ({
@@ -59,6 +60,7 @@ const StructuredProperty = ({
   nodes,
   locked,
   selectedDiffNode,
+  addNewSpecialization,
 }: IStructuredPropertyProps) => {
   const [{ user }] = useAuth();
   const theme = useTheme();
@@ -158,10 +160,10 @@ const StructuredProperty = ({
             DISPLAY[property] ? DISPLAY[property] : property
           )}
         </Typography>
-        {currentVisibleNode.inheritance?.property?.ref && (
+        {currentVisibleNode?.inheritance[property]?.ref && (
           <Typography sx={{ fontSize: "14px", ml: "9px" }}>
             {'(Inherited from "'}
-            {getTitle(nodes, currentVisibleNode.inheritance.property.ref || "")}
+            {getTitle(nodes, currentVisibleNode.inheritance[property].ref || "")}
             {'")'}
           </Typography>
         )}
@@ -175,6 +177,16 @@ const StructuredProperty = ({
               gap: "15px",
             }}
           >
+            {property === "specializations" && (
+              <Button
+                onClick={() => addNewSpecialization("main")}
+                sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
+                variant="outlined"
+              >
+                {"Add "}
+                {capitalizeFirstLetter(DISPLAY[property] || property)}
+              </Button>
+            )}
             <Button
               onClick={() => showList(property, "main")}
               sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
@@ -221,21 +233,36 @@ const StructuredProperty = ({
                     <Paper
                       key={category}
                       id={category}
-                      sx={{ p: "10px", mt: "5px", borderRadius: "20px" }}
-                      elevation={category !== "main" ? 3 : 0}
+                      sx={{ p: '10px', mt: '5px', borderRadius: '20px' }}
+                      elevation={category !== 'main' ? 3 : 0}
                     >
-                      {category !== "main" && (
+                      {category !== 'main' && (
                         <Box
                           sx={{
-                            display: "flex",
-                            alignItems: "center",
+                            display: 'flex',
+                            alignItems: 'center',
                           }}
                         >
-                          <Typography sx={{ fontWeight: "bold" }}>
+                          <Typography sx={{ fontWeight: 'bold', mr: '13px' }}>
                             {category} :
                           </Typography>
+                          {property === 'specializations' && (
+                            <Button
+                              onClick={() => addNewSpecialization(category)}
+                              sx={{
+                                borderRadius: '25px',
+                                backgroundColor: BUTTON_COLOR,
+                              }}
+                              variant='outlined'
+                            >
+                              {'Add '}
+                              {capitalizeFirstLetter(
+                                DISPLAY[property] || property
+                              )}
+                            </Button>
+                          )}
                           <Button onClick={() => showList(property, category)}>
-                            {"Select"} {property}
+                            {'Select'} {property}
                           </Button>
                           <Button
                             onClick={() =>
@@ -253,7 +280,7 @@ const StructuredProperty = ({
                       )}
 
                       <List sx={{ p: 0 }}>
-                        <Droppable droppableId={category} type="CATEGORY">
+                        <Droppable droppableId={category} type='CATEGORY'>
                           {(provided, snapshot) => (
                             <Box
                               {...provided.droppableProps}
@@ -261,12 +288,12 @@ const StructuredProperty = ({
                               sx={{
                                 backgroundColor: snapshot.isDraggingOver
                                   ? (theme) =>
-                                      theme.palette.mode === "light"
+                                      theme.palette.mode === 'light'
                                         ? DESIGN_SYSTEM_COLORS.gray250
                                         : DESIGN_SYSTEM_COLORS.notebookG400
-                                  : "",
-                                borderRadius: "25px",
-                                userSelect: "none",
+                                  : '',
+                                borderRadius: '25px',
+                                userSelect: 'none',
                               }}
                             >
                               {links.map((link, index) => (
@@ -284,11 +311,11 @@ const StructuredProperty = ({
                                         my: 1,
                                         p: 0,
                                         backgroundColor:
-                                          link.change === "added"
-                                            ? "#acf2bd"
-                                            : link.change === "removed"
-                                            ? "#fdb8c0"
-                                            : "",
+                                          link.change === 'added'
+                                            ? '#acf2bd'
+                                            : link.change === 'removed'
+                                            ? '#fdb8c0'
+                                            : '',
                                       }}
                                     >
                                       <ListItemIcon sx={{ minWidth: 0 }}>

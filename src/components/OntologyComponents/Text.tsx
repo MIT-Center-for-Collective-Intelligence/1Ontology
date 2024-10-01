@@ -88,15 +88,15 @@ const Text = ({
             where("deleted", "==", false)
           )
         );
-        console.log(
-          "currentVisibleNode.id",
-          currentVisibleNode.id,
-          nodeDocs.docs[0].id,
-          nodeDocs.docs.length > 0 &&
-            currentVisibleNode.id &&
-            nodeDocs.docs[0].id !== currentVisibleNode.id,
-          text
-        );
+        // console.log(
+        //   "currentVisibleNode.id",
+        //   currentVisibleNode.id,
+        //   nodeDocs.docs[0].id,
+        //   nodeDocs.docs.length > 0 &&
+        //     currentVisibleNode.id &&
+        //     nodeDocs.docs[0].id !== currentVisibleNode.id,
+        //   text
+        // );
         if (
           nodeDocs.docs.length > 0 &&
           currentVisibleNode.id &&
@@ -176,13 +176,18 @@ const Text = ({
   );
 
   useEffect(() => {
-    setTimeout(() => {
-      setEditorContent(text);
-    }, 1000);
+    // setTimeout(() => {
+    //   setEditorContent(text);
+    // }, 1000);
 
     setError("");
-    if (setSelectTitle) {
-      setSelectTitle(false);
+    if (selectTitle) {
+      textAreaRef.current.focus();
+      setEditorContent("");
+    } else {
+      setTimeout(() => {
+        setEditorContent(text);
+      }, 500);
     }
 
     if (selectedDiffNode && selectedDiffNode.modifiedProperty === property) {
@@ -192,16 +197,17 @@ const Text = ({
       );
       setDiffContent(diff);
     }
-  }, [currentVisibleNode.id, selectedDiffNode, text]);
+  }, [currentVisibleNode.id, selectedDiffNode, selectTitle]);
 
-  useEffect(() => {
-    if (selectTitle && property === "title" && textAreaRef.current) {
-      textAreaRef.current.focus();
-      setTimeout(() => {
-        setEditorContent("");
-      }, 0);
-    }
-  }, [currentVisibleNode.id, textAreaRef.current, selectTitle]);
+  // useEffect(() => {
+  //   if (selectTitle && property === "title" && textAreaRef.current) {
+  //     textAreaRef.current.focus();
+  //     setTimeout(() => {
+  //       setEditorContent("");
+  //       setSelectTitle(false);
+  //     }, 0);
+  //   }
+  // }, [currentVisibleNode.id, textAreaRef.current, selectTitle]);
 
   // useEffect(() => {
   //   const handler = setTimeout(() => {
@@ -228,6 +234,7 @@ const Text = ({
     if (setSelectTitle) {
       setSelectTitle(false);
     }
+    setEditorContent("");
   };
 
   // Function to render the GitHub-style diff view
@@ -324,10 +331,10 @@ const Text = ({
             DISPLAY[property] ? DISPLAY[property] : property
           )}
         </Typography>
-        {currentVisibleNode.inheritance?.property?.ref && (
+        {currentVisibleNode.inheritance[property]?.ref && (
           <Typography sx={{ fontSize: "14px", ml: "9px" }}>
             {'(Inherited from "'}
-            {getTitleNode(currentVisibleNode.inheritance.property.ref || "")}
+            {getTitleNode(currentVisibleNode.inheritance[property].ref || "")}
             {'")'}
           </Typography>
         )}
@@ -365,7 +372,7 @@ const Text = ({
               inputRef={textAreaRef}
               multiline
               minRows={2}
-              value={editorContent}
+              value={selectTitle && property === "title" ? "" : editorContent || text}
               onChange={handleChanges}
               onBlur={handleBlur}
               placeholder="Type something..."

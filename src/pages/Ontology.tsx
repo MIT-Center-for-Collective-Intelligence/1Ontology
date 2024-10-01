@@ -225,23 +225,23 @@ const Ontology = () => {
   const [openNotificationSection, setOpenNotificationSection] =
     useState<boolean>(false);
 
-  useEffect(() => {
-    if (!user) return;
+  // useEffect(() => {
+  //   if (!user) return;
 
-    const userQuery = query(
-      collection(db, LOGS),
-      where("__name__", "==", "00EWFECw1PnBRPy4wZVt")
-    );
+  //   const userQuery = query(
+  //     collection(db, LOGS),
+  //     where("__name__", "==", "00EWFECw1PnBRPy4wZVt")
+  //   );
 
-    const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
-      const docChange = snapshot.docChanges()[0];
-      if (docChange.type !== "added") {
-        window.location.reload();
-      }
-    });
+  //   const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
+  //     const docChange = snapshot.docChanges()[0];
+  //     if (docChange.type !== "added") {
+  //       window.location.reload();
+  //     }
+  //   });
 
-    return () => unsubscribeUser();
-  }, [db, user, nodes]);
+  //   return () => unsubscribeUser();
+  // }, [db, user, nodes]);
 
   useEffect(() => {
     // Check if a user is logged in
