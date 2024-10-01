@@ -67,7 +67,10 @@ In this example, `ChildNode` is used to display a child node with the given prop
  */
 import { NODES } from " @components/lib/firestoreClient/collections";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
-import { unlinkPropertyOf } from " @components/lib/utils/helpers";
+import {
+  saveNewChange,
+  unlinkPropertyOf,
+} from " @components/lib/utils/helpers";
 import { INode, INodePath, IChildNode } from " @components/types/INode";
 import { Box, Button, Link, Tooltip, useTheme } from "@mui/material";
 import {
@@ -95,6 +98,10 @@ type ISubOntologyProps = {
   title: string;
   nodes: any;
   index: number;
+  deleteVisible: boolean;
+  linkLocked: any;
+  locked: boolean;
+  user: any;
 };
 
 const LinkNode = ({
@@ -109,6 +116,10 @@ const LinkNode = ({
   title,
   nodes,
   index,
+  deleteVisible,
+  linkLocked,
+  locked,
+  user,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -118,7 +129,7 @@ const LinkNode = ({
     navigateToNode(child.id);
   };
 
-  const deleteChildNode = async () => {
+  const unlinkNodeRelation = async () => {
     try {
       if (
         await confirmIt(
@@ -140,7 +151,9 @@ const LinkNode = ({
               JSON.stringify(inheritedNode.properties[property])
             );
           }
-
+          const previousValue = JSON.parse(
+            JSON.stringify(nodeData.properties[property])
+          );
           if (index !== -1) {
             nodeData.properties[property][category].splice(index, 1);
           }
@@ -171,7 +184,16 @@ const LinkNode = ({
               updatedProperty: property,
             });
           }
-
+          saveNewChange(db, {
+            nodeId: currentVisibleNode.id,
+            modifiedBy: user?.uname,
+            modifiedProperty: property,
+            previousValue,
+            newValue: nodeData.properties[property],
+            modifiedAt: new Date(),
+            changeType: "remove element",
+            fullNode: currentVisibleNode,
+          });
           recordLogs({
             action: "unlinked a node",
             property,
@@ -187,6 +209,100 @@ const LinkNode = ({
         `Ok`,
         ""
       );
+    }
+  };
+
+  const removeNodeLink = async (
+    type: "specializations" | "generalizations",
+    removeNodeId: string,
+    removeIdFrom: string
+  ) => {
+    const specOrGenDoc = await getDoc(doc(collection(db, NODES), removeIdFrom));
+    let removeFrom: "specializations" | "generalizations" = "specializations";
+
+    if (type === "specializations") {
+      removeFrom = "generalizations";
+    }
+    if (specOrGenDoc.exists()) {
+      const specOrGenData = specOrGenDoc.data() as INode;
+      for (let cat in specOrGenData[removeFrom]) {
+        specOrGenData[removeFrom][cat] = specOrGenData[removeFrom][cat].filter(
+          (c: { id: string }) => c.id !== removeNodeId
+        );
+      }
+      await updateDoc(specOrGenDoc.ref, {
+        [`${removeFrom}`]: specOrGenData[removeFrom],
+      });
+    }
+  };
+
+  const unlinkSpecializationOrGeneralization = async () => {
+    try {
+      if (
+        await confirmIt(
+          `Are you sure you want unlink this node?`,
+          "Unlink",
+          "Keep"
+        )
+      ) {
+        const nodeDoc = await getDoc(
+          doc(collection(db, NODES), currentVisibleNode.id)
+        );
+        if (nodeDoc.exists()) {
+          const nodeData = nodeDoc.data() as INode;
+          const previousValue = JSON.parse(
+            JSON.stringify(
+              nodeData[property as "specializations" | "generalizations"]
+            )
+          );
+          if (index !== -1) {
+            nodeData[property as "specializations" | "generalizations"][
+              category
+            ].splice(index, 1);
+          }
+
+          const shouldBeRemovedFromParent = !Object.values(
+            nodeData[property as "specializations" | "generalizations"]
+          )
+            .flat()
+            .some((c: { id: string }) => c.id === child.id);
+
+          if (shouldBeRemovedFromParent) {
+            removeNodeLink(
+              property as "specializations" | "generalizations",
+              currentVisibleNode.id,
+              child.id
+            );
+          }
+          saveNewChange(db, {
+            nodeId: currentVisibleNode.id,
+            modifiedBy: user?.uname,
+            modifiedProperty: property,
+            previousValue,
+            newValue:
+              nodeData[property as "specializations" | "generalizations"],
+            modifiedAt: new Date(),
+            changeType: "remove element",
+            fullNode: currentVisibleNode,
+          });
+          await updateDoc(nodeDoc.ref, nodeData);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      await confirmIt(
+        `There is an issue with deleting the node, please try again.`,
+        `Ok`,
+        ""
+      );
+    }
+  };
+
+  const handleUnlinkNode = () => {
+    if (property === "specializations" || property === "generalizations") {
+      unlinkSpecializationOrGeneralization();
+    } else {
+      unlinkNodeRelation();
     }
   };
 
@@ -207,17 +323,19 @@ const LinkNode = ({
           {" "}
           {title}
         </Link>
-        <Button
-          sx={{
-            ml: "8px",
-            borderRadius: "25px",
-            backgroundColor: BUTTON_COLOR,
-          }}
-          variant="outlined"
-          onClick={deleteChildNode}
-        >
-          Unlink
-        </Button>
+        {deleteVisible && !locked && !linkLocked && (
+          <Button
+            sx={{
+              ml: "8px",
+              borderRadius: "25px",
+              backgroundColor: BUTTON_COLOR,
+            }}
+            variant="outlined"
+            onClick={handleUnlinkNode}
+          >
+            Unlink
+          </Button>
+        )}
       </Box>
 
       {ConfirmDialog}

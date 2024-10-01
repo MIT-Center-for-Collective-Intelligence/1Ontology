@@ -119,7 +119,6 @@ import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import TreeViewSimplified from "./TreeViewSimplified";
 import { SearchBox } from "../SearchBox/SearchBox";
 import NodeBody from "../NodBody/NodeBody";
-import LinkSpecGen from "../GeneralizationsSpecializations/LinkSpecGen";
 
 import {
   capitalizeFirstLetter,
@@ -134,7 +133,9 @@ import {
   unlinkPropertyOf,
   updateInheritance,
 } from " @components/lib/utils/helpers";
-import LinkStructuredProperty from "../StructuredProprety/LinkStructuredProperty";
+
+import { NodeChange } from "../Logs/LogsSideBar";
+import StructuredProperty from "../StructuredProprety/LinkStructuredProperty";
 
 type INodeProps = {
   scrolling: any;
@@ -151,6 +152,7 @@ type INodeProps = {
   eachOntologyPath: { [key: string]: any };
   searchWithFuse: any;
   locked: boolean;
+  selectedDiffNode: NodeChange | null;
 };
 
 const Node = ({
@@ -163,10 +165,10 @@ const Node = ({
   addNewNode,
   user,
   recordLogs,
-
   navigateToNode,
   searchWithFuse,
   locked,
+  selectedDiffNode,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -744,6 +746,16 @@ const Node = ({
       // Update the node document in the database
       await updateDoc(nodeDoc.ref, nodeData);
 
+      // saveNewChange(db, {
+      //   nodeId: currentVisibleNode.id,
+      //   modifiedBy: user?.uname,
+      //   modifiedProperty: property,
+      //   previousValue,
+      //   newValue,
+      //   modifiedAt: new Date(),
+      //   changeType: "change text",
+      //   fullNode: currentVisibleNode,
+      // });
       // Update inheritance for non-specialization/generalization properties
       if (
         selectedProperty !== "specializations" &&
@@ -1282,6 +1294,14 @@ const Node = ({
       scrolling.current.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  const getTitleNode = useCallback(
+    (nodeId: string) => {
+      return getTitle(nodes, nodeId);
+    },
+    [nodes]
+  );
+
   /* "root": "T
   of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'.
   The user should not be able to modify the value of this field. Please automatically specify
@@ -1305,275 +1325,78 @@ const Node = ({
           width: "100%",
         }}
       >
-        {" "}
-        <Paper
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            width: "100%",
-            borderRadius: "25px",
-          }}
-          elevation={6}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              alignContent: "center",
-              background: (theme: any) =>
-                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+        <Text
+          currentVisibleNode={currentVisibleNode}
+          setCurrentVisibleNode={setCurrentVisibleNode}
+          nodes={nodes}
+          property={"title"}
+          text={currentVisibleNode.title}
+          confirmIt={confirmIt}
+          recordLogs={recordLogs}
+          setSelectTitle={setSelectTitle}
+          selectTitle={selectTitle}
+          locked={locked}
+          selectedDiffNode={selectedDiffNode}
+          getTitleNode={getTitleNode}
+          root={currentVisibleNode.root}
+          manageLock={!!user?.manageLock}
+          deleteNode={deleteNode}
+          handleLockNode={handleLockNode}
+          navigateToNode={navigateToNode}
+        />
+        <Text
+          nodes={nodes}
+          recordLogs={recordLogs}
+          text={
+            getPropertyValue(
+              nodes,
+              currentVisibleNode.inheritance.description.ref,
+              "description"
+            ) || currentVisibleNode.properties.description
+          }
+          currentVisibleNode={currentVisibleNode}
+          property={"description"}
+          setCurrentVisibleNode={setCurrentVisibleNode}
+          locked={locked}
+          selectedDiffNode={selectedDiffNode}
+          getTitleNode={getTitleNode}
+        />
 
-              p: 3,
-              pb: 0.5,
-              borderTopRightRadius: "25px",
-              borderTopLeftRadius: "25px",
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: "20px",
-                fontWeight: "500",
-                mb: "13px",
-              }}
-            >
-              Node Title: {/* {currentVisibleNode.id} */}
-            </Typography>
-
-            <Box
-              sx={{
-                display: "flex",
-                mb: "5px",
-                ml: "auto",
-                alignItems: "center",
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  px: "19px",
-                  mb: "15px",
-                  alignItems: "center",
-                  alignContent: "center",
-                }}
-              >
-                {getTitle(nodes, currentVisibleNode.root) && (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      mt: "5px",
-                      gap: "15px",
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: "19px",
-                        fontWeight: "bold",
-                        color: (theme: Theme) =>
-                          theme.palette.mode === "dark"
-                            ? theme.palette.common.gray50
-                            : theme.palette.common.notebookMainBlack,
-                      }}
-                    >
-                      Root:
-                    </Typography>
-                    <Link
-                      underline="hover"
-                      onClick={() => navigateToNode(currentVisibleNode.root)}
-                      sx={{
-                        cursor: "pointer",
-                        textDecoration: "underline",
-                        color: "orange",
-                      }}
-                    >
-                      {getTitle(nodes, currentVisibleNode.root)}
-                    </Link>
-                  </Box>
-                )}
-              </Box>
-              {(locked || user?.manageLock) && (
-                <Tooltip
-                  title={
-                    !user?.manageLock
-                      ? "This node is locked"
-                      : currentVisibleNode.locked
-                      ? "This node is locked for everyone else"
-                      : "Lock this node"
-                  }
-                >
-                  {user?.manageLock ? (
-                    <IconButton
-                      onClick={handleLockNode}
-                      sx={{
-                        borderRadius: "25px",
-                        mx: "7px",
-                        mb: "13px",
-                      }}
-                    >
-                      {currentVisibleNode.locked ? (
-                        <LockIcon
-                          sx={{
-                            color: "orange",
-                          }}
-                        />
-                      ) : (
-                        <LockOutlinedIcon
-                          sx={{
-                            color: "orange",
-                          }}
-                        />
-                      )}
-                    </IconButton>
-                  ) : currentVisibleNode.locked ? (
-                    <LockIcon
-                      sx={{
-                        color: "orange",
-                        mb: "13px",
-                      }}
-                    />
-                  ) : (
-                    <></>
-                  )}
-                </Tooltip>
-              )}
-
-              {!locked && (
-                <Button
-                  onClick={deleteNode}
-                  variant="contained"
-                  sx={{ borderRadius: "25px", mb: "7px" }}
-                >
-                  {" "}
-                  Delete Node
-                </Button>
-              )}
-            </Box>
-          </Box>
-
-          <Box>
-            <Text
-              currentVisibleNode={currentVisibleNode}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              nodes={nodes}
-              property={"title"}
-              text={currentVisibleNode.title}
-              confirmIt={confirmIt}
-              recordLogs={recordLogs}
-              setSelectTitle={setSelectTitle}
-              selectTitle={selectTitle}
-              locked={locked}
-            />
-          </Box>
-        </Paper>
-        <Paper
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            borderRadius: "25px",
-
-            width: "100%",
-          }}
-          elevation={6}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              background: (theme: any) =>
-                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-
-              p: 3,
-              borderTopRightRadius: "25px",
-              borderTopLeftRadius: "25px",
-            }}
-          >
-            <Typography sx={{ fontSize: "20px", fontWeight: "500" }}>
-              Description:
-            </Typography>
-            {currentVisibleNode.inheritance?.description?.ref && (
-              <Typography
-                sx={{
-                  color: (theme: Theme) =>
-                    theme.palette.mode === "dark" ? "white" : "black",
-                  fontSize: "14px",
-                  ml: "auto",
-                }}
-              >
-                {'(Inherited from "'}
-                {getTitle(
-                  nodes,
-                  currentVisibleNode.inheritance.description.ref || ""
-                )}
-                {'")'}
-              </Typography>
-            )}
-          </Box>
-          <Box>
-            <Text
-              nodes={nodes}
-              recordLogs={recordLogs}
-              text={
-                getPropertyValue(
-                  nodes,
-                  currentVisibleNode.inheritance.description.ref,
-                  "description"
-                ) || currentVisibleNode.properties.description
-              }
-              currentVisibleNode={currentVisibleNode}
-              property={"description"}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              locked={locked}
-            />
-          </Box>
-        </Paper>
         {currentVisibleNode?.properties.hasOwnProperty("actor") && (
-          <Paper
-            elevation={9}
-            sx={{ borderRadius: "30px", minWidth: "500px", width: "100%" }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                background: (theme: any) =>
-                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                p: 3,
-                borderTopRightRadius: "25px",
-                borderTopLeftRadius: "25px",
-              }}
-            >
-              <Typography
-                sx={{
-                  color: viewValueSpecialization === 0 ? "#ff6d00" : "",
-                  fontSize: "20px",
-                  fontWeight: 500,
-                  fontFamily: "Roboto, sans-serif",
-                }}
-              >
-                Actors:
-              </Typography>
-              {currentVisibleNode.inheritance?.["actor"]?.ref && (
-                <Typography sx={{ fontSize: "14px", ml: "9px" }}>
-                  {'(Inherited from "'}
-                  {getTitle(
-                    nodes,
-                    currentVisibleNode.inheritance["actor"].ref || ""
-                  )}
-                  {'")'}
-                </Typography>
-              )}
-            </Box>
-            <LinkStructuredProperty
-              properties={
-                getPropertyValue(
-                  nodes,
-                  currentVisibleNode.inheritance.actor.ref,
-                  "actor"
-                ) || currentVisibleNode?.properties?.actor
-              }
+          <StructuredProperty
+            selectedDiffNode={selectedDiffNode}
+            currentVisibleNode={currentVisibleNode}
+            showListToSelect={showListToSelect}
+            setOpenAddCategory={setOpenAddCategory}
+            setSelectedProperty={setSelectedProperty}
+            handleSorting={handleSorting}
+            handleEditCategory={handleEditCategory}
+            deleteCategory={deleteCategory}
+            navigateToNode={navigateToNode}
+            recordLogs={recordLogs}
+            setSnackbarMessage={setSnackbarMessage}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            updateInheritance={updateInheritance}
+            property={"actor"}
+            nodes={nodes}
+            locked={locked}
+          />
+        )}
+
+        <Stack
+          direction={width < 1050 ? "column" : "row"}
+          sx={{
+            gap: 3,
+          }}
+        >
+          {["generalizations", "specializations"].map((property, index) => (
+            <StructuredProperty
+              key={property + index}
+              selectedDiffNode={selectedDiffNode}
               currentVisibleNode={currentVisibleNode}
-              showList={showListToSelect}
+              showListToSelect={showListToSelect}
               setOpenAddCategory={setOpenAddCategory}
-              setType={setSelectedProperty}
+              setSelectedProperty={setSelectedProperty}
               handleSorting={handleSorting}
               handleEditCategory={handleEditCategory}
               deleteCategory={deleteCategory}
@@ -1582,113 +1405,11 @@ const Node = ({
               setSnackbarMessage={setSnackbarMessage}
               setCurrentVisibleNode={setCurrentVisibleNode}
               updateInheritance={updateInheritance}
-              property={"actor"}
+              property={property}
               nodes={nodes}
               locked={locked}
             />
-          </Paper>
-        )}
-        <Stack
-          direction={width < 1050 ? "column" : "row"}
-          sx={{
-            gap: 3,
-          }}
-        >
-          <Paper
-            elevation={9}
-            sx={{
-              borderRadius: "30px",
-              width: "100%",
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                background: (theme: any) =>
-                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                p: 3,
-                borderTopRightRadius: "25px",
-                borderTopLeftRadius: "25px",
-              }}
-            >
-              <Typography
-                sx={{
-                  color: viewValueSpecialization === 0 ? "#ff6d00" : "",
-                  fontSize: "20px",
-                  fontWeight: 500,
-                  fontFamily: "Roboto, sans-serif",
-                }}
-              >
-                Generalizations:
-              </Typography>
-            </Box>
-            <LinkSpecGen
-              properties={currentVisibleNode?.properties?.generalizations || {}}
-              currentVisibleNode={currentVisibleNode}
-              showList={showListToSelect}
-              setOpenAddCategory={setOpenAddCategory}
-              setType={setSelectedProperty}
-              handleSorting={handleSorting}
-              handleEditCategory={handleEditCategory}
-              deleteCategory={deleteCategory}
-              navigateToNode={navigateToNode}
-              recordLogs={recordLogs}
-              setSnackbarMessage={setSnackbarMessage}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              relationType={"generalizations"}
-              nodes={nodes}
-              locked={locked}
-            />
-          </Paper>
-          <Paper
-            elevation={9}
-            sx={{
-              borderRadius: "30px",
-              width: "100%",
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                background: (theme: any) =>
-                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                p: 3,
-                borderTopRightRadius: "25px",
-                borderTopLeftRadius: "25px",
-              }}
-            >
-              <Typography
-                sx={{
-                  color: viewValueSpecialization === 0 ? "#ff6d00" : "",
-                  fontSize: "20px",
-                  fontWeight: 500,
-                  fontFamily: "Roboto, sans-serif",
-                }}
-              >
-                Specializations:
-              </Typography>
-            </Box>
-            <LinkSpecGen
-              properties={currentVisibleNode?.specializations || {}}
-              currentVisibleNode={currentVisibleNode}
-              showList={showListToSelect}
-              setOpenAddCategory={setOpenAddCategory}
-              setType={setSelectedProperty}
-              handleSorting={handleSorting}
-              handleEditCategory={handleEditCategory}
-              deleteCategory={deleteCategory}
-              navigateToNode={navigateToNode}
-              recordLogs={recordLogs}
-              setSnackbarMessage={setSnackbarMessage}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              relationType={"specializations"}
-              handleNewSpecialization={handleNewSpecialization}
-              nodes={nodes}
-              locked={locked}
-            />
-          </Paper>
+          ))}
         </Stack>
         <Stack
           mt={1}
@@ -1697,44 +1418,14 @@ const Node = ({
             gap: 3,
           }}
         >
-          <Paper
-            elevation={9}
-            sx={{ borderRadius: "30px", minWidth: "500px", width: "100%" }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                background: (theme: any) =>
-                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                p: 3,
-                borderTopRightRadius: "25px",
-                borderTopLeftRadius: "25px",
-              }}
-            >
-              <Typography
-                sx={{
-                  color: viewValueSpecialization === 0 ? "#ff6d00" : "",
-                  fontSize: "20px",
-                  fontWeight: 500,
-                  fontFamily: "Roboto, sans-serif",
-                }}
-              >
-                Is Part of:
-              </Typography>
-            </Box>
-            <LinkStructuredProperty
-              properties={
-                getPropertyValue(
-                  nodes,
-                  currentVisibleNode.inheritance.isPartOf?.ref,
-                  "isPartOf"
-                ) || currentVisibleNode?.properties?.isPartOf
-              }
+          {["isPartOf", "parts"].map((property, index) => (
+            <StructuredProperty
+              key={property + index}
+              selectedDiffNode={selectedDiffNode}
               currentVisibleNode={currentVisibleNode}
-              showList={showListToSelect}
+              showListToSelect={showListToSelect}
               setOpenAddCategory={setOpenAddCategory}
-              setType={setSelectedProperty}
+              setSelectedProperty={setSelectedProperty}
               handleSorting={handleSorting}
               handleEditCategory={handleEditCategory}
               deleteCategory={deleteCategory}
@@ -1743,72 +1434,11 @@ const Node = ({
               setSnackbarMessage={setSnackbarMessage}
               setCurrentVisibleNode={setCurrentVisibleNode}
               updateInheritance={updateInheritance}
-              property={"isPartOf"}
+              property={property}
               nodes={nodes}
               locked={locked}
             />
-          </Paper>
-          <Paper
-            elevation={9}
-            sx={{ borderRadius: "30px", minWidth: "500px", width: "100%" }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                background: (theme: any) =>
-                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                p: 3,
-                borderTopRightRadius: "25px",
-                borderTopLeftRadius: "25px",
-              }}
-            >
-              <Typography
-                sx={{
-                  color: viewValueSpecialization === 0 ? "#ff6d00" : "",
-                  fontSize: "20px",
-                  fontWeight: 500,
-                  fontFamily: "Roboto, sans-serif",
-                }}
-              >
-                Parts:
-              </Typography>
-              {currentVisibleNode.inheritance?.["parts"]?.ref && (
-                <Typography sx={{ fontSize: "14px", ml: "9px" }}>
-                  {'(Inherited from "'}
-                  {getTitle(
-                    nodes,
-                    currentVisibleNode.inheritance["parts"].ref || ""
-                  )}
-                  {'")'}
-                </Typography>
-              )}
-            </Box>
-            <LinkStructuredProperty
-              properties={
-                getPropertyValue(
-                  nodes,
-                  currentVisibleNode.inheritance.parts.ref,
-                  "parts"
-                ) || currentVisibleNode?.properties?.parts
-              }
-              currentVisibleNode={currentVisibleNode}
-              showList={showListToSelect}
-              setOpenAddCategory={setOpenAddCategory}
-              setType={setSelectedProperty}
-              handleSorting={handleSorting}
-              handleEditCategory={handleEditCategory}
-              deleteCategory={deleteCategory}
-              navigateToNode={navigateToNode}
-              recordLogs={recordLogs}
-              setSnackbarMessage={setSnackbarMessage}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              updateInheritance={updateInheritance}
-              property={"parts"}
-              nodes={nodes}
-              locked={locked}
-            />
-          </Paper>
+          ))}
         </Stack>
         <Box
           sx={{
@@ -1830,12 +1460,14 @@ const Node = ({
             navigateToNode={navigateToNode}
             setSnackbarMessage={setSnackbarMessage}
             setOpenAddCategory={setOpenAddCategory}
-            setType={setSelectedProperty}
+            setSelectedProperty={setSelectedProperty}
             setOpenAddField={setOpenAddField}
             removeProperty={removeProperty}
             user={user}
             nodes={nodes}
             locked={locked}
+            selectedDiffNode={selectedDiffNode}
+            getTitleNode={getTitleNode}
           />
         </Box>
       </Box>

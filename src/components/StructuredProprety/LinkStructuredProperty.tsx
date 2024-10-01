@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   Box,
   Button,
@@ -14,19 +14,20 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import {
   capitalizeFirstLetter,
+  getPropertyValue,
   getTitle,
 } from " @components/lib/utils/string.utils";
 import { INode } from " @components/types/INode";
 import { DISPLAY } from " @components/lib/CONSTANTS";
 import LinkNode from "../LinkNode/LinkNode";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import { useAuth } from "../context/AuthContext";
 
-type ILinkStructuredPropertyProps = {
-  properties: { [key: string]: any };
+type IStructuredPropertyProps = {
   currentVisibleNode: INode;
-  showList: any;
+  showListToSelect: any;
   setOpenAddCategory: any;
-  setType: any;
+  setSelectedProperty: any;
   handleSorting: any;
   handleEditCategory: any;
   deleteCategory: any;
@@ -35,17 +36,17 @@ type ILinkStructuredPropertyProps = {
   setSnackbarMessage: any;
   setCurrentVisibleNode: any;
   updateInheritance: any;
-  property: "parts" | "isPartOf" | "actor";
+  property: string;
   nodes: { [id: string]: INode };
   locked: boolean;
+  selectedDiffNode: any;
 };
 
-const LinkStructuredProperty = ({
-  properties,
+const StructuredProperty = ({
   currentVisibleNode,
-  showList,
+  showListToSelect: showList,
   setOpenAddCategory,
-  setType,
+  setSelectedProperty,
   handleSorting,
   handleEditCategory,
   deleteCategory,
@@ -57,12 +58,115 @@ const LinkStructuredProperty = ({
   property,
   nodes,
   locked,
-}: ILinkStructuredPropertyProps) => {
+  selectedDiffNode,
+}: IStructuredPropertyProps) => {
+  const [{ user }] = useAuth();
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
+
+  const properties = useMemo(() => {
+    const result =
+      getPropertyValue(
+        nodes,
+        currentVisibleNode.inheritance[property]?.ref,
+        property
+      ) ||
+      currentVisibleNode?.properties[property] ||
+      currentVisibleNode[property as "specializations" | "generalizations"];
+
+    let finalResult: any = {};
+
+    if (selectedDiffNode && selectedDiffNode.modifiedProperty === property) {
+      Object.keys(selectedDiffNode.newValue).forEach((key) => {
+        const newValueArray = selectedDiffNode.newValue[key];
+        const previousValueArray = selectedDiffNode.previousValue[key];
+        if (Array.isArray(newValueArray)) {
+          finalResult[key] = newValueArray.map((newElement) => {
+            const foundInPrevious = previousValueArray.find(
+              (prevElement: any) => prevElement.id === newElement.id
+            );
+            if (foundInPrevious) {
+              return { ...newElement };
+            } else {
+              return { ...newElement, change: "added" };
+            }
+          });
+
+          previousValueArray.forEach((prevElement: any) => {
+            const foundInNew = newValueArray.find(
+              (newElement) => newElement.id === prevElement.id
+            );
+            if (!foundInNew) {
+              finalResult[key].push({ ...prevElement, change: "removed" });
+            }
+          });
+        }
+      });
+      return { ...finalResult };
+    }
+
+    return result;
+  }, [currentVisibleNode, nodes, property, selectedDiffNode]);
+
+  console.log(properties, "properties ====>", property);
+
+  const unlinkVisible = useCallback(
+    (nodeId: string) => {
+      const getNumOfGeneralizations = (id: string) => {
+        return nodes[id]
+          ? Object.values(nodes[id]?.generalizations || {}).flat().length
+          : 0;
+      };
+      if (!!selectedDiffNode) {
+        return false;
+      }
+      return (
+        (property === "generalizations" &&
+          Object.values(properties).flat().length !== 1) ||
+        (property === "specializations" &&
+          getNumOfGeneralizations(nodeId) > 1) ||
+        (property !== "generalizations" && property !== "specializations")
+      );
+    },
+    [properties, property, nodes, selectedDiffNode]
+  );
+
   return (
-    <Box sx={{ p: "13px" /* , height: "100vh" */ }}>
-      <Box>
+    <Paper
+      elevation={9}
+      sx={{ borderRadius: "30px", minWidth: "500px", width: "100%" }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          background: (theme: any) =>
+            theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+          p: 3,
+          borderTopRightRadius: "25px",
+          borderTopLeftRadius: "25px",
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: "20px",
+            fontWeight: 500,
+            fontFamily: "Roboto, sans-serif",
+          }}
+        >
+          {capitalizeFirstLetter(
+            DISPLAY[property] ? DISPLAY[property] : property
+          )}
+        </Typography>
+        {currentVisibleNode.inheritance?.property?.ref && (
+          <Typography sx={{ fontSize: "14px", ml: "9px" }}>
+            {'(Inherited from "'}
+            {getTitle(nodes, currentVisibleNode.inheritance.property.ref || "")}
+            {'")'}
+          </Typography>
+        )}
+      </Box>
+      <Box sx={{ p: "15px" }}>
         {!locked && (
           <Box
             sx={{
@@ -77,14 +181,14 @@ const LinkStructuredProperty = ({
               variant="outlined"
             >
               {"Select "}
-              {capitalizeFirstLetter(DISPLAY[property])}
+              {capitalizeFirstLetter(DISPLAY[property] || property)}
             </Button>
 
             {property !== "parts" && property !== "isPartOf" && (
               <Button
                 onClick={() => {
                   setOpenAddCategory(true);
-                  setType(property);
+                  setSelectedProperty(property);
                 }}
                 sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
                 variant="outlined"
@@ -101,35 +205,35 @@ const LinkStructuredProperty = ({
             handleSorting(e, property);
           }}
         >
-          <ul style={{ paddingLeft: 7 }}>
-            {Object.keys(properties)
+          <Box>
+            {Object.keys(properties || {})
               .sort((a, b) =>
                 a === "main" ? -1 : b === "main" ? 1 : a.localeCompare(b)
               )
               .map((category: string) => {
-                const children: {
+                const links: {
                   id: string;
-                  title: string;
+                  change?: string;
                 }[] = properties[category] || [];
-                const showGap =
-                  Object.keys(properties).filter(
-                    (c) => (properties[c] || []).length > 0 && c !== "main"
-                  ).length > 0;
+
                 return (
-                  <Box key={category} id={category}>
-                    {category !== "main" && (
-                      <li>
+                  links.length > 0 && (
+                    <Paper
+                      key={category}
+                      id={category}
+                      sx={{ p: "10px", mt: "5px", borderRadius: "20px" }}
+                      elevation={category !== "main" ? 3 : 0}
+                    >
+                      {category !== "main" && (
                         <Box
-                          sx={
-                            {
-                              /*    display: "flex",
-                            alignItems: "center", */
-                            }
-                          }
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                          }}
                         >
                           <Typography sx={{ fontWeight: "bold" }}>
                             {category} :
-                          </Typography>{" "}
+                          </Typography>
                           <Button onClick={() => showList(property, category)}>
                             {"Select"} {property}
                           </Button>
@@ -146,10 +250,8 @@ const LinkStructuredProperty = ({
                             Delete
                           </Button>
                         </Box>
-                      </li>
-                    )}
+                      )}
 
-                    {(children.length > 0 || showGap) && (
                       <List sx={{ p: 0 }}>
                         <Droppable droppableId={category} type="CATEGORY">
                           {(provided, snapshot) => (
@@ -167,10 +269,10 @@ const LinkStructuredProperty = ({
                                 userSelect: "none",
                               }}
                             >
-                              {children.map((child, index) => (
+                              {links.map((link, index) => (
                                 <Draggable
-                                  key={child.id + index}
-                                  draggableId={child.id}
+                                  key={link.id + index}
+                                  draggableId={link.id}
                                   index={index}
                                 >
                                   {(provided) => (
@@ -178,7 +280,16 @@ const LinkStructuredProperty = ({
                                       ref={provided.innerRef}
                                       {...provided.draggableProps}
                                       {...provided.dragHandleProps}
-                                      sx={{ my: 1, p: 0 }}
+                                      sx={{
+                                        my: 1,
+                                        p: 0,
+                                        backgroundColor:
+                                          link.change === "added"
+                                            ? "#acf2bd"
+                                            : link.change === "removed"
+                                            ? "#fdb8c0"
+                                            : "",
+                                      }}
                                     >
                                       <ListItemIcon sx={{ minWidth: 0 }}>
                                         <DragIndicatorIcon />
@@ -192,13 +303,17 @@ const LinkStructuredProperty = ({
                                           setCurrentVisibleNode
                                         }
                                         sx={{ pl: 1 }}
-                                        child={child}
+                                        child={link}
                                         property={property}
                                         category={category}
                                         updateInheritance={updateInheritance}
-                                        title={getTitle(nodes, child.id)}
+                                        title={getTitle(nodes, link.id)}
                                         nodes={nodes}
                                         index={index}
+                                        deleteVisible={unlinkVisible(link.id)}
+                                        linkLocked={false}
+                                        locked={locked}
+                                        user={user}
                                       />
                                     </ListItem>
                                   )}
@@ -209,15 +324,15 @@ const LinkStructuredProperty = ({
                           )}
                         </Droppable>
                       </List>
-                    )}
-                  </Box>
+                    </Paper>
+                  )
                 );
               })}
-          </ul>
+          </Box>
         </DragDropContext>
       </Box>
-    </Box>
+    </Paper>
   );
 };
 
-export default LinkStructuredProperty;
+export default StructuredProperty;

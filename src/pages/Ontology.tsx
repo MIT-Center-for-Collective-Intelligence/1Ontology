@@ -116,7 +116,6 @@ import {
   getOperatingSystem,
 } from " @components/lib/firestoreClient/errors.firestore";
 import Inheritance from " @components/components/Inheritance/Inheritance";
-import useSelectDialog from " @components/lib/hooks/useSelectDialog";
 import Chat from " @components/components/Chat/Chat";
 import { IChat, INotification } from " @components/types/IChat";
 import {
@@ -126,6 +125,9 @@ import {
 import { SearchBox } from " @components/components/SearchBox/SearchBox";
 import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
 import { Notification } from " @components/components/Chat/Notification";
+import LogsSideBar, {
+  NodeChange,
+} from " @components/components/Logs/LogsSideBar";
 
 const synchronizeStuff = (prev: (any & { id: string })[], change: any) => {
   const docType = change.type;
@@ -170,8 +172,6 @@ const Ontology = () => {
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
   const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
-  const { selectIt, selectDialog } = useSelectDialog();
-  const [editingComment, setEditingComment] = useState("");
   const [lockedNodeFields, setLockedNodeFields] = useState<ILockedNode>({});
   const [sidebarView, setSidebarView] = useState<number>(1);
   const [selectedChatTab, setSelectedChatTab] = useState<number>(0);
@@ -182,6 +182,12 @@ const Ontology = () => {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [dagreZoomState, setDagreZoomState] = useState<any>(null);
   const [rightPanelVisible, setRightPanelVisible] = useState<any>(false);
+  const [openLogsFor, setOpenLogsFor] = useState<{
+    uname: string;
+    imageUrl: string;
+    fullname: string;
+  } | null>(null);
+
   const [users, setUsers] = useState<
     {
       id: string;
@@ -211,6 +217,9 @@ const Ontology = () => {
     new Date(Date.now())
   );
   const [anchor, setAnchor] = useState<any>(null);
+  const [selectedDiffNode, setSelectedDiffNode] = useState<NodeChange | null>(
+    null
+  );
   const scrolling = useRef<any>();
 
   const [openNotificationSection, setOpenNotificationSection] =
@@ -1061,6 +1070,31 @@ const Ontology = () => {
     }
   }, [setSidebarView, setRightPanelVisible, rightPanelVisible, sidebarView]);
 
+  const displayUserLogs = useCallback(
+    (user: { uname: string; imageUrl: string; fullname: string }) => {
+      if (
+        sidebarView !== 3 ||
+        !rightPanelVisible ||
+        openLogsFor?.uname !== user.uname
+      ) {
+        setSidebarView(3);
+        setRightPanelVisible(true);
+        setOpenLogsFor(user);
+      } else {
+        setRightPanelVisible(false);
+        setOpenLogsFor(null);
+      }
+      setSelectedDiffNode(null);
+    },
+    [
+      setSidebarView,
+      setRightPanelVisible,
+      rightPanelVisible,
+      sidebarView,
+      openLogsFor,
+    ]
+  );
+
   return (
     <Box>
       {Object.keys(nodes).length > 0 ? (
@@ -1233,6 +1267,7 @@ const Ontology = () => {
                   eachOntologyPath={eachOntologyPath}
                   searchWithFuse={searchWithFuse}
                   locked={!!currentVisibleNode.locked && !user?.manageLock}
+                  selectedDiffNode={selectedDiffNode}
                 />
               )}
             </Box>
@@ -1426,6 +1461,21 @@ const Ontology = () => {
                       )}
                     </Box>
                   )}
+                  {sidebarView === 3 && (
+                    <Box>
+                      {currentVisibleNode && (
+                        <LogsSideBar
+                          openLogsFor={openLogsFor}
+                          displayDiff={(data: any) => {
+                            setSelectedDiffNode(data);
+                            if (currentVisibleNode.id !== data.nodeId) {
+                              setCurrentVisibleNode(nodes[data.nodeId]);
+                            }
+                          }}
+                        />
+                      )}
+                    </Box>
+                  )}
                   {/* <TabPanel value={sidebarView} index={3}>
                     <Box
                       sx={{
@@ -1441,7 +1491,6 @@ const Ontology = () => {
             </Section>
           )}
           {ConfirmDialog}
-          {selectDialog}
           <SneakMessage
             newMessage={snackbarMessage}
             setNewMessage={setSnackbarMessage}
@@ -1478,6 +1527,7 @@ const Ontology = () => {
           handleSearch={handleSearch}
           navigateToNode={navigateToNode}
           displayInheritanceSettings={displayInheritanceSettings}
+          // displayUserLogs={displayUserLogs}
           locked={!!currentVisibleNode?.locked && !user?.manageLock}
         />
       </Box>

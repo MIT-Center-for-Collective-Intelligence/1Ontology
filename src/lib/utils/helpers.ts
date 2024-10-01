@@ -7,8 +7,10 @@ import {
   DocumentReference,
   writeBatch,
   WriteBatch,
+  setDoc,
 } from "firebase/firestore";
-import { NODES } from "../firestoreClient/collections";
+import { NODES, NODES_LOGS } from "../firestoreClient/collections";
+import { NodeChange } from " @components/components/Logs/LogsSideBar";
 
 export const unlinkPropertyOf = async (
   db: any,
@@ -120,8 +122,6 @@ export const removeIsPartOf = async (db: any, nodeData: INode) => {
     }
   }
 };
-
-
 
 interface UpdateInheritanceParams {
   nodeId: string;
@@ -258,4 +258,13 @@ const updateProperty = async (
     await batch.commit();
     batch = writeBatch(db);
   }
+};
+
+export const saveNewChange = (db: any, data: NodeChange) => {
+  if (!data.modifiedBy) return;
+  // console.log("saveNewChange", data);
+  // const changeUseRef = doc(
+  //   collection(doc(collection(db, NODES_LOGS), data.modifiedBy), "changes")
+  // );
+  // setDoc(changeUseRef, data);
 };
