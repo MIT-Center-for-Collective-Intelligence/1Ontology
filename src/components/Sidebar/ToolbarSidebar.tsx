@@ -335,7 +335,7 @@ const ToolbarSidebar = ({
   );
 
   const onDownload = useCallback(() => {
-    handleDownload({user, db});
+    handleDownload({ user, db });
   }, [user, db]);
 
   const renderContent = () => {
@@ -493,6 +493,33 @@ const ToolbarSidebar = ({
                 </Box>
                 <Box>
                   <Typography>{openLogsFor.fName}'s Edit History</Typography>
+                </Box>
+              </Box>
+            )}
+            {activeSidebar === 'chat' && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Box>
+                  <Typography sx={{ fontSize: '19px', fontWeight: 'bold' }}>
+                    Node's Chat
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+            {activeSidebar === 'nodeHistory' && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Box>
+                  <Typography sx={{ fontSize: '19px', fontWeight: 'bold' }}>
+                    Node's History
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+            {activeSidebar === 'inheritanceSettings' && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Box>
+                  <Typography sx={{ fontSize: '19px', fontWeight: 'bold' }}>
+                    Node's Inheritance Settings
+                  </Typography>
                 </Box>
               </Box>
             )}

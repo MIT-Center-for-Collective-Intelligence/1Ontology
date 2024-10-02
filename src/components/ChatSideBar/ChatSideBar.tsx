@@ -174,7 +174,7 @@ const ChatSideBar = ({
 
   return (
     <Box>
-      <Tabs
+      {/* <Tabs
         id="chat-tabs"
         value={selectedChatTab}
         onChange={handleChatTabsChange}
@@ -191,11 +191,11 @@ const ChatSideBar = ({
         {CHAT_TABS.map((tab, idx) => (
           <Tab key={tab.id} label={tab.title} {...a11yProps(idx)} />
         ))}
-        {/*     <Tab label="This node" {...a11yProps(0)} />
+            <Tab label="This node" {...a11yProps(0)} />
                    <Tab label="Bug Reports" {...a11yProps(1)} />
                    <Tab label="Feature Requests" {...a11yProps(2)} />
-                   <Tab label="Help" {...a11yProps(3)} /> */}
-      </Tabs>
+                   <Tab label="Help" {...a11yProps(3)} />
+      </Tabs> */}
       <Box>
         {CHAT_TABS.map((tab, idx: number) => (
           <TabPanel key={tab.id} value={idx} index={idx}>
