@@ -39,8 +39,7 @@ export type NodeChange = {
   fullNode: INode;
 };
 
-const UserActivity = ({
-  openLogsFor,
+const NodeActivity = ({
   setSelectedDiffNode,
   currentVisibleNode,
   setCurrentVisibleNode,
@@ -51,12 +50,12 @@ const UserActivity = ({
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    if (!openLogsFor?.uname) return;
+    if (!currentVisibleNode.id) return;
     setLogs({});
 
     const nodesQuery = query(
       collection(db, NODES_LOGS),
-      where('modifiedBy', '==', openLogsFor.uname),
+      where('nodeId', '==', currentVisibleNode.id),
       orderBy('modifiedAt', 'desc')
     );
 
@@ -79,7 +78,7 @@ const UserActivity = ({
     });
 
     return () => unsubscribeNodes();
-  }, [db, openLogsFor?.uname]);
+  }, [db, currentVisibleNode.id]);
 
   const getModifiedAt = (modifiedAt: any) => {
     modifiedAt = moment(modifiedAt.toDate());
@@ -174,7 +173,7 @@ const UserActivity = ({
                   >
                     {getChangeDescription(
                       logs[id],
-                      openLogsFor?.fullname || ''
+                      logs[id].modifiedBy || ''
                     )}
                   </Typography>
                 </Box>
@@ -195,4 +194,4 @@ const UserActivity = ({
   );
 };
 
-export default UserActivity;
+export default NodeActivity;
