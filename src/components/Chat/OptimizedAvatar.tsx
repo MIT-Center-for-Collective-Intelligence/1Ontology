@@ -41,7 +41,7 @@ const OptimizedAvatar: FC<Props> = ({
         position: "relative",
         borderRadius: "50%",
         cursor: "pointer",
-        border: (theme) => `solid 2px #87d37c`,
+        // border: (theme) => `solid 2px #87d37c`,
         ":hover": {
           ...(onClick && {
             border: `solid 1px ${DESIGN_SYSTEM_COLORS.primary600}`,

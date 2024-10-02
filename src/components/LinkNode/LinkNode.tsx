@@ -82,7 +82,7 @@ import {
 } from "firebase/firestore";
 
 type ISubOntologyProps = {
-  child: IChildNode;
+  link: IChildNode;
   currentVisibleNode: INode;
   sx?: { [key: string]: any };
   property: string;
@@ -105,7 +105,7 @@ type ISubOntologyProps = {
 };
 
 const LinkNode = ({
-  child,
+  link,
   sx,
   property,
   currentVisibleNode,
@@ -126,7 +126,7 @@ const LinkNode = ({
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const handleNavigateToNode = () => {
-    navigateToNode(child.id);
+    navigateToNode(link.id);
   };
 
   const unlinkNodeRelation = async () => {
@@ -162,12 +162,12 @@ const LinkNode = ({
             Object.values(nodeData.properties[property]) as { id: string }[]
           )
             .flat()
-            .some((c: { id: string }) => c.id === child.id);
+            .some((c: { id: string }) => c.id === link.id);
 
           // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
           // const childData = childDoc.data() as INode;
           if (shouldBeRemovedFromParent) {
-            unlinkPropertyOf(db, property, currentVisibleNode.id, child.id);
+            unlinkPropertyOf(db, property, currentVisibleNode.id, link.id);
           }
 
           await updateDoc(nodeDoc.ref, {
@@ -197,7 +197,7 @@ const LinkNode = ({
           recordLogs({
             action: "unlinked a node",
             property,
-            unlinked: child.id,
+            unlinked: link.id,
             node: nodeDoc.id,
           });
         }
@@ -265,13 +265,13 @@ const LinkNode = ({
             nodeData[property as "specializations" | "generalizations"]
           )
             .flat()
-            .some((c: { id: string }) => c.id === child.id);
+            .some((c: { id: string }) => c.id === link.id);
 
           if (shouldBeRemovedFromParent) {
             removeNodeLink(
               property as "specializations" | "generalizations",
               currentVisibleNode.id,
-              child.id
+              link.id
             );
           }
           saveNewChange(db, {
@@ -315,7 +315,11 @@ const LinkNode = ({
           sx={{
             cursor: "pointer",
             color: (theme) =>
-              theme.palette.mode === "dark"
+              link.change === "added"
+                ? "green"
+                : link.change === "removed"
+                ? "red"
+                : theme.palette.mode === "dark"
                 ? theme.palette.common.gray50
                 : theme.palette.common.notebookMainBlack,
           }}

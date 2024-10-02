@@ -8,9 +8,10 @@ import {
   writeBatch,
   WriteBatch,
   setDoc,
+  increment,
 } from "firebase/firestore";
-import { NODES, NODES_LOGS } from "../firestoreClient/collections";
-import { NodeChange } from " @components/components/Logs/LogsSideBar";
+import { NODES, NODES_LOGS, USERS } from "../firestoreClient/collections";
+import { NodeChange } from " @components/components/ActiveUsers/UserActivity";
 
 export const unlinkPropertyOf = async (
   db: any,
@@ -262,9 +263,75 @@ const updateProperty = async (
 
 export const saveNewChange = (db: any, data: NodeChange) => {
   if (!data.modifiedBy) return;
-  // console.log("saveNewChange", data);
-  // const changeUseRef = doc(
-  //   collection(doc(collection(db, NODES_LOGS), data.modifiedBy), "changes")
-  // );
-  // setDoc(changeUseRef, data);
+  const changeUseRef = doc(collection(db, NODES_LOGS));
+  setDoc(changeUseRef, data);
+  const userRef = doc(collection(db, USERS), data.modifiedBy);
+  updateDoc(userRef, {
+    reputations: increment(1),
+  });
+};
+
+export const getChangeDescription = (
+  log: NodeChange,
+  modifiedByFullName: string
+): string => {
+  const {
+    modifiedProperty,
+    previousValue,
+    newValue,
+    changeType,
+    modifiedAt,
+    fullNode,
+  } = log;
+
+  switch (changeType) {
+    case "change text":
+      return `${modifiedByFullName} updated the text in "${fullNode.title}",  The property "${modifiedProperty}" was changed from "${previousValue}" to "${newValue}".`;
+    case "add collection":
+      return `${modifiedByFullName} added a new collection to "${fullNode.title}",  The collection was created with initial properties.`;
+    case "delete collection":
+      return `${modifiedByFullName} deleted a collection from "${fullNode.title}",  All related data has been removed.`;
+    case "edit collection":
+      return `${modifiedByFullName} renamed a collection in "${fullNode.title}",  It was renamed from "${previousValue}" to "${newValue}".`;
+    case "sort elements":
+      return `${modifiedByFullName} sorted elements in the collection of "${fullNode.title}", `;
+    case "remove element":
+      return `${modifiedByFullName} removed an element from "${fullNode.title}", Under the property "${modifiedProperty}".`;
+    case "modify elements":
+      return `${modifiedByFullName} modified the elements of "${fullNode.title}", changing "${modifiedProperty}" from "${previousValue}" to "${newValue}".`;
+    case "add property":
+      return `${modifiedByFullName} added a new property "${modifiedProperty}" to "${fullNode.title}",  The initial value is "${newValue}".`;
+    case "remove property":
+      return `${modifiedByFullName} removed the property "${modifiedProperty}" from "${fullNode.title}",  Its previous value was "${previousValue}".`;
+    case "delete node":
+      return `${modifiedByFullName} deleted the node "${fullNode.title}",  All associated data has been removed.`;
+    default:
+      return `${modifiedByFullName} made an unknown change to "${fullNode.title}", `;
+  }
+};
+
+export const synchronizeStuff = (
+  prev: (any & { id: string })[],
+  change: any
+) => {
+  const docType = change.type;
+  const curData = change.data as any & { id: string };
+
+  const prevIdx = prev.findIndex(
+    (m: any & { id: string }) => m.id === curData.id
+  );
+  if (docType === "added" && prevIdx === -1) {
+    prev.push(curData);
+  }
+  if (docType === "modified" && prevIdx !== -1) {
+    prev[prevIdx] = curData;
+  }
+
+  if (docType === "removed" && prevIdx !== -1) {
+    prev.splice(prevIdx, 1);
+  }
+  prev.sort(
+    (a, b) => a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime()
+  );
+  return prev;
 };

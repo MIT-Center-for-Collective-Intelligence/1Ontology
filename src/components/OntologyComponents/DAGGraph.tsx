@@ -215,42 +215,38 @@ const DagGraph = ({
     };
   }, [treeVisualization, expandedNodes]);
 
-
   useEffect(() => {
     if (graph && currentVisibleNode) {
       const nodeId = currentVisibleNode.id;
 
       if (graph.node(nodeId)) {
-       
         const nodePosition = graph.node(nodeId);
-      const svg = d3.select<SVGSVGElement, unknown>(svgRef.current!);
-      const svgGroup = svg.select("g");
+        const svg = d3.select<SVGSVGElement, unknown>(svgRef.current!);
+        const svgGroup = svg.select("g");
 
-      const svgWidth = svg.node()?.clientWidth || 0;
-      const svgHeight = svg.node()?.clientHeight || 0;
-      
-      const scale = 1
-      const translateX = (svgWidth / 2) - nodePosition.x * scale; 
-      const translateY = (svgHeight / 2.5) - nodePosition.y * scale;
-      
+        const svgWidth = svg.node()?.clientWidth || 0;
+        const svgHeight = svg.node()?.clientHeight || 0;
 
-      const zoomTranslate = d3.zoomIdentity
-        .translate(translateX, translateY)
-        .scale(scale);
+        const scale = 1;
+        const translateX = svgWidth / 2 - nodePosition.x * scale;
+        const translateY = svgHeight / 2.5 - nodePosition.y * scale;
 
-      svg.transition()
-        .duration(1000)
-        .call(
-          d3.zoom().transform as any,
-          zoomTranslate
-        );
+        const zoomTranslate = d3.zoomIdentity
+          .translate(translateX, translateY)
+          .scale(scale);
 
-      svgGroup.transition()
-        .duration(1000)
-        .attr(
-          "transform",
-          `translate(${translateX}, ${translateY}) scale(${scale})`
-        );
+        svg
+          .transition()
+          .duration(1000)
+          .call(d3.zoom().transform as any, zoomTranslate);
+
+        svgGroup
+          .transition()
+          .duration(1000)
+          .attr(
+            "transform",
+            `translate(${translateX}, ${translateY}) scale(${scale})`
+          );
       }
     }
   }, [currentVisibleNode?.id, graph]);

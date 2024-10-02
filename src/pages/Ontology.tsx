@@ -50,30 +50,20 @@ Here's a breakdown of the key parts of the component:
 This component is a key part of the application, providing a rich interface for users to interact with ontological data. It demonstrates the use of React hooks, Firestore, and third-party libraries to create a dynamic and responsive user experience. */
 
 import { Bar, Container, Section } from "@column-resizer/react";
-import SearchIcon from "@mui/icons-material/Search";
+
 import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
 import {
   Box,
-  Button,
   CircularProgress,
-  IconButton,
-  List,
-  ListItem,
-  Modal,
-  Paper,
-  Popper,
   Tab,
   Tabs,
-  TextField,
   Typography,
   useMediaQuery,
 } from "@mui/material";
 import {
   Timestamp,
-  addDoc,
   collection,
   doc,
-  getDocs,
   getFirestore,
   onSnapshot,
   query,
@@ -82,7 +72,7 @@ import {
   where,
 } from "firebase/firestore";
 import Fuse from "fuse.js";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 // import markdownContent from "../components/OntologyComponents/Markdown-Here-Cheatsheet.md";
 import SneakMessage from " @components/components/OntologyComponents/SneakMessage";
 import Node from " @components/components/OntologyComponents/Node";
@@ -97,8 +87,6 @@ import {
 } from " @components/types/INode";
 import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
 
-import AppHeaderMemoized from " @components/components/Header/AppHeader";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import withAuthUser from " @components/components/hoc/withAuthUser";
 import { useAuth } from " @components/components/context/AuthContext";
@@ -107,7 +95,6 @@ import DagGraph from " @components/components/OntologyComponents/DAGGraph";
 import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import {
   LOGS,
-  MESSAGES,
   NODES,
   USERS,
 } from " @components/lib/firestoreClient/collections";
@@ -115,49 +102,12 @@ import {
   getBrowser,
   getOperatingSystem,
 } from " @components/lib/firestoreClient/errors.firestore";
-import Inheritance from " @components/components/Inheritance/Inheritance";
-import Chat from " @components/components/Chat/Chat";
-import { IChat, INotification } from " @components/types/IChat";
-import {
-  chatChange,
-  getMessagesSnapshot,
-} from "../client/firestore/messages.firestore";
-import { SearchBox } from " @components/components/SearchBox/SearchBox";
-import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
-import { Notification } from " @components/components/Chat/Notification";
-import LogsSideBar, {
-  NodeChange,
-} from " @components/components/Logs/LogsSideBar";
+import { IChat } from " @components/types/IChat";
 
-const synchronizeStuff = (prev: (any & { id: string })[], change: any) => {
-  const docType = change.type;
-  const curData = change.data as any & { id: string };
-
-  const prevIdx = prev.findIndex(
-    (m: any & { id: string }) => m.id === curData.id
-  );
-  if (docType === "added" && prevIdx === -1) {
-    prev.push(curData);
-  }
-  if (docType === "modified" && prevIdx !== -1) {
-    prev[prevIdx] = curData;
-  }
-
-  if (docType === "removed" && prevIdx !== -1) {
-    prev.splice(prevIdx, 1);
-  }
-  prev.sort(
-    (a, b) => a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime()
-  );
-  return prev;
-};
-
-const CHAT_TABS = [
-  { id: "node", title: "This node" },
-  /*  { id: "bug_report", title: "Bug Reports" },
-  { id: "feature_request", title: "Feature Requests" },
-  { id: "help", title: "Help" }, */
-];
+import { saveNewChange } from " @components/lib/utils/helpers";
+import { useHover } from " @components/lib/hooks/useHover";
+import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarSidebar";
+import { NodeChange } from " @components/components/ActiveUsers/UserActivity";
 
 const Ontology = () => {
   const db = getFirestore();
@@ -173,75 +123,55 @@ const Ontology = () => {
   const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [lockedNodeFields, setLockedNodeFields] = useState<ILockedNode>({});
-  const [sidebarView, setSidebarView] = useState<number>(1);
-  const [selectedChatTab, setSelectedChatTab] = useState<number>(0);
   const [viewValue, setViewValue] = useState<number>(0);
-  const [searchValue, setSearchValue] = useState("");
   const fuse = new Fuse(Object.values(nodes), { keys: ["title"] });
   const headerRef = useRef<HTMLHeadElement | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [dagreZoomState, setDagreZoomState] = useState<any>(null);
   const [rightPanelVisible, setRightPanelVisible] = useState<any>(false);
-  const [openLogsFor, setOpenLogsFor] = useState<{
-    uname: string;
-    imageUrl: string;
-    fullname: string;
-  } | null>(null);
-
-  const [users, setUsers] = useState<
-    {
-      id: string;
-      display: string;
-      uname: string;
-      fullName: string;
-      imageUrl: string;
-    }[]
-  >([]);
   const [eachOntologyPath, setEachOntologyPath] = useState<{
     [key: string]: any;
   }>({});
   const columnResizerRef = useRef<any>();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [nodeMessages, setNodeMessages] = useState<IChat[]>([]);
-  const [bugReportMessages, setBugReportMessages] = useState<IChat[]>([]);
-  const [featureRequestMessages, setFeatureRequestMessages] = useState<IChat[]>(
-    []
-  );
-  const [helpMessages, setHelpMessages] = useState<IChat[]>([]);
-  const [openSelectModel, setOpenSelectModel] = useState(false);
-  const [notifications, setNotifications] = useState<INotification[]>([]);
-
   const [lastUpdate, setLastUpdate] = useState(Date.now());
+
   //last interaction date from the user
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
     new Date(Date.now())
   );
-  const [anchor, setAnchor] = useState<any>(null);
+
   const [selectedDiffNode, setSelectedDiffNode] = useState<NodeChange | null>(
     null
   );
   const scrolling = useRef<any>();
 
-  const [openNotificationSection, setOpenNotificationSection] =
-    useState<boolean>(false);
+  const { ref: toolbarRef, isHovered } = useHover();
 
-  // useEffect(() => {
-  //   if (!user) return;
+  const [activeSidebar, setActiveSidebar] = useState<string | null>(null);
 
-  //   const userQuery = query(
-  //     collection(db, LOGS),
-  //     where("__name__", "==", "00EWFECw1PnBRPy4wZVt")
-  //   );
+  const handleExpandSidebar = (sidebarType: string) => {
+    setActiveSidebar(sidebarType);
+  };
 
-  //   const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
-  //     const docChange = snapshot.docChanges()[0];
-  //     if (docChange.type !== "added") {
-  //       window.location.reload();
-  //     }
-  //   });
+  useEffect(() => {
+    if (!user) return;
 
-  //   return () => unsubscribeUser();
-  // }, [db, user, nodes]);
+    const userQuery = query(
+      collection(db, LOGS),
+      where("__name__", "==", "00EWFECw1PnBRPy4wZVt")
+    );
+
+    const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
+      if (
+        snapshot.docChanges().length > 0 &&
+        snapshot.docChanges()[0].type !== "added"
+      ) {
+        window.location.reload();
+      }
+    });
+
+    return () => unsubscribeUser();
+  }, [db, user, nodes]);
 
   useEffect(() => {
     // Check if a user is logged in
@@ -254,126 +184,9 @@ const Ontology = () => {
     }
   }, [user, emailVerified]);
 
-  useEffect(() => {
-    if (!user) return;
-    if (!currentVisibleNode?.id) return;
-    setIsLoading(true);
-    setNodeMessages([]);
-    const onSynchronize = (changes: chatChange[]) => {
-      setNodeMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
-      setIsLoading(false);
-    };
-    const killSnapshot = getMessagesSnapshot(
-      db,
-      { nodeId: currentVisibleNode?.id, type: "node", lastVisible: null },
-      onSynchronize
-    );
-    return () => killSnapshot();
-  }, [db, user, currentVisibleNode?.id]);
-
-  useEffect(() => {
-    if (!user) return;
-    setBugReportMessages([]);
-    setFeatureRequestMessages([]);
-    setHelpMessages([]);
-    const onSynchronize = (changes: chatChange[]) => {
-      setBugReportMessages((prev) =>
-        changes.reduce(synchronizeStuff, [...prev])
-      );
-    };
-    const killSnapshot = getMessagesSnapshot(
-      db,
-      { type: "bug_report", lastVisible: null },
-      onSynchronize
-    );
-
-    const onFeatureRequestSynchronize = (changes: chatChange[]) => {
-      setFeatureRequestMessages((prev) =>
-        changes.reduce(synchronizeStuff, [...prev])
-      );
-    };
-    const killFeatureRequestSnapshot = getMessagesSnapshot(
-      db,
-      { type: "feature_request", lastVisible: null },
-      onFeatureRequestSynchronize
-    );
-
-    const onHelSynchronize = (changes: chatChange[]) => {
-      setHelpMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
-    };
-    const killHelpSnapshot = getMessagesSnapshot(
-      db,
-      { type: "help", lastVisible: null },
-      onHelSynchronize
-    );
-
-    return () => {
-      killSnapshot();
-      killFeatureRequestSnapshot();
-      killHelpSnapshot();
-    };
-  }, [db, user]);
-
-  useEffect(() => {
-    if (!user) return;
-    setNotifications([]);
-    const onSynchronize = (changes: chatChange[]) => {
-      setNotifications((prev) => changes.reduce(synchronizeStuff, [...prev]));
-    };
-    const killSnapshot = getNotificationsSnapshot(
-      db,
-      { uname: user.uname, lastVisible: null },
-      onSynchronize
-    );
-    return () => killSnapshot();
-  }, [db, user]);
-
-  useEffect(() => {
-    (async () => {
-      if (!db) return;
-      const usersQuery = query(collection(db, USERS));
-      const usersDocs = await getDocs(usersQuery);
-      const _users: any = [];
-      usersDocs.docs.forEach((userDoc: any) => {
-        _users.push({
-          id: userDoc.data().uname,
-          display: `${userDoc.data().fName} ${userDoc.data().lName}`,
-          uname: userDoc.data().uname,
-          fullName: `${userDoc.data().fName} ${userDoc.data().lName}`,
-          imageUrl: userDoc.data().imageUrl,
-        });
-      });
-      setUsers(_users);
-    })();
-  }, [db]);
-
-  useEffect(() => {
-    if (openNotificationSection) {
-      document.addEventListener("click", handleClickOutside);
-    } else {
-      document.removeEventListener("click", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
-  }, [openNotificationSection, anchor]);
-
-  const handleClickOutside = useCallback(
-    (event: MouseEvent) => {
-      if (anchor && !anchor.contains(event.target)) {
-        setAnchor(null);
-        setOpenNotificationSection(false);
-      }
-    },
-    [anchor]
-  );
-
   const recordLogs = async (logs: any) => {
     try {
-      if (!user || user.uname === "ouhrac") return;
       const logRef = doc(collection(db, LOGS));
-
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -439,21 +252,6 @@ const Ontology = () => {
           !item.category &&
           (!nodeType || nodeType === item.nodeType)
       );
-  };
-  const searchResults = useMemo(() => {
-    recordLogs({
-      action: "Searched",
-      query: searchValue,
-    });
-    return searchWithFuse(searchValue);
-  }, [searchValue]);
-
-  const handleChatTabsChange = (event: any, newValue: number) => {
-    setSelectedChatTab(newValue);
-    recordLogs({
-      action: "chat tab change",
-      viewType: newValue === 0 ? "Tree View" : "Dag View",
-    });
   };
 
   const handleViewChange = (event: any, newValue: number) => {
@@ -780,6 +578,7 @@ const Ontology = () => {
   const addNewNode = useCallback(
     async ({ id, newNode }: { id: string; newNode: any }) => {
       try {
+        if (!user?.uname) return;
         // Reference to the new node document
         setCurrentVisibleNode({
           id,
@@ -793,7 +592,16 @@ const Ontology = () => {
           deleted: false,
           createdAt: new Date(),
         });
-
+        saveNewChange(db, {
+          nodeId: newNodeRef.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: "",
+          previousValue: null,
+          newValue: null,
+          modifiedAt: new Date(),
+          changeType: "add node",
+          fullNode: newNode,
+        });
         // Record logs for the created node
         await recordLogs({
           action: "Create a new node",
@@ -805,7 +613,7 @@ const Ontology = () => {
         console.error(error);
       }
     },
-    [nodes]
+    [nodes, user?.uname]
   );
 
   // Define a callback function to handle the opening of the ontology DAGRE view.
@@ -958,679 +766,217 @@ const Ontology = () => {
     }
   };
 
-  const handleClose = useCallback(() => {
-    setOpenSelectModel(false);
-  }, [setOpenSelectModel]);
-
-  const sendNode = useCallback(
-    async (nodeId: string, title: string) => {
-      if (!user || !currentVisibleNode?.id) return;
-      const messageData = {
-        nodeId: currentVisibleNode.id,
-        text: title,
-        sender: user.uname,
-        senderDetail: {
-          uname: user.uname,
-          fullname: user.fName + " " + user.lName,
-          imageUrl: user.imageUrl,
-          uid: user.userId,
-        },
-        imageUrls: [],
-        reactions: [],
-        edited: false,
-        deleted: false,
-        totalReplies: 0,
-        type: ["node", "bug_report", "feature_request", "help"][
-          selectedChatTab
-        ],
-        messageType: "node",
-        sharedNodeId: nodeId,
-        createdAt: new Date(),
-      };
-
-      await addDoc(collection(db, MESSAGES), messageData);
-    },
-    [selectedChatTab, currentVisibleNode?.id, user]
-  );
-
-  const openNotification = useCallback(
-    (
-      notificationId: string,
-      messageId: string,
-      type: string,
-      nodeId?: string
-    ) => {
-      const notificationRef = doc(db, "notifications", notificationId);
-      updateDoc(notificationRef, {
-        seen: true,
-      });
-      recordLogs({
-        action: "Opened a notification",
-        notificationId,
-        page: ontologyPath[ontologyPath.length - 1],
-      });
-      if (type === "node" && nodeId) {
-        setCurrentVisibleNode(nodes[nodeId]);
-      }
-      setSidebarView(1);
-      setSelectedChatTab(
-        ["node", "bug_report", "feature_request", "help"].indexOf(type)
-      );
-      setOpenNotificationSection(false);
-      setAnchor(null);
-      setTimeout(
-        () => {
-          const element = document.getElementById(`message-${messageId}`);
-          if (element) {
-            element.scrollIntoView({ behavior: "smooth", block: "center" });
-            element.style.border = `solid 1px ${DESIGN_SYSTEM_COLORS.orange400}`;
-            setTimeout(() => {
-              element.style.border = "none";
-            }, 1000);
-          }
-        },
-        type === "node" ? 2000 : 1000
-      );
-    },
-    [db, user]
-  );
-
-  const handleNotificationPopup = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      setAnchor(anchor ? null : event.currentTarget);
-      setOpenNotificationSection(!openNotificationSection);
-    },
-    [anchor, openNotificationSection]
-  );
-
-  const handleSearch = useCallback(() => {
-    if (sidebarView !== 0 || !rightPanelVisible) {
-      setSidebarView(0);
-      setRightPanelVisible(true);
+  const displayNodeChat = useCallback(() => {
+    if (activeSidebar === "chat") {
+      setActiveSidebar(null);
     } else {
-      setRightPanelVisible(false);
+      handleExpandSidebar("chat");
     }
-  }, [setSidebarView, setRightPanelVisible, rightPanelVisible, sidebarView]);
-
-  const handleChat = useCallback(() => {
-    if (sidebarView !== 1 || !rightPanelVisible) {
-      setSidebarView(1);
-      setRightPanelVisible(true);
-    } else {
-      setRightPanelVisible(false);
-    }
-  }, [setSidebarView, setRightPanelVisible, rightPanelVisible, sidebarView]);
+  }, [activeSidebar]);
 
   const displayInheritanceSettings = useCallback(() => {
-    if (sidebarView !== 2 || !rightPanelVisible) {
-      setSidebarView(2);
-      setRightPanelVisible(true);
+    if (activeSidebar === "inheritanceSettings") {
+      setActiveSidebar(null);
     } else {
-      setRightPanelVisible(false);
+      handleExpandSidebar("inheritanceSettings");
     }
-  }, [setSidebarView, setRightPanelVisible, rightPanelVisible, sidebarView]);
+  }, [activeSidebar]);
 
-  const displayUserLogs = useCallback(
-    (user: { uname: string; imageUrl: string; fullname: string }) => {
-      if (
-        sidebarView !== 3 ||
-        !rightPanelVisible ||
-        openLogsFor?.uname !== user.uname
-      ) {
-        setSidebarView(3);
-        setRightPanelVisible(true);
-        setOpenLogsFor(user);
-      } else {
-        setRightPanelVisible(false);
-        setOpenLogsFor(null);
-      }
-      setSelectedDiffNode(null);
-    },
-    [
-      setSidebarView,
-      setRightPanelVisible,
-      rightPanelVisible,
-      sidebarView,
-      openLogsFor,
-    ]
-  );
+  if (Object.keys(nodes).length <= 0) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          flexDirection: "column",
+        }}
+      >
+        <CircularProgress />
+        {/* <br /> */}
+        <Typography sx={{ mt: "5px" }}> Loading...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box>
-      {Object.keys(nodes).length > 0 ? (
-        <Container
-          style={{
-            marginTop: "80px",
-            height: "calc(100vh - 80px)",
-            display: "flex",
-          }}
-          columnResizerRef={columnResizerRef}
-        >
-          {!isMobile && (
-            <Section
-              minSize={0}
-              defaultSize={500}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <Box
-                sx={{
-                  backgroundColor: (theme: any) =>
-                    theme.palette.mode === "dark" ? "#303134" : "white",
-                }}
-              >
-                <Tabs
-                  value={viewValue}
-                  onChange={handleViewChange}
-                  sx={{
-                    width: "100%",
-                    borderColor: "divider",
-
-                    backgroundColor: (theme) =>
-                      theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                    ".MuiTab-root.Mui-selected": {
-                      color: "#ff6d00",
-                    },
-                  }}
-                >
-                  <Tab
-                    label="Outline"
-                    {...a11yProps(0)}
-                    sx={{ width: "50%", fontSize: "20px" }}
-                  />
-                  <Tab
-                    label="Graph View"
-                    {...a11yProps(1)}
-                    sx={{ width: "50%", fontSize: "20px" }}
-                  />
-                </Tabs>
-
-                <Box
-                  sx={{
-                    height: "85vh",
-                    flexGrow: 1,
-                    overflow: "auto",
-                    ...SCROLL_BAR_STYLE,
-                  }}
-                >
-                  <TabPanel
-                    value={viewValue}
-                    index={0}
-                    sx={{
-                      mt: "5px",
-                    }}
-                  >
-                    <TreeViewSimplified
-                      treeVisualization={treeVisualization}
-                      onOpenNodesTree={onOpenNodesTree}
-                      expandedNodes={expandedNodes}
-                      currentVisibleNode={currentVisibleNode}
-                    />
-                  </TabPanel>
-                  <TabPanel value={viewValue} index={1}>
-                    <DagGraph
-                      treeVisualization={treeVisualization}
-                      setExpandedNodes={setExpandedNodes}
-                      expandedNodes={expandedNodes}
-                      setDagreZoomState={setDagreZoomState}
-                      dagreZoomState={dagreZoomState}
-                      onOpenNodeDagre={onOpenNodeDagre}
-                      currentVisibleNode={currentVisibleNode}
-                    />
-                  </TabPanel>
-                </Box>
-              </Box>
-            </Section>
-          )}
-
-          <Bar
-            size={2}
-            style={{
-              background: "currentColor",
-              cursor: "col-resize",
-              position: "relative",
-            }}
-          >
-            <SettingsEthernetIcon
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                color: (theme) =>
-                  theme.palette.mode === "dark"
-                    ? theme.palette.common.gray50
-                    : theme.palette.common.notebookMainBlack,
-              }}
-            />
-          </Bar>
-          <Section minSize={0}>
-            <Box
-              id="node-section"
-              sx={{
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "dark"
-                    ? theme.palette.common.notebookMainBlack
-                    : theme.palette.common.gray50,
-                p: "20px",
-                overflow: "auto",
-                height: "94vh",
-                ...SCROLL_BAR_STYLE,
-              }}
-            >
-              <Box ref={scrolling}></Box>
-              {/*               <Breadcrumbs sx={{ ml: "40px", mt: "14px" }}>
-                {(ontologyPath || []).map((path) => (
-                  <Link
-                    underline={path.category ? "none" : "hover"}
-                    key={path.id}
-                    onClick={() => {
-                      if (!path.category) handleLinkNavigation(path, "");
-                    }}
-                    sx={{
-                      cursor: !path.category ? "pointer" : "",
-                      ":hover": {
-                        cursor: !path.category ? "pointer" : "",
-                      },
-                      fontSize: path.category ? "15px" : "20px",
-                      color: path.category
-                        ? "orange"
-                        : (theme) =>
-                            theme.palette.mode === "dark"
-                              ? theme.palette.common.white
-                              : theme.palette.common.black,
-                    }}
-                  >
-                    {path.title.split(" ").splice(0, 3).join(" ") +
-                      (path.title.split(" ").length > 3 ? "..." : "")}
-                  </Link>
-                ))}
-              </Breadcrumbs> */}
-
-              {currentVisibleNode && (
-                <Node
-                  scrolling={scrolling}
-                  currentVisibleNode={currentVisibleNode}
-                  setCurrentVisibleNode={setCurrentVisibleNode}
-                  setSnackbarMessage={setSnackbarMessage}
-                  user={user}
-                  mainSpecializations={getMainSpecializations(
-                    treeVisualization
-                  )}
-                  nodes={nodes}
-                  addNewNode={addNewNode}
-                  lockedNodeFields={lockedNodeFields}
-                  recordLogs={recordLogs}
-                  navigateToNode={navigateToNode}
-                  eachOntologyPath={eachOntologyPath}
-                  searchWithFuse={searchWithFuse}
-                  locked={!!currentVisibleNode.locked && !user?.manageLock}
-                  selectedDiffNode={selectedDiffNode}
-                />
-              )}
-            </Box>
-          </Section>
-
-          <Bar
-            size={2}
-            style={{
-              background: "currentColor",
-              cursor: "col-resize",
-              position: "relative",
-              display: rightPanelVisible ? "block" : "none",
-            }}
-          >
-            <SettingsEthernetIcon
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                color: (theme) =>
-                  theme.palette.mode === "dark"
-                    ? theme.palette.common.gray50
-                    : theme.palette.common.notebookMainBlack,
-              }}
-            />
-          </Bar>
-
-          {!isMobile && (
-            <Section minSize={0} defaultSize={400}>
-              <Box id="right-panel-tabs" sx={{ width: "100%" }}>
-                <Box
-                  sx={{
-                    borderColor: "divider",
-                    position: "sticky",
-                  }}
-                >
-                  {/* <Tabs
-                    id="right-panel-tabs"
-                    value={sidebarView}
-                    onChange={handleChange}
-                    aria-label="basic tabs example"
-                    variant="scrollable"
-                    sx={{
-                      background: (theme) =>
-                        theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                      ".MuiTab-root.Mui-selected": {
-                        color: "#ff6d00",
-                      },
-                    }}
-                  >
-                    <Tab label="Search" {...a11yProps(1)} />
-                    <Tab label="Chat" {...a11yProps(0)} />
-                    <Tab label="Inheritance" {...a11yProps(2)} />
-                    <Tab label="Markdown Cheatsheet" {...a11yProps(3)} />
-                  </Tabs> */}
-                </Box>
-                <Box
-                  sx={{
-                    // padding: "10px",
-                    height: "89vh",
-                    overflow: "auto",
-                    pb: "125px",
-                    backgroundColor: (theme: any) =>
-                      theme.palette.mode === "dark" ? "#303134" : "white",
-                    ...SCROLL_BAR_STYLE,
-                  }}
-                >
-                  {sidebarView === 0 && (
-                    <Box>
-                      <Box sx={{ pl: "10px" }}>
-                        <TextField
-                          variant="standard"
-                          placeholder="Search..."
-                          value={searchValue}
-                          onChange={(e) => setSearchValue(e.target.value)}
-                          fullWidth
-                          InputProps={{
-                            startAdornment: (
-                              <IconButton
-                                sx={{ mr: "5px", cursor: "auto" }}
-                                color="primary"
-                                edge="end"
-                              >
-                                <SearchIcon />
-                              </IconButton>
-                            ),
-                          }}
-                          autoFocus
-                          sx={{
-                            p: "8px",
-                            mt: "5px",
-                          }}
-                        />
-                        <List>
-                          {searchResults.map((node: any) => (
-                            <ListItem
-                              key={node.id}
-                              onClick={() => openSearchedNode(node)}
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                color: "white",
-                                cursor: "pointer",
-                                borderRadius: "4px",
-                                padding: "8px",
-                                transition: "background-color 0.3s",
-                                // border: "1px solid #ccc",
-                                mt: "5px",
-                                "&:hover": {
-                                  backgroundColor: (theme) =>
-                                    theme.palette.mode === "dark"
-                                      ? DESIGN_SYSTEM_COLORS.notebookG450
-                                      : DESIGN_SYSTEM_COLORS.gray200,
-                                },
-                              }}
-                            >
-                              <Typography>{node.title}</Typography>
-                            </ListItem>
-                          ))}
-                        </List>
-                      </Box>
-                    </Box>
-                  )}
-
-                  {sidebarView === 1 && (
-                    <Box>
-                      <Tabs
-                        id="chat-tabs"
-                        value={selectedChatTab}
-                        onChange={handleChatTabsChange}
-                        aria-label="basic tabs example"
-                        variant="scrollable"
-                        sx={{
-                          background: (theme) =>
-                            theme.palette.mode === "dark"
-                              ? "#000000"
-                              : "#c3c3c3",
-                          ".MuiTab-root.Mui-selected": {
-                            color: "#ff6d00",
-                          },
-                        }}
-                      >
-                        {CHAT_TABS.map((tab, idx) => (
-                          <Tab
-                            key={tab.id}
-                            label={tab.title}
-                            {...a11yProps(idx)}
-                          />
-                        ))}
-                        {/*     <Tab label="This node" {...a11yProps(0)} />
-                        <Tab label="Bug Reports" {...a11yProps(1)} />
-                        <Tab label="Feature Requests" {...a11yProps(2)} />
-                        <Tab label="Help" {...a11yProps(3)} /> */}
-                      </Tabs>
-                      <Box>
-                        {CHAT_TABS.map((tab, idx) => (
-                          <TabPanel
-                            key={tab.id}
-                            value={selectedChatTab}
-                            index={idx}
-                          >
-                            {currentVisibleNode?.id && (
-                              <Chat
-                                user={user}
-                                messages={nodeMessages}
-                                setMessages={setNodeMessages}
-                                type={tab.id}
-                                nodeId={currentVisibleNode?.id}
-                                users={users}
-                                firstLoad={true}
-                                isLoading={isLoading}
-                                confirmIt={confirmIt}
-                                setOpenSelectModel={setOpenSelectModel}
-                                recordLogs={recordLogs}
-                              />
-                            )}
-                          </TabPanel>
-                        ))}
-                      </Box>
-                    </Box>
-                  )}
-
-                  {sidebarView === 2 && (
-                    <Box>
-                      {currentVisibleNode && (
-                        <Inheritance
-                          selectedNode={currentVisibleNode}
-                          nodes={nodes}
-                        />
-                      )}
-                    </Box>
-                  )}
-                  {sidebarView === 3 && (
-                    <Box>
-                      {currentVisibleNode && (
-                        <LogsSideBar
-                          openLogsFor={openLogsFor}
-                          displayDiff={(data: any) => {
-                            setSelectedDiffNode(data);
-                            if (currentVisibleNode.id !== data.nodeId) {
-                              setCurrentVisibleNode(nodes[data.nodeId]);
-                            }
-                          }}
-                        />
-                      )}
-                    </Box>
-                  )}
-                  {/* <TabPanel value={sidebarView} index={3}>
-                    <Box
-                      sx={{
-                        p: "18px",
-                        ...SCROLL_BAR_STYLE,
-                      }}
-                    >
-                      <MarkdownRender text={markdownContent} />
-                    </Box>
-                  </TabPanel> */}
-                </Box>
-              </Box>
-            </Section>
-          )}
-          {ConfirmDialog}
-          <SneakMessage
-            newMessage={snackbarMessage}
-            setNewMessage={setSnackbarMessage}
-          />
-        </Container>
-      ) : (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
-            flexDirection: "column",
-          }}
-        >
-          <CircularProgress />
-          {/* <br /> */}
-          <Typography sx={{ mt: "5px" }}> Loading...</Typography>
-        </Box>
-      )}
-      <Box sx={{ position: "absolute", top: 0, width: "100%" }}>
-        <AppHeaderMemoized
-          ref={headerRef}
-          setRightPanelVisible={setRightPanelVisible}
-          rightPanelVisible={rightPanelVisible}
-          loading={false}
-          confirmIt={confirmIt}
-          sidebarView={sidebarView}
-          setSidebarView={setSidebarView}
-          handleNotificationPopup={handleNotificationPopup}
-          notifications={notifications}
-          handleChat={handleChat}
-          nodes={nodes}
-          handleSearch={handleSearch}
-          navigateToNode={navigateToNode}
-          displayInheritanceSettings={displayInheritanceSettings}
-          // displayUserLogs={displayUserLogs}
-          locked={!!currentVisibleNode?.locked && !user?.manageLock}
-        />
-      </Box>
-
-      <Popper
-        sx={{
-          backgroundColor: (theme) =>
-            theme.palette.mode === "dark" ? "#3a3b3c" : "#d0d5dd",
-          width: "400px",
-          p: 2,
-          height: "420px",
-          overflowY: "auto",
-          borderRadius: "10px",
-          zIndex: 999,
-        }}
-        placeholder={""}
-        open={openNotificationSection}
-        anchorEl={anchor}
-        placement="bottom-end"
-        onPointerEnterCapture={undefined}
-        onPointerLeaveCapture={undefined}
-      >
-        <Notification
-          user={user}
-          notifications={notifications}
-          openNotification={openNotification}
-        />
-      </Popper>
-
-      <Modal
-        sx={{
+      <Container
+        style={{
+          height: "100vh",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "transparent",
-          // backgroundColor: "rgba(0, 0, 0, 0.5)",
         }}
-        open={openSelectModel}
-        onClose={handleClose}
+        columnResizerRef={columnResizerRef}
       >
-        <Box
-          sx={{
-            maxHeight: "80vh",
-            minWidth: "900px",
-            overflowY: "auto",
-            borderRadius: 2,
-            boxShadow: 24,
-            ...SCROLL_BAR_STYLE,
-          }}
-        >
-          <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <SearchBox
-                  setSearchValue={setSearchValue}
-                  label={"Search ..."}
-                />
-              </Box>
-            </Box>
-          </Paper>
-          <Paper>
-            {searchValue ? (
-              <Box>
-                {" "}
-                {searchResults.map((node: any) => (
-                  <ListItem
-                    key={node.id}
-                    onClick={() => {}}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      color: "white",
-                      cursor: "pointer",
-                      borderRadius: "4px",
-                      padding: "8px",
-                      transition: "background-color 0.3s",
-                      // border: "1px solid #ccc",
-                      mt: "5px",
-                      "&:hover": {
-                        backgroundColor: (theme) =>
-                          theme.palette.mode === "dark"
-                            ? DESIGN_SYSTEM_COLORS.notebookG450
-                            : DESIGN_SYSTEM_COLORS.gray200,
-                      },
-                    }}
-                  >
-                    {" "}
-                    <Typography>{node.title}</Typography>
-                    <Button variant="outlined">Send</Button>
-                  </ListItem>
-                ))}
-              </Box>
-            ) : (
-              <TreeViewSimplified
-                treeVisualization={treeVisualization}
-                expandedNodes={expandedNodes}
-                onOpenNodesTree={onOpenNodesTree}
-                sendNode={sendNode}
+        <MemoizedToolbarSidebar
+          // isHovered={toolbarIsHovered}
+          toolbarRef={toolbarRef}
+          user={user}
+          openSearchedNode={openSearchedNode}
+          searchWithFuse={searchWithFuse}
+          nodes={nodes}
+          selectedDiffNode={selectedDiffNode}
+          setSelectedDiffNode={setSelectedDiffNode}
+          currentVisibleNode={currentVisibleNode}
+          setCurrentVisibleNode={setCurrentVisibleNode}
+          confirmIt={confirmIt}
+          recordLogs={recordLogs}
+          activeSidebar={activeSidebar}
+          setActiveSidebar={setActiveSidebar}
+          handleExpandSidebar={handleExpandSidebar}
+          navigateToNode={navigateToNode}
+        />
+        <Section minSize={0}>
+          <Box
+            id="node-section"
+            sx={{
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? theme.palette.common.notebookMainBlack
+                  : theme.palette.common.gray50,
+              p: "20px",
+              pt: 0,
+              overflow: "auto",
+              height: "100vh",
+              ...SCROLL_BAR_STYLE,
+            }}
+          >
+            <Box ref={scrolling}></Box>
+
+            {currentVisibleNode && (
+              <Node
+                scrolling={scrolling}
+                currentVisibleNode={currentVisibleNode}
+                setCurrentVisibleNode={setCurrentVisibleNode}
+                setSnackbarMessage={setSnackbarMessage}
+                user={user}
+                mainSpecializations={getMainSpecializations(treeVisualization)}
+                nodes={nodes}
+                addNewNode={addNewNode}
+                lockedNodeFields={lockedNodeFields}
+                recordLogs={recordLogs}
+                navigateToNode={navigateToNode}
+                eachOntologyPath={eachOntologyPath}
+                searchWithFuse={searchWithFuse}
+                locked={!!currentVisibleNode.locked && !user?.manageLock}
+                selectedDiffNode={selectedDiffNode}
+                displayInheritanceSettings={displayInheritanceSettings}
+                displayNodeChat={displayNodeChat}
+                rightPanelVisible={rightPanelVisible}
+                activeSidebar={activeSidebar}
               />
             )}
-          </Paper>
-        </Box>
-      </Modal>
+          </Box>
+        </Section>
+
+        <Bar
+          size={2}
+          style={{
+            background: "currentColor",
+            cursor: "col-resize",
+            position: "relative",
+          }}
+        >
+          <SettingsEthernetIcon
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              color: (theme) =>
+                theme.palette.mode === "dark"
+                  ? theme.palette.common.gray50
+                  : theme.palette.common.notebookMainBlack,
+            }}
+          />
+        </Bar>
+        {!isMobile && (
+          <Section
+            minSize={0}
+            defaultSize={500}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              height: "100vh",
+            }}
+          >
+            <Box
+              sx={{
+                backgroundColor: (theme: any) =>
+                  theme.palette.mode === "dark" ? "#303134" : "white",
+              }}
+            >
+              <Tabs
+                value={viewValue}
+                onChange={handleViewChange}
+                sx={{
+                  width: "100%",
+                  borderColor: "divider",
+
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                  ".MuiTab-root.Mui-selected": {
+                    color: "#ff6d00",
+                  },
+                }}
+              >
+                <Tab
+                  label="Outline"
+                  {...a11yProps(0)}
+                  sx={{ width: "50%", fontSize: "20px" }}
+                />
+                <Tab
+                  label="Graph View"
+                  {...a11yProps(1)}
+                  sx={{ width: "50%", fontSize: "20px" }}
+                />
+              </Tabs>
+
+              <Box
+                sx={{
+                  height: "100vh",
+                  flexGrow: 1,
+                  overflow: "auto",
+                  ...SCROLL_BAR_STYLE,
+                }}
+              >
+                <TabPanel
+                  value={viewValue}
+                  index={0}
+                  sx={{
+                    mt: "5px",
+                  }}
+                >
+                  <TreeViewSimplified
+                    treeVisualization={treeVisualization}
+                    onOpenNodesTree={onOpenNodesTree}
+                    expandedNodes={expandedNodes}
+                    currentVisibleNode={currentVisibleNode}
+                  />
+                </TabPanel>
+                <TabPanel value={viewValue} index={1}>
+                  <DagGraph
+                    treeVisualization={treeVisualization}
+                    setExpandedNodes={setExpandedNodes}
+                    expandedNodes={expandedNodes}
+                    setDagreZoomState={setDagreZoomState}
+                    dagreZoomState={dagreZoomState}
+                    onOpenNodeDagre={onOpenNodeDagre}
+                    currentVisibleNode={currentVisibleNode}
+                  />
+                </TabPanel>
+              </Box>
+            </Box>
+          </Section>
+        )}
+      </Container>
+
+      {ConfirmDialog}
+      <SneakMessage
+        newMessage={snackbarMessage}
+        setNewMessage={setSnackbarMessage}
+      />
     </Box>
   );
 };

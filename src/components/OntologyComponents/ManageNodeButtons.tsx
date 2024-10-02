@@ -10,6 +10,9 @@ import {
 import React from "react";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import ChatIcon from "@mui/icons-material/Chat";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const ManageNodeButtons = ({
   locked,
@@ -19,6 +22,9 @@ const ManageNodeButtons = ({
   getTitleNode,
   handleLockNode,
   navigateToNode,
+  displayInheritanceSettings,
+  displayNodeChat,
+  activeSidebar,
 }: {
   locked: boolean;
   root: string;
@@ -27,6 +33,9 @@ const ManageNodeButtons = ({
   getTitleNode: (nodeId: string) => string;
   handleLockNode: any;
   navigateToNode: any;
+  displayInheritanceSettings: any;
+  displayNodeChat: any;
+  activeSidebar: string;
 }) => {
   return (
     <Box sx={{ ml: "auto" }}>
@@ -36,6 +45,7 @@ const ManageNodeButtons = ({
           mb: "5px",
           ml: "auto",
           alignItems: "center",
+          gap: "5px",
         }}
       >
         <Box
@@ -126,16 +136,32 @@ const ManageNodeButtons = ({
             )}
           </Tooltip>
         )}
-
         {!locked && (
-          <Button
-            onClick={deleteNode}
-            variant="contained"
-            sx={{ borderRadius: "25px", mb: "7px" }}
-          >
-            {" "}
-            Delete Node
-          </Button>
+          <Tooltip title="Manage Inheritance">
+            <IconButton onClick={displayInheritanceSettings}>
+              <AccountTreeIcon
+                color={
+                  activeSidebar === "inheritanceSettings"
+                    ? "primary"
+                    : "inherit"
+                }
+              />
+            </IconButton>
+          </Tooltip>
+        )}
+        <Tooltip title="Open Chat Tab">
+          <IconButton onClick={displayNodeChat}>
+            <ChatIcon
+              color={activeSidebar === "chat" ? "primary" : "inherit"}
+            />
+          </IconButton>
+        </Tooltip>
+        {!locked && (
+          <Tooltip title="Delete Node">
+            <IconButton onClick={deleteNode}>
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
         )}
       </Box>
     </Box>

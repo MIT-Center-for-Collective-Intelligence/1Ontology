@@ -65,14 +65,6 @@ export const Notification = ({
                   }}
                 />
               </Box>
-              <Typography
-                fontWeight={"500"}
-                fontSize={"18px"}
-                textAlign={"center"}
-                maxWidth={"300px"}
-              >
-                Notifications not found
-              </Typography>
             </Box>
           </Box>
         </Box>

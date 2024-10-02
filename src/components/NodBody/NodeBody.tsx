@@ -6,7 +6,7 @@ import { INode } from " @components/types/INode";
 import Text from "../OntologyComponents/Text";
 import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
 import { NODES } from " @components/lib/firestoreClient/collections";
-import StructuredProperty from "../StructuredProprety/LinkStructuredProperty";
+import StructuredProperty from "../StructuredProperty/StructuredProperty";
 
 interface NodeBodyProps {
   currentVisibleNode: INode;

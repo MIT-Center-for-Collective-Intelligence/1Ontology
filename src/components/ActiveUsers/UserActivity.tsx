@@ -13,39 +13,39 @@ import { INode } from " @components/types/INode";
 import { NODES_LOGS } from " @components/lib/firestoreClient/collections";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import moment from "moment";
+import { getChangeDescription } from " @components/lib/utils/helpers";
+import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
+import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 
 export type NodeChange = {
   nodeId: string;
   modifiedBy: string;
-  modifiedProperty: string;
+  modifiedProperty: string | null;
   previousValue: any;
   newValue: any;
   modifiedAt: Date;
   changeType:
-    | "change text"
-    | "add collection"
-    | "delete collection"
-    | "change collection name"
-    | "sort elements"
-    | "remove element"
-    | "modify elements"
-    | "add property"
-    | "remove property"
-    | "delete node";
+    | "change text" //handled
+    | "sort elements" //handled
+    | "remove element" //handled
+    | "modify elements" //handled
+    | "add property" // missing
+    | "remove property" // missing
+    | "delete node" // handled
+    | "add node" // handled
+    | "add collection" // handled
+    | "delete collection" // handled
+    | "edit collection"; // handled
   fullNode: INode;
 };
 
-const LogsSideBar = ({
+const UserActivity = ({
   openLogsFor,
-  displayDiff,
-}: {
-  openLogsFor: {
-    uname: string;
-    imageUrl: string;
-    fullname: string;
-  } | null;
-  displayDiff: any;
-}) => {
+  setSelectedDiffNode,
+  currentVisibleNode,
+  setCurrentVisibleNode,
+  nodes,
+}: any) => {
   const db = getFirestore();
   const [logs, setLogs] = useState<any>({});
 
@@ -54,21 +54,19 @@ const LogsSideBar = ({
     setLogs({});
 
     const nodesQuery = query(
-      collection(
-        doc(collection(db, NODES_LOGS), openLogsFor?.uname),
-        "changes"
-      ),
+      collection(db, NODES_LOGS),
+      where("modifiedBy", "==", openLogsFor.uname),
       orderBy("modifiedAt", "desc")
     );
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
       const docChanges = snapshot.docChanges();
-      console.log("docChanges", docChanges);
+
       setLogs((prev: any) => {
         for (let change of docChanges) {
           const changeData: any = change.doc.data();
           const nodeId = change.doc.id;
-          console.log("changeData", changeData);
+
           if (change.type === "removed" && prev[nodeId]) {
             delete prev[nodeId];
           } else {
@@ -82,7 +80,6 @@ const LogsSideBar = ({
     return () => unsubscribeNodes();
   }, [db, openLogsFor?.uname]);
 
-  console.log("logs", logs);
   const getModifiedAt = (modifiedAt: any) => {
     modifiedAt = moment(modifiedAt.toDate());
     const today = moment();
@@ -90,13 +87,54 @@ const LogsSideBar = ({
       ? `Today at ${modifiedAt.format("hh:mm A")}`
       : modifiedAt.format("hh:mm A DD/MM/YYYY");
   };
-
+  const displayDiff = (data: any) => {
+    setSelectedDiffNode(data);
+    if (currentVisibleNode.id !== data.nodeId) {
+      setCurrentVisibleNode(nodes[data.nodeId]);
+    }
+  };
   return (
-    <Box>
-      {logs &&
+    <Box sx={{ height: "100vh", overflow: "auto", ...SCROLL_BAR_STYLE }}>
+      {Object.keys(logs).length <= 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: "20%",
+          }}
+        >
+          <Box sx={{ height: "100%", display: "grid", placeItems: "center" }}>
+            <Box>
+              <Box
+                sx={{
+                  width: { xs: "250px", sm: "300px" },
+                  height: { xs: "250px", sm: "200px" },
+                  "& .rive-canvas": {
+                    height: "100%",
+                  },
+                }}
+              >
+                <RiveComponentMemoized
+                  src="/rive/notification.riv"
+                  animations={"Timeline 1"}
+                  artboard="New Artboard"
+                  autoplay={true}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                  }}
+                />
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      )}
+      {Object.keys(logs).length > 0 &&
         Object.keys(logs).map((id) => (
           <Paper
-            elevation={1}
+            elevation={3}
             sx={{ padding: 1, marginBottom: 1, m: "15px" }}
             key={id}
           >
@@ -131,8 +169,11 @@ const LogsSideBar = ({
                   {logs[id].fullNode.title}
                 </Typography>
 
-                <Typography variant="body2" sx={{ fontSize: "0.75rem" }}>
-                  {`Modified Property: ${logs[id].modifiedProperty} | Previous: ${logs[id].previousValue} | New: ${logs[id].newValue}`}
+                <Typography
+                  variant="body2"
+                  sx={{ fontSize: "14px", mt: "15px" }}
+                >
+                  {getChangeDescription(logs[id], openLogsFor?.fullname || "")}
                 </Typography>
               </Box>
             </Box>
@@ -143,7 +184,7 @@ const LogsSideBar = ({
               variant="outlined"
               sx={{ borderRadius: "25px" }}
             >
-              Compare
+              View
             </Button>
           </Paper>
         ))}
@@ -151,4 +192,4 @@ const LogsSideBar = ({
   );
 };
 
-export default LogsSideBar;
+export default UserActivity;
