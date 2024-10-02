@@ -77,6 +77,9 @@ type MainSidebarProps = {
   setActiveSidebar: any;
   handleExpandSidebar: any;
   navigateToNode: any;
+  treeVisualization: any;
+  expandedNodes: any;
+  onOpenNodesTree: any;
 };
 
 const ToolbarSidebar = ({
@@ -95,6 +98,9 @@ const ToolbarSidebar = ({
   setActiveSidebar,
   handleExpandSidebar,
   navigateToNode,
+  treeVisualization,
+  expandedNodes,
+  onOpenNodesTree,
 }: MainSidebarProps) => {
   const theme = useTheme();
   const db = getFirestore();
@@ -376,6 +382,10 @@ const ToolbarSidebar = ({
             confirmIt={confirmIt}
             recordLogs={recordLogs}
             searchWithFuse={searchWithFuse}
+            treeVisualization={treeVisualization}
+            expandedNodes={expandedNodes}
+            onOpenNodesTree={onOpenNodesTree}
+            navigateToNode={navigateToNode}
           />
         );
       case "inheritanceSettings":

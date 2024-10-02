@@ -57,6 +57,7 @@ type ChatProps = {
   setOpenSelectModel: React.Dispatch<React.SetStateAction<boolean>>;
   recordLogs: (logs: any) => void;
   users: any;
+  navigateToNode: any;
 };
 
 const Chat = ({
@@ -67,6 +68,7 @@ const Chat = ({
   setOpenSelectModel,
   recordLogs,
   users,
+  navigateToNode,
 }: ChatProps) => {
   const db = getFirestore();
   const [showReplies, setShowReplies] = useState<string | null>(null);
@@ -629,7 +631,7 @@ const Chat = ({
                 <OptimizedAvatar
                   alt={message.senderDetail?.fullname || ""}
                   imageUrl={message.senderDetail?.imageUrl || ""}
-                  size={30}
+                  size={40}
                   sx={{ border: "none" }}
                 />
                 {/* {onlineUsers[message.senderDetail?.uname] && (
@@ -695,7 +697,7 @@ const Chat = ({
                       background: (theme) =>
                         theme.palette.mode === "dark"
                           ? DESIGN_SYSTEM_COLORS.notebookG700
-                          : DESIGN_SYSTEM_COLORS.gray200,
+                          : DESIGN_SYSTEM_COLORS.gray300,
                       ":hover": {
                         "& .message-buttons": {
                           display: "block",
@@ -727,6 +729,13 @@ const Chat = ({
                                 ? DESIGN_SYSTEM_COLORS.gray100
                                 : DESIGN_SYSTEM_COLORS.orange50,
                             mb: "10px",
+                            ":hover": {
+                              backgroundColor: "orange",
+                              cursor: "pointer",
+                            },
+                          }}
+                          onClick={() => {
+                            navigateToNode(message.sharedNodeId);
                           }}
                         >
                           <Box
@@ -928,7 +937,6 @@ const Chat = ({
                       bgcolor: "grey.300",
                       borderRadius: "0px 10px 10px 10px",
                       mt: "19px",
-                      ml: "5px",
                     }}
                   />
                 </Box>

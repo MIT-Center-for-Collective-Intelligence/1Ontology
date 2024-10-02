@@ -133,7 +133,7 @@ const Ontology = () => {
     [key: string]: any;
   }>({});
   const columnResizerRef = useRef<any>();
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<number | null>(null);
 
   //last interaction date from the user
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
@@ -723,9 +723,8 @@ const Ontology = () => {
       setLastInteractionDate(new Date(currentTime));
 
       if (user) {
-        const timeSinceLastUpdate = lastUpdate
-          ? currentTime - lastUpdate
-          : 60001;
+        const timeSinceLastUpdate =
+          lastUpdate !== null ? currentTime - lastUpdate || 0 : 60001;
         if (timeSinceLastUpdate >= 60000) {
           const userDocRef = doc(collection(db, USERS), user.uname);
           updateDoc(userDocRef, {
@@ -981,6 +980,9 @@ const Ontology = () => {
           setActiveSidebar={setActiveSidebar}
           handleExpandSidebar={handleExpandSidebar}
           navigateToNode={navigateToNode}
+          treeVisualization={treeVisualization}
+          expandedNodes={expandedNodes}
+          onOpenNodesTree={onOpenNodesTree}
         />
       </Container>
       {ConfirmDialog}
