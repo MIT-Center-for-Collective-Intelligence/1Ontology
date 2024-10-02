@@ -304,7 +304,9 @@ export const getChangeDescription = (
     case "remove property":
       return `${modifiedByFullName} removed the property "${modifiedProperty}" from "${fullNode.title}",  Its previous value was "${previousValue}".`;
     case "delete node":
-      return `${modifiedByFullName} deleted the node "${fullNode.title}",  All associated data has been removed.`;
+      return `${modifiedByFullName} deleted the node "${fullNode.title}".`;
+    case "add node":
+      return `${modifiedByFullName} added a new node titled "${fullNode.title}".`;
     default:
       return `${modifiedByFullName} made an unknown change to "${fullNode.title}", `;
   }

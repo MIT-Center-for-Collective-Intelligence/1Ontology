@@ -7,9 +7,10 @@ import {
   Radio,
   Box,
   Typography,
+  Paper,
 } from "@mui/material";
 import { INode, InheritanceType } from " @components/types/INode";
-import { DISPLAY } from " @components/lib/CONSTANTS";
+import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import {
@@ -133,27 +134,38 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
   );
 
   return (
-    <Box sx={{ padding: 2, overflow: "auto", height: "100vh", width: "100%" }}>
+    <Box
+      sx={{
+        padding: 2,
+        overflow: "auto",
+        height: "100vh",
+        width: "100%",
+        ...SCROLL_BAR_STYLE,
+      }}
+    >
       {Object.entries(selectedNode.inheritance)
         .sort()
         .map(([key, inheritance]) => (
-          <Box key={key} sx={{ marginBottom: 3 }}>
-            <FormControl component="fieldset">
-              <FormLabel
-                component="legend"
-                sx={{
-                  fontSize: "20px",
-                  fontWeight: "bold",
-                  ml: "15px",
-                  mb: "13px",
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "dark" ? "#242425" : "#D0D5D1",
-                  p: "10px",
-                  borderRadius: "25px",
-                }}
-              >
+          <Paper key={key} sx={{ marginBottom: 3 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark" ? "#1f232f" : "#969faf",
+                borderTopLeftRadius: "25px",
+                borderTopRightRadius: "25px",
+                m: 0,
+                p: 2,
+                gap: "10px",
+                width: "100%",
+              }}
+            >
+              <Typography sx={{ fontWeight: "bold" }}>
                 {capitalizeFirstLetter(DISPLAY[key] ? DISPLAY[key] : key)}
-              </FormLabel>
+              </Typography>
+            </Box>
+            <FormControl component="fieldset">
               <RadioGroup
                 value={inheritanceState[key]}
                 onChange={(e) => handleInheritanceChange(key, e)}
@@ -177,7 +189,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
                 ))}
               </RadioGroup>
             </FormControl>
-          </Box>
+          </Paper>
         ))}
     </Box>
   );

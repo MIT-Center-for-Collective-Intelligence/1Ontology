@@ -1,5 +1,13 @@
 import { shortenNumber, timeAgo } from " @components/lib/utils/string.utils";
-import { Box, Button, Link, Tooltip, Typography, useTheme } from "@mui/material";
+import {
+  Badge,
+  Box,
+  Button,
+  Link,
+  Tooltip,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import DoneIcon from "@mui/icons-material/Done";
@@ -87,130 +95,118 @@ const ActiveUsers = ({
     return () => unsubscribe();
   }, [nodes]);
   return (
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
-      {Object.values(usersNodesViews).sort((a: any,b: any) => b.reputations - a.reputations).map((u: any) => (
-        <Tooltip
-          key={`${u.fName} ${u.lName}`}
-          title={
-            <Box
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        overflow: "auto",
+        height: "70vh",
+        mt: "15px",
+      }}
+    >
+      {Object.values(usersNodesViews)
+        .sort((a: any, b: any) => b.reputations - a.reputations)
+        .map((u: any) => (
+          <Tooltip
+            key={`${u.fName} ${u.lName}`}
+            title={
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  maxWidth: "300px",
+                  whiteSpace: "normal",
+                  p: 1,
+                }}
+              >
+                <strong
+                  style={{ marginRight: "4px" }}
+                >{`${u.fName} ${u.lName}`}</strong>
+                {u.node.id && <div> {"last interacted with"}</div>}
+
+                {u.node.id && (
+                  <Link
+                    underline="hover"
+                    onClick={() => navigateToNode(u.node.id)}
+                    sx={{
+                      cursor: "pointer",
+                      mx: "5px",
+                    }}
+                  >
+                    {" "}
+                    {u.node.title}
+                  </Link>
+                )}
+                {u.node.id && u.lastInteracted && (
+                  <div>{timeAgo(u.lastInteracted)}</div>
+                )}
+              </Box>
+            }
+          >
+            <Button
               sx={{
                 display: "flex",
-                flexWrap: "wrap",
-                maxWidth: "300px",
-                whiteSpace: "normal",
-                p: 1,
+                justifyContent: fullVersion ? "flex-start" : "center",
+                gap: "10px",
+                minWidth: "0px",
               }}
             >
-              <strong
-                style={{ marginRight: "4px" }}
-              >{`${u.fName} ${u.lName}`}</strong>
-              {u.node.id && <div> {"last interacted with"}</div>}
-
-              {u.node.id && (
-                <Link
-                  underline="hover"
-                  onClick={() => navigateToNode(u.node.id)}
+              <Box sx={{ position: "relative" }}>
+                <Badge
+                  color="success"
+                  badgeContent={shortenNumber(u.reputations, 2, false)}
                   sx={{
-                    cursor: "pointer",
-                    mx: "5px",
+                    "& .MuiBadge-badge": {
+                      right: -1,
+                      top: 25,
+                      border: `2px solid ${theme.palette.background.paper}`,
+                      padding: "0 4px",
+                      display: u.reputations === 0 ? "none" : "",
+                    },
                   }}
                 >
-                  {" "}
-                  {u.node.title}
-                </Link>
-              )}
-              {u.node.id && u.lastInteracted && (
-                <div>{timeAgo(u.lastInteracted)}</div>
-              )}
-            </Box>
-          }
-        >
-          <Button
-            sx={{
-              display: "flex",
-              justifyContent: fullVersion ? "flex-start" : "center",
-              gap: "10px",
-              minWidth: "0px",
-            }}
-          >
-            <Box sx={{ position: "relative" }}>
-              <OptimizedAvatar
-                alt={`${u.fName} ${u.lName}`}
-                imageUrl={u.imageUrl || ""}
-                size={30}
-                sx={{
-                  width: "100%",
-                  height: "100%",
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  borderColor: "green",
-                }}
-              />
+                  <OptimizedAvatar
+                    alt={`${u.fName} ${u.lName}`}
+                    imageUrl={u.imageUrl || ""}
+                    size={30}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
+                    online={u.online}
+                  />
+                </Badge>
+              </Box>
 
-              {u.online && (
+              {fullVersion && (
                 <Box
                   sx={{
                     position: "relative",
-                    whiteSpace: "nowrap",
-                    margin: "-10px 0px -4px 0px",
-                    height: "10px",
-                    width: "10px",
-                    borderRadius: "50%",
-                    backgroundColor: "#12b76a",
-                    overflow: "hidden",
-                  }}
-                />
-              )}
-            </Box>
-
-            {fullVersion && (
-              <Box
-                sx={{
-                  position: "relative",
-                  display: "flex",
-                  mt: "3px",
-                  flexDirection: "column",
-                }}
-                onClick={viewProfileLogs}
-                id={u.uname}
-              >
-                <Typography
-                  sx={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    display: "inline-block",
-                    fontSize: "13px",
-                  }}
-                >
-                  {`${u.fName} ${u.lName}`}
-                </Typography>
-                <Box
-                  sx={{
                     display: "flex",
-                    alignItems: "center",
+                    mb: "3px",
+                    flexDirection: "column",
                   }}
+                  onClick={viewProfileLogs}
+                  id={u.uname}
                 >
-                  <span
-                    style={{
+                  <Typography
+                    sx={{
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
                       display: "inline-block",
-                      fontSize: "14px",
-                      width: "47px",
-                      paddingLeft: "4px",
-                      color: theme.palette.mode === 'light' ? 'black' : 'white',
+                      fontSize: "13px",
                     }}
                   >
-                    {shortenNumber(u.reputations, 2, false)}
-                  </span>
+                    {`${u.fName} ${u.lName}`}
+                  </Typography>
                 </Box>
-              </Box>
-            )}
-          </Button>
-        </Tooltip>
-      ))}
+              )}
+            </Button>
+          </Tooltip>
+        ))}
     </Box>
   );
 };
