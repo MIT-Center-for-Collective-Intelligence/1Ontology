@@ -499,7 +499,27 @@ const ToolbarSidebar = ({
             {activeSidebar === 'chat' && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <Box>
-                  <Typography sx={{ fontSize: '19px', fontWeight: 'bold' }}>Node's Chat</Typography>
+                  <Typography sx={{ fontSize: '19px', fontWeight: 'bold' }}>
+                    Node's Chat
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+            {activeSidebar === 'nodeHistory' && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Box>
+                  <Typography sx={{ fontSize: '19px', fontWeight: 'bold' }}>
+                    Node's History
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+            {activeSidebar === 'inheritanceSettings' && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Box>
+                  <Typography sx={{ fontSize: '19px', fontWeight: 'bold' }}>
+                    Node's Inheritance Settings
+                  </Typography>
                 </Box>
               </Box>
             )}

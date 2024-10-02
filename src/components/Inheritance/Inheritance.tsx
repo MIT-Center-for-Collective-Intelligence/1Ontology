@@ -134,9 +134,6 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
 
   return (
     <Box sx={{ padding: 2, overflow: "auto", height: "100vh", width: "100%" }}>
-      <Typography sx={{ fontSize: "20px", mb: "14px", fontWeight: "bold" }}>
-        Update Inheritance for {selectedNode.title}
-      </Typography>
       {Object.entries(selectedNode.inheritance)
         .sort()
         .map(([key, inheritance]) => (
