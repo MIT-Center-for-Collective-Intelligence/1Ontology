@@ -156,6 +156,7 @@ type INodeProps = {
   selectedDiffNode: NodeChange | null;
   displayInheritanceSettings: any;
   displayNodeChat: any;
+  displayNodeHistory: any;
   rightPanelVisible: any;
   activeSidebar: any;
 };
@@ -176,6 +177,7 @@ const Node = ({
   selectedDiffNode,
   displayInheritanceSettings,
   displayNodeChat,
+  displayNodeHistory,
   rightPanelVisible,
   activeSidebar,
 }: INodeProps) => {
@@ -1434,6 +1436,7 @@ const Node = ({
           navigateToNode={navigateToNode}
           displayInheritanceSettings={displayInheritanceSettings}
           displayNodeChat={displayNodeChat}
+          displayNodeHistory={displayNodeHistory}
           rightPanelVisible={rightPanelVisible}
           activeSidebar={activeSidebar}
         />

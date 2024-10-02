@@ -286,7 +286,7 @@ export const getChangeDescription = (
 
   switch (changeType) {
     case "change text":
-      return `${modifiedByFullName} updated the text in "${fullNode.title}",  The property "${modifiedProperty}" was changed from "${previousValue}" to "${newValue}".`;
+      return `${modifiedByFullName} updated the property "${modifiedProperty}" of "${fullNode.title}".`;
     case "add collection":
       return `${modifiedByFullName} added a new collection to "${fullNode.title}",  The collection was created with initial properties.`;
     case "delete collection":

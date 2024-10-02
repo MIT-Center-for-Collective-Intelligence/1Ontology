@@ -46,6 +46,7 @@ type ISubOntologyProps = {
   navigateToNode?: any;
   displayInheritanceSettings?: any;
   displayNodeChat?: any;
+  displayNodeHistory?: any;
   rightPanelVisible?: any;
   activeSidebar?: any;
 };
@@ -69,6 +70,7 @@ const Text = ({
   navigateToNode,
   displayInheritanceSettings,
   displayNodeChat,
+  displayNodeHistory,
   rightPanelVisible,
   activeSidebar,
 }: ISubOntologyProps) => {
@@ -235,7 +237,7 @@ const Text = ({
             borderRadius: "5px",
             fontFamily: "'Courier New', Courier, monospace",
             fontSize: "14px",
-            ...lineStyle,
+            // ...lineStyle,
           }}
         >
           <Typography
@@ -244,7 +246,7 @@ const Text = ({
               whiteSpace: "pre-wrap",
               flex: 1,
               wordBreak: "break-word",
-              color: "black",
+              color: part.removed ? "red" : "green",
             }}
             component="div"
           >
@@ -301,6 +303,7 @@ const Text = ({
             navigateToNode={navigateToNode}
             displayInheritanceSettings={displayInheritanceSettings}
             displayNodeChat={displayNodeChat}
+            displayNodeHistory={displayNodeHistory}
             activeSidebar={activeSidebar}
           />
         )}
@@ -318,7 +321,7 @@ const Text = ({
           {selectedDiffNode &&
           selectedDiffNode.modifiedProperty === property ? (
             <Box
-              sx={{ p: "10px", border: "1px solid gray", borderRadius: "5px" }}
+              sx={{ p: "10px", borderRadius: "5px" }}
             >
               <Box>{renderDiff()}</Box>
             </Box>

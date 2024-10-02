@@ -1,5 +1,5 @@
 import { shortenNumber, timeAgo } from " @components/lib/utils/string.utils";
-import { Box, Link, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Link, Tooltip, Typography, useTheme } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import DoneIcon from "@mui/icons-material/Done";
@@ -26,6 +26,7 @@ const ActiveUsers = ({
 }) => {
   const [usersNodesViews, setUsersNodesViews] = useState<any>({});
   const db = getFirestore();
+  const theme = useTheme();
 
   const viewProfileLogs = (e: any) => {
     const userName = e.currentTarget.id;
@@ -33,6 +34,7 @@ const ActiveUsers = ({
       uname: userName,
       imageUrl: usersNodesViews[userName].imageUrl,
       fullname: `${usersNodesViews[userName].fName} ${usersNodesViews[userName].lName}`,
+      fName: usersNodesViews[userName].fName,
     });
     handleExpand("userActivity");
   };
@@ -86,7 +88,7 @@ const ActiveUsers = ({
   }, [nodes]);
   return (
     <Box sx={{ display: "flex", flexDirection: "column" }}>
-      {Object.values(usersNodesViews).map((u: any) => (
+      {Object.values(usersNodesViews).sort((a: any,b: any) => b.reputations - a.reputations).map((u: any) => (
         <Tooltip
           key={`${u.fName} ${u.lName}`}
           title={
@@ -123,13 +125,12 @@ const ActiveUsers = ({
             </Box>
           }
         >
-          <Box
+          <Button
             sx={{
               display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-center",
+              justifyContent: fullVersion ? "flex-start" : "center",
               gap: "10px",
-              padding: "5px 0px",
+              minWidth: "0px",
             }}
           >
             <Box sx={{ position: "relative" }}>
@@ -190,10 +191,6 @@ const ActiveUsers = ({
                     alignItems: "center",
                   }}
                 >
-                  <DoneIcon
-                    className="material-icons red-text"
-                    sx={{ fontSize: "14px", color: "green" }}
-                  />
                   <span
                     style={{
                       overflow: "hidden",
@@ -203,7 +200,7 @@ const ActiveUsers = ({
                       fontSize: "14px",
                       width: "47px",
                       paddingLeft: "4px",
-                      color: "green",
+                      color: theme.palette.mode === 'light' ? 'black' : 'white',
                     }}
                   >
                     {shortenNumber(u.reputations, 2, false)}
@@ -211,7 +208,7 @@ const ActiveUsers = ({
                 </Box>
               </Box>
             )}
-          </Box>
+          </Button>
         </Tooltip>
       ))}
     </Box>
