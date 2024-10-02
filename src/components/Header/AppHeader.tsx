@@ -36,11 +36,10 @@ import LightModeIcon from "@mui/icons-material/LightMode";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import NotificationsIcon from "@mui/icons-material/Notifications";
-import ChatIcon from "@mui/icons-material/Chat";
 import SearchIcon from "@mui/icons-material/Search";
 import ViewSidebarIcon from "@mui/icons-material/ViewSidebar";
 import DownloadIcon from "@mui/icons-material/Download";
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
+
 import {
   Avatar,
   Badge,
@@ -711,37 +710,11 @@ const AppHeader = forwardRef(
                 alignItems="center"
                 spacing={"8px"}
               >
-                {!locked && (
-                  <Tooltip title="Manage Inheritance">
-                    <IconButton onClick={displayInheritanceSettings}>
-                      <AccountTreeIcon
-                        color={
-                          rightPanelVisible && sidebarView === 2
-                            ? "primary"
-                            : "inherit"
-                        }
-                      />
-                    </IconButton>
-                  </Tooltip>
-                )}
-
                 <Tooltip title="Open Search Tab">
                   <IconButton onClick={handleSearch}>
                     <SearchIcon
                       color={
                         rightPanelVisible && sidebarView === 0
-                          ? "primary"
-                          : "inherit"
-                      }
-                    />
-                  </IconButton>
-                </Tooltip>
-
-                <Tooltip title="Open Chat Tab">
-                  <IconButton onClick={handleChat}>
-                    <ChatIcon
-                      color={
-                        rightPanelVisible && sidebarView === 1
                           ? "primary"
                           : "inherit"
                       }

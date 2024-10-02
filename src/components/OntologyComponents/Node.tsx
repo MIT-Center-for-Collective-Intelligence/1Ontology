@@ -135,8 +135,8 @@ import {
   updateInheritance,
 } from " @components/lib/utils/helpers";
 
-import { NodeChange } from "../Logs/LogsSideBar";
-import StructuredProperty from "../StructuredProprety/LinkStructuredProperty";
+import StructuredProperty from "../StructuredProperty/StructuredProperty";
+import { NodeChange } from "../ActiveUsers/UserActivity";
 
 type INodeProps = {
   scrolling: any;
@@ -154,6 +154,10 @@ type INodeProps = {
   searchWithFuse: any;
   locked: boolean;
   selectedDiffNode: NodeChange | null;
+  displayInheritanceSettings: any;
+  displayNodeChat: any;
+  rightPanelVisible: any;
+  activeSidebar: any;
 };
 
 const Node = ({
@@ -170,6 +174,10 @@ const Node = ({
   searchWithFuse,
   locked,
   selectedDiffNode,
+  displayInheritanceSettings,
+  displayNodeChat,
+  rightPanelVisible,
+  activeSidebar,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -1424,6 +1432,10 @@ const Node = ({
           deleteNode={deleteNode}
           handleLockNode={handleLockNode}
           navigateToNode={navigateToNode}
+          displayInheritanceSettings={displayInheritanceSettings}
+          displayNodeChat={displayNodeChat}
+          rightPanelVisible={rightPanelVisible}
+          activeSidebar={activeSidebar}
         />
         <Text
           nodes={nodes}

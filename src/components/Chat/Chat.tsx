@@ -13,6 +13,7 @@ import {
   arrayUnion,
   collection,
   doc,
+  getDocs,
   getFirestore,
   increment,
   onSnapshot,
@@ -35,7 +36,12 @@ import { IChat } from " @components/types/IChat";
 import { Emoticons } from "./Emoticons";
 import LinkIcon from "@mui/icons-material/Link";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
-import { MESSAGES } from " @components/lib/firestoreClient/collections";
+import { MESSAGES, USERS } from " @components/lib/firestoreClient/collections";
+import {
+  chatChange,
+  getMessagesSnapshot,
+} from " @components/client/firestore/messages.firestore";
+import { synchronizeStuff } from " @components/lib/utils/helpers";
 const DynamicMemoEmojiPicker = dynamic(() => import("./EmojiPicker"), {
   loading: () => <p>Loading...</p>,
   ssr: false,
@@ -44,35 +50,23 @@ const DynamicMemoEmojiPicker = dynamic(() => import("./EmojiPicker"), {
 type ChatProps = {
   user: any;
   confirmIt: any;
-  messages: IChat[];
-  users: any;
   sidebarWidth?: number;
   innerHeight?: number;
-  setMessages: React.Dispatch<React.SetStateAction<IChat[]>>;
-  firstLoad: boolean;
-  isLoading: boolean;
-  //onlineUsers: { [uname: string]: boolean };
   type: string;
-  nodeId?: string;
+  nodeId: string;
   setOpenSelectModel: React.Dispatch<React.SetStateAction<boolean>>;
   recordLogs: (logs: any) => void;
+  users: any;
 };
 
 const Chat = ({
   user,
   confirmIt,
-  messages,
-  users,
-  // sidebarWidth,
-  // innerHeight,
-  setMessages,
-  firstLoad,
-  isLoading,
-  // onlineUsers,
   type,
   nodeId,
   setOpenSelectModel,
   recordLogs,
+  users,
 }: ChatProps) => {
   const db = getFirestore();
   const [showReplies, setShowReplies] = useState<string | null>(null);
@@ -90,6 +84,25 @@ const Chat = ({
   const [anchorEl, setAnchorEl] = useState(null);
   const openPicker = Boolean(anchorEl);
   const scrolling = useRef<any>();
+  const [messages, setMessages] = useState<IChat[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!user) return;
+    if (!nodeId) return;
+    setIsLoading(true);
+    setMessages([]);
+    const onSynchronize = (changes: chatChange[]) => {
+      setMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
+      setIsLoading(false);
+    };
+    const killSnapshot = getMessagesSnapshot(
+      db,
+      { nodeId: nodeId, type: "node", lastVisible: null },
+      onSynchronize
+    );
+    return () => killSnapshot();
+  }, [db, user, nodeId]);
 
   useEffect(() => {
     const element = document.getElementById("right-panel-tabs");
@@ -969,7 +982,7 @@ const Chat = ({
             bottom: "13px",
             mt: "15px",
             pl: 2,
-            width: width - 10,
+            width: "420px" /* width - 10 */,
           }}
         >
           <MessageInput

@@ -110,8 +110,6 @@ const StructuredProperty = ({
     return result;
   }, [currentVisibleNode, nodes, property, selectedDiffNode]);
 
-  console.log(properties, "properties ====>", property);
-
   const unlinkVisible = useCallback(
     (nodeId: string) => {
       const getNumOfGeneralizations = (id: string) => {
@@ -133,10 +131,7 @@ const StructuredProperty = ({
     [properties, property, nodes, selectedDiffNode]
   );
 
-  const handleCategorySorting = (e: any, property: any) => {
-    console.log("event ==>", e);
-    console.log("property ==>", property);
-  };
+  const handleCategorySorting = (e: any, property: any) => {};
 
   return (
     <Paper
@@ -280,7 +275,7 @@ const StructuredProperty = ({
                                 <Typography
                                   sx={{ fontWeight: "bold", mr: "13px" }}
                                 >
-                                  {category} :
+                                  {capitalizeFirstLetter(category)}
                                 </Typography>
                                 {property === "specializations" && (
                                   <Button

@@ -14,6 +14,8 @@ import { NODES_LOGS } from " @components/lib/firestoreClient/collections";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import moment from "moment";
 import { getChangeDescription } from " @components/lib/utils/helpers";
+import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
+import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 
 export type NodeChange = {
   nodeId: string;
@@ -37,17 +39,13 @@ export type NodeChange = {
   fullNode: INode;
 };
 
-const LogsSideBar = ({
+const UserActivity = ({
   openLogsFor,
-  displayDiff,
-}: {
-  openLogsFor: {
-    uname: string;
-    imageUrl: string;
-    fullname: string;
-  } | null;
-  displayDiff: any;
-}) => {
+  setSelectedDiffNode,
+  currentVisibleNode,
+  setCurrentVisibleNode,
+  nodes,
+}: any) => {
   const db = getFirestore();
   const [logs, setLogs] = useState<any>({});
 
@@ -63,12 +61,12 @@ const LogsSideBar = ({
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
       const docChanges = snapshot.docChanges();
-      console.log("docChanges", docChanges);
+
       setLogs((prev: any) => {
         for (let change of docChanges) {
           const changeData: any = change.doc.data();
           const nodeId = change.doc.id;
-          console.log("changeData", changeData);
+
           if (change.type === "removed" && prev[nodeId]) {
             delete prev[nodeId];
           } else {
@@ -82,7 +80,6 @@ const LogsSideBar = ({
     return () => unsubscribeNodes();
   }, [db, openLogsFor?.uname]);
 
-  console.log("logs", logs);
   const getModifiedAt = (modifiedAt: any) => {
     modifiedAt = moment(modifiedAt.toDate());
     const today = moment();
@@ -90,10 +87,51 @@ const LogsSideBar = ({
       ? `Today at ${modifiedAt.format("hh:mm A")}`
       : modifiedAt.format("hh:mm A DD/MM/YYYY");
   };
-
+  const displayDiff = (data: any) => {
+    setSelectedDiffNode(data);
+    if (currentVisibleNode.id !== data.nodeId) {
+      setCurrentVisibleNode(nodes[data.nodeId]);
+    }
+  };
   return (
-    <Box>
-      {logs &&
+    <Box sx={{ height: "100vh", overflow: "auto", ...SCROLL_BAR_STYLE }}>
+      {Object.keys(logs).length <= 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: "20%",
+          }}
+        >
+          <Box sx={{ height: "100%", display: "grid", placeItems: "center" }}>
+            <Box>
+              <Box
+                sx={{
+                  width: { xs: "250px", sm: "300px" },
+                  height: { xs: "250px", sm: "200px" },
+                  "& .rive-canvas": {
+                    height: "100%",
+                  },
+                }}
+              >
+                <RiveComponentMemoized
+                  src="/rive/notification.riv"
+                  animations={"Timeline 1"}
+                  artboard="New Artboard"
+                  autoplay={true}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                  }}
+                />
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      )}
+      {Object.keys(logs).length > 0 &&
         Object.keys(logs).map((id) => (
           <Paper
             elevation={3}
@@ -154,4 +192,4 @@ const LogsSideBar = ({
   );
 };
 
-export default LogsSideBar;
+export default UserActivity;

@@ -30,7 +30,7 @@ type ISubOntologyProps = {
   currentVisibleNode: INode;
   setCurrentVisibleNode: (state: any) => void;
   property: string;
-  text: string;
+  text: string; // Real-time text from WebSocket
   confirmIt?: any;
   nodes: { [id: string]: INode };
   recordLogs: (logs: any) => void;
@@ -44,13 +44,17 @@ type ISubOntologyProps = {
   deleteNode?: any;
   handleLockNode?: any;
   navigateToNode?: any;
+  displayInheritanceSettings?: any;
+  displayNodeChat?: any;
+  rightPanelVisible?: any;
+  activeSidebar?: any;
 };
 
 const Text = ({
   currentVisibleNode,
   setCurrentVisibleNode,
   property,
-  text,
+  text, // Real-time text prop from WebSocket
   confirmIt,
   recordLogs,
   setSelectTitle,
@@ -63,19 +67,24 @@ const Text = ({
   deleteNode,
   handleLockNode,
   navigateToNode,
+  displayInheritanceSettings,
+  displayNodeChat,
+  rightPanelVisible,
+  activeSidebar,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
-  const [editorContent, setEditorContent] = useState(text);
+  const [editorContent, setEditorContent] = useState(text); // Local state to manage text
   const textAreaRef = useRef<any>(null);
   const [error, setError] = useState("");
   const [diffContent, setDiffContent] = useState<any[]>([]);
-  // const [debouncedContent, setDebouncedContent] = useState(text);
+  const [isEditing, setIsEditing] = useState(false); // State to check if user is editing
   const [{ user }] = useAuth();
 
   const onSaveTextChange = useCallback(
     async (copyValue: string) => {
       if (!user?.uname) return;
+
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );
@@ -88,15 +97,6 @@ const Text = ({
             where("deleted", "==", false)
           )
         );
-        // console.log(
-        //   "currentVisibleNode.id",
-        //   currentVisibleNode.id,
-        //   nodeDocs.docs[0].id,
-        //   nodeDocs.docs.length > 0 &&
-        //     currentVisibleNode.id &&
-        //     nodeDocs.docs[0].id !== currentVisibleNode.id,
-        //   text
-        // );
         if (
           nodeDocs.docs.length > 0 &&
           currentVisibleNode.id &&
@@ -116,19 +116,15 @@ const Text = ({
             ? nodeData[property]
             : nodeData.properties[property] || "";
         let newValue = copyValue;
-        if (property === "title") {
-          console.log({
-            previousValue,
-            newValue,
-            com: previousValue.trim() !== newValue.trim(),
-          });
-        }
+
         if (previousValue.trim() === newValue.trim()) {
           return;
         }
+
         if (setSelectTitle) {
           setSelectTitle(false);
         }
+
         if (property === "title") {
           nodeData.title = copyValue || "";
         } else {
@@ -177,10 +173,12 @@ const Text = ({
   );
 
   useEffect(() => {
-    // setTimeout(() => {
-    //   setEditorContent(text);
-    // }, 1000);
+    if (!isEditing) {
+      setEditorContent(text);
+    }
+  }, [text, isEditing]);
 
+  useEffect(() => {
     setError("");
     if (selectTitle) {
       textAreaRef.current.focus();
@@ -200,42 +198,20 @@ const Text = ({
     }
   }, [currentVisibleNode.id, selectedDiffNode, selectTitle]);
 
-  // useEffect(() => {
-  //   if (selectTitle && property === "title" && textAreaRef.current) {
-  //     textAreaRef.current.focus();
-  //     setTimeout(() => {
-  //       setEditorContent("");
-  //       setSelectTitle(false);
-  //     }, 0);
-  //   }
-  // }, [currentVisibleNode.id, textAreaRef.current, selectTitle]);
-
-  // useEffect(() => {
-  //   const handler = setTimeout(() => {
-  //     setDebouncedContent(editorContent);
-  //   }, 400);
-
-  //   return () => {
-  //     clearTimeout(handler);
-  //   };
-  // }, [editorContent, text]);
-
-  // useEffect(() => {
-  //   if (debouncedContent !== "") {
-  //     onSaveTextChange(debouncedContent);
-  //   }
-  // }, [debouncedContent, onSaveTextChange, currentVisibleNode.id]);
-
   const handleChanges = (e: any) => {
     setEditorContent(e.target.value);
     onSaveTextChange(e.target.value);
   };
 
   const handleBlur = () => {
+    setIsEditing(false); // User stopped editing
     if (setSelectTitle) {
       setSelectTitle(false);
     }
-    setEditorContent("");
+  };
+
+  const handleFocus = () => {
+    setIsEditing(true); // User started editing
   };
 
   // Function to render the GitHub-style diff view
@@ -273,39 +249,13 @@ const Text = ({
             component="div"
           >
             {part.added ? "+ " : part.removed ? "- " : "  "}
-            {renderWordDiff(part.value, part.added, part.removed)}
+            {part.value}
           </Typography>
         </Box>
       );
     });
   };
 
-  // Render word-level diff with stronger colors for added/removed words
-  const renderWordDiff = (
-    value: string,
-    isAdded: boolean,
-    isRemoved: boolean
-  ) => {
-    const diffedWords = diffWords(value, value); // Get word-by-word diff
-    return diffedWords.map((wordPart: any, i: any) => {
-      const wordStyle = wordPart.added
-        ? { backgroundColor: "#acf2bd", fontWeight: "bold" } // Stronger green
-        : wordPart.removed
-        ? {
-            backgroundColor: "#fdb8c0",
-            fontWeight: "bold",
-            textDecoration: "line-through",
-          } // Stronger red
-        : {};
-
-      return (
-        <span key={i} style={wordStyle}>
-          {wordPart.value}
-        </span>
-      );
-    });
-  };
-  console.log("diffContent ==>", diffContent);
   return (
     <Paper
       elevation={9}
@@ -349,6 +299,9 @@ const Text = ({
             getTitleNode={getTitleNode}
             handleLockNode={handleLockNode}
             navigateToNode={navigateToNode}
+            displayInheritanceSettings={displayInheritanceSettings}
+            displayNodeChat={displayNodeChat}
+            activeSidebar={activeSidebar}
           />
         )}
       </Box>
@@ -374,11 +327,10 @@ const Text = ({
               inputRef={textAreaRef}
               multiline
               minRows={2}
-              value={
-                selectTitle && property === "title" ? "" : editorContent || text
-              }
+              value={editorContent}
               onChange={handleChanges}
-              onBlur={handleBlur}
+              onFocus={handleFocus} // When the user starts editing
+              onBlur={handleBlur} // When the user stops editing
               placeholder="Type something..."
               InputProps={{
                 sx: {

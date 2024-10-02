@@ -8,9 +8,10 @@ import {
   writeBatch,
   WriteBatch,
   setDoc,
+  increment,
 } from "firebase/firestore";
-import { NODES, NODES_LOGS } from "../firestoreClient/collections";
-import { NodeChange } from " @components/components/Logs/LogsSideBar";
+import { NODES, NODES_LOGS, USERS } from "../firestoreClient/collections";
+import { NodeChange } from " @components/components/ActiveUsers/UserActivity";
 
 export const unlinkPropertyOf = async (
   db: any,
@@ -262,9 +263,12 @@ const updateProperty = async (
 
 export const saveNewChange = (db: any, data: NodeChange) => {
   if (!data.modifiedBy) return;
-  console.log("saveNewChange", data);
   const changeUseRef = doc(collection(db, NODES_LOGS));
   setDoc(changeUseRef, data);
+  const userRef = doc(collection(db, USERS), data.modifiedBy);
+  updateDoc(userRef, {
+    reputations: increment(1),
+  });
 };
 
 export const getChangeDescription = (
@@ -304,4 +308,30 @@ export const getChangeDescription = (
     default:
       return `${modifiedByFullName} made an unknown change to "${fullNode.title}", `;
   }
+};
+
+export const synchronizeStuff = (
+  prev: (any & { id: string })[],
+  change: any
+) => {
+  const docType = change.type;
+  const curData = change.data as any & { id: string };
+
+  const prevIdx = prev.findIndex(
+    (m: any & { id: string }) => m.id === curData.id
+  );
+  if (docType === "added" && prevIdx === -1) {
+    prev.push(curData);
+  }
+  if (docType === "modified" && prevIdx !== -1) {
+    prev[prevIdx] = curData;
+  }
+
+  if (docType === "removed" && prevIdx !== -1) {
+    prev.splice(prevIdx, 1);
+  }
+  prev.sort(
+    (a, b) => a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime()
+  );
+  return prev;
 };
