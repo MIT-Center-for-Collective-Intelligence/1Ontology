@@ -49,9 +49,9 @@ Here's a breakdown of the key parts of the component:
 
 This component is a key part of the application, providing a rich interface for users to interact with ontological data. It demonstrates the use of React hooks, Firestore, and third-party libraries to create a dynamic and responsive user experience. */
 
-import { Bar, Container, Section } from '@column-resizer/react';
+import { Bar, Container, Section } from "@column-resizer/react";
 
-import SettingsEthernetIcon from '@mui/icons-material/SettingsEthernet';
+import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
 import {
   Box,
   CircularProgress,
@@ -59,7 +59,7 @@ import {
   Tabs,
   Typography,
   useMediaQuery,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Timestamp,
   collection,
@@ -70,13 +70,13 @@ import {
   setDoc,
   updateDoc,
   where,
-} from 'firebase/firestore';
-import Fuse from 'fuse.js';
-import { useCallback, useEffect, useRef, useState } from 'react';
+} from "firebase/firestore";
+import Fuse from "fuse.js";
+import { useCallback, useEffect, useRef, useState } from "react";
 // import markdownContent from "../components/OntologyComponents/Markdown-Here-Cheatsheet.md";
-import SneakMessage from ' @components/components/OntologyComponents/SneakMessage';
-import Node from ' @components/components/OntologyComponents/Node';
-import TreeViewSimplified from ' @components/components/OntologyComponents/TreeViewSimplified';
+import SneakMessage from " @components/components/OntologyComponents/SneakMessage";
+import Node from " @components/components/OntologyComponents/Node";
+import TreeViewSimplified from " @components/components/OntologyComponents/TreeViewSimplified";
 import {
   ILockedNode,
   INode,
@@ -84,56 +84,56 @@ import {
   INodeTypes,
   MainSpecializations,
   TreeVisual,
-} from ' @components/types/INode';
-import { TabPanel, a11yProps } from ' @components/lib/utils/TabPanel';
+} from " @components/types/INode";
+import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
 
-import useConfirmDialog from ' @components/lib/hooks/useConfirmDialog';
-import withAuthUser from ' @components/components/hoc/withAuthUser';
-import { useAuth } from ' @components/components/context/AuthContext';
-import { useRouter } from 'next/router';
-import DagGraph from ' @components/components/OntologyComponents/DAGGraph';
-import { SCROLL_BAR_STYLE } from ' @components/lib/CONSTANTS';
+import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
+import withAuthUser from " @components/components/hoc/withAuthUser";
+import { useAuth } from " @components/components/context/AuthContext";
+import { useRouter } from "next/router";
+import DagGraph from " @components/components/OntologyComponents/DAGGraph";
+import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import {
   LOGS,
   NODES,
   USERS,
-} from ' @components/lib/firestoreClient/collections';
+} from " @components/lib/firestoreClient/collections";
 import {
   getBrowser,
   getOperatingSystem,
-} from ' @components/lib/firestoreClient/errors.firestore';
-import { IChat } from ' @components/types/IChat';
+} from " @components/lib/firestoreClient/errors.firestore";
+import { IChat } from " @components/types/IChat";
 
-import { saveNewChange } from ' @components/lib/utils/helpers';
-import { useHover } from ' @components/lib/hooks/useHover';
-import { MemoizedToolbarSidebar } from ' @components/components/Sidebar/ToolbarSidebar';
-import { NodeChange } from ' @components/components/ActiveUsers/UserActivity';
+import { saveNewChange } from " @components/lib/utils/helpers";
+import { useHover } from " @components/lib/hooks/useHover";
+import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarSidebar";
+import { NodeChange } from " @components/components/ActiveUsers/UserActivity";
 
 const Ontology = () => {
   const db = getFirestore();
   const [{ emailVerified, user }] = useAuth();
   const router = useRouter();
-  const isMobile = useMediaQuery('(max-width:599px)') && true;
+  const isMobile = useMediaQuery("(max-width:599px)") && true;
   const [nodes, setNodes] = useState<{ [id: string]: INode }>({});
   const [currentVisibleNode, setCurrentVisibleNode] = useState<INode | null>(
     null
   );
   const [ontologyPath, setOntologyPath] = useState<INodePath[]>([]);
-  const [snackbarMessage, setSnackbarMessage] = useState<string>('');
+  const [snackbarMessage, setSnackbarMessage] = useState<string>("");
   const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [lockedNodeFields, setLockedNodeFields] = useState<ILockedNode>({});
   const [viewValue, setViewValue] = useState<number>(0);
-  const fuse = new Fuse(Object.values(nodes), { keys: ['title'] });
+  const fuse = new Fuse(Object.values(nodes), { keys: ["title"] });
   const headerRef = useRef<HTMLHeadElement | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [dagreZoomState, setDagreZoomState] = useState<any>(null);
-  const [rightPanelVisible, setRightPanelVisible] = useState<any>(false);
+
   const [eachOntologyPath, setEachOntologyPath] = useState<{
     [key: string]: any;
   }>({});
   const columnResizerRef = useRef<any>();
-  const [lastUpdate, setLastUpdate] = useState(Date.now());
+  const [lastUpdate, setLastUpdate] = useState<number | null>(null);
 
   //last interaction date from the user
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
@@ -158,13 +158,13 @@ const Ontology = () => {
 
     const userQuery = query(
       collection(db, LOGS),
-      where('__name__', '==', '00EWFECw1PnBRPy4wZVt')
+      where("__name__", "==", "00EWFECw1PnBRPy4wZVt")
     );
 
     const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
       if (
         snapshot.docChanges().length > 0 &&
-        snapshot.docChanges()[0].type !== 'added'
+        snapshot.docChanges()[0].type !== "added"
       ) {
         window.location.reload();
       }
@@ -179,7 +179,7 @@ const Ontology = () => {
       // Check if the user's email is verified
       if (!emailVerified) {
         // If the email is not verified, redirect to the sign-in page
-        router.replace('/signin');
+        router.replace("/signin");
       }
     }
   }, [user, emailVerified]);
@@ -189,15 +189,15 @@ const Ontology = () => {
       const logRef = doc(collection(db, LOGS));
       const now = new Date();
       const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
 
       const doerCreate = `${user?.uname}-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
       await setDoc(logRef, {
-        type: 'info',
+        type: "info",
         ...logs,
         createdAt: new Date(),
         doer: user?.uname,
@@ -216,7 +216,7 @@ const Ontology = () => {
       // Check if there is a hash in the URL
       if (window.location.hash) {
         // Call updateUserDoc with the hash split into an array
-        const visibleNodeId = window.location.hash.split('#').reverse()[0];
+        const visibleNodeId = window.location.hash.split("#").reverse()[0];
         if (nodes[visibleNodeId]) {
           setCurrentVisibleNode(nodes[visibleNodeId]);
         }
@@ -224,14 +224,14 @@ const Ontology = () => {
     };
 
     // Add an event listener to the window for hash changes
-    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener("hashchange", handleHashChange);
 
     // Call handleHashChange immediately to handle any initial hash
     handleHashChange();
 
     // Clean up the event listener when the component is unmounted
     return () => {
-      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener("hashchange", handleHashChange);
     };
   }, [eachOntologyPath]);
 
@@ -257,8 +257,8 @@ const Ontology = () => {
   const handleViewChange = (event: any, newValue: number) => {
     setViewValue(newValue);
     recordLogs({
-      action: 'view change',
-      viewType: newValue === 0 ? 'Tree View' : 'Dag View',
+      action: "view change",
+      viewType: newValue === 0 ? "Tree View" : "Dag View",
     });
   };
 
@@ -267,14 +267,11 @@ const Ontology = () => {
 
     if (controller) {
       const resizer = controller.getResizer();
-      if (rightPanelVisible) {
-        resizer.resizeSection(2, { toSize: 400 });
-      } else {
-        resizer.resizeSection(2, { toSize: 0 });
-      }
+
+      resizer.resizeSection(2, { toSize: 0 });
       controller.applyResizer(resizer);
     }
-  }, [rightPanelVisible, user, nodes]);
+  }, [user, nodes]);
 
   useEffect(() => {
     const checkIfDifferentDay = () => {
@@ -344,7 +341,7 @@ const Ontology = () => {
               id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
               category: !!node.category,
             });
-            if (category !== 'main') {
+            if (category !== "main") {
               subPath.push({
                 title: category,
                 id: `${node.id}-${category.trim()}`,
@@ -365,8 +362,8 @@ const Ontology = () => {
       } catch (error) {
         recordLogs({
           error,
-          at: 'getSpecializationsTree',
-          type: 'error',
+          at: "getSpecializationsTree",
+          type: "error",
         });
       }
     },
@@ -417,7 +414,7 @@ const Ontology = () => {
         });
 
         // Check if the category is the main category
-        if (category === 'main') {
+        if (category === "main") {
           // If main, update the main specializations entry with recursive call
           newSpecializationsTree[nodeTitle] = {
             id: node.category ? `${node.id}-${nodeTitle.trim()}` : node.id,
@@ -464,7 +461,7 @@ const Ontology = () => {
     // Create a query for the NODES collection where "deleted" is false
     const nodesQuery = query(
       collection(db, NODES),
-      where('deleted', '==', false)
+      where("deleted", "==", false)
     );
 
     // Set up a snapshot listener to track changes in the nodes collection
@@ -481,7 +478,7 @@ const Ontology = () => {
           const changeData: any = change.doc.data();
           const nodeId = change.doc.id;
 
-          if (change.type === 'removed' && _nodes[nodeId]) {
+          if (change.type === "removed" && _nodes[nodeId]) {
             // If the document is removed, delete it from the state
             delete _nodes[nodeId];
           } else {
@@ -507,7 +504,7 @@ const Ontology = () => {
 
     // Sort main nodes based on a predefined order
     mainCategories.sort((nodeA: any, nodeB: any) => {
-      const order = ['WHAT: Activities', 'WHO: Actors', 'WHY: Evaluation'];
+      const order = ["WHAT: Activities", "WHO: Actors", "WHY: Evaluation"];
       const nodeATitle = nodeA.title;
       const nodeBTitle = nodeB.title;
       return order.indexOf(nodeATitle) - order.indexOf(nodeBTitle);
@@ -536,7 +533,7 @@ const Ontology = () => {
     // Record logs if ontology path is not empty
     if (currentNode) {
       await recordLogs({
-        action: 'Opened a node',
+        action: "Opened a node",
         node: currentNode,
       });
     }
@@ -546,7 +543,7 @@ const Ontology = () => {
     if (!path) {
       return;
     }
-    let newHash = '';
+    let newHash = "";
     path.forEach((p: any) => (newHash = newHash + `#${p.id.trim()}`));
     window.location.hash = newHash;
   };
@@ -595,16 +592,16 @@ const Ontology = () => {
         saveNewChange(db, {
           nodeId: newNodeRef.id,
           modifiedBy: user?.uname,
-          modifiedProperty: '',
+          modifiedProperty: "",
           previousValue: null,
           newValue: null,
           modifiedAt: new Date(),
-          changeType: 'add node',
+          changeType: "add node",
           fullNode: newNode,
         });
         // Record logs for the created node
         await recordLogs({
-          action: 'Create a new node',
+          action: "Create a new node",
           nodeId: id,
         });
 
@@ -629,7 +626,7 @@ const Ontology = () => {
 
         // Record logs for the action of opening the DAGRE view for the node.
         await recordLogs({
-          action: 'opened dagre-view',
+          action: "opened dagre-view",
           itemClicked: nodes[nodeId].id,
         });
       }
@@ -662,7 +659,7 @@ const Ontology = () => {
 
         // Record logs for the action of clicking the tree-view
         await recordLogs({
-          action: 'clicked tree-view',
+          action: "clicked tree-view",
           itemClicked: nodes[nodeId].id,
         });
       }
@@ -685,7 +682,7 @@ const Ontology = () => {
     // Include specializations for "Actor" category
     mainSpecializations = {
       ...mainSpecializations,
-      ...(mainSpecializations['actor']?.specializations || {}),
+      ...(mainSpecializations["actor"]?.specializations || {}),
     };
     for (let type in mainSpecializations) {
       mainSpecializations[type.toLowerCase()] = mainSpecializations[type];
@@ -701,15 +698,15 @@ const Ontology = () => {
       setCurrentVisibleNode(node);
 
       setTimeout(() => {
-        const element = document.getElementById('node-' + node?.id);
+        const element = document.getElementById("node-" + node?.id);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }, 800);
 
       // Record the click action in logs
       recordLogs({
-        action: 'Search result clicked',
+        action: "Search result clicked",
         clicked: node.id,
       });
     } catch (error) {
@@ -722,8 +719,9 @@ const Ontology = () => {
       const currentTime = Date.now();
       setLastInteractionDate(new Date(currentTime));
 
-      if (user && user.uname !== 'ouhrac' && user.uname !== 'SamOuhra2') {
-        const timeSinceLastUpdate = currentTime - lastUpdate;
+      if (user) {
+        const timeSinceLastUpdate =
+          lastUpdate !== null ? currentTime - lastUpdate || 0 : 60001;
         if (timeSinceLastUpdate >= 60000) {
           const userDocRef = doc(collection(db, USERS), user.uname);
           updateDoc(userDocRef, {
@@ -733,13 +731,11 @@ const Ontology = () => {
         }
       }
     };
-
-    window.addEventListener('mousemove', handleUserActivity);
-    window.addEventListener('keydown', handleUserActivity);
+    handleUserActivity();
+    window.addEventListener("click", handleUserActivity);
 
     return () => {
-      window.removeEventListener('mousemove', handleUserActivity);
-      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener("click", handleUserActivity);
     };
   }, [user, lastUpdate, db]);
 
@@ -763,30 +759,31 @@ const Ontology = () => {
   const navigateToNode = async (nodeId: string) => {
     if (nodes[nodeId]) {
       setCurrentVisibleNode(nodes[nodeId]);
+      setSelectedDiffNode(null);
     }
   };
 
   const displayNodeChat = useCallback(() => {
-    if (activeSidebar === 'chat') {
+    if (activeSidebar === "chat") {
       setActiveSidebar(null);
     } else {
-      handleExpandSidebar('chat');
+      handleExpandSidebar("chat");
     }
   }, [activeSidebar]);
 
   const displayNodeHistory = useCallback(() => {
-    if (activeSidebar === 'nodeHistory') {
+    if (activeSidebar === "nodeHistory") {
       setActiveSidebar(null);
     } else {
-      handleExpandSidebar('nodeHistory');
+      handleExpandSidebar("nodeHistory");
     }
   }, [activeSidebar]);
 
   const displayInheritanceSettings = useCallback(() => {
-    if (activeSidebar === 'inheritanceSettings') {
+    if (activeSidebar === "inheritanceSettings") {
       setActiveSidebar(null);
     } else {
-      handleExpandSidebar('inheritanceSettings');
+      handleExpandSidebar("inheritanceSettings");
     }
   }, [activeSidebar]);
 
@@ -794,16 +791,16 @@ const Ontology = () => {
     return (
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          flexDirection: 'column',
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          flexDirection: "column",
         }}
       >
         <CircularProgress />
         {/* <br /> */}
-        <Typography sx={{ mt: '5px' }}> Loading...</Typography>
+        <Typography sx={{ mt: "5px" }}> Loading...</Typography>
       </Box>
     );
   }
@@ -812,9 +809,9 @@ const Ontology = () => {
     <Box>
       <Container
         style={{
-          height: '100vh',
-          display: 'flex',
-          overflow: 'hidden',
+          height: "100vh",
+          display: "flex",
+          overflow: "hidden",
         }}
         columnResizerRef={columnResizerRef}
       >
@@ -823,47 +820,47 @@ const Ontology = () => {
             minSize={0}
             defaultSize={500}
             style={{
-              display: 'flex',
-              flexDirection: 'column',
+              display: "flex",
+              flexDirection: "column",
             }}
           >
             <Box
               sx={{
                 backgroundColor: (theme: any) =>
-                  theme.palette.mode === 'dark' ? '#303134' : 'white',
+                  theme.palette.mode === "dark" ? "#303134" : "white",
               }}
             >
               <Tabs
                 value={viewValue}
                 onChange={handleViewChange}
                 sx={{
-                  width: '100%',
-                  borderColor: 'divider',
+                  width: "100%",
+                  borderColor: "divider",
 
                   backgroundColor: (theme) =>
-                    theme.palette.mode === 'dark' ? '#242425' : '#d0d5dd',
-                  '.MuiTab-root.Mui-selected': {
-                    color: '#ff6d00',
+                    theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                  ".MuiTab-root.Mui-selected": {
+                    color: "#ff6d00",
                   },
                 }}
               >
                 <Tab
-                  label='Outline'
+                  label="Outline"
                   {...a11yProps(0)}
-                  sx={{ width: '50%', fontSize: '20px' }}
+                  sx={{ width: "50%", fontSize: "20px" }}
                 />
                 <Tab
-                  label='Graph View'
+                  label="Graph View"
                   {...a11yProps(1)}
-                  sx={{ width: '50%', fontSize: '20px' }}
+                  sx={{ width: "50%", fontSize: "20px" }}
                 />
               </Tabs>
 
               <Box
                 sx={{
-                  height: '100vh',
+                  height: "100vh",
                   flexGrow: 1,
-                  overflow: 'auto',
+                  overflow: "auto",
                   ...SCROLL_BAR_STYLE,
                 }}
               >
@@ -871,8 +868,8 @@ const Ontology = () => {
                   value={viewValue}
                   index={0}
                   sx={{
-                    mt: '5px',
-                    mb: '50px',
+                    mt: "5px",
+                    mb: "50px",
                   }}
                 >
                   <TreeViewSimplified
@@ -901,19 +898,19 @@ const Ontology = () => {
         <Bar
           size={2}
           style={{
-            background: 'currentColor',
-            cursor: 'col-resize',
-            position: 'relative',
+            background: "currentColor",
+            cursor: "col-resize",
+            position: "relative",
           }}
         >
           <SettingsEthernetIcon
             sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
               color: (theme) =>
-                theme.palette.mode === 'dark'
+                theme.palette.mode === "dark"
                   ? theme.palette.common.gray50
                   : theme.palette.common.notebookMainBlack,
             }}
@@ -922,16 +919,16 @@ const Ontology = () => {
 
         <Section minSize={0}>
           <Box
-            id='node-section'
+            id="node-section"
             sx={{
               backgroundColor: (theme) =>
-                theme.palette.mode === 'dark'
+                theme.palette.mode === "dark"
                   ? theme.palette.common.notebookMainBlack
                   : theme.palette.common.gray50,
-              p: '20px',
+              p: "20px",
               pt: 0,
-              overflow: 'auto',
-              height: '100vh',
+              overflow: "auto",
+              height: "100vh",
               ...SCROLL_BAR_STYLE,
             }}
           >
@@ -957,7 +954,6 @@ const Ontology = () => {
                 displayInheritanceSettings={displayInheritanceSettings}
                 displayNodeChat={displayNodeChat}
                 displayNodeHistory={displayNodeHistory}
-                rightPanelVisible={rightPanelVisible}
                 activeSidebar={activeSidebar}
               />
             )}
@@ -981,6 +977,9 @@ const Ontology = () => {
           setActiveSidebar={setActiveSidebar}
           handleExpandSidebar={handleExpandSidebar}
           navigateToNode={navigateToNode}
+          treeVisualization={treeVisualization}
+          expandedNodes={expandedNodes}
+          onOpenNodesTree={onOpenNodesTree}
         />
       </Container>
       {ConfirmDialog}

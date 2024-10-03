@@ -1,5 +1,5 @@
 import { MESSAGES, USERS } from " @components/lib/firestoreClient/collections";
-
+import CloseIcon from "@mui/icons-material/Close";
 import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
 
 import {
@@ -11,6 +11,7 @@ import {
   Modal,
   Paper,
   Typography,
+  IconButton,
 } from "@mui/material";
 import {
   query,
@@ -38,12 +39,20 @@ const ChatSideBar = ({
   confirmIt,
   recordLogs,
   searchWithFuse,
+  treeVisualization,
+  expandedNodes,
+  onOpenNodesTree,
+  navigateToNode,
 }: {
   currentVisibleNode: any;
   user: any;
   confirmIt: any;
   recordLogs: any;
   searchWithFuse: any;
+  treeVisualization: any;
+  expandedNodes: any;
+  onOpenNodesTree: any;
+  navigateToNode: any;
 }) => {
   const [selectedChatTab, setSelectedChatTab] = useState<number>(0);
   const db = getFirestore();
@@ -56,7 +65,7 @@ const ChatSideBar = ({
       imageUrl: string;
     }[]
   >([]);
-  const [openSelectModel, setOpenSelectModel] = useState(false);
+  const [openModel, setOpenModel] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
   const handleChatTabsChange = (event: any, newValue: number) => {
@@ -95,8 +104,8 @@ const ChatSideBar = ({
   }, [db]);
 
   const handleClose = useCallback(() => {
-    setOpenSelectModel(false);
-  }, [setOpenSelectModel]);
+    setOpenModel(false);
+  }, [setOpenModel]);
 
   const sendNode = useCallback(
     async (nodeId: string, title: string) => {
@@ -206,8 +215,11 @@ const ChatSideBar = ({
                 nodeId={currentVisibleNode?.id}
                 users={users}
                 confirmIt={confirmIt}
-                setOpenSelectModel={() => {}}
+                setOpenSelectModel={() => {
+                  setOpenModel(true);
+                }}
                 recordLogs={recordLogs}
+                navigateToNode={navigateToNode}
               />
             )}
           </TabPanel>
@@ -221,7 +233,7 @@ const ChatSideBar = ({
           backgroundColor: "transparent",
           // backgroundColor: "rgba(0, 0, 0, 0.5)",
         }}
-        open={openSelectModel}
+        open={openModel}
         onClose={handleClose}
       >
         <Box
@@ -236,12 +248,14 @@ const ChatSideBar = ({
         >
           <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <SearchBox
-                  setSearchValue={setSearchValue}
-                  label={"Search ..."}
-                />
-              </Box>
+              <SearchBox setSearchValue={setSearchValue} label={"Search ..."} />
+              <IconButton
+                onClick={() => {
+                  setOpenModel(false);
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
             </Box>
           </Paper>
           <Paper>
@@ -282,14 +296,12 @@ const ChatSideBar = ({
                 ))}
               </Box>
             ) : (
-              <></>
-
-              /* <TreeViewSimplified
+              <TreeViewSimplified
                 treeVisualization={treeVisualization}
                 expandedNodes={expandedNodes}
                 onOpenNodesTree={onOpenNodesTree}
                 sendNode={sendNode}
-              /> */
+              />
             )}
           </Paper>
         </Box>

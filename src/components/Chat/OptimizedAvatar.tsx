@@ -13,6 +13,7 @@ type Props = {
   quality?: number;
   sx?: SxProps<Theme>;
   borderColor?: string;
+  online?: boolean;
 };
 
 const DEFAULT_AVATAR =
@@ -26,6 +27,7 @@ const OptimizedAvatar: FC<Props> = ({
   quality = 50,
   sx,
   borderColor,
+  online,
 }) => {
   const [hasError, setHasError] = useState(false);
 
@@ -41,7 +43,7 @@ const OptimizedAvatar: FC<Props> = ({
         position: "relative",
         borderRadius: "50%",
         cursor: "pointer",
-        // border: (theme) => `solid 2px #87d37c`,
+        border: (theme) => (online ? `solid 3px #14c815` : ""),
         ":hover": {
           ...(onClick && {
             border: `solid 1px ${DESIGN_SYSTEM_COLORS.primary600}`,

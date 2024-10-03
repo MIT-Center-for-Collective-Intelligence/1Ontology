@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -9,20 +9,20 @@ import {
   Tooltip,
   Paper,
   useTheme,
-} from '@mui/material';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+} from "@mui/material";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import {
   capitalizeFirstLetter,
   getPropertyValue,
   getTitle,
-} from ' @components/lib/utils/string.utils';
-import { INode } from ' @components/types/INode';
-import { DISPLAY } from ' @components/lib/CONSTANTS';
-import LinkNode from '../LinkNode/LinkNode';
-import { DESIGN_SYSTEM_COLORS } from ' @components/lib/theme/colors';
-import { useAuth } from '../context/AuthContext';
-import { boolean } from 'yup';
+} from " @components/lib/utils/string.utils";
+import { INode } from " @components/types/INode";
+import { DISPLAY } from " @components/lib/CONSTANTS";
+import LinkNode from "../LinkNode/LinkNode";
+import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import { useAuth } from "../context/AuthContext";
+import { boolean } from "yup";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
@@ -65,7 +65,7 @@ const StructuredProperty = ({
 }: IStructuredPropertyProps) => {
   const [{ user }] = useAuth();
   const theme = useTheme();
-  const BUTTON_COLOR = theme.palette.mode === 'dark' ? '#373739' : '#dde2ea';
+  const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
 
   const properties = useMemo(() => {
     const result =
@@ -75,7 +75,7 @@ const StructuredProperty = ({
         property
       ) ||
       currentVisibleNode?.properties[property] ||
-      currentVisibleNode[property as 'specializations' | 'generalizations'];
+      currentVisibleNode[property as "specializations" | "generalizations"];
 
     let finalResult: any = {};
 
@@ -91,7 +91,7 @@ const StructuredProperty = ({
             if (foundInPrevious) {
               return { ...newElement };
             } else {
-              return { ...newElement, change: 'added' };
+              return { ...newElement, change: "added" };
             }
           });
 
@@ -100,7 +100,7 @@ const StructuredProperty = ({
               (newElement) => newElement.id === prevElement.id
             );
             if (!foundInNew) {
-              finalResult[key].push({ ...prevElement, change: 'removed' });
+              finalResult[key].push({ ...prevElement, change: "removed" });
             }
           });
         }
@@ -122,11 +122,11 @@ const StructuredProperty = ({
         return false;
       }
       return (
-        (property === 'generalizations' &&
+        (property === "generalizations" &&
           Object.values(properties).flat().length !== 1) ||
-        (property === 'specializations' &&
+        (property === "specializations" &&
           getNumOfGeneralizations(nodeId) > 1) ||
-        (property !== 'generalizations' && property !== 'specializations')
+        (property !== "generalizations" && property !== "specializations")
       );
     },
     [properties, property, nodes, selectedDiffNode]
@@ -137,24 +137,24 @@ const StructuredProperty = ({
   return (
     <Paper
       elevation={9}
-      sx={{ borderRadius: '30px', minWidth: '500px', width: '100%' }}
+      sx={{ borderRadius: "30px", minWidth: "500px", width: "100%" }}
     >
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           background: (theme: any) =>
-            theme.palette.mode === 'dark' ? '#242425' : '#d0d5dd',
+            theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
           p: 3,
-          borderTopRightRadius: '25px',
-          borderTopLeftRadius: '25px',
+          borderTopRightRadius: "25px",
+          borderTopLeftRadius: "25px",
         }}
       >
         <Typography
           sx={{
-            fontSize: '20px',
+            fontSize: "20px",
             fontWeight: 500,
-            fontFamily: 'Roboto, sans-serif',
+            fontFamily: "Roboto, sans-serif",
           }}
         >
           {capitalizeFirstLetter(
@@ -162,52 +162,52 @@ const StructuredProperty = ({
           )}
         </Typography>
         {currentVisibleNode?.inheritance[property]?.ref && (
-          <Typography sx={{ fontSize: '14px', ml: '9px' }}>
+          <Typography sx={{ fontSize: "14px", ml: "9px" }}>
             {'(Inherited from "'}
             {getTitle(
               nodes,
-              currentVisibleNode.inheritance[property].ref || ''
+              currentVisibleNode.inheritance[property].ref || ""
             )}
             {'")'}
           </Typography>
         )}
       </Box>
-      <Box sx={{ p: '15px' }}>
+      <Box sx={{ p: "15px" }}>
         {!locked && !selectedDiffNode && (
           <Box
             sx={{
-              alignItems: 'center',
-              display: 'flex',
-              gap: '15px',
+              alignItems: "center",
+              display: "flex",
+              gap: "15px",
             }}
           >
-            {property === 'specializations' && (
+            {property === "specializations" && (
               <Button
-                onClick={() => addNewSpecialization('main')}
-                sx={{ borderRadius: '25px', backgroundColor: BUTTON_COLOR }}
-                variant='outlined'
+                onClick={() => addNewSpecialization("main")}
+                sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
+                variant="outlined"
               >
-                {'Add '}
+                {"Add "}
                 {capitalizeFirstLetter(DISPLAY[property] || property)}
               </Button>
             )}
             <Button
-              onClick={() => showList(property, 'main')}
-              sx={{ borderRadius: '25px', backgroundColor: BUTTON_COLOR }}
-              variant='outlined'
+              onClick={() => showList(property, "main")}
+              sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
+              variant="outlined"
             >
-              {'Select '}
+              {"Select "}
               {capitalizeFirstLetter(DISPLAY[property] || property)}
             </Button>
 
-            {property !== 'parts' && property !== 'isPartOf' && (
+            {property !== "parts" && property !== "isPartOf" && (
               <Button
                 onClick={() => {
                   setOpenAddCategory(true);
                   setSelectedProperty(property);
                 }}
-                sx={{ borderRadius: '25px', backgroundColor: BUTTON_COLOR }}
-                variant='outlined'
+                sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
+                variant="outlined"
               >
                 Add Collection
               </Button>
@@ -218,7 +218,7 @@ const StructuredProperty = ({
         <DragDropContext
           onDragEnd={(e) => {
             if (locked) return;
-            if (e.type === 'CATEGORY') {
+            if (e.type === "CATEGORY") {
               handleCategorySorting(e, property);
             } else {
               handleSorting(e, property);
@@ -226,12 +226,12 @@ const StructuredProperty = ({
           }}
         >
           {/* Droppable for categories */}
-          <Droppable droppableId='categories' type='CATEGORY'>
+          <Droppable droppableId="categories" type="CATEGORY">
             {(provided) => (
               <Box ref={provided.innerRef} {...provided.droppableProps}>
                 {Object.keys(properties || {})
                   .sort((a, b) =>
-                    a === 'main' ? 1 : b === 'main' ? -1 : a.localeCompare(b)
+                    a === "main" ? 1 : b === "main" ? -1 : a.localeCompare(b)
                   )
                   .map((category: string, index) => {
                     const links: {
@@ -252,84 +252,84 @@ const StructuredProperty = ({
                             {...provided.dragHandleProps}
                             id={category}
                             sx={{
-                              mt: '15px',
-                              borderRadius: '20px',
+                              mt: "15px",
+                              borderRadius: "20px",
                             }}
-                            elevation={category !== 'main' ? 6 : 0}
+                            elevation={category !== "main" ? 6 : 0}
                           >
-                            {category !== 'main' && (
+                            {category !== "main" && (
                               <Box
                                 sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
+                                  display: "flex",
+                                  alignItems: "center",
                                   backgroundColor: (theme) =>
-                                    theme.palette.mode === 'dark'
-                                      ? '#1f232f'
-                                      : '#969faf',
-                                  borderTopLeftRadius: '25px',
-                                  borderTopRightRadius: '25px',
+                                    theme.palette.mode === "dark"
+                                      ? "#1f232f"
+                                      : "#969faf",
+                                  borderTopLeftRadius: "25px",
+                                  borderTopRightRadius: "25px",
                                   m: 0,
                                   p: 2,
-                                  gap: '10px',
+                                  gap: "10px",
                                 }}
                               >
                                 <Typography
-                                  sx={{ fontWeight: 'bold', mr: '13px' }}
+                                  sx={{ fontWeight: "bold", mr: "13px" }}
                                 >
                                   {capitalizeFirstLetter(category)}
                                 </Typography>
                                 {!selectedDiffNode && (
                                   <Box
                                     sx={{
-                                      display: 'flex',
-                                      gap: '15px',
+                                      display: "flex",
+                                      gap: "15px",
                                     }}
                                   >
-                                    {property === 'specializations' && (
+                                    {property === "specializations" && (
                                       <Button
                                         onClick={() =>
                                           addNewSpecialization(category)
                                         }
                                         sx={{
-                                          borderRadius: '25px',
+                                          borderRadius: "25px",
                                           backgroundColor: BUTTON_COLOR,
                                         }}
-                                        variant='outlined'
+                                        variant="outlined"
                                       >
-                                        {'Add '}
+                                        {"Add "}
                                       </Button>
                                     )}
                                     <Button
-                                      variant='outlined'
+                                      variant="outlined"
                                       onClick={() =>
                                         showList(property, category)
                                       }
                                       sx={{
-                                        borderRadius: '25px',
+                                        borderRadius: "25px",
                                         backgroundColor: BUTTON_COLOR,
                                       }}
                                     >
-                                      {'Select'}
+                                      {"Select"}
                                     </Button>
                                     <Button
-                                      variant='outlined'
+                                      variant="outlined"
                                       onClick={() =>
                                         handleEditCategory(property, category)
                                       }
                                       sx={{
-                                        borderRadius: '25px',
+                                        borderRadius: "25px",
                                         backgroundColor: BUTTON_COLOR,
                                       }}
                                     >
                                       Edit
                                     </Button>
                                     <Button
-                                      variant='outlined'
+                                      variant="outlined"
                                       onClick={() =>
                                         deleteCategory(property, category)
                                       }
                                       sx={{
-                                        borderRadius: '25px',
+                                        borderRadius: "25px",
                                         backgroundColor: BUTTON_COLOR,
                                       }}
                                     >
@@ -341,7 +341,7 @@ const StructuredProperty = ({
                             )}
 
                             <List sx={{ p: 1 }}>
-                              <Droppable droppableId={category} type='LINK'>
+                              <Droppable droppableId={category} type="LINK">
                                 {(provided, snapshot) => (
                                   <Box
                                     {...provided.droppableProps}
@@ -349,12 +349,12 @@ const StructuredProperty = ({
                                     sx={{
                                       backgroundColor: snapshot.isDraggingOver
                                         ? (theme) =>
-                                            theme.palette.mode === 'light'
+                                            theme.palette.mode === "light"
                                               ? DESIGN_SYSTEM_COLORS.gray250
                                               : DESIGN_SYSTEM_COLORS.notebookG400
-                                        : '',
-                                      borderRadius: '25px',
-                                      userSelect: 'none',
+                                        : "",
+                                      borderRadius: "25px",
+                                      userSelect: "none",
                                     }}
                                   >
                                     {links.length > 0 ? (
@@ -380,12 +380,12 @@ const StructuredProperty = ({
                                                 <DragIndicatorIcon
                                                   sx={{
                                                     color:
-                                                      link.change === 'added'
-                                                        ? 'green'
+                                                      link.change === "added"
+                                                        ? "green"
                                                         : link.change ===
-                                                          'removed'
-                                                        ? 'red'
-                                                        : '',
+                                                          "removed"
+                                                        ? "red"
+                                                        : "",
                                                   }}
                                                 />
                                               </ListItemIcon>
@@ -424,14 +424,14 @@ const StructuredProperty = ({
                                       ))
                                     ) : (
                                       <Typography
-                                        variant='body2'
+                                        variant="body2"
                                         sx={{
                                           p: 2,
-                                          color: 'text.secondary',
-                                          textAlign: 'center',
+                                          color: "text.secondary",
+                                          textAlign: "center",
                                         }}
                                       >
-                                        {category === 'main' ? '' : 'No items'}
+                                        {category === "main" ? "" : "No items"}
                                       </Typography>
                                     )}
                                     {provided.placeholder}

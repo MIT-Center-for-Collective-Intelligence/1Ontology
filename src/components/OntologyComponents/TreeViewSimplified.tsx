@@ -11,7 +11,7 @@ type ITreeViewSimplifiedProps = {
   treeVisualization: TreeVisual | any;
   expandedNodes: any;
   currentVisibleNode?: any;
-  checkSpecialization?: any;
+  markItemAsChecked?: any;
   checkedItems?: any;
   handleCloning?: any;
   clone?: boolean;
@@ -27,7 +27,7 @@ const TreeViewSimplified = ({
   onOpenNodesTree,
   expandedNodes,
   currentVisibleNode,
-  checkSpecialization,
+  markItemAsChecked,
   checkedItems,
   handleCloning,
   clone,
@@ -93,8 +93,7 @@ const TreeViewSimplified = ({
                           e.stopPropagation();
                         }}
                         onChange={(e) => {
-                          e.stopPropagation();
-                          checkSpecialization(treeVisualization[category].id);
+                          markItemAsChecked(treeVisualization[category].id);
                         }}
                         name={treeVisualization[category].id}
                       />
@@ -184,7 +183,7 @@ const TreeViewSimplified = ({
                   onOpenNodesTree={onOpenNodesTree}
                   expandedNodes={expandedNodes}
                   currentVisibleNode={currentVisibleNode}
-                  checkSpecialization={checkSpecialization}
+                  markItemAsChecked={markItemAsChecked}
                   checkedItems={checkedItems}
                   handleCloning={handleCloning}
                   clone={clone}

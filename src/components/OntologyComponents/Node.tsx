@@ -157,7 +157,6 @@ type INodeProps = {
   displayInheritanceSettings: any;
   displayNodeChat: any;
   displayNodeHistory: any;
-  rightPanelVisible: any;
   activeSidebar: any;
 };
 
@@ -178,7 +177,6 @@ const Node = ({
   displayInheritanceSettings,
   displayNodeChat,
   displayNodeHistory,
-  rightPanelVisible,
   activeSidebar,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
@@ -243,12 +241,14 @@ const Node = ({
 
   const markItemAsChecked = (checkedId: string) => {
     setCheckedItems((oldChecked: Set<string>) => {
-      if (oldChecked.has(checkedId)) {
-        oldChecked.delete(checkedId);
+      const _oldChecked = new Set(oldChecked);
+
+      if (_oldChecked.has(checkedId)) {
+        _oldChecked.delete(checkedId);
       } else {
-        oldChecked.add(checkedId);
+        _oldChecked.add(checkedId);
       }
-      return oldChecked;
+      return _oldChecked;
     });
   };
 
@@ -1437,7 +1437,6 @@ const Node = ({
           displayInheritanceSettings={displayInheritanceSettings}
           displayNodeChat={displayNodeChat}
           displayNodeHistory={displayNodeHistory}
-          rightPanelVisible={rightPanelVisible}
           activeSidebar={activeSidebar}
         />
         <Text
@@ -1667,7 +1666,7 @@ const Node = ({
                 treeVisualization={selectFromTree()}
                 expandedNodes={expandedNodes}
                 onOpenNodesTree={handleToggle}
-                checkSpecialization={markItemAsChecked}
+                markItemAsChecked={markItemAsChecked}
                 checkedItems={checkedItems}
                 handleCloning={handleCloning}
                 clone={true}

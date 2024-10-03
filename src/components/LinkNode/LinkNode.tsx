@@ -144,7 +144,7 @@ const LinkNode = ({
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as INode;
 
-          const nodeId = nodeData.inheritance[property].ref;
+          const nodeId = nodeData.inheritance[property]?.ref || null;
           if (nodeId) {
             const inheritedNode = nodes[nodeId as string];
             nodeData.properties[property] = JSON.parse(
@@ -205,7 +205,7 @@ const LinkNode = ({
     } catch (error) {
       console.error(error);
       await confirmIt(
-        `There is an issue with deleting the node, please try again.`,
+        `There is an issue with unlinking the node, please try again.`,
         `Ok`,
         ""
       );
@@ -322,6 +322,7 @@ const LinkNode = ({
                 : theme.palette.mode === "dark"
                 ? theme.palette.common.gray50
                 : theme.palette.common.notebookMainBlack,
+            textDecoration: link.change === "removed" ? "line-through" : "none",
           }}
         >
           {" "}
