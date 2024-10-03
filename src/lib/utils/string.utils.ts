@@ -76,14 +76,6 @@ export const getPropertyValue = (
   property: string
 ) => {
   if (id && nodes[id] && nodes[id].properties[property]) {
-    /*    if (property === "description") {
-      console.log(
-        "getPropertyValue ==>",
-        property,
-        id,
-        nodes[id]?.properties[property]
-      );
-    } */
     return nodes[id].properties[property];
   }
 };

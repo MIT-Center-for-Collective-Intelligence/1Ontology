@@ -544,7 +544,6 @@ const ToolbarSidebar = ({
                 if (user.currentNode && selectedDiffNode) {
                   setCurrentVisibleNode(nodes[user.currentNode] || null);
                 }
-                console.log(user, "user");
               }}
               sx={{ ml: "auto" }}
             >

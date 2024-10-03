@@ -401,6 +401,7 @@ const Ontology = () => {
         isCategory: !!node.category,
         locked: !!node.locked,
         title: nodeTitle,
+
         specializations: {},
       };
 
@@ -409,7 +410,7 @@ const Ontology = () => {
       for (let category in node.specializations) {
         // Filter nodes based on the current category
         const specializations: INode[] = [];
-        node?.specializations[category].forEach((o: { id: string }) => {
+        (node?.specializations[category] || []).forEach((o: { id: string }) => {
           specializations.push(nodes[o.id]);
         });
 
@@ -422,6 +423,7 @@ const Ontology = () => {
             isCategory: !!node.category,
             title: nodeTitle,
             locked: !!node.locked,
+            categoriesOrder: node.categoriesOrder?.specializations,
             specializations: {
               ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
               ...getSpecializationsTree(specializations, [...path, node.id]),
@@ -435,6 +437,7 @@ const Ontology = () => {
             title: nodeTitle,
             c: node.category,
             locked: !!node.locked,
+            categoriesOrder: node.categoriesOrder?.specializations,
             specializations: {
               ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
               [category]: {
@@ -511,7 +514,6 @@ const Ontology = () => {
     });
     // Generate a tree structure of specializations from the sorted main nodes
     let treeOfSpecializations = getSpecializationsTree(mainCategories, []);
-
     // Set the generated tree structure for visualization
     setTreeVisualization(treeOfSpecializations);
   }, [nodes]);

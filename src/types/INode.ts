@@ -74,7 +74,7 @@ export type INode = {
   parents: string[];
   propertyType: { [key: string]: string };
   nodeType: INodeTypes;
-
+  categoriesOrder: { [propertyTitle: string]: string[] };
   category?: boolean;
   locked?: boolean;
   editMode?: boolean;
