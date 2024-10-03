@@ -286,29 +286,29 @@ export const getChangeDescription = (
 
   switch (changeType) {
     case "change text":
-      return `${modifiedByFullName} updated the property "${modifiedProperty}" of "${fullNode.title}".`;
+      return `updated the property "${modifiedProperty}".`;
     case "add collection":
-      return `${modifiedByFullName} added a new collection to "${fullNode.title}",  The collection was created with initial properties.`;
+      return `added a new collection.`;
     case "delete collection":
-      return `${modifiedByFullName} deleted a collection from "${fullNode.title}",  All related data has been removed.`;
+      return `deleted a collection.`;
     case "edit collection":
-      return `${modifiedByFullName} renamed a collection in "${fullNode.title}",  It was renamed from "${previousValue}" to "${newValue}".`;
+      return `renamed a collection.`;
     case "sort elements":
-      return `${modifiedByFullName} sorted elements in the collection of "${fullNode.title}", `;
+      return `sorted elements in "${modifiedProperty}", `;
     case "remove element":
-      return `${modifiedByFullName} removed an element from "${fullNode.title}", Under the property "${modifiedProperty}".`;
+      return `removed an element under the property "${modifiedProperty}".`;
     case "modify elements":
-      return `${modifiedByFullName} modified the elements of "${fullNode.title}", changing "${modifiedProperty}" from "${previousValue}" to "${newValue}".`;
+      return `modified the elements.`;
     case "add property":
-      return `${modifiedByFullName} added a new property "${modifiedProperty}" to "${fullNode.title}",  The initial value is "${newValue}".`;
+      return `added a new property.`;
     case "remove property":
-      return `${modifiedByFullName} removed the property "${modifiedProperty}" from "${fullNode.title}",  Its previous value was "${previousValue}".`;
+      return `removed the property "${modifiedProperty}".`;
     case "delete node":
-      return `${modifiedByFullName} deleted the node "${fullNode.title}".`;
+      return `deleted the node "${fullNode.title}".`;
     case "add node":
-      return `${modifiedByFullName} added a new node titled "${fullNode.title}".`;
+      return `added a new node titled "${fullNode.title}".`;
     default:
-      return `${modifiedByFullName} made an unknown change to "${fullNode.title}", `;
+      return `made an unknown change to "${fullNode.title}", `;
   }
 };
 

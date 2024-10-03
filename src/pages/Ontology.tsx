@@ -128,7 +128,7 @@ const Ontology = () => {
   const headerRef = useRef<HTMLHeadElement | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [dagreZoomState, setDagreZoomState] = useState<any>(null);
-  const [rightPanelVisible, setRightPanelVisible] = useState<any>(false);
+
   const [eachOntologyPath, setEachOntologyPath] = useState<{
     [key: string]: any;
   }>({});
@@ -267,14 +267,11 @@ const Ontology = () => {
 
     if (controller) {
       const resizer = controller.getResizer();
-      if (rightPanelVisible) {
-        resizer.resizeSection(2, { toSize: 400 });
-      } else {
-        resizer.resizeSection(2, { toSize: 0 });
-      }
+
+      resizer.resizeSection(2, { toSize: 0 });
       controller.applyResizer(resizer);
     }
-  }, [rightPanelVisible, user, nodes]);
+  }, [user, nodes]);
 
   useEffect(() => {
     const checkIfDifferentDay = () => {
@@ -762,6 +759,7 @@ const Ontology = () => {
   const navigateToNode = async (nodeId: string) => {
     if (nodes[nodeId]) {
       setCurrentVisibleNode(nodes[nodeId]);
+      setSelectedDiffNode(null);
     }
   };
 
@@ -956,7 +954,6 @@ const Ontology = () => {
                 displayInheritanceSettings={displayInheritanceSettings}
                 displayNodeChat={displayNodeChat}
                 displayNodeHistory={displayNodeHistory}
-                rightPanelVisible={rightPanelVisible}
                 activeSidebar={activeSidebar}
               />
             )}

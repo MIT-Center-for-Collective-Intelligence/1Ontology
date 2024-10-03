@@ -502,7 +502,10 @@ const ToolbarSidebar = ({
                   />
                 </Box>
                 <Box>
-                  <Typography>{openLogsFor.fName}'s Edit History</Typography>
+                  <Typography>
+                    {openLogsFor.fName}
+                    {"'s Edit History"}
+                  </Typography>
                 </Box>
               </Box>
             )}
@@ -510,7 +513,7 @@ const ToolbarSidebar = ({
               <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
                 <Box>
                   <Typography sx={{ fontSize: "19px", fontWeight: "bold" }}>
-                    Node's Chat
+                    {"Node's Chat"}
                   </Typography>
                 </Box>
               </Box>
@@ -519,7 +522,7 @@ const ToolbarSidebar = ({
               <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
                 <Box>
                   <Typography sx={{ fontSize: "19px", fontWeight: "bold" }}>
-                    Node's History
+                    {"Node's History"}
                   </Typography>
                 </Box>
               </Box>
@@ -528,7 +531,7 @@ const ToolbarSidebar = ({
               <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
                 <Box>
                   <Typography sx={{ fontSize: "19px", fontWeight: "bold" }}>
-                    Node's Inheritance Settings
+                    {"Node's Inheritance Settings"}
                   </Typography>
                 </Box>
               </Box>
@@ -624,13 +627,13 @@ const ToolbarSidebar = ({
               text="Search"
               toolbarIsOpen={hovered}
             />
-            <SidebarButton
+            {/*<SidebarButton
               id="toolbar-download-button"
               icon={<DownloadIcon />}
               onClick={onDownload}
               text="Download"
               toolbarIsOpen={hovered}
-            />
+            /> */}
             <SidebarButton
               id="toolbar-theme-button"
               icon={

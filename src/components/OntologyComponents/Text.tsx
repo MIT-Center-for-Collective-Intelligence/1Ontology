@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Box, Paper, TextField, Typography } from "@mui/material";
+import { debounce } from "lodash";
 import {
   getDoc,
   collection,
@@ -14,7 +15,7 @@ import { useTheme } from "@emotion/react";
 import { INode } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import {
-  saveNewChange,
+  saveNewChange as saveNewChangeLog,
   updateInheritance,
 } from " @components/lib/utils/helpers";
 import { diffWords, diffLines } from "diff"; // Using diffLines for line-by-line diff
@@ -47,16 +48,13 @@ type ISubOntologyProps = {
   displayInheritanceSettings?: any;
   displayNodeChat?: any;
   displayNodeHistory?: any;
-  rightPanelVisible?: any;
   activeSidebar?: any;
 };
 
 const Text = ({
   currentVisibleNode,
-  setCurrentVisibleNode,
   property,
-  text, // Real-time text prop from WebSocket
-  confirmIt,
+  text, // Real-time text prop from firestore snapshot
   recordLogs,
   setSelectTitle,
   selectTitle,
@@ -71,7 +69,6 @@ const Text = ({
   displayInheritanceSettings,
   displayNodeChat,
   displayNodeHistory,
-  rightPanelVisible,
   activeSidebar,
 }: ISubOntologyProps) => {
   const db = getFirestore();
@@ -82,6 +79,24 @@ const Text = ({
   const [diffContent, setDiffContent] = useState<any[]>([]);
   const [isEditing, setIsEditing] = useState(false); // State to check if user is editing
   const [{ user }] = useAuth();
+  const previousValueRef = useRef("");
+
+  const debouncedSaveNewChangeLog = useCallback(
+    debounce(async (db, currentVisibleNode, user, property, newValue) => {
+      saveNewChangeLog(db, {
+        nodeId: currentVisibleNode.id,
+        modifiedBy: user?.uname,
+        modifiedProperty: property,
+        previousValue: previousValueRef.current,
+        newValue,
+        modifiedAt: new Date(),
+        changeType: "change text",
+        fullNode: currentVisibleNode,
+      });
+      previousValueRef.current = "";
+    }, 3000),
+    []
+  );
 
   const onSaveTextChange = useCallback(
     async (copyValue: string) => {
@@ -122,7 +137,9 @@ const Text = ({
         if (previousValue.trim() === newValue.trim()) {
           return;
         }
-
+        if (!previousValueRef.current) {
+          previousValueRef.current = previousValue;
+        }
         if (setSelectTitle) {
           setSelectTitle(false);
         }
@@ -151,24 +168,14 @@ const Text = ({
           });
         }
 
-        recordLogs({
-          action: "change text",
-          field: property,
-          previousValue,
-          newValue,
-          nodeId: currentVisibleNode.id,
-        });
-
-        saveNewChange(db, {
-          nodeId: currentVisibleNode.id,
-          modifiedBy: user?.uname,
-          modifiedProperty: property,
-          previousValue,
-          newValue,
-          modifiedAt: new Date(),
-          changeType: "change text",
-          fullNode: currentVisibleNode,
-        });
+        // Call the debounced function instead of directly logging
+        debouncedSaveNewChangeLog(
+          db,
+          currentVisibleNode,
+          user,
+          property,
+          previousValue
+        );
       }
     },
     [currentVisibleNode.id, user?.uname, property]
@@ -186,11 +193,10 @@ const Text = ({
       textAreaRef.current.focus();
       setEditorContent("");
     } else {
-      setTimeout(() => {
-        setEditorContent(text);
-      }, 500);
+      if (textAreaRef.current) {
+        textAreaRef.current.blur();
+      }
     }
-
     if (selectedDiffNode && selectedDiffNode.modifiedProperty === property) {
       const diff = diffLines(
         selectedDiffNode.previousValue || "",
@@ -198,7 +204,7 @@ const Text = ({
       );
       setDiffContent(diff);
     }
-  }, [currentVisibleNode.id, selectedDiffNode, selectTitle]);
+  }, [currentVisibleNode.id, selectedDiffNode]);
 
   const handleChanges = (e: any) => {
     setEditorContent(e.target.value);
@@ -268,8 +274,15 @@ const Text = ({
           display: "flex",
           alignItems: "center",
           background: (theme: any) =>
-            theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+            selectedDiffNode &&
+            selectedDiffNode.changeType === "delete node" &&
+            property === "title"
+              ? "red"
+              : theme.palette.mode === "dark"
+              ? "#242425"
+              : "#d0d5dd",
           p: 3,
+          pb: 1.5,
           borderTopRightRadius: "25px",
           borderTopLeftRadius: "25px",
         }}
@@ -285,6 +298,11 @@ const Text = ({
             DISPLAY[property] ? DISPLAY[property] : property
           )}
         </Typography>
+        {selectedDiffNode &&
+          selectedDiffNode.changeType === "delete node" &&
+          property === "title" && (
+            <Typography sx={{ mx: "5px" }}>DELETED NODE</Typography>
+          )}
         {currentVisibleNode.inheritance[property]?.ref && (
           <Typography sx={{ fontSize: "14px", ml: "9px" }}>
             {'(Inherited from "'}
@@ -292,6 +310,7 @@ const Text = ({
             {'")'}
           </Typography>
         )}
+
         {property === "title" && (
           <ManageNodeButtons
             locked={locked}
@@ -320,9 +339,7 @@ const Text = ({
         <>
           {selectedDiffNode &&
           selectedDiffNode.modifiedProperty === property ? (
-            <Box
-              sx={{ p: "10px", borderRadius: "5px" }}
-            >
+            <Box sx={{ p: "10px", borderRadius: "5px" }}>
               <Box>{renderDiff()}</Box>
             </Box>
           ) : (

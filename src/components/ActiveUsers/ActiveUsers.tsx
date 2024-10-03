@@ -18,6 +18,7 @@ import {
   getFirestore,
   Timestamp,
 } from "firebase/firestore";
+import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 
 const ActiveUsers = ({
   nodes,
@@ -102,6 +103,13 @@ const ActiveUsers = ({
         overflow: "auto",
         height: "70vh",
         mt: "15px",
+        overflowX: "hidden",
+        ...SCROLL_BAR_STYLE, 
+        "&::-webkit-scrollbar": {
+          display: "none", 
+        },
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
       }}
     >
       {Object.values(usersNodesViews)
@@ -123,7 +131,6 @@ const ActiveUsers = ({
                   style={{ marginRight: "4px" }}
                 >{`${u.fName} ${u.lName}`}</strong>
                 {u.node.id && <div> {"last interacted with"}</div>}
-
                 {u.node.id && (
                   <Link
                     underline="hover"
@@ -150,16 +157,20 @@ const ActiveUsers = ({
                 gap: "10px",
                 minWidth: "0px",
               }}
+              id={u.uname}
+              onClick={viewProfileLogs}
             >
               <Box sx={{ position: "relative" }}>
                 <Badge
                   color="success"
-                  badgeContent={shortenNumber(u.reputations, 2, false)}
+                  badgeContent={
+                    /* shortenNumber(u.reputations, 2, false) */ null
+                  }
                   sx={{
                     "& .MuiBadge-badge": {
                       right: -1,
                       top: 25,
-                      border: `2px solid ${theme.palette.background.paper}`,
+                      border: `4px solid ${theme.palette.background.paper}`,
                       padding: "0 4px",
                       display: u.reputations === 0 ? "none" : "",
                     },
@@ -188,8 +199,6 @@ const ActiveUsers = ({
                     mb: "3px",
                     flexDirection: "column",
                   }}
-                  onClick={viewProfileLogs}
-                  id={u.uname}
                 >
                   <Typography
                     sx={{

@@ -172,18 +172,17 @@ const UserActivity = ({
             >
               <Box sx={{ py: 4, pl: 2 }}>
                 <Box>
-                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-                    {logs[id].fullNode.title}
-                  </Typography>
-
                   <Typography
                     variant="body2"
-                    sx={{ fontSize: "14px", mt: "15px" }}
+                    sx={{ fontSize: "14px", mt: "15px", mb: "13px" }}
                   >
                     {getChangeDescription(
                       logs[id],
                       openLogsFor?.fullname || ""
                     )}
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                    {logs[id].fullNode.title}
                   </Typography>
                 </Box>
               </Box>

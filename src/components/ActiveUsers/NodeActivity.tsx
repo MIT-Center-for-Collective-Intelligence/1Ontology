@@ -22,6 +22,7 @@ import moment from "moment";
 import { getChangeDescription } from " @components/lib/utils/helpers";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
+import OptimizedAvatar from "../Chat/OptimizedAvatar";
 
 export type NodeChange = {
   nodeId: string;
@@ -154,6 +155,19 @@ const NodeActivity = ({
       {Object.keys(logs).length > 0 &&
         Object.keys(logs).map((id) => (
           <Box key={id} sx={{ display: "flex", flexDirection: "column" }}>
+            {/*        <Box>
+              {" "} */}
+            {/* <OptimizedAvatar
+                alt={logs[id].fullname}
+                imageUrl={logs[id].imageUrl || ""}
+                size={40}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                }}
+              /> */}
             <Typography
               sx={{
                 fontSize: "13px",
@@ -165,6 +179,8 @@ const NodeActivity = ({
               {" "}
               {getModifiedAt(logs[id].modifiedAt)}
             </Typography>
+            {/*        </Box> */}
+
             <Paper
               elevation={3}
               sx={{ padding: 1, marginBottom: 1, m: "15px", mt: "0px" }}
