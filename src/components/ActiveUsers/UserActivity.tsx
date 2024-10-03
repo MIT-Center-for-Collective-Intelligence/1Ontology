@@ -23,28 +23,7 @@ import moment from "moment";
 import { getChangeDescription } from " @components/lib/utils/helpers";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
-
-export type NodeChange = {
-  nodeId: string;
-  modifiedBy: string;
-  modifiedProperty: string | null;
-  previousValue: any;
-  newValue: any;
-  modifiedAt: Date;
-  changeType:
-    | "change text" //handled
-    | "sort elements" //handled
-    | "remove element" //handled
-    | "modify elements" //handled
-    | "add property" // missing
-    | "remove property" // missing
-    | "delete node" // handled
-    | "add node" // handled
-    | "add collection" // handled
-    | "delete collection" // handled
-    | "edit collection"; // handled
-  fullNode: INode;
-};
+import ActivityDetails from "./ActivityDetails";
 
 const UserActivity = ({
   openLogsFor,
@@ -87,14 +66,6 @@ const UserActivity = ({
 
     return () => unsubscribeNodes();
   }, [db, openLogsFor?.uname]);
-
-  const getModifiedAt = (modifiedAt: any) => {
-    modifiedAt = moment(modifiedAt.toDate());
-    const today = moment();
-    return modifiedAt.isSame(today, "day")
-      ? `Today at ${modifiedAt.format("hh:mm A")}`
-      : modifiedAt.format("hh:mm A DD/MM/YYYY");
-  };
 
   if (loading) {
     return (
@@ -154,49 +125,7 @@ const UserActivity = ({
       )}
       {Object.keys(logs).length > 0 &&
         Object.keys(logs).map((id) => (
-          <Box key={id} sx={{ display: "flex", flexDirection: "column" }}>
-            <Typography
-              sx={{
-                fontSize: "13px",
-                fontWeight: "bold",
-                ml: "auto",
-                mr: "15px",
-              }}
-            >
-              {" "}
-              {getModifiedAt(logs[id].modifiedAt)}
-            </Typography>
-            <Paper
-              elevation={3}
-              sx={{ padding: 1, marginBottom: 1, m: "15px", mt: "0px" }}
-            >
-              <Box sx={{ py: 4, pl: 2 }}>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ fontSize: "14px", mt: "15px", mb: "13px" }}
-                  >
-                    {getChangeDescription(
-                      logs[id],
-                      openLogsFor?.fullname || ""
-                    )}
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-                    {logs[id].fullNode.title}
-                  </Typography>
-                </Box>
-              </Box>
-              <Button
-                onClick={() => {
-                  displayDiff(logs[id]);
-                }}
-                variant="outlined"
-                sx={{ borderRadius: "25px" }}
-              >
-                View
-              </Button>
-            </Paper>
-          </Box>
+          <ActivityDetails key={id} activity={logs[id]} displayDiff={displayDiff} />
         ))}
     </Box>
   );

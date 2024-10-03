@@ -136,7 +136,7 @@ import {
 } from " @components/lib/utils/helpers";
 
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
-import { NodeChange } from "../ActiveUsers/UserActivity";
+import { NodeChange } from " @components/types/INode";
 
 type INodeProps = {
   scrolling: any;
@@ -211,7 +211,8 @@ const Node = ({
   const [openAddProprety, setOpenAddProperty] = useState(false);
   const [newFieldTitle, setNewProperty] = useState("");
   const [selectTitle, setSelectTitle] = useState(false);
-
+  
+  const [reviewId, setReviewId] = useState("");
   const db = getFirestore();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [width, setWidth] = useState<number>(0);
@@ -333,7 +334,7 @@ const Node = ({
 
   // Function to add a new specialization to the node
   const addNewSpecialization = useCallback(
-    async (category: string = "main") => {
+    async (category: string = "main", searchValue: string = "") => {
       try {
         if (!category) {
           category = "main";
@@ -363,7 +364,7 @@ const Node = ({
         }
         // Clone the parent node data
         // Check if the specified type and category exist in the parent node
-        let newTitle = `New ${parentNode.title}`;
+        let newTitle = searchValue ? searchValue : `New ${parentNode.title}`;
         const specializationsTitles = Object.values(parentNode.specializations)
           .flat()
           .map((spec) => nodes[spec.id].title);
@@ -401,22 +402,24 @@ const Node = ({
             ...parentNode.specializations,
             [category]: [
               {
-                id: newNodeRef.id,
+                id: newNodeRef.id
               },
             ],
           };
         } else {
           // Add the new node to the specified type and category
           parentNode.specializations[category].push({
-            id: newNodeRef.id,
+            id: newNodeRef.id
           });
         }
 
         // Add the new node to the database
         addNewNode({ id: newNodeRef.id, newNode });
 
-        scrollToTop();
-        setSelectTitle(true);
+        setReviewId(newNodeRef.id);
+
+        // scrollToTop();
+        // setSelectTitle(true);
         // Update the parent node document in the database
         setOpenSelectModel(false);
         await updateDoc(nodeParentRef, parentNode);
@@ -1504,6 +1507,8 @@ const Node = ({
               nodes={nodes}
               locked={locked}
               addNewSpecialization={addNewSpecialization}
+              reviewId={reviewId}
+              setReviewId={setReviewId}
             />
           ))}
         </Stack>
@@ -1608,6 +1613,16 @@ const Node = ({
                   setSearchValue={setSearchValue}
                   label={"Search ..."}
                 />
+                {selectedProperty === "specializations" && (
+                  <Button
+                    onClick={() => addNewSpecialization("main", searchValue)}
+                    sx={{ borderRadius: "25px", minWidth: '100px' }}
+                    variant="outlined"
+                    disabled={searchValue.length < 3}
+                  >
+                    {"Add new"}
+                  </Button>
+                )}
               </Box>
             </Box>
           </Paper>

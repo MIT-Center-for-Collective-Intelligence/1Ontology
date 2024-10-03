@@ -107,7 +107,7 @@ import { IChat } from " @components/types/IChat";
 import { saveNewChange } from " @components/lib/utils/helpers";
 import { useHover } from " @components/lib/hooks/useHover";
 import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarSidebar";
-import { NodeChange } from " @components/components/ActiveUsers/UserActivity";
+import { NodeChange } from " @components/types/INode";
 
 const Ontology = () => {
   const db = getFirestore();
@@ -577,10 +577,10 @@ const Ontology = () => {
       try {
         if (!user?.uname) return;
         // Reference to the new node document
-        setCurrentVisibleNode({
-          id,
-          ...newNode,
-        });
+        // setCurrentVisibleNode({
+        //   id,
+        //   ...newNode,
+        // });
         const newNodeRef = doc(collection(db, NODES), id);
         // Set the document with the new node data
         await setDoc(newNodeRef, {
