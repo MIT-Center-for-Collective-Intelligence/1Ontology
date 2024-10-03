@@ -211,7 +211,7 @@ const Node = ({
   const [openAddProprety, setOpenAddProperty] = useState(false);
   const [newFieldTitle, setNewProperty] = useState("");
   const [selectTitle, setSelectTitle] = useState(false);
-  
+
   const [reviewId, setReviewId] = useState("");
   const db = getFirestore();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
@@ -402,14 +402,14 @@ const Node = ({
             ...parentNode.specializations,
             [category]: [
               {
-                id: newNodeRef.id
+                id: newNodeRef.id,
               },
             ],
           };
         } else {
           // Add the new node to the specified type and category
           parentNode.specializations[category].push({
-            id: newNodeRef.id
+            id: newNodeRef.id,
           });
         }
 
@@ -816,6 +816,7 @@ const Node = ({
   const addNewCollection = useCallback(async () => {
     try {
       // Check if newCategory is provided
+      handleCloseAddCollection();
       if (!newCollection) return;
       let previousValue = null;
       let changeType: "add collection" | "edit collection" = "edit collection";
@@ -935,8 +936,6 @@ const Node = ({
           changeType,
           fullNode: currentVisibleNode,
         });
-        // Close the add category modal
-        handleCloseAddCollection();
       }
     } catch (error) {
       // Log any errors that occur during the process
@@ -962,7 +961,7 @@ const Node = ({
     });
   };
 
-  const deleteCategory = async (property: string, category: string) => {
+  const deleteCollection = async (property: string, category: string) => {
     if (
       await confirmIt(
         `Are you sure you want to delete the collection ${category}?`,
@@ -1469,7 +1468,7 @@ const Node = ({
             setSelectedProperty={setSelectedProperty}
             handleSorting={handleSorting}
             handleEditCategory={handleEditCategory}
-            deleteCategory={deleteCategory}
+            deleteCategory={deleteCollection}
             navigateToNode={navigateToNode}
             recordLogs={recordLogs}
             setSnackbarMessage={setSnackbarMessage}
@@ -1497,7 +1496,7 @@ const Node = ({
               setSelectedProperty={setSelectedProperty}
               handleSorting={handleSorting}
               handleEditCategory={handleEditCategory}
-              deleteCategory={deleteCategory}
+              deleteCategory={deleteCollection}
               navigateToNode={navigateToNode}
               recordLogs={recordLogs}
               setSnackbarMessage={setSnackbarMessage}
@@ -1529,7 +1528,7 @@ const Node = ({
               setSelectedProperty={setSelectedProperty}
               handleSorting={handleSorting}
               handleEditCategory={handleEditCategory}
-              deleteCategory={deleteCategory}
+              deleteCategory={deleteCollection}
               navigateToNode={navigateToNode}
               recordLogs={recordLogs}
               setSnackbarMessage={setSnackbarMessage}
@@ -1556,7 +1555,7 @@ const Node = ({
             updateInheritance={updateInheritance}
             showListToSelect={showListToSelect}
             handleEditCategory={handleEditCategory}
-            deleteCategory={deleteCategory}
+            deleteCategory={deleteCollection}
             handleSorting={handleSorting}
             navigateToNode={navigateToNode}
             setSnackbarMessage={setSnackbarMessage}
@@ -1615,12 +1614,21 @@ const Node = ({
                 />
                 {selectedProperty === "specializations" && (
                   <Button
-                    onClick={() => addNewSpecialization("main", searchValue)}
-                    sx={{ borderRadius: "25px", minWidth: '100px' }}
+                    onClick={() =>
+                      addNewSpecialization(
+                        selectedCategory || "main",
+                        searchValue
+                      )
+                    }
+                    sx={{ borderRadius: "25px", minWidth: "200px" }}
                     variant="outlined"
-                    disabled={searchValue.length < 3}
+                    disabled={
+                      searchValue.length < 3 ||
+                      searchResultsForSelection[0].title.trim() ===
+                        searchValue.trim()
+                    }
                   >
-                    {"Add new"}
+                    {"Add new specialization"}
                   </Button>
                 )}
               </Box>

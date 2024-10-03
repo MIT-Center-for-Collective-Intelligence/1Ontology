@@ -269,6 +269,7 @@ export const saveNewChange = (db: any, data: NodeChange) => {
   const userRef = doc(collection(db, USERS), data.modifiedBy);
   updateDoc(userRef, {
     reputations: increment(1),
+    lasChangeMadeAt: new Date(),
   });
 };
 

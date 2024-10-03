@@ -301,7 +301,9 @@ const Text = ({
         {selectedDiffNode &&
           selectedDiffNode.changeType === "delete node" &&
           property === "title" && (
-            <Typography sx={{ mx: "5px" }}>DELETED NODE</Typography>
+            <Typography sx={{ mx: "5px", ml: "145px", fontWeight: "bold" }}>
+              DELETED NODE
+            </Typography>
           )}
         {currentVisibleNode.inheritance[property]?.ref && (
           <Typography sx={{ fontSize: "14px", ml: "9px" }}>
@@ -311,7 +313,7 @@ const Text = ({
           </Typography>
         )}
 
-        {property === "title" && (
+        {property === "title" && !selectedDiffNode && (
           <ManageNodeButtons
             locked={locked}
             root={root}
@@ -327,7 +329,7 @@ const Text = ({
           />
         )}
       </Box>
-      <Typography color="red">{error}</Typography>
+      <Typography color="red">{error}</Typography> 
       {locked ||
       (selectedDiffNode && selectedDiffNode.modifiedProperty !== property) ? (
         <Typography

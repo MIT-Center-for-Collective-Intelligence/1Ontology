@@ -9,7 +9,10 @@ import {
   Tooltip,
   Paper,
   useTheme,
+  IconButton,
 } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import {
@@ -195,15 +198,16 @@ const StructuredProperty = ({
                 {capitalizeFirstLetter(DISPLAY[property] || property)}
               </Button>
             )}
-            {/* <Button
-              onClick={() => showList(property, "main")}
-              sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
-              variant="outlined"
-            >
-              {"Select "}
-              {capitalizeFirstLetter(DISPLAY[property] || property)}
-            </Button> */}
-
+            {property !== "specializations" && (
+              <Button
+                onClick={() => showList(property, "main")}
+                sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
+                variant="outlined"
+              >
+                {"Select "}
+                {capitalizeFirstLetter(DISPLAY[property] || property)}
+              </Button>
+            )}
             {property !== "parts" && property !== "isPartOf" && (
               <Button
                 onClick={() => {
@@ -266,12 +270,12 @@ const StructuredProperty = ({
                                 sx={{
                                   display: "flex",
                                   alignItems: "center",
-                                  backgroundColor: (theme) =>
+                                  background: (theme: any) =>
                                     theme.palette.mode === "dark"
-                                      ? "#1f232f"
-                                      : "#969faf",
-                                  borderTopLeftRadius: "25px",
-                                  borderTopRightRadius: "25px",
+                                      ? "#242425"
+                                      : "#d0d5dd",
+                                  borderTopLeftRadius: "21px",
+                                  borderTopRightRadius: "21px",
                                   m: 0,
                                   p: 2,
                                   gap: "10px",
@@ -282,63 +286,56 @@ const StructuredProperty = ({
                                 >
                                   {capitalizeFirstLetter(category)}
                                 </Typography>
-                                {!selectedDiffNode && (
-                                  <Box
-                                    sx={{
-                                      display: "flex",
-                                      gap: "15px",
-                                    }}
-                                  >
-                                    {property === "specializations" && (
-                                      <Button
-                                        onClick={() =>
-                                          addNewSpecialization(category)
-                                        }
-                                        sx={{
-                                          borderRadius: "25px",
-                                          backgroundColor: BUTTON_COLOR,
-                                        }}
-                                        variant="outlined"
-                                      >
-                                        {"Add "}
-                                      </Button>
-                                    )}
+                                {property === "specializations" &&
+                                  !selectedDiffNode && (
                                     <Button
-                                      variant="outlined"
                                       onClick={() =>
                                         showList(property, category)
                                       }
                                       sx={{
                                         borderRadius: "25px",
                                         backgroundColor: BUTTON_COLOR,
+                                        ":hover": {
+                                          backgroundColor:
+                                            theme.palette.mode === "light"
+                                              ? "#f0f0f0"
+                                              : "",
+                                        },
                                       }}
-                                    >
-                                      {"Select"}
-                                    </Button>
-                                    <Button
                                       variant="outlined"
-                                      onClick={() =>
-                                        handleEditCategory(property, category)
-                                      }
-                                      sx={{
+                                    >
+                                      {"Add Specializations"}
+                                    </Button>
+                                  )}
+                                {!selectedDiffNode && (
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      ml: "auto",
+                                    }}
+                                  >
+                                    <Tooltip title="Edit collection title">
+                                      <IconButton
+                                        onClick={() =>
+                                          handleEditCategory(property, category)
+                                        }
+                                      >
+                                        <EditIcon />
+                                      </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Delete collection">
+                                      <IconButton
+                                        onClick={() =>
+                                          deleteCategory(property, category)
+                                        }
+                                        /*  sx={{
                                         borderRadius: "25px",
                                         backgroundColor: BUTTON_COLOR,
-                                      }}
-                                    >
-                                      Edit
-                                    </Button>
-                                    <Button
-                                      variant="outlined"
-                                      onClick={() =>
-                                        deleteCategory(property, category)
-                                      }
-                                      sx={{
-                                        borderRadius: "25px",
-                                        backgroundColor: BUTTON_COLOR,
-                                      }}
-                                    >
-                                      Delete
-                                    </Button>
+                                      }} */
+                                      >
+                                        <DeleteIcon />
+                                      </IconButton>
+                                    </Tooltip>
                                   </Box>
                                 )}
                               </Box>

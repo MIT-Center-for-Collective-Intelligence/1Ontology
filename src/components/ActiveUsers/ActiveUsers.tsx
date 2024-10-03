@@ -80,6 +80,7 @@ const ActiveUsers = ({
               fName: data.fName,
               lName: data.lName,
               lastInteracted: data.lastInteracted,
+              lasChangeMadeAt: data.lasChangeMadeAt,
               online: isOnline(data.lastInteracted),
               uname: userId,
               reputations: data?.reputations || 0,
@@ -104,16 +105,23 @@ const ActiveUsers = ({
         height: "70vh",
         mt: "15px",
         overflowX: "hidden",
-        ...SCROLL_BAR_STYLE, 
+        ...SCROLL_BAR_STYLE,
         "&::-webkit-scrollbar": {
-          display: "none", 
+          display: "none",
         },
         scrollbarWidth: "none",
         msOverflowStyle: "none",
       }}
     >
       {Object.values(usersNodesViews)
-        .sort((a: any, b: any) => b.reputations - a.reputations)
+        .sort((a: any, b: any) => {
+          if (!a.lasChangeMadeAt) return 1;
+          if (!b.lasChangeMadeAt) return -1;
+          return (
+            new Date(b.lasChangeMadeAt).getTime() -
+            new Date(a.lasChangeMadeAt).getTime()
+          );
+        })
         .map((u: any) => (
           <Tooltip
             key={`${u.fName} ${u.lName}`}
