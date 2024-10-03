@@ -111,3 +111,25 @@ export type MainSpecializations = {
     specializations: MainSpecializations;
   };
 };
+
+export type NodeChange = {
+  nodeId: string;
+  modifiedBy: string;
+  modifiedProperty: string | null;
+  previousValue: any;
+  newValue: any;
+  modifiedAt: Date;
+  changeType:
+    | "change text" //handled
+    | "sort elements" //handled
+    | "remove element" //handled
+    | "modify elements" //handled
+    | "add property" // missing
+    | "remove property" // missing
+    | "delete node" // handled
+    | "add node" // handled
+    | "add collection" // handled
+    | "delete collection" // handled
+    | "edit collection"; // handled
+  fullNode: INode;
+};

@@ -11,7 +11,8 @@ import {
   increment,
 } from "firebase/firestore";
 import { NODES, NODES_LOGS, USERS } from "../firestoreClient/collections";
-import { NodeChange } from " @components/components/ActiveUsers/UserActivity";
+import { NodeChange } from " @components/types/INode";
+import moment from "moment";
 
 export const unlinkPropertyOf = async (
   db: any,
@@ -286,29 +287,29 @@ export const getChangeDescription = (
 
   switch (changeType) {
     case "change text":
-      return `updated the property "${modifiedProperty}".`;
+      return `Updated "${modifiedProperty}" in:`;
     case "add collection":
-      return `added a new collection.`;
+      return `Added a new collection in:`;
     case "delete collection":
-      return `deleted a collection.`;
+      return `Deleted a collection in:`;
     case "edit collection":
-      return `renamed a collection.`;
+      return `Renamed a collection in:`;
     case "sort elements":
-      return `sorted elements in "${modifiedProperty}", `;
+      return `Sorted elements under "${modifiedProperty}" in:`;
     case "remove element":
-      return `removed an element under the property "${modifiedProperty}".`;
+      return `Removed an element under "${modifiedProperty}" in:`;
     case "modify elements":
-      return `modified the elements.`;
+      return `Modified the elements in:`;
     case "add property":
-      return `added a new property.`;
+      return `Added "${modifiedProperty}" in:`;
     case "remove property":
-      return `removed the property "${modifiedProperty}".`;
+      return `Removed "${modifiedProperty}" in:`;
     case "delete node":
-      return `deleted the node "${fullNode.title}".`;
+      return `Deleted the node:`;
     case "add node":
-      return `added a new node titled "${fullNode.title}".`;
+      return `Added a new node titled:`;
     default:
-      return `made an unknown change to "${fullNode.title}", `;
+      return `Made an unknown change to:`;
   }
 };
 
@@ -336,4 +337,12 @@ export const synchronizeStuff = (
     (a, b) => a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime()
   );
   return prev;
+};
+
+export const getModifiedAt = (modifiedAt: any) => {
+  modifiedAt = moment(modifiedAt.toDate());
+  const today = moment();
+  return modifiedAt.isSame(today, "day")
+    ? `Today at ${modifiedAt.format("hh:mm A")}`
+    : modifiedAt.format("hh:mm A DD/MM/YYYY");
 };

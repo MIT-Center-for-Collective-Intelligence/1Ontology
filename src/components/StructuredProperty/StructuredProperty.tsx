@@ -42,6 +42,8 @@ type IStructuredPropertyProps = {
   locked: boolean;
   selectedDiffNode: any;
   addNewSpecialization?: any;
+  reviewId?: string;
+  setReviewId?: Function;
 };
 
 const StructuredProperty = ({
@@ -62,6 +64,8 @@ const StructuredProperty = ({
   locked,
   selectedDiffNode,
   addNewSpecialization,
+  reviewId,
+  setReviewId,
 }: IStructuredPropertyProps) => {
   const [{ user }] = useAuth();
   const theme = useTheme();
@@ -183,7 +187,7 @@ const StructuredProperty = ({
           >
             {property === "specializations" && (
               <Button
-                onClick={() => addNewSpecialization("main")}
+                onClick={() => showList(property, "main")}
                 sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
                 variant="outlined"
               >
@@ -191,14 +195,14 @@ const StructuredProperty = ({
                 {capitalizeFirstLetter(DISPLAY[property] || property)}
               </Button>
             )}
-            <Button
+            {/* <Button
               onClick={() => showList(property, "main")}
               sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
               variant="outlined"
             >
               {"Select "}
               {capitalizeFirstLetter(DISPLAY[property] || property)}
-            </Button>
+            </Button> */}
 
             {property !== "parts" && property !== "isPartOf" && (
               <Button
@@ -417,6 +421,8 @@ const StructuredProperty = ({
                                                 linkLocked={false}
                                                 locked={locked}
                                                 user={user}
+                                                reviewId={reviewId}
+                                                setReviewId={setReviewId}
                                               />
                                             </ListItem>
                                           )}
