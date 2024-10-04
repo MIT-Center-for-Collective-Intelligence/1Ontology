@@ -105,7 +105,7 @@ const Text = ({
     async (copyValue: string) => {
       if (!user?.uname) return;
 
-      if (currentVisibleNode.inheritance[property]?.ref) {
+/*       if (currentVisibleNode.inheritance[property]?.ref) {
         if (
           await confirmIt(
             `Are you sure you want to break the inheritance of ${property}?`,
@@ -120,7 +120,7 @@ const Text = ({
         } else {
           return;
         }
-      }
+      } */
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );
@@ -362,8 +362,7 @@ const Text = ({
           selectedDiffNode.modifiedProperty === property ? (
             <Box sx={{ p: "10px", borderRadius: "5px" }}>
               <Box>{renderDiff()}</Box>
-            </Box>
-          ) : !currentVisibleNode.inheritance[property]?.ref ? (
+            </Box> /* : !currentVisibleNode.inheritance[property]?.ref ? (
             <YjsEditor
               uname={`${user?.fName} ${user?.lName}`}
               property={property}
@@ -371,6 +370,7 @@ const Text = ({
               color={randomProminentColor()}
               saveChanges={onSaveTextChange}
             />
+          ) */
           ) : (
             <TextField
               inputRef={textAreaRef}

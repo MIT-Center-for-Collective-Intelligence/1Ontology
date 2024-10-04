@@ -4,10 +4,10 @@ import { WebsocketProvider } from "y-websocket";
 import { QuillBinding } from "y-quill";
 import Quill from "quill";
 import QuillCursors from "quill-cursors";
-import "quill/dist/quill.snow.css"; // Import Quill's CSS
 import { Box } from "@mui/material";
 import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
 import { NODES } from " @components/lib/firestoreClient/collections";
+import "quill/dist/quill.snow.css";
 
 Quill.register("modules/cursors", QuillCursors);
 
@@ -27,6 +27,7 @@ const YjsEditorWrapper = ({
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
   const yTextRef = useRef<any>(null);
+  const contentLoaded = useRef<any>(null);
 
   // Fetch initial text content from Firestore
   const loadTextFromFirestore = async (ydoc: Y.Doc) => {
@@ -50,7 +51,7 @@ const YjsEditorWrapper = ({
 
       if (content.trim()) {
         console.log(content, "content==>");
-        ydoc.getText("quill").insert(0, content);
+        ydoc.getText("quill").insert(0, content.trim());
       }
     } else {
       console.log(
@@ -62,8 +63,12 @@ const YjsEditorWrapper = ({
   useEffect(() => {
     if (!property || !uname || !nodeId) return;
     const ydoc = new Y.Doc();
+    const WS_URL =
+      process.env.NODE_ENV === "development"
+        ? `ws://${process.env.NEXT_PUBLIC_WS_SERVER}/ws`
+        : `wss://${process.env.NEXT_PUBLIC_WS_SERVER}/ws`;
     const provider = new WebsocketProvider(
-      "ws://websocket-server-163479774214.us-central1.run.app/ws",
+      WS_URL,
       `${nodeId}-${property}`,
       ydoc,
       { connect: true }
@@ -74,11 +79,14 @@ const YjsEditorWrapper = ({
     yTextRef.current = yText;
 
     provider.on("sync", async (isSynced: any) => {
-      if (isSynced && provider.awareness.getStates().size === 1) {
-        console.log(
-          "This is the first client, loading initial content from Firestore..."
-        );
+      if (
+        isSynced &&
+        provider.awareness.getStates().size === 1 &&
+        !contentLoaded.current
+      ) {
+        // This is the first client, loading initial content from Firestore
         await loadTextFromFirestore(ydoc);
+        contentLoaded.current = true;
       }
     });
 
@@ -106,9 +114,8 @@ const YjsEditorWrapper = ({
       provider.awareness.setLocalStateField("user", userInfo);
 
       editor.on("text-change", (delta, oldDelta, source) => {
-        console.log("editor.getText()", editor.getText(), saveChanges);
         if (saveChanges) {
-          saveChanges(editor.getText());
+          // saveChanges(editor.getText());
         }
       });
 
@@ -120,7 +127,7 @@ const YjsEditorWrapper = ({
         editor.off("text-change");
       };
     }
-  }, [uname, property, nodeId]);
+  }, [uname, property, nodeId, contentLoaded]);
 
   return (
     <Box
@@ -129,7 +136,7 @@ const YjsEditorWrapper = ({
         borderBottomRightRadius: "25px",
         borderBottomLeftRadius: "25px",
         minHeight: "70px",
-        fontSize: property === "title" ? "24px" : "18px",
+        fontSize: property === "title" ? "24px" : "128px",
       }}
     />
   );
