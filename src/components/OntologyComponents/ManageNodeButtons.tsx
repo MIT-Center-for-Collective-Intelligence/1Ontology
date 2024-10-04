@@ -45,7 +45,6 @@ const ManageNodeButtons = ({
       <Box
         sx={{
           display: "flex",
-          mb: "5px",
           ml: "auto",
           alignItems: "center",
           gap: "5px",
@@ -55,7 +54,6 @@ const ManageNodeButtons = ({
           sx={{
             display: "flex",
             px: "19px",
-            mb: "15px",
             alignItems: "center",
             alignContent: "center",
           }}
@@ -64,7 +62,6 @@ const ManageNodeButtons = ({
             <Box
               sx={{
                 display: "flex",
-                mt: "5px",
                 gap: "15px",
               }}
             >
@@ -110,7 +107,6 @@ const ManageNodeButtons = ({
                 sx={{
                   borderRadius: "25px",
                   mx: "7px",
-                  mb: "13px",
                 }}
               >
                 {locked ? (
@@ -131,7 +127,6 @@ const ManageNodeButtons = ({
               <LockIcon
                 sx={{
                   color: "orange",
-                  mb: "13px",
                 }}
               />
             ) : (
