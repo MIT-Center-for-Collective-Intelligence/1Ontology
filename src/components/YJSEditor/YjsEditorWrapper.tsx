@@ -50,13 +50,8 @@ const YjsEditorWrapper = ({
       }
 
       if (content.trim()) {
-        console.log(content, "content==>");
         ydoc.getText("quill").insert(0, content.trim());
       }
-    } else {
-      console.log(
-        "No such document in Firestore, initializing a new document."
-      );
     }
   };
 
@@ -73,7 +68,6 @@ const YjsEditorWrapper = ({
       ydoc,
       { connect: true }
     );
-    console.log("provider", provider);
 
     const yText = ydoc.getText("quill");
     yTextRef.current = yText;

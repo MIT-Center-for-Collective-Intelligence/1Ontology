@@ -104,7 +104,7 @@ import {
 } from " @components/lib/firestoreClient/errors.firestore";
 import { IChat } from " @components/types/IChat";
 
-import { saveNewChange } from " @components/lib/utils/helpers";
+import { saveNewChangeLog } from " @components/lib/utils/helpers";
 import { useHover } from " @components/lib/hooks/useHover";
 import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarSidebar";
 import { NodeChange } from " @components/types/INode";
@@ -591,7 +591,7 @@ const Ontology = () => {
           deleted: false,
           createdAt: new Date(),
         });
-        saveNewChange(db, {
+        saveNewChangeLog(db, {
           nodeId: newNodeRef.id,
           modifiedBy: user?.uname,
           modifiedProperty: "",

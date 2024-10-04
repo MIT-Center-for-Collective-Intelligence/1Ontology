@@ -68,7 +68,7 @@ In this example, `ChildNode` is used to display a child node with the given prop
 import { NODES } from " @components/lib/firestoreClient/collections";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import {
-  saveNewChange,
+  saveNewChangeLog,
   unlinkPropertyOf,
 } from " @components/lib/utils/helpers";
 import { INode, INodePath, IChildNode } from " @components/types/INode";
@@ -184,7 +184,7 @@ const LinkNode = ({
       const nodeRef = doc(collection(db, NODES), link.id);
       updateDoc(nodeRef, { title: editorContent, deleted: true });
 
-      saveNewChange(db, {
+      saveNewChangeLog(db, {
         nodeId: link.id,
         modifiedBy: user?.uname,
         modifiedProperty: null,
@@ -256,7 +256,7 @@ const LinkNode = ({
               updatedProperty: property,
             });
           }
-          saveNewChange(db, {
+          saveNewChangeLog(db, {
             nodeId: currentVisibleNode.id,
             modifiedBy: user?.uname,
             modifiedProperty: property,
@@ -346,7 +346,7 @@ const LinkNode = ({
               link.id
             );
           }
-          saveNewChange(db, {
+          saveNewChangeLog(db, {
             nodeId: currentVisibleNode.id,
             modifiedBy: user?.uname,
             modifiedProperty: property,

@@ -13,6 +13,7 @@ import {
 import { NODES, NODES_LOGS, USERS } from "../firestoreClient/collections";
 import { NodeChange } from " @components/types/INode";
 import moment from "moment";
+import { capitalizeFirstLetter } from "./string.utils";
 
 export const unlinkPropertyOf = async (
   db: any,
@@ -262,7 +263,7 @@ const updateProperty = async (
   }
 };
 
-export const saveNewChange = (db: any, data: NodeChange) => {
+export const saveNewChangeLog = (db: any, data: NodeChange) => {
   if (!data.modifiedBy) return;
   const changeUseRef = doc(collection(db, NODES_LOGS));
   setDoc(changeUseRef, data);
@@ -309,6 +310,14 @@ export const getChangeDescription = (
       return `Deleted the node:`;
     case "add node":
       return `Added a new node titled:`;
+    case "add element":
+      return `Added a new ${
+        modifiedProperty === "specializations"
+          ? "Specialization"
+          : modifiedProperty === "generalizations"
+          ? "Generalization"
+          : capitalizeFirstLetter(modifiedProperty || "")
+      } Under:`;
     default:
       return `Made an unknown change to:`;
   }
@@ -349,7 +358,6 @@ export const getModifiedAt = (modifiedAt: any) => {
 };
 
 export function randomProminentColor() {
-  
   const prominentColors = [
     "#FF5733", // Red-Orange
     "#FFBD33", // Yellow-Orange
@@ -365,9 +373,7 @@ export function randomProminentColor() {
     "#808080", // Gray
   ];
 
-  
   const randomIndex = Math.floor(Math.random() * prominentColors.length);
-
 
   return prominentColors[randomIndex];
 }

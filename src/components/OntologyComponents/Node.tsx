@@ -130,7 +130,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {
   removeIsPartOf,
-  saveNewChange,
+  saveNewChangeLog,
   unlinkPropertyOf,
   updateInheritance,
 } from " @components/lib/utils/helpers";
@@ -241,16 +241,13 @@ const Node = ({
   }, [searchValue, selectedProperty]);
 
   const markItemAsChecked = (checkedId: string) => {
-    setCheckedItems((oldChecked: Set<string>) => {
-      const _oldChecked = new Set(oldChecked);
-
-      if (_oldChecked.has(checkedId)) {
-        _oldChecked.delete(checkedId);
-      } else {
-        _oldChecked.add(checkedId);
-      }
-      return _oldChecked;
-    });
+    const _oldChecked = new Set(checkedItems);
+    if (_oldChecked.has(checkedId)) {
+      _oldChecked.delete(checkedId);
+    } else {
+      _oldChecked.add(checkedId);
+    }
+    setCheckedItems(_oldChecked);
   };
 
   const cloneNode = useCallback(
@@ -354,6 +351,9 @@ const Node = ({
 
         // Retrieve the parent node document
         const nodeParentData = nodes[currentVisibleNode.id];
+        const previousParentValue = JSON.parse(
+          JSON.stringify(nodeParentData.specializations)
+        );
 
         // Extract data from the parent node document
         const parentNode = {
@@ -434,6 +434,26 @@ const Node = ({
         // Update the parent node document in the database
         setOpenSelectModel(false);
         await updateDoc(nodeParentRef, parentNode);
+        saveNewChangeLog(db, {
+          nodeId: currentVisibleNode.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: "specializations",
+          previousValue: previousParentValue,
+          newValue: parentNode.specializations,
+          modifiedAt: new Date(),
+          changeType: "add element",
+          fullNode: parentNode,
+        });
+        saveNewChangeLog(db, {
+          nodeId: newNodeRef.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: "specializations",
+          previousValue: null,
+          newValue: null,
+          modifiedAt: new Date(),
+          changeType: "add node",
+          fullNode: newNode,
+        });
       } catch (error) {
         // Handle errors by logging to the console
         confirmIt("Sorry there was an Error please try again!", "Ok", "");
@@ -796,7 +816,7 @@ const Node = ({
           db,
         });
       }
-      saveNewChange(db, {
+      saveNewChangeLog(db, {
         nodeId: currentVisibleNode.id,
         modifiedBy: user?.uname,
         modifiedProperty: selectedProperty,
@@ -957,7 +977,7 @@ const Node = ({
       await updateDoc(nodeDoc.ref, updateData);
 
       // Log final change
-      saveNewChange(db, {
+      saveNewChangeLog(db, {
         nodeId: currentVisibleNode.id,
         modifiedBy: user?.uname,
         modifiedProperty: selectedProperty,
@@ -1050,20 +1070,14 @@ const Node = ({
           // Update the node document
           await updateDoc(nodeDoc.ref, updateData);
 
-          // Log the deletion
-          console.log("logs ==>", {
-            action: "Deleted a category",
+          recordLogs({
+            action: "Deleted a collection",
             category,
             node: nodeDoc.id,
           });
-          // recordLogs({
-          //   action: "Deleted a category",
-          //   category,
-          //   node: nodeDoc.id,
-          // });
 
           // Log the changes
-          saveNewChange(db, {
+          saveNewChangeLog(db, {
             nodeId: currentVisibleNode.id,
             modifiedBy: user?.uname,
             modifiedProperty: property,
@@ -1181,7 +1195,7 @@ const Node = ({
               });
             }
 
-            saveNewChange(db, {
+            saveNewChangeLog(db, {
               nodeId: currentVisibleNode.id,
               modifiedBy: user?.uname,
               modifiedProperty: property,
@@ -1265,7 +1279,7 @@ const Node = ({
         // Update the user document by removing the deleted node's ID
         await updateDoc(nodeRef, { deleted: true });
 
-        saveNewChange(db, {
+        saveNewChangeLog(db, {
           nodeId: currentVisibleNode.id,
           modifiedBy: user?.uname,
           modifiedProperty: null,
@@ -1742,14 +1756,25 @@ const Node = ({
                   >
                     {" "}
                     {user?.manageLock || !node.locked ? (
-                      <Checkbox
-                        checked={checkedItems.has(node.id)}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          markItemAsChecked(node.id);
-                        }}
-                        name={node.id}
-                      />
+                      checkedItems.has(node.id) ? (
+                        <Checkbox
+                          checked={true}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            markItemAsChecked(node.id);
+                          }}
+                          name={node.id}
+                        />
+                      ) : (
+                        <Checkbox
+                          checked={false}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            markItemAsChecked(node.id);
+                          }}
+                          name={node.id}
+                        />
+                      )
                     ) : (
                       <LockIcon
                         sx={{

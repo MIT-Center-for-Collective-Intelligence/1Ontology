@@ -90,7 +90,14 @@ const StructuredProperty = ({
 
     let finalResult: any = {};
 
-    if (selectedDiffNode && selectedDiffNode.modifiedProperty === property) {
+    if (
+      selectedDiffNode &&
+      selectedDiffNode.modifiedProperty === property &&
+      (selectedDiffNode.changeType === "sort elements" ||
+        selectedDiffNode.changeType === "remove element" ||
+        selectedDiffNode.changeType === "modify elements" ||
+        selectedDiffNode.changeType === "add element")
+    ) {
       Object.keys(selectedDiffNode.newValue).forEach((key) => {
         const newValueArray = selectedDiffNode.newValue[key];
         const previousValueArray = selectedDiffNode.previousValue[key];

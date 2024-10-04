@@ -123,6 +123,7 @@ export type NodeChange = {
     | "change text" //handled
     | "sort elements" //handled
     | "remove element" //handled
+    | "add element"
     | "modify elements" //handled
     | "add property" // missing
     | "remove property" // missing

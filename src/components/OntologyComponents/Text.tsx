@@ -16,7 +16,7 @@ import { INode } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import {
   randomProminentColor,
-  saveNewChange as saveNewChangeLog,
+  saveNewChangeLog,
   updateInheritance,
 } from " @components/lib/utils/helpers";
 import { diffWords, diffLines } from "diff"; // Using diffLines for line-by-line diff
@@ -105,7 +105,7 @@ const Text = ({
     async (copyValue: string) => {
       if (!user?.uname) return;
 
-/*       if (currentVisibleNode.inheritance[property]?.ref) {
+      /*       if (currentVisibleNode.inheritance[property]?.ref) {
         if (
           await confirmIt(
             `Are you sure you want to break the inheritance of ${property}?`,
