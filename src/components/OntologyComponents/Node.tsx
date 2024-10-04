@@ -839,14 +839,21 @@ const Node = ({
       if (!nodeDoc.exists()) return;
 
       const nodeData = nodeDoc.data();
-      const isSpecialization = selectedProperty === "specializations";
+      const isSpecialization =
+        selectedProperty === "specializations" ||
+        selectedProperty === "generalizations";
+
       const propertyPath = isSpecialization
         ? selectedProperty
         : `properties.${selectedProperty}`;
 
       const getNodeCategories = () =>
         (currentVisibleNode.categoriesOrder || {})[selectedProperty] ||
-        Object.keys(nodeData[propertyPath] || {});
+        Object.keys(
+          isSpecialization
+            ? nodeData[propertyPath]
+            : nodeData.properties[propertyPath] || {}
+        );
 
       const updateCategoriesOrder = (
         oldName: string | null,
@@ -869,12 +876,23 @@ const Node = ({
 
       if (editCollection) {
         categoriesOrder = getNodeCategories();
-        previousValue = JSON.parse(JSON.stringify(nodeData[propertyPath]));
-
+        previousValue = JSON.parse(
+          JSON.stringify(
+            isSpecialization
+              ? nodeData[propertyPath]
+              : nodeData.properties[propertyPath] || {}
+          )
+        );
         // Update the collection name
-        nodeData[propertyPath][newCollection] =
-          nodeData[propertyPath][editCollection.category];
-        delete nodeData[propertyPath][editCollection.category];
+        if (isSpecialization) {
+          nodeData[propertyPath][newCollection] =
+            nodeData[propertyPath][editCollection.category];
+          delete nodeData[propertyPath][editCollection.category];
+        } else {
+          nodeData.properties[selectedProperty][newCollection] =
+            nodeData.properties[selectedProperty][editCollection.category];
+          delete nodeData.properties[selectedProperty][editCollection.category];
+        }
 
         updateCategoriesOrder(editCollection.category, newCollection);
         logChange("Edited a category", editCollection.category, newCollection);
@@ -890,11 +908,24 @@ const Node = ({
         }
 
         // Add a new collection
-        previousValue = JSON.parse(JSON.stringify(nodeData[propertyPath]));
-        nodeData[propertyPath] = {
-          ...(nodeData[propertyPath] || {}),
-          [newCollection]: [],
-        };
+        previousValue = JSON.parse(
+          JSON.stringify(
+            isSpecialization
+              ? nodeData[propertyPath] || {}
+              : nodeData.properties[selectedProperty] || {}
+          )
+        );
+        if (isSpecialization) {
+          nodeData[propertyPath] = {
+            ...(nodeData[propertyPath] || {}),
+            [newCollection]: [],
+          };
+        } else {
+          nodeData.properties[selectedProperty] = {
+            ...(nodeData.properties[selectedProperty] || {}),
+            [newCollection]: [],
+          };
+        }
 
         updateCategoriesOrder(null, newCollection);
         logChange("add collection", null, newCollection);
@@ -913,8 +944,11 @@ const Node = ({
       }
 
       // Update the node document
+
       const updateData = {
-        [propertyPath]: nodeData[propertyPath],
+        [propertyPath]: isSpecialization
+          ? nodeData[propertyPath]
+          : nodeData.properties[selectedProperty],
         ...(categoriesOrder && {
           [`categoriesOrder.${selectedProperty}`]: categoriesOrder,
         }),
@@ -928,7 +962,9 @@ const Node = ({
         modifiedBy: user?.uname,
         modifiedProperty: selectedProperty,
         previousValue,
-        newValue: nodeData[propertyPath],
+        newValue: isSpecialization
+          ? nodeData[propertyPath]
+          : nodeData.properties[selectedProperty],
         modifiedAt: new Date(),
         changeType,
         fullNode: currentVisibleNode,
@@ -964,21 +1000,37 @@ const Node = ({
         if (nodeDoc.exists()) {
           let previousValue = null;
           const nodeData = nodeDoc.data();
-          const isSpecialization = property === "specializations";
+          const isSpecialization =
+            property === "specializations" || property === "generalizations";
+
           const propertyPath = isSpecialization
             ? property
             : `properties.${property}`;
           const categoriesOrderPath = `categoriesOrder.${property}`;
 
           // Handle collection deletion for both 'specializations' and other properties
-          previousValue = JSON.parse(JSON.stringify(nodeData[propertyPath]));
+          previousValue = JSON.parse(
+            JSON.stringify(
+              isSpecialization
+                ? nodeData[propertyPath]
+                : nodeData.properties[property]
+            )
+          );
 
           // Merge the category into "main" and delete the category
-          nodeData[propertyPath]["main"] = [
-            ...(nodeData[propertyPath]["main"] || []),
-            ...nodeData[propertyPath][category],
-          ];
-          delete nodeData[propertyPath][category];
+          if (isSpecialization) {
+            nodeData[propertyPath]["main"] = [
+              ...(nodeData[propertyPath]["main"] || []),
+              ...nodeData[propertyPath][category],
+            ];
+            delete nodeData[propertyPath][category];
+          } else {
+            nodeData.properties[property]["main"] = [
+              ...(nodeData.properties[property]["main"] || []),
+              ...nodeData.properties[property][category],
+            ];
+            delete nodeData.properties[property][category];
+          }
 
           // Remove the category from categoriesOrder
           const categoriesOrder =
@@ -989,7 +1041,9 @@ const Node = ({
 
           // Prepare the updated document data
           const updateData = {
-            [propertyPath]: nodeData[propertyPath],
+            [propertyPath]: isSpecialization
+              ? nodeData[propertyPath]
+              : nodeData.properties[property],
             [categoriesOrderPath]: updatedCategoriesOrder,
           };
 
@@ -997,11 +1051,16 @@ const Node = ({
           await updateDoc(nodeDoc.ref, updateData);
 
           // Log the deletion
-          recordLogs({
+          console.log("logs ==>", {
             action: "Deleted a category",
             category,
             node: nodeDoc.id,
           });
+          // recordLogs({
+          //   action: "Deleted a category",
+          //   category,
+          //   node: nodeDoc.id,
+          // });
 
           // Log the changes
           saveNewChange(db, {
@@ -1009,13 +1068,16 @@ const Node = ({
             modifiedBy: user?.uname,
             modifiedProperty: property,
             previousValue,
-            newValue: nodeData[propertyPath],
+            newValue: isSpecialization
+              ? nodeData[propertyPath]
+              : nodeData.properties[property],
             modifiedAt: new Date(),
             changeType: "delete collection",
             fullNode: currentVisibleNode,
           });
         }
       } catch (error) {
+        console.error("error", error);
         recordLogs({
           type: "error",
           error,
