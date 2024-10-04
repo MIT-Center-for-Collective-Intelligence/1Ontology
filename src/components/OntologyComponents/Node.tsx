@@ -1303,7 +1303,7 @@ const Node = ({
         error,
       });
     }
-  }, [currentVisibleNode.id, user?.uname]);
+  }, [currentVisibleNode.id, user?.uname, nodes, currentVisibleNode]);
 
   const handleToggle = useCallback(
     (nodeId: string) => {

@@ -27,7 +27,7 @@ import {
 import ManageNodeButtons from "./ManageNodeButtons";
 import { DISPLAY } from " @components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
-import YjsEditor from "../YJSEditor/YjsEditor";
+// import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ISubOntologyProps = {
   currentVisibleNode: INode;

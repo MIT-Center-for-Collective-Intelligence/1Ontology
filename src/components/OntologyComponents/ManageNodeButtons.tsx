@@ -13,7 +13,6 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import ChatIcon from "@mui/icons-material/Chat";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import DeleteIcon from "@mui/icons-material/Delete";
-import HistoryIcon from '@mui/icons-material/History';
 
 const ManageNodeButtons = ({
   locked,
@@ -25,7 +24,6 @@ const ManageNodeButtons = ({
   navigateToNode,
   displayInheritanceSettings,
   displayNodeChat,
-  displayNodeHistory,
   activeSidebar,
 }: {
   locked: boolean;
@@ -37,7 +35,6 @@ const ManageNodeButtons = ({
   navigateToNode: any;
   displayInheritanceSettings: any;
   displayNodeChat: any;
-  displayNodeHistory: any;
   activeSidebar: string;
 }) => {
   return (
@@ -45,7 +42,6 @@ const ManageNodeButtons = ({
       <Box
         sx={{
           display: "flex",
-          mb: "5px",
           ml: "auto",
           alignItems: "center",
           gap: "5px",
@@ -55,7 +51,6 @@ const ManageNodeButtons = ({
           sx={{
             display: "flex",
             px: "19px",
-            mb: "15px",
             alignItems: "center",
             alignContent: "center",
           }}
@@ -64,7 +59,6 @@ const ManageNodeButtons = ({
             <Box
               sx={{
                 display: "flex",
-                mt: "5px",
                 gap: "15px",
               }}
             >
@@ -110,7 +104,6 @@ const ManageNodeButtons = ({
                 sx={{
                   borderRadius: "25px",
                   mx: "7px",
-                  mb: "13px",
                 }}
               >
                 {locked ? (
@@ -131,7 +124,6 @@ const ManageNodeButtons = ({
               <LockIcon
                 sx={{
                   color: "orange",
-                  mb: "13px",
                 }}
               />
             ) : (
@@ -156,13 +148,6 @@ const ManageNodeButtons = ({
           <IconButton onClick={displayNodeChat}>
             <ChatIcon
               color={activeSidebar === "chat" ? "primary" : "inherit"}
-            />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="View History">
-          <IconButton onClick={displayNodeHistory}>
-            <HistoryIcon 
-              color={activeSidebar === "nodeHistory" ? "primary" : "inherit"}
             />
           </IconButton>
         </Tooltip>
