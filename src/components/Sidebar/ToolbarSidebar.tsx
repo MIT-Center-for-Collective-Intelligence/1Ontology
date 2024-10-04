@@ -37,7 +37,15 @@ import { chatChange } from " @components/client/firestore/messages.firestore";
 import { INotification } from " @components/types/IChat";
 import { synchronizeStuff } from " @components/lib/utils/helpers";
 import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
-import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getFirestore,
+  onSnapshot,
+  query,
+  Timestamp,
+  updateDoc,
+} from "firebase/firestore";
 import SearchSideBar from "../SearchSideBar/SearchSideBar";
 import ActiveUsers from "../ActiveUsers/ActiveUsers";
 import UserActivity from "../ActiveUsers/UserActivity";
@@ -121,6 +129,7 @@ const ToolbarSidebar = ({
   const [isUploading, setIsUploading] = useState(false);
   const [profileImage, setProfileImage] = useState("");
   const isProfileMenuOpen = Boolean(profileMenuOpen);
+  const [activeUsers, setActiveUsers] = useState<any>({});
 
   const signOut = async () => {
     router.push(ROUTES.signIn);
@@ -322,6 +331,56 @@ const ToolbarSidebar = ({
     [db, user]
   );
 
+  const isOnline = (timestamp: Timestamp) => {
+    if (!timestamp) return false;
+    const now = new Date();
+    const timeDifference = now.getTime() - timestamp.toMillis();
+    const minutes = Math.floor(timeDifference / 1000 / 60);
+    return minutes < 10;
+  };
+
+  useEffect(() => {
+    const usersQuery = query(collection(db, "users"));
+    const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+      setActiveUsers((prevUsersNodesViews: any) => {
+        const updatedUsersData = { ...prevUsersNodesViews };
+
+        snapshot.docChanges().forEach((change) => {
+          const doc = change.doc;
+          const userId = doc.id;
+          const data = doc.data();
+          const currentNode = data.currentNode;
+
+          if (
+            (change.type === "added" || change.type === "modified") &&
+            currentNode
+          ) {
+            updatedUsersData[userId] = {
+              node: {
+                title: nodes[currentNode]?.title || "",
+                id: currentNode,
+              },
+              imageUrl: data.imageUrl,
+              fName: data.fName,
+              lName: data.lName,
+              lastInteracted: data.lastInteracted,
+              lasChangeMadeAt: data.lasChangeMadeAt,
+              online: isOnline(data.lastInteracted),
+              uname: userId,
+              reputations: data?.reputations || 0,
+            };
+          } else if (change.type === "removed") {
+            delete updatedUsersData[userId];
+          }
+        });
+
+        return updatedUsersData;
+      });
+    });
+
+    return () => unsubscribe();
+  }, [nodes]);
+
   const displayUserLogs = useCallback(
     (user: {
       uname: string;
@@ -395,6 +454,7 @@ const ToolbarSidebar = ({
           <NodeActivity
             currentVisibleNode={currentVisibleNode}
             displayDiff={displayDiff}
+            activeUsers={activeUsers}
           />
         );
       default:
@@ -654,6 +714,7 @@ const ToolbarSidebar = ({
               displayUserLogs={displayUserLogs}
               handleExpand={handleExpandSidebar}
               fullVersion={hovered}
+              activeUsers={activeUsers}
             />
           </Box>
         </>

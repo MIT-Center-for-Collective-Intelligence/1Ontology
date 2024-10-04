@@ -28,9 +28,11 @@ import ActivityDetails from "./ActivityDetails";
 const NodeActivity = ({
   currentVisibleNode,
   displayDiff,
+  activeUsers,
 }: {
   currentVisibleNode: any;
   displayDiff: any;
+  activeUsers: any;
 }) => {
   const db = getFirestore();
   const [logs, setLogs] = useState<any>({});
@@ -66,14 +68,6 @@ const NodeActivity = ({
 
     return () => unsubscribeNodes();
   }, [db, currentVisibleNode.id]);
-
-  const getModifiedAt = (modifiedAt: any) => {
-    modifiedAt = moment(modifiedAt.toDate());
-    const today = moment();
-    return modifiedAt.isSame(today, "day")
-      ? `Today at ${modifiedAt.format("hh:mm A")}`
-      : modifiedAt.format("hh:mm A DD/MM/YYYY");
-  };
 
   if (loading) {
     return (
@@ -133,7 +127,12 @@ const NodeActivity = ({
       )}
       {Object.keys(logs).length > 0 &&
         Object.keys(logs).map((id) => (
-          <ActivityDetails key={id} activity={logs[id]} displayDiff={displayDiff} />
+          <ActivityDetails
+            key={id}
+            activity={logs[id]}
+            displayDiff={displayDiff}
+            modifiedByDetails={activeUsers[logs[id].modifiedBy]}
+          />
         ))}
     </Box>
   );
