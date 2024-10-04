@@ -347,3 +347,27 @@ export const getModifiedAt = (modifiedAt: any) => {
     ? `Today at ${modifiedAt.format("hh:mm A")}`
     : modifiedAt.format("hh:mm A DD/MM/YYYY");
 };
+
+export function randomProminentColor() {
+  
+  const prominentColors = [
+    "#FF5733", // Red-Orange
+    "#FFBD33", // Yellow-Orange
+    "#DBFF33", // Yellow-Green
+    "#75FF33", // Green
+    "#33FF57", // Green-Teal
+    "#33DBFF", // Teal
+    "#3375FF", // Blue
+    "#3357FF", // Blue-Purple
+    "#8E33FF", // Purple
+    "#FF33BD", // Pink
+    "#FF3357", // Red
+    "#808080", // Gray
+  ];
+
+  
+  const randomIndex = Math.floor(Math.random() * prominentColors.length);
+
+
+  return prominentColors[randomIndex];
+}

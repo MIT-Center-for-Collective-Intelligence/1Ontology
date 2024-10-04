@@ -15,6 +15,7 @@ import { useTheme } from "@emotion/react";
 import { INode } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import {
+  randomProminentColor,
   saveNewChange as saveNewChangeLog,
   updateInheritance,
 } from " @components/lib/utils/helpers";
@@ -26,6 +27,7 @@ import {
 import ManageNodeButtons from "./ManageNodeButtons";
 import { DISPLAY } from " @components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
+import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ISubOntologyProps = {
   currentVisibleNode: INode;
@@ -169,13 +171,13 @@ const Text = ({
         }
 
         // Call the debounced function instead of directly logging
-        debouncedSaveNewChangeLog(
-          db,
-          currentVisibleNode,
-          user,
-          property,
-          previousValue
-        );
+        // debouncedSaveNewChangeLog(
+        //   db,
+        //   currentVisibleNode,
+        //   user,
+        //   property,
+        //   previousValue
+        // );
       }
     },
     [currentVisibleNode.id, user?.uname, property]
@@ -329,7 +331,7 @@ const Text = ({
           />
         )}
       </Box>
-      <Typography color="red">{error}</Typography> 
+      <Typography color="red">{error}</Typography>
       {locked ||
       (selectedDiffNode && selectedDiffNode.modifiedProperty !== property) ? (
         <Typography
@@ -344,6 +346,14 @@ const Text = ({
             <Box sx={{ p: "10px", borderRadius: "5px" }}>
               <Box>{renderDiff()}</Box>
             </Box>
+          ) : !currentVisibleNode.inheritance[property]?.ref ? (
+            <YjsEditor
+              uname={`${user?.fName} ${user?.lName}`}
+              property={property}
+              nodeId={currentVisibleNode.id}
+              color={randomProminentColor()}
+              saveChanges={onSaveTextChange}
+            />
           ) : (
             <TextField
               inputRef={textAreaRef}
