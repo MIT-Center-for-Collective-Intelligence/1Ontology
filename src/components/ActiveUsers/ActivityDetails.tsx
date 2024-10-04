@@ -1,9 +1,9 @@
 import {
   getChangeDescription,
   getModifiedAt,
-} from ' @components/lib/utils/helpers';
-import { NodeChange } from ' @components/types/INode';
-import { Box, Typography, Paper, Button } from '@mui/material';
+} from " @components/lib/utils/helpers";
+import { NodeChange } from " @components/types/INode";
+import { Box, Typography, Paper, Button } from "@mui/material";
 
 const ActivityDetails = ({
   activity,
@@ -13,34 +13,40 @@ const ActivityDetails = ({
   displayDiff: Function;
 }) => {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ display: "flex", flexDirection: "column" }}>
       <Typography
         sx={{
-          fontSize: '13px',
-          fontWeight: 'bold',
-          ml: 'auto',
-          mr: '15px',
+          fontSize: "13px",
+          fontWeight: "bold",
+          ml: "auto",
+          mr: "15px",
         }}
       >
-        {' '}
+        {" "}
         {getModifiedAt(activity.modifiedAt)}
       </Typography>
       <Paper
         elevation={3}
-        sx={{ padding: 1, marginBottom: 1, m: '15px', mt: '0px', position: 'relative' }}
+        sx={{
+          padding: 1,
+          marginBottom: 1,
+          m: "15px",
+          mt: "0px",
+          position: "relative",
+        }}
       >
         <Button
           onClick={() => {
             displayDiff(activity);
           }}
-          variant='outlined'
-          sx={{ 
-            borderRadius: '25px',
-            position: 'absolute',
-            top: '0',
-            right: '0',
-            mr: '8px',
-            mt: '8px',
+          variant="outlined"
+          sx={{
+            borderRadius: "25px",
+            position: "absolute",
+            top: "0",
+            right: "0",
+            mr: "8px",
+            mt: "8px",
           }}
         >
           View
@@ -48,17 +54,26 @@ const ActivityDetails = ({
         <Box sx={{ pb: 4, pl: 2 }}>
           <Box
             sx={{
-              display: 'flex',
+              display: "flex",
             }}
           >
             <Typography
-              variant='body2'
-              sx={{ fontSize: '14px', mt: '15px', mb: '13px' }}
+              variant="body2"
+              sx={{ fontSize: "14px", mt: "15px", mb: "13px" }}
             >
-              {getChangeDescription(activity, '')}
+              {getChangeDescription(activity, "")}
             </Typography>
           </Box>
-          <Typography variant='body1' sx={{ fontWeight: 'bold' }}>
+          <Typography
+            variant="body1"
+            sx={{
+              fontWeight: "bold",
+              wordWrap: "break-word",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
             {activity.fullNode.title}
           </Typography>
         </Box>
