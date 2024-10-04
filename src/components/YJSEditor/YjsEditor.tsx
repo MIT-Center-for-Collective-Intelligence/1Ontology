@@ -1,6 +1,9 @@
 import dynamic from "next/dynamic";
 import React from "react";
-const TextEditor = dynamic(() => import("./YjsEditorWrapper"), { ssr: false });
+
+const YjsEditorWrapper = dynamic(() => import(".//YjsEditorWrapper"), {
+  ssr: false,
+});
 
 const YjsEditor = ({
   uname,
@@ -16,7 +19,7 @@ const YjsEditor = ({
   saveChanges: Function;
 }) => {
   return (
-    <TextEditor
+    <YjsEditorWrapper
       uname={uname}
       property={property}
       nodeId={nodeId}

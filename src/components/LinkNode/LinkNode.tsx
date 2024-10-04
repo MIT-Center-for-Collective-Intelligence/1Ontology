@@ -171,8 +171,8 @@ const LinkNode = ({
       ).flat()[0] as { id: string };
       const generalizationNode = nodes[generalization.id];
 
-      generalizationNode.specializations["main"] =
-        generalizationNode.specializations["main"].filter(
+      generalizationNode.specializations[category || "main"] =
+        generalizationNode.specializations[category || "main"].filter(
           (l: { id: string }) => l.id !== link.id
         );
 

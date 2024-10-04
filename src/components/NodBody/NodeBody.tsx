@@ -28,6 +28,7 @@ interface NodeBodyProps {
   locked: boolean;
   selectedDiffNode: any;
   getTitleNode: any;
+  confirmIt: any;
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -50,6 +51,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   locked,
   selectedDiffNode,
   getTitleNode,
+  confirmIt,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -183,6 +185,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     locked={locked}
                     selectedDiffNode={selectedDiffNode}
                     getTitleNode={getTitleNode}
+                    confirmIt={confirmIt}
                   />
                 )
               )}

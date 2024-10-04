@@ -48,7 +48,7 @@ const YjsEditorWrapper = ({
         });
       }
 
-      if (content) {
+      if (content.trim()) {
         console.log(content, "content==>");
         ydoc.getText("quill").insert(0, content);
       }
@@ -63,7 +63,7 @@ const YjsEditorWrapper = ({
     if (!property || !uname || !nodeId) return;
     const ydoc = new Y.Doc();
     const provider = new WebsocketProvider(
-      "ws://localhost:3001/ws",
+      "ws://websocket-server-163479774214.us-central1.run.app/ws",
       `${nodeId}-${property}`,
       ydoc,
       { connect: true }

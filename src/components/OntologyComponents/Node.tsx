@@ -376,7 +376,8 @@ const Node = ({
         let newTitle = searchValue ? searchValue : `New ${parentNode.title}`;
         const specializationsTitles = Object.values(parentNode.specializations)
           .flat()
-          .map((spec) => nodes[spec.id].title);
+          .map((spec) => nodes[spec.id]?.title || "");
+
         newTitle = generateUniqueTitle(newTitle, specializationsTitles);
         const newNode = {
           ...nodeParentData,
@@ -1460,6 +1461,7 @@ const Node = ({
           locked={locked}
           selectedDiffNode={selectedDiffNode}
           getTitleNode={getTitleNode}
+          confirmIt={confirmIt}
         />
 
         {currentVisibleNode?.properties.hasOwnProperty("actor") && (
@@ -1571,6 +1573,7 @@ const Node = ({
             locked={locked}
             selectedDiffNode={selectedDiffNode}
             getTitleNode={getTitleNode}
+            confirmIt={confirmIt}
           />
         </Box>
       </Box>
@@ -1588,7 +1591,7 @@ const Node = ({
         open={openSelectModel}
         onClose={handleClose}
       >
-        <Box
+        <Paper
           sx={{
             maxHeight: "80vh",
             overflowY: "auto",
@@ -1597,9 +1600,9 @@ const Node = ({
             ...SCROLL_BAR_STYLE,
           }}
         >
-          <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography>
+          <Box sx={{ position: "sticky", top: "0", zIndex: 1 }}>
+            <Paper sx={{ pt: "15px" }}>
+              <Typography sx={{ pl: "15px" }}>
                 Check the Box for the{" "}
                 <strong style={{ color: "orange" }}>
                   {capitalizeFirstLetter(
@@ -1610,7 +1613,17 @@ const Node = ({
                 </strong>{" "}
                 that you want to add:
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  width: "950px",
+                  pr: "5px",
+                }}
+              >
+                <Typography sx={{ width: "300px", ml: "14px" }}>
+                  Enter the new title:{" "}
+                </Typography>
                 <SearchBox
                   setSearchValue={setSearchValue}
                   label={"Search ..."}
@@ -1635,9 +1648,9 @@ const Node = ({
                   </Button>
                 )}
               </Box>
-            </Box>
-          </Paper>
-          <Paper>
+            </Paper>
+          </Box>
+          <Box>
             {searchValue ? (
               <Box>
                 {" "}
@@ -1700,7 +1713,7 @@ const Node = ({
                 manageLock={user?.manageLock}
               />
             )}
-          </Paper>
+          </Box>
           {/* {selectedProperty === "specializations" && (
               <Button
                 variant="contained"
@@ -1729,7 +1742,7 @@ const Node = ({
               Save
             </Button>
           </Paper>
-        </Box>
+        </Paper>
       </Modal>
       <Dialog
         onClose={() => {

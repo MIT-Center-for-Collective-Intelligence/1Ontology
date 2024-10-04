@@ -34,7 +34,7 @@ type ISubOntologyProps = {
   setCurrentVisibleNode: (state: any) => void;
   property: string;
   text: string; // Real-time text from WebSocket
-  confirmIt?: any;
+  confirmIt: any;
   nodes: { [id: string]: INode };
   recordLogs: (logs: any) => void;
   setSelectTitle?: any;
@@ -58,6 +58,7 @@ const Text = ({
   property,
   text, // Real-time text prop from firestore snapshot
   recordLogs,
+  confirmIt,
   setSelectTitle,
   selectTitle,
   locked,
@@ -104,6 +105,22 @@ const Text = ({
     async (copyValue: string) => {
       if (!user?.uname) return;
 
+      if (currentVisibleNode.inheritance[property]?.ref) {
+        if (
+          await confirmIt(
+            `Are you sure you want to break the inheritance of ${property}?`,
+            "Yes",
+            "Cancel"
+          )
+        ) {
+          const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+          updateDoc(nodeRef, {
+            [`inheritance.${property}.ref`]: null,
+          });
+        } else {
+          return;
+        }
+      }
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );
@@ -171,16 +188,16 @@ const Text = ({
         }
 
         // Call the debounced function instead of directly logging
-        // debouncedSaveNewChangeLog(
-        //   db,
-        //   currentVisibleNode,
-        //   user,
-        //   property,
-        //   previousValue
-        // );
+        debouncedSaveNewChangeLog(
+          db,
+          currentVisibleNode,
+          user,
+          property,
+          previousValue
+        );
       }
     },
-    [currentVisibleNode.id, user?.uname, property]
+    [currentVisibleNode, user?.uname, property]
   );
 
   useEffect(() => {
