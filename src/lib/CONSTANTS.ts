@@ -4,8 +4,6 @@ import { DESIGN_SYSTEM_COLORS } from "./theme/colors";
 
 // Defining an object to hold initial values for various node types
 
-// TO-DO: Consider storing this data in the database to identify node types in the project
-
 export const DISPLAY: {
   [key: string]: string;
 } = {
