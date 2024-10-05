@@ -1,5 +1,6 @@
 import { INode } from " @components/types/INode";
-import { Timestamp } from "firebase/firestore";
+import { collection, doc, getDoc, Timestamp } from "firebase/firestore";
+import { NODES } from "../firestoreClient/collections";
 
 // Function to capitalize the first letter of a string
 export function capitalizeFirstLetter(str: string): string {
@@ -64,6 +65,20 @@ export const getTitle = (nodes: { [id: string]: INode }, id: string) => {
     return nodes[id].title;
   }
   return "";
+};
+export const getTitleDeleted = async (
+  nodes: { [id: string]: INode },
+  id: string,
+  forceGet = false,
+  db: any = null
+) => {
+  if (nodes[id]) {
+    return nodes[id].title;
+  } else if (forceGet && db) {
+    const nodeDoc = await getDoc(doc(collection(db, NODES), id));
+    return nodeDoc.data()?.title || " ";
+  }
+  return " ";
 };
 
 export const checkNodeLock = (nodes: { [id: string]: INode }, id: string) => {

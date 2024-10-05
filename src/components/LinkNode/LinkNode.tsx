@@ -91,6 +91,7 @@ import {
 import DoneIcon from "@mui/icons-material/Done";
 import CloseIcon from "@mui/icons-material/Close";
 import { useEffect, useState } from "react";
+import { getTitleDeleted } from " @components/lib/utils/string.utils";
 
 type ISubOntologyProps = {
   link: IChildNode;
@@ -141,6 +142,20 @@ const LinkNode = ({
   const [editorContent, setEditorContent] = useState(title);
 
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
+
+  const [regionalTitle, setRegionalTitle] = useState(title);
+
+  // useEffect to handle async call to getTitle
+  useEffect(() => {
+    const fetchTitle = async () => {
+      const title = await getTitleDeleted(nodes, link.id, true, db);
+      setRegionalTitle(title);
+    };
+    if (!title) {
+      fetchTitle();
+    }
+  }, [link.id, nodes, title]);
+
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const handleNavigateToNode = () => {
     navigateToNode(link.id);
@@ -400,7 +415,7 @@ const LinkNode = ({
             }}
           >
             {" "}
-            {title}
+            {title || regionalTitle}
           </Link>
           {deleteVisible && !locked && !linkLocked && (
             <Button

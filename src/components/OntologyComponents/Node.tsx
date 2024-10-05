@@ -1286,7 +1286,7 @@ const Node = ({
           setCurrentVisibleNode(nodes[generalizationId]);
         }
         // call removeIsPartOf function to remove the node link from all the nodes where it's linked
-        removeIsPartOf(db, currentVisibleNode as INode);
+        removeIsPartOf(db, currentVisibleNode as INode, user?.uname);
         // Update the user document by removing the deleted node's ID
         await updateDoc(nodeRef, { deleted: true });
 

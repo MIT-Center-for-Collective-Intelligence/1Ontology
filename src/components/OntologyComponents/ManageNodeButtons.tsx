@@ -13,6 +13,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import ChatIcon from "@mui/icons-material/Chat";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import DeleteIcon from "@mui/icons-material/Delete";
+import HistoryIcon from "@mui/icons-material/History";
 
 const ManageNodeButtons = ({
   locked,
@@ -25,6 +26,7 @@ const ManageNodeButtons = ({
   displayInheritanceSettings,
   displayNodeChat,
   activeSidebar,
+  displayNodeHistory,
 }: {
   locked: boolean;
   root: string;
@@ -36,6 +38,7 @@ const ManageNodeButtons = ({
   displayInheritanceSettings: any;
   displayNodeChat: any;
   activeSidebar: string;
+  displayNodeHistory: any;
 }) => {
   return (
     <Box sx={{ ml: "auto" }}>
@@ -151,6 +154,14 @@ const ManageNodeButtons = ({
             />
           </IconButton>
         </Tooltip>
+        <Tooltip title="View Node's History">
+          <IconButton onClick={displayNodeHistory}>
+            <HistoryIcon
+              color={activeSidebar === "nodeHistory" ? "primary" : "inherit"}
+            />
+          </IconButton>
+        </Tooltip>
+
         {!locked && (
           <Tooltip title="Delete Node">
             <IconButton onClick={deleteNode}>

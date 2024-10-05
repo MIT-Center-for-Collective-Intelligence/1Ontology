@@ -61,13 +61,32 @@ export const fetchAndUpdateNode = async (
   db: any,
   linkId: string,
   nodeId: string,
-  removeFromProperty: string
+  removeFromProperty: string,
+  uname: string
 ) => {
   const nodeDoc = await getDoc(doc(collection(db, NODES), linkId));
 
   if (nodeDoc.exists()) {
     let nodeData = nodeDoc.data() as INode;
+    const previousValue = JSON.parse(
+      JSON.stringify(
+        nodeData[removeFromProperty as "specializations" | "generalizations"] ||
+          nodeData.properties[removeFromProperty]
+      )
+    );
     nodeData = removeNodeFromLinks(nodeData, nodeId, removeFromProperty);
+    saveNewChangeLog(db, {
+      nodeId: linkId,
+      modifiedBy: uname,
+      modifiedProperty: removeFromProperty,
+      previousValue,
+      newValue:
+        nodeData[removeFromProperty as "specializations" | "generalizations"] ||
+        nodeData.properties[removeFromProperty],
+      modifiedAt: new Date(),
+      changeType: "remove element",
+      fullNode: nodeData,
+    });
     await updateDoc(nodeDoc.ref, nodeData);
   }
 };
@@ -96,14 +115,24 @@ export const removeNodeFromLinks = (
 };
 
 // Main function to remove the isPartOf and generalizations references
-export const removeIsPartOf = async (db: any, nodeData: INode) => {
+export const removeIsPartOf = async (
+  db: any,
+  nodeData: INode,
+  uname: string
+) => {
   // Helper to handle both generalizations and isPartOfs
   const processRemoval = async (
     references: any[],
     removeFromProperty: string
   ) => {
     for (let { id: linkId } of references) {
-      await fetchAndUpdateNode(db, linkId, nodeData.id, removeFromProperty);
+      await fetchAndUpdateNode(
+        db,
+        linkId,
+        nodeData.id,
+        removeFromProperty,
+        uname
+      );
     }
   };
 

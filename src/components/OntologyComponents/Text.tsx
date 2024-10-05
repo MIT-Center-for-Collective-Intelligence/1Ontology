@@ -293,10 +293,12 @@ const Text = ({
           display: "flex",
           alignItems: "center",
           background: (theme: any) =>
-            selectedDiffNode &&
-            selectedDiffNode.changeType === "delete node" &&
+            selectedDiffNode?.changeType === "delete node" &&
             property === "title"
               ? "red"
+              : selectedDiffNode?.changeType === "add node" &&
+                property === "title"
+              ? "green"
               : theme.palette.mode === "dark"
               ? "#242425"
               : "#d0d5dd",
