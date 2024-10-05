@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Box, Button, useTheme } from "@mui/material";
 
 import { getPropertyValue } from " @components/lib/utils/string.utils";
@@ -76,6 +76,29 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     }
   };
 
+  const properties = useMemo(() => {
+    if (
+      (selectedDiffNode && selectedDiffNode?.changeType === "add property") ||
+      selectedDiffNode?.changeType === "add property"
+    ) {
+      return selectedDiffNode?.fullNode.properties;
+    } else {
+      return currentVisibleNode.properties;
+    }
+  }, [currentVisibleNode, selectedDiffNode]);
+
+  const currentNode = useMemo(() => {
+    if (
+      selectedDiffNode &&
+      (selectedDiffNode?.changeType === "add property" ||
+        selectedDiffNode?.changeType === "add property")
+    ) {
+      return selectedDiffNode.fullNode;
+    } else {
+      return currentVisibleNode;
+    }
+  }, [currentVisibleNode, selectedDiffNode]);
+
   // {Object.values(currentVisibleNode.generalizations).flat()
   //   .length > 1 && (
   //   <TextField
@@ -135,7 +158,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   return (
     <Box>
       <Box>
-        {Object.keys(currentVisibleNode.properties)
+        {Object.keys(properties || {})
           .filter(
             (p) =>
               p !== "parts" &&
@@ -146,11 +169,11 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           .sort()
           .map((property: string, index) => (
             <Box key={property} sx={{ mt: "15px" }}>
-              {currentVisibleNode.propertyType[property] !== "string" ? (
+              {currentNode.propertyType[property] !== "string" ? (
                 <StructuredProperty
                   key={property + index}
                   selectedDiffNode={selectedDiffNode}
-                  currentVisibleNode={currentVisibleNode}
+                  currentVisibleNode={currentNode}
                   showListToSelect={showListToSelect}
                   setOpenAddCategory={setOpenAddCategory}
                   setSelectedProperty={setSelectedProperty}
@@ -168,7 +191,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 />
               ) : (
                 property !== "description" &&
-                currentVisibleNode.propertyType[property] === "string" && (
+                currentNode.propertyType[property] === "string" && (
                   <Text
                     recordLogs={recordLogs}
                     text={
@@ -178,7 +201,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                         property
                       ) || currentVisibleNode.properties[property]
                     }
-                    currentVisibleNode={currentVisibleNode}
+                    currentVisibleNode={currentNode}
                     property={property}
                     setCurrentVisibleNode={setCurrentVisibleNode}
                     nodes={nodes}

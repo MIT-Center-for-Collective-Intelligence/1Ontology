@@ -79,7 +79,7 @@ const StructuredProperty = ({
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
 
   const properties = useMemo(() => {
-    const result =
+    let result =
       getPropertyValue(
         nodes,
         currentVisibleNode.inheritance[property]?.ref,
@@ -87,6 +87,15 @@ const StructuredProperty = ({
       ) ||
       currentVisibleNode?.properties[property] ||
       currentVisibleNode[property as "specializations" | "generalizations"];
+
+    if (
+      selectedDiffNode &&
+      selectedDiffNode.modifiedProperty === property &&
+      (selectedDiffNode.changeType === "delete collection" ||
+        selectedDiffNode.changeType === "edit collection")
+    ) {
+      result = selectedDiffNode.previousValue;
+    }
 
     let finalResult: any = {};
 
@@ -100,7 +109,7 @@ const StructuredProperty = ({
     ) {
       Object.keys(selectedDiffNode.newValue).forEach((key) => {
         const newValueArray = selectedDiffNode.newValue[key];
-        const previousValueArray = selectedDiffNode.previousValue[key];
+        const previousValueArray = selectedDiffNode.previousValue[key] || [];
         if (Array.isArray(newValueArray)) {
           finalResult[key] = newValueArray.map((newElement) => {
             const foundInPrevious = previousValueArray.find(
@@ -180,10 +189,48 @@ const StructuredProperty = ({
     }
   };
 
+  const getCategoryStyle = useCallback(
+    (collection: string) => {
+      if (!selectedDiffNode) return "";
+
+      if (
+        selectedDiffNode.changeType === "add collection" &&
+        collection === selectedDiffNode.changeDetails.addedCollection
+      ) {
+        return "green";
+      }
+      if (
+        selectedDiffNode.changeType === "delete collection" &&
+        collection === selectedDiffNode.changeDetails.deletedCollection
+      ) {
+        return "red";
+      }
+    },
+    [selectedDiffNode]
+  );
+  const getOrder = useMemo(() => {
+    if (selectedDiffNode || !currentVisibleNode.categoriesOrder) {
+      return Object.keys(properties || {});
+    }
+    return (
+      (currentVisibleNode.categoriesOrder || {})[property] ||
+      Object.keys(properties)
+    );
+  }, [
+    selectedDiffNode,
+    currentVisibleNode.categoriesOrder,
+    property,
+    properties,
+  ]);
+
   return (
     <Paper
       elevation={9}
-      sx={{ borderRadius: "30px", minWidth: "500px", width: "100%" }}
+      sx={{
+        borderRadius: "30px",
+        minWidth: "500px",
+        width: "100%",
+      }}
     >
       <Box
         sx={{
@@ -194,6 +241,12 @@ const StructuredProperty = ({
           p: 3,
           borderTopRightRadius: "25px",
           borderTopLeftRadius: "25px",
+          backgroundColor:
+            selectedDiffNode &&
+            selectedDiffNode.changeType === "add property" &&
+            selectedDiffNode.changeDetails.addedProperty === property
+              ? "green"
+              : "",
         }}
       >
         <Typography
@@ -261,7 +314,7 @@ const StructuredProperty = ({
             )}
           </Box>
         )}
-        {/* List of categories within the property */}
+
         <DragDropContext
           onDragEnd={(e) => {
             if (locked) return;
@@ -276,10 +329,7 @@ const StructuredProperty = ({
           <Droppable droppableId="categories" type="CATEGORY">
             {(provided) => (
               <Box ref={provided.innerRef} {...provided.droppableProps}>
-                {(
-                  (currentVisibleNode.categoriesOrder || {})[property] ||
-                  Object.keys(properties || {})
-                ).map((category: string, index) => {
+                {(getOrder || []).map((category: string, index) => {
                   const links: {
                     id: string;
                     change?: string;
@@ -317,13 +367,47 @@ const StructuredProperty = ({
                                 m: 0,
                                 p: 2,
                                 gap: "10px",
+                                backgroundColor: getCategoryStyle(category),
                               }}
                             >
-                              <Typography
-                                sx={{ fontWeight: "bold", mr: "13px" }}
-                              >
-                                {capitalizeFirstLetter(category)}
-                              </Typography>
+                              {selectedDiffNode &&
+                              selectedDiffNode.changeType ===
+                                "edit collection" &&
+                              selectedDiffNode.changeDetails
+                                .modifiedCollection === category ? (
+                                <Box sx={{ display: "flex" }}>
+                                  <Typography
+                                    sx={{
+                                      fontWeight: "bold",
+                                      mr: "13px",
+                                      color: "red",
+                                      textDecoration: "line-through",
+                                    }}
+                                  >
+                                    {capitalizeFirstLetter(category)}
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      fontWeight: "bold",
+                                      mr: "13px",
+                                      color: "green",
+                                    }}
+                                  >
+                                    {capitalizeFirstLetter(
+                                      selectedDiffNode.changeDetails.newValue
+                                    )}
+                                  </Typography>
+                                </Box>
+                              ) : (
+                                <Typography
+                                  sx={{
+                                    fontWeight: "bold",
+                                    mr: "13px",
+                                  }}
+                                >
+                                  {capitalizeFirstLetter(category)}
+                                </Typography>
+                              )}
                               {property === "specializations" &&
                                 !selectedDiffNode && (
                                   <Button
@@ -364,10 +448,6 @@ const StructuredProperty = ({
                                       onClick={() =>
                                         deleteCategory(property, category)
                                       }
-                                      /*  sx={{
-                                        borderRadius: "25px",
-                                        backgroundColor: BUTTON_COLOR,
-                                      }} */
                                     >
                                       <DeleteIcon />
                                     </IconButton>

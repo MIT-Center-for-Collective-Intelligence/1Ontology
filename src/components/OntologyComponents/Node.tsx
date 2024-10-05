@@ -208,7 +208,7 @@ const Node = ({
 
   const [searchValue, setSearchValue] = useState("");
   const [newFieldType, setNewFieldType] = useState("String");
-  const [openAddProprety, setOpenAddProperty] = useState(false);
+  const [openAddProperty, setOpenAddProperty] = useState(false);
   const [newFieldTitle, setNewProperty] = useState("");
   const [selectTitle, setSelectTitle] = useState(false);
 
@@ -276,6 +276,7 @@ const Node = ({
             inheritance[property].ref = currentVisibleNode.id;
           }
         }
+
         // Prepare the data for the new node by copying existing data.
         const newNode: any = {
           ...parentNodeDoc.data(),
@@ -302,7 +303,18 @@ const Node = ({
           },
           locked: false,
         };
+        if (selectedProperty === "parts") {
+          newNode.properties.isPartOf["main"].push({
+            id: currentVisibleNode.id!,
+          });
+        }
+        if (selectedProperty === "isPartOf") {
+          newNode.properties.parts["main"].push({
+            id: currentVisibleNode.id!,
+          });
 
+          newNode.inheritance.parts.ref = null;
+        }
         if (!parentNodeData?.specializations.hasOwnProperty("main")) {
           parentNodeData.specializations["main"] = [];
         }
@@ -444,16 +456,6 @@ const Node = ({
           changeType: "add element",
           fullNode: parentNode,
         });
-        saveNewChangeLog(db, {
-          nodeId: newNodeRef.id,
-          modifiedBy: user?.uname,
-          modifiedProperty: "specializations",
-          previousValue: null,
-          newValue: null,
-          modifiedAt: new Date(),
-          changeType: "add node",
-          fullNode: newNode,
-        });
       } catch (error) {
         // Handle errors by logging to the console
         confirmIt("Sorry there was an Error please try again!", "Ok", "");
@@ -531,7 +533,7 @@ const Node = ({
         [`${selectedProperty}`]: nodeData[selectedProperty],
       });
     } else {
-      if (nodeData.inheritance[selectedProperty].ref) {
+      if (nodeData.inheritance[selectedProperty]?.ref) {
         nodeData.properties[selectedProperty] = JSON.parse(
           JSON.stringify(
             nodes[nodeData.inheritance[selectedProperty].ref].properties[
@@ -543,6 +545,7 @@ const Node = ({
       nodeData.properties[selectedProperty][selectedCategory || "main"].push({
         id: newNode.id,
       });
+
       updateDoc(nodeRef, {
         [`properties.${selectedProperty}`]:
           nodeData.properties[selectedProperty],
@@ -555,9 +558,9 @@ const Node = ({
       });
     }
 
-    scrollToTop();
-    setSelectTitle(true);
-    setCurrentVisibleNode(newNode);
+    // scrollToTop();
+    // setSelectTitle(true);
+    // setCurrentVisibleNode(newNode);
 
     // Close the modal or perform any necessary cleanup.
     handleClose();
@@ -988,6 +991,11 @@ const Node = ({
         modifiedAt: new Date(),
         changeType,
         fullNode: currentVisibleNode,
+        changeDetails: {
+          addedCollection: newCollection || "",
+          modifiedCollection: editCollection?.category || "",
+          newValue: editCollection?.category ? newCollection : "",
+        },
       });
     } catch (error) {
       console.error(error);
@@ -1088,6 +1096,9 @@ const Node = ({
             modifiedAt: new Date(),
             changeType: "delete collection",
             fullNode: currentVisibleNode,
+            changeDetails: {
+              deletedCollection: category || "",
+            },
           });
         }
       } catch (error) {
@@ -1381,6 +1392,9 @@ const Node = ({
       if (!newProperty.trim() || !newPropertyType.trim()) return;
       const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
       const properties = currentVisibleNode.properties;
+      const previousValue = JSON.parse(
+        JSON.stringify(currentVisibleNode.properties)
+      );
       const propertyType = currentVisibleNode.propertyType;
       const inheritance = currentVisibleNode.inheritance;
 
@@ -1402,8 +1416,21 @@ const Node = ({
         propertyType,
         inheritance,
       });
+      saveNewChangeLog(db, {
+        nodeId: currentVisibleNode.id,
+        modifiedBy: user?.uname,
+        modifiedProperty: null,
+        previousValue,
+        newValue: properties,
+        modifiedAt: new Date(),
+        changeType: "add property",
+        fullNode: currentVisibleNode,
+        changeDetails: { addedProperty: newProperty },
+      });
+
       setNewProperty("");
       setOpenAddProperty(false);
+
       const batch = writeBatch(db);
       await updateSpecializationsInheritance(
         Object.values(currentVisibleNode.specializations).flat(),
@@ -1835,7 +1862,7 @@ const Node = ({
         onClose={() => {
           setOpenAddProperty(false);
         }}
-        open={openAddProprety}
+        open={openAddProperty}
       >
         <DialogContent>
           <Box sx={{ height: "auto", width: "500px" }}>

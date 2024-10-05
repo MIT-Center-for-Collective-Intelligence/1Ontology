@@ -120,17 +120,18 @@ export type NodeChange = {
   newValue: any;
   modifiedAt: Date;
   changeType:
-    | "change text" //handled
-    | "sort elements" //handled
-    | "remove element" //handled
+    | "change text"
+    | "sort elements"
+    | "remove element"
     | "add element"
-    | "modify elements" //handled
-    | "add property" // missing
-    | "remove property" // missing
-    | "delete node" // handled
-    | "add node" // handled
-    | "add collection" // handled
-    | "delete collection" // handled
-    | "edit collection"; // handled
+    | "modify elements"
+    | "add property"
+    | "remove property"
+    | "delete node"
+    | "add node"
+    | "add collection"
+    | "delete collection"
+    | "edit collection";
   fullNode: INode;
+  changeDetails?: { [key: string]: any };
 };

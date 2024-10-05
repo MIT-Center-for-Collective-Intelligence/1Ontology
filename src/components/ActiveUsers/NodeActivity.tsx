@@ -27,9 +27,11 @@ import ActivityDetails from "./ActivityDetails";
 
 const NodeActivity = ({
   currentVisibleNode,
+  selectedDiffNode,
   displayDiff,
   activeUsers,
 }: {
+  selectedDiffNode: any;
   currentVisibleNode: any;
   displayDiff: any;
   activeUsers: any;
@@ -53,12 +55,12 @@ const NodeActivity = ({
       setLogs((prev: any) => {
         for (let change of docChanges) {
           const changeData: any = change.doc.data();
-          const nodeId = change.doc.id;
+          const id = change.doc.id;
 
-          if (change.type === "removed" && prev[nodeId]) {
-            delete prev[nodeId];
+          if (change.type === "removed" && prev[id]) {
+            delete prev[id];
           } else {
-            prev[nodeId] = { ...changeData };
+            prev[id] = { ...changeData, id };
           }
         }
         return prev;
@@ -132,6 +134,7 @@ const NodeActivity = ({
             activity={logs[id]}
             displayDiff={displayDiff}
             modifiedByDetails={activeUsers[logs[id].modifiedBy]}
+            isSelected={selectedDiffNode?.id === id}
           />
         ))}
     </Box>

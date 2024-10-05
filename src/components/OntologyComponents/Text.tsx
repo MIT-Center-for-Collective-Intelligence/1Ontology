@@ -304,6 +304,12 @@ const Text = ({
           pb: 1.5,
           borderTopRightRadius: "25px",
           borderTopLeftRadius: "25px",
+          backgroundColor:
+            selectedDiffNode &&
+            selectedDiffNode.changeType === "add property" &&
+            selectedDiffNode.changeDetails.addedProperty === property
+              ? "green"
+              : "",
         }}
       >
         <Typography

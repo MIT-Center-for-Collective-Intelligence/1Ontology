@@ -1,19 +1,21 @@
-import {
-  getChangeDescription,
-  getModifiedAt,
-} from " @components/lib/utils/helpers";
-import { NodeChange } from " @components/types/INode";
 import { Box, Typography, Paper, Button } from "@mui/material";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
+import {
+  getModifiedAt,
+  getChangeDescription,
+} from " @components/lib/utils/helpers";
+import { NodeChange } from " @components/types/INode";
 
 const ActivityDetails = ({
   activity,
   displayDiff,
   modifiedByDetails,
+  isSelected = false,
 }: {
   activity: NodeChange;
   displayDiff: Function;
   modifiedByDetails?: any;
+  isSelected?: boolean;
 }) => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", mt: "8px" }}>
@@ -42,6 +44,14 @@ const ActivityDetails = ({
           "&:hover": {
             boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.15)",
           },
+          backgroundColor: (theme) =>
+            theme.palette.mode === "dark"
+              ? isSelected
+                ? "rgba(173, 216, 230, 0.5)"
+                : "#303134"
+              : isSelected
+              ? "rgba(173, 216, 230, 0.5)"
+              : "#e9ebf5",
         }}
       >
         {modifiedByDetails && (

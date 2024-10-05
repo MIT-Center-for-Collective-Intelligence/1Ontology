@@ -28,9 +28,11 @@ import ActivityDetails from "./ActivityDetails";
 const UserActivity = ({
   openLogsFor,
   displayDiff,
+  selectedDiffNode,
 }: {
   openLogsFor: any;
   displayDiff: any;
+  selectedDiffNode: any;
 }) => {
   const db = getFirestore();
   const [logs, setLogs] = useState<any>({});
@@ -51,12 +53,12 @@ const UserActivity = ({
       setLogs((prev: any) => {
         for (let change of docChanges) {
           const changeData: any = change.doc.data();
-          const nodeId = change.doc.id;
+          const id = change.doc.id;
 
-          if (change.type === "removed" && prev[nodeId]) {
-            delete prev[nodeId];
+          if (change.type === "removed" && prev[id]) {
+            delete prev[id];
           } else {
-            prev[nodeId] = { ...changeData };
+            prev[id] = { ...changeData, id };
           }
         }
         return prev;
@@ -66,6 +68,7 @@ const UserActivity = ({
 
     return () => unsubscribeNodes();
   }, [db, openLogsFor?.uname]);
+
 
   if (loading) {
     return (
@@ -125,7 +128,12 @@ const UserActivity = ({
       )}
       {Object.keys(logs).length > 0 &&
         Object.keys(logs).map((id) => (
-          <ActivityDetails key={id} activity={logs[id]} displayDiff={displayDiff} />
+          <ActivityDetails
+            key={id}
+            activity={logs[id]}
+            displayDiff={displayDiff}
+            isSelected={selectedDiffNode?.id === id}
+          />
         ))}
     </Box>
   );

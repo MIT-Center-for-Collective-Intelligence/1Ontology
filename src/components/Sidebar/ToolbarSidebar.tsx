@@ -431,7 +431,11 @@ const ToolbarSidebar = ({
         );
       case "userActivity":
         return (
-          <UserActivity openLogsFor={openLogsFor} displayDiff={displayDiff} />
+          <UserActivity
+            openLogsFor={openLogsFor}
+            displayDiff={displayDiff}
+            selectedDiffNode={selectedDiffNode}
+          />
         );
       case "chat":
         return (
@@ -453,6 +457,7 @@ const ToolbarSidebar = ({
         return (
           <NodeActivity
             currentVisibleNode={currentVisibleNode}
+            selectedDiffNode={selectedDiffNode}
             displayDiff={displayDiff}
             activeUsers={activeUsers}
           />

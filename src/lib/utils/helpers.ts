@@ -285,6 +285,7 @@ export const getChangeDescription = (
     changeType,
     modifiedAt,
     fullNode,
+    changeDetails,
   } = log;
 
   switch (changeType) {
@@ -303,7 +304,7 @@ export const getChangeDescription = (
     case "modify elements":
       return `Modified the elements in:`;
     case "add property":
-      return `Added "${modifiedProperty}" in:`;
+      return `Added "${changeDetails?.addedProperty}" in:`;
     case "remove property":
       return `Removed "${modifiedProperty}" in:`;
     case "delete node":
