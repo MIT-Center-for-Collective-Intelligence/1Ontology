@@ -101,7 +101,7 @@ User Message:
 ${userMessage}
 '''
 
-The knowledgeGraph:
+The knowledge Graph:
 '''
 ${JSON.stringify(nodesArray, null, 2)}
 '''
@@ -160,12 +160,9 @@ const getStructureForJSON = (data: any, nodeTitles: any) => {
 
   const { properties } = data;
   for (let property in properties) {
-    if (
-      typeof properties[property] !== "string" &&
-      (!(property in data.inheritance) ||
-        !data.inheritance[property] ||
-        !data.inheritance[property].ref)
-    ) {
+    if (property in data.inheritance && data.inheritance[property].ref) {
+      delete properties[property];
+    } else if (typeof properties[property] !== "string") {
       properties[property] = getTitles(properties[property]);
     }
   }
