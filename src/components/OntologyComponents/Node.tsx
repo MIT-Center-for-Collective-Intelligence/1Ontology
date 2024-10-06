@@ -1501,6 +1501,22 @@ const Node = ({
     },
     [nodes]
   );
+  const onGetPropertyValue = useCallback(
+    (property: string) => {
+      const inheritedProperty = getPropertyValue(
+        nodes,
+        currentVisibleNode.inheritance.description.ref,
+        property
+      );
+
+      if (inheritedProperty !== null) {
+        return inheritedProperty;
+      } else {
+        return currentVisibleNode.properties.description;
+      }
+    },
+    [currentVisibleNode, nodes]
+  );
 
   /* "root": "T
   of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'.
@@ -1551,13 +1567,7 @@ const Node = ({
         <Text
           nodes={nodes}
           recordLogs={recordLogs}
-          text={
-            getPropertyValue(
-              nodes,
-              currentVisibleNode.inheritance.description.ref,
-              "description"
-            ) || currentVisibleNode.properties.description
-          }
+          text={onGetPropertyValue("description")}
           currentVisibleNode={currentVisibleNode}
           property={"description"}
           setCurrentVisibleNode={setCurrentVisibleNode}
@@ -1677,6 +1687,7 @@ const Node = ({
             selectedDiffNode={selectedDiffNode}
             getTitleNode={getTitleNode}
             confirmIt={confirmIt}
+            onGetPropertyValue={onGetPropertyValue}
           />
         </Box>
       </Box>

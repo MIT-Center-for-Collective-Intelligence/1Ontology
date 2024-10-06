@@ -353,7 +353,7 @@ const Text = ({
           {selectedDiffNode &&
           selectedDiffNode.modifiedProperty === property ? (
             <Box sx={{ p: "10px", borderRadius: "5px" }}>
-              <Box sx={{ display: "flex", gap: "3px", p: "14px" }}>
+              <Box sx={{ display: "flow", gap: "3px", p: "14px" }}>
                 {renderDiff(
                   selectedDiffNode.previousValue,
                   selectedDiffNode.newValue
@@ -377,7 +377,7 @@ const Text = ({
               onChange={handleChanges}
               onFocus={handleFocus} // When the user starts editing
               onBlur={handleBlur} // When the user stops editing
-              placeholder="Type something..."
+              placeholder="Start collaborating..."
               InputProps={{
                 sx: {
                   padding: "15px",

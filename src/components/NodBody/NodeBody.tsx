@@ -29,6 +29,7 @@ interface NodeBodyProps {
   selectedDiffNode: any;
   getTitleNode: any;
   confirmIt: any;
+  onGetPropertyValue: any;
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -52,6 +53,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   selectedDiffNode,
   getTitleNode,
   confirmIt,
+  onGetPropertyValue,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -194,13 +196,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 currentNode.propertyType[property] === "string" && (
                   <Text
                     recordLogs={recordLogs}
-                    text={
-                      getPropertyValue(
-                        nodes,
-                        currentVisibleNode.inheritance[property].ref,
-                        property
-                      ) || currentVisibleNode.properties[property]
-                    }
+                    text={onGetPropertyValue(property)}
                     currentVisibleNode={currentNode}
                     property={property}
                     setCurrentVisibleNode={setCurrentVisibleNode}

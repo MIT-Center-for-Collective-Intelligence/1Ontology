@@ -90,9 +90,10 @@ export const getPropertyValue = (
   id: string | null,
   property: string
 ) => {
-  if (id && nodes[id] && nodes[id].properties[property]) {
+  if (id && nodes[id] && nodes[id].properties.hasOwnProperty(property)) {
     return nodes[id].properties[property];
   }
+  return null;
 };
 
 export const timeAgo = (timestamp: Timestamp) => {

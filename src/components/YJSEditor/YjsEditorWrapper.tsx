@@ -4,7 +4,7 @@ import { WebsocketProvider } from "y-websocket";
 import { QuillBinding } from "y-quill";
 import Quill from "quill";
 import QuillCursors from "quill-cursors";
-import { Box } from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 import "quill/dist/quill.snow.css";
 import { getFirestore } from "firebase/firestore";
 
@@ -59,7 +59,10 @@ const YjsEditorWrapper = ({
     if (!property || !fullname || !nodeId) return;
 
     const ydoc = new Y.Doc();
-    const WS_URL = `ws://${process.env.NEXT_PUBLIC_WS_SERVER}/ws`;
+    const WS_URL =
+      process.env.NODE_ENV === "development"
+        ? `ws://${process.env.NEXT_PUBLIC_DEV_WS_SERVER}/ws`
+        : `wss://${process.env.NEXT_PUBLIC_WS_SERVER}/ws`;
 
     const provider = new WebsocketProvider(
       WS_URL,
@@ -80,7 +83,7 @@ const YjsEditorWrapper = ({
             userOnly: true,
           },
         },
-        placeholder: "Type something...",
+        placeholder: "Start collaborating...",
         theme: "snow",
       });
 
@@ -132,8 +135,11 @@ const YjsEditorWrapper = ({
           borderBottomRightRadius: "25px",
           borderBottomLeftRadius: "25px",
           minHeight: "70px",
-          fontSize: property === "title" ? "24px" : "18px",
-          marginBottom: "0px",
+          fontSize:
+            property === "title" ? "24px !important" : "18px !important",
+          "& .ql-editor.ql-blank::before": {
+            color: "gray !important",
+          },
         }}
       />
     </>
