@@ -13,6 +13,7 @@ import {
 import { NODES, NODES_LOGS, USERS } from "../firestoreClient/collections";
 import { NodeChange } from " @components/types/INode";
 import moment from "moment";
+import { capitalizeFirstLetter } from "./string.utils";
 
 export const unlinkPropertyOf = async (
   db: any,
@@ -60,13 +61,32 @@ export const fetchAndUpdateNode = async (
   db: any,
   linkId: string,
   nodeId: string,
-  removeFromProperty: string
+  removeFromProperty: string,
+  uname: string
 ) => {
   const nodeDoc = await getDoc(doc(collection(db, NODES), linkId));
 
   if (nodeDoc.exists()) {
     let nodeData = nodeDoc.data() as INode;
+    const previousValue = JSON.parse(
+      JSON.stringify(
+        nodeData[removeFromProperty as "specializations" | "generalizations"] ||
+          nodeData.properties[removeFromProperty]
+      )
+    );
     nodeData = removeNodeFromLinks(nodeData, nodeId, removeFromProperty);
+    saveNewChangeLog(db, {
+      nodeId: linkId,
+      modifiedBy: uname,
+      modifiedProperty: removeFromProperty,
+      previousValue,
+      newValue:
+        nodeData[removeFromProperty as "specializations" | "generalizations"] ||
+        nodeData.properties[removeFromProperty],
+      modifiedAt: new Date(),
+      changeType: "remove element",
+      fullNode: nodeData,
+    });
     await updateDoc(nodeDoc.ref, nodeData);
   }
 };
@@ -95,14 +115,24 @@ export const removeNodeFromLinks = (
 };
 
 // Main function to remove the isPartOf and generalizations references
-export const removeIsPartOf = async (db: any, nodeData: INode) => {
+export const removeIsPartOf = async (
+  db: any,
+  nodeData: INode,
+  uname: string
+) => {
   // Helper to handle both generalizations and isPartOfs
   const processRemoval = async (
     references: any[],
     removeFromProperty: string
   ) => {
     for (let { id: linkId } of references) {
-      await fetchAndUpdateNode(db, linkId, nodeData.id, removeFromProperty);
+      await fetchAndUpdateNode(
+        db,
+        linkId,
+        nodeData.id,
+        removeFromProperty,
+        uname
+      );
     }
   };
 
@@ -262,13 +292,14 @@ const updateProperty = async (
   }
 };
 
-export const saveNewChange = (db: any, data: NodeChange) => {
+export const saveNewChangeLog = (db: any, data: NodeChange) => {
   if (!data.modifiedBy) return;
   const changeUseRef = doc(collection(db, NODES_LOGS));
   setDoc(changeUseRef, data);
   const userRef = doc(collection(db, USERS), data.modifiedBy);
   updateDoc(userRef, {
     reputations: increment(1),
+    lasChangeMadeAt: new Date(),
   });
 };
 
@@ -283,6 +314,7 @@ export const getChangeDescription = (
     changeType,
     modifiedAt,
     fullNode,
+    changeDetails,
   } = log;
 
   switch (changeType) {
@@ -301,13 +333,21 @@ export const getChangeDescription = (
     case "modify elements":
       return `Modified the elements in:`;
     case "add property":
-      return `Added "${modifiedProperty}" in:`;
+      return `Added "${changeDetails?.addedProperty}" in:`;
     case "remove property":
       return `Removed "${modifiedProperty}" in:`;
     case "delete node":
       return `Deleted the node:`;
     case "add node":
       return `Added a new node titled:`;
+    case "add element":
+      return `Added a new ${
+        modifiedProperty === "specializations"
+          ? "Specialization"
+          : modifiedProperty === "generalizations"
+          ? "Generalization"
+          : capitalizeFirstLetter(modifiedProperty || "")
+      } Under:`;
     default:
       return `Made an unknown change to:`;
   }
@@ -346,3 +386,24 @@ export const getModifiedAt = (modifiedAt: any) => {
     ? `Today at ${modifiedAt.format("hh:mm A")}`
     : modifiedAt.format("hh:mm A DD/MM/YYYY");
 };
+
+export function randomProminentColor() {
+  const prominentColors = [
+    "#FF5733", // Red-Orange
+    "#FFBD33", // Yellow-Orange
+    "#DBFF33", // Yellow-Green
+    "#75FF33", // Green
+    "#33FF57", // Green-Teal
+    "#33DBFF", // Teal
+    "#3375FF", // Blue
+    "#3357FF", // Blue-Purple
+    "#8E33FF", // Purple
+    "#FF33BD", // Pink
+    "#FF3357", // Red
+    "#808080", // Gray
+  ];
+
+  const randomIndex = Math.floor(Math.random() * prominentColors.length);
+
+  return prominentColors[randomIndex];
+}

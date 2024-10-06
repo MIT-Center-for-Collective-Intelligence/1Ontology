@@ -65,13 +65,13 @@ In this example, `ChildNode` is used to display a child node with the given prop
 - Error handling is implemented in the `deleteSubOntologyEditable` function, but it is important to ensure that proper error handling is in place throughout the application.
 - The component does not directly mutate the state but uses provided functions to handle state changes, ensuring a unidirectional data flow.
  */
-import { NODES } from ' @components/lib/firestoreClient/collections';
-import useConfirmDialog from ' @components/lib/hooks/useConfirmDialog';
+import { NODES } from " @components/lib/firestoreClient/collections";
+import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import {
-  saveNewChange,
+  saveNewChangeLog,
   unlinkPropertyOf,
-} from ' @components/lib/utils/helpers';
-import { INode, INodePath, IChildNode } from ' @components/types/INode';
+} from " @components/lib/utils/helpers";
+import { INode, INodePath, IChildNode } from " @components/types/INode";
 import {
   Box,
   Button,
@@ -80,17 +80,18 @@ import {
   TextField,
   Tooltip,
   useTheme,
-} from '@mui/material';
+} from "@mui/material";
 import {
   collection,
   doc,
   getDoc,
   getFirestore,
   updateDoc,
-} from 'firebase/firestore';
-import DoneIcon from '@mui/icons-material/Done';
-import CloseIcon from '@mui/icons-material/Close';
-import { useState } from 'react';
+} from "firebase/firestore";
+import DoneIcon from "@mui/icons-material/Done";
+import CloseIcon from "@mui/icons-material/Close";
+import { useEffect, useState } from "react";
+import { getTitleDeleted } from " @components/lib/utils/string.utils";
 
 type ISubOntologyProps = {
   link: IChildNode;
@@ -140,11 +141,28 @@ const LinkNode = ({
   const theme = useTheme();
   const [editorContent, setEditorContent] = useState(title);
 
-  const BUTTON_COLOR = theme.palette.mode === 'dark' ? '#373739' : '#dde2ea';
+  const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
+
+  const [regionalTitle, setRegionalTitle] = useState(title);
+
+  // useEffect to handle async call to getTitle
+  useEffect(() => {
+    const fetchTitle = async () => {
+      const title = await getTitleDeleted(nodes, link.id, true, db);
+      setRegionalTitle(title);
+    };
+    if (!title) {
+      fetchTitle();
+    }
+  }, [link.id, nodes, title]);
+
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const handleNavigateToNode = () => {
     navigateToNode(link.id);
   };
+  useEffect(() => {
+    setEditorContent(title);
+  }, [title]);
 
   const handleChanges = (e: any) => {
     setEditorContent(e.target.value);
@@ -158,24 +176,45 @@ const LinkNode = ({
     } catch (e: any) {
       console.error(e.message);
     }
-  }
+  };
 
   const cancelEditingNode = () => {
     try {
       const currentNode = nodes[link.id];
-      const generalization = Object.values(currentNode.generalizations).flat()[0] as { id: string };
+      const generalization = Object.values(
+        currentNode.generalizations
+      ).flat()[0] as { id: string };
       const generalizationNode = nodes[generalization.id];
-      
-      generalizationNode.specializations["main"] = generalizationNode.specializations["main"].filter((l: { id: string }) => l.id !== link.id);
+
+      generalizationNode.specializations[category || "main"] =
+        generalizationNode.specializations[category || "main"].filter(
+          (l: { id: string }) => l.id !== link.id
+        );
 
       const generalizationRef = doc(collection(db, NODES), generalization.id);
-      updateDoc(generalizationRef, { specializations: generalizationNode.specializations });
+      updateDoc(generalizationRef, {
+        specializations: generalizationNode.specializations,
+      });
+
+      const nodeRef = doc(collection(db, NODES), link.id);
+      updateDoc(nodeRef, { title: editorContent, deleted: true });
+
+      saveNewChangeLog(db, {
+        nodeId: link.id,
+        modifiedBy: user?.uname,
+        modifiedProperty: null,
+        previousValue: null,
+        newValue: null,
+        modifiedAt: new Date(),
+        changeType: "delete node",
+        fullNode: currentNode,
+      });
 
       if (setReviewId) setReviewId("");
     } catch (e: any) {
       console.error(e.message);
     }
-  }
+  };
 
   const unlinkNodeRelation = async () => {
     try {
@@ -183,7 +222,7 @@ const LinkNode = ({
         await confirmIt(
           `Are you sure you want remove this item the list?`,
           `Remove`,
-          'Keep'
+          "Keep"
         )
       ) {
         const nodeDoc = await getDoc(
@@ -222,7 +261,7 @@ const LinkNode = ({
             [`properties.${property}.${category}`]:
               nodeData.properties[property][category],
           });
-          if (property !== 'isPartOf') {
+          if (property !== "isPartOf") {
             await updateDoc(nodeDoc.ref, {
               [`inheritance.${property}.ref`]: null,
             });
@@ -232,18 +271,18 @@ const LinkNode = ({
               updatedProperty: property,
             });
           }
-          saveNewChange(db, {
+          saveNewChangeLog(db, {
             nodeId: currentVisibleNode.id,
             modifiedBy: user?.uname,
             modifiedProperty: property,
             previousValue,
             newValue: nodeData.properties[property],
             modifiedAt: new Date(),
-            changeType: 'remove element',
+            changeType: "remove element",
             fullNode: currentVisibleNode,
           });
           recordLogs({
-            action: 'unlinked a node',
+            action: "unlinked a node",
             property,
             unlinked: link.id,
             node: nodeDoc.id,
@@ -255,21 +294,21 @@ const LinkNode = ({
       await confirmIt(
         `There is an issue with unlinking the node, please try again.`,
         `Ok`,
-        ''
+        ""
       );
     }
   };
 
   const removeNodeLink = async (
-    type: 'specializations' | 'generalizations',
+    type: "specializations" | "generalizations",
     removeNodeId: string,
     removeIdFrom: string
   ) => {
     const specOrGenDoc = await getDoc(doc(collection(db, NODES), removeIdFrom));
-    let removeFrom: 'specializations' | 'generalizations' = 'specializations';
+    let removeFrom: "specializations" | "generalizations" = "specializations";
 
-    if (type === 'specializations') {
-      removeFrom = 'generalizations';
+    if (type === "specializations") {
+      removeFrom = "generalizations";
     }
     if (specOrGenDoc.exists()) {
       const specOrGenData = specOrGenDoc.data() as INode;
@@ -289,8 +328,8 @@ const LinkNode = ({
       if (
         await confirmIt(
           `Are you sure you want unlink this node?`,
-          'Unlink',
-          'Keep'
+          "Unlink",
+          "Keep"
         )
       ) {
         const nodeDoc = await getDoc(
@@ -300,37 +339,37 @@ const LinkNode = ({
           const nodeData = nodeDoc.data() as INode;
           const previousValue = JSON.parse(
             JSON.stringify(
-              nodeData[property as 'specializations' | 'generalizations']
+              nodeData[property as "specializations" | "generalizations"]
             )
           );
           if (index !== -1) {
-            nodeData[property as 'specializations' | 'generalizations'][
+            nodeData[property as "specializations" | "generalizations"][
               category
             ].splice(index, 1);
           }
 
           const shouldBeRemovedFromParent = !Object.values(
-            nodeData[property as 'specializations' | 'generalizations']
+            nodeData[property as "specializations" | "generalizations"]
           )
             .flat()
             .some((c: { id: string }) => c.id === link.id);
 
           if (shouldBeRemovedFromParent) {
             removeNodeLink(
-              property as 'specializations' | 'generalizations',
+              property as "specializations" | "generalizations",
               currentVisibleNode.id,
               link.id
             );
           }
-          saveNewChange(db, {
+          saveNewChangeLog(db, {
             nodeId: currentVisibleNode.id,
             modifiedBy: user?.uname,
             modifiedProperty: property,
             previousValue,
             newValue:
-              nodeData[property as 'specializations' | 'generalizations'],
+              nodeData[property as "specializations" | "generalizations"],
             modifiedAt: new Date(),
-            changeType: 'remove element',
+            changeType: "remove element",
             fullNode: currentVisibleNode,
           });
           await updateDoc(nodeDoc.ref, nodeData);
@@ -341,13 +380,13 @@ const LinkNode = ({
       await confirmIt(
         `There is an issue with deleting the node, please try again.`,
         `Ok`,
-        ''
+        ""
       );
     }
   };
 
   const handleUnlinkNode = () => {
-    if (property === 'specializations' || property === 'generalizations') {
+    if (property === "specializations" || property === "generalizations") {
       unlinkSpecializationOrGeneralization();
     } else {
       unlinkNodeRelation();
@@ -357,35 +396,35 @@ const LinkNode = ({
   return (
     <Box sx={{ ...sx }}>
       {reviewId !== link.id ? (
-        <Box style={{ display: 'flex', alignItems: 'center' }}>
+        <Box style={{ display: "flex", alignItems: "center" }}>
           <Link
-            underline='hover'
+            underline="hover"
             onClick={handleNavigateToNode}
             sx={{
-              cursor: 'pointer',
+              cursor: "pointer",
               color: (theme) =>
-                link.change === 'added'
-                  ? 'green'
-                  : link.change === 'removed'
-                  ? 'red'
-                  : theme.palette.mode === 'dark'
+                link.change === "added"
+                  ? "green"
+                  : link.change === "removed"
+                  ? "red"
+                  : theme.palette.mode === "dark"
                   ? theme.palette.common.gray50
                   : theme.palette.common.notebookMainBlack,
               textDecoration:
-                link.change === 'removed' ? 'line-through' : 'none',
+                link.change === "removed" ? "line-through" : "none",
             }}
           >
-            {' '}
-            {title}
+            {" "}
+            {title || regionalTitle}
           </Link>
           {deleteVisible && !locked && !linkLocked && (
             <Button
               sx={{
-                ml: '8px',
-                borderRadius: '25px',
+                ml: "8px",
+                borderRadius: "25px",
                 backgroundColor: BUTTON_COLOR,
               }}
-              variant='outlined'
+              variant="outlined"
               onClick={handleUnlinkNode}
             >
               Unlink
@@ -393,16 +432,26 @@ const LinkNode = ({
           )}
         </Box>
       ) : (
-        <Box sx={{ alignItems: 'center' }}>
-          <TextField value={editorContent} onChange={handleChanges} />
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <TextField
+            value={editorContent}
+            onChange={handleChanges}
+            InputProps={{
+              inputProps: {
+                style: {
+                  padding: 5,
+                },
+              },
+            }}
+          />
           <Tooltip title="Save">
-            <IconButton onClick={saveNodeTitle} sx={{ ml: '5px' }}>
-              <DoneIcon sx={{ color: 'green' }} />
+            <IconButton onClick={saveNodeTitle} sx={{ ml: "5px" }}>
+              <DoneIcon sx={{ color: "green" }} />
             </IconButton>
           </Tooltip>
           <Tooltip title="Remove">
-            <IconButton onClick={cancelEditingNode} sx={{ ml: '5px' }}>
-              <CloseIcon sx={{ color: 'red' }} />
+            <IconButton onClick={cancelEditingNode} sx={{ ml: "5px" }}>
+              <CloseIcon sx={{ color: "red" }} />
             </IconButton>
           </Tooltip>
         </Box>

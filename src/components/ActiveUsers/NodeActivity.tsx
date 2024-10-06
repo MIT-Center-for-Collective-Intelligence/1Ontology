@@ -27,10 +27,14 @@ import ActivityDetails from "./ActivityDetails";
 
 const NodeActivity = ({
   currentVisibleNode,
+  selectedDiffNode,
   displayDiff,
+  activeUsers,
 }: {
+  selectedDiffNode: any;
   currentVisibleNode: any;
   displayDiff: any;
+  activeUsers: any;
 }) => {
   const db = getFirestore();
   const [logs, setLogs] = useState<any>({});
@@ -51,12 +55,12 @@ const NodeActivity = ({
       setLogs((prev: any) => {
         for (let change of docChanges) {
           const changeData: any = change.doc.data();
-          const nodeId = change.doc.id;
+          const id = change.doc.id;
 
-          if (change.type === "removed" && prev[nodeId]) {
-            delete prev[nodeId];
+          if (change.type === "removed" && prev[id]) {
+            delete prev[id];
           } else {
-            prev[nodeId] = { ...changeData };
+            prev[id] = { ...changeData, id };
           }
         }
         return prev;
@@ -66,14 +70,6 @@ const NodeActivity = ({
 
     return () => unsubscribeNodes();
   }, [db, currentVisibleNode.id]);
-
-  const getModifiedAt = (modifiedAt: any) => {
-    modifiedAt = moment(modifiedAt.toDate());
-    const today = moment();
-    return modifiedAt.isSame(today, "day")
-      ? `Today at ${modifiedAt.format("hh:mm A")}`
-      : modifiedAt.format("hh:mm A DD/MM/YYYY");
-  };
 
   if (loading) {
     return (
@@ -133,7 +129,13 @@ const NodeActivity = ({
       )}
       {Object.keys(logs).length > 0 &&
         Object.keys(logs).map((id) => (
-          <ActivityDetails key={id} activity={logs[id]} displayDiff={displayDiff} />
+          <ActivityDetails
+            key={id}
+            activity={logs[id]}
+            displayDiff={displayDiff}
+            modifiedByDetails={activeUsers[logs[id].modifiedBy]}
+            isSelected={selectedDiffNode?.id === id}
+          />
         ))}
     </Box>
   );

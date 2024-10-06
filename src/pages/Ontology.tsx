@@ -104,7 +104,7 @@ import {
 } from " @components/lib/firestoreClient/errors.firestore";
 import { IChat } from " @components/types/IChat";
 
-import { saveNewChange } from " @components/lib/utils/helpers";
+import { saveNewChangeLog } from " @components/lib/utils/helpers";
 import { useHover } from " @components/lib/hooks/useHover";
 import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarSidebar";
 import { NodeChange } from " @components/types/INode";
@@ -401,6 +401,7 @@ const Ontology = () => {
         isCategory: !!node.category,
         locked: !!node.locked,
         title: nodeTitle,
+
         specializations: {},
       };
 
@@ -409,7 +410,7 @@ const Ontology = () => {
       for (let category in node.specializations) {
         // Filter nodes based on the current category
         const specializations: INode[] = [];
-        node?.specializations[category].forEach((o: { id: string }) => {
+        (node?.specializations[category] || []).forEach((o: { id: string }) => {
           specializations.push(nodes[o.id]);
         });
 
@@ -422,6 +423,7 @@ const Ontology = () => {
             isCategory: !!node.category,
             title: nodeTitle,
             locked: !!node.locked,
+            categoriesOrder: node.categoriesOrder?.specializations,
             specializations: {
               ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
               ...getSpecializationsTree(specializations, [...path, node.id]),
@@ -435,6 +437,7 @@ const Ontology = () => {
             title: nodeTitle,
             c: node.category,
             locked: !!node.locked,
+            categoriesOrder: node.categoriesOrder?.specializations,
             specializations: {
               ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
               [category]: {
@@ -511,7 +514,6 @@ const Ontology = () => {
     });
     // Generate a tree structure of specializations from the sorted main nodes
     let treeOfSpecializations = getSpecializationsTree(mainCategories, []);
-
     // Set the generated tree structure for visualization
     setTreeVisualization(treeOfSpecializations);
   }, [nodes]);
@@ -589,7 +591,7 @@ const Ontology = () => {
           deleted: false,
           createdAt: new Date(),
         });
-        saveNewChange(db, {
+        saveNewChangeLog(db, {
           nodeId: newNodeRef.id,
           modifiedBy: user?.uname,
           modifiedProperty: "",
@@ -715,6 +717,7 @@ const Ontology = () => {
   };
 
   useEffect(() => {
+    if (process.env.NODE_ENV === "development") return;
     const handleUserActivity = () => {
       const currentTime = Date.now();
       setLastInteractionDate(new Date(currentTime));

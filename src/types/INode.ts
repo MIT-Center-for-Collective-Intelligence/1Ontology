@@ -74,7 +74,7 @@ export type INode = {
   parents: string[];
   propertyType: { [key: string]: string };
   nodeType: INodeTypes;
-
+  categoriesOrder: { [propertyTitle: string]: string[] };
   category?: boolean;
   locked?: boolean;
   editMode?: boolean;
@@ -118,18 +118,20 @@ export type NodeChange = {
   modifiedProperty: string | null;
   previousValue: any;
   newValue: any;
-  modifiedAt: Date;
+  modifiedAt: any;
   changeType:
-    | "change text" //handled
-    | "sort elements" //handled
-    | "remove element" //handled
-    | "modify elements" //handled
-    | "add property" // missing
-    | "remove property" // missing
-    | "delete node" // handled
-    | "add node" // handled
-    | "add collection" // handled
-    | "delete collection" // handled
-    | "edit collection"; // handled
+    | "change text"
+    | "sort elements"
+    | "remove element"
+    | "add element"
+    | "modify elements"
+    | "add property"
+    | "remove property"
+    | "delete node"
+    | "add node"
+    | "add collection"
+    | "delete collection"
+    | "edit collection";
   fullNode: INode;
+  changeDetails?: { [key: string]: any };
 };

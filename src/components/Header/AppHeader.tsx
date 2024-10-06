@@ -383,7 +383,7 @@ const AppHeader = forwardRef(
         // ...properties,
       };
     };
-    console.log("usersNodesViews", usersNodesViews);
+
     const handleDownload = useCallback(async () => {
       // try {
       const nodesCollection = query(

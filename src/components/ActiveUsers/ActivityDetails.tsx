@@ -1,65 +1,138 @@
+import { Box, Typography, Paper, Button } from "@mui/material";
+import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import {
-  getChangeDescription,
   getModifiedAt,
-} from ' @components/lib/utils/helpers';
-import { NodeChange } from ' @components/types/INode';
-import { Box, Typography, Paper, Button } from '@mui/material';
+  getChangeDescription,
+} from " @components/lib/utils/helpers";
+import { NodeChange } from " @components/types/INode";
+import dayjs from "dayjs";
 
 const ActivityDetails = ({
   activity,
   displayDiff,
+  modifiedByDetails,
+  isSelected = false,
 }: {
   activity: NodeChange;
   displayDiff: Function;
+  modifiedByDetails?: any;
+  isSelected?: boolean;
 }) => {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ display: "flex", flexDirection: "column", mt: "8px" }}>
       <Typography
         sx={{
-          fontSize: '13px',
-          fontWeight: 'bold',
-          ml: 'auto',
-          mr: '15px',
+          fontSize: "12px",
+          fontWeight: "600",
+          ml: "auto",
+          mr: 5,
+          color: "text.secondary",
         }}
       >
-        {' '}
-        {getModifiedAt(activity.modifiedAt)}
+        {" "}
+        {dayjs(new Date(activity.modifiedAt.toDate())).fromNow().includes("NaN")
+          ? "a few minutes ago"
+          : `${dayjs(new Date(activity.modifiedAt.toDate())).fromNow()}`}
       </Typography>
+
       <Paper
         elevation={3}
-        sx={{ padding: 1, marginBottom: 1, m: '15px', mt: '0px', position: 'relative' }}
+        sx={{
+          padding: 2,
+          marginX: "15px",
+          mt: 0,
+          position: "relative",
+          borderRadius: "12px",
+          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+          transition: "box-shadow 0.3s ease-in-out",
+          "&:hover": {
+            boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.15)",
+          },
+          backgroundColor: (theme) =>
+            theme.palette.mode === "dark"
+              ? isSelected
+                ? "rgba(173, 216, 230, 0.5)"
+                : "#303134"
+              : isSelected
+              ? "rgba(173, 216, 230, 0.5)"
+              : "#e9ebf5",
+        }}
       >
+        {modifiedByDetails && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              position: "absolute",
+              top: 12,
+              left: 12,
+            }}
+          >
+            <OptimizedAvatar
+              alt={modifiedByDetails.fName + " " + modifiedByDetails.lName}
+              imageUrl={modifiedByDetails.imageUrl || ""}
+              size={40}
+              sx={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                objectFit: "cover",
+              }}
+            />
+
+            <Typography
+              sx={{
+                marginLeft: 1,
+                fontSize: "14px",
+                color: "text.primary",
+              }}
+            >
+              {modifiedByDetails.fName} {modifiedByDetails.lName}
+            </Typography>
+          </Box>
+        )}
+
         <Button
-          onClick={() => {
-            displayDiff(activity);
-          }}
-          variant='outlined'
-          sx={{ 
-            borderRadius: '25px',
-            position: 'absolute',
-            top: '0',
-            right: '0',
-            mr: '8px',
-            mt: '8px',
+          onClick={() => displayDiff(activity)}
+          variant="outlined"
+          sx={{
+            borderRadius: "20px",
+            position: "absolute",
+            top: 12,
+            right: 12,
+            padding: "4px 12px",
+            fontSize: "12px",
           }}
         >
           View
         </Button>
-        <Box sx={{ pb: 4, pl: 2 }}>
-          <Box
+
+        <Box
+          sx={{
+            paddingBottom: 4,
+            paddingLeft: 2,
+            paddingTop: modifiedByDetails ? 9 : 4,
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ fontSize: "13px", mt: 2, mb: 1.5, color: "text.secondary" }}
+          >
+            {getChangeDescription(activity, "")}
+          </Typography>
+
+          <Typography
+            variant="h6"
             sx={{
-              display: 'flex',
+              fontWeight: "bold",
+              fontSize: "16px",
+              wordWrap: "break-word",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
-            <Typography
-              variant='body2'
-              sx={{ fontSize: '14px', mt: '15px', mb: '13px' }}
-            >
-              {getChangeDescription(activity, '')}
-            </Typography>
-          </Box>
-          <Typography variant='body1' sx={{ fontWeight: 'bold' }}>
-            {activity.fullNode.title}
+            {activity.fullNode?.title}
           </Typography>
         </Box>
       </Paper>

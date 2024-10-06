@@ -130,7 +130,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {
   removeIsPartOf,
-  saveNewChange,
+  saveNewChangeLog,
   unlinkPropertyOf,
   updateInheritance,
 } from " @components/lib/utils/helpers";
@@ -208,10 +208,10 @@ const Node = ({
 
   const [searchValue, setSearchValue] = useState("");
   const [newFieldType, setNewFieldType] = useState("String");
-  const [openAddProprety, setOpenAddProperty] = useState(false);
+  const [openAddProperty, setOpenAddProperty] = useState(false);
   const [newFieldTitle, setNewProperty] = useState("");
   const [selectTitle, setSelectTitle] = useState(false);
-  
+
   const [reviewId, setReviewId] = useState("");
   const db = getFirestore();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
@@ -241,16 +241,13 @@ const Node = ({
   }, [searchValue, selectedProperty]);
 
   const markItemAsChecked = (checkedId: string) => {
-    setCheckedItems((oldChecked: Set<string>) => {
-      const _oldChecked = new Set(oldChecked);
-
-      if (_oldChecked.has(checkedId)) {
-        _oldChecked.delete(checkedId);
-      } else {
-        _oldChecked.add(checkedId);
-      }
-      return _oldChecked;
-    });
+    const _oldChecked = new Set(checkedItems);
+    if (_oldChecked.has(checkedId)) {
+      _oldChecked.delete(checkedId);
+    } else {
+      _oldChecked.add(checkedId);
+    }
+    setCheckedItems(_oldChecked);
   };
 
   const cloneNode = useCallback(
@@ -271,11 +268,21 @@ const Node = ({
           .flat()
           .map((spec) => nodes[spec.id].title);
         newTitle = generateUniqueTitle(newTitle, specializationsTitles);
+        const inheritance = JSON.parse(
+          JSON.stringify({ ...parentNodeData.inheritance })
+        );
+        for (let property in inheritance) {
+          if (!inheritance[property].ref) {
+            inheritance[property].ref = currentVisibleNode.id;
+          }
+        }
 
         // Prepare the data for the new node by copying existing data.
         const newNode: any = {
           ...parentNodeDoc.data(),
           id: newNodeRef.id,
+          inheritance,
+          categoriesOrder: {},
           title: newTitle,
           specializations: { main: [] },
           propertyOf: {
@@ -296,7 +303,18 @@ const Node = ({
           },
           locked: false,
         };
+        if (selectedProperty === "parts") {
+          newNode.properties.isPartOf["main"].push({
+            id: currentVisibleNode.id!,
+          });
+        }
+        if (selectedProperty === "isPartOf") {
+          newNode.properties.parts["main"].push({
+            id: currentVisibleNode.id!,
+          });
 
+          newNode.inheritance.parts.ref = null;
+        }
         if (!parentNodeData?.specializations.hasOwnProperty("main")) {
           parentNodeData.specializations["main"] = [];
         }
@@ -345,6 +363,9 @@ const Node = ({
 
         // Retrieve the parent node document
         const nodeParentData = nodes[currentVisibleNode.id];
+        const previousParentValue = JSON.parse(
+          JSON.stringify(nodeParentData.specializations)
+        );
 
         // Extract data from the parent node document
         const parentNode = {
@@ -367,10 +388,12 @@ const Node = ({
         let newTitle = searchValue ? searchValue : `New ${parentNode.title}`;
         const specializationsTitles = Object.values(parentNode.specializations)
           .flat()
-          .map((spec) => nodes[spec.id].title);
+          .map((spec) => nodes[spec.id]?.title || "");
+
         newTitle = generateUniqueTitle(newTitle, specializationsTitles);
         const newNode = {
           ...nodeParentData,
+          categoriesOrder: {},
           // Initialize the specializations sub-node
           specializations: { main: [] },
           inheritance,
@@ -402,14 +425,14 @@ const Node = ({
             ...parentNode.specializations,
             [category]: [
               {
-                id: newNodeRef.id
+                id: newNodeRef.id,
               },
             ],
           };
         } else {
           // Add the new node to the specified type and category
           parentNode.specializations[category].push({
-            id: newNodeRef.id
+            id: newNodeRef.id,
           });
         }
 
@@ -423,6 +446,16 @@ const Node = ({
         // Update the parent node document in the database
         setOpenSelectModel(false);
         await updateDoc(nodeParentRef, parentNode);
+        saveNewChangeLog(db, {
+          nodeId: currentVisibleNode.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: "specializations",
+          previousValue: previousParentValue,
+          newValue: parentNode.specializations,
+          modifiedAt: new Date(),
+          changeType: "add element",
+          fullNode: parentNode,
+        });
       } catch (error) {
         // Handle errors by logging to the console
         confirmIt("Sorry there was an Error please try again!", "Ok", "");
@@ -500,7 +533,7 @@ const Node = ({
         [`${selectedProperty}`]: nodeData[selectedProperty],
       });
     } else {
-      if (nodeData.inheritance[selectedProperty].ref) {
+      if (nodeData.inheritance[selectedProperty]?.ref) {
         nodeData.properties[selectedProperty] = JSON.parse(
           JSON.stringify(
             nodes[nodeData.inheritance[selectedProperty].ref].properties[
@@ -512,6 +545,7 @@ const Node = ({
       nodeData.properties[selectedProperty][selectedCategory || "main"].push({
         id: newNode.id,
       });
+
       updateDoc(nodeRef, {
         [`properties.${selectedProperty}`]:
           nodeData.properties[selectedProperty],
@@ -524,9 +558,9 @@ const Node = ({
       });
     }
 
-    scrollToTop();
-    setSelectTitle(true);
-    setCurrentVisibleNode(newNode);
+    // scrollToTop();
+    // setSelectTitle(true);
+    // setCurrentVisibleNode(newNode);
 
     // Close the modal or perform any necessary cleanup.
     handleClose();
@@ -785,7 +819,7 @@ const Node = ({
           db,
         });
       }
-      saveNewChange(db, {
+      saveNewChangeLog(db, {
         nodeId: currentVisibleNode.id,
         modifiedBy: user?.uname,
         modifiedProperty: selectedProperty,
@@ -815,154 +849,171 @@ const Node = ({
 
   const addNewCollection = useCallback(async () => {
     try {
-      // Check if newCategory is provided
+      handleCloseAddCollection();
       if (!newCollection) return;
+
       let previousValue = null;
       let changeType: "add collection" | "edit collection" = "edit collection";
-      // Fetch the node document based on the currentVisibleNode.id
+      let categoriesOrder: any = null;
+
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );
+      if (!nodeDoc.exists()) return;
 
-      // Check if the node document exists
-      if (nodeDoc.exists()) {
-        // Retrieve node data from the document
-        const nodeData = nodeDoc.data();
+      const nodeData = nodeDoc.data();
+      const isSpecialization =
+        selectedProperty === "specializations" ||
+        selectedProperty === "generalizations";
 
-        // If editCategory is provided, update existing category
-        if (editCollection) {
-          previousValue = JSON.parse(
-            JSON.stringify(nodeData[editCollection.property])
-          );
-          changeType = "edit collection";
-          // Log the action of editing a category
-          recordLogs({
-            action: "Edited a category",
-            previousValue: editCollection.category,
-            newValue: newCollection,
-            node: nodeDoc.id,
-            property: editCollection.property,
-          });
-          if (
-            editCollection.property === "specializations" ||
-            editCollection.property === "specializations"
-          ) {
-            // Update ontologyData for the edited category
-            nodeData[editCollection.property][newCollection] =
-              nodeData[editCollection.property][editCollection.category];
-            delete nodeData[editCollection.property][editCollection.category];
-          } else {
-            // Update ontologyData for the edited category
-            nodeData.properties[editCollection.property][newCollection] =
-              nodeData.properties[editCollection.property][
-                editCollection.category
-              ];
-            delete nodeData.properties[editCollection.property][
-              editCollection.category
-            ];
-          }
-        } else {
-          // If it's a new category, create it
-          changeType = "add collection";
+      const propertyPath = isSpecialization
+        ? selectedProperty
+        : `properties.${selectedProperty}`;
 
-          if (
-            !nodeData?.properties[selectedProperty]?.hasOwnProperty(
-              newCollection.trim()
-            )
-          ) {
-            if (
-              selectedProperty === "specializations" ||
-              selectedProperty === "specializations"
-            ) {
-              previousValue = JSON.parse(
-                JSON.stringify(nodeData[selectedProperty])
-              );
-              nodeData[selectedProperty] = {
-                ...(nodeData[selectedProperty] || {}),
-                [newCollection]: [],
-              };
-            } else {
-              previousValue = JSON.parse(
-                JSON.stringify(nodeData.properties[selectedProperty])
-              );
-              nodeData.properties[selectedProperty] = {
-                ...(nodeData?.properties[selectedProperty] || {}),
-                [newCollection]: [],
-              };
-            }
+      const getNodeCategories = () =>
+        (currentVisibleNode.categoriesOrder || {})[selectedProperty] ||
+        Object.keys(
+          isSpecialization
+            ? nodeData[propertyPath]
+            : nodeData.properties[propertyPath] || {}
+        );
 
-            // Log the action of creating a new category
-            recordLogs({
-              action: "add collection",
-              category: newCollection,
-              node: nodeDoc.id,
-              field: selectedProperty,
-            });
-          } else {
-            if (editCollection !== null) {
-              confirmIt(
-                `This category already exist under the property ${selectedProperty}`,
-                "Ok",
-                ""
-              );
-            }
+      const updateCategoriesOrder = (
+        oldName: string | null,
+        newName: string
+      ) => {
+        const categoryIndex = categoriesOrder.indexOf(oldName);
+        if (categoryIndex !== -1) categoriesOrder[categoryIndex] = newName;
+        else categoriesOrder.push(newName);
+      };
 
-            return;
-          }
-        }
-        if (
-          selectedProperty !== "specializations" ||
-          selectedProperty !== "specializations"
-        ) {
-          updateInheritance({
-            nodeId: nodeDoc.id,
-            updatedProperty: editCollection
-              ? editCollection.property
-              : selectedProperty,
-            db,
-          });
-        }
-        // Update the node document with the modified data
-        await updateDoc(nodeDoc.ref, nodeData);
-
-        saveNewChange(db, {
-          nodeId: currentVisibleNode.id,
-          modifiedBy: user?.uname,
-          modifiedProperty: selectedProperty,
-          previousValue,
-          newValue: nodeData.properties[selectedProperty],
-          modifiedAt: new Date(),
-          changeType,
-          fullNode: currentVisibleNode,
+      const logChange = (action: string, prevValue: any, newValue: any) => {
+        recordLogs({
+          action,
+          previousValue: prevValue,
+          newValue,
+          node: nodeDoc.id,
+          property: selectedProperty,
         });
-        // Close the add category modal
-        handleCloseAddCollection();
-      }
-    } catch (error) {
-      // Log any errors that occur during the process
-      console.error(error);
-      recordLogs({
-        type: "error",
-        error,
-      });
-    }
-  }, [newCollection]);
+      };
 
-  const handleNewSpecialization = async (category?: string) => {
-    await addNewSpecialization(category || selectedCategory);
-    handleClose();
-  };
+      if (editCollection) {
+        categoriesOrder = getNodeCategories();
+        previousValue = JSON.parse(
+          JSON.stringify(
+            isSpecialization
+              ? nodeData[propertyPath]
+              : nodeData.properties[propertyPath] || {}
+          )
+        );
+        // Update the collection name
+        if (isSpecialization) {
+          nodeData[propertyPath][newCollection] =
+            nodeData[propertyPath][editCollection.category];
+          delete nodeData[propertyPath][editCollection.category];
+        } else {
+          nodeData.properties[selectedProperty][newCollection] =
+            nodeData.properties[selectedProperty][editCollection.category];
+          delete nodeData.properties[selectedProperty][editCollection.category];
+        }
+
+        updateCategoriesOrder(editCollection.category, newCollection);
+        logChange("Edited a category", editCollection.category, newCollection);
+      } else {
+        categoriesOrder = getNodeCategories();
+        if (nodeData[propertyPath]?.hasOwnProperty(newCollection.trim())) {
+          confirmIt(
+            `This category already exists under the property ${selectedProperty}`,
+            "Ok",
+            ""
+          );
+          return;
+        }
+
+        // Add a new collection
+        previousValue = JSON.parse(
+          JSON.stringify(
+            isSpecialization
+              ? nodeData[propertyPath] || {}
+              : nodeData.properties[selectedProperty] || {}
+          )
+        );
+        if (isSpecialization) {
+          nodeData[propertyPath] = {
+            ...(nodeData[propertyPath] || {}),
+            [newCollection]: [],
+          };
+        } else {
+          nodeData.properties[selectedProperty] = {
+            ...(nodeData.properties[selectedProperty] || {}),
+            [newCollection]: [],
+          };
+        }
+
+        updateCategoriesOrder(null, newCollection);
+        logChange("add collection", null, newCollection);
+        changeType = "add collection";
+      }
+
+      // Update inheritance if necessary
+      if (!isSpecialization) {
+        updateInheritance({
+          nodeId: nodeDoc.id,
+          updatedProperty: editCollection
+            ? editCollection.property
+            : selectedProperty,
+          db,
+        });
+      }
+
+      // Update the node document
+
+      const updateData = {
+        [propertyPath]: isSpecialization
+          ? nodeData[propertyPath]
+          : nodeData.properties[selectedProperty],
+        ...(categoriesOrder && {
+          [`categoriesOrder.${selectedProperty}`]: categoriesOrder,
+        }),
+      };
+
+      await updateDoc(nodeDoc.ref, updateData);
+
+      // Log final change
+      saveNewChangeLog(db, {
+        nodeId: currentVisibleNode.id,
+        modifiedBy: user?.uname,
+        modifiedProperty: selectedProperty,
+        previousValue,
+        newValue: isSpecialization
+          ? nodeData[propertyPath]
+          : nodeData.properties[selectedProperty],
+        modifiedAt: new Date(),
+        changeType,
+        fullNode: currentVisibleNode,
+        changeDetails: {
+          addedCollection: newCollection || "",
+          modifiedCollection: editCollection?.category || "",
+          newValue: editCollection?.category ? newCollection : "",
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      recordLogs({ type: "error", error });
+    }
+  }, [newCollection, selectedProperty]);
 
   const handleEditCategory = (property: string, category: string) => {
     setNewCollection(category);
     setOpenAddCategory(true);
+    setSelectedProperty(property);
     setEditCategory({
       property,
       category,
     });
   };
 
-  const deleteCategory = async (property: string, category: string) => {
+  const deleteCollection = async (property: string, category: string) => {
     if (
       await confirmIt(
         `Are you sure you want to delete the collection ${category}?`,
@@ -977,16 +1028,30 @@ const Node = ({
         if (nodeDoc.exists()) {
           let previousValue = null;
           const nodeData = nodeDoc.data();
-          if (
-            property === "specializations" ||
-            property === "specializations"
-          ) {
-            previousValue = JSON.parse(JSON.stringify(nodeData[property]));
-            nodeData[property]["main"] = [
-              ...(nodeData[property]["main"] || []),
-              ...nodeData[property][category],
+          const isSpecialization =
+            property === "specializations" || property === "generalizations";
+
+          const propertyPath = isSpecialization
+            ? property
+            : `properties.${property}`;
+          const categoriesOrderPath = `categoriesOrder.${property}`;
+
+          // Handle collection deletion for both 'specializations' and other properties
+          previousValue = JSON.parse(
+            JSON.stringify(
+              isSpecialization
+                ? nodeData[propertyPath]
+                : nodeData.properties[property]
+            )
+          );
+
+          // Merge the category into "main" and delete the category
+          if (isSpecialization) {
+            nodeData[propertyPath]["main"] = [
+              ...(nodeData[propertyPath]["main"] || []),
+              ...nodeData[propertyPath][category],
             ];
-            delete nodeData[property][category];
+            delete nodeData[propertyPath][category];
           } else {
             nodeData.properties[property]["main"] = [
               ...(nodeData.properties[property]["main"] || []),
@@ -995,24 +1060,49 @@ const Node = ({
             delete nodeData.properties[property][category];
           }
 
-          await updateDoc(nodeDoc.ref, nodeData);
+          // Remove the category from categoriesOrder
+          const categoriesOrder =
+            (currentVisibleNode.categoriesOrder || {})[property] || [];
+          const updatedCategoriesOrder = categoriesOrder.filter(
+            (cat) => cat !== category
+          );
+
+          // Prepare the updated document data
+          const updateData = {
+            [propertyPath]: isSpecialization
+              ? nodeData[propertyPath]
+              : nodeData.properties[property],
+            [categoriesOrderPath]: updatedCategoriesOrder,
+          };
+
+          // Update the node document
+          await updateDoc(nodeDoc.ref, updateData);
+
           recordLogs({
-            action: "Deleted a category",
+            action: "Deleted a collection",
             category,
             node: nodeDoc.id,
           });
-          saveNewChange(db, {
+
+          // Log the changes
+          saveNewChangeLog(db, {
             nodeId: currentVisibleNode.id,
             modifiedBy: user?.uname,
             modifiedProperty: property,
             previousValue,
-            newValue: nodeData.properties[property],
+            newValue: isSpecialization
+              ? nodeData[propertyPath]
+              : nodeData.properties[property],
             modifiedAt: new Date(),
             changeType: "delete collection",
             fullNode: currentVisibleNode,
+            changeDetails: {
+              deletedCollection: category || "",
+            },
           });
         }
       } catch (error) {
+        console.error("error", error);
         recordLogs({
           type: "error",
           error,
@@ -1116,7 +1206,7 @@ const Node = ({
               });
             }
 
-            saveNewChange(db, {
+            saveNewChangeLog(db, {
               nodeId: currentVisibleNode.id,
               modifiedBy: user?.uname,
               modifiedProperty: property,
@@ -1196,11 +1286,11 @@ const Node = ({
           setCurrentVisibleNode(nodes[generalizationId]);
         }
         // call removeIsPartOf function to remove the node link from all the nodes where it's linked
-        removeIsPartOf(db, currentVisibleNode as INode);
+        removeIsPartOf(db, currentVisibleNode as INode, user?.uname);
         // Update the user document by removing the deleted node's ID
         await updateDoc(nodeRef, { deleted: true });
 
-        saveNewChange(db, {
+        saveNewChangeLog(db, {
           nodeId: currentVisibleNode.id,
           modifiedBy: user?.uname,
           modifiedProperty: null,
@@ -1224,7 +1314,7 @@ const Node = ({
         error,
       });
     }
-  }, [currentVisibleNode.id, user?.uname]);
+  }, [currentVisibleNode.id, user?.uname, nodes, currentVisibleNode]);
 
   const handleToggle = useCallback(
     (nodeId: string) => {
@@ -1302,6 +1392,9 @@ const Node = ({
       if (!newProperty.trim() || !newPropertyType.trim()) return;
       const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
       const properties = currentVisibleNode.properties;
+      const previousValue = JSON.parse(
+        JSON.stringify(currentVisibleNode.properties)
+      );
       const propertyType = currentVisibleNode.propertyType;
       const inheritance = currentVisibleNode.inheritance;
 
@@ -1323,8 +1416,21 @@ const Node = ({
         propertyType,
         inheritance,
       });
+      saveNewChangeLog(db, {
+        nodeId: currentVisibleNode.id,
+        modifiedBy: user?.uname,
+        modifiedProperty: null,
+        previousValue,
+        newValue: properties,
+        modifiedAt: new Date(),
+        changeType: "add property",
+        fullNode: currentVisibleNode,
+        changeDetails: { addedProperty: newProperty },
+      });
+
       setNewProperty("");
       setOpenAddProperty(false);
+
       const batch = writeBatch(db);
       await updateSpecializationsInheritance(
         Object.values(currentVisibleNode.specializations).flat(),
@@ -1395,6 +1501,22 @@ const Node = ({
     },
     [nodes]
   );
+  const onGetPropertyValue = useCallback(
+    (property: string) => {
+      const inheritedProperty = getPropertyValue(
+        nodes,
+        currentVisibleNode.inheritance.description.ref,
+        property
+      );
+
+      if (inheritedProperty !== null) {
+        return inheritedProperty;
+      } else {
+        return currentVisibleNode.properties.description;
+      }
+    },
+    [currentVisibleNode, nodes]
+  );
 
   /* "root": "T
   of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'.
@@ -1445,19 +1567,14 @@ const Node = ({
         <Text
           nodes={nodes}
           recordLogs={recordLogs}
-          text={
-            getPropertyValue(
-              nodes,
-              currentVisibleNode.inheritance.description.ref,
-              "description"
-            ) || currentVisibleNode.properties.description
-          }
+          text={onGetPropertyValue("description")}
           currentVisibleNode={currentVisibleNode}
           property={"description"}
           setCurrentVisibleNode={setCurrentVisibleNode}
           locked={locked}
           selectedDiffNode={selectedDiffNode}
           getTitleNode={getTitleNode}
+          confirmIt={confirmIt}
         />
 
         {currentVisibleNode?.properties.hasOwnProperty("actor") && (
@@ -1469,7 +1586,7 @@ const Node = ({
             setSelectedProperty={setSelectedProperty}
             handleSorting={handleSorting}
             handleEditCategory={handleEditCategory}
-            deleteCategory={deleteCategory}
+            deleteCategory={deleteCollection}
             navigateToNode={navigateToNode}
             recordLogs={recordLogs}
             setSnackbarMessage={setSnackbarMessage}
@@ -1497,7 +1614,7 @@ const Node = ({
               setSelectedProperty={setSelectedProperty}
               handleSorting={handleSorting}
               handleEditCategory={handleEditCategory}
-              deleteCategory={deleteCategory}
+              deleteCategory={deleteCollection}
               navigateToNode={navigateToNode}
               recordLogs={recordLogs}
               setSnackbarMessage={setSnackbarMessage}
@@ -1529,7 +1646,7 @@ const Node = ({
               setSelectedProperty={setSelectedProperty}
               handleSorting={handleSorting}
               handleEditCategory={handleEditCategory}
-              deleteCategory={deleteCategory}
+              deleteCategory={deleteCollection}
               navigateToNode={navigateToNode}
               recordLogs={recordLogs}
               setSnackbarMessage={setSnackbarMessage}
@@ -1556,7 +1673,7 @@ const Node = ({
             updateInheritance={updateInheritance}
             showListToSelect={showListToSelect}
             handleEditCategory={handleEditCategory}
-            deleteCategory={deleteCategory}
+            deleteCategory={deleteCollection}
             handleSorting={handleSorting}
             navigateToNode={navigateToNode}
             setSnackbarMessage={setSnackbarMessage}
@@ -1569,6 +1686,8 @@ const Node = ({
             locked={locked}
             selectedDiffNode={selectedDiffNode}
             getTitleNode={getTitleNode}
+            confirmIt={confirmIt}
+            onGetPropertyValue={onGetPropertyValue}
           />
         </Box>
       </Box>
@@ -1586,7 +1705,7 @@ const Node = ({
         open={openSelectModel}
         onClose={handleClose}
       >
-        <Box
+        <Paper
           sx={{
             maxHeight: "80vh",
             overflowY: "auto",
@@ -1595,9 +1714,9 @@ const Node = ({
             ...SCROLL_BAR_STYLE,
           }}
         >
-          <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Typography>
+          <Box sx={{ position: "sticky", top: "0", zIndex: 1 }}>
+            <Paper sx={{ pt: "15px" }}>
+              <Typography sx={{ pl: "15px" }}>
                 Check the Box for the{" "}
                 <strong style={{ color: "orange" }}>
                   {capitalizeFirstLetter(
@@ -1608,25 +1727,44 @@ const Node = ({
                 </strong>{" "}
                 that you want to add:
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  width: "950px",
+                  pr: "5px",
+                }}
+              >
+                <Typography sx={{ width: "300px", ml: "14px" }}>
+                  Enter the new title:{" "}
+                </Typography>
                 <SearchBox
                   setSearchValue={setSearchValue}
                   label={"Search ..."}
                 />
                 {selectedProperty === "specializations" && (
                   <Button
-                    onClick={() => addNewSpecialization("main", searchValue)}
-                    sx={{ borderRadius: "25px", minWidth: '100px' }}
+                    onClick={() =>
+                      addNewSpecialization(
+                        selectedCategory || "main",
+                        searchValue
+                      )
+                    }
+                    sx={{ borderRadius: "25px", minWidth: "200px" }}
                     variant="outlined"
-                    disabled={searchValue.length < 3}
+                    disabled={
+                      searchValue.length < 3 ||
+                      searchResultsForSelection[0]?.title.trim() ===
+                        searchValue.trim()
+                    }
                   >
-                    {"Add new"}
+                    {"Add new specialization"}
                   </Button>
                 )}
               </Box>
-            </Box>
-          </Paper>
-          <Paper>
+            </Paper>
+          </Box>
+          <Box>
             {searchValue ? (
               <Box>
                 {" "}
@@ -1656,14 +1794,25 @@ const Node = ({
                   >
                     {" "}
                     {user?.manageLock || !node.locked ? (
-                      <Checkbox
-                        checked={checkedItems.has(node.id)}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          markItemAsChecked(node.id);
-                        }}
-                        name={node.id}
-                      />
+                      checkedItems.has(node.id) ? (
+                        <Checkbox
+                          checked={true}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            markItemAsChecked(node.id);
+                          }}
+                          name={node.id}
+                        />
+                      ) : (
+                        <Checkbox
+                          checked={false}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            markItemAsChecked(node.id);
+                          }}
+                          name={node.id}
+                        />
+                      )
                     ) : (
                       <LockIcon
                         sx={{
@@ -1689,7 +1838,7 @@ const Node = ({
                 manageLock={user?.manageLock}
               />
             )}
-          </Paper>
+          </Box>
           {/* {selectedProperty === "specializations" && (
               <Button
                 variant="contained"
@@ -1718,13 +1867,13 @@ const Node = ({
               Save
             </Button>
           </Paper>
-        </Box>
+        </Paper>
       </Modal>
       <Dialog
         onClose={() => {
           setOpenAddProperty(false);
         }}
-        open={openAddProprety}
+        open={openAddProperty}
       >
         <DialogContent>
           <Box sx={{ height: "auto", width: "500px" }}>
