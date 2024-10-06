@@ -5,6 +5,7 @@ import {
   getChangeDescription,
 } from " @components/lib/utils/helpers";
 import { NodeChange } from " @components/types/INode";
+import dayjs from "dayjs";
 
 const ActivityDetails = ({
   activity,
@@ -28,7 +29,10 @@ const ActivityDetails = ({
           color: "text.secondary",
         }}
       >
-        {getModifiedAt(activity.modifiedAt)}
+        {" "}
+        {dayjs(new Date(activity.modifiedAt.toDate())).fromNow().includes("NaN")
+          ? "a few minutes ago"
+          : `${dayjs(new Date(activity.modifiedAt.toDate())).fromNow()}`}
       </Typography>
 
       <Paper
@@ -128,7 +132,7 @@ const ActivityDetails = ({
               whiteSpace: "nowrap",
             }}
           >
-            {activity.fullNode.title}
+            {activity.fullNode?.title}
           </Typography>
         </Box>
       </Paper>

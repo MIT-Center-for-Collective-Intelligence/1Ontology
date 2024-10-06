@@ -717,6 +717,7 @@ const Ontology = () => {
   };
 
   useEffect(() => {
+    if (process.env.NODE_ENV === "development") return;
     const handleUserActivity = () => {
       const currentTime = Date.now();
       setLastInteractionDate(new Date(currentTime));

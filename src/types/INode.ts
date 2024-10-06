@@ -118,7 +118,7 @@ export type NodeChange = {
   modifiedProperty: string | null;
   previousValue: any;
   newValue: any;
-  modifiedAt: Date;
+  modifiedAt: any;
   changeType:
     | "change text"
     | "sort elements"

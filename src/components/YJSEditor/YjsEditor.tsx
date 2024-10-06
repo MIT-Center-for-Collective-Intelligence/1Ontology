@@ -6,25 +6,25 @@ const YjsEditorWrapper = dynamic(() => import(".//YjsEditorWrapper"), {
 });
 
 const YjsEditor = ({
-  uname,
+  fullname,
   property,
   nodeId,
   color,
-  saveChanges,
+  saveChangeHistory,
 }: {
-  uname: string;
+  fullname: string;
   property: string;
   nodeId: string;
   color: string;
-  saveChanges: Function;
+  saveChangeHistory: Function;
 }) => {
   return (
     <YjsEditorWrapper
-      uname={uname}
+      fullname={fullname}
       property={property}
       nodeId={nodeId}
       color={color}
-      saveChanges={saveChanges}
+      saveChangeHistory={saveChangeHistory}
     />
   );
 };
