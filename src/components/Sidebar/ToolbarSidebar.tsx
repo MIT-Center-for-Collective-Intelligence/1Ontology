@@ -123,7 +123,7 @@ const ToolbarSidebar = ({
     fullname: string;
     fName: string;
   } | null>(null);
-  const [hovered, setHovered] = useState(false); // Hover state for sidebar
+  const [hovered, setHovered] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(null);
   const [percentageUploaded, setPercentageUploaded] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -547,7 +547,7 @@ const ToolbarSidebar = ({
           <Box
             sx={{
               display: "flex",
-              justifyContent: "space-between", // Aligns the icon to the right
+              justifyContent: "space-between",
               mb: 2,
             }}
           >
@@ -563,6 +563,7 @@ const ToolbarSidebar = ({
                       height: "100%",
                       borderRadius: "50%",
                       objectFit: "cover",
+                      transition: "transform 0.3s ease",
                     }}
                   />
                 </Box>
@@ -628,6 +629,7 @@ const ToolbarSidebar = ({
                 width: hovered ? "140px" : "50px",
                 height: "auto",
                 borderRadius: 0,
+                transition: "width 0.3s ease", // Add transition for smooth width change
               }}
             />
           </Box>
@@ -641,7 +643,7 @@ const ToolbarSidebar = ({
                 justifyContent: "flex-start",
                 padding: 0,
                 textTransform: "none",
-                minWidth: 0, // removes default button padding
+                minWidth: 0,
               }}
               onClick={handleProfileMenuOpen}
             >
@@ -649,24 +651,28 @@ const ToolbarSidebar = ({
                 <OptimizedAvatar
                   alt={`${user?.fName} ${user?.lName}`}
                   imageUrl={user?.imageUrl || ""}
-                  size={40}
+                  size={45}
                   sx={{
                     width: "100%",
                     height: "100%",
                     borderRadius: "50%",
                     objectFit: "cover",
+                    transition: "transform 0.3s ease",
                   }}
-                  online={true}
                 />
               )}
-
-              {/* Show Full Name when hovered */}
             </Button>
-            {hovered && user && (
-              <Typography sx={{ ml: 2 }}>
-                {`${user?.fName} ${user?.lName}`}
-              </Typography>
-            )}
+
+            <Typography
+              sx={{
+                ml: 2,
+                transition: "opacity 0.3s ease",
+                opacity: hovered ? 1 : 0,
+                minWidth: "120px",
+              }}
+            >
+              {`${user?.fName} ${user?.lName}`}
+            </Typography>
           </Box>
 
           <Box sx={{ mt: "13px" }}>
@@ -691,13 +697,6 @@ const ToolbarSidebar = ({
               text="Search"
               toolbarIsOpen={hovered}
             />
-            {/*<SidebarButton
-              id="toolbar-download-button"
-              icon={<DownloadIcon />}
-              onClick={onDownload}
-              text="Download"
-              toolbarIsOpen={hovered}
-            /> */}
             <SidebarButton
               id="toolbar-theme-button"
               icon={
