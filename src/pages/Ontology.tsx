@@ -127,7 +127,6 @@ const Ontology = () => {
   const fuse = new Fuse(Object.values(nodes), { keys: ["title"] });
   const headerRef = useRef<HTMLHeadElement | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-  const [dagreZoomState, setDagreZoomState] = useState<any>(null);
 
   const [eachOntologyPath, setEachOntologyPath] = useState<{
     [key: string]: any;
@@ -884,8 +883,6 @@ const Ontology = () => {
                     treeVisualization={treeVisualization}
                     setExpandedNodes={setExpandedNodes}
                     expandedNodes={expandedNodes}
-                    setDagreZoomState={setDagreZoomState}
-                    dagreZoomState={dagreZoomState}
                     onOpenNodeDagre={onOpenNodeDagre}
                     currentVisibleNode={currentVisibleNode}
                   />

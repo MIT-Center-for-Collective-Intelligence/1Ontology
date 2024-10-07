@@ -76,8 +76,6 @@ type IDagGraphProps = {
   treeVisualization: TreeVisual;
   setExpandedNodes: (state: Set<string>) => void;
   expandedNodes: Set<string>;
-  setDagreZoomState: any;
-  dagreZoomState: any;
   onOpenNodeDagre: (ontologyId: string) => void;
   currentVisibleNode: any;
 };
@@ -86,13 +84,16 @@ const DagGraph = ({
   treeVisualization,
   expandedNodes,
   setExpandedNodes,
-  setDagreZoomState,
-  dagreZoomState,
   onOpenNodeDagre,
   currentVisibleNode,
 }: IDagGraphProps) => {
   const svgRef = useRef(null);
   const [graph, setGraph] = useState<any>(null);
+  const [zoomState, setZoomState] = useState<{ translateX: number, translateY: number, scale: number}>({
+    translateX: 0,
+    translateY: 0,
+    scale: 0,
+  });
 
   const handleNodeClick = (nodeId: string) => {
     onOpenNodeDagre(nodeId);
@@ -176,16 +177,20 @@ const DagGraph = ({
 
     const zoom: any = d3.zoom().on("zoom", function (event) {
       svgGroup.attr("transform", event.transform);
-      setDagreZoomState(event.transform); // Save zoom state
+      setZoomState({
+        translateX: event.transform.x,
+        translateY: event.transform.y,
+        scale: event.transform.k,
+      }); // Save zoom state
     });
+  
+    svg.call(zoom);
 
     // Handle node click
     svg.selectAll("g.node").on("click", function () {
       const ontologyId = d3.select(this).datum() as string;
       handleNodeClick(ontologyId);
     });
-
-    svg.call(zoom);
 
     const svgWidth = (window.innerWidth * 70) / 100;
     const svgHeight = 290;
@@ -197,8 +202,13 @@ const DagGraph = ({
     const translateY = 150;
 
     // Restore zoom state if it exists
-    if (dagreZoomState) {
-      svg.call(zoom.transform, dagreZoomState);
+    if (zoomState) {
+      svg.call(
+        zoom.transform,
+        d3.zoomIdentity
+          .translate(zoomState.translateX, zoomState.translateY)
+          .scale(zoomState.scale)
+      );
     } else {
       // Apply initial zoom only if there is no existing zoom state
       svg.call(
@@ -247,6 +257,14 @@ const DagGraph = ({
             "transform",
             `translate(${translateX}, ${translateY}) scale(${scale})`
           );
+
+        setTimeout(() => {
+          setZoomState({
+            translateX: translateX,
+            translateY: translateY,
+            scale: scale,
+          });
+        }, 500);
       }
     }
   }, [currentVisibleNode?.id, graph]);
