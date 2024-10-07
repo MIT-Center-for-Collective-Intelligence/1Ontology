@@ -902,7 +902,7 @@ const Chat = ({
         <Box
           id="comments-section"
           sx={{
-            height: "calc(100vh - 300px)",
+            height: "calc(100vh - 180px)",
             overflow: "auto",
             "&::-webkit-scrollbar": {
               display: "none",
