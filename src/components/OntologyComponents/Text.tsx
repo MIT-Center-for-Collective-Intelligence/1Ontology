@@ -32,12 +32,11 @@ import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ISubOntologyProps = {
   currentVisibleNode: INode;
-  setCurrentVisibleNode: (state: any) => void;
+  setCurrentVisibleNode: Function;
   property: string;
   text: string; // Real-time text from WebSocket
   confirmIt: any;
   nodes: { [id: string]: INode };
-  recordLogs: (logs: any) => void;
   setSelectTitle?: any;
   selectTitle?: any;
   locked: boolean;
@@ -48,9 +47,7 @@ type ISubOntologyProps = {
   deleteNode?: any;
   handleLockNode?: any;
   navigateToNode?: any;
-  displayInheritanceSettings?: any;
-  displayNodeChat?: any;
-  displayNodeHistory?: any;
+  displaySidebar?: Function;
   activeSidebar?: any;
 };
 
@@ -58,7 +55,6 @@ const Text = ({
   currentVisibleNode,
   property,
   text, // Real-time text prop from firestore snapshot
-  recordLogs,
   confirmIt,
   setSelectTitle,
   selectTitle,
@@ -70,9 +66,7 @@ const Text = ({
   deleteNode,
   handleLockNode,
   navigateToNode,
-  displayInheritanceSettings,
-  displayNodeChat,
-  displayNodeHistory,
+  displaySidebar,
   activeSidebar,
 }: ISubOntologyProps) => {
   const db = getFirestore();
@@ -166,7 +160,8 @@ const Text = ({
       setError("");
       if (nodeDoc.exists()) {
         const nodeData = nodeDoc.data() as INode;
-        let previousValue =
+        if (typeof nodeData.properties[property] !== "string") return;
+        let previousValue: string =
           property === "title"
             ? nodeData[property]
             : nodeData.properties[property] || "";
@@ -324,7 +319,7 @@ const Text = ({
           </Typography>
         )}
 
-        {property === "title" && !selectedDiffNode && (
+        {property === "title" && !selectedDiffNode && displaySidebar && (
           <ManageNodeButtons
             locked={locked}
             root={root}
@@ -333,9 +328,7 @@ const Text = ({
             getTitleNode={getTitleNode}
             handleLockNode={handleLockNode}
             navigateToNode={navigateToNode}
-            displayInheritanceSettings={displayInheritanceSettings}
-            displayNodeChat={displayNodeChat}
-            displayNodeHistory={displayNodeHistory}
+            displaySidebar={displaySidebar}
             activeSidebar={activeSidebar}
           />
         )}

@@ -94,7 +94,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
         }
 
         newBatch = await updateSpecializationsInheritance(
-          Object.values(nodes[specialization.id].specializations).flat(),
+          nodes[specialization.id].specializations.flatMap((n) => n.nodes),
           newBatch,
           property,
           newValue,
@@ -121,7 +121,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
       newState[property] = newInheritance;
       setInheritanceState(newState);
       await updateSpecializationsInheritance(
-        Object.values(selectedNode.specializations).flat(),
+        selectedNode.specializations.flatMap((n) => n.nodes),
         batch,
         property,
         newInheritance,

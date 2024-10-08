@@ -68,19 +68,20 @@ import { useRouter } from "next/router";
 import ROUTES from " @components/lib/utils/routes";
 import { handleDownload } from " @components/lib/utils/random";
 import NodeActivity from "../ActiveUsers/NodeActivity";
+import { User } from " @components/types/IAuth";
+import { NodeChange } from " @components/types/INode";
 
 type MainSidebarProps = {
   toolbarRef: any;
-  user: any;
-  openSearchedNode: any;
-  searchWithFuse: any;
-  nodes: any;
+  user: User | null;
+  openSearchedNode: Function;
+  searchWithFuse: Function;
+  nodes: { [nodeId: string]: any };
   selectedDiffNode: any;
   setSelectedDiffNode: any;
   currentVisibleNode: any;
   setCurrentVisibleNode: any;
-  confirmIt: any;
-  recordLogs: any;
+  confirmIt: Function;
   activeSidebar: any;
   setActiveSidebar: any;
   handleExpandSidebar: any;
@@ -101,7 +102,6 @@ const ToolbarSidebar = ({
   currentVisibleNode,
   setCurrentVisibleNode,
   confirmIt,
-  recordLogs,
   activeSidebar,
   setActiveSidebar,
   handleExpandSidebar,
@@ -399,11 +399,7 @@ const ToolbarSidebar = ({
     [openLogsFor]
   );
 
-  const onDownload = useCallback(() => {
-    handleDownload({ user, db });
-  }, [user, db]);
-
-  const displayDiff = (data: any) => {
+  const displayDiff = (data: NodeChange) => {
     setSelectedDiffNode(data);
     if (currentVisibleNode?.id !== data.nodeId) {
       setCurrentVisibleNode(
@@ -443,7 +439,6 @@ const ToolbarSidebar = ({
             currentVisibleNode={currentVisibleNode}
             user={user}
             confirmIt={confirmIt}
-            recordLogs={recordLogs}
             searchWithFuse={searchWithFuse}
             treeVisualization={treeVisualization}
             expandedNodes={expandedNodes}
@@ -602,19 +597,21 @@ const ToolbarSidebar = ({
                 </Box>
               </Box>
             )}
-            <IconButton
-              onClick={() => {
-                setActiveSidebar(null);
-                setOpenLogsFor(null);
-                setSelectedDiffNode(null);
-                if (user.currentNode && selectedDiffNode) {
-                  setCurrentVisibleNode(nodes[user.currentNode] || null);
-                }
-              }}
-              sx={{ ml: "auto" }}
-            >
-              <ClearIcon />
-            </IconButton>
+            {user && (
+              <IconButton
+                onClick={() => {
+                  setActiveSidebar(null);
+                  setOpenLogsFor(null);
+                  setSelectedDiffNode(null);
+                  if (user.currentNode && selectedDiffNode) {
+                    setCurrentVisibleNode(nodes[user.currentNode] || null);
+                  }
+                }}
+                sx={{ ml: "auto" }}
+              >
+                <ClearIcon />
+              </IconButton>
+            )}
           </Box>
           {renderContent()}
         </Box>

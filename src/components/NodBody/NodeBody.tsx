@@ -1,29 +1,21 @@
 import React, { useMemo } from "react";
-import { Box, Button, useTheme } from "@mui/material";
-
-import { getPropertyValue } from " @components/lib/utils/string.utils";
+import { Box, Button, Typography, useTheme } from "@mui/material";
 import { INode } from " @components/types/INode";
 import Text from "../OntologyComponents/Text";
 import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
+import { DISPLAY } from " @components/lib/CONSTANTS";
+import { recordLogs, updateInheritance } from " @components/lib/utils/helpers";
 
 interface NodeBodyProps {
   currentVisibleNode: INode;
-  setCurrentVisibleNode: any;
-  recordLogs: any;
-  updateInheritance: any;
-  showListToSelect: any;
-  handleEditCategory: any;
-  deleteCategory: any;
-  handleSorting: any;
-  navigateToNode: any;
-  setSnackbarMessage: any;
-  setOpenAddCategory: any;
-  setSelectedProperty: any;
-  setOpenAddField: any;
-  removeProperty: any;
-  user: any;
+  setCurrentVisibleNode: Function;
+  showListToSelect: Function;
+  navigateToNode: Function;
+  setSnackbarMessage: Function;
+  setSelectedProperty: Function;
+  setOpenAddProperty: Function;
   nodes: { [id: string]: INode };
   locked: boolean;
   selectedDiffNode: any;
@@ -35,19 +27,11 @@ interface NodeBodyProps {
 const NodeBody: React.FC<NodeBodyProps> = ({
   currentVisibleNode,
   setCurrentVisibleNode,
-  recordLogs,
-  updateInheritance,
   showListToSelect,
-  handleEditCategory,
-  deleteCategory,
-  handleSorting,
   navigateToNode,
   setSnackbarMessage,
-  setOpenAddCategory,
   setSelectedProperty,
-  setOpenAddField,
-  removeProperty,
-  user,
+  setOpenAddProperty,
   nodes,
   locked,
   selectedDiffNode,
@@ -71,6 +55,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         updateInheritance({
           nodeId: currentVisibleNode.id,
           updatedProperty: property,
+          db,
         });
       }
     } catch (error) {
@@ -101,6 +86,29 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     }
   }, [currentVisibleNode, selectedDiffNode]);
 
+  const removeProperty = async (property: string) => {
+    if (
+      await confirmIt(
+        <Typography>
+          Are sure you want delete the property{" "}
+          <strong>{DISPLAY[property] || property}</strong>?
+        </Typography>,
+        "Delete",
+        "Keep"
+      )
+    ) {
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+      const properties = currentVisibleNode.properties;
+      const propertyType = currentVisibleNode.propertyType;
+      delete properties[property];
+      await updateDoc(nodeRef, { propertyType, properties });
+      recordLogs({
+        action: "removeProperty",
+        node: currentVisibleNode.id,
+        property,
+      });
+    }
+  };
   // {Object.values(currentVisibleNode.generalizations).flat()
   //   .length > 1 && (
   //   <TextField
@@ -174,19 +182,14 @@ const NodeBody: React.FC<NodeBodyProps> = ({
               {currentNode.propertyType[property] !== "string" ? (
                 <StructuredProperty
                   key={property + index}
+                  confirmIt={confirmIt}
                   selectedDiffNode={selectedDiffNode}
                   currentVisibleNode={currentNode}
                   showListToSelect={showListToSelect}
-                  setOpenAddCategory={setOpenAddCategory}
                   setSelectedProperty={setSelectedProperty}
-                  handleSorting={handleSorting}
-                  handleEditCategory={handleEditCategory}
-                  deleteCategory={deleteCategory}
                   navigateToNode={navigateToNode}
-                  recordLogs={recordLogs}
                   setSnackbarMessage={setSnackbarMessage}
                   setCurrentVisibleNode={setCurrentVisibleNode}
-                  updateInheritance={updateInheritance}
                   property={property}
                   nodes={nodes}
                   locked={locked}
@@ -195,7 +198,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 property !== "description" &&
                 currentNode.propertyType[property] === "string" && (
                   <Text
-                    recordLogs={recordLogs}
                     text={onGetPropertyValue(property)}
                     currentVisibleNode={currentNode}
                     property={property}
@@ -214,7 +216,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
       {!locked && (
         <Button
           onClick={() => {
-            setOpenAddField(true);
+            setOpenAddProperty(true);
           }}
           variant="outlined"
           sx={{

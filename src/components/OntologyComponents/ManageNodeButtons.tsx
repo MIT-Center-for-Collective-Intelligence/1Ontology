@@ -23,23 +23,24 @@ const ManageNodeButtons = ({
   getTitleNode,
   handleLockNode,
   navigateToNode,
-  displayInheritanceSettings,
-  displayNodeChat,
+  displaySidebar,
   activeSidebar,
-  displayNodeHistory,
 }: {
   locked: boolean;
   root: string;
   manageLock: boolean;
-  deleteNode: any;
+  deleteNode: Function;
   getTitleNode: (nodeId: string) => string;
-  handleLockNode: any;
-  navigateToNode: any;
-  displayInheritanceSettings: any;
-  displayNodeChat: any;
+  handleLockNode: Function;
+  navigateToNode: Function;
+  displaySidebar: Function;
   activeSidebar: string;
-  displayNodeHistory: any;
 }) => {
+  const displayNodeChat = () => displaySidebar("chat");
+  const displayNodeHistory = () => displaySidebar("nodeHistory");
+  const displayInheritanceSettings = () =>
+    displaySidebar("inheritanceSettings");
+
   return (
     <Box sx={{ ml: "auto" }}>
       <Box
@@ -103,7 +104,7 @@ const ManageNodeButtons = ({
           >
             {manageLock ? (
               <IconButton
-                onClick={handleLockNode}
+                onClick={() => handleLockNode()}
                 sx={{
                   borderRadius: "25px",
                   mx: "7px",
@@ -164,7 +165,7 @@ const ManageNodeButtons = ({
 
         {!locked && (
           <Tooltip title="Delete Node">
-            <IconButton onClick={deleteNode}>
+            <IconButton onClick={() => deleteNode()}>
               <DeleteIcon />
             </IconButton>
           </Tooltip>

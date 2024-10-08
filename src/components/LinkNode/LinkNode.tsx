@@ -68,10 +68,12 @@ In this example, `ChildNode` is used to display a child node with the given prop
 import { NODES } from " @components/lib/firestoreClient/collections";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import {
+  recordLogs,
   saveNewChangeLog,
   unlinkPropertyOf,
+  updateInheritance,
 } from " @components/lib/utils/helpers";
-import { INode, INodePath, IChildNode } from " @components/types/INode";
+import { INode, INodePath, ILinkNode } from " @components/types/INode";
 import {
   Box,
   Button,
@@ -94,28 +96,23 @@ import { useEffect, useState } from "react";
 import { getTitleDeleted } from " @components/lib/utils/string.utils";
 
 type ISubOntologyProps = {
-  link: IChildNode;
+  link: ILinkNode;
   currentVisibleNode: INode;
   sx?: { [key: string]: any };
   property: string;
   setCurrentVisibleNode: (currentVisibleNode: any) => void;
   setSnackbarMessage: (message: any) => void;
-  category: string;
-  recordLogs: (logs: any) => void;
-  updateInheritance: (parameters: {
-    nodeId: string;
-    updatedProperty: string;
-  }) => void;
   navigateToNode: (nodeID: string) => void;
   title: string;
-  nodes: any;
-  index: number;
+  nodes: { [nodeId: string]: INode };
   deleteVisible: boolean;
   linkLocked: any;
   locked: boolean;
   user: any;
   reviewId?: string;
   setReviewId?: Function;
+  linkIndex: number;
+  collectionIndex: number;
 };
 
 const LinkNode = ({
@@ -123,19 +120,17 @@ const LinkNode = ({
   sx,
   property,
   currentVisibleNode,
-  category,
-  recordLogs,
-  updateInheritance,
   navigateToNode,
   title,
   nodes,
-  index,
+  linkIndex: linkIndex,
   deleteVisible,
   linkLocked,
   locked,
   user,
   reviewId,
   setReviewId,
+  collectionIndex,
 }: ISubOntologyProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -181,23 +176,36 @@ const LinkNode = ({
   const cancelEditingNode = () => {
     try {
       const currentNode = nodes[link.id];
-      const generalization = Object.values(
+      /*       const generalization = Object.values(
         currentNode.generalizations
-      ).flat()[0] as { id: string };
-      const generalizationNode = nodes[generalization.id];
+      ).flat()[0] as { id: string }; */
 
-      generalizationNode.specializations[category || "main"] =
-        generalizationNode.specializations[category || "main"].filter(
-          (l: { id: string }) => l.id !== link.id
-        );
+      for (let genCollection of currentNode.generalizations) {
+        for (let generalizationLink of genCollection.nodes) {
+          const generalizationNode = nodes[generalizationLink.id];
+          for (
+            let specCollectionIndex = 0;
+            specCollectionIndex < generalizationNode.specializations.length;
+            specCollectionIndex++
+          ) {
+            generalizationNode.specializations[specCollectionIndex].nodes =
+              generalizationNode.specializations[
+                specCollectionIndex
+              ].nodes.filter((l: ILinkNode) => l.id !== link.id);
+          }
 
-      const generalizationRef = doc(collection(db, NODES), generalization.id);
-      updateDoc(generalizationRef, {
-        specializations: generalizationNode.specializations,
-      });
+          const generalizationRef = doc(
+            collection(db, NODES),
+            generalizationLink.id
+          );
+          updateDoc(generalizationRef, {
+            specializations: generalizationNode.specializations,
+          });
 
-      const nodeRef = doc(collection(db, NODES), link.id);
-      updateDoc(nodeRef, { title: editorContent, deleted: true });
+          const nodeRef = doc(collection(db, NODES), link.id);
+          updateDoc(nodeRef, { title: editorContent, deleted: true });
+        }
+      }
 
       saveNewChangeLog(db, {
         nodeId: link.id,
@@ -241,8 +249,14 @@ const LinkNode = ({
           const previousValue = JSON.parse(
             JSON.stringify(nodeData.properties[property])
           );
-          if (index !== -1) {
-            nodeData.properties[property][category].splice(index, 1);
+          if (
+            linkIndex !== -1 &&
+            Array.isArray(nodeData.properties[property])
+          ) {
+            nodeData.properties[property][collectionIndex].nodes.splice(
+              linkIndex,
+              1
+            );
           }
 
           const shouldBeRemovedFromParent = !(
@@ -258,8 +272,7 @@ const LinkNode = ({
           }
 
           await updateDoc(nodeDoc.ref, {
-            [`properties.${property}.${category}`]:
-              nodeData.properties[property][category],
+            [`properties.${property}`]: nodeData.properties[property],
           });
           if (property !== "isPartOf") {
             await updateDoc(nodeDoc.ref, {
@@ -269,6 +282,7 @@ const LinkNode = ({
             updateInheritance({
               nodeId: nodeDoc.id,
               updatedProperty: property,
+              db,
             });
           }
           saveNewChangeLog(db, {
@@ -312,11 +326,13 @@ const LinkNode = ({
     }
     if (specOrGenDoc.exists()) {
       const specOrGenData = specOrGenDoc.data() as INode;
-      for (let cat in specOrGenData[removeFrom]) {
-        specOrGenData[removeFrom][cat] = specOrGenData[removeFrom][cat].filter(
-          (c: { id: string }) => c.id !== removeNodeId
-        );
-      }
+
+      specOrGenData[removeFrom][collectionIndex].nodes = specOrGenData[
+        removeFrom
+      ][collectionIndex].nodes.filter(
+        (c: { id: string }) => c.id !== removeNodeId
+      );
+
       await updateDoc(specOrGenDoc.ref, {
         [`${removeFrom}`]: specOrGenData[removeFrom],
       });
@@ -342,17 +358,17 @@ const LinkNode = ({
               nodeData[property as "specializations" | "generalizations"]
             )
           );
-          if (index !== -1) {
+          if (linkIndex !== -1) {
             nodeData[property as "specializations" | "generalizations"][
-              category
-            ].splice(index, 1);
+              collectionIndex
+            ].nodes.splice(linkIndex, 1);
           }
 
-          const shouldBeRemovedFromParent = !Object.values(
-            nodeData[property as "specializations" | "generalizations"]
-          )
-            .flat()
-            .some((c: { id: string }) => c.id === link.id);
+          const shouldBeRemovedFromParent = !nodeData[
+            property as "specializations" | "generalizations"
+          ].some((c: { nodes: ILinkNode[] }) =>
+            c.nodes.includes({ id: link.id })
+          );
 
           if (shouldBeRemovedFromParent) {
             removeNodeLink(

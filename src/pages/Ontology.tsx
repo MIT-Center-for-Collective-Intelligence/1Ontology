@@ -54,6 +54,7 @@ import { Bar, Container, Section } from "@column-resizer/react";
 import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
 import {
   Box,
+  Button,
   CircularProgress,
   Tab,
   Tabs,
@@ -78,6 +79,7 @@ import SneakMessage from " @components/components/OntologyComponents/SneakMessag
 import Node from " @components/components/OntologyComponents/Node";
 import TreeViewSimplified from " @components/components/OntologyComponents/TreeViewSimplified";
 import {
+  ILinkNode,
   ILockedNode,
   INode,
   INodePath,
@@ -102,12 +104,13 @@ import {
   getBrowser,
   getOperatingSystem,
 } from " @components/lib/firestoreClient/errors.firestore";
-import { IChat } from " @components/types/IChat";
 
-import { saveNewChangeLog } from " @components/lib/utils/helpers";
+import { recordLogs, saveNewChangeLog } from " @components/lib/utils/helpers";
 import { useHover } from " @components/lib/hooks/useHover";
 import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarSidebar";
 import { NodeChange } from " @components/types/INode";
+
+import { getAuth } from "firebase/auth";
 
 const Ontology = () => {
   const db = getFirestore();
@@ -118,18 +121,15 @@ const Ontology = () => {
   const [currentVisibleNode, setCurrentVisibleNode] = useState<INode | null>(
     null
   );
-  const [ontologyPath, setOntologyPath] = useState<INodePath[]>([]);
+  // const [ontologyPath, setOntologyPath] = useState<INodePath[]>([]);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
   const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
-  const [lockedNodeFields, setLockedNodeFields] = useState<ILockedNode>({});
   const [viewValue, setViewValue] = useState<number>(0);
   const fuse = new Fuse(Object.values(nodes), { keys: ["title"] });
-  const headerRef = useRef<HTMLHeadElement | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-
   const [eachOntologyPath, setEachOntologyPath] = useState<{
-    [key: string]: any;
+    [key: string]: INodePath[];
   }>({});
   const columnResizerRef = useRef<any>();
   const [lastUpdate, setLastUpdate] = useState<number | null>(null);
@@ -182,32 +182,6 @@ const Ontology = () => {
       }
     }
   }, [user, emailVerified]);
-
-  const recordLogs = async (logs: any) => {
-    try {
-      const logRef = doc(collection(db, LOGS));
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, "0");
-      const day = String(now.getDate()).padStart(2, "0");
-      const hours = String(now.getHours()).padStart(2, "0");
-      const minutes = String(now.getMinutes()).padStart(2, "0");
-      const seconds = String(now.getSeconds()).padStart(2, "0");
-
-      const doerCreate = `${user?.uname}-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
-      await setDoc(logRef, {
-        type: "info",
-        ...logs,
-        createdAt: new Date(),
-        doer: user?.uname,
-        operatingSystem: getOperatingSystem(),
-        browser: getBrowser(),
-        doerCreate,
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   useEffect(() => {
     // Function to handle changes in the URL hash
@@ -299,9 +273,9 @@ const Ontology = () => {
       eachOntologyPath,
     }: {
       mainNodes: INode[];
-      path: any;
-      eachOntologyPath: any;
-    }) => {
+      path: INodePath[];
+      eachOntologyPath: { [nodeId: string]: INodePath[] };
+    }): { [nodeId: string]: INodePath[] } | undefined => {
       try {
         // Loop through each main node
 
@@ -320,18 +294,12 @@ const Ontology = () => {
             },
           ];
 
-          // Loop through categories in the children of the current node
-
-          for (let category in node.specializations) {
-            // Filter nodes based on their inclusion in the specializations of the current category
-            const childrenIds = node.specializations[category].map(
-              (n: any) => n.id
+          // Loop through categories in the specializations of the current node
+          node.specializations.forEach((collection, collectionIdx) => {
+            const specializationsData: INode[] = [];
+            node.specializations[collectionIdx].nodes.forEach((n: ILinkNode) =>
+              specializationsData.push(nodes[n.id])
             );
-            const children = [];
-
-            for (let childId of childrenIds) {
-              children.push(nodes[childId]);
-            }
 
             const subPath = [...path];
 
@@ -340,29 +308,35 @@ const Ontology = () => {
               id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
               category: !!node.category,
             });
-            if (category !== "main") {
+            if (collection.collectionName !== "main") {
               subPath.push({
-                title: category,
-                id: `${node.id}-${category.trim()}`,
+                title: collection.collectionName,
+                id: `${node.id}-${collection.collectionName.trim()}`,
                 category: true,
               });
             }
             // Recursively call the findOntologyPath function for the filtered specializations
-            eachOntologyPath = findOntologyPath({
-              mainNodes: children,
+            const result = findOntologyPath({
+              mainNodes: specializationsData,
               path: [...subPath],
               eachOntologyPath,
             });
-          }
+            if (result) {
+              eachOntologyPath = result;
+            }
+          });
         }
 
         // Return the accumulated ontology paths
         return eachOntologyPath;
-      } catch (error) {
+      } catch (error: any) {
         recordLogs({
-          error,
-          at: "getSpecializationsTree",
           type: "error",
+          error: JSON.stringify({
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          }),
         });
       }
     },
@@ -378,12 +352,14 @@ const Ontology = () => {
         path: [],
         eachOntologyPath: {},
       });
-      setEachOntologyPath(eachOntologyPath);
+      if (eachOntologyPath) {
+        setEachOntologyPath(eachOntologyPath);
+      }
     }
   }, [nodes]);
 
   // Function to generate a tree structure of specializations based on main nodes
-  const getSpecializationsTree = (_nodes: INode[], path: any) => {
+  const getSpecializationsTree = (_nodes: INode[], path: string[]) => {
     // Object to store the main specializations tree
     let newSpecializationsTree: any = {};
     // Iterate through each main nodes
@@ -404,17 +380,17 @@ const Ontology = () => {
         specializations: {},
       };
 
-      // Iterate through each category in the specializations child-nodes
+      // Iterate through each collection in the specializations child-nodes
 
-      for (let category in node.specializations) {
-        // Filter nodes based on the current category
+      for (let collection of node.specializations) {
+        // Filter nodes based on the current collection
         const specializations: INode[] = [];
-        (node?.specializations[category] || []).forEach((o: { id: string }) => {
-          specializations.push(nodes[o.id]);
+        collection.nodes.forEach((nodeLink: { id: string }) => {
+          specializations.push(nodes[nodeLink.id]);
         });
 
-        // Check if the category is the main category
-        if (category === "main") {
+        // Check if the collection is the main collection
+        if (collection.collectionName === "main") {
           // If main, update the main specializations entry with recursive call
           newSpecializationsTree[nodeTitle] = {
             id: node.category ? `${node.id}-${nodeTitle.trim()}` : node.id,
@@ -422,27 +398,27 @@ const Ontology = () => {
             isCategory: !!node.category,
             title: nodeTitle,
             locked: !!node.locked,
-            categoriesOrder: node.categoriesOrder?.specializations,
+            categoriesOrder: node.specializations.map((n) => n.collectionName),
             specializations: {
               ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
               ...getSpecializationsTree(specializations, [...path, node.id]),
             },
           };
         } else {
-          // If not main, create a new entry for the category
+          // If not main, create a new entry for the collection
           newSpecializationsTree[nodeTitle] = {
             id: node.id,
             path: [...path, node.id],
             title: nodeTitle,
             c: node.category,
             locked: !!node.locked,
-            categoriesOrder: node.categoriesOrder?.specializations,
+            categoriesOrder: node.specializations.map((n) => n.collectionName),
             specializations: {
               ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
-              [category]: {
+              [collection.collectionName]: {
                 isCategory: true,
-                id: `${node.id}-${category.trim()}`, // Assuming newId and db are defined elsewhere
-                title: category,
+                id: `${node.id}-${collection.collectionName.trim()}`,
+                title: collection.collectionName,
                 locked: !!node.locked,
                 specializations: getSpecializationsTree(specializations, [
                   ...path,
@@ -533,7 +509,7 @@ const Ontology = () => {
 
     // Record logs if ontology path is not empty
     if (currentNode) {
-      await recordLogs({
+      recordLogs({
         action: "Opened a node",
         node: currentNode,
       });
@@ -567,7 +543,7 @@ const Ontology = () => {
     }
 
     openedANode(currentVisibleNode.id);
-    setOntologyPath(eachOntologyPath[currentVisibleNode?.id]);
+    // setOntologyPath(eachOntologyPath[currentVisibleNode?.id]);
     initializeExpanded(eachOntologyPath[currentVisibleNode?.id]);
     updateTheUrl(eachOntologyPath[currentVisibleNode?.id]);
   }, [currentVisibleNode?.id, eachOntologyPath]);
@@ -601,7 +577,7 @@ const Ontology = () => {
           fullNode: newNode,
         });
         // Record logs for the created node
-        await recordLogs({
+        recordLogs({
           action: "Create a new node",
           nodeId: id,
         });
@@ -626,7 +602,7 @@ const Ontology = () => {
         setCurrentVisibleNode(nodes[nodeId]);
 
         // Record logs for the action of opening the DAGRE view for the node.
-        await recordLogs({
+        recordLogs({
           action: "opened dagre-view",
           itemClicked: nodes[nodeId].id,
         });
@@ -659,7 +635,7 @@ const Ontology = () => {
         setCurrentVisibleNode(nodes[nodeId]);
 
         // Record logs for the action of clicking the tree-view
-        await recordLogs({
+        recordLogs({
           action: "clicked tree-view",
           itemClicked: nodes[nodeId].id,
         });
@@ -765,29 +741,16 @@ const Ontology = () => {
     }
   };
 
-  const displayNodeChat = useCallback(() => {
-    if (activeSidebar === "chat") {
-      setActiveSidebar(null);
-    } else {
-      handleExpandSidebar("chat");
-    }
-  }, [activeSidebar]);
-
-  const displayNodeHistory = useCallback(() => {
-    if (activeSidebar === "nodeHistory") {
-      setActiveSidebar(null);
-    } else {
-      handleExpandSidebar("nodeHistory");
-    }
-  }, [activeSidebar]);
-
-  const displayInheritanceSettings = useCallback(() => {
-    if (activeSidebar === "inheritanceSettings") {
-      setActiveSidebar(null);
-    } else {
-      handleExpandSidebar("inheritanceSettings");
-    }
-  }, [activeSidebar]);
+  const displaySidebar = useCallback(
+    (sidebarName: "chat" | "nodeHistory" | "inheritanceSettings") => {
+      if (activeSidebar === sidebarName) {
+        setActiveSidebar(null);
+      } else {
+        handleExpandSidebar(sidebarName);
+      }
+    },
+    [activeSidebar]
+  );
 
   if (Object.keys(nodes).length <= 0) {
     return (
@@ -934,9 +897,8 @@ const Ontology = () => {
           >
             <Box ref={scrolling}></Box>
 
-            {currentVisibleNode && (
+            {currentVisibleNode && user && (
               <Node
-                scrolling={scrolling}
                 currentVisibleNode={currentVisibleNode}
                 setCurrentVisibleNode={setCurrentVisibleNode}
                 setSnackbarMessage={setSnackbarMessage}
@@ -944,16 +906,12 @@ const Ontology = () => {
                 mainSpecializations={getMainSpecializations(treeVisualization)}
                 nodes={nodes}
                 addNewNode={addNewNode}
-                lockedNodeFields={lockedNodeFields}
-                recordLogs={recordLogs}
                 navigateToNode={navigateToNode}
                 eachOntologyPath={eachOntologyPath}
                 searchWithFuse={searchWithFuse}
                 locked={!!currentVisibleNode.locked && !user?.manageLock}
                 selectedDiffNode={selectedDiffNode}
-                displayInheritanceSettings={displayInheritanceSettings}
-                displayNodeChat={displayNodeChat}
-                displayNodeHistory={displayNodeHistory}
+                displaySidebar={displaySidebar}
                 activeSidebar={activeSidebar}
               />
             )}
@@ -972,7 +930,6 @@ const Ontology = () => {
           currentVisibleNode={currentVisibleNode}
           setCurrentVisibleNode={setCurrentVisibleNode}
           confirmIt={confirmIt}
-          recordLogs={recordLogs}
           activeSidebar={activeSidebar}
           setActiveSidebar={setActiveSidebar}
           handleExpandSidebar={handleExpandSidebar}

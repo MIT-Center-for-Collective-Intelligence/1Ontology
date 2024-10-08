@@ -110,8 +110,11 @@ import Text from "./Text";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import {
+  ICollection,
+  ILinkNode,
   ILockedNode,
   INode,
+  INodeTypes,
   MainSpecializations,
 } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
@@ -127,41 +130,40 @@ import {
   getTitle,
 } from " @components/lib/utils/string.utils";
 import LockIcon from "@mui/icons-material/Lock";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {
+  checkIfCanDeleteANode,
+  createNewNode,
+  generateInheritance,
+  recordLogs,
   removeIsPartOf,
   saveNewChangeLog,
   unlinkPropertyOf,
   updateInheritance,
+  updateSpecializations,
 } from " @components/lib/utils/helpers";
 
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
 import { NodeChange } from " @components/types/INode";
+import { User } from " @components/types/IAuth";
 
 type INodeProps = {
-  scrolling: any;
   currentVisibleNode: INode;
   setCurrentVisibleNode: (node: INode) => void;
   setSnackbarMessage: (message: string) => void;
-  user: any;
+  user: User;
   mainSpecializations: MainSpecializations;
   nodes: { [id: string]: INode };
-  addNewNode: ({ id, newNode }: { id: string; newNode: any }) => void;
-  lockedNodeFields: ILockedNode;
-  recordLogs: (logs: any) => void;
+  addNewNode: ({ id, newNode }: { id: string; newNode: INode }) => void;
   navigateToNode: (nodeId: string) => void;
   eachOntologyPath: { [key: string]: any };
-  searchWithFuse: any;
+  searchWithFuse: (query: string, nodeType?: INodeTypes) => INode[];
   locked: boolean;
   selectedDiffNode: NodeChange | null;
-  displayInheritanceSettings: any;
-  displayNodeChat: any;
-  displayNodeHistory: any;
+  displaySidebar: Function;
   activeSidebar: any;
 };
 
 const Node = ({
-  scrolling,
   currentVisibleNode,
   setCurrentVisibleNode,
   setSnackbarMessage,
@@ -169,14 +171,11 @@ const Node = ({
   nodes,
   addNewNode,
   user,
-  recordLogs,
   navigateToNode,
   searchWithFuse,
   locked,
   selectedDiffNode,
-  displayInheritanceSettings,
-  displayNodeChat,
-  displayNodeHistory,
+  displaySidebar,
   activeSidebar,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
@@ -189,13 +188,7 @@ const Node = ({
     setOpenSelectModel(false);
     setSelectedCategory("");
   };
-  const [openAddCategory, setOpenAddCategory] = useState(false);
-  const handleCloseAddCollection = () => {
-    setSelectedProperty("");
-    setNewCollection("");
-    setOpenAddCategory(false);
-    setEditCategory(null);
-  };
+
   const [newCollection, setNewCollection] = useState("");
   const [selectedProperty, setSelectedProperty] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -235,9 +228,19 @@ const Node = ({
   }, []);
 
   const searchResultsForSelection = useMemo(() => {
-    const propertyType =
-      currentVisibleNode.propertyType[selectedProperty] || "";
-    return searchWithFuse(searchValue, propertyType);
+    const propertyType = currentVisibleNode.propertyType[
+      selectedProperty
+    ] as INodeTypes;
+    if (propertyType) {
+      return searchWithFuse(searchValue, propertyType);
+    }
+    if (
+      selectedProperty === "specializations" ||
+      selectedProperty === "generalizations"
+    ) {
+      return searchWithFuse(searchValue);
+    }
+    return [];
   }, [searchValue, selectedProperty]);
 
   const markItemAsChecked = (checkedId: string) => {
@@ -262,82 +265,75 @@ const Node = ({
         // Create a reference for the new node document in Firestore.
         const newNodeRef = doc(collection(db, NODES));
         let newTitle = `New ${parentNodeData.title}`;
-        const specializationsTitles = Object.values(
-          parentNodeData.specializations
-        )
-          .flat()
-          .map((spec) => nodes[spec.id].title);
-        newTitle = generateUniqueTitle(newTitle, specializationsTitles);
-        const inheritance = JSON.parse(
-          JSON.stringify({ ...parentNodeData.inheritance })
+
+        // Generate a unique title based on existing specializations
+        const specializationsTitles = parentNodeData.specializations.flatMap(
+          (collection) => collection.nodes.map((spec) => nodes[spec.id].title)
         );
-        for (let property in inheritance) {
-          if (!inheritance[property].ref) {
-            inheritance[property].ref = currentVisibleNode.id;
+        newTitle = generateUniqueTitle(newTitle, specializationsTitles);
+
+        // Generate new inheritance structure
+        const inheritance = generateInheritance(
+          parentNodeData.inheritance,
+          currentVisibleNode.id
+        );
+
+        // Create the new node object
+        const newNode = createNewNode(
+          parentNodeData,
+          newNodeRef.id,
+          newTitle,
+          inheritance,
+          nodeId
+        );
+
+        // Handle specific property updates for `parts` and `isPartOf`
+        if (selectedProperty === "parts") {
+          if (
+            newNode.properties.isPartOf &&
+            Array.isArray(newNode.properties.isPartOf)
+          ) {
+            newNode.properties.isPartOf.push({
+              collectionName: "main",
+              nodes: [{ id: currentVisibleNode.id }],
+            });
           }
         }
 
-        // Prepare the data for the new node by copying existing data.
-        const newNode: any = {
-          ...parentNodeDoc.data(),
-          id: newNodeRef.id,
-          inheritance,
-          categoriesOrder: {},
-          title: newTitle,
-          specializations: { main: [] },
-          propertyOf: {
-            [selectedProperty]: {
-              main: [
-                {
-                  id: currentVisibleNode.id!,
-                },
-              ],
-            },
-          },
-          generalizations: {
-            main: [
-              {
-                id: nodeId,
-              },
-            ],
-          },
-          locked: false,
-        };
-        if (selectedProperty === "parts") {
-          newNode.properties.isPartOf["main"].push({
-            id: currentVisibleNode.id!,
-          });
-        }
         if (selectedProperty === "isPartOf") {
-          newNode.properties.parts["main"].push({
-            id: currentVisibleNode.id!,
-          });
+          if (
+            newNode.properties.parts &&
+            Array.isArray(newNode.properties.parts)
+          ) {
+            newNode.properties.parts.push({
+              collectionName: "main",
+              nodes: [{ id: currentVisibleNode.id }],
+            });
+          }
 
+          // Update inheritance for parts
           newNode.inheritance.parts.ref = null;
         }
-        if (!parentNodeData?.specializations.hasOwnProperty("main")) {
-          parentNodeData.specializations["main"] = [];
-        }
-        parentNodeData?.specializations["main"].push({
-          id: newNodeRef.id,
-        });
-        // // Create a new document in Firestore for the cloned node with the modified data.
+
+        // Update the parent node's specializations
+        updateSpecializations(parentNodeData, newNodeRef.id);
+
+        // Create a new document in Firestore for the cloned node
         await setDoc(newNodeRef, {
           ...newNode,
           locked: false,
           createdAt: new Date(),
         });
 
-        // Update the original node document in Firestore with the modified data.
-        updateDoc(parentNodeDoc.ref, {
+        // Update the original parent node
+        await updateDoc(parentNodeDoc.ref, {
           ...parentNodeData,
           updatedAt: new Date(),
         });
 
-        // Return the ID of the newly created node.
+        // Return the newly created node
         return newNode;
       } catch (error) {
-        // Log any errors that occur during the cloning process.
         confirmIt(
           "There was an error while creating the new node, please try again",
           "OK",
@@ -350,114 +346,177 @@ const Node = ({
     [currentVisibleNode.id, selectedProperty, nodes]
   );
 
-  // Function to add a new specialization to the node
+  // This function handles the cloning of a node.
+  const handleCloning = async (node: { id: string }) => {
+    // Call the asynchronous function to clone the node with the given ID.
+    const newNode = await cloneNode(node.id);
+    if (!newNode) return;
+
+    const nodeData = nodes[currentVisibleNode.id];
+    const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+
+    // Handle the addition of specializations or generalizations
+    if (
+      selectedProperty === "specializations" ||
+      selectedProperty === "generalizations"
+    ) {
+      const targetCollection = nodeData[selectedProperty].find(
+        (collection) =>
+          collection.collectionName === (selectedCategory || "main")
+      );
+
+      // If the collection does not exist, create it
+      if (!targetCollection) {
+        nodeData[selectedProperty].push({
+          collectionName: selectedCategory || "main",
+          nodes: [],
+        });
+      }
+
+      // Push the new node ID into the corresponding collection
+      const collectionToUpdate = nodeData[selectedProperty].find(
+        (collection) =>
+          collection.collectionName === (selectedCategory || "main")
+      );
+      collectionToUpdate?.nodes.push({ id: newNode.id });
+
+      // Update Firestore document with the new specializations or generalizations
+      await updateDoc(nodeRef, {
+        [selectedProperty]: nodeData[selectedProperty],
+      });
+    } else {
+      // Handling property updates
+      if (nodeData.inheritance[selectedProperty]?.ref) {
+        nodeData.properties[selectedProperty] = JSON.parse(
+          JSON.stringify(
+            nodes[nodeData.inheritance[selectedProperty].ref].properties[
+              selectedProperty
+            ]
+          )
+        );
+      }
+      if (!Array.isArray(nodeData.properties[selectedProperty])) return;
+
+      const targetPropertyCollection = nodeData.properties[
+        selectedProperty
+      ].find(
+        (collection) =>
+          collection.collectionName === (selectedCategory || "main")
+      );
+
+      // If the property collection does not exist, create it
+      if (!targetPropertyCollection) {
+        nodeData.properties[selectedProperty].push({
+          collectionName: selectedCategory || "main",
+          nodes: [],
+        });
+      }
+
+      // Push the new node ID into the corresponding property collection
+      const propertyCollectionToUpdate = nodeData.properties[
+        selectedProperty
+      ].find(
+        (collection) =>
+          collection.collectionName === (selectedCategory || "main")
+      );
+      propertyCollectionToUpdate?.nodes.push({ id: newNode.id });
+
+      // Update Firestore document with the updated properties and inheritance
+      await updateDoc(nodeRef, {
+        [`properties.${selectedProperty}`]:
+          nodeData.properties[selectedProperty],
+        [`inheritance.${selectedProperty}.ref`]: null,
+      });
+
+      // Update inheritance (if needed)
+      updateInheritance({
+        nodeId: currentVisibleNode.id,
+        updatedProperty: selectedProperty,
+        db,
+      });
+    }
+
+    // Close the modal or perform any necessary cleanup.
+    handleClose();
+  };
+
+  // Function to add a new specialization to a node
   const addNewSpecialization = useCallback(
-    async (category: string = "main", searchValue: string = "") => {
+    async (collectionName: string = "main", searchValue: string = "") => {
       try {
-        if (!category) {
-          category = "main";
+        if (!collectionName) {
+          collectionName = "main";
         }
 
         // Get a reference to the parent node document
         const nodeParentRef = doc(collection(db, NODES), currentVisibleNode.id);
 
-        // Retrieve the parent node document
+        // Retrieve the parent node data
         const nodeParentData = nodes[currentVisibleNode.id];
         const previousParentValue = JSON.parse(
           JSON.stringify(nodeParentData.specializations)
         );
 
-        // Extract data from the parent node document
-        const parentNode = {
-          ...nodeParentData,
-          id: currentVisibleNode.id,
-        } as INode;
-
         // Create a new node document reference
         const newNodeRef = doc(collection(db, NODES));
-        const inheritance = JSON.parse(
-          JSON.stringify({ ...parentNode.inheritance })
+
+        // Generate new inheritance structure
+        const inheritance = generateInheritance(
+          nodeParentData.inheritance,
+          currentVisibleNode.id
         );
-        for (let property in inheritance) {
-          if (!inheritance[property].ref) {
-            inheritance[property].ref = currentVisibleNode.id;
-          }
-        }
-        // Clone the parent node data
-        // Check if the specified type and category exist in the parent node
-        let newTitle = searchValue ? searchValue : `New ${parentNode.title}`;
-        const specializationsTitles = Object.values(parentNode.specializations)
-          .flat()
-          .map((spec) => nodes[spec.id]?.title || "");
 
+        // Generate a new title
+        let newTitle = searchValue
+          ? searchValue
+          : `New ${nodeParentData.title}`;
+        const specializationsTitles = nodeParentData.specializations.flatMap(
+          (collection) =>
+            collection.nodes.map((spec) => nodes[spec.id]?.title || "")
+        );
         newTitle = generateUniqueTitle(newTitle, specializationsTitles);
-        const newNode = {
-          ...nodeParentData,
-          categoriesOrder: {},
-          // Initialize the specializations sub-node
-          specializations: { main: [] },
-          inheritance,
-          comments: [],
-          // Set the parents and title for the new node
-          generalizations: {
-            main: [
-              {
-                id: currentVisibleNode.id,
-                title: currentVisibleNode.title,
-              },
-            ],
-          },
-          propertyOf: {},
-          root: parentNode.root || "",
-          title: newTitle,
-          id: newNodeRef.id,
-        };
 
+        // Create the new node object
+        const newNode = createNewNode(
+          nodeParentData,
+          newNodeRef.id,
+          newTitle,
+          inheritance,
+          currentVisibleNode.id
+        );
+
+        // Remove the `locked` property if it exists
         if ("locked" in newNode) {
           delete newNode.locked;
         }
 
-        // Generate a unique title based on the existing ones
-        newTitle = generateUniqueTitle(newTitle, specializationsTitles);
-        if (!parentNode.specializations.hasOwnProperty(category)) {
-          // If not, create the specified type and category
-          parentNode.specializations = {
-            ...parentNode.specializations,
-            [category]: [
-              {
-                id: newNodeRef.id,
-              },
-            ],
-          };
-        } else {
-          // Add the new node to the specified type and category
-          parentNode.specializations[category].push({
-            id: newNodeRef.id,
-          });
-        }
+        // Update the parent node's specializations
+        updateSpecializations(nodeParentData, newNodeRef.id, collectionName);
 
         // Add the new node to the database
         addNewNode({ id: newNodeRef.id, newNode });
 
         setReviewId(newNodeRef.id);
-
-        // scrollToTop();
-        // setSelectTitle(true);
-        // Update the parent node document in the database
         setOpenSelectModel(false);
-        await updateDoc(nodeParentRef, parentNode);
+
+        // Update the parent node document
+        await updateDoc(nodeParentRef, {
+          ...nodeParentData,
+          specializations: nodeParentData.specializations,
+        });
+
+        // Save the change log
         saveNewChangeLog(db, {
           nodeId: currentVisibleNode.id,
           modifiedBy: user?.uname,
           modifiedProperty: "specializations",
           previousValue: previousParentValue,
-          newValue: parentNode.specializations,
+          newValue: nodeParentData.specializations,
           modifiedAt: new Date(),
           changeType: "add element",
-          fullNode: parentNode,
+          fullNode: nodeParentData,
         });
       } catch (error) {
-        // Handle errors by logging to the console
         confirmIt("Sorry there was an Error please try again!", "Ok", "");
         console.error(error);
       }
@@ -472,20 +531,37 @@ const Node = ({
     ]
   );
 
-  const showListToSelect = async (property: string, category: string) => {
+  const showListToSelect = async (
+    property: string,
+    collectionName: string,
+    collectionIdx: number
+  ) => {
     setOpenSelectModel(true);
     setSelectedProperty(property);
-    setSelectedCategory(category);
-    let previousCheckedItems = [];
+    setSelectedCategory(collectionName);
+
+    let previousCheckedItems: string[] = [];
+
+    // Handle specializations or generalizations
     if (property === "specializations" || property === "generalizations") {
-      previousCheckedItems = (
-        (currentVisibleNode[property] || {})[category] || []
-      ).map((link: { id: string }) => link.id);
+      // Find the collection based on the collection name
+      const collection = currentVisibleNode[property][collectionIdx];
+      if (collection) {
+        previousCheckedItems = collection.nodes.map((link) => link.id);
+      }
     } else {
-      previousCheckedItems = (
-        (currentVisibleNode.properties[property] || {})[category] || []
-      ).map((link: { id: string }) => link.id);
+      // Handle properties case
+      const propertyCollection = currentVisibleNode.properties[property];
+      if (Array.isArray(propertyCollection)) {
+        const collection = propertyCollection.find(
+          (col) => col.collectionName === collectionName
+        );
+        if (collection) {
+          previousCheckedItems = collection.nodes.map((link) => link.id);
+        }
+      }
     }
+
     setCheckedItems(new Set(previousCheckedItems));
   };
 
@@ -513,72 +589,43 @@ const Node = ({
     }
   };
 
-  // This function handles the cloning of an node.
-  const handleCloning = async (node: { id: string }) => {
-    // Call the asynchronous function to clone the node with the given ID.
-    const newNode = await cloneNode(node.id);
-    if (!newNode) return;
-    const nodeData = nodes[currentVisibleNode.id];
-    const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-
-    if (
-      selectedProperty === "specializations" ||
-      selectedProperty === "generalizations"
-    ) {
-      nodeData[selectedProperty][selectedCategory || "main"].push({
-        id: newNode.id,
-      });
-
-      updateDoc(nodeRef, {
-        [`${selectedProperty}`]: nodeData[selectedProperty],
-      });
-    } else {
-      if (nodeData.inheritance[selectedProperty]?.ref) {
-        nodeData.properties[selectedProperty] = JSON.parse(
-          JSON.stringify(
-            nodes[nodeData.inheritance[selectedProperty].ref].properties[
-              selectedProperty
-            ]
-          )
-        );
-      }
-      nodeData.properties[selectedProperty][selectedCategory || "main"].push({
-        id: newNode.id,
-      });
-
-      updateDoc(nodeRef, {
-        [`properties.${selectedProperty}`]:
-          nodeData.properties[selectedProperty],
-        [`inheritance.${selectedProperty}.ref`]: null,
-      });
-      updateInheritance({
-        nodeId: currentVisibleNode.id,
-        updatedProperty: selectedProperty,
-        db,
-      });
-    }
-
-    // scrollToTop();
-    // setSelectTitle(true);
-    // setCurrentVisibleNode(newNode);
-
-    // Close the modal or perform any necessary cleanup.
-    handleClose();
-  };
-
   const updateLinks = (
     children: { id: string }[],
     newLink: { id: string },
     linkType: "specializations" | "generalizations"
   ) => {
-    for (let child of children) {
+    const filteredChildren = children.filter((child) => {
+      const childData = nodes[child.id];
+      const allLinks = [
+        ...(childData.specializations || []),
+        ...(childData.generalizations || []),
+      ];
+
+      return !allLinks.some((collection) => {
+        return collection.nodes.some((node) => node.id === newLink.id);
+      });
+    });
+
+    for (let child of filteredChildren) {
       const childData = nodes[child.id];
       const links = childData[linkType];
-      const existingLinks = Object.values(links).flat();
-      const index = existingLinks.findIndex((e: any) => e.id === newLink.id);
 
-      if (index === -1) {
-        links["main"].push(newLink);
+      const mainCollection = links.find(
+        (collection) => collection.collectionName === "main"
+      );
+
+      if (mainCollection) {
+        mainCollection.nodes.push(newLink);
+        const childRef = doc(collection(db, NODES), child.id);
+        updateDoc(childRef, {
+          [linkType]: links,
+        });
+      } else {
+        const newCollection = {
+          collectionName: "main",
+          nodes: [newLink],
+        };
+        links.push(newCollection);
         const childRef = doc(collection(db, NODES), child.id);
         updateDoc(childRef, {
           [linkType]: links,
@@ -586,109 +633,155 @@ const Node = ({
       }
     }
   };
-
   const updatePropertyOf = async (
-    children: { id: string; title: string }[],
+    links: { id: string }[],
     newLink: { id: string },
     property: string
   ) => {
-    for (let child of children) {
+    links.filter((child) => {
       const childData = nodes[child.id];
       if (!childData.propertyOf) {
         childData.propertyOf = {};
       }
-      const propertyData: { [key: string]: { id: string }[] } = childData
-        .propertyOf[property] || { main: [] };
+      const propertyData = childData.propertyOf[property] || [
+        { collectionName: "main", nodes: [] },
+      ];
+      const mainCollection = propertyData.find(
+        (collection) => collection.collectionName === "main"
+      );
+      const existingIds = mainCollection
+        ? mainCollection.nodes.map((node) => node.id)
+        : [];
 
-      const keys = Object.values(propertyData).flat();
-      const index = keys.findIndex((e: any) => e.id === newLink.id);
-      if (index === -1) {
-        propertyData["main"].push(newLink);
-        const childRef = doc(collection(db, NODES), child.id);
-        await updateDoc(childRef, {
-          [`propertyOf.${property}`]: propertyData,
-        });
-      }
-    }
-  };
+      if (!existingIds.includes(newLink.id)) {
+        const childData = nodes[child.id];
+        if (!childData.propertyOf) {
+          childData.propertyOf = {};
+        }
 
-  const updatePartsAndPartsOf = async (
-    children: { id: string }[],
-    newLink: { id: string },
-    property: "isPartOf" | "parts"
-  ) => {
-    for (let child of children) {
-      const childData = nodes[child.id];
-      const propertyData = childData.properties[property];
+        const propertyData = childData.propertyOf[property] || [
+          { collectionName: "main", nodes: [] },
+        ];
+        const mainCollection = propertyData.find(
+          (collection) => collection.collectionName === "main"
+        );
+        if (mainCollection) {
+          mainCollection.nodes.push(newLink);
 
-      const keys = Object.values(propertyData).flat();
-      const index = keys.findIndex((e: any) => e.id === newLink.id);
-      if (index === -1) {
-        propertyData["main"].push(newLink);
-        const childRef = doc(collection(db, NODES), child.id);
-        await updateDoc(childRef, {
-          [`properties.${property}`]: propertyData,
-        });
-        if (property === "parts") {
-          updateInheritance({
-            nodeId: child.id,
-            updatedProperty: property,
-            db,
+          const childRef = doc(collection(db, NODES), child.id);
+          updateDoc(childRef, {
+            [`propertyOf.${property}`]: propertyData,
           });
         }
       }
-    }
+    });
+  };
+
+  const updatePartsAndPartsOf = async (
+    links: { id: string }[],
+    newLink: { id: string },
+    property: "isPartOf" | "parts"
+  ) => {
+    links.forEach((child) => {
+      const childData = nodes[child.id] as INode;
+      if (Array.isArray(childData.properties[property])) {
+        const propertyData = childData.properties[property] as ICollection[];
+        const existingIds = propertyData.flatMap((collection) =>
+          collection.nodes.map((spec) => spec.id)
+        );
+        if (!existingIds.includes(newLink.id)) {
+          const childData = nodes[child.id];
+          const propertyData = childData.properties[property];
+          if (Array.isArray(propertyData)) {
+            const mainCollection = propertyData.find(
+              (collection) => collection.collectionName === "main"
+            ) as ICollection;
+            // Add the new link to the property data
+            mainCollection.nodes.push(newLink);
+
+            const childRef = doc(collection(db, NODES), child.id);
+            updateDoc(childRef, {
+              [`properties.${property}`]: propertyData,
+            });
+
+            // Update inheritance if the property is "parts"
+            if (property === "parts") {
+              updateInheritance({
+                nodeId: child.id,
+                updatedProperty: property,
+                db,
+              });
+            }
+          }
+        }
+      }
+    });
   };
 
   const handleSaveLinkChanges = useCallback(async () => {
     try {
       // Close the modal or perform any other necessary actions
       handleClose();
+
       // Get the node document from the database
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );
-      let previousValue = null;
-      let newValue = null;
+      let previousValue: ICollection[] | null = null;
+      let newValue: ICollection[] | null = null;
 
       // If the node document does not exist, return early
       if (!nodeDoc.exists()) return;
 
       // Extract existing node data from the document
-      const nodeData: any = nodeDoc.data();
+      const nodeData = nodeDoc.data() as INode;
 
       // Initialize a new array for storing updated children
-      let oldLinks = [];
-      let allLinks: any = [];
+      let oldLinks: ILinkNode[] = [];
+      let allLinks: ILinkNode[] = [];
 
+      // Handle specializations or generalizations
       if (
         selectedProperty === "specializations" ||
         selectedProperty === "generalizations"
       ) {
-        oldLinks = [...nodeData[selectedProperty][selectedCategory]];
-        allLinks = Object.values(nodeData[selectedProperty]).flat();
+        const selectedCollection = nodeData[selectedProperty].find(
+          (c: ICollection) => c.collectionName === selectedCategory
+        );
+        if (selectedCollection) {
+          oldLinks = [...(selectedCollection.nodes || [])];
+          allLinks = nodeData[selectedProperty].flatMap(
+            (collection) => collection.nodes
+          );
+        }
 
         previousValue = JSON.parse(JSON.stringify(nodeData[selectedProperty]));
       } else {
-        oldLinks = [
-          ...((nodeData.properties[selectedProperty] || {})[selectedCategory] ||
-            []),
-        ];
-        allLinks = Object.values(nodeData.properties[selectedProperty]).flat();
-        previousValue = JSON.parse(
-          JSON.stringify(nodeData.properties[selectedProperty])
-        );
+        if (Array.isArray(nodeData.properties[selectedProperty])) {
+          const selectedCollection = (
+            nodeData.properties[selectedProperty] || []
+          ).find((c: ICollection) => c.collectionName === selectedCategory);
+          if (selectedCollection) {
+            oldLinks = [...selectedCollection.nodes];
+            allLinks = nodeData.properties[selectedProperty].flatMap(
+              (collection) => collection.nodes
+            );
+            previousValue = JSON.parse(
+              JSON.stringify(nodeData.properties[selectedProperty])
+            );
+          }
+        }
       }
 
       // Iterate through checkedItems to add new children
       checkedItems.forEach((checked) => {
-        // Check if the node is not already present in oldChildren
+        // Check if the node is not already present in oldLinks
         const indexFound = allLinks.findIndex(
-          (link: { id: string }) => link.id === checked
+          (link: ILinkNode) => link.id === checked
         );
 
         if (indexFound === -1) {
-          // Add the node to oldChildren if not present
+          // Add the node to oldLinks if not present
           oldLinks.push({
             id: checked,
           });
@@ -700,17 +793,20 @@ const Node = ({
         (link) => !checkedItems.has(link.id)
       );
 
+      // Only keep the checked links
       oldLinks = oldLinks.filter((link) => checkedItems.has(link.id));
 
       // Prevent removing all generalizations
       if (selectedProperty === "generalizations" && oldLinks.length === 0) {
         await confirmIt(
-          "You cannot remove all the generalizations for this node. Make sure it at least links to one generalization.",
+          "You cannot remove all the generalizations for this node. Make sure it links to at least one generalization.",
           "Ok",
           ""
         );
         return;
       }
+
+      // Handle removed links
       if (
         selectedProperty !== "specializations" &&
         selectedProperty !== "generalizations"
@@ -724,18 +820,31 @@ const Node = ({
           );
         }
       }
+
       // Update the node data with the new children
       if (
         selectedProperty === "specializations" ||
         selectedProperty === "generalizations"
       ) {
-        nodeData[selectedProperty][selectedCategory] = oldLinks;
-        newValue = JSON.parse(JSON.stringify(nodeData[selectedProperty]));
-      } else {
-        nodeData.properties[selectedProperty][selectedCategory] = oldLinks;
-        newValue = JSON.parse(
-          JSON.stringify(nodeData.properties[selectedProperty])
+        const selectedCollection = nodeData[selectedProperty].find(
+          (c: ICollection) => c.collectionName === selectedCategory
         );
+        if (selectedCollection) {
+          selectedCollection.nodes = oldLinks;
+          newValue = JSON.parse(JSON.stringify(nodeData[selectedProperty]));
+        }
+      } else {
+        if (Array.isArray(nodeData.properties[selectedProperty])) {
+          const selectedCollection = (
+            nodeData.properties[selectedProperty] || []
+          ).find((c: ICollection) => c.collectionName === selectedCategory);
+          if (selectedCollection) {
+            selectedCollection.nodes = oldLinks;
+            newValue = JSON.parse(
+              JSON.stringify(nodeData.properties[selectedProperty])
+            );
+          }
+        }
       }
 
       // Update links for specializations/generalizations
@@ -744,10 +853,8 @@ const Node = ({
         selectedProperty === "generalizations"
       ) {
         updateLinks(
-          Object.values(oldLinks).flat(),
-          {
-            id: currentVisibleNode.id,
-          },
+          oldLinks,
+          { id: currentVisibleNode.id },
           selectedProperty === "specializations"
             ? "generalizations"
             : "specializations"
@@ -757,10 +864,8 @@ const Node = ({
       // Update parts/isPartOf links
       if (selectedProperty === "parts" || selectedProperty === "isPartOf") {
         updatePartsAndPartsOf(
-          Object.values(oldLinks).flat(),
-          {
-            id: currentVisibleNode.id,
-          },
+          oldLinks,
+          { id: currentVisibleNode.id },
           selectedProperty === "parts" ? "isPartOf" : "parts"
         );
       }
@@ -768,28 +873,24 @@ const Node = ({
       // Reset inheritance if applicable
       if (
         nodeData.inheritance &&
-        selectedProperty !== "specializations" &&
-        selectedProperty !== "generalizations" &&
-        selectedProperty !== "parts" &&
-        selectedProperty !== "isPartOf" &&
-        nodeData.inheritance[selectedProperty]
+        !["specializations", "generalizations", "parts", "isPartOf"].includes(
+          selectedProperty
+        )
       ) {
-        nodeData.inheritance[selectedProperty].ref = null;
-        nodeData.inheritance[selectedProperty].title = "";
+        if (nodeData.inheritance[selectedProperty]) {
+          nodeData.inheritance[selectedProperty].ref = null;
+        }
       }
 
       // Update other properties if applicable
       if (
-        selectedProperty !== "specializations" &&
-        selectedProperty !== "generalizations" &&
-        selectedProperty !== "parts" &&
-        selectedProperty !== "isPartOf"
+        !["specializations", "generalizations", "parts", "isPartOf"].includes(
+          selectedProperty
+        )
       ) {
         updatePropertyOf(
-          Object.values(oldLinks).flat(),
-          {
-            id: currentVisibleNode.id,
-          },
+          oldLinks,
+          { id: currentVisibleNode.id },
           selectedProperty
         );
       }
@@ -797,21 +898,11 @@ const Node = ({
       // Update the node document in the database
       await updateDoc(nodeDoc.ref, nodeData);
 
-      // saveNewChange(db, {
-      //   nodeId: currentVisibleNode.id,
-      //   modifiedBy: user?.uname,
-      //   modifiedProperty: property,
-      //   previousValue,
-      //   newValue,
-      //   modifiedAt: new Date(),
-      //   changeType: "change text",
-      //   fullNode: currentVisibleNode,
-      // });
       // Update inheritance for non-specialization/generalization properties
       if (
-        selectedProperty !== "specializations" &&
-        selectedProperty !== "generalizations" &&
-        selectedProperty !== "isPartOf"
+        !["specializations", "generalizations", "isPartOf"].includes(
+          selectedProperty
+        )
       ) {
         updateInheritance({
           nodeId: currentVisibleNode.id,
@@ -819,6 +910,7 @@ const Node = ({
           db,
         });
       }
+
       saveNewChangeLog(db, {
         nodeId: currentVisibleNode.id,
         modifiedBy: user?.uname,
@@ -826,15 +918,20 @@ const Node = ({
         previousValue,
         newValue,
         modifiedAt: new Date(),
-        changeType: "remove element",
+        changeType: "modify elements",
         fullNode: currentVisibleNode,
       });
-    } catch (error) {
+    } catch (error: any) {
       // Handle any errors that occur during the process
       console.error(error);
       recordLogs({
         type: "error",
-        error,
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+        at: "handleSaveLinkChanges",
       });
     }
   }, [
@@ -842,409 +939,9 @@ const Node = ({
     currentVisibleNode.id,
     currentVisibleNode.title,
     db,
-    nodes,
     selectedCategory,
     selectedProperty,
   ]);
-
-  const addNewCollection = useCallback(async () => {
-    try {
-      handleCloseAddCollection();
-      if (!newCollection) return;
-
-      let previousValue = null;
-      let changeType: "add collection" | "edit collection" = "edit collection";
-      let categoriesOrder: any = null;
-
-      const nodeDoc = await getDoc(
-        doc(collection(db, NODES), currentVisibleNode.id)
-      );
-      if (!nodeDoc.exists()) return;
-
-      const nodeData = nodeDoc.data();
-      const isSpecialization =
-        selectedProperty === "specializations" ||
-        selectedProperty === "generalizations";
-
-      const propertyPath = isSpecialization
-        ? selectedProperty
-        : `properties.${selectedProperty}`;
-
-      const getNodeCategories = () =>
-        (currentVisibleNode.categoriesOrder || {})[selectedProperty] ||
-        Object.keys(
-          isSpecialization
-            ? nodeData[propertyPath]
-            : nodeData.properties[propertyPath] || {}
-        );
-
-      const updateCategoriesOrder = (
-        oldName: string | null,
-        newName: string
-      ) => {
-        const categoryIndex = categoriesOrder.indexOf(oldName);
-        if (categoryIndex !== -1) categoriesOrder[categoryIndex] = newName;
-        else categoriesOrder.push(newName);
-      };
-
-      const logChange = (action: string, prevValue: any, newValue: any) => {
-        recordLogs({
-          action,
-          previousValue: prevValue,
-          newValue,
-          node: nodeDoc.id,
-          property: selectedProperty,
-        });
-      };
-
-      if (editCollection) {
-        categoriesOrder = getNodeCategories();
-        previousValue = JSON.parse(
-          JSON.stringify(
-            isSpecialization
-              ? nodeData[propertyPath]
-              : nodeData.properties[propertyPath] || {}
-          )
-        );
-        // Update the collection name
-        if (isSpecialization) {
-          nodeData[propertyPath][newCollection] =
-            nodeData[propertyPath][editCollection.category];
-          delete nodeData[propertyPath][editCollection.category];
-        } else {
-          nodeData.properties[selectedProperty][newCollection] =
-            nodeData.properties[selectedProperty][editCollection.category];
-          delete nodeData.properties[selectedProperty][editCollection.category];
-        }
-
-        updateCategoriesOrder(editCollection.category, newCollection);
-        logChange("Edited a category", editCollection.category, newCollection);
-      } else {
-        categoriesOrder = getNodeCategories();
-        if (nodeData[propertyPath]?.hasOwnProperty(newCollection.trim())) {
-          confirmIt(
-            `This category already exists under the property ${selectedProperty}`,
-            "Ok",
-            ""
-          );
-          return;
-        }
-
-        // Add a new collection
-        previousValue = JSON.parse(
-          JSON.stringify(
-            isSpecialization
-              ? nodeData[propertyPath] || {}
-              : nodeData.properties[selectedProperty] || {}
-          )
-        );
-        if (isSpecialization) {
-          nodeData[propertyPath] = {
-            ...(nodeData[propertyPath] || {}),
-            [newCollection]: [],
-          };
-        } else {
-          nodeData.properties[selectedProperty] = {
-            ...(nodeData.properties[selectedProperty] || {}),
-            [newCollection]: [],
-          };
-        }
-
-        updateCategoriesOrder(null, newCollection);
-        logChange("add collection", null, newCollection);
-        changeType = "add collection";
-      }
-
-      // Update inheritance if necessary
-      if (!isSpecialization) {
-        updateInheritance({
-          nodeId: nodeDoc.id,
-          updatedProperty: editCollection
-            ? editCollection.property
-            : selectedProperty,
-          db,
-        });
-      }
-
-      // Update the node document
-
-      const updateData = {
-        [propertyPath]: isSpecialization
-          ? nodeData[propertyPath]
-          : nodeData.properties[selectedProperty],
-        ...(categoriesOrder && {
-          [`categoriesOrder.${selectedProperty}`]: categoriesOrder,
-        }),
-      };
-
-      await updateDoc(nodeDoc.ref, updateData);
-
-      // Log final change
-      saveNewChangeLog(db, {
-        nodeId: currentVisibleNode.id,
-        modifiedBy: user?.uname,
-        modifiedProperty: selectedProperty,
-        previousValue,
-        newValue: isSpecialization
-          ? nodeData[propertyPath]
-          : nodeData.properties[selectedProperty],
-        modifiedAt: new Date(),
-        changeType,
-        fullNode: currentVisibleNode,
-        changeDetails: {
-          addedCollection: newCollection || "",
-          modifiedCollection: editCollection?.category || "",
-          newValue: editCollection?.category ? newCollection : "",
-        },
-      });
-    } catch (error) {
-      console.error(error);
-      recordLogs({ type: "error", error });
-    }
-  }, [newCollection, selectedProperty]);
-
-  const handleEditCategory = (property: string, category: string) => {
-    setNewCollection(category);
-    setOpenAddCategory(true);
-    setSelectedProperty(property);
-    setEditCategory({
-      property,
-      category,
-    });
-  };
-
-  const deleteCollection = async (property: string, category: string) => {
-    if (
-      await confirmIt(
-        `Are you sure you want to delete the collection ${category}?`,
-        "Delete Collection",
-        "Keep Collection"
-      )
-    ) {
-      try {
-        const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id)
-        );
-        if (nodeDoc.exists()) {
-          let previousValue = null;
-          const nodeData = nodeDoc.data();
-          const isSpecialization =
-            property === "specializations" || property === "generalizations";
-
-          const propertyPath = isSpecialization
-            ? property
-            : `properties.${property}`;
-          const categoriesOrderPath = `categoriesOrder.${property}`;
-
-          // Handle collection deletion for both 'specializations' and other properties
-          previousValue = JSON.parse(
-            JSON.stringify(
-              isSpecialization
-                ? nodeData[propertyPath]
-                : nodeData.properties[property]
-            )
-          );
-
-          // Merge the category into "main" and delete the category
-          if (isSpecialization) {
-            nodeData[propertyPath]["main"] = [
-              ...(nodeData[propertyPath]["main"] || []),
-              ...nodeData[propertyPath][category],
-            ];
-            delete nodeData[propertyPath][category];
-          } else {
-            nodeData.properties[property]["main"] = [
-              ...(nodeData.properties[property]["main"] || []),
-              ...nodeData.properties[property][category],
-            ];
-            delete nodeData.properties[property][category];
-          }
-
-          // Remove the category from categoriesOrder
-          const categoriesOrder =
-            (currentVisibleNode.categoriesOrder || {})[property] || [];
-          const updatedCategoriesOrder = categoriesOrder.filter(
-            (cat) => cat !== category
-          );
-
-          // Prepare the updated document data
-          const updateData = {
-            [propertyPath]: isSpecialization
-              ? nodeData[propertyPath]
-              : nodeData.properties[property],
-            [categoriesOrderPath]: updatedCategoriesOrder,
-          };
-
-          // Update the node document
-          await updateDoc(nodeDoc.ref, updateData);
-
-          recordLogs({
-            action: "Deleted a collection",
-            category,
-            node: nodeDoc.id,
-          });
-
-          // Log the changes
-          saveNewChangeLog(db, {
-            nodeId: currentVisibleNode.id,
-            modifiedBy: user?.uname,
-            modifiedProperty: property,
-            previousValue,
-            newValue: isSpecialization
-              ? nodeData[propertyPath]
-              : nodeData.properties[property],
-            modifiedAt: new Date(),
-            changeType: "delete collection",
-            fullNode: currentVisibleNode,
-            changeDetails: {
-              deletedCollection: category || "",
-            },
-          });
-        }
-      } catch (error) {
-        console.error("error", error);
-        recordLogs({
-          type: "error",
-          error,
-        });
-      }
-    }
-  };
-
-  // Function to handle sorting of draggable items
-  const handleSorting = useCallback(
-    async (result: any, property: string) => {
-      try {
-        // Destructure properties from the result object
-        const { source, destination, draggableId, type } = result;
-        let previousValue = null;
-        // If there is no destination, no sorting needed
-        if (!destination) {
-          return;
-        }
-
-        // Extract the source and destination category IDs
-        const sourceCategory = source.droppableId; // The source category
-        const destinationCategory = destination.droppableId; // The destination category
-
-        // Ensure valid source and destination categories and they are not the same
-        if (sourceCategory && destinationCategory) {
-          // Retrieve node document from the anodes object
-          const nodeData = { ...currentVisibleNode };
-          if (
-            property !== "specializations" &&
-            property !== "generalizations" &&
-            nodeData.inheritance &&
-            nodeData.inheritance[property].ref
-          ) {
-            const nodeId = nodeData.inheritance[property].ref;
-            const inheritedNode = nodes[nodeId as string];
-            nodeData.properties[property] = JSON.parse(
-              JSON.stringify(inheritedNode.properties[property])
-            );
-          }
-
-          // Ensure nodeData exists
-          if (nodeData) {
-            let propertyValue: any = null;
-            if (
-              property === "specializations" ||
-              property === "generalizations"
-            ) {
-              // Get the children and specializations related to the provided subType
-              previousValue = JSON.parse(JSON.stringify(nodeData[property]));
-              propertyValue = nodeData[property];
-            } else {
-              propertyValue = nodeData.properties[property];
-              previousValue = JSON.parse(
-                JSON.stringify(nodeData.properties[property])
-              );
-            }
-
-            // Find the index of the draggable item in the source category
-            const nodeIdx = propertyValue[sourceCategory].findIndex(
-              (onto: any) => onto.id === draggableId
-            );
-
-            // If the draggable item is found in the source category
-            if (nodeIdx !== -1) {
-              const moveValue = propertyValue[sourceCategory][nodeIdx];
-
-              // Remove the item from the source category
-              propertyValue[sourceCategory].splice(nodeIdx, 1);
-
-              // Move the item to the destination category
-              propertyValue[destinationCategory].splice(
-                destination.index,
-                0,
-                moveValue
-              );
-
-              setCurrentVisibleNode(nodeData);
-            }
-            // Update the nodeData with the new property values
-            const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-            if (
-              property === "specializations" ||
-              property === "generalizations"
-            ) {
-              updateDoc(nodeRef, {
-                [property]: propertyValue,
-              });
-            } else {
-              if (nodeData.inheritance) {
-                nodeData.inheritance[property].ref = null;
-              }
-              updateDoc(nodeRef, {
-                [`properties.${property}`]: propertyValue,
-                [`inheritance.${property}.ref`]: null,
-              });
-              updateInheritance({
-                nodeId: currentVisibleNode.id,
-                updatedProperty: property,
-                db,
-              });
-            }
-
-            saveNewChangeLog(db, {
-              nodeId: currentVisibleNode.id,
-              modifiedBy: user?.uname,
-              modifiedProperty: property,
-              previousValue,
-              newValue:
-                property === "specializations" || property === "generalizations"
-                  ? nodeData[property]
-                  : nodeData.properties[property],
-              modifiedAt: new Date(),
-              changeType: "sort elements",
-              fullNode: currentVisibleNode,
-            });
-
-            // Record a log of the sorting action
-            recordLogs({
-              action: "sort elements",
-              field: property,
-              sourceCategory:
-                sourceCategory === "main" ? "outside" : sourceCategory,
-              destinationCategory:
-                destinationCategory === "main"
-                  ? "outside"
-                  : destinationCategory,
-              nodeId: currentVisibleNode.id,
-            });
-          }
-        }
-      } catch (error) {
-        // Log any errors that occur during the sorting process
-        console.error(error);
-        recordLogs({
-          type: "error",
-          error,
-        });
-      }
-    },
-    [currentVisibleNode, db, nodes, recordLogs]
-  );
 
   //  function to handle the deletion of a Node
   const deleteNode = useCallback(async () => {
@@ -1259,16 +956,13 @@ const Node = ({
       ) {
         if (!user?.uname) return;
 
-        const specializations = Object.values(
-          currentVisibleNode.specializations
-        ).flat();
+        const specializations = [];
+        for (let collection of currentVisibleNode.specializations) {
+          specializations.push(...collection.nodes);
+        }
 
         if (specializations.length > 0) {
-          if (
-            specializations.some((spc: { id: string }) => {
-              return Object.values(nodes[spc.id].generalizations).length === 1;
-            })
-          ) {
+          if (checkIfCanDeleteANode(nodes, specializations)) {
             await confirmIt(
               "To delete a Node you need to delete it's specializations or move them under a different generalization",
               "Ok",
@@ -1278,13 +972,14 @@ const Node = ({
           }
         }
         // Retrieve the document reference of the node to be deleted
-        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-        const generalizationId = Object.values(
-          currentVisibleNode.generalizations
-        ).flat()[0].id;
-        if (generalizationId && nodes[generalizationId]) {
-          setCurrentVisibleNode(nodes[generalizationId]);
+        for (let collection of currentVisibleNode.generalizations) {
+          if ((collection.nodes, length > 0)) {
+            setCurrentVisibleNode(nodes[collection.nodes[0].id]);
+            break;
+          }
         }
+
+        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
         // call removeIsPartOf function to remove the node link from all the nodes where it's linked
         removeIsPartOf(db, currentVisibleNode as INode, user?.uname);
         // Update the user document by removing the deleted node's ID
@@ -1306,12 +1001,16 @@ const Node = ({
           node: currentVisibleNode.id,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       // Log any errors that occur during the execution of the function
       console.error(error);
       recordLogs({
         type: "error",
-        error,
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
       });
     }
   }, [currentVisibleNode.id, user?.uname, nodes, currentVisibleNode]);
@@ -1332,7 +1031,7 @@ const Node = ({
   );
 
   const updateSpecializationsInheritance = async (
-    specializations: { id: string }[],
+    specializations: ICollection[],
     batch: any,
     property: string,
     propertyValue: any,
@@ -1341,35 +1040,38 @@ const Node = ({
   ) => {
     try {
       let newBatch = batch;
-      for (let specialization of specializations) {
-        const nodeRef = doc(collection(db, NODES), specialization.id);
-        let objectUpdate: any = {
-          [`inheritance.${property}.inheritanceType`]:
-            "inheritUnlessAlreadyOverRidden",
-          [`properties.${property}`]: propertyValue,
-          [`inheritance.${property}.ref`]: ref,
-          [`propertyType.${property}`]: propertyType,
-        };
+      for (let { nodes: links } of specializations) {
+        for (let link of links) {
+          const nodeRef = doc(collection(db, NODES), link.id);
+          let objectUpdate = {
+            [`inheritance.${property}.inheritanceType`]:
+              "inheritUnlessAlreadyOverRidden",
+            [`properties.${property}`]: propertyValue,
+            [`inheritance.${property}.ref`]: ref,
+            [`propertyType.${property}`]: propertyType,
+          };
 
-        if (newBatch._committed) {
-          newBatch = writeBatch(db);
+          if (newBatch._committed) {
+            newBatch = writeBatch(db);
+          }
+          updateDoc(nodeRef, objectUpdate);
+
+          if (newBatch._mutations.length > 498) {
+            await newBatch.commit();
+            newBatch = writeBatch(db);
+          }
+
+          newBatch = await updateSpecializationsInheritance(
+            nodes[link.id].specializations,
+            newBatch,
+            property,
+            propertyValue,
+            ref,
+            propertyType
+          );
         }
-        updateDoc(nodeRef, objectUpdate);
-
-        if (newBatch._mutations.length > 498) {
-          await newBatch.commit();
-          newBatch = writeBatch(db);
-        }
-
-        newBatch = await updateSpecializationsInheritance(
-          Object.values(nodes[specialization.id].specializations).flat(),
-          newBatch,
-          property,
-          propertyValue,
-          ref,
-          propertyType
-        );
       }
+
       return newBatch;
     } catch (error) {
       console.error(error);
@@ -1403,9 +1105,7 @@ const Node = ({
       if (newPropertyType.toLowerCase() === "string") {
         properties[newProperty] = "";
       } else {
-        properties[newProperty] = {
-          main: [],
-        };
+        properties[newProperty] = [{ collectionName: "main", nodes: [] }];
       }
       inheritance[newProperty] = {
         ref: null,
@@ -1433,7 +1133,7 @@ const Node = ({
 
       const batch = writeBatch(db);
       await updateSpecializationsInheritance(
-        Object.values(currentVisibleNode.specializations).flat(),
+        currentVisibleNode.specializations,
         batch,
         newProperty,
         properties[newProperty],
@@ -1448,32 +1148,15 @@ const Node = ({
         newProperty,
         newPropertyType,
       });
-    } catch (error) {
+    } catch (error: any) {
       setOpenAddProperty(false);
-      console.error(error);
-    }
-  };
-
-  const removeProperty = async (property: string) => {
-    if (
-      await confirmIt(
-        <Typography>
-          Are sure you want delete the property{" "}
-          <strong>{DISPLAY[property] || property}</strong>?
-        </Typography>,
-        "Delete",
-        "Keep"
-      )
-    ) {
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-      const properties = currentVisibleNode.properties;
-      const propertyType = currentVisibleNode.propertyType;
-      delete properties[property];
-      await updateDoc(nodeRef, { propertyType, properties });
       recordLogs({
-        action: "removeProperty",
-        node: currentVisibleNode.id,
-        property,
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
       });
     }
   };
@@ -1486,12 +1169,6 @@ const Node = ({
       });
     } catch (error) {
       console.error(error);
-    }
-  };
-
-  const scrollToTop = () => {
-    if (scrolling.current) {
-      scrolling.current.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -1548,7 +1225,6 @@ const Node = ({
           property={"title"}
           text={currentVisibleNode.title}
           confirmIt={confirmIt}
-          recordLogs={recordLogs}
           setSelectTitle={setSelectTitle}
           selectTitle={selectTitle}
           locked={locked}
@@ -1559,15 +1235,12 @@ const Node = ({
           deleteNode={deleteNode}
           handleLockNode={handleLockNode}
           navigateToNode={navigateToNode}
-          displayInheritanceSettings={displayInheritanceSettings}
-          displayNodeChat={displayNodeChat}
-          displayNodeHistory={displayNodeHistory}
+          displaySidebar={displaySidebar}
           activeSidebar={activeSidebar}
         />
         <Text
           nodes={nodes}
-          recordLogs={recordLogs}
-          text={onGetPropertyValue("description")}
+          text={onGetPropertyValue("description") as string}
           currentVisibleNode={currentVisibleNode}
           property={"description"}
           setCurrentVisibleNode={setCurrentVisibleNode}
@@ -1580,18 +1253,13 @@ const Node = ({
         {currentVisibleNode?.properties.hasOwnProperty("actor") && (
           <StructuredProperty
             selectedDiffNode={selectedDiffNode}
+            confirmIt={confirmIt}
             currentVisibleNode={currentVisibleNode}
             showListToSelect={showListToSelect}
-            setOpenAddCategory={setOpenAddCategory}
             setSelectedProperty={setSelectedProperty}
-            handleSorting={handleSorting}
-            handleEditCategory={handleEditCategory}
-            deleteCategory={deleteCollection}
             navigateToNode={navigateToNode}
-            recordLogs={recordLogs}
             setSnackbarMessage={setSnackbarMessage}
             setCurrentVisibleNode={setCurrentVisibleNode}
-            updateInheritance={updateInheritance}
             property={"actor"}
             nodes={nodes}
             locked={locked}
@@ -1607,23 +1275,17 @@ const Node = ({
           {["generalizations", "specializations"].map((property, index) => (
             <StructuredProperty
               key={property + index}
+              confirmIt={confirmIt}
               selectedDiffNode={selectedDiffNode}
               currentVisibleNode={currentVisibleNode}
               showListToSelect={showListToSelect}
-              setOpenAddCategory={setOpenAddCategory}
               setSelectedProperty={setSelectedProperty}
-              handleSorting={handleSorting}
-              handleEditCategory={handleEditCategory}
-              deleteCategory={deleteCollection}
               navigateToNode={navigateToNode}
-              recordLogs={recordLogs}
               setSnackbarMessage={setSnackbarMessage}
               setCurrentVisibleNode={setCurrentVisibleNode}
-              updateInheritance={updateInheritance}
               property={property}
               nodes={nodes}
               locked={locked}
-              addNewSpecialization={addNewSpecialization}
               reviewId={reviewId}
               setReviewId={setReviewId}
             />
@@ -1639,19 +1301,14 @@ const Node = ({
           {["isPartOf", "parts"].map((property, index) => (
             <StructuredProperty
               key={property + index}
+              confirmIt={confirmIt}
               selectedDiffNode={selectedDiffNode}
               currentVisibleNode={currentVisibleNode}
               showListToSelect={showListToSelect}
-              setOpenAddCategory={setOpenAddCategory}
               setSelectedProperty={setSelectedProperty}
-              handleSorting={handleSorting}
-              handleEditCategory={handleEditCategory}
-              deleteCategory={deleteCollection}
               navigateToNode={navigateToNode}
-              recordLogs={recordLogs}
               setSnackbarMessage={setSnackbarMessage}
               setCurrentVisibleNode={setCurrentVisibleNode}
-              updateInheritance={updateInheritance}
               property={property}
               nodes={nodes}
               locked={locked}
@@ -1669,19 +1326,11 @@ const Node = ({
           <NodeBody
             currentVisibleNode={currentVisibleNode}
             setCurrentVisibleNode={setCurrentVisibleNode}
-            recordLogs={recordLogs}
-            updateInheritance={updateInheritance}
             showListToSelect={showListToSelect}
-            handleEditCategory={handleEditCategory}
-            deleteCategory={deleteCollection}
-            handleSorting={handleSorting}
             navigateToNode={navigateToNode}
             setSnackbarMessage={setSnackbarMessage}
-            setOpenAddCategory={setOpenAddCategory}
             setSelectedProperty={setSelectedProperty}
-            setOpenAddField={setOpenAddProperty}
-            removeProperty={removeProperty}
-            user={user}
+            setOpenAddProperty={setOpenAddProperty}
             nodes={nodes}
             locked={locked}
             selectedDiffNode={selectedDiffNode}
@@ -1935,52 +1584,6 @@ const Node = ({
             }}
             color="primary"
             variant="contained"
-            sx={{ borderRadius: "25px" }}
-          >
-            Cancel
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog onClose={handleCloseAddCollection} open={openAddCategory}>
-        <DialogContent>
-          <Box sx={{ height: "auto", width: "500px" }}>
-            <Typography sx={{ mb: "13px", fontSize: "19px" }}>
-              {editCollection ? "Edit " : "Add "}a new Collection:
-            </Typography>
-            <TextField
-              placeholder={`Add Collection`}
-              fullWidth
-              value={newCollection}
-              multiline
-              onChange={(e: any) => setNewCollection(e.target.value)}
-              sx={{
-                fontWeight: 400,
-                fontSize: {
-                  xs: "14px",
-                  md: "16px",
-                },
-                marginBottom: "5px",
-                width: "100%",
-                display: "block",
-              }}
-              autoFocus
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center" }}>
-          <Button
-            onClick={addNewCollection}
-            color="primary"
-            variant="outlined"
-            sx={{ borderRadius: "25px" }}
-          >
-            {editCollection ? "Save" : "Add"}
-          </Button>
-          <Button
-            onClick={handleCloseAddCollection}
-            color="primary"
-            variant="outlined"
             sx={{ borderRadius: "25px" }}
           >
             Cancel

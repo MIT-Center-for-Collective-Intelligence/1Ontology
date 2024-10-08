@@ -41,7 +41,7 @@ import {
   chatChange,
   getMessagesSnapshot,
 } from " @components/client/firestore/messages.firestore";
-import { synchronizeStuff } from " @components/lib/utils/helpers";
+import { recordLogs, synchronizeStuff } from " @components/lib/utils/helpers";
 const DynamicMemoEmojiPicker = dynamic(() => import("./EmojiPicker"), {
   loading: () => <p>Loading...</p>,
   ssr: false,
@@ -55,7 +55,6 @@ type ChatProps = {
   type: string;
   nodeId: string;
   setOpenSelectModel: React.Dispatch<React.SetStateAction<boolean>>;
-  recordLogs: (logs: any) => void;
   users: any;
   navigateToNode: any;
 };
@@ -66,7 +65,6 @@ const Chat = ({
   type,
   nodeId,
   setOpenSelectModel,
-  recordLogs,
   users,
   navigateToNode,
 }: ChatProps) => {

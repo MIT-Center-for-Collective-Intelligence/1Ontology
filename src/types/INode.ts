@@ -2,14 +2,6 @@
 
 import { Timestamp } from "firebase/firestore";
 
-export type IChildNode = {
-  id: string;
-  category?: string;
-  editMode?: boolean;
-  new?: boolean;
-  change?: any;
-};
-
 export type IChildCategory = {
   [category: string]: { id: string }[];
 };
@@ -38,46 +30,44 @@ export type InheritanceType = {
     | "inheritAfterReview";
 };
 
+export type ILinkNode = {
+  id: string;
+  category?: string;
+  editMode?: boolean;
+  new?: boolean;
+  change?: any;
+};
+
+export type ICollection = { collectionName: string; nodes: ILinkNode[] };
+export type IInheritance = {
+  [key: string]: {
+    ref: string | null;
+    inheritanceType:
+      | "neverInherit"
+      | "alwaysInherit"
+      | "inheritUnlessAlreadyOverRidden"
+      | "inheritAfterReview";
+  };
+};
 export type INode = {
   id: string;
   title: string;
   deleted: boolean;
-  properties: { [propertyName: string]: any };
-  inheritance: {
-    [key: string]: {
-      ref: string | null;
-      inheritanceType:
-        | "neverInherit"
-        | "alwaysInherit"
-        | "inheritUnlessAlreadyOverRidden"
-        | "inheritAfterReview";
-    };
+  properties: {
+    [propertyName: string]: ICollection[] | string | boolean | number;
   };
-  specializations: {
-    [key: string]: {
-      id: string;
-    }[];
-  };
-  generalizations: {
-    [key: string]: {
-      id: string;
-    }[];
-  };
+  inheritance: IInheritance;
+  specializations: ICollection[];
+  generalizations: ICollection[];
   propertyOf?: {
-    [propertyName: string]: {
-      [collectionName: string]: {
-        id: string;
-      }[];
-    };
+    [propertyName: string]: ICollection[];
   };
   root: string;
-  parents: string[];
   propertyType: { [key: string]: string };
   nodeType: INodeTypes;
-  categoriesOrder: { [propertyTitle: string]: string[] };
   category?: boolean;
   locked?: boolean;
-  editMode?: boolean;
+  numberOfGeneralizations: number;
 };
 
 export type TreeVisual = {
@@ -132,6 +122,6 @@ export type NodeChange = {
     | "add collection"
     | "delete collection"
     | "edit collection";
-  fullNode: INode;
+  fullNode: INode | null;
   changeDetails?: { [key: string]: any };
 };
