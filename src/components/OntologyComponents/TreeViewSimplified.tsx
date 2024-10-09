@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { TreeView, TreeItem } from "@mui/lab";
+import { TreeView, TreeItem, treeItemClasses } from "@mui/lab";
 import { Box, Typography, Checkbox, Button } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -194,6 +194,10 @@ const TreeViewSimplified = ({
             /*  "&.MuiTreeItem-content": {
               // borderRadius: "25px",
             }, */
+            position: 'relative',
+            [`& .${treeItemClasses.group}`]: {
+              borderLeft: `1px solid gray`
+            }
           }}
         >
           {Object.keys(treeVisualization[nodeId].specializations).length > 0 &&
