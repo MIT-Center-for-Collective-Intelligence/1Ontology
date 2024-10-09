@@ -792,7 +792,7 @@ const StructuredProperty = ({
                 sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
                 variant="outlined"
               >
-                {"Select "}
+                {"Add "}
                 {capitalizeFirstLetter(DISPLAY[property] || property)}
               </Button>
             )}
