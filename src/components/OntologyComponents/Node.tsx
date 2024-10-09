@@ -118,7 +118,11 @@ import {
   MainSpecializations,
 } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
-import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
+import {
+  DISPLAY,
+  SCROLL_BAR_STYLE,
+  SpecialCharacterRegex,
+} from " @components/lib/CONSTANTS";
 import TreeViewSimplified from "./TreeViewSimplified";
 import { SearchBox } from "../SearchBox/SearchBox";
 import NodeBody from "../NodBody/NodeBody";
@@ -209,6 +213,7 @@ const Node = ({
   const db = getFirestore();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [width, setWidth] = useState<number>(0);
+  const [inputError, setInputError] = useState<boolean>(false);
 
   useEffect(() => {
     const element = document.getElementById("node-section");
@@ -1579,8 +1584,6 @@ const Node = ({
               >
                 {[
                   "String",
-                  /* "Number",
-                  "Boolean", */
                   "Activity",
                   "Object",
                   "Actor",
@@ -1593,11 +1596,26 @@ const Node = ({
                   </MenuItem>
                 ))}
               </Select>
+
               <TextField
                 label="New Property"
                 sx={{ mt: "14px" }}
                 value={newFieldTitle}
-                onChange={(event) => setNewProperty(event.target.value)}
+                onChange={(event) => {
+                  const value = event.target.value;
+
+                  const isValid =
+                    SpecialCharacterRegex.test(value) && value.length <= 30;
+
+                  setNewProperty(value);
+                  setInputError(!isValid);
+                }}
+                error={inputError}
+                helperText={
+                  inputError
+                    ? "Max 30 characters, no special characters allowed."
+                    : ""
+                }
                 InputLabelProps={{
                   sx: { color: "grey" },
                 }}
@@ -1609,7 +1627,7 @@ const Node = ({
           <Button
             onClick={() => addNewProperty(newFieldTitle, newFieldType)}
             color="primary"
-            disabled={!newFieldType || !newFieldTitle}
+            disabled={!newFieldType || !newFieldTitle || inputError} // Disable button if input error exists
             variant="contained"
             sx={{ borderRadius: "25px" }}
           >
@@ -1619,6 +1637,7 @@ const Node = ({
             onClick={() => {
               setOpenAddProperty(false);
               setNewProperty("");
+              setInputError(false); // Reset error on cancel
             }}
             color="primary"
             variant="contained"

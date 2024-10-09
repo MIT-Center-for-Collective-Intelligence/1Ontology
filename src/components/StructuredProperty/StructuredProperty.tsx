@@ -846,7 +846,7 @@ const StructuredProperty = ({
           <Droppable droppableId="categories" type="CATEGORY">
             {(provided) => (
               <Box ref={provided.innerRef} {...provided.droppableProps}>
-                {propertyValue.map(
+                {(propertyValue || []).map(
                   (collection: ICollection, collectionIndex: number) => {
                     return (
                       <Draggable

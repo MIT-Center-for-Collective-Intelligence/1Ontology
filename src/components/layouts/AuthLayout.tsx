@@ -67,11 +67,9 @@ import {
   useState,
 } from "react";
 
-import darkModeLibraryImage from "../../../public/darkModeLibraryBackground.jpg";
-import lightModeLibraryImage from "../../../public/lightModeLibraryBackground.png";
-import logoGoogleCloud from "../../../public/logo-google-cloud.svg";
-import logoHonor from "../../../public/logo-honor.jpeg";
-import logoMIT from "../../../public/MIT-Logo-Dark.png";
+import darkModeLibraryImage from "/public/darkModeLibraryBackground.jpg";
+import lightModeLibraryImage from "/public/lightModeLibraryBackground.png";
+import logoMIT from "/public/MIT-Logo-Dark.png";
 // import { use1AcademyTheme } from "../../context/ThemeContext";
 import ROUTES from "../../lib/utils/routes";
 import FullPageLogoLoading from "./FullPageLogoLoading";
@@ -125,12 +123,12 @@ const AuthLayout: FC<Props> = ({ children }) => {
             zIndex: -2,
           }}
         >
-          <Image
+          <img
             alt="Library"
-            src={darkModeLibraryImage}
-            layout="fill"
-            objectFit="cover"
-            priority
+            src={darkModeLibraryImage.src}
+            // layout="fill"
+            // objectFit="cover"
+            // priority
           />
         </Box>
       )}
@@ -194,13 +192,16 @@ const AuthLayout: FC<Props> = ({ children }) => {
             >
               {/* this this image has absolute position, by their configuration */}
               {settings.theme === "Dark" && (
-                <Image
+                <img
                   alt="Library"
-                  src={darkModeLibraryImage}
-                  layout="fill"
-                  objectFit="cover"
-                  priority
-                  // style={{ filter: "blur(4px)" }}
+                  src={darkModeLibraryImage.src}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    filter: "blur(4px)",
+                    position: "absolute",
+                  }}
                 />
               )}
               <Box
@@ -221,8 +222,8 @@ const AuthLayout: FC<Props> = ({ children }) => {
                   href="https://www.mit.edu/"
                   aria-label="Go to School of information"
                 >
-                  <Image
-                    src={logoMIT}
+                  <img
+                    src={logoMIT.src}
                     alt="School of Information"
                     width={150}
                   />
