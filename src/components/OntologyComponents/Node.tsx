@@ -563,19 +563,39 @@ const Node = ({
     // Handle specializations or generalizations
     if (property === "specializations" || property === "generalizations") {
       // Find the collection based on the collection name
-      const collection = currentVisibleNode[property][collectionIdx];
-      if (collection) {
-        previousCheckedItems = collection.nodes.map((link) => link.id);
-      }
-    } else {
-      // Handle properties case
-      const propertyCollection = currentVisibleNode.properties[property];
-      if (Array.isArray(propertyCollection)) {
-        const collection = propertyCollection.find(
+
+      if (collectionName === "main") {
+        let checked = [];
+        for (let collection of currentVisibleNode[property]) {
+          checked.push(...collection.nodes.map((link) => link.id));
+        }
+        previousCheckedItems = checked;
+      } else {
+        const collection = currentVisibleNode[property].find(
           (col) => col.collectionName === collectionName
         );
         if (collection) {
           previousCheckedItems = collection.nodes.map((link) => link.id);
+        }
+      }
+    } else {
+      // Handle properties case
+      const propertyCollection = currentVisibleNode.properties[property];
+      console.log("propertyCollection ==>", propertyCollection);
+      if (Array.isArray(propertyCollection)) {
+        if (collectionName === "main") {
+          let checked = [];
+          for (let collection of propertyCollection) {
+            checked.push(...collection.nodes.map((link) => link.id));
+          }
+          previousCheckedItems = checked;
+        } else {
+          const collection = propertyCollection.find(
+            (col) => col.collectionName === collectionName
+          );
+          if (collection) {
+            previousCheckedItems = collection.nodes.map((link) => link.id);
+          }
         }
       }
     }
