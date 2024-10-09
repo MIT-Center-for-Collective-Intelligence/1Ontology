@@ -105,7 +105,7 @@ type ISubOntologyProps = {
   navigateToNode: (nodeID: string) => void;
   title: string;
   nodes: { [nodeId: string]: INode };
-  deleteVisible: boolean;
+  unlinkVisible: boolean;
   linkLocked: any;
   locked: boolean;
   user: any;
@@ -124,7 +124,7 @@ const LinkNode = ({
   title,
   nodes,
   linkIndex: linkIndex,
-  deleteVisible,
+  unlinkVisible,
   linkLocked,
   locked,
   user,
@@ -433,7 +433,7 @@ const LinkNode = ({
             {" "}
             {title || regionalTitle}
           </Link>
-          {deleteVisible && !locked && !linkLocked && (
+          {unlinkVisible && !locked && !linkLocked && (
             <Button
               sx={{
                 ml: "8px",

@@ -268,7 +268,8 @@ const Node = ({
 
         // Generate a unique title based on existing specializations
         const specializationsTitles = parentNodeData.specializations.flatMap(
-          (collection) => collection.nodes.map((spec) => nodes[spec.id].title)
+          (collection) =>
+            collection.nodes.map((spec) => nodes[spec.id]?.title || "")
         );
         newTitle = generateUniqueTitle(newTitle, specializationsTitles);
 
@@ -352,7 +353,7 @@ const Node = ({
     const newNode = await cloneNode(node.id);
     if (!newNode) return;
 
-    const nodeData = nodes[currentVisibleNode.id];
+    const nodeData = nodes[currentVisibleNode.id] as INode;
     const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
 
     // Handle the addition of specializations or generalizations
@@ -420,7 +421,24 @@ const Node = ({
           collection.collectionName === (selectedCategory || "main")
       );
       propertyCollectionToUpdate?.nodes.push({ id: newNode.id });
-
+      if (!newNode.propertyOf) {
+        newNode.propertyOf = {
+          [selectedProperty]: [{ collectionName: "main", nodes: [] }],
+        };
+      }
+      if (!newNode.propertyOf[selectedProperty]) {
+        newNode.propertyOf[selectedProperty] = [
+          { collectionName: "main", nodes: [] },
+        ];
+      }
+      newNode.propertyOf[selectedProperty][0].nodes.push({
+        id: nodeRef.id,
+      });
+      const newNodeRef = doc(collection(db, NODES), newNode.id);
+      updateDoc(newNodeRef, {
+        [`propertyOf.${selectedProperty}`]:
+          newNode.propertyOf[selectedProperty],
+      });
       // Update Firestore document with the updated properties and inheritance
       await updateDoc(nodeRef, {
         [`properties.${selectedProperty}`]:
@@ -973,7 +991,7 @@ const Node = ({
         }
         // Retrieve the document reference of the node to be deleted
         for (let collection of currentVisibleNode.generalizations) {
-          if ((collection.nodes, length > 0)) {
+          if (collection.nodes.length > 0) {
             setCurrentVisibleNode(nodes[collection.nodes[0].id]);
             break;
           }
@@ -1206,7 +1224,7 @@ const Node = ({
     <Box
       sx={{
         // padding: "40px 40px 40px 40px",
-        pt: "40px",
+        pt: "15px",
         mb: "90px",
       }}
     >

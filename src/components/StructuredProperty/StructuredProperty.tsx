@@ -87,7 +87,7 @@ const StructuredProperty = ({
 
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
 
-  const propertyValue = useMemo(() => {
+  const propertyValue: ICollection[] = useMemo(() => {
     let result =
       getPropertyValue(
         nodes,
@@ -156,11 +156,16 @@ const StructuredProperty = ({
       if (!!selectedDiffNode) {
         return false;
       }
+      let numberOfGeneralizations = 0;
+      if (property === "specializations") {
+        for (let colGeneralization of nodes[nodeId]?.generalizations || []) {
+          numberOfGeneralizations += colGeneralization.nodes.length;
+        }
+      }
       return (
         (property === "generalizations" &&
-          Object.values(propertyValue).flat().length !== 1) ||
-        (property === "specializations" &&
-          (nodes[nodeId]?.numberOfGeneralizations || 0) > 1) ||
+          propertyValue.flatMap((n) => n.nodes).length !== 1) ||
+        (property === "specializations" && numberOfGeneralizations > 1) ||
         (property !== "generalizations" && property !== "specializations")
       );
     },
@@ -204,6 +209,15 @@ const StructuredProperty = ({
           const newArray = [...propertyValue];
           const [movedElement] = newArray.splice(sourceIndex, 1);
           newArray.splice(destinationIndex, 0, movedElement);
+
+          const mainIndex = newArray.findIndex(
+            (item) => item.collectionName === "main"
+          );
+
+          if (mainIndex !== -1 && mainIndex !== newArray.length - 1) {
+            const [mainCollection] = newArray.splice(mainIndex, 1);
+            newArray.push(mainCollection);
+          }
 
           const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
 
@@ -1116,7 +1130,7 @@ const StructuredProperty = ({
                                                   )}
                                                   nodes={nodes}
                                                   linkIndex={index}
-                                                  deleteVisible={unlinkVisible(
+                                                  unlinkVisible={unlinkVisible(
                                                     link.id
                                                   )}
                                                   linkLocked={false}

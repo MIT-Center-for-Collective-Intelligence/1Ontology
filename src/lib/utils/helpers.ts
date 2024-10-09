@@ -180,19 +180,26 @@ export const removeIsPartOf = async (
   };
 
   // Process generalizations
-  const generalizations = Object.values(nodeData?.generalizations || {}).flat();
+  const generalizations = (nodeData?.generalizations || []).flatMap(
+    (n) => n.nodes
+  );
   await processRemoval(generalizations, "specializations");
 
   // Process isPartOfs
-  const isPartOfs = Object.values(nodeData?.properties?.isPartOf || {}).flat();
-  await processRemoval(isPartOfs, "parts");
+  if (Array.isArray(nodeData?.properties?.isPartOf)) {
+    const isPartOfs = (nodeData?.properties?.isPartOf || []).flatMap(
+      (n) => n.nodes
+    );
+    await processRemoval(isPartOfs, "parts");
+  }
 
   // Process any additional properties in propertyOf
   if (nodeData.propertyOf) {
     for (let propertyName in nodeData.propertyOf) {
-      const propertyOfElements = Object.values(
-        nodeData.propertyOf[propertyName] || {}
-      ).flat();
+      console.log("nodeData.propertyOf ==>", nodeData.propertyOf);
+      const propertyOfElements = nodeData.propertyOf[propertyName].flatMap(
+        (n) => n.nodes
+      );
       await processRemoval(propertyOfElements, propertyName);
     }
   }
