@@ -586,7 +586,6 @@ const Node = ({
     } else {
       // Handle properties case
       const propertyCollection = currentVisibleNode.properties[property];
-      console.log("propertyCollection ==>", propertyCollection);
       if (Array.isArray(propertyCollection)) {
         if (collectionName === "main") {
           let checked = [];
@@ -1225,14 +1224,14 @@ const Node = ({
     (property: string) => {
       const inheritedProperty = getPropertyValue(
         nodes,
-        currentVisibleNode.inheritance.description.ref,
+        currentVisibleNode.inheritance[property].ref,
         property
       );
 
       if (inheritedProperty !== null) {
         return inheritedProperty;
       } else {
-        return currentVisibleNode.properties.description;
+        return currentVisibleNode.properties[property];
       }
     },
     [currentVisibleNode, nodes]

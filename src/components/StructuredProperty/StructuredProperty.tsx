@@ -66,7 +66,7 @@ type IStructuredPropertyProps = {
 
 const StructuredProperty = ({
   currentVisibleNode,
-  showListToSelect: showList,
+  showListToSelect,
   navigateToNode,
   setSnackbarMessage,
   setCurrentVisibleNode,
@@ -626,7 +626,7 @@ const StructuredProperty = ({
         });
       }
     },
-    [user?.uname, property]
+    [user?.uname, db, currentVisibleNode.id, property]
   );
 
   const saveEditCollection = useCallback(
@@ -792,7 +792,7 @@ const StructuredProperty = ({
           >
             {property === "specializations" && (
               <Button
-                onClick={() => showList(property, "main")}
+                onClick={() => showListToSelect(property, "main")}
                 sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
                 variant="outlined"
               >
@@ -802,7 +802,7 @@ const StructuredProperty = ({
             )}
             {property !== "specializations" && (
               <Button
-                onClick={() => showList(property, "main")}
+                onClick={() => showListToSelect(property, "main")}
                 sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
                 variant="outlined"
               >
@@ -935,7 +935,10 @@ const StructuredProperty = ({
                                   !selectedDiffNode && (
                                     <Button
                                       onClick={() =>
-                                        showList(property, collection)
+                                        showListToSelect(
+                                          property,
+                                          collection.collectionName
+                                        )
                                       }
                                       sx={{
                                         borderRadius: "25px",

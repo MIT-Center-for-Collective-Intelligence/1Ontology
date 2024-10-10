@@ -370,7 +370,7 @@ const Text = ({
               onChange={handleChanges}
               onFocus={handleFocus} // When the user starts editing
               onBlur={handleBlur} // When the user stops editing
-              placeholder="Start collaborating..."
+              placeholder=""
               InputProps={{
                 sx: {
                   padding: "15px",

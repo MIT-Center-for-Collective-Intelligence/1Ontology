@@ -153,26 +153,6 @@ const Ontology = () => {
   };
 
   useEffect(() => {
-    if (!user) return;
-
-    const userQuery = query(
-      collection(db, LOGS),
-      where("__name__", "==", "00EWFECw1PnBRPy4wZVt")
-    );
-
-    const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
-      if (
-        snapshot.docChanges().length > 0 &&
-        snapshot.docChanges()[0].type !== "added"
-      ) {
-        window.location.reload();
-      }
-    });
-
-    return () => unsubscribeUser();
-  }, [db, user, nodes]);
-
-  useEffect(() => {
     // Check if a user is logged in
     if (user) {
       // Check if the user's email is verified
@@ -494,10 +474,13 @@ const Ontology = () => {
   }, [nodes]);
 
   useEffect(() => {
+    if (currentVisibleNode) return;
     if (user?.currentNode && nodes[user.currentNode]) {
       setCurrentVisibleNode(nodes[user.currentNode]);
+    } else {
+      setCurrentVisibleNode(nodes["hn9pGQNxmQe9Xod5MuKK"]!);
     }
-  }, [user?.currentNode]);
+  }, [user?.currentNode, nodes]);
 
   // Function to update the user document with the current ontology path
   const openedANode = async (currentNode: string) => {

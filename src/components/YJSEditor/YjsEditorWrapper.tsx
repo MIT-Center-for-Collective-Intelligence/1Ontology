@@ -83,7 +83,7 @@ const YjsEditorWrapper = ({
             userOnly: true,
           },
         },
-        placeholder: "Start collaborating...",
+        placeholder: "",
         theme: "snow",
       });
 
@@ -95,6 +95,13 @@ const YjsEditorWrapper = ({
         name: fullname,
         color: color,
       };
+      provider.on("status", (event: any) => {
+        if (event.status === "disconnected" && editorRef.current) {
+          editorRef.current.enable(false);
+        } else if (event.status === "connected" && editorRef.current) {
+          editorRef.current.enable(true);
+        }
+      });
       provider.awareness.setLocalStateField("user", userInfo);
       editor.on("text-change", (delta, oldDelta, source) => {
         if (source === "user") {
@@ -120,8 +127,10 @@ const YjsEditorWrapper = ({
         provider.disconnect();
         provider.destroy();
         binding.destroy();
-        editor.off("selection-change");
-        editor.off("text-change");
+        if (editor) {
+          editor.off("selection-change");
+          editor.off("text-change");
+        }
         clearInterval(intervalId);
       };
     }

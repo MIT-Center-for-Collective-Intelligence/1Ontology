@@ -196,7 +196,6 @@ export const removeIsPartOf = async (
   // Process any additional properties in propertyOf
   if (nodeData.propertyOf) {
     for (let propertyName in nodeData.propertyOf) {
-      console.log("nodeData.propertyOf ==>", nodeData.propertyOf);
       const propertyOfElements = nodeData.propertyOf[propertyName].flatMap(
         (n) => n.nodes
       );
@@ -541,10 +540,10 @@ export const updateSpecializations = (
   newNodeRefId: string,
   collectionName: string = "main"
 ) => {
-  const parentSpecialization = parentNode.specializations.find(
+  const collectionIdx = parentNode.specializations.findIndex(
     (spec) => spec.collectionName === collectionName
   );
-  if (!parentSpecialization) {
+  if (collectionIdx === -1) {
     // Create the collection if it doesn't exist
     parentNode.specializations.push({
       collectionName,
@@ -552,7 +551,7 @@ export const updateSpecializations = (
     });
   } else {
     // Add the new node to the collection if it exists
-    parentSpecialization.nodes.push({
+    parentNode.specializations[collectionIdx].nodes.push({
       id: newNodeRefId,
     });
   }

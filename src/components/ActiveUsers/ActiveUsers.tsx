@@ -91,8 +91,10 @@ const ActiveUsers = ({
                 <strong
                   style={{ marginRight: "4px" }}
                 >{`${u.fName} ${u.lName}`}</strong>
-                {u.node.id && <div> {"last interacted with"}</div>}
-                {u.node.id && (
+                {u.node.id && u.node.title && (
+                  <div> {"last interacted with"}</div>
+                )}
+                {u.node.id && u.node.title && (
                   <Link
                     underline="hover"
                     onClick={() => navigateToNode(u.node.id)}
@@ -105,7 +107,7 @@ const ActiveUsers = ({
                     {u.node.title}
                   </Link>
                 )}
-                {u.node.id && u.lastInteracted && (
+                {u.node.id && u.lastInteracted && u.node.title && (
                   <div>{timeAgo(u.lastInteracted)}</div>
                 )}
               </Box>
