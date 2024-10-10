@@ -118,22 +118,20 @@ const Text = ({
       if (!user?.uname) return;
 
       if (currentVisibleNode.inheritance[property]?.ref) {
-        if (
-          await confirmIt(
-            `Are you sure you want to break the inheritance of ${property}?`,
-            "Yes",
-            "Cancel"
-          )
-        ) {
-          const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-          updateDoc(nodeRef, {
-            [`inheritance.${property}.ref`]: null,
-            [`properties.${property}`]: text,
-          });
-        } else {
-          return;
-        }
+        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+        updateDoc(nodeRef, {
+          [`inheritance.${property}.ref`]: null,
+          [`properties.${property}`]: text,
+        });
+        updateInheritance({
+          nodeId: currentVisibleNode.id,
+          updatedProperty: property,
+          db,
+        });
+      } else {
+        return;
       }
+
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );

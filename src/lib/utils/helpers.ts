@@ -277,17 +277,18 @@ const recursivelyUpdateSpecializations = async ({
   // Get the inheritance type for the updated property
   const inheritance = nodeData.inheritance[updatedProperty];
   const canInherit =
-    // (inheritanceType === "inheritUnlessAlreadyOverRidden" && inheritance.ref === generalizationId) ||
+    (inheritanceType === "inheritUnlessAlreadyOverRidden" &&
+      inheritance.ref !== null) ||
     inheritanceType === "alwaysInherit";
-
-  if (nestedCall && canInherit && inheritance.ref !== generalizationId) {
+  console.log(nodeId);
+  if (nestedCall && canInherit) {
     await updateProperty(batch, nodeRef, updatedProperty, generalizationId, db);
   }
 
   if (inheritance?.inheritanceType === "neverInherit") {
     return;
   }
-  let specializations = getFlatLinks(nodeData.specializations);
+  let specializations = nodeData.specializations.flatMap((n) => n.nodes);
 
   if (inheritance?.inheritanceType === "inheritAfterReview") {
     /*   specializations = (await selectIt(
@@ -476,16 +477,6 @@ export const checkIfCanDeleteANode = (
     }
   }
   return true;
-};
-
-export const getFlatLinks = (
-  collections: { collectionName: string; nodes: { id: string }[] }[]
-) => {
-  const nodes = [];
-  for (let collection of collections) {
-    nodes.push(...collection.nodes);
-  }
-  return nodes;
 };
 
 export const generateInheritance = (
