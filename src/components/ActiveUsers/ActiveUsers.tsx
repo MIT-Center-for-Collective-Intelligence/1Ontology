@@ -71,8 +71,8 @@ const ActiveUsers = ({
           if (!a.lasChangeMadeAt) return 1;
           if (!b.lasChangeMadeAt) return -1;
           return (
-            new Date(b.lasChangeMadeAt).getTime() -
-            new Date(a.lasChangeMadeAt).getTime()
+            new Date(b.lasChangeMadeAt.toDate()).getTime() -
+            new Date(a.lasChangeMadeAt.toDate()).getTime()
           );
         })
         .map((u: any) => (

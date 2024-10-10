@@ -393,7 +393,7 @@ const StructuredProperty = ({
       if (
         user?.uname &&
         (await confirmIt(
-          `Are you sure you want to delete the collection ${collectionIdx}?`,
+          `Are you sure you want to delete the collection ${collectionName}?`,
           "Delete Collection",
           "Keep Collection"
         ))
@@ -506,7 +506,7 @@ const StructuredProperty = ({
         }
       }
     },
-    [user?.uname]
+    [confirmIt, currentVisibleNode, db, user?.uname]
   );
 
   const logChange = (
