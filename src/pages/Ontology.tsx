@@ -73,7 +73,7 @@ import {
   where,
 } from "firebase/firestore";
 import Fuse from "fuse.js";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // import markdownContent from "../components/OntologyComponents/Markdown-Here-Cheatsheet.md";
 import SneakMessage from " @components/components/OntologyComponents/SneakMessage";
 import Node from " @components/components/OntologyComponents/Node";
@@ -95,15 +95,7 @@ import { useAuth } from " @components/components/context/AuthContext";
 import { useRouter } from "next/router";
 import DagGraph from " @components/components/OntologyComponents/DAGGraph";
 import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
-import {
-  LOGS,
-  NODES,
-  USERS,
-} from " @components/lib/firestoreClient/collections";
-import {
-  getBrowser,
-  getOperatingSystem,
-} from " @components/lib/firestoreClient/errors.firestore";
+import { NODES, USERS } from " @components/lib/firestoreClient/collections";
 
 import { recordLogs, saveNewChangeLog } from " @components/lib/utils/helpers";
 import { useHover } from " @components/lib/hooks/useHover";
@@ -526,8 +518,10 @@ const Ontology = () => {
     }
 
     openedANode(currentVisibleNode.id);
+    if (expandedNodes.size === 0) {
+      initializeExpanded(eachOntologyPath[currentVisibleNode?.id]);
+    }
     // setOntologyPath(eachOntologyPath[currentVisibleNode?.id]);
-    initializeExpanded(eachOntologyPath[currentVisibleNode?.id]);
     updateTheUrl(eachOntologyPath[currentVisibleNode?.id]);
   }, [currentVisibleNode?.id, eachOntologyPath]);
 
@@ -624,7 +618,7 @@ const Ontology = () => {
         });
       }
     },
-    [nodes, user, eachOntologyPath]
+    [nodes, user]
   );
 
   // Function to retrieve main specializations from tree visualization data
@@ -639,17 +633,17 @@ const Ontology = () => {
       };
     }
 
-    // Include specializations for "Actor" category
-    mainSpecializations = {
-      ...mainSpecializations,
-      ...(mainSpecializations["actor"]?.specializations || {}),
-    };
     for (let type in mainSpecializations) {
-      mainSpecializations[type.toLowerCase()] = mainSpecializations[type];
+      mainSpecializations[nodes[mainSpecializations[type].id].nodeType] =
+        mainSpecializations[type];
       delete mainSpecializations[type];
     }
     return mainSpecializations;
   };
+
+  const mainSpecializations = useMemo(() => {
+    return getMainSpecializations(treeVisualization);
+  }, [treeVisualization]);
 
   // This function is called when a search result node is clicked.
   const openSearchedNode = (node: any) => {
@@ -886,7 +880,7 @@ const Ontology = () => {
                 setCurrentVisibleNode={setCurrentVisibleNode}
                 setSnackbarMessage={setSnackbarMessage}
                 user={user}
-                mainSpecializations={getMainSpecializations(treeVisualization)}
+                mainSpecializations={mainSpecializations}
                 nodes={nodes}
                 addNewNode={addNewNode}
                 navigateToNode={navigateToNode}
