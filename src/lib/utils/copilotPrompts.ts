@@ -185,7 +185,7 @@ Each item should represent an object that proposes an improvement to an existing
    }
 }
 
-Please do not propose the creation of any new node under "specializations" or "generalizations" in an improvement object. New nodes should only be proposed under the "new_nodes" array.
+IMPORTANT: Please do not propose the creation of any new node under "specializations" or "generalizations" in an improvement object. New nodes should only be proposed under the "new_nodes" array.
 
 For the "new_nodes" array:
 Each item should represent an object proposing a new node. Please structure each object as follows:
@@ -195,6 +195,8 @@ Each item should represent an object proposing a new node. Please structure each
    "first_generalization": {}, // An object, including the node title that you would like to specify as the first generalization of this new node, and the collection in the array of specializations of this generalization, where the new node should be classified under.
    "reasoning": "Your reasoning for proposing this new node"
 }
+
+IMPORTANT: Please do not propose any new node that already exists in the knowledge graph. Ensure that each node is unique.
 
 For the "guidelines" array:
 Each item should represent a category as an object. Please structure each object as follows:
