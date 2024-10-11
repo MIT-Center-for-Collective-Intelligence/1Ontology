@@ -1,6 +1,5 @@
 import {
   Box,
-  Button,
   IconButton,
   Link,
   Theme,
@@ -106,7 +105,7 @@ const ManageNodeButtons = ({
               <IconButton
                 onClick={() => handleLockNode()}
                 sx={{
-                  borderRadius: "25px",
+                  borderRadius: "18px",
                   mx: "7px",
                 }}
               >

@@ -47,6 +47,7 @@ import {
   updateInheritance,
 } from " @components/lib/utils/helpers";
 import NewCollection from "../Collection/NewCollection";
+import SelectInheritance from "../SelectInheretance/SelectInhertance";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
@@ -119,10 +120,10 @@ const StructuredProperty = ({
       selectedDiffNode.newValue.forEach(
         (collectionNewValue: ICollection, collectionIndex: number) => {
           const collectionPrevious: ICollection =
-            selectedDiffNode.previousValue[collectionIndex];
+            selectedDiffNode?.previousValue[collectionIndex] || [];
 
           collectionNewValue.nodes.forEach((nodeLink) => {
-            const foundInPrevious = collectionPrevious.nodes.find(
+            const foundInPrevious = (collectionPrevious?.nodes || []).find(
               (prevElement: ILinkNode) => prevElement.id === nodeLink.id
             );
             if (!foundInPrevious) {
@@ -130,7 +131,7 @@ const StructuredProperty = ({
               return { ...nodeLink, change: "added" };
             }
           });
-          collectionPrevious.nodes.forEach((prevElement: any) => {
+          (collectionPrevious?.nodes || []).forEach((prevElement: any) => {
             const foundInNew = collectionNewValue.nodes.find(
               (newElement: ILinkNode) => newElement.id === prevElement.id
             );
@@ -749,8 +750,8 @@ const StructuredProperty = ({
           background: (theme: any) =>
             theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
           p: 3,
-          borderTopRightRadius: "25px",
-          borderTopLeftRadius: "25px",
+          borderTopRightRadius: "18px",
+          borderTopLeftRadius: "18px",
           backgroundColor:
             selectedDiffNode &&
             selectedDiffNode.changeType === "add property" &&
@@ -780,6 +781,13 @@ const StructuredProperty = ({
             {'")'}
           </Typography>
         )}
+        {property !== "specializations" && property !== "generalizations" && (
+          <SelectInheritance
+            currentVisibleNode={currentVisibleNode}
+            property={property}
+            nodes={nodes}
+          />
+        )}
       </Box>
       <Box sx={{ p: "15px" }}>
         {!locked && !selectedDiffNode && (
@@ -793,7 +801,7 @@ const StructuredProperty = ({
             {property === "specializations" && (
               <Button
                 onClick={() => showListToSelect(property, "main")}
-                sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
+                sx={{ borderRadius: "18px", backgroundColor: BUTTON_COLOR }}
                 variant="outlined"
               >
                 {"Add "}
@@ -803,10 +811,10 @@ const StructuredProperty = ({
             {property !== "specializations" && (
               <Button
                 onClick={() => showListToSelect(property, "main")}
-                sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
+                sx={{ borderRadius: "18px", backgroundColor: BUTTON_COLOR }}
                 variant="outlined"
               >
-                {"Add "}
+                {"Link "}
                 {capitalizeFirstLetter(DISPLAY[property] || property)}
               </Button>
             )}
@@ -815,7 +823,7 @@ const StructuredProperty = ({
                 onClick={() => {
                   setOpenAddCollection(true);
                 }}
-                sx={{ borderRadius: "25px", backgroundColor: BUTTON_COLOR }}
+                sx={{ borderRadius: "18px", backgroundColor: BUTTON_COLOR }}
                 variant="outlined"
               >
                 Add Collection
@@ -941,7 +949,7 @@ const StructuredProperty = ({
                                         )
                                       }
                                       sx={{
-                                        borderRadius: "25px",
+                                        borderRadius: "18px",
                                         backgroundColor: BUTTON_COLOR,
                                         ":hover": {
                                           backgroundColor:
@@ -1073,7 +1081,7 @@ const StructuredProperty = ({
                                               ? DESIGN_SYSTEM_COLORS.gray250
                                               : DESIGN_SYSTEM_COLORS.notebookG400
                                         : "",
-                                      borderRadius: "25px",
+                                      borderRadius: "18px",
                                       userSelect: "none",
                                     }}
                                   >

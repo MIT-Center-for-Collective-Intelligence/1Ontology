@@ -187,10 +187,12 @@ const Node = ({
   const isSmallScreen = useMediaQuery("(max-width: 600px)");
 
   const [openSelectModel, setOpenSelectModel] = useState(false);
-  const handleClose = () => {
+
+  const handleCloseAddLinksModel = () => {
     setCheckedItems(new Set());
     setOpenSelectModel(false);
     setSelectedCategory("");
+    setSearchValue("");
   };
 
   const [newCollection, setNewCollection] = useState("");
@@ -202,18 +204,12 @@ const Node = ({
     category: string;
   } | null>(null);
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
-
   const [searchValue, setSearchValue] = useState("");
-  const [newFieldType, setNewFieldType] = useState("String");
-  const [openAddProperty, setOpenAddProperty] = useState(false);
-  const [newFieldTitle, setNewProperty] = useState("");
   const [selectTitle, setSelectTitle] = useState(false);
-
   const [reviewId, setReviewId] = useState("");
   const db = getFirestore();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [width, setWidth] = useState<number>(0);
-  const [inputError, setInputError] = useState<boolean>(false);
 
   useEffect(() => {
     const element = document.getElementById("node-section");
@@ -460,7 +456,7 @@ const Node = ({
     }
 
     // Close the modal or perform any necessary cleanup.
-    handleClose();
+    handleCloseAddLinksModel();
   };
 
   // Function to add a new specialization to a node
@@ -763,7 +759,7 @@ const Node = ({
   const handleSaveLinkChanges = useCallback(async () => {
     try {
       // Close the modal or perform any other necessary actions
-      handleClose();
+      handleCloseAddLinksModel();
 
       // Get the node document from the database
       const nodeDoc = await getDoc(
@@ -1072,137 +1068,6 @@ const Node = ({
     [setExpandedNodes]
   );
 
-  const updateSpecializationsInheritance = async (
-    specializations: ICollection[],
-    batch: any,
-    property: string,
-    propertyValue: any,
-    ref: string,
-    propertyType: string
-  ) => {
-    try {
-      let newBatch = batch;
-      for (let { nodes: links } of specializations) {
-        for (let link of links) {
-          const nodeRef = doc(collection(db, NODES), link.id);
-          let objectUpdate = {
-            [`inheritance.${property}.inheritanceType`]:
-              "inheritUnlessAlreadyOverRidden",
-            [`properties.${property}`]: propertyValue,
-            [`inheritance.${property}.ref`]: ref,
-            [`propertyType.${property}`]: propertyType,
-          };
-
-          if (newBatch._committed) {
-            newBatch = writeBatch(db);
-          }
-          updateDoc(nodeRef, objectUpdate);
-
-          if (newBatch._mutations.length > 498) {
-            await newBatch.commit();
-            newBatch = writeBatch(db);
-          }
-
-          newBatch = await updateSpecializationsInheritance(
-            nodes[link.id].specializations,
-            newBatch,
-            property,
-            propertyValue,
-            ref,
-            propertyType
-          );
-        }
-      }
-
-      return newBatch;
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const addNewProperty = async (
-    newProperty: string,
-    newPropertyType: string
-  ) => {
-    try {
-      if (newProperty in currentVisibleNode.properties) {
-        await confirmIt(
-          `The property ${newProperty} already exist under this node`,
-          "Ok",
-          ""
-        );
-        return;
-      }
-      if (!newProperty.trim() || !newPropertyType.trim()) return;
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-      const properties = currentVisibleNode.properties;
-      const previousValue = JSON.parse(
-        JSON.stringify(currentVisibleNode.properties)
-      );
-      const propertyType = currentVisibleNode.propertyType;
-      const inheritance = currentVisibleNode.inheritance;
-
-      propertyType[newProperty] = newPropertyType.toLowerCase();
-
-      if (newPropertyType.toLowerCase() === "string") {
-        properties[newProperty] = "";
-      } else {
-        properties[newProperty] = [{ collectionName: "main", nodes: [] }];
-      }
-      inheritance[newProperty] = {
-        ref: null,
-        inheritanceType: "inheritUnlessAlreadyOverRidden",
-      };
-      await updateDoc(nodeRef, {
-        properties,
-        propertyType,
-        inheritance,
-      });
-      saveNewChangeLog(db, {
-        nodeId: currentVisibleNode.id,
-        modifiedBy: user?.uname,
-        modifiedProperty: null,
-        previousValue,
-        newValue: properties,
-        modifiedAt: new Date(),
-        changeType: "add property",
-        fullNode: currentVisibleNode,
-        changeDetails: { addedProperty: newProperty },
-      });
-
-      setNewProperty("");
-      setOpenAddProperty(false);
-
-      const batch = writeBatch(db);
-      await updateSpecializationsInheritance(
-        currentVisibleNode.specializations,
-        batch,
-        newProperty,
-        properties[newProperty],
-        currentVisibleNode.id,
-        newPropertyType.toLowerCase()
-      );
-      await batch.commit();
-
-      recordLogs({
-        action: "add new property",
-        node: currentVisibleNode.id,
-        newProperty,
-        newPropertyType,
-      });
-    } catch (error: any) {
-      setOpenAddProperty(false);
-      recordLogs({
-        type: "error",
-        error: JSON.stringify({
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        }),
-      });
-    }
-  };
-
   const handleLockNode = () => {
     try {
       const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
@@ -1260,6 +1125,7 @@ const Node = ({
           width: "100%",
         }}
       >
+        {/* title of the node */}
         <Text
           currentVisibleNode={currentVisibleNode}
           setCurrentVisibleNode={setCurrentVisibleNode}
@@ -1280,6 +1146,7 @@ const Node = ({
           displaySidebar={displaySidebar}
           activeSidebar={activeSidebar}
         />
+        {/* description of the node */}
         <Text
           nodes={nodes}
           text={onGetPropertyValue("description") as string}
@@ -1291,7 +1158,7 @@ const Node = ({
           getTitleNode={getTitleNode}
           confirmIt={confirmIt}
         />
-
+        {/* actors of the node if it's exist */}
         {currentVisibleNode?.properties.hasOwnProperty("actor") && (
           <StructuredProperty
             selectedDiffNode={selectedDiffNode}
@@ -1307,7 +1174,7 @@ const Node = ({
             locked={locked}
           />
         )}
-
+        {/* specializations and generalizations*/}
         <Stack
           direction={width < 1050 ? "column" : "row"}
           sx={{
@@ -1333,6 +1200,7 @@ const Node = ({
             />
           ))}
         </Stack>
+        {/* isPartOf and isPartOf*/}
         <Stack
           mt={1}
           direction={width < 1050 ? "column" : "row"}
@@ -1340,7 +1208,7 @@ const Node = ({
             gap: 3,
           }}
         >
-          {["isPartOf", "parts"].map((property, index) => (
+          {["isPartOf", "isPartOf"].map((property, index) => (
             <StructuredProperty
               key={property + index}
               confirmIt={confirmIt}
@@ -1357,30 +1225,22 @@ const Node = ({
             />
           ))}
         </Stack>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            // p: "17px",
-            width: "100%",
-          }}
-        >
-          <NodeBody
-            currentVisibleNode={currentVisibleNode}
-            setCurrentVisibleNode={setCurrentVisibleNode}
-            showListToSelect={showListToSelect}
-            navigateToNode={navigateToNode}
-            setSnackbarMessage={setSnackbarMessage}
-            setSelectedProperty={setSelectedProperty}
-            setOpenAddProperty={setOpenAddProperty}
-            nodes={nodes}
-            locked={locked}
-            selectedDiffNode={selectedDiffNode}
-            getTitleNode={getTitleNode}
-            confirmIt={confirmIt}
-            onGetPropertyValue={onGetPropertyValue}
-          />
-        </Box>
+
+        {/* rest of the properties in the NodeBody*/}
+        <NodeBody
+          currentVisibleNode={currentVisibleNode}
+          setCurrentVisibleNode={setCurrentVisibleNode}
+          showListToSelect={showListToSelect}
+          navigateToNode={navigateToNode}
+          setSnackbarMessage={setSnackbarMessage}
+          setSelectedProperty={setSelectedProperty}
+          nodes={nodes}
+          locked={locked}
+          selectedDiffNode={selectedDiffNode}
+          getTitleNode={getTitleNode}
+          confirmIt={confirmIt}
+          onGetPropertyValue={onGetPropertyValue}
+        />
       </Box>
 
       {ConfirmDialog}
@@ -1394,7 +1254,7 @@ const Node = ({
           // backgroundColor: "rgba(0, 0, 0, 0.5)",
         }}
         open={openSelectModel}
-        onClose={handleClose}
+        onClose={handleCloseAddLinksModel}
       >
         <Paper
           sx={{
@@ -1441,7 +1301,7 @@ const Node = ({
                         searchValue
                       )
                     }
-                    sx={{ borderRadius: "25px", minWidth: "200px" }}
+                    sx={{ borderRadius: "18px", minWidth: "200px" }}
                     variant="outlined"
                     disabled={
                       searchValue.length < 3 ||
@@ -1530,14 +1390,7 @@ const Node = ({
               />
             )}
           </Box>
-          {/* {selectedProperty === "specializations" && (
-              <Button
-                variant="contained"
-                onClick={() => handleNewSpecialization()}
-              >
-                Add new
-              </Button>
-            )} */}
+
           <Paper
             sx={{
               display: "flex",
@@ -1547,7 +1400,11 @@ const Node = ({
               justifyContent: "space-between",
             }}
           >
-            <Button variant="contained" onClick={handleClose} color="primary">
+            <Button
+              variant="contained"
+              onClick={handleCloseAddLinksModel}
+              color="primary"
+            >
               Cancel
             </Button>
             <Button
@@ -1560,92 +1417,6 @@ const Node = ({
           </Paper>
         </Paper>
       </Modal>
-      <Dialog
-        onClose={() => {
-          setOpenAddProperty(false);
-        }}
-        open={openAddProperty}
-      >
-        <DialogContent>
-          <Box sx={{ height: "auto", width: "500px" }}>
-            <FormControl fullWidth margin="normal" sx={{ width: "500px" }}>
-              <InputLabel>Type</InputLabel>
-              <Select
-                value={newFieldType}
-                onChange={(event) => setNewFieldType(event.target.value)}
-                label="Difficulty"
-                MenuProps={{
-                  sx: {
-                    zIndex: "9999",
-                  },
-                }}
-                sx={{ borderRadius: "20px" }}
-              >
-                {[
-                  "String",
-                  "Activity",
-                  "Object",
-                  "Actor",
-                  "Evaluation Dimension",
-                  "Incentive",
-                  "Reward",
-                ].map((item) => (
-                  <MenuItem key={item} value={item}>
-                    {item}
-                  </MenuItem>
-                ))}
-              </Select>
-
-              <TextField
-                label="New Property"
-                sx={{ mt: "14px" }}
-                value={newFieldTitle}
-                onChange={(event) => {
-                  const value = event.target.value;
-
-                  const isValid =
-                    SpecialCharacterRegex.test(value) && value.length <= 30;
-
-                  setNewProperty(value);
-                  setInputError(!isValid);
-                }}
-                error={inputError}
-                helperText={
-                  inputError
-                    ? "Max 30 characters, no special characters allowed."
-                    : ""
-                }
-                InputLabelProps={{
-                  sx: { color: "grey" },
-                }}
-              />
-            </FormControl>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center" }}>
-          <Button
-            onClick={() => addNewProperty(newFieldTitle, newFieldType)}
-            color="primary"
-            disabled={!newFieldType || !newFieldTitle || inputError} // Disable button if input error exists
-            variant="contained"
-            sx={{ borderRadius: "25px" }}
-          >
-            {"Add"}
-          </Button>
-          <Button
-            onClick={() => {
-              setOpenAddProperty(false);
-              setNewProperty("");
-              setInputError(false); // Reset error on cancel
-            }}
-            color="primary"
-            variant="contained"
-            sx={{ borderRadius: "25px" }}
-          >
-            Cancel
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

@@ -1,12 +1,24 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Box, Button, Typography, useTheme } from "@mui/material";
-import { INode } from " @components/types/INode";
+import { ICollection, INode } from " @components/types/INode";
 import Text from "../OntologyComponents/Text";
-import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getFirestore,
+  updateDoc,
+  writeBatch,
+} from "firebase/firestore";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
 import { DISPLAY } from " @components/lib/CONSTANTS";
-import { recordLogs, updateInheritance } from " @components/lib/utils/helpers";
+import {
+  recordLogs,
+  saveNewChangeLog,
+  updateInheritance,
+} from " @components/lib/utils/helpers";
+import AddPropertyForm from "../AddPropertyForm/AddPropertyForm";
+import { useAuth } from "../context/AuthContext";
 
 interface NodeBodyProps {
   currentVisibleNode: INode;
@@ -15,7 +27,6 @@ interface NodeBodyProps {
   navigateToNode: Function;
   setSnackbarMessage: Function;
   setSelectedProperty: Function;
-  setOpenAddProperty: Function;
   nodes: { [id: string]: INode };
   locked: boolean;
   selectedDiffNode: any;
@@ -31,7 +42,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   navigateToNode,
   setSnackbarMessage,
   setSelectedProperty,
-  setOpenAddProperty,
   nodes,
   locked,
   selectedDiffNode,
@@ -42,26 +52,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   const db = getFirestore();
-
-  const changeInheritance = (event: any, property: string) => {
-    try {
-      const newGeneralizationId = event.target.value;
-
-      if (newGeneralizationId) {
-        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-        updateDoc(nodeRef, {
-          [`inheritance.${property}.ref`]: newGeneralizationId,
-        });
-        updateInheritance({
-          nodeId: currentVisibleNode.id,
-          updatedProperty: property,
-          db,
-        });
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const [openAddProperty, setOpenAddProperty] = useState(false);
+  const [{ user }] = useAuth();
 
   const properties = useMemo(() => {
     if (
@@ -109,61 +101,137 @@ const NodeBody: React.FC<NodeBodyProps> = ({
       });
     }
   };
-  // {Object.values(currentVisibleNode.generalizations).flat()
-  //   .length > 1 && (
-  //   <TextField
-  //     value={
-  //       currentVisibleNode.inheritance[property]?.ref || ""
-  //     }
-  //     onChange={(e) => {
-  //       changeInheritance(e, property);
-  //     }}
-  //     select
-  //     label="Change Inheritance"
-  //     sx={{ minWidth: "200px" }}
-  //     InputProps={{
-  //       sx: {
-  //         height: "40px",
-  //         padding: "0 14px",
-  //         borderRadius: "25px",
-  //       },
-  //     }}
-  //     InputLabelProps={{
-  //       style: { color: "grey" },
-  //     }}
-  //   >
-  //     <MenuItem
-  //       value=""
-  //       disabled
-  //       sx={{
-  //         backgroundColor: (theme) =>
-  //           theme.palette.mode === "dark" ? "" : "white",
-  //       }}
-  //     >
-  //       Select Inheritance
-  //     </MenuItem>
-  //     {[
-  //       ...Object.values(currentVisibleNode.generalizations),
-  //       {
-  //         id:
-  //           currentVisibleNode.inheritance[property]?.ref || "",
-  //         title: getTitle(
-  //           nodes,
-  //           currentVisibleNode.inheritance[property]?.ref || ""
-  //         ),
-  //       },
-  //     ]
-  //       .flat()
-  //       .map((generalization) => (
-  //         <MenuItem
-  //           key={generalization.id}
-  //           value={generalization.id}
-  //         >
-  //           {getTitle(nodes, generalization.id)}{" "}
-  //         </MenuItem>
-  //       ))}
-  //   </TextField>
-  // )}
+
+  const updateSpecializationsInheritance = async (
+    specializations: ICollection[],
+    batch: any,
+    property: string,
+    propertyValue: any,
+    ref: string,
+    propertyType: string
+  ) => {
+    try {
+      let newBatch = batch;
+      for (let { nodes: links } of specializations) {
+        for (let link of links) {
+          const nodeRef = doc(collection(db, NODES), link.id);
+          let objectUpdate = {
+            [`inheritance.${property}.inheritanceType`]:
+              "inheritUnlessAlreadyOverRidden",
+            [`properties.${property}`]: propertyValue,
+            [`inheritance.${property}.ref`]: ref,
+            [`propertyType.${property}`]: propertyType,
+          };
+
+          if (newBatch._committed) {
+            newBatch = writeBatch(db);
+          }
+          updateDoc(nodeRef, objectUpdate);
+
+          if (newBatch._mutations.length > 498) {
+            await newBatch.commit();
+            newBatch = writeBatch(db);
+          }
+
+          newBatch = await updateSpecializationsInheritance(
+            nodes[link.id].specializations,
+            newBatch,
+            property,
+            propertyValue,
+            ref,
+            propertyType
+          );
+        }
+      }
+
+      return newBatch;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const addNewProperty = async (
+    newProperty: string,
+    newPropertyType: string
+  ) => {
+    try {
+      if (!user) return;
+      if (newProperty in currentVisibleNode.properties) {
+        await confirmIt(
+          `The property ${newProperty} already exist under this node`,
+          "Ok",
+          ""
+        );
+        return;
+      }
+      if (!newProperty.trim() || !newPropertyType.trim()) return;
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+      const properties = currentVisibleNode.properties;
+      const previousValue = JSON.parse(
+        JSON.stringify(currentVisibleNode.properties)
+      );
+      const propertyType = currentVisibleNode.propertyType;
+      const inheritance = currentVisibleNode.inheritance;
+
+      propertyType[newProperty] = newPropertyType.toLowerCase();
+
+      if (newPropertyType.toLowerCase() === "string") {
+        properties[newProperty] = "";
+      } else {
+        properties[newProperty] = [{ collectionName: "main", nodes: [] }];
+      }
+      inheritance[newProperty] = {
+        ref: null,
+        inheritanceType: "inheritUnlessAlreadyOverRidden",
+      };
+      await updateDoc(nodeRef, {
+        properties,
+        propertyType,
+        inheritance,
+      });
+      saveNewChangeLog(db, {
+        nodeId: currentVisibleNode.id,
+        modifiedBy: user?.uname,
+        modifiedProperty: null,
+        previousValue,
+        newValue: properties,
+        modifiedAt: new Date(),
+        changeType: "add property",
+        fullNode: currentVisibleNode,
+        changeDetails: { addedProperty: newProperty },
+      });
+
+      setOpenAddProperty(false);
+
+      const batch = writeBatch(db);
+      await updateSpecializationsInheritance(
+        currentVisibleNode.specializations,
+        batch,
+        newProperty,
+        properties[newProperty],
+        currentVisibleNode.id,
+        newPropertyType.toLowerCase()
+      );
+      await batch.commit();
+
+      recordLogs({
+        action: "add new property",
+        node: currentVisibleNode.id,
+        newProperty,
+        newPropertyType,
+      });
+    } catch (error: any) {
+      setOpenAddProperty(false);
+      recordLogs({
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+      });
+    }
+  };
 
   return (
     <Box>
@@ -213,6 +281,13 @@ const NodeBody: React.FC<NodeBodyProps> = ({
             </Box>
           ))}
       </Box>
+      {!locked && openAddProperty && (
+        <AddPropertyForm
+          addNewProperty={addNewProperty}
+          setOpenAddProperty={setOpenAddProperty}
+          locked={locked}
+        />
+      )}
       {!locked && (
         <Button
           onClick={() => {
@@ -220,7 +295,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           }}
           variant="outlined"
           sx={{
-            borderRadius: "25px",
+            borderRadius: "18px",
             backgroundColor: BUTTON_COLOR,
             mt: "15px",
           }}

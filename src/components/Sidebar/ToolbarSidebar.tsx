@@ -265,7 +265,7 @@ const ToolbarSidebar = ({
         <MenuItem sx={{ flexGrow: 3 }} onClick={handleEditImage}>
           {isUploading ? (
             <Box sx={{ mr: "15px" }}>
-              <LinearProgress sx={{ width: "25px" }} />
+              <LinearProgress sx={{ width: "18px" }} />
             </Box>
           ) : (
             <CameraAltIcon sx={{ mr: "5px" }} />
@@ -602,9 +602,8 @@ const ToolbarSidebar = ({
                 onClick={() => {
                   setActiveSidebar(null);
                   setOpenLogsFor(null);
-                  setSelectedDiffNode(null);
-                  if (user.currentNode && selectedDiffNode) {
-                    setCurrentVisibleNode(nodes[user.currentNode] || null);
+                  if (selectedDiffNode) {
+                    navigateToNode(currentVisibleNode.id);
                   }
                 }}
                 sx={{ ml: "auto" }}

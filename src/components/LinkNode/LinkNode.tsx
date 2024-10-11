@@ -326,12 +326,11 @@ const LinkNode = ({
     }
     if (specOrGenDoc.exists()) {
       const specOrGenData = specOrGenDoc.data() as INode;
-
-      specOrGenData[removeFrom][collectionIndex].nodes = specOrGenData[
-        removeFrom
-      ][collectionIndex].nodes.filter(
-        (c: { id: string }) => c.id !== removeNodeId
-      );
+      for (let collection of specOrGenData[removeFrom]) {
+        collection.nodes = collection.nodes.filter(
+          (c: { id: string }) => c.id !== removeNodeId
+        );
+      }
 
       await updateDoc(specOrGenDoc.ref, {
         [`${removeFrom}`]: specOrGenData[removeFrom],
@@ -391,13 +390,17 @@ const LinkNode = ({
           await updateDoc(nodeDoc.ref, nodeData);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      await confirmIt(
-        `There is an issue with deleting the node, please try again.`,
-        `Ok`,
-        ""
-      );
+      recordLogs({
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+        at: "updateInheritance",
+      });
     }
   };
 
@@ -437,7 +440,7 @@ const LinkNode = ({
             <Button
               sx={{
                 ml: "8px",
-                borderRadius: "25px",
+                borderRadius: "18px",
                 backgroundColor: BUTTON_COLOR,
               }}
               variant="outlined"

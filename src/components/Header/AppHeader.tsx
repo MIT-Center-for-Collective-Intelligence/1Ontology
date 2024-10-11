@@ -325,7 +325,7 @@ const AppHeader = forwardRef(
           <MenuItem sx={{ flexGrow: 3 }} onClick={handleEditImage}>
             {isUploading ? (
               <Box sx={{ mr: "15px" }}>
-                <LinearProgress sx={{ width: "25px" }} />
+                <LinearProgress sx={{ width: "18px" }} />
               </Box>
             ) : (
               <CameraAltIcon sx={{ mr: "5px" }} />

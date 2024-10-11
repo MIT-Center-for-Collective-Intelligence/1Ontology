@@ -28,9 +28,11 @@ import ManageNodeButtons from "./ManageNodeButtons";
 import { DISPLAY } from " @components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
 import YjsEditor from "../YJSEditor/YjsEditor";
+import SimpleEditor from "../YJSEditor/SimpleEditor";
+import SelectInheritance from "../SelectInheretance/SelectInhertance";
 // import YjsEditor from "../YJSEditor/YjsEditor";
 
-type ISubOntologyProps = {
+type ITextProps = {
   currentVisibleNode: INode;
   setCurrentVisibleNode: Function;
   property: string;
@@ -68,33 +70,23 @@ const Text = ({
   navigateToNode,
   displaySidebar,
   activeSidebar,
-}: ISubOntologyProps) => {
+  nodes,
+}: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
   const [editorContent, setEditorContent] = useState(text); // Local state to manage text
-  const textAreaRef = useRef<any>(null);
   const [error, setError] = useState("");
-
   const [isEditing, setIsEditing] = useState(false); // State to check if user is editing
   const [{ user }] = useAuth();
-  const previousValueRef = useRef("");
+  const focusAfterSaveRef = useRef(false); // Ref to track whether to refocus
 
-  /*   const debouncedSaveNewChangeLog = useCallback(
-    debounce(async (db, currentVisibleNode, user, property, newValue) => {
-      saveNewChangeLog(db, {
-        nodeId: currentVisibleNode.id,
-        modifiedBy: user?.uname,
-        modifiedProperty: property,
-        previousValue: previousValueRef.current,
-        newValue,
-        modifiedAt: new Date(),
-        changeType: "change text",
-        fullNode: currentVisibleNode,
-      });
-      previousValueRef.current = "";
-    }, 3000),
-    []
-  ); */
+  // // Maintain focus after inheritance change
+  // useEffect(() => {
+  //   if (focusAfterSaveRef.current && textAreaRef.current) {
+  //     textAreaRef.current.focus(); // Refocus after re-render
+  //     focusAfterSaveRef.current = false; // Reset
+  //   }
+  // }, [currentVisibleNode.inheritance[property]?.ref]);
 
   const saveChangeHistory = useCallback(
     (previousValue: string, newValue: string) => {
@@ -117,90 +109,33 @@ const Text = ({
     async (copyValue: string) => {
       if (!user?.uname) return;
 
+      // Mark that we want to keep focus after inheritance breaks
+      focusAfterSaveRef.current = true;
+
       if (currentVisibleNode.inheritance[property]?.ref) {
+        console.log("copyValue", copyValue);
         const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-        updateDoc(nodeRef, {
-          [`inheritance.${property}.ref`]: null,
-          [`properties.${property}`]: text,
+        await updateDoc(nodeRef, {
+          [`properties.${property}`]: copyValue,
         });
-        updateInheritance({
-          nodeId: currentVisibleNode.id,
-          updatedProperty: property,
-          db,
-        });
-      } else {
-        return;
-      }
 
-      const nodeDoc = await getDoc(
-        doc(collection(db, NODES), currentVisibleNode.id)
-      );
-
-      if (property === "title") {
-        const nodeDocs = await getDocs(
-          query(
-            collection(db, NODES),
-            where("title", "==", copyValue.trim()),
-            where("deleted", "==", false)
-          )
-        );
-        if (
-          nodeDocs.docs.length > 0 &&
-          currentVisibleNode.id &&
-          nodeDocs.docs[0].id !== currentVisibleNode.id
-        ) {
-          setError(
-            "A node with this title already exists. Please choose a different title."
-          );
-          return;
-        }
-      }
-      setError("");
-      if (nodeDoc.exists()) {
-        const nodeData = nodeDoc.data() as INode;
-        if (typeof nodeData.properties[property] !== "string") return;
-        let previousValue: string =
-          property === "title"
-            ? nodeData[property]
-            : nodeData.properties[property] || "";
-        let newValue = copyValue;
-
-        if (previousValue.trim() === newValue.trim()) {
-          return;
-        }
-        if (!previousValueRef.current) {
-          previousValueRef.current = previousValue;
-        }
-        if (setSelectTitle) {
-          setSelectTitle(false);
-        }
-
-        if (property === "title") {
-          nodeData.title = copyValue || "";
-        } else {
-          nodeData.properties[property] = copyValue || "";
-        }
-
-        if (
-          property !== "title" &&
-          nodeData.inheritance &&
-          previousValue.trim() !== newValue.trim()
-        ) {
-          nodeData.inheritance[property].ref = null;
-        }
-
-        await updateDoc(nodeDoc.ref, nodeData);
-
-        if (property !== "title") {
+        // Delay the inheritance update slightly to avoid a focus loss glitch
+        setTimeout(() => {
           updateInheritance({
             nodeId: currentVisibleNode.id,
             updatedProperty: property,
             db,
           });
-        }
+        }, 300); // Reduced the delay to improve smoothness
       }
     },
-    [currentVisibleNode, user?.uname, property, text]
+    [
+      user?.uname,
+      currentVisibleNode.inheritance,
+      currentVisibleNode.id,
+      property,
+      db,
+    ]
   );
 
   useEffect(() => {
@@ -209,17 +144,17 @@ const Text = ({
     }
   }, [text, isEditing]);
 
-  useEffect(() => {
-    setError("");
-    if (selectTitle) {
-      textAreaRef.current.focus();
-      setEditorContent("");
-    } else {
-      if (textAreaRef.current) {
-        textAreaRef.current.blur();
-      }
-    }
-  }, [currentVisibleNode.id]);
+  // useEffect(() => {
+  //   setError("");
+  //   if (selectTitle) {
+  //     textAreaRef.current.focus();
+  //     setEditorContent("");
+  //   } else {
+  //     if (textAreaRef.current) {
+  //       textAreaRef.current.blur();
+  //     }
+  //   }
+  // }, [currentVisibleNode.id]);
 
   const handleChanges = (e: any) => {
     setEditorContent(e.target.value);
@@ -281,8 +216,8 @@ const Text = ({
               : "#d0d5dd",
           p: 3,
           pb: 1.5,
-          borderTopRightRadius: "25px",
-          borderTopLeftRadius: "25px",
+          borderTopRightRadius: "18px",
+          borderTopLeftRadius: "18px",
           backgroundColor:
             selectedDiffNode &&
             selectedDiffNode.changeType === "add property" &&
@@ -330,6 +265,13 @@ const Text = ({
             activeSidebar={activeSidebar}
           />
         )}
+        {property !== "title" && (
+          <SelectInheritance
+            currentVisibleNode={currentVisibleNode}
+            property={property}
+            nodes={nodes}
+          />
+        )}
       </Box>
       <Typography color="red">{error}</Typography>
       {locked ||
@@ -360,35 +302,10 @@ const Text = ({
               saveChangeHistory={saveChangeHistory}
             />
           ) : (
-            <TextField
-              inputRef={textAreaRef}
-              multiline
-              minRows={2}
-              value={editorContent}
-              onChange={handleChanges}
-              onFocus={handleFocus} // When the user starts editing
-              onBlur={handleBlur} // When the user stops editing
-              placeholder=""
-              InputProps={{
-                sx: {
-                  padding: "15px",
-                  borderBottomRightRadius: "25px",
-                  borderBottomLeftRadius: "25px",
-                  fontSize: "19px",
-                },
-              }}
-              sx={{
-                width: "100%",
-                height: "auto",
-                outline: "none",
-                fontSize: property === "title" ? "29px" : "16px",
-                fontFamily: "'Roboto', sans-serif",
-                color: theme.palette.mode === "dark" ? "white" : "black",
-                whiteSpace: "pre-wrap",
-                resize: "none",
-                zIndex: 1,
-                position: "relative",
-              }}
+            <SimpleEditor
+              property={property}
+              breakInheritance={onSaveTextChange}
+              text={text}
             />
           )}
         </>

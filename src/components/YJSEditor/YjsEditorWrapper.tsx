@@ -7,6 +7,7 @@ import QuillCursors from "quill-cursors";
 import { Box, useTheme } from "@mui/material";
 import "quill/dist/quill.snow.css";
 import { getFirestore } from "firebase/firestore";
+import { recordLogs } from " @components/lib/utils/helpers";
 
 Quill.register("modules/cursors", QuillCursors);
 
@@ -52,7 +53,18 @@ const YjsEditorWrapper = ({
         const newValue = changeHistory.at(-1).newText;
         saveChangeHistory(previousValue, newValue);
       }
-    } catch (error) {}
+    } catch (error: any) {
+      console.log(error);
+      recordLogs({
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+        at: "saveChangeLog",
+      });
+    }
   };
 
   useEffect(() => {
@@ -124,6 +136,7 @@ const YjsEditorWrapper = ({
       }, TIMEOUT);
 
       return () => {
+        saveChangeLog(changeHistoryRef.current);
         provider.disconnect();
         provider.destroy();
         binding.destroy();
@@ -141,8 +154,8 @@ const YjsEditorWrapper = ({
       <Box
         ref={editorContainerRef}
         sx={{
-          borderBottomRightRadius: "25px",
-          borderBottomLeftRadius: "25px",
+          borderBottomRightRadius: "20px",
+          borderBottomLeftRadius: "20px",
           minHeight: "70px",
           fontSize:
             property === "title" ? "24px !important" : "18px !important",

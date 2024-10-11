@@ -177,7 +177,7 @@ const TreeViewSimplified = ({
             </Box>
           }
           sx={{
-            // borderRadius: "25px",.Mui-expanded
+            // borderRadius: "18px",.Mui-expanded
             /*            backgroundColor:
               currentVisibleNode?.id === treeVisualization[category].id
                 ? "#87D37C"
@@ -192,7 +192,7 @@ const TreeViewSimplified = ({
               backgroundColor: "red",
             },
             /*  "&.MuiTreeItem-content": {
-              // borderRadius: "25px",
+              // borderRadius: "18px",
             }, */
             position: 'relative',
             [`& .${treeItemClasses.group}`]: {

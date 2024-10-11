@@ -32,6 +32,7 @@ export type InheritanceType = {
 
 export type ILinkNode = {
   id: string;
+  title?: string;
   category?: string;
   editMode?: boolean;
   new?: boolean;

@@ -42,14 +42,14 @@ const NewCollection: React.FC<NewCollectionProps> = ({ onAdd, onCancel }) => {
         <Button
           onClick={() => onCancel()}
           variant="outlined"
-          sx={{ borderRadius: "25px" }}
+          sx={{ borderRadius: "18px" }}
         >
           Cancel
         </Button>
         <Button
           onClick={() => onAdd(collectionName)}
           variant="contained"
-          sx={{ borderRadius: "25px" }}
+          sx={{ borderRadius: "18px" }}
           disabled={!collectionName.trim()}
         >
           Add
