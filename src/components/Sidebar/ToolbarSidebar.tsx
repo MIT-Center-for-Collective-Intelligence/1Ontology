@@ -37,7 +37,15 @@ import { chatChange } from " @components/client/firestore/messages.firestore";
 import { INotification } from " @components/types/IChat";
 import { synchronizeStuff } from " @components/lib/utils/helpers";
 import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
-import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getFirestore,
+  onSnapshot,
+  query,
+  Timestamp,
+  updateDoc,
+} from "firebase/firestore";
 import SearchSideBar from "../SearchSideBar/SearchSideBar";
 import ActiveUsers from "../ActiveUsers/ActiveUsers";
 import UserActivity from "../ActiveUsers/UserActivity";
@@ -60,19 +68,20 @@ import { useRouter } from "next/router";
 import ROUTES from " @components/lib/utils/routes";
 import { handleDownload } from " @components/lib/utils/random";
 import NodeActivity from "../ActiveUsers/NodeActivity";
+import { User } from " @components/types/IAuth";
+import { NodeChange } from " @components/types/INode";
 
 type MainSidebarProps = {
   toolbarRef: any;
-  user: any;
-  openSearchedNode: any;
-  searchWithFuse: any;
-  nodes: any;
+  user: User | null;
+  openSearchedNode: Function;
+  searchWithFuse: Function;
+  nodes: { [nodeId: string]: any };
   selectedDiffNode: any;
   setSelectedDiffNode: any;
   currentVisibleNode: any;
   setCurrentVisibleNode: any;
-  confirmIt: any;
-  recordLogs: any;
+  confirmIt: Function;
   activeSidebar: any;
   setActiveSidebar: any;
   handleExpandSidebar: any;
@@ -93,7 +102,6 @@ const ToolbarSidebar = ({
   currentVisibleNode,
   setCurrentVisibleNode,
   confirmIt,
-  recordLogs,
   activeSidebar,
   setActiveSidebar,
   handleExpandSidebar,
@@ -115,12 +123,13 @@ const ToolbarSidebar = ({
     fullname: string;
     fName: string;
   } | null>(null);
-  const [hovered, setHovered] = useState(false); // Hover state for sidebar
+  const [hovered, setHovered] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(null);
   const [percentageUploaded, setPercentageUploaded] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [profileImage, setProfileImage] = useState("");
   const isProfileMenuOpen = Boolean(profileMenuOpen);
+  const [activeUsers, setActiveUsers] = useState<any>({});
 
   const signOut = async () => {
     router.push(ROUTES.signIn);
@@ -322,6 +331,56 @@ const ToolbarSidebar = ({
     [db, user]
   );
 
+  const isOnline = (timestamp: Timestamp) => {
+    if (!timestamp) return false;
+    const now = new Date();
+    const timeDifference = now.getTime() - timestamp.toMillis();
+    const minutes = Math.floor(timeDifference / 1000 / 60);
+    return minutes < 10;
+  };
+
+  useEffect(() => {
+    const usersQuery = query(collection(db, "users"));
+    const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+      setActiveUsers((prevUsersNodesViews: any) => {
+        const updatedUsersData = { ...prevUsersNodesViews };
+
+        snapshot.docChanges().forEach((change) => {
+          const doc = change.doc;
+          const userId = doc.id;
+          const data = doc.data();
+          const currentNode = data.currentNode;
+
+          if (
+            (change.type === "added" || change.type === "modified") &&
+            currentNode
+          ) {
+            updatedUsersData[userId] = {
+              node: {
+                title: nodes[currentNode]?.title || "",
+                id: currentNode,
+              },
+              imageUrl: data.imageUrl,
+              fName: data.fName,
+              lName: data.lName,
+              lastInteracted: data.lastInteracted,
+              lasChangeMadeAt: data.lasChangeMadeAt,
+              online: isOnline(data.lastInteracted),
+              uname: userId,
+              reputations: data?.reputations || 0,
+            };
+          } else if (change.type === "removed") {
+            delete updatedUsersData[userId];
+          }
+        });
+
+        return updatedUsersData;
+      });
+    });
+
+    return () => unsubscribe();
+  }, [nodes]);
+
   const displayUserLogs = useCallback(
     (user: {
       uname: string;
@@ -340,11 +399,7 @@ const ToolbarSidebar = ({
     [openLogsFor]
   );
 
-  const onDownload = useCallback(() => {
-    handleDownload({ user, db });
-  }, [user, db]);
-
-  const displayDiff = (data: any) => {
+  const displayDiff = (data: NodeChange) => {
     setSelectedDiffNode(data);
     if (currentVisibleNode?.id !== data.nodeId) {
       setCurrentVisibleNode(
@@ -372,7 +427,11 @@ const ToolbarSidebar = ({
         );
       case "userActivity":
         return (
-          <UserActivity openLogsFor={openLogsFor} displayDiff={displayDiff} />
+          <UserActivity
+            openLogsFor={openLogsFor}
+            displayDiff={displayDiff}
+            selectedDiffNode={selectedDiffNode}
+          />
         );
       case "chat":
         return (
@@ -380,7 +439,6 @@ const ToolbarSidebar = ({
             currentVisibleNode={currentVisibleNode}
             user={user}
             confirmIt={confirmIt}
-            recordLogs={recordLogs}
             searchWithFuse={searchWithFuse}
             treeVisualization={treeVisualization}
             expandedNodes={expandedNodes}
@@ -394,7 +452,9 @@ const ToolbarSidebar = ({
         return (
           <NodeActivity
             currentVisibleNode={currentVisibleNode}
+            selectedDiffNode={selectedDiffNode}
             displayDiff={displayDiff}
+            activeUsers={activeUsers}
           />
         );
       default:
@@ -482,7 +542,7 @@ const ToolbarSidebar = ({
           <Box
             sx={{
               display: "flex",
-              justifyContent: "space-between", // Aligns the icon to the right
+              justifyContent: "space-between",
               mb: 2,
             }}
           >
@@ -498,6 +558,7 @@ const ToolbarSidebar = ({
                       height: "100%",
                       borderRadius: "50%",
                       objectFit: "cover",
+                      transition: "transform 0.3s ease",
                     }}
                   />
                 </Box>
@@ -536,20 +597,21 @@ const ToolbarSidebar = ({
                 </Box>
               </Box>
             )}
-            <IconButton
-              onClick={() => {
-                setActiveSidebar(null);
-                setOpenLogsFor(null);
-                setSelectedDiffNode(null);
-                if (user.currentNode && selectedDiffNode) {
-                  setCurrentVisibleNode(nodes[user.currentNode] || null);
-                }
-                console.log(user, "user");
-              }}
-              sx={{ ml: "auto" }}
-            >
-              <ClearIcon />
-            </IconButton>
+            {user && (
+              <IconButton
+                onClick={() => {
+                  setActiveSidebar(null);
+                  setOpenLogsFor(null);
+                  setSelectedDiffNode(null);
+                  if (user.currentNode && selectedDiffNode) {
+                    setCurrentVisibleNode(nodes[user.currentNode] || null);
+                  }
+                }}
+                sx={{ ml: "auto" }}
+              >
+                <ClearIcon />
+              </IconButton>
+            )}
           </Box>
           {renderContent()}
         </Box>
@@ -564,6 +626,7 @@ const ToolbarSidebar = ({
                 width: hovered ? "140px" : "50px",
                 height: "auto",
                 borderRadius: 0,
+                transition: "width 0.3s ease", // Add transition for smooth width change
               }}
             />
           </Box>
@@ -577,7 +640,7 @@ const ToolbarSidebar = ({
                 justifyContent: "flex-start",
                 padding: 0,
                 textTransform: "none",
-                minWidth: 0, // removes default button padding
+                minWidth: 0,
               }}
               onClick={handleProfileMenuOpen}
             >
@@ -585,24 +648,28 @@ const ToolbarSidebar = ({
                 <OptimizedAvatar
                   alt={`${user?.fName} ${user?.lName}`}
                   imageUrl={user?.imageUrl || ""}
-                  size={40}
+                  size={45}
                   sx={{
                     width: "100%",
                     height: "100%",
                     borderRadius: "50%",
                     objectFit: "cover",
+                    transition: "transform 0.3s ease",
                   }}
-                  online={true}
                 />
               )}
-
-              {/* Show Full Name when hovered */}
             </Button>
-            {hovered && user && (
-              <Typography sx={{ ml: 2 }}>
-                {`${user?.fName} ${user?.lName}`}
-              </Typography>
-            )}
+
+            <Typography
+              sx={{
+                ml: 2,
+                transition: "opacity 0.3s ease",
+                opacity: hovered ? 1 : 0,
+                minWidth: "120px",
+              }}
+            >
+              {`${user?.fName} ${user?.lName}`}
+            </Typography>
           </Box>
 
           <Box sx={{ mt: "13px" }}>
@@ -627,13 +694,6 @@ const ToolbarSidebar = ({
               text="Search"
               toolbarIsOpen={hovered}
             />
-            {/*<SidebarButton
-              id="toolbar-download-button"
-              icon={<DownloadIcon />}
-              onClick={onDownload}
-              text="Download"
-              toolbarIsOpen={hovered}
-            /> */}
             <SidebarButton
               id="toolbar-theme-button"
               icon={
@@ -655,6 +715,7 @@ const ToolbarSidebar = ({
               displayUserLogs={displayUserLogs}
               handleExpand={handleExpandSidebar}
               fullVersion={hovered}
+              activeUsers={activeUsers}
             />
           </Box>
         </>

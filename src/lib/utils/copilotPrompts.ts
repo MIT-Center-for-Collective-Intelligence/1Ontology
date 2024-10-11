@@ -7,7 +7,7 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { GUILD_LINES, NODES } from "../firestoreClient/collections";
+import { GUIDELINES, NODES } from "../firestoreClient/collections";
 import { ICollection, INode } from " @components/types/INode";
 import { Post } from "./Post";
 
@@ -119,7 +119,7 @@ const proposerAgent = async (
   evaluation: string = ""
 ) => {
   const db = getFirestore();
-  const guidelinesSnapshot = await getDocs(collection(db, GUILD_LINES));
+  const guidelinesSnapshot = await getDocs(collection(db, GUIDELINES));
   const guidelines = guidelinesSnapshot.docs
     .map((doc) => doc.data())
     .sort((a, b) => a.index - b.index);
@@ -205,8 +205,6 @@ const getStructureForJSON = (data: any, nodeTitles: any) => {
     nodeType: data.nodeType,
     generalizations: getTitles(data.generalizations),
     specializations: getTitles(data.specializations),
-    // parts: properties.parts,
-    // isPartOf: properties.isPartOf,
     ...properties,
   };
 };

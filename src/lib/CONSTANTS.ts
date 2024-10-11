@@ -50,3 +50,5 @@ export const SCROLL_BAR_STYLE = {
     background: DESIGN_SYSTEM_COLORS.orange400,
   },
 };
+
+export const SpecialCharacterRegex = /^[a-zA-Z0-9\s]+$/;

@@ -37,7 +37,6 @@ const ChatSideBar = ({
   currentVisibleNode,
   user,
   confirmIt,
-  recordLogs,
   searchWithFuse,
   treeVisualization,
   expandedNodes,
@@ -47,7 +46,6 @@ const ChatSideBar = ({
   currentVisibleNode: any;
   user: any;
   confirmIt: any;
-  recordLogs: any;
   searchWithFuse: any;
   treeVisualization: any;
   expandedNodes: any;
@@ -218,7 +216,6 @@ const ChatSideBar = ({
                 setOpenSelectModel={() => {
                   setOpenModel(true);
                 }}
-                recordLogs={recordLogs}
                 navigateToNode={navigateToNode}
               />
             )}

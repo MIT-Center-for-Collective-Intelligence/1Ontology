@@ -94,7 +94,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
         }
 
         newBatch = await updateSpecializationsInheritance(
-          Object.values(nodes[specialization.id].specializations).flat(),
+          nodes[specialization.id].specializations.flatMap((n) => n.nodes),
           newBatch,
           property,
           newValue,
@@ -121,7 +121,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
       newState[property] = newInheritance;
       setInheritanceState(newState);
       await updateSpecializationsInheritance(
-        Object.values(selectedNode.specializations).flat(),
+        selectedNode.specializations.flatMap((n) => n.nodes),
         batch,
         property,
         newInheritance,
@@ -138,57 +138,89 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
       sx={{
         padding: 2,
         overflow: "auto",
-        height: "100vh",
+        height: "90vh",
         width: "100%",
+        backgroundColor: (theme) =>
+          theme.palette.mode === "dark" ? "#1e1e2e" : "#f0f2f5", // Softer background
+        borderRadius: "10px",
+        boxShadow: (theme) =>
+          theme.palette.mode === "dark"
+            ? "0px 4px 12px rgba(0, 0, 0, 0.3)"
+            : "0px 4px 12px rgba(0, 0, 0, 0.1)",
         ...SCROLL_BAR_STYLE,
       }}
     >
       {Object.entries(selectedNode.inheritance)
         .sort()
         .map(([key, inheritance]) => (
-          <Paper key={key} sx={{ marginBottom: 3 }}>
+          <Paper
+            key={key}
+            sx={{
+              marginBottom: 3,
+              borderRadius: "15px",
+              overflow: "hidden",
+              boxShadow: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "0px 4px 8px rgba(0, 0, 0, 0.3)"
+                  : "0px 4px 8px rgba(0, 0, 0, 0.1)",
+            }}
+          >
             <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
                 backgroundColor: (theme) =>
-                  theme.palette.mode === "dark" ? "#1f232f" : "#969faf",
-                borderTopLeftRadius: "25px",
-                borderTopRightRadius: "25px",
-                m: 0,
-                p: 2,
+                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                color: (theme) =>
+                  theme.palette.mode === "dark" ? "#fff" : "#fff",
+                padding: "12px 20px",
                 gap: "10px",
                 width: "100%",
+                borderTopLeftRadius: "15px",
+                borderTopRightRadius: "15px",
               }}
             >
-              <Typography sx={{ fontWeight: "bold" }}>
+              <Typography sx={{ fontWeight: "bold", fontSize: "1.2rem" }}>
                 {capitalizeFirstLetter(DISPLAY[key] ? DISPLAY[key] : key)}
               </Typography>
             </Box>
-            <FormControl component="fieldset">
-              <RadioGroup
-                value={inheritanceState[key]}
-                onChange={(e) => handleInheritanceChange(key, e)}
-                sx={{ ml: "15px" }}
-              >
-                {[
-                  { value: "neverInherit", label: "Never Inherit" },
-                  { value: "alwaysInherit", label: "Always Inherit" },
-                  {
-                    value: "inheritUnlessAlreadyOverRidden",
-                    label: "Inherit Unless Already Overridden",
-                  },
-                ].map(({ value, label }) => (
-                  <FormControlLabel
-                    key={value}
-                    value={value}
-                    control={<Radio />}
-                    label={label}
-                    id={value}
-                  />
-                ))}
-              </RadioGroup>
-            </FormControl>
+            <Box sx={{ padding: 2 }}>
+              <FormControl component="fieldset">
+                <RadioGroup
+                  value={inheritanceState[key]}
+                  onChange={(e) => handleInheritanceChange(key, e)}
+                  sx={{ ml: "15px" }}
+                >
+                  {[
+                    { value: "neverInherit", label: "Never Inherit" },
+                    { value: "alwaysInherit", label: "Always Inherit" },
+                    {
+                      value: "inheritUnlessAlreadyOverRidden",
+                      label: "Inherit Unless Already Overridden",
+                    },
+                  ].map(({ value, label }) => (
+                    <FormControlLabel
+                      key={value}
+                      value={value}
+                      control={<Radio />}
+                      label={label}
+                      id={value}
+                      sx={{
+                        "& .MuiTypography-root": {
+                          fontSize: "0.95rem",
+                          color: (theme) =>
+                            theme.palette.mode === "dark" ? "#ddd" : "#333",
+                        },
+                        "& .MuiRadio-root": {
+                          color: (theme) =>
+                            theme.palette.mode === "dark" ? "#fff" : "#3f51b5",
+                        },
+                      }}
+                    />
+                  ))}
+                </RadioGroup>
+              </FormControl>
+            </Box>
           </Paper>
         ))}
     </Box>

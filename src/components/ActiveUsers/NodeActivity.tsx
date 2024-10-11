@@ -16,10 +16,8 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { INode } from " @components/types/INode";
+import { INode, NodeChange } from " @components/types/INode";
 import { NODES_LOGS } from " @components/lib/firestoreClient/collections";
-import moment from "moment";
-import { getChangeDescription } from " @components/lib/utils/helpers";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
@@ -27,18 +25,22 @@ import ActivityDetails from "./ActivityDetails";
 
 const NodeActivity = ({
   currentVisibleNode,
+  selectedDiffNode,
   displayDiff,
+  activeUsers,
 }: {
+  selectedDiffNode: any;
   currentVisibleNode: any;
   displayDiff: any;
+  activeUsers: any;
 }) => {
   const db = getFirestore();
-  const [logs, setLogs] = useState<any>({});
+  const [logs, setLogs] = useState<(NodeChange & { id: string })[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (!currentVisibleNode.id) return;
-    setLogs({});
+    setLogs([]);
 
     const nodesQuery = query(
       collection(db, NODES_LOGS),
@@ -48,16 +50,11 @@ const NodeActivity = ({
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
       const docChanges = snapshot.docChanges();
-      setLogs((prev: any) => {
+      setLogs((prev: (NodeChange & { id: string })[]) => {
         for (let change of docChanges) {
           const changeData: any = change.doc.data();
-          const nodeId = change.doc.id;
-
-          if (change.type === "removed" && prev[nodeId]) {
-            delete prev[nodeId];
-          } else {
-            prev[nodeId] = { ...changeData };
-          }
+          const id = change.doc.id;
+          prev.push({ ...changeData, id });
         }
         return prev;
       });
@@ -66,14 +63,6 @@ const NodeActivity = ({
 
     return () => unsubscribeNodes();
   }, [db, currentVisibleNode.id]);
-
-  const getModifiedAt = (modifiedAt: any) => {
-    modifiedAt = moment(modifiedAt.toDate());
-    const today = moment();
-    return modifiedAt.isSame(today, "day")
-      ? `Today at ${modifiedAt.format("hh:mm A")}`
-      : modifiedAt.format("hh:mm A DD/MM/YYYY");
-  };
 
   if (loading) {
     return (
@@ -131,10 +120,23 @@ const NodeActivity = ({
           </Box>
         </Box>
       )}
-      {Object.keys(logs).length > 0 &&
-        Object.keys(logs).map((id) => (
-          <ActivityDetails key={id} activity={logs[id]} displayDiff={displayDiff} />
-        ))}
+      {logs.length > 0 &&
+        logs
+          .sort((a: any, b: any) => {
+            return (
+              new Date(b.modifiedAt.toDate()).getTime() -
+              new Date(a.modifiedAt.toDate()).getTime()
+            );
+          })
+          .map((log: NodeChange & { id: string }) => (
+            <ActivityDetails
+              key={log.id}
+              activity={log}
+              displayDiff={displayDiff}
+              modifiedByDetails={activeUsers[log.modifiedBy]}
+              isSelected={selectedDiffNode?.id === log.id}
+            />
+          ))}
     </Box>
   );
 };

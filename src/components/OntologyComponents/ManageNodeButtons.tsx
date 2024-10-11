@@ -13,7 +13,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import ChatIcon from "@mui/icons-material/Chat";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import DeleteIcon from "@mui/icons-material/Delete";
-import HistoryIcon from '@mui/icons-material/History';
+import HistoryIcon from "@mui/icons-material/History";
 
 const ManageNodeButtons = ({
   locked,
@@ -23,29 +23,29 @@ const ManageNodeButtons = ({
   getTitleNode,
   handleLockNode,
   navigateToNode,
-  displayInheritanceSettings,
-  displayNodeChat,
-  displayNodeHistory,
+  displaySidebar,
   activeSidebar,
 }: {
   locked: boolean;
   root: string;
   manageLock: boolean;
-  deleteNode: any;
+  deleteNode: Function;
   getTitleNode: (nodeId: string) => string;
-  handleLockNode: any;
-  navigateToNode: any;
-  displayInheritanceSettings: any;
-  displayNodeChat: any;
-  displayNodeHistory: any;
+  handleLockNode: Function;
+  navigateToNode: Function;
+  displaySidebar: Function;
   activeSidebar: string;
 }) => {
+  const displayNodeChat = () => displaySidebar("chat");
+  const displayNodeHistory = () => displaySidebar("nodeHistory");
+  const displayInheritanceSettings = () =>
+    displaySidebar("inheritanceSettings");
+
   return (
     <Box sx={{ ml: "auto" }}>
       <Box
         sx={{
           display: "flex",
-          mb: "5px",
           ml: "auto",
           alignItems: "center",
           gap: "5px",
@@ -55,7 +55,6 @@ const ManageNodeButtons = ({
           sx={{
             display: "flex",
             px: "19px",
-            mb: "15px",
             alignItems: "center",
             alignContent: "center",
           }}
@@ -64,7 +63,6 @@ const ManageNodeButtons = ({
             <Box
               sx={{
                 display: "flex",
-                mt: "5px",
                 gap: "15px",
               }}
             >
@@ -106,11 +104,10 @@ const ManageNodeButtons = ({
           >
             {manageLock ? (
               <IconButton
-                onClick={handleLockNode}
+                onClick={() => handleLockNode()}
                 sx={{
                   borderRadius: "25px",
                   mx: "7px",
-                  mb: "13px",
                 }}
               >
                 {locked ? (
@@ -131,7 +128,6 @@ const ManageNodeButtons = ({
               <LockIcon
                 sx={{
                   color: "orange",
-                  mb: "13px",
                 }}
               />
             ) : (
@@ -159,16 +155,17 @@ const ManageNodeButtons = ({
             />
           </IconButton>
         </Tooltip>
-        <Tooltip title="View History">
+        <Tooltip title="View Node's History">
           <IconButton onClick={displayNodeHistory}>
-            <HistoryIcon 
+            <HistoryIcon
               color={activeSidebar === "nodeHistory" ? "primary" : "inherit"}
             />
           </IconButton>
         </Tooltip>
+
         {!locked && (
           <Tooltip title="Delete Node">
-            <IconButton onClick={deleteNode}>
+            <IconButton onClick={() => deleteNode()}>
               <DeleteIcon />
             </IconButton>
           </Tooltip>

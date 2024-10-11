@@ -26,14 +26,15 @@ const ActiveUsers = ({
   navigateToNode,
   handleExpand,
   fullVersion,
+  activeUsers,
 }: {
   nodes: any;
   displayUserLogs: any;
   navigateToNode: any;
   handleExpand: any;
   fullVersion: any;
+  activeUsers: any;
 }) => {
-  const [usersNodesViews, setUsersNodesViews] = useState<any>({});
   const db = getFirestore();
   const theme = useTheme();
 
@@ -41,60 +42,13 @@ const ActiveUsers = ({
     const userName = e.currentTarget.id;
     displayUserLogs({
       uname: userName,
-      imageUrl: usersNodesViews[userName].imageUrl,
-      fullname: `${usersNodesViews[userName].fName} ${usersNodesViews[userName].lName}`,
-      fName: usersNodesViews[userName].fName,
+      imageUrl: activeUsers[userName].imageUrl,
+      fullname: `${activeUsers[userName].fName} ${activeUsers[userName].lName}`,
+      fName: activeUsers[userName].fName,
     });
     handleExpand("userActivity");
   };
 
-  const isOnline = (timestamp: Timestamp) => {
-    if (!timestamp) return false;
-    const now = new Date();
-    const timeDifference = now.getTime() - timestamp.toMillis();
-    const minutes = Math.floor(timeDifference / 1000 / 60);
-    return minutes < 10;
-  };
-  useEffect(() => {
-    const usersQuery = query(collection(db, "users"));
-    const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
-      setUsersNodesViews((prevUsersNodesViews: any) => {
-        const updatedUsersData = { ...prevUsersNodesViews };
-
-        snapshot.docChanges().forEach((change) => {
-          const doc = change.doc;
-          const userId = doc.id;
-          const data = doc.data();
-          const currentNode = data.currentNode;
-
-          if (
-            (change.type === "added" || change.type === "modified") &&
-            currentNode
-          ) {
-            updatedUsersData[userId] = {
-              node: {
-                title: nodes[currentNode]?.title || "",
-                id: currentNode,
-              },
-              imageUrl: data.imageUrl,
-              fName: data.fName,
-              lName: data.lName,
-              lastInteracted: data.lastInteracted,
-              online: isOnline(data.lastInteracted),
-              uname: userId,
-              reputations: data?.reputations || 0,
-            };
-          } else if (change.type === "removed") {
-            delete updatedUsersData[userId];
-          }
-        });
-
-        return updatedUsersData;
-      });
-    });
-
-    return () => unsubscribe();
-  }, [nodes]);
   return (
     <Box
       sx={{
@@ -104,16 +58,23 @@ const ActiveUsers = ({
         height: "70vh",
         mt: "15px",
         overflowX: "hidden",
-        ...SCROLL_BAR_STYLE, 
+        ...SCROLL_BAR_STYLE,
         "&::-webkit-scrollbar": {
-          display: "none", 
+          display: "none",
         },
         scrollbarWidth: "none",
         msOverflowStyle: "none",
       }}
     >
-      {Object.values(usersNodesViews)
-        .sort((a: any, b: any) => b.reputations - a.reputations)
+      {Object.values(activeUsers)
+        .sort((a: any, b: any) => {
+          if (!a.lasChangeMadeAt) return 1;
+          if (!b.lasChangeMadeAt) return -1;
+          return (
+            new Date(b.lasChangeMadeAt).getTime() -
+            new Date(a.lasChangeMadeAt).getTime()
+          );
+        })
         .map((u: any) => (
           <Tooltip
             key={`${u.fName} ${u.lName}`}
@@ -130,8 +91,10 @@ const ActiveUsers = ({
                 <strong
                   style={{ marginRight: "4px" }}
                 >{`${u.fName} ${u.lName}`}</strong>
-                {u.node.id && <div> {"last interacted with"}</div>}
-                {u.node.id && (
+                {u.node.id && u.node.title && (
+                  <div> {"last interacted with"}</div>
+                )}
+                {u.node.id && u.node.title && (
                   <Link
                     underline="hover"
                     onClick={() => navigateToNode(u.node.id)}
@@ -144,7 +107,7 @@ const ActiveUsers = ({
                     {u.node.title}
                   </Link>
                 )}
-                {u.node.id && u.lastInteracted && (
+                {u.node.id && u.lastInteracted && u.node.title && (
                   <div>{timeAgo(u.lastInteracted)}</div>
                 )}
               </Box>

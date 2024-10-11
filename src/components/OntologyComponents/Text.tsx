@@ -15,7 +15,8 @@ import { useTheme } from "@emotion/react";
 import { INode } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import {
-  saveNewChange as saveNewChangeLog,
+  randomProminentColor,
+  saveNewChangeLog,
   updateInheritance,
 } from " @components/lib/utils/helpers";
 import { diffWords, diffLines } from "diff"; // Using diffLines for line-by-line diff
@@ -26,15 +27,16 @@ import {
 import ManageNodeButtons from "./ManageNodeButtons";
 import { DISPLAY } from " @components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
+import YjsEditor from "../YJSEditor/YjsEditor";
+// import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ISubOntologyProps = {
   currentVisibleNode: INode;
-  setCurrentVisibleNode: (state: any) => void;
+  setCurrentVisibleNode: Function;
   property: string;
   text: string; // Real-time text from WebSocket
-  confirmIt?: any;
+  confirmIt: any;
   nodes: { [id: string]: INode };
-  recordLogs: (logs: any) => void;
   setSelectTitle?: any;
   selectTitle?: any;
   locked: boolean;
@@ -45,9 +47,7 @@ type ISubOntologyProps = {
   deleteNode?: any;
   handleLockNode?: any;
   navigateToNode?: any;
-  displayInheritanceSettings?: any;
-  displayNodeChat?: any;
-  displayNodeHistory?: any;
+  displaySidebar?: Function;
   activeSidebar?: any;
 };
 
@@ -55,7 +55,7 @@ const Text = ({
   currentVisibleNode,
   property,
   text, // Real-time text prop from firestore snapshot
-  recordLogs,
+  confirmIt,
   setSelectTitle,
   selectTitle,
   locked,
@@ -66,9 +66,7 @@ const Text = ({
   deleteNode,
   handleLockNode,
   navigateToNode,
-  displayInheritanceSettings,
-  displayNodeChat,
-  displayNodeHistory,
+  displaySidebar,
   activeSidebar,
 }: ISubOntologyProps) => {
   const db = getFirestore();
@@ -76,12 +74,12 @@ const Text = ({
   const [editorContent, setEditorContent] = useState(text); // Local state to manage text
   const textAreaRef = useRef<any>(null);
   const [error, setError] = useState("");
-  const [diffContent, setDiffContent] = useState<any[]>([]);
+
   const [isEditing, setIsEditing] = useState(false); // State to check if user is editing
   const [{ user }] = useAuth();
   const previousValueRef = useRef("");
 
-  const debouncedSaveNewChangeLog = useCallback(
+  /*   const debouncedSaveNewChangeLog = useCallback(
     debounce(async (db, currentVisibleNode, user, property, newValue) => {
       saveNewChangeLog(db, {
         nodeId: currentVisibleNode.id,
@@ -96,12 +94,46 @@ const Text = ({
       previousValueRef.current = "";
     }, 3000),
     []
+  ); */
+
+  const saveChangeHistory = useCallback(
+    (previousValue: string, newValue: string) => {
+      if (!user?.uname) return;
+      saveNewChangeLog(db, {
+        nodeId: currentVisibleNode.id,
+        modifiedBy: user.uname,
+        modifiedProperty: property,
+        previousValue: previousValue,
+        newValue,
+        modifiedAt: new Date(),
+        changeType: "change text",
+        fullNode: currentVisibleNode,
+      });
+    },
+    [currentVisibleNode.id, db, property, user]
   );
 
   const onSaveTextChange = useCallback(
     async (copyValue: string) => {
       if (!user?.uname) return;
 
+      if (currentVisibleNode.inheritance[property]?.ref) {
+        if (
+          await confirmIt(
+            `Are you sure you want to break the inheritance of ${property}?`,
+            "Yes",
+            "Cancel"
+          )
+        ) {
+          const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+          updateDoc(nodeRef, {
+            [`inheritance.${property}.ref`]: null,
+            [`properties.${property}`]: text,
+          });
+        } else {
+          return;
+        }
+      }
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
       );
@@ -128,7 +160,8 @@ const Text = ({
       setError("");
       if (nodeDoc.exists()) {
         const nodeData = nodeDoc.data() as INode;
-        let previousValue =
+        if (typeof nodeData.properties[property] !== "string") return;
+        let previousValue: string =
           property === "title"
             ? nodeData[property]
             : nodeData.properties[property] || "";
@@ -167,18 +200,9 @@ const Text = ({
             db,
           });
         }
-
-        // Call the debounced function instead of directly logging
-        debouncedSaveNewChangeLog(
-          db,
-          currentVisibleNode,
-          user,
-          property,
-          previousValue
-        );
       }
     },
-    [currentVisibleNode.id, user?.uname, property]
+    [currentVisibleNode, user?.uname, property, text]
   );
 
   useEffect(() => {
@@ -197,14 +221,7 @@ const Text = ({
         textAreaRef.current.blur();
       }
     }
-    if (selectedDiffNode && selectedDiffNode.modifiedProperty === property) {
-      const diff = diffLines(
-        selectedDiffNode.previousValue || "",
-        selectedDiffNode.newValue || ""
-      );
-      setDiffContent(diff);
-    }
-  }, [currentVisibleNode.id, selectedDiffNode]);
+  }, [currentVisibleNode.id]);
 
   const handleChanges = (e: any) => {
     setEditorContent(e.target.value);
@@ -222,46 +239,27 @@ const Text = ({
     setIsEditing(true); // User started editing
   };
 
-  // Function to render the GitHub-style diff view
-  const renderDiff = () => {
-    return diffContent.map((part, index) => {
-      const lineStyle = part.added
-        ? { backgroundColor: "#e6ffed", color: "#2cbe4e" }
-        : part.removed
-        ? { backgroundColor: "#ffeef0", color: "#d73a49" }
-        : {};
+  const renderDiff = (previousValue: string, newValue: string) => {
+    const diffContent = diffWords(previousValue, newValue);
 
-      return (
-        <Box
-          key={index}
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "flex-start",
-            gap: "5px",
-            padding: "5px 10px",
-            borderRadius: "5px",
-            fontFamily: "'Courier New', Courier, monospace",
-            fontSize: "14px",
-            // ...lineStyle,
+    const addedText = diffContent
+      .filter((part) => part.added)
+      .map((part) => part.value)
+      .join("");
+
+    return diffContent.map((word) => (
+      <div key={word.value}>
+        <span
+          style={{
+            fontSize: property === "title" ? "29px" : "19px",
+            color: word.added ? "green" : word.removed ? "red" : "",
+            textDecoration: word.removed ? "line-through" : "none",
           }}
         >
-          <Typography
-            sx={{
-              fontWeight: part.added || part.removed ? "bold" : "normal",
-              whiteSpace: "pre-wrap",
-              flex: 1,
-              wordBreak: "break-word",
-              color: part.removed ? "red" : "green",
-            }}
-            component="div"
-          >
-            {part.added ? "+ " : part.removed ? "- " : "  "}
-            {part.value}
-          </Typography>
-        </Box>
-      );
-    });
+          {word.value}
+        </span>
+      </div>
+    ));
   };
 
   return (
@@ -274,10 +272,12 @@ const Text = ({
           display: "flex",
           alignItems: "center",
           background: (theme: any) =>
-            selectedDiffNode &&
-            selectedDiffNode.changeType === "delete node" &&
+            selectedDiffNode?.changeType === "delete node" &&
             property === "title"
               ? "red"
+              : selectedDiffNode?.changeType === "add node" &&
+                property === "title"
+              ? "green"
               : theme.palette.mode === "dark"
               ? "#242425"
               : "#d0d5dd",
@@ -285,6 +285,12 @@ const Text = ({
           pb: 1.5,
           borderTopRightRadius: "25px",
           borderTopLeftRadius: "25px",
+          backgroundColor:
+            selectedDiffNode &&
+            selectedDiffNode.changeType === "add property" &&
+            selectedDiffNode.changeDetails.addedProperty === property
+              ? "green"
+              : "",
         }}
       >
         <Typography
@@ -301,7 +307,9 @@ const Text = ({
         {selectedDiffNode &&
           selectedDiffNode.changeType === "delete node" &&
           property === "title" && (
-            <Typography sx={{ mx: "5px" }}>DELETED NODE</Typography>
+            <Typography sx={{ mx: "5px", ml: "145px", fontWeight: "bold" }}>
+              DELETED NODE
+            </Typography>
           )}
         {currentVisibleNode.inheritance[property]?.ref && (
           <Typography sx={{ fontSize: "14px", ml: "9px" }}>
@@ -311,7 +319,7 @@ const Text = ({
           </Typography>
         )}
 
-        {property === "title" && (
+        {property === "title" && !selectedDiffNode && displaySidebar && (
           <ManageNodeButtons
             locked={locked}
             root={root}
@@ -320,9 +328,7 @@ const Text = ({
             getTitleNode={getTitleNode}
             handleLockNode={handleLockNode}
             navigateToNode={navigateToNode}
-            displayInheritanceSettings={displayInheritanceSettings}
-            displayNodeChat={displayNodeChat}
-            displayNodeHistory={displayNodeHistory}
+            displaySidebar={displaySidebar}
             activeSidebar={activeSidebar}
           />
         )}
@@ -340,8 +346,21 @@ const Text = ({
           {selectedDiffNode &&
           selectedDiffNode.modifiedProperty === property ? (
             <Box sx={{ p: "10px", borderRadius: "5px" }}>
-              <Box>{renderDiff()}</Box>
+              <Box sx={{ display: "flow", gap: "3px", p: "14px" }}>
+                {renderDiff(
+                  selectedDiffNode.previousValue,
+                  selectedDiffNode.newValue
+                )}
+              </Box>
             </Box>
+          ) : !currentVisibleNode.inheritance[property]?.ref ? (
+            <YjsEditor
+              fullname={`${user?.fName} ${user?.lName}`}
+              property={property}
+              nodeId={currentVisibleNode.id}
+              color={randomProminentColor()}
+              saveChangeHistory={saveChangeHistory}
+            />
           ) : (
             <TextField
               inputRef={textAreaRef}
@@ -351,7 +370,7 @@ const Text = ({
               onChange={handleChanges}
               onFocus={handleFocus} // When the user starts editing
               onBlur={handleBlur} // When the user stops editing
-              placeholder="Type something..."
+              placeholder=""
               InputProps={{
                 sx: {
                   padding: "15px",

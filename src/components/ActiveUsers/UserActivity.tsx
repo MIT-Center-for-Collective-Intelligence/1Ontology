@@ -16,10 +16,8 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { INode } from " @components/types/INode";
+import { NodeChange } from " @components/types/INode";
 import { NODES_LOGS } from " @components/lib/firestoreClient/collections";
-import OptimizedAvatar from "../Chat/OptimizedAvatar";
-import moment from "moment";
 import { getChangeDescription } from " @components/lib/utils/helpers";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
@@ -28,17 +26,19 @@ import ActivityDetails from "./ActivityDetails";
 const UserActivity = ({
   openLogsFor,
   displayDiff,
+  selectedDiffNode,
 }: {
   openLogsFor: any;
-  displayDiff: any;
+  displayDiff: Function;
+  selectedDiffNode: any;
 }) => {
   const db = getFirestore();
-  const [logs, setLogs] = useState<any>({});
+  const [logs, setLogs] = useState<(NodeChange & { id: string })[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (!openLogsFor?.uname) return;
-    setLogs({});
+    setLogs([]);
 
     const nodesQuery = query(
       collection(db, NODES_LOGS),
@@ -48,16 +48,11 @@ const UserActivity = ({
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
       const docChanges = snapshot.docChanges();
-      setLogs((prev: any) => {
+      setLogs((prev: (NodeChange & { id: string })[]) => {
         for (let change of docChanges) {
-          const changeData: any = change.doc.data();
-          const nodeId = change.doc.id;
-
-          if (change.type === "removed" && prev[nodeId]) {
-            delete prev[nodeId];
-          } else {
-            prev[nodeId] = { ...changeData };
-          }
+          const changeData = change.doc.data() as NodeChange;
+          const id = change.doc.id;
+          prev.push({ ...changeData, id });
         }
         return prev;
       });
@@ -123,10 +118,22 @@ const UserActivity = ({
           </Box>
         </Box>
       )}
-      {Object.keys(logs).length > 0 &&
-        Object.keys(logs).map((id) => (
-          <ActivityDetails key={id} activity={logs[id]} displayDiff={displayDiff} />
-        ))}
+      {logs.length > 0 &&
+        logs
+          .sort((a: any, b: any) => {
+            return (
+              new Date(b.modifiedAt.toDate()).getTime() -
+              new Date(a.modifiedAt.toDate()).getTime()
+            );
+          })
+          .map((log) => (
+            <ActivityDetails
+              key={log.id}
+              activity={log}
+              displayDiff={displayDiff}
+              isSelected={selectedDiffNode?.id === log.id}
+            />
+          ))}
     </Box>
   );
 };

@@ -39,7 +39,7 @@ import { CacheProvider } from "@emotion/react";
 import CssBaseline from "@mui/material/CssBaseline";
 import Head from "next/head";
 import { SnackbarProvider } from "notistack";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Hydrate, QueryClient, QueryClientProvider } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
 
@@ -50,6 +50,14 @@ import { ThemeProvider } from " @components/components/context/ThemeContext";
 import { createEmotionCache } from " @components/lib/theme/createEmotionCache";
 import { initializeFirestore } from " @components/lib/firestoreClient/firestoreClient.config";
 import { LastDeploymentProvider } from " @components/components/context/LastDeploymentContext";
+import {
+  collection,
+  getFirestore,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
+import { LOGS } from " @components/lib/firestoreClient/collections";
 
 const clientSideEmotionCache = createEmotionCache();
 
@@ -57,6 +65,7 @@ initializeFirestore();
 
 const App = (props: AppPropsWithLayout) => {
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
+  const db = getFirestore();
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -68,6 +77,23 @@ const App = (props: AppPropsWithLayout) => {
         },
       })
   );
+  useEffect(() => {
+    const userQuery = query(
+      collection(db, LOGS),
+      where("__name__", "==", "00EWFECw1PnBRPy4wZVt")
+    );
+
+    const unsubscribeUser = onSnapshot(userQuery, (snapshot) => {
+      if (
+        snapshot.docChanges().length > 0 &&
+        snapshot.docChanges()[0].type !== "added"
+      ) {
+        window.location.reload();
+      }
+    });
+
+    return () => unsubscribeUser();
+  }, [db]);
 
   const getLayout = Component.getLayout ?? ((page: any) => page);
 

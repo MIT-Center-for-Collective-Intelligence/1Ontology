@@ -2,14 +2,6 @@
 
 import { Timestamp } from "firebase/firestore";
 
-export type IChildNode = {
-  id: string;
-  category?: string;
-  editMode?: boolean;
-  new?: boolean;
-  change?: any;
-};
-
 export type IChildCategory = {
   [category: string]: { id: string }[];
 };
@@ -38,46 +30,44 @@ export type InheritanceType = {
     | "inheritAfterReview";
 };
 
+export type ILinkNode = {
+  id: string;
+  category?: string;
+  editMode?: boolean;
+  new?: boolean;
+  change?: any;
+};
+
+export type ICollection = { collectionName: string; nodes: ILinkNode[] };
+export type IInheritance = {
+  [key: string]: {
+    ref: string | null;
+    inheritanceType:
+      | "neverInherit"
+      | "alwaysInherit"
+      | "inheritUnlessAlreadyOverRidden"
+      | "inheritAfterReview";
+  };
+};
 export type INode = {
   id: string;
   title: string;
   deleted: boolean;
-  properties: { [propertyName: string]: any };
-  inheritance: {
-    [key: string]: {
-      ref: string | null;
-      inheritanceType:
-        | "neverInherit"
-        | "alwaysInherit"
-        | "inheritUnlessAlreadyOverRidden"
-        | "inheritAfterReview";
-    };
+  properties: {
+    [propertyName: string]: ICollection[] | string | boolean | number;
   };
-  specializations: {
-    [key: string]: {
-      id: string;
-    }[];
-  };
-  generalizations: {
-    [key: string]: {
-      id: string;
-    }[];
-  };
+  inheritance: IInheritance;
+  specializations: ICollection[];
+  generalizations: ICollection[];
   propertyOf?: {
-    [propertyName: string]: {
-      [collectionName: string]: {
-        id: string;
-      }[];
-    };
+    [propertyName: string]: ICollection[];
   };
   root: string;
-  parents: string[];
   propertyType: { [key: string]: string };
   nodeType: INodeTypes;
-
   category?: boolean;
   locked?: boolean;
-  editMode?: boolean;
+  numberOfGeneralizations: number;
 };
 
 export type TreeVisual = {
@@ -118,18 +108,20 @@ export type NodeChange = {
   modifiedProperty: string | null;
   previousValue: any;
   newValue: any;
-  modifiedAt: Date;
+  modifiedAt: any;
   changeType:
-    | "change text" //handled
-    | "sort elements" //handled
-    | "remove element" //handled
-    | "modify elements" //handled
-    | "add property" // missing
-    | "remove property" // missing
-    | "delete node" // handled
-    | "add node" // handled
-    | "add collection" // handled
-    | "delete collection" // handled
-    | "edit collection"; // handled
-  fullNode: INode;
+    | "change text"
+    | "sort elements"
+    | "remove element"
+    | "add element"
+    | "modify elements"
+    | "add property"
+    | "remove property"
+    | "delete node"
+    | "add node"
+    | "add collection"
+    | "delete collection"
+    | "edit collection";
+  fullNode: INode | null;
+  changeDetails?: { [key: string]: any };
 };
