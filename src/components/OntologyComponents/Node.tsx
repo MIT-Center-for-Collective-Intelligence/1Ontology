@@ -1208,7 +1208,7 @@ const Node = ({
             gap: 3,
           }}
         >
-          {["isPartOf", "isPartOf"].map((property, index) => (
+          {["isPartOf", "parts"].map((property, index) => (
             <StructuredProperty
               key={property + index}
               confirmIt={confirmIt}

@@ -274,7 +274,7 @@ const LinkNode = ({
           await updateDoc(nodeDoc.ref, {
             [`properties.${property}`]: nodeData.properties[property],
           });
-          if (property !== "isPartOf") {
+          if (property !== "isPartOf" || nodeData.inheritance[property]) {
             await updateDoc(nodeDoc.ref, {
               [`inheritance.${property}.ref`]: null,
             });

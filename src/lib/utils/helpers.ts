@@ -485,7 +485,7 @@ export const generateInheritance = (
 ) => {
   const newInheritance = JSON.parse(JSON.stringify({ ...inheritance }));
   for (let property in newInheritance) {
-    if (!newInheritance[property].ref) {
+    if (!newInheritance[property].ref && property !== "isPartOf") {
       newInheritance[property].ref = currentNodeId;
     }
   }
