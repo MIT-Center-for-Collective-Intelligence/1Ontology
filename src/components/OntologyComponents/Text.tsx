@@ -41,6 +41,7 @@ type ITextProps = {
   navigateToNode?: any;
   displaySidebar?: Function;
   activeSidebar?: any;
+  structured?: boolean;
 };
 
 const Text = ({
@@ -61,6 +62,7 @@ const Text = ({
   displaySidebar,
   activeSidebar,
   nodes,
+  structured = false,
 }: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -105,9 +107,15 @@ const Text = ({
       if (currentVisibleNode.inheritance[property]?.ref) {
         console.log("copyValue", copyValue);
         const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-        await updateDoc(nodeRef, {
-          [`properties.${property}`]: copyValue,
-        });
+        if (structured) {
+          await updateDoc(nodeRef, {
+            [`textValue.${property}`]: copyValue,
+          });
+        } else {
+          await updateDoc(nodeRef, {
+            [`properties.${property}`]: copyValue,
+          });
+        }
 
         // Delay the inheritance update slightly to avoid a focus loss glitch
         setTimeout(() => {
@@ -188,81 +196,88 @@ const Text = ({
   return (
     <Paper
       elevation={9}
-      sx={{ borderRadius: "30px", minWidth: "500px", width: "100%" }}
+      sx={{
+        borderRadius: "20px",
+        minWidth: "500px",
+        width: "100%",
+        border: structured ? "1px solid white" : "",
+      }}
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          background: (theme: any) =>
-            selectedDiffNode?.changeType === "delete node" &&
-            property === "title"
-              ? "red"
-              : selectedDiffNode?.changeType === "add node" &&
-                property === "title"
-              ? "green"
-              : theme.palette.mode === "dark"
-              ? "#242425"
-              : "#d0d5dd",
-          p: 3,
-          pb: 1.5,
-          borderTopRightRadius: "18px",
-          borderTopLeftRadius: "18px",
-          backgroundColor:
-            selectedDiffNode &&
-            selectedDiffNode.changeType === "add property" &&
-            selectedDiffNode.changeDetails.addedProperty === property
-              ? "green"
-              : "",
-        }}
-      >
-        <Typography
+      {!structured && (
+        <Box
           sx={{
-            fontSize: "20px",
-            fontWeight: 500,
-            fontFamily: "Roboto, sans-serif",
+            display: "flex",
+            alignItems: "center",
+            background: (theme: any) =>
+              selectedDiffNode?.changeType === "delete node" &&
+              property === "title"
+                ? "red"
+                : selectedDiffNode?.changeType === "add node" &&
+                  property === "title"
+                ? "green"
+                : theme.palette.mode === "dark"
+                ? "#242425"
+                : "#d0d5dd",
+            p: 3,
+            pb: 1.5,
+            borderTopRightRadius: "18px",
+            borderTopLeftRadius: "18px",
+            backgroundColor:
+              selectedDiffNode &&
+              selectedDiffNode.changeType === "add property" &&
+              selectedDiffNode.changeDetails.addedProperty === property
+                ? "green"
+                : "",
           }}
         >
-          {capitalizeFirstLetter(
-            DISPLAY[property] ? DISPLAY[property] : property
-          )}
-        </Typography>
-        {selectedDiffNode &&
-          selectedDiffNode.changeType === "delete node" &&
-          property === "title" && (
-            <Typography sx={{ mx: "5px", ml: "145px", fontWeight: "bold" }}>
-              DELETED NODE
+          <Typography
+            sx={{
+              fontSize: "20px",
+              fontWeight: 500,
+              fontFamily: "Roboto, sans-serif",
+            }}
+          >
+            {capitalizeFirstLetter(
+              DISPLAY[property] ? DISPLAY[property] : property
+            )}
+          </Typography>
+          {selectedDiffNode &&
+            selectedDiffNode.changeType === "delete node" &&
+            property === "title" && (
+              <Typography sx={{ mx: "5px", ml: "145px", fontWeight: "bold" }}>
+                DELETED NODE
+              </Typography>
+            )}
+          {currentVisibleNode.inheritance[property]?.ref && (
+            <Typography sx={{ fontSize: "14px", ml: "9px" }}>
+              {'(Inherited from "'}
+              {getTitleNode(currentVisibleNode.inheritance[property].ref || "")}
+              {'")'}
             </Typography>
           )}
-        {currentVisibleNode.inheritance[property]?.ref && (
-          <Typography sx={{ fontSize: "14px", ml: "9px" }}>
-            {'(Inherited from "'}
-            {getTitleNode(currentVisibleNode.inheritance[property].ref || "")}
-            {'")'}
-          </Typography>
-        )}
 
-        {property === "title" && !selectedDiffNode && displaySidebar && (
-          <ManageNodeButtons
-            locked={locked}
-            root={root}
-            manageLock={manageLock}
-            deleteNode={deleteNode}
-            getTitleNode={getTitleNode}
-            handleLockNode={handleLockNode}
-            navigateToNode={navigateToNode}
-            displaySidebar={displaySidebar}
-            activeSidebar={activeSidebar}
-          />
-        )}
-        {property !== "title" && (
-          <SelectInheritance
-            currentVisibleNode={currentVisibleNode}
-            property={property}
-            nodes={nodes}
-          />
-        )}
-      </Box>
+          {property === "title" && !selectedDiffNode && displaySidebar && (
+            <ManageNodeButtons
+              locked={locked}
+              root={root}
+              manageLock={manageLock}
+              deleteNode={deleteNode}
+              getTitleNode={getTitleNode}
+              handleLockNode={handleLockNode}
+              navigateToNode={navigateToNode}
+              displaySidebar={displaySidebar}
+              activeSidebar={activeSidebar}
+            />
+          )}
+          {property !== "title" && (
+            <SelectInheritance
+              currentVisibleNode={currentVisibleNode}
+              property={property}
+              nodes={nodes}
+            />
+          )}
+        </Box>
+      )}
       <Typography color="red">{error}</Typography>
       {locked ||
       (selectedDiffNode && selectedDiffNode.modifiedProperty !== property) ? (
@@ -293,6 +308,7 @@ const Text = ({
               reference={currentVisibleNode.inheritance[property]?.ref || null}
               breakInheritance={onSaveTextChange}
               text={text}
+              structured={!structured}
             />
           )}
         </>

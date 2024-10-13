@@ -261,6 +261,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                   property={property}
                   nodes={nodes}
                   locked={locked}
+                  onGetPropertyValue={onGetPropertyValue}
                 />
               ) : (
                 property !== "description" &&

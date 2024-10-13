@@ -91,6 +91,12 @@ export const getPropertyValue = (
   property: string
 ) => {
   if (id && nodes[id] && nodes[id].properties.hasOwnProperty(property)) {
+    if (
+      nodes[id].propertyType.hasOwnProperty(property) &&
+      nodes[id].propertyType[property] !== "string"
+    ) {
+      return nodes[id]?.textValue[property] || "";
+    }
     return nodes[id].properties[property];
   }
   return null;

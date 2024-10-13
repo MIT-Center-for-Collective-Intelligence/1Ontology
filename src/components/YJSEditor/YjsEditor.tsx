@@ -14,6 +14,7 @@ const YjsEditor = ({
   reference,
   breakInheritance,
   text,
+  structured,
 }: {
   fullname: string;
   property: string;
@@ -23,6 +24,7 @@ const YjsEditor = ({
   reference: string | null;
   breakInheritance: Function;
   text: string;
+  structured: boolean;
 }) => {
   return (
     <YjsEditorWrapper
@@ -34,6 +36,7 @@ const YjsEditor = ({
       reference={reference}
       breakInheritance={breakInheritance}
       text={text}
+      structured={structured}
     />
   );
 };

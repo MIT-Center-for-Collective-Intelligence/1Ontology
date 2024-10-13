@@ -1089,13 +1089,21 @@ const Node = ({
     (property: string) => {
       const inheritedProperty = getPropertyValue(
         nodes,
-        currentVisibleNode.inheritance[property].ref,
+        currentVisibleNode.inheritance[property]?.ref,
         property
       );
 
       if (inheritedProperty !== null) {
         return inheritedProperty;
       } else {
+        if (
+          currentVisibleNode.propertyType.hasOwnProperty(property) &&
+          currentVisibleNode.propertyType[property] !== "string"
+        ) {
+          return currentVisibleNode?.textValue
+            ? currentVisibleNode?.textValue[property] || ""
+            : "";
+        }
         return currentVisibleNode.properties[property];
       }
     },
@@ -1172,6 +1180,7 @@ const Node = ({
             property={"actor"}
             nodes={nodes}
             locked={locked}
+            onGetPropertyValue={onGetPropertyValue}
           />
         )}
         {/* specializations and generalizations*/}
@@ -1197,6 +1206,7 @@ const Node = ({
               locked={locked}
               reviewId={reviewId}
               setReviewId={setReviewId}
+              onGetPropertyValue={onGetPropertyValue}
             />
           ))}
         </Stack>
@@ -1222,6 +1232,7 @@ const Node = ({
               property={property}
               nodes={nodes}
               locked={locked}
+              onGetPropertyValue={onGetPropertyValue}
             />
           ))}
         </Stack>

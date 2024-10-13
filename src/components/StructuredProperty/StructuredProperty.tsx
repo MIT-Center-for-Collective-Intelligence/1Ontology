@@ -48,6 +48,7 @@ import {
 } from " @components/lib/utils/helpers";
 import NewCollection from "../Collection/NewCollection";
 import SelectInheritance from "../SelectInheretance/SelectInhertance";
+import Text from "../OntologyComponents/Text";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
@@ -63,6 +64,7 @@ type IStructuredPropertyProps = {
   reviewId?: string;
   setReviewId?: Function;
   confirmIt: any;
+  onGetPropertyValue: any;
 };
 
 const StructuredProperty = ({
@@ -78,6 +80,7 @@ const StructuredProperty = ({
   reviewId,
   setReviewId,
   confirmIt,
+  onGetPropertyValue,
 }: IStructuredPropertyProps) => {
   const [{ user }] = useAuth();
   const theme = useTheme();
@@ -1189,6 +1192,31 @@ const StructuredProperty = ({
           </Droppable>
         </DragDropContext>
       </Box>
+      {property !== "specializations" && property !== "generalizations" && (
+        <Box sx={{ mt: "14px", p: "6px" }}>
+          <Typography sx={{ mb: "4px" }}>
+            If you cannot find the existing{" "}
+            <strong>
+              {capitalizeFirstLetter(
+                DISPLAY[property] ? DISPLAY[property] : property
+              )}{" "}
+            </strong>
+            to link, you can describe them below:
+          </Typography>
+          <Text
+            text={onGetPropertyValue(property)}
+            currentVisibleNode={currentVisibleNode}
+            property={property}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            nodes={nodes}
+            locked={locked}
+            selectedDiffNode={selectedDiffNode}
+            getTitleNode={() => {}}
+            confirmIt={confirmIt}
+            structured={true}
+          />
+        </Box>
+      )}
     </Paper>
   );
 };

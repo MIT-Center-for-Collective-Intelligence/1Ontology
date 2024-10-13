@@ -8,6 +8,8 @@ import { Box } from "@mui/material";
 import "quill/dist/quill.snow.css";
 import { getFirestore } from "firebase/firestore";
 import { recordLogs } from " @components/lib/utils/helpers";
+import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
+import { DISPLAY } from " @components/lib/CONSTANTS";
 
 Quill.register("modules/cursors", QuillCursors);
 
@@ -40,6 +42,7 @@ const YjsEditorWrapper = ({
   reference,
   breakInheritance,
   text,
+  structured,
 }: {
   fullname: string;
   property: string;
@@ -49,6 +52,7 @@ const YjsEditorWrapper = ({
   reference: string | null;
   breakInheritance: Function;
   text: string;
+  structured: boolean;
 }) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
@@ -90,7 +94,9 @@ const YjsEditorWrapper = ({
             userOnly: true,
           },
         },
-        placeholder: "",
+        placeholder: `${capitalizeFirstLetter(
+          DISPLAY[property] ? DISPLAY[property] : property
+        )}...`,
         theme: "snow",
       });
 
@@ -121,7 +127,7 @@ const YjsEditorWrapper = ({
       WS_URL,
       `${nodeId}-${property}`,
       ydoc,
-      { connect: true }
+      { connect: true, params: { type: structured ? "structured" : "" } }
     );
 
     const yText = ydoc.getText("quill");

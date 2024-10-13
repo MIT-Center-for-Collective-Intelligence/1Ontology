@@ -69,6 +69,7 @@ export type INode = {
   category?: boolean;
   locked?: boolean;
   numberOfGeneralizations: number;
+  textValue: { [propertyName: string]: string };
 };
 
 export type TreeVisual = {
