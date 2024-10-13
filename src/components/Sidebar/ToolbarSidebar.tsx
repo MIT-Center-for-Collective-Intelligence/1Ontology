@@ -88,6 +88,7 @@ type MainSidebarProps = {
   navigateToNode: any;
   treeVisualization: any;
   expandedNodes: any;
+  setExpandedNodes: any;
   onOpenNodesTree: any;
 };
 
@@ -108,6 +109,7 @@ const ToolbarSidebar = ({
   navigateToNode,
   treeVisualization,
   expandedNodes,
+  setExpandedNodes,
   onOpenNodesTree,
 }: MainSidebarProps) => {
   const theme = useTheme();
@@ -442,6 +444,7 @@ const ToolbarSidebar = ({
             searchWithFuse={searchWithFuse}
             treeVisualization={treeVisualization}
             expandedNodes={expandedNodes}
+            setExpandedNodes={setExpandedNodes}
             onOpenNodesTree={onOpenNodesTree}
             navigateToNode={navigateToNode}
           />

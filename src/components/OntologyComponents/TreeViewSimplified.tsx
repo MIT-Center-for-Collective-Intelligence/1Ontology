@@ -10,6 +10,7 @@ type ITreeViewSimplifiedProps = {
   onOpenNodesTree: (nodeId: string) => void;
   treeVisualization: TreeVisual | any;
   expandedNodes: any;
+  setExpandedNodes: any;
   currentVisibleNode?: any;
   markItemAsChecked?: any;
   checkedItems?: any;
@@ -27,6 +28,7 @@ const TreeViewSimplified = ({
   treeVisualization,
   onOpenNodesTree,
   expandedNodes,
+  setExpandedNodes,
   currentVisibleNode,
   markItemAsChecked,
   checkedItems,
@@ -62,7 +64,10 @@ const TreeViewSimplified = ({
       defaultCollapseIcon={<ExpandMoreIcon />}
       defaultExpandIcon={<ChevronRightIcon />}
       expanded={expanded} // Use the local expanded state
-      onNodeToggle={(event, nodeIds) => setExpanded(nodeIds)}
+      onNodeToggle={(event, nodeIds) => {
+        setExpanded(nodeIds);
+        setExpandedNodes(new Set(nodeIds));
+      }}
       disabledItemsFocusable={false}
       defaultEndIcon={<div style={{ width: 24 }} />}
       sx={{ flexGrow: 1 }}
@@ -91,7 +96,7 @@ const TreeViewSimplified = ({
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                console.log("treeVisualization[nodeId].id", treeVisualization[nodeId].id)
+
                 if (sendNode || clone) return;
                 onOpenNodesTree(treeVisualization[nodeId].id);
               }}
@@ -210,6 +215,7 @@ const TreeViewSimplified = ({
                 categoriesOrder={treeVisualization[nodeId].categoriesOrder}
                 onOpenNodesTree={onOpenNodesTree}
                 expandedNodes={expandedNodes}
+                setExpandedNodes={setExpandedNodes}
                 currentVisibleNode={currentVisibleNode}
                 markItemAsChecked={markItemAsChecked}
                 checkedItems={checkedItems}

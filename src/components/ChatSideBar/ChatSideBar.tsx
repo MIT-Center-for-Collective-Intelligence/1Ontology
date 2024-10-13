@@ -40,6 +40,7 @@ const ChatSideBar = ({
   searchWithFuse,
   treeVisualization,
   expandedNodes,
+  setExpandedNodes,
   onOpenNodesTree,
   navigateToNode,
 }: {
@@ -49,6 +50,7 @@ const ChatSideBar = ({
   searchWithFuse: any;
   treeVisualization: any;
   expandedNodes: any;
+  setExpandedNodes: any;
   onOpenNodesTree: any;
   navigateToNode: any;
 }) => {
@@ -296,6 +298,7 @@ const ChatSideBar = ({
               <TreeViewSimplified
                 treeVisualization={treeVisualization}
                 expandedNodes={expandedNodes}
+                setExpandedNodes={setExpandedNodes}
                 onOpenNodesTree={onOpenNodesTree}
                 sendNode={sendNode}
               />

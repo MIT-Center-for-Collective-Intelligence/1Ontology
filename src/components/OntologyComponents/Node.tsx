@@ -1380,6 +1380,7 @@ const Node = ({
               <TreeViewSimplified
                 treeVisualization={selectFromTree()}
                 expandedNodes={expandedNodes}
+                setExpandedNodes={setExpandedNodes}
                 onOpenNodesTree={handleToggle}
                 markItemAsChecked={markItemAsChecked}
                 checkedItems={checkedItems}

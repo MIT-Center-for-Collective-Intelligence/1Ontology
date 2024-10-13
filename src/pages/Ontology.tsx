@@ -815,6 +815,7 @@ const Ontology = () => {
                   treeVisualization={treeVisualization}
                   onOpenNodesTree={onOpenNodesTree}
                   expandedNodes={expandedNodes}
+                  setExpandedNodes={setExpandedNodes}
                   currentVisibleNode={currentVisibleNode}
                 />
               </TabPanel>
@@ -909,6 +910,7 @@ const Ontology = () => {
           navigateToNode={navigateToNode}
           treeVisualization={treeVisualization}
           expandedNodes={expandedNodes}
+          setExpandedNodes={setExpandedNodes}
           onOpenNodesTree={onOpenNodesTree}
         />
       </Container>
