@@ -1,16 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Box, Paper, TextField, Typography } from "@mui/material";
-import { debounce } from "lodash";
-import {
-  getDoc,
-  collection,
-  doc,
-  updateDoc,
-  getDocs,
-  query,
-  where,
-  getFirestore,
-} from "firebase/firestore";
+import { Box, Paper, Typography } from "@mui/material";
+import { collection, doc, updateDoc, getFirestore } from "firebase/firestore";
 import { useTheme } from "@emotion/react";
 import { INode } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
@@ -293,17 +283,14 @@ const Text = ({
                 )}
               </Box>
             </Box>
-          ) : !currentVisibleNode.inheritance[property]?.ref ? (
+          ) : (
             <YjsEditor
               fullname={`${user?.fName} ${user?.lName}`}
               property={property}
               nodeId={currentVisibleNode.id}
               color={randomProminentColor()}
               saveChangeHistory={saveChangeHistory}
-            />
-          ) : (
-            <SimpleEditor
-              property={property}
+              reference={currentVisibleNode.inheritance[property]?.ref || null}
               breakInheritance={onSaveTextChange}
               text={text}
             />

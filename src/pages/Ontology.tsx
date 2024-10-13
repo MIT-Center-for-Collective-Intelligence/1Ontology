@@ -60,6 +60,7 @@ import {
   Tabs,
   Typography,
   useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Timestamp,
@@ -143,6 +144,7 @@ const Ontology = () => {
   const handleExpandSidebar = (sidebarType: string) => {
     setActiveSidebar(sidebarType);
   };
+  const theme = useTheme();
 
   useEffect(() => {
     // Check if a user is logged in
@@ -599,7 +601,7 @@ const Ontology = () => {
       setExpandedNodes((prevExpanded: Set<string>) => {
         const newExpanded = new Set(prevExpanded); // Create a new set to avoid mutating the previous state
         if (newExpanded.has(nodeId)) {
-          newExpanded.delete(nodeId); // Remove the nodeId if it exists
+          // newExpanded.delete(nodeId); // Remove the nodeId if it exists
         } else {
           newExpanded.add(nodeId); // Otherwise, add it
         }
@@ -657,7 +659,7 @@ const Ontology = () => {
           element.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }, 800);
-
+      initializeExpanded(eachOntologyPath[node.id]);
       // Record the click action in logs
       recordLogs({
         action: "Search result clicked",
@@ -760,77 +762,71 @@ const Ontology = () => {
         {!isMobile && (
           <Section
             minSize={0}
-            defaultSize={500}
+            defaultSize={600}
             style={{
               display: "flex",
               flexDirection: "column",
+              backgroundColor:
+                theme.palette.mode === "dark" ? "#303134" : "white",
             }}
           >
-            <Box
+            <Tabs
+              value={viewValue}
+              onChange={handleViewChange}
               sx={{
-                backgroundColor: (theme: any) =>
-                  theme.palette.mode === "dark" ? "#303134" : "white",
+                width: "100%",
+                borderColor: "divider",
+
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                ".MuiTab-root.Mui-selected": {
+                  color: "#ff6d00",
+                },
               }}
             >
-              <Tabs
+              <Tab
+                label="Outline"
+                {...a11yProps(0)}
+                sx={{ width: "50%", fontSize: "20px" }}
+              />
+              <Tab
+                label="Graph View"
+                {...a11yProps(1)}
+                sx={{ width: "50%", fontSize: "20px" }}
+              />
+            </Tabs>
+
+            <Box
+              sx={{
+                height: "100vh",
+                flexGrow: 1,
+                overflow: "auto",
+                ...SCROLL_BAR_STYLE,
+              }}
+            >
+              <TabPanel
                 value={viewValue}
-                onChange={handleViewChange}
+                index={0}
                 sx={{
-                  width: "100%",
-                  borderColor: "divider",
-
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                  ".MuiTab-root.Mui-selected": {
-                    color: "#ff6d00",
-                  },
+                  mb: "50px",
                 }}
               >
-                <Tab
-                  label="Outline"
-                  {...a11yProps(0)}
-                  sx={{ width: "50%", fontSize: "20px" }}
+                <TreeViewSimplified
+                  treeVisualization={treeVisualization}
+                  onOpenNodesTree={onOpenNodesTree}
+                  expandedNodes={expandedNodes}
+                  currentVisibleNode={currentVisibleNode}
                 />
-                <Tab
-                  label="Graph View"
-                  {...a11yProps(1)}
-                  sx={{ width: "50%", fontSize: "20px" }}
+              </TabPanel>
+              <TabPanel value={viewValue} index={1}>
+                <DagGraph
+                  treeVisualization={treeVisualization}
+                  setExpandedNodes={setExpandedNodes}
+                  expandedNodes={expandedNodes}
+                  onOpenNodeDagre={onOpenNodeDagre}
+                  currentVisibleNode={currentVisibleNode}
                 />
-              </Tabs>
-
-              <Box
-                sx={{
-                  height: "100vh",
-                  flexGrow: 1,
-                  overflow: "auto",
-                  ...SCROLL_BAR_STYLE,
-                }}
-              >
-                <TabPanel
-                  value={viewValue}
-                  index={0}
-                  sx={{
-                    mt: "5px",
-                    mb: "50px",
-                  }}
-                >
-                  <TreeViewSimplified
-                    treeVisualization={treeVisualization}
-                    onOpenNodesTree={onOpenNodesTree}
-                    expandedNodes={expandedNodes}
-                    currentVisibleNode={currentVisibleNode}
-                  />
-                </TabPanel>
-                <TabPanel value={viewValue} index={1}>
-                  <DagGraph
-                    treeVisualization={treeVisualization}
-                    setExpandedNodes={setExpandedNodes}
-                    expandedNodes={expandedNodes}
-                    onOpenNodeDagre={onOpenNodeDagre}
-                    currentVisibleNode={currentVisibleNode}
-                  />
-                </TabPanel>
-              </Box>
+              </TabPanel>
             </Box>
           </Section>
         )}

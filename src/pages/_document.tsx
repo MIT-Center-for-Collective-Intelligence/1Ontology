@@ -41,14 +41,14 @@ class CustomDocument extends Document {
           <meta name="robots" content="index, follow" />
           <meta name="googlebot" content="index, follow" />
           <meta name="language" content="ENG" />
-          <meta name="copyright" content="1Cademy" />
+          <meta name="copyright" content="1Ontology" />
           <meta name="reply-to" content="onecademy@umich.edu" />
           <meta name="coverage" content="Worldwide" />
           <meta name="distribution" content="Global" />
           <meta name="rating" content="General" />
           <meta name="target" content="all" />
           <meta name="HandheldFriendly" content="False" />
-          <meta name="author" content="1Cademy" />
+          <meta name="author" content="1Ontology" />
           <meta httpEquiv="Expires" content="-1" />
           <meta httpEquiv="Pragma" content="no-cache" />
           <meta httpEquiv="Cache-Control" content="no-cache" />

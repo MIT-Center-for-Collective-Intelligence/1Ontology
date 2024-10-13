@@ -11,12 +11,18 @@ const YjsEditor = ({
   nodeId,
   color,
   saveChangeHistory,
+  reference,
+  breakInheritance,
+  text,
 }: {
   fullname: string;
   property: string;
   nodeId: string;
   color: string;
   saveChangeHistory: Function;
+  reference: string | null;
+  breakInheritance: Function;
+  text: string;
 }) => {
   return (
     <YjsEditorWrapper
@@ -25,6 +31,9 @@ const YjsEditor = ({
       nodeId={nodeId}
       color={color}
       saveChangeHistory={saveChangeHistory}
+      reference={reference}
+      breakInheritance={breakInheritance}
+      text={text}
     />
   );
 };

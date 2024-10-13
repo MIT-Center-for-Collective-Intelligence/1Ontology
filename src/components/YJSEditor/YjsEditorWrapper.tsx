@@ -4,7 +4,7 @@ import { WebsocketProvider } from "y-websocket";
 import { QuillBinding } from "y-quill";
 import Quill from "quill";
 import QuillCursors from "quill-cursors";
-import { Box, useTheme } from "@mui/material";
+import { Box } from "@mui/material";
 import "quill/dist/quill.snow.css";
 import { getFirestore } from "firebase/firestore";
 import { recordLogs } from " @components/lib/utils/helpers";
@@ -37,7 +37,19 @@ const YjsEditorWrapper = ({
   nodeId,
   color,
   saveChangeHistory,
-}: any) => {
+  reference,
+  breakInheritance,
+  text,
+}: {
+  fullname: string;
+  property: string;
+  nodeId: string;
+  color: string;
+  saveChangeHistory: Function;
+  reference: string | null;
+  breakInheritance: Function;
+  text: string;
+}) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
   const yTextRef = useRef<any>(null);
@@ -45,6 +57,7 @@ const YjsEditorWrapper = ({
   const db = getFirestore();
   const TIMEOUT = 15000 + Math.floor(Math.random() * 300);
   const changeHistoryRef = useRef<any[]>([]);
+  const ydoc = new Y.Doc();
 
   const saveChangeLog = (changeHistory: any[]) => {
     try {
@@ -68,9 +81,37 @@ const YjsEditorWrapper = ({
   };
 
   useEffect(() => {
-    if (!property || !fullname || !nodeId) return;
+    if (editorContainerRef.current) {
+      editorRef.current = new Quill(editorContainerRef.current, {
+        modules: {
+          cursors: true,
+          toolbar: false,
+          history: {
+            userOnly: true,
+          },
+        },
+        placeholder: "",
+        theme: "snow",
+      });
 
-    const ydoc = new Y.Doc();
+      if (reference && editorRef.current) {
+        editorRef.current.setText(text);
+        editorRef.current.on("text-change", (delta, oldDelta, source) => {
+          console.log("text-change ==>");
+          if (source === "user" && reference) {
+            const text = editorRef.current?.getText();
+            console.log("text", text);
+            breakInheritance(text);
+          }
+        });
+        return;
+      }
+    }
+  }, [reference, text]);
+
+  useEffect(() => {
+    if (!property || !fullname || !nodeId || reference) return;
+
     const WS_URL =
       process.env.NODE_ENV === "development"
         ? `ws://${process.env.NEXT_PUBLIC_DEV_WS_SERVER}/ws`
@@ -86,22 +127,12 @@ const YjsEditorWrapper = ({
     const yText = ydoc.getText("quill");
     yTextRef.current = yText;
 
-    if (editorContainerRef.current) {
-      const editor = new Quill(editorContainerRef.current, {
-        modules: {
-          cursors: true,
-          toolbar: false,
-          history: {
-            userOnly: true,
-          },
-        },
-        placeholder: "",
-        theme: "snow",
-      });
-
-      editorRef.current = editor;
-
-      const binding = new QuillBinding(yText, editor, provider.awareness);
+    if (editorRef.current) {
+      const binding = new QuillBinding(
+        yText,
+        editorRef.current,
+        provider.awareness
+      );
 
       const userInfo = {
         name: fullname,
@@ -115,7 +146,8 @@ const YjsEditorWrapper = ({
         }
       });
       provider.awareness.setLocalStateField("user", userInfo);
-      editor.on("text-change", (delta, oldDelta, source) => {
+      editorRef.current.on("text-change", (delta, oldDelta, source) => {
+        console.log("text-change ==>");
         if (source === "user") {
           const previousText = (oldDelta.ops[0].insert || "") as string;
           const newText = applyDeltaToText(previousText, delta);
@@ -140,14 +172,14 @@ const YjsEditorWrapper = ({
         provider.disconnect();
         provider.destroy();
         binding.destroy();
-        if (editor) {
-          editor.off("selection-change");
-          editor.off("text-change");
+        if (editorRef.current) {
+          editorRef.current.off("selection-change");
+          editorRef.current.off("text-change");
         }
         clearInterval(intervalId);
       };
     }
-  }, [fullname, property, nodeId]);
+  }, [fullname, property, nodeId, reference]);
 
   return (
     <>
@@ -157,6 +189,7 @@ const YjsEditorWrapper = ({
           borderBottomRightRadius: "20px",
           borderBottomLeftRadius: "20px",
           minHeight: "70px",
+          border: "none !important",
           fontSize:
             property === "title" ? "24px !important" : "18px !important",
           "& .ql-editor.ql-blank::before": {

@@ -89,6 +89,9 @@ const TreeViewSimplified = ({
                 justifyContent: sendNode ? "space-between" : undefined,
               }}
               onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                console.log("treeVisualization[nodeId].id", treeVisualization[nodeId].id)
                 if (sendNode || clone) return;
                 onOpenNodesTree(treeVisualization[nodeId].id);
               }}
@@ -194,10 +197,10 @@ const TreeViewSimplified = ({
             /*  "&.MuiTreeItem-content": {
               // borderRadius: "18px",
             }, */
-            position: 'relative',
+            position: "relative",
             [`& .${treeItemClasses.group}`]: {
-              borderLeft: `1px solid gray`
-            }
+              borderLeft: `1px solid gray`,
+            },
           }}
         >
           {Object.keys(treeVisualization[nodeId].specializations).length > 0 &&
