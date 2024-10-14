@@ -92,7 +92,7 @@ export const getPropertyValue = (
   nodes: { [id: string]: INode },
   id: string | null,
   property: string,
-  structured: boolean
+  structured?: boolean
 ) => {
   if (id && nodes[id] && nodes[id].properties.hasOwnProperty(property)) {
     if (Array.isArray(nodes[id].properties[property]) && !structured) {

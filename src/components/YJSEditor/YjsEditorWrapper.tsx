@@ -61,7 +61,6 @@ const YjsEditorWrapper = ({
   const db = getFirestore();
   const TIMEOUT = 15000 + Math.floor(Math.random() * 300);
   const changeHistoryRef = useRef<any[]>([]);
-  const ydoc = new Y.Doc();
 
   const saveChangeLog = (changeHistory: any[]) => {
     try {
@@ -117,7 +116,7 @@ const YjsEditorWrapper = ({
 
   useEffect(() => {
     if (!property || !fullname || !nodeId || reference) return;
-
+    const ydoc = new Y.Doc();
     const WS_URL =
       process.env.NODE_ENV === "development"
         ? `ws://${process.env.NEXT_PUBLIC_DEV_WS_SERVER}/ws`

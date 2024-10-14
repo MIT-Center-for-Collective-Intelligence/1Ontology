@@ -839,7 +839,7 @@ const StructuredProperty = ({
             {'")'}
           </Typography>
         )}
-        {!locked && !selectedDiffNode && (
+        {!locked && !selectedDiffNode && property === "specializations" && (
           <Box
             sx={{
               alignItems: "center",
@@ -859,7 +859,7 @@ const StructuredProperty = ({
             </Button>
           </Box>
         )}
-        {!selectedDiffNode && (
+        {!selectedDiffNode && property !== "specializations" && (
           <Button
             onClick={() => showListToSelect(property, "main")}
             sx={{
