@@ -67,7 +67,9 @@ const YjsEditorWrapper = ({
       if (changeHistory.length > 0) {
         const previousValue = changeHistory[0].previousText;
         const newValue = changeHistory.at(-1).newText;
-        saveChangeHistory(previousValue, newValue);
+        if (previousValue !== newValue) {
+          saveChangeHistory(previousValue, newValue);
+        }
       }
     } catch (error: any) {
       console.log(error);

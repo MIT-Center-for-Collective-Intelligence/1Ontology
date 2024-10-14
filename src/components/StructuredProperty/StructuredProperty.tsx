@@ -116,6 +116,7 @@ const StructuredProperty = ({
 
       let finalResult: any = [];
       const listOfChanges = [];
+
       if (
         selectedDiffNode &&
         selectedDiffNode.modifiedProperty === property &&
@@ -126,6 +127,7 @@ const StructuredProperty = ({
       ) {
         listOfChanges.push(selectedDiffNode);
       }
+
       if (currentImprovement) {
         listOfChanges.push(...currentImprovement.detailsOfChange);
       }
@@ -133,40 +135,30 @@ const StructuredProperty = ({
       if (
         selectedDiffNode &&
         selectedDiffNode.modifiedProperty === property &&
-        (selectedDiffNode.changeType === "sort elements" ||
-          selectedDiffNode.changeType === "remove element" ||
-          selectedDiffNode.changeType === "modify elements" ||
-          selectedDiffNode.changeType === "add element")
+        selectedDiffNode.changeType === "sort elements" &&
+        selectedDiffNode.changeDetails
       ) {
-        selectedDiffNode.newValue.forEach(
-          (collectionNewValue: ICollection, collectionIndex: number) => {
-            const collectionPrevious: ICollection =
-              selectedDiffNode?.previousValue[collectionIndex] || [];
+        const { draggableNodeId, destination, source } =
+          selectedDiffNode.changeDetails;
 
-            collectionNewValue.nodes.forEach((nodeLink) => {
-              const foundInPrevious = (collectionPrevious?.nodes || []).find(
-                (prevElement: ILinkNode) => prevElement.id === nodeLink.id
-              );
-              if (!foundInPrevious) {
-                nodeLink.change = "added";
-                return { ...nodeLink, change: "added" };
-              }
-            });
-            (collectionPrevious?.nodes || []).forEach((prevElement: any) => {
-              const foundInNew = collectionNewValue.nodes.find(
-                (newElement: ILinkNode) => newElement.id === prevElement.id
-              );
-              if (!foundInNew) {
-                collectionNewValue.nodes.push({
-                  ...prevElement,
-                  change: "removed",
-                });
-              }
-            });
-            finalResult.push(collectionNewValue);
-          }
+        const sourceCollectionIndex = parseInt(source.droppableId, 10);
+        const destinationCollectionIndex = parseInt(
+          destination?.droppableId || "0",
+          10
         );
+        const previousValue = selectedDiffNode.previousValue;
+        previousValue[sourceCollectionIndex].nodes[source.index].change =
+          "removed";
+        previousValue[sourceCollectionIndex].nodes[source.index].changeType =
+          "sort";
+        previousValue[destinationCollectionIndex].nodes.splice(
+          destination.index,
+          0,
+          { id: draggableNodeId, change: "added", changeType: "sort" }
+        );
+        return previousValue;
       }
+
       for (let improvementChange of listOfChanges || []) {
         if (improvementChange.modifiedProperty === property) {
           improvementChange.newValue.forEach(
@@ -414,6 +406,11 @@ const StructuredProperty = ({
             newValue: propertyValue,
             modifiedAt: new Date(),
             changeType: "sort elements",
+            changeDetails: {
+              draggableNodeId: draggableId,
+              source,
+              destination,
+            },
             fullNode: currentVisibleNode,
           });
 
@@ -799,6 +796,9 @@ const StructuredProperty = ({
         borderRadius: "30px",
         minWidth: "500px",
         width: "100%",
+        maxHeight: "80vh",
+        overflow: "auto",
+        position: "relative",
       }}
     >
       <Box
@@ -986,7 +986,7 @@ const StructuredProperty = ({
                                           )}
                                         </Typography>
                                       </Box>
-                                    ) : (
+                                    ) : collection.collectionName !== "main" ? (
                                       <Typography
                                         sx={{
                                           fontWeight: "bold",
@@ -994,39 +994,11 @@ const StructuredProperty = ({
                                         }}
                                       >
                                         {capitalizeFirstLetter(
-                                          collection.collectionName === "main"
-                                            ? "Default"
-                                            : collection.collectionName
+                                          collection.collectionName
                                         )}
                                       </Typography>
-                                    )}
-                                    {!selectedDiffNode && (
-                                      <Button
-                                        onClick={() =>
-                                          showListToSelect(
-                                            property,
-                                            collection.collectionName
-                                          )
-                                        }
-                                        sx={{
-                                          borderRadius: "18px",
-                                          backgroundColor: BUTTON_COLOR,
-                                          ":hover": {
-                                            backgroundColor:
-                                              theme.palette.mode === "light"
-                                                ? "#f0f0f0"
-                                                : "",
-                                          },
-                                          ml: "auto",
-                                        }}
-                                        variant="outlined"
-                                      >
-                                        {property === "specializations"
-                                          ? "Add Specializations"
-                                          : `Link ${capitalizeFirstLetter(
-                                              DISPLAY[property] || property
-                                            )}`}{" "}
-                                      </Button>
+                                    ) : (
+                                      <></>
                                     )}
 
                                     {!selectedDiffNode &&
@@ -1035,8 +1007,36 @@ const StructuredProperty = ({
                                           sx={{
                                             display: "flex",
                                             ml: "auto",
+                                            gap: "5px",
                                           }}
                                         >
+                                          {" "}
+                                          <Button
+                                            onClick={() =>
+                                              showListToSelect(
+                                                property,
+                                                collection.collectionName
+                                              )
+                                            }
+                                            sx={{
+                                              borderRadius: "18px",
+                                              backgroundColor: BUTTON_COLOR,
+                                              ":hover": {
+                                                backgroundColor:
+                                                  theme.palette.mode === "light"
+                                                    ? "#f0f0f0"
+                                                    : "",
+                                              },
+                                              ml: "auto",
+                                            }}
+                                            variant="outlined"
+                                          >
+                                            {property === "specializations"
+                                              ? "Add Specializations"
+                                              : `Link ${capitalizeFirstLetter(
+                                                  DISPLAY[property] || property
+                                                )}`}{" "}
+                                          </Button>
                                           <Tooltip title="Edit collection title">
                                             <IconButton
                                               onClick={() => {
@@ -1162,7 +1162,7 @@ const StructuredProperty = ({
                                           <Draggable
                                             key={link.id + index}
                                             draggableId={link.id}
-                                            index={collectionIndex}
+                                            index={index}
                                           >
                                             {(provided) => (
                                               <ListItem

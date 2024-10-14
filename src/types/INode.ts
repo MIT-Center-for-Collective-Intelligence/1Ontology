@@ -37,6 +37,7 @@ export type ILinkNode = {
   editMode?: boolean;
   new?: boolean;
   change?: any;
+  changeType?: string;
 };
 
 export type ICollection = { collectionName: string; nodes: ILinkNode[] };

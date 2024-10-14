@@ -94,6 +94,7 @@ import DoneIcon from "@mui/icons-material/Done";
 import CloseIcon from "@mui/icons-material/Close";
 import { useEffect, useState } from "react";
 import { getTitleDeleted } from " @components/lib/utils/string.utils";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 
 type ISubOntologyProps = {
   link: ILinkNode;
@@ -411,6 +412,15 @@ const LinkNode = ({
       unlinkNodeRelation();
     }
   };
+  const getLinkColor = (changeType: "added" | "removed") => {
+    return changeType === "added"
+      ? "green"
+      : changeType === "removed"
+      ? "red"
+      : theme.palette.mode === "dark"
+      ? theme.palette.common.gray50
+      : theme.palette.common.notebookMainBlack;
+  };
 
   return (
     <Box sx={{ ...sx }}>
@@ -421,22 +431,21 @@ const LinkNode = ({
             onClick={handleNavigateToNode}
             sx={{
               cursor: "pointer",
-              color: (theme) =>
-                link.change === "added"
-                  ? "green"
-                  : link.change === "removed"
-                  ? "red"
-                  : theme.palette.mode === "dark"
-                  ? theme.palette.common.gray50
-                  : theme.palette.common.notebookMainBlack,
+              color: getLinkColor(link.change),
               textDecoration:
                 link.change === "removed" ? "line-through" : "none",
             }}
           >
             {" "}
             {title || regionalTitle}
-            {/* {link.id} */}
+            {"--"}
+            {link.id}
           </Link>
+          {link.changeType === "sort" && (
+            <SwapHorizIcon
+              sx={{ color: getLinkColor(link.change), pl: "5px" }}
+            />
+          )}
           {unlinkVisible && !locked && !linkLocked && (
             <Button
               sx={{
