@@ -462,21 +462,14 @@ export const checkIfCanDeleteANode = (
   nodes: { [nodeId: string]: INode },
   specializations: any /* { id: string }[] */
 ) => {
-  for (let specialization of specializations) {
-    const generalizationsOfSpecialization =
-      nodes[specialization.id].generalizations;
-    let linksLength = 0;
-    inner: for (let collection of generalizationsOfSpecialization) {
-      if (collection.nodes.length > 1) {
-        break inner;
-      }
-      linksLength += collection.nodes.length;
-    }
-    if (linksLength <= 1) {
-      return false;
-    }
-  }
-  return true;
+  const candelete = specializations.some((specialization: { id: string }) => {
+    const generalizationsOfSpecialization = nodes[
+      specialization.id
+    ].generalizations.flatMap((n) => n.nodes);
+    return generalizationsOfSpecialization.length === 1;
+  });
+  console.log(candelete, "candelete");
+  return candelete;
 };
 
 export const generateInheritance = (

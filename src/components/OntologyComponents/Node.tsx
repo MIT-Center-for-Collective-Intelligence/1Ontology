@@ -987,6 +987,23 @@ const Node = ({
   const deleteNode = useCallback(async () => {
     try {
       // Confirm deletion with the user using a custom confirmation dialog
+
+      if (!user?.uname) return;
+
+      const specializations = currentVisibleNode.specializations.flatMap(
+        (n) => n.nodes
+      );
+
+      if (specializations.length > 0) {
+        if (checkIfCanDeleteANode(nodes, specializations)) {
+          await confirmIt(
+            "To delete a Node you need to delete it's specializations or move them under a different generalization",
+            "Ok",
+            ""
+          );
+          return;
+        }
+      }
       if (
         await confirmIt(
           `Are you sure you want to delete this Node?`,
@@ -994,23 +1011,6 @@ const Node = ({
           "Keep Node"
         )
       ) {
-        if (!user?.uname) return;
-
-        const specializations = [];
-        for (let collection of currentVisibleNode.specializations) {
-          specializations.push(...collection.nodes);
-        }
-
-        if (specializations.length > 0) {
-          if (checkIfCanDeleteANode(nodes, specializations)) {
-            await confirmIt(
-              "To delete a Node you need to delete it's specializations or move them under a different generalization",
-              "Ok",
-              ""
-            );
-            return;
-          }
-        }
         // Retrieve the document reference of the node to be deleted
         for (let collection of currentVisibleNode.generalizations) {
           if (collection.nodes.length > 0) {
