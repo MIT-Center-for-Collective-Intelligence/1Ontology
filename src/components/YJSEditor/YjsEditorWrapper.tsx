@@ -86,19 +86,21 @@ const YjsEditorWrapper = ({
 
   useEffect(() => {
     if (editorContainerRef.current) {
-      editorRef.current = new Quill(editorContainerRef.current, {
-        modules: {
-          cursors: true,
-          toolbar: false,
-          history: {
-            userOnly: true,
+      if (!editorRef.current) {
+        editorRef.current = new Quill(editorContainerRef.current, {
+          modules: {
+            cursors: true,
+            toolbar: false,
+            history: {
+              userOnly: true,
+            },
           },
-        },
-        placeholder: `${capitalizeFirstLetter(
-          DISPLAY[property] ? DISPLAY[property] : property
-        )}...`,
-        theme: "snow",
-      });
+          placeholder: `${capitalizeFirstLetter(
+            DISPLAY[property] ? DISPLAY[property] : property
+          )}...`,
+          theme: "snow",
+        });
+      }
 
       if (reference && editorRef.current) {
         editorRef.current.setText(text);
@@ -142,13 +144,6 @@ const YjsEditorWrapper = ({
         name: fullname,
         color: color,
       };
-      provider.on("status", (event: any) => {
-        if (event.status === "disconnected" && editorRef.current) {
-          editorRef.current.enable(false);
-        } else if (event.status === "connected" && editorRef.current) {
-          editorRef.current.enable(true);
-        }
-      });
       provider.awareness.setLocalStateField("user", userInfo);
       editorRef.current.on("text-change", (delta, oldDelta, source) => {
         if (source === "user") {

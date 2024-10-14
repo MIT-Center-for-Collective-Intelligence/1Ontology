@@ -91,10 +91,11 @@ export const checkNodeLock = (nodes: { [id: string]: INode }, id: string) => {
 export const getPropertyValue = (
   nodes: { [id: string]: INode },
   id: string | null,
-  property: string
+  property: string,
+  structured: boolean
 ) => {
   if (id && nodes[id] && nodes[id].properties.hasOwnProperty(property)) {
-    if (Array.isArray(nodes[id].properties[property])) {
+    if (Array.isArray(nodes[id].properties[property]) && !structured) {
       return nodes[id]?.textValue && nodes[id]?.textValue[property]
         ? nodes[id]?.textValue[property] || ""
         : "";

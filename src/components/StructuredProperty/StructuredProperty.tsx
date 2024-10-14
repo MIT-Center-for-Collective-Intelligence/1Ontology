@@ -48,7 +48,7 @@ import {
 } from " @components/lib/utils/helpers";
 import NewCollection from "../Collection/NewCollection";
 import SelectInheritance from "../SelectInheretance/SelectInhertance";
-import Text from "../OntologyComponents/Text";
+// import Text from "../OntologyComponents/Text";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
@@ -99,7 +99,8 @@ const StructuredProperty = ({
         getPropertyValue(
           nodes,
           currentVisibleNode.inheritance[property]?.ref,
-          property
+          property,
+          true
         ) ||
         currentVisibleNode?.properties[property] ||
         currentVisibleNode[property as "specializations" | "generalizations"];
@@ -858,6 +859,27 @@ const StructuredProperty = ({
             </Button>
           </Box>
         )}
+        {!selectedDiffNode && (
+          <Button
+            onClick={() => showListToSelect(property, "main")}
+            sx={{
+              borderRadius: "18px",
+              backgroundColor: BUTTON_COLOR,
+              ":hover": {
+                backgroundColor:
+                  theme.palette.mode === "light" ? "#f0f0f0" : "",
+              },
+              ml: "auto",
+            }}
+            variant="outlined"
+          >
+            {property === "specializations"
+              ? "Add Specializations"
+              : `Link ${capitalizeFirstLetter(
+                  DISPLAY[property] || property
+                )}`}{" "}
+          </Button>
+        )}
         {property !== "specializations" && property !== "generalizations" && (
           <SelectInheritance
             currentVisibleNode={currentVisibleNode}
@@ -908,202 +930,209 @@ const StructuredProperty = ({
                               mt: "15px",
                               borderRadius: "20px",
                             }}
+                            elevation={property !== "specializations" ? 0 : 3}
                           >
-                            {editCollection === null ||
-                            editCollection !== collection.collectionName ? (
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  background: (theme: any) =>
-                                    theme.palette.mode === "dark"
-                                      ? "#242425"
-                                      : "#d0d5dd",
-                                  borderTopLeftRadius: "21px",
-                                  borderTopRightRadius: "21px",
-                                  m: 0,
-                                  p: 2,
-                                  gap: "10px",
-                                  backgroundColor: getCategoryStyle(
-                                    collection.collectionName
-                                  ),
-                                }}
-                              >
-                                {selectedDiffNode &&
-                                selectedDiffNode.changeType ===
-                                  "edit collection" &&
-                                selectedDiffNode.changeDetails
-                                  .modifiedCollection ===
-                                  collection.collectionName ? (
-                                  <Box sx={{ display: "flex" }}>
-                                    <Typography
-                                      sx={{
-                                        fontWeight: "bold",
-                                        mr: "13px",
-                                        color: "red",
-                                        textDecoration: "line-through",
-                                      }}
-                                    >
-                                      {capitalizeFirstLetter(
-                                        collection.collectionName
-                                      )}
-                                    </Typography>
-                                    <Typography
-                                      sx={{
-                                        fontWeight: "bold",
-                                        mr: "13px",
-                                        color: "green",
-                                      }}
-                                    >
-                                      {capitalizeFirstLetter(
-                                        selectedDiffNode.changeDetails.newValue
-                                      )}
-                                    </Typography>
-                                  </Box>
-                                ) : (
-                                  <Typography
+                            {property === "specializations" && (
+                              <Box>
+                                {editCollection === null ||
+                                editCollection !== collection.collectionName ? (
+                                  <Box
                                     sx={{
-                                      fontWeight: "bold",
-                                      mr: "13px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      background: (theme: any) =>
+                                        theme.palette.mode === "dark"
+                                          ? "#242425"
+                                          : "#d0d5dd",
+                                      borderTopLeftRadius: "21px",
+                                      borderTopRightRadius: "21px",
+                                      m: 0,
+                                      p: 2,
+                                      gap: "10px",
+                                      backgroundColor: getCategoryStyle(
+                                        collection.collectionName
+                                      ),
                                     }}
                                   >
-                                    {capitalizeFirstLetter(
-                                      collection.collectionName === "main"
-                                        ? "Default"
-                                        : collection.collectionName
-                                    )}
-                                  </Typography>
-                                )}
-                                {!selectedDiffNode && (
-                                  <Button
-                                    onClick={() =>
-                                      showListToSelect(
-                                        property,
-                                        collection.collectionName
-                                      )
-                                    }
-                                    sx={{
-                                      borderRadius: "18px",
-                                      backgroundColor: BUTTON_COLOR,
-                                      ":hover": {
-                                        backgroundColor:
-                                          theme.palette.mode === "light"
-                                            ? "#f0f0f0"
-                                            : "",
-                                      },
-                                      ml: "auto",
-                                    }}
-                                    variant="outlined"
-                                  >
-                                    {property === "specializations"
-                                      ? "Add Specializations"
-                                      : `Link ${capitalizeFirstLetter(
-                                          DISPLAY[property] || property
-                                        )}`}{" "}
-                                  </Button>
-                                )}
-
-                                {!selectedDiffNode &&
-                                  collection.collectionName !== "main" && (
-                                    <Box
-                                      sx={{
-                                        display: "flex",
-                                        ml: "auto",
-                                      }}
-                                    >
-                                      <Tooltip title="Edit collection title">
-                                        <IconButton
-                                          onClick={() => {
-                                            handleEditCollection(
-                                              collection.collectionName
-                                            );
+                                    {selectedDiffNode &&
+                                    selectedDiffNode.changeType ===
+                                      "edit collection" &&
+                                    selectedDiffNode.changeDetails
+                                      .modifiedCollection ===
+                                      collection.collectionName ? (
+                                      <Box sx={{ display: "flex" }}>
+                                        <Typography
+                                          sx={{
+                                            fontWeight: "bold",
+                                            mr: "13px",
+                                            color: "red",
+                                            textDecoration: "line-through",
                                           }}
                                         >
-                                          <EditIcon />
-                                        </IconButton>
-                                      </Tooltip>
-                                      <Tooltip title="Delete collection">
-                                        <IconButton
-                                          onClick={() =>
-                                            deleteCollection(
-                                              property,
-                                              collectionIndex,
-                                              collection.collectionName
-                                            )
-                                          }
+                                          {capitalizeFirstLetter(
+                                            collection.collectionName
+                                          )}
+                                        </Typography>
+                                        <Typography
+                                          sx={{
+                                            fontWeight: "bold",
+                                            mr: "13px",
+                                            color: "green",
+                                          }}
                                         >
-                                          <DeleteIcon />
-                                        </IconButton>
-                                      </Tooltip>
-                                    </Box>
-                                  )}
-                              </Box>
-                            ) : editCollection === collection.collectionName ? (
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  background: (theme: any) =>
-                                    theme.palette.mode === "dark"
-                                      ? "#242425"
-                                      : "#d0d5dd",
-                                  borderTopLeftRadius: "21px",
-                                  borderTopRightRadius: "21px",
-                                  m: 0,
-                                  p: 2,
-                                  gap: "10px",
-                                  backgroundColor: getCategoryStyle(
-                                    collection.collectionName
-                                  ),
-                                }}
-                              >
-                                <TextField
-                                  sx={{ p: 0 }}
-                                  fullWidth
-                                  placeholder="Edit collection..."
-                                  onChange={(e) =>
-                                    setNewEditCollection(e.target.value)
-                                  }
-                                  value={newEditCollection}
-                                />
-                                <Tooltip title="Save">
-                                  <IconButton
-                                    onClick={() => {
-                                      saveEditCollection(newEditCollection);
+                                          {capitalizeFirstLetter(
+                                            selectedDiffNode.changeDetails
+                                              .newValue
+                                          )}
+                                        </Typography>
+                                      </Box>
+                                    ) : (
+                                      <Typography
+                                        sx={{
+                                          fontWeight: "bold",
+                                          mr: "13px",
+                                        }}
+                                      >
+                                        {capitalizeFirstLetter(
+                                          collection.collectionName === "main"
+                                            ? "Default"
+                                            : collection.collectionName
+                                        )}
+                                      </Typography>
+                                    )}
+                                    {!selectedDiffNode && (
+                                      <Button
+                                        onClick={() =>
+                                          showListToSelect(
+                                            property,
+                                            collection.collectionName
+                                          )
+                                        }
+                                        sx={{
+                                          borderRadius: "18px",
+                                          backgroundColor: BUTTON_COLOR,
+                                          ":hover": {
+                                            backgroundColor:
+                                              theme.palette.mode === "light"
+                                                ? "#f0f0f0"
+                                                : "",
+                                          },
+                                          ml: "auto",
+                                        }}
+                                        variant="outlined"
+                                      >
+                                        {property === "specializations"
+                                          ? "Add Specializations"
+                                          : `Link ${capitalizeFirstLetter(
+                                              DISPLAY[property] || property
+                                            )}`}{" "}
+                                      </Button>
+                                    )}
+
+                                    {!selectedDiffNode &&
+                                      collection.collectionName !== "main" && (
+                                        <Box
+                                          sx={{
+                                            display: "flex",
+                                            ml: "auto",
+                                          }}
+                                        >
+                                          <Tooltip title="Edit collection title">
+                                            <IconButton
+                                              onClick={() => {
+                                                handleEditCollection(
+                                                  collection.collectionName
+                                                );
+                                              }}
+                                            >
+                                              <EditIcon />
+                                            </IconButton>
+                                          </Tooltip>
+                                          <Tooltip title="Delete collection">
+                                            <IconButton
+                                              onClick={() =>
+                                                deleteCollection(
+                                                  property,
+                                                  collectionIndex,
+                                                  collection.collectionName
+                                                )
+                                              }
+                                            >
+                                              <DeleteIcon />
+                                            </IconButton>
+                                          </Tooltip>
+                                        </Box>
+                                      )}
+                                  </Box>
+                                ) : editCollection ===
+                                  collection.collectionName ? (
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      background: (theme: any) =>
+                                        theme.palette.mode === "dark"
+                                          ? "#242425"
+                                          : "#d0d5dd",
+                                      borderTopLeftRadius: "21px",
+                                      borderTopRightRadius: "21px",
+                                      m: 0,
+                                      p: 2,
+                                      gap: "10px",
+                                      backgroundColor: getCategoryStyle(
+                                        collection.collectionName
+                                      ),
                                     }}
-                                    disabled={
-                                      !newEditCollection ||
-                                      collection.collectionName ===
-                                        newEditCollection
-                                    }
-                                    sx={{ ml: "5px" }}
                                   >
-                                    <DoneIcon
-                                      sx={{
-                                        color:
+                                    <TextField
+                                      sx={{ p: 0 }}
+                                      fullWidth
+                                      placeholder="Edit collection..."
+                                      onChange={(e) =>
+                                        setNewEditCollection(e.target.value)
+                                      }
+                                      value={newEditCollection}
+                                    />
+                                    <Tooltip title="Save">
+                                      <IconButton
+                                        onClick={() => {
+                                          saveEditCollection(newEditCollection);
+                                        }}
+                                        disabled={
                                           !newEditCollection ||
                                           collection.collectionName ===
                                             newEditCollection
-                                            ? "gray"
-                                            : "green",
-                                      }}
-                                    />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Cancel">
-                                  <IconButton
-                                    onClick={() => {
-                                      setEditCollection(null);
-                                      setNewEditCollection("");
-                                    }}
-                                    sx={{ ml: "5px" }}
-                                  >
-                                    <CloseIcon sx={{ color: "red" }} />
-                                  </IconButton>
-                                </Tooltip>
+                                        }
+                                        sx={{ ml: "5px" }}
+                                      >
+                                        <DoneIcon
+                                          sx={{
+                                            color:
+                                              !newEditCollection ||
+                                              collection.collectionName ===
+                                                newEditCollection
+                                                ? "gray"
+                                                : "green",
+                                          }}
+                                        />
+                                      </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Cancel">
+                                      <IconButton
+                                        onClick={() => {
+                                          setEditCollection(null);
+                                          setNewEditCollection("");
+                                        }}
+                                        sx={{ ml: "5px" }}
+                                      >
+                                        <CloseIcon sx={{ color: "red" }} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </Box>
+                                ) : (
+                                  <></>
+                                )}
                               </Box>
-                            ) : (
-                              <></>
                             )}
 
                             <List sx={{ p: 1 }}>
