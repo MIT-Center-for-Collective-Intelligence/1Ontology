@@ -165,6 +165,7 @@ type INodeProps = {
   selectedDiffNode: NodeChange | null;
   displaySidebar: Function;
   activeSidebar: any;
+  currentImprovement: any;
 };
 
 const Node = ({
@@ -181,6 +182,7 @@ const Node = ({
   selectedDiffNode,
   displaySidebar,
   activeSidebar,
+  currentImprovement,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -1096,10 +1098,7 @@ const Node = ({
       if (inheritedProperty !== null) {
         return inheritedProperty;
       } else {
-        if (
-          currentVisibleNode.propertyType.hasOwnProperty(property) &&
-          currentVisibleNode.propertyType[property] !== "string"
-        ) {
+        if (Array.isArray(currentVisibleNode.properties[property])) {
           return currentVisibleNode?.textValue
             ? currentVisibleNode?.textValue[property] || ""
             : "";
@@ -1153,6 +1152,7 @@ const Node = ({
           navigateToNode={navigateToNode}
           displaySidebar={displaySidebar}
           activeSidebar={activeSidebar}
+          currentImprovement={currentImprovement}
         />
         {/* description of the node */}
         <Text
@@ -1165,6 +1165,7 @@ const Node = ({
           selectedDiffNode={selectedDiffNode}
           getTitleNode={getTitleNode}
           confirmIt={confirmIt}
+          currentImprovement={currentImprovement}
         />
         {/* actors of the node if it's exist */}
         {currentVisibleNode?.properties.hasOwnProperty("actor") && (
@@ -1181,6 +1182,7 @@ const Node = ({
             nodes={nodes}
             locked={locked}
             onGetPropertyValue={onGetPropertyValue}
+            currentImprovement={currentImprovement}
           />
         )}
         {/* specializations and generalizations*/}
@@ -1207,6 +1209,7 @@ const Node = ({
               reviewId={reviewId}
               setReviewId={setReviewId}
               onGetPropertyValue={onGetPropertyValue}
+              currentImprovement={currentImprovement}
             />
           ))}
         </Stack>
@@ -1233,6 +1236,7 @@ const Node = ({
               nodes={nodes}
               locked={locked}
               onGetPropertyValue={onGetPropertyValue}
+              currentImprovement={currentImprovement}
             />
           ))}
         </Stack>
@@ -1251,6 +1255,7 @@ const Node = ({
           getTitleNode={getTitleNode}
           confirmIt={confirmIt}
           onGetPropertyValue={onGetPropertyValue}
+          currentImprovement={currentImprovement}
         />
       </Box>
 

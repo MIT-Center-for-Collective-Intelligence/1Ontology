@@ -4,6 +4,9 @@ import { NODES } from "../firestoreClient/collections";
 
 // Function to capitalize the first letter of a string
 export function capitalizeFirstLetter(str: string): string {
+  if (typeof str !== "string") {
+    return "";
+  }
   const capitalized = str.charAt(0).toUpperCase() + str.slice(1);
   return capitalized;
 }
@@ -91,11 +94,10 @@ export const getPropertyValue = (
   property: string
 ) => {
   if (id && nodes[id] && nodes[id].properties.hasOwnProperty(property)) {
-    if (
-      nodes[id].propertyType.hasOwnProperty(property) &&
-      nodes[id].propertyType[property] !== "string"
-    ) {
-      return nodes[id]?.textValue[property] || "";
+    if (Array.isArray(nodes[id].properties[property])) {
+      return nodes[id]?.textValue && nodes[id]?.textValue[property]
+        ? nodes[id]?.textValue[property] || ""
+        : "";
     }
     return nodes[id].properties[property];
   }

@@ -104,6 +104,7 @@ import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarS
 import { NodeChange } from " @components/types/INode";
 
 import { getAuth } from "firebase/auth";
+import GuidLines from " @components/components/Guidlines/GuidLines";
 
 const Ontology = () => {
   const db = getFirestore();
@@ -145,6 +146,9 @@ const Ontology = () => {
     setActiveSidebar(sidebarType);
   };
   const theme = useTheme();
+
+  const [currentImprovement, setCurrentImprovement] = useState(null);
+  const [displayGuidelines, setDisplayGuidelines] = useState(false);
 
   useEffect(() => {
     // Check if a user is logged in
@@ -870,8 +874,12 @@ const Ontology = () => {
             }}
           >
             <Box ref={scrolling}></Box>
-
-            {currentVisibleNode && user && (
+            {displayGuidelines && (
+              <Box sx={{ p: 2 }}>
+                <GuidLines />
+              </Box>
+            )}
+            {currentVisibleNode && user && !displayGuidelines && (
               <Node
                 currentVisibleNode={currentVisibleNode}
                 setCurrentVisibleNode={setCurrentVisibleNode}
@@ -887,6 +895,7 @@ const Ontology = () => {
                 selectedDiffNode={selectedDiffNode}
                 displaySidebar={displaySidebar}
                 activeSidebar={activeSidebar}
+                currentImprovement={currentImprovement}
               />
             )}
           </Box>
@@ -912,6 +921,9 @@ const Ontology = () => {
           expandedNodes={expandedNodes}
           setExpandedNodes={setExpandedNodes}
           onOpenNodesTree={onOpenNodesTree}
+          setDisplayGuidelines={setDisplayGuidelines}
+          currentImprovement={currentImprovement}
+          setCurrentImprovement={setCurrentImprovement}
         />
       </Container>
       {ConfirmDialog}

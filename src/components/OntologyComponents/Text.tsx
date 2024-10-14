@@ -1,6 +1,22 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Box, Paper, Typography } from "@mui/material";
-import { collection, doc, updateDoc, getFirestore } from "firebase/firestore";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
+import { Box, Paper, TextField, Typography } from "@mui/material";
+import { debounce } from "lodash";
+import {
+  getDoc,
+  collection,
+  doc,
+  updateDoc,
+  getDocs,
+  query,
+  where,
+  getFirestore,
+} from "firebase/firestore";
 import { useTheme } from "@emotion/react";
 import { INode } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
@@ -42,6 +58,7 @@ type ITextProps = {
   displaySidebar?: Function;
   activeSidebar?: any;
   structured?: boolean;
+  currentImprovement: any;
 };
 
 const Text = ({
@@ -63,6 +80,7 @@ const Text = ({
   activeSidebar,
   nodes,
   structured = false,
+  currentImprovement,
 }: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -192,7 +210,13 @@ const Text = ({
       </div>
     ));
   };
-
+  const changeOnProperty = useMemo(() => {
+    if (selectedDiffNode) {
+    }
+    if (currentImprovement) {
+      currentImprovement.detailsOfChange
+    }
+  }, [currentImprovement, selectedDiffNode]);
   return (
     <Paper
       elevation={9}

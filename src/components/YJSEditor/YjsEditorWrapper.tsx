@@ -101,6 +101,7 @@ const YjsEditorWrapper = ({
       });
 
       if (reference && editorRef.current) {
+        console.log("text ==>", text, property);
         editorRef.current.setText(text);
         editorRef.current.on("text-change", (delta, oldDelta, source) => {
           console.log("text-change ==>");

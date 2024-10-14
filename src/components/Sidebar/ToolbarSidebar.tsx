@@ -22,6 +22,8 @@ import mitLogoLightLong from "../../../public/CCI-logo.gif";
 import mitLogoDarkLong from "../../../public/MIT-Logo-Dark.png";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import AutoStoriesIcon from "@mui/icons-material/AutoStories";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 import SearchIcon from "@mui/icons-material/Search";
 import NotificationsIcon from "@mui/icons-material/Notifications";
@@ -70,6 +72,7 @@ import { handleDownload } from " @components/lib/utils/random";
 import NodeActivity from "../ActiveUsers/NodeActivity";
 import { User } from " @components/types/IAuth";
 import { NodeChange } from " @components/types/INode";
+import Improvements from "../Improvements/Improvements";
 
 type MainSidebarProps = {
   toolbarRef: any;
@@ -90,6 +93,9 @@ type MainSidebarProps = {
   expandedNodes: any;
   setExpandedNodes: any;
   onOpenNodesTree: any;
+  setDisplayGuidelines: Function;
+  currentImprovement: any;
+  setCurrentImprovement: any;
 };
 
 const ToolbarSidebar = ({
@@ -111,6 +117,9 @@ const ToolbarSidebar = ({
   expandedNodes,
   setExpandedNodes,
   onOpenNodesTree,
+  setDisplayGuidelines,
+  currentImprovement,
+  setCurrentImprovement,
 }: MainSidebarProps) => {
   const theme = useTheme();
   const db = getFirestore();
@@ -460,6 +469,14 @@ const ToolbarSidebar = ({
             activeUsers={activeUsers}
           />
         );
+      case "improvements":
+        return (
+          <Improvements
+            currentImprovement={currentImprovement}
+            setCurrentImprovement={setCurrentImprovement}
+            currentVisibleNode={currentVisibleNode}
+          />
+        );
       default:
         return null;
     }
@@ -696,6 +713,26 @@ const ToolbarSidebar = ({
               text="Search"
               toolbarIsOpen={hovered}
             />
+            {/*<SidebarButton
+              id="toolbar-theme-button"
+              icon={<AutoAwesomeIcon />}
+              onClick={() => {
+                handleExpandSidebar("improvements");
+              }}
+              text={"Copilot"}
+              toolbarIsOpen={hovered}
+            />
+
+            <SidebarButton
+              id="toolbar-theme-button"
+              icon={<AutoStoriesIcon />}
+              onClick={() => {
+                setDisplayGuidelines((prev: boolean) => !prev);
+              }}
+              text={"Guidelines"}
+              toolbarIsOpen={hovered}
+            /> */}
+
             <SidebarButton
               id="toolbar-theme-button"
               icon={

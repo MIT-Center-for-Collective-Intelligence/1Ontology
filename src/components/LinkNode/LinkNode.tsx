@@ -434,7 +434,8 @@ const LinkNode = ({
             }}
           >
             {" "}
-            {title || regionalTitle}
+            {/* {title || regionalTitle} */}
+            {link.id}
           </Link>
           {unlinkVisible && !locked && !linkLocked && (
             <Button

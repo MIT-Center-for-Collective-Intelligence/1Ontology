@@ -65,6 +65,7 @@ type IStructuredPropertyProps = {
   setReviewId?: Function;
   confirmIt: any;
   onGetPropertyValue: any;
+  currentImprovement: any;
 };
 
 const StructuredProperty = ({
@@ -81,6 +82,7 @@ const StructuredProperty = ({
   setReviewId,
   confirmIt,
   onGetPropertyValue,
+  currentImprovement,
 }: IStructuredPropertyProps) => {
   const [{ user }] = useAuth();
   const theme = useTheme();
@@ -92,68 +94,125 @@ const StructuredProperty = ({
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
 
   const propertyValue: ICollection[] = useMemo(() => {
-    let result =
-      getPropertyValue(
-        nodes,
-        currentVisibleNode.inheritance[property]?.ref,
-        property
-      ) ||
-      currentVisibleNode?.properties[property] ||
-      currentVisibleNode[property as "specializations" | "generalizations"];
+    try {
+      let result =
+        getPropertyValue(
+          nodes,
+          currentVisibleNode.inheritance[property]?.ref,
+          property
+        ) ||
+        currentVisibleNode?.properties[property] ||
+        currentVisibleNode[property as "specializations" | "generalizations"];
 
-    if (
-      selectedDiffNode &&
-      selectedDiffNode.modifiedProperty === property &&
-      (selectedDiffNode.changeType === "delete collection" ||
-        selectedDiffNode.changeType === "edit collection")
-    ) {
-      result = selectedDiffNode.previousValue;
-    }
+      if (
+        selectedDiffNode &&
+        selectedDiffNode.modifiedProperty === property &&
+        (selectedDiffNode.changeType === "delete collection" ||
+          selectedDiffNode.changeType === "edit collection")
+      ) {
+        result = selectedDiffNode.previousValue;
+      }
 
-    let finalResult: any = [];
+      let finalResult: any = [];
+      const listOfChanges = [];
+      if (
+        selectedDiffNode &&
+        selectedDiffNode.modifiedProperty === property &&
+        (selectedDiffNode.changeType === "sort elements" ||
+          selectedDiffNode.changeType === "remove element" ||
+          selectedDiffNode.changeType === "modify elements" ||
+          selectedDiffNode.changeType === "add element")
+      ) {
+        listOfChanges.push(selectedDiffNode);
+      }
+      if (currentImprovement) {
+        listOfChanges.push(...currentImprovement.detailsOfChange);
+      }
 
-    if (
-      selectedDiffNode &&
-      selectedDiffNode.modifiedProperty === property &&
-      (selectedDiffNode.changeType === "sort elements" ||
-        selectedDiffNode.changeType === "remove element" ||
-        selectedDiffNode.changeType === "modify elements" ||
-        selectedDiffNode.changeType === "add element")
-    ) {
-      selectedDiffNode.newValue.forEach(
-        (collectionNewValue: ICollection, collectionIndex: number) => {
-          const collectionPrevious: ICollection =
-            selectedDiffNode?.previousValue[collectionIndex] || [];
+      if (
+        selectedDiffNode &&
+        selectedDiffNode.modifiedProperty === property &&
+        (selectedDiffNode.changeType === "sort elements" ||
+          selectedDiffNode.changeType === "remove element" ||
+          selectedDiffNode.changeType === "modify elements" ||
+          selectedDiffNode.changeType === "add element")
+      ) {
+        selectedDiffNode.newValue.forEach(
+          (collectionNewValue: ICollection, collectionIndex: number) => {
+            const collectionPrevious: ICollection =
+              selectedDiffNode?.previousValue[collectionIndex] || [];
 
-          collectionNewValue.nodes.forEach((nodeLink) => {
-            const foundInPrevious = (collectionPrevious?.nodes || []).find(
-              (prevElement: ILinkNode) => prevElement.id === nodeLink.id
-            );
-            if (!foundInPrevious) {
-              nodeLink.change = "added";
-              return { ...nodeLink, change: "added" };
-            }
-          });
-          (collectionPrevious?.nodes || []).forEach((prevElement: any) => {
-            const foundInNew = collectionNewValue.nodes.find(
-              (newElement: ILinkNode) => newElement.id === prevElement.id
-            );
-            if (!foundInNew) {
-              collectionNewValue.nodes.push({
-                ...prevElement,
-                change: "removed",
+            collectionNewValue.nodes.forEach((nodeLink) => {
+              const foundInPrevious = (collectionPrevious?.nodes || []).find(
+                (prevElement: ILinkNode) => prevElement.id === nodeLink.id
+              );
+              if (!foundInPrevious) {
+                nodeLink.change = "added";
+                return { ...nodeLink, change: "added" };
+              }
+            });
+            (collectionPrevious?.nodes || []).forEach((prevElement: any) => {
+              const foundInNew = collectionNewValue.nodes.find(
+                (newElement: ILinkNode) => newElement.id === prevElement.id
+              );
+              if (!foundInNew) {
+                collectionNewValue.nodes.push({
+                  ...prevElement,
+                  change: "removed",
+                });
+              }
+            });
+            finalResult.push(collectionNewValue);
+          }
+        );
+      }
+      for (let improvementChange of listOfChanges || []) {
+        console.log("improvementChange ==>", improvementChange, property);
+        if (improvementChange.modifiedProperty === property) {
+          improvementChange.newValue.forEach(
+            (collectionNewValue: ICollection, collectionIndex: number) => {
+              const collectionPrevious: ICollection =
+                improvementChange.previousValue[collectionIndex];
+
+              collectionNewValue.nodes.forEach((nodeLink) => {
+                const foundInPrevious = collectionPrevious.nodes.find(
+                  (prevElement: ILinkNode) => prevElement.id === nodeLink.id
+                );
+                if (!foundInPrevious) {
+                  nodeLink.change = "added";
+                  return { ...nodeLink, change: "added" };
+                }
               });
+              collectionPrevious.nodes.forEach((prevElement: any) => {
+                const foundInNew = collectionNewValue.nodes.find(
+                  (newElement: ILinkNode) => newElement.id === prevElement.id
+                );
+                if (!foundInNew) {
+                  collectionNewValue.nodes.push({
+                    ...prevElement,
+                    change: "removed",
+                  });
+                }
+              });
+              finalResult.push(collectionNewValue);
             }
-          });
-          finalResult.push(collectionNewValue);
+          );
+          console.log(finalResult, "finalResult ==>");
+          return [...finalResult];
         }
-      );
+      }
 
-      return [...finalResult];
+      return result;
+    } catch (error) {
+      console.error(error);
     }
-
-    return result;
-  }, [currentVisibleNode, nodes, property, selectedDiffNode]) as ICollection[];
+  }, [
+    currentVisibleNode,
+    nodes,
+    property,
+    selectedDiffNode,
+    currentImprovement,
+  ]) as ICollection[];
 
   const unlinkVisible = useCallback(
     (nodeId: string) => {
@@ -1214,6 +1273,7 @@ const StructuredProperty = ({
             getTitleNode={() => {}}
             confirmIt={confirmIt}
             structured={true}
+            currentImprovement={currentImprovement}
           />
         </Box>
       )}

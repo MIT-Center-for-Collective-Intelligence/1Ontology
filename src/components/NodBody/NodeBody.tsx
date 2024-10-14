@@ -33,6 +33,7 @@ interface NodeBodyProps {
   getTitleNode: any;
   confirmIt: any;
   onGetPropertyValue: any;
+  currentImprovement: any;
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -48,6 +49,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   getTitleNode,
   confirmIt,
   onGetPropertyValue,
+  currentImprovement,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -262,6 +264,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                   nodes={nodes}
                   locked={locked}
                   onGetPropertyValue={onGetPropertyValue}
+                  currentImprovement={currentImprovement}
                 />
               ) : (
                 property !== "description" &&
@@ -276,6 +279,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     selectedDiffNode={selectedDiffNode}
                     getTitleNode={getTitleNode}
                     confirmIt={confirmIt}
+                    currentImprovement={currentImprovement}
                   />
                 )
               )}
