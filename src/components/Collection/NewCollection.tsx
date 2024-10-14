@@ -9,6 +9,11 @@ interface NewCollectionProps {
 const NewCollection: React.FC<NewCollectionProps> = ({ onAdd, onCancel }) => {
   const [collectionName, setCollectionName] = useState("");
 
+  const isInvalidName = (name: string) => {
+    const forbiddenNames = ["default", "main"];
+    return forbiddenNames.includes(name.trim().toLowerCase());
+  };
+
   return (
     <Paper
       elevation={9}
@@ -30,6 +35,12 @@ const NewCollection: React.FC<NewCollectionProps> = ({ onAdd, onCancel }) => {
         InputLabelProps={{
           style: { color: "grey" },
         }}
+        error={isInvalidName(collectionName)}
+        helperText={
+          isInvalidName(collectionName)
+            ? 'Name cannot be "default" or "main"'
+            : ""
+        }
       />
       <Box
         sx={{
@@ -50,7 +61,7 @@ const NewCollection: React.FC<NewCollectionProps> = ({ onAdd, onCancel }) => {
           onClick={() => onAdd(collectionName)}
           variant="contained"
           sx={{ borderRadius: "18px" }}
-          disabled={!collectionName.trim()}
+          disabled={!collectionName.trim() || isInvalidName(collectionName)}
         >
           Add
         </Button>

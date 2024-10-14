@@ -271,16 +271,6 @@ const StructuredProperty = ({
           const newArray = [...propertyValue];
           const [movedElement] = newArray.splice(sourceIndex, 1);
           newArray.splice(destinationIndex, 0, movedElement);
-
-          const mainIndex = newArray.findIndex(
-            (item) => item.collectionName === "main"
-          );
-
-          if (mainIndex !== -1 && mainIndex !== newArray.length - 1) {
-            const [mainCollection] = newArray.splice(mainIndex, 1);
-            newArray.push(mainCollection);
-          }
-
           const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
 
           if (
@@ -590,6 +580,12 @@ const StructuredProperty = ({
   const addCollection = useCallback(
     async (newCollection: string) => {
       try {
+        if (
+          newCollection.toLowerCase() === "main" ||
+          newCollection.toLowerCase() === "default"
+        ) {
+          return;
+        }
         setOpenAddCollection(false);
         if (!newCollection || !user?.uname) return;
 
@@ -842,21 +838,13 @@ const StructuredProperty = ({
             {'")'}
           </Typography>
         )}
-        {property !== "specializations" && property !== "generalizations" && (
-          <SelectInheritance
-            currentVisibleNode={currentVisibleNode}
-            property={property}
-            nodes={nodes}
-          />
-        )}
-      </Box>
-      <Box sx={{ p: "15px" }}>
         {!locked && !selectedDiffNode && (
           <Box
             sx={{
               alignItems: "center",
               display: "flex",
               gap: "15px",
+              ml: "auto",
             }}
           >
             <Button
@@ -870,6 +858,15 @@ const StructuredProperty = ({
             </Button>
           </Box>
         )}
+        {property !== "specializations" && property !== "generalizations" && (
+          <SelectInheritance
+            currentVisibleNode={currentVisibleNode}
+            property={property}
+            nodes={nodes}
+          />
+        )}
+      </Box>
+      <Box sx={{ p: "15px", pt: 0 }}>
         {openAddCollection && (
           <NewCollection
             onAdd={addCollection}
@@ -963,7 +960,7 @@ const StructuredProperty = ({
                                       )}
                                     </Typography>
                                   </Box>
-                                ) : collection.collectionName !== "main" ? (
+                                ) : (
                                   <Typography
                                     sx={{
                                       fontWeight: "bold",
@@ -971,11 +968,11 @@ const StructuredProperty = ({
                                     }}
                                   >
                                     {capitalizeFirstLetter(
-                                      collection.collectionName
+                                      collection.collectionName === "main"
+                                        ? "Default"
+                                        : collection.collectionName
                                     )}
                                   </Typography>
-                                ) : (
-                                  <></>
                                 )}
                                 {!selectedDiffNode && (
                                   <Button
@@ -994,6 +991,7 @@ const StructuredProperty = ({
                                             ? "#f0f0f0"
                                             : "",
                                       },
+                                      ml: "auto",
                                     }}
                                     variant="outlined"
                                   >
