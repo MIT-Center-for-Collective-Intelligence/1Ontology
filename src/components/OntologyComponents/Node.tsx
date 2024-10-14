@@ -239,7 +239,9 @@ const Node = ({
     }
     if (
       selectedProperty === "specializations" ||
-      selectedProperty === "generalizations"
+      selectedProperty === "generalizations" ||
+      selectedProperty === "parts" ||
+      selectedProperty === "isPartOf"
     ) {
       return searchWithFuse(searchValue);
     }
@@ -567,20 +569,20 @@ const Node = ({
     if (property === "specializations" || property === "generalizations") {
       // Find the collection based on the collection name
 
-      if (collectionName === "main") {
+      /*       if (collectionName === "main") {
         let checked = [];
         for (let collection of currentVisibleNode[property]) {
           checked.push(...collection.nodes.map((link) => link.id));
         }
         previousCheckedItems = checked;
-      } else {
-        const collection = currentVisibleNode[property].find(
-          (col) => col.collectionName === collectionName
-        );
-        if (collection) {
-          previousCheckedItems = collection.nodes.map((link) => link.id);
-        }
+      } else { */
+      const collection = currentVisibleNode[property].find(
+        (col) => col.collectionName === collectionName
+      );
+      if (collection) {
+        previousCheckedItems = collection.nodes.map((link) => link.id);
       }
+      // }
     } else {
       // Handle properties case
       const propertyCollection = currentVisibleNode.properties[property];
@@ -630,15 +632,15 @@ const Node = ({
   };
 
   const updateLinks = (
-    children: { id: string }[],
+    links: { id: string }[],
     newLink: { id: string },
     linkType: "specializations" | "generalizations"
   ) => {
-    const filteredChildren = children.filter((child) => {
+    const filteredChildren = links.filter((child) => {
       const childData = nodes[child.id];
       const allLinks = [
-        ...(childData.specializations || []),
-        ...(childData.generalizations || []),
+        ...(childData?.specializations || []),
+        ...(childData?.generalizations || []),
       ];
 
       return !allLinks.some((collection) => {
@@ -648,9 +650,10 @@ const Node = ({
 
     for (let child of filteredChildren) {
       const childData = nodes[child.id];
-      const links = childData[linkType];
+      if (!childData) continue;
+      const childLinks = childData[linkType];
 
-      const mainCollection = links.find(
+      const mainCollection = childLinks.find(
         (collection) => collection.collectionName === "main"
       );
 
@@ -658,17 +661,17 @@ const Node = ({
         mainCollection.nodes.push(newLink);
         const childRef = doc(collection(db, NODES), child.id);
         updateDoc(childRef, {
-          [linkType]: links,
+          [linkType]: childLinks,
         });
       } else {
         const newCollection = {
           collectionName: "main",
           nodes: [newLink],
         };
-        links.push(newCollection);
+        childLinks.push(newCollection);
         const childRef = doc(collection(db, NODES), child.id);
         updateDoc(childRef, {
-          [linkType]: links,
+          [linkType]: childLinks,
         });
       }
     }
@@ -847,18 +850,14 @@ const Node = ({
       }
 
       // Handle removed links
-      if (
-        selectedProperty !== "specializations" &&
-        selectedProperty !== "generalizations"
-      ) {
-        for (let link of removedLinks) {
-          unlinkPropertyOf(
-            db,
-            selectedProperty,
-            currentVisibleNode.id,
-            link.id
-          );
-        }
+
+      for (let link of removedLinks) {
+        await unlinkPropertyOf(
+          db,
+          selectedProperty,
+          currentVisibleNode.id,
+          link.id
+        );
       }
 
       // Update the node data with the new children

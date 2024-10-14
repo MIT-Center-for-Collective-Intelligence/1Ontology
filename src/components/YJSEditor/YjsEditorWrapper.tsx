@@ -101,13 +101,10 @@ const YjsEditorWrapper = ({
       });
 
       if (reference && editorRef.current) {
-        console.log("text ==>", text, property);
         editorRef.current.setText(text);
         editorRef.current.on("text-change", (delta, oldDelta, source) => {
-          console.log("text-change ==>");
           if (source === "user" && reference) {
             const text = editorRef.current?.getText();
-            console.log("text", text);
             breakInheritance(text);
           }
         });
@@ -154,7 +151,6 @@ const YjsEditorWrapper = ({
       });
       provider.awareness.setLocalStateField("user", userInfo);
       editorRef.current.on("text-change", (delta, oldDelta, source) => {
-        console.log("text-change ==>");
         if (source === "user") {
           const previousText = (oldDelta.ops[0].insert || "") as string;
           const newText = applyDeltaToText(previousText, delta);

@@ -123,7 +123,6 @@ const Text = ({
       focusAfterSaveRef.current = true;
 
       if (currentVisibleNode.inheritance[property]?.ref) {
-        console.log("copyValue", copyValue);
         const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
         if (structured) {
           await updateDoc(nodeRef, {
@@ -214,9 +213,10 @@ const Text = ({
     if (selectedDiffNode) {
     }
     if (currentImprovement) {
-      currentImprovement.detailsOfChange
+      currentImprovement.detailsOfChange;
     }
   }, [currentImprovement, selectedDiffNode]);
+
   return (
     <Paper
       elevation={9}
@@ -302,7 +302,9 @@ const Text = ({
           )}
         </Box>
       )}
-      <Typography color="red">{error}</Typography>
+      <Typography color="red" sx={{ pl: "5px" }}>
+        {error}
+      </Typography>
       {locked ||
       (selectedDiffNode && selectedDiffNode.modifiedProperty !== property) ? (
         <Typography

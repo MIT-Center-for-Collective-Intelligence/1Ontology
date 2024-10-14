@@ -720,7 +720,14 @@ const Ontology = () => {
   const navigateToNode = async (nodeId: string) => {
     if (nodes[nodeId]) {
       setCurrentVisibleNode(nodes[nodeId]);
+      initializeExpanded(eachOntologyPath[nodeId]);
       setSelectedDiffNode(null);
+      setTimeout(() => {
+        const element = document.getElementById("node-" + nodeId);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 800);
     }
   };
 

@@ -54,19 +54,9 @@ export const compareProperties = async (
         );
 
         if (missingItems.length > 0) {
-          console.log(
-            `New items added in property "${propertyName}": ${missingItems.join(
-              ", "
-            )}`
-          );
           changedProperty = true;
         }
         if (extraItems.length > 0) {
-          console.log(
-            `Items removed from property "${propertyName}": ${extraItems.join(
-              ", "
-            )}`
-          );
           changedProperty = true;
         }
         if (changedProperty) {

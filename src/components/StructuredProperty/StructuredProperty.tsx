@@ -167,7 +167,6 @@ const StructuredProperty = ({
         );
       }
       for (let improvementChange of listOfChanges || []) {
-        console.log("improvementChange ==>", improvementChange, property);
         if (improvementChange.modifiedProperty === property) {
           improvementChange.newValue.forEach(
             (collectionNewValue: ICollection, collectionIndex: number) => {
@@ -197,7 +196,7 @@ const StructuredProperty = ({
               finalResult.push(collectionNewValue);
             }
           );
-          console.log(finalResult, "finalResult ==>");
+
           return [...finalResult];
         }
       }
@@ -860,37 +859,15 @@ const StructuredProperty = ({
               gap: "15px",
             }}
           >
-            {property === "specializations" && (
-              <Button
-                onClick={() => showListToSelect(property, "main")}
-                sx={{ borderRadius: "18px", backgroundColor: BUTTON_COLOR }}
-                variant="outlined"
-              >
-                {"Add "}
-                {capitalizeFirstLetter(DISPLAY[property] || property)}
-              </Button>
-            )}
-            {property !== "specializations" && (
-              <Button
-                onClick={() => showListToSelect(property, "main")}
-                sx={{ borderRadius: "18px", backgroundColor: BUTTON_COLOR }}
-                variant="outlined"
-              >
-                {"Link "}
-                {capitalizeFirstLetter(DISPLAY[property] || property)}
-              </Button>
-            )}
-            {property !== "parts" && property !== "isPartOf" && (
-              <Button
-                onClick={() => {
-                  setOpenAddCollection(true);
-                }}
-                sx={{ borderRadius: "18px", backgroundColor: BUTTON_COLOR }}
-                variant="outlined"
-              >
-                Add Collection
-              </Button>
-            )}
+            <Button
+              onClick={() => {
+                setOpenAddCollection(true);
+              }}
+              sx={{ borderRadius: "18px", backgroundColor: BUTTON_COLOR }}
+              variant="outlined"
+            >
+              Add Collection
+            </Button>
           </Box>
         )}
         {openAddCollection && (
@@ -934,12 +911,9 @@ const StructuredProperty = ({
                               mt: "15px",
                               borderRadius: "20px",
                             }}
-                            elevation={
-                              collection.collectionName !== "main" ? 6 : 0
-                            }
                           >
-                            {collection.collectionName !== "main" &&
-                            editCollection === null ? (
+                            {editCollection === null ||
+                            editCollection !== collection.collectionName ? (
                               <Box
                                 sx={{
                                   display: "flex",
@@ -989,7 +963,7 @@ const StructuredProperty = ({
                                       )}
                                     </Typography>
                                   </Box>
-                                ) : (
+                                ) : collection.collectionName !== "main" ? (
                                   <Typography
                                     sx={{
                                       fontWeight: "bold",
@@ -1000,64 +974,71 @@ const StructuredProperty = ({
                                       collection.collectionName
                                     )}
                                   </Typography>
+                                ) : (
+                                  <></>
                                 )}
-                                {property === "specializations" &&
-                                  !selectedDiffNode && (
-                                    <Button
-                                      onClick={() =>
-                                        showListToSelect(
-                                          property,
-                                          collection.collectionName
-                                        )
-                                      }
-                                      sx={{
-                                        borderRadius: "18px",
-                                        backgroundColor: BUTTON_COLOR,
-                                        ":hover": {
-                                          backgroundColor:
-                                            theme.palette.mode === "light"
-                                              ? "#f0f0f0"
-                                              : "",
-                                        },
-                                      }}
-                                      variant="outlined"
-                                    >
-                                      {"Add Specializations"}
-                                    </Button>
-                                  )}
                                 {!selectedDiffNode && (
-                                  <Box
+                                  <Button
+                                    onClick={() =>
+                                      showListToSelect(
+                                        property,
+                                        collection.collectionName
+                                      )
+                                    }
                                     sx={{
-                                      display: "flex",
-                                      ml: "auto",
+                                      borderRadius: "18px",
+                                      backgroundColor: BUTTON_COLOR,
+                                      ":hover": {
+                                        backgroundColor:
+                                          theme.palette.mode === "light"
+                                            ? "#f0f0f0"
+                                            : "",
+                                      },
                                     }}
+                                    variant="outlined"
                                   >
-                                    <Tooltip title="Edit collection title">
-                                      <IconButton
-                                        onClick={() => {
-                                          handleEditCollection(
-                                            collection.collectionName
-                                          );
-                                        }}
-                                      >
-                                        <EditIcon />
-                                      </IconButton>
-                                    </Tooltip>
-                                    <Tooltip title="Delete collection">
-                                      <IconButton
-                                        onClick={() =>
-                                          deleteCollection(
-                                            property,
-                                            collectionIndex,
-                                            collection.collectionName
-                                          )
-                                        }
-                                      >
-                                        <DeleteIcon />
-                                      </IconButton>
-                                    </Tooltip>
-                                  </Box>
+                                    {property === "specializations"
+                                      ? "Add Specializations"
+                                      : `Link ${capitalizeFirstLetter(
+                                          DISPLAY[property] || property
+                                        )}`}{" "}
+                                  </Button>
                                 )}
+
+                                {!selectedDiffNode &&
+                                  collection.collectionName !== "main" && (
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        ml: "auto",
+                                      }}
+                                    >
+                                      <Tooltip title="Edit collection title">
+                                        <IconButton
+                                          onClick={() => {
+                                            handleEditCollection(
+                                              collection.collectionName
+                                            );
+                                          }}
+                                        >
+                                          <EditIcon />
+                                        </IconButton>
+                                      </Tooltip>
+                                      <Tooltip title="Delete collection">
+                                        <IconButton
+                                          onClick={() =>
+                                            deleteCollection(
+                                              property,
+                                              collectionIndex,
+                                              collection.collectionName
+                                            )
+                                          }
+                                        >
+                                          <DeleteIcon />
+                                        </IconButton>
+                                      </Tooltip>
+                                    </Box>
+                                  )}
                               </Box>
                             ) : editCollection === collection.collectionName ? (
                               <Box
@@ -1251,7 +1232,7 @@ const StructuredProperty = ({
           </Droppable>
         </DragDropContext>
       </Box>
-      {property !== "specializations" && property !== "generalizations" && (
+      {/*   {property !== "specializations" && property !== "generalizations" && (
         <Box sx={{ mt: "14px", p: "6px" }}>
           <Typography sx={{ mb: "4px" }}>
             If you cannot find the existing{" "}
@@ -1276,7 +1257,7 @@ const StructuredProperty = ({
             currentImprovement={currentImprovement}
           />
         </Box>
-      )}
+      )} */}
     </Paper>
   );
 };

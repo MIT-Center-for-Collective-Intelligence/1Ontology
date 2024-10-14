@@ -1,4 +1,4 @@
-import { IInheritance, INode } from " @components/types/INode";
+import { ICollection, IInheritance, INode } from " @components/types/INode";
 import {
   getDoc,
   doc,
@@ -54,46 +54,80 @@ export const recordLogs = async (logs: { [key: string]: any }) => {
 
 export const unlinkPropertyOf = async (
   db: any,
-  property: "parts" | "isPartOf" | string,
+  property:
+    | "parts"
+    | "isPartOf"
+    | "specializations"
+    | "generalizations"
+    | string,
   removeNodeId: string,
   removeFromId: string
 ) => {
   if (!removeFromId) return;
 
   const unlinkFromDoc = await getDoc(doc(collection(db, NODES), removeFromId));
-  let removeFrom: "parts" | "isPartOf" | string =
-    property === "parts" ? "isPartOf" : property;
+  let removeFrom:
+    | "parts"
+    | "isPartOf"
+    | "specializations"
+    | "generalizations"
+    | string = property;
+
+  if (property === "parts") {
+    removeFrom = "isPartOf";
+  }
+  if (property === "isPartOf") {
+    removeFrom = "parts";
+  }
+  if (property === "specializations") {
+    removeFrom = "generalizations";
+  }
+  if (property === "generalizations") {
+    removeFrom = "specializations";
+  }
+  // = property === "parts" ? "isPartOf" : property;
 
   if (unlinkFromDoc.exists()) {
     const unlinkFromData = unlinkFromDoc.data() as INode;
-
-    if (
-      (removeFrom === "parts" || removeFrom === "isPartOf") &&
-      Array.isArray(unlinkFromData.properties[removeFrom])
-    ) {
-      for (let collection of unlinkFromData.properties[removeFrom]) {
+    if (removeFrom === "generalizations" || removeFrom === "specializations") {
+      for (let collection of unlinkFromData[removeFrom]) {
         collection.nodes = collection.nodes.filter(
           (n: { id: string }) => n.id !== removeNodeId
         );
       }
       await updateDoc(unlinkFromDoc.ref, {
-        [`properties.${removeFrom}`]: unlinkFromData.properties[removeFrom],
+        [`${removeFrom}`]: unlinkFromData[removeFrom],
       });
     } else {
       if (
-        unlinkFromData.propertyOf &&
-        unlinkFromData.propertyOf[removeFrom] &&
+        (removeFrom === "parts" || removeFrom === "isPartOf") &&
         Array.isArray(unlinkFromData.properties[removeFrom])
       ) {
-        for (let collection of unlinkFromData.propertyOf[removeFrom]) {
+        const newValue = unlinkFromData.properties[removeFrom] as ICollection[];
+        for (let collection of newValue) {
           collection.nodes = collection.nodes.filter(
-            (c: { id: string }) => c.id !== removeNodeId
+            (n: { id: string }) => n.id !== removeNodeId
           );
         }
-
         await updateDoc(unlinkFromDoc.ref, {
-          [`propertyOf.${removeFrom}`]: unlinkFromData.propertyOf[removeFrom],
+          [`properties.${removeFrom}`]: newValue,
         });
+      } else {
+        if (
+          unlinkFromData.propertyOf &&
+          unlinkFromData.propertyOf[removeFrom] &&
+          Array.isArray(unlinkFromData.properties[removeFrom])
+        ) {
+          for (let collection of unlinkFromData.propertyOf[removeFrom]) {
+            collection.nodes = collection.nodes.filter(
+              (c: { id: string }) => c.id !== removeNodeId
+            );
+          }
+
+          await updateDoc(unlinkFromDoc.ref, {
+            [`propertyOf.${removeFrom}`]: unlinkFromData.propertyOf[removeFrom],
+          });
+        }
       }
     }
   }
@@ -118,6 +152,7 @@ export const fetchAndUpdateNode = async (
       )
     );
     nodeData = removeNodeFromLinks(nodeData, nodeId, removeFromProperty);
+    await updateDoc(nodeDoc.ref, nodeData);
     saveNewChangeLog(db, {
       nodeId: linkId,
       modifiedBy: uname,
@@ -130,7 +165,6 @@ export const fetchAndUpdateNode = async (
       changeType: "remove element",
       fullNode: nodeData,
     });
-    await updateDoc(nodeDoc.ref, nodeData);
   }
 };
 
@@ -280,7 +314,7 @@ const recursivelyUpdateSpecializations = async ({
     (inheritanceType === "inheritUnlessAlreadyOverRidden" &&
       inheritance.ref !== null) ||
     inheritanceType === "alwaysInherit";
-  console.log(nodeId);
+
   if (nestedCall && canInherit) {
     await updateProperty(batch, nodeRef, updatedProperty, generalizationId, db);
   }
@@ -468,7 +502,7 @@ export const checkIfCanDeleteANode = (
     ].generalizations.flatMap((n) => n.nodes);
     return generalizationsOfSpecialization.length === 1;
   });
-  console.log(candelete, "candelete");
+
   return candelete;
 };
 
@@ -498,7 +532,12 @@ export const createNewNode = (
     id: newNodeRefId,
     title: newTitle,
     inheritance,
-    specializations: [],
+    specializations: [
+      {
+        collectionName: "main",
+        nodes: [],
+      },
+    ],
     generalizations: [
       {
         collectionName: "main",

@@ -29,7 +29,7 @@ const SearchSideBar = ({
   }, [searchValue]);
 
   return (
-    <Box sx={{ pl: "10px" }}>
+    <Box sx={{ pl: "10px", overflow: "auto", height: "100vh" }}>
       <TextField
         variant="standard"
         placeholder="Search..."
@@ -51,6 +51,13 @@ const SearchSideBar = ({
         sx={{
           p: "8px",
           mt: "5px",
+          position: "sticky",
+          top: "0px",
+          background: (theme) =>
+            theme.palette.mode === "dark"
+              ? "black"
+              : DESIGN_SYSTEM_COLORS.gray200,
+          zIndex: 1000,
         }}
       />
       <List>
