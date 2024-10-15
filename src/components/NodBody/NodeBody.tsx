@@ -11,7 +11,7 @@ import {
 } from "firebase/firestore";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
-import { DISPLAY } from " @components/lib/CONSTANTS";
+import { DISPLAY, PROPERTIES_ORDER } from " @components/lib/CONSTANTS";
 import {
   recordLogs,
   saveNewChangeLog,
@@ -235,56 +235,65 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     }
   };
 
+  const orderOfProperties = useMemo(() => {
+    const priorityOrder = PROPERTIES_ORDER[currentVisibleNode.nodeType] || [];
+
+    return Object.keys(properties || {})
+      .filter(
+        (p) =>
+          p !== "parts" &&
+          p !== "isPartOf" &&
+          p !== "description" &&
+          p.toLowerCase() !== "actor"
+      )
+      .sort(
+        (a, b) =>
+          priorityOrder.indexOf(a) - priorityOrder.indexOf(b) ||
+          (priorityOrder.includes(b) ? 1 : 0)
+      );
+  }, [currentVisibleNode, properties]);
+
   return (
     <Box>
       <Box>
-        {Object.keys(properties || {})
-          .filter(
-            (p) =>
-              p !== "parts" &&
-              p !== "isPartOf" &&
-              p !== "description" &&
-              p.toLowerCase() !== "actor"
-          )
-          .sort()
-          .map((property: string, index) => (
-            <Box key={property} sx={{ mt: "15px" }}>
-              {currentNode.propertyType[property] !== "string" ? (
-                <StructuredProperty
-                  key={property + index}
-                  confirmIt={confirmIt}
-                  selectedDiffNode={selectedDiffNode}
+        {orderOfProperties.map((property: string, index) => (
+          <Box key={property} sx={{ mt: "15px" }}>
+            {currentNode.propertyType[property] !== "string" ? (
+              <StructuredProperty
+                key={property + index}
+                confirmIt={confirmIt}
+                selectedDiffNode={selectedDiffNode}
+                currentVisibleNode={currentNode}
+                showListToSelect={showListToSelect}
+                setSelectedProperty={setSelectedProperty}
+                navigateToNode={navigateToNode}
+                setSnackbarMessage={setSnackbarMessage}
+                setCurrentVisibleNode={setCurrentVisibleNode}
+                property={property}
+                nodes={nodes}
+                locked={locked}
+                onGetPropertyValue={onGetPropertyValue}
+                currentImprovement={currentImprovement}
+              />
+            ) : (
+              property !== "description" &&
+              currentNode.propertyType[property] === "string" && (
+                <Text
+                  text={onGetPropertyValue(property)}
                   currentVisibleNode={currentNode}
-                  showListToSelect={showListToSelect}
-                  setSelectedProperty={setSelectedProperty}
-                  navigateToNode={navigateToNode}
-                  setSnackbarMessage={setSnackbarMessage}
-                  setCurrentVisibleNode={setCurrentVisibleNode}
                   property={property}
+                  setCurrentVisibleNode={setCurrentVisibleNode}
                   nodes={nodes}
                   locked={locked}
-                  onGetPropertyValue={onGetPropertyValue}
+                  selectedDiffNode={selectedDiffNode}
+                  getTitleNode={getTitleNode}
+                  confirmIt={confirmIt}
                   currentImprovement={currentImprovement}
                 />
-              ) : (
-                property !== "description" &&
-                currentNode.propertyType[property] === "string" && (
-                  <Text
-                    text={onGetPropertyValue(property)}
-                    currentVisibleNode={currentNode}
-                    property={property}
-                    setCurrentVisibleNode={setCurrentVisibleNode}
-                    nodes={nodes}
-                    locked={locked}
-                    selectedDiffNode={selectedDiffNode}
-                    getTitleNode={getTitleNode}
-                    confirmIt={confirmIt}
-                    currentImprovement={currentImprovement}
-                  />
-                )
-              )}
-            </Box>
-          ))}
+              )
+            )}
+          </Box>
+        ))}
       </Box>
       {!locked && openAddProperty && (
         <AddPropertyForm

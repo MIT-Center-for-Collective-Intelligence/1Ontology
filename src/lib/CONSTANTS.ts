@@ -52,3 +52,42 @@ export const SCROLL_BAR_STYLE = {
 };
 
 export const SpecialCharacterRegex = /^[a-zA-Z0-9\s]+$/;
+
+export const PROPERTIES_ORDER: any = {
+  activity: [
+    "actor",
+    "preConditions",
+    "postConditions",
+    "evaluationDimension",
+    "References",
+  ],
+  actor: ["abilities", "typeOfActor", "parts", "isPartOf"],
+  group: [
+    "abilities",
+    "individual",
+    "numberOfIndividualsInGroup",
+    "listOfIndividualsInGroup",
+    "typeOfActor",
+  ],
+  incentive: [
+    "reward",
+    "evaluationDimension",
+    "description",
+    "rewardFunction",
+    "capabilitiesRequired",
+  ],
+  evaluationDimension: [
+    "evaluationType",
+    "criteriaForAcceptability",
+    "description",
+    "directionOfDesirability",
+    "measurementUnits",
+  ],
+  reward: ["rewardType", "units"],
+  object: [],
+  evaluation: [
+    "criteriaForAcceptability",
+    "measurementUnits",
+    "directionOfDesirability",
+  ],
+};
