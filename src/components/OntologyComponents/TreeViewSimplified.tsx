@@ -53,7 +53,7 @@ const TreeViewSimplified = ({
           ? 1
           : 0
       )
-    : Object.keys(treeVisualization).sort();
+    : Object.keys(treeVisualization);
 
   useEffect(() => {
     setExpanded(Array.from(expandedNodes));
@@ -90,6 +90,10 @@ const TreeViewSimplified = ({
                 backgroundColor:
                   currentVisibleNode?.id === treeVisualization[nodeId].id
                     ? "#87D37C"
+                    : "",
+                marginLeft:
+                  currentVisibleNode?.id === treeVisualization[nodeId].id
+                    ? "8px"
                     : "",
                 justifyContent: sendNode ? "space-between" : undefined,
               }}
@@ -203,6 +207,13 @@ const TreeViewSimplified = ({
               // borderRadius: "18px",
             }, */
             position: "relative",
+            '& .MuiTreeItem-iconContainer': {
+              marginLeft: '1px !important',
+              marginRight: '0px !important',
+            },
+            '& .MuiTreeItem-label': {
+              paddingLeft: '0px !important',
+            },
             [`& .${treeItemClasses.group}`]: {
               borderLeft: `1px solid gray`,
             },

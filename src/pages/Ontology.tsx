@@ -777,6 +777,9 @@ const Ontology = () => {
             minSize={0}
             defaultSize={600}
             style={{
+              height: "100vh",
+              overflow: "hidden",
+              position: "relative",
               display: "flex",
               flexDirection: "column",
               backgroundColor:
@@ -789,7 +792,9 @@ const Ontology = () => {
               sx={{
                 width: "100%",
                 borderColor: "divider",
-
+                position: "absolute",
+                top: 0,
+                zIndex: 1,
                 backgroundColor: (theme) =>
                   theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
                 ".MuiTab-root.Mui-selected": {
@@ -812,6 +817,7 @@ const Ontology = () => {
             <Box
               sx={{
                 height: "100vh",
+                paddingTop: "50px",
                 flexGrow: 1,
                 overflow: "auto",
                 ...SCROLL_BAR_STYLE,
