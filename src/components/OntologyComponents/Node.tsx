@@ -519,7 +519,7 @@ const Node = ({
         // Add the new node to the database
         addNewNode({ id: newNodeRef.id, newNode });
 
-        setReviewId(newNodeRef.id);
+        // setReviewId(newNodeRef.id);
         setOpenSelectModel(false);
 
         // Update the parent node document
@@ -614,9 +614,7 @@ const Node = ({
       )
     ) {
       return (
-        mainSpecializations[
-          getTitle(nodes, currentVisibleNode.root).toLowerCase()
-        ]?.specializations || {}
+        mainSpecializations[currentVisibleNode.nodeType]?.specializations || {}
       );
     } else {
       const propertyType = currentVisibleNode.propertyType[selectedProperty];

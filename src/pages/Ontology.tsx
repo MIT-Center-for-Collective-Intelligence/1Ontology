@@ -652,7 +652,7 @@ const Ontology = () => {
   }, [treeVisualization]);
 
   // This function is called when a search result node is clicked.
-  const openSearchedNode = (node: any) => {
+  const openSearchedNode = (node: INode, searched = true) => {
     try {
       // Set the clicked node as the open currentVisibleNode
       setCurrentVisibleNode(node);
@@ -665,10 +665,12 @@ const Ontology = () => {
       }, 800);
       initializeExpanded(eachOntologyPath[node.id]);
       // Record the click action in logs
-      recordLogs({
-        action: "Search result clicked",
-        clicked: node.id,
-      });
+      if (searched) {
+        recordLogs({
+          action: "Search result clicked",
+          clicked: node.id,
+        });
+      }
     } catch (error) {
       console.error(error);
     }
@@ -818,9 +820,11 @@ const Ontology = () => {
               <TabPanel
                 value={viewValue}
                 index={0}
-                sx={{
-                  mb: "50px",
-                }}
+                sx={
+                  {
+                    // mb: "50px",
+                  }
+                }
               >
                 <TreeViewSimplified
                   treeVisualization={treeVisualization}

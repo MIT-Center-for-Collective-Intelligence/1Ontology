@@ -796,6 +796,7 @@ const StructuredProperty = ({
         borderRadius: "30px",
         minWidth: "500px",
         width: "100%",
+        minHeight: "150px",
         maxHeight: "100%",
         overflow: "auto",
         position: "relative",

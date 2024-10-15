@@ -438,8 +438,6 @@ const LinkNode = ({
           >
             {" "}
             {title || regionalTitle}
-            {"--"}
-            {link.id}
           </Link>
           {link.changeType === "sort" && (
             <SwapHorizIcon

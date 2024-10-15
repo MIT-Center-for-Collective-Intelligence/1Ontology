@@ -29,7 +29,7 @@ const SearchSideBar = ({
   }, [searchValue]);
 
   return (
-    <Box sx={{ pl: "10px", overflow: "auto", height: "100vh" }}>
+    <Box sx={{ pl: "10px", overflow: "auto", height: "90vh" }}>
       <TextField
         variant="standard"
         placeholder="Search..."
