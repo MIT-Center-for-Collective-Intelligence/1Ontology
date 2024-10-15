@@ -174,7 +174,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
       );
       const propertyType = currentVisibleNode.propertyType;
       const inheritance = currentVisibleNode.inheritance;
-
+      newProperty = newProperty.replace(" ", "");
       propertyType[newProperty] = newPropertyType.toLowerCase();
 
       if (newPropertyType.toLowerCase() === "string") {
@@ -238,19 +238,22 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   const orderOfProperties = useMemo(() => {
     const priorityOrder = PROPERTIES_ORDER[currentVisibleNode.nodeType] || [];
 
-    return Object.keys(properties || {})
-      .filter(
-        (p) =>
-          p !== "parts" &&
-          p !== "isPartOf" &&
-          p !== "description" &&
-          p.toLowerCase() !== "actor"
-      )
-      .sort(
-        (a, b) =>
-          priorityOrder.indexOf(a) - priorityOrder.indexOf(b) ||
-          (priorityOrder.includes(b) ? 1 : 0)
-      );
+    const sortedKeys = Object.keys(properties || {})
+      .filter((p) => p !== "parts" && p !== "isPartOf" && p !== "description")
+      .sort((a, b) => {
+        const indexA = priorityOrder.indexOf(a);
+        const indexB = priorityOrder.indexOf(b);
+
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+
+        if (indexA !== -1) return -1;
+
+        if (indexB !== -1) return 1;
+
+        return 0;
+      });
+
+    return sortedKeys;
   }, [currentVisibleNode, properties]);
 
   return (
