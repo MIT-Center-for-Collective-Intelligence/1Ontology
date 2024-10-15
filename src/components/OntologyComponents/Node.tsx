@@ -1339,7 +1339,8 @@ const Node = ({
                       markItemAsChecked(node.id);
                     }}
                     sx={{
-                      display: "flex",
+                      display:
+                        currentVisibleNode.id === node.id ? "none" : "flex",
                       alignItems: "center",
                       color: "white",
                       cursor: "pointer",
