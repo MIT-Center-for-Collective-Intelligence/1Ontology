@@ -900,7 +900,7 @@ const StructuredProperty = ({
 
         <DragDropContext
           onDragEnd={(e) => {
-            if (locked) return;
+            if (locked || !!selectedDiffNode) return;
             if (e.type === "CATEGORY") {
               handleCollectionSorting(e);
             } else {
@@ -1001,42 +1001,43 @@ const StructuredProperty = ({
                                       <></>
                                     )}
 
-                                    {!selectedDiffNode &&
-                                      collection.collectionName !== "main" && (
-                                        <Box
+                                    {!selectedDiffNode && (
+                                      <Box
+                                        sx={{
+                                          display: "flex",
+                                          ml: "auto",
+                                          gap: "5px",
+                                        }}
+                                      >
+                                        {" "}
+                                        <Button
+                                          onClick={() =>
+                                            showListToSelect(
+                                              property,
+                                              collection.collectionName
+                                            )
+                                          }
                                           sx={{
-                                            display: "flex",
+                                            borderRadius: "18px",
+                                            backgroundColor: BUTTON_COLOR,
+                                            ":hover": {
+                                              backgroundColor:
+                                                theme.palette.mode === "light"
+                                                  ? "#f0f0f0"
+                                                  : "",
+                                            },
                                             ml: "auto",
-                                            gap: "5px",
                                           }}
+                                          variant="outlined"
                                         >
-                                          {" "}
-                                          <Button
-                                            onClick={() =>
-                                              showListToSelect(
-                                                property,
-                                                collection.collectionName
-                                              )
-                                            }
-                                            sx={{
-                                              borderRadius: "18px",
-                                              backgroundColor: BUTTON_COLOR,
-                                              ":hover": {
-                                                backgroundColor:
-                                                  theme.palette.mode === "light"
-                                                    ? "#f0f0f0"
-                                                    : "",
-                                              },
-                                              ml: "auto",
-                                            }}
-                                            variant="outlined"
-                                          >
-                                            {property === "specializations"
-                                              ? "Add Specializations"
-                                              : `Link ${capitalizeFirstLetter(
-                                                  DISPLAY[property] || property
-                                                )}`}{" "}
-                                          </Button>
+                                          {property === "specializations"
+                                            ? "Add Specializations"
+                                            : `Link ${capitalizeFirstLetter(
+                                                DISPLAY[property] || property
+                                              )}`}{" "}
+                                        </Button>
+                                        {collection.collectionName !==
+                                          "main" && (
                                           <Tooltip title="Edit collection title">
                                             <IconButton
                                               onClick={() => {
@@ -1048,6 +1049,9 @@ const StructuredProperty = ({
                                               <EditIcon />
                                             </IconButton>
                                           </Tooltip>
+                                        )}
+                                        {collection.collectionName !==
+                                          "main" && (
                                           <Tooltip title="Delete collection">
                                             <IconButton
                                               onClick={() =>
@@ -1061,8 +1065,9 @@ const StructuredProperty = ({
                                               <DeleteIcon />
                                             </IconButton>
                                           </Tooltip>
-                                        </Box>
-                                      )}
+                                        )}
+                                      </Box>
+                                    )}
                                   </Box>
                                 ) : editCollection ===
                                   collection.collectionName ? (
@@ -1160,7 +1165,7 @@ const StructuredProperty = ({
                                       propertyValue[collectionIndex].nodes.map(
                                         (link: ILinkNode, index: number) => (
                                           <Draggable
-                                            key={link.id + index}
+                                            key={link.id}
                                             draggableId={link.id}
                                             index={index}
                                           >
