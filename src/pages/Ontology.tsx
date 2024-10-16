@@ -348,7 +348,7 @@ const Ontology = () => {
       }
       const nodeTitle = node.title;
       // Create an entry for the current node in the main specializations tree
-      newSpecializationsTree[nodeTitle] = {
+      newSpecializationsTree[node.id] = {
         id: node.category ? `${node.id}-${nodeTitle.trim()}` : node.id,
         path: [...path, node.id],
         isCategory: !!node.category,
@@ -370,7 +370,7 @@ const Ontology = () => {
         // Check if the collection is the main collection
         if (collection.collectionName === "main") {
           // If main, update the main specializations entry with recursive call
-          newSpecializationsTree[nodeTitle] = {
+          newSpecializationsTree[node.id] = {
             id: node.category ? `${node.id}-${nodeTitle.trim()}` : node.id,
             path: [...path, node.id],
             isCategory: !!node.category,

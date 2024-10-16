@@ -117,6 +117,9 @@ const YjsEditorWrapper = ({
         });
         return;
       }
+      if (checkDuplicateTitle) {
+        setErrorDuplicate(checkDuplicateTitle(text));
+      }
     }
   }, [reference, text]);
 

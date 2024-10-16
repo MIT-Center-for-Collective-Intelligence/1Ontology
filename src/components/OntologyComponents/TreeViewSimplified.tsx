@@ -157,7 +157,7 @@ const TreeViewSimplified = ({
                   ...sx,
                 }}
               >
-                {nodeId}
+                {treeVisualization[nodeId].title}
               </Typography>
 
               {clone &&
@@ -207,12 +207,12 @@ const TreeViewSimplified = ({
               // borderRadius: "18px",
             }, */
             position: "relative",
-            '& .MuiTreeItem-iconContainer': {
-              marginLeft: '1px !important',
-              marginRight: '0px !important',
+            "& .MuiTreeItem-iconContainer": {
+              marginLeft: "1px !important",
+              marginRight: "0px !important",
             },
-            '& .MuiTreeItem-label': {
-              paddingLeft: '0px !important',
+            "& .MuiTreeItem-label": {
+              paddingLeft: "0px !important",
             },
             [`& .${treeItemClasses.group}`]: {
               borderLeft: `1px solid gray`,

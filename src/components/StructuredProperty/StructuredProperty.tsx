@@ -923,6 +923,7 @@ const StructuredProperty = ({
                           key={collection.collectionName + collectionIndex}
                           draggableId={`${collectionIndex}`}
                           index={collectionIndex}
+                          isDragDisabled={property !== "specializations"}
                         >
                           {(provided) => (
                             <Paper
