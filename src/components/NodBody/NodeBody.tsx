@@ -315,6 +315,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           addNewProperty={addNewProperty}
           setOpenAddProperty={setOpenAddProperty}
           locked={locked}
+          exitingProperties={Object.keys(properties || {})}
         />
       )}
       {!locked && (

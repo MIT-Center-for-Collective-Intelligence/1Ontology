@@ -24,6 +24,7 @@ const ManageNodeButtons = ({
   navigateToNode,
   displaySidebar,
   activeSidebar,
+  unclassified,
 }: {
   locked: boolean;
   root: string;
@@ -34,6 +35,7 @@ const ManageNodeButtons = ({
   navigateToNode: Function;
   displaySidebar: Function;
   activeSidebar: string;
+  unclassified: boolean;
 }) => {
   const displayNodeChat = () => displaySidebar("chat");
   const displayNodeHistory = () => displaySidebar("nodeHistory");
@@ -162,7 +164,7 @@ const ManageNodeButtons = ({
           </IconButton>
         </Tooltip>
 
-        {!locked && (
+        {!locked && !unclassified && (
           <Tooltip title="Delete Node">
             <IconButton onClick={() => deleteNode()}>
               <DeleteIcon />

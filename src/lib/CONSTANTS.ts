@@ -1,3 +1,4 @@
+import { INodeTypes } from " @components/types/INode";
 import { DESIGN_SYSTEM_COLORS } from "./theme/colors";
 
 // TO-DO: Consider storing this data in the database to identify node types in the project
@@ -90,4 +91,13 @@ export const PROPERTIES_ORDER: any = {
     "measurementUnits",
     "directionOfDesirability",
   ],
+};
+
+export const UNCLASSIFIED: any = {
+  activity: "Unclassified",
+  object: "Unclassified Objects",
+  actor: "Unclassified Actors",
+  evaluationDimension: "Unclassified evaluation dimensions",
+  incentive: "Unclassified incentives",
+  reward: "Unclassified rewards",
 };

@@ -106,42 +106,44 @@ const TreeViewSimplified = ({
               }}
               id={`node-${treeVisualization[nodeId]?.id}`}
             >
-              {!treeVisualization[nodeId].isCategory && clone && (
-                <>
-                  {manageLock || !treeVisualization[nodeId].locked ? (
-                    checkedItems.has(treeVisualization[nodeId]?.id) ? (
-                      <Checkbox
-                        checked={true}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                        onChange={(e) => {
-                          markItemAsChecked(treeVisualization[nodeId].id);
-                        }}
-                        name={treeVisualization[nodeId].id}
-                      />
+              {!treeVisualization[nodeId].isCategory &&
+                clone &&
+                !treeVisualization[nodeId].unclassified && (
+                  <>
+                    {manageLock || !treeVisualization[nodeId].locked ? (
+                      checkedItems.has(treeVisualization[nodeId]?.id) ? (
+                        <Checkbox
+                          checked={true}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onChange={(e) => {
+                            markItemAsChecked(treeVisualization[nodeId].id);
+                          }}
+                          name={treeVisualization[nodeId].id}
+                        />
+                      ) : (
+                        <Checkbox
+                          checked={false}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onChange={(e) => {
+                            markItemAsChecked(treeVisualization[nodeId].id);
+                          }}
+                          name={treeVisualization[nodeId].id}
+                        />
+                      )
                     ) : (
-                      <Checkbox
-                        checked={false}
-                        onClick={(e) => {
-                          e.stopPropagation();
+                      <LockIcon
+                        sx={{
+                          color: "orange",
+                          mx: "15px",
                         }}
-                        onChange={(e) => {
-                          markItemAsChecked(treeVisualization[nodeId].id);
-                        }}
-                        name={treeVisualization[nodeId].id}
                       />
-                    )
-                  ) : (
-                    <LockIcon
-                      sx={{
-                        color: "orange",
-                        mx: "15px",
-                      }}
-                    />
-                  )}
-                </>
-              )}
+                    )}
+                  </>
+                )}
               <Typography
                 sx={{
                   fontWeight: treeVisualization[nodeId].isCategory

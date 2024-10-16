@@ -99,6 +99,7 @@ import { Box } from "@mui/system";
 import {
   collection,
   doc,
+  Firestore,
   getDoc,
   getFirestore,
   setDoc,
@@ -143,6 +144,8 @@ import {
   saveNewChangeLog,
   unlinkPropertyOf,
   updateInheritance,
+  updatePartsAndPartsOf,
+  updatePropertyOf,
   updateSpecializations,
 } from " @components/lib/utils/helpers";
 
@@ -457,12 +460,56 @@ const Node = ({
         [`propertyOf.${selectedProperty}`]:
           newNode.propertyOf[selectedProperty],
       });
-      // Update Firestore document with the updated properties and inheritance
-      await updateDoc(nodeRef, {
-        [`properties.${selectedProperty}`]:
-          nodeData.properties[selectedProperty],
-        [`inheritance.${selectedProperty}.ref`]: null,
-      });
+      if (nodeData.inheritance[selectedProperty]?.ref) {
+        const referencedProperty =
+          nodes[nodeData.inheritance[selectedProperty].ref].properties[
+            selectedProperty
+          ];
+        if (Array.isArray(referencedProperty)) {
+          const links = referencedProperty.flatMap((c) => c.nodes);
+          if (selectedProperty === "parts" || selectedProperty === "isPartOf") {
+            updatePartsAndPartsOf(
+              links,
+              { id: currentVisibleNode.id },
+              selectedProperty === "parts" ? "isPartOf" : "parts",
+              db,
+              nodes
+            );
+          } else {
+            updatePropertyOf(
+              links,
+              { id: currentVisibleNode.id },
+              selectedProperty,
+              nodes,
+              db
+            );
+          }
+        }
+      }
+
+      if (nodeData) {
+        let updateObject: any = {
+          [`properties.${selectedProperty}`]:
+            nodeData.properties[selectedProperty],
+          [`inheritance.${selectedProperty}.ref`]: null,
+        };
+        const reference = nodeData.inheritance[selectedProperty]?.ref;
+        if (reference) {
+          if (
+            nodes[reference].textValue &&
+            nodes[reference].textValue.hasOwnProperty(selectedProperty)
+          ) {
+            updateObject = {
+              ...updateObject,
+              [`textValue.${selectedProperty}`]:
+                nodes[reference].textValue[selectedProperty],
+            };
+          }
+        }
+        // Update Firestore document with the updated properties and inheritance
+        await updateDoc(nodeRef, updateObject);
+      }
+
       setReviewId(newNode.id);
       // Update inheritance (if needed)
       updateInheritance({
@@ -598,7 +645,11 @@ const Node = ({
       // }
     } else {
       // Handle properties case
-      const propertyCollection = currentVisibleNode.properties[property];
+      let propertyCollection = currentVisibleNode.properties[property];
+      const reference = currentVisibleNode.inheritance[property]?.ref || null;
+      if (reference) {
+        propertyCollection = nodes[reference].properties[property];
+      }
       if (Array.isArray(propertyCollection)) {
         if (collectionName === "main") {
           let checked = [];
@@ -686,90 +737,6 @@ const Node = ({
         });
       }
     }
-  };
-  const updatePropertyOf = async (
-    links: { id: string }[],
-    newLink: { id: string },
-    property: string
-  ) => {
-    links.filter((child) => {
-      const childData = nodes[child.id];
-      if (!childData.propertyOf) {
-        childData.propertyOf = {};
-      }
-      const propertyData = childData.propertyOf[property] || [
-        { collectionName: "main", nodes: [] },
-      ];
-      const mainCollection = propertyData.find(
-        (collection) => collection.collectionName === "main"
-      );
-      const existingIds = mainCollection
-        ? mainCollection.nodes.map((node) => node.id)
-        : [];
-
-      if (!existingIds.includes(newLink.id)) {
-        const childData = nodes[child.id];
-        if (!childData.propertyOf) {
-          childData.propertyOf = {};
-        }
-
-        const propertyData = childData.propertyOf[property] || [
-          { collectionName: "main", nodes: [] },
-        ];
-        const mainCollection = propertyData.find(
-          (collection) => collection.collectionName === "main"
-        );
-        if (mainCollection) {
-          mainCollection.nodes.push(newLink);
-
-          const childRef = doc(collection(db, NODES), child.id);
-          updateDoc(childRef, {
-            [`propertyOf.${property}`]: propertyData,
-          });
-        }
-      }
-    });
-  };
-
-  const updatePartsAndPartsOf = async (
-    links: { id: string }[],
-    newLink: { id: string },
-    property: "isPartOf" | "parts"
-  ) => {
-    links.forEach((child) => {
-      const childData = nodes[child.id] as INode;
-      if (Array.isArray(childData.properties[property])) {
-        const propertyData = childData.properties[property] as ICollection[];
-        const existingIds = propertyData.flatMap((collection) =>
-          collection.nodes.map((spec) => spec.id)
-        );
-        if (!existingIds.includes(newLink.id)) {
-          const childData = nodes[child.id];
-          const propertyData = childData.properties[property];
-          if (Array.isArray(propertyData)) {
-            const mainCollection = propertyData.find(
-              (collection) => collection.collectionName === "main"
-            ) as ICollection;
-            // Add the new link to the property data
-            mainCollection.nodes.push(newLink);
-
-            const childRef = doc(collection(db, NODES), child.id);
-            updateDoc(childRef, {
-              [`properties.${property}`]: propertyData,
-            });
-
-            // Update inheritance if the property is "parts"
-            if (property === "parts") {
-              updateInheritance({
-                nodeId: child.id,
-                updatedProperty: property,
-                db,
-              });
-            }
-          }
-        }
-      }
-    });
   };
 
   const handleSaveLinkChanges = useCallback(async () => {
@@ -916,7 +883,9 @@ const Node = ({
         updatePartsAndPartsOf(
           oldLinks,
           { id: currentVisibleNode.id },
-          selectedProperty === "parts" ? "isPartOf" : "parts"
+          selectedProperty === "parts" ? "isPartOf" : "parts",
+          db,
+          nodes
         );
       }
 
@@ -928,6 +897,22 @@ const Node = ({
         )
       ) {
         if (nodeData.inheritance[selectedProperty]) {
+          const reference = nodeData.inheritance[selectedProperty].ref;
+          if (
+            reference &&
+            nodes[reference].textValue &&
+            nodes[reference].textValue.hasOwnProperty(selectedProperty)
+          ) {
+            if (!nodeData.textValue) {
+              nodeData.textValue = {
+                [selectedProperty]:
+                  nodes[reference].textValue[selectedProperty],
+              };
+            } else {
+              nodeData.textValue[selectedProperty] =
+                nodes[reference].textValue[selectedProperty];
+            }
+          }
           nodeData.inheritance[selectedProperty].ref = null;
         }
       }
@@ -941,7 +926,9 @@ const Node = ({
         updatePropertyOf(
           oldLinks,
           { id: currentVisibleNode.id },
-          selectedProperty
+          selectedProperty,
+          nodes,
+          db
         );
       }
 
@@ -991,6 +978,7 @@ const Node = ({
     db,
     selectedCategory,
     selectedProperty,
+    nodes,
   ]);
 
   //  function to handle the deletion of a Node
@@ -1140,6 +1128,7 @@ const Node = ({
   it by tracing the generalizations of this descendent activity back to reach one of the direct specializations 
   of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. So, obviously the root of the node 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'
   itself and its direct specializations would be empty string because they are already roots."*/
+  console.log("selectFromTree() ==>", selectFromTree());
 
   return (
     <Box
@@ -1439,6 +1428,35 @@ const Node = ({
                 manageLock={user?.manageLock}
               />
             )}
+            {selectedProperty !== "specializations" &&
+              selectedProperty !== "generalizations" && (
+                <Box sx={{ p: "6px", mt: "auto" }}>
+                  <Typography sx={{ mb: "4px" }}>
+                    If you cannot find the existing{" "}
+                    <strong>
+                      {capitalizeFirstLetter(
+                        DISPLAY[selectedProperty]
+                          ? DISPLAY[selectedProperty]
+                          : selectedProperty
+                      )}{" "}
+                    </strong>
+                    to link, you can describe them below:
+                  </Typography>
+                  <Text
+                    text={onGetPropertyValue(selectedProperty, true) as string}
+                    currentVisibleNode={currentVisibleNode}
+                    property={selectedProperty}
+                    setCurrentVisibleNode={setCurrentVisibleNode}
+                    nodes={nodes}
+                    locked={locked}
+                    selectedDiffNode={selectedDiffNode}
+                    getTitleNode={() => {}}
+                    confirmIt={confirmIt}
+                    structured={true}
+                    currentImprovement={currentImprovement}
+                  />
+                </Box>
+              )}
           </Box>
 
           <Paper

@@ -24,6 +24,8 @@ import {
   randomProminentColor,
   saveNewChangeLog,
   updateInheritance,
+  updatePartsAndPartsOf,
+  updatePropertyOf,
 } from " @components/lib/utils/helpers";
 import { diffWords, diffLines } from "diff"; // Using diffLines for line-by-line diff
 import {
@@ -127,9 +129,34 @@ const Text = ({
       if (currentVisibleNode.inheritance[property]?.ref) {
         const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
         if (structured) {
+          const referencedNode =
+            nodes[currentVisibleNode.inheritance[property]?.ref];
           await updateDoc(nodeRef, {
             [`textValue.${property}`]: copyValue,
+            [`properties.${property}`]: referencedNode.properties[property],
           });
+          if (Array.isArray(referencedNode.properties[property])) {
+            const links = referencedNode.properties[property].flatMap(
+              (c) => c.nodes
+            );
+            if (property === "parts" || property === "isPartOf") {
+              updatePartsAndPartsOf(
+                links,
+                { id: currentVisibleNode.id },
+                property === "parts" ? "isPartOf" : "parts",
+                db,
+                nodes
+              );
+            } else {
+              updatePropertyOf(
+                links,
+                { id: currentVisibleNode.id },
+                property,
+                nodes,
+                db
+              );
+            }
+          }
         } else {
           await updateDoc(nodeRef, {
             [`properties.${property}`]: copyValue,
@@ -152,6 +179,7 @@ const Text = ({
       currentVisibleNode.id,
       property,
       db,
+      nodes,
     ]
   );
 
@@ -286,6 +314,7 @@ const Text = ({
               navigateToNode={navigateToNode}
               displaySidebar={displaySidebar}
               activeSidebar={activeSidebar}
+              unclassified={currentVisibleNode.unclassified}
             />
           )}
           {property !== "title" && (
@@ -301,7 +330,9 @@ const Text = ({
         {error}
       </Typography>
       {locked ||
-      (selectedDiffNode && selectedDiffNode.modifiedProperty !== property) ? (
+      (selectedDiffNode &&
+        (selectedDiffNode.modifiedProperty !== property || structured)) ||
+      currentVisibleNode.unclassified ? (
         <Typography
           sx={{ fontSize: property === "title" ? "34px" : "19px", p: "19px" }}
         >

@@ -49,6 +49,7 @@ import {
 import NewCollection from "../Collection/NewCollection";
 import SelectInheritance from "../SelectInheretance/SelectInhertance";
 import Text from "../OntologyComponents/Text";
+import MarkdownRender from "../Markdown/MarkdownRender";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
@@ -863,27 +864,26 @@ const StructuredProperty = ({
               </Button>
             </Box>
           )}
-          {!selectedDiffNode && property !== "specializations" && (
-            <Button
-              onClick={() => showListToSelect(property, "main")}
-              sx={{
-                borderRadius: "18px",
-                backgroundColor: BUTTON_COLOR,
-                ":hover": {
-                  backgroundColor:
-                    theme.palette.mode === "light" ? "#f0f0f0" : "",
-                },
-                ml: "auto",
-              }}
-              variant="outlined"
-            >
-              {property === "specializations"
-                ? "Add Specializations"
-                : `Link ${capitalizeFirstLetter(
-                    DISPLAY[property] || property
-                  )}`}{" "}
-            </Button>
-          )}
+          {(property !== "generalizations" ||
+            !currentVisibleNode.unclassified) &&
+            !selectedDiffNode &&
+            property !== "specializations" && (
+              <Button
+                onClick={() => showListToSelect(property, "main")}
+                sx={{
+                  borderRadius: "18px",
+                  backgroundColor: BUTTON_COLOR,
+                  ":hover": {
+                    backgroundColor:
+                      theme.palette.mode === "light" ? "#f0f0f0" : "",
+                  },
+                  ml: "auto",
+                }}
+                variant="outlined"
+              >
+                {`Edit ${capitalizeFirstLetter(DISPLAY[property] || property)}`}{" "}
+              </Button>
+            )}
           {property !== "specializations" && property !== "generalizations" && (
             <SelectInheritance
               currentVisibleNode={currentVisibleNode}
@@ -1037,11 +1037,9 @@ const StructuredProperty = ({
                                             }}
                                             variant="outlined"
                                           >
-                                            {property === "specializations"
-                                              ? "Add Specializations"
-                                              : `Link ${capitalizeFirstLetter(
-                                                  DISPLAY[property] || property
-                                                )}`}{" "}
+                                            {`Edit ${capitalizeFirstLetter(
+                                              DISPLAY[property] || property
+                                            )}`}{" "}
                                           </Button>
                                           {collection.collectionName !==
                                             "main" && (
@@ -1277,32 +1275,33 @@ const StructuredProperty = ({
           </DragDropContext>
         </Box>
       </Box>
-      {property !== "specializations" && property !== "generalizations" && (
-        <Box sx={{ p: "6px", mt: "auto" }}>
-          <Typography sx={{ mb: "4px" }}>
-            If you cannot find the existing{" "}
-            <strong>
-              {capitalizeFirstLetter(
-                DISPLAY[property] ? DISPLAY[property] : property
-              )}{" "}
-            </strong>
-            to link, you can describe them below:
-          </Typography>
-          <Text
-            text={onGetPropertyValue(property, true)}
-            currentVisibleNode={currentVisibleNode}
-            property={property}
-            setCurrentVisibleNode={setCurrentVisibleNode}
-            nodes={nodes}
-            locked={locked}
-            selectedDiffNode={selectedDiffNode}
-            getTitleNode={() => {}}
-            confirmIt={confirmIt}
-            structured={true}
-            currentImprovement={currentImprovement}
-          />
-        </Box>
-      )}
+      {property !== "specializations" &&
+        property !== "generalizations" &&
+        onGetPropertyValue(property, true) && (
+          <Box sx={{ p: "16px", mt: "auto" }}>
+            <Typography
+              sx={{ mb: "4px", fontWeight: "bold", fontSize: "17px" }}
+            >
+              Comments:
+            </Typography>
+
+            <MarkdownRender text={onGetPropertyValue(property, true)} />
+
+            {/* <Text
+              text={onGetPropertyValue(property, true)}
+              currentVisibleNode={currentVisibleNode}
+              property={property}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              nodes={nodes}
+              locked={locked}
+              selectedDiffNode={selectedDiffNode}
+              getTitleNode={() => {}}
+              confirmIt={confirmIt}
+              structured={true}
+              currentImprovement={currentImprovement}
+            /> */}
+          </Box>
+        )}
     </Paper>
   );
 };

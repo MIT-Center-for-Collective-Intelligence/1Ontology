@@ -354,7 +354,7 @@ const Ontology = () => {
         isCategory: !!node.category,
         locked: !!node.locked,
         title: nodeTitle,
-
+        unclassified: !!node.unclassified,
         specializations: {},
       };
 
@@ -377,22 +377,24 @@ const Ontology = () => {
             title: nodeTitle,
             locked: !!node.locked,
             categoriesOrder: node.specializations.map((n) => n.collectionName),
+            unclassified: !!node.unclassified,
             specializations: {
-              ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
+              ...(newSpecializationsTree[node.id]?.specializations || {}),
               ...getSpecializationsTree(specializations, [...path, node.id]),
             },
           };
         } else {
           // If not main, create a new entry for the collection
-          newSpecializationsTree[nodeTitle] = {
+          newSpecializationsTree[node.id] = {
             id: node.id,
             path: [...path, node.id],
             title: nodeTitle,
             c: node.category,
             locked: !!node.locked,
             categoriesOrder: node.specializations.map((n) => n.collectionName),
+            unclassified: !!node.unclassified,
             specializations: {
-              ...(newSpecializationsTree[nodeTitle]?.specializations || {}),
+              ...(newSpecializationsTree[node.id]?.specializations || {}),
               [collection.collectionName]: {
                 isCategory: true,
                 id: `${node.id}-${collection.collectionName.trim()}`,
@@ -682,7 +684,7 @@ const Ontology = () => {
       const currentTime = Date.now();
       setLastInteractionDate(new Date(currentTime));
 
-      if (user) {
+      if (user && user?.uname !== "ouhrac") {
         const timeSinceLastUpdate =
           lastUpdate !== null ? currentTime - lastUpdate || 0 : 60001;
         if (timeSinceLastUpdate >= 60000) {

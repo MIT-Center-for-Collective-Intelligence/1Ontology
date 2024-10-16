@@ -496,14 +496,14 @@ export const checkIfCanDeleteANode = (
   nodes: { [nodeId: string]: INode },
   specializations: any /* { id: string }[] */
 ) => {
-  const candelete = specializations.some((specialization: { id: string }) => {
-    const generalizationsOfSpecialization = nodes[
-      specialization.id
-    ].generalizations.flatMap((n) => n.nodes);
+  const canDelete = specializations.some((specialization: { id: string }) => {
+    const generalizationsOfSpecialization = (
+      nodes[specialization.id]?.generalizations || []
+    ).flatMap((n) => n.nodes);
     return generalizationsOfSpecialization.length === 1;
   });
 
-  return candelete;
+  return canDelete;
 };
 
 export const generateInheritance = (
@@ -552,7 +552,10 @@ export const createNewNode = (
     locked: false,
     root: parentNodeData.root || "",
     numberOfGeneralizations: parentNodeData.numberOfGeneralizations + 1,
-    properties: { ...parentNodeData.properties },
+    properties: {
+      ...parentNodeData.properties,
+      isPartOf: [{ collectionName: "main", nodes: [] }],
+    },
     propertyType: { ...parentNodeData.propertyType },
     nodeType: parentNodeData.nodeType,
   };
@@ -578,4 +581,103 @@ export const updateSpecializations = (
       id: newNodeRefId,
     });
   }
+};
+
+export const updatePartsAndPartsOf = async (
+  links: { id: string }[],
+  newLink: { id: string },
+  property: "isPartOf" | "parts",
+  db: Firestore,
+  nodes: { [nodeId: string]: INode }
+) => {
+  debugger;
+  links.forEach(async (child) => {
+    let childData: any = nodes[child.id] as INode;
+    if (!childData) {
+      const childDoc = await getDoc(doc(collection(db, NODES), child.id));
+      childData = childDoc.data();
+    }
+
+    if (childData && Array.isArray(childData.properties[property])) {
+      const propertyData = childData.properties[property] as ICollection[];
+      const existingIds = propertyData.flatMap((collection) =>
+        collection.nodes.map((spec) => spec.id)
+      );
+      if (!existingIds.includes(newLink.id)) {
+        const propertyData = childData.properties[property];
+        if (Array.isArray(propertyData)) {
+          const mainCollection = propertyData.find(
+            (collection) => collection.collectionName === "main"
+          ) as ICollection;
+          // Add the new link to the property data
+          const linkIdx = mainCollection.nodes.findIndex(
+            (l) => l.id === newLink.id
+          );
+          if (linkIdx === -1) {
+            mainCollection.nodes.push(newLink);
+          }
+
+          const childRef = doc(collection(db, NODES), child.id);
+          updateDoc(childRef, {
+            [`properties.${property}`]: propertyData,
+          });
+
+          // Update inheritance if the property is "parts"
+          if (property === "parts") {
+            updateInheritance({
+              nodeId: child.id,
+              updatedProperty: property,
+              db,
+            });
+          }
+        }
+      }
+    }
+  });
+};
+
+export const updatePropertyOf = async (
+  links: { id: string }[],
+  newLink: { id: string },
+  property: string,
+  nodes: { [nodeId: string]: INode },
+  db: Firestore
+) => {
+  links.filter((child) => {
+    const childData = nodes[child.id];
+    if (!childData.propertyOf) {
+      childData.propertyOf = {};
+    }
+    const propertyData = childData.propertyOf[property] || [
+      { collectionName: "main", nodes: [] },
+    ];
+    const mainCollection = propertyData.find(
+      (collection) => collection.collectionName === "main"
+    );
+    const existingIds = mainCollection
+      ? mainCollection.nodes.map((node) => node.id)
+      : [];
+
+    if (!existingIds.includes(newLink.id)) {
+      const childData = nodes[child.id];
+      if (!childData.propertyOf) {
+        childData.propertyOf = {};
+      }
+
+      const propertyData = childData.propertyOf[property] || [
+        { collectionName: "main", nodes: [] },
+      ];
+      const mainCollection = propertyData.find(
+        (collection) => collection.collectionName === "main"
+      );
+      if (mainCollection) {
+        mainCollection.nodes.push(newLink);
+
+        const childRef = doc(collection(db, NODES), child.id);
+        updateDoc(childRef, {
+          [`propertyOf.${property}`]: propertyData,
+        });
+      }
+    }
+  });
 };

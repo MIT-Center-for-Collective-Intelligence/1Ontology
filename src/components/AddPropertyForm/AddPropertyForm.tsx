@@ -15,6 +15,7 @@ interface AddPropertyFormProps {
   addNewProperty: (title: string, type: string) => void;
   locked: boolean;
   setOpenAddProperty: any;
+  exitingProperties: string[];
 }
 
 const SpecialCharacterRegex = /^[a-zA-Z0-9 ]*$/; // Adjust regex as necessary
@@ -23,10 +24,12 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
   addNewProperty,
   locked,
   setOpenAddProperty,
+  exitingProperties,
 }) => {
   const [propertyType, setPropertyType] = useState<string>("String");
   const [newPropertyTitle, setNewPropertyTitle] = useState<string>("");
   const [inputError, setInputError] = useState<boolean>(false);
+  const [duplicateError, setDuplicateError] = useState<boolean>(false);
 
   const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -34,6 +37,34 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
 
     setNewPropertyTitle(value);
     setInputError(!isValid);
+    setDuplicateError(false);
+  };
+
+  const handleAddProperty = () => {
+    if (
+      !newPropertyTitle ||
+      !propertyType ||
+      inputError ||
+      locked ||
+      duplicateError
+    ) {
+      return;
+    }
+
+    // Check if the property already exists
+    if (
+      exitingProperties.some(
+        (p) => p.trim().toLowerCase() === newPropertyTitle.trim().toLowerCase()
+      )
+    ) {
+      setDuplicateError(true);
+      return;
+    }
+
+    // Add the new property
+    addNewProperty(newPropertyTitle, propertyType);
+    setNewPropertyTitle("");
+    setPropertyType("String");
   };
 
   return (
@@ -85,10 +116,12 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
           label="Property Title"
           value={newPropertyTitle}
           onChange={handleTitleChange}
-          error={inputError}
+          error={inputError || duplicateError}
           helperText={
             inputError
               ? "Max 30 characters, no special characters allowed."
+              : duplicateError
+              ? "This property already exists."
               : ""
           }
           InputLabelProps={{
@@ -97,16 +130,14 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
         />
         <Box sx={{ display: "flex", gap: "10px" }}>
           <Button
-            onClick={() => {
-              if (newPropertyTitle && propertyType && !inputError) {
-                addNewProperty(newPropertyTitle, propertyType);
-                setNewPropertyTitle("");
-                setPropertyType("");
-              }
-            }}
+            onClick={handleAddProperty}
             color="primary"
             disabled={
-              !propertyType || !newPropertyTitle || inputError || locked
+              !propertyType ||
+              !newPropertyTitle ||
+              inputError ||
+              locked ||
+              duplicateError
             }
             variant="contained"
             sx={{
@@ -123,6 +154,7 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
               setOpenAddProperty(false);
               setNewPropertyTitle("");
               setInputError(false);
+              setDuplicateError(false);
             }}
             color="primary"
             variant="contained"

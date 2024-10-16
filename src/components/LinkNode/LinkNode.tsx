@@ -72,6 +72,8 @@ import {
   saveNewChangeLog,
   unlinkPropertyOf,
   updateInheritance,
+  updatePartsAndPartsOf,
+  updatePropertyOf,
 } from " @components/lib/utils/helpers";
 import { INode, INodePath, ILinkNode } from " @components/types/INode";
 import {
@@ -81,20 +83,26 @@ import {
   Link,
   TextField,
   Tooltip,
+  Typography,
   useTheme,
 } from "@mui/material";
 import {
   collection,
   doc,
   getDoc,
+  getDocs,
   getFirestore,
+  query,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import DoneIcon from "@mui/icons-material/Done";
 import CloseIcon from "@mui/icons-material/Close";
 import { useEffect, useState } from "react";
 import { getTitleDeleted } from " @components/lib/utils/string.utils";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import LinkOffIcon from "@mui/icons-material/LinkOff";
+import { UNCLASSIFIED } from " @components/lib/CONSTANTS";
 
 type ILinkNodeProps = {
   link: ILinkNode;
@@ -276,9 +284,42 @@ const LinkNode = ({
             [`properties.${property}`]: nodeData.properties[property],
           });
           if (property !== "isPartOf" || nodeData.inheritance[property]) {
-            await updateDoc(nodeDoc.ref, {
+            const reference = nodeData.inheritance[property].ref;
+            let updateObject: any = {
               [`inheritance.${property}.ref`]: null,
-            });
+            };
+            if (
+              reference &&
+              nodes[reference].textValue &&
+              nodes[reference].textValue.hasOwnProperty(property) &&
+              Array.isArray(nodeData.properties[property])
+            ) {
+              const links = nodeData.properties[property].flatMap(
+                (c) => c.nodes
+              );
+              if (property === "isPartOf") {
+                updatePartsAndPartsOf(
+                  links,
+                  { id: currentVisibleNode.id },
+                  "isPartOf",
+                  db,
+                  nodes
+                );
+              } else {
+                updatePropertyOf(
+                  links,
+                  { id: currentVisibleNode.id },
+                  property,
+                  nodes,
+                  db
+                );
+              }
+              updateObject = {
+                ...updateObject,
+                [`textValue.${property}`]: nodes[reference].textValue[property],
+              };
+            }
+            await updateDoc(nodeDoc.ref, updateObject);
 
             updateInheritance({
               nodeId: nodeDoc.id,
@@ -343,7 +384,28 @@ const LinkNode = ({
     try {
       if (
         await confirmIt(
-          `Are you sure you want unlink this node?`,
+          <Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                mb: "14px",
+              }}
+            >
+              <LinkOffIcon />
+            </Box>
+            <Typography sx={{ fontWeight: "bold" }}>
+              Are you sure you want unlink this node?
+            </Typography>
+            {!unlinkVisible && (
+              <Typography sx={{ mt: "15px" }}>
+                {`There's no other generalization linked to this node. Are you
+                sure you want to unlink it and move it as a specialization under
+              ${UNCLASSIFIED[nodes[link.id].nodeType]}`}
+              </Typography>
+            )}
+          </Box>,
           "Unlink",
           "Keep"
         )
@@ -371,12 +433,78 @@ const LinkNode = ({
           );
 
           if (shouldBeRemovedFromParent) {
-            removeNodeLink(
+            await removeNodeLink(
               property as "specializations" | "generalizations",
               currentVisibleNode.id,
               link.id
             );
           }
+          if (!unlinkVisible && shouldBeRemovedFromParent) {
+            const nodeType = nodes[link.id].nodeType;
+            const unclassifiedNodeDocs = await getDocs(
+              query(
+                collection(db, NODES),
+                where("unclassified", "==", true),
+                where("nodeType", "==", nodeType)
+              )
+            );
+            if (unclassifiedNodeDocs.docs.length > 0) {
+              const unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
+              debugger;
+              if (property === "specializations") {
+                const nodeRef = doc(collection(db, NODES), link.id);
+                const generalizations = nodes[link.id].generalizations;
+
+                const mCollectionIdx = generalizations.findIndex(
+                  (c) => c.collectionName === "main"
+                );
+                if (mCollectionIdx !== -1) {
+                  generalizations[mCollectionIdx].nodes = generalizations[
+                    mCollectionIdx
+                  ].nodes.filter((g) => g.id !== nodeDoc.id);
+
+                  generalizations[0].nodes.push({ id: unclassifiedNodeDoc.id });
+                  updateDoc(nodeRef, {
+                    generalizations,
+                  });
+                }
+
+                const specializations =
+                  nodes[unclassifiedNodeDoc.id].specializations;
+
+                const mainCollectionIdx = specializations.findIndex(
+                  (c) => c.collectionName === "main"
+                );
+                if (mainCollectionIdx !== -1) {
+                  specializations[mainCollectionIdx].nodes.push({
+                    id: link.id,
+                  });
+                  updateDoc(unclassifiedNodeDoc.ref, {
+                    specializations,
+                  });
+                }
+              }
+
+              if (property === "generalizations") {
+                const generalizations = nodeData.generalizations;
+                generalizations[0].nodes.push({ id: unclassifiedNodeDoc.id });
+
+                const specializations =
+                  nodes[unclassifiedNodeDoc.id].specializations;
+
+                const mainCollectionIdx = specializations.findIndex(
+                  (c) => c.collectionName === "main"
+                );
+                specializations[mainCollectionIdx].nodes.push({
+                  id: nodeDoc.id,
+                });
+                updateDoc(unclassifiedNodeDoc.ref, {
+                  specializations,
+                });
+              }
+            }
+          }
+          await updateDoc(nodeDoc.ref, nodeData);
           saveNewChangeLog(db, {
             nodeId: currentVisibleNode.id,
             modifiedBy: user?.uname,
@@ -388,7 +516,6 @@ const LinkNode = ({
             changeType: "remove element",
             fullNode: currentVisibleNode,
           });
-          await updateDoc(nodeDoc.ref, nodeData);
         }
       }
     } catch (error: any) {
@@ -444,7 +571,7 @@ const LinkNode = ({
               sx={{ color: getLinkColor(link.change), pl: "5px" }}
             />
           )}
-          {unlinkVisible && !locked && !linkLocked && (
+          {!locked && !linkLocked && !currentVisibleNode.unclassified && (
             <Button
               sx={{
                 ml: "8px",
@@ -463,7 +590,7 @@ const LinkNode = ({
           <TextField
             value={editorContent}
             onChange={handleChanges}
-            sx={{ width: "500px" }}
+            sx={{ width: "300px" }}
             InputProps={{
               inputProps: {
                 style: {
