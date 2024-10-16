@@ -34,6 +34,8 @@ interface NodeBodyProps {
   confirmIt: any;
   onGetPropertyValue: any;
   currentImprovement: any;
+  reviewId: string;
+  setReviewId: any;
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -50,6 +52,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   confirmIt,
   onGetPropertyValue,
   currentImprovement,
+  reviewId,
+  setReviewId,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -239,7 +243,13 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     const priorityOrder = PROPERTIES_ORDER[currentVisibleNode.nodeType] || [];
 
     const sortedKeys = Object.keys(properties || {})
-      .filter((p) => p !== "parts" && p !== "isPartOf" && p !== "description")
+      .filter(
+        (p) =>
+          p !== "parts" &&
+          p !== "isPartOf" &&
+          p !== "description" &&
+          p !== "actor"
+      )
       .sort((a, b) => {
         const indexA = priorityOrder.indexOf(a);
         const indexB = priorityOrder.indexOf(b);
@@ -277,6 +287,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 locked={locked}
                 onGetPropertyValue={onGetPropertyValue}
                 currentImprovement={currentImprovement}
+                reviewId={reviewId}
+                setReviewId={setReviewId}
               />
             ) : (
               property !== "description" &&

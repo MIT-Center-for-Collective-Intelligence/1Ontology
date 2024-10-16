@@ -196,15 +196,9 @@ const Node = ({
     setSelectedCategory("");
     setSearchValue("");
   };
-
-  const [newCollection, setNewCollection] = useState("");
   const [selectedProperty, setSelectedProperty] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
-  const [editCollection, setEditCategory] = useState<{
-    property: string;
-    category: string;
-  } | null>(null);
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [searchValue, setSearchValue] = useState("");
   const [selectTitle, setSelectTitle] = useState(false);
@@ -299,22 +293,39 @@ const Node = ({
             newNode.properties.isPartOf &&
             Array.isArray(newNode.properties.isPartOf)
           ) {
-            newNode.properties.isPartOf.push({
-              collectionName: "main",
-              nodes: [{ id: currentVisibleNode.id }],
-            });
+            const mainIdx = newNode.properties.isPartOf.findIndex(
+              (c) => c.collectionName === "main"
+            );
+            if (mainIdx === -1) {
+              newNode.properties.isPartOf.push({
+                collectionName: "main",
+                nodes: [{ id: currentVisibleNode.id }],
+              });
+            } else {
+              newNode.properties.isPartOf[mainIdx].nodes.push({
+                id: currentVisibleNode.id,
+              });
+            }
           }
         }
-
         if (selectedProperty === "isPartOf") {
           if (
             newNode.properties.parts &&
             Array.isArray(newNode.properties.parts)
           ) {
-            newNode.properties.parts.push({
-              collectionName: "main",
-              nodes: [{ id: currentVisibleNode.id }],
-            });
+            const mainIdx = newNode.properties.parts.findIndex(
+              (c) => c.collectionName === "main"
+            );
+            if (mainIdx === -1) {
+              newNode.properties.parts.push({
+                collectionName: "main",
+                nodes: [{ id: currentVisibleNode.id }],
+              });
+            } else {
+              newNode.properties.parts[mainIdx].nodes.push({
+                id: currentVisibleNode.id,
+              });
+            }
           }
 
           // Update inheritance for parts
@@ -355,6 +366,7 @@ const Node = ({
   // This function handles the cloning of a node.
   const handleCloning = async (node: { id: string }) => {
     // Call the asynchronous function to clone the node with the given ID.
+
     const newNode = await cloneNode(node.id);
     if (!newNode) return;
 
@@ -401,8 +413,8 @@ const Node = ({
           )
         );
       }
-      if (!Array.isArray(nodeData.properties[selectedProperty])) return;
 
+      if (!Array.isArray(nodeData.properties[selectedProperty])) return;
       const targetPropertyCollection = nodeData.properties[
         selectedProperty
       ].find(
@@ -411,6 +423,7 @@ const Node = ({
       );
 
       // If the property collection does not exist, create it
+
       if (!targetPropertyCollection) {
         nodeData.properties[selectedProperty].push({
           collectionName: selectedCategory || "main",
@@ -450,7 +463,7 @@ const Node = ({
           nodeData.properties[selectedProperty],
         [`inheritance.${selectedProperty}.ref`]: null,
       });
-
+      setReviewId(newNode.id);
       // Update inheritance (if needed)
       updateInheritance({
         nodeId: currentVisibleNode.id,
@@ -1085,11 +1098,12 @@ const Node = ({
     [nodes]
   );
   const onGetPropertyValue = useCallback(
-    (property: string) => {
+    (property: string, structured: boolean = false) => {
       const inheritedProperty = getPropertyValue(
         nodes,
         currentVisibleNode.inheritance[property]?.ref,
-        property
+        property,
+        structured
       );
 
       if (inheritedProperty !== null) {
@@ -1105,7 +1119,21 @@ const Node = ({
     },
     [currentVisibleNode, nodes]
   );
-
+  const checkDuplicateTitle = (newTitle: string) => {
+    try {
+      const fuseSearch = searchWithFuse(newTitle.trim());
+      return (
+        fuseSearch.length > 0 &&
+        fuseSearch.some(
+          (s) =>
+            s.title.toLowerCase().trim() === newTitle.toLowerCase().trim() &&
+            currentVisibleNode.id !== s.id
+        )
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
   /* "root": "T
   of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'.
   The user should not be able to modify the value of this field. Please automatically specify
@@ -1150,6 +1178,7 @@ const Node = ({
           displaySidebar={displaySidebar}
           activeSidebar={activeSidebar}
           currentImprovement={currentImprovement}
+          checkDuplicateTitle={checkDuplicateTitle}
         />
         {/* description of the node */}
         <Text
@@ -1180,6 +1209,8 @@ const Node = ({
             locked={locked}
             onGetPropertyValue={onGetPropertyValue}
             currentImprovement={currentImprovement}
+            reviewId={reviewId}
+            setReviewId={setReviewId}
           />
         )}
         {/* specializations and generalizations*/}
@@ -1234,6 +1265,8 @@ const Node = ({
               locked={locked}
               onGetPropertyValue={onGetPropertyValue}
               currentImprovement={currentImprovement}
+              reviewId={reviewId}
+              setReviewId={setReviewId}
             />
           ))}
         </Stack>
@@ -1253,6 +1286,8 @@ const Node = ({
           confirmIt={confirmIt}
           onGetPropertyValue={onGetPropertyValue}
           currentImprovement={currentImprovement}
+          reviewId={reviewId}
+          setReviewId={setReviewId}
         />
       </Box>
 

@@ -15,6 +15,7 @@ const YjsEditor = ({
   breakInheritance,
   text,
   structured,
+  checkDuplicateTitle,
 }: {
   fullname: string;
   property: string;
@@ -25,6 +26,7 @@ const YjsEditor = ({
   breakInheritance: Function;
   text: string;
   structured: boolean;
+  checkDuplicateTitle: Function;
 }) => {
   return (
     <YjsEditorWrapper
@@ -37,6 +39,7 @@ const YjsEditor = ({
       breakInheritance={breakInheritance}
       text={text}
       structured={structured}
+      checkDuplicateTitle={checkDuplicateTitle}
     />
   );
 };

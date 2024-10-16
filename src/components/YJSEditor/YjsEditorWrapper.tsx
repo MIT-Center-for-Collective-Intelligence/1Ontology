@@ -1,10 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { QuillBinding } from "y-quill";
 import Quill from "quill";
 import QuillCursors from "quill-cursors";
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import "quill/dist/quill.snow.css";
 import { getFirestore } from "firebase/firestore";
 import { recordLogs } from " @components/lib/utils/helpers";
@@ -43,6 +43,7 @@ const YjsEditorWrapper = ({
   breakInheritance,
   text,
   structured,
+  checkDuplicateTitle,
 }: {
   fullname: string;
   property: string;
@@ -53,6 +54,7 @@ const YjsEditorWrapper = ({
   breakInheritance: Function;
   text: string;
   structured: boolean;
+  checkDuplicateTitle: Function;
 }) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
@@ -61,6 +63,8 @@ const YjsEditorWrapper = ({
   const db = getFirestore();
   const TIMEOUT = 15000 + Math.floor(Math.random() * 300);
   const changeHistoryRef = useRef<any[]>([]);
+
+  const [errorDuplicate, setErrorDuplicate] = useState(false);
 
   const saveChangeLog = (changeHistory: any[]) => {
     try {
@@ -72,7 +76,7 @@ const YjsEditorWrapper = ({
         }
       }
     } catch (error: any) {
-      console.log(error);
+      console.error(error);
       recordLogs({
         type: "error",
         error: JSON.stringify({
@@ -159,6 +163,9 @@ const YjsEditorWrapper = ({
             newText,
           };
           changeHistoryRef.current = [...changeHistoryRef.current, newChange];
+          if (property === "title") {
+            setErrorDuplicate(checkDuplicateTitle(newText));
+          }
         }
       });
       const intervalId = setInterval(() => {
@@ -179,9 +186,14 @@ const YjsEditorWrapper = ({
       };
     }
   }, [fullname, property, nodeId, reference]);
-
   return (
     <>
+      {errorDuplicate && (
+        <Typography color="red" sx={{ ml: "15px" }}>
+          There is already a node with this title! Please try to create a unique
+          title.
+        </Typography>
+      )}
       <Box
         ref={editorContainerRef}
         sx={{

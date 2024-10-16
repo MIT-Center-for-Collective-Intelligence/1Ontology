@@ -59,6 +59,7 @@ type ITextProps = {
   activeSidebar?: any;
   structured?: boolean;
   currentImprovement: any;
+  checkDuplicateTitle?: any;
 };
 
 const Text = ({
@@ -81,6 +82,7 @@ const Text = ({
   nodes,
   structured = false,
   currentImprovement,
+  checkDuplicateTitle,
 }: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -209,13 +211,6 @@ const Text = ({
       </div>
     ));
   };
-  const changeOnProperty = useMemo(() => {
-    if (selectedDiffNode) {
-    }
-    if (currentImprovement) {
-      currentImprovement.detailsOfChange;
-    }
-  }, [currentImprovement, selectedDiffNode]);
 
   return (
     <Paper
@@ -334,7 +329,8 @@ const Text = ({
               reference={currentVisibleNode.inheritance[property]?.ref || null}
               breakInheritance={onSaveTextChange}
               text={text}
-              structured={!structured}
+              structured={structured}
+              checkDuplicateTitle={checkDuplicateTitle}
             />
           )}
         </>

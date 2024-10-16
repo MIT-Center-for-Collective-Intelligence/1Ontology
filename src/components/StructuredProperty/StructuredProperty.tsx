@@ -48,7 +48,7 @@ import {
 } from " @components/lib/utils/helpers";
 import NewCollection from "../Collection/NewCollection";
 import SelectInheritance from "../SelectInheretance/SelectInhertance";
-// import Text from "../OntologyComponents/Text";
+import Text from "../OntologyComponents/Text";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
@@ -61,8 +61,8 @@ type IStructuredPropertyProps = {
   nodes: { [id: string]: INode };
   locked: boolean;
   selectedDiffNode: any;
-  reviewId?: string;
-  setReviewId?: Function;
+  reviewId: string;
+  setReviewId: Function;
   confirmIt: any;
   onGetPropertyValue: any;
   currentImprovement: any;
@@ -99,8 +99,7 @@ const StructuredProperty = ({
         getPropertyValue(
           nodes,
           currentVisibleNode.inheritance[property]?.ref,
-          property,
-          true
+          property
         ) ||
         currentVisibleNode?.properties[property] ||
         currentVisibleNode[property as "specializations" | "generalizations"];
@@ -789,6 +788,7 @@ const StructuredProperty = ({
     setEditCollection(collectionName);
     setNewEditCollection(collectionName);
   };
+
   return (
     <Paper
       elevation={9}
@@ -800,473 +800,484 @@ const StructuredProperty = ({
         maxHeight: "100%",
         overflow: "auto",
         position: "relative",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          background: (theme: any) =>
-            theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-          p: 3,
-          borderTopRightRadius: "18px",
-          borderTopLeftRadius: "18px",
-          backgroundColor:
-            selectedDiffNode &&
-            selectedDiffNode.changeType === "add property" &&
-            selectedDiffNode.changeDetails.addedProperty === property
-              ? "green"
-              : "",
-        }}
-      >
-        <Typography
+      <Box>
+        <Box
           sx={{
-            fontSize: "20px",
-            fontWeight: 500,
-            fontFamily: "Roboto, sans-serif",
+            display: "flex",
+            alignItems: "center",
+            background: (theme: any) =>
+              theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+            p: 3,
+            borderTopRightRadius: "18px",
+            borderTopLeftRadius: "18px",
+            backgroundColor:
+              selectedDiffNode &&
+              selectedDiffNode.changeType === "add property" &&
+              selectedDiffNode.changeDetails.addedProperty === property
+                ? "green"
+                : "",
           }}
         >
-          {capitalizeFirstLetter(
-            DISPLAY[property] ? DISPLAY[property] : property
-          )}
-        </Typography>
-        {currentVisibleNode?.inheritance[property]?.ref && (
-          <Typography sx={{ fontSize: "14px", ml: "9px" }}>
-            {'(Inherited from "'}
-            {getTitle(
-              nodes,
-              currentVisibleNode.inheritance[property].ref || ""
-            )}
-            {'")'}
-          </Typography>
-        )}
-        {!locked && !selectedDiffNode && property === "specializations" && (
-          <Box
+          <Typography
             sx={{
-              alignItems: "center",
-              display: "flex",
-              gap: "15px",
-              ml: "auto",
+              fontSize: "20px",
+              fontWeight: 500,
+              fontFamily: "Roboto, sans-serif",
             }}
           >
-            <Button
-              onClick={() => {
-                setOpenAddCollection(true);
+            {capitalizeFirstLetter(
+              DISPLAY[property] ? DISPLAY[property] : property
+            )}
+          </Typography>
+          {currentVisibleNode?.inheritance[property]?.ref && (
+            <Typography sx={{ fontSize: "14px", ml: "9px" }}>
+              {'(Inherited from "'}
+              {getTitle(
+                nodes,
+                currentVisibleNode.inheritance[property].ref || ""
+              )}
+              {'")'}
+            </Typography>
+          )}
+          {!locked && !selectedDiffNode && property === "specializations" && (
+            <Box
+              sx={{
+                alignItems: "center",
+                display: "flex",
+                gap: "15px",
+                ml: "auto",
               }}
-              sx={{ borderRadius: "18px", backgroundColor: BUTTON_COLOR }}
+            >
+              <Button
+                onClick={() => {
+                  setOpenAddCollection(true);
+                }}
+                sx={{ borderRadius: "18px", backgroundColor: BUTTON_COLOR }}
+                variant="outlined"
+              >
+                Add Collection
+              </Button>
+            </Box>
+          )}
+          {!selectedDiffNode && property !== "specializations" && (
+            <Button
+              onClick={() => showListToSelect(property, "main")}
+              sx={{
+                borderRadius: "18px",
+                backgroundColor: BUTTON_COLOR,
+                ":hover": {
+                  backgroundColor:
+                    theme.palette.mode === "light" ? "#f0f0f0" : "",
+                },
+                ml: "auto",
+              }}
               variant="outlined"
             >
-              Add Collection
+              {property === "specializations"
+                ? "Add Specializations"
+                : `Link ${capitalizeFirstLetter(
+                    DISPLAY[property] || property
+                  )}`}{" "}
             </Button>
-          </Box>
-        )}
-        {!selectedDiffNode && property !== "specializations" && (
-          <Button
-            onClick={() => showListToSelect(property, "main")}
-            sx={{
-              borderRadius: "18px",
-              backgroundColor: BUTTON_COLOR,
-              ":hover": {
-                backgroundColor:
-                  theme.palette.mode === "light" ? "#f0f0f0" : "",
-              },
-              ml: "auto",
-            }}
-            variant="outlined"
-          >
-            {property === "specializations"
-              ? "Add Specializations"
-              : `Link ${capitalizeFirstLetter(
-                  DISPLAY[property] || property
-                )}`}{" "}
-          </Button>
-        )}
-        {property !== "specializations" && property !== "generalizations" && (
-          <SelectInheritance
-            currentVisibleNode={currentVisibleNode}
-            property={property}
-            nodes={nodes}
-          />
-        )}
-      </Box>
-      <Box sx={{ p: "15px", pt: 0 }}>
-        {openAddCollection && (
-          <NewCollection
-            onAdd={addCollection}
-            onCancel={() => {
-              setOpenAddCollection(false);
-            }}
-          />
-        )}
+          )}
+          {property !== "specializations" && property !== "generalizations" && (
+            <SelectInheritance
+              currentVisibleNode={currentVisibleNode}
+              property={property}
+              nodes={nodes}
+            />
+          )}
+        </Box>
+        <Box sx={{ p: "15px", pt: 0 }}>
+          {openAddCollection && (
+            <NewCollection
+              onAdd={addCollection}
+              onCancel={() => {
+                setOpenAddCollection(false);
+              }}
+            />
+          )}
 
-        <DragDropContext
-          onDragEnd={(e) => {
-            if (locked || !!selectedDiffNode) return;
-            if (e.type === "CATEGORY") {
-              handleCollectionSorting(e);
-            } else {
-              handleSorting(e, property, propertyValue);
-            }
-          }}
-        >
-          {/* Droppable for categories */}
-          <Droppable droppableId="categories" type="CATEGORY">
-            {(provided) => (
-              <Box ref={provided.innerRef} {...provided.droppableProps}>
-                {(propertyValue || []).map(
-                  (collection: ICollection, collectionIndex: number) => {
-                    return (
-                      <Draggable
-                        key={collection.collectionName + collectionIndex}
-                        draggableId={`${collectionIndex}`}
-                        index={collectionIndex}
-                      >
-                        {(provided) => (
-                          <Paper
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            id={`${collectionIndex}`}
-                            sx={{
-                              mt: "15px",
-                              borderRadius: "20px",
-                            }}
-                            elevation={property !== "specializations" ? 0 : 3}
-                          >
-                            {property === "specializations" && (
-                              <Box>
-                                {editCollection === null ||
-                                editCollection !== collection.collectionName ? (
-                                  <Box
-                                    sx={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      background: (theme: any) =>
-                                        theme.palette.mode === "dark"
-                                          ? "#242425"
-                                          : "#d0d5dd",
-                                      borderTopLeftRadius: "21px",
-                                      borderTopRightRadius: "21px",
-                                      m: 0,
-                                      p: 2,
-                                      gap: "10px",
-                                      backgroundColor: getCategoryStyle(
-                                        collection.collectionName
-                                      ),
-                                    }}
-                                  >
-                                    {selectedDiffNode &&
-                                    selectedDiffNode.changeType ===
-                                      "edit collection" &&
-                                    selectedDiffNode.changeDetails
-                                      .modifiedCollection ===
-                                      collection.collectionName ? (
-                                      <Box sx={{ display: "flex" }}>
+          <DragDropContext
+            onDragEnd={(e) => {
+              if (locked || !!selectedDiffNode) return;
+              if (e.type === "CATEGORY") {
+                handleCollectionSorting(e);
+              } else {
+                handleSorting(e, property, propertyValue);
+              }
+            }}
+          >
+            {/* Droppable for categories */}
+            <Droppable droppableId="categories" type="CATEGORY">
+              {(provided) => (
+                <Box ref={provided.innerRef} {...provided.droppableProps}>
+                  {(propertyValue || []).map(
+                    (collection: ICollection, collectionIndex: number) => {
+                      return (
+                        <Draggable
+                          key={collection.collectionName + collectionIndex}
+                          draggableId={`${collectionIndex}`}
+                          index={collectionIndex}
+                        >
+                          {(provided) => (
+                            <Paper
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              id={`${collectionIndex}`}
+                              sx={{
+                                mt: "15px",
+                                borderRadius: "20px",
+                              }}
+                              elevation={property !== "specializations" ? 0 : 3}
+                            >
+                              {property === "specializations" && (
+                                <Box>
+                                  {editCollection === null ||
+                                  editCollection !==
+                                    collection.collectionName ? (
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        background: (theme: any) =>
+                                          theme.palette.mode === "dark"
+                                            ? "#242425"
+                                            : "#d0d5dd",
+                                        borderTopLeftRadius: "21px",
+                                        borderTopRightRadius: "21px",
+                                        m: 0,
+                                        p: 2,
+                                        gap: "10px",
+                                        backgroundColor: getCategoryStyle(
+                                          collection.collectionName
+                                        ),
+                                      }}
+                                    >
+                                      {selectedDiffNode &&
+                                      selectedDiffNode.changeType ===
+                                        "edit collection" &&
+                                      selectedDiffNode.changeDetails
+                                        .modifiedCollection ===
+                                        collection.collectionName ? (
+                                        <Box sx={{ display: "flex" }}>
+                                          <Typography
+                                            sx={{
+                                              fontWeight: "bold",
+                                              mr: "13px",
+                                              color: "red",
+                                              textDecoration: "line-through",
+                                            }}
+                                          >
+                                            {capitalizeFirstLetter(
+                                              collection.collectionName
+                                            )}
+                                          </Typography>
+                                          <Typography
+                                            sx={{
+                                              fontWeight: "bold",
+                                              mr: "13px",
+                                              color: "green",
+                                            }}
+                                          >
+                                            {capitalizeFirstLetter(
+                                              selectedDiffNode.changeDetails
+                                                .newValue
+                                            )}
+                                          </Typography>
+                                        </Box>
+                                      ) : collection.collectionName !==
+                                        "main" ? (
                                         <Typography
                                           sx={{
                                             fontWeight: "bold",
                                             mr: "13px",
-                                            color: "red",
-                                            textDecoration: "line-through",
                                           }}
                                         >
                                           {capitalizeFirstLetter(
                                             collection.collectionName
                                           )}
                                         </Typography>
-                                        <Typography
-                                          sx={{
-                                            fontWeight: "bold",
-                                            mr: "13px",
-                                            color: "green",
-                                          }}
-                                        >
-                                          {capitalizeFirstLetter(
-                                            selectedDiffNode.changeDetails
-                                              .newValue
-                                          )}
-                                        </Typography>
-                                      </Box>
-                                    ) : collection.collectionName !== "main" ? (
-                                      <Typography
-                                        sx={{
-                                          fontWeight: "bold",
-                                          mr: "13px",
-                                        }}
-                                      >
-                                        {capitalizeFirstLetter(
-                                          collection.collectionName
-                                        )}
-                                      </Typography>
-                                    ) : (
-                                      <></>
-                                    )}
+                                      ) : (
+                                        <></>
+                                      )}
 
-                                    {!selectedDiffNode && (
-                                      <Box
-                                        sx={{
-                                          display: "flex",
-                                          ml: "auto",
-                                          gap: "5px",
-                                        }}
-                                      >
-                                        {" "}
-                                        <Button
-                                          onClick={() =>
-                                            showListToSelect(
-                                              property,
-                                              collection.collectionName
-                                            )
-                                          }
+                                      {!selectedDiffNode && (
+                                        <Box
                                           sx={{
-                                            borderRadius: "18px",
-                                            backgroundColor: BUTTON_COLOR,
-                                            ":hover": {
-                                              backgroundColor:
-                                                theme.palette.mode === "light"
-                                                  ? "#f0f0f0"
-                                                  : "",
-                                            },
+                                            display: "flex",
                                             ml: "auto",
+                                            gap: "5px",
                                           }}
-                                          variant="outlined"
                                         >
-                                          {property === "specializations"
-                                            ? "Add Specializations"
-                                            : `Link ${capitalizeFirstLetter(
-                                                DISPLAY[property] || property
-                                              )}`}{" "}
-                                        </Button>
-                                        {collection.collectionName !==
-                                          "main" && (
-                                          <Tooltip title="Edit collection title">
-                                            <IconButton
-                                              onClick={() => {
-                                                handleEditCollection(
-                                                  collection.collectionName
-                                                );
-                                              }}
-                                            >
-                                              <EditIcon />
-                                            </IconButton>
-                                          </Tooltip>
-                                        )}
-                                        {collection.collectionName !==
-                                          "main" && (
-                                          <Tooltip title="Delete collection">
-                                            <IconButton
-                                              onClick={() =>
-                                                deleteCollection(
-                                                  property,
-                                                  collectionIndex,
-                                                  collection.collectionName
-                                                )
-                                              }
-                                            >
-                                              <DeleteIcon />
-                                            </IconButton>
-                                          </Tooltip>
-                                        )}
-                                      </Box>
-                                    )}
-                                  </Box>
-                                ) : editCollection ===
-                                  collection.collectionName ? (
-                                  <Box
-                                    sx={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      background: (theme: any) =>
-                                        theme.palette.mode === "dark"
-                                          ? "#242425"
-                                          : "#d0d5dd",
-                                      borderTopLeftRadius: "21px",
-                                      borderTopRightRadius: "21px",
-                                      m: 0,
-                                      p: 2,
-                                      gap: "10px",
-                                      backgroundColor: getCategoryStyle(
-                                        collection.collectionName
-                                      ),
-                                    }}
-                                  >
-                                    <TextField
-                                      sx={{ p: 0 }}
-                                      fullWidth
-                                      placeholder="Edit collection..."
-                                      onChange={(e) =>
-                                        setNewEditCollection(e.target.value)
-                                      }
-                                      value={newEditCollection}
-                                    />
-                                    <Tooltip title="Save">
-                                      <IconButton
-                                        onClick={() => {
-                                          saveEditCollection(newEditCollection);
-                                        }}
-                                        disabled={
-                                          !newEditCollection ||
-                                          collection.collectionName ===
-                                            newEditCollection
-                                        }
-                                        sx={{ ml: "5px" }}
-                                      >
-                                        <DoneIcon
-                                          sx={{
-                                            color:
-                                              !newEditCollection ||
-                                              collection.collectionName ===
-                                                newEditCollection
-                                                ? "gray"
-                                                : "green",
-                                          }}
-                                        />
-                                      </IconButton>
-                                    </Tooltip>
-                                    <Tooltip title="Cancel">
-                                      <IconButton
-                                        onClick={() => {
-                                          setEditCollection(null);
-                                          setNewEditCollection("");
-                                        }}
-                                        sx={{ ml: "5px" }}
-                                      >
-                                        <CloseIcon sx={{ color: "red" }} />
-                                      </IconButton>
-                                    </Tooltip>
-                                  </Box>
-                                ) : (
-                                  <></>
-                                )}
-                              </Box>
-                            )}
-
-                            <List sx={{ p: 1 }}>
-                              <Droppable
-                                droppableId={`${collectionIndex}`}
-                                type="LINK"
-                              >
-                                {(provided, snapshot) => (
-                                  <Box
-                                    {...provided.droppableProps}
-                                    ref={provided.innerRef}
-                                    sx={{
-                                      backgroundColor: snapshot.isDraggingOver
-                                        ? (theme) =>
-                                            theme.palette.mode === "light"
-                                              ? DESIGN_SYSTEM_COLORS.gray250
-                                              : DESIGN_SYSTEM_COLORS.notebookG400
-                                        : "",
-                                      borderRadius: "18px",
-                                      userSelect: "none",
-                                    }}
-                                  >
-                                    {propertyValue[collectionIndex].nodes
-                                      .length > 0 ? (
-                                      propertyValue[collectionIndex].nodes.map(
-                                        (link: ILinkNode, index: number) => (
-                                          <Draggable
-                                            key={link.id}
-                                            draggableId={link.id}
-                                            index={index}
+                                          {" "}
+                                          <Button
+                                            onClick={() =>
+                                              showListToSelect(
+                                                property,
+                                                collection.collectionName
+                                              )
+                                            }
+                                            sx={{
+                                              borderRadius: "18px",
+                                              backgroundColor: BUTTON_COLOR,
+                                              ":hover": {
+                                                backgroundColor:
+                                                  theme.palette.mode === "light"
+                                                    ? "#f0f0f0"
+                                                    : "",
+                                              },
+                                              ml: "auto",
+                                            }}
+                                            variant="outlined"
                                           >
-                                            {(provided) => (
-                                              <ListItem
-                                                ref={provided.innerRef}
-                                                {...provided.draggableProps}
-                                                {...provided.dragHandleProps}
-                                                sx={{
-                                                  my: 1,
-                                                  p: 0,
+                                            {property === "specializations"
+                                              ? "Add Specializations"
+                                              : `Link ${capitalizeFirstLetter(
+                                                  DISPLAY[property] || property
+                                                )}`}{" "}
+                                          </Button>
+                                          {collection.collectionName !==
+                                            "main" && (
+                                            <Tooltip title="Edit collection title">
+                                              <IconButton
+                                                onClick={() => {
+                                                  handleEditCollection(
+                                                    collection.collectionName
+                                                  );
                                                 }}
                                               >
-                                                <ListItemIcon
-                                                  sx={{ minWidth: 0 }}
+                                                <EditIcon />
+                                              </IconButton>
+                                            </Tooltip>
+                                          )}
+                                          {collection.collectionName !==
+                                            "main" && (
+                                            <Tooltip title="Delete collection">
+                                              <IconButton
+                                                onClick={() =>
+                                                  deleteCollection(
+                                                    property,
+                                                    collectionIndex,
+                                                    collection.collectionName
+                                                  )
+                                                }
+                                              >
+                                                <DeleteIcon />
+                                              </IconButton>
+                                            </Tooltip>
+                                          )}
+                                        </Box>
+                                      )}
+                                    </Box>
+                                  ) : editCollection ===
+                                    collection.collectionName ? (
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        background: (theme: any) =>
+                                          theme.palette.mode === "dark"
+                                            ? "#242425"
+                                            : "#d0d5dd",
+                                        borderTopLeftRadius: "21px",
+                                        borderTopRightRadius: "21px",
+                                        m: 0,
+                                        p: 2,
+                                        gap: "10px",
+                                        backgroundColor: getCategoryStyle(
+                                          collection.collectionName
+                                        ),
+                                      }}
+                                    >
+                                      <TextField
+                                        sx={{ p: 0 }}
+                                        fullWidth
+                                        placeholder="Edit collection..."
+                                        onChange={(e) =>
+                                          setNewEditCollection(e.target.value)
+                                        }
+                                        value={newEditCollection}
+                                      />
+                                      <Tooltip title="Save">
+                                        <IconButton
+                                          onClick={() => {
+                                            saveEditCollection(
+                                              newEditCollection
+                                            );
+                                          }}
+                                          disabled={
+                                            !newEditCollection ||
+                                            collection.collectionName ===
+                                              newEditCollection
+                                          }
+                                          sx={{ ml: "5px" }}
+                                        >
+                                          <DoneIcon
+                                            sx={{
+                                              color:
+                                                !newEditCollection ||
+                                                collection.collectionName ===
+                                                  newEditCollection
+                                                  ? "gray"
+                                                  : "green",
+                                            }}
+                                          />
+                                        </IconButton>
+                                      </Tooltip>
+                                      <Tooltip title="Cancel">
+                                        <IconButton
+                                          onClick={() => {
+                                            setEditCollection(null);
+                                            setNewEditCollection("");
+                                          }}
+                                          sx={{ ml: "5px" }}
+                                        >
+                                          <CloseIcon sx={{ color: "red" }} />
+                                        </IconButton>
+                                      </Tooltip>
+                                    </Box>
+                                  ) : (
+                                    <></>
+                                  )}
+                                </Box>
+                              )}
+
+                              <List sx={{ p: 1 }}>
+                                <Droppable
+                                  droppableId={`${collectionIndex}`}
+                                  type="LINK"
+                                >
+                                  {(provided, snapshot) => (
+                                    <Box
+                                      {...provided.droppableProps}
+                                      ref={provided.innerRef}
+                                      sx={{
+                                        backgroundColor: snapshot.isDraggingOver
+                                          ? (theme) =>
+                                              theme.palette.mode === "light"
+                                                ? DESIGN_SYSTEM_COLORS.gray250
+                                                : DESIGN_SYSTEM_COLORS.notebookG400
+                                          : "",
+                                        borderRadius: "18px",
+                                        userSelect: "none",
+                                      }}
+                                    >
+                                      {propertyValue[collectionIndex].nodes
+                                        .length > 0 ? (
+                                        propertyValue[
+                                          collectionIndex
+                                        ].nodes.map(
+                                          (link: ILinkNode, index: number) => (
+                                            <Draggable
+                                              key={link.id}
+                                              draggableId={link.id}
+                                              index={index}
+                                            >
+                                              {(provided) => (
+                                                <ListItem
+                                                  ref={provided.innerRef}
+                                                  {...provided.draggableProps}
+                                                  {...provided.dragHandleProps}
+                                                  sx={{
+                                                    my: 1,
+                                                    p: 0,
+                                                  }}
                                                 >
-                                                  <DragIndicatorIcon
-                                                    sx={{
-                                                      color:
-                                                        link.change === "added"
-                                                          ? "green"
-                                                          : link.change ===
-                                                            "removed"
-                                                          ? "red"
-                                                          : "",
-                                                    }}
+                                                  <ListItemIcon
+                                                    sx={{ minWidth: 0 }}
+                                                  >
+                                                    <DragIndicatorIcon
+                                                      sx={{
+                                                        color:
+                                                          link.change ===
+                                                          "added"
+                                                            ? "green"
+                                                            : link.change ===
+                                                              "removed"
+                                                            ? "red"
+                                                            : "",
+                                                      }}
+                                                    />
+                                                  </ListItemIcon>
+                                                  <LinkNode
+                                                    navigateToNode={
+                                                      navigateToNode
+                                                    }
+                                                    setSnackbarMessage={
+                                                      setSnackbarMessage
+                                                    }
+                                                    currentVisibleNode={
+                                                      currentVisibleNode
+                                                    }
+                                                    setCurrentVisibleNode={
+                                                      setCurrentVisibleNode
+                                                    }
+                                                    sx={{ pl: 1 }}
+                                                    link={link}
+                                                    property={property}
+                                                    title={getTitle(
+                                                      nodes,
+                                                      link.id
+                                                    )}
+                                                    nodes={nodes}
+                                                    linkIndex={index}
+                                                    unlinkVisible={unlinkVisible(
+                                                      link.id
+                                                    )}
+                                                    linkLocked={false}
+                                                    locked={locked}
+                                                    user={user}
+                                                    reviewId={reviewId}
+                                                    setReviewId={setReviewId}
+                                                    collectionIndex={
+                                                      collectionIndex
+                                                    }
                                                   />
-                                                </ListItemIcon>
-                                                <LinkNode
-                                                  navigateToNode={
-                                                    navigateToNode
-                                                  }
-                                                  setSnackbarMessage={
-                                                    setSnackbarMessage
-                                                  }
-                                                  currentVisibleNode={
-                                                    currentVisibleNode
-                                                  }
-                                                  setCurrentVisibleNode={
-                                                    setCurrentVisibleNode
-                                                  }
-                                                  sx={{ pl: 1 }}
-                                                  link={link}
-                                                  property={property}
-                                                  title={getTitle(
-                                                    nodes,
-                                                    link.id
-                                                  )}
-                                                  nodes={nodes}
-                                                  linkIndex={index}
-                                                  unlinkVisible={unlinkVisible(
-                                                    link.id
-                                                  )}
-                                                  linkLocked={false}
-                                                  locked={locked}
-                                                  user={user}
-                                                  reviewId={reviewId}
-                                                  setReviewId={setReviewId}
-                                                  collectionIndex={
-                                                    collectionIndex
-                                                  }
-                                                />
-                                              </ListItem>
-                                            )}
-                                          </Draggable>
+                                                </ListItem>
+                                              )}
+                                            </Draggable>
+                                          )
                                         )
-                                      )
-                                    ) : (
-                                      <Typography
-                                        variant="body2"
-                                        sx={{
-                                          p: 2,
-                                          color: "text.secondary",
-                                          textAlign: "center",
-                                        }}
-                                      >
-                                        {collection.collectionName === "main"
-                                          ? ""
-                                          : "No items"}
-                                      </Typography>
-                                    )}
-                                    {provided.placeholder}
-                                  </Box>
-                                )}
-                              </Droppable>
-                            </List>
-                          </Paper>
-                        )}
-                      </Draggable>
-                    );
-                  }
-                )}
-                {provided.placeholder}
-              </Box>
-            )}
-          </Droppable>
-        </DragDropContext>
+                                      ) : (
+                                        <Typography
+                                          variant="body2"
+                                          sx={{
+                                            p: 2,
+                                            color: "text.secondary",
+                                            textAlign: "center",
+                                          }}
+                                        >
+                                          {collection.collectionName === "main"
+                                            ? ""
+                                            : "No items"}
+                                        </Typography>
+                                      )}
+                                      {provided.placeholder}
+                                    </Box>
+                                  )}
+                                </Droppable>
+                              </List>
+                            </Paper>
+                          )}
+                        </Draggable>
+                      );
+                    }
+                  )}
+                  {provided.placeholder}
+                </Box>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </Box>
       </Box>
-      {/*   {property !== "specializations" && property !== "generalizations" && (
-        <Box sx={{ mt: "14px", p: "6px" }}>
+      {property !== "specializations" && property !== "generalizations" && (
+        <Box sx={{ p: "6px", mt: "auto" }}>
           <Typography sx={{ mb: "4px" }}>
             If you cannot find the existing{" "}
             <strong>
@@ -1277,7 +1288,7 @@ const StructuredProperty = ({
             to link, you can describe them below:
           </Typography>
           <Text
-            text={onGetPropertyValue(property)}
+            text={onGetPropertyValue(property, true)}
             currentVisibleNode={currentVisibleNode}
             property={property}
             setCurrentVisibleNode={setCurrentVisibleNode}
@@ -1290,7 +1301,7 @@ const StructuredProperty = ({
             currentImprovement={currentImprovement}
           />
         </Box>
-      )} */}
+      )}
     </Paper>
   );
 };

@@ -96,7 +96,7 @@ import { useEffect, useState } from "react";
 import { getTitleDeleted } from " @components/lib/utils/string.utils";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 
-type ISubOntologyProps = {
+type ILinkNodeProps = {
   link: ILinkNode;
   currentVisibleNode: INode;
   sx?: { [key: string]: any };
@@ -110,8 +110,8 @@ type ISubOntologyProps = {
   linkLocked: any;
   locked: boolean;
   user: any;
-  reviewId?: string;
-  setReviewId?: Function;
+  reviewId: string;
+  setReviewId: Function;
   linkIndex: number;
   collectionIndex: number;
 };
@@ -132,7 +132,7 @@ const LinkNode = ({
   reviewId,
   setReviewId,
   collectionIndex,
-}: ISubOntologyProps) => {
+}: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
   const [editorContent, setEditorContent] = useState(title);
@@ -463,10 +463,11 @@ const LinkNode = ({
           <TextField
             value={editorContent}
             onChange={handleChanges}
+            sx={{ width: "500px" }}
             InputProps={{
               inputProps: {
                 style: {
-                  padding: 5,
+                  padding: 10,
                 },
               },
             }}
@@ -476,11 +477,11 @@ const LinkNode = ({
               <DoneIcon sx={{ color: "green" }} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Remove">
+          {/*     <Tooltip title="Remove">
             <IconButton onClick={cancelEditingNode} sx={{ ml: "5px" }}>
               <CloseIcon sx={{ color: "red" }} />
             </IconButton>
-          </Tooltip>
+          </Tooltip> */}
         </Box>
       )}
       {ConfirmDialog}

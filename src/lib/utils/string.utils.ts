@@ -95,7 +95,7 @@ export const getPropertyValue = (
   structured?: boolean
 ) => {
   if (id && nodes[id] && nodes[id].properties.hasOwnProperty(property)) {
-    if (Array.isArray(nodes[id].properties[property]) && !structured) {
+    if (Array.isArray(nodes[id].properties[property]) && structured) {
       return nodes[id]?.textValue && nodes[id]?.textValue[property]
         ? nodes[id]?.textValue[property] || ""
         : "";
