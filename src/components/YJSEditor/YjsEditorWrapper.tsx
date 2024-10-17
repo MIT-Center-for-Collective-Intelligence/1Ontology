@@ -96,7 +96,7 @@ const YjsEditorWrapper = ({
 
   useEffect(() => {
     if (editorContainerRef.current) {
-      if (!editorRef.current) {
+      if (!editorRef.current || !reference) {
         editorRef.current = new Quill(editorContainerRef.current, {
           modules: {
             cursors: true,
@@ -159,7 +159,7 @@ const YjsEditorWrapper = ({
         setErrorDuplicate(checkDuplicateTitle(text));
       }
     }
-  }, [reference, text, breakInheritance]);
+  }, [reference, text, breakInheritance, nodeId]);
 
   useEffect(() => {
     if (!property || !fullname || !nodeId || reference) return;
@@ -219,6 +219,7 @@ const YjsEditorWrapper = ({
         provider.disconnect();
         provider.destroy();
         binding.destroy();
+
         if (editorRef.current) {
           editorRef.current.off("selection-change");
           editorRef.current.off("text-change");
