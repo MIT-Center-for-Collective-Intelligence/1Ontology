@@ -94,6 +94,7 @@ const Text = ({
   const [isEditing, setIsEditing] = useState(false); // State to check if user is editing
   const [{ user }] = useAuth();
   const focusAfterSaveRef = useRef(false); // Ref to track whether to refocus
+  const [reference, setReference] = useState<string | null>(null);
 
   // // Maintain focus after inheritance change
   // useEffect(() => {
@@ -102,6 +103,9 @@ const Text = ({
   //     focusAfterSaveRef.current = false; // Reset
   //   }
   // }, [currentVisibleNode.inheritance[property]?.ref]);
+  useEffect(() => {
+    setReference(currentVisibleNode.inheritance[property]?.ref || null);
+  }, [currentVisibleNode]);
 
   const saveChangeHistory = useCallback(
     (previousValue: string, newValue: string) => {
@@ -174,14 +178,7 @@ const Text = ({
         }, 300); // Reduced the delay to improve smoothness
       }
     },
-    [
-      user?.uname,
-      currentVisibleNode.inheritance,
-      currentVisibleNode.id,
-      property,
-      db,
-      nodes,
-    ]
+    [user?.uname, currentVisibleNode, reference, property, db, nodes]
   );
 
   useEffect(() => {
@@ -361,7 +358,7 @@ const Text = ({
               nodeId={currentVisibleNode.id}
               color={randomProminentColor()}
               saveChangeHistory={saveChangeHistory}
-              reference={currentVisibleNode.inheritance[property]?.ref || null}
+              reference={reference}
               breakInheritance={onSaveTextChange}
               text={text}
               structured={structured}

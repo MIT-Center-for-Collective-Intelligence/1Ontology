@@ -591,7 +591,7 @@ export const updatePartsAndPartsOf = async (
   db: Firestore,
   nodes: { [nodeId: string]: INode }
 ) => {
-  debugger;
+
   links.forEach(async (child) => {
     let childData: any = nodes[child.id] as INode;
     if (!childData) {

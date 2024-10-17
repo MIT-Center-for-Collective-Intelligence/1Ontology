@@ -369,7 +369,8 @@ const Node = ({
   // This function handles the cloning of a node.
   const handleCloning = async (node: { id: string }) => {
     // Call the asynchronous function to clone the node with the given ID.
-
+    // Close the modal or perform any necessary cleanup.
+    handleCloseAddLinksModel();
     const newNode = await cloneNode(node.id);
     if (!newNode) return;
 
@@ -518,9 +519,6 @@ const Node = ({
         db,
       });
     }
-
-    // Close the modal or perform any necessary cleanup.
-    handleCloseAddLinksModel();
   };
 
   // Function to add a new specialization to a node

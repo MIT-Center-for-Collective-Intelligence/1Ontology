@@ -59,6 +59,7 @@ const YjsEditorWrapper = ({
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
   const yTextRef = useRef<any>(null);
+  const referenceRef = useRef(reference);
 
   const db = getFirestore();
   const TIMEOUT = 15000 + Math.floor(Math.random() * 300);
@@ -90,6 +91,10 @@ const YjsEditorWrapper = ({
   };
 
   useEffect(() => {
+    referenceRef.current = reference;
+  }, [reference]);
+
+  useEffect(() => {
     if (editorContainerRef.current) {
       if (!editorRef.current) {
         editorRef.current = new Quill(editorContainerRef.current, {
@@ -98,6 +103,35 @@ const YjsEditorWrapper = ({
             toolbar: false,
             history: {
               userOnly: true,
+            },
+            clipboard: {
+              matchVisual: true,
+
+              matchers: [
+                [
+                  "span[style], div[style], p[style]",
+                  (node: any, delta: any) => {
+                    const sanitizedDelta = delta;
+                    sanitizedDelta.ops.forEach((op: any) => {
+                      if (op.attributes) {
+                        delete op.attributes.color;
+                        delete op.attributes.background;
+                        delete op.attributes.bold;
+                        delete op.attributes.italic;
+                        delete op.attributes.underline;
+                        delete op.attributes.strike;
+                        delete op.attributes.font;
+                        delete op.attributes.size;
+                        delete op.attributes.align;
+                        delete op.attributes.indent;
+                        delete op.attributes.direction;
+                        delete op.attributes.border;
+                      }
+                    });
+                    return sanitizedDelta;
+                  },
+                ],
+              ],
             },
           },
           placeholder: `${capitalizeFirstLetter(
@@ -110,9 +144,13 @@ const YjsEditorWrapper = ({
       if (reference && editorRef.current) {
         editorRef.current.setText(text);
         editorRef.current.on("text-change", (delta, oldDelta, source) => {
-          if (source === "user" && reference) {
-            const text = editorRef.current?.getText();
-            breakInheritance(text);
+          if (referenceRef.current && source === "user") {
+            setTimeout(() => {
+              if (editorRef.current) {
+                const text = editorRef.current?.getText();
+                breakInheritance(text);
+              }
+            }, 100);
           }
         });
         return;
@@ -121,7 +159,7 @@ const YjsEditorWrapper = ({
         setErrorDuplicate(checkDuplicateTitle(text));
       }
     }
-  }, [reference, text]);
+  }, [reference, text, breakInheritance]);
 
   useEffect(() => {
     if (!property || !fullname || !nodeId || reference) return;
