@@ -332,7 +332,7 @@ const Text = ({
       {locked ||
       (selectedDiffNode &&
         (selectedDiffNode.modifiedProperty !== property || structured)) ||
-      currentVisibleNode.unclassified ? (
+      (currentVisibleNode.unclassified && property === "title") ? (
         <Typography
           sx={{ fontSize: property === "title" ? "34px" : "19px", p: "19px" }}
         >

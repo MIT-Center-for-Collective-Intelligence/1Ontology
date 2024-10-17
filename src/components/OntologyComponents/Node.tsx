@@ -278,7 +278,7 @@ const Node = ({
         // Generate new inheritance structure
         const inheritance = generateInheritance(
           parentNodeData.inheritance,
-          currentVisibleNode.id
+          nodeId
         );
 
         // Create the new node object
@@ -1097,7 +1097,10 @@ const Node = ({
       if (inheritedProperty !== null) {
         return inheritedProperty;
       } else {
-        if (Array.isArray(currentVisibleNode.properties[property])) {
+        if (
+          structured ||
+          Array.isArray(currentVisibleNode.properties[property])
+        ) {
           return currentVisibleNode?.textValue
             ? currentVisibleNode?.textValue[property] || ""
             : "";
@@ -1428,35 +1431,33 @@ const Node = ({
                 manageLock={user?.manageLock}
               />
             )}
-            {selectedProperty !== "specializations" &&
-              selectedProperty !== "generalizations" && (
-                <Box sx={{ p: "6px", mt: "auto" }}>
-                  <Typography sx={{ mb: "4px" }}>
-                    If you cannot find the existing{" "}
-                    <strong>
-                      {capitalizeFirstLetter(
-                        DISPLAY[selectedProperty]
-                          ? DISPLAY[selectedProperty]
-                          : selectedProperty
-                      )}{" "}
-                    </strong>
-                    to link, you can describe them below:
-                  </Typography>
-                  <Text
-                    text={onGetPropertyValue(selectedProperty, true) as string}
-                    currentVisibleNode={currentVisibleNode}
-                    property={selectedProperty}
-                    setCurrentVisibleNode={setCurrentVisibleNode}
-                    nodes={nodes}
-                    locked={locked}
-                    selectedDiffNode={selectedDiffNode}
-                    getTitleNode={() => {}}
-                    confirmIt={confirmIt}
-                    structured={true}
-                    currentImprovement={currentImprovement}
-                  />
-                </Box>
-              )}
+
+            <Box sx={{ p: "6px", mt: "auto" }}>
+              <Typography sx={{ mb: "4px" }}>
+                If you cannot find the existing{" "}
+                <strong>
+                  {capitalizeFirstLetter(
+                    DISPLAY[selectedProperty]
+                      ? DISPLAY[selectedProperty]
+                      : selectedProperty
+                  )}{" "}
+                </strong>
+                to link, you can describe them below:
+              </Typography>
+              <Text
+                text={onGetPropertyValue(selectedProperty, true) as string}
+                currentVisibleNode={currentVisibleNode}
+                property={selectedProperty}
+                setCurrentVisibleNode={setCurrentVisibleNode}
+                nodes={nodes}
+                locked={locked}
+                selectedDiffNode={selectedDiffNode}
+                getTitleNode={() => {}}
+                confirmIt={confirmIt}
+                structured={true}
+                currentImprovement={currentImprovement}
+              />
+            </Box>
           </Box>
 
           <Paper

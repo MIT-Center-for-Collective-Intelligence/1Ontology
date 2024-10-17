@@ -1275,19 +1275,15 @@ const StructuredProperty = ({
           </DragDropContext>
         </Box>
       </Box>
-      {property !== "specializations" &&
-        property !== "generalizations" &&
-        onGetPropertyValue(property, true) && (
-          <Box sx={{ p: "16px", mt: "auto" }}>
-            <Typography
-              sx={{ mb: "4px", fontWeight: "bold", fontSize: "17px" }}
-            >
-              Comments:
-            </Typography>
+      {onGetPropertyValue(property, true) && (
+        <Box sx={{ p: "16px", mt: "auto" }}>
+          <Typography sx={{ mb: "4px", fontWeight: "bold", fontSize: "17px" }}>
+            Comments:
+          </Typography>
 
-            <MarkdownRender text={onGetPropertyValue(property, true)} />
+          <MarkdownRender text={onGetPropertyValue(property, true)} />
 
-            {/* <Text
+          {/* <Text
               text={onGetPropertyValue(property, true)}
               currentVisibleNode={currentVisibleNode}
               property={property}
@@ -1300,8 +1296,8 @@ const StructuredProperty = ({
               structured={true}
               currentImprovement={currentImprovement}
             /> */}
-          </Box>
-        )}
+        </Box>
+      )}
     </Paper>
   );
 };
