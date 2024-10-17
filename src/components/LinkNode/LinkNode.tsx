@@ -98,7 +98,7 @@ import {
 } from "firebase/firestore";
 import DoneIcon from "@mui/icons-material/Done";
 import CloseIcon from "@mui/icons-material/Close";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getTitleDeleted } from " @components/lib/utils/string.utils";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
@@ -144,7 +144,7 @@ const LinkNode = ({
   const db = getFirestore();
   const theme = useTheme();
   const [editorContent, setEditorContent] = useState(title);
-
+  const textFieldRef = useRef<HTMLInputElement>(null);
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
 
   const [regionalTitle, setRegionalTitle] = useState(title);
@@ -548,7 +548,13 @@ const LinkNode = ({
       ? theme.palette.common.gray50
       : theme.palette.common.notebookMainBlack;
   };
-
+  useEffect(() => {
+    
+    if (reviewId === link.id && textFieldRef.current) {
+      textFieldRef.current.focus();
+      textFieldRef.current.select(); 
+    }
+  }, [reviewId]);
   return (
     <Box sx={{ ...sx }}>
       {reviewId !== link.id ? (
@@ -588,6 +594,7 @@ const LinkNode = ({
       ) : (
         <Box sx={{ display: "flex", alignItems: "center" }}>
           <TextField
+            inputRef={textFieldRef}
             value={editorContent}
             onChange={handleChanges}
             sx={{ width: "300px" }}

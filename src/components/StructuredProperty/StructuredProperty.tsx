@@ -27,6 +27,7 @@ import {
   capitalizeFirstLetter,
   getPropertyValue,
   getTitle,
+  getTooltipHelper,
 } from " @components/lib/utils/string.utils";
 import { ICollection, ILinkNode, INode } from " @components/types/INode";
 import { DISPLAY } from " @components/lib/CONSTANTS";
@@ -823,17 +824,19 @@ const StructuredProperty = ({
                 : "",
           }}
         >
-          <Typography
-            sx={{
-              fontSize: "20px",
-              fontWeight: 500,
-              fontFamily: "Roboto, sans-serif",
-            }}
-          >
-            {capitalizeFirstLetter(
-              DISPLAY[property] ? DISPLAY[property] : property
-            )}
-          </Typography>
+          <Tooltip title={getTooltipHelper(property)}>
+            <Typography
+              sx={{
+                fontSize: "20px",
+                fontWeight: 500,
+                fontFamily: "Roboto, sans-serif",
+              }}
+            >
+              {capitalizeFirstLetter(
+                DISPLAY[property] ? DISPLAY[property] : property
+              )}
+            </Typography>
+          </Tooltip>
           {currentVisibleNode?.inheritance[property]?.ref && (
             <Typography sx={{ fontSize: "14px", ml: "9px" }}>
               {'(Inherited from "'}

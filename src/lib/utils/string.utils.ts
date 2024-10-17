@@ -206,3 +206,47 @@ function annotate(
   }
   return rounded + abbr;
 }
+export const getTooltipHelper = (property: string): string => {
+  const propertyDescriptions: { [key: string]: string } = {
+    title:
+      "The title of an entity, typically starting with a verb. Example: 'Turn around aircraft'.",
+    description:
+      "A detailed explanation of this entity to help others understand its purpose and how it differs from similar entities.",
+    "Is Part Of":
+      "The larger entities that this entity is a component of. For activities, it includes larger activities of which this is a sub-activity. Example: The activity 'Dress seats' is part of 'Clean aircraft.'",
+    parts:
+      "The components or sub-entities that make up this entity. For activities, parts are the sub-activities needed to achieve the overall goal.",
+    generalizations:
+      "Entities that this entity is a specific type of. Example: 'Turn around aircraft' is a generalization of 'Change user of physical object' because turning around an aircraft changes its user.",
+    specializations:
+      "Entities that are more specific variants of this entity. Example: 'Turn around aircraft' is a specialization of 'Change user of physical object' because it involves changing the user of an aircraft.",
+    references:
+      "Sources of information used to create the properties of this node, such as books, papers, or other references. Please cite them here.",
+    actor: "Individuals or groups who perform this activity.",
+    "Pre-Conditions":
+      "The conditions that must be met before this activity can be performed.",
+    "Post-Conditions":
+      "The outcomes or conditions that should be achieved as a result of performing this activity.",
+    "Evaluation Dimensions":
+      "Criteria used to assess the performance of this activity.",
+    abilities: "The skills or abilities required of this actor.",
+    individual: "Types of individuals belonging to this group.",
+    "Number of Individuals in Group": "The count of individuals in this group.",
+    "List of Individuals in Group":
+      "A detailed list of individuals that make up this group.",
+    "Type of Actor": "The specific types of actors that belong to this group.",
+    "Criteria for Acceptability":
+      "The standards used to determine if the activity's performance meets expectations according to this evaluation dimension.",
+    "Direction of Desirability":
+      "Indicates whether an increase or decrease in measurement would be considered desirable for this activity’s performance.",
+    "Measurement Units":
+      "The units used to quantify this evaluation dimension.",
+    reward: "The incentive or benefit associated with this activity or goal.",
+    "Reward Function": "The way in which the reward is structured or provided.",
+    "Capabilities Required":
+      "The capabilities that actors must possess to achieve this reward.",
+    root: "The most generalized entity in the ontology. Tracing the generalizations of this entity back leads to the root of the ontology.",
+  };
+
+  return propertyDescriptions[property] || "";
+};

@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { Box, Paper, TextField, Typography } from "@mui/material";
+import { Box, Paper, TextField, Tooltip, Typography } from "@mui/material";
 import { debounce } from "lodash";
 import {
   getDoc,
@@ -31,6 +31,7 @@ import { diffWords, diffLines } from "diff"; // Using diffLines for line-by-line
 import {
   capitalizeFirstLetter,
   getTitle,
+  getTooltipHelper as getTooltipHelper,
 } from " @components/lib/utils/string.utils";
 import ManageNodeButtons from "./ManageNodeButtons";
 import { DISPLAY } from " @components/lib/CONSTANTS";
@@ -277,17 +278,20 @@ const Text = ({
                 : "",
           }}
         >
-          <Typography
-            sx={{
-              fontSize: "20px",
-              fontWeight: 500,
-              fontFamily: "Roboto, sans-serif",
-            }}
-          >
-            {capitalizeFirstLetter(
-              DISPLAY[property] ? DISPLAY[property] : property
-            )}
-          </Typography>
+          <Tooltip title={getTooltipHelper(property)}>
+            <Typography
+              sx={{
+                fontSize: "20px",
+                fontWeight: 500,
+                fontFamily: "Roboto, sans-serif",
+              }}
+            >
+              {capitalizeFirstLetter(
+                DISPLAY[property] ? DISPLAY[property] : property
+              )}
+            </Typography>
+          </Tooltip>
+
           {selectedDiffNode &&
             selectedDiffNode.changeType === "delete node" &&
             property === "title" && (

@@ -529,6 +529,7 @@ export const createNewNode = (
 ): INode => {
   return {
     ...parentNodeData,
+    unclassified: false,
     id: newNodeRefId,
     title: newTitle,
     inheritance,
