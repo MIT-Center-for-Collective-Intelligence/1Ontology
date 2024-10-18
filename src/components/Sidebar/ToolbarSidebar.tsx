@@ -704,7 +704,7 @@ const ToolbarSidebar = ({
               rightOption={<CustomBadge value={0} />}
               rightFloatingOption={<CustomSmallBadge value={0} />}
             />
-            <SidebarButton
+            {/* <SidebarButton
               id="toolbar-search-button"
               icon={<SearchIcon />}
               onClick={() => {
@@ -712,7 +712,7 @@ const ToolbarSidebar = ({
               }}
               text="Search"
               toolbarIsOpen={hovered}
-            />
+            /> */}
             {/*<SidebarButton
               id="toolbar-theme-button"
               icon={<AutoAwesomeIcon />}
