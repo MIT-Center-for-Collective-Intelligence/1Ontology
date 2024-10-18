@@ -8,8 +8,9 @@ import {
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import CloseIcon from '@mui/icons-material/Close';
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const SearchSideBar = ({
   openSearchedNode,
@@ -19,6 +20,10 @@ const SearchSideBar = ({
   searchWithFuse: any;
 }) => {
   const [searchValue, setSearchValue] = useState("");
+  const [isListOpen, setIsListOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
 
   const searchResults = useMemo(() => {
     /*  recordLogs({
@@ -28,15 +33,77 @@ const SearchSideBar = ({
     return searchWithFuse(searchValue);
   }, [searchValue]);
 
+  const handleFocus = () => {
+    if (searchValue.trim() !== "") {
+      setIsFocused(true);
+      setIsListOpen(true);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchValue("");
+    setIsListOpen(false);
+    setIsFocused(false);
+  };
+
+  const handleBlur = () => {
+    setTimeout(() => {
+      if (searchValue.trim() === "") {
+        setIsFocused(false);
+        setIsListOpen(false);
+      }
+    }, 100);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchValue(value);
+    if (value.trim()) {
+      setIsListOpen(true);
+      setIsFocused(true);
+    } else {
+      setIsListOpen(false);
+      setIsFocused(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        setIsFocused(false);
+        setIsListOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
-    <Box sx={{ pl: "10px", overflow: "auto", height: "90vh" }}>
+    <Box
+      ref={sidebarRef} 
+      sx={{
+        overflow: "auto",
+        height: "100vh",
+        position: 'relative',
+        zIndex: isFocused ? 1000 : '',
+        background: isFocused ? 'black' : 'transparent',
+        transition: 'background 0.3s ease',
+      }}
+    >
       <TextField
-        variant="standard"
         placeholder="Search..."
         value={searchValue}
-        onChange={(e) => setSearchValue(e.target.value)}
+        onChange={handleInputChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         fullWidth
         InputProps={{
+          style: {
+            fontSize: "19px",
+          },
           startAdornment: (
             <IconButton
               sx={{ mr: "5px", cursor: "auto" }}
@@ -46,11 +113,19 @@ const SearchSideBar = ({
               <SearchIcon />
             </IconButton>
           ),
+          endAdornment: searchValue && (
+            <IconButton
+              sx={{ mr: "5px" }}
+              onClick={clearSearch}
+              color="primary"
+              edge="end"
+            >
+              <CloseIcon />
+            </IconButton>
+          ),
         }}
-        autoFocus
         sx={{
           p: "8px",
-          mt: "5px",
           position: "sticky",
           top: "0px",
           background: (theme) =>
@@ -60,11 +135,17 @@ const SearchSideBar = ({
           zIndex: 1000,
         }}
       />
-      <List>
+      {isListOpen && searchResults.length > 0 && (
+        <List sx={{ zIndex: isListOpen ? 10 : 0 }}>
         {searchResults.map((node: any) => (
           <ListItem
             key={node.id}
-            onClick={() => openSearchedNode(node)}
+            onClick={() => {
+              openSearchedNode(node);
+              setSearchValue(node.title);
+              setIsListOpen(false);
+              setIsFocused(false);
+            }}
             sx={{
               display: "flex",
               alignItems: "center",
@@ -87,6 +168,7 @@ const SearchSideBar = ({
           </ListItem>
         ))}
       </List>
+      )}
     </Box>
   );
 };

@@ -105,6 +105,7 @@ import { NodeChange } from " @components/types/INode";
 
 import { getAuth } from "firebase/auth";
 import GuidLines from " @components/components/Guidlines/GuidLines";
+import SearchSideBar from " @components/components/SearchSideBar/SearchSideBar";
 
 const Ontology = () => {
   const db = getFirestore();
@@ -149,6 +150,7 @@ const Ontology = () => {
 
   const [currentImprovement, setCurrentImprovement] = useState(null);
   const [displayGuidelines, setDisplayGuidelines] = useState(false);
+  const [prevHash, setPrevHash] = useState('');
 
   useEffect(() => {
     // Check if a user is logged in
@@ -170,21 +172,30 @@ const Ontology = () => {
         const visibleNodeId = window.location.hash.split("#").reverse()[0];
         if (nodes[visibleNodeId]) {
           setCurrentVisibleNode(nodes[visibleNodeId]);
+          if (window.location.hash !== prevHash) {
+            initializeExpanded(eachOntologyPath[visibleNodeId]);
+          }
         }
+        // Update the previous hash
+        setPrevHash(window.location.hash);
       }
     };
 
-    // Add an event listener to the window for hash changes
-    window.addEventListener("hashchange", handleHashChange);
+    if (typeof window !== 'undefined') {
+      setPrevHash(window.location.hash);
 
-    // Call handleHashChange immediately to handle any initial hash
-    handleHashChange();
+      // Call handleHashChange immediately to handle any initial hash
+      handleHashChange();
+
+      // Add an event listener to the window for hash changes
+      window.addEventListener('hashchange', handleHashChange);
+    }
 
     // Clean up the event listener when the component is unmounted
     return () => {
-      window.removeEventListener("hashchange", handleHashChange);
+      window.removeEventListener('hashchange', handleHashChange);
     };
-  }, [eachOntologyPath]);
+  }, [eachOntologyPath, prevHash]);
 
   // Function to perform a search using Fuse.js library
   const searchWithFuse = (query: string, nodeType?: INodeTypes): INode[] => {
@@ -514,6 +525,41 @@ const Ontology = () => {
     }
     const newExpandedSet: Set<string> = new Set();
 
+    const node = nodes[ontologyPath[ontologyPath.length - 1].id];
+    const nodeGeneralizations = node.generalizations[0].nodes;
+
+    const generlizationSet: Set<string> = new Set(nodeGeneralizations.map(g => g.id));
+
+    // Initialize the expanded set with the current node's ID
+    newExpandedSet.add(node.id);
+
+    const addGeneralizationsToSet = (id: string, expandedSet: any) => {
+      if (expandedSet.has(id)) return;
+
+      expandedSet.add(id);
+
+      const currentNode = nodes[id];
+
+      if (!currentNode) return;
+
+      if (currentNode && currentNode.generalizations && currentNode.generalizations.length > 0) {
+        const generalizations = currentNode.generalizations[0].nodes;
+
+        currentNode.specializations?.forEach(specialization => {
+          if (specialization.collectionName !== "main") {
+            specialization.nodes.forEach(spec => {
+              if (generlizationSet.has(spec.id) || newExpandedSet.has(spec.id)) {
+                addGeneralizationsToSet(`${currentNode.id}-${specialization.collectionName.trim()}`, expandedSet);
+              }
+            });
+          }
+        });
+        generalizations.forEach(g => addGeneralizationsToSet(g.id, expandedSet));
+      }
+    };
+    for (let generalization of nodeGeneralizations) {
+      addGeneralizationsToSet(generalization.id, newExpandedSet);
+    }
     for (let node of ontologyPath) {
       newExpandedSet.add(node.id);
     }
@@ -788,6 +834,18 @@ const Ontology = () => {
                 theme.palette.mode === "dark" ? "#303134" : "white",
             }}
           >
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                width: '100%',
+              }}
+            >
+              <SearchSideBar 
+                openSearchedNode={openSearchedNode}
+              searchWithFuse={searchWithFuse}
+              />
+            </Box>
             <Tabs
               value={viewValue}
               onChange={handleViewChange}
@@ -795,7 +853,7 @@ const Ontology = () => {
                 width: "100%",
                 borderColor: "divider",
                 position: "absolute",
-                top: 0,
+                top: 76,
                 zIndex: 1,
                 backgroundColor: (theme) =>
                   theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
@@ -819,7 +877,7 @@ const Ontology = () => {
             <Box
               sx={{
                 height: "100vh",
-                paddingTop: "50px",
+                paddingTop: "126px",
                 flexGrow: 1,
                 overflow: "auto",
                 ...SCROLL_BAR_STYLE,
