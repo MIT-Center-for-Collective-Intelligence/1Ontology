@@ -106,7 +106,13 @@ import {
   updateDoc,
   writeBatch,
 } from "firebase/firestore";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Text from "./Text";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
@@ -1123,31 +1129,23 @@ const Node = ({
       console.error(error);
     }
   };
+
   /* "root": "T
   of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'.
   The user should not be able to modify the value of this field. Please automatically specify
   it by tracing the generalizations of this descendent activity back to reach one of the direct specializations 
   of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. So, obviously the root of the node 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'
   itself and its direct specializations would be empty string because they are already roots."*/
-  console.log("selectFromTree() ==>", selectFromTree());
 
   return (
     <Box
       sx={{
         // padding: "40px 40px 40px 40px",
-        pt: "15px",
+        // pt: "15px",
         mb: "90px",
       }}
     >
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          width: "100%",
-        }}
-      >
-        {/* title of the node */}
+      <Box sx={{ position: "sticky", top: 0, mb: "15px", zIndex: 100 }}>
         <Text
           currentVisibleNode={currentVisibleNode}
           setCurrentVisibleNode={setCurrentVisibleNode}
@@ -1170,6 +1168,17 @@ const Node = ({
           currentImprovement={currentImprovement}
           checkDuplicateTitle={checkDuplicateTitle}
         />
+      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+          width: "100%",
+        }}
+      >
+        {/* title of the node */}
+
         {/* description of the node */}
         <Text
           nodes={nodes}

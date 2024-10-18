@@ -402,7 +402,7 @@ const LinkNode = ({
               <Typography sx={{ mt: "15px" }}>
                 {`There's no other generalization linked to this node. Are you
                 sure you want to unlink it and move it as a specialization under
-              ${UNCLASSIFIED[nodes[link.id].nodeType]}`}
+              ${UNCLASSIFIED[nodes[link.id].nodeType]}`}?
               </Typography>
             )}
           </Box>,

@@ -265,8 +265,8 @@ const Text = ({
                 : "#d0d5dd",
             p: 3,
             pb: 1.5,
-            borderTopRightRadius: "18px",
-            borderTopLeftRadius: "18px",
+            borderTopRightRadius: property !== "title" ? "18px" : "",
+            borderTopLeftRadius: property !== "title" ? "18px" : "",
             backgroundColor:
               selectedDiffNode &&
               selectedDiffNode.changeType === "add property" &&
