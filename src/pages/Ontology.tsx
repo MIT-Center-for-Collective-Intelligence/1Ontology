@@ -150,7 +150,7 @@ const Ontology = () => {
 
   const [currentImprovement, setCurrentImprovement] = useState(null);
   const [displayGuidelines, setDisplayGuidelines] = useState(false);
-  const [prevHash, setPrevHash] = useState('');
+  const [prevHash, setPrevHash] = useState("");
 
   useEffect(() => {
     // Check if a user is logged in
@@ -181,19 +181,19 @@ const Ontology = () => {
       }
     };
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       setPrevHash(window.location.hash);
 
       // Call handleHashChange immediately to handle any initial hash
       handleHashChange();
 
       // Add an event listener to the window for hash changes
-      window.addEventListener('hashchange', handleHashChange);
+      window.addEventListener("hashchange", handleHashChange);
     }
 
     // Clean up the event listener when the component is unmounted
     return () => {
-      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener("hashchange", handleHashChange);
     };
   }, [eachOntologyPath, prevHash]);
 
@@ -358,6 +358,9 @@ const Ontology = () => {
         continue;
       }
       const nodeTitle = node.title;
+      const parts = Array.isArray(node.properties.parts)
+        ? node.properties.parts.flatMap((c) => c.nodes)
+        : [];
       // Create an entry for the current node in the main specializations tree
       newSpecializationsTree[node.id] = {
         id: node.category ? `${node.id}-${nodeTitle.trim()}` : node.id,
@@ -366,6 +369,7 @@ const Ontology = () => {
         locked: !!node.locked,
         title: nodeTitle,
         unclassified: !!node.unclassified,
+        parts,
         specializations: {},
       };
 
@@ -528,7 +532,9 @@ const Ontology = () => {
     const node = nodes[ontologyPath[ontologyPath.length - 1].id];
     const nodeGeneralizations = node.generalizations[0].nodes;
 
-    const generlizationSet: Set<string> = new Set(nodeGeneralizations.map(g => g.id));
+    const generlizationSet: Set<string> = new Set(
+      nodeGeneralizations.map((g) => g.id)
+    );
 
     // Initialize the expanded set with the current node's ID
     newExpandedSet.add(node.id);
@@ -542,19 +548,31 @@ const Ontology = () => {
 
       if (!currentNode) return;
 
-      if (currentNode && currentNode.generalizations && currentNode.generalizations.length > 0) {
+      if (
+        currentNode &&
+        currentNode.generalizations &&
+        currentNode.generalizations.length > 0
+      ) {
         const generalizations = currentNode.generalizations[0].nodes;
 
-        currentNode.specializations?.forEach(specialization => {
+        currentNode.specializations?.forEach((specialization) => {
           if (specialization.collectionName !== "main") {
-            specialization.nodes.forEach(spec => {
-              if (generlizationSet.has(spec.id) || newExpandedSet.has(spec.id)) {
-                addGeneralizationsToSet(`${currentNode.id}-${specialization.collectionName.trim()}`, expandedSet);
+            specialization.nodes.forEach((spec) => {
+              if (
+                generlizationSet.has(spec.id) ||
+                newExpandedSet.has(spec.id)
+              ) {
+                addGeneralizationsToSet(
+                  `${currentNode.id}-${specialization.collectionName.trim()}`,
+                  expandedSet
+                );
               }
             });
           }
         });
-        generalizations.forEach(g => addGeneralizationsToSet(g.id, expandedSet));
+        generalizations.forEach((g) =>
+          addGeneralizationsToSet(g.id, expandedSet)
+        );
       }
     };
     for (let generalization of nodeGeneralizations) {
@@ -835,18 +853,6 @@ const Ontology = () => {
                 theme.palette.mode === "dark" ? "#303134" : "white",
             }}
           >
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                width: '100%',
-              }}
-            >
-              <SearchSideBar 
-                openSearchedNode={openSearchedNode}
-              searchWithFuse={searchWithFuse}
-              />
-            </Box>
             <Tabs
               value={viewValue}
               onChange={handleViewChange}
@@ -855,7 +861,7 @@ const Ontology = () => {
                 borderColor: "divider",
                 position: "absolute",
                 top: 76,
-                zIndex: 1,
+                zIndex: 9,
                 backgroundColor: (theme) =>
                   theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
                 ".MuiTab-root.Mui-selected": {
@@ -881,6 +887,7 @@ const Ontology = () => {
                 paddingTop: "126px",
                 flexGrow: 1,
                 overflow: "auto",
+
                 ...SCROLL_BAR_STYLE,
               }}
             >
@@ -908,8 +915,21 @@ const Ontology = () => {
                   expandedNodes={expandedNodes}
                   onOpenNodeDagre={onOpenNodeDagre}
                   currentVisibleNode={currentVisibleNode}
+                  // nodes={nodes}
                 />
               </TabPanel>
+            </Box>
+            <Box
+              sx={{
+                position: "absolute",
+                top: 0,
+                width: "100%",
+              }}
+            >
+              <SearchSideBar
+                openSearchedNode={openSearchedNode}
+                searchWithFuse={searchWithFuse}
+              />
             </Box>
           </Section>
         )}

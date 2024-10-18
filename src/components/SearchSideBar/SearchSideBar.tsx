@@ -86,7 +86,7 @@ const SearchSideBar = ({
       ref={sidebarRef} 
       sx={{
         overflow: "auto",
-        height: "100vh",
+        // height: "100vh",
         position: 'relative',
         zIndex: isFocused ? 1000 : '',
         background: isFocused ? 'black' : 'transparent',

@@ -1278,7 +1278,7 @@ const StructuredProperty = ({
           </DragDropContext>
         </Box>
       </Box>
-      {onGetPropertyValue(property, true) && (
+      {onGetPropertyValue(property, true).trim() && (
         <Box sx={{ p: "16px", mt: "auto" }}>
           <Typography sx={{ mb: "4px", fontWeight: "bold", fontSize: "17px" }}>
             Comments:
