@@ -260,19 +260,20 @@ const Ontology = () => {
       mainNodes,
       path,
       eachOntologyPath,
+      visited = new Set(),
     }: {
       mainNodes: INode[];
       path: INodePath[];
       eachOntologyPath: { [nodeId: string]: INodePath[] };
+      visited?: Set<string>;
     }): { [nodeId: string]: INodePath[] } | undefined => {
       try {
-        // Loop through each main node
-
         for (let node of mainNodes) {
-          if (!node) {
+          if (!node || visited.has(node.id)) {
             continue;
           }
-          // Update the path for the current node
+
+          visited.add(node.id);
 
           eachOntologyPath[node.id] = [
             ...path,
@@ -283,15 +284,14 @@ const Ontology = () => {
             },
           ];
 
-          // Loop through categories in the specializations of the current node
-          node.specializations.forEach((collection, collectionIdx) => {
+          node.specializations.forEach((collection) => {
             const specializationsData: INode[] = [];
-            node.specializations[collectionIdx].nodes.forEach((n: ILinkNode) =>
+
+            collection.nodes.forEach((n: ILinkNode) =>
               specializationsData.push(nodes[n.id])
             );
 
             const subPath = [...path];
-
             subPath.push({
               title: node.title,
               id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
@@ -309,6 +309,7 @@ const Ontology = () => {
               mainNodes: specializationsData,
               path: [...subPath],
               eachOntologyPath,
+              visited,
             });
             if (result) {
               eachOntologyPath = result;
@@ -335,7 +336,6 @@ const Ontology = () => {
   useEffect(() => {
     const mainNodes = Object.values(nodes).filter((node: any) => node.category);
     if (mainNodes.length > 0) {
-      // Initialize eachOntologyPath with an empty object and find the ontology path
       let eachOntologyPath = findOntologyPath({
         mainNodes,
         path: [],
@@ -346,17 +346,19 @@ const Ontology = () => {
       }
     }
   }, [nodes]);
-
   // Function to generate a tree structure of specializations based on main nodes
-  const getSpecializationsTree = (_nodes: INode[], path: string[]) => {
-    // Object to store the main specializations tree
+    const getSpecializationsTree = (
+    _nodes: INode[],
+    path: string[],
+    visited: Set<string> = new Set()
+  ) => {
     let newSpecializationsTree: any = {};
-    // Iterate through each main nodes
 
     for (let node of _nodes) {
-      if (!node) {
+      if (!node || visited.has(node.id)) {
         continue;
       }
+      visited.add(node.id);
       const nodeTitle = node.title;
       const parts = Array.isArray(node.properties.parts)
         ? node.properties.parts.flatMap((c) => c.nodes)
@@ -382,45 +384,28 @@ const Ontology = () => {
           specializations.push(nodes[nodeLink.id]);
         });
 
-        // Check if the collection is the main collection
         if (collection.collectionName === "main") {
-          // If main, update the main specializations entry with recursive call
-          newSpecializationsTree[node.id] = {
-            id: node.category ? `${node.id}-${nodeTitle.trim()}` : node.id,
-            path: [...path, node.id],
-            isCategory: !!node.category,
-            title: nodeTitle,
-            locked: !!node.locked,
-            categoriesOrder: node.specializations.map((n) => n.collectionName),
-            unclassified: !!node.unclassified,
-            specializations: {
-              ...(newSpecializationsTree[node.id]?.specializations || {}),
-              ...getSpecializationsTree(specializations, [...path, node.id]),
-            },
+          newSpecializationsTree[node.id].specializations = {
+            ...(newSpecializationsTree[node.id]?.specializations || {}),
+            ...getSpecializationsTree(
+              specializations,
+              [...path, node.id],
+              visited
+            ),
           };
         } else {
-          // If not main, create a new entry for the collection
-          newSpecializationsTree[node.id] = {
-            id: node.id,
-            path: [...path, node.id],
-            title: nodeTitle,
-            c: node.category,
+          newSpecializationsTree[node.id].specializations[
+            collection.collectionName
+          ] = {
+            isCategory: true,
+            id: `${node.id}-${collection.collectionName.trim()}`,
+            title: collection.collectionName,
             locked: !!node.locked,
-            categoriesOrder: node.specializations.map((n) => n.collectionName),
-            unclassified: !!node.unclassified,
-            specializations: {
-              ...(newSpecializationsTree[node.id]?.specializations || {}),
-              [collection.collectionName]: {
-                isCategory: true,
-                id: `${node.id}-${collection.collectionName.trim()}`,
-                title: collection.collectionName,
-                locked: !!node.locked,
-                specializations: getSpecializationsTree(specializations, [
-                  ...path,
-                  node.id,
-                ]),
-              },
-            },
+            specializations: getSpecializationsTree(
+              specializations,
+              [...path, node.id],
+              visited
+            ),
           };
         }
       }
