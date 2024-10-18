@@ -105,6 +105,7 @@ import { NodeChange } from " @components/types/INode";
 
 import { getAuth } from "firebase/auth";
 import GuidLines from " @components/components/Guidlines/GuidLines";
+import SearchSideBar from " @components/components/SearchSideBar/SearchSideBar";
 
 const Ontology = () => {
   const db = getFirestore();
@@ -788,6 +789,12 @@ const Ontology = () => {
                 theme.palette.mode === "dark" ? "#303134" : "white",
             }}
           >
+            <Box>
+              <SearchSideBar 
+                openSearchedNode={openSearchedNode}
+              searchWithFuse={searchWithFuse}
+              />
+            </Box>
             <Tabs
               value={viewValue}
               onChange={handleViewChange}
@@ -795,7 +802,7 @@ const Ontology = () => {
                 width: "100%",
                 borderColor: "divider",
                 position: "absolute",
-                top: 0,
+                top: 56,
                 zIndex: 1,
                 backgroundColor: (theme) =>
                   theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
@@ -819,7 +826,7 @@ const Ontology = () => {
             <Box
               sx={{
                 height: "100vh",
-                paddingTop: "50px",
+                paddingTop: "106px",
                 flexGrow: 1,
                 overflow: "auto",
                 ...SCROLL_BAR_STYLE,
