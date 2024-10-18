@@ -96,9 +96,8 @@ const SearchSideBar = ({
         background: isFocused
           ? theme.palette.mode === "dark"
             ? "black"
-            : "#d0d5dd"
-          : "transparent",
-        transition: "background 0.3s ease",
+            : "white"
+          : "",
       }}
     >
       <TextField
@@ -136,10 +135,9 @@ const SearchSideBar = ({
         sx={{
           p: "8px",
           position: "sticky",
-
           top: "0px",
           background: (theme) =>
-            theme.palette.mode === "dark" ? "black" : "#d0d5dd",
+            theme.palette.mode === "dark" ? "black" : "white",
           zIndex: 1000,
         }}
       />
@@ -168,7 +166,7 @@ const SearchSideBar = ({
                   backgroundColor: (theme) =>
                     theme.palette.mode === "dark"
                       ? DESIGN_SYSTEM_COLORS.notebookG450
-                      : DESIGN_SYSTEM_COLORS.gray200,
+                      : "white",
                 },
               }}
             >
