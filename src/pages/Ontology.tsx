@@ -703,15 +703,17 @@ const Ontology = () => {
   const openSearchedNode = (node: INode, searched = true) => {
     try {
       // Set the clicked node as the open currentVisibleNode
-      setCurrentVisibleNode(node);
+      // setCurrentVisibleNode(node);
+
+      navigateToNode(node.id);
 
       setTimeout(() => {
         const element = document.getElementById("node-" + node?.id);
         if (element) {
           element.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-      }, 800);
-      initializeExpanded(eachOntologyPath[node.id]);
+      }, 500);
+      // initializeExpanded(eachOntologyPath[node.id]);
       // Record the click action in logs
       if (searched) {
         recordLogs({
@@ -723,7 +725,6 @@ const Ontology = () => {
       console.error(error);
     }
   };
-
   useEffect(() => {
     if (process.env.NODE_ENV === "development") return;
     const handleUserActivity = () => {
