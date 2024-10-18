@@ -6,9 +6,10 @@ import {
   ListItem,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import CloseIcon from '@mui/icons-material/Close';
+import CloseIcon from "@mui/icons-material/Close";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
@@ -23,7 +24,7 @@ const SearchSideBar = ({
   const [isListOpen, setIsListOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-
+  const theme = useTheme();
 
   const searchResults = useMemo(() => {
     /*  recordLogs({
@@ -69,28 +70,35 @@ const SearchSideBar = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node)
+      ) {
         setIsFocused(false);
         setIsListOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   return (
     <Box
-      ref={sidebarRef} 
+      ref={sidebarRef}
       sx={{
         overflow: "auto",
-        // height: "100vh",
-        position: 'relative',
-        zIndex: isFocused ? 1000 : '',
-        background: isFocused ? 'black' : 'transparent',
-        transition: 'background 0.3s ease',
+        height: isFocused ? "100vh" : "",
+        position: "relative",
+        zIndex: isFocused ? 1000 : "",
+        background: isFocused
+          ? theme.palette.mode === "dark"
+            ? "black"
+            : "#d0d5dd"
+          : "transparent",
+        transition: "background 0.3s ease",
       }}
     >
       <TextField
@@ -103,6 +111,7 @@ const SearchSideBar = ({
         InputProps={{
           style: {
             fontSize: "19px",
+            borderRadius: "45px",
           },
           startAdornment: (
             <IconButton
@@ -127,47 +136,46 @@ const SearchSideBar = ({
         sx={{
           p: "8px",
           position: "sticky",
+
           top: "0px",
           background: (theme) =>
-            theme.palette.mode === "dark"
-              ? "black"
-              : DESIGN_SYSTEM_COLORS.gray200,
+            theme.palette.mode === "dark" ? "black" : "#d0d5dd",
           zIndex: 1000,
         }}
       />
       {isListOpen && searchResults.length > 0 && (
         <List sx={{ zIndex: isListOpen ? 10 : 0 }}>
-        {searchResults.map((node: any) => (
-          <ListItem
-            key={node.id}
-            onClick={() => {
-              openSearchedNode(node);
-              setSearchValue(node.title);
-              setIsListOpen(false);
-              setIsFocused(false);
-            }}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              color: "white",
-              cursor: "pointer",
-              borderRadius: "4px",
-              padding: "8px",
-              transition: "background-color 0.3s",
-              // border: "1px solid #ccc",
-              mt: "5px",
-              "&:hover": {
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "dark"
-                    ? DESIGN_SYSTEM_COLORS.notebookG450
-                    : DESIGN_SYSTEM_COLORS.gray200,
-              },
-            }}
-          >
-            <Typography>{node.title}</Typography>
-          </ListItem>
-        ))}
-      </List>
+          {searchResults.map((node: any) => (
+            <ListItem
+              key={node.id}
+              onClick={() => {
+                openSearchedNode(node);
+                setSearchValue(node.title);
+                setIsListOpen(false);
+                setIsFocused(false);
+              }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                color: "white",
+                cursor: "pointer",
+                borderRadius: "4px",
+                padding: "8px",
+                transition: "background-color 0.3s",
+                // border: "1px solid #ccc",
+                mt: "5px",
+                "&:hover": {
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? DESIGN_SYSTEM_COLORS.notebookG450
+                      : DESIGN_SYSTEM_COLORS.gray200,
+                },
+              }}
+            >
+              <Typography>{node.title}</Typography>
+            </ListItem>
+          ))}
+        </List>
       )}
     </Box>
   );
