@@ -789,7 +789,13 @@ const Ontology = () => {
                 theme.palette.mode === "dark" ? "#303134" : "white",
             }}
           >
-            <Box>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                width: '100%',
+              }}
+            >
               <SearchSideBar 
                 openSearchedNode={openSearchedNode}
               searchWithFuse={searchWithFuse}
@@ -802,7 +808,7 @@ const Ontology = () => {
                 width: "100%",
                 borderColor: "divider",
                 position: "absolute",
-                top: 56,
+                top: 76,
                 zIndex: 1,
                 backgroundColor: (theme) =>
                   theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
@@ -826,7 +832,7 @@ const Ontology = () => {
             <Box
               sx={{
                 height: "100vh",
-                paddingTop: "106px",
+                paddingTop: "126px",
                 flexGrow: 1,
                 overflow: "auto",
                 ...SCROLL_BAR_STYLE,

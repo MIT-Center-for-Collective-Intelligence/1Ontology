@@ -34,8 +34,10 @@ const SearchSideBar = ({
   }, [searchValue]);
 
   const handleFocus = () => {
-    setIsFocused(true);
-    setIsListOpen(true);
+    if (searchValue.trim() !== "") {
+      setIsFocused(true);
+      setIsListOpen(true);
+    }
   };
 
   const clearSearch = () => {
@@ -54,11 +56,14 @@ const SearchSideBar = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchValue(e.target.value);
-    if (e.target.value) {
+    const value = e.target.value;
+    setSearchValue(value);
+    if (value.trim()) {
       setIsListOpen(true);
+      setIsFocused(true);
     } else {
       setIsListOpen(false);
+      setIsFocused(false);
     }
   };
 
@@ -89,7 +94,6 @@ const SearchSideBar = ({
       }}
     >
       <TextField
-        variant="standard"
         placeholder="Search..."
         value={searchValue}
         onChange={handleInputChange}
@@ -97,6 +101,9 @@ const SearchSideBar = ({
         onBlur={handleBlur}
         fullWidth
         InputProps={{
+          style: {
+            fontSize: "19px",
+          },
           startAdornment: (
             <IconButton
               sx={{ mr: "5px", cursor: "auto" }}
@@ -117,7 +124,6 @@ const SearchSideBar = ({
             </IconButton>
           ),
         }}
-        autoFocus
         sx={{
           p: "8px",
           position: "sticky",
