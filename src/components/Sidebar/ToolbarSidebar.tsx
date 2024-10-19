@@ -141,6 +141,7 @@ const ToolbarSidebar = ({
   const [profileImage, setProfileImage] = useState("");
   const isProfileMenuOpen = Boolean(profileMenuOpen);
   const [activeUsers, setActiveUsers] = useState<any>({});
+  const [previousNodeId, setPreviousNodeId] = useState("");
 
   const signOut = async () => {
     router.push(ROUTES.signIn);
@@ -412,6 +413,9 @@ const ToolbarSidebar = ({
 
   const displayDiff = (data: NodeChange) => {
     setSelectedDiffNode(data);
+    if (!previousNodeId) {
+      setPreviousNodeId(currentVisibleNode.id);
+    }
     if (currentVisibleNode?.id !== data.nodeId) {
       setCurrentVisibleNode(
         nodes[data.nodeId] ? nodes[data.nodeId] : data.fullNode
@@ -620,11 +624,12 @@ const ToolbarSidebar = ({
             {user && (
               <IconButton
                 onClick={() => {
+                  if (previousNodeId) {
+                    navigateToNode(previousNodeId);
+                    setPreviousNodeId("");
+                  }
                   setActiveSidebar(null);
                   setOpenLogsFor(null);
-                  if (selectedDiffNode) {
-                    navigateToNode(currentVisibleNode.id);
-                  }
                 }}
                 sx={{ ml: "auto" }}
               >

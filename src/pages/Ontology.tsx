@@ -102,8 +102,6 @@ import { recordLogs, saveNewChangeLog } from " @components/lib/utils/helpers";
 import { useHover } from " @components/lib/hooks/useHover";
 import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarSidebar";
 import { NodeChange } from " @components/types/INode";
-
-import { getAuth } from "firebase/auth";
 import GuidLines from " @components/components/Guidlines/GuidLines";
 import SearchSideBar from " @components/components/SearchSideBar/SearchSideBar";
 
