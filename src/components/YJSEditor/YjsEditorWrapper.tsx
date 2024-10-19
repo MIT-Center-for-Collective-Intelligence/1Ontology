@@ -39,9 +39,6 @@ const YjsEditorWrapper = ({
   nodeId,
   color,
   saveChangeHistory,
-  reference,
-  breakInheritance,
-  text,
   structured,
   checkDuplicateTitle,
 }: {
@@ -50,21 +47,14 @@ const YjsEditorWrapper = ({
   nodeId: string;
   color: string;
   saveChangeHistory: Function;
-  reference: string | null;
-  breakInheritance: Function;
-  text: string;
   structured: boolean;
   checkDuplicateTitle: Function;
 }) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
   const yTextRef = useRef<any>(null);
-  const referenceRef = useRef(reference);
-
-  const db = getFirestore();
   const TIMEOUT = 15000 + Math.floor(Math.random() * 300);
   const changeHistoryRef = useRef<any[]>([]);
-
   const [errorDuplicate, setErrorDuplicate] = useState(false);
 
   const saveChangeLog = (changeHistory: any[]) => {
@@ -91,78 +81,8 @@ const YjsEditorWrapper = ({
   };
 
   useEffect(() => {
-    referenceRef.current = reference;
-  }, [reference]);
-
-  useEffect(() => {
-    if (editorContainerRef.current) {
-      if (!editorRef.current || !reference) {
-        editorRef.current = new Quill(editorContainerRef.current, {
-          modules: {
-            cursors: true,
-            toolbar: false,
-            history: {
-              userOnly: true,
-            },
-            clipboard: {
-              matchVisual: true,
-
-              matchers: [
-                [
-                  "span[style], div[style], p[style]",
-                  (node: any, delta: any) => {
-                    const sanitizedDelta = delta;
-                    sanitizedDelta.ops.forEach((op: any) => {
-                      if (op.attributes) {
-                        delete op.attributes.color;
-                        delete op.attributes.background;
-                        delete op.attributes.bold;
-                        delete op.attributes.italic;
-                        delete op.attributes.underline;
-                        delete op.attributes.strike;
-                        delete op.attributes.font;
-                        delete op.attributes.size;
-                        delete op.attributes.align;
-                        delete op.attributes.indent;
-                        delete op.attributes.direction;
-                        delete op.attributes.border;
-                      }
-                    });
-                    return sanitizedDelta;
-                  },
-                ],
-              ],
-            },
-          },
-          placeholder: `${capitalizeFirstLetter(
-            DISPLAY[property] ? DISPLAY[property] : property
-          )}...`,
-          theme: "snow",
-        });
-      }
-
-      if (reference && editorRef.current) {
-        editorRef.current.setText(text);
-        editorRef.current.on("text-change", (delta, oldDelta, source) => {
-          if (referenceRef.current && source === "user") {
-            setTimeout(() => {
-              if (editorRef.current) {
-                const text = editorRef.current?.getText();
-                breakInheritance(text);
-              }
-            }, 100);
-          }
-        });
-        return;
-      }
-      if (checkDuplicateTitle) {
-        setErrorDuplicate(checkDuplicateTitle(text));
-      }
-    }
-  }, [reference, text, breakInheritance, nodeId]);
-
-  useEffect(() => {
-    if (!property || !fullname || !nodeId || reference) return;
+    if (!property || !fullname || !nodeId) return;
+    // Create Yjs document and WebSocket provider
     const ydoc = new Y.Doc();
     const WS_URL =
       process.env.NODE_ENV === "development"
@@ -179,6 +99,61 @@ const YjsEditorWrapper = ({
     const yText = ydoc.getText("quill");
     yTextRef.current = yText;
 
+    if (editorContainerRef.current) {
+      editorRef.current = new Quill(editorContainerRef.current, {
+        modules: {
+          cursors: true,
+          toolbar: false,
+          history: {
+            userOnly: true,
+          },
+          clipboard: {
+            matchVisual: true,
+            matchers: [
+              [
+                "span[style], div[style], p[style]",
+                (node: any, delta: any) => {
+                  const sanitizedDelta = delta;
+                  sanitizedDelta.ops.forEach((op: any) => {
+                    if (op.attributes) {
+                      delete op.attributes.color;
+                      delete op.attributes.background;
+                      delete op.attributes.bold;
+                      delete op.attributes.italic;
+                      delete op.attributes.underline;
+                      delete op.attributes.strike;
+                      delete op.attributes.font;
+                      delete op.attributes.size;
+                      delete op.attributes.align;
+                      delete op.attributes.indent;
+                      delete op.attributes.direction;
+                      delete op.attributes.border;
+                    }
+                  });
+                  return sanitizedDelta;
+                },
+              ],
+            ],
+          },
+        },
+        placeholder: `${capitalizeFirstLetter(
+          DISPLAY[property] ? DISPLAY[property] : property
+        )}...`,
+        theme: "snow",
+      });
+    }
+
+    // if (reference && editorRef.current) {
+    //   editorRef.current.setText(text);
+
+    //   editorRef.current.on("text-change", (delta, oldDelta, source) => {
+    //     if (source === "user") {
+    //       const text = editorRef.current?.getText();
+    //       breakInheritance(text);
+    //     }
+    //   });
+    // }
+
     if (editorRef.current) {
       const binding = new QuillBinding(
         yText,
@@ -186,11 +161,11 @@ const YjsEditorWrapper = ({
         provider.awareness
       );
 
-      const userInfo = {
+      provider.awareness.setLocalStateField("user", {
         name: fullname,
         color: color,
-      };
-      provider.awareness.setLocalStateField("user", userInfo);
+      });
+
       editorRef.current.on("text-change", (delta, oldDelta, source) => {
         if (source === "user") {
           const previousText = (oldDelta.ops[0].insert || "") as string;
@@ -204,11 +179,13 @@ const YjsEditorWrapper = ({
             newText,
           };
           changeHistoryRef.current = [...changeHistoryRef.current, newChange];
+
           if (property === "title") {
             setErrorDuplicate(checkDuplicateTitle(newText));
           }
         }
       });
+
       const intervalId = setInterval(() => {
         saveChangeLog(changeHistoryRef.current);
         changeHistoryRef.current = [];
@@ -219,15 +196,13 @@ const YjsEditorWrapper = ({
         provider.disconnect();
         provider.destroy();
         binding.destroy();
-
-        if (editorRef.current) {
-          editorRef.current.off("selection-change");
-          editorRef.current.off("text-change");
-        }
+        editorRef.current?.off("selection-change");
+        editorRef.current?.off("text-change");
         clearInterval(intervalId);
       };
     }
-  }, [fullname, property, nodeId, reference]);
+  }, [fullname, property, nodeId, structured]);
+
   return (
     <>
       {errorDuplicate && (

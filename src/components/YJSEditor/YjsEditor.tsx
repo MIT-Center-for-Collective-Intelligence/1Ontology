@@ -11,9 +11,6 @@ const YjsEditor = ({
   nodeId,
   color,
   saveChangeHistory,
-  reference,
-  breakInheritance,
-  text,
   structured,
   checkDuplicateTitle,
 }: {
@@ -22,9 +19,6 @@ const YjsEditor = ({
   nodeId: string;
   color: string;
   saveChangeHistory: Function;
-  reference: string | null;
-  breakInheritance: Function;
-  text: string;
   structured: boolean;
   checkDuplicateTitle: Function;
 }) => {
@@ -35,9 +29,6 @@ const YjsEditor = ({
       nodeId={nodeId}
       color={color}
       saveChangeHistory={saveChangeHistory}
-      reference={reference}
-      breakInheritance={breakInheritance}
-      text={text}
       structured={structured}
       checkDuplicateTitle={checkDuplicateTitle}
     />

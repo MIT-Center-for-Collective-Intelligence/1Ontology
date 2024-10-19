@@ -351,18 +351,21 @@ const Text = ({
                 )}
               </Box>
             </Box>
-          ) : (
+          ) : !currentVisibleNode.inheritance[property]?.ref ? (
             <YjsEditor
               fullname={`${user?.fName} ${user?.lName}`}
               property={property}
               nodeId={currentVisibleNode.id}
               color={randomProminentColor()}
               saveChangeHistory={saveChangeHistory}
-              reference={reference}
-              breakInheritance={onSaveTextChange}
-              text={text}
               structured={structured}
               checkDuplicateTitle={checkDuplicateTitle}
+            />
+          ) : (
+            <SimpleEditor
+              property={property}
+              text={text}
+              breakInheritance={onSaveTextChange}
             />
           )}
         </>
