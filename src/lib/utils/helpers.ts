@@ -377,7 +377,7 @@ const updateProperty = async (
 };
 
 export const saveNewChangeLog = (db: any, data: NodeChange) => {
-  if (!data.modifiedBy) return;
+  if (!data.modifiedBy || data.modifiedBy === "ouhrac") return;
   const changeUseRef = doc(collection(db, NODES_LOGS));
   setDoc(changeUseRef, data);
   const userRef = doc(collection(db, USERS), data.modifiedBy);
@@ -591,7 +591,6 @@ export const updatePartsAndPartsOf = async (
   db: Firestore,
   nodes: { [nodeId: string]: INode }
 ) => {
-
   links.forEach(async (child) => {
     let childData: any = nodes[child.id] as INode;
     if (!childData) {

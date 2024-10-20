@@ -68,13 +68,11 @@ const QuillEditor = ({
         const updatedText = editor.getText();
         breakInheritance(updatedText);
 
-
         const selection = editor.getSelection();
         if (selection) {
           setCursorPosition(selection.index);
         }
       });
-
 
       editor.on("selection-change", (range: any) => {
         if (range) {
@@ -99,6 +97,7 @@ const QuillEditor = ({
           borderBottomRightRadius: "20px",
           borderBottomLeftRadius: "20px",
           minHeight: "70px",
+          border: "none !important",
           fontSize:
             property === "title" ? "24px !important" : "18px !important",
           "& .ql-editor.ql-blank::before": {

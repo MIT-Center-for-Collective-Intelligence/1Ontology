@@ -16,6 +16,7 @@ import {
   where,
   getFirestore,
 } from "firebase/firestore";
+import * as Y from "yjs";
 import { useTheme } from "@emotion/react";
 import { INode } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
@@ -28,14 +29,16 @@ import {
 } from " @components/lib/utils/helpers";
 import { diffWords, diffLines } from "diff"; // Using diffLines for line-by-line diff
 import {
-  capitalizeFirstLetter, getTooltipHelper as getTooltipHelper,
+  capitalizeFirstLetter,
+  getTooltipHelper as getTooltipHelper,
 } from " @components/lib/utils/string.utils";
 import ManageNodeButtons from "./ManageNodeButtons";
-import { DISPLAY } from " @components/lib/CONSTANTS";
+import { DISPLAY, WS_URL } from " @components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
 import YjsEditor from "../YJSEditor/YjsEditor";
 import SimpleEditor from "../YJSEditor/SimpleEditor";
 import SelectInheritance from "../SelectInheretance/SelectInhertance";
+import { WebsocketProvider } from "y-websocket";
 // import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ITextProps = {
@@ -94,6 +97,7 @@ const Text = ({
   const [reference, setReference] = useState<string | null>(null);
   const [autoFocus, setAutoFocus] = useState(false);
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
+  const [switchToWebsocket, setSwitchToWebSocket] = useState(true);
 
   // // Maintain focus after inheritance change
   // useEffect(() => {
@@ -132,12 +136,14 @@ const Text = ({
       focusAfterSaveRef.current = true;
 
       if (reference) {
+        setSwitchToWebSocket(false);
         const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
         if (structured) {
           const referencedNode = nodes[reference];
           await updateDoc(nodeRef, {
             [`textValue.${property}`]: copyValue,
             [`properties.${property}`]: referencedNode.properties[property],
+            [`inheritance.${property}.ref`]: null,
           });
 
           if (Array.isArray(referencedNode.properties[property])) {
@@ -167,8 +173,21 @@ const Text = ({
             [`properties.${property}`]: copyValue,
             [`inheritance.${property}.ref`]: null,
           });
-          setAutoFocus(true);
         }
+        setAutoFocus(true);
+        const ydoc = new Y.Doc();
+        new WebsocketProvider(
+          WS_URL,
+          `${currentVisibleNode.id}-${property}`,
+          ydoc,
+          {
+            connect: true,
+            params: { type: structured ? "structured" : "" },
+          }
+        );
+        setTimeout(() => {
+          setSwitchToWebSocket(true);
+        }, 500);
 
         updateInheritance({
           nodeId: currentVisibleNode.id,
@@ -345,7 +364,7 @@ const Text = ({
                 )}
               </Box>
             </Box>
-          ) : !reference ? (
+          ) : !reference && switchToWebsocket ? (
             <YjsEditor
               fullname={`${user?.fName} ${user?.lName}`}
               property={property}

@@ -8,7 +8,7 @@ import { Box, Typography } from "@mui/material";
 import "quill/dist/quill.snow.css";
 import { recordLogs } from " @components/lib/utils/helpers";
 import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import { DISPLAY } from " @components/lib/CONSTANTS";
+import { DISPLAY, WS_URL } from " @components/lib/CONSTANTS";
 
 Quill.register("modules/cursors", QuillCursors);
 
@@ -93,10 +93,6 @@ const YjsEditorWrapper = ({
     if (!property || !fullname || !nodeId) return;
     // Create Yjs document and WebSocket provider
     const ydoc = new Y.Doc();
-    const WS_URL =
-      process.env.NODE_ENV === "development"
-        ? `ws://${process.env.NEXT_PUBLIC_DEV_WS_SERVER}/ws`
-        : `wss://${process.env.NEXT_PUBLIC_WS_SERVER}/ws`;
 
     const provider = new WebsocketProvider(
       WS_URL,
@@ -106,7 +102,7 @@ const YjsEditorWrapper = ({
     );
     provider.on("sync", (isSynced: boolean) => {
       if (isSynced) {
-        setSynced(true); 
+        setSynced(true);
       }
     });
     const yText = ydoc.getText("quill");
