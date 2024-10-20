@@ -13,6 +13,8 @@ const YjsEditor = ({
   saveChangeHistory,
   structured,
   checkDuplicateTitle,
+  autoFocus,
+  cursorPosition,
 }: {
   fullname: string;
   property: string;
@@ -21,6 +23,8 @@ const YjsEditor = ({
   saveChangeHistory: Function;
   structured: boolean;
   checkDuplicateTitle: Function;
+  autoFocus: boolean;
+  cursorPosition: number | null;
 }) => {
   return (
     <YjsEditorWrapper
@@ -31,6 +35,8 @@ const YjsEditor = ({
       saveChangeHistory={saveChangeHistory}
       structured={structured}
       checkDuplicateTitle={checkDuplicateTitle}
+      autoFocus={autoFocus}
+      cursorPosition={cursorPosition}
     />
   );
 };

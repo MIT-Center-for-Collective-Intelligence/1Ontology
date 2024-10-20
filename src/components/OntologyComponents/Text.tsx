@@ -6,7 +6,6 @@ import React, {
   useMemo,
 } from "react";
 import { Box, Paper, TextField, Tooltip, Typography } from "@mui/material";
-import { debounce } from "lodash";
 import {
   getDoc,
   collection,
@@ -29,9 +28,7 @@ import {
 } from " @components/lib/utils/helpers";
 import { diffWords, diffLines } from "diff"; // Using diffLines for line-by-line diff
 import {
-  capitalizeFirstLetter,
-  getTitle,
-  getTooltipHelper as getTooltipHelper,
+  capitalizeFirstLetter, getTooltipHelper as getTooltipHelper,
 } from " @components/lib/utils/string.utils";
 import ManageNodeButtons from "./ManageNodeButtons";
 import { DISPLAY } from " @components/lib/CONSTANTS";
@@ -95,6 +92,8 @@ const Text = ({
   const [{ user }] = useAuth();
   const focusAfterSaveRef = useRef(false); // Ref to track whether to refocus
   const [reference, setReference] = useState<string | null>(null);
+  const [autoFocus, setAutoFocus] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState<number | null>(null);
 
   // // Maintain focus after inheritance change
   // useEffect(() => {
@@ -105,6 +104,7 @@ const Text = ({
   // }, [currentVisibleNode.inheritance[property]?.ref]);
   useEffect(() => {
     setReference(currentVisibleNode.inheritance[property]?.ref || null);
+    setAutoFocus(false);
   }, [currentVisibleNode]);
 
   const saveChangeHistory = useCallback(
@@ -131,15 +131,15 @@ const Text = ({
       // Mark that we want to keep focus after inheritance breaks
       focusAfterSaveRef.current = true;
 
-      if (currentVisibleNode.inheritance[property]?.ref) {
+      if (reference) {
         const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
         if (structured) {
-          const referencedNode =
-            nodes[currentVisibleNode.inheritance[property]?.ref];
+          const referencedNode = nodes[reference];
           await updateDoc(nodeRef, {
             [`textValue.${property}`]: copyValue,
             [`properties.${property}`]: referencedNode.properties[property],
           });
+
           if (Array.isArray(referencedNode.properties[property])) {
             const links = referencedNode.properties[property].flatMap(
               (c) => c.nodes
@@ -165,20 +165,19 @@ const Text = ({
         } else {
           await updateDoc(nodeRef, {
             [`properties.${property}`]: copyValue,
+            [`inheritance.${property}.ref`]: null,
           });
+          setAutoFocus(true);
         }
 
-        // Delay the inheritance update slightly to avoid a focus loss glitch
-        setTimeout(() => {
-          updateInheritance({
-            nodeId: currentVisibleNode.id,
-            updatedProperty: property,
-            db,
-          });
-        }, 300); // Reduced the delay to improve smoothness
+        updateInheritance({
+          nodeId: currentVisibleNode.id,
+          updatedProperty: property,
+          db,
+        });
       }
     },
-    [user?.uname, currentVisibleNode, reference, property, db, nodes]
+    [user?.uname, currentVisibleNode.id, reference, property, db, nodes]
   );
 
   useEffect(() => {
@@ -217,11 +216,6 @@ const Text = ({
 
   const renderDiff = (previousValue: string, newValue: string) => {
     const diffContent = diffWords(previousValue, newValue);
-
-    const addedText = diffContent
-      .filter((part) => part.added)
-      .map((part) => part.value)
-      .join("");
 
     return diffContent.map((word) => (
       <div key={word.value}>
@@ -351,7 +345,7 @@ const Text = ({
                 )}
               </Box>
             </Box>
-          ) : !currentVisibleNode.inheritance[property]?.ref ? (
+          ) : !reference ? (
             <YjsEditor
               fullname={`${user?.fName} ${user?.lName}`}
               property={property}
@@ -360,12 +354,16 @@ const Text = ({
               saveChangeHistory={saveChangeHistory}
               structured={structured}
               checkDuplicateTitle={checkDuplicateTitle}
+              autoFocus={autoFocus}
+              cursorPosition={cursorPosition}
             />
           ) : (
             <SimpleEditor
               property={property}
               text={text}
               breakInheritance={onSaveTextChange}
+              nodeId={currentVisibleNode.id}
+              setCursorPosition={setCursorPosition}
             />
           )}
         </>

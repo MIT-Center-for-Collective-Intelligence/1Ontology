@@ -6,7 +6,6 @@ import Quill from "quill";
 import QuillCursors from "quill-cursors";
 import { Box, Typography } from "@mui/material";
 import "quill/dist/quill.snow.css";
-import { getFirestore } from "firebase/firestore";
 import { recordLogs } from " @components/lib/utils/helpers";
 import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
 import { DISPLAY } from " @components/lib/CONSTANTS";
@@ -41,6 +40,8 @@ const YjsEditorWrapper = ({
   saveChangeHistory,
   structured,
   checkDuplicateTitle,
+  autoFocus,
+  cursorPosition,
 }: {
   fullname: string;
   property: string;
@@ -49,6 +50,8 @@ const YjsEditorWrapper = ({
   saveChangeHistory: Function;
   structured: boolean;
   checkDuplicateTitle: Function;
+  autoFocus: boolean;
+  cursorPosition: number | null;
 }) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
@@ -56,6 +59,7 @@ const YjsEditorWrapper = ({
   const TIMEOUT = 15000 + Math.floor(Math.random() * 300);
   const changeHistoryRef = useRef<any[]>([]);
   const [errorDuplicate, setErrorDuplicate] = useState(false);
+  const [synced, setSynced] = useState(false);
 
   const saveChangeLog = (changeHistory: any[]) => {
     try {
@@ -79,7 +83,12 @@ const YjsEditorWrapper = ({
       });
     }
   };
-
+  const focus = (cursorPosition: number | null) => {
+    if (editorRef.current && cursorPosition !== null) {
+      editorRef.current.focus();
+      editorRef.current.setSelection(cursorPosition);
+    }
+  };
   useEffect(() => {
     if (!property || !fullname || !nodeId) return;
     // Create Yjs document and WebSocket provider
@@ -95,7 +104,11 @@ const YjsEditorWrapper = ({
       ydoc,
       { connect: true, params: { type: structured ? "structured" : "" } }
     );
-
+    provider.on("sync", (isSynced: boolean) => {
+      if (isSynced) {
+        setSynced(true); 
+      }
+    });
     const yText = ydoc.getText("quill");
     yTextRef.current = yText;
 
@@ -142,17 +155,6 @@ const YjsEditorWrapper = ({
         theme: "snow",
       });
     }
-
-    // if (reference && editorRef.current) {
-    //   editorRef.current.setText(text);
-
-    //   editorRef.current.on("text-change", (delta, oldDelta, source) => {
-    //     if (source === "user") {
-    //       const text = editorRef.current?.getText();
-    //       breakInheritance(text);
-    //     }
-    //   });
-    // }
 
     if (editorRef.current) {
       const binding = new QuillBinding(
@@ -202,7 +204,13 @@ const YjsEditorWrapper = ({
       };
     }
   }, [fullname, property, nodeId, structured]);
-
+  useEffect(() => {
+    if (synced && autoFocus && editorRef.current) {
+      setTimeout(() => {
+        focus(cursorPosition);
+      }, 1000);
+    }
+  }, [synced, autoFocus, cursorPosition]);
   return (
     <>
       {errorDuplicate && (
@@ -211,6 +219,7 @@ const YjsEditorWrapper = ({
           title.
         </Typography>
       )}
+
       <Box
         ref={editorContainerRef}
         sx={{

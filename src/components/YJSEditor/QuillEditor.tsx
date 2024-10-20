@@ -7,10 +7,14 @@ const QuillEditor = ({
   property,
   text,
   breakInheritance,
+  nodeId,
+  setCursorPosition,
 }: {
   property: string;
   text: string;
   breakInheritance: (updatedText: string) => void;
+  nodeId: string;
+  setCursorPosition: Function;
 }) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
@@ -22,6 +26,34 @@ const QuillEditor = ({
           toolbar: false,
           history: {
             userOnly: true,
+          },
+          clipboard: {
+            matchVisual: true,
+            matchers: [
+              [
+                "span[style], div[style], p[style]",
+                (node: any, delta: any) => {
+                  const sanitizedDelta = delta;
+                  sanitizedDelta.ops.forEach((op: any) => {
+                    if (op.attributes) {
+                      delete op.attributes.color;
+                      delete op.attributes.background;
+                      delete op.attributes.bold;
+                      delete op.attributes.italic;
+                      delete op.attributes.underline;
+                      delete op.attributes.strike;
+                      delete op.attributes.font;
+                      delete op.attributes.size;
+                      delete op.attributes.align;
+                      delete op.attributes.indent;
+                      delete op.attributes.direction;
+                      delete op.attributes.border;
+                    }
+                  });
+                  return sanitizedDelta;
+                },
+              ],
+            ],
           },
         },
         placeholder: "",
@@ -35,15 +67,29 @@ const QuillEditor = ({
       editor.on("text-change", () => {
         const updatedText = editor.getText();
         breakInheritance(updatedText);
+
+
+        const selection = editor.getSelection();
+        if (selection) {
+          setCursorPosition(selection.index);
+        }
+      });
+
+
+      editor.on("selection-change", (range: any) => {
+        if (range) {
+          setCursorPosition(range.index);
+        }
       });
 
       return () => {
         if (editor) {
           editor.off("text-change");
+          editor.off("selection-change");
         }
       };
     }
-  }, [text, breakInheritance]);
+  }, [nodeId]);
 
   return (
     <>
