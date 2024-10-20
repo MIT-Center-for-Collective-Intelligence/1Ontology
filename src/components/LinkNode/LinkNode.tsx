@@ -402,7 +402,8 @@ const LinkNode = ({
               <Typography sx={{ mt: "15px" }}>
                 {`There's no other generalization linked to this node. Are you
                 sure you want to unlink it and move it as a specialization under
-              ${UNCLASSIFIED[nodes[link.id].nodeType]}`}?
+              ${UNCLASSIFIED[nodes[link.id].nodeType]}`}
+                ?
               </Typography>
             )}
           </Box>,
@@ -549,10 +550,9 @@ const LinkNode = ({
       : theme.palette.common.notebookMainBlack;
   };
   useEffect(() => {
-    
     if (reviewId === link.id && textFieldRef.current) {
       textFieldRef.current.focus();
-      textFieldRef.current.select(); 
+      textFieldRef.current.select();
     }
   }, [reviewId]);
   return (
@@ -598,6 +598,11 @@ const LinkNode = ({
             value={editorContent}
             onChange={handleChanges}
             sx={{ width: "300px" }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                saveNodeTitle();
+              }
+            }}
             InputProps={{
               inputProps: {
                 style: {
