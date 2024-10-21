@@ -82,7 +82,6 @@ const Improvements = ({
       const improvements = (
         (await compareProposals(response.data)) || []
       ).filter((m: any) => (m.detailsOfChange || []).length > 0);
-      console.log("improvements ==>", improvements);
 
       if (improvements) {
         setImprovements(improvements);
@@ -137,17 +136,9 @@ const Improvements = ({
             );
             if (missingSpecializations.length > 0) {
               changedProperty = true;
-              console.log(
-                `New specializations added: ${missingSpecializations.join(
-                  ", "
-                )}`
-              );
             }
             if (extraSpecializations.length > 0) {
               changedProperty = true;
-              console.log(
-                `Specializations removed: ${extraSpecializations.join(", ")}`
-              );
             }
             if (changedProperty) {
               detailsOfChange.push({
@@ -179,16 +170,12 @@ const Improvements = ({
             improvement
           );
           detailsOfChange.push(..._detailsOfChange);
-          console.log("detailsOfChange", detailsOfChange);
           improvement.detailsOfChange = detailsOfChange;
-          console.log(`Comparison complete for ${improvement.old_title}`);
         } else {
-          console.log(
-            `No node found with the title "${improvement.old_title}"`
-          );
+          // `No node found with the title "${improvement.old_title}"`
         }
       }
-      console.log("done-improvements", improvements);
+
       return improvements;
     } catch (error) {
       console.error("Error comparing proposals:", error);
@@ -197,7 +184,6 @@ const Improvements = ({
   const onRejectChange = () => {};
   const onAcceptChange = () => {
     try {
-      console.log(currentImprovement, "setCurrentImprovement");
     } catch (error) {
       console.error(error);
     }

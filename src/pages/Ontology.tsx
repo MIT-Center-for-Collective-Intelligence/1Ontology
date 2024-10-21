@@ -345,7 +345,7 @@ const Ontology = () => {
     }
   }, [nodes]);
   // Function to generate a tree structure of specializations based on main nodes
-    const getSpecializationsTree = (
+  const getSpecializationsTree = (
     _nodes: INode[],
     path: string[],
     visited: Set<string> = new Set()
@@ -353,7 +353,7 @@ const Ontology = () => {
     let newSpecializationsTree: any = {};
 
     for (let node of _nodes) {
-      if (!node || visited.has(node.id)) {
+      if (!node /* || visited.has(node.id) */) {
         continue;
       }
       visited.add(node.id);
@@ -577,7 +577,9 @@ const Ontology = () => {
       initializeExpanded(eachOntologyPath[currentVisibleNode?.id]);
     }
     // setOntologyPath(eachOntologyPath[currentVisibleNode?.id]);
-    updateTheUrl(eachOntologyPath[currentVisibleNode?.id]);
+    updateTheUrl([
+      { id: currentVisibleNode?.id, title: currentVisibleNode.title },
+    ]);
   }, [currentVisibleNode?.id, eachOntologyPath]);
 
   // Callback function to add a new node to the database
@@ -825,7 +827,7 @@ const Ontology = () => {
         {!isMobile && (
           <Section
             minSize={0}
-            defaultSize={600}
+            defaultSize={500}
             style={{
               height: "100vh",
               overflow: "hidden",

@@ -74,8 +74,9 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
         mb: "20px",
         borderRadius: "18px",
         padding: "20px",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+        backgroundColor: "#f0f0f0",
       }}
+      elevation={3}
     >
       <Typography variant="h6" sx={{ mb: "16px" }}>
         Add New Property

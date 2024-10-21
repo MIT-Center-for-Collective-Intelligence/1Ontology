@@ -19,7 +19,6 @@ export const sendLLMRequest = async ({
   messages: any;
 }) => {
   try {
-    console.log({ model, messages });
     const response = Post("http://localhost:3001/api/sendOpenAIRequest", {
       model: model,
       messages,
@@ -272,8 +271,7 @@ ${JSON.stringify(guidelines, null, 2)}
   });
 
   proposalsJSON = completion.choices[0].message.content;
-  console.log(proposalsJSON);
-  console.log(JSON.stringify(proposalsJSON, null, 2));
+
   return { proposalsJSON };
 };
 
@@ -426,13 +424,11 @@ export const generateProposals = async (
       await getNodesInThreeLevels(nodeData, nodes, nodesArray, nodeTitles);
     }
   }
-  console.log(nodesArray.length + " nodes retrieved.");
 
   if (nodesArray.length === 0) {
-    console.log("No related nodes found!");
+    // "No related nodes found!"
   } else {
-    console.log("Related Nodes:");
-    console.log(JSON.stringify(nodesArray, null, 2));
+    // "Related Nodes:"
     if (evaluation) {
       return await proposerAgent(
         userMessage,

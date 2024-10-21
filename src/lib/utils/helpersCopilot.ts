@@ -71,11 +71,9 @@ export const compareProperties = async (
         typeof nodeValue !== "object" &&
         JSON.stringify(nodeValue) !== JSON.stringify(proposalValue)
       ) {
-        console.log(
-          `Property "${propertyName}" changed from "${JSON.stringify(
-            nodeValue
-          )}" to "${JSON.stringify(proposalValue)}"`
-        );
+        // `Property "${propertyName}" changed from "${JSON.stringify(
+        //   nodeValue
+        // )}" to "${JSON.stringify(proposalValue)}"`;
         detailsOfChange.push({
           modifiedProperty: propertyName,
           previousValue: nodeValue,
@@ -83,16 +81,14 @@ export const compareProperties = async (
         });
       }
     } else {
-      console.log(`Property "${propertyName}" was removed.`);
+      // `Property "${propertyName}" was removed.`
     }
   });
 
   // Check for new properties in the proposal that are not in the node
   // Object.keys(proposalProps).forEach((key) => {
   //   if (!nodeProps[key]) {
-  //     console.log(
-  //       `New property "${key}" added: "${JSON.stringify(proposalProps[key])}"`
-  //     );
+
   //   }
   // });
 
