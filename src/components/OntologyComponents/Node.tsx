@@ -1439,7 +1439,7 @@ const Node = ({
               />
             )}
 
-            <Box sx={{ p: "6px", mt: "auto" }}>
+            <Box sx={{ p: "6px", mt: "auto", maxWidth: "100vh" }}>
               <Typography sx={{ mb: "4px" }}>
                 If you cannot find the existing{" "}
                 <strong>

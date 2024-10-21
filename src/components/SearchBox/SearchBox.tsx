@@ -25,9 +25,9 @@ export const SearchBox = ({ setSearchValue, label }: IProps) => {
   return (
     <FormControl
       sx={{
-        width: "100%",
         m: 0,
       }}
+      fullWidth
     >
       {window.innerWidth > 800 && (
         <OutlinedInput
