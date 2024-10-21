@@ -1,0 +1,7 @@
+.ql-toolbar.ql-snow {
+  border: none !important;
+}
+
+.ql-editor.ql-blank::before {
+  color: gray !important
+}

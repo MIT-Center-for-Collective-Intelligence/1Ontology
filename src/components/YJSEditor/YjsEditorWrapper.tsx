@@ -118,37 +118,13 @@ const YjsEditorWrapper = ({
           },
           clipboard: {
             matchVisual: true,
-            matchers: [
-              [
-                "span[style], div[style], p[style]",
-                (node: any, delta: any) => {
-                  const sanitizedDelta = delta;
-                  sanitizedDelta.ops.forEach((op: any) => {
-                    if (op.attributes) {
-                      delete op.attributes.color;
-                      delete op.attributes.background;
-                      delete op.attributes.bold;
-                      delete op.attributes.italic;
-                      delete op.attributes.underline;
-                      delete op.attributes.strike;
-                      delete op.attributes.font;
-                      delete op.attributes.size;
-                      delete op.attributes.align;
-                      delete op.attributes.indent;
-                      delete op.attributes.direction;
-                      delete op.attributes.border;
-                    }
-                  });
-                  return sanitizedDelta;
-                },
-              ],
-            ],
           },
         },
         placeholder: `${capitalizeFirstLetter(
           DISPLAY[property] ? DISPLAY[property] : property
         )}...`,
         theme: "snow",
+        formats: [],
       });
     }
 
@@ -225,9 +201,6 @@ const YjsEditorWrapper = ({
           border: "none !important",
           fontSize:
             property === "title" ? "24px !important" : "18px !important",
-          "& .ql-editor.ql-blank::before": {
-            color: "gray !important",
-          },
         }}
       />
     </>

@@ -33,6 +33,7 @@
 16. **Export**: Finally, the `App` component is exported as the default export of the module. */
 
 // import "./global.css";
+import "./editor.css";
 // import "./custom-tree.css";
 
 import { CacheProvider } from "@emotion/react";

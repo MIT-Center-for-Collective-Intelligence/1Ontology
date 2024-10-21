@@ -550,7 +550,7 @@ const ToolbarSidebar = ({
         backdropFilter: "saturate(180%) blur(10px)",
         display: "flex",
         flexDirection: "column",
-        padding: "10px",
+        padding: "9px",
       }}
       onMouseEnter={() => {
         if (!activeSidebar) {
@@ -752,16 +752,15 @@ const ToolbarSidebar = ({
               toolbarIsOpen={hovered}
             />
           </Box>
-          <Box sx={{ mt: "14px" }}>
-            <ActiveUsers
-              nodes={nodes}
-              navigateToNode={navigateToNode}
-              displayUserLogs={displayUserLogs}
-              handleExpand={handleExpandSidebar}
-              fullVersion={hovered}
-              activeUsers={activeUsers}
-            />
-          </Box>
+
+          <ActiveUsers
+            nodes={nodes}
+            navigateToNode={navigateToNode}
+            displayUserLogs={displayUserLogs}
+            handleExpand={handleExpandSidebar}
+            fullVersion={hovered}
+            activeUsers={activeUsers}
+          />
         </>
       )}
       {isAuthenticated && user && renderProfileMenu}

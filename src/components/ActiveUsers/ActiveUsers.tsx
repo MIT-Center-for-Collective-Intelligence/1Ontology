@@ -56,7 +56,7 @@ const ActiveUsers = ({
         flexDirection: "column",
         overflow: "auto",
         height: "70vh",
-        mt: "15px",
+        mt: "7px",
         overflowX: "hidden",
         ...SCROLL_BAR_STYLE,
         "&::-webkit-scrollbar": {
@@ -119,6 +119,11 @@ const ActiveUsers = ({
                 justifyContent: fullVersion ? "flex-start" : "center",
                 gap: "10px",
                 minWidth: "0px",
+                borderRadius: "16px",
+                ":hover": {
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "dark" ? "#55402B" : "#FFE2D0",
+                },
               }}
               id={u.uname}
               onClick={viewProfileLogs}

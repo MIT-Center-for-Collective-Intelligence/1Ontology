@@ -16,6 +16,7 @@ import HistoryIcon from "@mui/icons-material/History";
 
 const ManageNodeButtons = ({
   locked,
+  lockedInductor,
   root,
   manageLock,
   deleteNode,
@@ -27,6 +28,7 @@ const ManageNodeButtons = ({
   unclassified,
 }: {
   locked: boolean;
+  lockedInductor: boolean;
   root: string;
   manageLock: boolean;
   deleteNode: Function;
@@ -98,7 +100,7 @@ const ManageNodeButtons = ({
             title={
               !manageLock
                 ? "This node is locked"
-                : locked
+                : lockedInductor
                 ? "This node is locked for everyone else"
                 : "Lock this node"
             }
@@ -111,7 +113,7 @@ const ManageNodeButtons = ({
                   mx: "7px",
                 }}
               >
-                {locked ? (
+                {lockedInductor ? (
                   <LockIcon
                     sx={{
                       color: "orange",

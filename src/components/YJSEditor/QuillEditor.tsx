@@ -58,6 +58,7 @@ const QuillEditor = ({
         },
         placeholder: "",
         theme: "snow",
+        formats: [],
       });
 
       editorRef.current = editor;

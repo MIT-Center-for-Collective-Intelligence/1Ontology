@@ -38,7 +38,6 @@ export const SidebarButton = ({
         backgroundColor: variant === "fill" ? "#F38744" : undefined,
         lineHeight: "19px",
         display: "flex",
-        p: "10px 16px",
         alignItems: "center",
         justifyContent: toolbarIsOpen ? "space-between" : "center",
         ":hover": {

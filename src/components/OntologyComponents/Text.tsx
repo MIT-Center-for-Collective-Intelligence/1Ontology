@@ -176,7 +176,7 @@ const Text = ({
         }
         setAutoFocus(true);
         const ydoc = new Y.Doc();
-        new WebsocketProvider(
+        const websocketProvider = new WebsocketProvider(
           WS_URL,
           `${currentVisibleNode.id}-${property}`,
           ydoc,
@@ -185,9 +185,14 @@ const Text = ({
             params: { type: structured ? "structured" : "" },
           }
         );
+
         setTimeout(() => {
           setSwitchToWebSocket(true);
-        }, 500);
+        }, 1100);
+        setTimeout(() => {
+          websocketProvider.disconnect();
+          websocketProvider.destroy();
+        }, 5000);
 
         updateInheritance({
           nodeId: currentVisibleNode.id,
@@ -320,6 +325,7 @@ const Text = ({
           {property === "title" && !selectedDiffNode && displaySidebar && (
             <ManageNodeButtons
               locked={locked}
+              lockedInductor={!!currentVisibleNode.locked}
               root={root}
               manageLock={manageLock}
               deleteNode={deleteNode}
