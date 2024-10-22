@@ -254,6 +254,10 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         const indexA = priorityOrder.indexOf(a);
         const indexB = priorityOrder.indexOf(b);
 
+        // Force "References" to be placed at the bottom
+        if (a === "References") return 1;
+        if (b === "References") return -1;
+
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
 
         if (indexA !== -1) return -1;
