@@ -50,7 +50,7 @@ Exports the `AuthLayout` component as the default export.
 For more details and usage, refer to the source code.
  */
 
-import { Button, Typography, useMediaQuery } from "@mui/material";
+import { Avatar, Button, Typography, useMediaQuery } from "@mui/material";
 import { Box } from "@mui/system";
 import Image from "next/image";
 import Link from "next/link";
@@ -75,7 +75,7 @@ import ROUTES from "../../lib/utils/routes";
 import FullPageLogoLoading from "./FullPageLogoLoading";
 import { AppBackground, AuthLayoutActions } from " @components/types/IAuth";
 import { useAuth } from "../context/AuthContext";
-
+import mitLogoDark from "../../../public/MIT-Logo-small-Dark.png";
 const AuthLayoutContext = createContext<AuthLayoutActions | undefined>(
   undefined
 );
@@ -204,63 +204,36 @@ const AuthLayout: FC<Props> = ({ children }) => {
                   }}
                 />
               )}
-              <Box
-                sx={{
-                  width: "200px",
-                  height: "40px",
-                  position: "absolute",
-                  bottom: "15px",
-                  left: "16px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <a
-                  rel="noreferrer"
-                  target="_blank"
-                  href="https://www.mit.edu/"
-                  aria-label="Go to School of information"
-                >
-                  <img
-                    src={logoMIT.src}
-                    alt="School of Information"
-                    width={150}
-                  />
-                </a>
-                {/* <a
-                  rel="noreferrer"
-                  target="_blank"
-                  href="https://www.honor.education/"
-                  aria-label="Go to Honor Education"
-                >
-                  <Image
-                    src={logoHonor}
-                    alt="Honor Education"
-                    height={41}
-                    width={41}
-                  />
-                </a>
-                <a
-                  rel="noreferrer"
-                  target="_blank"
-                  href="https://cloud.google.com/edu/researchers"
-                  aria-label="Go to Google Cloud"
-                >
-                  <Image
-                    src={logoGoogleCloud}
-                    alt="Google Cloud"
-                    height={41}
-                    width={49}
-                  />
-                </a> */}
-              </Box>
+
               <Box sx={{ zIndex: 1 }}>
-                <Typography textAlign={"center"} variant="h1">
-                  Welcome
-                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <a
+                    rel="noreferrer"
+                    target="_blank"
+                    href="https://www.mit.edu/"
+                    aria-label="Go to School of information"
+                  >
+                    <Avatar
+                      src={mitLogoDark.src}
+                      alt="logo"
+                      sx={{
+                        cursor: "pointer",
+                        width: "140px",
+                        height: "auto",
+                        borderRadius: 0,
+                      }}
+                    />
+                  </a>
+                </Box>
+
                 <Typography textAlign={"center"} variant="caption">
-                  We Visualize Learning Pathways from Books & Research Papers.
+                  The Ontology of Collective Intelligence
                 </Typography>
                 <Box
                   aria-label="sign in and sing up options"
