@@ -11,6 +11,7 @@ import {
   increment,
   Firestore,
   getFirestore,
+  deleteField,
 } from "firebase/firestore";
 import { LOGS, NODES, NODES_LOGS, USERS } from "../firestoreClient/collections";
 import { NodeChange } from " @components/types/INode";
@@ -47,8 +48,17 @@ export const recordLogs = async (logs: { [key: string]: any }) => {
       browser: getBrowser(),
       doerCreate,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
+    recordLogs({
+      type: "error",
+      error: JSON.stringify({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      }),
+      at: "recordLogs",
+    });
   }
 };
 
@@ -240,33 +250,57 @@ export const removeIsPartOf = async (
 
 interface UpdateInheritanceParams {
   nodeId: string;
-  updatedProperty: string;
+  updatedProperties: string[];
+  deletedProperties?: string[];
   db: any;
 }
 // Function to handle inheritance
 export const updateInheritance = async ({
   nodeId,
-  updatedProperty,
+  updatedProperties,
+  deletedProperties = [],
   db,
 }: UpdateInheritanceParams): Promise<void> => {
   try {
-    const batch = writeBatch(db);
+    let batch: any = writeBatch(db);
 
     const nodeRef = doc(collection(db, NODES), nodeId);
-    updateDoc(nodeRef, {
-      [`inheritance.${updatedProperty}.ref`]: null,
-    });
-
+    let ObjectUpdates = {};
+    for (let property of updatedProperties) {
+      ObjectUpdates = {
+        ...ObjectUpdates,
+        [`inheritance.${property}.ref`]: null,
+      };
+    }
+    for (let property of deletedProperties) {
+      ObjectUpdates = {
+        ...ObjectUpdates,
+        [`inheritance.${property}`]: deleteField(),
+        [`properties.${property}`]: deleteField(),
+      };
+    }
+    updateDoc(nodeRef, ObjectUpdates);
+    const nodeDoc = await getDoc(nodeRef);
+    const nodeData = nodeDoc.data();
     // Recursively update specializations
-    await recursivelyUpdateSpecializations({
-      nodeId: nodeId,
-      updatedProperty,
-      batch,
-      generalizationId: nodeId,
-      db,
-    });
+    if (nodeData) {
+      batch = await recursivelyUpdateSpecializations({
+        nodeId: nodeId,
+        updatedProperties,
+        deletedProperties,
+        addedProperties: [],
+        batch,
+        inheritanceType: nodeData.inheritance,
+        generalizationId: nodeId,
+        db,
+      });
+    }
+
     // Commit all updates as a batch
-    await batch.commit();
+
+    if (!batch._committed) {
+      await batch.commit();
+    }
   } catch (error: any) {
     recordLogs({
       type: "error",
@@ -274,6 +308,11 @@ export const updateInheritance = async ({
         name: error.name,
         message: error.message,
         stack: error.stack,
+        params: {
+          nodeId,
+          updatedProperties,
+          deletedProperties,
+        },
       }),
       at: "updateInheritance",
     });
@@ -283,97 +322,151 @@ export const updateInheritance = async ({
 // Helper function to recursively update specializations
 const recursivelyUpdateSpecializations = async ({
   nodeId,
-  updatedProperty,
+  updatedProperties,
+  deletedProperties,
+  addedProperties,
   batch,
-  nestedCall = false,
   inheritanceType,
   generalizationId,
   db,
+  nestedCall = false,
 }: {
   nodeId: string;
-  updatedProperty: string;
+  updatedProperties: string[];
+  deletedProperties: string[];
+  addedProperties: {
+    propertyName: string;
+    propertyType: string;
+    propertyValue: any;
+  }[];
   batch: WriteBatch;
-  nestedCall?: boolean;
-  inheritanceType?:
-    | "inheritUnlessAlreadyOverRidden"
-    | "inheritAfterReview"
-    | "alwaysInherit";
-  generalizationId: string;
+  inheritanceType: IInheritance;
+  generalizationId: string | null;
   db: any;
-}): Promise<void> => {
+  nestedCall?: boolean;
+}): Promise<any> => {
   // Fetch node data from Firestore
+
   const nodeRef = doc(collection(db, NODES), nodeId);
   const nodeSnapshot = await getDoc(nodeRef);
   const nodeData = nodeSnapshot.data() as INode;
+  const inheritance: IInheritance = nodeData.inheritance;
+  if (nestedCall) {
+    if (!nodeData) return;
 
-  if (!nodeData || !nodeData.properties.hasOwnProperty(updatedProperty)) return;
+    // Get the inheritance type for the updated property
+    updatedProperties = updatedProperties.filter((p, index) => {
+      if (inheritanceType[p].inheritanceType === "neverInherit") {
+        return false;
+      }
 
-  // Get the inheritance type for the updated property
-  const inheritance = nodeData.inheritance[updatedProperty];
-  const canInherit =
-    (inheritanceType === "inheritUnlessAlreadyOverRidden" &&
-      inheritance.ref !== null) ||
-    inheritanceType === "alwaysInherit";
+      const canInherit =
+        (inheritanceType[p].inheritanceType ===
+          "inheritUnlessAlreadyOverRidden" &&
+          inheritance[p].ref !== null) ||
+        inheritanceType[p].inheritanceType === "alwaysInherit";
 
-  if (nestedCall && canInherit) {
-    await updateProperty(batch, nodeRef, updatedProperty, generalizationId, db);
+      return canInherit;
+    });
+
+    deletedProperties = deletedProperties.filter((p, index) => {
+      if (inheritanceType[p].inheritanceType === "neverInherit") {
+        return false;
+      }
+
+      const canInherit =
+        (inheritanceType[p].inheritanceType ===
+          "inheritUnlessAlreadyOverRidden" &&
+          !!inheritance[p]?.ref) ||
+        inheritanceType[p].inheritanceType === "alwaysInherit";
+
+      return canInherit;
+    });
+
+    batch = await updateProperty(
+      batch,
+      nodeRef,
+      updatedProperties,
+      deletedProperties,
+      addedProperties,
+      generalizationId,
+      db
+    );
   }
 
-  if (inheritance?.inheritanceType === "neverInherit") {
-    return;
-  }
   let specializations = nodeData.specializations.flatMap((n) => n.nodes);
 
-  if (inheritance?.inheritanceType === "inheritAfterReview") {
-    /*   specializations = (await selectIt(
-      <Box sx={{ mb: "15px" }}>
-        <Typography>
-          Select which of the following specializations should inherit the
-          change that you just made to the property{" "}
-          <strong>{updatedProperty}</strong>,
-        </Typography>
-        <Typography>{"After you're done click continue."}</Typography>
-      </Box>,
-      specializations,
-      "Continue",
-      ""
-    )) as {
-      id: string;
-      title: string;
-    }[]; */
-  }
-  if (specializations.length <= 0) {
-    return;
-  }
   for (const specialization of specializations) {
-    await recursivelyUpdateSpecializations({
+    batch = await recursivelyUpdateSpecializations({
       nodeId: specialization.id,
-      updatedProperty,
+      updatedProperties,
+      deletedProperties,
+      addedProperties,
       batch,
       nestedCall: true,
-      inheritanceType: inheritance.inheritanceType,
+      inheritanceType: inheritance,
       generalizationId,
       db,
     });
   }
+  return batch;
 };
 
 // Function to update a property in Firestore using a batch commit
 const updateProperty = async (
   batch: any,
   nodeRef: DocumentReference,
-  updatedProperty: string,
-  inheritanceRef: string,
+  updatedProperties: string[],
+  deletedProperties: string[],
+  addedProperties: {
+    propertyName: string;
+    propertyType: string;
+    propertyValue: any;
+  }[],
+  inheritanceRef: string | null,
   db: any
 ) => {
-  const updateData = {
-    [`inheritance.${updatedProperty}.ref`]: inheritanceRef,
-  };
-  batch.update(nodeRef, updateData);
-  if (batch._mutations.length > 10) {
+  let ObjectUpdates = {};
+  for (let property of updatedProperties) {
+    ObjectUpdates = {
+      ...ObjectUpdates,
+      [`inheritance.${property}.ref`]: inheritanceRef,
+    };
+  }
+  for (let property of deletedProperties) {
+    ObjectUpdates = {
+      ...ObjectUpdates,
+      [`inheritance.${property}`]: deleteField(),
+      [`properties.${property}`]: deleteField(),
+      [`textValue.${property}`]: deleteField(),
+      [`propertyType.${property}`]: deleteField(),
+    };
+  }
+  for (let property of addedProperties) {
+    ObjectUpdates = {
+      ...ObjectUpdates,
+      [`inheritance.${property.propertyName}`]: {
+        inheritanceType: "inheritUnlessAlreadyOverRidden",
+        ref: inheritanceRef,
+      },
+      [`properties.${property.propertyName}`]: property.propertyValue,
+    };
+    if (property.propertyType) {
+      ObjectUpdates = {
+        ...ObjectUpdates,
+        [`propertyType.${property.propertyName}`]: property.propertyType,
+      };
+    }
+  }
+  if (batch._committed) {
+    batch = writeBatch(db);
+  }
+  batch.update(nodeRef, ObjectUpdates);
+  if (batch._mutations.length > 2) {
     await batch.commit();
     batch = writeBatch(db);
   }
+  return batch;
 };
 
 export const saveNewChangeLog = (db: any, data: NodeChange) => {
@@ -626,7 +719,7 @@ export const updatePartsAndPartsOf = async (
           if (property === "parts") {
             updateInheritance({
               nodeId: child.id,
-              updatedProperty: property,
+              updatedProperties: [property],
               db,
             });
           }
@@ -635,7 +728,6 @@ export const updatePartsAndPartsOf = async (
     }
   });
 };
-
 export const updatePropertyOf = async (
   links: { id: string }[],
   newLink: { id: string },
@@ -681,3 +773,466 @@ export const updatePropertyOf = async (
     }
   });
 };
+
+export const getNewAddedProperties = (
+  addedLinks: { id: string }[],
+  specializationData: INode,
+  nodes: { [nodeId: string]: INode }
+): {
+  [inheritedFromId: string]: {
+    propertyName: string;
+    propertyType: string;
+    propertyValue: any;
+  }[];
+} => {
+  try {
+    if (!specializationData || addedLinks.length === 0) {
+      return {};
+    }
+
+    const addedProperties: {
+      [inheritedFromId: string]: {
+        propertyName: string;
+        propertyType: string;
+        propertyValue: any;
+      }[];
+    } = {};
+
+    for (const link of addedLinks) {
+      const generalizationId = link.id;
+      const generalizationData = nodes[generalizationId];
+
+      if (generalizationData) {
+        for (const property in generalizationData.properties) {
+          if (!specializationData.properties.hasOwnProperty(property)) {
+            const referenceTo =
+              nodes[link.id].inheritance[property]?.ref || link.id;
+            if (!addedProperties[referenceTo]) {
+              addedProperties[referenceTo] = [];
+            }
+            addedProperties[referenceTo].push({
+              propertyName: property,
+              propertyType: generalizationData.propertyType[property],
+              propertyValue: generalizationData.properties[property],
+            });
+          }
+        }
+      }
+    }
+
+    return addedProperties;
+  } catch (error: any) {
+    console.error(error);
+    recordLogs({
+      type: "error",
+      error: JSON.stringify({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      }),
+      at: "addNewPropertiesForInheritance",
+    });
+    return {};
+  }
+};
+
+export const updateLinksForInheritance = async (
+  db: Firestore,
+  specializationId: string,
+  addedLinks: { id: string }[],
+  removedLinks: { id: string }[],
+  specializationData: INode,
+  newLinks: { id: string }[],
+  nodes: { [nodeId: string]: INode }
+) => {
+  try {
+    const deletedProperties = [];
+    const updatedProperties: {
+      [ref: string]: string[];
+    } = {};
+
+    const addedProperties: {
+      [ref: string]: {
+        propertyName: string;
+        propertyType: string;
+        propertyValue: any;
+      }[];
+    } = getNewAddedProperties(addedLinks, specializationData, nodes);
+
+    for (let property in specializationData.inheritance) {
+      const propertyRef = specializationData.inheritance[property].ref;
+      if (!!propertyRef) {
+        let canDelete = true;
+        let ignore = false;
+        let inheritFromId = null;
+        let hasProperty = [];
+        for (let link of newLinks) {
+          const generalizationData = nodes[link.id];
+          if (
+            propertyRef === link.id ||
+            propertyRef === generalizationData.inheritance[property].ref
+          ) {
+            ignore = true;
+            break;
+          }
+          if (generalizationData.properties.hasOwnProperty(property)) {
+            hasProperty.push(link.id);
+          }
+        }
+        if (ignore) {
+          continue;
+        }
+        if (hasProperty.length > 0) {
+          canDelete = false;
+          inheritFromId = hasProperty[0];
+        }
+
+        if (canDelete) {
+          deletedProperties.push(property);
+        } else if (inheritFromId) {
+          const referenceTo =
+            nodes[inheritFromId].inheritance[property]?.ref || inheritFromId;
+          if (!updatedProperties[referenceTo]) {
+            updatedProperties[referenceTo] = [];
+          }
+          updatedProperties[referenceTo].push(property);
+        }
+      }
+    }
+
+    let batch = writeBatch(db);
+
+    for (let inheritedFromId in addedProperties) {
+      batch = await recursivelyUpdateSpecializations({
+        nodeId: specializationId,
+        updatedProperties: [],
+        deletedProperties,
+        addedProperties: addedProperties[inheritedFromId],
+        nestedCall: true,
+        batch,
+        inheritanceType: specializationData.inheritance,
+        generalizationId: inheritedFromId,
+        db,
+      });
+    }
+    await recursivelyUpdateSpecializations({
+      nodeId: specializationId,
+      updatedProperties: [],
+      deletedProperties,
+      addedProperties: [],
+      nestedCall: true,
+      batch,
+      inheritanceType: specializationData.inheritance,
+      generalizationId: null,
+      db,
+    });
+    for (let inheritedFromId in updatedProperties) {
+      const inheritsFromData = nodes[inheritedFromId];
+      batch = await recursivelyUpdateSpecializations({
+        nodeId: specializationId,
+        updatedProperties: updatedProperties[inheritedFromId],
+        deletedProperties: [],
+        addedProperties: [],
+        nestedCall: true,
+        batch,
+        inheritanceType: inheritsFromData.inheritance,
+        generalizationId: inheritedFromId,
+        db,
+      });
+    }
+    await batch.commit();
+  } catch (error: any) {
+    console.error(error);
+    recordLogs({
+      type: "error",
+      error: JSON.stringify({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      }),
+      at: "removedLinksInheritance",
+    });
+  }
+};
+
+export const updateLinksForInheritanceSpecializations = async (
+  db: Firestore,
+  generalizationId: string,
+  addedLinks: { id: string }[],
+  removedLinks: { id: string }[],
+  generalizationData: INode,
+  oldLinks: { id: string }[],
+  nodes: { [nodeId: string]: INode }
+) => {
+  try {
+    const batch = writeBatch(db);
+    for (let addedLink of addedLinks) {
+      const addedProperties: {
+        propertyName: string;
+        propertyType: string;
+        propertyValue: any;
+      }[] = [];
+      const specializationData = nodes[addedLink.id];
+      for (let property in generalizationData.properties) {
+        // if the specialization doesn't have the property you need to add it
+        if (!specializationData.properties.hasOwnProperty(property)) {
+          addedProperties.push({
+            propertyName: property,
+            propertyType: generalizationData.propertyType[property],
+            propertyValue: generalizationData.properties[property],
+          });
+        }
+      }
+
+      await recursivelyUpdateSpecializations({
+        nodeId: addedLink.id,
+        updatedProperties: [],
+        deletedProperties: [],
+        addedProperties,
+        nestedCall: true,
+        batch,
+        inheritanceType: specializationData.inheritance,
+        generalizationId: generalizationId,
+        db,
+      });
+    }
+
+    for (let removedLink of removedLinks) {
+      const deletedProperties = [];
+      const specializationData = nodes[removedLink.id];
+      for (let property in generalizationData.properties) {
+        // if the specialization doesn't have the property you need to remove it
+        const referenceProperty = specializationData.inheritance[property]?.ref;
+        if (!!referenceProperty && referenceProperty === generalizationId) {
+          deletedProperties.push(property);
+        }
+      }
+      await recursivelyUpdateSpecializations({
+        nodeId: removedLink.id,
+        updatedProperties: [],
+        deletedProperties,
+        addedProperties: [],
+        nestedCall: true,
+        batch,
+        inheritanceType: specializationData.inheritance,
+        generalizationId: generalizationId,
+        db,
+      });
+    }
+    await batch.commit();
+  } catch (error: any) {
+    console.error(error);
+    recordLogs({
+      type: "error",
+      error: JSON.stringify({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      }),
+      at: "updateInheritanceWhenUnlinkAGeneralization",
+    });
+  }
+};
+
+/* when the user unlinks a generalization call this function */
+export const updateInheritanceWhenUnlinkAGeneralization = async (
+  db: any,
+  unlinkedGeneralizationId: string,
+  specializationData: INode,
+  nodes: { [nodeId: string]: INode }
+) => {
+  try {
+    if (specializationData) {
+      const addedProperties: {
+        propertyName: string;
+        propertyType: string;
+        propertyValue: any;
+      }[] = [];
+      const updatedProperties: {
+        [ref: string]: string[];
+      } = {};
+      const deletedProperties = [];
+      const remainingGeneralizations =
+        specializationData.generalizations.flatMap((n: ICollection) => n.nodes);
+      if (remainingGeneralizations.length <= 0) {
+        return;
+      }
+      const nextGeneralization = remainingGeneralizations[0];
+      const nextGeneralizationData = nodes[nextGeneralization.id];
+      const unlinkedGeneralization = nodes[unlinkedGeneralizationId];
+
+      if (nextGeneralizationData) {
+        for (let property in specializationData.inheritance) {
+          if (
+            specializationData.inheritance[property] &&
+            specializationData.inheritance[property].ref !== null &&
+            (specializationData.inheritance[property].ref ===
+              unlinkedGeneralizationId ||
+              nodes[unlinkedGeneralizationId].inheritance[property]?.ref ===
+                specializationData.inheritance[property].ref)
+          ) {
+            if (!nextGeneralizationData.properties.hasOwnProperty(property)) {
+              let canDelete = true;
+              let inheritFrom = null;
+              for (let generalization of remainingGeneralizations) {
+                const generalizationData = nodes[generalization.id];
+                if (generalizationData.properties.hasOwnProperty(property)) {
+                  canDelete = false;
+                  inheritFrom = generalization.id;
+                  break;
+                }
+              }
+              if (canDelete) {
+                deletedProperties.push(property);
+              } else if (inheritFrom) {
+                if (!updatedProperties[inheritFrom]) {
+                  updatedProperties[inheritFrom] = [];
+                }
+                updatedProperties[inheritFrom].push(property);
+              }
+            } else {
+              if (!updatedProperties[nextGeneralization.id]) {
+                updatedProperties[nextGeneralization.id] = [];
+              }
+              updatedProperties[nextGeneralization.id].push(property);
+            }
+          }
+        }
+        for (let property in nextGeneralizationData.properties) {
+          if (!specializationData.properties.hasOwnProperty(property)) {
+            addedProperties.push({
+              propertyName: property,
+              propertyType: nextGeneralizationData.propertyType[property],
+              propertyValue: nextGeneralizationData.properties[property],
+            });
+          }
+        }
+      }
+
+      /* update the inheritance */
+      let batch = writeBatch(db);
+      batch = await recursivelyUpdateSpecializations({
+        nodeId: specializationData.id,
+        updatedProperties: [],
+        deletedProperties,
+        addedProperties,
+        nestedCall: true,
+        batch,
+        inheritanceType: unlinkedGeneralization.inheritance,
+        generalizationId: nextGeneralization.id,
+        db,
+      });
+
+      for (let inheritFrom in updatedProperties) {
+        const inheritsFromData = nodes[inheritFrom];
+        await recursivelyUpdateSpecializations({
+          nodeId: specializationData.id,
+          updatedProperties: updatedProperties[inheritFrom],
+          deletedProperties: [],
+          addedProperties: [],
+          nestedCall: true,
+          batch,
+          inheritanceType: inheritsFromData.inheritance,
+          generalizationId: inheritFrom,
+          db,
+        });
+      }
+      await batch.commit();
+    }
+  } catch (error: any) {
+    recordLogs({
+      type: "error",
+      error: JSON.stringify({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      }),
+      at: "updateInheritanceWhenUnlinkAGeneralization",
+    });
+  }
+};
+
+// export const updateInheritanceWhenUnlinkSpecialization = async (
+//   db: any,
+//   removedLinkId: string,
+//   generalizationData: INode,
+//   nodes: { [nodeId: string]: INode }
+// ) => {
+//   try {
+//     const deletedProperties = [];
+//     const specializationData = nodes[removedLinkId];
+//     const generalizationId = generalizationData.id;
+//     const remainingGeneralizations =
+//       specializationData.generalizations[0].nodes.filter(
+//         (g) => g.id !== generalizationId
+//       );
+//     const nextGeneralization = nodes[remainingGeneralizations[0].id];
+//     const updatedProperties: {
+//       [ref: string]: string[];
+//     } = {};
+//     for (let property in specializationData.inheritance) {
+//       if (
+//         specializationData.inheritance[property] &&
+//         specializationData.inheritance[property].ref !== null &&
+//         (specializationData.inheritance[property].ref === generalizationId ||
+//           nodes[generalizationId].inheritance[property]?.ref ===
+//             specializationData.inheritance[property].ref)
+//       ) {
+//         if (!nextGeneralization.properties.hasOwnProperty(property)) {
+//           let canDelete = true;
+//           let inheritFrom = null;
+//           for (let generalization of remainingGeneralizations) {
+//             const generalizationData = nodes[generalization.id];
+//             if (generalizationData.properties.hasOwnProperty(property)) {
+//               canDelete = false;
+//               inheritFrom = generalization.id;
+//               break;
+//             }
+//           }
+//           if (canDelete) {
+//             deletedProperties.push(property);
+//           } else if (inheritFrom) {
+//             if (!updatedProperties[inheritFrom]) {
+//               updatedProperties[inheritFrom] = [];
+//             }
+//             updatedProperties[inheritFrom].push(property);
+//           }
+//         } else {
+//           if (!updatedProperties[nextGeneralization.id]) {
+//             updatedProperties[nextGeneralization.id] = [];
+//           }
+//           updatedProperties[nextGeneralization.id].push(property);
+//         }
+//       }
+//     }
+//     const batch = writeBatch(db);
+//     await recursivelyUpdateSpecializations({
+//       nodeId: removedLinkId,
+//       updatedProperties: [],
+//       deletedProperties,
+//       addedProperties: [],
+//       nestedCall: true,
+//       batch,
+//       inheritanceType: generalizationData.inheritance,
+//       generalizationId: generalizationId,
+//       db,
+//     });
+//     for (let inheritedFromId in updatedProperties) {
+//       const inheritsFromData = nodes[inheritedFromId];
+//       await recursivelyUpdateSpecializations({
+//         nodeId: removedLinkId,
+//         updatedProperties: updatedProperties[inheritedFromId],
+//         deletedProperties: [],
+//         addedProperties: [],
+//         nestedCall: true,
+//         batch,
+//         inheritanceType: inheritsFromData.inheritance,
+//         generalizationId: inheritedFromId,
+//         db,
+//       });
+//     }
+//     await batch.commit();
+//   } catch (error) {
+//     console.error(error);
+//   }
+// };

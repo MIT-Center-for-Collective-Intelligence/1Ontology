@@ -86,7 +86,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
         if (newBatch._committed) {
           newBatch = writeBatch(db);
         }
-        updateDoc(nodeRef, objectUpdate);
+        newBatch.update(nodeRef, objectUpdate);
 
         if (newBatch._mutations.length > 498) {
           await newBatch.commit();

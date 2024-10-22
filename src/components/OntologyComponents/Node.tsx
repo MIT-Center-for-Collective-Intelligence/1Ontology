@@ -146,6 +146,7 @@ import {
   createNewNode,
   generateInheritance,
   recordLogs,
+  updateLinksForInheritance,
   removeIsPartOf,
   saveNewChangeLog,
   unlinkPropertyOf,
@@ -153,6 +154,7 @@ import {
   updatePartsAndPartsOf,
   updatePropertyOf,
   updateSpecializations,
+  updateLinksForInheritanceSpecializations,
 } from " @components/lib/utils/helpers";
 
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
@@ -521,7 +523,7 @@ const Node = ({
       // Update inheritance (if needed)
       updateInheritance({
         nodeId: currentVisibleNode.id,
-        updatedProperty: selectedProperty,
+        updatedProperties: [selectedProperty],
         db,
       });
     }
@@ -531,6 +533,7 @@ const Node = ({
   const addNewSpecialization = useCallback(
     async (collectionName: string = "main", searchValue: string = "") => {
       try {
+        handleCloseAddLinksModel();
         if (!collectionName) {
           collectionName = "main";
         }
@@ -797,7 +800,7 @@ const Node = ({
           }
         }
       }
-
+      const addedLinks: { id: string }[] = [];
       // Iterate through checkedItems to add new children
       checkedItems.forEach((checked) => {
         // Check if the node is not already present in oldLinks
@@ -808,6 +811,9 @@ const Node = ({
         if (indexFound === -1) {
           // Add the node to oldLinks if not present
           oldLinks.push({
+            id: checked,
+          });
+          addedLinks.push({
             id: checked,
           });
         }
@@ -830,8 +836,6 @@ const Node = ({
         );
         return;
       }
-
-      // Handle removed links
 
       for (let link of removedLinks) {
         await unlinkPropertyOf(
@@ -938,7 +942,29 @@ const Node = ({
 
       // Update the node document in the database
       await updateDoc(nodeDoc.ref, nodeData);
-
+      //the user modified generalizations
+      if (selectedProperty === "generalizations") {
+        await updateLinksForInheritance(
+          db,
+          currentVisibleNode.id,
+          addedLinks,
+          removedLinks,
+          currentVisibleNode,
+          oldLinks,
+          nodes
+        );
+      }
+      if (selectedProperty === "specializations") {
+        await updateLinksForInheritanceSpecializations(
+          db,
+          currentVisibleNode.id,
+          addedLinks,
+          removedLinks,
+          currentVisibleNode,
+          oldLinks,
+          nodes
+        );
+      }
       // Update inheritance for non-specialization/generalization properties
       if (
         !["specializations", "generalizations", "isPartOf"].includes(
@@ -947,7 +973,7 @@ const Node = ({
       ) {
         updateInheritance({
           nodeId: currentVisibleNode.id,
-          updatedProperty: selectedProperty,
+          updatedProperties: [selectedProperty],
           db,
         });
       }
@@ -999,7 +1025,7 @@ const Node = ({
       if (specializations.length > 0) {
         if (checkIfCanDeleteANode(nodes, specializations)) {
           await confirmIt(
-            "To delete a Node you need to delete it's specializations or move them under a different generalization",
+            "To delete a node, you need to first delete its specializations or move them under a different generalization.",
             "Ok",
             ""
           );
@@ -1303,195 +1329,237 @@ const Node = ({
         open={openSelectModel}
         onClose={handleCloseAddLinksModel}
       >
-        <Paper
-          sx={{
-            maxHeight: "80vh",
-            overflowY: "auto",
-            borderRadius: 2,
-            boxShadow: 24,
-            ...SCROLL_BAR_STYLE,
-          }}
-        >
-          <Box sx={{ position: "sticky", top: "0", zIndex: 1 }}>
-            <Paper sx={{ pt: "15px" }}>
-              <Typography sx={{ pl: "15px" }}>
-                Check the Box for the{" "}
-                <strong style={{ color: "orange" }}>
-                  {capitalizeFirstLetter(
-                    DISPLAY[selectedProperty]
-                      ? DISPLAY[selectedProperty]
-                      : selectedProperty
-                  )}
-                </strong>{" "}
-                that you want to add:
-              </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  width: "950px",
-                  pr: "5px",
-                }}
-              >
-                <Typography sx={{ width: "300px", ml: "14px" }}>
-                  Enter the new title:{" "}
-                </Typography>
-                <SearchBox
-                  setSearchValue={setSearchValue}
-                  label={"Search ..."}
-                />
-                {selectedProperty === "specializations" && (
-                  <Button
-                    onClick={() =>
-                      addNewSpecialization(
-                        selectedCategory || "main",
-                        searchValue
-                      )
-                    }
-                    sx={{ borderRadius: "18px", minWidth: "200px" }}
-                    variant="outlined"
-                    disabled={
-                      searchValue.length < 3 ||
-                      searchResultsForSelection[0]?.title.trim() ===
-                        searchValue.trim()
-                    }
-                  >
-                    {"Add new specialization"}
-                  </Button>
-                )}
-              </Box>
-            </Paper>
-          </Box>
-          <Box>
-            {searchValue ? (
-              <Box>
-                {" "}
-                {searchResultsForSelection.map((node: any) => (
-                  <ListItem
-                    key={node.id}
-                    onClick={() => {
-                      markItemAsChecked(node.id);
-                    }}
-                    sx={{
-                      display:
-                        currentVisibleNode.id === node.id ? "none" : "flex",
-                      alignItems: "center",
-                      color: "white",
-                      cursor: "pointer",
-                      borderRadius: "4px",
-                      padding: "8px",
-                      transition: "background-color 0.3s",
-                      // border: "1px solid #ccc",
-                      mt: "5px",
-                      "&:hover": {
-                        backgroundColor: (theme: Theme) =>
-                          theme.palette.mode === "dark"
-                            ? DESIGN_SYSTEM_COLORS.notebookG450
-                            : DESIGN_SYSTEM_COLORS.gray200,
-                      },
-                    }}
-                  >
-                    {" "}
-                    {user?.manageLock || !node.locked ? (
-                      checkedItems.has(node.id) ? (
-                        <Checkbox
-                          checked={true}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            markItemAsChecked(node.id);
-                          }}
-                          name={node.id}
-                        />
-                      ) : (
-                        <Checkbox
-                          checked={false}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            markItemAsChecked(node.id);
-                          }}
-                          name={node.id}
-                        />
-                      )
-                    ) : (
-                      <LockIcon
-                        sx={{
-                          color: "orange",
-                          mx: "15px",
-                        }}
-                      />
-                    )}
-                    <Typography>{node.title}</Typography>
-                  </ListItem>
-                ))}
-              </Box>
-            ) : (
-              <TreeViewSimplified
-                treeVisualization={selectFromTree()}
-                expandedNodes={expandedNodes}
-                setExpandedNodes={setExpandedNodes}
-                onOpenNodesTree={handleToggle}
-                markItemAsChecked={markItemAsChecked}
-                checkedItems={checkedItems}
-                handleCloning={handleCloning}
-                clone={true}
-                stopPropagation={currentVisibleNode.id}
-                manageLock={user?.manageLock}
-              />
-            )}
-
-            <Box sx={{ p: "6px", mt: "auto", maxWidth: "100vh" }}>
-              <Typography sx={{ mb: "4px" }}>
-                If you cannot find the existing{" "}
-                <strong>
-                  {capitalizeFirstLetter(
-                    DISPLAY[selectedProperty]
-                      ? DISPLAY[selectedProperty]
-                      : selectedProperty
-                  )}{" "}
-                </strong>
-                to link, you can describe them below:
-              </Typography>
-              <Text
-                text={onGetPropertyValue(selectedProperty, true) as string}
-                currentVisibleNode={currentVisibleNode}
-                property={selectedProperty}
-                setCurrentVisibleNode={setCurrentVisibleNode}
-                nodes={nodes}
-                locked={locked}
-                selectedDiffNode={selectedDiffNode}
-                getTitleNode={() => {}}
-                confirmIt={confirmIt}
-                structured={true}
-                currentImprovement={currentImprovement}
-              />
-            </Box>
-          </Box>
-
+        <Box sx={{ display: "flex" }}>
           <Paper
             sx={{
-              display: "flex",
-              position: "sticky",
-              bottom: "0px",
-              p: 3,
-              justifyContent: "space-between",
+              maxHeight: "80vh",
+              overflowY: "auto",
+
+              ...SCROLL_BAR_STYLE,
             }}
           >
-            <Button
-              variant="contained"
-              onClick={handleCloseAddLinksModel}
-              color="primary"
+            <Box
+              sx={{
+                position: "sticky",
+                top: "0",
+                zIndex: 1,
+              }}
             >
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleSaveLinkChanges}
-              color="success"
+              <Box
+                sx={{
+                  pt: "15px",
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
+                }}
+              >
+                <Typography sx={{ pl: "15px" }}>
+                  Check the Box for the{" "}
+                  <strong style={{ color: "orange" }}>
+                    {capitalizeFirstLetter(
+                      DISPLAY[selectedProperty]
+                        ? DISPLAY[selectedProperty]
+                        : selectedProperty
+                    )}
+                  </strong>{" "}
+                  that you want to add:
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    width: "950px",
+                    pr: "5px",
+                  }}
+                >
+                  <Typography sx={{ width: "300px", ml: "14px" }}>
+                    Enter the new title:{" "}
+                  </Typography>
+                  <SearchBox
+                    setSearchValue={setSearchValue}
+                    label={"Search ..."}
+                  />
+                  {selectedProperty === "specializations" && (
+                    <Button
+                      onClick={() =>
+                        addNewSpecialization(
+                          selectedCategory || "main",
+                          searchValue
+                        )
+                      }
+                      sx={{ borderRadius: "18px", minWidth: "200px" }}
+                      variant="outlined"
+                      disabled={
+                        searchValue.length < 3 ||
+                        searchResultsForSelection[0]?.title.trim() ===
+                          searchValue.trim()
+                      }
+                    >
+                      {"Add new specialization"}
+                    </Button>
+                  )}
+                </Box>
+              </Box>
+            </Box>
+            <Box>
+              {searchValue ? (
+                <Box>
+                  {" "}
+                  {searchResultsForSelection.map((node: any) => (
+                    <ListItem
+                      key={node.id}
+                      onClick={() => {
+                        markItemAsChecked(node.id);
+                      }}
+                      sx={{
+                        display:
+                          currentVisibleNode.id === node.id ? "none" : "flex",
+                        alignItems: "center",
+                        color: "white",
+                        cursor: "pointer",
+                        borderRadius: "4px",
+                        padding: "8px",
+                        transition: "background-color 0.3s",
+                        // border: "1px solid #ccc",
+                        mt: "5px",
+                        "&:hover": {
+                          backgroundColor: (theme: Theme) =>
+                            theme.palette.mode === "dark"
+                              ? DESIGN_SYSTEM_COLORS.notebookG450
+                              : DESIGN_SYSTEM_COLORS.gray200,
+                        },
+                      }}
+                    >
+                      {" "}
+                      {user?.manageLock || !node.locked ? (
+                        checkedItems.has(node.id) ? (
+                          <Checkbox
+                            checked={true}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              markItemAsChecked(node.id);
+                            }}
+                            name={node.id}
+                          />
+                        ) : (
+                          <Checkbox
+                            checked={false}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              markItemAsChecked(node.id);
+                            }}
+                            name={node.id}
+                          />
+                        )
+                      ) : (
+                        <LockIcon
+                          sx={{
+                            color: "orange",
+                            mx: "15px",
+                          }}
+                        />
+                      )}
+                      <Typography>{node.title}</Typography>
+                    </ListItem>
+                  ))}
+                </Box>
+              ) : (
+                <TreeViewSimplified
+                  treeVisualization={selectFromTree()}
+                  expandedNodes={expandedNodes}
+                  setExpandedNodes={setExpandedNodes}
+                  onOpenNodesTree={handleToggle}
+                  markItemAsChecked={markItemAsChecked}
+                  checkedItems={checkedItems}
+                  handleCloning={handleCloning}
+                  clone={true}
+                  stopPropagation={currentVisibleNode.id}
+                  manageLock={user?.manageLock}
+                />
+              )}
+
+              <Box sx={{ p: "6px", mt: "auto", maxWidth: "100vh" }}>
+                <Typography sx={{ mb: "4px" }}>
+                  If you cannot find the existing{" "}
+                  <strong>
+                    {capitalizeFirstLetter(
+                      DISPLAY[selectedProperty]
+                        ? DISPLAY[selectedProperty]
+                        : selectedProperty
+                    )}{" "}
+                  </strong>
+                  to link, you can describe them below:
+                </Typography>
+                <Text
+                  text={onGetPropertyValue(selectedProperty, true) as string}
+                  currentVisibleNode={currentVisibleNode}
+                  property={selectedProperty}
+                  setCurrentVisibleNode={setCurrentVisibleNode}
+                  nodes={nodes}
+                  locked={locked}
+                  selectedDiffNode={selectedDiffNode}
+                  getTitleNode={() => {}}
+                  confirmIt={confirmIt}
+                  structured={true}
+                  currentImprovement={currentImprovement}
+                />
+              </Box>
+            </Box>
+
+            <Box
+              sx={{
+                display: "flex",
+                position: "sticky",
+                bottom: "0px",
+                p: 3,
+                pt: 5,
+                mt: "15px",
+                justifyContent: "space-between",
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
+                zIndex: 500,
+              }}
             >
-              Save
-            </Button>
+              <Button
+                variant="contained"
+                onClick={handleCloseAddLinksModel}
+                color="primary"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleSaveLinkChanges}
+                color="success"
+              >
+                Save
+              </Button>
+            </Box>
           </Paper>
-        </Paper>
+
+          {checkedItems.size > 0 && (
+            <Paper>
+              <Box sx={{ p: 3 }}>
+                <Typography variant="h6">Selected Items</Typography>
+                {Array.from(checkedItems).map((id: any) => (
+                  <Box
+                    key={id}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      mb: 2, // Add some margin between items
+                    }}
+                  >
+                    <Checkbox
+                      checked={checkedItems.has(id)}
+                      onChange={() => markItemAsChecked(id)}
+                    />
+                    <Typography>{nodes[id].title}</Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Paper>
+          )}
+        </Box>
       </Modal>
     </Box>
   );

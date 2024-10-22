@@ -97,7 +97,7 @@ const Text = ({
   const [reference, setReference] = useState<string | null>(null);
   const [autoFocus, setAutoFocus] = useState(false);
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
-  const [switchToWebsocket, setSwitchToWebSocket] = useState(true);
+  const [switchToWebsocket, setSwitchToWebSocket] = useState(false);
 
   // // Maintain focus after inheritance change
   // useEffect(() => {
@@ -196,7 +196,7 @@ const Text = ({
 
         updateInheritance({
           nodeId: currentVisibleNode.id,
-          updatedProperty: property,
+          updatedProperties: [property],
           db,
         });
       }

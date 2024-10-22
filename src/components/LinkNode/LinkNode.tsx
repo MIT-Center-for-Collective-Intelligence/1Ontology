@@ -74,6 +74,7 @@ import {
   updateInheritance,
   updatePartsAndPartsOf,
   updatePropertyOf,
+  updateInheritanceWhenUnlinkAGeneralization,
 } from " @components/lib/utils/helpers";
 import { INode, INodePath, ILinkNode } from " @components/types/INode";
 import {
@@ -122,6 +123,7 @@ type ILinkNodeProps = {
   setReviewId: Function;
   linkIndex: number;
   collectionIndex: number;
+  selectedDiffNode: any;
 };
 
 const LinkNode = ({
@@ -140,6 +142,7 @@ const LinkNode = ({
   reviewId,
   setReviewId,
   collectionIndex,
+  selectedDiffNode,
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -323,7 +326,7 @@ const LinkNode = ({
 
             updateInheritance({
               nodeId: nodeDoc.id,
-              updatedProperty: property,
+              updatedProperties: [property],
               db,
             });
           }
@@ -426,13 +429,13 @@ const LinkNode = ({
               collectionIndex
             ].nodes.splice(linkIndex, 1);
           }
-
+          //check if this link is includes in other collections of the node or not
+          //to be able to remove it
           const shouldBeRemovedFromParent = !nodeData[
             property as "specializations" | "generalizations"
           ].some((c: { nodes: ILinkNode[] }) =>
             c.nodes.includes({ id: link.id })
           );
-
           if (shouldBeRemovedFromParent) {
             await removeNodeLink(
               property as "specializations" | "generalizations",
@@ -451,7 +454,6 @@ const LinkNode = ({
             );
             if (unclassifiedNodeDocs.docs.length > 0) {
               const unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
-              debugger;
               if (property === "specializations") {
                 const nodeRef = doc(collection(db, NODES), link.id);
                 const generalizations = nodes[link.id].generalizations;
@@ -517,6 +519,22 @@ const LinkNode = ({
             changeType: "remove element",
             fullNode: currentVisibleNode,
           });
+          if (property === "generalizations") {
+            updateInheritanceWhenUnlinkAGeneralization(
+              db,
+              link.id,
+              nodeData,
+              nodes
+            );
+          }
+          if (property === "specializations") {
+            updateInheritanceWhenUnlinkAGeneralization(
+              db,
+              nodeDoc.id,
+              nodes[link.id],
+              nodes
+            );
+          }
         }
       }
     } catch (error: any) {
@@ -577,19 +595,22 @@ const LinkNode = ({
               sx={{ color: getLinkColor(link.change), pl: "5px" }}
             />
           )}
-          {!locked && !linkLocked && !currentVisibleNode.unclassified && (
-            <Button
-              sx={{
-                ml: "8px",
-                borderRadius: "18px",
-                backgroundColor: BUTTON_COLOR,
-              }}
-              variant="outlined"
-              onClick={handleUnlinkNode}
-            >
-              Unlink
-            </Button>
-          )}
+          {!locked &&
+            !linkLocked &&
+            !currentVisibleNode.unclassified &&
+            !selectedDiffNode && (
+              <Button
+                sx={{
+                  ml: "8px",
+                  borderRadius: "18px",
+                  backgroundColor: BUTTON_COLOR,
+                }}
+                variant="outlined"
+                onClick={handleUnlinkNode}
+              >
+                Unlink
+              </Button>
+            )}
         </Box>
       ) : (
         <Box sx={{ display: "flex", alignItems: "center" }}>

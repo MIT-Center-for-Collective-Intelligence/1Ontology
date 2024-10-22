@@ -285,7 +285,7 @@ const StructuredProperty = ({
 
             updateInheritance({
               nodeId: currentVisibleNode.id,
-              updatedProperty: property,
+              updatedProperties: [property],
               db,
             });
           }
@@ -394,7 +394,7 @@ const StructuredProperty = ({
             });
             updateInheritance({
               nodeId: currentVisibleNode.id,
-              updatedProperty: property,
+              updatedProperties: [property],
               db,
             });
           }
@@ -643,7 +643,7 @@ const StructuredProperty = ({
         if (!isSpecialization) {
           updateInheritance({
             nodeId: nodeDoc.id,
-            updatedProperty: property,
+            updatedProperties: [property],
             db,
           });
         }
@@ -741,7 +741,7 @@ const StructuredProperty = ({
         if (!isSpecialization) {
           updateInheritance({
             nodeId: nodeDoc.id,
-            updatedProperty: property,
+            updatedProperties: [property],
             db,
           });
         }
@@ -1239,6 +1239,9 @@ const StructuredProperty = ({
                                                     setReviewId={setReviewId}
                                                     collectionIndex={
                                                       collectionIndex
+                                                    }
+                                                    selectedDiffNode={
+                                                      selectedDiffNode
                                                     }
                                                   />
                                                 </ListItem>

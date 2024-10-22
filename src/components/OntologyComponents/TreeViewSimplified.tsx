@@ -236,6 +236,7 @@ const TreeViewSimplified = ({
                 clone={clone}
                 sendNode={sendNode}
                 manageLock={manageLock}
+                stopPropagation={stopPropagation}
               />
             )}
         </TreeItem>
