@@ -958,9 +958,7 @@ const Ontology = () => {
           >
             <Box ref={scrolling}></Box>
             {displayGuidelines && (
-              <Box sx={{ p: 2 }}>
-                <GuidLines />
-              </Box>
+              <GuidLines setDisplayGuidelines={setDisplayGuidelines} />
             )}
             {currentVisibleNode && user && !displayGuidelines && (
               <Node

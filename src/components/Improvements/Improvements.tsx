@@ -14,6 +14,7 @@ import {
   compareProperties,
   getNodeIdByTitle,
 } from " @components/lib/utils/helpersCopilot";
+import { sendLLMRequest } from " @components/lib/utils/copilotPrompts";
 type ImprovementsProps = {
   currentImprovement: any;
   setCurrentImprovement: any;
@@ -82,7 +83,6 @@ const Improvements = ({
       const improvements = (
         (await compareProposals(response.data)) || []
       ).filter((m: any) => (m.detailsOfChange || []).length > 0);
-
       if (improvements) {
         setImprovements(improvements);
         setCurrentImprovement(improvements[0]);

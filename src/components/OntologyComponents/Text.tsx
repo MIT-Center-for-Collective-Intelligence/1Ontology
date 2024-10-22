@@ -97,7 +97,7 @@ const Text = ({
   const [reference, setReference] = useState<string | null>(null);
   const [autoFocus, setAutoFocus] = useState(false);
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
-  const [switchToWebsocket, setSwitchToWebSocket] = useState(false);
+  const [switchToWebsocket, setSwitchToWebSocket] = useState(true);
 
   // // Maintain focus after inheritance change
   // useEffect(() => {

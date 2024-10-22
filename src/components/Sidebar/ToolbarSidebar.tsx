@@ -718,7 +718,7 @@ const ToolbarSidebar = ({
               text="Search"
               toolbarIsOpen={hovered}
             /> */}
-            {/*<SidebarButton
+            {/* <SidebarButton
               id="toolbar-theme-button"
               icon={<AutoAwesomeIcon />}
               onClick={() => {

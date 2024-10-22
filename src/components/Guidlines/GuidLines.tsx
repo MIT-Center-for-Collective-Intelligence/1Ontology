@@ -7,6 +7,7 @@ import {
   TextField,
   IconButton,
   Button,
+  Box,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddIcon from "@mui/icons-material/Add";
@@ -18,8 +19,9 @@ import {
   addDoc,
 } from "firebase/firestore";
 import { GUIDELINES } from " @components/lib/firestoreClient/collections";
+import CloseIcon from "@mui/icons-material/Close";
 
-const GuidLines = () => {
+const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
   const db = getFirestore();
   const [guidelines, setGuidelines] = useState<{ [id: string]: any }>({});
   const [newGuidelines, setNewGuidelines] = useState<{ [id: string]: string }>(
@@ -71,7 +73,27 @@ const GuidLines = () => {
     .map((categoryId) => guidelines[categoryId]);
 
   return (
-    <div>
+    <Box>
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 3,
+          py: 3,
+          backgroundColor: "#1b1a1a",
+        }}
+      >
+        <Button
+          variant="contained"
+          sx={{ mb: "3px" }}
+          onClick={() => {
+            setDisplayGuidelines(false);
+          }}
+        >
+          Hide guidelines
+        </Button>
+      </Box>
+
       {sortedCategories.map((category) => (
         <Accordion defaultExpanded={true} key={category.id}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -120,7 +142,7 @@ const GuidLines = () => {
           </AccordionDetails>
         </Accordion>
       ))}
-    </div>
+    </Box>
   );
 };
 
