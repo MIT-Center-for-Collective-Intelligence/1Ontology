@@ -178,7 +178,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
       );
       const propertyType = currentVisibleNode.propertyType;
       const inheritance = currentVisibleNode.inheritance;
-      newProperty = newProperty.replace(" ", "");
+
       propertyType[newProperty] = newPropertyType.toLowerCase();
 
       if (newPropertyType.toLowerCase() === "string") {

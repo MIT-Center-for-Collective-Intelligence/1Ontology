@@ -1011,7 +1011,19 @@ const StructuredProperty = ({
                                       ) : (
                                         <></>
                                       )}
-
+                                      {collection.collectionName !== "main" && (
+                                        <Tooltip title="Edit collection title">
+                                          <IconButton
+                                            onClick={() => {
+                                              handleEditCollection(
+                                                collection.collectionName
+                                              );
+                                            }}
+                                          >
+                                            <EditIcon />
+                                          </IconButton>
+                                        </Tooltip>
+                                      )}
                                       {!selectedDiffNode && (
                                         <Box
                                           sx={{
@@ -1021,44 +1033,6 @@ const StructuredProperty = ({
                                           }}
                                         >
                                           {" "}
-                                          <Button
-                                            onClick={() =>
-                                              showListToSelect(
-                                                property,
-                                                collection.collectionName
-                                              )
-                                            }
-                                            sx={{
-                                              borderRadius: "18px",
-                                              backgroundColor: BUTTON_COLOR,
-                                              ":hover": {
-                                                backgroundColor:
-                                                  theme.palette.mode === "light"
-                                                    ? "#f0f0f0"
-                                                    : "",
-                                              },
-                                              ml: "auto",
-                                            }}
-                                            variant="outlined"
-                                          >
-                                            {`Edit ${capitalizeFirstLetter(
-                                              DISPLAY[property] || property
-                                            )}`}{" "}
-                                          </Button>
-                                          {collection.collectionName !==
-                                            "main" && (
-                                            <Tooltip title="Edit collection title">
-                                              <IconButton
-                                                onClick={() => {
-                                                  handleEditCollection(
-                                                    collection.collectionName
-                                                  );
-                                                }}
-                                              >
-                                                <EditIcon />
-                                              </IconButton>
-                                            </Tooltip>
-                                          )}
                                           {collection.collectionName !==
                                             "main" && (
                                             <Tooltip title="Delete collection">
@@ -1269,6 +1243,33 @@ const StructuredProperty = ({
                                   )}
                                 </Droppable>
                               </List>
+                              {property === "specializations" && (
+                                <Button
+                                  onClick={() =>
+                                    showListToSelect(
+                                      property,
+                                      collection.collectionName
+                                    )
+                                  }
+                                  sx={{
+                                    borderRadius: "18px",
+                                    backgroundColor: BUTTON_COLOR,
+                                    ":hover": {
+                                      backgroundColor:
+                                        theme.palette.mode === "light"
+                                          ? "#f0f0f0"
+                                          : "",
+                                    },
+                                    // ml: "auto",
+                                    m: "5px",
+                                  }}
+                                  variant="outlined"
+                                >
+                                  {`Add ${capitalizeFirstLetter(
+                                    DISPLAY[property] || property
+                                  )}`}{" "}
+                                </Button>
+                              )}
                             </Paper>
                           )}
                         </Draggable>

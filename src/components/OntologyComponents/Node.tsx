@@ -690,13 +690,7 @@ const Node = ({
     } else {
       const propertyType = currentVisibleNode.propertyType[selectedProperty];
 
-      return (
-        mainSpecializations[
-          propertyType === "evaluationDimension"
-            ? "evaluation dimension"
-            : propertyType
-        ]?.specializations || {}
-      );
+      return mainSpecializations[propertyType]?.specializations || {};
     }
   };
 

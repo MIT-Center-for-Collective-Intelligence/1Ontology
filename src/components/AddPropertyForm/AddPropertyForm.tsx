@@ -54,7 +54,9 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
     // Check if the property already exists
     if (
       exitingProperties.some(
-        (p) => p.trim().toLowerCase() === newPropertyTitle.trim().toLowerCase()
+        (p) =>
+          p.replaceAll(" ", "").trim().toLowerCase() ===
+          newPropertyTitle.replaceAll(" ", "").trim().toLowerCase()
       )
     ) {
       setDuplicateError(true);
