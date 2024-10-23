@@ -64,10 +64,22 @@ export function splitSentenceIntoChunks(
 }
 
 export const getTitle = (nodes: { [id: string]: INode }, id: string) => {
+  let value = "";
   if (nodes[id]) {
-    return nodes[id].title;
+    value = nodes[id].title;
   }
-  return "";
+  if (
+    nodes[id] &&
+    nodes[id].nodeType === "context" &&
+    Array.isArray(nodes[id].properties.context)
+  ) {
+    const contextId = nodes[id].properties.context[0].nodes[0]?.id;
+
+    if (contextId) {
+      value += " at " + nodes[contextId].title;
+    }
+  }
+  return value;
 };
 export const getTitleDeleted = async (
   nodes: { [id: string]: INode },

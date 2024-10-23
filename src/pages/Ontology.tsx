@@ -105,6 +105,21 @@ import { NodeChange } from " @components/types/INode";
 import GuidLines from " @components/components/Guidlines/GuidLines";
 import SearchSideBar from " @components/components/SearchSideBar/SearchSideBar";
 
+const AddContext = (nodes: any, nodesObject: any): INode[] => {
+  for (let node of nodes) {
+    if (node.nodeType === "context" && Array.isArray(node.properties.context)) {
+      const contextId = node.properties.context[0].nodes[0]?.id;
+      if (nodesObject[contextId]) {
+        node.context = {
+          id: contextId,
+          title: nodesObject[contextId].title,
+        };
+      }
+    }
+  }
+  return nodes;
+};
+
 const Ontology = () => {
   const db = getFirestore();
   const [{ emailVerified, user }] = useAuth();
@@ -119,7 +134,9 @@ const Ontology = () => {
   const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [viewValue, setViewValue] = useState<number>(0);
-  const fuse = new Fuse(Object.values(nodes), { keys: ["title"] });
+  const fuse = new Fuse(AddContext(Object.values(nodes), nodes), {
+    keys: ["title", "context.title"],
+  });
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [eachOntologyPath, setEachOntologyPath] = useState<{
     [key: string]: INodePath[];
@@ -149,7 +166,6 @@ const Ontology = () => {
   const [currentImprovement, setCurrentImprovement] = useState(null);
   const [displayGuidelines, setDisplayGuidelines] = useState(false);
   const [prevHash, setPrevHash] = useState("");
-
   useEffect(() => {
     // Check if a user is logged in
     if (user) {

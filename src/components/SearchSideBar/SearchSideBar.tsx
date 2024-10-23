@@ -170,7 +170,10 @@ const SearchSideBar = ({
                 },
               }}
             >
-              <Typography>{node.title}</Typography>
+              <Typography>
+                {node.title}
+                {!!node.context?.title && ` at ${node.context.title}`}
+              </Typography>
             </ListItem>
           ))}
         </List>

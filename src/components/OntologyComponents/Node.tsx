@@ -248,16 +248,19 @@ const Node = ({
       selectedProperty === "parts" ||
       selectedProperty === "isPartOf"
     ) {
-      return searchWithFuse(searchValue);
+      return searchWithFuse(searchValue, currentVisibleNode.nodeType);
     }
     return [];
   }, [searchValue, selectedProperty]);
 
-  const markItemAsChecked = (checkedId: string) => {
-    const _oldChecked = new Set(checkedItems);
+  const markItemAsChecked = (checkedId: string, radioSelection = false) => {
+    let _oldChecked = new Set(checkedItems);
     if (_oldChecked.has(checkedId)) {
       _oldChecked.delete(checkedId);
     } else {
+      if (radioSelection) {
+        _oldChecked = new Set();
+      }
       _oldChecked.add(checkedId);
     }
     setCheckedItems(_oldChecked);
@@ -1430,7 +1433,10 @@ const Node = ({
                     <ListItem
                       key={node.id}
                       onClick={() => {
-                        markItemAsChecked(node.id);
+                        markItemAsChecked(
+                          node.id,
+                          selectedProperty === "context"
+                        );
                       }}
                       sx={{
                         display:
@@ -1490,7 +1496,9 @@ const Node = ({
                   expandedNodes={expandedNodes}
                   setExpandedNodes={setExpandedNodes}
                   onOpenNodesTree={handleToggle}
-                  markItemAsChecked={markItemAsChecked}
+                  markItemAsChecked={(id: string) =>
+                    markItemAsChecked(id, selectedProperty === "context")
+                  }
                   checkedItems={checkedItems}
                   handleCloning={handleCloning}
                   clone={true}
@@ -1499,32 +1507,34 @@ const Node = ({
                 />
               )}
 
-              <Box sx={{ p: "6px", mt: "auto", maxWidth: "100vh" }}>
-                <Typography sx={{ mb: "4px" }}>
-                  If you cannot find the existing{" "}
-                  <strong>
-                    {capitalizeFirstLetter(
-                      DISPLAY[selectedProperty]
-                        ? DISPLAY[selectedProperty]
-                        : selectedProperty
-                    )}{" "}
-                  </strong>
-                  to link, you can describe them below:
-                </Typography>
-                <Text
-                  text={onGetPropertyValue(selectedProperty, true) as string}
-                  currentVisibleNode={currentVisibleNode}
-                  property={selectedProperty}
-                  setCurrentVisibleNode={setCurrentVisibleNode}
-                  nodes={nodes}
-                  locked={locked}
-                  selectedDiffNode={selectedDiffNode}
-                  getTitleNode={() => {}}
-                  confirmIt={confirmIt}
-                  structured={true}
-                  currentImprovement={currentImprovement}
-                />
-              </Box>
+              {selectedProperty !== "context" && (
+                <Box sx={{ p: "6px", mt: "auto", maxWidth: "100vh" }}>
+                  <Typography sx={{ mb: "4px" }}>
+                    If you cannot find the existing{" "}
+                    <strong>
+                      {capitalizeFirstLetter(
+                        DISPLAY[selectedProperty]
+                          ? DISPLAY[selectedProperty]
+                          : selectedProperty
+                      )}{" "}
+                    </strong>
+                    to link, you can describe them below:
+                  </Typography>
+                  <Text
+                    text={onGetPropertyValue(selectedProperty, true) as string}
+                    currentVisibleNode={currentVisibleNode}
+                    property={selectedProperty}
+                    setCurrentVisibleNode={setCurrentVisibleNode}
+                    nodes={nodes}
+                    locked={locked}
+                    selectedDiffNode={selectedDiffNode}
+                    getTitleNode={() => {}}
+                    confirmIt={confirmIt}
+                    structured={true}
+                    currentImprovement={currentImprovement}
+                  />
+                </Box>
+              )}
             </Box>
 
             <Box

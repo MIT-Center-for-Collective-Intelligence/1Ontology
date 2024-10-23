@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 export const initializeFirestore = () => {
-  if (process.env.NODE_ENV === "development") {
+if (process.env.NODE_ENV === "development") {
     initializeApp({
       apiKey: process.env.NEXT_PUBLIC_DEV_API_KEY,
       authDomain: process.env.NEXT_PUBLIC_DEV_AUTH_DOMAIN,
