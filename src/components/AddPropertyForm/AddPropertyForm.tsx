@@ -74,7 +74,6 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
         mb: "20px",
         borderRadius: "18px",
         padding: "20px",
-        backgroundColor: "#f0f0f0",
       }}
       elevation={3}
     >

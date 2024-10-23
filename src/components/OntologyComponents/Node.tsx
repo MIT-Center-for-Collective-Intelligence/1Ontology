@@ -1171,7 +1171,16 @@ const Node = ({
         mb: "90px",
       }}
     >
-      <Box sx={{ position: "sticky", top: 0, mb: "15px", zIndex: 100 }}>
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          mb: "15px",
+          zIndex: 100,
+          display: "flex",
+          gap: "5px",
+        }}
+      >
         <Text
           currentVisibleNode={currentVisibleNode}
           setCurrentVisibleNode={setCurrentVisibleNode}
@@ -1194,6 +1203,25 @@ const Node = ({
           currentImprovement={currentImprovement}
           checkDuplicateTitle={checkDuplicateTitle}
         />
+        {currentVisibleNode.nodeType === "context" && (
+          <StructuredProperty
+            selectedDiffNode={selectedDiffNode}
+            confirmIt={confirmIt}
+            currentVisibleNode={currentVisibleNode}
+            showListToSelect={showListToSelect}
+            setSelectedProperty={setSelectedProperty}
+            navigateToNode={navigateToNode}
+            setSnackbarMessage={setSnackbarMessage}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            property={"context"}
+            nodes={nodes}
+            locked={locked}
+            onGetPropertyValue={onGetPropertyValue}
+            currentImprovement={currentImprovement}
+            reviewId={reviewId}
+            setReviewId={setReviewId}
+          />
+        )}
       </Box>
       <Box
         sx={{

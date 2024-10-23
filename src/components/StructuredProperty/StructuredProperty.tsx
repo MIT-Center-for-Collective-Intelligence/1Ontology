@@ -795,7 +795,9 @@ const StructuredProperty = ({
     <Paper
       elevation={9}
       sx={{
-        borderRadius: "30px",
+        borderRadius: property !== "context" ? "30px" : "",
+        borderBottomRightRadius: "18px",
+        borderBottomLeftRadius: "18px",
         minWidth: "500px",
         width: "100%",
         minHeight: "150px",
@@ -814,8 +816,7 @@ const StructuredProperty = ({
             background: (theme: any) =>
               theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
             p: 3,
-            borderTopRightRadius: "18px",
-            borderTopLeftRadius: "18px",
+
             backgroundColor:
               selectedDiffNode &&
               selectedDiffNode.changeType === "add property" &&

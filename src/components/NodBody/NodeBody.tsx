@@ -248,7 +248,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           p !== "parts" &&
           p !== "isPartOf" &&
           p !== "description" &&
-          p !== "actor"
+          p !== "actor" &&
+          p !== "context"
       )
       .sort((a, b) => {
         const indexA = priorityOrder.indexOf(a);

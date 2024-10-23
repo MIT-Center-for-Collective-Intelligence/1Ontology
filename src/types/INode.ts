@@ -13,7 +13,8 @@ export type INodeTypes =
   | "role"
   | "incentive"
   | "reward"
-  | "group";
+  | "group"
+  | "context";
 
 export type INodePath = {
   id: string;

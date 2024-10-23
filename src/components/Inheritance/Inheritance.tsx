@@ -140,13 +140,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
         overflow: "auto",
         height: "90vh",
         width: "100%",
-        backgroundColor: (theme) =>
-          theme.palette.mode === "dark" ? "#1e1e2e" : "#f0f2f5", // Softer background
         borderRadius: "10px",
-        boxShadow: (theme) =>
-          theme.palette.mode === "dark"
-            ? "0px 4px 12px rgba(0, 0, 0, 0.3)"
-            : "0px 4px 12px rgba(0, 0, 0, 0.1)",
         ...SCROLL_BAR_STYLE,
       }}
     >

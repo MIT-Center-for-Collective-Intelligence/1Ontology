@@ -460,7 +460,12 @@ const Ontology = () => {
 
     // Sort main nodes based on a predefined order
     mainCategories.sort((nodeA: any, nodeB: any) => {
-      const order = ["WHAT: Activities", "WHO: Actors", "WHY: Evaluation"];
+      const order = [
+        "WHAT: Activities and Objects",
+        "WHO: Actors",
+        "WHY: Evaluation",
+        "Where: Context",
+      ];
       const nodeATitle = nodeA.title;
       const nodeBTitle = nodeB.title;
       return order.indexOf(nodeATitle) - order.indexOf(nodeBTitle);
