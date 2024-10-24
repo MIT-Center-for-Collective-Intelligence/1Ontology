@@ -1011,30 +1011,29 @@ const StructuredProperty = ({
                                       ) : (
                                         <></>
                                       )}
-                                      {collection.collectionName !== "main" && (
-                                        <Tooltip title="Edit collection title">
-                                          <IconButton
-                                            onClick={() => {
-                                              handleEditCollection(
-                                                collection.collectionName
-                                              );
+
+                                      {!selectedDiffNode &&
+                                        collection.collectionName !==
+                                          "main" && (
+                                          <Box
+                                            sx={{
+                                              display: "flex",
+                                              ml: "auto",
+                                              gap: "5px",
                                             }}
                                           >
-                                            <EditIcon />
-                                          </IconButton>
-                                        </Tooltip>
-                                      )}
-                                      {!selectedDiffNode && (
-                                        <Box
-                                          sx={{
-                                            display: "flex",
-                                            ml: "auto",
-                                            gap: "5px",
-                                          }}
-                                        >
-                                          {" "}
-                                          {collection.collectionName !==
-                                            "main" && (
+                                            <Tooltip title="Edit collection title">
+                                              <IconButton
+                                                onClick={() => {
+                                                  handleEditCollection(
+                                                    collection.collectionName
+                                                  );
+                                                }}
+                                              >
+                                                <EditIcon />
+                                              </IconButton>
+                                            </Tooltip>
+
                                             <Tooltip title="Delete collection">
                                               <IconButton
                                                 onClick={() =>
@@ -1048,9 +1047,8 @@ const StructuredProperty = ({
                                                 <DeleteIcon />
                                               </IconButton>
                                             </Tooltip>
-                                          )}
-                                        </Box>
-                                      )}
+                                          </Box>
+                                        )}
                                     </Box>
                                   ) : editCollection ===
                                     collection.collectionName ? (
@@ -1079,6 +1077,24 @@ const StructuredProperty = ({
                                         onChange={(e) =>
                                           setNewEditCollection(e.target.value)
                                         }
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") {
+                                            if (
+                                              newEditCollection.trim() &&
+                                              collection.collectionName !==
+                                                newEditCollection
+                                            ) {
+                                              saveEditCollection(
+                                                newEditCollection
+                                              );
+                                            }
+                                          }
+                                          if (e.key === "Escape") {
+                                            setEditCollection(null);
+                                            setNewEditCollection("");
+                                          }
+                                        }}
                                         value={newEditCollection}
                                       />
                                       <Tooltip title="Save">

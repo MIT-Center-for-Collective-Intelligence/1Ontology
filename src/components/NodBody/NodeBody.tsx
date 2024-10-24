@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Box, Button, Typography, useTheme } from "@mui/material";
 import { ICollection, INode } from " @components/types/INode";
 import Text from "../OntologyComponents/Text";
@@ -60,6 +60,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   const db = getFirestore();
   const [openAddProperty, setOpenAddProperty] = useState(false);
   const [{ user }] = useAuth();
+  const scrollRef = useRef<any>(null);
 
   const properties = useMemo(() => {
     if (
@@ -323,10 +324,18 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           exitingProperties={Object.keys(properties || {})}
         />
       )}
-      {!locked && (
+      {!locked && !openAddProperty && (
         <Button
           onClick={() => {
             setOpenAddProperty(true);
+            if (scrollRef.current) {
+              setTimeout(() => {
+                scrollRef.current.scrollIntoView({
+                  behavior: "smooth",
+                  block: "end",
+                });
+              }, 10);
+            }
           }}
           variant="outlined"
           sx={{
@@ -338,6 +347,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           Add New Property
         </Button>
       )}
+      <div ref={scrollRef}></div>
     </Box>
   );
 };

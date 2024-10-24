@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { TreeView, TreeItem, treeItemClasses } from "@mui/lab";
-import { Box, Typography, Checkbox, Button } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { TreeVisual } from " @components/types/INode";
 import LockIcon from "@mui/icons-material/Lock";
+import { TreeVisual } from " @components/types/INode";
 
 type ITreeViewSimplifiedProps = {
   onOpenNodesTree: (nodeId: string) => void;
@@ -18,6 +18,7 @@ type ITreeViewSimplifiedProps = {
   clone?: boolean;
   sx?: any;
   stopPropagation?: string;
+  preventLoops?: Set<string>;
   searchValue?: string;
   sendNode?: (nodeId: string, title: string) => void;
   manageLock?: boolean;
@@ -36,6 +37,7 @@ const TreeViewSimplified = ({
   clone,
   sx,
   stopPropagation,
+  preventLoops,
   searchValue,
   sendNode,
   manageLock,
@@ -63,14 +65,12 @@ const TreeViewSimplified = ({
     <TreeView
       defaultCollapseIcon={<ExpandMoreIcon />}
       defaultExpandIcon={<ChevronRightIcon />}
-      expanded={expanded} // Use the local expanded state
+      expanded={expanded}
       onNodeToggle={(event, nodeIds) => {
         setExpanded(nodeIds);
         setExpandedNodes(new Set(nodeIds));
       }}
-      disabledItemsFocusable={false}
-      defaultEndIcon={<div style={{ width: 24 }} />}
-      sx={{ flexGrow: 1 }}
+      sx={{ flexGrow: 1, ...sx }}
     >
       {sortedKeys.map((nodeId) => (
         <TreeItem
@@ -81,109 +81,127 @@ const TreeViewSimplified = ({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                height: "auto",
-                overflow: "hidden",
-                minHeight: "fit-content",
-                p: "10px",
-                pl: "9px",
-                borderRadius: "5px",
+                padding: "8px 12px",
+                borderRadius: "4px",
                 backgroundColor:
                   currentVisibleNode?.id === treeVisualization[nodeId].id
-                    ? "#87D37C"
-                    : "",
-                marginLeft:
-                  currentVisibleNode?.id === treeVisualization[nodeId].id
-                    ? "8px"
-                    : "",
-                justifyContent: sendNode ? "space-between" : undefined,
+                    ? (theme) =>
+                        theme.palette.mode === "dark" ? "#125f07" : "#1fb509"
+                    : "transparent",
+                "&:hover": {
+                  backgroundColor: "",
+                },
+                transition: "background-color 0.2s ease-in-out",
               }}
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-
                 if (sendNode || clone) return;
                 onOpenNodesTree(treeVisualization[nodeId].id);
               }}
-              id={`node-${treeVisualization[nodeId]?.id}`}
             >
-              {!treeVisualization[nodeId].isCategory &&
-                clone &&
-                !treeVisualization[nodeId].unclassified && (
-                  <>
-                    {manageLock || !treeVisualization[nodeId].locked ? (
-                      checkedItems.has(treeVisualization[nodeId]?.id) ? (
-                        <Checkbox
-                          checked={true}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          onChange={(e) => {
-                            markItemAsChecked(treeVisualization[nodeId].id);
-                          }}
-                          name={treeVisualization[nodeId].id}
-                        />
-                      ) : (
-                        <Checkbox
-                          checked={false}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          onChange={(e) => {
-                            markItemAsChecked(treeVisualization[nodeId].id);
-                          }}
-                          name={treeVisualization[nodeId].id}
-                        />
-                      )
-                    ) : (
-                      <LockIcon
-                        sx={{
-                          color: "orange",
-                          mx: "15px",
-                        }}
-                      />
-                    )}
-                  </>
-                )}
               <Typography
                 sx={{
                   fontWeight: treeVisualization[nodeId].isCategory
-                    ? "bold"
-                    : "",
+                    ? "600"
+                    : "400",
                   color:
                     currentVisibleNode?.id === treeVisualization[nodeId].id
-                      ? "black"
+                      ? "white"
                       : treeVisualization[nodeId].isCategory
                       ? "orange"
                       : "",
 
-                  ...sx,
+                  flex: 1,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
                 {treeVisualization[nodeId].title}
               </Typography>
 
+              {/* Action Buttons */}
+              {!treeVisualization[nodeId].isCategory &&
+                clone &&
+                !treeVisualization[nodeId].unclassified &&
+                !preventLoops?.has(treeVisualization[nodeId]?.id) && (
+                  <>
+                    {manageLock || !treeVisualization[nodeId].locked ? (
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markItemAsChecked(treeVisualization[nodeId]?.id);
+                        }}
+                        variant={
+                          checkedItems.has(treeVisualization[nodeId]?.id)
+                            ? "contained"
+                            : "outlined"
+                        }
+                        sx={{
+                          borderRadius: "16px",
+                          textTransform: "none",
+                          marginLeft: "12px",
+                          padding: "2px 12px",
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        {checkedItems.has(treeVisualization[nodeId]?.id)
+                          ? "Unselect"
+                          : "Select"}
+                      </Button>
+                    ) : (
+                      <LockIcon sx={{ color: "#FF6F00", marginLeft: "12px" }} />
+                    )}
+                  </>
+                )}
+
               {clone &&
                 !treeVisualization[nodeId].isCategory &&
-                !treeVisualization[nodeId].locked && (
+                !treeVisualization[nodeId].locked &&
+                !preventLoops?.has(treeVisualization[nodeId]?.id) && (
                   <Button
                     variant="outlined"
-                    sx={{ m: "9px" }}
+                    sx={{
+                      borderRadius: "16px",
+                      marginLeft: "10px",
+                      textTransform: "none",
+                      fontSize: "0.8rem",
+                      padding: "2px 12px",
+                      color: "#388E3C",
+                      // borderColor: "#388E3C",
+                      "&:hover": {
+                        borderColor: "#2E7D32",
+                        backgroundColor: "#E8F5E9",
+                      },
+                    }}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleCloning(treeVisualization[nodeId]);
                     }}
                   >
-                    <span style={{ color: "green", paddingInline: "10px" }}>
-                      Add Specialization
-                    </span>
+                    Add Specialization
                   </Button>
                 )}
+
               {sendNode && !treeVisualization[nodeId].isCategory && (
                 <Button
                   variant="outlined"
                   onClick={() =>
                     sendNode(treeVisualization[nodeId]?.id || "", nodeId)
                   }
+                  sx={{
+                    borderRadius: "16px",
+                    textTransform: "none",
+                    fontSize: "0.8rem",
+                    padding: "2px 12px",
+                    marginLeft: "10px",
+                    color: "#0288D1",
+                    borderColor: "#0288D1",
+                    "&:hover": {
+                      backgroundColor: "#E1F5FE",
+                    },
+                  }}
                 >
                   Send
                 </Button>
@@ -191,33 +209,16 @@ const TreeViewSimplified = ({
             </Box>
           }
           sx={{
-            // borderRadius: "18px",.Mui-expanded
-            /*            backgroundColor:
-              currentVisibleNode?.id === treeVisualization[category].id
-                ? "#87D37C"
-                : "", */
-            // "& .MuiTreeItem-root": {
-            //   backgroundColor: "#f0f0f0",
-            // },
-            "&.MuiTreeItem-content.Mui-selected": {
-              backgroundColor: "red",
-            },
-            "&.Mui-selected": {
-              backgroundColor: "red",
-            },
-            /*  "&.MuiTreeItem-content": {
-              // borderRadius: "18px",
-            }, */
-            position: "relative",
-            "& .MuiTreeItem-iconContainer": {
-              marginLeft: "1px !important",
-              marginRight: "0px !important",
-            },
-            "& .MuiTreeItem-label": {
-              paddingLeft: "0px !important",
+            "& .MuiTreeItem-content.Mui-selected": {
+              backgroundColor: "transparent !important",
+              "&:hover": {
+                backgroundColor: "transparent !important",
+              },
             },
             [`& .${treeItemClasses.group}`]: {
-              borderLeft: `1px solid gray`,
+              borderLeft: (theme) => `1px solid #797575`,
+              marginLeft: "16px",
+              paddingLeft: "16px",
             },
           }}
         >
@@ -237,6 +238,7 @@ const TreeViewSimplified = ({
                 sendNode={sendNode}
                 manageLock={manageLock}
                 stopPropagation={stopPropagation}
+                preventLoops={preventLoops}
               />
             )}
         </TreeItem>

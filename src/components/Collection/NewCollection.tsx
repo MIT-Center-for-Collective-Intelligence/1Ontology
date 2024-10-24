@@ -11,7 +11,7 @@ const NewCollection: React.FC<NewCollectionProps> = ({ onAdd, onCancel }) => {
 
   const isInvalidName = (name: string) => {
     const forbiddenNames = ["default", "main"];
-    return forbiddenNames.includes(name.trim().toLowerCase());
+    return !forbiddenNames.includes(name.trim().toLowerCase());
   };
 
   return (
@@ -35,9 +35,17 @@ const NewCollection: React.FC<NewCollectionProps> = ({ onAdd, onCancel }) => {
         InputLabelProps={{
           style: { color: "grey" },
         }}
+        autoFocus
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            if (collectionName.trim() && isInvalidName(collectionName)) {
+              onAdd(collectionName);
+            }
+          }
+        }}
         error={isInvalidName(collectionName)}
         helperText={
-          isInvalidName(collectionName)
+          !isInvalidName(collectionName)
             ? 'Name cannot be "default" or "main"'
             : ""
         }
@@ -61,7 +69,7 @@ const NewCollection: React.FC<NewCollectionProps> = ({ onAdd, onCancel }) => {
           onClick={() => onAdd(collectionName)}
           variant="contained"
           sx={{ borderRadius: "18px" }}
-          disabled={!collectionName.trim() || isInvalidName(collectionName)}
+          disabled={!collectionName.trim() || !isInvalidName(collectionName)}
         >
           Add
         </Button>

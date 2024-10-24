@@ -63,6 +63,7 @@ type ITextProps = {
   structured?: boolean;
   currentImprovement: any;
   checkDuplicateTitle?: any;
+  sx?: any;
 };
 
 const Text = ({
@@ -86,6 +87,7 @@ const Text = ({
   structured = false,
   currentImprovement,
   checkDuplicateTitle,
+  sx,
 }: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -264,6 +266,7 @@ const Text = ({
         minWidth: "500px",
         width: "100%",
         border: structured ? "1px solid white" : "",
+        ...sx,
       }}
     >
       {!structured && (

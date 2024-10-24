@@ -1,4 +1,4 @@
-import { INode } from " @components/types/INode";
+import { INode, INodeTypes } from " @components/types/INode";
 import { collection, doc, getDoc, Timestamp } from "firebase/firestore";
 import { NODES } from "../firestoreClient/collections";
 
@@ -261,4 +261,39 @@ export const getTooltipHelper = (property: string): string => {
   };
 
   return propertyDescriptions[property] || "";
+};
+
+export const getSelectingModelTitle = (
+  property: string,
+  nodeType: string,
+  propertyType: INodeTypes
+) => {
+  if (property === "specializations") {
+    property = "specialization";
+  } else if (property === "generalizations") {
+    property = "generalization";
+  } else if (property === "parts") {
+    property = "part";
+  }
+  let displayNodeType: string = propertyType;
+  if (
+    property === "specialization" ||
+    property === "generalization" ||
+    property === "parts" ||
+    property === "isPartOf"
+  ) {
+    displayNodeType = nodeType;
+  }
+
+  if (displayNodeType === "activity") {
+    displayNodeType = "activities";
+  } else if (displayNodeType === "evaluationDimension") {
+    displayNodeType = "Evaluation Dimensions";
+  } else {
+    displayNodeType += "s";
+  }
+
+  return `Select the ${capitalizeFirstLetter(
+    property
+  )}(s) to add, by searching existing ${displayNodeType}, or navigating through the ontology.`;
 };

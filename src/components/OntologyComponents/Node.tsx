@@ -94,6 +94,8 @@ import {
   Typography,
   useMediaQuery,
 } from "@mui/material";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Dialog from "@mui/material/Dialog";
 import { Box } from "@mui/system";
 import {
@@ -160,6 +162,9 @@ import {
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
 import { NodeChange } from " @components/types/INode";
 import { User } from " @components/types/IAuth";
+import { TreeItem, TreeView } from "@mui/lab";
+import ExpandSearchResult from "./ExpandSearchResult";
+import SelectModelModal from "../Models/SelectModel";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -194,6 +199,7 @@ const Node = ({
   displaySidebar,
   activeSidebar,
   currentImprovement,
+  eachOntologyPath,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -1152,6 +1158,18 @@ const Node = ({
       console.error(error);
     }
   };
+  const getPath = useCallback(
+    (nodeId: string, selectedCategory: string): Set<string> => {
+      if (selectedCategory === "generalizations") {
+        return new Set([nodeId]);
+      }
+      if (selectedCategory === "specializations") {
+        return new Set(eachOntologyPath[nodeId].map((p: any) => p.id));
+      }
+      return new Set();
+    },
+    [eachOntologyPath]
+  );
 
   /* "root": "T
   of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'.
@@ -1200,7 +1218,7 @@ const Node = ({
           currentImprovement={currentImprovement}
           checkDuplicateTitle={checkDuplicateTitle}
         />
-        {currentVisibleNode.nodeType === "context" && (
+        {/* {currentVisibleNode.nodeType === "context" && (
           <StructuredProperty
             selectedDiffNode={selectedDiffNode}
             confirmIt={confirmIt}
@@ -1218,7 +1236,7 @@ const Node = ({
             reviewId={reviewId}
             setReviewId={setReviewId}
           />
-        )}
+        )} */}
       </Box>
       <Box
         sx={{
@@ -1340,259 +1358,36 @@ const Node = ({
           setReviewId={setReviewId}
         />
       </Box>
+      <SelectModelModal
+        openSelectModel={openSelectModel}
+        handleCloseAddLinksModel={handleCloseAddLinksModel}
+        selectedProperty={selectedProperty}
+        currentVisibleNode={currentVisibleNode}
+        setSearchValue={setSearchValue}
+        searchValue={searchValue}
+        searchResultsForSelection={searchResultsForSelection}
+        addNewSpecialization={addNewSpecialization}
+        selectedCategory={selectedCategory}
+        checkedItems={checkedItems}
+        markItemAsChecked={markItemAsChecked}
+        handleCloning={handleCloning}
+        user={user}
+        nodes={nodes}
+        selectFromTree={selectFromTree}
+        expandedNodes={expandedNodes}
+        setExpandedNodes={setExpandedNodes}
+        handleToggle={handleToggle}
+        getPath={getPath}
+        locked={locked}
+        selectedDiffNode={selectedDiffNode}
+        confirmIt={confirmIt}
+        currentImprovement={currentImprovement}
+        handleSaveLinkChanges={handleSaveLinkChanges}
+        onGetPropertyValue={onGetPropertyValue}
+        setCurrentVisibleNode={setCurrentVisibleNode}
+      />
 
       {ConfirmDialog}
-
-      <Modal
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "transparent",
-          // backgroundColor: "rgba(0, 0, 0, 0.5)",
-        }}
-        open={openSelectModel}
-        onClose={handleCloseAddLinksModel}
-      >
-        <Box sx={{ display: "flex" }}>
-          <Paper
-            sx={{
-              maxHeight: "80vh",
-              overflowY: "auto",
-
-              ...SCROLL_BAR_STYLE,
-            }}
-          >
-            <Box
-              sx={{
-                position: "sticky",
-                top: "0",
-                zIndex: 1,
-              }}
-            >
-              <Box
-                sx={{
-                  pt: "15px",
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
-                }}
-              >
-                <Typography sx={{ pl: "15px" }}>
-                  Check the Box for the{" "}
-                  <strong style={{ color: "orange" }}>
-                    {capitalizeFirstLetter(
-                      DISPLAY[selectedProperty]
-                        ? DISPLAY[selectedProperty]
-                        : selectedProperty
-                    )}
-                  </strong>{" "}
-                  that you want to add:
-                </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    width: "950px",
-                    pr: "5px",
-                  }}
-                >
-                  <Typography sx={{ width: "300px", ml: "14px" }}>
-                    Enter the new title:{" "}
-                  </Typography>
-                  <SearchBox
-                    setSearchValue={setSearchValue}
-                    label={"Search ..."}
-                  />
-                  {selectedProperty === "specializations" && (
-                    <Button
-                      onClick={() =>
-                        addNewSpecialization(
-                          selectedCategory || "main",
-                          searchValue
-                        )
-                      }
-                      sx={{ borderRadius: "18px", minWidth: "200px" }}
-                      variant="outlined"
-                      disabled={
-                        searchValue.length < 3 ||
-                        searchResultsForSelection[0]?.title.trim() ===
-                          searchValue.trim()
-                      }
-                    >
-                      {"Add new specialization"}
-                    </Button>
-                  )}
-                </Box>
-              </Box>
-            </Box>
-            <Box>
-              {searchValue ? (
-                <Box>
-                  {" "}
-                  {searchResultsForSelection.map((node: any) => (
-                    <ListItem
-                      key={node.id}
-                      onClick={() => {
-                        markItemAsChecked(
-                          node.id,
-                          selectedProperty === "context"
-                        );
-                      }}
-                      sx={{
-                        display:
-                          currentVisibleNode.id === node.id ? "none" : "flex",
-                        alignItems: "center",
-                        color: "white",
-                        cursor: "pointer",
-                        borderRadius: "4px",
-                        padding: "8px",
-                        transition: "background-color 0.3s",
-                        // border: "1px solid #ccc",
-                        mt: "5px",
-                        "&:hover": {
-                          backgroundColor: (theme: Theme) =>
-                            theme.palette.mode === "dark"
-                              ? DESIGN_SYSTEM_COLORS.notebookG450
-                              : DESIGN_SYSTEM_COLORS.gray200,
-                        },
-                      }}
-                    >
-                      {" "}
-                      {user?.manageLock || !node.locked ? (
-                        checkedItems.has(node.id) ? (
-                          <Checkbox
-                            checked={true}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              markItemAsChecked(node.id);
-                            }}
-                            name={node.id}
-                          />
-                        ) : (
-                          <Checkbox
-                            checked={false}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              markItemAsChecked(node.id);
-                            }}
-                            name={node.id}
-                          />
-                        )
-                      ) : (
-                        <LockIcon
-                          sx={{
-                            color: "orange",
-                            mx: "15px",
-                          }}
-                        />
-                      )}
-                      <Typography>{node.title}</Typography>
-                    </ListItem>
-                  ))}
-                </Box>
-              ) : (
-                <TreeViewSimplified
-                  treeVisualization={selectFromTree()}
-                  expandedNodes={expandedNodes}
-                  setExpandedNodes={setExpandedNodes}
-                  onOpenNodesTree={handleToggle}
-                  markItemAsChecked={(id: string) =>
-                    markItemAsChecked(id, selectedProperty === "context")
-                  }
-                  checkedItems={checkedItems}
-                  handleCloning={handleCloning}
-                  clone={true}
-                  stopPropagation={currentVisibleNode.id}
-                  manageLock={user?.manageLock}
-                />
-              )}
-
-              {selectedProperty !== "context" && (
-                <Box sx={{ p: "6px", mt: "auto", maxWidth: "100vh" }}>
-                  <Typography sx={{ mb: "4px" }}>
-                    If you cannot find the existing{" "}
-                    <strong>
-                      {capitalizeFirstLetter(
-                        DISPLAY[selectedProperty]
-                          ? DISPLAY[selectedProperty]
-                          : selectedProperty
-                      )}{" "}
-                    </strong>
-                    to link, you can describe them below:
-                  </Typography>
-                  <Text
-                    text={onGetPropertyValue(selectedProperty, true) as string}
-                    currentVisibleNode={currentVisibleNode}
-                    property={selectedProperty}
-                    setCurrentVisibleNode={setCurrentVisibleNode}
-                    nodes={nodes}
-                    locked={locked}
-                    selectedDiffNode={selectedDiffNode}
-                    getTitleNode={() => {}}
-                    confirmIt={confirmIt}
-                    structured={true}
-                    currentImprovement={currentImprovement}
-                  />
-                </Box>
-              )}
-            </Box>
-
-            <Box
-              sx={{
-                display: "flex",
-                position: "sticky",
-                bottom: "0px",
-                p: 3,
-                pt: 5,
-                mt: "15px",
-                justifyContent: "space-between",
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
-                zIndex: 500,
-              }}
-            >
-              <Button
-                variant="contained"
-                onClick={handleCloseAddLinksModel}
-                color="primary"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleSaveLinkChanges}
-                color="success"
-              >
-                Save
-              </Button>
-            </Box>
-          </Paper>
-
-          {checkedItems.size > 0 && (
-            <Paper>
-              <Box sx={{ p: 3 }}>
-                <Typography variant="h6">Selected Items</Typography>
-                {Array.from(checkedItems).map((id: any) => (
-                  <Box
-                    key={id}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      mb: 2, // Add some margin between items
-                    }}
-                  >
-                    <Checkbox
-                      checked={checkedItems.has(id)}
-                      onChange={() => markItemAsChecked(id)}
-                    />
-                    <Typography>{nodes[id].title}</Typography>
-                  </Box>
-                ))}
-              </Box>
-            </Paper>
-          )}
-        </Box>
-      </Modal>
     </Box>
   );
 };
