@@ -1,4 +1,8 @@
-import { shortenNumber, timeAgo } from " @components/lib/utils/string.utils";
+import {
+  isOnline,
+  shortenNumber,
+  timeAgo,
+} from " @components/lib/utils/string.utils";
 import {
   Badge,
   Box,
@@ -35,7 +39,6 @@ const ActiveUsers = ({
   fullVersion: any;
   activeUsers: any;
 }) => {
-  const db = getFirestore();
   const theme = useTheme();
 
   const viewProfileLogs = (e: any) => {
@@ -153,7 +156,7 @@ const ActiveUsers = ({
                       borderRadius: "50%",
                       objectFit: "cover",
                     }}
-                    online={u.online}
+                    online={isOnline(u.lastInteracted)}
                   />
                 </Badge>
               </Box>
