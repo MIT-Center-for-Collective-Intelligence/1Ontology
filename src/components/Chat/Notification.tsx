@@ -30,7 +30,6 @@ export const Notification = ({
   notifications,
   openNotification,
 }: CommentsProps) => {
-  const db = getFirestore();
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: "4px", p: 2 }}>
       {!notifications.length && (

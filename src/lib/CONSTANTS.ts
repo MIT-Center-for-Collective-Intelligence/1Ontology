@@ -106,3 +106,9 @@ export const WS_URL =
   process.env.NODE_ENV === "development"
     ? `ws://${process.env.NEXT_PUBLIC_DEV_WS_SERVER}/ws`
     : `wss://${process.env.NEXT_PUBLIC_WS_SERVER}/ws`;
+
+export const CHAT_DISCUSSION_TABS = [
+  { id: "bug_report", title: "Bug Reports" },
+  { id: "feature_request", title: "Feature Requests" },
+  { id: "help", title: "Help" },
+];

@@ -24,6 +24,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
 
 import SearchIcon from "@mui/icons-material/Search";
 import NotificationsIcon from "@mui/icons-material/Notifications";
@@ -73,7 +74,14 @@ import NodeActivity from "../ActiveUsers/NodeActivity";
 import { User } from " @components/types/IAuth";
 import { NodeChange } from " @components/types/INode";
 import Improvements from "../Improvements/Improvements";
+import { CHAT_DISCUSSION_TABS } from " @components/lib/CONSTANTS";
 
+const CHAT_TABS = [
+  { id: "node", title: "This node" },
+  /*  { id: "bug_report", title: "Bug Reports" },
+    { id: "feature_request", title: "Feature Requests" },
+    { id: "help", title: "Help" }, */
+];
 type MainSidebarProps = {
   toolbarRef: any;
   user: User | null;
@@ -142,7 +150,7 @@ const ToolbarSidebar = ({
   const isProfileMenuOpen = Boolean(profileMenuOpen);
   const [activeUsers, setActiveUsers] = useState<any>({});
   const [previousNodeId, setPreviousNodeId] = useState("");
-
+  const [selectedChatTab, setSelectedChatTab] = useState<number>(0);
   const signOut = async () => {
     router.push(ROUTES.signIn);
     getAuth().signOut();
@@ -305,7 +313,14 @@ const ToolbarSidebar = ({
     if (!user) return;
     setNotifications([]);
     const onSynchronize = (changes: chatChange[]) => {
-      setNotifications((prev) => changes.reduce(synchronizeStuff, [...prev]));
+      setNotifications((prev) =>
+        changes.reduce(synchronizeStuff, [...prev]).sort((a: any, b: any) => {
+          return (
+            new Date(b.createdAt.toDate()).getTime() -
+            new Date(a.createdAt.toDate()).getTime()
+          );
+        })
+      );
     };
     const killSnapshot = getNotificationsSnapshot(
       db,
@@ -326,6 +341,16 @@ const ToolbarSidebar = ({
       updateDoc(notificationRef, {
         seen: true,
       });
+      if (type === "node") {
+        setActiveSidebar("chat");
+        navigateToNode(nodeId);
+      } else {
+        setActiveSidebar("chat-discussion");
+        const index = CHAT_DISCUSSION_TABS.findIndex((c) => c.id === type);
+        if (index !== -1) {
+          setSelectedChatTab(index);
+        }
+      }
       setTimeout(
         () => {
           const element = document.getElementById(`message-${messageId}`);
@@ -460,6 +485,26 @@ const ToolbarSidebar = ({
             setExpandedNodes={setExpandedNodes}
             onOpenNodesTree={onOpenNodesTree}
             navigateToNode={navigateToNode}
+            chatTabs={[{ id: "node", title: "This node" }]}
+            selectedChatTab={selectedChatTab}
+            setSelectedChatTab={setSelectedChatTab}
+          />
+        );
+      case "chat-discussion":
+        return (
+          <ChatSideBar
+            currentVisibleNode={currentVisibleNode}
+            user={user}
+            confirmIt={confirmIt}
+            searchWithFuse={searchWithFuse}
+            treeVisualization={treeVisualization}
+            expandedNodes={expandedNodes}
+            setExpandedNodes={setExpandedNodes}
+            onOpenNodesTree={onOpenNodesTree}
+            navigateToNode={navigateToNode}
+            chatTabs={CHAT_DISCUSSION_TABS}
+            selectedChatTab={selectedChatTab}
+            setSelectedChatTab={setSelectedChatTab}
           />
         );
       case "inheritanceSettings":
@@ -596,20 +641,28 @@ const ToolbarSidebar = ({
             )}
             {activeSidebar === "chat" && (
               <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <Box>
-                  <Typography sx={{ fontSize: "19px", fontWeight: "bold" }}>
-                    {"Node's Chat"}
-                  </Typography>
-                </Box>
+                <Typography sx={{ fontSize: "19px", fontWeight: "bold" }}>
+                  {"Node's Chat"}
+                </Typography>
+              </Box>
+            )}
+            {activeSidebar === "notifications" && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <Typography
+                  sx={{
+                    fontSize: "19px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {"Notifications"}
+                </Typography>
               </Box>
             )}
             {activeSidebar === "nodeHistory" && (
               <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <Box>
-                  <Typography sx={{ fontSize: "19px", fontWeight: "bold" }}>
-                    {"Node's History"}
-                  </Typography>
-                </Box>
+                <Typography sx={{ fontSize: "19px", fontWeight: "bold" }}>
+                  {"Node's History"}
+                </Typography>
               </Box>
             )}
             {activeSidebar === "inheritanceSettings" && (
@@ -631,7 +684,7 @@ const ToolbarSidebar = ({
                   setActiveSidebar(null);
                   setOpenLogsFor(null);
                 }}
-                sx={{ ml: "auto" }}
+                sx={{ ml: "auto", zIndex: 100 }}
               >
                 <ClearIcon />
               </IconButton>
@@ -706,8 +759,19 @@ const ToolbarSidebar = ({
               }}
               text="Notifications"
               toolbarIsOpen={hovered}
-              rightOption={<CustomBadge value={0} />}
-              rightFloatingOption={<CustomSmallBadge value={0} />}
+              rightOption={<CustomBadge value={notifications.length} />}
+              rightFloatingOption={
+                <CustomSmallBadge value={notifications.length} />
+              }
+            />
+            <SidebarButton
+              id="toolbar-help-button"
+              icon={<QuestionMarkIcon />}
+              onClick={() => {
+                handleExpandSidebar("chat-discussion");
+              }}
+              text="Help"
+              toolbarIsOpen={hovered}
             />
             {/* <SidebarButton
               id="toolbar-search-button"
