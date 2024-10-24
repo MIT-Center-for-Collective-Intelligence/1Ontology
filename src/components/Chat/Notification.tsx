@@ -31,7 +31,16 @@ export const Notification = ({
   openNotification,
 }: CommentsProps) => {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: "4px", p: 2 }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "4px",
+        p: 2,
+        overflow: "auto",
+        height: "100vh",
+      }}
+    >
       {!notifications.length && (
         <Box
           sx={{
@@ -189,6 +198,7 @@ export const Notification = ({
           </Box>
         </Paper>
       ))}
+      <Box sx={{ mb: "300px" }}></Box>
     </Box>
   );
 };

@@ -143,9 +143,14 @@ const SelectModelModal = ({
                   <Typography sx={{ pl: "15px" }}>
                     Select the specialization to add, by either:
                     <strong style={{ color: "orange" }}> A) </strong> Searching
-                    existing activities,{" "}
-                    <strong style={{ color: "orange" }}> B) </strong> Navigating
-                    through the ontology,{" "}
+                    existing{" "}
+                    {currentVisibleNode.nodeType === "activity"
+                      ? "activities"
+                      : currentVisibleNode.nodeType === "evaluationDimension"
+                      ? "Evaluation Dimensions"
+                      : currentVisibleNode.nodeType + "s"}
+                    , <strong style={{ color: "orange" }}> B) </strong>{" "}
+                    Navigating through the ontology,{" "}
                     <strong style={{ color: "orange" }}> C) </strong>
                     Creating what you searched as a new specialization
                   </Typography>
