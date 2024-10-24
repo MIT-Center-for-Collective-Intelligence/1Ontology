@@ -274,6 +274,8 @@ export const getSelectingModelTitle = (
     property = "generalization";
   } else if (property === "parts") {
     property = "part";
+  } else if (property === "evaluationDimension") {
+    property = "Evaluation Dimension";
   }
   let displayNodeType: string = propertyType;
   if (

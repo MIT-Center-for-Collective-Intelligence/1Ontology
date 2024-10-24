@@ -132,24 +132,38 @@ const SelectModelModal = ({
               sx={{
                 position: "sticky",
                 top: 0,
+                width: "950px",
                 zIndex: 1,
                 backgroundColor: (theme) =>
                   theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
               }}
             >
               <Box sx={{ pt: "15px" }}>
-                <Typography sx={{ pl: "15px" }}>
-                  {getSelectingModelTitle(
-                    selectedProperty,
-                    currentVisibleNode.nodeType,
-                    currentVisibleNode.propertyType[selectedProperty]
-                  )}
-                </Typography>
+                {selectedProperty === "specializations" ? (
+                  <Typography sx={{ pl: "15px" }}>
+                    Select the specialization to add, by either:
+                    <strong style={{ color: "orange" }}> A) </strong> Searching
+                    existing activities,{" "}
+                    <strong style={{ color: "orange" }}> B) </strong> Navigating
+                    through the ontology,{" "}
+                    <strong style={{ color: "orange" }}> C) </strong>
+                    Creating what you searched as a new specialization
+                  </Typography>
+                ) : (
+                  <Typography sx={{ pl: "15px" }}>
+                    {getSelectingModelTitle(
+                      selectedProperty,
+                      currentVisibleNode.nodeType,
+                      currentVisibleNode.propertyType[selectedProperty]
+                    )}
+                  </Typography>
+                )}
+
                 <Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    width: "950px",
+
                     pr: "5px",
                   }}
                 >
@@ -165,7 +179,7 @@ const SelectModelModal = ({
                           searchValue
                         )
                       }
-                      sx={{ borderRadius: "18px", minWidth: "200px" }}
+                      sx={{ borderRadius: "18px", minWidth: "300px" }}
                       variant="outlined"
                       disabled={
                         searchValue.length < 3 ||
@@ -173,7 +187,7 @@ const SelectModelModal = ({
                           searchValue.trim()
                       }
                     >
-                      Add new specialization
+                      Create as a new Specialization
                     </Button>
                   )}
                 </Box>
@@ -189,6 +203,7 @@ const SelectModelModal = ({
                 sx={{
                   p: "16px",
                   mt: "auto",
+                  width: "950px",
                   backgroundColor: (theme) =>
                     theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
                 }}
