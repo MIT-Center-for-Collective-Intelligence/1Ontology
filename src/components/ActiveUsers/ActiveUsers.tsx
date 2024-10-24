@@ -55,7 +55,6 @@ const ActiveUsers = ({
         display: "flex",
         flexDirection: "column",
         overflow: "auto",
-        height: "70vh",
         mt: "7px",
         overflowX: "hidden",
         ...SCROLL_BAR_STYLE,
