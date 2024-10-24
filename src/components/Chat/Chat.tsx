@@ -990,7 +990,7 @@ const Chat = ({
               </Box>
             </Box>
           ) : (
-            <Box sx={{ px: 2 }}>{renderMessages(messages)}</Box>
+            <Box sx={{ px: 2, mb: "133px" }}>{renderMessages(messages)}</Box>
           )}
         </Box>
         <Box

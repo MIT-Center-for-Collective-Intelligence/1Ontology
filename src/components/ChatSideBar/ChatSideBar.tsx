@@ -179,13 +179,7 @@ const ChatSideBar = ({
   // }, [db, user]);
 
   return (
-    <Box
-      sx={{
-        position: chatTabs.length > 1 ? "absolute" : "inherit",
-        top: chatTabs.length > 1 ? 0 : 13,
-        width: chatTabs.length > 1 ? "97%" : "inherit",
-      }}
-    >
+    <Box>
       {chatTabs.length > 1 && (
         <Tabs
           id="chat-tabs"
@@ -199,6 +193,7 @@ const ChatSideBar = ({
             ".MuiTab-root.Mui-selected": {
               color: "#ff6d00",
             },
+            width: "190%",
           }}
         >
           {chatTabs.map((tab, idx) => (
