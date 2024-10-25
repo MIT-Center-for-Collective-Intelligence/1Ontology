@@ -56,7 +56,7 @@ const YjsEditorWrapper = ({
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
   const yTextRef = useRef<any>(null);
-  const TIMEOUT = 15000 + Math.floor(Math.random() * 300);
+  // const TIMEOUT = 15000 + Math.floor(Math.random() * 300);
   const changeHistoryRef = useRef<any[]>([]);
   const [errorDuplicate, setErrorDuplicate] = useState(false);
   const [synced, setSynced] = useState(false);
@@ -160,19 +160,36 @@ const YjsEditorWrapper = ({
         }
       });
 
-      const intervalId = setInterval(() => {
+      // const intervalId = setInterval(() => {
+      //   console.log('timeout working', TIMEOUT);
+      //   saveChangeLog(changeHistoryRef.current);
+      //   changeHistoryRef.current = [];
+      // }, TIMEOUT);
+
+      const saveChanges = () => {
         saveChangeLog(changeHistoryRef.current);
         changeHistoryRef.current = [];
-      }, TIMEOUT);
+      };    
+
+      const handleSelectionChange = (range: Range | null, oldRange: Range | null, source: string) => {
+        // On blur
+        if (range === null && oldRange !== null) {
+          saveChanges();
+        }
+      };
+
+      editorRef.current.on("selection-change", handleSelectionChange);
+
+      window.addEventListener("beforeunload", saveChanges);
 
       return () => {
         saveChangeLog(changeHistoryRef.current);
         provider.disconnect();
         provider.destroy();
         binding.destroy();
-        editorRef.current?.off("selection-change");
+        editorRef.current?.off("selection-change", handleSelectionChange);
         editorRef.current?.off("text-change");
-        clearInterval(intervalId);
+        window.removeEventListener("beforeunload", saveChanges);
       };
     }
   }, [fullname, property, nodeId, structured]);
