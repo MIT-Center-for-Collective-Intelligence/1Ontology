@@ -299,3 +299,11 @@ export const getSelectingModelTitle = (
     property
   )}(s) to add, by searching existing ${displayNodeType}, or navigating through the ontology.`;
 };
+
+export const isOnline = (timestamp: Timestamp) => {
+  if (!timestamp) return false;
+  const now = new Date();
+  const timeDifference = now.getTime() - timestamp.toMillis();
+  const minutes = Math.floor(timeDifference / 1000 / 60);
+  return minutes < 10;
+};

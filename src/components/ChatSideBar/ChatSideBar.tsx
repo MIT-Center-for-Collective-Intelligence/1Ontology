@@ -26,12 +26,6 @@ import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import TreeViewSimplified from "../OntologyComponents/TreeViewSimplified";
 import { SearchBox } from "../SearchBox/SearchBox";
-const CHAT_TABS = [
-  { id: "node", title: "This node" },
-  /*  { id: "bug_report", title: "Bug Reports" },
-    { id: "feature_request", title: "Feature Requests" },
-    { id: "help", title: "Help" }, */
-];
 
 const ChatSideBar = ({
   currentVisibleNode,
@@ -43,6 +37,9 @@ const ChatSideBar = ({
   setExpandedNodes,
   onOpenNodesTree,
   navigateToNode,
+  chatTabs,
+  selectedChatTab,
+  setSelectedChatTab,
 }: {
   currentVisibleNode: any;
   user: any;
@@ -53,8 +50,10 @@ const ChatSideBar = ({
   setExpandedNodes: any;
   onOpenNodesTree: any;
   navigateToNode: any;
+  chatTabs: { title: string; id: string }[];
+  selectedChatTab: number;
+  setSelectedChatTab: Function;
 }) => {
-  const [selectedChatTab, setSelectedChatTab] = useState<number>(0);
   const db = getFirestore();
   const [users, setUsers] = useState<
     {
@@ -125,14 +124,12 @@ const ChatSideBar = ({
         edited: false,
         deleted: false,
         totalReplies: 0,
-        type: ["node", "bug_report", "feature_request", "help"][
-          selectedChatTab
-        ],
+        type: chatTabs[selectedChatTab].id,
         messageType: "node",
         sharedNodeId: nodeId,
         createdAt: new Date(),
       };
-
+      return;
       await addDoc(collection(db, MESSAGES), messageData);
     },
     [selectedChatTab, currentVisibleNode?.id, user]
@@ -183,36 +180,35 @@ const ChatSideBar = ({
 
   return (
     <Box>
-      {/* <Tabs
-        id="chat-tabs"
-        value={selectedChatTab}
-        onChange={handleChatTabsChange}
-        aria-label="basic tabs example"
-        variant="scrollable"
-        sx={{
-          background: (theme) =>
-            theme.palette.mode === "dark" ? "#000000" : "#c3c3c3",
-          ".MuiTab-root.Mui-selected": {
-            color: "#ff6d00",
-          },
-        }}
-      >
-        {CHAT_TABS.map((tab, idx) => (
-          <Tab key={tab.id} label={tab.title} {...a11yProps(idx)} />
-        ))}
-            <Tab label="This node" {...a11yProps(0)} />
-                   <Tab label="Bug Reports" {...a11yProps(1)} />
-                   <Tab label="Feature Requests" {...a11yProps(2)} />
-                   <Tab label="Help" {...a11yProps(3)} />
-      </Tabs> */}
+      {chatTabs.length > 1 && (
+        <Tabs
+          id="chat-tabs"
+          value={selectedChatTab}
+          onChange={handleChatTabsChange}
+          aria-label="basic tabs example"
+          variant="scrollable"
+          sx={{
+            background: (theme) =>
+              theme.palette.mode === "dark" ? "#000000" : "#c3c3c3",
+            ".MuiTab-root.Mui-selected": {
+              color: "#ff6d00",
+            },
+            width: "190%",
+          }}
+        >
+          {chatTabs.map((tab, idx) => (
+            <Tab key={tab.id} label={tab.title} {...a11yProps(idx)} />
+          ))}
+        </Tabs>
+      )}
       <Box>
-        {CHAT_TABS.map((tab, idx: number) => (
-          <TabPanel key={tab.id} value={idx} index={idx}>
+        {chatTabs.map((tab, idx: number) => (
+          <TabPanel key={tab.id} value={selectedChatTab} index={idx}>
             {currentVisibleNode?.id && (
               <Chat
                 user={user}
                 type={tab.id}
-                nodeId={currentVisibleNode?.id}
+                nodeId={tab.id === "node" ? currentVisibleNode?.id : ""}
                 users={users}
                 confirmIt={confirmIt}
                 setOpenSelectModel={() => {

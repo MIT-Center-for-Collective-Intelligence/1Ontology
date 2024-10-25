@@ -12,6 +12,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 
 const SearchSideBar = ({
   openSearchedNode,
@@ -98,6 +99,7 @@ const SearchSideBar = ({
             ? "black"
             : "white"
           : "",
+        ...SCROLL_BAR_STYLE,
       }}
     >
       <TextField

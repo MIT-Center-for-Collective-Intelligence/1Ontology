@@ -88,22 +88,23 @@ const Chat = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!user) return;
-    if (!nodeId) return;
-    setIsLoading(true);
     setMessages([]);
+    if (!user) return;
+    if (!nodeId && type === "node") return;
+    setIsLoading(true);
+
     const onSynchronize = (changes: chatChange[]) => {
       setMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
       setIsLoading(false);
     };
+
     const killSnapshot = getMessagesSnapshot(
       db,
-      { nodeId: nodeId, type: "node", lastVisible: null },
+      { nodeId: nodeId, type, lastVisible: null },
       onSynchronize
     );
     return () => killSnapshot();
-  }, [db, user, nodeId]);
-
+  }, [db, user, nodeId, type]);
   useEffect(() => {
     const element = document.getElementById("right-panel-tabs");
     if (element) {
@@ -259,6 +260,13 @@ const Chat = ({
     const batch = writeBatch(db);
     for (const userData of users) {
       if (userData.uname === user.uname) continue;
+      if (
+        userData.uname !== "1man" &&
+        userData.uname !== "ouhrac" &&
+        type !== "node"
+      )
+        continue;
+
       const notificationData = {
         title: title,
         body: body,
@@ -282,11 +290,10 @@ const Chat = ({
     }
     await batch.commit();
   };
-
   const addMessage = async (text: string, imageUrls: string[]) => {
     if (!user?.uname) return;
     const commentData = {
-      nodeId: nodeId || "",
+      nodeId: type === "node" ? nodeId || "" : null,
       text: text,
       sender: user.uname,
       senderDetail: {
@@ -315,6 +322,9 @@ const Chat = ({
       text,
       messageId: docRef.id,
     });
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
   };
 
   const addReply = async (
@@ -599,13 +609,13 @@ const Chat = ({
     ));
   };
 
-  // const scrollToBottom = () => {
-  //   if (scrolling.current) {
-  //     scrolling.current.scrollIntoView({ behaviour: "smooth" });
-  //   }
-  // };
+  const scrollToBottom = () => {
+    if (scrolling.current) {
+      scrolling.current.scrollIntoView({ behaviour: "smooth" });
+    }
+  };
 
-  const renderMessages = () => {
+  const renderMessages = (messages: IChat[]) => {
     return (
       <TransitionGroup>
         {messages.map((message) => (
@@ -941,6 +951,7 @@ const Chat = ({
               ))}
             </Box>
           )}
+
           {messages.length === 0 ? (
             <Box
               sx={{
@@ -979,7 +990,7 @@ const Chat = ({
               </Box>
             </Box>
           ) : (
-            <Box sx={{ px: 2 }}>{renderMessages()}</Box>
+            <Box sx={{ px: 2, mb: "133px" }}>{renderMessages(messages)}</Box>
           )}
         </Box>
         <Box

@@ -103,9 +103,12 @@ import {
   doc,
   Firestore,
   getDoc,
+  getDocs,
   getFirestore,
+  query,
   setDoc,
   updateDoc,
+  where,
   writeBatch,
 } from "firebase/firestore";
 import React, {
@@ -1013,7 +1016,16 @@ const Node = ({
     selectedProperty,
     nodes,
   ]);
-
+  const clearNotifications = async (nodeId: string) => {
+    if (!nodeId) return;
+    const batch = writeBatch(db);
+    const notificationDocs = await getDocs(
+      query(collection(db, "notifications"), where("nodeId", "==", nodeId))
+    );
+    for (let notDoc of notificationDocs.docs) {
+      batch.update(notDoc.ref, { seen: true });
+    }
+  };
   //  function to handle the deletion of a Node
   const deleteNode = useCallback(async () => {
     try {
@@ -1067,6 +1079,7 @@ const Node = ({
           fullNode: currentVisibleNode,
         });
         // Record a log entry for the deletion action
+        clearNotifications(nodeRef.id);
         recordLogs({
           action: "Deleted Node",
           node: currentVisibleNode.id,
