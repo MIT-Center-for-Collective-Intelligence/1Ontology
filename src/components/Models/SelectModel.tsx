@@ -199,7 +199,14 @@ const SelectModelModal = ({
               </Box>
             </Box>
 
-            <Box sx={{ flexGrow: 1, overflowY: "auto", pl: "4px" }}>
+            <Box
+              sx={{
+                flexGrow: 1,
+                overflowY: "auto",
+                px: "4px",
+                ...SCROLL_BAR_STYLE,
+              }}
+            >
               {renderSearchOrTree()}
             </Box>
 
