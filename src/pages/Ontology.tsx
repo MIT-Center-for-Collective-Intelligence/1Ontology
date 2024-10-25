@@ -104,6 +104,7 @@ import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarS
 import { NodeChange } from " @components/types/INode";
 import GuidLines from " @components/components/Guidlines/GuidLines";
 import SearchSideBar from " @components/components/SearchSideBar/SearchSideBar";
+import Head from "next/head";
 
 const AddContext = (nodes: any, nodesObject: any): INode[] => {
   for (let node of nodes) {
@@ -836,131 +837,135 @@ const Ontology = () => {
   }
 
   return (
-    <Box>
-      <Container
-        style={{
-          height: "100vh",
-          display: "flex",
-          overflow: "hidden",
-        }}
-        columnResizerRef={columnResizerRef}
-      >
-        {!isMobile && (
-          <Section
-            minSize={0}
-            defaultSize={500}
+    <>
+      <Head>
+        <title>{currentVisibleNode ? currentVisibleNode.title : "1ontology"}</title>
+      </Head>
+      <Box>
+        <Container
+          style={{
+            height: "100vh",
+            display: "flex",
+            overflow: "hidden",
+          }}
+          columnResizerRef={columnResizerRef}
+        >
+          {!isMobile && (
+            <Section
+              minSize={0}
+              defaultSize={500}
+              style={{
+                height: "100vh",
+                overflow: "hidden",
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                backgroundColor:
+                  theme.palette.mode === "dark" ? "#303134" : "white",
+              }}
+            >
+              <Tabs
+                value={viewValue}
+                onChange={handleViewChange}
+                sx={{
+                  width: "100%",
+                  borderColor: "divider",
+                  position: "absolute",
+                  top: 76,
+                  zIndex: 9,
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                  ".MuiTab-root.Mui-selected": {
+                    color: "#ff6d00",
+                  },
+                }}
+              >
+                <Tab
+                  label="Outline"
+                  {...a11yProps(0)}
+                  sx={{ width: "50%", fontSize: "20px" }}
+                />
+                <Tab
+                  label="Graph View"
+                  {...a11yProps(1)}
+                  sx={{ width: "50%", fontSize: "20px" }}
+                />
+              </Tabs>
+
+              <Box
+                sx={{
+                  height: "100vh",
+                  paddingTop: "126px",
+                  flexGrow: 1,
+                  overflow: "auto",
+
+                  ...SCROLL_BAR_STYLE,
+                }}
+              >
+                <TabPanel
+                  value={viewValue}
+                  index={0}
+                  sx={
+                    {
+                      // mb: "50px",
+                    }
+                  }
+                >
+                  <TreeViewSimplified
+                    treeVisualization={treeVisualization}
+                    onOpenNodesTree={onOpenNodesTree}
+                    expandedNodes={expandedNodes}
+                    setExpandedNodes={setExpandedNodes}
+                    currentVisibleNode={currentVisibleNode}
+                  />
+                </TabPanel>
+                <TabPanel value={viewValue} index={1}>
+                  <DagGraph
+                    treeVisualization={treeVisualization}
+                    setExpandedNodes={setExpandedNodes}
+                    expandedNodes={expandedNodes}
+                    onOpenNodeDagre={onOpenNodeDagre}
+                    currentVisibleNode={currentVisibleNode}
+                    // nodes={nodes}
+                  />
+                </TabPanel>
+              </Box>
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  width: "100%",
+                }}
+              >
+                <SearchSideBar
+                  openSearchedNode={openSearchedNode}
+                  searchWithFuse={searchWithFuse}
+                />
+              </Box>
+            </Section>
+          )}
+
+          <Bar
+            size={2}
             style={{
-              height: "100vh",
-              overflow: "hidden",
+              background: "currentColor",
+              cursor: "col-resize",
               position: "relative",
-              display: "flex",
-              flexDirection: "column",
-              backgroundColor:
-                theme.palette.mode === "dark" ? "#303134" : "white",
             }}
           >
-            <Tabs
-              value={viewValue}
-              onChange={handleViewChange}
-              sx={{
-                width: "100%",
-                borderColor: "divider",
-                position: "absolute",
-                top: 76,
-                zIndex: 9,
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                ".MuiTab-root.Mui-selected": {
-                  color: "#ff6d00",
-                },
-              }}
-            >
-              <Tab
-                label="Outline"
-                {...a11yProps(0)}
-                sx={{ width: "50%", fontSize: "20px" }}
-              />
-              <Tab
-                label="Graph View"
-                {...a11yProps(1)}
-                sx={{ width: "50%", fontSize: "20px" }}
-              />
-            </Tabs>
-
-            <Box
-              sx={{
-                height: "100vh",
-                paddingTop: "126px",
-                flexGrow: 1,
-                overflow: "auto",
-
-                ...SCROLL_BAR_STYLE,
-              }}
-            >
-              <TabPanel
-                value={viewValue}
-                index={0}
-                sx={
-                  {
-                    // mb: "50px",
-                  }
-                }
-              >
-                <TreeViewSimplified
-                  treeVisualization={treeVisualization}
-                  onOpenNodesTree={onOpenNodesTree}
-                  expandedNodes={expandedNodes}
-                  setExpandedNodes={setExpandedNodes}
-                  currentVisibleNode={currentVisibleNode}
-                />
-              </TabPanel>
-              <TabPanel value={viewValue} index={1}>
-                <DagGraph
-                  treeVisualization={treeVisualization}
-                  setExpandedNodes={setExpandedNodes}
-                  expandedNodes={expandedNodes}
-                  onOpenNodeDagre={onOpenNodeDagre}
-                  currentVisibleNode={currentVisibleNode}
-                  // nodes={nodes}
-                />
-              </TabPanel>
-            </Box>
-            <Box
+            <SettingsEthernetIcon
               sx={{
                 position: "absolute",
-                top: 0,
-                width: "100%",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                color: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? theme.palette.common.gray50
+                    : theme.palette.common.notebookMainBlack,
               }}
-            >
-              <SearchSideBar
-                openSearchedNode={openSearchedNode}
-                searchWithFuse={searchWithFuse}
-              />
-            </Box>
-          </Section>
-        )}
-
-        <Bar
-          size={2}
-          style={{
-            background: "currentColor",
-            cursor: "col-resize",
-            position: "relative",
-          }}
-        >
-          <SettingsEthernetIcon
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              color: (theme) =>
-                theme.palette.mode === "dark"
-                  ? theme.palette.common.gray50
-                  : theme.palette.common.notebookMainBlack,
-            }}
-          />
-        </Bar>
+            />
+          </Bar>
 
         <Section minSize={0}>
           <Box
@@ -1003,37 +1008,38 @@ const Ontology = () => {
           </Box>
         </Section>
 
-        <MemoizedToolbarSidebar
-          // isHovered={toolbarIsHovered}
-          toolbarRef={toolbarRef}
-          user={user}
-          openSearchedNode={openSearchedNode}
-          searchWithFuse={searchWithFuse}
-          nodes={nodes}
-          selectedDiffNode={selectedDiffNode}
-          setSelectedDiffNode={setSelectedDiffNode}
-          currentVisibleNode={currentVisibleNode}
-          setCurrentVisibleNode={setCurrentVisibleNode}
-          confirmIt={confirmIt}
-          activeSidebar={activeSidebar}
-          setActiveSidebar={setActiveSidebar}
-          handleExpandSidebar={handleExpandSidebar}
-          navigateToNode={navigateToNode}
-          treeVisualization={treeVisualization}
-          expandedNodes={expandedNodes}
-          setExpandedNodes={setExpandedNodes}
-          onOpenNodesTree={onOpenNodesTree}
-          setDisplayGuidelines={setDisplayGuidelines}
-          currentImprovement={currentImprovement}
-          setCurrentImprovement={setCurrentImprovement}
+          <MemoizedToolbarSidebar
+            // isHovered={toolbarIsHovered}
+            toolbarRef={toolbarRef}
+            user={user}
+            openSearchedNode={openSearchedNode}
+            searchWithFuse={searchWithFuse}
+            nodes={nodes}
+            selectedDiffNode={selectedDiffNode}
+            setSelectedDiffNode={setSelectedDiffNode}
+            currentVisibleNode={currentVisibleNode}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            confirmIt={confirmIt}
+            activeSidebar={activeSidebar}
+            setActiveSidebar={setActiveSidebar}
+            handleExpandSidebar={handleExpandSidebar}
+            navigateToNode={navigateToNode}
+            treeVisualization={treeVisualization}
+            expandedNodes={expandedNodes}
+            setExpandedNodes={setExpandedNodes}
+            onOpenNodesTree={onOpenNodesTree}
+            setDisplayGuidelines={setDisplayGuidelines}
+            currentImprovement={currentImprovement}
+            setCurrentImprovement={setCurrentImprovement}
+          />
+        </Container>
+        {ConfirmDialog}
+        <SneakMessage
+          newMessage={snackbarMessage}
+          setNewMessage={setSnackbarMessage}
         />
-      </Container>
-      {ConfirmDialog}
-      <SneakMessage
-        newMessage={snackbarMessage}
-        setNewMessage={setSnackbarMessage}
-      />
-    </Box>
+      </Box>
+    </>
   );
 };
 export default withAuthUser({

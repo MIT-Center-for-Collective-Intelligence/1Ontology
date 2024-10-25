@@ -23,6 +23,7 @@ import {
   getOperatingSystem,
 } from "../firestoreClient/errors.firestore";
 import { getAuth } from "firebase/auth";
+import { DISPLAY } from "../CONSTANTS";
 
 export const recordLogs = async (logs: { [key: string]: any }) => {
   try {
@@ -494,9 +495,14 @@ export const getChangeDescription = (
     changeDetails,
   } = log;
 
+  const displayText =
+    modifiedProperty && DISPLAY[modifiedProperty]
+      ? DISPLAY[modifiedProperty]
+      : capitalizeFirstLetter(modifiedProperty || '');
+
   switch (changeType) {
     case "change text":
-      return `Updated "${modifiedProperty}" in:`;
+      return `Updated "${displayText}" in:`;
     case "add collection":
       return `Added a new collection in:`;
     case "delete collection":
@@ -504,15 +510,15 @@ export const getChangeDescription = (
     case "edit collection":
       return `Renamed a collection in:`;
     case "sort elements":
-      return `Sorted elements under "${modifiedProperty}" in:`;
+      return `Sorted elements under "${displayText}" in:`;
     case "remove element":
-      return `Removed an element under "${modifiedProperty}" in:`;
+      return `Removed an element under "${displayText}" in:`;
     case "modify elements":
-      return `Modified the elements in:`;
+      return `Added a new "${displayText}" Under:`;
     case "add property":
       return `Added "${changeDetails?.addedProperty}" in:`;
     case "remove property":
-      return `Removed "${modifiedProperty}" in:`;
+      return `Removed "${displayText}" in:`;
     case "delete node":
       return `Deleted the node:`;
     case "add node":

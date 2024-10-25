@@ -42,7 +42,7 @@ interface SignInFormValues {
 
 const SignInPage: NextPageWithLayout = () => {
   const [, { handleError }] = useAuth();
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [isLoading, setIsLoading] = useState(false);
 
   const initialValues: SignInFormValues = {
@@ -67,6 +67,7 @@ const SignInPage: NextPageWithLayout = () => {
         await signOut(getAuth());
         return;
       }
+      closeSnackbar();
     } catch (error) {
       const errorMessage = getFirebaseFriendlyError(error as FirebaseError);
       setIsLoading(false);
