@@ -64,9 +64,24 @@ const ExpandSearchResult = ({
               },
             },
             [`& .${treeItemClasses.group}`]: {
-              borderLeft: (theme) => `1px solid #797575`,
-              marginLeft: "16px",
-              paddingLeft: "16px",
+              marginLeft: "6px",
+              paddingLeft: "6px",
+              position: "relative",
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: "-12px",
+                bottom: 0,
+                left: 0,
+                borderLeft: (theme) => `2px solid #797575`,
+              },
+            },
+            "& .MuiTreeItem-content.Mui-focused": {
+              backgroundColor: "transparent !important",
+            },
+
+            "& .MuiTreeItem-content": {
+              p: 0,
             },
           }}
         >
@@ -95,12 +110,12 @@ const NodeLabel = ({
         color: "white",
         cursor: "pointer",
         borderRadius: "4px",
-        padding: "8px 12px",
+        py: "2px",
+        paddingLeft: "4px",
         transition: "background-color 0.3s",
-        py: 1,
-        gap: "12px",
+        gap: "2px",
         "&:hover": {
-          backgroundColor: "rgba(255, 255, 255, 0.1)",
+          backgroundColor: "transparent !important",
         },
       }}
     >
@@ -113,7 +128,7 @@ const NodeLabel = ({
             markItemAsChecked(node.id);
           }}
           variant={isChecked ? "contained" : "outlined"}
-          sx={{ borderRadius: "25px", ml: "auto" }}
+          sx={{ borderRadius: "25px", ml: "auto", fontSize: "0.8rem" }}
         >
           {isChecked ? "Unselect" : "Select"}
         </Button>
@@ -124,7 +139,7 @@ const NodeLabel = ({
       {handleCloning && (
         <Button
           variant="outlined"
-          sx={{ m: "9px", borderRadius: "25px" }}
+          sx={{ m: "9px", borderRadius: "25px", fontSize: "0.8rem" }}
           onClick={(e) => {
             e.stopPropagation();
             handleCloning(node);

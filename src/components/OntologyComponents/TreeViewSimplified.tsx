@@ -70,7 +70,7 @@ const TreeViewSimplified = ({
         setExpanded(nodeIds);
         setExpandedNodes(new Set(nodeIds));
       }}
-      sx={{ flexGrow: 1, ...sx }}
+      sx={{ flexGrow: 1, ...sx, ml: "4px" }}
     >
       {sortedKeys.map((nodeId) => (
         <TreeItem
@@ -81,7 +81,8 @@ const TreeViewSimplified = ({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                padding: "8px 12px",
+                py: "8px",
+                paddingLeft: "4px",
                 borderRadius: "4px",
                 backgroundColor:
                   currentVisibleNode?.id === treeVisualization[nodeId].id
@@ -89,7 +90,7 @@ const TreeViewSimplified = ({
                         theme.palette.mode === "dark" ? "#125f07" : "#1fb509"
                     : "transparent",
                 "&:hover": {
-                  backgroundColor: "",
+                  backgroundColor: "transparent !important",
                 },
                 transition: "background-color 0.2s ease-in-out",
               }}
@@ -216,9 +217,24 @@ const TreeViewSimplified = ({
               },
             },
             [`& .${treeItemClasses.group}`]: {
-              borderLeft: (theme) => `1px solid #797575`,
-              marginLeft: "16px",
-              paddingLeft: "16px",
+              marginLeft: "6px",
+              paddingLeft: "6px",
+              position: "relative",
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: "-8px",
+                bottom: 0,
+                left: 0,
+                borderLeft: (theme) => `2px solid #797575`,
+              },
+            },
+            "& .MuiTreeItem-content.Mui-focused": {
+              backgroundColor: "transparent !important",
+            },
+
+            "& .MuiTreeItem-content": {
+              p: 0,
             },
           }}
         >
