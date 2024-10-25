@@ -839,7 +839,9 @@ const Ontology = () => {
   return (
     <>
       <Head>
-        <title>{currentVisibleNode ? currentVisibleNode.title : "1ontology"}</title>
+        <title>
+          {currentVisibleNode ? currentVisibleNode.title : "1ontology"}
+        </title>
       </Head>
       <Box>
         <Container
@@ -898,8 +900,10 @@ const Ontology = () => {
                   paddingTop: "126px",
                   flexGrow: 1,
                   overflow: "auto",
-
-                  ...SCROLL_BAR_STYLE,
+                  // ...SCROLL_BAR_STYLE,
+                  "&::-webkit-scrollbar": {
+                    display: "none",
+                  },
                 }}
               >
                 <TabPanel
@@ -967,46 +971,48 @@ const Ontology = () => {
             />
           </Bar>
 
-        <Section minSize={0}>
-          <Box
-            id="node-section"
-            sx={{
-              backgroundColor: (theme) =>
-                theme.palette.mode === "dark"
-                  ? theme.palette.common.notebookMainBlack
-                  : theme.palette.common.gray50,
-              p: "20px",
-              pt: 0,
-              overflow: "auto",
-              height: "100vh",
-              ...SCROLL_BAR_STYLE,
-            }}
-          >
-            <Box ref={scrolling}></Box>
-            {displayGuidelines && (
-              <GuidLines setDisplayGuidelines={setDisplayGuidelines} />
-            )}
-            {currentVisibleNode && user && !displayGuidelines && (
-              <Node
-                currentVisibleNode={currentVisibleNode}
-                setCurrentVisibleNode={setCurrentVisibleNode}
-                setSnackbarMessage={setSnackbarMessage}
-                user={user}
-                mainSpecializations={mainSpecializations}
-                nodes={nodes}
-                addNewNode={addNewNode}
-                navigateToNode={navigateToNode}
-                eachOntologyPath={eachOntologyPath}
-                searchWithFuse={searchWithFuse}
-                locked={!!currentVisibleNode.locked && !user?.manageLock}
-                selectedDiffNode={selectedDiffNode}
-                displaySidebar={displaySidebar}
-                activeSidebar={activeSidebar}
-                currentImprovement={currentImprovement}
-              />
-            )}
-          </Box>
-        </Section>
+          <Section minSize={0}>
+            <Box
+              id="node-section"
+              sx={{
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? theme.palette.common.notebookMainBlack
+                    : theme.palette.common.gray50,
+                p: "20px",
+                pt: 0,
+                overflow: "auto",
+                height: "100vh",
+                "&::-webkit-scrollbar": {
+                  display: "none",
+                },
+              }}
+            >
+              <Box ref={scrolling}></Box>
+              {displayGuidelines && (
+                <GuidLines setDisplayGuidelines={setDisplayGuidelines} />
+              )}
+              {currentVisibleNode && user && !displayGuidelines && (
+                <Node
+                  currentVisibleNode={currentVisibleNode}
+                  setCurrentVisibleNode={setCurrentVisibleNode}
+                  setSnackbarMessage={setSnackbarMessage}
+                  user={user}
+                  mainSpecializations={mainSpecializations}
+                  nodes={nodes}
+                  addNewNode={addNewNode}
+                  navigateToNode={navigateToNode}
+                  eachOntologyPath={eachOntologyPath}
+                  searchWithFuse={searchWithFuse}
+                  locked={!!currentVisibleNode.locked && !user?.manageLock}
+                  selectedDiffNode={selectedDiffNode}
+                  displaySidebar={displaySidebar}
+                  activeSidebar={activeSidebar}
+                  currentImprovement={currentImprovement}
+                />
+              )}
+            </Box>
+          </Section>
 
           <MemoizedToolbarSidebar
             // isHovered={toolbarIsHovered}
