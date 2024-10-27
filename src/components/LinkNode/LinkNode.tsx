@@ -604,6 +604,7 @@ const LinkNode = ({
                   ml: "8px",
                   borderRadius: "18px",
                   backgroundColor: BUTTON_COLOR,
+                  fontSize: "12px",
                 }}
                 variant="outlined"
                 onClick={handleUnlinkNode}

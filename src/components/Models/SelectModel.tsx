@@ -138,6 +138,14 @@ const SelectModelModal = ({
                   theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
               }}
             >
+              <Box sx={{ textAlign: "center" }}>
+                <Typography sx={{ pt: "15px", pl: "15px", fontSize: "20px" }}>
+                  Editing{" "}
+                  <strong style={{ color: "orange" }}>
+                    {currentVisibleNode.title}
+                  </strong>
+                </Typography>
+              </Box>
               <Box sx={{ pt: "15px" }}>
                 {selectedProperty === "specializations" ? (
                   <Typography sx={{ pl: "15px" }}>
