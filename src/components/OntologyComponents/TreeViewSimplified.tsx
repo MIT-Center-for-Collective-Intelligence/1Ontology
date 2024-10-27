@@ -89,9 +89,6 @@ const TreeViewSimplified = ({
                     ? (theme) =>
                         theme.palette.mode === "dark" ? "#125f07" : "#1fb509"
                     : "transparent",
-                "&:hover": {
-                  backgroundColor: "transparent !important",
-                },
                 transition: "background-color 0.2s ease-in-out",
               }}
               onClick={(e) => {
@@ -112,7 +109,6 @@ const TreeViewSimplified = ({
                       : treeVisualization[nodeId].isCategory
                       ? "orange"
                       : "",
-
                   flex: 1,
                   whiteSpace: "nowrap",
                   overflow: "hidden",
