@@ -307,3 +307,22 @@ export const isOnline = (timestamp: Timestamp) => {
   const minutes = Math.floor(timeDifference / 1000 / 60);
   return minutes < 10;
 };
+
+export const getTaggedUsers = (input: string) => {
+  const regex = /\[[^\]]+\]\(([^)]+)\)/g;
+  if (input) {
+    const _matches = input.match(regex);
+    if (_matches) {
+      const matches: string[] = [];
+      for (let match of _matches) {
+        const m = match.match(/\(([^)]+)\)/);
+        if (m) {
+          matches.push(m[1]);
+        }
+      }
+
+      return matches;
+    }
+  }
+  return [];
+};

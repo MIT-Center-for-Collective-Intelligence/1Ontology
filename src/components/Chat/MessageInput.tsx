@@ -20,6 +20,9 @@ import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import { IChat } from " @components/types/IChat";
 import { useUploadImage } from " @components/hooks/useUploadImage";
 import { isValidHttpUrl } from " @components/lib/utils/utils";
+import defaultStyle from "./defaultStyle";
+import { getTaggedUsers } from " @components/lib/utils/string.utils";
+import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 
 type ChatInputProps = {
   user: any;
@@ -39,6 +42,7 @@ type ChatInputProps = {
   setEditing: any;
   setOpenSelectModel?: React.Dispatch<React.SetStateAction<boolean>>;
 };
+
 const ChatInput = ({
   message,
   user,
@@ -72,6 +76,52 @@ const ChatInput = ({
     fileInputRef?.current?.click();
   }, [fileInputRef]);
 
+  let style = {
+    // ...defaultStyle,
+
+    highlighter: {
+      boxSizing: "border-box",
+      overflow: "hidden",
+      height: 70,
+    },
+
+    control: {
+      fontSize: 16,
+      padding: "10px",
+      boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.1)",
+      border: "none",
+      overFlow: "hidden",
+    },
+    input: {
+      overflow: "auto",
+      fontSize: 16,
+      border: "none",
+      outline: "none",
+      width: "100%",
+      color:
+        theme.palette.mode === "dark"
+          ? DESIGN_SYSTEM_COLORS.orange100
+          : DESIGN_SYSTEM_COLORS.notebookG900,
+      padding: "15px",
+      overFlow: "auto",
+      fontFamily: "system-ui",
+      ...SCROLL_BAR_STYLE,
+    },
+    suggestions: {
+      list: {
+        background:
+          theme.palette.mode === "dark"
+            ? DESIGN_SYSTEM_COLORS.notebookG700
+            : DESIGN_SYSTEM_COLORS.gray100,
+
+        padding: "2px",
+        fontSize: 16,
+        maxHeight: "150px",
+        overflowY: "auto",
+      },
+    },
+  };
+
   const onUploadImage = useCallback(
     (event: any) => {
       try {
@@ -99,6 +149,7 @@ const ChatInput = ({
     },
     [setImageUrls, user]
   );
+
   return (
     <Box
       sx={{
@@ -115,55 +166,19 @@ const ChatInput = ({
             ? DESIGN_SYSTEM_COLORS.notebookG700
             : DESIGN_SYSTEM_COLORS.gray100,
         ...sx,
+        ...SCROLL_BAR_STYLE,
       }}
     >
       <MentionsInput
         id="comment-mention"
         className="comment-input"
         placeholder="Type your message here..."
-        style={{
-          control: {
-            fontSize: 16,
-            padding: "10px",
-            boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.1)",
-            border: "none",
-            overFlow: "hidden",
-          },
-          input: {
-            fontSize: 16,
-            border: "none",
-            outline: "none",
-            width: "100%",
-            color:
-              theme.palette.mode === "dark"
-                ? DESIGN_SYSTEM_COLORS.orange100
-                : DESIGN_SYSTEM_COLORS.notebookG900,
-            padding: "15px",
-            overFlow: "auto",
-            fontFamily: "system-ui",
-          },
-          suggestions: {
-            list: {
-              background:
-                theme.palette.mode === "dark"
-                  ? DESIGN_SYSTEM_COLORS.notebookG700
-                  : DESIGN_SYSTEM_COLORS.gray100,
-
-              padding: "2px",
-              fontSize: 16,
-              position: "absolute",
-              top: "-120px",
-              left: "-16px",
-              maxHeight: "150px",
-              overflowY: "auto",
-            },
-          },
-        }}
+        style={style}
         value={inputValue}
         singleLine={false}
         onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && e.shiftKey) {
+          if (e.key === "Enter" && (e.shiftKey || e.metaKey)) {
             e.preventDefault();
             setInputValue(inputValue + "\n");
           } else if (e.key === "Enter" || e.keyCode === 13) {
@@ -178,13 +193,15 @@ const ChatInput = ({
                     message?.id
                   );
                 } else {
-                  onSubmit(inputValue, imageUrls, message?.id);
+                  const taggedUsers = getTaggedUsers(inputValue);
+                  onSubmit(inputValue, imageUrls, message?.id, taggedUsers);
                 }
               } else {
                 if (isEditing) {
                   onSubmit(inputValue, imageUrls, message?.id);
                 } else {
-                  onSubmit(inputValue, imageUrls);
+                  const taggedUsers = getTaggedUsers(inputValue);
+                  onSubmit(inputValue, imageUrls, taggedUsers);
                 }
               }
             }
@@ -200,12 +217,18 @@ const ChatInput = ({
           displayTransform={(id, display) => {
             return `@${display}`;
           }}
-          markup="[@__display__](/mention/__id__)"
+          markup="[@__display__](__id__)"
           renderSuggestion={(suggestion: any) => (
             <MentionUser user={suggestion} />
           )}
+          appendSpaceOnAdd={true}
+          style={{
+            backgroundColor: "#0d8fad",
+            paddingRight: "5px",
+          }}
         />
       </MentionsInput>
+
       <Box sx={{ display: "flex" }}>
         {(imageUrls || []).map((imageUrl) => (
           <Box
@@ -343,13 +366,15 @@ const ChatInput = ({
                       message?.id
                     );
                   } else {
-                    onSubmit(inputValue, imageUrls, message?.id);
+                    const taggedUsers = getTaggedUsers(inputValue);
+                    onSubmit(inputValue, imageUrls, message?.id, taggedUsers);
                   }
                 } else {
                   if (isEditing) {
                     onSubmit(inputValue, imageUrls, message?.id);
                   } else {
-                    onSubmit(inputValue, imageUrls);
+                    const taggedUsers = getTaggedUsers(inputValue);
+                    onSubmit(inputValue, imageUrls, taggedUsers);
                   }
                 }
                 setEditing(null);

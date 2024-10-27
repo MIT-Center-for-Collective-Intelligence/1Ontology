@@ -255,15 +255,17 @@ const Chat = ({
   const createNotifications = async (
     title: string,
     body: string,
-    entityId: string
+    entityId: string,
+    taggedUsers: Set<string> = new Set()
   ) => {
     const batch = writeBatch(db);
     for (const userData of users) {
       if (userData.uname === user.uname) continue;
       if (
-        userData.uname !== "1man" &&
-        userData.uname !== "ouhrac" &&
-        type !== "node"
+        (userData.uname !== "1man" &&
+          userData.uname !== "ouhrac" &&
+          type !== "node") ||
+        taggedUsers.has(userData.uname)
       )
         continue;
 
@@ -290,7 +292,11 @@ const Chat = ({
     }
     await batch.commit();
   };
-  const addMessage = async (text: string, imageUrls: string[]) => {
+  const addMessage = async (
+    text: string,
+    imageUrls: string[],
+    taggedUsers: Set<string>
+  ) => {
     if (!user?.uname) return;
     const commentData = {
       nodeId: type === "node" ? nodeId || "" : null,
@@ -315,7 +321,8 @@ const Chat = ({
     createNotifications(
       `New Message from ${user.fName + " " + user.lName}`,
       text,
-      docRef.id
+      docRef.id,
+      taggedUsers
     );
     recordLogs({
       action: "Send a message",
@@ -452,8 +459,8 @@ const Chat = ({
         key={index}
         sx={{
           display: "flex",
-          gap: "10px",
-          pt: 5,
+          // gap: "10px",
+          // pt: 5,
         }}
       >
         <Box
@@ -531,7 +538,7 @@ const Chat = ({
                 background: (theme) =>
                   theme.palette.mode === "dark"
                     ? DESIGN_SYSTEM_COLORS.notebookG700
-                    : DESIGN_SYSTEM_COLORS.gray200,
+                    : DESIGN_SYSTEM_COLORS.gray300,
                 ":hover": {
                   "& .message-buttons": {
                     display: "block",
@@ -832,7 +839,9 @@ const Chat = ({
 
                     <Button
                       onClick={() =>
-                        setShowReplies(!showReplies ? message.id : null)
+                        setShowReplies(
+                          showReplies !== message.id ? message.id : null
+                        )
                       }
                       style={{ border: "none", fontSize: "14px" }}
                     >

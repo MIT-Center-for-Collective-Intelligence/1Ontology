@@ -14,12 +14,16 @@ export const MentionUser = ({ user }: UsersTagProps) => {
         display: "flex",
         flexDirection: "column",
         p: "10px",
-        background: theme =>
-          theme.palette.mode === "dark" ? theme.palette.common.notebookG700 : theme.palette.common.gray100,
+        background: (theme) =>
+          theme.palette.mode === "dark"
+            ? theme.palette.common.notebookG700
+            : theme.palette.common.gray100,
         cursor: "pointer",
         ":hover": {
-          background: theme =>
-            theme.palette.mode === "dark" ? theme.palette.common.notebookG600 : theme.palette.common.gray200,
+          background: (theme) =>
+            theme.palette.mode === "dark"
+              ? theme.palette.common.notebookG600
+              : theme.palette.common.gray200,
         },
       }}
     >
@@ -52,9 +56,17 @@ export const MentionUser = ({ user }: UsersTagProps) => {
             }}
           >
             <Box className="user-image">
-              <OptimizedAvatar alt={""} size={30} imageUrl={user.imageUrl} sx={{ border: "none" }} />
+              <OptimizedAvatar
+                alt={user.fullName}
+                size={30}
+                imageUrl={user.imageUrl}
+                sx={{ border: "none" }}
+              />
             </Box>
-            <Box sx={{ background: "#12B76A" }} className="UserStatusOnlineIcon" />
+            <Box
+              sx={{ background: "#12B76A" }}
+              className="UserStatusOnlineIcon"
+            />
           </Box>
           <Box>
             <Box sx={{ display: "flex", width: "300px", alignItems: "center" }}>
