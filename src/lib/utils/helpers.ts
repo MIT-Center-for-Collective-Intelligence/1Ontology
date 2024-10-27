@@ -498,7 +498,7 @@ export const getChangeDescription = (
   const displayText =
     modifiedProperty && DISPLAY[modifiedProperty]
       ? DISPLAY[modifiedProperty]
-      : capitalizeFirstLetter(modifiedProperty || '');
+      : capitalizeFirstLetter(modifiedProperty || "");
 
   switch (changeType) {
     case "change text":
@@ -624,10 +624,12 @@ export const createNewNode = (
   newNodeRefId: string,
   newTitle: string,
   inheritance: IInheritance,
-  generalizationId: string
+  generalizationId: string,
+  uname: string
 ): INode => {
   return {
     ...parentNodeData,
+    createdBy: uname,
     unclassified: false,
     id: newNodeRefId,
     title: newTitle,

@@ -73,6 +73,7 @@ export type INode = {
   numberOfGeneralizations: number;
   textValue: { [propertyName: string]: string };
   unclassified: boolean;
+  createdBy: string;
 };
 
 export type TreeVisual = {

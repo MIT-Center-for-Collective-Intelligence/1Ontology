@@ -307,7 +307,8 @@ const Node = ({
           newNodeRef.id,
           newTitle,
           inheritance,
-          nodeId
+          nodeId,
+          user.uname
         );
 
         // Handle specific property updates for `parts` and `isPartOf`
@@ -584,7 +585,8 @@ const Node = ({
           newNodeRef.id,
           newTitle,
           inheritance,
-          currentVisibleNode.id
+          currentVisibleNode.id,
+          user.uname
         );
 
         // Remove the `locked` property if it exists
