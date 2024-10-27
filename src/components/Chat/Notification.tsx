@@ -7,6 +7,7 @@ import OptimizedAvatar from "./OptimizedAvatar";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import { INotification } from " @components/types/IChat";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
+import MarkdownRender from "../Markdown/MarkdownRender";
 
 dayjs.extend(relativeTime);
 type CommentsProps = {
@@ -151,14 +152,8 @@ export const Notification = ({
                 {notification?.title}
               </Typography>
 
-              <Typography
-                sx={{
-                  fontSize: "13px",
-                  lineHeight: "24px",
-                }}
-              >
-                {notification?.body}
-              </Typography>
+              <MarkdownRender text={notification?.body} />
+
               <Box
                 sx={{
                   width: "100%",
