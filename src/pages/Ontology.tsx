@@ -900,7 +900,7 @@ const Ontology = () => {
                   marginTop: "126px",
                   flexGrow: 1,
                   overflow: "auto",
-                  // ...SCROLL_BAR_STYLE,
+                  ...SCROLL_BAR_STYLE,
                   "&::-webkit-scrollbar": {
                     display: "none",
                   },
@@ -914,6 +914,7 @@ const Ontology = () => {
                       height: "100%",
                     overflowX: "auto",
                     whiteSpace: "nowrap",
+                    ...SCROLL_BAR_STYLE,
                     }
                   }
               >
