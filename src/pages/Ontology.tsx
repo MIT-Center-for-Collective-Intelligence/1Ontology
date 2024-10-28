@@ -897,7 +897,7 @@ const Ontology = () => {
               <Box
                 sx={{
                   height: "100vh",
-                  paddingTop: "126px",
+                  marginTop: "126px",
                   flexGrow: 1,
                   overflow: "auto",
                   // ...SCROLL_BAR_STYLE,
@@ -911,17 +911,26 @@ const Ontology = () => {
                   index={0}
                   sx={
                     {
-                      // mb: "50px",
+                      height: "100%",
+                    overflowX: "auto",
+                    whiteSpace: "nowrap",
                     }
                   }
-                >
-                  <TreeViewSimplified
-                    treeVisualization={treeVisualization}
-                    onOpenNodesTree={onOpenNodesTree}
-                    expandedNodes={expandedNodes}
-                    setExpandedNodes={setExpandedNodes}
-                    currentVisibleNode={currentVisibleNode}
-                  />
+              >
+                <Box
+                  sx={{
+                    display: "inline-block", // Keep it inline for horizontal scroll
+                    minWidth: "100%", // Ensures it takes at least the width of the container
+                  }}
+                  >
+                    <TreeViewSimplified
+                      treeVisualization={treeVisualization}
+                      onOpenNodesTree={onOpenNodesTree}
+                      expandedNodes={expandedNodes}
+                      setExpandedNodes={setExpandedNodes}
+                      currentVisibleNode={currentVisibleNode}
+                    />
+                </Box>
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
                   <DagGraph
