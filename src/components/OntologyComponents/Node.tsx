@@ -879,6 +879,10 @@ const Node = ({
           }
         }
       }
+      if (JSON.stringify(newValue) === JSON.stringify(previousValue)) {
+        //no change
+        return;
+      }
 
       // Update links for specializations/generalizations
       if (

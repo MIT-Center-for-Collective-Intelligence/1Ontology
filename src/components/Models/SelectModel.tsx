@@ -38,7 +38,34 @@ const SelectModelModal = ({
   handleSaveLinkChanges,
   onGetPropertyValue,
   setCurrentVisibleNode,
-}: any) => {
+}: {
+  openSelectModel: any;
+  handleCloseAddLinksModel: any;
+  selectedProperty: any;
+  currentVisibleNode: any;
+  setSearchValue: any;
+  searchValue: any;
+  searchResultsForSelection: any;
+  addNewSpecialization: any;
+  selectedCategory: any;
+  checkedItems: any;
+  markItemAsChecked: any;
+  handleCloning: any;
+  user: any;
+  nodes: any;
+  selectFromTree: any;
+  expandedNodes: any;
+  setExpandedNodes: any;
+  handleToggle: any;
+  getPath: any;
+  locked: any;
+  selectedDiffNode: any;
+  confirmIt: any;
+  currentImprovement: any;
+  handleSaveLinkChanges: any;
+  onGetPropertyValue: any;
+  setCurrentVisibleNode: any;
+}) => {
   const renderSelectedItems = () => (
     <Box
       sx={{
