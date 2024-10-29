@@ -1211,7 +1211,7 @@ const Node = ({
           top: 0,
           mb: "15px",
           zIndex: 100,
-          display: "flex",
+          // display: "flex",
           gap: "5px",
         }}
       >

@@ -573,8 +573,6 @@ export const getModifiedAt = (modifiedAt: any) => {
 export function randomProminentColor() {
   const prominentColors = [
     "#FF5733", // Red-Orange
-    "#FFBD33", // Yellow-Orange
-    "#DBFF33", // Yellow-Green
     "#75FF33", // Green
     "#33FF57", // Green-Teal
     "#33DBFF", // Teal

@@ -872,29 +872,30 @@ const StructuredProperty = ({
             !currentVisibleNode.unclassified) &&
             !selectedDiffNode &&
             property !== "specializations" && (
-              <Button
-                onClick={() => showListToSelect(property, "main")}
-                sx={{
-                  borderRadius: "18px",
-                  backgroundColor: BUTTON_COLOR,
-                  ":hover": {
-                    backgroundColor:
-                      theme.palette.mode === "light" ? "#f0f0f0" : "",
-                  },
-                  ml: "auto",
-                }}
-                variant="outlined"
-              >
-                {`Edit ${capitalizeFirstLetter(DISPLAY[property] || property)}`}{" "}
-              </Button>
+              <Box sx={{ ml: "auto", display: "flex", gap: "14px" }}>
+                <Button
+                  onClick={() => showListToSelect(property, "main")}
+                  sx={{
+                    borderRadius: "18px",
+                    backgroundColor: BUTTON_COLOR,
+                    ":hover": {
+                      backgroundColor:
+                        theme.palette.mode === "light" ? "#f0f0f0" : "",
+                    },
+                  }}
+                  variant="outlined"
+                >
+                  {`Edit ${capitalizeFirstLetter(
+                    DISPLAY[property] || property
+                  )}`}{" "}
+                </Button>
+                <SelectInheritance
+                  currentVisibleNode={currentVisibleNode}
+                  property={property}
+                  nodes={nodes}
+                />
+              </Box>
             )}
-          {property !== "specializations" && property !== "generalizations" && (
-            <SelectInheritance
-              currentVisibleNode={currentVisibleNode}
-              property={property}
-              nodes={nodes}
-            />
-          )}
         </Box>
         <Box sx={{ p: "15px", pt: 0 }}>
           {openAddCollection && (

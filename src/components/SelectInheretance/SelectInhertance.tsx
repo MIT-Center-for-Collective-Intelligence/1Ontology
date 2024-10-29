@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { TextField, MenuItem, Box } from "@mui/material";
 
 import {
@@ -10,7 +10,7 @@ import {
   WriteBatch,
 } from "firebase/firestore";
 import { NODES } from " @components/lib/firestoreClient/collections";
-import { recordLogs, updateInheritance } from " @components/lib/utils/helpers";
+import { recordLogs } from " @components/lib/utils/helpers";
 import { getTitle } from " @components/lib/utils/string.utils";
 import { INode, ICollection, ILinkNode } from " @components/types/INode";
 
@@ -23,15 +23,36 @@ const SelectInheritance = ({
   property: string;
   nodes: { [nodeId: string]: INode };
 }) => {
-  const inheritanceRef = currentVisibleNode.inheritance?.[property]?.ref || "";
+  const [generalizations, setGeneralizations] = useState<
+    { id: string; title: string }[]
+  >([]);
 
-  // Map the generalizations to get the title and id
-  const generalizations = currentVisibleNode.generalizations
-    .flatMap((gen: ICollection) => gen.nodes)
-    .map((node: ILinkNode) => ({
+  const inheritanceRef =
+    currentVisibleNode.inheritance?.[property]?.ref || "not-inherited";
+  console.log("inheritanceRef ==>", inheritanceRef);
+  useEffect(() => {
+    const _generalizations = [
+      ...currentVisibleNode.generalizations.flatMap(
+        (gen: ICollection) => gen.nodes
+      ),
+    ].map((node: ILinkNode) => ({
       id: node.id,
       title: getTitle(nodes, node.id),
     }));
+    const index = _generalizations.findIndex((g) => g.id === inheritanceRef);
+    if (index === -1) {
+      _generalizations.push({
+        id: inheritanceRef,
+        title:
+          inheritanceRef === "not-inherited"
+            ? "not-inherited"
+            : getTitle(nodes, inheritanceRef),
+      });
+    }
+    setGeneralizations(_generalizations);
+  }, [currentVisibleNode.generalizations, inheritanceRef]);
+
+  // Map the generalizations to get the title and id
 
   const db = getFirestore();
 
@@ -84,10 +105,15 @@ const SelectInheritance = ({
     property: string
   ) => {
     try {
-      const newGeneralizationId = event.target.value;
+      let newGeneralizationId = event.target.value;
 
       if (newGeneralizationId && newGeneralizationId !== inheritanceRef) {
         const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+        const newGeneralization = nodes[newGeneralizationId];
+        if (newGeneralization.inheritance[property].ref) {
+          newGeneralizationId = newGeneralization.inheritance[property].ref;
+        }
+
         updateDoc(nodeRef, {
           [`inheritance.${property}.ref`]: newGeneralizationId,
         })
@@ -119,15 +145,6 @@ const SelectInheritance = ({
       });
     }
   };
-
-  if (
-    !inheritanceRef ||
-    generalizations.length <= 1 ||
-    !generalizations.some((gen) => gen.id === inheritanceRef)
-  ) {
-    return null;
-  }
-
   return (
     <Box sx={{ ml: "auto" }}>
       <TextField
@@ -157,7 +174,11 @@ const SelectInheritance = ({
           Select Inheritance
         </MenuItem>
         {generalizations.map((generalization) => (
-          <MenuItem key={generalization.id} value={generalization.id}>
+          <MenuItem
+            key={generalization.id}
+            value={generalization.id}
+            sx={{ color: generalization.id === "not-inherited" ? "red" : "" }}
+          >
             {generalization.title}
           </MenuItem>
         ))}
