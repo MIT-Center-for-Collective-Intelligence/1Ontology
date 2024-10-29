@@ -573,7 +573,7 @@ const ToolbarSidebar = ({
       ref={toolbarRef}
       sx={{
         width: hovered ? "190px" : !!activeSidebar ? "450px" : "70px",
-        transition: "width 0.3s ease",
+        transition: "width 0.4s ease",
         height: "100vh",
         background:
           theme.palette.mode === "dark"
@@ -689,16 +689,11 @@ const ToolbarSidebar = ({
       ) : (
         <>
           <Box sx={{ mb: 2, mr: "10px" }}>
-            <Avatar
+            <img
               src={getLog}
-              alt="logo"
-              sx={{
-                cursor: "pointer",
-                width: hovered ? "140px" : "50px",
-                height: "auto",
-                borderRadius: 0,
-                transition: "width 0.3s ease", // Add transition for smooth width change
-              }}
+              alt="onecademy logo"
+              width={"auto"}
+              height={"40px"}
             />
           </Box>
 

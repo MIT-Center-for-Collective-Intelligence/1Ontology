@@ -1,6 +1,7 @@
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import {
   Box,
+  GlobalStyles,
   IconButton,
   List,
   ListItem,
@@ -102,6 +103,20 @@ const SearchSideBar = ({
         ...SCROLL_BAR_STYLE,
       }}
     >
+      <GlobalStyles
+        styles={{
+          "& input:-webkit-autofill": {
+            boxShadow: `0px 0px 0px 100px ${
+              theme.palette.mode === "dark" ? "black" : "white"
+            } inset !important`,
+            WebkitTextFillColor: `${
+              theme.palette.mode === "dark" ? "#fff" : "#000"
+            } !important`,
+            caretColor: "#fff !important",
+            borderRadius: "0 !important",
+          },
+        }}
+      />
       <TextField
         placeholder="Search..."
         value={searchValue}
@@ -110,9 +125,13 @@ const SearchSideBar = ({
         onBlur={handleBlur}
         fullWidth
         InputProps={{
-          style: {
+          sx: {
             fontSize: "19px",
             borderRadius: "45px",
+            background: (theme) =>
+              theme.palette.mode === "dark"
+                ? "black !important"
+                : "white !important",
           },
           startAdornment: (
             <IconButton
@@ -139,7 +158,9 @@ const SearchSideBar = ({
           position: "sticky",
           top: "0px",
           background: (theme) =>
-            theme.palette.mode === "dark" ? "black" : "white",
+            theme.palette.mode === "dark"
+              ? "black !important"
+              : "white !important",
           zIndex: 1000,
         }}
       />
