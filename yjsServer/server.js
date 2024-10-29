@@ -64,7 +64,10 @@ const loadContent = async (docId, structured) => {
 
   try {
     const nodeId = docId.replace("ws/", "").split("-")[0];
-    const property = docId.replace("ws/", "").split("-")[1].replace("%20", " ");
+    const property = docId
+      .replace("ws/", "")
+      .split("-")[1]
+      .replaceAll("%20", " ");
     const firestoreDoc = await db.collection(NODES).doc(nodeId).get();
 
     let firestoreData = firestoreDoc.data();
@@ -183,7 +186,7 @@ setInterval(() => {
           lastContent,
           newContent: textContent,
         });
-        if (!lastContent || lastContent !== textContent) {
+        if (lastContent !== textContent) {
           console.log("updated", docId);
           saveInFirestore(docId, textContent, value.structuredProperty);
         }
