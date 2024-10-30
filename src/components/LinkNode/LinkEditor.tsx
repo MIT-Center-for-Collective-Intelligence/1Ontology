@@ -1,0 +1,119 @@
+import React, { useEffect, useRef, useState } from "react";
+import { Box, TextField, Tooltip, IconButton } from "@mui/material";
+import DoneIcon from "@mui/icons-material/Done";
+import { NODES } from " @components/lib/firestoreClient/collections";
+import { doc, collection, updateDoc, getFirestore } from "firebase/firestore";
+import { link } from "fs";
+
+type LinkEditorProps = {
+  reviewId: string;
+  setReviewId: any;
+  title: string;
+};
+
+const LinkEditor: React.FC<LinkEditorProps> = ({
+  reviewId,
+  setReviewId,
+  title,
+}) => {
+  const db = getFirestore();
+  const textFieldRef = useRef<HTMLInputElement>(null);
+  const [editorContent, setEditorContent] = useState(title);
+  const saveNodeTitle = () => {
+    try {
+      const nodeRef = doc(collection(db, NODES), reviewId);
+      updateDoc(nodeRef, { title: editorContent });
+      if (setReviewId) setReviewId("");
+    } catch (e: any) {
+      console.error(e.message);
+    }
+  };
+  const handleChanges = (e: any) => {
+    setEditorContent(e.target.value);
+  };
+  useEffect(() => {
+    if (textFieldRef.current) {
+      textFieldRef.current.focus();
+      textFieldRef.current.select();
+    }
+  }, [reviewId]);
+  // const cancelEditingNode = () => {
+  //   try {
+  //     const currentNode = nodes[link.id];
+  //     /*       const generalization = Object.values(
+  //       currentNode.generalizations
+  //     ).flat()[0] as { id: string }; */
+
+  //     for (let genCollection of currentNode.generalizations) {
+  //       for (let generalizationLink of genCollection.nodes) {
+  //         const generalizationNode = nodes[generalizationLink.id];
+  //         for (
+  //           let specCollectionIndex = 0;
+  //           specCollectionIndex < generalizationNode.specializations.length;
+  //           specCollectionIndex++
+  //         ) {
+  //           generalizationNode.specializations[specCollectionIndex].nodes =
+  //             generalizationNode.specializations[
+  //               specCollectionIndex
+  //             ].nodes.filter((l: ILinkNode) => l.id !== link.id);
+  //         }
+
+  //         const generalizationRef = doc(
+  //           collection(db, NODES),
+  //           generalizationLink.id
+  //         );
+  //         updateDoc(generalizationRef, {
+  //           specializations: generalizationNode.specializations,
+  //         });
+
+  //         const nodeRef = doc(collection(db, NODES), link.id);
+  //         updateDoc(nodeRef, { title: editorContent, deleted: true });
+  //       }
+  //     }
+
+  //     saveNewChangeLog(db, {
+  //       nodeId: link.id,
+  //       modifiedBy: user?.uname,
+  //       modifiedProperty: null,
+  //       previousValue: null,
+  //       newValue: null,
+  //       modifiedAt: new Date(),
+  //       changeType: "delete node",
+  //       fullNode: currentNode,
+  //     });
+
+  //     if (setReviewId) setReviewId("");
+  //   } catch (e: any) {
+  //     console.error(e.message);
+  //   }
+  // };
+  return (
+    <Box sx={{ display: "flex", alignItems: "center" }}>
+      <TextField
+        inputRef={textFieldRef}
+        value={editorContent}
+        onChange={handleChanges}
+        sx={{ width: "300px" }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            saveNodeTitle();
+          }
+        }}
+        InputProps={{
+          inputProps: {
+            style: {
+              padding: 10,
+            },
+          },
+        }}
+      />
+      <Tooltip title="Save">
+        <IconButton onClick={saveNodeTitle} sx={{ ml: "5px" }}>
+          <DoneIcon sx={{ color: "green" }} />
+        </IconButton>
+      </Tooltip>
+    </Box>
+  );
+};
+
+export default LinkEditor;

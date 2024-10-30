@@ -1,5 +1,15 @@
-import React from "react";
-import { Modal, Box, Paper, Typography, Button, Checkbox } from "@mui/material";
+import React, { useRef } from "react";
+import {
+  Modal,
+  Box,
+  Paper,
+  Typography,
+  Button,
+  Checkbox,
+  IconButton,
+  TextField,
+  Tooltip,
+} from "@mui/material";
 
 import ExpandSearchResult from "../OntologyComponents/ExpandSearchResult";
 import TreeViewSimplified from "../OntologyComponents/TreeViewSimplified";
@@ -10,6 +20,7 @@ import {
   getSelectingModelTitle,
   capitalizeFirstLetter,
 } from " @components/lib/utils/string.utils";
+import LinkEditor from "../LinkNode/LinkEditor";
 
 const SelectModelModal = ({
   openSelectModel,
@@ -38,6 +49,8 @@ const SelectModelModal = ({
   handleSaveLinkChanges,
   onGetPropertyValue,
   setCurrentVisibleNode,
+  reviewId,
+  setReviewId,
 }: {
   openSelectModel: any;
   handleCloseAddLinksModel: any;
@@ -65,7 +78,11 @@ const SelectModelModal = ({
   handleSaveLinkChanges: any;
   onGetPropertyValue: any;
   setCurrentVisibleNode: any;
+  reviewId: string;
+  setReviewId: any;
 }) => {
+  const textFieldRef = useRef<HTMLInputElement>(null);
+
   const renderSelectedItems = () => (
     <Box
       sx={{
@@ -95,7 +112,15 @@ const SelectModelModal = ({
               checked={checkedItems.has(id)}
               onChange={() => markItemAsChecked(id)}
             />
-            <Typography>{nodes[id].title}</Typography>
+            {reviewId === id ? (
+              <LinkEditor
+                reviewId={reviewId}
+                setReviewId={setReviewId}
+                title={nodes[id].title}
+              />
+            ) : (
+              <Typography>{nodes[id].title}</Typography>
+            )}
           </Box>
         ))}
       </Box>

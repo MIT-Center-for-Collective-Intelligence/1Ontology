@@ -104,6 +104,7 @@ import { getTitleDeleted } from " @components/lib/utils/string.utils";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import { UNCLASSIFIED } from " @components/lib/CONSTANTS";
+import LinkEditor from "./LinkEditor";
 
 type ILinkNodeProps = {
   link: ILinkNode;
@@ -146,8 +147,7 @@ const LinkNode = ({
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
-  const [editorContent, setEditorContent] = useState(title);
-  const textFieldRef = useRef<HTMLInputElement>(null);
+
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
 
   const [regionalTitle, setRegionalTitle] = useState(title);
@@ -166,74 +166,6 @@ const LinkNode = ({
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const handleNavigateToNode = () => {
     navigateToNode(link.id);
-  };
-  useEffect(() => {
-    setEditorContent(title);
-  }, [title]);
-
-  const handleChanges = (e: any) => {
-    setEditorContent(e.target.value);
-  };
-
-  const saveNodeTitle = () => {
-    try {
-      const nodeRef = doc(collection(db, NODES), link.id);
-      updateDoc(nodeRef, { title: editorContent });
-      if (setReviewId) setReviewId("");
-    } catch (e: any) {
-      console.error(e.message);
-    }
-  };
-
-  const cancelEditingNode = () => {
-    try {
-      const currentNode = nodes[link.id];
-      /*       const generalization = Object.values(
-        currentNode.generalizations
-      ).flat()[0] as { id: string }; */
-
-      for (let genCollection of currentNode.generalizations) {
-        for (let generalizationLink of genCollection.nodes) {
-          const generalizationNode = nodes[generalizationLink.id];
-          for (
-            let specCollectionIndex = 0;
-            specCollectionIndex < generalizationNode.specializations.length;
-            specCollectionIndex++
-          ) {
-            generalizationNode.specializations[specCollectionIndex].nodes =
-              generalizationNode.specializations[
-                specCollectionIndex
-              ].nodes.filter((l: ILinkNode) => l.id !== link.id);
-          }
-
-          const generalizationRef = doc(
-            collection(db, NODES),
-            generalizationLink.id
-          );
-          updateDoc(generalizationRef, {
-            specializations: generalizationNode.specializations,
-          });
-
-          const nodeRef = doc(collection(db, NODES), link.id);
-          updateDoc(nodeRef, { title: editorContent, deleted: true });
-        }
-      }
-
-      saveNewChangeLog(db, {
-        nodeId: link.id,
-        modifiedBy: user?.uname,
-        modifiedProperty: null,
-        previousValue: null,
-        newValue: null,
-        modifiedAt: new Date(),
-        changeType: "delete node",
-        fullNode: currentNode,
-      });
-
-      if (setReviewId) setReviewId("");
-    } catch (e: any) {
-      console.error(e.message);
-    }
   };
 
   const unlinkNodeRelation = async () => {
@@ -567,12 +499,7 @@ const LinkNode = ({
       ? theme.palette.common.gray50
       : theme.palette.common.notebookMainBlack;
   };
-  useEffect(() => {
-    if (reviewId === link.id && textFieldRef.current) {
-      textFieldRef.current.focus();
-      textFieldRef.current.select();
-    }
-  }, [reviewId]);
+
   return (
     <Box sx={{ ...sx }}>
       {reviewId !== link.id ? (
@@ -614,36 +541,11 @@ const LinkNode = ({
             )}
         </Box>
       ) : (
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <TextField
-            inputRef={textFieldRef}
-            value={editorContent}
-            onChange={handleChanges}
-            sx={{ width: "300px" }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                saveNodeTitle();
-              }
-            }}
-            InputProps={{
-              inputProps: {
-                style: {
-                  padding: 10,
-                },
-              },
-            }}
-          />
-          <Tooltip title="Save">
-            <IconButton onClick={saveNodeTitle} sx={{ ml: "5px" }}>
-              <DoneIcon sx={{ color: "green" }} />
-            </IconButton>
-          </Tooltip>
-          {/*     <Tooltip title="Remove">
-            <IconButton onClick={cancelEditingNode} sx={{ ml: "5px" }}>
-              <CloseIcon sx={{ color: "red" }} />
-            </IconButton>
-          </Tooltip> */}
-        </Box>
+        <LinkEditor
+          reviewId={reviewId}
+          setReviewId={setReviewId}
+          title={title}
+        />
       )}
       {ConfirmDialog}
     </Box>

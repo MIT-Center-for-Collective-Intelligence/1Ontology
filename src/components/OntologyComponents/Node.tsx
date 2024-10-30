@@ -391,13 +391,13 @@ const Node = ({
   const handleCloning = async (node: { id: string }) => {
     // Call the asynchronous function to clone the node with the given ID.
     // Close the modal or perform any necessary cleanup.
-    handleCloseAddLinksModel();
+    // handleCloseAddLinksModel();
     const newNode = await cloneNode(node.id);
     if (!newNode) return;
 
     const nodeData = nodes[currentVisibleNode.id] as INode;
     const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-
+    markItemAsChecked(newNode.id);
     // Handle the addition of specializations or generalizations
     if (
       selectedProperty === "specializations" ||
@@ -1404,6 +1404,8 @@ const Node = ({
         handleSaveLinkChanges={handleSaveLinkChanges}
         onGetPropertyValue={onGetPropertyValue}
         setCurrentVisibleNode={setCurrentVisibleNode}
+        reviewId={reviewId}
+        setReviewId={setReviewId}
       />
 
       {ConfirmDialog}
