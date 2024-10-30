@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
   Modal,
   Box,
@@ -15,12 +15,22 @@ import ExpandSearchResult from "../OntologyComponents/ExpandSearchResult";
 import TreeViewSimplified from "../OntologyComponents/TreeViewSimplified";
 import { SearchBox } from "../SearchBox/SearchBox";
 import Text from "../OntologyComponents/Text";
-import { SCROLL_BAR_STYLE, DISPLAY } from " @components/lib/CONSTANTS";
 import {
-  getSelectingModelTitle,
-  capitalizeFirstLetter,
-} from " @components/lib/utils/string.utils";
+  SCROLL_BAR_STYLE,
+  DISPLAY,
+  UNCLASSIFIED,
+} from " @components/lib/CONSTANTS";
+import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
 import LinkEditor from "../LinkNode/LinkEditor";
+import { INodeTypes } from " @components/types/INode";
+import { NODES } from " @components/lib/firestoreClient/collections";
+import {
+  getDocs,
+  query,
+  collection,
+  where,
+  getFirestore,
+} from "firebase/firestore";
 
 const SelectModelModal = ({
   openSelectModel,
@@ -81,7 +91,51 @@ const SelectModelModal = ({
   reviewId: string;
   setReviewId: any;
 }) => {
-  const textFieldRef = useRef<HTMLInputElement>(null);
+  const [disabledButton, setDisabledButton] = useState(false);
+
+  const db = getFirestore();
+  const getSelectingModelTitle = (
+    property: string,
+    nodeType: string,
+    propertyType: INodeTypes
+  ) => {
+    if (property === "specializations") {
+      property = "specialization";
+    } else if (property === "generalizations") {
+      property = "generalization";
+    } else if (property === "parts") {
+      property = "part";
+    } else if (property === "evaluationDimension") {
+      property = "Evaluation Dimension";
+    }
+    let displayNodeType: string = propertyType;
+    if (
+      property === "specialization" ||
+      property === "generalization" ||
+      property === "parts" ||
+      property === "isPartOf"
+    ) {
+      displayNodeType = nodeType;
+    }
+
+    if (displayNodeType === "activity") {
+      displayNodeType = "activities";
+    } else if (displayNodeType === "evaluationDimension") {
+      displayNodeType = "Evaluation Dimensions";
+    } else {
+      displayNodeType += "s";
+    }
+    return (
+      <div>
+        Select the{" "}
+        <strong style={{ color: "orange" }}>
+          {capitalizeFirstLetter(property)}(s)
+        </strong>{" "}
+        to add, by searching existing ${displayNodeType}, or navigating through
+        the ontology.
+      </div>
+    );
+  };
 
   const renderSelectedItems = () => (
     <Box
@@ -156,7 +210,19 @@ const SelectModelModal = ({
         manageLock={user?.manageLock}
       />
     );
-
+  const cloneUnclassifiedNode = async () => {
+    const unclassifiedNodeDocs = await getDocs(
+      query(
+        collection(db, NODES),
+        where("unclassified", "==", true),
+        where("nodeType", "==", currentVisibleNode.nodeType)
+      )
+    );
+    if (unclassifiedNodeDocs.docs.length > 0) {
+      const unclassifiedId = unclassifiedNodeDocs.docs[0].id;
+      handleCloning({ id: unclassifiedId }, searchValue);
+    }
+  };
   return (
     <Modal
       sx={{
@@ -201,7 +267,9 @@ const SelectModelModal = ({
               <Box sx={{ pt: "15px" }}>
                 {selectedProperty === "specializations" ? (
                   <Typography sx={{ pl: "15px" }}>
-                    Select the specialization to add, by either:
+                    Select the{" "}
+                    <strong style={{ color: "orange" }}>Specialization</strong>{" "}
+                    to add, by either:
                     <strong style={{ color: "orange" }}> A) </strong> Searching
                     existing{" "}
                     {currentVisibleNode.nodeType === "activity"
@@ -236,25 +304,34 @@ const SelectModelModal = ({
                     setSearchValue={setSearchValue}
                     label="Search ..."
                   />
-                  {selectedProperty === "specializations" && (
-                    <Button
-                      onClick={() =>
-                        addNewSpecialization(
+
+                  <Button
+                    onClick={async () => {
+                      setDisabledButton(true);
+                      if (selectedProperty === "specializations") {
+                        await addNewSpecialization(
                           selectedCategory || "main",
                           searchValue
-                        )
+                        );
+                      } else {
+                        await cloneUnclassifiedNode();
                       }
-                      sx={{ borderRadius: "18px", minWidth: "300px" }}
-                      variant="outlined"
-                      disabled={
-                        searchValue.length < 3 ||
-                        searchResultsForSelection[0]?.title.trim() ===
-                          searchValue.trim()
-                      }
-                    >
-                      Create as a new Specialization
-                    </Button>
-                  )}
+                      setDisabledButton(false);
+                    }}
+                    sx={{ borderRadius: "18px", minWidth: "300px" }}
+                    variant="outlined"
+                    disabled={
+                      searchValue.length < 3 ||
+                      searchResultsForSelection[0]?.title.trim() ===
+                        searchValue.trim() ||
+                      disabledButton
+                    }
+                  >
+                    Create as a new Specialization{" "}
+                    {selectedProperty !== "specializations"
+                      ? "Under " + UNCLASSIFIED[currentVisibleNode.nodeType]
+                      : ""}
+                  </Button>
                 </Box>
               </Box>
             </Box>

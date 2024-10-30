@@ -263,42 +263,6 @@ export const getTooltipHelper = (property: string): string => {
   return propertyDescriptions[property] || "";
 };
 
-export const getSelectingModelTitle = (
-  property: string,
-  nodeType: string,
-  propertyType: INodeTypes
-) => {
-  if (property === "specializations") {
-    property = "specialization";
-  } else if (property === "generalizations") {
-    property = "generalization";
-  } else if (property === "parts") {
-    property = "part";
-  } else if (property === "evaluationDimension") {
-    property = "Evaluation Dimension";
-  }
-  let displayNodeType: string = propertyType;
-  if (
-    property === "specialization" ||
-    property === "generalization" ||
-    property === "parts" ||
-    property === "isPartOf"
-  ) {
-    displayNodeType = nodeType;
-  }
-
-  if (displayNodeType === "activity") {
-    displayNodeType = "activities";
-  } else if (displayNodeType === "evaluationDimension") {
-    displayNodeType = "Evaluation Dimensions";
-  } else {
-    displayNodeType += "s";
-  }
-
-  return `Select the ${capitalizeFirstLetter(
-    property
-  )}(s) to add, by searching existing ${displayNodeType}, or navigating through the ontology.`;
-};
 
 export const isOnline = (timestamp: Timestamp) => {
   if (!timestamp) return false;

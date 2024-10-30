@@ -276,7 +276,10 @@ const Node = ({
   };
 
   const cloneNode = useCallback(
-    async (nodeId: string): Promise<INode | null> => {
+    async (
+      nodeId: string,
+      searchValue: string | null
+    ): Promise<INode | null> => {
       try {
         // Retrieve the document of the original node from Firestore.
         const parentNodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
@@ -286,7 +289,8 @@ const Node = ({
 
         // Create a reference for the new node document in Firestore.
         const newNodeRef = doc(collection(db, NODES));
-        let newTitle = `New ${parentNodeData.title}`;
+        let newTitle =
+          searchValue !== null ? searchValue : `New ${parentNodeData.title}`;
 
         // Generate a unique title based on existing specializations
         const specializationsTitles = parentNodeData.specializations.flatMap(
@@ -388,11 +392,11 @@ const Node = ({
   );
 
   // This function handles the cloning of a node.
-  const handleCloning = async (node: { id: string }) => {
+  const handleCloning = async (node: { id: string }, searchValue = null) => {
     // Call the asynchronous function to clone the node with the given ID.
     // Close the modal or perform any necessary cleanup.
     // handleCloseAddLinksModel();
-    const newNode = await cloneNode(node.id);
+    const newNode = await cloneNode(node.id, searchValue);
     if (!newNode) return;
 
     const nodeData = nodes[currentVisibleNode.id] as INode;
