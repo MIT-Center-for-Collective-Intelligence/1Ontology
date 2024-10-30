@@ -28,7 +28,7 @@ const SelectInheritance = ({
   >([]);
 
   const inheritanceRef =
-    currentVisibleNode.inheritance?.[property]?.ref || "not-inherited";
+    currentVisibleNode.inheritance?.[property]?.ref || "inheritance-overridden";
   console.log("inheritanceRef ==>", inheritanceRef);
   useEffect(() => {
     const _generalizations = [
@@ -44,8 +44,8 @@ const SelectInheritance = ({
       _generalizations.push({
         id: inheritanceRef,
         title:
-          inheritanceRef === "not-inherited"
-            ? "not-inherited"
+          inheritanceRef === "inheritance-overridden"
+            ? "Inheritance Overridden"
             : getTitle(nodes, inheritanceRef),
       });
     }
@@ -177,7 +177,10 @@ const SelectInheritance = ({
           <MenuItem
             key={generalization.id}
             value={generalization.id}
-            sx={{ color: generalization.id === "not-inherited" ? "red" : "" }}
+            sx={{
+              color:
+                generalization.id === "inheritance-overridden" ? "orange" : "",
+            }}
           >
             {generalization.title}
           </MenuItem>
