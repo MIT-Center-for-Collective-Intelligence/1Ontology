@@ -18,9 +18,13 @@ import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 const SearchSideBar = ({
   openSearchedNode,
   searchWithFuse,
+  lastSearches,
+  updateLastSearches,
 }: {
   openSearchedNode: any;
   searchWithFuse: any;
+  lastSearches: any[];
+  updateLastSearches: Function;
 }) => {
   const [searchValue, setSearchValue] = useState("");
   const [isListOpen, setIsListOpen] = useState(false);
@@ -37,8 +41,8 @@ const SearchSideBar = ({
   }, [searchValue]);
 
   const handleFocus = () => {
-    if (searchValue.trim() !== "") {
-      setIsFocused(true);
+    setIsFocused(true);
+    if (searchValue.trim() !== "" || !!lastSearches.length) {
       setIsListOpen(true);
     }
   };
@@ -70,6 +74,14 @@ const SearchSideBar = ({
     }
   };
 
+  const handleNodeClick = (node: any) => {
+    openSearchedNode(node);
+    setSearchValue(node.title);
+    updateLastSearches(node);
+    setIsListOpen(false);
+    setIsFocused(false);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -86,6 +98,34 @@ const SearchSideBar = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const renderListItem = (node: any) => (
+    <ListItem
+      key={node.id}
+      onClick={() => handleNodeClick(node)}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        color: "white",
+        cursor: "pointer",
+        borderRadius: "4px",
+        padding: "8px",
+        transition: "background-color 0.3s",
+        mt: "5px",
+        "&:hover": {
+          backgroundColor: (theme) =>
+            theme.palette.mode === "dark"
+              ? "rgba(255, 255, 255, 0.1)"
+              : "rgba(0, 0, 0, 0.1)",
+        },
+      }}
+    >
+      <Typography>
+        {node.title}
+        {!!node.context?.title && ` at ${node.context.title}`}
+      </Typography>
+    </ListItem>
+  );
 
   return (
     <Box
@@ -164,41 +204,13 @@ const SearchSideBar = ({
           zIndex: 1000,
         }}
       />
-      {isListOpen && searchResults.length > 0 && (
+      {isListOpen && (
         <List sx={{ zIndex: isListOpen ? 10 : 0 }}>
-          {searchResults.map((node: any) => (
-            <ListItem
-              key={node.id}
-              onClick={() => {
-                openSearchedNode(node);
-                setSearchValue(node.title);
-                setIsListOpen(false);
-                setIsFocused(false);
-              }}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                color: "white",
-                cursor: "pointer",
-                borderRadius: "4px",
-                padding: "8px",
-                transition: "background-color 0.3s",
-                // border: "1px solid #ccc",
-                mt: "5px",
-                "&:hover": {
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "dark"
-                      ? DESIGN_SYSTEM_COLORS.notebookG450
-                      : "white",
-                },
-              }}
-            >
-              <Typography>
-                {node.title}
-                {!!node.context?.title && ` at ${node.context.title}`}
-              </Typography>
-            </ListItem>
-          ))}
+          {searchResults.length > 0
+            ? searchResults.map(renderListItem)
+            : searchValue === "" &&
+              lastSearches.length > 0 &&
+              lastSearches.map(renderListItem)}
         </List>
       )}
     </Box>

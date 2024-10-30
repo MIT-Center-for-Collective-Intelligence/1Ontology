@@ -100,6 +100,8 @@ type MainSidebarProps = {
   setDisplayGuidelines: Function;
   currentImprovement: any;
   setCurrentImprovement: any;
+  lastSearches: string[];
+  updateLastSearches: Function;
 };
 
 const ToolbarSidebar = ({
@@ -124,6 +126,8 @@ const ToolbarSidebar = ({
   setDisplayGuidelines,
   currentImprovement,
   setCurrentImprovement,
+  lastSearches,
+  updateLastSearches,
 }: MainSidebarProps) => {
   const theme = useTheme();
   const db = getFirestore();
@@ -450,6 +454,8 @@ const ToolbarSidebar = ({
           <SearchSideBar
             openSearchedNode={openSearchedNode}
             searchWithFuse={searchWithFuse}
+            lastSearches={lastSearches}
+            updateLastSearches={updateLastSearches}
           />
         );
       case "userActivity":
