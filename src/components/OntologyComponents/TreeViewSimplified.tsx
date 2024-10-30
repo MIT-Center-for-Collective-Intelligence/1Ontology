@@ -94,6 +94,14 @@ const TreeViewSimplified = ({
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
+                if (
+                  !treeVisualization[nodeId].isCategory &&
+                  clone &&
+                  !treeVisualization[nodeId].unclassified &&
+                  !preventLoops?.has(treeVisualization[nodeId]?.id)
+                ) {
+                  markItemAsChecked(treeVisualization[nodeId]?.id);
+                }
                 if (sendNode || clone) return;
                 onOpenNodesTree(treeVisualization[nodeId].id);
               }}
