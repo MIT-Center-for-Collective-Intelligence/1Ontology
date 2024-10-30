@@ -151,7 +151,7 @@ const ManageNodeButtons = ({
             </IconButton>
           </Tooltip>
         )}
-        <Tooltip title="Open Chat Tab">
+        <Tooltip title="Open Node Comments">
           <IconButton onClick={displayNodeChat}>
             <ChatIcon
               color={activeSidebar === "chat" ? "primary" : "inherit"}

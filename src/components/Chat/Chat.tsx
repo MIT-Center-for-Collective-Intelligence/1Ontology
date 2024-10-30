@@ -259,6 +259,8 @@ const Chat = ({
     taggedUsers: Set<string> = new Set()
   ) => {
     const batch = writeBatch(db);
+    console.log("taggedUsers", taggedUsers);
+
     for (const userData of users) {
       if (userData.uname === user.uname) continue;
       if (
@@ -297,6 +299,7 @@ const Chat = ({
     imageUrls: string[],
     taggedUsers: Set<string>
   ) => {
+    console.log("taggedUsers ===>>", taggedUsers)
     if (!user?.uname) return;
     const commentData = {
       nodeId: type === "node" ? nodeId || "" : null,

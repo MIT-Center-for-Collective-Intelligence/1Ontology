@@ -263,7 +263,6 @@ export const getTooltipHelper = (property: string): string => {
   return propertyDescriptions[property] || "";
 };
 
-
 export const isOnline = (timestamp: Timestamp) => {
   if (!timestamp) return false;
   const now = new Date();
@@ -277,16 +276,16 @@ export const getTaggedUsers = (input: string) => {
   if (input) {
     const _matches = input.match(regex);
     if (_matches) {
-      const matches: string[] = [];
+      const matches: Set<string> = new Set();
       for (let match of _matches) {
         const m = match.match(/\(([^)]+)\)/);
         if (m) {
-          matches.push(m[1]);
+          matches.add(m[1]);
         }
       }
 
       return matches;
     }
   }
-  return [];
+  return new Set();
 };

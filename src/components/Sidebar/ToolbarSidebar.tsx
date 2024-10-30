@@ -636,7 +636,7 @@ const ToolbarSidebar = ({
             {activeSidebar === "chat" && (
               <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
                 <Typography sx={{ fontSize: "19px", fontWeight: "bold" }}>
-                  {"Node's Chat"}
+                  {"Node Comments"}
                 </Typography>
               </Box>
             )}
