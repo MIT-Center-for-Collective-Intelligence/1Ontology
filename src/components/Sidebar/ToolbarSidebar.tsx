@@ -691,7 +691,7 @@ const ToolbarSidebar = ({
           <Box sx={{ mb: 2, mr: "10px" }}>
             <img
               src={getLog}
-              alt="onecademy logo"
+              alt="mit logo"
               width={"auto"}
               height={"40px"}
             />

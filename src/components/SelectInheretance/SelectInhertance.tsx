@@ -29,7 +29,7 @@ const SelectInheritance = ({
 
   const inheritanceRef =
     currentVisibleNode.inheritance?.[property]?.ref || "inheritance-overridden";
-  console.log("inheritanceRef ==>", inheritanceRef);
+
   useEffect(() => {
     const _generalizations = [
       ...currentVisibleNode.generalizations.flatMap(

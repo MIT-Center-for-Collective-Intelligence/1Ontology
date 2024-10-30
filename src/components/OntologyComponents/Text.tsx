@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid";
 import React, {
   useEffect,
   useRef,
@@ -241,21 +242,32 @@ const Text = ({
   };
 
   const renderDiff = (previousValue: string, newValue: string) => {
-    const diffContent = diffWords(previousValue, newValue);
-
-    return diffContent.map((word) => (
-      <div key={word.value}>
-        <span
-          style={{
-            fontSize: property === "title" ? "29px" : "19px",
-            color: word.added ? "green" : word.removed ? "red" : "",
-            textDecoration: word.removed ? "line-through" : "none",
-          }}
-        >
-          {word.value}
-        </span>
-      </div>
-    ));
+    try {
+      const diffContent = diffWords(previousValue, newValue);
+      const lines = diffLines(previousValue, newValue);
+      return diffContent.map((line, index) => (
+        <div key={uuidv4()}>
+          <span
+            style={{
+              fontSize: property === "title" ? "29px" : "19px",
+              color: line.added ? "green" : line.removed ? "red" : "",
+              textDecoration: line.removed ? "line-through" : "none",
+            }}
+          >
+            {line.value}
+          </span>
+        </div>
+      ));
+    } catch (error) {
+      return (
+        <div>
+          <div style={{ color: "red", textDecoration: "line-through" }}>
+            {previousValue}
+          </div>
+          <div style={{ color: "green" }}>{newValue}</div>
+        </div>
+      );
+    }
   };
 
   return (
