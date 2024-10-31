@@ -304,34 +304,42 @@ const SelectModelModal = ({
                     setSearchValue={setSearchValue}
                     label="Search ..."
                   />
-
-                  <Button
-                    onClick={async () => {
-                      setDisabledButton(true);
-                      if (selectedProperty === "specializations") {
-                        await addNewSpecialization(
-                          selectedCategory || "main",
-                          searchValue
-                        );
-                      } else {
-                        await cloneUnclassifiedNode();
-                      }
-                      setDisabledButton(false);
-                    }}
-                    sx={{ borderRadius: "18px", minWidth: "300px" }}
-                    variant="outlined"
-                    disabled={
-                      searchValue.length < 3 ||
-                      searchResultsForSelection[0]?.title.trim() ===
-                        searchValue.trim() ||
-                      disabledButton
-                    }
+                  <Tooltip
+                    title={`Create as a new Specialization 
+                    ${
+                      selectedProperty !== "specializations"
+                        ? "Under " + UNCLASSIFIED[currentVisibleNode.nodeType]
+                        : ""
+                    } Node`}
                   >
-                    Create as a new Specialization{" "}
-                    {selectedProperty !== "specializations"
-                      ? "Under " + UNCLASSIFIED[currentVisibleNode.nodeType]
-                      : ""}
-                  </Button>
+                    <Button
+                      onClick={async () => {
+                        setDisabledButton(true);
+                        if (selectedProperty === "specializations") {
+                          await addNewSpecialization(
+                            selectedCategory || "main",
+                            searchValue
+                          );
+                        } else {
+                          await cloneUnclassifiedNode();
+                        }
+                        setDisabledButton(false);
+                      }}
+                      sx={{ borderRadius: "18px", minWidth: "300px" }}
+                      variant="outlined"
+                      disabled={
+                        searchValue.length < 3 ||
+                        searchResultsForSelection[0]?.title.trim() ===
+                          searchValue.trim() ||
+                        disabledButton
+                      }
+                    >
+                      Create{" "}
+                      {selectedProperty !== "specializations"
+                        ? "Under " + UNCLASSIFIED[currentVisibleNode.nodeType]
+                        : ""}
+                    </Button>
+                  </Tooltip>
                 </Box>
               </Box>
             </Box>

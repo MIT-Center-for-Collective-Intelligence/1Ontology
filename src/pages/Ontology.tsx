@@ -909,20 +909,18 @@ const Ontology = () => {
                 <TabPanel
                   value={viewValue}
                   index={0}
-                  sx={
-                    {
-                      height: "100%",
+                  sx={{
+                    height: "100%",
                     overflowX: "auto",
                     whiteSpace: "nowrap",
                     ...SCROLL_BAR_STYLE,
-                    }
-                  }
-              >
-                <Box
-                  sx={{
-                    display: "inline-block", // Keep it inline for horizontal scroll
-                    minWidth: "100%", // Ensures it takes at least the width of the container
                   }}
+                >
+                  <Box
+                    sx={{
+                      display: "inline-block", // Keep it inline for horizontal scroll
+                      minWidth: "100%", // Ensures it takes at least the width of the container
+                    }}
                   >
                     <TreeViewSimplified
                       treeVisualization={treeVisualization}
@@ -931,7 +929,7 @@ const Ontology = () => {
                       setExpandedNodes={setExpandedNodes}
                       currentVisibleNode={currentVisibleNode}
                     />
-                </Box>
+                  </Box>
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
                   <DagGraph

@@ -134,7 +134,9 @@ const ChatSideBar = ({
     },
     [selectedChatTab, currentVisibleNode?.id, user]
   );
-
+  useEffect(() => {
+    setSelectedChatTab(0);
+  }, [chatTabs]);
   // useEffect(() => {
   //   if (!user) return;
   //   setBugReportMessages([]);
@@ -177,7 +179,6 @@ const ChatSideBar = ({
   //     killHelpSnapshot();
   //   };
   // }, [db, user]);
-
   return (
     <Box>
       {chatTabs.length > 1 && (
@@ -204,19 +205,17 @@ const ChatSideBar = ({
       <Box>
         {chatTabs.map((tab, idx: number) => (
           <TabPanel key={tab.id} value={selectedChatTab} index={idx}>
-            {currentVisibleNode?.id && (
-              <Chat
-                user={user}
-                type={tab.id}
-                nodeId={tab.id === "node" ? currentVisibleNode?.id : ""}
-                users={users}
-                confirmIt={confirmIt}
-                setOpenSelectModel={() => {
-                  setOpenModel(true);
-                }}
-                navigateToNode={navigateToNode}
-              />
-            )}
+            <Chat
+              user={user}
+              type={tab.id}
+              nodeId={tab.id === "node" ? currentVisibleNode?.id : ""}
+              users={users}
+              confirmIt={confirmIt}
+              setOpenSelectModel={() => {
+                setOpenModel(true);
+              }}
+              navigateToNode={navigateToNode}
+            />
           </TabPanel>
         ))}
       </Box>

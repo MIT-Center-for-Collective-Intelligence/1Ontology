@@ -435,7 +435,7 @@ const ToolbarSidebar = ({
     }
   };
 
-  const renderContent = () => {
+  const renderContent = (activeSidebar: string) => {
     switch (activeSidebar) {
       case "notifications":
         return (
@@ -684,17 +684,12 @@ const ToolbarSidebar = ({
               </IconButton>
             )}
           </Box>
-          {renderContent()}
+          {renderContent(activeSidebar)}
         </Box>
       ) : (
         <>
           <Box sx={{ mb: 2, mr: "10px" }}>
-            <img
-              src={getLog}
-              alt="mit logo"
-              width={"auto"}
-              height={"40px"}
-            />
+            <img src={getLog} alt="mit logo" width={"auto"} height={"40px"} />
           </Box>
 
           {/* Button for Avatar and Full Name */}

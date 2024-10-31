@@ -90,12 +90,16 @@ const Chat = ({
   useEffect(() => {
     setMessages([]);
     if (!user) return;
+
     if (!nodeId && type === "node") return;
     setIsLoading(true);
 
     const onSynchronize = (changes: chatChange[]) => {
       setMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
       setIsLoading(false);
+      setTimeout(() => {
+        scrollToBottom();
+      }, 0);
     };
 
     const killSnapshot = getMessagesSnapshot(
@@ -105,6 +109,7 @@ const Chat = ({
     );
     return () => killSnapshot();
   }, [db, user, nodeId, type]);
+
   useEffect(() => {
     const element = document.getElementById("right-panel-tabs");
     if (element) {
