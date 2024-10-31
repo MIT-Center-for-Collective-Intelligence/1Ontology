@@ -402,6 +402,7 @@ const Node = ({
     const nodeData = nodes[currentVisibleNode.id] as INode;
     const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
     markItemAsChecked(newNode.id);
+    setReviewId(newNode.id);
     // Handle the addition of specializations or generalizations
     if (
       selectedProperty === "specializations" ||
@@ -536,7 +537,6 @@ const Node = ({
         await updateDoc(nodeRef, updateObject);
       }
 
-      setReviewId(newNode.id);
       // Update inheritance (if needed)
       updateInheritance({
         nodeId: currentVisibleNode.id,

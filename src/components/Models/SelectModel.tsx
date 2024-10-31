@@ -136,7 +136,7 @@ const SelectModelModal = ({
       </div>
     );
   };
-
+console.log("reviewId==>", reviewId)
   const renderSelectedItems = () => (
     <Box
       sx={{

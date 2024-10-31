@@ -12,6 +12,7 @@ import { chatChange } from " @components/client/firestore/messages.firestore";
 import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
 import { synchronizeStuff } from " @components/lib/utils/helpers";
 import { getFirestore } from "firebase/firestore";
+import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 
 dayjs.extend(relativeTime);
 
@@ -80,6 +81,7 @@ export const Notifications = ({
         flexDirection: "column",
         height: "100vh",
         p: 2,
+        ...SCROLL_BAR_STYLE,
       }}
     >
       <Tabs
@@ -95,6 +97,9 @@ export const Notifications = ({
           overflow: "auto",
           flex: 1,
           mt: 2,
+          "&::-webkit-scrollbar": {
+            display: "none",
+          },
         }}
       >
         {!displayNotifications.length && (
