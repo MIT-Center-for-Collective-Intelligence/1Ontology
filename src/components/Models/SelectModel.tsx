@@ -144,6 +144,7 @@ const SelectModelModal = ({
         height: "700px",
         overflowY: "auto",
         "&::-webkit-scrollbar": { display: "none" },
+        px: "15px",
       }}
     >
       <Box
@@ -421,7 +422,7 @@ const SelectModelModal = ({
           </Box>
 
           {/* Selected Items Section */}
-          {checkedItems.size > 0 && renderSelectedItems()}
+          {renderSelectedItems()}
         </Paper>
       </Box>
     </Modal>

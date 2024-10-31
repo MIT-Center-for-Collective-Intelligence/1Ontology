@@ -271,7 +271,7 @@ export const isOnline = (timestamp: Timestamp) => {
   return minutes < 10;
 };
 
-export const getTaggedUsers = (input: string) => {
+export const getTaggedUsers = (input: string): Set<string> => {
   const regex = /\[[^\]]+\]\(([^)]+)\)/g;
   if (input) {
     const _matches = input.match(regex);

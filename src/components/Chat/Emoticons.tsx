@@ -2,15 +2,15 @@ import AddReactionIcon from "@mui/icons-material/AddReaction";
 import { Button, IconButton } from "@mui/material";
 import { Box } from "@mui/system";
 import React, { useEffect, useState } from "react";
-import { IChat, Reaction } from " @components/types/IChat";
+import { IChatMessage, Reaction } from " @components/types/IChat";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import { shortenNumber } from " @components/lib/utils/utils";
 
 type EmoticonsProps = {
-  message: IChat;
+  message: IChatMessage;
   reactionsMap: Reaction[];
-  toggleEmojiPicker: (event: any, message?: IChat) => void;
-  toggleReaction: (comment: IChat, emoji: string) => void;
+  toggleEmojiPicker: (event: any, message?: IChatMessage) => void;
+  toggleReaction: (comment: IChatMessage, emoji: string) => void;
   user: any;
 };
 export const Emoticons = ({ message, reactionsMap, toggleEmojiPicker, toggleReaction, user }: EmoticonsProps) => {

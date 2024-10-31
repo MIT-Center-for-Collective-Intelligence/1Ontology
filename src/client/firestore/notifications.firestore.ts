@@ -1,4 +1,4 @@
-import { IChat } from " @components/types/IChat";
+import { IChatMessage } from " @components/types/IChat";
 import {
   collection,
   Firestore,
@@ -14,7 +14,7 @@ import {
 export type SnapshotChangesTypes = "added" | "modified" | "removed";
 
 export type notificationChange = {
-  data: IChat & { id: string };
+  data: IChatMessage & { id: string };
   type: SnapshotChangesTypes;
 };
 
@@ -23,10 +23,11 @@ export const getNotificationsSnapshot = (
   data: {
     lastVisible: any;
     uname: string;
+    seen?: boolean;
   },
   callback: (changes: notificationChange[]) => void
 ): Unsubscribe => {
-  const { uname } = data;
+  const { uname, seen } = data;
   //const pageSize = 15;
 
   const messagesRef = collection(db, "notifications");
@@ -34,7 +35,7 @@ export const getNotificationsSnapshot = (
   const q = query(
     messagesRef,
     where("user", "==", uname),
-    where("seen", "==", false)
+    where("seen", "==", !!seen)
   );
 
   //   if (lastVisible) {
@@ -53,7 +54,7 @@ export const getNotificationsSnapshot = (
 
     const actionTrackDocuments: notificationChange[] = docChanges.map(
       (change) => {
-        const document = change.doc.data() as IChat;
+        const document = change.doc.data() as IChatMessage;
         return {
           type: change.type,
           data: { ...document, id: change.doc.id },

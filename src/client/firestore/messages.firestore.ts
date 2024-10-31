@@ -1,5 +1,5 @@
 import { MESSAGES } from " @components/lib/firestoreClient/collections";
-import { IChat } from " @components/types/IChat";
+import { IChatMessage } from " @components/types/IChat";
 import {
   collection,
   Firestore,
@@ -15,7 +15,7 @@ import {
 export type SnapshotChangesTypes = "added" | "modified" | "removed";
 
 export type chatChange = {
-  data: IChat & { id: string };
+  data: IChatMessage & { id: string };
   type: SnapshotChangesTypes;
 };
 
@@ -62,7 +62,7 @@ export const getMessagesSnapshot = (
     const docChanges = snapshot.docChanges();
 
     const actionTrackDocuments: chatChange[] = docChanges.map((change) => {
-      const document = change.doc.data() as IChat;
+      const document = change.doc.data() as IChatMessage;
       return {
         type: change.type,
         data: { ...document, id: change.doc.id },

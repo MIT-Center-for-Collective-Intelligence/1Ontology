@@ -13,7 +13,7 @@ export type senderDetail = {
   role?: string;
 };
 
-export type IChat = {
+export type IChatMessage = {
   doc?: any;
   heading?: string;
   id: string;
@@ -35,6 +35,7 @@ export type IChat = {
   totalReplies?: number;
   messageType?: string;
   sharedNodeId?: string;
+  subscribed?: string[];
 };
 
 export type INotification = {

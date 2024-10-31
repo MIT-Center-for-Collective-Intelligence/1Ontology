@@ -6,14 +6,12 @@ import React, {
   useState,
 } from "react";
 import {
-  Avatar,
   Button,
   IconButton,
   LinearProgress,
   Menu,
   MenuItem,
   SvgIcon, // Changed from IconButton to Button
-  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
@@ -24,20 +22,14 @@ import mitLogoLightLong from "../../../public/CCI-logo.gif";
 import mitLogoDarkLong from "../../../public/MIT-Logo-Dark.png";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
-import AutoStoriesIcon from "@mui/icons-material/AutoStories";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
-
-import SearchIcon from "@mui/icons-material/Search";
 import NotificationsIcon from "@mui/icons-material/Notifications";
-import DownloadIcon from "@mui/icons-material/Download";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import useThemeChange from " @components/lib/hooks/useThemeChange";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import ClearIcon from "@mui/icons-material/Clear";
-import { Notification } from " @components/components/Chat/Notification";
+import { Notifications } from " @components/components/Chat/Notifications";
 import { chatChange } from " @components/client/firestore/messages.firestore";
 import { INotification } from " @components/types/IChat";
 import { synchronizeStuff } from " @components/lib/utils/helpers";
@@ -352,10 +344,15 @@ const ToolbarSidebar = ({
           const element = document.getElementById(`message-${messageId}`);
           if (element) {
             element.scrollIntoView({ behavior: "smooth", block: "center" });
-            element.style.border = `solid 1px ${DESIGN_SYSTEM_COLORS.orange400}`;
+            element.style.borderRadius = "8px";
+            element.style.padding = "8px";
+            element.style.marginTop = "8px";
+            element.style.backgroundColor = `#deab8b99`;
+            element.style.transition = "background-color 0.5s ease";
             setTimeout(() => {
               element.style.border = "none";
-            }, 1000);
+              element.style.backgroundColor = ``;
+            }, 3000);
           }
         },
         type === "node" ? 2000 : 1000
@@ -439,7 +436,7 @@ const ToolbarSidebar = ({
     switch (activeSidebar) {
       case "notifications":
         return (
-          <Notification
+          <Notifications
             user={user}
             notifications={notifications}
             openNotification={openNotification}
@@ -567,7 +564,27 @@ const ToolbarSidebar = ({
       />
     );
   };
-
+  const getHeaderTest = (activeSidebar: string) => {
+    switch (activeSidebar) {
+      case "chat-discussion":
+        return "Chatroom";
+        break;
+      case "chat":
+        return "Node Comments";
+        break;
+      case "notifications":
+        return "Notifications";
+        break;
+      case "nodeHistory":
+        return "Node's History";
+        break;
+      case "inheritanceSettings":
+        return "Node's Inheritance Settings";
+        break;
+      default:
+        return "";
+    }
+  };
   return (
     <Box
       ref={toolbarRef}
@@ -626,46 +643,12 @@ const ToolbarSidebar = ({
                 </Box>
               </Box>
             )}
-            {activeSidebar === "chat-discussion" && (
+
+            {getHeaderTest(activeSidebar) && (
               <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <Typography sx={{ fontSize: "19px", fontWeight: "bold" }}>
-                  {"Chatroom"}
+                <Typography sx={{ fontSize: "29px", fontWeight: "bold" }}>
+                  {getHeaderTest(activeSidebar)}
                 </Typography>
-              </Box>
-            )}
-            {activeSidebar === "chat" && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <Typography sx={{ fontSize: "19px", fontWeight: "bold" }}>
-                  {"Node Comments"}
-                </Typography>
-              </Box>
-            )}
-            {activeSidebar === "notifications" && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <Typography
-                  sx={{
-                    fontSize: "19px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {"Notifications"}
-                </Typography>
-              </Box>
-            )}
-            {activeSidebar === "nodeHistory" && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <Typography sx={{ fontSize: "19px", fontWeight: "bold" }}>
-                  {"Node's History"}
-                </Typography>
-              </Box>
-            )}
-            {activeSidebar === "inheritanceSettings" && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <Box>
-                  <Typography sx={{ fontSize: "19px", fontWeight: "bold" }}>
-                    {"Node's Inheritance Settings"}
-                  </Typography>
-                </Box>
               </Box>
             )}
             {user && (

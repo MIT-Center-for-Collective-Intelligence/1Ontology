@@ -1,5 +1,5 @@
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
-import { IChat } from " @components/types/IChat";
+import { IChatMessage } from " @components/types/IChat";
 import AddReactionIcon from "@mui/icons-material/AddReaction";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -9,7 +9,7 @@ import { IconButton, Tooltip } from "@mui/material";
 import { Box, SxProps, Theme } from "@mui/system";
 import React from "react";
 type CommentButtonProps = {
-  message: IChat;
+  message: IChatMessage;
   sx?: SxProps<Theme>;
   replyMessage?: (message: any) => void;
   forwardMessage?: (message: any) => void;

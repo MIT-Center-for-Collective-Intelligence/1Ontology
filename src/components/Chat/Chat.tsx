@@ -32,7 +32,7 @@ import { MessageButtons } from "./MessageButtons";
 import MessageInput from "./MessageInput";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import MarkdownRender from "../Markdown/MarkdownRender";
-import { IChat } from " @components/types/IChat";
+import { IChatMessage } from " @components/types/IChat";
 import { Emoticons } from "./Emoticons";
 import LinkIcon from "@mui/icons-material/Link";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
@@ -42,6 +42,7 @@ import {
   getMessagesSnapshot,
 } from " @components/client/firestore/messages.firestore";
 import { recordLogs, synchronizeStuff } from " @components/lib/utils/helpers";
+import { getTaggedUsers } from " @components/lib/utils/string.utils";
 const DynamicMemoEmojiPicker = dynamic(() => import("./EmojiPicker"), {
   loading: () => <p>Loading...</p>,
   ssr: false,
@@ -84,7 +85,7 @@ const Chat = ({
   const [anchorEl, setAnchorEl] = useState(null);
   const openPicker = Boolean(anchorEl);
   const scrolling = useRef<any>();
-  const [messages, setMessages] = useState<IChat[]>([]);
+  const [messages, setMessages] = useState<IChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -127,7 +128,7 @@ const Chat = ({
     }
   }, []);
 
-  const toggleEmojiPicker = (event: any, comment?: IChat) => {
+  const toggleEmojiPicker = (event: any, comment?: IChatMessage) => {
     commentRef.current.comment = comment || null;
     setAnchorEl(event.currentTarget);
     setShowEmojiPicker(!showEmojiPicker);
@@ -144,7 +145,7 @@ const Chat = ({
     setShowEmojiPicker(false);
   };
 
-  const addReaction = async (message: IChat, emoji: string) => {
+  const addReaction = async (message: IChatMessage, emoji: string) => {
     if (!message.id || !user?.uname) return;
 
     if (!message.parentMessage) {
@@ -171,7 +172,8 @@ const Chat = ({
     createNotifications(
       emoji,
       message.text,
-      message?.parentMessage || message?.id
+      message?.parentMessage || message?.id,
+      new Set([message.sender])
     );
 
     recordLogs({
@@ -180,7 +182,7 @@ const Chat = ({
     });
   };
 
-  const removeReaction = async (message: IChat, emoji: string) => {
+  const removeReaction = async (message: IChatMessage, emoji: string) => {
     if (!message.id) return;
     if (!message.parentMessage) {
       setMessages((prevMessages: any) => {
@@ -216,7 +218,7 @@ const Chat = ({
     });
   };
 
-  const toggleReaction = (message: IChat, emoji: string) => {
+  const toggleReaction = (message: IChatMessage, emoji: string) => {
     if (!message?.id || !user?.uname) return;
     const reactionIdx = message.reactions.findIndex(
       (r: any) => r.user === user?.uname && r.emoji === emoji
@@ -264,7 +266,6 @@ const Chat = ({
     taggedUsers: Set<string> = new Set()
   ) => {
     const batch = writeBatch(db);
-
     for (const userData of users) {
       if (userData.uname === user.uname) continue;
       if (
@@ -343,7 +344,8 @@ const Chat = ({
   const addReply = async (
     text: string,
     imageUrls: string[],
-    messageId: string
+    messageId: string,
+    taggedUsers: Set<string>
   ) => {
     if (!user?.uname) return;
     const reply = {
@@ -363,15 +365,17 @@ const Chat = ({
     };
     const messageRef = getMessageDocRef(messageId);
     const replyRef = collection(messageRef, "replies");
-    const docRef = await addDoc(replyRef, reply);
+    await addDoc(replyRef, reply);
     await updateDoc(messageRef, {
       totalReplies: increment(1),
+      subscribed: arrayUnion(user.uname),
     });
 
     createNotifications(
       `Reply by ${user.fName + " " + user.lName}`,
       text,
-      messageId
+      messageId,
+      taggedUsers
     );
 
     recordLogs({
@@ -628,7 +632,7 @@ const Chat = ({
     }
   };
 
-  const renderMessages = (messages: IChat[]) => {
+  const renderMessages = (messages: IChatMessage[]) => {
     return (
       <TransitionGroup>
         {messages.map((message) => (
