@@ -76,14 +76,14 @@ export const MessageButtons = ({
         </IconButton>
       </Tooltip> */}
       {isSender && handleEditMessage && (
-        <Tooltip title={"edit"}>
+        <Tooltip title={"Edit message"}>
           <IconButton onClick={handleEditMessage}>
             <EditIcon sx={{ fontSize: "19px" }} />
           </IconButton>
         </Tooltip>
       )}
       {handleDeleteMessage && isSender && (
-        <Tooltip title={"delete"}>
+        <Tooltip title={"Delete message"}>
           <IconButton onClick={handleDeleteMessage}>
             <DeleteIcon sx={{ fontSize: "19px" }} />
           </IconButton>

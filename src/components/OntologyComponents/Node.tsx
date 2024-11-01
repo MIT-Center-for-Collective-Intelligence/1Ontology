@@ -1072,7 +1072,7 @@ const Node = ({
         // call removeIsPartOf function to remove the node link from all the nodes where it's linked
         await removeIsPartOf(db, currentNode as INode, user?.uname);
         // Update the user document by removing the deleted node's ID
-        await updateDoc(nodeRef, { deleted: true });
+        await updateDoc(nodeRef, { deleted: true, deletedAt: new Date() });
 
         saveNewChangeLog(db, {
           nodeId: currentNode.id,

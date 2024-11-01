@@ -13,7 +13,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { getStorage } from "firebase/storage";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Mention, MentionsInput } from "react-mentions";
 import { MentionUser } from "./MentionUser";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
@@ -33,15 +33,12 @@ type ChatInputProps = {
   onClose?: any;
   isEditing?: boolean;
   sx?: SxProps<Theme>;
-  startListening: any;
-  stopListening: any;
-  isRecording: boolean;
-  recordingType: string | null;
   users: any;
   confirmIt: any;
-  editing?: any;
+  editing: any;
   setEditing: any;
   setOpenSelectModel?: React.Dispatch<React.SetStateAction<boolean>>;
+  chatType: string;
 };
 
 const ChatInput = ({
@@ -51,16 +48,13 @@ const ChatInput = ({
   onSubmit,
   onClose,
   isEditing,
-  sx,
-  // startListening,
-  // stopListening,
-  // isRecording,
-  // recordingType,
   users,
   confirmIt,
   editing,
   setEditing,
   setOpenSelectModel,
+  chatType,
+  sx,
 }: ChatInputProps) => {
   const theme = useTheme();
   const storage = getStorage();
@@ -78,19 +72,23 @@ const ChatInput = ({
   }, [fileInputRef]);
 
   let style = {
-    // ...defaultStyle,
     highlighter: {
       boxSizing: "border-box",
       overflow: "hidden",
-      height: 70,
+      height: "auto",
+      minHeight: "70px",
+      maxHeight: "300px",
     },
-
     control: {
       fontSize: 16,
       padding: "10px",
       boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.1)",
       border: "none",
-      overFlow: "hidden",
+      overflow: "hidden",
+      minHeight: "70px",
+      maxHeight: "300px",
+      height: "auto",
+      resize: "none",
     },
     input: {
       overflow: "auto",
@@ -104,8 +102,11 @@ const ChatInput = ({
           : DESIGN_SYSTEM_COLORS.notebookG900,
       padding: "15px",
       paddingBottom: "0px",
-      overFlow: "auto",
       fontFamily: "system-ui",
+      minHeight: "70px",
+      maxHeight: "300px",
+      height: "auto",
+      resize: "none",
       ...SCROLL_BAR_STYLE,
     },
     suggestions: {
@@ -114,7 +115,6 @@ const ChatInput = ({
           theme.palette.mode === "dark"
             ? DESIGN_SYSTEM_COLORS.notebookG700
             : DESIGN_SYSTEM_COLORS.gray100,
-
         padding: "2px",
         fontSize: 16,
         maxHeight: "150px",
@@ -123,6 +123,27 @@ const ChatInput = ({
     },
     ...SCROLL_BAR_STYLE,
   };
+
+  useEffect(() => {
+    const savedInputValue = localStorage.getItem(
+      `chatInputValue-${type}-${chatType}`
+    );
+    if (isEditing) {
+      setInputValue(editing?.text);
+      return;
+    }
+    if (savedInputValue) {
+      setInputValue(savedInputValue);
+    } else {
+      setInputValue("");
+    }
+  }, [chatType, type, isEditing]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      localStorage.setItem(`chatInputValue-${type}-${chatType}`, inputValue);
+    }
+  }, [inputValue, chatType, type, isEditing]);
 
   const onUploadImage = useCallback(
     (event: any) => {
@@ -154,7 +175,12 @@ const ChatInput = ({
   const onKeyDown = (e: any) => {
     if (e.key === "Enter" && (e.shiftKey || e.metaKey)) {
       e.preventDefault();
-      setInputValue(inputValue + "\n");
+      const { selectionStart, selectionEnd } = e.currentTarget;
+      const newValue =
+        inputValue.slice(0, selectionStart) +
+        "\n" +
+        inputValue.slice(selectionEnd);
+      setInputValue(newValue);
     } else if (e.key === "Enter" || e.keyCode === 13) {
       e.preventDefault();
       if (inputValue) {

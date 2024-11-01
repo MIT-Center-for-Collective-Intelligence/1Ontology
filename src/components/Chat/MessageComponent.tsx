@@ -8,16 +8,14 @@ import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import { Emoticons } from "./Emoticons";
 import { MessageButtons } from "./MessageButtons";
-import MessageInput from "./MessageInput";
 import OptimizedAvatar from "./OptimizedAvatar";
+import ChatInput from "./ChatInput";
 
 const MessageComponent = ({
   message,
   user,
   editing,
   setEditing,
-  isRecording,
-  recordingType,
   users,
   confirmIt,
   toggleEmojiPicker,
@@ -30,13 +28,12 @@ const MessageComponent = ({
   deleteMessage,
   navigateToNode,
   replies,
+  chatType,
 }: {
   message: any;
   user: any;
   editing: any;
   setEditing: any;
-  isRecording: any;
-  recordingType: any;
   users: any;
   confirmIt: any;
   toggleEmojiPicker: any;
@@ -49,6 +46,7 @@ const MessageComponent = ({
   deleteMessage: any;
   navigateToNode: any;
   replies: any;
+  chatType: string;
 }) => {
   const boxRef = useRef<HTMLDivElement>(null);
   const scrolling = useRef<HTMLDivElement>(null);
@@ -105,20 +103,18 @@ const MessageComponent = ({
           </Box>
 
           {editing?.id === message.id ? (
-            <MessageInput
+            <ChatInput
               message={message}
               user={user}
               type="message"
               onClose={() => setEditing(null)}
               onSubmit={editMessage}
               isEditing
-              startListening={() => {}}
-              stopListening={() => {}}
-              isRecording={isRecording}
-              recordingType={recordingType}
               users={users}
               confirmIt={confirmIt}
               setEditing={setEditing}
+              chatType={chatType}
+              editing={editing}
             />
           ) : (
             <Box
@@ -243,6 +239,7 @@ const MessageComponent = ({
                   toggleEmojiPicker={toggleEmojiPicker}
                   toggleReaction={toggleReaction}
                   user={user}
+                  boxRef={boxRef}
                 />
               </Box>
               <Button
@@ -264,18 +261,16 @@ const MessageComponent = ({
           {showReplies === message.id && (
             <Box sx={{ mt: "10px" }}>
               {renderReplies(message.id, replies, boxRef)}
-              <MessageInput
+              <ChatInput
                 user={user}
                 type="reply"
                 message={message}
                 onSubmit={addReply}
-                startListening={() => {}}
-                stopListening={() => {}}
-                isRecording={isRecording}
-                recordingType={recordingType}
                 users={users}
                 confirmIt={confirmIt}
                 setEditing={setEditing}
+                chatType={chatType}
+                editing={editing}
               />
             </Box>
           )}

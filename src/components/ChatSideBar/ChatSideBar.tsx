@@ -207,7 +207,7 @@ const ChatSideBar = ({
           <TabPanel key={tab.id} value={selectedChatTab} index={idx}>
             <Chat
               user={user}
-              type={tab.id}
+              chatType={tab.id}
               nodeId={tab.id === "node" ? currentVisibleNode?.id : ""}
               users={users}
               confirmIt={confirmIt}

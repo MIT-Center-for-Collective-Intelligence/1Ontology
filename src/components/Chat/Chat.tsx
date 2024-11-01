@@ -1,12 +1,8 @@
-import AddReactionIcon from "@mui/icons-material/AddReaction";
 import {
   Box,
-  Button,
-  IconButton,
   // Divider,
   Popover,
   Skeleton,
-  Typography,
 } from "@mui/material";
 import { EmojiClickData } from "emoji-picker-react";
 import {
@@ -15,7 +11,6 @@ import {
   arrayUnion,
   collection,
   doc,
-  getDocs,
   getFirestore,
   increment,
   onSnapshot,
@@ -24,28 +19,22 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import moment from "moment";
 import dynamic from "next/dynamic";
 import React, { useEffect, useRef, useState } from "react";
-import { CSSTransition, TransitionGroup } from "react-transition-group";
-import OptimizedAvatar from "./OptimizedAvatar";
+import { TransitionGroup } from "react-transition-group";
 // import { NotFoundNotification } from "../Sidebar/SidebarV2/NotificationSidebar";
-import { MessageButtons } from "./MessageButtons";
-import MessageInput from "./MessageInput";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
-import MarkdownRender from "../Markdown/MarkdownRender";
 import { IChatMessage } from " @components/types/IChat";
-import { Emoticons } from "./Emoticons";
 
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
-import { MESSAGES, USERS } from " @components/lib/firestoreClient/collections";
+import { MESSAGES } from " @components/lib/firestoreClient/collections";
 import {
   chatChange,
   getMessagesSnapshot,
 } from " @components/client/firestore/messages.firestore";
 import { recordLogs, synchronizeStuff } from " @components/lib/utils/helpers";
-import { getTaggedUsers } from " @components/lib/utils/string.utils";
 import MessageComponent from "./MessageComponent";
+import ReplyMessage from "./ReplyMessage";
+import ChatInput from "./ChatInput";
 const DynamicMemoEmojiPicker = dynamic(() => import("./EmojiPicker"), {
   loading: () => <p>Loading...</p>,
   ssr: false,
@@ -56,7 +45,7 @@ type ChatProps = {
   confirmIt: any;
   sidebarWidth?: number;
   innerHeight?: number;
-  type: string;
+  chatType: string;
   nodeId: string;
   setOpenSelectModel: React.Dispatch<React.SetStateAction<boolean>>;
   users: any;
@@ -66,7 +55,7 @@ type ChatProps = {
 const Chat = ({
   user,
   confirmIt,
-  type,
+  chatType,
   nodeId,
   setOpenSelectModel,
   users,
@@ -76,8 +65,6 @@ const Chat = ({
   const [showReplies, setShowReplies] = useState<string | null>(null);
   const [editing, setEditing] = useState<any | null>(null);
   const [replies, setReplies] = useState<any[]>([]);
-  const [isRecording] = useState<boolean>(false);
-  const [recordingType] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
   const [width, setWidth] = useState<number>(0);
   const commentRef = useRef<{
@@ -95,24 +82,22 @@ const Chat = ({
     setMessages([]);
     if (!user) return;
 
-    if (!nodeId && type === "node") return;
+    if (!nodeId && chatType === "node") return;
     setIsLoading(true);
 
     const onSynchronize = (changes: chatChange[]) => {
       setMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
       setIsLoading(false);
-      setTimeout(() => {
-        scrollToBottom();
-      }, 0);
+      // scrollToBottom();
     };
 
     const killSnapshot = getMessagesSnapshot(
       db,
-      { nodeId: nodeId, type, lastVisible: null },
+      { nodeId: nodeId, type: chatType, lastVisible: null },
       onSynchronize
     );
     return () => killSnapshot();
-  }, [db, user, nodeId, type]);
+  }, [db, user, nodeId, chatType]);
 
   useEffect(() => {
     const element = document.getElementById("right-panel-tabs");
@@ -279,7 +264,7 @@ const Chat = ({
       if (
         (userData.uname !== "1man" &&
           userData.uname !== "ouhrac" &&
-          type !== "node") ||
+          chatType !== "node") ||
         taggedUsers.has(userData.uname)
       )
         continue;
@@ -299,7 +284,7 @@ const Chat = ({
         notificationType: "message",
         nodeId: nodeId || "",
         seen: false,
-        type: type,
+        type: chatType,
         createdAt: new Date(),
       };
       const notificationRef = doc(collection(db, "notifications"));
@@ -314,7 +299,7 @@ const Chat = ({
   ) => {
     if (!user?.uname) return;
     const commentData = {
-      nodeId: type === "node" ? nodeId || "" : null,
+      nodeId: chatType === "node" ? nodeId || "" : null,
       text: text,
       sender: user.uname,
       senderDetail: {
@@ -328,7 +313,7 @@ const Chat = ({
       edited: false,
       deleted: false,
       totalReplies: 0,
-      type: type,
+      type: chatType,
       createdAt: new Date(),
     };
     const docRef = await addDoc(getMessageRef(), commentData);
@@ -409,7 +394,7 @@ const Chat = ({
   const deleteMessage = async (messageId: string) => {
     if (
       await confirmIt(
-        "Are you sure you want to delete this comment?",
+        "Are you sure you want to delete this message?",
         "Delete",
         "Keep"
       )
@@ -473,165 +458,22 @@ const Chat = ({
 
   const renderReplies = (messageId: string, replies: any, boxRef: any) => {
     return replies.map((reply: any, index: number) => (
-      <Box
-        key={index}
-        sx={{
-          display: "flex",
-          // gap: "10px",
-          // pt: 5,
-        }}
-      >
-        <Box
-          sx={{
-            width: `40px`,
-            height: `40px`,
-            cursor: "pointer",
-            borderRadius: "50%",
-          }}
-        >
-          <OptimizedAvatar
-            alt={reply.senderDetail?.fullname || ""}
-            imageUrl={reply.senderDetail?.imageUrl || ""}
-            size={30}
-            sx={{ border: "none" }}
-          />
-          {/* {onlineUsers[reply.senderDetail?.uname] && (
-            <Box
-              sx={{ background: "#12B76A", fontSize: "1px" }}
-              className="UserStatusOnlineIcon"
-            />
-          )} */}
-        </Box>
-
-        <Box sx={{ width: "90%" }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box sx={{ display: "flex" }}>
-              <Typography
-                sx={{
-                  fontSize: "16px",
-                  fontWeight: "500",
-                  lineHeight: "24px",
-                }}
-              >
-                {reply.senderDetail.fullname}
-              </Typography>
-            </Box>
-            <Typography sx={{ fontSize: "12px" }}>
-              {moment(reply.createdAt.toDate().getTime()).format("h:mm a")}
-            </Typography>
-          </Box>
-          {editing?.parentMessage === messageId && editing?.id === reply.id ? (
-            <MessageInput
-              message={reply}
-              user={user}
-              type="reply"
-              onClose={() => setEditing(null)}
-              onSubmit={editReply}
-              isEditing={true}
-              isRecording={isRecording}
-              recordingType={recordingType}
-              users={users}
-              startListening={() => {}}
-              stopListening={() => {}}
-              confirmIt={confirmIt}
-              editing={editing}
-              setEditing={setEditing}
-            />
-          ) : (
-            <Box
-              className="reply-box"
-              sx={{
-                position: "relative",
-                fontSize: "16px",
-                fontWeight: "400",
-                lineHeight: "24px",
-                p: "10px 14px",
-                borderRadius: "9px",
-                background: (theme) =>
-                  theme.palette.mode === "dark"
-                    ? DESIGN_SYSTEM_COLORS.notebookG700
-                    : DESIGN_SYSTEM_COLORS.gray300,
-                ":hover": {
-                  "& .message-buttons": {
-                    display: "block",
-                  },
-                },
-              }}
-            >
-              <Box
-                sx={{
-                  fontSize: "16px",
-                  fontWeight: "400",
-                  lineHeight: "24px",
-                }}
-              >
-                <MarkdownRender
-                  text={reply.text}
-                  sx={{
-                    fontSize: "16px",
-                    fontWeight: 400,
-                    letterSpacing: "inherit",
-                  }}
-                />
-
-                <Box
-                  sx={{
-                    pt: 1,
-                    display: "flex",
-                    gap: "15px",
-                    justifyContent: "center",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  {(reply.imageUrls || []).map((imageUrl: string) => (
-                    <img
-                      width={"100%"}
-                      style={{ borderRadius: "8px", objectFit: "contain" }}
-                      src={imageUrl}
-                      alt="reply image"
-                      key={imageUrl}
-                    />
-                  ))}
-                </Box>
-              </Box>
-
-              <Box className="message-buttons" sx={{ display: "none" }}>
-                <MessageButtons
-                  message={reply}
-                  handleEditMessage={() => setEditing(reply)}
-                  handleDeleteMessage={() => deleteReply(messageId, reply.id)}
-                  toggleEmojiPicker={toggleEmojiPicker}
-                  user={user}
-                  boxRef={boxRef}
-                />
-              </Box>
-
-              <Box
-                sx={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  gap: "5px",
-                }}
-              >
-                <Emoticons
-                  message={reply}
-                  reactionsMap={reply.reactions}
-                  toggleEmojiPicker={toggleEmojiPicker}
-                  toggleReaction={toggleReaction}
-                  user={user}
-                />
-              </Box>
-            </Box>
-          )}
-        </Box>
-      </Box>
+      <ReplyMessage
+        key={reply.id}
+        reply={reply}
+        index={index}
+        editing={editing}
+        messageId={messageId}
+        user={user}
+        users={users}
+        confirmIt={confirmIt}
+        setEditing={setEditing}
+        editReply={editReply}
+        deleteReply={deleteReply}
+        toggleEmojiPicker={toggleEmojiPicker}
+        toggleReaction={toggleReaction}
+        chatType={chatType}
+      />
     ));
   };
 
@@ -651,8 +493,6 @@ const Chat = ({
             user={user}
             editing={editing}
             setEditing={setEditing}
-            isRecording={isRecording}
-            recordingType={recordingType}
             users={users}
             confirmIt={confirmIt}
             toggleEmojiPicker={toggleEmojiPicker}
@@ -665,6 +505,7 @@ const Chat = ({
             deleteMessage={deleteMessage}
             navigateToNode={navigateToNode}
             replies={replies}
+            chatType={chatType}
           />
         ))}
         <Box ref={scrolling}></Box>
@@ -801,18 +642,16 @@ const Chat = ({
             width: "420px" /* width - 10 */,
           }}
         >
-          <MessageInput
+          <ChatInput
             user={user}
             type="message"
             onSubmit={addMessage}
-            startListening={() => {}}
-            stopListening={() => {}}
-            isRecording={isRecording}
-            recordingType={recordingType}
             users={users}
             confirmIt={confirmIt}
+            editing={editing}
             setEditing={setEditing}
             setOpenSelectModel={setOpenSelectModel}
+            chatType={chatType}
           />
         </Box>
       </Box>
