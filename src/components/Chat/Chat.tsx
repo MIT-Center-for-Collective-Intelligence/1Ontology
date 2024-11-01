@@ -77,7 +77,7 @@ const Chat = ({
   const scrolling = useRef<any>();
   const [messages, setMessages] = useState<IChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
+  const scrolled = useRef(false);
   useEffect(() => {
     setMessages([]);
     if (!user) return;
@@ -88,7 +88,6 @@ const Chat = ({
     const onSynchronize = (changes: chatChange[]) => {
       setMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
       setIsLoading(false);
-      // scrollToBottom();
     };
 
     const killSnapshot = getMessagesSnapshot(
@@ -98,6 +97,13 @@ const Chat = ({
     );
     return () => killSnapshot();
   }, [db, user, nodeId, chatType]);
+
+  useEffect(() => {
+    if (messages.length > 0 && !scrolled.current) {
+      scrollToBottom();
+      scrolled.current = true;
+    }
+  }, [messages]);
 
   useEffect(() => {
     const element = document.getElementById("right-panel-tabs");

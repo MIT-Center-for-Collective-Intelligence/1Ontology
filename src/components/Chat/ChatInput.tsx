@@ -96,10 +96,7 @@ const ChatInput = ({
       border: "none",
       outline: "none",
       width: "100%",
-      color:
-        theme.palette.mode === "dark"
-          ? DESIGN_SYSTEM_COLORS.orange100
-          : DESIGN_SYSTEM_COLORS.notebookG900,
+      color: theme.palette.mode === "dark" ? "white" : "black",
       padding: "15px",
       paddingBottom: "0px",
       fontFamily: "system-ui",

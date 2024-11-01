@@ -10,6 +10,7 @@ import { Emoticons } from "./Emoticons";
 import { MessageButtons } from "./MessageButtons";
 import OptimizedAvatar from "./OptimizedAvatar";
 import ChatInput from "./ChatInput";
+import dayjs from "dayjs";
 
 const MessageComponent = ({
   message,
@@ -98,7 +99,11 @@ const MessageComponent = ({
               </Typography>
             </Box>
             <Typography sx={{ fontSize: "12px" }}>
-              {moment(message.createdAt.toDate().getTime()).format("h:mm a")}
+              {dayjs(new Date(message.createdAt.toDate()))
+                .fromNow()
+                .includes("NaN")
+                ? "a few minutes ago"
+                : `${dayjs(new Date(message.createdAt.toDate())).fromNow()}`}
             </Typography>
           </Box>
 
