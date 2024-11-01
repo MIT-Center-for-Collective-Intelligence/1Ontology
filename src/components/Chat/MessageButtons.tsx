@@ -13,12 +13,13 @@ type CommentButtonProps = {
   sx?: SxProps<Theme>;
   replyMessage?: (message: any) => void;
   forwardMessage?: (message: any) => void;
-  toggleEmojiPicker: (event: any, comment?: any) => void;
+  toggleEmojiPicker: (event: any, boxRef: any, comment?: any) => void;
   handleEditMessage?: any;
   setInputMessage?: any;
   handleDeleteMessage?: any;
   user: any;
   makeMessageUnread?: (comment: any) => void;
+  boxRef: any;
 };
 export const MessageButtons = ({
   message,
@@ -29,6 +30,7 @@ export const MessageButtons = ({
   handleDeleteMessage,
   user,
   makeMessageUnread,
+  boxRef,
 }: CommentButtonProps) => {
   const isSender = user.uname === message.sender;
 
@@ -42,7 +44,7 @@ export const MessageButtons = ({
           theme.palette.mode === "dark"
             ? DESIGN_SYSTEM_COLORS.notebookG700
             : DESIGN_SYSTEM_COLORS.gray100,
-        top: "-46px",
+        top: "-40px",
         right: "0px",
         borderRadius: "8px",
         p: "3px",
@@ -52,19 +54,19 @@ export const MessageButtons = ({
       {replyMessage && !message.parentMessage && (
         <Tooltip title={"reply"}>
           <IconButton onClick={replyMessage}>
-            <ReplyIcon />
+            <ReplyIcon sx={{ fontSize: "19px" }} />
           </IconButton>
         </Tooltip>
       )}
       <Tooltip title={"react"}>
-        <IconButton onClick={(e: any) => toggleEmojiPicker(e, message)}>
-          <AddReactionIcon color="secondary" />
+        <IconButton onClick={(e: any) => toggleEmojiPicker(e, boxRef, message)}>
+          <AddReactionIcon color="secondary" sx={{ fontSize: "19px" }} />
         </IconButton>
       </Tooltip>
       {!message.parentMessage && makeMessageUnread && (
         <Tooltip title={"unread"}>
           <IconButton onClick={() => makeMessageUnread(message)}>
-            <MarkAsUnreadIcon color="secondary" />
+            <MarkAsUnreadIcon color="secondary" sx={{ fontSize: "19px" }} />
           </IconButton>
         </Tooltip>
       )}
@@ -76,14 +78,14 @@ export const MessageButtons = ({
       {isSender && handleEditMessage && (
         <Tooltip title={"edit"}>
           <IconButton onClick={handleEditMessage}>
-            <EditIcon />
+            <EditIcon sx={{ fontSize: "19px" }} />
           </IconButton>
         </Tooltip>
       )}
       {handleDeleteMessage && isSender && (
         <Tooltip title={"delete"}>
           <IconButton onClick={handleDeleteMessage}>
-            <DeleteIcon />
+            <DeleteIcon sx={{ fontSize: "19px" }} />
           </IconButton>
         </Tooltip>
       )}

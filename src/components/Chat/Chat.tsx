@@ -1,6 +1,8 @@
+import AddReactionIcon from "@mui/icons-material/AddReaction";
 import {
   Box,
   Button,
+  IconButton,
   // Divider,
   Popover,
   Skeleton,
@@ -34,7 +36,7 @@ import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import { IChatMessage } from " @components/types/IChat";
 import { Emoticons } from "./Emoticons";
-import LinkIcon from "@mui/icons-material/Link";
+
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 import { MESSAGES, USERS } from " @components/lib/firestoreClient/collections";
 import {
@@ -43,6 +45,7 @@ import {
 } from " @components/client/firestore/messages.firestore";
 import { recordLogs, synchronizeStuff } from " @components/lib/utils/helpers";
 import { getTaggedUsers } from " @components/lib/utils/string.utils";
+import MessageComponent from "./MessageComponent";
 const DynamicMemoEmojiPicker = dynamic(() => import("./EmojiPicker"), {
   loading: () => <p>Loading...</p>,
   ssr: false,
@@ -128,9 +131,13 @@ const Chat = ({
     }
   }, []);
 
-  const toggleEmojiPicker = (event: any, comment?: IChatMessage) => {
+  const toggleEmojiPicker = (
+    event: any,
+    boxRef: any,
+    comment?: IChatMessage
+  ) => {
     commentRef.current.comment = comment || null;
-    setAnchorEl(event.currentTarget);
+    setAnchorEl(boxRef.current);
     setShowEmojiPicker(!showEmojiPicker);
   };
   const handleCloseEmojiPicker = () => {
@@ -233,6 +240,7 @@ const Chat = ({
 
   useEffect(() => {
     if (!showReplies) return;
+    setReplies([]);
     const commentRef = getMessageDocRef(showReplies);
     const replyRef = collection(commentRef, "replies");
     const q = query(replyRef, where("deleted", "==", false));
@@ -463,7 +471,7 @@ const Chat = ({
     }
   };
 
-  const renderReplies = (messageId: string, replies: any) => {
+  const renderReplies = (messageId: string, replies: any, boxRef: any) => {
     return replies.map((reply: any, index: number) => (
       <Box
         key={index}
@@ -600,6 +608,7 @@ const Chat = ({
                   handleDeleteMessage={() => deleteReply(messageId, reply.id)}
                   toggleEmojiPicker={toggleEmojiPicker}
                   user={user}
+                  boxRef={boxRef}
                 />
               </Box>
 
@@ -636,258 +645,29 @@ const Chat = ({
     return (
       <TransitionGroup>
         {messages.map((message) => (
-          <CSSTransition key={message.id} timeout={500} classNames="comment">
-            <Box
-              id={`message-${message.id}`}
-              sx={{
-                display: "flex",
-                gap: "10px",
-                pt: 5,
-              }}
-            >
-              <Box
-                sx={{
-                  width: `40px`,
-                  height: `40px`,
-                  cursor: "pointer",
-                  borderRadius: "50%",
-                }}
-              >
-                <OptimizedAvatar
-                  alt={message.senderDetail?.fullname || ""}
-                  imageUrl={message.senderDetail?.imageUrl || ""}
-                  size={40}
-                  sx={{ border: "none" }}
-                />
-                {/* {onlineUsers[message.senderDetail?.uname] && (
-                  <Box
-                    sx={{ background: "#12B76A", fontSize: "1px" }}
-                    className="UserStatusOnlineIcon"
-                  />
-                )} */}
-              </Box>
-
-              <Box sx={{ width: "90%" }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Box sx={{ display: "flex" }}>
-                    <Typography
-                      sx={{
-                        fontSize: "16px",
-                        fontWeight: "500",
-                        lineHeight: "24px",
-                      }}
-                    >
-                      {message.senderDetail.fullname}
-                    </Typography>
-                  </Box>
-                  <Typography sx={{ fontSize: "12px" }}>
-                    {moment(message.createdAt.toDate().getTime()).format(
-                      "h:mm a"
-                    )}
-                  </Typography>
-                </Box>
-                {editing?.id === message.id ? (
-                  <MessageInput
-                    message={message}
-                    user={user}
-                    type="message"
-                    onClose={() => setEditing(null)}
-                    onSubmit={editMessage}
-                    isEditing={true}
-                    startListening={() => {}}
-                    stopListening={() => {}}
-                    isRecording={isRecording}
-                    recordingType={recordingType}
-                    users={users}
-                    confirmIt={confirmIt}
-                    editing={editing}
-                    setEditing={setEditing}
-                  />
-                ) : (
-                  <Box
-                    className="reply-box"
-                    sx={{
-                      position: "relative",
-                      fontSize: "16px",
-                      fontWeight: "400",
-                      lineHeight: "24px",
-                      p: "10px 14px",
-                      borderRadius: "9px",
-                      background: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? DESIGN_SYSTEM_COLORS.notebookG700
-                          : DESIGN_SYSTEM_COLORS.gray300,
-                      ":hover": {
-                        "& .message-buttons": {
-                          display: "block",
-                        },
-                      },
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        fontSize: "16px",
-                        fontWeight: "400",
-                        lineHeight: "24px",
-                      }}
-                    >
-                      {message.messageType === "node" ? (
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "10px",
-                            p: "10px",
-                            borderRadius: "8px",
-                            background: (theme) =>
-                              theme.palette.mode === "dark"
-                                ? message.sender === "You"
-                                  ? DESIGN_SYSTEM_COLORS.notebookG600
-                                  : DESIGN_SYSTEM_COLORS.notebookO800
-                                : message.sender === "You"
-                                ? DESIGN_SYSTEM_COLORS.gray100
-                                : DESIGN_SYSTEM_COLORS.orange50,
-                            mb: "10px",
-                            ":hover": {
-                              backgroundColor: "orange",
-                              cursor: "pointer",
-                            },
-                          }}
-                          onClick={() => {
-                            navigateToNode(message.sharedNodeId);
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              width: "30px",
-                              height: "30px",
-                              borderRadius: "50%",
-                              background: DESIGN_SYSTEM_COLORS.primary600,
-                              display: "flex",
-                              justifyContent: "center",
-                              alignItems: "center",
-                            }}
-                          >
-                            <LinkIcon
-                              sx={{
-                                color: DESIGN_SYSTEM_COLORS.gray25,
-                              }}
-                            />
-                          </Box>
-                          <Typography sx={{ fontWeight: "500" }}>
-                            {message.text?.substr(0, 40)}
-                            {message.text?.length > 40 ? "..." : ""}
-                          </Typography>
-                        </Box>
-                      ) : (
-                        <MarkdownRender
-                          text={message.text}
-                          sx={{
-                            fontSize: "16px",
-                            fontWeight: 400,
-                            letterSpacing: "inherit",
-                          }}
-                        />
-                      )}
-
-                      <Box
-                        sx={{
-                          pt: 1,
-                          display: "flex",
-                          gap: "15px",
-                          justifyContent: "center",
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        {(message.imageUrls || []).map((imageUrl: string) => (
-                          <img
-                            width={"100%"}
-                            style={{
-                              borderRadius: "8px",
-                              objectFit: "contain",
-                            }}
-                            src={imageUrl}
-                            alt="comment image"
-                            key={imageUrl}
-                          />
-                        ))}
-                      </Box>
-                    </Box>
-
-                    <Box className="message-buttons" sx={{ display: "none" }}>
-                      <MessageButtons
-                        message={message}
-                        handleEditMessage={() => setEditing(message)}
-                        handleDeleteMessage={() => deleteMessage(message.id)}
-                        toggleEmojiPicker={toggleEmojiPicker}
-                        user={user}
-                      />
-                    </Box>
-
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        alignItems: "center",
-                        gap: "5px",
-                      }}
-                    >
-                      <Emoticons
-                        message={message}
-                        reactionsMap={message.reactions}
-                        toggleEmojiPicker={toggleEmojiPicker}
-                        toggleReaction={toggleReaction}
-                        user={user}
-                      />
-                    </Box>
-
-                    <Button
-                      onClick={() =>
-                        setShowReplies(
-                          showReplies !== message.id ? message.id : null
-                        )
-                      }
-                      style={{ border: "none", fontSize: "14px" }}
-                    >
-                      {showReplies === message.id
-                        ? "Hide"
-                        : message?.totalReplies || null}{" "}
-                      {message?.totalReplies && message.totalReplies > 1
-                        ? "Replies"
-                        : "Reply"}
-                    </Button>
-                  </Box>
-                )}
-
-                {showReplies === message.id && (
-                  <Box sx={{ mt: "10px" }}>
-                    {renderReplies(message.id, replies)}
-                    <MessageInput
-                      user={user}
-                      type="reply"
-                      message={message}
-                      onSubmit={addReply}
-                      startListening={() => {}}
-                      stopListening={() => {}}
-                      isRecording={isRecording}
-                      recordingType={recordingType}
-                      users={users}
-                      confirmIt={confirmIt}
-                      setEditing={setEditing}
-                    />
-                  </Box>
-                )}
-                <Box ref={scrolling}></Box>
-              </Box>
-            </Box>
-          </CSSTransition>
+          <MessageComponent
+            key={message.id}
+            message={message}
+            user={user}
+            editing={editing}
+            setEditing={setEditing}
+            isRecording={isRecording}
+            recordingType={recordingType}
+            users={users}
+            confirmIt={confirmIt}
+            toggleEmojiPicker={toggleEmojiPicker}
+            toggleReaction={toggleReaction}
+            showReplies={showReplies}
+            setShowReplies={setShowReplies}
+            renderReplies={renderReplies}
+            addReply={addReply}
+            editMessage={editMessage}
+            deleteMessage={deleteMessage}
+            navigateToNode={navigateToNode}
+            replies={replies}
+          />
         ))}
+        <Box ref={scrolling}></Box>
       </TransitionGroup>
     );
   };

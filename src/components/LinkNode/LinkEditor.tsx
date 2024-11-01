@@ -1,33 +1,42 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Box, TextField, Tooltip, IconButton } from "@mui/material";
 import DoneIcon from "@mui/icons-material/Done";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import { doc, collection, updateDoc, getFirestore } from "firebase/firestore";
 import { link } from "fs";
-
+import { useAuth } from "../context/AuthContext";
 type LinkEditorProps = {
   reviewId: string;
-  setReviewId: any;
   title: string;
+  checkDuplicateTitle: any;
 };
 
 const LinkEditor: React.FC<LinkEditorProps> = ({
   reviewId,
-  setReviewId,
   title,
+  checkDuplicateTitle,
 }) => {
   const db = getFirestore();
+  const [{ user }] = useAuth();
+
   const textFieldRef = useRef<HTMLInputElement>(null);
   const [editorContent, setEditorContent] = useState(title);
-  const saveNodeTitle = () => {
+
+  const saveNodeTitle = useCallback(() => {
     try {
       const nodeRef = doc(collection(db, NODES), reviewId);
       updateDoc(nodeRef, { title: editorContent });
-      if (setReviewId) setReviewId("");
     } catch (e: any) {
       console.error(e.message);
     }
-  };
+  }, [db, editorContent, reviewId]);
+
+  useEffect(() => {
+    return () => {
+      saveNodeTitle();
+    };
+  }, [saveNodeTitle]);
+
   const handleChanges = (e: any) => {
     setEditorContent(e.target.value);
   };
@@ -107,11 +116,6 @@ const LinkEditor: React.FC<LinkEditorProps> = ({
           },
         }}
       />
-      <Tooltip title="Save">
-        <IconButton onClick={saveNodeTitle} sx={{ ml: "5px" }}>
-          <DoneIcon sx={{ color: "green" }} />
-        </IconButton>
-      </Tooltip>
     </Box>
   );
 };
