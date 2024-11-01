@@ -104,7 +104,6 @@ import { getTitleDeleted } from " @components/lib/utils/string.utils";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import { UNCLASSIFIED } from " @components/lib/CONSTANTS";
-import LinkEditor from "./LinkEditor";
 
 type ILinkNodeProps = {
   link: ILinkNode;
@@ -120,8 +119,6 @@ type ILinkNodeProps = {
   linkLocked: any;
   locked: boolean;
   user: any;
-  reviewId: string;
-  setReviewId: Function;
   linkIndex: number;
   collectionIndex: number;
   selectedDiffNode: any;
@@ -140,8 +137,6 @@ const LinkNode = ({
   linkLocked,
   locked,
   user,
-  reviewId,
-  setReviewId,
   collectionIndex,
   selectedDiffNode,
 }: ILinkNodeProps) => {
@@ -502,51 +497,41 @@ const LinkNode = ({
 
   return (
     <Box sx={{ ...sx }}>
-      {reviewId !== link.id ? (
-        <Box style={{ display: "flex", alignItems: "center" }}>
-          <Link
-            underline="hover"
-            onClick={handleNavigateToNode}
-            sx={{
-              cursor: "pointer",
-              color: getLinkColor(link.change),
-              textDecoration:
-                link.change === "removed" ? "line-through" : "none",
-            }}
-          >
-            {" "}
-            {title || regionalTitle}
-          </Link>
-          {link.changeType === "sort" && (
-            <SwapHorizIcon
-              sx={{ color: getLinkColor(link.change), pl: "5px" }}
-            />
+      <Box style={{ display: "flex", alignItems: "center" }}>
+        <Link
+          underline="hover"
+          onClick={handleNavigateToNode}
+          sx={{
+            cursor: "pointer",
+            color: getLinkColor(link.change),
+            textDecoration: link.change === "removed" ? "line-through" : "none",
+          }}
+        >
+          {" "}
+          {title || regionalTitle}
+        </Link>
+        {link.changeType === "sort" && (
+          <SwapHorizIcon sx={{ color: getLinkColor(link.change), pl: "5px" }} />
+        )}
+        {!locked &&
+          !linkLocked &&
+          !currentVisibleNode.unclassified &&
+          !selectedDiffNode && (
+            <Button
+              sx={{
+                ml: "8px",
+                borderRadius: "18px",
+                backgroundColor: BUTTON_COLOR,
+                fontSize: "12px",
+              }}
+              variant="outlined"
+              onClick={handleUnlinkNode}
+            >
+              Unlink
+            </Button>
           )}
-          {!locked &&
-            !linkLocked &&
-            !currentVisibleNode.unclassified &&
-            !selectedDiffNode && (
-              <Button
-                sx={{
-                  ml: "8px",
-                  borderRadius: "18px",
-                  backgroundColor: BUTTON_COLOR,
-                  fontSize: "12px",
-                }}
-                variant="outlined"
-                onClick={handleUnlinkNode}
-              >
-                Unlink
-              </Button>
-            )}
-        </Box>
-      ) : (
-        <LinkEditor
-          reviewId={reviewId}
-          setReviewId={setReviewId}
-          title={title}
-        />
-      )}
+      </Box>
+
       {ConfirmDialog}
     </Box>
   );

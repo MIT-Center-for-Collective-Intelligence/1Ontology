@@ -150,7 +150,8 @@ export const fetchAndUpdateNode = async (
   linkId: string,
   nodeId: string,
   removeFromProperty: string,
-  uname: string
+  uname: string,
+  batch: any
 ) => {
   const nodeDoc = await getDoc(doc(collection(db, NODES), linkId));
 
@@ -163,7 +164,15 @@ export const fetchAndUpdateNode = async (
       )
     );
     nodeData = removeNodeFromLinks(nodeData, nodeId, removeFromProperty);
-    await updateDoc(nodeDoc.ref, nodeData);
+
+    if (batch._committed) {
+      batch = writeBatch(db);
+    }
+    batch.update(nodeDoc.ref, nodeData);
+    if (batch._mutations.length > 400) {
+      await batch.commit();
+      batch = writeBatch(db);
+    }
     saveNewChangeLog(db, {
       nodeId: linkId,
       modifiedBy: uname,
@@ -177,6 +186,7 @@ export const fetchAndUpdateNode = async (
       fullNode: nodeData,
     });
   }
+  return batch;
 };
 
 export const removeNodeFromLinks = (
@@ -208,44 +218,63 @@ export const removeIsPartOf = async (
   nodeData: INode,
   uname: string
 ) => {
-  // Helper to handle both generalizations and isPartOfs
-  const processRemoval = async (
-    references: any[],
-    removeFromProperty: string
-  ) => {
-    for (let { id: linkId } of references) {
-      await fetchAndUpdateNode(
-        db,
-        linkId,
-        nodeData.id,
-        removeFromProperty,
-        uname
-      );
-    }
-  };
+  try {
+    let batch: any = writeBatch(db);
+    // Helper to handle both generalizations and isPartOfs
+    const processRemoval = async (
+      references: any[],
+      removeFromProperty: string,
+      batch: WriteBatch
+    ) => {
+      let newBatch = batch;
+      for (let { id: linkId } of references) {
+        newBatch = await fetchAndUpdateNode(
+          db,
+          linkId,
+          nodeData.id,
+          removeFromProperty,
+          uname,
+          newBatch
+        );
+      }
+      return newBatch;
+    };
 
-  // Process generalizations
-  const generalizations = (nodeData?.generalizations || []).flatMap(
-    (n) => n.nodes
-  );
-  await processRemoval(generalizations, "specializations");
-
-  // Process isPartOfs
-  if (Array.isArray(nodeData?.properties?.isPartOf)) {
-    const isPartOfs = (nodeData?.properties?.isPartOf || []).flatMap(
+    // Process generalizations
+    const generalizations = (nodeData?.generalizations || []).flatMap(
       (n) => n.nodes
     );
-    await processRemoval(isPartOfs, "parts");
-  }
+    batch = await processRemoval(generalizations, "specializations", batch);
 
-  // Process any additional properties in propertyOf
-  if (nodeData.propertyOf) {
-    for (let propertyName in nodeData.propertyOf) {
-      const propertyOfElements = nodeData.propertyOf[propertyName].flatMap(
+    // Process isPartOfs
+    if (Array.isArray(nodeData?.properties?.isPartOf)) {
+      const isPartOfs = (nodeData?.properties?.isPartOf || []).flatMap(
         (n) => n.nodes
       );
-      await processRemoval(propertyOfElements, propertyName);
+      batch = await processRemoval(isPartOfs, "parts", batch);
     }
+
+    // Process any additional properties in propertyOf
+    if (nodeData.propertyOf) {
+      for (let propertyName in nodeData.propertyOf) {
+        const propertyOfElements = nodeData.propertyOf[propertyName].flatMap(
+          (n) => n.nodes
+        );
+        batch = await processRemoval(propertyOfElements, propertyName, batch);
+      }
+    }
+    batch.commit();
+  } catch (error: any) {
+    console.error(error);
+    recordLogs({
+      type: "error",
+      error: JSON.stringify({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      }),
+      at: "removeIsPartOf",
+    });
   }
 };
 
@@ -463,7 +492,7 @@ const updateProperty = async (
     batch = writeBatch(db);
   }
   batch.update(nodeRef, ObjectUpdates);
-  if (batch._mutations.length > 2) {
+  if (batch._mutations.length > 400) {
     await batch.commit();
     batch = writeBatch(db);
   }

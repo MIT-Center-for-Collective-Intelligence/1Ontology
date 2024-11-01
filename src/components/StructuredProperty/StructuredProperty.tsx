@@ -63,8 +63,6 @@ type IStructuredPropertyProps = {
   nodes: { [id: string]: INode };
   locked: boolean;
   selectedDiffNode: any;
-  reviewId: string;
-  setReviewId: Function;
   confirmIt: any;
   onGetPropertyValue: any;
   currentImprovement: any;
@@ -80,8 +78,6 @@ const StructuredProperty = ({
   nodes,
   locked,
   selectedDiffNode,
-  reviewId,
-  setReviewId,
   confirmIt,
   onGetPropertyValue,
   currentImprovement,
@@ -1227,8 +1223,6 @@ const StructuredProperty = ({
                                                     linkLocked={false}
                                                     locked={locked}
                                                     user={user}
-                                                    reviewId={reviewId}
-                                                    setReviewId={setReviewId}
                                                     collectionIndex={
                                                       collectionIndex
                                                     }

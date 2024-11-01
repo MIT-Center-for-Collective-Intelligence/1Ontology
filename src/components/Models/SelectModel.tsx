@@ -59,8 +59,8 @@ const SelectModelModal = ({
   handleSaveLinkChanges,
   onGetPropertyValue,
   setCurrentVisibleNode,
-  reviewId,
-  setReviewId,
+  reviewIds,
+  checkDuplicateTitle,
 }: {
   openSelectModel: any;
   handleCloseAddLinksModel: any;
@@ -88,8 +88,8 @@ const SelectModelModal = ({
   handleSaveLinkChanges: any;
   onGetPropertyValue: any;
   setCurrentVisibleNode: any;
-  reviewId: string;
-  setReviewId: any;
+  reviewIds: Set<string>;
+  checkDuplicateTitle: any;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
 
@@ -136,7 +136,7 @@ const SelectModelModal = ({
       </div>
     );
   };
-console.log("reviewId==>", reviewId)
+
   const renderSelectedItems = () => (
     <Box
       sx={{
@@ -144,7 +144,9 @@ console.log("reviewId==>", reviewId)
         height: "700px",
         overflowY: "auto",
         "&::-webkit-scrollbar": { display: "none" },
-        px: "15px",
+        px: "5px",
+        mr: "15px",
+        width: "350px",
       }}
     >
       <Box
@@ -158,7 +160,7 @@ console.log("reviewId==>", reviewId)
           p: 1,
         }}
       >
-        <Typography variant="h6">Selected Items</Typography>
+        <Typography variant="h6">Selected Entities</Typography>
       </Box>
       <Box sx={{ p: 3 }}>
         {Array.from(checkedItems).map((id: any) => (
@@ -167,11 +169,11 @@ console.log("reviewId==>", reviewId)
               checked={checkedItems.has(id)}
               onChange={() => markItemAsChecked(id)}
             />
-            {reviewId === id ? (
+            {reviewIds.has(id) ? (
               <LinkEditor
-                reviewId={reviewId}
-                setReviewId={setReviewId}
+                reviewId={id}
                 title={nodes[id].title}
+                checkDuplicateTitle={checkDuplicateTitle}
               />
             ) : (
               <Typography>{nodes[id].title}</Typography>
