@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { TreeView, TreeItem, treeItemClasses } from "@mui/lab";
+import { TreeView, TreeItem, treeItemClasses, LoadingButton } from "@mui/lab";
 import { Box, Typography, Button } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -23,6 +23,7 @@ type ITreeViewSimplifiedProps = {
   sendNode?: (nodeId: string, title: string) => void;
   manageLock?: boolean;
   categoriesOrder?: string[];
+  cloning?: string | null;
 };
 
 const TreeViewSimplified = ({
@@ -42,6 +43,7 @@ const TreeViewSimplified = ({
   sendNode,
   manageLock,
   categoriesOrder,
+  cloning,
 }: ITreeViewSimplifiedProps) => {
   const [expanded, setExpanded] = useState<string[]>([]);
 
@@ -165,7 +167,8 @@ const TreeViewSimplified = ({
                 !treeVisualization[nodeId].isCategory &&
                 !treeVisualization[nodeId].locked &&
                 !preventLoops?.has(treeVisualization[nodeId]?.id) && (
-                  <Button
+                  <LoadingButton
+                    loading={cloning === treeVisualization[nodeId]?.id}
                     variant="outlined"
                     sx={{
                       borderRadius: "16px",
@@ -174,7 +177,6 @@ const TreeViewSimplified = ({
                       fontSize: "0.8rem",
                       padding: "2px 12px",
                       color: "#388E3C",
-                      // borderColor: "#388E3C",
                       "&:hover": {
                         borderColor: "#2E7D32",
                         backgroundColor: "#E8F5E9",
@@ -184,9 +186,10 @@ const TreeViewSimplified = ({
                       e.stopPropagation();
                       handleCloning(treeVisualization[nodeId]);
                     }}
+                    disabled={!!cloning}
                   >
                     Add Specialization
-                  </Button>
+                  </LoadingButton>
                 )}
 
               {sendNode && !treeVisualization[nodeId].isCategory && (
@@ -259,6 +262,7 @@ const TreeViewSimplified = ({
                 manageLock={manageLock}
                 stopPropagation={stopPropagation}
                 preventLoops={preventLoops}
+                cloning={cloning}
               />
             )}
         </TreeItem>

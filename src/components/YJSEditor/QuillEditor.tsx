@@ -71,12 +71,13 @@ const QuillEditor = ({
 
       editor.on("text-change", () => {
         const updatedText = editor.getText();
-        breakInheritance(updatedText);
-
-        const selection = editor.getSelection();
-        if (selection) {
-          setCursorPosition(selection.index);
-        }
+        setTimeout(() => {
+          breakInheritance(updatedText);
+          const selection = editor.getSelection();
+          if (selection) {
+            setCursorPosition(selection.index);
+          }
+        }, 0);
       });
 
       editor.on("selection-change", (range: any) => {

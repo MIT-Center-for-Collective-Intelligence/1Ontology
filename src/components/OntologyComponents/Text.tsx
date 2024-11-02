@@ -111,7 +111,7 @@ const Text = ({
   // }, [currentVisibleNode.inheritance[property]?.ref]);
   useEffect(() => {
     setReference(currentVisibleNode.inheritance[property]?.ref || null);
-    setAutoFocus(false);
+    // setAutoFocus(false);
   }, [currentVisibleNode]);
 
   const saveChangeHistory = useCallback(
@@ -191,7 +191,7 @@ const Text = ({
 
         setTimeout(() => {
           setSwitchToWebSocket(true);
-        }, 1100);
+        }, 900);
         setTimeout(() => {
           websocketProvider.disconnect();
           websocketProvider.destroy();
