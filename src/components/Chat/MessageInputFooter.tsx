@@ -33,49 +33,53 @@ const MessageInputFooter: React.FC<MessageInputFooterProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   return (
-    <Box sx={{ display: "flex" }}>
-      {(imageUrls || []).map((imageUrl) => (
-        <Box
-          key={imageUrl}
-          sx={{
-            display: "flex",
-            // p: 1,
-            position: "relative",
-            "&:hover .close-icon": { opacity: 1 },
-          }}
-        >
-          <Tooltip title="Remove Image" placement="top">
-            <CloseIcon
-              className="close-icon"
-              sx={{
-                position: "absolute",
-                top: 0,
-                right: 0,
-                zIndex: 1,
-                cursor: "pointer",
-                borderRadius: "50%",
-                opacity: 0,
-                transition: "opacity 0.3s",
-                backgroundColor: "grey",
-                color: "white",
-                height: "20px",
-                width: "20px",
-              }}
-              onClick={() =>
-                setImageUrls((prev) =>
-                  prev.filter((image) => image !== imageUrl)
-                )
-              }
+    <Box>
+      <Box sx={{ display: "flex" }}>
+        {(imageUrls || []).map((imageUrl) => (
+          <Box
+            key={imageUrl}
+            sx={{
+              display: "flex",
+              position: "relative",
+              "&:hover .close-icon": { opacity: 1 },
+              width: "100px",
+              p: 1,
+            }}
+          >
+            <Tooltip title="Remove Image" placement="top">
+              <CloseIcon
+                className="close-icon"
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  zIndex: 1,
+                  cursor: "pointer",
+                  borderRadius: "50%",
+                  opacity: 0,
+                  transition: "opacity 0.3s",
+                  backgroundColor: "grey",
+                  color: "white",
+                  height: "20px",
+                  width: "20px",
+                }}
+                onClick={() =>
+                  setImageUrls((prev) =>
+                    prev.filter((image) => image !== imageUrl)
+                  )
+                }
+              />
+            </Tooltip>
+            <img
+              width="100%"
+              style={{ borderRadius: "8px", objectFit: "contain" }}
+              src={imageUrl}
+              alt=""
             />
-          </Tooltip>
-          <img
-            width="100%"
-            style={{ borderRadius: "8px", objectFit: "contain" }}
-            src={imageUrl}
-            alt=""
-          />
-        </Box>
-      ))}
+          </Box>
+        ))}
+      </Box>
+
       <Box sx={{ width: "100%", display: "flex", alignItems: "center" }}>
         <Box
           sx={{
@@ -133,7 +137,7 @@ const MessageInputFooter: React.FC<MessageInputFooterProps> = ({
                 onClick={onClose}
                 variant="outlined"
                 // color="error"
-                disabled={!inputValue}
+                disabled={!inputValue && !imageUrls?.length}
                 sx={{
                   minWidth: "0px",
                   // width: "36px",

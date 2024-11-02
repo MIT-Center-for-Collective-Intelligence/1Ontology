@@ -145,8 +145,12 @@ const ChatInput = ({
   const onUploadImage = useCallback(
     (event: any) => {
       try {
-        let bucket: string = "ontology-41607.appspot.com";
-        if (isValidHttpUrl(bucket)) {
+        let bucket =
+          process.env.NODE_ENV === "development"
+            ? process.env.NEXT_PUBLIC_DEV_STORAGE_BUCKET
+            : process.env.NEXT_PUBLIC_STORAGE_BUCKET;
+
+        if (bucket && isValidHttpUrl(bucket)) {
           const { hostname } = new URL(bucket);
           bucket = hostname;
         }
@@ -292,6 +296,13 @@ const ChatInput = ({
         handleSendMessage={handleSendMessage}
         inputValue={inputValue}
         setImageUrls={setImageUrls}
+      />
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={onUploadImage}
+        accept="image/png, image/jpg, image/jpeg"
+        hidden
       />
     </Box>
   );

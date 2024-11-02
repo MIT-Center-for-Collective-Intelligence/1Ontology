@@ -195,8 +195,12 @@ const ToolbarSidebar = ({
         } else {
           setIsUploading(true);
 
-          let bucket = "ontology-41607.appspot.com";
-          if (isValidHttpUrl(bucket)) {
+          let bucket =
+            process.env.NODE_ENV === "development"
+              ? process.env.NEXT_PUBLIC_DEV_STORAGE_BUCKET
+              : process.env.NEXT_PUBLIC_STORAGE_BUCKET;
+
+          if (bucket && isValidHttpUrl(bucket)) {
             const { hostname } = new URL(bucket);
             bucket = hostname;
           }
@@ -691,7 +695,7 @@ const ToolbarSidebar = ({
               {user && (
                 <OptimizedAvatar
                   alt={`${user?.fName} ${user?.lName}`}
-                  imageUrl={user?.imageUrl || ""}
+                  imageUrl={activeUsers[user?.uname]?.imageUrl || ""}
                   size={45}
                   sx={{
                     width: "100%",

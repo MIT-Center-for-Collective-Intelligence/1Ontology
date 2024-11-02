@@ -32,7 +32,7 @@ export const useUploadImage = ({ storage }: UseUploadImage) => {
     new Promise((resolve, reject) => {
       try {
         const image = event.target.files[0];
-        if (!image) return reject("cancel upload image");
+        if (!image) return;
         const hasValidFormat = [
           "image/jpg",
           "image/jpeg",
