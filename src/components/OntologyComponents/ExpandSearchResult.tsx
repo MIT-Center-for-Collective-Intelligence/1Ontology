@@ -13,6 +13,7 @@ const ExpandSearchResult = ({
   checkedItems,
   user,
   nodes,
+  cloning,
 }: any) => {
   const [expanded, setExpanded] = useState<string[]>([]);
 
@@ -54,6 +55,7 @@ const ExpandSearchResult = ({
               checkedItems={checkedItems}
               user={user}
               handleCloning={handleCloning}
+              cloning={cloning}
             />
           }
           sx={{
@@ -98,6 +100,7 @@ const NodeLabel = ({
   checkedItems,
   user,
   handleCloning,
+  cloning,
 }: any) => {
   const isChecked = checkedItems.has(node.id);
   const isLocked = !user?.manageLock && node.locked;
@@ -144,6 +147,7 @@ const NodeLabel = ({
             e.stopPropagation();
             handleCloning(node);
           }}
+          disabled={!!cloning}
         >
           <span style={{ color: "green", paddingInline: "10px" }}>
             Add Specialization

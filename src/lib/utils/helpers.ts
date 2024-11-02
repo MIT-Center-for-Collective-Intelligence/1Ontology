@@ -517,8 +517,9 @@ export const saveNewChangeLog = (db: any, data: NodeChange) => {
     if (data.modifiedProperty) {
       updatesObject = {
         ...updatesObject,
-        [`contributorsByProperty.${data.modifiedProperty}`]:
-          arrayUnion("data.modifiedBy"),
+        [`contributorsByProperty.${data.modifiedProperty}`]: arrayUnion(
+          data.modifiedBy
+        ),
       };
     }
     updateDoc(nodeRef, updatesObject);

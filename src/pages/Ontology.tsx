@@ -1017,6 +1017,7 @@ const Ontology = () => {
                   displaySidebar={displaySidebar}
                   activeSidebar={activeSidebar}
                   currentImprovement={currentImprovement}
+                  setNodes={setNodes}
                 />
               )}
             </Box>

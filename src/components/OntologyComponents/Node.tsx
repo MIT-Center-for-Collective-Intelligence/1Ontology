@@ -73,35 +73,11 @@ The `Node` component is intended to be used within an application that requires 
 - The component is designed to work with a specific data structure and may require adaptation for different use cases.
 
 This documentation provides a high-level overview of the `Node` component and its capabilities. For detailed implementation and integration, refer to the source code and the specific application context in which the component is used.*/
-import {
-  Button,
-  Checkbox,
-  DialogActions,
-  DialogContent,
-  FormControl,
-  IconButton,
-  InputLabel,
-  Link,
-  ListItem,
-  MenuItem,
-  Modal,
-  Paper,
-  Select,
-  Stack,
-  TextField,
-  Theme,
-  Tooltip,
-  Typography,
-  useMediaQuery,
-} from "@mui/material";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import Dialog from "@mui/material/Dialog";
+import { Stack, useMediaQuery } from "@mui/material";
 import { Box } from "@mui/system";
 import {
   collection,
   doc,
-  Firestore,
   getDoc,
   getDocs,
   getFirestore,
@@ -111,41 +87,24 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Text from "./Text";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import {
   ICollection,
   ILinkNode,
-  ILockedNode,
   INode,
   INodeTypes,
   MainSpecializations,
 } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
-import {
-  DISPLAY,
-  SCROLL_BAR_STYLE,
-  SpecialCharacterRegex,
-} from " @components/lib/CONSTANTS";
-import TreeViewSimplified from "./TreeViewSimplified";
-import { SearchBox } from "../SearchBox/SearchBox";
 import NodeBody from "../NodBody/NodeBody";
 
 import {
-  capitalizeFirstLetter,
   generateUniqueTitle,
   getPropertyValue,
   getTitle,
 } from " @components/lib/utils/string.utils";
-import LockIcon from "@mui/icons-material/Lock";
 import {
   checkIfCanDeleteANode,
   createNewNode,
@@ -165,8 +124,6 @@ import {
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
 import { NodeChange } from " @components/types/INode";
 import { User } from " @components/types/IAuth";
-import { TreeItem, TreeView } from "@mui/lab";
-import ExpandSearchResult from "./ExpandSearchResult";
 import SelectModelModal from "../Models/SelectModel";
 
 type INodeProps = {
@@ -185,6 +142,7 @@ type INodeProps = {
   displaySidebar: Function;
   activeSidebar: any;
   currentImprovement: any;
+  setNodes: any;
 };
 
 const Node = ({
@@ -203,13 +161,14 @@ const Node = ({
   activeSidebar,
   currentImprovement,
   eachOntologyPath,
+  setNodes,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
   const isSmallScreen = useMediaQuery("(max-width: 600px)");
 
   const [openSelectModel, setOpenSelectModel] = useState(false);
-
+  const [cloning, setCloning] = useState<string | null>(null);
   const handleCloseAddLinksModel = () => {
     setCheckedItems(new Set());
     setOpenSelectModel(false);
@@ -264,16 +223,18 @@ const Node = ({
   }, [searchValue, selectedProperty]);
 
   const markItemAsChecked = (checkedId: string, radioSelection = false) => {
-    let _oldChecked = new Set(checkedItems);
-    if (_oldChecked.has(checkedId)) {
-      _oldChecked.delete(checkedId);
-    } else {
-      if (radioSelection) {
-        _oldChecked = new Set();
+    setCheckedItems((checkedItems) => {
+      let _oldChecked = new Set(checkedItems);
+      if (_oldChecked.has(checkedId)) {
+        _oldChecked.delete(checkedId);
+      } else {
+        if (radioSelection) {
+          _oldChecked = new Set();
+        }
+        _oldChecked.add(checkedId);
       }
-      _oldChecked.add(checkedId);
-    }
-    setCheckedItems(_oldChecked);
+      return _oldChecked;
+    });
   };
 
   const cloneNode = useCallback(
@@ -282,6 +243,7 @@ const Node = ({
       searchValue: string | null
     ): Promise<INode | null> => {
       try {
+        setCloning(nodeId);
         // Retrieve the document of the original node from Firestore.
         const parentNodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
 
@@ -490,16 +452,28 @@ const Node = ({
             db,
           });
         }
-
-        // Update the parent node's specializations
-        updateSpecializations(parentNodeData, newNodeRef.id);
-
+        setNodes((prev: { [id: string]: INode }) => {
+          prev[newNode.id] = {
+            ...newNode,
+            locked: false,
+          };
+          return prev;
+        });
+        markItemAsChecked(newNode.id);
+        setReviewIds((prev) => {
+          prev.add(newNode.id);
+          return prev;
+        });
         // Create a new document in Firestore for the cloned node
         await setDoc(newNodeRef, {
           ...newNode,
           locked: false,
           createdAt: new Date(),
         });
+
+        setCloning(null);
+        // Update the parent node's specializations
+        updateSpecializations(parentNodeData, newNodeRef.id);
 
         // Update the original parent node
         await updateDoc(parentNodeDoc.ref, {
@@ -519,7 +493,14 @@ const Node = ({
         return null;
       }
     },
-    [currentVisibleNode.id, selectedProperty, nodes]
+    [
+      db,
+      user.uname,
+      selectedCategory,
+      selectedProperty,
+      nodes,
+      currentVisibleNode.id,
+    ]
   );
 
   // This function handles the cloning of a node.
@@ -528,22 +509,13 @@ const Node = ({
     // Close the modal or perform any necessary cleanup.
     // handleCloseAddLinksModel();
     const newNode = await cloneNode(node.id, searchValue);
-    if (!newNode) return;
-
-    const nodeData = nodes[currentVisibleNode.id] as INode;
-    const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-    markItemAsChecked(newNode.id);
-    setReviewIds((prev) => {
-      prev.add(newNode.id);
-      return prev;
-    });
   };
 
   // Function to add a new specialization to a node
   const addNewSpecialization = useCallback(
     async (collectionName: string = "main", searchValue: string = "") => {
       try {
-        handleCloseAddLinksModel();
+        // handleCloseAddLinksModel();
         if (!collectionName) {
           collectionName = "main";
         }
@@ -596,9 +568,15 @@ const Node = ({
 
         // Add the new node to the database
         addNewNode({ id: newNodeRef.id, newNode });
-
-        // setReviewId(newNodeRef.id);
-        setOpenSelectModel(false);
+        setNodes((prev: { [id: string]: INode }) => {
+          prev[newNodeRef.id] = newNode;
+          return prev;
+        });
+        markItemAsChecked(newNodeRef.id);
+        setReviewIds((prev) => {
+          prev.add(newNodeRef.id);
+          return prev;
+        });
 
         // Update the parent node document
         await updateDoc(nodeParentRef, {
@@ -1398,6 +1376,7 @@ const Node = ({
         setCurrentVisibleNode={setCurrentVisibleNode}
         reviewIds={reviewIds}
         checkDuplicateTitle={checkDuplicateTitle}
+        cloning={cloning}
       />
 
       {ConfirmDialog}

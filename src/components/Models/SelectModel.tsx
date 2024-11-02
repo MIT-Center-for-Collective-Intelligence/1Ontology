@@ -61,6 +61,7 @@ const SelectModelModal = ({
   setCurrentVisibleNode,
   reviewIds,
   checkDuplicateTitle,
+  cloning,
 }: {
   openSelectModel: any;
   handleCloseAddLinksModel: any;
@@ -90,6 +91,7 @@ const SelectModelModal = ({
   setCurrentVisibleNode: any;
   reviewIds: Set<string>;
   checkDuplicateTitle: any;
+  cloning: string | null;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
 
@@ -131,10 +133,13 @@ const SelectModelModal = ({
         <strong style={{ color: "orange" }}>
           {capitalizeFirstLetter(property)}(s)
         </strong>{" "}
-        to add, by searching existing ${displayNodeType}, or navigating through
+        to add, by searching existing {displayNodeType}, or navigating through
         the ontology.
       </div>
     );
+  };
+  const getCreateNewButtonText = (propertyType: string) => {
+    return UNCLASSIFIED[propertyType];
   };
 
   const renderSelectedItems = () => (
@@ -172,11 +177,11 @@ const SelectModelModal = ({
             {reviewIds.has(id) ? (
               <LinkEditor
                 reviewId={id}
-                title={nodes[id].title}
+                title={nodes[id]?.title || ""}
                 checkDuplicateTitle={checkDuplicateTitle}
               />
             ) : (
-              <Typography>{nodes[id].title}</Typography>
+              <Typography>{nodes[id]?.title || ""}</Typography>
             )}
           </Box>
         ))}
@@ -193,6 +198,7 @@ const SelectModelModal = ({
         checkedItems={checkedItems}
         user={user}
         nodes={nodes}
+        cloning={cloning}
       />
     ) : (
       <TreeViewSimplified
@@ -211,14 +217,16 @@ const SelectModelModal = ({
         }
         preventLoops={getPath(currentVisibleNode.id, selectedCategory)}
         manageLock={user?.manageLock}
+        cloning={cloning}
       />
     );
   const cloneUnclassifiedNode = async () => {
+    const nodeType = currentVisibleNode.propertyType[selectedProperty];
     const unclassifiedNodeDocs = await getDocs(
       query(
         collection(db, NODES),
         where("unclassified", "==", true),
-        where("nodeType", "==", currentVisibleNode.nodeType)
+        where("nodeType", "==", nodeType)
       )
     );
     if (unclassifiedNodeDocs.docs.length > 0) {
@@ -311,7 +319,9 @@ const SelectModelModal = ({
                     title={`Create as a new Specialization 
                     ${
                       selectedProperty !== "specializations"
-                        ? "Under " + UNCLASSIFIED[currentVisibleNode.nodeType]
+                        ? `Under ${getCreateNewButtonText(
+                            currentVisibleNode.propertyType[selectedProperty]
+                          )}`
                         : ""
                     } Node`}
                   >
@@ -339,7 +349,10 @@ const SelectModelModal = ({
                     >
                       Create{" "}
                       {selectedProperty !== "specializations"
-                        ? "Under " + UNCLASSIFIED[currentVisibleNode.nodeType]
+                        ? "Under " +
+                          getCreateNewButtonText(
+                            currentVisibleNode.propertyType[selectedProperty]
+                          )
                         : ""}
                     </Button>
                   </Tooltip>
