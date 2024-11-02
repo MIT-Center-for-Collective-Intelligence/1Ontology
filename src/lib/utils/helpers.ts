@@ -12,6 +12,7 @@ import {
   Firestore,
   getFirestore,
   deleteField,
+  arrayUnion,
 } from "firebase/firestore";
 import { LOGS, NODES, NODES_LOGS, USERS } from "../firestoreClient/collections";
 import { NodeChange } from " @components/types/INode";
@@ -508,6 +509,12 @@ export const saveNewChangeLog = (db: any, data: NodeChange) => {
     reputations: increment(1),
     lasChangeMadeAt: new Date(),
   });
+  if (data.modifiedBy) {
+    const nodeRef = doc(collection(db, NODES), data.nodeId);
+    updateDoc(nodeRef, {
+      contributors: arrayUnion(data.modifiedBy),
+    });
+  }
 };
 
 export const getChangeDescription = (

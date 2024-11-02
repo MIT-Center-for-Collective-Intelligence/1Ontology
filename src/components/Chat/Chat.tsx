@@ -11,6 +11,7 @@ import {
   arrayUnion,
   collection,
   doc,
+  getDoc,
   getFirestore,
   increment,
   onSnapshot,
@@ -26,7 +27,7 @@ import { TransitionGroup } from "react-transition-group";
 import { IChatMessage } from " @components/types/IChat";
 
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
-import { MESSAGES } from " @components/lib/firestoreClient/collections";
+import { MESSAGES, NODES } from " @components/lib/firestoreClient/collections";
 import {
   chatChange,
   getMessagesSnapshot,
@@ -268,12 +269,11 @@ const Chat = ({
     for (const userData of users) {
       if (userData.uname === user.uname) continue;
       if (
-        (userData.uname !== "1man" &&
-          userData.uname !== "ouhrac" &&
-          chatType !== "node") ||
+        (userData.uname !== "1man" && userData.uname !== "ouhrac") ||
         taggedUsers.has(userData.uname)
-      )
+      ) {
         continue;
+      }
 
       const notificationData = {
         title: title,
@@ -323,6 +323,13 @@ const Chat = ({
       createdAt: new Date(),
     };
     const docRef = await addDoc(getMessageRef(), commentData);
+    if (chatType === "node") {
+      const nodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
+      const nodeData = nodeDoc.data();
+      (nodeData?.contributors || []).forEach((contributor: string) => {
+        taggedUsers.add(contributor);
+      });
+    }
 
     createNotifications(
       `New Message from ${user.fName + " " + user.lName}`,
