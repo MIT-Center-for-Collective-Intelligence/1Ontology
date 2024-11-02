@@ -589,8 +589,8 @@ const ToolbarSidebar = ({
     <Box
       ref={toolbarRef}
       sx={{
-        width: hovered ? "190px" : !!activeSidebar ? "450px" : "70px",
-        transition: "width 0.4s ease",
+        width: !!activeSidebar ? "450px" : hovered ? "190px" : "70px",
+        transition: "width 0.2s ease",
         height: "100vh",
         background:
           theme.palette.mode === "dark"

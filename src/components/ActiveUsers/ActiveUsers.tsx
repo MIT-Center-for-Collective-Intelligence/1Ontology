@@ -1,8 +1,4 @@
-import {
-  isOnline,
-  shortenNumber,
-  timeAgo,
-} from " @components/lib/utils/string.utils";
+import { isOnline, timeAgo } from " @components/lib/utils/string.utils";
 import {
   Badge,
   Box,
@@ -12,16 +8,8 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
-import DoneIcon from "@mui/icons-material/Done";
-import {
-  query,
-  collection,
-  onSnapshot,
-  getFirestore,
-  Timestamp,
-} from "firebase/firestore";
 import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 
 const ActiveUsers = ({
