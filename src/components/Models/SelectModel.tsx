@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   Modal,
   Box,
@@ -138,9 +138,22 @@ const SelectModelModal = ({
       </div>
     );
   };
-  const getCreateNewButtonText = (propertyType: string) => {
-    return UNCLASSIFIED[propertyType];
-  };
+  const getCreateNewButtonText = useMemo(() => {
+    let nodeType = currentVisibleNode.propertyType[selectedProperty];
+    if (
+      selectedProperty === "specializations" ||
+      selectedProperty === "generalizations" ||
+      selectedProperty === "parts" ||
+      selectedProperty === "isPartOf"
+    ) {
+      nodeType = currentVisibleNode.nodeType;
+    }
+    return UNCLASSIFIED[nodeType];
+  }, [
+    currentVisibleNode.nodeType,
+    currentVisibleNode.propertyType,
+    selectedProperty,
+  ]);
 
   const renderSelectedItems = () => (
     <Box
@@ -319,9 +332,7 @@ const SelectModelModal = ({
                     title={`Create as a new Specialization 
                     ${
                       selectedProperty !== "specializations"
-                        ? `Under ${getCreateNewButtonText(
-                            currentVisibleNode.propertyType[selectedProperty]
-                          )}`
+                        ? `Under ${getCreateNewButtonText}`
                         : ""
                     } Node`}
                   >
@@ -349,10 +360,7 @@ const SelectModelModal = ({
                     >
                       Create{" "}
                       {selectedProperty !== "specializations"
-                        ? "Under " +
-                          getCreateNewButtonText(
-                            currentVisibleNode.propertyType[selectedProperty]
-                          )
+                        ? "Under " + getCreateNewButtonText
                         : ""}
                     </Button>
                   </Tooltip>
