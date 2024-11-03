@@ -203,6 +203,7 @@ const TreeViewSimplified = ({
                     textTransform: "none",
                     fontSize: "0.8rem",
                     padding: "2px 12px",
+                    mr: "15px",
                     marginLeft: "10px",
                     color: "#0288D1",
                     borderColor: "#0288D1",

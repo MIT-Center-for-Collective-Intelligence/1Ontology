@@ -20,12 +20,19 @@ import {
   getFirestore,
   addDoc,
 } from "firebase/firestore";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Chat from "../Chat/Chat";
 import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import TreeViewSimplified from "../OntologyComponents/TreeViewSimplified";
 import { SearchBox } from "../SearchBox/SearchBox";
+import { INode } from " @components/types/INode";
 
 const ChatSideBar = ({
   currentVisibleNode,
@@ -40,6 +47,7 @@ const ChatSideBar = ({
   chatTabs,
   selectedChatTab,
   setSelectedChatTab,
+  nodes,
 }: {
   currentVisibleNode: any;
   user: any;
@@ -53,6 +61,7 @@ const ChatSideBar = ({
   chatTabs: { title: string; id: string }[];
   selectedChatTab: number;
   setSelectedChatTab: Function;
+  nodes: { [nodeId: string]: INode };
 }) => {
   const db = getFirestore();
   const [users, setUsers] = useState<
@@ -66,6 +75,7 @@ const ChatSideBar = ({
   >([]);
   const [openModel, setOpenModel] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const scrollingRef = useRef<any>();
 
   const handleChatTabsChange = (event: any, newValue: number) => {
     setSelectedChatTab(newValue);
@@ -106,6 +116,11 @@ const ChatSideBar = ({
     setOpenModel(false);
   }, [setOpenModel]);
 
+  const scrollToBottom = () => {
+    if (scrollingRef.current) {
+      scrollingRef.current.scrollIntoView({ behaviour: "smooth" });
+    }
+  };
   const sendNode = useCallback(
     async (nodeId: string, title: string) => {
       if (!user || !currentVisibleNode?.id) return;
@@ -129,8 +144,8 @@ const ChatSideBar = ({
         sharedNodeId: nodeId,
         createdAt: new Date(),
       };
-      return;
       await addDoc(collection(db, MESSAGES), messageData);
+      scrollToBottom();
     },
     [selectedChatTab, currentVisibleNode?.id, user]
   );
@@ -215,6 +230,8 @@ const ChatSideBar = ({
                 setOpenModel(true);
               }}
               navigateToNode={navigateToNode}
+              nodes={nodes}
+              scrollingRef={scrollingRef}
             />
           </TabPanel>
         ))}

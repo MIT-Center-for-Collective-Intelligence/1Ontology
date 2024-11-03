@@ -36,6 +36,7 @@ import { recordLogs, synchronizeStuff } from " @components/lib/utils/helpers";
 import MessageComponent from "./MessageComponent";
 import ReplyMessage from "./ReplyMessage";
 import ChatInput from "./ChatInput";
+import { INode } from " @components/types/INode";
 const DynamicMemoEmojiPicker = dynamic(() => import("./EmojiPicker"), {
   loading: () => <p>Loading...</p>,
   ssr: false,
@@ -51,6 +52,8 @@ type ChatProps = {
   setOpenSelectModel: React.Dispatch<React.SetStateAction<boolean>>;
   users: any;
   navigateToNode: any;
+  nodes: { [nodeId: string]: INode };
+  scrollingRef: any;
 };
 
 const Chat = ({
@@ -61,6 +64,8 @@ const Chat = ({
   setOpenSelectModel,
   users,
   navigateToNode,
+  nodes,
+  scrollingRef,
 }: ChatProps) => {
   const db = getFirestore();
   const [showReplies, setShowReplies] = useState<string | null>(null);
@@ -75,7 +80,7 @@ const Chat = ({
   });
   const [anchorEl, setAnchorEl] = useState(null);
   const openPicker = Boolean(anchorEl);
-  const scrolling = useRef<any>();
+
   const [messages, setMessages] = useState<IChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const scrolled = useRef(false);
@@ -491,8 +496,8 @@ const Chat = ({
   };
 
   const scrollToBottom = () => {
-    if (scrolling.current) {
-      scrolling.current.scrollIntoView({ behaviour: "smooth" });
+    if (scrollingRef.current) {
+      scrollingRef.current.scrollIntoView({ behaviour: "smooth" });
     }
   };
 
@@ -519,9 +524,10 @@ const Chat = ({
             navigateToNode={navigateToNode}
             replies={replies}
             chatType={chatType}
+            nodes={nodes}
           />
         ))}
-        <Box ref={scrolling}></Box>
+        <Box ref={scrollingRef}></Box>
       </TransitionGroup>
     );
   };

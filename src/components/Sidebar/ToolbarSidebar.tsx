@@ -476,6 +476,7 @@ const ToolbarSidebar = ({
             chatTabs={[{ id: "node", title: "This node" }]}
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
+            nodes={nodes}
           />
         );
       case "chat-discussion":
@@ -493,6 +494,7 @@ const ToolbarSidebar = ({
             chatTabs={CHAT_DISCUSSION_TABS}
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
+            nodes={nodes}
           />
         );
       case "inheritanceSettings":

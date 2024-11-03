@@ -11,6 +11,8 @@ import { MessageButtons } from "./MessageButtons";
 import OptimizedAvatar from "./OptimizedAvatar";
 import ChatInput from "./ChatInput";
 import dayjs from "dayjs";
+import { getTitle } from " @components/lib/utils/string.utils";
+import { INode } from " @components/types/INode";
 
 const MessageComponent = ({
   message,
@@ -30,6 +32,7 @@ const MessageComponent = ({
   navigateToNode,
   replies,
   chatType,
+  nodes,
 }: {
   message: any;
   user: any;
@@ -48,6 +51,7 @@ const MessageComponent = ({
   navigateToNode: any;
   replies: any;
   chatType: string;
+  nodes: { [nodeId: string]: INode };
 }) => {
   const boxRef = useRef<HTMLDivElement>(null);
   const scrolling = useRef<HTMLDivElement>(null);
@@ -142,7 +146,7 @@ const MessageComponent = ({
                 },
               }}
             >
-              {message.messageType === "node" ? (
+              {message.messageType === "node" && nodes[message.sharedNodeId] ? (
                 <Box
                   sx={{
                     display: "flex",
@@ -182,8 +186,7 @@ const MessageComponent = ({
                     <LinkIcon sx={{ color: DESIGN_SYSTEM_COLORS.gray25 }} />
                   </Box>
                   <Typography sx={{ fontWeight: "500" }}>
-                    {message.text?.substr(0, 40)}
-                    {message.text?.length > 40 ? "..." : ""}
+                    {getTitle(nodes, message.sharedNodeId)?.substr(0, 40)}
                   </Typography>
                 </Box>
               ) : (
