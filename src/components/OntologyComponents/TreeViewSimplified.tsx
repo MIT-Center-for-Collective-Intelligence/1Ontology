@@ -78,6 +78,7 @@ const TreeViewSimplified = ({
         <TreeItem
           key={treeVisualization[nodeId]?.id || nodeId}
           nodeId={treeVisualization[nodeId]?.id || nodeId}
+          className={`node-${nodeId}`}
           label={
             <Box
               sx={{
