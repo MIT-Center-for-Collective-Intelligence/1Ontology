@@ -173,17 +173,13 @@ const ChatInput = ({
     },
     [setImageUrls, user]
   );
-  const onKeyDown = (e: any) => {
-    if (e.key === "Enter" && (e.shiftKey || e.metaKey)) {
-      e.preventDefault();
-      const { selectionStart, selectionEnd } = e.currentTarget;
-      const newValue =
-        inputValue.slice(0, selectionStart) +
-        "\n" +
-        inputValue.slice(selectionEnd);
-      setInputValue(newValue);
-    } else if (e.key === "Enter" || e.keyCode === 13) {
-      e.preventDefault();
+  const onKeyDown = (event: any) => {
+    if (
+      event.key === "Enter" &&
+      (event.metaKey || event.ctrlKey) &&
+      (imageUrls.length > 0 || inputValue.trim())
+    ) {
+      event.preventDefault();
       if (inputValue) {
         if (type === "reply") {
           if (isEditing) {
