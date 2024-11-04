@@ -167,6 +167,18 @@ const Ontology = () => {
   const [currentImprovement, setCurrentImprovement] = useState(null);
   const [displayGuidelines, setDisplayGuidelines] = useState(false);
   const [prevHash, setPrevHash] = useState("");
+  const [lastSearches, setLastSearches] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      // Load last searches from localStorage with userId prefix
+      const searches = localStorage.getItem(`lastSearches_${user.userId}`);
+      if (searches) {
+        setLastSearches(JSON.parse(searches));
+      }
+    }
+  }, [user]);
+
   useEffect(() => {
     // Check if a user is logged in
     if (user) {
@@ -211,6 +223,45 @@ const Ontology = () => {
       window.removeEventListener("hashchange", handleHashChange);
     };
   }, [eachOntologyPath, prevHash]);
+
+  // Function to update last searches
+  const updateLastSearches = (searchedNode: any) => {
+    setLastSearches((prevSearches) => {
+      // If searchedNode is null, only filter valid searches from prevSearches
+      if (!searchedNode) {
+        const validSearches = prevSearches.filter((node) => {
+          const nodeInNodes = nodes[node.id];
+          return nodeInNodes && !nodeInNodes.deleted; // Keep only non-deleted nodes
+        });
+
+        localStorage.setItem(
+          `lastSearches_${user?.userId}`,
+          JSON.stringify(validSearches)
+        );
+        return validSearches;
+      }
+
+      // Proceed with the usual update if searchedNode is not null
+      const filteredSearches = prevSearches.filter(
+        (s) => s.id !== searchedNode.id
+      );
+      const updatedSearches = [searchedNode, ...filteredSearches];
+
+      const validSearches = updatedSearches.filter((node) => {
+        const nodeInNodes = nodes[node.id];
+        return nodeInNodes && !nodeInNodes.deleted; // Keep only non-deleted nodes
+      });
+
+      const limitedSearches = validSearches.slice(0, 20);
+
+      // Update localStorage with the new list of searches
+      localStorage.setItem(
+        `lastSearches_${user?.userId}`,
+        JSON.stringify(limitedSearches)
+      );
+      return limitedSearches;
+    });
+  };
 
   // Function to perform a search using Fuse.js library
   const searchWithFuse = (query: string, nodeType?: INodeTypes): INode[] => {
@@ -733,9 +784,11 @@ const Ontology = () => {
       navigateToNode(node.id);
 
       setTimeout(() => {
-        const element = document.getElementById("node-" + node?.id);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        const elements = document.getElementsByClassName("node-" + node?.id);
+        const firstElement = elements.length > 0 ? elements[0] : null;
+
+        if (firstElement) {
+          firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }, 500);
       // initializeExpanded(eachOntologyPath[node.id]);
@@ -793,15 +846,28 @@ const Ontology = () => {
     return () => clearInterval(intervalId);
   }, [lastInteractionDate]);
 
+  // Navigate to the currentVisibleNode when the viewValue is 0 (Outline View)
+  // Note: This functionality might be implemented without useEffect in the future.
+  useEffect(() => {
+    if (viewValue === 0 && currentVisibleNode) {
+      navigateToNode(currentVisibleNode.id);
+    }
+  }, [viewValue, currentVisibleNode]);
+
   const navigateToNode = async (nodeId: string) => {
     if (nodes[nodeId]) {
       setCurrentVisibleNode(nodes[nodeId]);
       initializeExpanded(eachOntologyPath[nodeId]);
       setSelectedDiffNode(null);
       setTimeout(() => {
-        const element = document.getElementById("node-" + nodeId);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Retrieve elements with the class name based on the nodeId
+        // Since the same node may be displayed multiple times across different parents, using unique IDs alone is not sufficient.
+        // MUI TreeView handles IDs internally, so adding an additional class to each node allows for easier access and manipulation later on.
+        const elements = document.getElementsByClassName("node-" + nodeId);
+        const firstElement = elements.length > 0 ? elements[0] : null; // Safely access the first element
+
+        if (firstElement) {
+          firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }, 800);
     }
@@ -909,20 +975,18 @@ const Ontology = () => {
                 <TabPanel
                   value={viewValue}
                   index={0}
-                  sx={
-                    {
-                      height: "100%",
+                  sx={{
+                    height: "100%",
                     overflowX: "auto",
                     whiteSpace: "nowrap",
                     ...SCROLL_BAR_STYLE,
-                    }
-                  }
-              >
-                <Box
-                  sx={{
-                    display: "inline-block", // Keep it inline for horizontal scroll
-                    minWidth: "100%", // Ensures it takes at least the width of the container
                   }}
+                >
+                  <Box
+                    sx={{
+                      display: "inline-block", // Keep it inline for horizontal scroll
+                      minWidth: "100%", // Ensures it takes at least the width of the container
+                    }}
                   >
                     <TreeViewSimplified
                       treeVisualization={treeVisualization}
@@ -931,7 +995,7 @@ const Ontology = () => {
                       setExpandedNodes={setExpandedNodes}
                       currentVisibleNode={currentVisibleNode}
                     />
-                </Box>
+                  </Box>
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
                   <DagGraph
@@ -954,6 +1018,8 @@ const Ontology = () => {
                 <SearchSideBar
                   openSearchedNode={openSearchedNode}
                   searchWithFuse={searchWithFuse}
+                  lastSearches={lastSearches}
+                  updateLastSearches={updateLastSearches}
                 />
               </Box>
             </Section>
@@ -1047,6 +1113,8 @@ const Ontology = () => {
             setDisplayGuidelines={setDisplayGuidelines}
             currentImprovement={currentImprovement}
             setCurrentImprovement={setCurrentImprovement}
+            lastSearches={lastSearches}
+            updateLastSearches={updateLastSearches}
           />
         </Container>
         {ConfirmDialog}
