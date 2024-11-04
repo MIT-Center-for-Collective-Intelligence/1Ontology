@@ -227,11 +227,34 @@ const Ontology = () => {
   // Function to update last searches
   const updateLastSearches = (searchedNode: any) => {
     setLastSearches((prevSearches) => {
+      // If searchedNode is null, only filter valid searches from prevSearches
+      if (!searchedNode) {
+        const validSearches = prevSearches.filter((node) => {
+          const nodeInNodes = nodes[node.id];
+          return nodeInNodes && !nodeInNodes.deleted; // Keep only non-deleted nodes
+        });
+
+        localStorage.setItem(
+          `lastSearches_${user?.userId}`,
+          JSON.stringify(validSearches)
+        );
+        return validSearches;
+      }
+
+      // Proceed with the usual update if searchedNode is not null
       const filteredSearches = prevSearches.filter(
         (s) => s.id !== searchedNode.id
       );
       const updatedSearches = [searchedNode, ...filteredSearches];
-      const limitedSearches = updatedSearches.slice(0, 20);
+
+      const validSearches = updatedSearches.filter((node) => {
+        const nodeInNodes = nodes[node.id];
+        return nodeInNodes && !nodeInNodes.deleted; // Keep only non-deleted nodes
+      });
+
+      const limitedSearches = validSearches.slice(0, 20);
+
+      // Update localStorage with the new list of searches
       localStorage.setItem(
         `lastSearches_${user?.userId}`,
         JSON.stringify(limitedSearches)

@@ -42,6 +42,7 @@ const SearchSideBar = ({
 
   const handleFocus = () => {
     setIsFocused(true);
+    updateLastSearches();
     if (searchValue.trim() !== "" || !!lastSearches.length) {
       setIsListOpen(true);
     }
