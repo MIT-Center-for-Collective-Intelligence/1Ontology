@@ -1202,7 +1202,53 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
     });
   }
 };
+export const updateLinks = (
+  links: { id: string }[],
+  newLink: { id: string },
+  linkType: "specializations" | "generalizations",
+  nodes: { [nodeId: string]: INode },
+  db: any
+) => {
+  const filteredChildren = links.filter((child) => {
+    const childData = nodes[child.id];
+    const allLinks = [
+      ...(childData?.specializations || []),
+      ...(childData?.generalizations || []),
+    ];
 
+    return !allLinks.some((collection) => {
+      return collection.nodes.some((node) => node.id === newLink.id);
+    });
+  });
+
+  for (let child of filteredChildren) {
+    const childData = nodes[child.id];
+    if (!childData) continue;
+    const childLinks = childData[linkType];
+
+    const mainCollection = childLinks.find(
+      (collection) => collection.collectionName === "main"
+    );
+
+    if (mainCollection) {
+      mainCollection.nodes.push(newLink);
+      const childRef = doc(collection(db, NODES), child.id);
+      updateDoc(childRef, {
+        [linkType]: childLinks,
+      });
+    } else {
+      const newCollection = {
+        collectionName: "main",
+        nodes: [newLink],
+      };
+      childLinks.push(newCollection);
+      const childRef = doc(collection(db, NODES), child.id);
+      updateDoc(childRef, {
+        [linkType]: childLinks,
+      });
+    }
+  }
+};
 // export const updateInheritanceWhenUnlinkSpecialization = async (
 //   db: any,
 //   removedLinkId: string,

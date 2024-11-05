@@ -5,6 +5,9 @@ import React, {
   useRef,
   useState,
 } from "react";
+import CircularProgress from "@mui/material/CircularProgress";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import {
   Button,
   IconButton,
@@ -66,9 +69,11 @@ import ROUTES from " @components/lib/utils/routes";
 
 import NodeActivity from "../ActiveUsers/NodeActivity";
 import { User } from " @components/types/IAuth";
-import { NodeChange } from " @components/types/INode";
+import { INode, NodeChange } from " @components/types/INode";
 import Improvements from "../Improvements/Improvements";
 import { CHAT_DISCUSSION_TABS } from " @components/lib/CONSTANTS";
+import { generateProposals } from " @components/lib/utils/copilotPrompts";
+import { compareProposals } from " @components/lib/utils/copilotHelpers";
 
 type MainSidebarProps = {
   toolbarRef: any;
@@ -143,6 +148,14 @@ const ToolbarSidebar = ({
   const [activeUsers, setActiveUsers] = useState<any>({});
   const [previousNodeId, setPreviousNodeId] = useState("");
   const [selectedChatTab, setSelectedChatTab] = useState<number>(0);
+  const [isLoadingCopilot, setIsLoadingCopilot] = useState(false);
+  const [nodesByTitle, setNodesByTitle] = useState<{
+    [nodeTitle: string]: INode;
+  }>({});
+  const [improvements, setImprovements] = useState<any>([]);
+  const [doneLoadingCopilot, setDoneLoadingCopilot] = useState(false);
+  const [copilotMessage, setCopilotMessage] = useState("");
+
   const signOut = async () => {
     router.push(ROUTES.signIn);
     getAuth().signOut();
@@ -440,6 +453,49 @@ const ToolbarSidebar = ({
     }
   };
 
+  useEffect(() => {
+    if (user?.uname === "ouhrac" || user?.uname === "1man") {
+      const nodesByT: { [nodeTitle: string]: INode } = {};
+      for (let nodeId in nodes) {
+        const nodeTitle = nodes[nodeId].title;
+        nodesByT[nodeTitle] = nodes[nodeId];
+      }
+      setNodesByTitle(nodesByT);
+    }
+  }, [nodes, user]);
+
+  const handleImproveClick = async () => {
+    setIsLoadingCopilot(true);
+    try {
+      const response: {
+        improvements: any;
+        new_nodes: any;
+        guidelines: any;
+        message: string;
+      } = await generateProposals("", currentVisibleNode, nodes);
+      console.log("response ==>", response);
+      setCopilotMessage(response.message);
+      const improvements = (
+        (await compareProposals(response.improvements, nodesByTitle)) || []
+      ).filter((m: any) => (m.detailsOfChange || []).length > 0);
+
+      const newNodes = response.new_nodes;
+      if (improvements) {
+        setImprovements(improvements);
+        // setCurrentImprovement(improvements[0]);
+      }
+      setDoneLoadingCopilot(true);
+    } catch (error) {
+      confirmIt(
+        "Sorry! There was an error generating proposals, please try again!",
+        "Ok"
+      );
+      console.error("Error fetching improvements:", error);
+    } finally {
+      setIsLoadingCopilot(false);
+    }
+  };
+
   const renderContent = (activeSidebar: string) => {
     switch (activeSidebar) {
       case "notifications":
@@ -520,6 +576,14 @@ const ToolbarSidebar = ({
             currentImprovement={currentImprovement}
             setCurrentImprovement={setCurrentImprovement}
             currentVisibleNode={currentVisibleNode}
+            nodes={nodes}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            navigateToNode={navigateToNode}
+            isLoadingCopilot={isLoadingCopilot}
+            improvements={improvements}
+            setImprovements={setImprovements}
+            handleImproveClick={handleImproveClick}
+            copilotMessage={copilotMessage}
           />
         );
       default:
@@ -580,19 +644,16 @@ const ToolbarSidebar = ({
     switch (activeSidebar) {
       case "chat-discussion":
         return "Chatroom";
-        break;
       case "chat":
         return "Node Comments";
-        break;
       case "notifications":
         return "Notifications";
-        break;
       case "nodeHistory":
         return "Node's History";
-        break;
       case "inheritanceSettings":
         return "Node's Inheritance Settings";
-        break;
+      case "improvements":
+        return "Copilot Improvements:";
       default:
         return "";
     }
@@ -611,7 +672,7 @@ const ToolbarSidebar = ({
         backdropFilter: "saturate(180%) blur(10px)",
         display: "flex",
         flexDirection: "column",
-        padding: "9px",
+        padding: activeSidebar !== "improvements" ? "9px" : "",
       }}
       onMouseEnter={() => {
         if (!activeSidebar) {
@@ -657,7 +718,15 @@ const ToolbarSidebar = ({
             )}
 
             {getHeaderTest(activeSidebar) && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  pt: "5px",
+                  pl: "5px",
+                }}
+              >
                 <Typography sx={{ fontSize: "29px", fontWeight: "bold" }}>
                   {getHeaderTest(activeSidebar)}
                 </Typography>
@@ -672,8 +741,17 @@ const ToolbarSidebar = ({
                   }
                   setActiveSidebar(null);
                   setOpenLogsFor(null);
+                  setCurrentImprovement(null);
                 }}
-                sx={{ ml: "auto", zIndex: 100 }}
+                sx={{
+                  ml: "auto",
+                  zIndex: 100,
+                  mt: "5px",
+                  mr: "5px",
+                  backgroundColor: "gray",
+                  width: "26px",
+                  height: "26px",
+                }}
               >
                 <ClearIcon />
               </IconButton>
@@ -752,34 +830,43 @@ const ToolbarSidebar = ({
               text="Chatroom"
               toolbarIsOpen={hovered}
             />
-            {/* <SidebarButton
-              id="toolbar-search-button"
-              icon={<SearchIcon />}
-              onClick={() => {
-                handleExpandSidebar("search");
-              }}
-              text="Search"
-              toolbarIsOpen={hovered}
-            /> */}
-            {/* <SidebarButton
-              id="toolbar-theme-button"
-              icon={<AutoAwesomeIcon />}
-              onClick={() => {
-                handleExpandSidebar("improvements");
-              }}
-              text={"Copilot"}
-              toolbarIsOpen={hovered}
-            />
 
-            <SidebarButton
-              id="toolbar-theme-button"
-              icon={<AutoStoriesIcon />}
-              onClick={() => {
-                setDisplayGuidelines((prev: boolean) => !prev);
-              }}
-              text={"Guidelines"}
-              toolbarIsOpen={hovered}
-            /> */}
+            {(user?.uname === "ouhrac" || user?.uname === "1man") && (
+              <SidebarButton
+                id="toolbar-theme-button"
+                icon={
+                  isLoadingCopilot ? (
+                    <CircularProgress size={27} />
+                  ) : (
+                    <AutoAwesomeIcon
+                      sx={{ color: doneLoadingCopilot ? "green" : "" }}
+                    />
+                  )
+                }
+                onClick={() => {
+                  if (improvements.length > 0) {
+                    handleExpandSidebar("improvements");
+                    setDoneLoadingCopilot(false);
+                    setCurrentImprovement(improvements[0]);
+                  } else {
+                    handleImproveClick();
+                  }
+                }}
+                text={"Copilot"}
+                toolbarIsOpen={hovered}
+              />
+            )}
+            {(user?.uname === "ouhrac" || user?.uname === "1man") && (
+              <SidebarButton
+                id="toolbar-theme-button"
+                icon={<AutoStoriesIcon />}
+                onClick={() => {
+                  setDisplayGuidelines((prev: boolean) => !prev);
+                }}
+                text={"Guidelines"}
+                toolbarIsOpen={hovered}
+              />
+            )}
 
             <SidebarButton
               id="toolbar-theme-button"

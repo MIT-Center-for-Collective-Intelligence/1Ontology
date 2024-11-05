@@ -98,7 +98,12 @@ const YjsEditorWrapper = ({
       WS_URL,
       `${nodeId}-${property}`,
       ydoc,
-      { connect: true, params: { type: structured ? "structured" : "" } }
+      {
+        connect: true,
+        params: {
+          type: structured ? "structured" : "non-structured",
+        },
+      }
     );
     provider.on("sync", (isSynced: boolean) => {
       if (isSynced) {
@@ -169,9 +174,13 @@ const YjsEditorWrapper = ({
       const saveChanges = () => {
         saveChangeLog(changeHistoryRef.current);
         changeHistoryRef.current = [];
-      };    
+      };
 
-      const handleSelectionChange = (range: Range | null, oldRange: Range | null, source: string) => {
+      const handleSelectionChange = (
+        range: Range | null,
+        oldRange: Range | null,
+        source: string
+      ) => {
         // On blur
         if (range === null && oldRange !== null) {
           saveChanges();

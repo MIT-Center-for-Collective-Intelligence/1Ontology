@@ -80,7 +80,8 @@ const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
           top: 0,
           zIndex: 3,
           py: 3,
-          backgroundColor: "#1b1a1a",
+          backgroundColor: (theme) =>
+            theme.palette.mode === "dark" ? "#1b1a1a" : "white",
         }}
       >
         <Button
