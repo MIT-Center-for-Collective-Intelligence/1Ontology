@@ -105,14 +105,25 @@ export const compareProposals = async (
             (k) => k !== "reasoning"
           )[0];
 
-          if (typeof nodeData.properties[property] === "string") {
+          if (
+            typeof nodeData.properties[property] === "string" ||
+            property === "title"
+          ) {
             modifiedProperties[property] = change.reasoning;
             detailsOfChange.push({
               modifiedProperty: property,
-              previousValue: nodeData.properties[property],
+              previousValue:
+                property === "title"
+                  ? nodeData.title
+                  : nodeData.properties[property],
               newValue: change[property],
             });
           } else {
+            if (property !== "specializations") {
+              change[property] = [
+                { collectionName: "main", nodes: change[property] },
+              ];
+            }
             const response: any = compareProperty(
               change,
               nodeData,

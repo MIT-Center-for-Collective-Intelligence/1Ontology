@@ -214,10 +214,15 @@ const Improvements = ({
     try {
       const nodeRef = doc(collection(db, NODES), nodeId);
       const nodeData = nodes[nodeId];
-
-      await updateDoc(nodeRef, {
-        [`properties.${property}`]: newValue,
-      });
+      if (property === "title") {
+        await updateDoc(nodeRef, {
+          [`${property}`]: newValue,
+        });
+      } else {
+        await updateDoc(nodeRef, {
+          [`properties.${property}`]: newValue,
+        });
+      }
 
       const serverURL =
         process.env.NODE_ENV === "development"
@@ -242,7 +247,7 @@ const Improvements = ({
       } else {
         await response.json();
       }
-      if (nodeData.inheritance && nodeData.inheritance[property].ref !== null) {
+      if (nodeData.inheritance && !!nodeData.inheritance[property]?.ref) {
         await updateInheritance({
           nodeId: nodeId,
           updatedProperties: [property],

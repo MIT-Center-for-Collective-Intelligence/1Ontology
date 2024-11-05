@@ -38,6 +38,7 @@
     "next": "^13.5.0",
     "notistack": "^2.0.5",
     "npm": "^10.2.5",
+    "openai": "^4.71.0",
     "quill": "^2.0.2",
     "quill-cursors": "^4.0.3",
     "raw-loader": "^4.0.2",

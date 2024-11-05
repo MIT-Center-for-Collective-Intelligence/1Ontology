@@ -128,56 +128,56 @@ For the "improvements" array:
 Each item should represent an object that proposes an improvement to an existing node. Please structure each object as follows:
 {
    "title": "The current title of the node.",
-   "nodeType": "The type of the node, which could be either 'activity', 'actor', 'object', 'evaluationDimension', 'incentive', or 'reward'",
+   "nodeType": "The type of the node, which could be either 'activity', 'actor', 'object', 'evaluationDimension', 'incentive', 'reward', or 'context'.",
    "changes": [], // An array of objects, each representing a change to a single property of the node, only if that property requires some modification. Depending on the property, the object would get only one of the following structures: 
    {
-     "title": "The improved title of the node.",
+     "title": "The improved title of the node. If the node type is 'activity', its typically starts with a verb. Example: 'Turn around aircraft'.",
      "reasoning": "Your reasoning for proposing this change to the title of the node."
    },
    {
-     "description": "The improved description of the node.",
+     "description": "The improved description of the node. This should be a detailed explanation of this entity to help others understand its purpose and how it differs from similar entities.",
      "reasoning": "Your reasoning for proposing this change to the description of the node."
    },
    {
-     "specializations": [], // An array of objects, each representing a collection with the following structure: {"collectionName": "The title of the collection", "nodes": [An array of nodes that are specializations of the original node and are classified under this collection based on their shared characteristics. Each item in this array is a string representing the title of the specialization node.]}
+     "specializations": [], // An array of objects, each representing a collection with the following structure: {"collectionName": "The title of the collection", "nodes": [An array of titles (as strings) of nodes that are specializations of this node and are classified under this collection based on their shared characteristics. These are nodes that are more specific variants of this node. Example: 'Turn around aircraft' is a specialization of 'Change user of physical object' because it involves changing the user of an aircraft.]}
      "reasoning": "Your reasoning for proposing this change to the specializations of the node."
    },
    {
-     "generalizations": [], // An array of objects, each representing a collection with the following structure: {"collectionName": "The title of the collection", "nodes": [An array of nodes that are generalizations of the original node and are classified under this collection based on their shared characteristics. Each item in this array is a string representing the title of the generalization node.]}
+     "generalizations": [], // An array of titles (as strings) of nodes that are generalizations of this node. These are nodes that this node is a specific type of. Example: "Turn around aircraft" is a generalization of "Change user of physical object" because turning around an aircraft changes its users.
      "reasoning": "Your reasoning for proposing this change to the generalizations of the node."
    },
    {
-     "parts": [], // An array of objects, each representing a collection with the following structure: {"collectionName": "The title of the collection", "nodes": [An array of nodes that are parts of the original node and are classified under this collection based on their shared characteristics. Each item in this array is a string representing the title of the part node.]}
+     "parts": [], // An array of titles (as strings) of nodes that are parts of this node. These are the components or sub-nodes that make up this node. For activities, parts are the sub-activities needed to achieve the overall activity goal.
      "reasoning": "Your reasoning for proposing this change to the parts of the node."
    },
    {
-     "isPartOf": [], // An array of objects, each representing a collection with the following structure: {"collectionName": "The title of the collection", "nodes": [An array of nodes that this node is a part of the original node and are classified under this collection based on their shared characteristics. Each item in this array is a string representing the title of the node that this node is a part of.]}
+     "isPartOf": [], // An array of titles (as strings) of nodes that this node is a part of. These are larger nodes that this node is a component of. For activities, it includes larger activities of which this is a sub-activity. Example: The activity "Dress seats" is part of "Clean aircraft."
      "reasoning": "Your reasoning for proposing this change to the isPartOf of the node."
    },
    // The following objects should only be included if "nodeType" is "activity":
    {
-     "actor": [], // An array of objects, each representing a collection with the following structure: {"collectionName": "The title of the collection", "nodes": [An array of nodes that are actors that perform the original activity node and are classified under this collection based on their shared characteristics. Each item in this array is a string representing the title of the actor node.]}
+     "actor": [], // An array of titles (as strings) of nodes that are individuals or groups that perform the original activity node.
      "reasoning": "Your reasoning for proposing this change to the actors of the node."
    },
    {
-     "Objects Acted on": [], // An array of objects, each representing a collection with the following structure: {"collectionName": "The title of the collection", "nodes": [An array of nodes that are objects that the original activity node is performed on and are classified under this collection based on their shared characteristics. Each item in this array is a string representing the title of the object node.]}
+     "Objects Acted on": [], // An array of titles (as strings) of nodes that are objects that the original activity node is performed on.
      "reasoning": "Your reasoning for proposing this change to the objects of the node."
    },
    {
-     "evaluationDimension": [], // An array of objects, each representing a collection with the following structure: {"collectionName": "The title of the collection", "nodes": [An array of nodes that are evaluation dimensions of the original node and are classified under this collection based on their shared characteristics. Each item in this array is a string representing the title of the evaluation dimension node.]}
+     "evaluationDimension": [], // An array of titles (as strings) of nodes that are evaluation dimensions of the original node. These are criteria used to assess the performance of this activity.
      "reasoning": "Your reasoning for proposing this change to the evaluation dimensions of the node."
    },
    {
-     "postConditions": "The post-conditions of the activity.",
+     "postConditions": "The conditions that must be met before this activity can be performed.",
      "reasoning": "Your reasoning for proposing this change to the postConditions of the node."
    },
    {
-     "preConditions": "The pre-conditions of the activity.",
+     "preConditions": "The pre-conditions of the activity that must be met before this activity can be performed.",
      "reasoning": "Your reasoning for proposing this change to the preConditions of the node."
    },
    // The following fields should only be included if "nodeType" is "actor":
    {
-     "abilities": "The abilities of the actor.",
+     "abilities": "The skills or abilities required of this actor.",
      "reasoning": "Your reasoning for proposing this change to the abilities of the node."
    },
    {
@@ -186,15 +186,15 @@ Each item should represent an object that proposes an improvement to an existing
    },
    // The following fields should only be included if "nodeType" is "group":
    {
-     "abilities": "The abilities of the actor.",
+     "abilities": "The skills or abilities required of the actors that belong to this group.",
      "reasoning": "Your reasoning for proposing this change to the abilities of the node."
    },
    {
-     "typeOfActor": "The type of actors in the group.",
+     "typeOfActor": "The specific types of actors that belong to this group.",
      "reasoning": "Your reasoning for proposing this change to the typeOfActor of the node."
    },
    {
-     "listOfIndividualsInGroup": "The list of individuals in the group.",
+     "listOfIndividualsInGroup": "The list of individuals that make up this group.",
      "reasoning": "Your reasoning for proposing this change to the listOfIndividualsInGroup of the node."
    },
    {
@@ -228,11 +228,11 @@ Each item should represent an object that proposes an improvement to an existing
    },
    // The following fields should only be included if "nodeType" is "evaluationDimension":
    {
-     "criteriaForAcceptability": "The criteria for acceptability of the evaluation dimension.",
+     "criteriaForAcceptability": "The standards used to determine if the activity's performance meets expectations according to this evaluation dimension.",
      "reasoning": "Your reasoning for proposing this change to the criteriaForAcceptability of the node."
    },
    {
-     "directionOfDesirability": "The direction of desirability of the evaluation dimension.",
+     "directionOfDesirability": "Indicates whether an increase or decrease in measurement would be considered desirable for this activity's performance.",
      "reasoning": "Your reasoning for proposing this change to the directionOfDesirability of the node."
    },
    {
@@ -240,7 +240,7 @@ Each item should represent an object that proposes an improvement to an existing
      "reasoning": "Your reasoning for proposing this change to the evaluationType of the node."
    },
    {
-     "measurementUnits": "The measurement units of the evaluation dimension.",
+     "measurementUnits": "The units used to quantify this evaluation dimension.",
      "reasoning": "Your reasoning for proposing this change to the measurementUnits of the node."
    },
    // The following fields should only be included if "nodeType" is "reward":
@@ -250,19 +250,19 @@ Each item should represent an object that proposes an improvement to an existing
    },
    // The following fields should only be included if "nodeType" is "incentive":
    {
-     "capabilitiesRequired": "The capabilities required for the incentive.",
+     "capabilitiesRequired": "The capabilities that actors must possess to achieve this incentive.",
      "reasoning": "Your reasoning for proposing this change to the capabilitiesRequired of the node."
    },
    {
-     "rewardFunction": "The reward function of the incentive.",
+     "rewardFunction": "The way in which the reward is structured or provided.",
      "reasoning": "Your reasoning for proposing this change to the rewardFunction of the node."
    },
    {
-     "evaluationDimension": [], // An array of objects, each representing a collection with the following structure: {"collectionName": "The title of the collection", "nodes": [An array of nodes that are evaluation dimensions of the original incentive node and are classified under this collection based on their shared characteristics. Each item in this array is a string representing the title of the evaluation dimension node.]}
+     "evaluationDimension": [], // An array of titles (as strings) of nodes that are evaluation dimensions of the original incentive node.
      "reasoning": "Your reasoning for proposing this change to the evaluationDimension of the node."
    },
    {
-     "reward": [], // An array of objects, each representing a collection with the following structure: {"collectionName": "The title of the collection", "nodes": [An array of nodes that are rewards of the original incentive node and are classified under this collection based on their shared characteristics. Each item in this array is a string representing the title of the reward node.]}
+     "reward": [], // An array of titles (as strings) of nodes that are rewards of the original incentive node.
      "reasoning": "Your reasoning for proposing this change to the reward of the node."
    }
 }

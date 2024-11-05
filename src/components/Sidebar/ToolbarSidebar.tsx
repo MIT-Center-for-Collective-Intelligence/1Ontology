@@ -473,7 +473,7 @@ const ToolbarSidebar = ({
         guidelines: any;
         message: string;
       } = await generateProposals("", currentVisibleNode, nodes);
-      console.log("response ==>", response);
+
       setCopilotMessage(response.message);
       const improvements = (
         (await compareProposals(response.improvements, nodesByTitle)) || []

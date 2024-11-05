@@ -16,7 +16,6 @@ function getErrorMessage(error: any) {
   return errorMessage;
 }
 const adapter = axios.create({
-  baseURL: "http://localhost:3001",
   headers: {
     Accept: "application/json",
   },

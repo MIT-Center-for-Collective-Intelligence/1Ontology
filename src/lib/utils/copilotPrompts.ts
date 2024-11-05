@@ -1,37 +1,15 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  getFirestore,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, getDocs, getFirestore } from "firebase/firestore";
 import { GUIDELINES, NODES } from "../firestoreClient/collections";
 import { ICollection, INode } from " @components/types/INode";
 import { Post } from "./Post";
 import { PROPOSALS_SCHEMA } from "../CONSTANTS";
-import { z } from "zod";
-
-const MODEL = "gpt-4o";
 
 export const sendLLMRequest = async ({ messages }: { messages: any }) => {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER}/ask`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages,
-      }),
+    const response = await Post("/copilot", {
+      messages,
     });
-    if (response.ok) {
-      const data = await response.json();
-      return data;
-    } else {
-      console.error("Error:", response.statusText);
-    }
+
     return response;
   } catch (error) {
     console.error("Error making request:", error);
@@ -58,11 +36,6 @@ const proposerAgent = async (
   evaluation: string = ""
 ) => {
   try {
-    const structuredResponse = z.object({
-      improvements: z.array(z.object({})),
-      new_nodes: z.array(z.object({})),
-      guidelines: z.array(z.object({})),
-    });
     const db = getFirestore();
     const guidelinesSnapshot = await getDocs(collection(db, GUIDELINES));
     const guidelines = guidelinesSnapshot.docs
@@ -118,7 +91,6 @@ ${JSON.stringify(guidelines, null, 2)}
       ],
     });
 
-    console.log("proposalsJSON ==>", completion);
     proposalsJSON = extractJSON(completion.choices[0].message.content);
     return proposalsJSON;
   } catch (error: any) {

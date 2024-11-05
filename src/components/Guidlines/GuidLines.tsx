@@ -17,6 +17,8 @@ import {
   onSnapshot,
   query,
   addDoc,
+  doc,
+  updateDoc,
 } from "firebase/firestore";
 import { GUIDELINES } from " @components/lib/firestoreClient/collections";
 import CloseIcon from "@mui/icons-material/Close";
@@ -72,6 +74,13 @@ const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
     .sort((a, b) => guidelines[a].index - guidelines[b].index)
     .map((categoryId) => guidelines[categoryId]);
 
+  const modifyGuidelines = (newValue: string, gId: string, gIdx: number) => {
+    const gRef = doc(collection(db, GUIDELINES), gId);
+    const gData = { ...guidelines[gId] };
+    gData.guidelines[gIdx] = newValue;
+    updateDoc(gRef, gData);
+  };
+
   return (
     <Box>
       <Box
@@ -111,11 +120,13 @@ const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
                 defaultValue={guideline}
                 variant="outlined"
                 margin="normal"
-                InputProps={{ readOnly: true }}
                 InputLabelProps={{
                   style: { color: "grey" },
                 }}
                 multiline
+                onChange={(e) =>
+                  modifyGuidelines(e.target.value, category.id, index)
+                }
               />
             ))}
             <TextField

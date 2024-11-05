@@ -123,7 +123,8 @@ const ImprovementsSlider = ({
                   mx: "5px",
                   width: "400px",
                   textAlign: "left",
-                  backgroundColor: "#d0d5dd",
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "light" ? "#d0d5dd" : "",
                 }}
               >
                 <Typography sx={{ mb: "15px" }}>
