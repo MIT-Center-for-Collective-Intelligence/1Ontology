@@ -1,27 +1,18 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback } from "react";
 import { Button, CircularProgress, Box, Typography } from "@mui/material";
 import ImprovementsSlider from "./ImprovementsSlider";
 import {
   collection,
   doc,
   getDoc,
-  getDocs,
   getFirestore,
-  query,
   updateDoc,
-  where,
 } from "firebase/firestore";
-import * as Y from "yjs";
 import { NODES } from " @components/lib/firestoreClient/collections";
-import { ICollection, ILinkNode, INode } from " @components/types/INode";
-import { getNodeIdByTitle } from " @components/lib/utils/helpersCopilot";
-import {
-  generateProposals,
-  sendLLMRequest,
-} from " @components/lib/utils/copilotPrompts";
+import { ICollection, INode } from " @components/types/INode";
+
 import {
   recordLogs,
-  saveNewChangeLog,
   unlinkPropertyOf,
   updateInheritance,
   updateLinks,
@@ -31,8 +22,6 @@ import {
   updatePropertyOf,
 } from " @components/lib/utils/helpers";
 import { useAuth } from "../context/AuthContext";
-import { WebsocketProvider } from "y-websocket";
-import { WS_URL } from " @components/lib/CONSTANTS";
 type ImprovementsProps = {
   currentImprovement: any;
   setCurrentImprovement: any;
@@ -249,11 +238,9 @@ const Improvements = ({
       );
 
       if (response.ok) {
-        const result = await response.json();
-        alert(`Success: ${result.message}`);
+        await response.json();
       } else {
-        const errorResult = await response.json();
-        alert(`Error: ${errorResult.error}`);
+        await response.json();
       }
       if (nodeData.inheritance && nodeData.inheritance[property].ref !== null) {
         await updateInheritance({
@@ -310,9 +297,11 @@ const Improvements = ({
         </Box>
       ) : improvements.length > 0 ? (
         <Box>
-          <Box>
-            <Typography>Copilot Message:</Typography>
-            <Typography>{copilotMessage}</Typography>
+          <Box sx={{ p: 2 }}>
+            <Typography sx={{ textAlign: "left", fontWeight: "bold" }}>
+              Copilot Message:
+            </Typography>
+            <Typography sx={{ textAlign: "left" }}>{copilotMessage}</Typography>
           </Box>
           <ImprovementsSlider
             proposals={improvements}

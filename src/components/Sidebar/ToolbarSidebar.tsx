@@ -473,7 +473,7 @@ const ToolbarSidebar = ({
         guidelines: any;
         message: string;
       } = await generateProposals("", currentVisibleNode, nodes);
-
+      console.log("response ==>", response);
       setCopilotMessage(response.message);
       const improvements = (
         (await compareProposals(response.improvements, nodesByTitle)) || []
@@ -482,10 +482,14 @@ const ToolbarSidebar = ({
       const newNodes = response.new_nodes;
       if (improvements) {
         setImprovements(improvements);
-        setCurrentImprovement(improvements[0]);
+        // setCurrentImprovement(improvements[0]);
       }
       setDoneLoadingCopilot(true);
     } catch (error) {
+      confirmIt(
+        "Sorry! There was an error generating proposals, please try again!",
+        "Ok"
+      );
       console.error("Error fetching improvements:", error);
     } finally {
       setIsLoadingCopilot(false);

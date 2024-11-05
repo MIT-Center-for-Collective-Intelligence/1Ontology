@@ -15,21 +15,23 @@ import { z } from "zod";
 
 const MODEL = "gpt-4o";
 
-export const sendLLMRequest = async ({
-  model,
-  messages,
-  structuredResponse,
-}: {
-  model: string;
-  messages: any;
-  structuredResponse: any;
-}) => {
+export const sendLLMRequest = async ({ messages }: { messages: any }) => {
   try {
-    const response = Post("http://localhost:3001/api/sendOpenAIRequest", {
-      model: model,
-      messages,
-      structuredResponse,
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER}/ask`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messages,
+      }),
     });
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    } else {
+      console.error("Error:", response.statusText);
+    }
     return response;
   } catch (error) {
     console.error("Error making request:", error);
@@ -108,19 +110,17 @@ ${JSON.stringify(guidelines, null, 2)}
     // proposalsJSON = await callOpenAIChat([], prompt);
     // proposalsJSON = await askGemini([], prompt);
     const completion: any = await sendLLMRequest({
-      model: MODEL,
       messages: [
         {
           role: "user",
           content: prompt,
         },
       ],
-      structuredResponse,
     });
 
+    console.log("proposalsJSON ==>", completion);
     proposalsJSON = extractJSON(completion.choices[0].message.content);
-
-    return { proposalsJSON };
+    return proposalsJSON;
   } catch (error: any) {
     console.error(error);
     throw new Error(error);
@@ -224,7 +224,6 @@ export const generateProposals = async (
   nodesArray.push(currentNodeD);
   const _nodesArray = getNodesInThreeLevels(currentNode, nodes, new Set());
   nodesArray.push(..._nodesArray);
-
   if (nodesArray.length === 0) {
     // "No related nodes found!"
   } else {

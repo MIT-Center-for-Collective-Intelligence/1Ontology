@@ -384,7 +384,7 @@ const Text = ({
         </Typography>
       ) : (
         <>
-          {currentImprovementChange ? (
+          {currentImprovementChange && !currentImprovement.implemented ? (
             <Box sx={{ p: 3 }}>
               <Typography sx={{ color: "red", textDecoration: "line-through" }}>
                 {currentImprovementChange.previousValue}
