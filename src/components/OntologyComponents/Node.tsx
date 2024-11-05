@@ -233,6 +233,9 @@ const Node = ({
         }
         _oldChecked.add(checkedId);
       }
+      if (selectedProperty === "generalizations" && _oldChecked.size === 0) {
+        return checkedItems;
+      }
       return _oldChecked;
     });
   };
