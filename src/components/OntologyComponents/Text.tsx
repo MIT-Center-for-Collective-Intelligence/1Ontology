@@ -102,6 +102,15 @@ const Text = ({
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
   const [switchToWebsocket, setSwitchToWebSocket] = useState(true);
 
+  const currentImprovementChange = useMemo(() => {
+    const uIndex = (currentImprovement?.detailsOfChange || []).findIndex(
+      (c: any) => c.modifiedProperty === property
+    );
+    if (uIndex !== -1) {
+      return currentImprovement.detailsOfChange[uIndex];
+    }
+    return null;
+  }, [currentImprovement]);
   // // Maintain focus after inheritance change
   // useEffect(() => {
   //   if (focusAfterSaveRef.current && textAreaRef.current) {
@@ -375,8 +384,17 @@ const Text = ({
         </Typography>
       ) : (
         <>
-          {selectedDiffNode &&
-          selectedDiffNode.modifiedProperty === property ? (
+          {currentImprovementChange ? (
+            <Box sx={{ p: 3 }}>
+              <Typography sx={{ color: "red", textDecoration: "line-through" }}>
+                {currentImprovementChange.previousValue}
+              </Typography>
+              <Typography sx={{ color: "green" }}>
+                {currentImprovementChange.newValue}
+              </Typography>
+            </Box>
+          ) : selectedDiffNode &&
+            selectedDiffNode.modifiedProperty === property ? (
             <Box sx={{ p: "10px", borderRadius: "5px" }}>
               <Box sx={{ display: "flow", gap: "3px", p: "14px" }}>
                 {renderDiff(

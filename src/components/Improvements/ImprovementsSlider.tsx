@@ -2,21 +2,26 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { Box, Button, Paper, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import MarkdownRender from "../Markdown/MarkdownRender";
 
 type IProposalSliderProps = {
   proposals: any;
   setCurrentImprovement: any;
+  currentImprovement: any;
   handleAcceptChange: any;
   setImprovements: any;
   handleRejectChange: any;
+  setCurrentVisibleNode: any;
+  navigateToNode: any;
 };
 const ImprovementsSlider = ({
   proposals,
   setCurrentImprovement,
+  currentImprovement,
   handleAcceptChange,
   setImprovements,
   handleRejectChange,
+  setCurrentVisibleNode,
+  navigateToNode,
 }: IProposalSliderProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -26,6 +31,7 @@ const ImprovementsSlider = ({
     }
     setTimeout(() => {
       setCurrentImprovement(proposals[currentIndex]);
+      navigateToNode(proposals[currentIndex].nodeId);
     }, 100);
   }, [currentIndex]);
 
@@ -34,6 +40,7 @@ const ImprovementsSlider = ({
       const newPrev = prevIndex === proposals.length - 1 ? 0 : prevIndex + 1;
       if (display) {
         setCurrentImprovement(proposals[newPrev]);
+        navigateToNode(proposals[newPrev].nodeId);
       }
       return newPrev;
     });
@@ -44,21 +51,22 @@ const ImprovementsSlider = ({
       const newPrev = prevIndex === 0 ? proposals.length - 1 : prevIndex - 1;
       if (display) {
         setCurrentImprovement(proposals[newPrev]);
+        navigateToNode(proposals[newPrev].nodeId);
       }
       return newPrev;
     });
   };
   const onHandleAcceptChange = async () => {
     await handleAcceptChange(proposals[currentIndex]);
-    handleNext(false);
-    // setImprovements((prev: any) => {
-    //   prev.splice(currentIndex, 1);
-    //   return prev;
-    // });
-    if (proposals.length <= 0) {
-      return;
-    }
-    handlePrevious();
+    setImprovements((prev: any) => {
+      prev[currentIndex].implemented = true;
+      return prev;
+    });
+    setCurrentImprovement((prev: any) => {
+      const _prev = { ...prev };
+      _prev.implemented = true;
+      return _prev;
+    });
   };
   const onHandleRejectChange = () => {
     setImprovements((prev: any) => {
@@ -72,15 +80,11 @@ const ImprovementsSlider = ({
     handleRejectChange();
   };
 
-  const generateSuggestionMessage = (suggestion: any): string => {
-    return "Invalid action.";
-  };
-
   return (
     <Box
       sx={{
         position: "relative",
-        width: "410px",
+        width: "450px",
         overflow: "hidden",
       }}
     >
@@ -91,96 +95,129 @@ const ImprovementsSlider = ({
           transform: `translateX(-${currentIndex * 100}%)`,
         }}
       >
-        {proposals.map((proposal: any, index: number) => (
-          <Box key={index} sx={{ display: "flex", minWidth: "100%" }}>
-            <Button
-              variant="contained"
-              sx={{
-                minWidth: "32px",
-                p: 0,
-                m: 0,
-                // ml: "-14px",
-                backgroundColor: "#1973d3",
-                borderTopLeftRadius: "0px",
-                borderBottomLeftRadius: "0px",
-                ":hover": { backgroundColor: "#084694" },
-                zIndex: 99999,
-              }}
-              onClick={() => handlePrevious()}
-              disabled={proposal === null}
-            >
-              <ArrowBackIosNewIcon />
-            </Button>
-
-            <Paper sx={{ p: "15px", m: "17px", width: "300px" }}>
-              {Object.keys(proposal || {}).length > 0 && (
-                <Box sx={{ mb: "15px" }}>
-                  <strong style={{ fontWeight: "bold", marginRight: "5px" }}>
-                    {" "}
-                    Proposal:
-                  </strong>{" "}
-                  <MarkdownRender
-                    text={proposal.improvementDetails}
-                    sx={{
-                      fontSize: "16px",
-                      fontWeight: 400,
-                      letterSpacing: "inherit",
-                    }}
-                  />
-                </Box>
-              )}
-              <strong style={{ fontWeight: "bold", marginRight: "5px" }}>
-                {" "}
-                Description:
-              </strong>{" "}
-              <Typography sx={{ display: "flex" }}>
-                {" "}
-                {(proposal || {}).description}
-              </Typography>
-              <Typography
-                sx={{ mr: "15px", mt: "5px", ml: "5px", fontWeight: "bold" }}
+        {currentImprovement &&
+          proposals.map((proposal: any, index: number) => (
+            <Box key={index} sx={{ display: "flex", minWidth: "100%" }}>
+              <Button
+                variant="contained"
+                sx={{
+                  minWidth: "32px",
+                  p: 0,
+                  m: 0,
+                  // ml: "-14px",
+                  backgroundColor: "#1973d3",
+                  borderTopLeftRadius: "0px",
+                  borderBottomLeftRadius: "0px",
+                  ":hover": { backgroundColor: "#084694" },
+                  zIndex: 99999,
+                }}
+                onClick={() => handlePrevious()}
+                disabled={proposal === null}
               >
-                {currentIndex + 1}/{proposals.length}
-              </Typography>
-            </Paper>
+                <ArrowBackIosNewIcon />
+              </Button>
 
-            <Button
-              variant="contained"
-              sx={{
-                minWidth: "32px",
-                p: 0,
-                m: 0 /* , mr: "-14px" */,
-                borderTopRightRadius: "0px",
-                borderBottomRightRadius: "0px",
-              }}
-              onClick={() => handleNext()}
-              // disabled={currentImprovement === null}
-            >
-              <ArrowForwardIosIcon />
-            </Button>
-          </Box>
-        ))}
+              <Paper
+                sx={{
+                  p: "15px",
+                  mx: "5px",
+                  width: "400px",
+                  textAlign: "left",
+                  backgroundColor: "#d0d5dd",
+                }}
+              >
+                <Typography sx={{ mb: "15px" }}>
+                  This proposal changes to{" "}
+                  <strong style={{ color: "orange" }}>
+                    {currentImprovement.title}
+                  </strong>
+                  :
+                </Typography>
+
+                {Object.keys(currentImprovement.modifiedProperties).map(
+                  (p: string) => (
+                    <Box key={p} sx={{ mb: "15px" }}>
+                      <Typography
+                        sx={{
+                          textTransform: "capitalize",
+                          fontWeight: "bold",
+                          color: "orange",
+                        }}
+                      >
+                        {p}:
+                      </Typography>
+                      <Typography>
+                        {" "}
+                        {currentImprovement.modifiedProperties[p]}
+                      </Typography>
+                    </Box>
+                  )
+                )}
+
+                <Typography
+                  sx={{ mr: "15px", mt: "5px", ml: "5px", fontWeight: "bold" }}
+                >
+                  {currentIndex + 1}/{proposals.length}
+                </Typography>
+                {currentImprovement.implemented && (
+                  <Typography
+                    sx={{ mt: "15px", fontWeight: "bold", color: "green" }}
+                  >
+                    Suggested improvement is implemented!
+                  </Typography>
+                )}
+              </Paper>
+              <Button
+                variant="contained"
+                sx={{
+                  minWidth: "32px",
+                  p: 0,
+                  m: 0 /* , mr: "-14px" */,
+                  borderTopRightRadius: "0px",
+                  borderBottomRightRadius: "0px",
+                }}
+                onClick={() => handleNext()}
+                // disabled={currentImprovement === null}
+              >
+                <ArrowForwardIosIcon />
+              </Button>
+            </Box>
+          ))}
       </Box>
-      <Box
-        sx={{ display: "flex", gap: "20px", alignItems: "center", my: "13px" }}
-      >
-        <Button
-          onClick={onHandleRejectChange}
-          color="error"
-          variant="contained"
+
+      {!currentImprovement.implemented && (
+        <Box
+          sx={{
+            display: "flex",
+            gap: "20px",
+            alignItems: "center",
+            my: "13px",
+          }}
         >
-          Delete Proposal
-        </Button>
-        <Button
-          onClick={onHandleAcceptChange}
-          color="success"
-          autoFocus
-          variant="contained"
-          sx={{ ml: "auto" }}
-        >
-          Implement Proposal
-        </Button>
-      </Box>
+          <Button
+            onClick={onHandleRejectChange}
+            color="error"
+            variant="contained"
+          >
+            Delete Improvement
+          </Button>
+          <Button
+            onClick={onHandleAcceptChange}
+            autoFocus
+            variant="contained"
+            sx={{
+              ml: "auto",
+              color: "white",
+              backgroundColor: "#115f07",
+              ":hover": {
+                backgroundColor: "green",
+              },
+            }}
+          >
+            Implement Improvement
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };

@@ -51,6 +51,7 @@ import NewCollection from "../Collection/NewCollection";
 import SelectInheritance from "../SelectInheretance/SelectInhertance";
 import Text from "../OntologyComponents/Text";
 import MarkdownRender from "../Markdown/MarkdownRender";
+import VisualizeTheProperty from "./VisualizeTheProperty";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
@@ -123,10 +124,6 @@ const StructuredProperty = ({
           selectedDiffNode.changeType === "add element")
       ) {
         listOfChanges.push(selectedDiffNode);
-      }
-
-      if (currentImprovement) {
-        listOfChanges.push(...currentImprovement.detailsOfChange);
       }
 
       if (
@@ -786,6 +783,22 @@ const StructuredProperty = ({
     setEditCollection(collectionName);
     setNewEditCollection(collectionName);
   };
+  if (
+    currentImprovement &&
+    !currentImprovement.implemented &&
+    currentImprovement.detailsOfChange.findIndex(
+      (c: any) => c.modifiedProperty === property
+    ) !== -1
+  ) {
+    return (
+      <VisualizeTheProperty
+        currentImprovement={currentImprovement}
+        property={property}
+        getTitle={getTitle}
+        nodes={nodes}
+      />
+    );
+  }
 
   return (
     <Paper

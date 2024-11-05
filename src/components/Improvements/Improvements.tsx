@@ -1,197 +1,307 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Button, CircularProgress, Box, Typography } from "@mui/material";
 import ImprovementsSlider from "./ImprovementsSlider";
 import {
   collection,
+  doc,
+  getDoc,
   getDocs,
   getFirestore,
   query,
+  updateDoc,
   where,
 } from "firebase/firestore";
+import * as Y from "yjs";
 import { NODES } from " @components/lib/firestoreClient/collections";
-import { ICollection, INode } from " @components/types/INode";
+import { ICollection, ILinkNode, INode } from " @components/types/INode";
+import { getNodeIdByTitle } from " @components/lib/utils/helpersCopilot";
 import {
-  compareProperties,
-  getNodeIdByTitle,
-} from " @components/lib/utils/helpersCopilot";
-import { sendLLMRequest } from " @components/lib/utils/copilotPrompts";
+  generateProposals,
+  sendLLMRequest,
+} from " @components/lib/utils/copilotPrompts";
+import {
+  recordLogs,
+  saveNewChangeLog,
+  unlinkPropertyOf,
+  updateInheritance,
+  updateLinks,
+  updateLinksForInheritance,
+  updateLinksForInheritanceSpecializations,
+  updatePartsAndPartsOf,
+  updatePropertyOf,
+} from " @components/lib/utils/helpers";
+import { useAuth } from "../context/AuthContext";
+import { WebsocketProvider } from "y-websocket";
+import { WS_URL } from " @components/lib/CONSTANTS";
 type ImprovementsProps = {
   currentImprovement: any;
   setCurrentImprovement: any;
   currentVisibleNode: any;
+  setCurrentVisibleNode: any;
+  nodes: Record<string, INode>;
+  navigateToNode: any;
+  isLoadingCopilot: boolean;
+  improvements: any;
+  setImprovements: any;
+  handleImproveClick: any;
+  copilotMessage: string;
 };
 const Improvements = ({
   currentImprovement,
   setCurrentImprovement,
-  currentVisibleNode: any,
+  currentVisibleNode,
+  setCurrentVisibleNode,
+  nodes,
+  navigateToNode,
+  isLoadingCopilot,
+  improvements,
+  setImprovements,
+  handleImproveClick,
+  copilotMessage,
 }: ImprovementsProps) => {
   const db = getFirestore();
-  const [isLoading, setIsLoading] = useState(false);
-  const [improvements, setImprovements] = useState<any>([]);
+  const [{ user }] = useAuth();
 
-  const handleImproveClick = async () => {
-    setIsLoading(true);
-
-    try {
-      const response: any = await new Promise((resolve) =>
-        setTimeout(
-          () =>
-            resolve({
-              data: [
-                {
-                  title: "Actor",
-                  nodeType:
-                    "The type of the node, which could be either 'activity', 'actor', 'object', 'evaluationDimension', 'incentive', or 'reward'",
-                  changes: [
-                    {
-                      title: "new title",
-                      reasoning:
-                        "Your reasoning for proposing this change to the title of the node.",
-                    },
-                    /*                     {
-                      description: "The improved description of the node.",
-                      reasoning:
-                        "Your reasoning for proposing this change to the description of the node.",
-                    },
-                    {
-                      specializations: [],
-                      reasoning:
-                        "Your reasoning for proposing this change to the specializations of the node.",
-                    },
-                    {
-                      generalizations: [],
-                      reasoning:
-                        "Your reasoning for proposing this change to the generalizations of the node.",
-                    },
-                    {
-                      parts: [],
-                      reasoning:
-                        "Your reasoning for proposing this change to the parts of the node.",
-                    },
-                    {
-                      isPartOf: [],
-                      reasoning:
-                        "Your reasoning for proposing this change to the isPartOf of the node.",
-                    }, */
-                  ],
-                },
-              ],
-            }),
-          2000
-        )
-      );
-      const improvements = (
-        (await compareProposals(response.data)) || []
-      ).filter((m: any) => (m.detailsOfChange || []).length > 0);
-      if (improvements) {
-        setImprovements(improvements);
-        setCurrentImprovement(improvements[0]);
-      }
-    } catch (error) {
-      console.error("Error fetching improvements:", error);
-    } finally {
-      setIsLoading(false);
-    }
+  const onRejectChange = () => {
+    /*  onRejectChange*/
   };
 
-  const compareProposals = async (improvements: any[]) => {
-    try {
-      for (let improvement of improvements) {
-        const nodeDocs = await getDocs(
-          query(collection(db, NODES), where("title", "==", improvement.title))
+  const handleSaveLinkChanges = useCallback(
+    async (
+      property: string,
+      newValue: ICollection[],
+      addedLinks: { id: string }[],
+      removedLinks: { id: string }[]
+    ) => {
+      try {
+        if (!user?.uname) return;
+        const oldLinks = newValue?.flatMap((c) => c.nodes);
+        // Close the modal or perform any other necessary actions
+        // Get the node document from the database
+        const nodeDoc = await getDoc(
+          doc(collection(db, NODES), currentVisibleNode.id)
         );
 
-        if (nodeDocs.docs.length > 0) {
-          const nodeData = nodeDocs.docs[0].data() as INode;
+        // If the node document does not exist, return early
+        if (!nodeDoc.exists()) return;
 
-          // for(let )
-          const detailsOfChange = [];
-          for (let property of ["specializations", "generalizations"]) {
-            let changedProperty = false;
-            const nodePropertyIds = nodeData[
-              property as "specializations" | "generalizations"
-            ]
-              .flatMap((spec) => spec.nodes)
-              .map((n) => n.id);
-            const proposalPropertyIds: string[] = [];
-            for (let collection of improvement[property]) {
-              const newNodes = [];
-              for (let nodeTitle of collection.nodes) {
-                const id = await getNodeIdByTitle(nodeTitle);
-                if (id) {
-                  newNodes.push({
-                    id,
-                  });
-                  proposalPropertyIds.push(id);
-                }
-              }
-              collection.nodes = newNodes;
-            }
+        // Extract existing node data from the document
+        const nodeData = nodeDoc.data() as INode;
 
-            const missingSpecializations = proposalPropertyIds.filter(
-              (id: string) => !nodePropertyIds.includes(id)
-            );
-            const extraSpecializations = nodePropertyIds.filter(
-              (id: string) => !proposalPropertyIds.includes(id)
-            );
-            if (missingSpecializations.length > 0) {
-              changedProperty = true;
-            }
-            if (extraSpecializations.length > 0) {
-              changedProperty = true;
-            }
-            if (changedProperty) {
-              detailsOfChange.push({
-                modifiedProperty: property,
-                previousValue:
-                  nodeData[property as "specializations" | "generalizations"],
-                newValue:
-                  improvement[property].length === 0
-                    ? [
-                        {
-                          collectionName: "main",
-                          nodes: [],
-                        },
-                      ]
-                    : improvement[property],
-              });
-            }
-          }
+        // Handle specializations or generalizations
 
-          const nodeProperties = nodeData.properties || {};
-          const proposalProperties = improvement || {};
-
-          // Function to compare properties based on type
-
-          // Compare the properties of the node and the proposal
-          const _detailsOfChange = await compareProperties(
-            nodeProperties,
-            proposalProperties,
-            improvement
-          );
-          detailsOfChange.push(..._detailsOfChange);
-          improvement.detailsOfChange = detailsOfChange;
-        } else {
-          // `No node found with the title "${improvement.old_title}"`
+        for (let link of removedLinks) {
+          await unlinkPropertyOf(db, property, currentVisibleNode.id, link.id);
         }
-      }
 
-      return improvements;
-    } catch (error) {
-      console.error("Error comparing proposals:", error);
+        // Update links for specializations/generalizations
+        if (property === "specializations" || property === "generalizations") {
+          updateLinks(
+            oldLinks,
+            { id: currentVisibleNode.id },
+            property === "specializations"
+              ? "generalizations"
+              : "specializations",
+            nodes,
+            db
+          );
+        }
+
+        // Update parts/isPartOf links
+        if (property === "parts" || property === "isPartOf") {
+          updatePartsAndPartsOf(
+            oldLinks,
+            { id: currentVisibleNode.id },
+            property === "parts" ? "isPartOf" : "parts",
+            db,
+            nodes
+          );
+        }
+
+        // Reset inheritance for the comments under the property if applicable
+        if (
+          nodeData.inheritance &&
+          !["specializations", "generalizations", "parts", "isPartOf"].includes(
+            property
+          )
+        ) {
+          if (nodeData.inheritance[property]) {
+            const reference = nodeData.inheritance[property].ref;
+            if (
+              reference &&
+              nodes[reference].textValue &&
+              nodes[reference].textValue.hasOwnProperty(property)
+            ) {
+              if (!nodeData.textValue) {
+                nodeData.textValue = {
+                  [property]: nodes[reference].textValue[property],
+                };
+              } else {
+                nodeData.textValue[property] =
+                  nodes[reference].textValue[property];
+              }
+            }
+            nodeData.inheritance[property].ref = null;
+          }
+        }
+
+        // Update other properties if applicable
+        if (
+          !["specializations", "generalizations", "parts", "isPartOf"].includes(
+            property
+          )
+        ) {
+          updatePropertyOf(
+            oldLinks,
+            { id: currentVisibleNode.id },
+            property,
+            nodes,
+            db
+          );
+        }
+        if (property === "specializations" || property === "generalizations") {
+          nodeData[property] = newValue;
+        } else {
+          nodeData.properties[property] = newValue;
+        }
+        // Update the node document in the database
+        await updateDoc(nodeDoc.ref, nodeData);
+
+        //the user modified generalizations
+        if (property === "generalizations") {
+          await updateLinksForInheritance(
+            db,
+            currentVisibleNode.id,
+            addedLinks,
+            removedLinks,
+            currentVisibleNode,
+            oldLinks,
+            nodes
+          );
+        }
+        if (property === "specializations") {
+          await updateLinksForInheritanceSpecializations(
+            db,
+            currentVisibleNode.id,
+            addedLinks,
+            removedLinks,
+            currentVisibleNode,
+            oldLinks,
+            nodes
+          );
+        }
+        // Update inheritance for non-specialization/generalization properties
+        if (
+          !["specializations", "generalizations", "isPartOf"].includes(property)
+        ) {
+          updateInheritance({
+            nodeId: currentVisibleNode.id,
+            updatedProperties: [property],
+            db,
+          });
+        }
+      } catch (error: any) {
+        // Handle any errors that occur during the process
+        console.error(error);
+        recordLogs({
+          type: "error",
+          error: JSON.stringify({
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          }),
+          at: "handleSaveLinkChanges",
+        });
+      }
+    },
+    [currentVisibleNode.id, currentVisibleNode.title, db, nodes, user]
+  );
+
+  const updateStringProperty = async (
+    nodeId: string,
+    property: string,
+    newValue: string
+  ) => {
+    try {
+      const nodeRef = doc(collection(db, NODES), nodeId);
+      const nodeData = nodes[nodeId];
+
+      await updateDoc(nodeRef, {
+        [`properties.${property}`]: newValue,
+      });
+
+      const serverURL =
+        process.env.NODE_ENV === "development"
+          ? process.env.NEXT_PUBLIC_DEV_WS_SERVER
+          : process.env.NEXT_PUBLIC_WS_SERVER;
+
+      const response = await fetch(
+        `http://${serverURL}/update/${nodeId}-${property}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            newValue,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Success: ${result.message}`);
+      } else {
+        const errorResult = await response.json();
+        alert(`Error: ${errorResult.error}`);
+      }
+      if (nodeData.inheritance && nodeData.inheritance[property].ref !== null) {
+        await updateInheritance({
+          nodeId: nodeId,
+          updatedProperties: [property],
+          db,
+        });
+      }
+    } catch (error: any) {
+      console.error(error);
+      recordLogs({
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+        at: "recordLogs",
+      });
     }
   };
-  const onRejectChange = () => {};
-  const onAcceptChange = () => {
+
+  const onAcceptChange = async (change: any) => {
     try {
+      for (let dChange of change.detailsOfChange) {
+        if (dChange.structuredProperty) {
+          await handleSaveLinkChanges(
+            dChange.modifiedProperty,
+            dChange.newValue,
+            dChange.addedLinks,
+            dChange.removedLinks
+          );
+        } else {
+          await updateStringProperty(
+            change.nodeId,
+            dChange.modifiedProperty,
+            dChange.newValue
+          );
+        }
+      }
     } catch (error) {
       console.error(error);
     }
   };
 
   return (
-    <Box textAlign="center" padding={4} sx={{ width: "450px" }}>
-      {isLoading ? (
+    <Box textAlign="center" sx={{ width: "450px", mt: "27px" }}>
+      {isLoadingCopilot ? (
         <Box display="flex" flexDirection="column" alignItems="center">
           <CircularProgress />
           <Typography variant="body1" marginTop={2}>
@@ -200,14 +310,25 @@ const Improvements = ({
         </Box>
       ) : improvements.length > 0 ? (
         <Box>
+          <Box>
+            <Typography>Copilot Message:</Typography>
+            <Typography>{copilotMessage}</Typography>
+          </Box>
           <ImprovementsSlider
             proposals={improvements}
             setCurrentImprovement={setCurrentImprovement}
+            currentImprovement={currentImprovement}
             handleAcceptChange={onAcceptChange}
             setImprovements={setImprovements}
             handleRejectChange={onRejectChange}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            navigateToNode={navigateToNode}
           />
-          <Button variant="contained" onClick={handleImproveClick}>
+          <Button
+            variant="contained"
+            onClick={handleImproveClick}
+            sx={{ mt: "24px" }}
+          >
             Suggest Improvements to the Sub-Ontology Centered Around This Node
           </Button>
         </Box>

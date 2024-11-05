@@ -13,7 +13,7 @@ type IComparePropertiesReturn = {
   previousValue: any;
   newValue: any;
 };
-export const compareProperties = async (
+ const compareProperties = async (
   nodeProps: any,
   proposalProps: any,
   improvement: any
@@ -46,11 +46,11 @@ export const compareProperties = async (
         }
 
         // Compare arrays
-        const missingItems = proposalPropertyIds.filter(
-          (item: any) => !nodePropertyIds.includes(item)
-        );
-        const extraItems = nodePropertyIds.filter(
+        const missingItems = nodePropertyIds.filter(
           (item: any) => !proposalPropertyIds.includes(item)
+        );
+        const extraItems = proposalPropertyIds.filter(
+          (item: any) => !nodePropertyIds.includes(item)
         );
 
         if (missingItems.length > 0) {
