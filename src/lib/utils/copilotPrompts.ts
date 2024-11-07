@@ -26,7 +26,7 @@ const extractJSON = (text: string) => {
     const jsonArrayString = text.slice(start, end + 1);
     return JSON.parse(jsonArrayString);
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 };
 const proposerAgent = async (

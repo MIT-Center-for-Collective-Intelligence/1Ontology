@@ -171,23 +171,27 @@ const Node = ({
 
   const [openSelectModel, setOpenSelectModel] = useState(false);
   const [cloning, setCloning] = useState<string | null>(null);
-  const handleCloseAddLinksModel = () => {
-    setCheckedItems(new Set());
-    setOpenSelectModel(false);
-    setSelectedCategory("");
-    setSearchValue("");
-    setReviewIds(new Set());
-  };
+
   const [selectedProperty, setSelectedProperty] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [searchValue, setSearchValue] = useState("");
   const [selectTitle, setSelectTitle] = useState(false);
-  const [reviewIds, setReviewIds] = useState<Set<string>>(new Set());
   const db = getFirestore();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [width, setWidth] = useState<number>(0);
+  const [clonedNodesQueue, setClonedNodesQueue] = useState<{
+    [nodeId: string]: { title: string; id: string };
+  }>({});
+
+  const handleCloseAddLinksModel = () => {
+    setCheckedItems(new Set());
+    setOpenSelectModel(false);
+    setSelectedCategory("");
+    setSearchValue("");
+    setClonedNodesQueue({});
+  };
 
   useEffect(() => {
     const element = document.getElementById("node-section");
@@ -241,11 +245,21 @@ const Node = ({
       return _oldChecked;
     });
   };
+  const addACloneNodeQueue = (nodeId: string, title?: string) => {
+    const newId = doc(collection(db, NODES)).id;
+    const newTitle = title ? title : `New ${nodes[nodeId].title}`;
+    setClonedNodesQueue((prev) => {
+      prev[newId] = { title: newTitle, id: nodeId };
+      return prev;
+    });
+    markItemAsChecked(newId);
+  };
 
   const cloneNode = useCallback(
     async (
       nodeId: string,
-      searchValue: string | null
+      searchValue: string | null,
+      newId: string | null
     ): Promise<INode | null> => {
       try {
         setCloning(nodeId);
@@ -256,7 +270,11 @@ const Node = ({
         const parentNodeData = parentNodeDoc.data() as INode;
 
         // Create a reference for the new node document in Firestore.
-        const newNodeRef = doc(collection(db, NODES));
+        const newNodeRef =
+          newId !== null
+            ? doc(collection(db, NODES), newId)
+            : doc(collection(db, NODES));
+
         let newTitle =
           searchValue !== null ? searchValue : `New ${parentNodeData.title}`;
 
@@ -393,11 +411,7 @@ const Node = ({
             newNode.propertyOf[selectedProperty][0].nodes.push({
               id: newNode.id,
             });
-            const newNodeRef = doc(collection(db, NODES), newNode.id);
-            updateDoc(newNodeRef, {
-              [`propertyOf.${selectedProperty}`]:
-                newNode.propertyOf[selectedProperty],
-            });
+
             if (newNode.inheritance[selectedProperty]?.ref) {
               const referencedProperty =
                 nodes[newNode.inheritance[selectedProperty].ref].properties[
@@ -464,11 +478,7 @@ const Node = ({
           };
           return prev;
         });
-        markItemAsChecked(newNode.id);
-        setReviewIds((prev) => {
-          prev.add(newNode.id);
-          return prev;
-        });
+
         // Create a new document in Firestore for the cloned node
         await setDoc(newNodeRef, {
           ...newNode,
@@ -509,11 +519,15 @@ const Node = ({
   );
 
   // This function handles the cloning of a node.
-  const handleCloning = async (node: { id: string }, searchValue = null) => {
+  const handleCloning = async (
+    node: { id: string },
+    searchValue = null,
+    newId = null
+  ) => {
     // Call the asynchronous function to clone the node with the given ID.
     // Close the modal or perform any necessary cleanup.
     // handleCloseAddLinksModel();
-    const newNode = await cloneNode(node.id, searchValue);
+    await cloneNode(node.id, searchValue, newId);
   };
 
   // Function to add a new specialization to a node
@@ -578,10 +592,6 @@ const Node = ({
           return prev;
         });
         markItemAsChecked(newNodeRef.id);
-        setReviewIds((prev) => {
-          prev.add(newNodeRef.id);
-          return prev;
-        });
 
         // Update the parent node document
         await updateDoc(nodeParentRef, {
@@ -691,7 +701,6 @@ const Node = ({
   const handleSaveLinkChanges = useCallback(async () => {
     try {
       // Close the modal or perform any other necessary actions
-      handleCloseAddLinksModel();
 
       // Get the node document from the database
       const nodeDoc = await getDoc(
@@ -1135,7 +1144,6 @@ const Node = ({
   it by tracing the generalizations of this descendent activity back to reach one of the direct specializations 
   of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. So, obviously the root of the node 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'
   itself and its direct specializations would be empty string because they are already roots."*/
-
   return (
     <Box
       sx={{
@@ -1335,9 +1343,11 @@ const Node = ({
         handleSaveLinkChanges={handleSaveLinkChanges}
         onGetPropertyValue={onGetPropertyValue}
         setCurrentVisibleNode={setCurrentVisibleNode}
-        reviewIds={reviewIds}
         checkDuplicateTitle={checkDuplicateTitle}
         cloning={cloning}
+        addACloneNodeQueue={addACloneNodeQueue}
+        setClonedNodesQueue={setClonedNodesQueue}
+        clonedNodesQueue={clonedNodesQueue}
       />
 
       {ConfirmDialog}

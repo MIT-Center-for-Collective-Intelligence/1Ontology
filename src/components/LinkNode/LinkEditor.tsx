@@ -9,12 +9,14 @@ type LinkEditorProps = {
   reviewId: string;
   title: string;
   checkDuplicateTitle: any;
+  setClonedNodesQueue: any;
 };
 
 const LinkEditor: React.FC<LinkEditorProps> = ({
   reviewId,
   title,
   checkDuplicateTitle,
+  setClonedNodesQueue,
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -24,21 +26,33 @@ const LinkEditor: React.FC<LinkEditorProps> = ({
 
   const saveNodeTitle = useCallback(() => {
     try {
-      const nodeRef = doc(collection(db, NODES), reviewId);
-      updateDoc(nodeRef, { title: editorContent });
+      // setClonedNodesQueue(
+      //   (prev: { [nodeId: string]: { title: string; id: string } }) => {
+      //     prev[reviewId].title = editorContent;
+      //     return prev;
+      //   }
+      // );
+      // const nodeRef = doc(collection(db, NODES), reviewId);
+      // updateDoc(nodeRef, { title: editorContent });
     } catch (e: any) {
       console.error(e.message);
     }
   }, [db, editorContent, reviewId]);
 
-  useEffect(() => {
-    return () => {
-      saveNodeTitle();
-    };
-  }, [saveNodeTitle]);
+  // useEffect(() => {
+  //   return () => {
+  //     saveNodeTitle();
+  //   };
+  // }, [saveNodeTitle]);
 
   const handleChanges = (e: any) => {
     setEditorContent(e.target.value);
+    setClonedNodesQueue(
+      (prev: { [nodeId: string]: { title: string; id: string } }) => {
+        prev[reviewId].title = e.target.value;
+        return prev;
+      }
+    );
   };
   useEffect(() => {
     if (textFieldRef.current) {

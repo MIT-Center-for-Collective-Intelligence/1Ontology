@@ -11,7 +11,7 @@ type ITreeViewSimplifiedProps = {
   treeVisualization: TreeVisual | any;
   expandedNodes: any;
   setExpandedNodes: any;
-  currentVisibleNode?: any;
+  currentVisibleNode: any;
   markItemAsChecked?: any;
   checkedItems?: any;
   handleCloning?: any;
@@ -24,6 +24,11 @@ type ITreeViewSimplifiedProps = {
   manageLock?: boolean;
   categoriesOrder?: string[];
   cloning?: string | null;
+  addACloneNodeQueue?: any;
+  isSaving?: any;
+  disabledAddButton?: boolean;
+  selectedProperty?: string;
+  getNumOfGeneralizations?: any;
 };
 
 const TreeViewSimplified = ({
@@ -44,6 +49,11 @@ const TreeViewSimplified = ({
   manageLock,
   categoriesOrder,
   cloning,
+  addACloneNodeQueue,
+  isSaving,
+  disabledAddButton,
+  selectedProperty,
+  getNumOfGeneralizations,
 }: ITreeViewSimplifiedProps) => {
   const [expanded, setExpanded] = useState<string[]>([]);
 
@@ -88,7 +98,7 @@ const TreeViewSimplified = ({
                 paddingLeft: "4px",
                 borderRadius: "4px",
                 backgroundColor:
-                  currentVisibleNode?.id === treeVisualization[nodeId].id
+                  currentVisibleNode?.id === nodeId
                     ? (theme) =>
                         theme.palette.mode === "dark" ? "#125f07" : "#1fb509"
                     : "transparent",
@@ -97,6 +107,15 @@ const TreeViewSimplified = ({
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
+                if (
+                  selectedProperty &&
+                  (disabledAddButton ||
+                    (selectedProperty === "specializations" &&
+                      getNumOfGeneralizations(nodeId))) &&
+                  checkedItems.has(treeVisualization[nodeId]?.id)
+                ) {
+                  return;
+                }
                 if (
                   !treeVisualization[nodeId].isCategory &&
                   clone &&
@@ -130,7 +149,8 @@ const TreeViewSimplified = ({
               </Typography>
 
               {/* Action Buttons */}
-              {!treeVisualization[nodeId].isCategory &&
+              {!isSaving &&
+                !treeVisualization[nodeId].isCategory &&
                 clone &&
                 !treeVisualization[nodeId].unclassified &&
                 !preventLoops?.has(treeVisualization[nodeId]?.id) && (
@@ -152,7 +172,15 @@ const TreeViewSimplified = ({
                           marginLeft: "12px",
                           padding: "2px 12px",
                           fontSize: "0.8rem",
+                          backgroundColor:
+                            currentVisibleNode?.id === nodeId ? "#E8F5E9" : "",
                         }}
+                        disabled={
+                          (disabledAddButton ||
+                            (selectedProperty === "specializations" &&
+                              getNumOfGeneralizations(nodeId))) &&
+                          checkedItems.has(treeVisualization[nodeId]?.id)
+                        }
                       >
                         {checkedItems.has(treeVisualization[nodeId]?.id)
                           ? "Unselect"
@@ -164,7 +192,8 @@ const TreeViewSimplified = ({
                   </>
                 )}
 
-              {clone &&
+              {!isSaving &&
+                clone &&
                 !treeVisualization[nodeId].isCategory &&
                 !treeVisualization[nodeId].locked &&
                 !preventLoops?.has(treeVisualization[nodeId]?.id) && (
@@ -177,15 +206,24 @@ const TreeViewSimplified = ({
                       textTransform: "none",
                       fontSize: "0.8rem",
                       padding: "2px 12px",
-                      color: "#388E3C",
+                      color:
+                        currentVisibleNode?.id === nodeId
+                          ? "#251306"
+                          : "#388E3C",
+                      backgroundColor:
+                        currentVisibleNode?.id === nodeId ? "#E8F5E9" : "",
                       "&:hover": {
                         borderColor: "#2E7D32",
-                        backgroundColor: "#E8F5E9",
+                        backgroundColor:
+                          currentVisibleNode?.id === nodeId
+                            ? "#388E3C"
+                            : "#E8F5E9",
                       },
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleCloning(treeVisualization[nodeId]);
+                      // handleCloning(treeVisualization[nodeId]);
+                      addACloneNodeQueue(nodeId);
                     }}
                     disabled={!!cloning}
                   >
@@ -265,6 +303,11 @@ const TreeViewSimplified = ({
                 stopPropagation={stopPropagation}
                 preventLoops={preventLoops}
                 cloning={cloning}
+                addACloneNodeQueue={addACloneNodeQueue}
+                isSaving={isSaving}
+                disabledAddButton={disabledAddButton}
+                selectedProperty={selectedProperty}
+                getNumOfGeneralizations={getNumOfGeneralizations}
               />
             )}
         </TreeItem>

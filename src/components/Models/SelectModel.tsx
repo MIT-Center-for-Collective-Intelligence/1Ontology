@@ -31,6 +31,7 @@ import {
   where,
   getFirestore,
 } from "firebase/firestore";
+import { LoadingButton } from "@mui/lab";
 
 const SelectModelModal = ({
   openSelectModel,
@@ -59,9 +60,11 @@ const SelectModelModal = ({
   handleSaveLinkChanges,
   onGetPropertyValue,
   setCurrentVisibleNode,
-  reviewIds,
   checkDuplicateTitle,
   cloning,
+  addACloneNodeQueue,
+  setClonedNodesQueue,
+  clonedNodesQueue,
 }: {
   openSelectModel: any;
   handleCloseAddLinksModel: any;
@@ -89,11 +92,14 @@ const SelectModelModal = ({
   handleSaveLinkChanges: any;
   onGetPropertyValue: any;
   setCurrentVisibleNode: any;
-  reviewIds: Set<string>;
   checkDuplicateTitle: any;
   cloning: string | null;
+  addACloneNodeQueue: (nodeId: string, title?: string) => void;
+  setClonedNodesQueue: Function;
+  clonedNodesQueue: { [nodeId: string]: { title: string; id: string } };
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const db = getFirestore();
   const getSelectingModelTitle = (
@@ -154,6 +160,35 @@ const SelectModelModal = ({
     currentVisibleNode.propertyType,
     selectedProperty,
   ]);
+  const onSave = async () => {
+    try {
+      setIsSaving(true);
+      for (let nId in clonedNodesQueue) {
+        await handleCloning(
+          { id: clonedNodesQueue[nId].id },
+          clonedNodesQueue[nId].title,
+          nId
+        );
+      }
+      await handleSaveLinkChanges();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+      handleCloseAddLinksModel();
+    }
+  };
+
+  const getNumOfGeneralizations = (id: string) => {
+    if (!nodes[id]) {
+      return false;
+    }
+    const generalizations = nodes[id].generalizations
+      .flatMap((c: any) => c.nodes)
+      .filter((n: { id: string }) => n.id !== currentVisibleNode.id);
+
+    return generalizations.length === 0;
+  };
 
   const renderSelectedItems = () => (
     <Box
@@ -184,14 +219,31 @@ const SelectModelModal = ({
         {Array.from(checkedItems).map((id: any) => (
           <Box key={id} sx={{ display: "flex", alignItems: "center", mb: 2 }}>
             <Checkbox
-              checked={checkedItems.has(id)}
-              onChange={() => markItemAsChecked(id)}
+              checked={true}
+              onChange={() => {
+                markItemAsChecked(id);
+                setClonedNodesQueue((prev: any) => {
+                  const _prev = { ...prev };
+                  if (_prev[id]) {
+                    delete _prev[id];
+                  }
+                  return _prev;
+                });
+              }}
+              disabled={
+                isSaving ||
+                (checkedItems.size === 1 &&
+                  selectedProperty === "generalizations") ||
+                (selectedProperty === "specializations" &&
+                  getNumOfGeneralizations(id))
+              }
             />
-            {reviewIds.has(id) ? (
+            {clonedNodesQueue.hasOwnProperty(id) ? (
               <LinkEditor
                 reviewId={id}
-                title={nodes[id]?.title || ""}
+                title={clonedNodesQueue[id]?.title || ""}
                 checkDuplicateTitle={checkDuplicateTitle}
+                setClonedNodesQueue={setClonedNodesQueue}
               />
             ) : (
               <Typography>{nodes[id]?.title || ""}</Typography>
@@ -212,6 +264,13 @@ const SelectModelModal = ({
         user={user}
         nodes={nodes}
         cloning={cloning}
+        addACloneNodeQueue={addACloneNodeQueue}
+        isSaving={isSaving}
+        disabledAddButton={
+          selectedProperty === "generalizations" && checkedItems.size === 1
+        }
+        getNumOfGeneralizations={getNumOfGeneralizations}
+        selectedProperty={selectedProperty}
       />
     ) : (
       <TreeViewSimplified
@@ -231,10 +290,26 @@ const SelectModelModal = ({
         preventLoops={getPath(currentVisibleNode.id, selectedCategory)}
         manageLock={user?.manageLock}
         cloning={cloning}
+        addACloneNodeQueue={addACloneNodeQueue}
+        isSaving={isSaving}
+        disabledAddButton={
+          checkedItems.size === 1 && selectedProperty === "generalizations"
+        }
+        selectedProperty={selectedProperty}
+        getNumOfGeneralizations={getNumOfGeneralizations}
+        currentVisibleNode={currentVisibleNode}
       />
     );
   const cloneUnclassifiedNode = async () => {
-    const nodeType = currentVisibleNode.propertyType[selectedProperty];
+    let nodeType = currentVisibleNode.propertyType[selectedProperty];
+    if (
+      selectedProperty === "parts" ||
+      selectedProperty === "isPartOf" ||
+      selectedProperty === "specializations" ||
+      selectedProperty === "generalizations"
+    ) {
+      nodeType = currentVisibleNode.nodeType;
+    }
     const unclassifiedNodeDocs = await getDocs(
       query(
         collection(db, NODES),
@@ -244,7 +319,8 @@ const SelectModelModal = ({
     );
     if (unclassifiedNodeDocs.docs.length > 0) {
       const unclassifiedId = unclassifiedNodeDocs.docs[0].id;
-      handleCloning({ id: unclassifiedId }, searchValue);
+      // handleCloning({ id: unclassifiedId }, searchValue);
+      addACloneNodeQueue(unclassifiedId, searchValue);
     }
   };
   return (
@@ -255,7 +331,7 @@ const SelectModelModal = ({
         justifyContent: "center",
         backgroundColor: "transparent",
       }}
-      open={openSelectModel}
+      open={isSaving || openSelectModel}
       onClose={handleCloseAddLinksModel}
     >
       <Box sx={{ display: "flex", height: "700px" }}>
@@ -340,10 +416,11 @@ const SelectModelModal = ({
                       onClick={async () => {
                         setDisabledButton(true);
                         if (selectedProperty === "specializations") {
-                          await addNewSpecialization(
-                            selectedCategory || "main",
-                            searchValue
-                          );
+                          addACloneNodeQueue(currentVisibleNode.id);
+                          // await addNewSpecialization(
+                          //   selectedCategory || "main",
+                          //   searchValue
+                          // );
                         } else {
                           await cloneUnclassifiedNode();
                         }
@@ -352,6 +429,7 @@ const SelectModelModal = ({
                       sx={{ borderRadius: "18px", minWidth: "300px" }}
                       variant="outlined"
                       disabled={
+                        isSaving ||
                         searchValue.length < 3 ||
                         searchResultsForSelection[0]?.title.trim() ===
                           searchValue.trim() ||
@@ -433,14 +511,15 @@ const SelectModelModal = ({
               >
                 Cancel
               </Button>
-              <Button
-                variant="contained"
-                onClick={handleSaveLinkChanges}
+              <LoadingButton
+                size="small"
+                onClick={onSave}
+                loading={isSaving}
                 color="success"
-                sx={{ color: "white" }}
+                variant="contained"
               >
                 Save
-              </Button>
+              </LoadingButton>
             </Box>
           </Box>
 

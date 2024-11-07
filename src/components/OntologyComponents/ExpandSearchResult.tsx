@@ -14,7 +14,25 @@ const ExpandSearchResult = ({
   user,
   nodes,
   cloning,
-}: any) => {
+  isSaving,
+  disabledAddButton,
+  getNumOfGeneralizations,
+  selectedProperty,
+  addACloneNodeQueue,
+}: {
+  searchResultsForSelection: any;
+  markItemAsChecked: any;
+  handleCloning: any;
+  checkedItems: any;
+  user: any;
+  nodes: any;
+  cloning: any;
+  isSaving: any;
+  disabledAddButton: any;
+  getNumOfGeneralizations: any;
+  selectedProperty: any;
+  addACloneNodeQueue: any;
+}) => {
   const [expanded, setExpanded] = useState<string[]>([]);
 
   const handleNodeToggle = (event: React.SyntheticEvent, nodeIds: string[]) => {
@@ -27,10 +45,17 @@ const ExpandSearchResult = ({
       nodeId={`${subNode.id}-${index}`}
       label={
         <NodeLabel
-          node={{ id: subNode.id, title: nodes[subNode.id].title }}
+          node={{ id: subNode.id, title: nodes[subNode.id]?.title }}
           markItemAsChecked={markItemAsChecked}
           checkedItems={checkedItems}
           user={user}
+          handleCloning={handleCloning}
+          cloning={cloning}
+          isSaving={isSaving}
+          disabledAddButton={disabledAddButton}
+          getNumOfGeneralizations={getNumOfGeneralizations}
+          selectedProperty={selectedProperty}
+          addACloneNodeQueue={addACloneNodeQueue}
         />
       }
     />
@@ -56,6 +81,11 @@ const ExpandSearchResult = ({
               user={user}
               handleCloning={handleCloning}
               cloning={cloning}
+              isSaving={isSaving}
+              disabledAddButton={disabledAddButton}
+              getNumOfGeneralizations={getNumOfGeneralizations}
+              selectedProperty={selectedProperty}
+              addACloneNodeQueue={addACloneNodeQueue}
             />
           }
           sx={{
@@ -101,7 +131,24 @@ const NodeLabel = ({
   user,
   handleCloning,
   cloning,
-}: any) => {
+  isSaving,
+  disabledAddButton,
+  getNumOfGeneralizations,
+  selectedProperty,
+  addACloneNodeQueue,
+}: {
+  node: any;
+  markItemAsChecked: any;
+  checkedItems: any;
+  user: any;
+  handleCloning: any;
+  cloning: any;
+  isSaving: any;
+  disabledAddButton: any;
+  getNumOfGeneralizations: any;
+  selectedProperty: any;
+  addACloneNodeQueue: any;
+}) => {
   const isChecked = checkedItems.has(node.id);
   const isLocked = !user?.manageLock && node.locked;
 
@@ -132,20 +179,26 @@ const NodeLabel = ({
           }}
           variant={isChecked ? "contained" : "outlined"}
           sx={{ borderRadius: "25px", ml: "auto", fontSize: "0.8rem" }}
+          disabled={
+            (isChecked && disabledAddButton) ||
+            (selectedProperty === "specializations" &&
+              getNumOfGeneralizations(node.id))
+          }
         >
+          {/* i have fixed  */}
           {isChecked ? "Unselect" : "Select"}
         </Button>
       ) : (
         <LockIcon sx={{ color: "orange", mx: "15px" }} />
       )}
 
-      {handleCloning && (
+      {handleCloning && !isSaving && (
         <Button
           variant="outlined"
           sx={{ m: "9px", borderRadius: "25px", fontSize: "0.8rem" }}
           onClick={(e) => {
             e.stopPropagation();
-            handleCloning(node);
+            addACloneNodeQueue(node.id);
           }}
           disabled={!!cloning}
         >
