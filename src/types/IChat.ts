@@ -3,6 +3,8 @@ import { Timestamp } from "firebase/firestore";
 export type Reaction = {
   user: string;
   emoji: string;
+  fName: string;
+  lName: string;
 };
 
 export type senderDetail = {

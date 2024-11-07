@@ -289,3 +289,18 @@ export const getTaggedUsers = (input: string): Set<string> => {
   }
   return new Set();
 };
+
+export const getJoinUsernames = (
+  reactions: string[],
+  currentUser: string
+): string => {
+  const allReactions = reactions.includes(currentUser)
+    ? ["You", ...reactions.filter((user) => user !== currentUser)]
+    : reactions;
+  if (allReactions.length > 2) {
+    const lastEl = allReactions.splice(-1);
+    return allReactions.join(", ") + ", and " + lastEl + " ";
+  } else {
+    return allReactions.join(" and ") + " ";
+  }
+};

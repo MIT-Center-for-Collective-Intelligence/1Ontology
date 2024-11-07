@@ -157,20 +157,35 @@ const Chat = ({
         const commentIdx = prevComments.findIndex(
           (m: any) => m.id === message.id
         );
-        prevComments[commentIdx].reactions.push({ user: user?.uname, emoji });
+        prevComments[commentIdx].reactions.push({
+          user: user?.uname,
+          emoji,
+          fName: user.fName,
+          lName: user.lName,
+        });
         return prevComments;
       });
     }
     if (!message.parentMessage) {
       const mRef = getMessageDocRef(message.id || "");
       await updateDoc(mRef, {
-        reactions: arrayUnion({ user: user?.uname, emoji }),
+        reactions: arrayUnion({
+          user: user?.uname,
+          emoji,
+          fName: user.fName,
+          lName: user.lName,
+        }),
       });
     } else {
       const cRef = getMessageDocRef(message.parentMessage);
       const replyRef = doc(cRef, "replies", message?.id || "");
       await updateDoc(replyRef, {
-        reactions: arrayUnion({ user: user?.uname, emoji }),
+        reactions: arrayUnion({
+          user: user?.uname,
+          emoji,
+          fName: user.fName,
+          lName: user.lName,
+        }),
       });
     }
     createNotifications(
