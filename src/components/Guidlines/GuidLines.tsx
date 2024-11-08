@@ -22,6 +22,7 @@ import {
 } from "firebase/firestore";
 import { GUIDELINES } from " @components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
+import GuidLineText from "./GuidLineText";
 
 const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
   const db = getFirestore();
@@ -71,9 +72,11 @@ const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
     }
   };
 
-  const sortedCategories = Object.keys(guidelines)
-    .sort((a, b) => guidelines[a].index - guidelines[b].index)
-    .map((categoryId) => guidelines[categoryId]);
+  const sortedCategories = Object.keys(guidelines).sort(
+    (a, b) => guidelines[a].index - guidelines[b].index
+  );
+
+  console.log("sortedCategories=>", sortedCategories);
 
   const modifyGuidelines = (newValue: string, gId: string, gIdx: number) => {
     const gRef = doc(collection(db, GUIDELINES), gId);
@@ -105,46 +108,45 @@ const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
         </Button>
       </Box>
 
-      {sortedCategories.map((category) => (
-        <Accordion defaultExpanded={true} key={category.id}>
+      {sortedCategories.map((catId) => (
+        <Accordion
+          defaultExpanded={true}
+          key={catId}
+          sx={{ borderRadius: "16px", border: "none" }}
+        >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography sx={{ fontSize: "24px" }}>
-              {category.category}
+            <Typography sx={{ fontSize: "29px", fontWeight: "bold" }}>
+              {guidelines[catId].category}
             </Typography>
           </AccordionSummary>
           <AccordionDetails sx={{ mt: -5.5 }}>
             {!!user?.copilot ? (
-              category.guidelines.map((guideline: string, index: number) => (
-                <TextField
-                  key={guideline + index}
-                  fullWidth
-                  label={`Guideline ${index + 1}`}
-                  defaultValue={guideline}
-                  variant="outlined"
-                  margin="normal"
-                  InputLabelProps={{
-                    style: { color: "grey" },
-                  }}
-                  multiline
-                  onChange={(e) =>
-                    modifyGuidelines(e.target.value, category.id, index)
-                  }
-                />
-              ))
+              guidelines[catId].guidelines.map(
+                (guideline: string, index: number) => (
+                  <GuidLineText
+                    guideline={guideline}
+                    index={index}
+                    onSaveGuideline={modifyGuidelines}
+                    catId={catId}
+                  />
+                )
+              )
             ) : (
               <ul>
-                {category.guidelines.map((guideline: string, index: number) => (
-                  <li key={guideline + index}>{guideline}</li>
-                ))}
+                {guidelines[catId].guidelines.map(
+                  (guideline: string, index: number) => (
+                    <li key={guideline + index}>{guideline}</li>
+                  )
+                )}
               </ul>
             )}
             {!!user?.copilot && (
               <TextField
                 fullWidth
                 label="Add new guideline"
-                value={newGuidelines[category.id] || ""}
+                value={newGuidelines[catId] || ""}
                 onChange={(e) =>
-                  handleNewGuidelineChange(category.id, e.target.value)
+                  handleNewGuidelineChange(catId, e.target.value)
                 }
                 variant="outlined"
                 margin="normal"
@@ -153,11 +155,11 @@ const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
                 }}
               />
             )}
-            {newGuidelines[category.id]?.trim() && !!user?.copilot && (
+            {newGuidelines[catId]?.trim() && !!user?.copilot && (
               <Button
                 color="primary"
-                onClick={() => addNewGuideline(category.id)}
-                disabled={!newGuidelines[category.id]?.trim()}
+                onClick={() => addNewGuideline(catId)}
+                disabled={!newGuidelines[catId]?.trim()}
               >
                 Add new guideline
               </Button>
