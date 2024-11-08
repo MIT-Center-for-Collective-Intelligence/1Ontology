@@ -783,6 +783,7 @@ const StructuredProperty = ({
     setEditCollection(collectionName);
     setNewEditCollection(collectionName);
   };
+
   if (
     currentImprovement &&
     !currentImprovement.implemented &&

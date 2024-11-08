@@ -876,7 +876,7 @@ const ToolbarSidebar = ({
                       userMessage: string;
                       deepNumber: number;
                     };
-                    console.log("options", options);
+
                     if (options) {
                       const { model, userMessage, deepNumber } = options;
                       handleImproveClick({

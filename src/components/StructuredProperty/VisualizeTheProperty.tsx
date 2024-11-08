@@ -3,15 +3,7 @@ import {
   capitalizeFirstLetter,
   getTooltipHelper,
 } from " @components/lib/utils/string.utils";
-import {
-  Paper,
-  Typography,
-  Box,
-  Tooltip,
-  List,
-  ListItem,
-  ListItemIcon,
-} from "@mui/material";
+import { Paper, Typography, Box, Tooltip, List, ListItem } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { useEffect, useState } from "react";
 import { ICollection } from " @components/types/INode";
@@ -38,25 +30,49 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
   getTitle,
   nodes,
 }) => {
-  const [newValue, setNewValue] = useState<ICollection[]>([]);
-  const [oldValue, setOldValue] = useState<ICollection[]>([]);
+  const [mergedValue, setMergedValue] = useState([]);
+  const [addedLinks, setAddLinks] = useState(new Set());
+  const [removedLinks, setRemovedLinks] = useState(new Set());
+
   useEffect(() => {
     const propertyIdx = currentImprovement.detailsOfChange.findIndex(
       (c: any) => c.modifiedProperty === property
     );
-    if (propertyIdx !== -1) {
-      setOldValue(
-        currentImprovement.detailsOfChange[propertyIdx].previousValue
+    const newValue = currentImprovement.detailsOfChange[propertyIdx].newValue;
+
+    setAddLinks(
+      new Set(currentImprovement.detailsOfChange[propertyIdx].addedLinks)
+    );
+    setRemovedLinks(
+      new Set(currentImprovement.detailsOfChange[propertyIdx].removedLinks)
+    );
+    const previousValue =
+      currentImprovement.detailsOfChange[propertyIdx].previousValue;
+
+    for (let collection of newValue) {
+      const collectionIdx = previousValue.findIndex(
+        (c: ICollection) => c.collectionName === collection.collectionName
       );
+      if (collectionIdx === -1) {
+        collection.change = "added";
+      }
     }
-    if (propertyIdx !== -1) {
-      setNewValue(currentImprovement.detailsOfChange[propertyIdx].newValue);
+    for (let collection of previousValue) {
+      const collectionIdx = newValue.findIndex(
+        (c: ICollection) => c.collectionName === collection.collectionName
+      );
+      if (collectionIdx === -1) {
+        newValue.push(collection);
+        collection.change = "removed";
+      }
     }
+    setMergedValue(newValue);
   }, [currentImprovement]);
-  const renderValue = (value: ICollection[], changeType: string) => {
+
+  const renderValue = (value: ICollection[]) => {
     return (
       <Box sx={{ display: "flex", flexDirection: "column" }}>
-        {(value || [])?.map((collection) => (
+        {(value || [])?.map((collection: any) => (
           <Paper
             key={collection.collectionName}
             sx={{
@@ -85,8 +101,8 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                   fontFamily: "Roboto, sans-serif",
                   minHeight: "5px",
                   textDecoration:
-                    changeType === "removed" ? "line-through" : "",
-                  color: changeType === "removed" ? "red" : "green",
+                    collection.change === "removed" ? "line-through" : "",
+                  color: collection.change === "removed" ? "red" : "green",
                 }}
               >
                 {collection.collectionName !== "main"
@@ -95,17 +111,28 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
               </Typography>
             </Box>
             <List>
-              {collection.nodes.map((node) => (
+              {collection.nodes.map((node: any) => (
                 <ListItem key={node.id}>
                   <DragIndicatorIcon
-                    sx={{ color: changeType === "removed" ? "red" : "green" }}
+                    sx={{
+                      color: addedLinks.has(node.id)
+                        ? "green"
+                        : removedLinks.has(node.id)
+                        ? "red"
+                        : "",
+                    }}
                   />
                   <Typography
                     variant="body1"
                     sx={{
-                      textDecoration:
-                        changeType === "removed" ? "line-through" : "",
-                      color: changeType === "removed" ? "red" : "green",
+                      textDecoration: removedLinks.has(node.id)
+                        ? "line-through"
+                        : "",
+                      color: addedLinks.has(node.id)
+                        ? "green"
+                        : removedLinks.has(node.id)
+                        ? "red"
+                        : "",
                     }}
                   >
                     {getTitle(nodes, node.id)}
@@ -160,8 +187,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
             </Typography>
           </Tooltip>
         </Box>
-        {renderValue(newValue, "added")}
-        {renderValue(oldValue, "removed")}
+        {renderValue(mergedValue)}
       </Box>
     </Paper>
   );

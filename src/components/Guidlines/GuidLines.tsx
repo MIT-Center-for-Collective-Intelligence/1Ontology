@@ -76,8 +76,6 @@ const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
     (a, b) => guidelines[a].index - guidelines[b].index
   );
 
-  console.log("sortedCategories=>", sortedCategories);
-
   const modifyGuidelines = (newValue: string, gId: string, gIdx: number) => {
     const gRef = doc(collection(db, GUIDELINES), gId);
     const gData = { ...guidelines[gId] };

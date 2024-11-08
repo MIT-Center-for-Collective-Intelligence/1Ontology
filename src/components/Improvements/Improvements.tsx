@@ -273,8 +273,9 @@ const Improvements = ({
   const onAcceptChange = async (change: any) => {
     try {
       for (let dChange of change.detailsOfChange) {
-        console.log("dChange ==>", dChange);
+        let changeType: any = null;
         if (dChange.structuredProperty) {
+          changeType = "change text";
           await handleSaveLinkChanges(
             dChange.modifiedProperty,
             dChange.newValue,
@@ -282,13 +283,14 @@ const Improvements = ({
             dChange.removedLinks
           );
         } else {
+          changeType = "modify elements";
           await updateStringProperty(
             change.nodeId,
             dChange.modifiedProperty,
             dChange.newValue
           );
         }
-        if (user?.uname) {
+        if (user?.uname && changeType) {
           saveNewChangeLog(db, {
             nodeId: currentVisibleNode.id,
             modifiedBy: user?.uname,
@@ -296,7 +298,7 @@ const Improvements = ({
             previousValue: dChange.previousValue,
             newValue: dChange.newValue,
             modifiedAt: new Date(),
-            changeType: "remove element",
+            changeType,
             fullNode: currentVisibleNode,
           });
         }
