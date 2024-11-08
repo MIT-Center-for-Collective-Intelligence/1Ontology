@@ -4,12 +4,19 @@ import { ICollection, INode } from " @components/types/INode";
 import { Post } from "./Post";
 import { PROPOSALS_SCHEMA } from "../CONSTANTS";
 
-export const sendLLMRequest = async ({ messages }: { messages: any }) => {
+export const sendLLMRequest = async ({
+  messages,
+  model,
+}: {
+  messages: any;
+  model: string;
+}) => {
   try {
     const response = await Post(
       "https://copilot-163479774214.us-central1.run.app/ask",
       {
         messages,
+        model,
       }
     );
 
@@ -34,6 +41,7 @@ const extractJSON = (text: string) => {
 };
 const proposerAgent = async (
   userMessage: string,
+  model: string,
   nodesArray: any[],
   proposalsJSON: any = {},
   evaluation: string = ""
@@ -92,6 +100,7 @@ ${JSON.stringify(guidelines, null, 2)}
           content: prompt,
         },
       ],
+      model,
     });
 
     proposalsJSON = extractJSON(completion.choices[0].message.content);
@@ -147,11 +156,12 @@ const getNodesInThreeLevels = (
   nodeData: any,
   nodes: Record<string, any>,
   visited: Set<string>,
+  deepNumber: number,
   level: number = 0
 ): any[] => {
   const nodesArray: any[] = [];
 
-  if (level === 2) {
+  if (level === deepNumber) {
     return nodesArray;
   }
   const specializations = nodeData.specializations.flatMap(
@@ -177,7 +187,13 @@ const getNodesInThreeLevels = (
       const nodeD = getStructureForJSON(itemData, nodes);
       nodesArray.push(nodeD);
       visited.add(itemData.title);
-      const p = getNodesInThreeLevels(itemData, nodes, visited, level + 1);
+      const p = getNodesInThreeLevels(
+        itemData,
+        nodes,
+        visited,
+        deepNumber,
+        level + 1
+      );
       if (Array.isArray(p)) {
         nodesArray.push(...p);
       }
@@ -190,6 +206,7 @@ const getNodesInThreeLevels = (
 export const generateProposals = async (
   userMessage: string,
   model: string,
+  deepNumber: number,
   currentNode: INode,
   nodes: Record<string, INode>,
   proposalsJSON: any = {},
@@ -198,7 +215,12 @@ export const generateProposals = async (
   const nodesArray: any = [];
   const currentNodeD = getStructureForJSON(currentNode, nodes);
   nodesArray.push(currentNodeD);
-  const _nodesArray = getNodesInThreeLevels(currentNode, nodes, new Set());
+  const _nodesArray = getNodesInThreeLevels(
+    currentNode,
+    nodes,
+    new Set(),
+    deepNumber === 0 ? 7 : deepNumber
+  );
   nodesArray.push(..._nodesArray);
   if (nodesArray.length === 0) {
     // "No related nodes found!"
@@ -207,12 +229,13 @@ export const generateProposals = async (
     if (evaluation) {
       return await proposerAgent(
         userMessage,
+        model,
         nodesArray,
         proposalsJSON,
         evaluation
       );
     } else {
-      return await proposerAgent(userMessage, nodesArray);
+      return await proposerAgent(userMessage, model, nodesArray);
     }
   }
 };

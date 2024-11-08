@@ -4,6 +4,7 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
+  DialogTitle,
   FormControl,
   InputLabel,
   MenuItem,
@@ -21,41 +22,62 @@ const OPTIONS = [
 const useSelectDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const [selectedOption, setSelectedOption] = useState<any>({
+  const [selectedOption, setSelectedOption] = useState<{
+    id: string;
+    title: string;
+  }>({
     id: "o1-preview",
     title: "O1",
   });
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState<string>("");
+  const [numberValue, setNumberValue] = useState<number>(7);
   const resolveRef = React.useRef<any>(null);
 
   const showDialog = useCallback(() => {
     setIsOpen(true);
-    return new Promise((resolve) => {
+    return new Promise<{
+      userMessage: string;
+      model: string;
+      deepNumber: number;
+    }>((resolve) => {
       resolveRef.current = resolve;
     });
   }, []);
 
-  const closeDialog = useCallback(() => {
-    setIsOpen(false);
+  const closeDialog = useCallback(
+    (start: boolean = false) => {
+      setIsOpen(false);
 
-    setInputValue("");
+      setInputValue("");
+      setNumberValue(7);
 
-    if (resolveRef.current) {
-      resolveRef.current({ userMessage: inputValue, model: selectedOption.id });
-    }
-  }, [inputValue]);
+      if (resolveRef.current && start) {
+        resolveRef.current({
+          userMessage: inputValue,
+          model: selectedOption.id,
+          deepNumber: numberValue,
+        });
+      }
+    },
+    [inputValue, selectedOption, numberValue]
+  );
 
   const handleSelectChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     const selected = OPTIONS.find((option) => option.id === event.target.value);
-    setSelectedOption(selected || null);
+    setSelectedOption(selected || { id: "", title: "" });
   };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value);
   };
 
+  const handleNumberChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setNumberValue(Number(event.target.value));
+  };
+
   const dropdownDialog = (
-    <Dialog open={isOpen} onClose={() => closeDialog()}>
+    <Dialog open={isOpen} onClose={() => closeDialog()} fullWidth maxWidth="md">
+      <DialogTitle>Copilot Settings:</DialogTitle>
       <DialogContent>
         <DialogContentText sx={{ mb: "15px" }}>
           Select the LLM model you want to use:
@@ -77,8 +99,9 @@ const useSelectDropdown = () => {
             textAlign: "center",
           }}
         />
+
         <FormControl fullWidth sx={{ mb: 2, mt: "15px" }}>
-          <InputLabel>Select an Option</InputLabel>
+          <InputLabel>Select an LLM Option</InputLabel>
           <Select
             value={selectedOption?.id || ""}
             onChange={(e: any) => handleSelectChange(e)}
@@ -91,15 +114,35 @@ const useSelectDropdown = () => {
             ))}
           </Select>
         </FormControl>
+        <TextField
+          margin="dense"
+          id="number-input"
+          type="number"
+          label="How far away from this node should I explore to propose improvements?"
+          value={numberValue || ""}
+          onChange={handleNumberChange}
+          fullWidth
+          inputProps={{ min: 0 }}
+          sx={{
+            mt: 3,
+            mx: "auto",
+            display: "block",
+            textAlign: "center",
+            "& .MuiInputLabel-root": {
+              color: "gray",
+            },
+          }}
+        />
       </DialogContent>
       <DialogActions sx={{ justifyContent: "center", mb: "5px" }}>
         <Button
-          onClick={() => closeDialog()}
+          onClick={() => closeDialog(true)}
           variant="contained"
           sx={{
             borderRadius: "26px",
             backgroundColor: DESIGN_SYSTEM_COLORS.primary800,
           }}
+          disabled={numberValue === 0}
         >
           Start
         </Button>

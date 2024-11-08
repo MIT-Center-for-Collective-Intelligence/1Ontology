@@ -14,6 +14,7 @@ import { ICollection, INode } from " @components/types/INode";
 
 import {
   recordLogs,
+  saveNewChangeLog,
   unlinkPropertyOf,
   updateInheritance,
   updateLinks,
@@ -272,6 +273,7 @@ const Improvements = ({
   const onAcceptChange = async (change: any) => {
     try {
       for (let dChange of change.detailsOfChange) {
+        console.log("dChange ==>", dChange);
         if (dChange.structuredProperty) {
           await handleSaveLinkChanges(
             dChange.modifiedProperty,
@@ -285,6 +287,18 @@ const Improvements = ({
             dChange.modifiedProperty,
             dChange.newValue
           );
+        }
+        if (user?.uname) {
+          saveNewChangeLog(db, {
+            nodeId: currentVisibleNode.id,
+            modifiedBy: user?.uname,
+            modifiedProperty: dChange.modifiedProperty,
+            previousValue: dChange.previousValue,
+            newValue: dChange.newValue,
+            modifiedAt: new Date(),
+            changeType: "remove element",
+            fullNode: currentVisibleNode,
+          });
         }
       }
     } catch (error) {

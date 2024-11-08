@@ -7,7 +7,6 @@ export const compareProperty = (
   nodesByTitle: { [nodeTitle: string]: INode }
 ) => {
   try {
-    debugger;
     let changedProperty = false;
     const isParentOrChild =
       property === "specializations" || property === "generalizations";
