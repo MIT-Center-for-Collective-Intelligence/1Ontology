@@ -18,6 +18,7 @@ function getErrorMessage(error: any) {
 const adapter = axios.create({
   headers: {
     Accept: "application/json",
+    withCredentials: false,
   },
 });
 

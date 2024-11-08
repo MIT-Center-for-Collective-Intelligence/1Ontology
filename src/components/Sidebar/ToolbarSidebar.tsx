@@ -74,6 +74,7 @@ import Improvements from "../Improvements/Improvements";
 import { CHAT_DISCUSSION_TABS } from " @components/lib/CONSTANTS";
 import { generateProposals } from " @components/lib/utils/copilotPrompts";
 import { compareProposals } from " @components/lib/utils/copilotHelpers";
+import useSelectDropdown from " @components/lib/hooks/useSelectDropdown";
 
 type MainSidebarProps = {
   toolbarRef: any;
@@ -153,8 +154,8 @@ const ToolbarSidebar = ({
     [nodeTitle: string]: INode;
   }>({});
   const [improvements, setImprovements] = useState<any>([]);
-  const [doneLoadingCopilot, setDoneLoadingCopilot] = useState(false);
   const [copilotMessage, setCopilotMessage] = useState("");
+  const { selectIt, dropdownDialog } = useSelectDropdown();
 
   const signOut = async () => {
     router.push(ROUTES.signIn);
@@ -464,7 +465,13 @@ const ToolbarSidebar = ({
     }
   }, [nodes, user]);
 
-  const handleImproveClick = async () => {
+  const handleImproveClick = async ({
+    model,
+    userMessage,
+  }: {
+    model: string;
+    userMessage: string;
+  }) => {
     setIsLoadingCopilot(true);
     try {
       const response: {
@@ -472,7 +479,12 @@ const ToolbarSidebar = ({
         new_nodes: any;
         guidelines: any;
         message: string;
-      } = await generateProposals("", currentVisibleNode, nodes);
+      } = await generateProposals(
+        model,
+        userMessage,
+        currentVisibleNode,
+        nodes
+      );
 
       setCopilotMessage(response.message);
       const improvements = (
@@ -484,7 +496,6 @@ const ToolbarSidebar = ({
         setImprovements(improvements);
         // setCurrentImprovement(improvements[0]);
       }
-      setDoneLoadingCopilot(true);
     } catch (error) {
       confirmIt(
         "Sorry! There was an error generating proposals, please try again!",
@@ -640,6 +651,7 @@ const ToolbarSidebar = ({
       />
     );
   };
+
   const getHeaderTest = (activeSidebar: string) => {
     switch (activeSidebar) {
       case "chat-discussion":
@@ -839,34 +851,47 @@ const ToolbarSidebar = ({
                     <CircularProgress size={27} />
                   ) : (
                     <AutoAwesomeIcon
-                      sx={{ color: doneLoadingCopilot ? "green" : "" }}
+                      sx={{
+                        color:
+                          improvements.filter((i: any) => !i.implemented)
+                            .length > 0
+                            ? "#00d000"
+                            : "",
+                      }}
                     />
                   )
                 }
-                onClick={() => {
-                  if (improvements.length > 0) {
+                onClick={async () => {
+                  if (
+                    improvements.filter((i: any) => !i.implemented).length > 0
+                  ) {
                     handleExpandSidebar("improvements");
-                    setDoneLoadingCopilot(false);
                     setCurrentImprovement(improvements[0]);
                   } else {
-                    handleImproveClick();
+                    // const options = await selectIt();
+                    const model = "";
+                    const userMessage = "";
+
+                    handleImproveClick({
+                      model,
+                      userMessage,
+                    });
                   }
                 }}
                 text={"Copilot"}
                 toolbarIsOpen={hovered}
               />
             )}
-            {(user?.uname === "ouhrac" || user?.uname === "1man") && (
-              <SidebarButton
-                id="toolbar-theme-button"
-                icon={<AutoStoriesIcon />}
-                onClick={() => {
-                  setDisplayGuidelines((prev: boolean) => !prev);
-                }}
-                text={"Guidelines"}
-                toolbarIsOpen={hovered}
-              />
-            )}
+
+            <SidebarButton
+              id="toolbar-theme-button"
+              icon={<AutoStoriesIcon />}
+              onClick={() => {
+                setDisplayGuidelines((prev: boolean) => !prev);
+              }}
+              text={"Guidelines"}
+              toolbarIsOpen={hovered}
+            />
 
             <SidebarButton
               id="toolbar-theme-button"
@@ -894,6 +919,7 @@ const ToolbarSidebar = ({
         </>
       )}
       {isAuthenticated && user && renderProfileMenu}
+      {dropdownDialog}
     </Box>
   );
 };

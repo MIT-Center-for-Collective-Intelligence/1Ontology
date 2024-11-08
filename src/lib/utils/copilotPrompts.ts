@@ -6,9 +6,12 @@ import { PROPOSALS_SCHEMA } from "../CONSTANTS";
 
 export const sendLLMRequest = async ({ messages }: { messages: any }) => {
   try {
-    const response = await Post("/copilot", {
-      messages,
-    });
+    const response = await Post(
+      "https://copilot-163479774214.us-central1.run.app/ask",
+      {
+        messages,
+      }
+    );
 
     return response;
   } catch (error) {
@@ -186,6 +189,7 @@ const getNodesInThreeLevels = (
 
 export const generateProposals = async (
   userMessage: string,
+  model: string,
   currentNode: INode,
   nodes: Record<string, INode>,
   proposalsJSON: any = {},

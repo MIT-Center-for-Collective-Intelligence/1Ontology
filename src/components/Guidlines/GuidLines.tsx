@@ -21,10 +21,11 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { GUIDELINES } from " @components/lib/firestoreClient/collections";
-import CloseIcon from "@mui/icons-material/Close";
+import { useAuth } from "../context/AuthContext";
 
 const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
   const db = getFirestore();
+  const [{ user }] = useAuth();
   const [guidelines, setGuidelines] = useState<{ [id: string]: any }>({});
   const [newGuidelines, setNewGuidelines] = useState<{ [id: string]: string }>(
     {}
@@ -111,38 +112,48 @@ const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
               {category.category}
             </Typography>
           </AccordionSummary>
-          <AccordionDetails>
-            {category.guidelines.map((guideline: string, index: number) => (
+          <AccordionDetails sx={{ mt: -5.5 }}>
+            {!!user?.copilot ? (
+              category.guidelines.map((guideline: string, index: number) => (
+                <TextField
+                  key={guideline + index}
+                  fullWidth
+                  label={`Guideline ${index + 1}`}
+                  defaultValue={guideline}
+                  variant="outlined"
+                  margin="normal"
+                  InputLabelProps={{
+                    style: { color: "grey" },
+                  }}
+                  multiline
+                  onChange={(e) =>
+                    modifyGuidelines(e.target.value, category.id, index)
+                  }
+                />
+              ))
+            ) : (
+              <ul>
+                {category.guidelines.map((guideline: string, index: number) => (
+                  <li key={guideline + index}>{guideline}</li>
+                ))}
+              </ul>
+            )}
+            {!!user?.copilot && (
               <TextField
-                key={index}
                 fullWidth
-                label={`Guideline ${index + 1}`}
-                defaultValue={guideline}
+                label="Add new guideline"
+                value={newGuidelines[category.id] || ""}
+                onChange={(e) =>
+                  handleNewGuidelineChange(category.id, e.target.value)
+                }
                 variant="outlined"
                 margin="normal"
                 InputLabelProps={{
                   style: { color: "grey" },
                 }}
-                multiline
-                onChange={(e) =>
-                  modifyGuidelines(e.target.value, category.id, index)
-                }
               />
-            ))}
-            <TextField
-              fullWidth
-              label="Add new guideline"
-              value={newGuidelines[category.id] || ""}
-              onChange={(e) =>
-                handleNewGuidelineChange(category.id, e.target.value)
-              }
-              variant="outlined"
-              margin="normal"
-              InputLabelProps={{
-                style: { color: "grey" },
-              }}
-            />
-            {newGuidelines[category.id]?.trim() && (
+            )}
+            {newGuidelines[category.id]?.trim() && !!user?.copilot && (
               <Button
                 color="primary"
                 onClick={() => addNewGuideline(category.id)}

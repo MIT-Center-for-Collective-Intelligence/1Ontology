@@ -8,20 +8,12 @@ export const Post = async <R>(
 ): Promise<R> => {
   try {
     const token = await getIdToken();
-    const response = await API.post(
-      `${mapUrl}`,
-      { ...postData },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const response = await API.post(`${mapUrl}`, { ...postData });
     return response.data;
   } catch (error) {
     const token = await getIdToken();
     if (callAgain) {
-      const response = await API.post(
-        `/api${mapUrl}`,
-        { ...postData },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await API.post(`${mapUrl}`, { ...postData });
       return response.data;
     } else {
       throw error;

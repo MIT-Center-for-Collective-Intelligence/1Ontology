@@ -70,6 +70,7 @@ export type User = {
   rightPanel: boolean;
   currentNode: string;
   manageLock: boolean;
+  copilot: boolean;
 };
 
 export type UserSettings = {

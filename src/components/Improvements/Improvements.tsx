@@ -8,6 +8,7 @@ import {
   getFirestore,
   updateDoc,
 } from "firebase/firestore";
+import ReplayIcon from "@mui/icons-material/Replay";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import { ICollection, INode } from " @components/types/INode";
 
@@ -323,7 +324,8 @@ const Improvements = ({
             onClick={handleImproveClick}
             sx={{ mt: "24px" }}
           >
-            Suggest Improvements to the Sub-Ontology Centered Around This Node
+            <ReplayIcon sx={{ pr: "5px" }} />
+            Re-instate
           </Button>
         </Box>
       ) : (

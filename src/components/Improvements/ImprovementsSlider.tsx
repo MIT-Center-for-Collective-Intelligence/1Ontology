@@ -40,7 +40,9 @@ const ImprovementsSlider = ({
       const newPrev = prevIndex === proposals.length - 1 ? 0 : prevIndex + 1;
       if (display) {
         setCurrentImprovement(proposals[newPrev]);
-        navigateToNode(proposals[newPrev].nodeId);
+        if (proposals[newPrev]?.nodeId) {
+          navigateToNode(proposals[newPrev]?.nodeId);
+        }
       }
       return newPrev;
     });
@@ -51,7 +53,9 @@ const ImprovementsSlider = ({
       const newPrev = prevIndex === 0 ? proposals.length - 1 : prevIndex - 1;
       if (display) {
         setCurrentImprovement(proposals[newPrev]);
-        navigateToNode(proposals[newPrev].nodeId);
+        if (proposals[newPrev]?.nodeId) {
+          navigateToNode(proposals[newPrev]?.nodeId);
+        }
       }
       return newPrev;
     });
@@ -186,7 +190,7 @@ const ImprovementsSlider = ({
           ))}
       </Box>
 
-      {!currentImprovement.implemented && (
+      {!currentImprovement?.implemented && (
         <Box
           sx={{
             display: "flex",
