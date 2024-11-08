@@ -33,6 +33,7 @@ const MessageComponent = ({
   replies,
   chatType,
   nodes,
+  setOpenMedia,
 }: {
   message: any;
   user: any;
@@ -52,6 +53,7 @@ const MessageComponent = ({
   replies: any;
   chatType: string;
   nodes: { [nodeId: string]: INode };
+  setOpenMedia: any;
 }) => {
   const boxRef = useRef<HTMLDivElement>(null);
   const scrolling = useRef<HTMLDivElement>(null);
@@ -215,10 +217,12 @@ const MessageComponent = ({
                     style={{
                       borderRadius: "8px",
                       objectFit: "contain",
+                      cursor: "pointer",
                     }}
                     src={imageUrl}
                     alt="comment image"
                     key={imageUrl}
+                    onClick={() => setOpenMedia(imageUrl)}
                   />
                 ))}
               </Box>

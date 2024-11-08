@@ -149,9 +149,7 @@ const ChatSideBar = ({
     },
     [selectedChatTab, currentVisibleNode?.id, user]
   );
-  useEffect(() => {
-    setSelectedChatTab(0);
-  }, [chatTabs]);
+
   // useEffect(() => {
   //   if (!user) return;
   //   setBugReportMessages([]);

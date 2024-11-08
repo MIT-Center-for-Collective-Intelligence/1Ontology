@@ -1,10 +1,13 @@
 import {
   Box,
+  Modal,
+  Paper,
   // Divider,
   Popover,
   Skeleton,
 } from "@mui/material";
 import { EmojiClickData } from "emoji-picker-react";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   addDoc,
   arrayRemove,
@@ -21,7 +24,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import dynamic from "next/dynamic";
-import React, { useEffect, useRef, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { TransitionGroup } from "react-transition-group";
 // import { NotFoundNotification } from "../Sidebar/SidebarV2/NotificationSidebar";
 import { IChatMessage } from " @components/types/IChat";
@@ -83,6 +86,8 @@ const Chat = ({
 
   const [messages, setMessages] = useState<IChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [openMedia, setOpenMedia] = useState<any>("");
+
   const scrolled = useRef(false);
   useEffect(() => {
     setMessages([]);
@@ -506,6 +511,7 @@ const Chat = ({
         toggleEmojiPicker={toggleEmojiPicker}
         toggleReaction={toggleReaction}
         chatType={chatType}
+        setOpenMedia={setOpenMedia}
       />
     ));
   };
@@ -540,6 +546,7 @@ const Chat = ({
             replies={replies}
             chatType={chatType}
             nodes={nodes}
+            setOpenMedia={setOpenMedia}
           />
         ))}
         <Box ref={scrollingRef}></Box>
@@ -689,6 +696,56 @@ const Chat = ({
           />
         </Box>
       </Box>
+      <Suspense fallback={<div></div>}>
+        <Modal
+          open={Boolean(openMedia)}
+          onClose={() => setOpenMedia(null)}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+          sx={{ backgroundColor: "black" }}
+        >
+          <>
+            <Paper
+              sx={{
+                position: "relative",
+                height: "100vh",
+                width: "100vw",
+                background: "transparent",
+                padding: 0,
+                margin: 0,
+                overflow: "hidden",
+              }}
+            >
+              <CloseIcon
+                sx={{
+                  position: "absolute",
+                  top: 16,
+                  right: 16,
+                  zIndex: 1,
+                  cursor: "pointer",
+                  backgroundColor: "gray",
+                  borderRadius: "50%",
+                  padding: 1,
+                  fontSize: "40px",
+                  ":hover": {
+                    backgroundColor: "#303134",
+                  },
+                }}
+                onClick={() => setOpenMedia(null)}
+              />
+              <img
+                src={openMedia || ""}
+                alt="Node image"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                }}
+              />
+            </Paper>
+          </>
+        </Modal>
+      </Suspense>
     </Box>
   );
 };

@@ -23,6 +23,7 @@ interface ReplyMessageProps {
   toggleEmojiPicker: (event: any, boxRef: any, message?: IChatMessage) => void;
   toggleReaction: (comment: IChatMessage, emoji: string) => void;
   chatType: string;
+  setOpenMedia: any;
 }
 
 const ReplyMessage: React.FC<ReplyMessageProps> = ({
@@ -39,6 +40,7 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
   toggleEmojiPicker,
   toggleReaction,
   chatType,
+  setOpenMedia,
 }) => {
   const boxRef = useRef(null);
   return (
@@ -135,10 +137,15 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
                 {(reply.imageUrls || []).map((imageUrl: string) => (
                   <img
                     width={"100%"}
-                    style={{ borderRadius: "8px", objectFit: "contain" }}
+                    style={{
+                      borderRadius: "8px",
+                      objectFit: "contain",
+                      cursor: "pointer",
+                    }}
                     src={imageUrl}
                     alt="reply image"
                     key={imageUrl}
+                    onClick={() => setOpenMedia(imageUrl)}
                   />
                 ))}
               </Box>
