@@ -95,11 +95,15 @@ const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
           py: 3,
           backgroundColor: (theme) =>
             theme.palette.mode === "dark" ? "#1b1a1a" : "white",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
+        <Typography sx={{ fontSize: "45px" }}>Guidelines</Typography>
         <Button
           variant="contained"
-          sx={{ mb: "3px" }}
+          sx={{ mb: "3px", mr: 2, ml: "auto" }}
           onClick={() => {
             setDisplayGuidelines(false);
           }}
@@ -124,6 +128,7 @@ const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
               guidelines[catId].guidelines.map(
                 (guideline: string, index: number) => (
                   <GuidLineText
+                    key={index + catId}
                     guideline={guideline}
                     index={index}
                     onSaveGuideline={modifyGuidelines}
