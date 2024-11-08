@@ -488,7 +488,9 @@ const ToolbarSidebar = ({
         currentVisibleNode,
         nodes
       );
-
+      if (!response) {
+        throw new Error("Messing response in handleImproveClick!");
+      }
       setCopilotMessage(response.message);
       const improvements = (
         (await compareProposals(response.improvements, nodesByTitle)) || []

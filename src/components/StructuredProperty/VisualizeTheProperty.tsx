@@ -68,7 +68,6 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
     }
     setMergedValue(newValue);
   }, [currentImprovement]);
-
   const renderValue = (value: ICollection[]) => {
     return (
       <Box sx={{ display: "flex", flexDirection: "column" }}>
@@ -102,7 +101,12 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                   minHeight: "5px",
                   textDecoration:
                     collection.change === "removed" ? "line-through" : "",
-                  color: collection.change === "removed" ? "red" : "green",
+                  color:
+                    collection.change === "removed"
+                      ? "red"
+                      : collection.change === "added"
+                      ? "green"
+                      : "",
                 }}
               >
                 {collection.collectionName !== "main"

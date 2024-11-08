@@ -3,6 +3,7 @@ import { GUIDELINES, NODES } from "../firestoreClient/collections";
 import { ICollection, INode } from " @components/types/INode";
 import { Post } from "./Post";
 import { PROPOSALS_SCHEMA } from "../CONSTANTS";
+import { recordLogs } from "./helpers";
 
 export const sendLLMRequest = async ({
   messages,
@@ -12,13 +13,10 @@ export const sendLLMRequest = async ({
   model: string;
 }) => {
   try {
-    const response = await Post(
-      "https://copilot-163479774214.us-central1.run.app/ask",
-      {
-        messages,
-        model,
-      }
-    );
+    const response = await Post("/ask", {
+      messages,
+      model,
+    });
 
     return response;
   } catch (error) {
@@ -26,19 +24,7 @@ export const sendLLMRequest = async ({
     throw error;
   }
 };
-const extractJSON = (text: string) => {
-  try {
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
-    if (end === -1 || start === -1) {
-      return null;
-    }
-    const jsonArrayString = text.slice(start, end + 1);
-    return JSON.parse(jsonArrayString);
-  } catch (error) {
-    console.error(error);
-  }
-};
+
 const proposerAgent = async (
   userMessage: string,
   model: string,
@@ -93,7 +79,7 @@ ${JSON.stringify(guidelines, null, 2)}
 
     // proposalsJSON = await callOpenAIChat([], prompt);
     // proposalsJSON = await askGemini([], prompt);
-    const completion: any = await sendLLMRequest({
+    const response: any = await sendLLMRequest({
       messages: [
         {
           role: "user",
@@ -103,11 +89,18 @@ ${JSON.stringify(guidelines, null, 2)}
       model,
     });
 
-    proposalsJSON = extractJSON(completion.choices[0].message.content);
-    return proposalsJSON;
+    return response;
   } catch (error: any) {
     console.error(error);
-    throw new Error(error);
+    recordLogs({
+      type: "error",
+      error: JSON.stringify({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      }),
+      at: "recordLogs",
+    });
   }
 };
 

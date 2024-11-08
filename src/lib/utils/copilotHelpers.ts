@@ -122,6 +122,16 @@ export const compareProposals = async (
               change[property] = [
                 { collectionName: "main", nodes: change[property] },
               ];
+            } else {
+              const mainCollectionIdx = change[property].findIndex(
+                (c: any) => c.collectionName === "main"
+              );
+              if (mainCollectionIdx === -1) {
+                change[property].push({
+                  collectionName: "main",
+                  nodes: [],
+                });
+              }
             }
             const response: any = compareProperty(
               change,
