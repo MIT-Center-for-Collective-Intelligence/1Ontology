@@ -13,7 +13,7 @@ export const sendLLMRequest = async ({
   model: string;
 }) => {
   try {
-    const response = await Post("/ask", {
+    const response = await Post("/copilot", {
       messages,
       model,
     });

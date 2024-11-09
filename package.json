@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 8080", 
     "lint": "next lint",
     "test": "jest"
   },
@@ -15,6 +15,7 @@
     "@emotion/react": "11.9.3",
     "@emotion/server": "11.4.0",
     "@emotion/styled": "11.9.3",
+    "@google/generative-ai": "^0.21.0",
     "@mui/icons-material": "^5.8.4",
     "@mui/lab": "5.0.0-alpha.90",
     "@mui/material": "5.9.0",
