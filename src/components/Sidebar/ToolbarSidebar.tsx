@@ -465,15 +465,14 @@ const ToolbarSidebar = ({
     }
   }, [nodes, user]);
 
-  const handleImproveClick = async ({
-    model,
-    userMessage,
-    deepNumber,
-  }: {
-    model: string;
-    userMessage: string;
-    deepNumber: number;
-  }) => {
+  const handleImproveClick = async () => {
+    const options = (await selectIt()) as {
+      model: string;
+      userMessage: string;
+      deepNumber: number;
+    };
+    if (!options) return;
+    const { model, userMessage, deepNumber } = options;
     setIsLoadingCopilot(true);
     try {
       const response: {
@@ -873,22 +872,7 @@ const ToolbarSidebar = ({
                     handleExpandSidebar("improvements");
                     setCurrentImprovement(improvements[0]);
                   } else {
-                    const options = (await selectIt()) as {
-                      model: string;
-                      userMessage: string;
-                      deepNumber: number;
-                    };
-
-                    if (options) {
-                      const { model, userMessage, deepNumber } = options;
-                      handleImproveClick({
-                        model,
-                        userMessage,
-                        deepNumber,
-                      });
-                    } else {
-                      return;
-                    }
+                    handleImproveClick();
                   }
                 }}
                 text={"Copilot"}
