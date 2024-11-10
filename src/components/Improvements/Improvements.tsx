@@ -277,7 +277,15 @@ const Improvements = ({
   };
 
   const addNewNode = useCallback(
-    async ({ id, newNode }: { id: string; newNode: any }) => {
+    async ({
+      id,
+      newNode,
+      reasoning,
+    }: {
+      id: string;
+      newNode: any;
+      reasoning: string;
+    }) => {
       try {
         if (!user?.uname) return;
         // Reference to the new node document
@@ -302,6 +310,7 @@ const Improvements = ({
           modifiedAt: new Date(),
           changeType: "add node",
           fullNode: newNode,
+          reasoning,
         });
         // Record logs for the created node
         recordLogs({
@@ -319,7 +328,11 @@ const Improvements = ({
 
   // Function to add a new specialization to a node
   const addNewSpecialization = useCallback(
-    async (collectionName: string = "main", newNode: INode) => {
+    async (
+      collectionName: string = "main",
+      newNode: INode,
+      reasoning: string
+    ) => {
       try {
         if (!user?.uname) return;
         // handleCloseAddLinksModel();
@@ -351,7 +364,7 @@ const Improvements = ({
         updateSpecializations(nodeParentData, newNodeRef.id, collectionName);
 
         // Add the new node to the database
-        await addNewNode({ id: newNodeRef.id, newNode });
+        await addNewNode({ id: newNodeRef.id, newNode, reasoning });
 
         // Update the parent node document
         await updateDoc(nodeParentRef, {
@@ -360,16 +373,6 @@ const Improvements = ({
         });
 
         // Save the change log
-        saveNewChangeLog(db, {
-          nodeId: parentId,
-          modifiedBy: user?.uname,
-          modifiedProperty: "specializations",
-          previousValue: previousParentValue,
-          newValue: nodeParentData.specializations,
-          modifiedAt: new Date(),
-          changeType: "add element",
-          fullNode: nodeParentData,
-        });
         saveNewChangeLog(db, {
           nodeId: parentId,
           modifiedBy: user?.uname,
@@ -397,11 +400,15 @@ const Improvements = ({
   const onAcceptChange = async (change: any) => {
     try {
       if (change.newNode) {
-        await addNewSpecialization("main", change.node);
+        await addNewSpecialization("main", change.node, change.reasoning);
         return;
       }
 
       for (let dChange of change.detailsOfChange) {
+        const reasoning =
+          currentImprovement.modifiedProperties[dChange.modifiedProperty]
+            .reasoning;
+
         let changeType: any = null;
 
         if (dChange.structuredProperty) {
@@ -430,6 +437,7 @@ const Improvements = ({
             modifiedAt: new Date(),
             changeType,
             fullNode: currentVisibleNode,
+            reasoning,
           });
         }
       }

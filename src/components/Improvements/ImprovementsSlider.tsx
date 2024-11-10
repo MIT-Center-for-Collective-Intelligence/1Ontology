@@ -187,25 +187,30 @@ const ImprovementsSlider = ({
                           {" "}
                           {currentImprovement.modifiedProperties[p].reasoning}
                         </Typography>
-                        <Typography>
-                          Co-pilot is proposing to add
-                          <ul>
+                        {(
+                          currentImprovement.modifiedProperties[p]
+                            ?.addedNonExistentElements || []
+                        ).length > 0 && (
+                          <Typography>
+                            Co-pilot is proposing to add
+                            <ul>
+                              {(
+                                currentImprovement.modifiedProperties[p]
+                                  ?.addedNonExistentElements || []
+                              ).map((nodeTitle: string) => (
+                                <li style={{ color: "orange" }}>{nodeTitle}</li>
+                              ))}
+                            </ul>
+                            as a new {p}, but such{" "}
                             {(
                               currentImprovement.modifiedProperties[p]
                                 ?.addedNonExistentElements || []
-                            ).map((nodeTitle: string) => (
-                              <li style={{ color: "orange" }}>{nodeTitle}</li>
-                            ))}
-                          </ul>
-                          as a new {p}, but such{" "}
-                          {(
-                            currentImprovement.modifiedProperties[p]
-                              ?.addedNonExistentElements || []
-                          ).length > 2
-                            ? "nodes do"
-                            : "a node does"}{" "}
-                          not exist.
-                        </Typography>
+                            ).length > 2
+                              ? "nodes do"
+                              : "a node does"}{" "}
+                            not exist.
+                          </Typography>
+                        )}
                       </Box>
                     )
                   )}

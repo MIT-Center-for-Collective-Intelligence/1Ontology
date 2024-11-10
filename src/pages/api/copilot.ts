@@ -31,7 +31,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     if (model === "Gemini 1.5 PRO") {
       const prompt = messages[0].content;
       const response = await askGemini(prompt);
-      console.log("response==>", JSON.stringify(response, null, 2));
+
       return res.status(200).send(response);
     }
     const temperature = model === "gpt-4o" ? 0 : 1;

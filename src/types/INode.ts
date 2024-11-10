@@ -130,4 +130,5 @@ export type NodeChange = {
     | "edit collection";
   fullNode: INode | null;
   changeDetails?: { [key: string]: any };
+  reasoning?: string;
 };

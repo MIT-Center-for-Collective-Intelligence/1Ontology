@@ -87,7 +87,19 @@ const ActivityDetails = ({
                 color: "text.primary",
               }}
             >
-              {modifiedByDetails.fName} {modifiedByDetails.lName}
+              {modifiedByDetails.fName} {modifiedByDetails.lName}{" "}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                fontSize: "13px",
+                mt: 2,
+                mb: 1.5,
+                mx: "14px",
+                color: "text.secondary",
+              }}
+            >
+              {getChangeDescription(activity, "")}
             </Typography>
           </Box>
         )}
@@ -115,17 +127,10 @@ const ActivityDetails = ({
           }}
         >
           <Typography
-            variant="body2"
-            sx={{ fontSize: "13px", mt: 2, mb: 1.5, color: "text.secondary" }}
-          >
-            {getChangeDescription(activity, "")}
-          </Typography>
-
-          <Typography
             variant="h6"
             sx={{
               fontWeight: "bold",
-              fontSize: "16px",
+              fontSize: "20px",
               wordWrap: "break-word",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -134,6 +139,14 @@ const ActivityDetails = ({
           >
             {activity.fullNode?.title}
           </Typography>
+          {activity.reasoning && (
+            <Box>
+              <Typography sx={{ mt: "15px", fontWeight: "bold" }}>
+                Comments:
+              </Typography>
+              <Typography>{activity.reasoning}</Typography>
+            </Box>
+          )}
         </Box>
       </Paper>
     </Box>

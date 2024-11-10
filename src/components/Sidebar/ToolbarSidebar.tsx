@@ -486,6 +486,8 @@ const ToolbarSidebar = ({
 
       for (let node of newNodes) {
         const generalization = nodesByTitle[node.first_generalization.title];
+        if (!generalization) continue;
+        
         const newId = doc(collection(db, NODES)).id;
         const inheritance = generateInheritance(
           generalization.inheritance,
@@ -523,17 +525,13 @@ const ToolbarSidebar = ({
   };
 
   const handleImproveClick = async () => {
-    // const options = (await selectIt()) as {
-    //   model: string;
-    //   userMessage: string;
-    //   deepNumber: number;
-    // };
-    // if (!options) return;
-    const { model, userMessage, deepNumber } = {
-      model: "",
-      userMessage: "",
-      deepNumber: 7,
+    const options = (await selectIt()) as {
+      model: string;
+      userMessage: string;
+      deepNumber: number;
     };
+    if (!options) return;
+    const { model, userMessage, deepNumber } = options;
     setIsLoadingCopilot(true);
     try {
       const response: {
