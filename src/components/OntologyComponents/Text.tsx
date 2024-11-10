@@ -103,6 +103,7 @@ const Text = ({
   const [switchToWebsocket, setSwitchToWebSocket] = useState(true);
 
   const currentImprovementChange = useMemo(() => {
+    if (currentImprovement?.newNode) return null;
     const uIndex = (currentImprovement?.detailsOfChange || []).findIndex(
       (c: any) => c.modifiedProperty === property
     );
@@ -299,7 +300,9 @@ const Text = ({
               selectedDiffNode?.changeType === "delete node" &&
               property === "title"
                 ? "red"
-                : selectedDiffNode?.changeType === "add node" &&
+                : (selectedDiffNode?.changeType === "add node" ||
+                    (!!currentImprovement?.newNode &&
+                      !currentImprovement?.implemented)) &&
                   property === "title"
                 ? "green"
                 : theme.palette.mode === "dark"
@@ -346,22 +349,25 @@ const Text = ({
             </Typography>
           )}
 
-          {property === "title" && !selectedDiffNode && displaySidebar && (
-            <ManageNodeButtons
-              locked={locked}
-              lockedInductor={!!currentVisibleNode.locked}
-              root={root}
-              manageLock={manageLock}
-              deleteNode={deleteNode}
-              getTitleNode={getTitleNode}
-              handleLockNode={handleLockNode}
-              navigateToNode={navigateToNode}
-              displaySidebar={displaySidebar}
-              activeSidebar={activeSidebar}
-              unclassified={currentVisibleNode.unclassified}
-            />
-          )}
-          {property !== "title" && (
+          {property === "title" &&
+            !selectedDiffNode &&
+            displaySidebar &&
+            !currentImprovement && (
+              <ManageNodeButtons
+                locked={locked}
+                lockedInductor={!!currentVisibleNode.locked}
+                root={root}
+                manageLock={manageLock}
+                deleteNode={deleteNode}
+                getTitleNode={getTitleNode}
+                handleLockNode={handleLockNode}
+                navigateToNode={navigateToNode}
+                displaySidebar={displaySidebar}
+                activeSidebar={activeSidebar}
+                unclassified={currentVisibleNode.unclassified}
+              />
+            )}
+          {property !== "title" && !currentImprovement && (
             <SelectInheritance
               currentVisibleNode={currentVisibleNode}
               property={property}
@@ -373,7 +379,8 @@ const Text = ({
       <Typography color="red" sx={{ pl: "5px" }}>
         {error}
       </Typography>
-      {locked ||
+      {currentImprovement?.newNode ||
+      locked ||
       (selectedDiffNode &&
         (selectedDiffNode.modifiedProperty !== property || structured)) ||
       (currentVisibleNode.unclassified && property === "title") ? (

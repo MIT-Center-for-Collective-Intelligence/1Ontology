@@ -9,9 +9,9 @@ type IProposalSliderProps = {
   currentImprovement: any;
   handleAcceptChange: any;
   setImprovements: any;
-  handleRejectChange: any;
   setCurrentVisibleNode: any;
   navigateToNode: any;
+  compareThisImprovement: any;
 };
 const ImprovementsSlider = ({
   proposals,
@@ -19,9 +19,9 @@ const ImprovementsSlider = ({
   currentImprovement,
   handleAcceptChange,
   setImprovements,
-  handleRejectChange,
   setCurrentVisibleNode,
   navigateToNode,
+  compareThisImprovement,
 }: IProposalSliderProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -30,16 +30,25 @@ const ImprovementsSlider = ({
       return;
     }
     setTimeout(() => {
-      setCurrentImprovement(proposals[currentIndex]);
       navigateToNode(proposals[currentIndex].nodeId);
+
+      if (proposals[currentIndex].newNode) {
+        setCurrentImprovement(proposals[currentIndex]);
+      } else {
+        compareThisImprovement(proposals[currentIndex]);
+      }
     }, 100);
-  }, [currentIndex]);
+  }, []);
 
   const handleNext = (display = true) => {
     setCurrentIndex((prevIndex) => {
       const newPrev = prevIndex === proposals.length - 1 ? 0 : prevIndex + 1;
       if (display) {
-        setCurrentImprovement(proposals[newPrev]);
+        if (proposals[newPrev].newNode) {
+          setCurrentImprovement(proposals[newPrev]);
+        } else {
+          compareThisImprovement(proposals[newPrev]);
+        }
         if (proposals[newPrev]?.nodeId) {
           navigateToNode(proposals[newPrev]?.nodeId);
         }
@@ -52,7 +61,11 @@ const ImprovementsSlider = ({
     setCurrentIndex((prevIndex) => {
       const newPrev = prevIndex === 0 ? proposals.length - 1 : prevIndex - 1;
       if (display) {
-        setCurrentImprovement(proposals[newPrev]);
+        if (proposals[newPrev].newNode) {
+          setCurrentImprovement(proposals[newPrev]);
+        } else {
+          compareThisImprovement(proposals[newPrev]);
+        }
         if (proposals[newPrev]?.nodeId) {
           navigateToNode(proposals[newPrev]?.nodeId);
         }
@@ -60,8 +73,9 @@ const ImprovementsSlider = ({
       return newPrev;
     });
   };
+
   const onHandleAcceptChange = async () => {
-    await handleAcceptChange(proposals[currentIndex]);
+    await handleAcceptChange(currentImprovement);
     setImprovements((prev: any) => {
       prev[currentIndex].implemented = true;
       return prev;
@@ -81,7 +95,6 @@ const ImprovementsSlider = ({
     setTimeout(() => {
       handlePrevious();
     }, 500);
-    handleRejectChange();
   };
 
   return (
@@ -131,38 +144,76 @@ const ImprovementsSlider = ({
                     theme.palette.mode === "light" ? "#d0d5dd" : "",
                 }}
               >
-                <Typography sx={{ mb: "15px" }}>
-                  This proposal changes to{" "}
-                  <strong style={{ color: "orange" }}>
-                    {currentImprovement.title}
-                  </strong>
-                  :
-                </Typography>
-
-                {Object.keys(currentImprovement.modifiedProperties).map(
-                  (p: string) => (
-                    <Box key={p} sx={{ mb: "15px" }}>
-                      <Typography
-                        sx={{
-                          textTransform: "capitalize",
-                          fontWeight: "bold",
-                          color: "orange",
-                        }}
-                      >
-                        {p}:
-                      </Typography>
-                      <Typography>
-                        {" "}
-                        {currentImprovement.modifiedProperties[p]}
-                      </Typography>
-                    </Box>
-                  )
+                {currentImprovement.newNode ? (
+                  <Box>
+                    <Typography>
+                      This proposal adds a new node titled:
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontWeight: "bold",
+                        color: "orange",
+                        my: "13px",
+                        fontSize: "17px",
+                      }}
+                    >
+                      {currentImprovement.node.title}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Typography sx={{ mb: "15px" }}>
+                    This proposal changes to{" "}
+                    <strong style={{ color: "orange" }}>
+                      {currentImprovement.title}
+                    </strong>
+                    :
+                  </Typography>
                 )}
+
+                {!currentImprovement.newNode &&
+                  Object.keys(currentImprovement.modifiedProperties).map(
+                    (p: string) => (
+                      <Box key={p} sx={{ mb: "15px" }}>
+                        <Typography
+                          sx={{
+                            textTransform: "capitalize",
+                            fontWeight: "bold",
+                            color: "orange",
+                          }}
+                        >
+                          {p}:
+                        </Typography>
+                        <Typography>
+                          {" "}
+                          {currentImprovement.modifiedProperties[p].reasoning}
+                        </Typography>
+                        <Typography>
+                          Co-pilot is proposing to add
+                          <ul>
+                            {(
+                              currentImprovement.modifiedProperties[p]
+                                ?.addedNonExistentElements || []
+                            ).map((nodeTitle: string) => (
+                              <li style={{ color: "orange" }}>{nodeTitle}</li>
+                            ))}
+                          </ul>
+                          as a new {p}, but such{" "}
+                          {(
+                            currentImprovement.modifiedProperties[p]
+                              ?.addedNonExistentElements || []
+                          ).length > 2
+                            ? "nodes do"
+                            : "a node does"}{" "}
+                          not exist.
+                        </Typography>
+                      </Box>
+                    )
+                  )}
 
                 <Typography
                   sx={{ mr: "15px", mt: "5px", ml: "5px", fontWeight: "bold" }}
                 >
-                  {currentIndex + 1}/{proposals.length}
+                  {index + 1}/{proposals.length}
                 </Typography>
                 {currentImprovement.implemented && (
                   <Typography

@@ -38,7 +38,9 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
     const propertyIdx = currentImprovement.detailsOfChange.findIndex(
       (c: any) => c.modifiedProperty === property
     );
-    const newValue = currentImprovement.detailsOfChange[propertyIdx].newValue;
+    const newValue = JSON.parse(
+      JSON.stringify(currentImprovement.detailsOfChange[propertyIdx].newValue)
+    );
 
     setAddLinks(
       new Set(currentImprovement.detailsOfChange[propertyIdx].addedLinks)
@@ -46,8 +48,11 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
     setRemovedLinks(
       new Set(currentImprovement.detailsOfChange[propertyIdx].removedLinks)
     );
-    const previousValue =
-      currentImprovement.detailsOfChange[propertyIdx].previousValue;
+    const previousValue = JSON.parse(
+      JSON.stringify(
+        currentImprovement.detailsOfChange[propertyIdx].previousValue
+      )
+    );
 
     for (let collection of newValue) {
       const collectionIdx = previousValue.findIndex(
@@ -55,6 +60,16 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
       );
       if (collectionIdx === -1) {
         collection.change = "added";
+      } else {
+        const _previousNodes = previousValue[collectionIdx].nodes.map(
+          (n: { id: string }) => n.id
+        );
+        const previousNodes = new Set(_previousNodes);
+        for (let node of collection.nodes) {
+          if (!previousNodes.has(node.id)) {
+            collection.nodes.push({ ...node, change: "added" });
+          }
+        }
       }
     }
     for (let collection of previousValue) {
@@ -64,8 +79,19 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
       if (collectionIdx === -1) {
         newValue.push(collection);
         collection.change = "removed";
+      } else {
+        const _newNodes = newValue[collectionIdx].nodes.map(
+          (n: { id: string }) => n.id
+        );
+        const newNodes = new Set(_newNodes);
+        for (let node of collection.nodes) {
+          if (!newNodes.has(node.id)) {
+            newValue[collectionIdx].nodes.push({ ...node, change: "removed" });
+          }
+        }
       }
     }
+
     setMergedValue(newValue);
   }, [currentImprovement]);
   const renderValue = (value: ICollection[]) => {
@@ -119,11 +145,13 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                 <ListItem key={node.id}>
                   <DragIndicatorIcon
                     sx={{
-                      color: addedLinks.has(node.id)
-                        ? "green"
-                        : removedLinks.has(node.id)
-                        ? "red"
-                        : "",
+                      color:
+                        addedLinks.has(node.id) || node.change === "added"
+                          ? "green"
+                          : removedLinks.has(node.id) ||
+                            node.change === "removed"
+                          ? "red"
+                          : "",
                     }}
                   />
                   <Typography
@@ -132,11 +160,13 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                       textDecoration: removedLinks.has(node.id)
                         ? "line-through"
                         : "",
-                      color: addedLinks.has(node.id)
-                        ? "green"
-                        : removedLinks.has(node.id)
-                        ? "red"
-                        : "",
+                      color:
+                        addedLinks.has(node.id) || node.change === "added"
+                          ? "green"
+                          : removedLinks.has(node.id) ||
+                            node.change === "removed"
+                          ? "red"
+                          : "",
                     }}
                   >
                     {getTitle(nodes, node.id)}

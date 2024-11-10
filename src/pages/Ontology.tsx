@@ -164,7 +164,7 @@ const Ontology = () => {
   };
   const theme = useTheme();
 
-  const [currentImprovement, setCurrentImprovement] = useState(null);
+  const [currentImprovement, setCurrentImprovement] = useState<any>(null);
   const [displayGuidelines, setDisplayGuidelines] = useState(false);
   const [prevHash, setPrevHash] = useState("");
   const [lastSearches, setLastSearches] = useState<any[]>([]);
@@ -656,46 +656,6 @@ const Ontology = () => {
   }, [currentVisibleNode?.id, eachOntologyPath]);
 
   // Callback function to add a new node to the database
-  const addNewNode = useCallback(
-    async ({ id, newNode }: { id: string; newNode: any }) => {
-      try {
-        if (!user?.uname) return;
-        // Reference to the new node document
-        // setCurrentVisibleNode({
-        //   id,
-        //   ...newNode,
-        // });
-        const newNodeRef = doc(collection(db, NODES), id);
-        // Set the document with the new node data
-        await setDoc(newNodeRef, {
-          ...newNode,
-          locked: false,
-          deleted: false,
-          createdAt: new Date(),
-        });
-        saveNewChangeLog(db, {
-          nodeId: newNodeRef.id,
-          modifiedBy: user?.uname,
-          modifiedProperty: "",
-          previousValue: null,
-          newValue: null,
-          modifiedAt: new Date(),
-          changeType: "add node",
-          fullNode: newNode,
-        });
-        // Record logs for the created node
-        recordLogs({
-          action: "Create a new node",
-          nodeId: id,
-        });
-
-        // Set the newly created node as editable
-      } catch (error) {
-        console.error(error);
-      }
-    },
-    [nodes, user?.uname]
-  );
 
   // Define a callback function to handle the opening of the ontology DAGRE view.
   const onOpenNodeDagre = useCallback(
@@ -1070,13 +1030,14 @@ const Ontology = () => {
               )}
               {currentVisibleNode && user && !displayGuidelines && (
                 <Node
-                  currentVisibleNode={currentVisibleNode}
+                  currentVisibleNode={
+                    currentImprovement?.node || currentVisibleNode
+                  }
                   setCurrentVisibleNode={setCurrentVisibleNode}
                   setSnackbarMessage={setSnackbarMessage}
                   user={user}
                   mainSpecializations={mainSpecializations}
                   nodes={nodes}
-                  addNewNode={addNewNode}
                   navigateToNode={navigateToNode}
                   eachOntologyPath={eachOntologyPath}
                   searchWithFuse={searchWithFuse}

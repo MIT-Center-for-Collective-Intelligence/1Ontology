@@ -11,6 +11,7 @@ import {
   collection,
   doc,
   getFirestore,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -45,7 +46,8 @@ const NodeActivity = ({
     const nodesQuery = query(
       collection(db, NODES_LOGS),
       where("nodeId", "==", currentVisibleNode.id),
-      orderBy("modifiedAt", "desc")
+      orderBy("modifiedAt", "desc"),
+      limit(100)
     );
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {

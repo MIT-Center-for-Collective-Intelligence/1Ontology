@@ -787,7 +787,8 @@ const StructuredProperty = ({
   if (
     currentImprovement &&
     !currentImprovement.implemented &&
-    currentImprovement.detailsOfChange.findIndex(
+    !currentImprovement?.newNode &&
+    (currentImprovement?.detailsOfChange || []).findIndex(
       (c: any) => c.modifiedProperty === property
     ) !== -1
   ) {
@@ -858,29 +859,33 @@ const StructuredProperty = ({
               {'")'}
             </Typography>
           )}
-          {!locked && !selectedDiffNode && property === "specializations" && (
-            <Box
-              sx={{
-                alignItems: "center",
-                display: "flex",
-                gap: "15px",
-                ml: "auto",
-              }}
-            >
-              <Button
-                onClick={() => {
-                  setOpenAddCollection(true);
+          {!locked &&
+            !currentImprovement &&
+            !selectedDiffNode &&
+            property === "specializations" && (
+              <Box
+                sx={{
+                  alignItems: "center",
+                  display: "flex",
+                  gap: "15px",
+                  ml: "auto",
                 }}
-                sx={{ borderRadius: "18px", backgroundColor: BUTTON_COLOR }}
-                variant="outlined"
               >
-                Add Collection
-              </Button>
-            </Box>
-          )}
+                <Button
+                  onClick={() => {
+                    setOpenAddCollection(true);
+                  }}
+                  sx={{ borderRadius: "18px", backgroundColor: BUTTON_COLOR }}
+                  variant="outlined"
+                >
+                  Add Collection
+                </Button>
+              </Box>
+            )}
           {(property !== "generalizations" ||
             !currentVisibleNode.unclassified) &&
             !selectedDiffNode &&
+            !currentImprovement &&
             property !== "specializations" && (
               <Box sx={{ ml: "auto", display: "flex", gap: "14px" }}>
                 <Button
@@ -919,7 +924,7 @@ const StructuredProperty = ({
 
           <DragDropContext
             onDragEnd={(e) => {
-              if (locked || !!selectedDiffNode) return;
+              if (locked || !!selectedDiffNode || !!currentImprovement) return;
               if (e.type === "CATEGORY") {
                 handleCollectionSorting(e);
               } else {
@@ -1235,7 +1240,10 @@ const StructuredProperty = ({
                                                       link.id
                                                     )}
                                                     linkLocked={false}
-                                                    locked={locked}
+                                                    locked={
+                                                      locked ||
+                                                      !!currentImprovement
+                                                    }
                                                     user={user}
                                                     collectionIndex={
                                                       collectionIndex
@@ -1268,33 +1276,34 @@ const StructuredProperty = ({
                                   )}
                                 </Droppable>
                               </List>
-                              {property === "specializations" && (
-                                <Button
-                                  onClick={() =>
-                                    showListToSelect(
-                                      property,
-                                      collection.collectionName
-                                    )
-                                  }
-                                  sx={{
-                                    borderRadius: "18px",
-                                    backgroundColor: BUTTON_COLOR,
-                                    ":hover": {
-                                      backgroundColor:
-                                        theme.palette.mode === "light"
-                                          ? "#f0f0f0"
-                                          : "",
-                                    },
-                                    // ml: "auto",
-                                    m: "5px",
-                                  }}
-                                  variant="outlined"
-                                >
-                                  {`Add ${capitalizeFirstLetter(
-                                    DISPLAY[property] || property
-                                  )}`}{" "}
-                                </Button>
-                              )}
+                              {property === "specializations" &&
+                                !currentImprovement?.newNode && (
+                                  <Button
+                                    onClick={() =>
+                                      showListToSelect(
+                                        property,
+                                        collection.collectionName
+                                      )
+                                    }
+                                    sx={{
+                                      borderRadius: "18px",
+                                      backgroundColor: BUTTON_COLOR,
+                                      ":hover": {
+                                        backgroundColor:
+                                          theme.palette.mode === "light"
+                                            ? "#f0f0f0"
+                                            : "",
+                                      },
+                                      // ml: "auto",
+                                      m: "5px",
+                                    }}
+                                    variant="outlined"
+                                  >
+                                    {`Add ${capitalizeFirstLetter(
+                                      DISPLAY[property] || property
+                                    )}`}{" "}
+                                  </Button>
+                                )}
                             </Paper>
                           )}
                         </Draggable>

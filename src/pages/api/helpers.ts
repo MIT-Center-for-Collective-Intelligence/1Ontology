@@ -92,7 +92,6 @@ export const askGemini = async (prompt: string) => {
         i + 1,
         " time."
       );
-      console.log("Response: ", response);
     } catch (error) {
       console.error("Error in generating content: ", error);
     }

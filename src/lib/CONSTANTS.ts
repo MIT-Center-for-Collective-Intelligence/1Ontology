@@ -274,7 +274,7 @@ Each item should represent an object proposing a new node. Please structure each
 {
    "title": "The title of the new node.",
    "description": "The description of the node.",
-   "first_generalization": {}, // An object, including the node title that you would like to specify as the first generalization of this new node, and the collection in the array of specializations of this generalization, where the new node should be classified under.
+   "first_generalization": "A string representing the title of the node that you would like to specify as the first generalization of this new node; i.e., the new node should be classified as one of its specializations.
    "reasoning": "Your reasoning for proposing this new node"
 }
 

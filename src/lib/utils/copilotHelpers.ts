@@ -22,7 +22,7 @@ export const compareProperty = (
     const existingCollectionNames = propertyValue.map(
       (c: ICollection) => c.collectionName
     );
-
+    let addedNonExistentElements = [];
     const proposalPropertyIds: string[] = [];
     for (let collection of change[property]) {
       const newNodes = [];
@@ -33,6 +33,8 @@ export const compareProperty = (
             id,
           });
           proposalPropertyIds.push(id);
+        } else {
+          addedNonExistentElements.push(nodeTitle);
         }
       }
       collection.nodes = newNodes;
@@ -81,7 +83,13 @@ export const compareProperty = (
         nodes: [],
       });
     }
-    return { changedProperty, removedLinks, addedLinks, collectionsModified };
+    return {
+      changedProperty,
+      removedLinks,
+      addedLinks,
+      collectionsModified,
+      addedNonExistentElements,
+    };
   } catch (error) {
     console.error("error at compareProperty", error);
   }
@@ -176,4 +184,92 @@ export const compareProposals = async (
   } catch (error) {
     console.error("Error comparing proposals:", error);
   }
+};
+
+export const compareImprovement = (
+  improvement: any,
+  nodesByTitle: { [nodeTitle: string]: INode }
+) => {
+  const _improvement = JSON.parse(JSON.stringify(improvement));
+  const nodeData = nodesByTitle[improvement.title];
+
+  if (nodeData) {
+    const detailsOfChange = [];
+    const modifiedProperties: any = {};
+    for (let change of _improvement.changes) {
+      const property = Object.keys(change).filter((k) => k !== "reasoning")[0];
+      if (!property) {
+        continue;
+      }
+      if (
+        typeof nodeData.properties[property] === "string" ||
+        property === "title"
+      ) {
+        modifiedProperties[property] = { reasoning: change.reasoning };
+        detailsOfChange.push({
+          modifiedProperty: property,
+          previousValue:
+            property === "title"
+              ? nodeData.title
+              : nodeData.properties[property],
+          newValue: change[property],
+        });
+      } else {
+        if (property !== "specializations") {
+          change[property] = [
+            { collectionName: "main", nodes: change[property] },
+          ];
+        } else {
+          const mainCollectionIdx = change[property].findIndex(
+            (c: any) => c.collectionName === "main"
+          );
+          if (mainCollectionIdx === -1) {
+            change[property].push({
+              collectionName: "main",
+              nodes: [],
+            });
+          }
+        }
+        const response: any = compareProperty(
+          change,
+          nodeData,
+          property,
+          nodesByTitle
+        );
+        const {
+          changedProperty,
+          removedLinks,
+          addedLinks,
+          collectionsModified,
+          addedNonExistentElements,
+        } = response;
+
+        const isParentOrChild =
+          property === "specializations" || property === "generalizations";
+        const previousValue = isParentOrChild
+          ? nodeData[property as "specializations" | "generalizations"]
+          : nodeData.properties[property];
+
+        if (changedProperty) {
+          modifiedProperties[property] = {
+            reasoning: change.reasoning,
+            addedNonExistentElements,
+          };
+          detailsOfChange.push({
+            modifiedProperty: property,
+            previousValue,
+            newValue: change[property],
+            collectionsModified,
+            structuredProperty: true,
+            removedLinks: removedLinks,
+            addedLinks: addedLinks,
+          });
+        }
+      }
+    }
+    _improvement.detailsOfChange = detailsOfChange;
+    _improvement.nodeId = nodeData.id;
+    _improvement.modifiedProperties = modifiedProperties;
+  }
+  return _improvement;
 };

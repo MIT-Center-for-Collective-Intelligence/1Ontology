@@ -20,9 +20,11 @@ const extractJSON = (text: string) => {
     return { jsonObject: {}, isJSON: false };
   }
 };
+
 async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
   try {
     const { messages, model } = req.body;
+
     if (messages.length <= 0) {
       return res.status(400).json({ error: "Prompt is required" });
     }
@@ -46,7 +48,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
         });
 
         const response = completion.choices[0].message.content;
-        console.log("response", response);
         isJSONObject = extractJSON(response || "");
         if (isJSONObject.isJSON) {
           break;
@@ -63,7 +64,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     if (!isJSONObject.isJSON) {
       throw new Error("Failed to get a complete JSON object");
     }
-    console.log("Response: ", isJSONObject.jsonObject);
+
+    console.log("Response: ", JSON.stringify(isJSONObject.jsonObject, null, 2));
     return res.status(200).send(isJSONObject.jsonObject);
   } catch (error: any) {
     res.status(500).json({ error: error.message });

@@ -135,7 +135,6 @@ type INodeProps = {
   user: User;
   mainSpecializations: MainSpecializations;
   nodes: { [id: string]: INode };
-  addNewNode: ({ id, newNode }: { id: string; newNode: INode }) => void;
   navigateToNode: (nodeId: string) => void;
   eachOntologyPath: { [key: string]: any };
   searchWithFuse: (query: string, nodeType?: INodeTypes) => INode[];
@@ -153,7 +152,6 @@ const Node = ({
   setSnackbarMessage,
   mainSpecializations,
   nodes,
-  addNewNode,
   user,
   navigateToNode,
   searchWithFuse,
@@ -485,6 +483,16 @@ const Node = ({
           locked: false,
           createdAt: new Date(),
         });
+        saveNewChangeLog(db, {
+          nodeId: newNodeRef.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: "",
+          previousValue: null,
+          newValue: null,
+          modifiedAt: new Date(),
+          changeType: "add node",
+          fullNode: newNode,
+        });
 
         setCloning(null);
         // Update the parent node's specializations
@@ -529,101 +537,6 @@ const Node = ({
     // handleCloseAddLinksModel();
     await cloneNode(node.id, searchValue, newId);
   };
-
-  // Function to add a new specialization to a node
-  const addNewSpecialization = useCallback(
-    async (collectionName: string = "main", searchValue: string = "") => {
-      try {
-        // handleCloseAddLinksModel();
-        if (!collectionName) {
-          collectionName = "main";
-        }
-
-        // Get a reference to the parent node document
-        const nodeParentRef = doc(collection(db, NODES), currentVisibleNode.id);
-
-        // Retrieve the parent node data
-        const nodeParentData = nodes[currentVisibleNode.id];
-        const previousParentValue = JSON.parse(
-          JSON.stringify(nodeParentData.specializations)
-        );
-
-        // Create a new node document reference
-        const newNodeRef = doc(collection(db, NODES));
-
-        // Generate new inheritance structure
-        const inheritance = generateInheritance(
-          nodeParentData.inheritance,
-          currentVisibleNode.id
-        );
-
-        // Generate a new title
-        let newTitle = searchValue
-          ? searchValue
-          : `New ${nodeParentData.title}`;
-        const specializationsTitles = nodeParentData.specializations.flatMap(
-          (collection) =>
-            collection.nodes.map((spec) => nodes[spec.id]?.title || "")
-        );
-        newTitle = generateUniqueTitle(newTitle, specializationsTitles);
-
-        // Create the new node object
-        const newNode = createNewNode(
-          nodeParentData,
-          newNodeRef.id,
-          newTitle,
-          inheritance,
-          currentVisibleNode.id,
-          user.uname
-        );
-
-        // Remove the `locked` property if it exists
-        if ("locked" in newNode) {
-          delete newNode.locked;
-        }
-
-        // Update the parent node's specializations
-        updateSpecializations(nodeParentData, newNodeRef.id, collectionName);
-
-        // Add the new node to the database
-        addNewNode({ id: newNodeRef.id, newNode });
-        setNodes((prev: { [id: string]: INode }) => {
-          prev[newNodeRef.id] = newNode;
-          return prev;
-        });
-        markItemAsChecked(newNodeRef.id);
-
-        // Update the parent node document
-        await updateDoc(nodeParentRef, {
-          ...nodeParentData,
-          specializations: nodeParentData.specializations,
-        });
-
-        // Save the change log
-        saveNewChangeLog(db, {
-          nodeId: currentVisibleNode.id,
-          modifiedBy: user?.uname,
-          modifiedProperty: "specializations",
-          previousValue: previousParentValue,
-          newValue: nodeParentData.specializations,
-          modifiedAt: new Date(),
-          changeType: "add element",
-          fullNode: nodeParentData,
-        });
-      } catch (error) {
-        confirmIt("Sorry there was an Error please try again!", "Ok", "");
-        console.error(error);
-      }
-    },
-    [
-      addNewNode,
-      confirmIt,
-      currentVisibleNode.id,
-      currentVisibleNode.root,
-      currentVisibleNode.title,
-      db,
-    ]
-  );
 
   const showListToSelect = async (
     property: string,
@@ -1324,7 +1237,6 @@ const Node = ({
         setSearchValue={setSearchValue}
         searchValue={searchValue}
         searchResultsForSelection={searchResultsForSelection}
-        addNewSpecialization={addNewSpecialization}
         selectedCategory={selectedCategory}
         checkedItems={checkedItems}
         markItemAsChecked={markItemAsChecked}

@@ -318,7 +318,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           exitingProperties={Object.keys(properties || {})}
         />
       )}
-      {!locked && !openAddProperty && (
+      {!locked && !openAddProperty && !currentImprovement && (
         <Button
           onClick={() => {
             setOpenAddProperty(true);

@@ -35,7 +35,11 @@ import ClearIcon from "@mui/icons-material/Clear";
 import { Notifications } from " @components/components/Chat/Notifications";
 import { chatChange } from " @components/client/firestore/messages.firestore";
 import { INotification } from " @components/types/IChat";
-import { synchronizeStuff } from " @components/lib/utils/helpers";
+import {
+  createNewNode,
+  generateInheritance,
+  synchronizeStuff,
+} from " @components/lib/utils/helpers";
 import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
 import {
   collection,
@@ -63,7 +67,7 @@ import {
   getDownloadURL,
   ref as refStorage,
 } from "firebase/storage";
-import { USERS } from " @components/lib/firestoreClient/collections";
+import { NODES, USERS } from " @components/lib/firestoreClient/collections";
 import { useRouter } from "next/router";
 import ROUTES from " @components/lib/utils/routes";
 
@@ -73,7 +77,10 @@ import { INode, NodeChange } from " @components/types/INode";
 import Improvements from "../Improvements/Improvements";
 import { CHAT_DISCUSSION_TABS } from " @components/lib/CONSTANTS";
 import { generateProposals } from " @components/lib/utils/copilotPrompts";
-import { compareProposals } from " @components/lib/utils/copilotHelpers";
+import {
+  compareImprovement,
+  compareProposals,
+} from " @components/lib/utils/copilotHelpers";
 import useSelectDropdown from " @components/lib/hooks/useSelectDropdown";
 
 type MainSidebarProps = {
@@ -465,14 +472,68 @@ const ToolbarSidebar = ({
     }
   }, [nodes, user]);
 
+  const getNewNodes = (
+    newNodes: {
+      title: string;
+      description: string;
+      first_generalization: { title: string };
+      reasoning: string;
+    }[]
+  ): any => {
+    try {
+      if (!user?.uname) return;
+      const _NODES = [];
+
+      for (let node of newNodes) {
+        const generalization = nodesByTitle[node.first_generalization.title];
+        const newId = doc(collection(db, NODES)).id;
+        const inheritance = generateInheritance(
+          generalization.inheritance,
+          generalization.id
+        );
+        inheritance.description.ref = null;
+        const newNode = createNewNode(
+          generalization,
+          newId,
+          node.title,
+          inheritance,
+          generalization.id,
+          user?.uname
+        );
+        _NODES.push({
+          node: newNode,
+          newNode: true,
+          reasoning: node.reasoning,
+        });
+      }
+
+      return _NODES;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const compareThisImprovement = (improvement: any) => {
+    const nodeId = nodesByTitle[improvement.title].id;
+    if (nodes[nodeId]) {
+      setCurrentVisibleNode(nodes[nodeId]);
+    }
+    const result = compareImprovement(improvement, nodesByTitle);
+
+    setCurrentImprovement(result);
+  };
+
   const handleImproveClick = async () => {
-    const options = (await selectIt()) as {
-      model: string;
-      userMessage: string;
-      deepNumber: number;
+    // const options = (await selectIt()) as {
+    //   model: string;
+    //   userMessage: string;
+    //   deepNumber: number;
+    // };
+    // if (!options) return;
+    const { model, userMessage, deepNumber } = {
+      model: "",
+      userMessage: "",
+      deepNumber: 7,
     };
-    if (!options) return;
-    const { model, userMessage, deepNumber } = options;
     setIsLoadingCopilot(true);
     try {
       const response: {
@@ -491,14 +552,17 @@ const ToolbarSidebar = ({
         throw new Error("Messing response in handleImproveClick!");
       }
       setCopilotMessage(response.message);
-      const improvements = (
-        (await compareProposals(response.improvements, nodesByTitle)) || []
-      ).filter((m: any) => (m.detailsOfChange || []).length > 0);
+      const improvements = JSON.parse(JSON.stringify(response.improvements));
 
-      const newNodes = response.new_nodes;
-      if (improvements) {
-        setImprovements(improvements);
-        // setCurrentImprovement(improvements[0]);
+      const newNodes: {
+        title: string;
+        description: string;
+        first_generalization: string;
+        reasoning: string;
+        newNode: boolean;
+      }[] = getNewNodes(response.new_nodes);
+      if (improvements.length > 0 || newNodes.length > 0) {
+        setImprovements([...newNodes, ...improvements]);
       }
     } catch (error) {
       confirmIt(
@@ -599,6 +663,8 @@ const ToolbarSidebar = ({
             setImprovements={setImprovements}
             handleImproveClick={handleImproveClick}
             copilotMessage={copilotMessage}
+            compareThisImprovement={compareThisImprovement}
+            confirmIt={confirmIt}
           />
         );
       default:
@@ -870,7 +936,11 @@ const ToolbarSidebar = ({
                     improvements.filter((i: any) => !i.implemented).length > 0
                   ) {
                     handleExpandSidebar("improvements");
-                    setCurrentImprovement(improvements[0]);
+                    if (improvements[0].newNode) {
+                      setCurrentImprovement(improvements[0]);
+                    } else {
+                      compareThisImprovement(improvements[0]);
+                    }
                   } else {
                     handleImproveClick();
                   }

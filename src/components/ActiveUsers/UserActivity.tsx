@@ -11,6 +11,7 @@ import {
   collection,
   doc,
   getFirestore,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -43,7 +44,8 @@ const UserActivity = ({
     const nodesQuery = query(
       collection(db, NODES_LOGS),
       where("modifiedBy", "==", openLogsFor.uname),
-      orderBy("modifiedAt", "desc")
+      orderBy("modifiedAt", "desc"),
+      limit(100)
     );
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {

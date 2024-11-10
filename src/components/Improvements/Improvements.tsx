@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { Button, CircularProgress, Box, Typography } from "@mui/material";
 import ImprovementsSlider from "./ImprovementsSlider";
 import {
@@ -6,6 +6,7 @@ import {
   doc,
   getDoc,
   getFirestore,
+  setDoc,
   updateDoc,
 } from "firebase/firestore";
 import ReplayIcon from "@mui/icons-material/Replay";
@@ -13,6 +14,8 @@ import { NODES } from " @components/lib/firestoreClient/collections";
 import { ICollection, INode } from " @components/types/INode";
 
 import {
+  createNewNode,
+  generateInheritance,
   recordLogs,
   saveNewChangeLog,
   unlinkPropertyOf,
@@ -22,8 +25,10 @@ import {
   updateLinksForInheritanceSpecializations,
   updatePartsAndPartsOf,
   updatePropertyOf,
+  updateSpecializations,
 } from " @components/lib/utils/helpers";
 import { useAuth } from "../context/AuthContext";
+import { generateUniqueTitle } from " @components/lib/utils/string.utils";
 type ImprovementsProps = {
   currentImprovement: any;
   setCurrentImprovement: any;
@@ -36,6 +41,8 @@ type ImprovementsProps = {
   setImprovements: any;
   handleImproveClick: any;
   copilotMessage: string;
+  compareThisImprovement: any;
+  confirmIt: any;
 };
 const Improvements = ({
   currentImprovement,
@@ -49,13 +56,11 @@ const Improvements = ({
   setImprovements,
   handleImproveClick,
   copilotMessage,
+  compareThisImprovement,
+  confirmIt,
 }: ImprovementsProps) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
-
-  const onRejectChange = () => {
-    /*  onRejectChange*/
-  };
 
   const handleSaveLinkChanges = useCallback(
     async (
@@ -223,6 +228,7 @@ const Improvements = ({
       } else {
         await updateDoc(nodeRef, {
           [`properties.${property}`]: newValue,
+          [`inheritance.${property}.ref`]: null,
         });
       }
 
@@ -270,12 +276,136 @@ const Improvements = ({
     }
   };
 
+  const addNewNode = useCallback(
+    async ({ id, newNode }: { id: string; newNode: any }) => {
+      try {
+        if (!user?.uname) return;
+        // Reference to the new node document
+        setCurrentVisibleNode({
+          id,
+          ...newNode,
+        });
+        const newNodeRef = doc(collection(db, NODES), id);
+        // Set the document with the new node data
+        await setDoc(newNodeRef, {
+          ...newNode,
+          locked: false,
+          deleted: false,
+          createdAt: new Date(),
+        });
+        saveNewChangeLog(db, {
+          nodeId: newNodeRef.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: "",
+          previousValue: null,
+          newValue: null,
+          modifiedAt: new Date(),
+          changeType: "add node",
+          fullNode: newNode,
+        });
+        // Record logs for the created node
+        recordLogs({
+          action: "Create a new node",
+          nodeId: id,
+        });
+
+        // Set the newly created node as editable
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [nodes, user?.uname]
+  );
+
+  // Function to add a new specialization to a node
+  const addNewSpecialization = useCallback(
+    async (collectionName: string = "main", newNode: INode) => {
+      try {
+        if (!user?.uname) return;
+        // handleCloseAddLinksModel();
+        if (!collectionName) {
+          collectionName = "main";
+        }
+        const parentId = newNode.generalizations[0]?.nodes[0]?.id;
+        if (!parentId) {
+          return;
+        }
+        // Get a reference to the parent node document
+        const nodeParentRef = doc(collection(db, NODES), parentId);
+
+        // Retrieve the parent node data
+        const nodeParentData = nodes[parentId];
+        const previousParentValue = JSON.parse(
+          JSON.stringify(nodeParentData.specializations)
+        );
+
+        // Create a new node document reference
+        const newNodeRef = doc(collection(db, NODES), newNode.id);
+
+        // Remove the `locked` property if it exists
+        if ("locked" in newNode) {
+          delete newNode.locked;
+        }
+
+        // Update the parent node's specializations
+        updateSpecializations(nodeParentData, newNodeRef.id, collectionName);
+
+        // Add the new node to the database
+        await addNewNode({ id: newNodeRef.id, newNode });
+
+        // Update the parent node document
+        await updateDoc(nodeParentRef, {
+          ...nodeParentData,
+          specializations: nodeParentData.specializations,
+        });
+
+        // Save the change log
+        saveNewChangeLog(db, {
+          nodeId: parentId,
+          modifiedBy: user?.uname,
+          modifiedProperty: "specializations",
+          previousValue: previousParentValue,
+          newValue: nodeParentData.specializations,
+          modifiedAt: new Date(),
+          changeType: "add element",
+          fullNode: nodeParentData,
+        });
+        saveNewChangeLog(db, {
+          nodeId: parentId,
+          modifiedBy: user?.uname,
+          modifiedProperty: "specializations",
+          previousValue: previousParentValue,
+          newValue: nodeParentData.specializations,
+          modifiedAt: new Date(),
+          changeType: "add element",
+          fullNode: nodeParentData,
+        });
+      } catch (error) {
+        confirmIt("Sorry there was an Error please try again!", "Ok", "");
+        console.error(error);
+      }
+    },
+    [
+      addNewNode,
+      confirmIt,
+      currentVisibleNode.id,
+      currentVisibleNode.root,
+      currentVisibleNode.title,
+      db,
+    ]
+  );
   const onAcceptChange = async (change: any) => {
     try {
+      if (change.newNode) {
+        await addNewSpecialization("main", change.node);
+        return;
+      }
+
       for (let dChange of change.detailsOfChange) {
         let changeType: any = null;
+
         if (dChange.structuredProperty) {
-          changeType = "change text";
+          changeType = "modify elements";
           await handleSaveLinkChanges(
             dChange.modifiedProperty,
             dChange.newValue,
@@ -283,7 +413,7 @@ const Improvements = ({
             dChange.removedLinks
           );
         } else {
-          changeType = "modify elements";
+          changeType = "change text";
           await updateStringProperty(
             change.nodeId,
             dChange.modifiedProperty,
@@ -318,9 +448,19 @@ const Improvements = ({
           </Typography>
         </Box>
       ) : improvements.length > 0 ? (
-        <Box>
-          <Box sx={{ p: 2 }}>
-            <Typography sx={{ textAlign: "left", fontWeight: "bold" }}>
+        <Box
+          sx={{
+            overflow: "auto",
+            height: "90vh",
+            "&::-webkit-scrollbar": {
+              display: "none",
+            },
+          }}
+        >
+          <Box sx={{ p: 3 }}>
+            <Typography
+              sx={{ textAlign: "left", fontWeight: "bold", fontSize: "22px" }}
+            >
               Copilot Message:
             </Typography>
             <Typography sx={{ textAlign: "left" }}>{copilotMessage}</Typography>
@@ -331,17 +471,18 @@ const Improvements = ({
             currentImprovement={currentImprovement}
             handleAcceptChange={onAcceptChange}
             setImprovements={setImprovements}
-            handleRejectChange={onRejectChange}
             setCurrentVisibleNode={setCurrentVisibleNode}
             navigateToNode={navigateToNode}
+            compareThisImprovement={compareThisImprovement}
           />
           <Button
             variant="contained"
             onClick={handleImproveClick}
             sx={{ mt: "24px" }}
+            className="re-analyze"
           >
             <ReplayIcon sx={{ pr: "5px" }} />
-            Re-instate
+            Re-Analyze
           </Button>
         </Box>
       ) : (

@@ -41,7 +41,6 @@ const SelectModelModal = ({
   setSearchValue,
   searchValue,
   searchResultsForSelection,
-  addNewSpecialization,
   selectedCategory,
   checkedItems,
   markItemAsChecked,
@@ -73,7 +72,6 @@ const SelectModelModal = ({
   setSearchValue: any;
   searchValue: any;
   searchResultsForSelection: any;
-  addNewSpecialization: any;
   selectedCategory: any;
   checkedItems: any;
   markItemAsChecked: any;
