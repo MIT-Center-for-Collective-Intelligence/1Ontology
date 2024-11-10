@@ -198,7 +198,9 @@ const ImprovementsSlider = ({
                                 currentImprovement.modifiedProperties[p]
                                   ?.addedNonExistentElements || []
                               ).map((nodeTitle: string) => (
-                                <li style={{ color: "orange" }}>{nodeTitle}</li>
+                                <li key={nodeTitle} style={{ color: "orange" }}>
+                                  {nodeTitle}
+                                </li>
                               ))}
                             </ul>
                             as a new {p}, but such{" "}
