@@ -450,14 +450,18 @@ const ToolbarSidebar = ({
   );
 
   const displayDiff = (data: NodeChange) => {
-    setSelectedDiffNode(data);
-    if (!previousNodeId) {
-      setPreviousNodeId(currentVisibleNode.id);
-    }
     if (currentVisibleNode?.id !== data.nodeId) {
       setCurrentVisibleNode(
         nodes[data.nodeId] ? nodes[data.nodeId] : data.fullNode
       );
+    }
+
+    setTimeout(() => {
+      setSelectedDiffNode(data);
+    }, 500);
+
+    if (!previousNodeId) {
+      setPreviousNodeId(currentVisibleNode.id);
     }
   };
 
@@ -487,7 +491,7 @@ const ToolbarSidebar = ({
       for (let node of newNodes) {
         const generalization = nodesByTitle[node.first_generalization.title];
         if (!generalization) continue;
-        
+
         const newId = doc(collection(db, NODES)).id;
         const inheritance = generateInheritance(
           generalization.inheritance,

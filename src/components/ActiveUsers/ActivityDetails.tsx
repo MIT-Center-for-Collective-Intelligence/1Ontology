@@ -58,16 +58,16 @@ const ActivityDetails = ({
               : "#e9ebf5",
         }}
       >
-        {modifiedByDetails && (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              position: "absolute",
-              top: 12,
-              left: 12,
-            }}
-          >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            position: "absolute",
+            top: 12,
+            left: 12,
+          }}
+        >
+          {modifiedByDetails && (
             <OptimizedAvatar
               alt={modifiedByDetails.fName + " " + modifiedByDetails.lName}
               imageUrl={modifiedByDetails.imageUrl || ""}
@@ -79,7 +79,9 @@ const ActivityDetails = ({
                 objectFit: "cover",
               }}
             />
+          )}
 
+          {modifiedByDetails && (
             <Typography
               sx={{
                 marginLeft: 1,
@@ -89,21 +91,36 @@ const ActivityDetails = ({
             >
               {modifiedByDetails.fName} {modifiedByDetails.lName}{" "}
             </Typography>
+          )}
+          {modifiedByDetails && (
             <Typography
               variant="body2"
               sx={{
                 fontSize: "13px",
-                mt: 2,
-                mb: 1.5,
-                mx: "14px",
+                // mt: 2,
+                // mb: 1.5,
+                mx: "10px",
                 color: "text.secondary",
               }}
             >
               {getChangeDescription(activity, "")}
             </Typography>
-          </Box>
+          )}
+        </Box>
+        {!modifiedByDetails && (
+          <Typography
+            variant="body2"
+            sx={{
+              fontSize: "13px",
+              // mt: 2,
+              // mb: 1.5,
+              mx: "10px",
+              color: "text.secondary",
+            }}
+          >
+            {getChangeDescription(activity, "")}
+          </Typography>
         )}
-
         <Button
           onClick={() => displayDiff(activity)}
           variant="outlined"
@@ -114,6 +131,7 @@ const ActivityDetails = ({
             right: 12,
             padding: "4px 12px",
             fontSize: "12px",
+            ml: "14px",
           }}
         >
           View
@@ -135,6 +153,7 @@ const ActivityDetails = ({
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
+              mt: "6px",
             }}
           >
             {activity.fullNode?.title}
