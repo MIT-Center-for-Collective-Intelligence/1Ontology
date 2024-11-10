@@ -12,11 +12,6 @@ type Node = {
   id: string;
 };
 
-type Collection = {
-  collectionName: string;
-  nodes: Node[];
-};
-
 type CollectionListProps = {
   currentImprovement: any;
   property: string;
@@ -35,9 +30,15 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
   const [removedLinks, setRemovedLinks] = useState(new Set());
 
   useEffect(() => {
+    if (!currentImprovement?.detailsOfChange) {
+      return;
+    }
     const propertyIdx = currentImprovement.detailsOfChange.findIndex(
       (c: any) => c.modifiedProperty === property
     );
+    if (!currentImprovement?.detailsOfChange[propertyIdx]) {
+      return;
+    }
     const newValue = JSON.parse(
       JSON.stringify(currentImprovement.detailsOfChange[propertyIdx].newValue)
     );

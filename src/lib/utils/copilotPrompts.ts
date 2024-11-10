@@ -17,7 +17,10 @@ export const sendLLMRequest = async ({
       messages,
       model,
     });
-
+    recordLogs({
+      reason: "sendLLMRequest",
+      response,
+    });
     return response;
   } catch (error) {
     console.error("Error making request:", error);
@@ -104,43 +107,55 @@ ${JSON.stringify(guidelines, null, 2)}
   }
 };
 
-const getStructureForJSON = (data: INode, nodes: Record<string, INode>) => {
-  const dataCopy = JSON.parse(JSON.stringify(data));
-  const getTitles = (
-    propertyValue: ICollection[]
-  ): { [collectionName: string]: string[] } => {
-    const propertyWithTitles: { [collectionName: string]: string[] } = {};
-
+const getStructureForJSON = (data: any, nodeTitles: any) => {
+  const getTitlesWithCollections = (propertyValue: ICollection[]) => {
+    const propertyWithTitles: { collectionName: string; nodes: string[] }[] =
+      [];
     for (let collection of propertyValue) {
-      propertyWithTitles[collection.collectionName] = [];
+      const theNodes = [];
       for (let node of collection.nodes) {
-        if (nodes[node.id]) {
-          propertyWithTitles[collection.collectionName].push(
-            nodes[node.id].title
-          );
-        }
+        theNodes.push(nodeTitles[node.id]);
+      }
+      if (collection.collectionName !== "main" || theNodes.length !== 0) {
+        propertyWithTitles.push({
+          collectionName: collection.collectionName,
+          nodes: theNodes,
+        });
       }
     }
     return propertyWithTitles;
   };
 
-  const { properties } = dataCopy;
+  const getTitles = (propertyValue: ICollection[]) => {
+    const propertyWithTitles: string[] = [];
+    for (let collection of propertyValue) {
+      for (let node of collection.nodes) {
+        propertyWithTitles.push(nodeTitles[node.id]);
+      }
+    }
+    return propertyWithTitles;
+  };
+
+  const properties = { ...data.properties };
+  const textValue = { ...data.textValue };
   for (let property in properties) {
-    if (
-      property in dataCopy.inheritance &&
-      dataCopy.inheritance[property].ref
-    ) {
+    if (property in data.inheritance && data.inheritance[property].ref) {
       delete properties[property];
-    } else if (Array.isArray(properties[property])) {
+    } else if (typeof properties[property] !== "string") {
       properties[property] = getTitles(properties[property]);
     }
   }
-
+  if (textValue && Object.keys(textValue).length > 0) {
+    properties.comments = textValue;
+  }
+  if ("References" in properties) {
+    delete properties.References;
+  }
   return {
-    title: dataCopy.title,
-    nodeType: dataCopy.nodeType,
-    generalizations: getTitles(dataCopy.generalizations),
-    specializations: getTitles(dataCopy.specializations),
+    title: data.title,
+    nodeType: data.nodeType,
+    generalizations: getTitles(data.generalizations),
+    specializations: getTitlesWithCollections(data.specializations),
     ...properties,
   };
 };

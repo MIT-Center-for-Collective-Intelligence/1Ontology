@@ -121,7 +121,7 @@ Please carefully generate a JSON object with the following structure:
 {
    "message": "A string message that you would send to the user in response to their message. This could include your analysis, questions, or explanations regarding the requested changes.",
    "improvements" : [], // An array of improvements to existing nodes.
-   "new_nodes" : [] // An array of new nodes. Note that you should not propose a new node if a node with the same title already exists in the knowledge graph.
+   "new_nodes" : [] // An array of new nodes. Note that you should not propose a new node if a node with the same title already exists in the ontology.
 }
 
 For the "improvements" array:
@@ -278,6 +278,6 @@ Each item should represent an object proposing a new node. Please structure each
    "reasoning": "Your reasoning for proposing this new node"
 }
 
-IMPORTANT: Please do not propose any new node that already exists in the knowledge graph. Ensure that each node is unique.
+IMPORTANT: Please do not propose any new node that already exists in the ontology. Ensure that each node is unique.
 '''
 `;
