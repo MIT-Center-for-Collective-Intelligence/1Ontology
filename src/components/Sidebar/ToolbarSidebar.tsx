@@ -480,7 +480,7 @@ const ToolbarSidebar = ({
     newNodes: {
       title: string;
       description: string;
-      first_generalization: { title: string };
+      first_generalization: string;
       reasoning: string;
     }[]
   ): any => {
@@ -489,7 +489,7 @@ const ToolbarSidebar = ({
       const _NODES = [];
 
       for (let node of newNodes) {
-        const generalization = nodesByTitle[node.first_generalization.title];
+        const generalization = nodesByTitle[node?.first_generalization];
         if (!generalization) continue;
 
         const newId = doc(collection(db, NODES)).id;
