@@ -249,12 +249,12 @@ export const compareImprovement = (
         const previousValue = isParentOrChild
           ? nodeData[property as "specializations" | "generalizations"]
           : nodeData.properties[property];
-
+          
+        modifiedProperties[property] = {
+          reasoning: change.reasoning,
+          addedNonExistentElements,
+        };
         if (changedProperty) {
-          modifiedProperties[property] = {
-            reasoning: change.reasoning,
-            addedNonExistentElements,
-          };
           detailsOfChange.push({
             modifiedProperty: property,
             previousValue,

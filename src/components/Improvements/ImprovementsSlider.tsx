@@ -161,13 +161,14 @@ const ImprovementsSlider = ({
                     </Typography>
                   </Box>
                 ) : (
-                  <Typography sx={{ mb: "15px" }}>
+                  <></>
+                  /*   <Typography sx={{ mb: "15px" }}>
                     This proposal changes to{" "}
                     <strong style={{ color: "orange" }}>
                       {currentImprovement.title}
                     </strong>
                     :
-                  </Typography>
+                  </Typography> */
                 )}
 
                 {!currentImprovement.newNode &&
@@ -176,12 +177,21 @@ const ImprovementsSlider = ({
                       <Box key={p} sx={{ mb: "15px" }}>
                         <Typography
                           sx={{
-                            textTransform: "capitalize",
-                            fontWeight: "bold",
-                            color: "orange",
+                            // fontWeight: "bold",
+                            // color: "orange",
+                            mb: "5px",
                           }}
                         >
-                          {p}:
+                          Changing{" "}
+                          <strong
+                            style={{
+                              color: "orange",
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            {p}
+                          </strong>{" "}
+                          because:
                         </Typography>
                         <Typography>
                           {" "}

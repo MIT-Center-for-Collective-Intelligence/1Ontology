@@ -90,20 +90,20 @@ const ActivityDetails = ({
               }}
             >
               {modifiedByDetails.fName} {modifiedByDetails.lName}{" "}
-            </Typography>
-          )}
-          {modifiedByDetails && (
-            <Typography
-              variant="body2"
-              sx={{
-                fontSize: "13px",
-                // mt: 2,
-                // mb: 1.5,
-                mx: "10px",
-                color: "text.secondary",
-              }}
-            >
-              {getChangeDescription(activity, "")}
+              {modifiedByDetails && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontSize: "13px",
+                    // mt: 2,
+                    // mb: 1.5,
+                    mx: "2px",
+                    color: "text.secondary",
+                  }}
+                >
+                  {getChangeDescription(activity, "")}
+                </Typography>
+              )}
             </Typography>
           )}
         </Box>

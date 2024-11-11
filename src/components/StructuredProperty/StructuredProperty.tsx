@@ -817,6 +817,7 @@ const StructuredProperty = ({
         position: "relative",
         display: "flex",
         flexDirection: "column",
+        overflowX: "hidden",
       }}
     >
       <Box>
