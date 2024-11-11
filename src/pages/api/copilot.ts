@@ -66,6 +66,7 @@ const sendLLMRequest = async ({ messages, model }: any) => {
       });
 
       const response = completion.choices[0].message.content;
+
       isJSONObject = extractJSON(response || "");
       if (isJSONObject.isJSON) {
         break;
@@ -139,7 +140,6 @@ ${JSON.stringify(guidelines, null, 2)}
 
     // proposalsJSON = await callOpenAIChat([], prompt);
     // proposalsJSON = await askGemini([], prompt);
-    console.log(prompt);
 
     const response: any = await sendLLMRequest({
       messages: [
@@ -203,7 +203,6 @@ export const generateProposals = async (
     deepNumber === 0 ? 7 : deepNumber
   );
   nodesArray.push(..._nodesArray);
-  console.log("nodesArray", nodesArray);
 
   if (nodesArray.length === 0) {
     // "No related nodes found!"
