@@ -66,7 +66,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
           (n: { id: string }) => n.id
         );
         const previousNodes = new Set(_previousNodes);
-        for (let node of collection.nodes) {
+        for (let node of [...collection.nodes]) {
           if (!previousNodes.has(node.id)) {
             collection.nodes.push({ ...node, change: "added" });
           }
@@ -85,7 +85,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
           (n: { id: string }) => n.id
         );
         const newNodes = new Set(_newNodes);
-        for (let node of collection.nodes) {
+        for (let node of [...collection.nodes]) {
           if (!newNodes.has(node.id)) {
             newValue[collectionIdx].nodes.push({ ...node, change: "removed" });
           }

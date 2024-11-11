@@ -226,6 +226,12 @@ export const generateProposals = async (
 async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
   try {
     const { userMessage, model, deepNumber, nodeId } = req.body;
+    console.log(" userMessage, model, deepNumber, nodeId", {
+      userMessage,
+      model,
+      deepNumber,
+      nodeId,
+    });
 
     const response = await generateProposals(
       userMessage,

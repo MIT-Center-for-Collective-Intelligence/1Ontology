@@ -554,7 +554,7 @@ const ToolbarSidebar = ({
         throw new Error("Messing response in handleImproveClick!");
       }
       if (response.improvements.length <= 0 || response.new_nodes.length <= 0) {
-        confirmIt("No improvements or new nodes have been proposed!");
+        confirmIt("No improvements or new nodes have been proposed!", "Ok");
         return;
       }
 
