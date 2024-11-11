@@ -5,6 +5,7 @@ import { Content } from "@google/generative-ai";
 import { PROPOSALS_SCHEMA } from " @components/lib/CONSTANTS";
 import {
   GUIDELINES,
+  LOGS,
   NODES,
 } from " @components/lib/firestoreClient/collections";
 import { db } from " @components/lib/firestoreServer/admin";
@@ -13,7 +14,27 @@ import {
   getStructureForJSON,
 } from " @components/lib/utils/helpersCopilot";
 import { INode } from " @components/types/INode";
+import fbAuth from " @components/middlewares/fbAuth";
+import { getDoerCreate } from " @components/lib/utils/helpers";
 
+const saveLogs = (
+  uname: string,
+  type: "info" | "error",
+  logs: { [key: string]: any }
+) => {
+  try {
+    const logRef = db.collection(LOGS).doc();
+    logRef.set({
+      type,
+      ...logs,
+      createdAt: new Date(),
+      doer: uname,
+      doerCreate: getDoerCreate(uname),
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};
 const openai = new OpenAI({
   apiKey: process.env.MIT_CCI_API_KEY,
   organization: process.env.MIT_CCI_API_ORG_ID,
@@ -32,64 +53,84 @@ const extractJSON = (text: string) => {
     return { jsonObject: {}, isJSON: false };
   }
 };
-const sendLLMRequest = async ({ messages, model }: any) => {
-  if (messages.length <= 0) {
-    throw new Error("Prompt is required");
-  }
-  if (model === "Gemini 1.5 PRO") {
-    const contents: Content[] = [];
-    for (let message of messages) {
-      contents.push({
-        role: "user",
-        parts: [
-          {
-            text: message.content,
-          },
-        ],
-      });
+const sendLLMRequest = async ({ messages, model, uname }: any) => {
+  try {
+    if (messages.length <= 0) {
+      throw new Error("Prompt is required");
     }
-    const response = await askGemini(contents);
-
-    return response;
-  }
-  const temperature = model === "gpt-4o" ? 0 : 1;
-  let isJSONObject: { jsonObject: any; isJSON: boolean } = {
-    jsonObject: {},
-    isJSON: false,
-  };
-  for (let i = 0; i < 4; i++) {
-    try {
-      const completion = await openai.chat.completions.create({
-        messages,
-        model: model || process.env.MODEL,
-        temperature,
-      });
-
-      const response = completion.choices[0].message.content;
-
-      isJSONObject = extractJSON(response || "");
-      if (isJSONObject.isJSON) {
-        break;
+    if (model === "Gemini 1.5 PRO") {
+      const contents: Content[] = [];
+      for (let message of messages) {
+        contents.push({
+          role: "user",
+          parts: [
+            {
+              text: message.content,
+            },
+          ],
+        });
       }
-      console.log(
-        "Failed to get a complete JSON object. Retrying for the ",
-        i + 1,
-        " time."
-      );
-    } catch (error) {
-      console.error("Error in generating content: ", error);
+      const response = await askGemini(contents);
+      saveLogs(uname, "info", {
+        response,
+        model,
+      });
+      return response;
     }
+    const temperature = model === "gpt-4o" ? 0 : 1;
+    let isJSONObject: { jsonObject: any; isJSON: boolean } = {
+      jsonObject: {},
+      isJSON: false,
+    };
+    for (let i = 0; i < 4; i++) {
+      try {
+        const completion = await openai.chat.completions.create({
+          messages,
+          model: model || process.env.MODEL,
+          temperature,
+        });
+
+        const response = completion.choices[0].message.content;
+
+        isJSONObject = extractJSON(response || "");
+        if (isJSONObject.isJSON) {
+          break;
+        }
+        console.log(
+          "Failed to get a complete JSON object. Retrying for the ",
+          i + 1,
+          " time."
+        );
+      } catch (error) {
+        console.error("Error in generating content: ", error);
+      }
+    }
+    if (!isJSONObject.isJSON) {
+      throw new Error("Failed to get a complete JSON object");
+    }
+    saveLogs(uname, "info", {
+      response: isJSONObject.jsonObject,
+      model,
+    });
+    return isJSONObject.jsonObject;
+  } catch (error: any) {
+    saveLogs(uname, "info", {
+      type: "error",
+      error: JSON.stringify({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      }),
+      at: "recordLogs",
+    });
   }
-  if (!isJSONObject.isJSON) {
-    throw new Error("Failed to get a complete JSON object");
-  }
-  return isJSONObject.jsonObject;
 };
 
 const proposerAgent = async (
   userMessage: string,
   model: string,
   nodesArray: any[],
+  uname: string,
   proposalsJSON: any = {},
   evaluation: string = ""
 ) => {
@@ -137,6 +178,8 @@ ${JSON.stringify(guidelines, null, 2)}
     prompt +=
       "\n\nPlease take your time and carefully respond a well-structured JSON object.\n" +
       "For every helpful proposal, we will pay you $100 and for every unhelpful one, you'll lose $100.";
+    prompt +=
+      "Please only generate no more than 10 improvements and 10 new nodes";
 
     // proposalsJSON = await callOpenAIChat([], prompt);
     // proposalsJSON = await askGemini([], prompt);
@@ -149,6 +192,7 @@ ${JSON.stringify(guidelines, null, 2)}
         },
       ],
       model,
+      uname,
     });
 
     return response;
@@ -184,6 +228,7 @@ export const generateProposals = async (
   model: string,
   deepNumber: number,
   nodeId: string,
+  uname: string,
   proposalsJSON: any = {},
   evaluation: string = ""
 ): Promise<any> => {
@@ -213,18 +258,21 @@ export const generateProposals = async (
         userMessage,
         model,
         nodesArray,
+        uname,
         proposalsJSON,
         evaluation
       );
     } else {
-      return await proposerAgent(userMessage, model, nodesArray);
+      return await proposerAgent(userMessage, model, nodesArray, uname);
     }
   }
 };
 
 async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
   try {
-    const { userMessage, model, deepNumber, nodeId } = req.body;
+    const { userMessage, model, deepNumber, nodeId, user } = req.body.data;
+    const { uname } = user;
+
     console.log(" userMessage, model, deepNumber, nodeId", {
       userMessage,
       model,
@@ -236,7 +284,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       userMessage,
       model,
       deepNumber,
-      nodeId
+      nodeId,
+      uname
     );
 
     console.log("Response: ", JSON.stringify(response, null, 2));
@@ -246,4 +295,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
   }
 }
 
-export default handler;
+export default fbAuth(handler);

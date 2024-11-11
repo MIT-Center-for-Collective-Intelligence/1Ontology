@@ -22,7 +22,7 @@ import { useUploadImage } from " @components/hooks/useUploadImage";
 import { isValidHttpUrl } from " @components/lib/utils/utils";
 import defaultStyle from "./defaultStyle";
 import { getTaggedUsers } from " @components/lib/utils/string.utils";
-import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
+import { development, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import MessageInputFooter from "./MessageInputFooter";
 
 type ChatInputProps = {
@@ -145,10 +145,9 @@ const ChatInput = ({
   const onUploadImage = useCallback(
     (event: any) => {
       try {
-        let bucket =
-          process.env.NODE_ENV === "development"
-            ? process.env.NEXT_PUBLIC_DEV_STORAGE_BUCKET
-            : process.env.NEXT_PUBLIC_STORAGE_BUCKET;
+        let bucket = development
+          ? process.env.NEXT_PUBLIC_DEV_STORAGE_BUCKET
+          : process.env.NEXT_PUBLIC_STORAGE_BUCKET;
 
         if (bucket && isValidHttpUrl(bucket)) {
           const { hostname } = new URL(bucket);

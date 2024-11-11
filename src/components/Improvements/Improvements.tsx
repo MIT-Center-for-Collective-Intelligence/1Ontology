@@ -29,6 +29,7 @@ import {
 } from " @components/lib/utils/helpers";
 import { useAuth } from "../context/AuthContext";
 import { generateUniqueTitle } from " @components/lib/utils/string.utils";
+import { development } from " @components/lib/CONSTANTS";
 type ImprovementsProps = {
   currentImprovement: any;
   setCurrentImprovement: any;
@@ -232,10 +233,9 @@ const Improvements = ({
         });
       }
 
-      const serverURL =
-        process.env.NODE_ENV === "development"
-          ? process.env.NEXT_PUBLIC_DEV_WS_SERVER
-          : process.env.NEXT_PUBLIC_WS_SERVER;
+      const serverURL = development
+        ? process.env.NEXT_PUBLIC_DEV_WS_SERVER
+        : process.env.NEXT_PUBLIC_WS_SERVER;
 
       const response = await fetch(
         `http://${serverURL}/update/${nodeId}-${property}`,

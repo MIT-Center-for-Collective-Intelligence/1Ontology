@@ -101,11 +101,11 @@ export const UNCLASSIFIED: any = {
   incentive: "Unclassified incentives",
   reward: "Unclassified rewards",
 };
-
-export const WS_URL =
-  process.env.NODE_ENV === "development"
-    ? `ws://${process.env.NEXT_PUBLIC_DEV_WS_SERVER}/ws`
-    : `wss://${process.env.NEXT_PUBLIC_WS_SERVER}/ws`;
+export const development = process.env.NODE_ENV !== "development";
+console.log("development", development);
+export const WS_URL = development
+  ? `ws://${process.env.NEXT_PUBLIC_DEV_WS_SERVER}/ws`
+  : `wss://${process.env.NEXT_PUBLIC_WS_SERVER}/ws`;
 
 export const CHAT_DISCUSSION_TABS = [
   { id: "discussion", title: "Discussion" },

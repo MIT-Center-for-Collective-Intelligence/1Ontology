@@ -75,7 +75,7 @@ import NodeActivity from "../ActiveUsers/NodeActivity";
 import { User } from " @components/types/IAuth";
 import { INode, NodeChange } from " @components/types/INode";
 import Improvements from "../Improvements/Improvements";
-import { CHAT_DISCUSSION_TABS } from " @components/lib/CONSTANTS";
+import { CHAT_DISCUSSION_TABS, development } from " @components/lib/CONSTANTS";
 
 import {
   compareImprovement,
@@ -221,10 +221,9 @@ const ToolbarSidebar = ({
         } else {
           setIsUploading(true);
 
-          let bucket =
-            process.env.NODE_ENV === "development"
-              ? process.env.NEXT_PUBLIC_DEV_STORAGE_BUCKET
-              : process.env.NEXT_PUBLIC_STORAGE_BUCKET;
+          let bucket = development
+            ? process.env.NEXT_PUBLIC_DEV_STORAGE_BUCKET
+            : process.env.NEXT_PUBLIC_STORAGE_BUCKET;
 
           if (bucket && isValidHttpUrl(bucket)) {
             const { hostname } = new URL(bucket);

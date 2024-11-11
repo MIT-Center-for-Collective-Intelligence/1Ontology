@@ -26,21 +26,26 @@ import {
 import { getAuth } from "firebase/auth";
 import { DISPLAY } from "../CONSTANTS";
 
+export const getDoerCreate = (uname: string) => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
+  return `${uname}-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
+};
+
 export const recordLogs = async (logs: { [key: string]: any }) => {
   try {
     const db = getFirestore();
     const auth = getAuth();
     const logRef = doc(collection(db, LOGS));
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    const hours = String(now.getHours()).padStart(2, "0");
-    const minutes = String(now.getMinutes()).padStart(2, "0");
-    const seconds = String(now.getSeconds()).padStart(2, "0");
 
     const uname = auth.currentUser?.displayName;
-    const doerCreate = `${uname}-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
+    const doerCreate = getDoerCreate(uname || "");
     await setDoc(logRef, {
       type: "info",
       ...logs,

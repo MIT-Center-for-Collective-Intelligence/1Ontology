@@ -1,6 +1,7 @@
 import { doc, getDoc, getFirestore, updateDoc } from "firebase/firestore";
 import React, { FC, ReactNode, useCallback, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
+import { development } from " @components/lib/CONSTANTS";
 
 type Props = {
   children: ReactNode;
@@ -25,7 +26,7 @@ const LastDeploymentProvider: FC<Props> = ({ children }) => {
   }, []);
 
   const checkIfDifferentDay = useCallback(async () => {
-    if (!user || process.env.NODE_ENV === "development") return;
+    if (!user || development) return;
 
     const userRef = doc(db, "users", user.uname);
     const userDoc = await getDoc(userRef);
