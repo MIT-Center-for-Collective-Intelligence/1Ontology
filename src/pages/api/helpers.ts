@@ -8,6 +8,7 @@
  */
 
 import {
+  Content,
   GoogleGenerativeAI,
   HarmBlockThreshold,
   HarmCategory,
@@ -58,7 +59,7 @@ const isValidJSON = (jsonString: string) => {
   }
 };
 
-export const askGemini = async (prompt: string) => {
+export const askGemini = async (contents: Content[]) => {
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
   let response = "";
   let isJSONObject = {
@@ -69,16 +70,7 @@ export const askGemini = async (prompt: string) => {
   for (let i = 0; i < 4; i++) {
     try {
       const result = await model.generateContent({
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt,
-              },
-            ],
-            role: "user",
-          },
-        ],
+        contents,
         generationConfig,
         safetySettings,
       });

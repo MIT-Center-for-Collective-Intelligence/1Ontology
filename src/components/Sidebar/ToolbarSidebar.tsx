@@ -76,12 +76,13 @@ import { User } from " @components/types/IAuth";
 import { INode, NodeChange } from " @components/types/INode";
 import Improvements from "../Improvements/Improvements";
 import { CHAT_DISCUSSION_TABS } from " @components/lib/CONSTANTS";
-import { generateProposals } from " @components/lib/utils/copilotPrompts";
+
 import {
   compareImprovement,
   compareProposals,
 } from " @components/lib/utils/copilotHelpers";
 import useSelectDropdown from " @components/lib/hooks/useSelectDropdown";
+import { sendLLMRequest } from " @components/lib/utils/copilotPrompts";
 
 type MainSidebarProps = {
   toolbarRef: any;
@@ -538,21 +539,25 @@ const ToolbarSidebar = ({
     const { model, userMessage, deepNumber } = options;
     setIsLoadingCopilot(true);
     try {
-      const response: {
+      const response = (await sendLLMRequest(
+        userMessage,
+        model,
+        deepNumber,
+        currentVisibleNode.id
+      )) as {
         improvements: any;
         new_nodes: any;
         guidelines: any;
         message: string;
-      } = await generateProposals(
-        userMessage,
-        model,
-        deepNumber,
-        currentVisibleNode,
-        nodes
-      );
+      };
       if (!response) {
         throw new Error("Messing response in handleImproveClick!");
       }
+      if (response.improvements.length <= 0 || response.new_nodes.length <= 0) {
+        confirmIt("No improvements or new nodes have been proposed!");
+        return;
+      }
+
       setCopilotMessage(response.message);
       const improvements = JSON.parse(JSON.stringify(response.improvements));
 

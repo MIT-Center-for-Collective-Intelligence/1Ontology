@@ -13,7 +13,7 @@ type IComparePropertiesReturn = {
   previousValue: any;
   newValue: any;
 };
- const compareProperties = async (
+const compareProperties = async (
   nodeProps: any,
   proposalProps: any,
   improvement: any
@@ -108,4 +108,115 @@ export const getNodeIdByTitle = async (title: string) => {
     return docs.docs[0].id;
   }
   return null;
+};
+
+export const getStructureForJSON = (
+  data: INode,
+  nodes: Record<string, INode>
+) => {
+  const getTitlesWithCollections = (propertyValue: ICollection[]) => {
+    const propertyWithTitles: { collectionName: string; nodes: string[] }[] =
+      [];
+    for (let collection of propertyValue) {
+      const theNodes = [];
+      for (let node of collection.nodes) {
+        if (nodes[node.id]) {
+          theNodes.push(nodes[node.id].title);
+        }
+      }
+      if (collection.collectionName !== "main" || theNodes.length !== 0) {
+        propertyWithTitles.push({
+          collectionName: collection.collectionName,
+          nodes: theNodes,
+        });
+      }
+    }
+    return propertyWithTitles;
+  };
+
+  const getTitles = (propertyValue: ICollection[]) => {
+    const propertyWithTitles: string[] = [];
+    for (let collection of propertyValue) {
+      for (let node of collection.nodes) {
+        if (nodes[node.id]) {
+          propertyWithTitles.push(nodes[node.id].title);
+        }
+      }
+    }
+    return propertyWithTitles;
+  };
+
+  const properties: any = { ...data.properties };
+  const textValue = { ...data.textValue };
+  for (let property in properties) {
+    if (property in data.inheritance && data.inheritance[property].ref) {
+      delete properties[property];
+    } else if (typeof properties[property] !== "string") {
+      properties[property] = getTitles(properties[property]);
+    }
+  }
+  if (textValue && Object.keys(textValue).length > 0) {
+    properties.comments = textValue;
+  }
+  if ("References" in properties) {
+    delete properties.References;
+  }
+  return {
+    title: data.title,
+    nodeType: data.nodeType,
+    generalizations: getTitles(data.generalizations),
+    specializations: getTitlesWithCollections(data.specializations),
+    ...properties,
+  };
+};
+
+export const getNodesInThreeLevels = (
+  nodeData: INode,
+  nodes: Record<string, INode>,
+  visited: Set<string>,
+  deepNumber: number,
+  level: number = 0
+): any[] => {
+  const nodesArray: any[] = [];
+
+  if (level === deepNumber) {
+    return nodesArray;
+  }
+  const specializations = nodeData.specializations.flatMap(
+    (c: ICollection) => c.nodes
+  );
+  const generalizations = nodeData.generalizations.flatMap(
+    (c: ICollection) => c.nodes
+  );
+  const items = [];
+  items.push(...specializations);
+  items.push(...generalizations);
+  for (let property in nodeData.properties) {
+    if (Array.isArray(nodeData.properties[property])) {
+      const propertyNodes = nodeData.properties[property].flatMap(
+        (c: ICollection) => c.nodes
+      );
+      items.push(...propertyNodes);
+    }
+  }
+  for (let item of items) {
+    const itemData = nodes[item.id];
+    if (itemData && !visited.has(itemData.title) && !itemData?.deleted) {
+      const nodeD = getStructureForJSON(itemData, nodes);
+      nodesArray.push(nodeD);
+      visited.add(itemData.title);
+      const p = getNodesInThreeLevels(
+        itemData,
+        nodes,
+        visited,
+        deepNumber,
+        level + 1
+      );
+      if (Array.isArray(p)) {
+        nodesArray.push(...p);
+      }
+    }
+  }
+
+  return nodesArray;
 };
