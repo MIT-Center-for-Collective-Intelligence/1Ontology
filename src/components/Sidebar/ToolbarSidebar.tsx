@@ -519,7 +519,10 @@ const ToolbarSidebar = ({
     }
   };
   const compareThisImprovement = (improvement: any) => {
-    const nodeId = nodesByTitle[improvement.title].id;
+    const nodeId = nodesByTitle[improvement.title]?.id;
+    if (!nodes[nodeId]) {
+      return;
+    }
     if (nodes[nodeId]) {
       setCurrentVisibleNode(nodes[nodeId]);
     }

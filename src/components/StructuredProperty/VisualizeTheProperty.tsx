@@ -31,6 +31,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
 
   useEffect(() => {
     if (!currentImprovement?.detailsOfChange) {
+      setMergedValue([]);
       return;
     }
     const propertyIdx = currentImprovement.detailsOfChange.findIndex(
@@ -68,7 +69,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
         const previousNodes = new Set(_previousNodes);
         for (let node of [...collection.nodes]) {
           if (!previousNodes.has(node.id)) {
-            collection.nodes.push({ ...node, change: "added" });
+            node = { ...node, change: "added" };
           }
         }
       }
