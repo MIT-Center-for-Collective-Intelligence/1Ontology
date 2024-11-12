@@ -575,6 +575,7 @@ const ToolbarSidebar = ({
       if (!response) {
         throw new Error("Messing response in handleImproveClick!");
       }
+
       if (response.improvements.length <= 0 || response.new_nodes.length <= 0) {
         confirmIt("No improvements or new nodes have been proposed!", "Ok");
         return;
@@ -582,7 +583,18 @@ const ToolbarSidebar = ({
 
       setCopilotMessage(response.message);
       const improvements = JSON.parse(JSON.stringify(response.improvements));
+      const improvementsDivided = [];
 
+      for (let improvement of improvements) {
+        if (improvement.changes.length >= 2) {
+          for (let change of improvement.changes) {
+            const _improvement = { ...improvement, changes: [change] };
+            improvementsDivided.push(_improvement);
+          }
+        } else {
+          improvementsDivided.push(improvement);
+        }
+      }
       const newNodes: {
         title: string;
         description: string;
@@ -591,7 +603,7 @@ const ToolbarSidebar = ({
         newNode: boolean;
       }[] = getNewNodes(response.new_nodes);
       if (improvements.length > 0 || newNodes.length > 0) {
-        setImprovements([...newNodes, ...improvements]);
+        setImprovements([...newNodes, ...improvementsDivided]);
       }
     } catch (error) {
       confirmIt(
