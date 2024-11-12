@@ -71,6 +71,7 @@ export type User = {
   currentNode: string;
   manageLock: boolean;
   copilot: boolean;
+  admin: boolean;
 };
 
 export type UserSettings = {

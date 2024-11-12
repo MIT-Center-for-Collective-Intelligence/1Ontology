@@ -942,7 +942,7 @@ const ToolbarSidebar = ({
               toolbarIsOpen={hovered}
             />
 
-            {(user?.uname === "ouhrac" || user?.uname === "1man") && (
+            {!!user?.admin && (
               <SidebarButton
                 id="toolbar-theme-button"
                 icon={

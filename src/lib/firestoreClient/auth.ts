@@ -101,6 +101,7 @@ export const retrieveAuthenticatedUser = async (
       email: userData.email,
       manageLock: !!claims.manageLock,
       copilot: !!claims.copilot,
+      admin: !!claims.admin,
       rightPanel: userData.rightPanel,
       currentNode: userData.currentNode,
       ...userData,
