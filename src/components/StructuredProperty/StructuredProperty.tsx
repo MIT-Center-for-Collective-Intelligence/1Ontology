@@ -883,8 +883,7 @@ const StructuredProperty = ({
                 </Button>
               </Box>
             )}
-          {(property !== "generalizations" ||
-            !currentVisibleNode.unclassified) &&
+          {!currentVisibleNode.unclassified &&
             !selectedDiffNode &&
             !currentImprovement &&
             property !== "specializations" && (
@@ -905,11 +904,13 @@ const StructuredProperty = ({
                     DISPLAY[property] || property
                   )}`}{" "}
                 </Button>
-                <SelectInheritance
-                  currentVisibleNode={currentVisibleNode}
-                  property={property}
-                  nodes={nodes}
-                />
+                {property !== "generalizations" && (
+                  <SelectInheritance
+                    currentVisibleNode={currentVisibleNode}
+                    property={property}
+                    nodes={nodes}
+                  />
+                )}
               </Box>
             )}
         </Box>
