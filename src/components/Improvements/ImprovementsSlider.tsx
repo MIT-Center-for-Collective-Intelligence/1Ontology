@@ -10,7 +10,7 @@ type IProposalSliderProps = {
   handleAcceptChange: any;
   setImprovements: any;
   setCurrentVisibleNode: any;
-  navigateToNode: any;
+  onNavigateToNode: any;
   compareThisImprovement: any;
 };
 const ImprovementsSlider = ({
@@ -20,7 +20,7 @@ const ImprovementsSlider = ({
   handleAcceptChange,
   setImprovements,
   setCurrentVisibleNode,
-  navigateToNode,
+  onNavigateToNode,
   compareThisImprovement,
 }: IProposalSliderProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -30,11 +30,11 @@ const ImprovementsSlider = ({
       return;
     }
     setTimeout(() => {
-      navigateToNode(proposals[currentIndex].nodeId);
-
-      if (proposals[currentIndex].newNode) {
+      if (proposals[currentIndex]?.newNode) {
         setCurrentImprovement(proposals[currentIndex]);
+        onNavigateToNode(proposals[currentIndex].first_generalization);
       } else {
+        onNavigateToNode(proposals[currentIndex].title);
         compareThisImprovement(proposals[currentIndex]);
       }
     }, 100);
@@ -44,14 +44,16 @@ const ImprovementsSlider = ({
     setCurrentIndex((prevIndex) => {
       const newPrev = prevIndex === proposals.length - 1 ? 0 : prevIndex + 1;
       if (display) {
-        if (proposals[newPrev].newNode) {
+        if (proposals[newPrev]?.newNode) {
           setCurrentImprovement(proposals[newPrev]);
         } else {
           compareThisImprovement(proposals[newPrev]);
         }
-        if (proposals[newPrev]?.nodeId) {
-          navigateToNode(proposals[newPrev]?.nodeId);
-        }
+
+        const nodeTitle = proposals[newPrev]?.newNode
+          ? proposals[newPrev].first_generalization
+          : proposals[newPrev]?.title;
+        onNavigateToNode(nodeTitle);
       }
       return newPrev;
     });
@@ -61,14 +63,17 @@ const ImprovementsSlider = ({
     setCurrentIndex((prevIndex) => {
       const newPrev = prevIndex === 0 ? proposals.length - 1 : prevIndex - 1;
       if (display) {
-        if (proposals[newPrev].newNode) {
+        if (proposals[newPrev]?.newNode) {
           setCurrentImprovement(proposals[newPrev]);
         } else {
           compareThisImprovement(proposals[newPrev]);
         }
-        if (proposals[newPrev]?.nodeId) {
-          navigateToNode(proposals[newPrev]?.nodeId);
-        }
+
+        const nodeTitle = !!proposals[newPrev]?.newNode
+          ? proposals[newPrev].first_generalization
+          : proposals[newPrev]?.title;
+
+        onNavigateToNode(nodeTitle);
       }
       return newPrev;
     });
@@ -144,7 +149,7 @@ const ImprovementsSlider = ({
                     theme.palette.mode === "light" ? "#d0d5dd" : "",
                 }}
               >
-                {currentImprovement.newNode ? (
+                {currentImprovement?.newNode ? (
                   <Box>
                     <Typography>
                       This proposal adds a new node titled:
@@ -171,7 +176,7 @@ const ImprovementsSlider = ({
                   </Typography> */
                 )}
 
-                {!currentImprovement.newNode &&
+                {!currentImprovement?.newNode &&
                   Object.keys(currentImprovement.modifiedProperties).map(
                     (p: string) => (
                       <Box key={p} sx={{ mb: "15px" }}>

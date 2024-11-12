@@ -184,6 +184,19 @@ const ToolbarSidebar = ({
     const userDoc = doc(collection(db, USERS), user?.uname);
     await updateDoc(userDoc, { imageUrl });
   };
+  const onNavigateToNode = useCallback(
+    (nodeTitle: string) => {
+      if (!nodeTitle) {
+        return;
+      }
+      const nodeId = nodesByTitle[nodeTitle]?.id;
+
+      if (nodeId) {
+        navigateToNode(nodeId);
+      }
+    },
+    [nodesByTitle]
+  );
 
   const handleImageChange = useCallback(
     async (event: any) => {
@@ -510,6 +523,8 @@ const ToolbarSidebar = ({
           node: newNode,
           newNode: true,
           reasoning: node.reasoning,
+          generalizationId: generalization.id,
+          first_generalization: node?.first_generalization,
         });
       }
 
@@ -519,6 +534,11 @@ const ToolbarSidebar = ({
     }
   };
   const compareThisImprovement = (improvement: any) => {
+    if (!improvement) {
+      setCurrentImprovement(null);
+      setImprovements([]);
+      return;
+    }
     const nodeId = nodesByTitle[improvement.title]?.id;
     if (!nodes[nodeId]) {
       return;
@@ -666,7 +686,7 @@ const ToolbarSidebar = ({
             currentVisibleNode={currentVisibleNode}
             nodes={nodes}
             setCurrentVisibleNode={setCurrentVisibleNode}
-            navigateToNode={navigateToNode}
+            onNavigateToNode={onNavigateToNode}
             isLoadingCopilot={isLoadingCopilot}
             improvements={improvements}
             setImprovements={setImprovements}
@@ -945,7 +965,7 @@ const ToolbarSidebar = ({
                     improvements.filter((i: any) => !i.implemented).length > 0
                   ) {
                     handleExpandSidebar("improvements");
-                    if (improvements[0].newNode) {
+                    if (improvements[0]?.newNode) {
                       setCurrentImprovement(improvements[0]);
                     } else {
                       compareThisImprovement(improvements[0]);

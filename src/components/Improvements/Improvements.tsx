@@ -36,7 +36,7 @@ type ImprovementsProps = {
   currentVisibleNode: any;
   setCurrentVisibleNode: any;
   nodes: Record<string, INode>;
-  navigateToNode: any;
+  onNavigateToNode: any;
   isLoadingCopilot: boolean;
   improvements: any;
   setImprovements: any;
@@ -51,7 +51,7 @@ const Improvements = ({
   currentVisibleNode,
   setCurrentVisibleNode,
   nodes,
-  navigateToNode,
+  onNavigateToNode,
   isLoadingCopilot,
   improvements,
   setImprovements,
@@ -399,7 +399,7 @@ const Improvements = ({
   );
   const onAcceptChange = async (change: any) => {
     try {
-      if (change.newNode) {
+      if (change?.newNode) {
         await addNewSpecialization("main", change.node, change.reasoning);
         return;
       }
@@ -480,7 +480,7 @@ const Improvements = ({
             handleAcceptChange={onAcceptChange}
             setImprovements={setImprovements}
             setCurrentVisibleNode={setCurrentVisibleNode}
-            navigateToNode={navigateToNode}
+            onNavigateToNode={onNavigateToNode}
             compareThisImprovement={compareThisImprovement}
           />
           <Button
@@ -495,7 +495,7 @@ const Improvements = ({
         </Box>
       ) : (
         <Button variant="contained" onClick={handleImproveClick}>
-          Suggest Improvements to the Sub-Ontology Centered Around This Node
+          Analyze the Sub-Ontology Centered Around This Node
         </Button>
       )}
     </Box>
