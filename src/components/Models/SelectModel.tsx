@@ -414,7 +414,10 @@ const SelectModelModal = ({
                       onClick={async () => {
                         setDisabledButton(true);
                         if (selectedProperty === "specializations") {
-                          addACloneNodeQueue(currentVisibleNode.id);
+                          addACloneNodeQueue(
+                            currentVisibleNode.id,
+                            searchValue
+                          );
                           // await addNewSpecialization(
                           //   selectedCategory || "main",
                           //   searchValue

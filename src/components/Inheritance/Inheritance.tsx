@@ -20,6 +20,7 @@ import {
   updateDoc,
   writeBatch,
 } from "firebase/firestore";
+import { useAuth } from "../context/AuthContext";
 
 type InheritanceProps = {
   selectedNode: INode;
@@ -35,6 +36,8 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
       return acc;
     }, {} as { [key: string]: InheritanceType })
   );
+
+  const [{ user }] = useAuth();
 
   const db = getFirestore();
 
@@ -179,7 +182,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
               </Typography>
             </Box>
             <Box sx={{ padding: 2 }}>
-              <FormControl component="fieldset">
+              <FormControl component="fieldset" disabled={!user?.manageLock}>
                 <RadioGroup
                   value={inheritanceState[key]}
                   onChange={(e) => handleInheritanceChange(key, e)}

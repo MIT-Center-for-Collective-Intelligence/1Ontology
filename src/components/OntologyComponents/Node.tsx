@@ -261,6 +261,7 @@ const Node = ({
     ): Promise<INode | null> => {
       try {
         setCloning(nodeId);
+
         // Retrieve the document of the original node from Firestore.
         const parentNodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
 
@@ -350,14 +351,27 @@ const Node = ({
           selectedProperty === "generalizations"
         ) {
           if (selectedProperty === "specializations") {
-            newNode.generalizations[0].nodes.push({
-              id: currentVisibleNode.id,
-            });
+            const alreadyExistIndex =
+              newNode.generalizations[0].nodes.findIndex(
+                (n) => n.id === currentVisibleNode.id
+              );
+            if (alreadyExistIndex === -1) {
+              newNode.generalizations[0].nodes.push({
+                id: currentVisibleNode.id,
+              });
+            }
           }
+
           if (selectedProperty === "generalizations") {
-            newNode.specializations[0].nodes.push({
-              id: currentVisibleNode.id,
-            });
+            const alreadyExistIndex =
+              newNode.specializations[0].nodes.findIndex(
+                (n) => n.id === currentVisibleNode.id
+              );
+            if (alreadyExistIndex === -1) {
+              newNode.specializations[0].nodes.push({
+                id: currentVisibleNode.id,
+              });
+            }
           }
         } else {
           // Handling property updates
