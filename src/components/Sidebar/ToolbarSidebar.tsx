@@ -793,7 +793,7 @@ const ToolbarSidebar = ({
       case "improvements":
         return "Copilot Improvements:";
       case "history":
-        return "Ontology Changes:";
+        return "Edit History:";
       default:
         return "";
     }
@@ -1020,7 +1020,7 @@ const ToolbarSidebar = ({
                 onClick={() => {
                   handleExpandSidebar("history");
                 }}
-                text="Changes"
+                text="Edit History"
                 toolbarIsOpen={hovered}
               />
             )}
