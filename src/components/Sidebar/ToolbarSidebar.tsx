@@ -908,7 +908,9 @@ const ToolbarSidebar = ({
                       ),
                     ].map((uname) => (
                       <MenuItem key={uname} value={uname}>
-                        {uname}
+                        {uname === "All"
+                          ? "All"
+                          : `${activeUsers[uname].fName} ${activeUsers[uname].lName}`}
                       </MenuItem>
                     ))}
                   </TextField>
