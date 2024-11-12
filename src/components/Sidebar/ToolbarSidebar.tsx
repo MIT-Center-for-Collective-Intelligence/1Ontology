@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import HistoryIcon from "@mui/icons-material/History";
 import CircularProgress from "@mui/material/CircularProgress";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
@@ -14,7 +15,8 @@ import {
   LinearProgress,
   Menu,
   MenuItem,
-  SvgIcon, // Changed from IconButton to Button
+  SvgIcon,
+  TextField, // Changed from IconButton to Button
   Typography,
   useTheme,
 } from "@mui/material";
@@ -83,6 +85,7 @@ import {
 } from " @components/lib/utils/copilotHelpers";
 import useSelectDropdown from " @components/lib/hooks/useSelectDropdown";
 import { sendLLMRequest } from " @components/lib/utils/copilotPrompts";
+import OntologyHistory from "../ActiveUsers/OntologyHistory";
 
 type MainSidebarProps = {
   toolbarRef: any;
@@ -173,6 +176,7 @@ const ToolbarSidebar = ({
   const handleProfileMenuOpen = (event: any) => {
     setProfileMenuOpen(event.currentTarget);
   };
+  const [selectedUser, setSelectedUser] = useState("All");
 
   const inputEl = useRef<HTMLInputElement>(null);
 
@@ -708,10 +712,21 @@ const ToolbarSidebar = ({
             confirmIt={confirmIt}
           />
         );
+      case "history":
+        return (
+          <OntologyHistory
+            currentVisibleNode={currentVisibleNode}
+            selectedDiffNode={selectedDiffNode}
+            displayDiff={displayDiff}
+            activeUsers={activeUsers}
+            selectedUser={selectedUser}
+          />
+        );
       default:
         return null;
     }
   };
+
   const getLog = useMemo(() => {
     if (hovered) {
       return theme.palette.mode === "dark"
@@ -763,7 +778,7 @@ const ToolbarSidebar = ({
     );
   };
 
-  const getHeaderTest = (activeSidebar: string) => {
+  const getHeaderTitle = (activeSidebar: string) => {
     switch (activeSidebar) {
       case "chat-discussion":
         return "Chatroom";
@@ -777,16 +792,19 @@ const ToolbarSidebar = ({
         return "Node's Inheritance Settings";
       case "improvements":
         return "Copilot Improvements:";
+      case "history":
+        return "Ontology Changes:";
       default:
         return "";
     }
   };
+
   return (
     <Box
       ref={toolbarRef}
       sx={{
         width: !!activeSidebar ? "450px" : hovered ? "190px" : "70px",
-        transition: "width 0.2s ease",
+        // transition: "width 0.1s ease",
         height: "100vh",
         background:
           theme.palette.mode === "dark"
@@ -840,7 +858,7 @@ const ToolbarSidebar = ({
               </Box>
             )}
 
-            {getHeaderTest(activeSidebar) && (
+            {getHeaderTitle(activeSidebar) && (
               <Box
                 sx={{
                   display: "flex",
@@ -851,8 +869,50 @@ const ToolbarSidebar = ({
                 }}
               >
                 <Typography sx={{ fontSize: "29px", fontWeight: "bold" }}>
-                  {getHeaderTest(activeSidebar)}
+                  {getHeaderTitle(activeSidebar)}
                 </Typography>
+
+                {activeSidebar === "history" && (
+                  <TextField
+                    value={selectedUser}
+                    onChange={(e: any) => {
+                      setSelectedUser(e.target.value);
+                    }}
+                    select
+                    label="Select User"
+                    sx={{ ml: "15px", minWidth: "100px" }}
+                    InputProps={{
+                      sx: {
+                        height: "40px",
+                        borderRadius: "18px",
+                      },
+                    }}
+                    InputLabelProps={{
+                      style: { color: "grey" },
+                    }}
+                  >
+                    <MenuItem
+                      value=""
+                      disabled
+                      sx={{
+                        backgroundColor: (theme) =>
+                          theme.palette.mode === "dark" ? "" : "white",
+                      }}
+                    >
+                      Select User
+                    </MenuItem>
+                    {[
+                      "All",
+                      ...Object.keys(activeUsers).filter(
+                        (u) => activeUsers[u]?.reputations > 0
+                      ),
+                    ].map((uname) => (
+                      <MenuItem key={uname} value={uname}>
+                        {uname}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
               </Box>
             )}
             {user && (
@@ -953,7 +1013,17 @@ const ToolbarSidebar = ({
               text="Chatroom"
               toolbarIsOpen={hovered}
             />
-
+            {!!user?.manageLock && (
+              <SidebarButton
+                id="toolbar-help-button"
+                icon={<HistoryIcon />}
+                onClick={() => {
+                  handleExpandSidebar("history");
+                }}
+                text="Changes"
+                toolbarIsOpen={hovered}
+              />
+            )}
             {!!user?.admin && (
               <SidebarButton
                 id="toolbar-theme-button"
