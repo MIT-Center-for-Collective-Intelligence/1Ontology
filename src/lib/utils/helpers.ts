@@ -916,7 +916,7 @@ export const updateLinksForInheritance = async (
     } = getNewAddedProperties(addedLinks, specializationData, nodes);
 
     for (let property in specializationData.inheritance) {
-      const propertyRef = specializationData.inheritance[property].ref;
+      const propertyRef = specializationData.inheritance[property]?.ref;
       if (!!propertyRef) {
         let canDelete = true;
         let ignore = false;
@@ -926,7 +926,7 @@ export const updateLinksForInheritance = async (
           const generalizationData = nodes[link.id];
           if (
             propertyRef === link.id ||
-            propertyRef === generalizationData.inheritance[property].ref
+            propertyRef === generalizationData.inheritance[property]?.ref
           ) {
             ignore = true;
             break;
@@ -1006,7 +1006,7 @@ export const updateLinksForInheritance = async (
         message: error.message,
         stack: error.stack,
       }),
-      at: "removedLinksInheritance",
+      at: "updateLinksForInheritance",
     });
   }
 };
