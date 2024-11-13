@@ -235,27 +235,20 @@ const Text = ({
   //   }
   // }, [currentVisibleNode.id]);
 
-  const handleChanges = (e: any) => {
-    setEditorContent(e.target.value);
-    onSaveTextChange(e.target.value);
-  };
-
-  const handleBlur = () => {
-    setIsEditing(false); // User stopped editing
-    if (setSelectTitle) {
-      setSelectTitle(false);
-    }
-  };
-
-  const handleFocus = () => {
-    setIsEditing(true); // User started editing
-  };
-
   const renderDiff = (previousValue: string, newValue: string) => {
     try {
-      const diffContent = diffWords(previousValue, newValue);
-      const lines = diffLines(previousValue, newValue);
-      return diffContent.map((line, index) => (
+      /*       const diffContent = diffWords(previousValue, newValue);
+      const lines = diffLines(previousValue, newValue); */
+
+      return (
+        <div>
+          <div style={{ color: "red", textDecoration: "line-through" }}>
+            {previousValue}
+          </div>
+          <div style={{ color: "green" }}>{newValue}</div>
+        </div>
+      );
+      /*   return diffContent.map((line, index) => (
         <div key={uuidv4()}>
           <span
             style={{
@@ -267,7 +260,7 @@ const Text = ({
             {line.value}
           </span>
         </div>
-      ));
+      )); */
     } catch (error) {
       return (
         <div>

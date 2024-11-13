@@ -12,6 +12,8 @@ type IProposalSliderProps = {
   setCurrentVisibleNode: any;
   onNavigateToNode: any;
   compareThisImprovement: any;
+  currentIndex: number;
+  setCurrentIndex: any;
 };
 const ImprovementsSlider = ({
   proposals,
@@ -22,9 +24,9 @@ const ImprovementsSlider = ({
   setCurrentVisibleNode,
   onNavigateToNode,
   compareThisImprovement,
+  currentIndex,
+  setCurrentIndex,
 }: IProposalSliderProps) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-
   useEffect(() => {
     if (!proposals[currentIndex]) {
       return;
@@ -41,7 +43,7 @@ const ImprovementsSlider = ({
   }, []);
 
   const handleNext = (display = true) => {
-    setCurrentIndex((prevIndex) => {
+    setCurrentIndex((prevIndex: number) => {
       const newPrev = prevIndex === proposals.length - 1 ? 0 : prevIndex + 1;
       if (display) {
         if (proposals[newPrev]?.newNode) {
@@ -60,7 +62,7 @@ const ImprovementsSlider = ({
   };
 
   const handlePrevious = (display = true) => {
-    setCurrentIndex((prevIndex) => {
+    setCurrentIndex((prevIndex: number) => {
       const newPrev = prevIndex === 0 ? proposals.length - 1 : prevIndex - 1;
       if (display) {
         if (proposals[newPrev]?.newNode) {
@@ -80,9 +82,12 @@ const ImprovementsSlider = ({
   };
 
   const onHandleAcceptChange = async () => {
-    await handleAcceptChange(currentImprovement);
+    const diffChange = await handleAcceptChange(currentImprovement);
     setImprovements((prev: any) => {
       prev[currentIndex].implemented = true;
+      if (diffChange) {
+        prev[currentIndex].diffChange = diffChange;
+      }
       return prev;
     });
     setCurrentImprovement((prev: any) => {
@@ -149,7 +154,7 @@ const ImprovementsSlider = ({
                     theme.palette.mode === "light" ? "#d0d5dd" : "",
                 }}
               >
-                {currentImprovement?.newNode ? (
+                {currentImprovement?.newNode && (
                   <Box>
                     <Typography>
                       This proposal adds a new node titled:
@@ -164,16 +169,9 @@ const ImprovementsSlider = ({
                     >
                       {currentImprovement.node.title}
                     </Typography>
+                    <Typography sx={{ mt: "15px" }}>Reasoning:</Typography>
+                    <Typography>{currentImprovement.reasoning}</Typography>
                   </Box>
-                ) : (
-                  <></>
-                  /*   <Typography sx={{ mb: "15px" }}>
-                    This proposal changes to{" "}
-                    <strong style={{ color: "orange" }}>
-                      {currentImprovement.title}
-                    </strong>
-                    :
-                  </Typography> */
                 )}
 
                 {!currentImprovement?.newNode &&

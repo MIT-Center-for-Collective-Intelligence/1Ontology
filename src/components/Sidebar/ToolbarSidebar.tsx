@@ -183,6 +183,7 @@ const ToolbarSidebar = ({
   const handleProfileMenuClose = () => {
     setProfileMenuOpen(null);
   };
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const updateUserImage = async (imageUrl: string) => {
     const userDoc = doc(collection(db, USERS), user?.uname);
@@ -538,6 +539,12 @@ const ToolbarSidebar = ({
     }
   };
   const compareThisImprovement = (improvement: any) => {
+    if (improvement.diffChange) {
+      displayDiff(improvement.diffChange);
+    } else {
+      setSelectedDiffNode(null);
+    }
+
     if (!improvement) {
       setCurrentImprovement(null);
       setImprovements([]);
@@ -553,6 +560,9 @@ const ToolbarSidebar = ({
     const result = compareImprovement(improvement, nodesByTitle);
 
     setCurrentImprovement(result);
+  };
+  const getProperty = (change: any) => {
+    return Object.keys(change).filter((p) => p !== "reasoning")[0];
   };
 
   const handleImproveClick = async () => {
@@ -592,7 +602,10 @@ const ToolbarSidebar = ({
       for (let improvement of improvements) {
         if (improvement.changes.length >= 2) {
           for (let change of improvement.changes) {
-            const _improvement = { ...improvement, changes: [change] };
+            const _improvement = {
+              ...improvement,
+              changes: [{ ...change }],
+            };
             improvementsDivided.push(_improvement);
           }
         } else {
@@ -710,6 +723,9 @@ const ToolbarSidebar = ({
             copilotMessage={copilotMessage}
             compareThisImprovement={compareThisImprovement}
             confirmIt={confirmIt}
+            currentIndex={currentIndex}
+            setCurrentIndex={setCurrentIndex}
+            displayDiff={displayDiff}
           />
         );
       case "history":

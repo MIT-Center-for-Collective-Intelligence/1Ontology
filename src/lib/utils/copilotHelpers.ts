@@ -201,6 +201,10 @@ export const compareImprovement = (
       if (!property) {
         continue;
       }
+      if (!!_improvement?.implemented) {
+        modifiedProperties[property] = { reasoning: change.reasoning };
+        continue;
+      }
       if (
         typeof nodeData.properties[property] === "string" ||
         property === "title"
@@ -249,7 +253,7 @@ export const compareImprovement = (
         const previousValue = isParentOrChild
           ? nodeData[property as "specializations" | "generalizations"]
           : nodeData.properties[property];
-          
+
         modifiedProperties[property] = {
           reasoning: change.reasoning,
           addedNonExistentElements,

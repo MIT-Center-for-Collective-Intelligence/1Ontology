@@ -44,6 +44,9 @@ type ImprovementsProps = {
   copilotMessage: string;
   compareThisImprovement: any;
   confirmIt: any;
+  currentIndex: number;
+  setCurrentIndex: any;
+  displayDiff: any;
 };
 const Improvements = ({
   currentImprovement,
@@ -59,6 +62,9 @@ const Improvements = ({
   copilotMessage,
   compareThisImprovement,
   confirmIt,
+  currentIndex,
+  setCurrentIndex,
+  displayDiff,
 }: ImprovementsProps) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -406,8 +412,7 @@ const Improvements = ({
 
       for (let dChange of change.detailsOfChange) {
         const reasoning =
-          currentImprovement.modifiedProperties[dChange.modifiedProperty]
-            .reasoning;
+          change.modifiedProperties[dChange.modifiedProperty].reasoning;
 
         let changeType: any = null;
 
@@ -428,6 +433,17 @@ const Improvements = ({
           );
         }
         if (user?.uname && changeType) {
+          const changeLog = {
+            nodeId: currentVisibleNode.id,
+            modifiedBy: user?.uname,
+            modifiedProperty: dChange.modifiedProperty,
+            previousValue: dChange.previousValue,
+            newValue: dChange.newValue,
+            modifiedAt: new Date(),
+            changeType,
+            fullNode: currentVisibleNode,
+            reasoning,
+          };
           saveNewChangeLog(db, {
             nodeId: currentVisibleNode.id,
             modifiedBy: user?.uname,
@@ -439,6 +455,7 @@ const Improvements = ({
             fullNode: currentVisibleNode,
             reasoning,
           });
+          return changeLog;
         }
       }
     } catch (error) {
@@ -482,6 +499,8 @@ const Improvements = ({
             setCurrentVisibleNode={setCurrentVisibleNode}
             onNavigateToNode={onNavigateToNode}
             compareThisImprovement={compareThisImprovement}
+            currentIndex={currentIndex}
+            setCurrentIndex={setCurrentIndex}
           />
           <Button
             variant="contained"
