@@ -937,7 +937,12 @@ const ToolbarSidebar = ({
               <IconButton
                 onClick={() => {
                   if (previousNodeId) {
-                    navigateToNode(previousNodeId);
+                    // Checks if the node is deleted (null or undefined)
+                    if (nodes[currentVisibleNode?.id] == null) {
+                      navigateToNode(previousNodeId);
+                    } else {
+                      navigateToNode(currentVisibleNode?.id);
+                    }
                     setPreviousNodeId("");
                   }
                   setActiveSidebar(null);

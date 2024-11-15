@@ -750,7 +750,7 @@ const Ontology = () => {
         if (firstElement) {
           firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-      }, 500);
+      }, 1000);
       // initializeExpanded(eachOntologyPath[node.id]);
       // Record the click action in logs
       if (searched) {
@@ -829,7 +829,7 @@ const Ontology = () => {
         if (firstElement) {
           firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-      }, 800);
+      }, 1000);
     }
   };
 
