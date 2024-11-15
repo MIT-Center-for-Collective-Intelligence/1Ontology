@@ -13,6 +13,7 @@ import ChatIcon from "@mui/icons-material/Chat";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import DeleteIcon from "@mui/icons-material/Delete";
 import HistoryIcon from "@mui/icons-material/History";
+import { getTooltipHelper } from " @components/lib/utils/string.utils";
 
 const ManageNodeButtons = ({
   locked,
@@ -69,18 +70,20 @@ const ManageNodeButtons = ({
                 gap: "15px",
               }}
             >
-              <Typography
-                sx={{
-                  fontSize: "19px",
-                  fontWeight: "bold",
-                  color: (theme: Theme) =>
-                    theme.palette.mode === "dark"
-                      ? theme.palette.common.gray50
-                      : theme.palette.common.notebookMainBlack,
-                }}
-              >
-                Root:
-              </Typography>
+              <Tooltip title={getTooltipHelper("root")}>
+                <Typography
+                  sx={{
+                    fontSize: "19px",
+                    fontWeight: "bold",
+                    color: (theme: Theme) =>
+                      theme.palette.mode === "dark"
+                        ? theme.palette.common.gray50
+                        : theme.palette.common.notebookMainBlack,
+                  }}
+                >
+                  Root:
+                </Typography>
+              </Tooltip>
               <Link
                 underline="hover"
                 onClick={() => navigateToNode(root)}
@@ -101,8 +104,8 @@ const ManageNodeButtons = ({
               !manageLock
                 ? "This node is locked"
                 : lockedInductor
-                ? "This node is locked for everyone else"
-                : "Lock this node"
+                  ? "This node is locked for everyone else"
+                  : "Lock this node"
             }
           >
             {manageLock ? (
