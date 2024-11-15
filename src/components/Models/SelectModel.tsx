@@ -43,6 +43,7 @@ const SelectModelModal = ({
   searchResultsForSelection,
   selectedCategory,
   checkedItems,
+  setCheckedItems,
   markItemAsChecked,
   handleCloning,
   user,
@@ -73,6 +74,7 @@ const SelectModelModal = ({
   searchValue: any;
   searchResultsForSelection: any;
   selectedCategory: any;
+  setCheckedItems: any;
   checkedItems: any;
   markItemAsChecked: any;
   handleCloning: any;
@@ -211,7 +213,18 @@ const SelectModelModal = ({
           p: 1,
         }}
       >
-        <Typography variant="h6">Selected Entities</Typography>
+        <Typography variant="h6">Selected Entities</Typography>{" "}
+        {selectedProperty === "parts" && checkedItems.size > 0 && (
+          <Button
+            onClick={() => {
+              setCheckedItems(new Set());
+            }}
+            variant="outlined"
+            sx={{ borderRadius: "25px" }}
+          >
+            Uncheck All
+          </Button>
+        )}
       </Box>
       <Box sx={{ p: 3 }}>
         {Array.from(checkedItems).map((id: any) => (

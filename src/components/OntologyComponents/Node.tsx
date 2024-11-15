@@ -1253,6 +1253,7 @@ const Node = ({
         searchResultsForSelection={searchResultsForSelection}
         selectedCategory={selectedCategory}
         checkedItems={checkedItems}
+        setCheckedItems={setCheckedItems}
         markItemAsChecked={markItemAsChecked}
         handleCloning={handleCloning}
         user={user}

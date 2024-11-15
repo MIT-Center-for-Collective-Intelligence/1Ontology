@@ -294,8 +294,7 @@ const Text = ({
               property === "title"
                 ? "red"
                 : (selectedDiffNode?.changeType === "add node" ||
-                    (!!currentImprovement?.newNode &&
-                      !currentImprovement?.implemented)) &&
+                    !!currentImprovement?.newNode) &&
                   property === "title"
                 ? "green"
                 : theme.palette.mode === "dark"
