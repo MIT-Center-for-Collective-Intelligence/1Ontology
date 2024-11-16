@@ -14,8 +14,8 @@ import {
 import React, { useCallback, useState } from "react";
 import { DESIGN_SYSTEM_COLORS } from "../theme/colors";
 const OPTIONS = [
-  { id: "gpt-4o", title: "GPT-4o" },
   { id: "o1-preview", title: "O1" },
+  { id: "gpt-4o", title: "GPT-4o" },
   { id: "Gemini 1.5 PRO", title: "Gemini 1.5 PRO" },
 ];
 
@@ -25,10 +25,7 @@ const useSelectDropdown = () => {
   const [selectedOption, setSelectedOption] = useState<{
     id: string;
     title: string;
-  }>({
-    id: "gpt-4o",
-    title: "GPT-4o",
-  });
+  }>({ id: "o1-preview", title: "O1" });
   const [inputValue, setInputValue] = useState<string>("");
   const [numberValue, setNumberValue] = useState<number>(7);
   const resolveRef = React.useRef<any>(null);

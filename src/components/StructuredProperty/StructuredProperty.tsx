@@ -783,7 +783,7 @@ const StructuredProperty = ({
     setEditCollection(collectionName);
     setNewEditCollection(collectionName);
   };
-
+  console.log("currentImprovement ==>", currentImprovement);
   if (
     currentImprovement &&
     !currentImprovement.implemented &&

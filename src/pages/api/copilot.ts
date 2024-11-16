@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { OpenAI } from "openai";
 import { askGemini } from "./helpers";
 import { Content } from "@google/generative-ai";
-import { PROPOSALS_SCHEMA } from " @components/lib/CONSTANTS";
+
 import {
   GUIDELINES,
   LOGS,
@@ -15,7 +15,12 @@ import {
 } from " @components/lib/utils/helpersCopilot";
 import { INode } from " @components/types/INode";
 import fbAuth from " @components/middlewares/fbAuth";
-import { getDoerCreate } from " @components/lib/utils/helpers";
+import { getDoerCreate, recordLogs } from " @components/lib/utils/helpers";
+import {
+  Improvement,
+  newNodeProposal,
+  PROPOSALS_SCHEMA,
+} from " @components/lib/utils/copilotPrompts";
 
 const saveLogs = (
   uname: string,
@@ -125,7 +130,7 @@ const sendLLMRequest = async ({ messages, model, uname }: any) => {
     });
   }
 };
-
+let guidelines: any = null;
 const proposerAgent = async (
   userMessage: string,
   model: string,
@@ -135,11 +140,13 @@ const proposerAgent = async (
   evaluation: string = ""
 ) => {
   try {
-    const guidelinesSnapshot = await db.collection(GUIDELINES).get();
-
-    const guidelines = guidelinesSnapshot.docs
-      .map((doc) => doc.data())
-      .sort((a, b) => a.index - b.index);
+    console.log(guidelines, "guidelines===>");
+    if (!guidelines) {
+      const guidelinesSnapshot = await db.collection(GUIDELINES).get();
+      guidelines = guidelinesSnapshot.docs
+        .map((doc) => doc.data())
+        .sort((a, b) => a.index - b.index);
+    }
 
     let prompt = `
 Objective:
@@ -184,7 +191,10 @@ ${JSON.stringify(guidelines, null, 2)}
     // proposalsJSON = await callOpenAIChat([], prompt);
     // proposalsJSON = await askGemini([], prompt);
 
-    const response: any = await sendLLMRequest({
+    const response: {
+      improvements: Improvement[];
+      newNodeProposal: newNodeProposal[];
+    } = await sendLLMRequest({
       messages: [
         {
           role: "user",
@@ -198,15 +208,15 @@ ${JSON.stringify(guidelines, null, 2)}
     return response;
   } catch (error: any) {
     console.error(error);
-    // recordLogs({
-    //   type: "error",
-    //   error: JSON.stringify({
-    //     name: error.name,
-    //     message: error.message,
-    //     stack: error.stack,
-    //   }),
-    //   at: "recordLogs",
-    // });
+    recordLogs({
+      type: "error",
+      error: JSON.stringify({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      }),
+      at: "proposerAgent",
+    });
   }
 };
 

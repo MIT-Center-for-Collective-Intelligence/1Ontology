@@ -101,12 +101,11 @@ const ImprovementsSlider = ({
       prev.splice(currentIndex, 1);
       return prev;
     });
-    handleNext();
     setTimeout(() => {
       handlePrevious();
     }, 500);
   };
-
+ 
   return (
     <Box
       sx={{

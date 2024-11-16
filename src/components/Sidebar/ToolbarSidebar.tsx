@@ -82,9 +82,14 @@ import { CHAT_DISCUSSION_TABS, development } from " @components/lib/CONSTANTS";
 import {
   compareImprovement,
   compareProposals,
+  filterProposals,
 } from " @components/lib/utils/copilotHelpers";
 import useSelectDropdown from " @components/lib/hooks/useSelectDropdown";
-import { sendLLMRequest } from " @components/lib/utils/copilotPrompts";
+import {
+  Improvement,
+  newNodeProposal,
+  sendLLMRequest,
+} from " @components/lib/utils/copilotPrompts";
 import OntologyHistory from "../ActiveUsers/OntologyHistory";
 
 type MainSidebarProps = {
@@ -507,6 +512,9 @@ const ToolbarSidebar = ({
       const _NODES = [];
 
       for (let node of newNodes) {
+        if (!!nodesByTitle[node.title]) {
+          continue;
+        }
         const generalization = nodesByTitle[node?.first_generalization];
         if (!generalization) continue;
 
@@ -515,7 +523,7 @@ const ToolbarSidebar = ({
           generalization.inheritance,
           generalization.id
         );
-        inheritance.description.ref = null;
+
         const newNode = createNewNode(
           generalization,
           newId,
@@ -524,6 +532,10 @@ const ToolbarSidebar = ({
           generalization.id,
           user?.uname
         );
+        if (!!node?.description) {
+          inheritance.description.ref = null;
+          newNode.properties.description = node.description;
+        }
         _NODES.push({
           node: newNode,
           newNode: true,
@@ -539,7 +551,7 @@ const ToolbarSidebar = ({
     }
   };
   const compareThisImprovement = (improvement: any) => {
-    if (improvement.diffChange) {
+    if (improvement?.diffChange) {
       displayDiff(improvement.diffChange);
     } else {
       setSelectedDiffNode(null);
@@ -561,9 +573,6 @@ const ToolbarSidebar = ({
 
     setCurrentImprovement(result);
   };
-  const getProperty = (change: any) => {
-    return Object.keys(change).filter((p) => p !== "reasoning")[0];
-  };
 
   const handleImproveClick = async () => {
     const options = (await selectIt()) as {
@@ -574,6 +583,7 @@ const ToolbarSidebar = ({
     if (!options) return;
     const { model, userMessage, deepNumber } = options;
     setIsLoadingCopilot(true);
+    setCurrentIndex(0);
     try {
       const response = (await sendLLMRequest(
         userMessage,
@@ -581,22 +591,35 @@ const ToolbarSidebar = ({
         deepNumber,
         currentVisibleNode.id
       )) as {
-        improvements: any;
-        new_nodes: any;
-        guidelines: any;
+        improvements: Improvement[];
+        new_nodes: newNodeProposal[];
         message: string;
       };
       if (!response) {
-        throw new Error("Messing response in handleImproveClick!");
+        throw new Error("Missing response in handleImproveClick!");
       }
 
-      if (response.improvements.length <= 0 || response.new_nodes.length <= 0) {
-        confirmIt("No improvements or new nodes have been proposed!", "Ok");
+      if (response.improvements.length <= 0 && response.new_nodes.length <= 0) {
+        confirmIt(
+          <Box>
+            No enhancements or additional nodes have been suggested to the
+            sub-ontology around the node{" "}
+            <strong style={{ color: "orange" }}>
+              {currentVisibleNode.title}
+            </strong>
+            .
+          </Box>,
+          "Ok"
+        );
         return;
       }
 
       setCopilotMessage(response.message);
-      const improvements = JSON.parse(JSON.stringify(response.improvements));
+      const improvements: Improvement[] = await filterProposals(
+        response.improvements,
+        nodesByTitle
+      );
+
       const improvementsDivided = [];
 
       for (let improvement of improvements) {

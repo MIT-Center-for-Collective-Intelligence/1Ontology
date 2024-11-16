@@ -3,14 +3,19 @@ import {
   capitalizeFirstLetter,
   getTooltipHelper,
 } from " @components/lib/utils/string.utils";
-import { Paper, Typography, Box, Tooltip, List, ListItem } from "@mui/material";
+import {
+  Paper,
+  Typography,
+  Box,
+  Tooltip,
+  List,
+  ListItem,
+  Button,
+} from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { useEffect, useState } from "react";
 import { ICollection } from " @components/types/INode";
-
-type Node = {
-  id: string;
-};
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 
 type CollectionListProps = {
   currentImprovement: any;
@@ -62,6 +67,9 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
       );
       if (collectionIdx === -1) {
         collection.change = "added";
+        for (let node of collection.nodes) {
+          node.change = "added";
+        }
       } else {
         const _previousNodes = previousValue[collectionIdx].nodes.map(
           (n: { id: string }) => n.id
@@ -81,6 +89,9 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
       if (collectionIdx === -1) {
         newValue.push(collection);
         collection.change = "removed";
+        for (let node of collection.nodes) {
+          node = { ...node, change: "removed" };
+        }
       } else {
         const _newNodes = newValue[collectionIdx].nodes.map(
           (n: { id: string }) => n.id
@@ -96,6 +107,8 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
 
     setMergedValue(newValue);
   }, [currentImprovement]);
+
+
   const renderValue = (value: ICollection[]) => {
     return (
       <Box sx={{ display: "flex", flexDirection: "column" }}>
@@ -141,6 +154,25 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                   ? collection.collectionName
                   : ""}
               </Typography>
+              {/* {(collection.change === "removed" ||
+                collection.change === "added") && (
+                <Tooltip
+                  placement="top"
+                  title={`Implementing this will ${
+                    collection.change === "added" ? "add the new" : "remove"
+                  } collection titled ${collection.collectionName}`}
+                >
+                  <Button
+                    sx={{
+                      borderRadius: "25px",
+                      fontSize: "11px",
+                      ml: "15px",
+                    }}
+                  >
+                    Implement
+                  </Button>
+                </Tooltip>
+              )} */}
             </Box>
             <List>
               {collection.nodes.map((node: any) => (
@@ -173,6 +205,27 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                   >
                     {getTitle(nodes, node.id)}
                   </Typography>
+                  {((!removedLinks.has(node.id) && node.change === "removed") ||
+                    (!addedLinks.has(node.id) && node.change === "added")) && (
+                    <SwapHorizIcon
+                      sx={{
+                        color: node.change === "removed" ? "red" : "green",
+                        pl: "5px",
+                      }}
+                    />
+                  )}
+                  {/* {(node.change === "removed" || node.change === "added") && (
+                    <Button
+                      sx={{
+                        borderRadius: "25px",
+                        fontSize: "11px",
+                        ml: "15px",
+                      }}
+                      onClick={() => {}}
+                    >
+                      Implement
+                    </Button>
+                  )} */}
                 </ListItem>
               ))}
             </List>
@@ -222,6 +275,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
               )}
             </Typography>
           </Tooltip>
+          <Typography sx={{ ml: "5px", color: "green" }}>(modified)</Typography>
         </Box>
         {renderValue(mergedValue)}
       </Box>

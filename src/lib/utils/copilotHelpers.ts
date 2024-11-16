@@ -1,4 +1,5 @@
 import { ICollection, INode } from " @components/types/INode";
+import { Improvement } from "./copilotPrompts";
 
 export const compareProperty = (
   change: any,
@@ -92,6 +93,77 @@ export const compareProperty = (
     };
   } catch (error) {
     console.error("error at compareProperty", error);
+  }
+};
+export const filterProposals = async (
+  improvements: any[],
+  nodesByTitle: { [nodeTitle: string]: INode }
+): Promise<Improvement[]> => {
+  try {
+    const improvementsCopy = JSON.parse(JSON.stringify(improvements));
+    const filteredImprovements = [];
+    for (let improvement of improvementsCopy) {
+      const nodeData = nodesByTitle[improvement.title];
+      if (nodeData) {
+        const changes = [];
+        for (let _change of improvement.changes) {
+          const change = JSON.parse(JSON.stringify(_change));
+          const property = Object.keys(change).filter(
+            (k) => k !== "reasoning"
+          )[0];
+
+          if (
+            typeof nodeData.properties[property] === "string" ||
+            property === "title"
+          ) {
+            const newValue = change[property];
+            const previousValue =
+              property === "title"
+                ? nodeData.title
+                : nodeData.properties[property];
+            if (newValue !== previousValue) {
+              changes.push(change);
+            }
+          } else {
+            if (property !== "specializations") {
+              change[property] = [
+                { collectionName: "main", nodes: change[property] },
+              ];
+            } else {
+              const mainCollectionIdx = change[property].findIndex(
+                (c: any) => c.collectionName === "main"
+              );
+              if (mainCollectionIdx === -1) {
+                change[property].push({
+                  collectionName: "main",
+                  nodes: [],
+                });
+              }
+            }
+            const response: any = compareProperty(
+              change,
+              nodeData,
+              property,
+              nodesByTitle
+            );
+            const { changedProperty } = response;
+
+            if (changedProperty) {
+              changes.push(_change);
+            }
+          }
+        }
+        if (changes.length > 0) {
+          improvement.changes = changes;
+          filteredImprovements.push(improvement);
+        }
+      }
+    }
+
+    return filteredImprovements;
+  } catch (error) {
+    console.error("Error comparing proposals:", error);
+    return [];
   }
 };
 
