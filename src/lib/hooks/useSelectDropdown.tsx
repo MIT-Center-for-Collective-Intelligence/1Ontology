@@ -29,9 +29,14 @@ const useSelectDropdown = () => {
   const [inputValue, setInputValue] = useState<string>("");
   const [numberValue, setNumberValue] = useState<number>(7);
   const resolveRef = React.useRef<any>(null);
-
+  // localStorage.setItem(
+  //   `lastSearches_${user?.userId}`,
+  //   JSON.stringify(validSearches)
+  // );
   const showDialog = useCallback(() => {
     setIsOpen(true);
+    const savedInputValue = localStorage.getItem(`user-copilot-message`);
+    setInputValue(savedInputValue || "");
     return new Promise<{
       userMessage: string;
       model: string;
@@ -44,8 +49,7 @@ const useSelectDropdown = () => {
   const closeDialog = useCallback(
     (start: boolean = false) => {
       setIsOpen(false);
-
-      setInputValue("");
+      localStorage.setItem(`user-copilot-message`, inputValue);
       setNumberValue(7);
 
       if (resolveRef.current && start) {
