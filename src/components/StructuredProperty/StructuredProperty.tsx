@@ -850,16 +850,7 @@ const StructuredProperty = ({
               )}
             </Typography>
           </Tooltip>
-          {currentVisibleNode?.inheritance[property]?.ref && (
-            <Typography sx={{ fontSize: "14px", ml: "9px" }}>
-              {'(Inherited from "'}
-              {getTitle(
-                nodes,
-                currentVisibleNode.inheritance[property].ref || ""
-              )}
-              {'")'}
-            </Typography>
-          )}
+
           {!locked &&
             !currentImprovement &&
             !selectedDiffNode &&
@@ -914,6 +905,16 @@ const StructuredProperty = ({
               </Box>
             )}
         </Box>
+        {currentVisibleNode?.inheritance[property]?.ref && (
+          <Typography sx={{ fontSize: "14px", ml: "9px", color: "gray" }}>
+            {'(Inherited from "'}
+            {getTitle(
+              nodes,
+              currentVisibleNode.inheritance[property].ref || ""
+            )}
+            {'")'}
+          </Typography>
+        )}
         <Box sx={{ p: "15px", pt: 0 }}>
           {openAddCollection && (
             <NewCollection

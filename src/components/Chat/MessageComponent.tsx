@@ -57,6 +57,29 @@ const MessageComponent = ({
 }) => {
   const boxRef = useRef<HTMLDivElement>(null);
   const scrolling = useRef<HTMLDivElement>(null);
+  const handleDeleteMessage = async () => {
+    if (
+      await confirmIt(
+        "Are you sure you want to delete this message?",
+        "Delete",
+        "Keep"
+      )
+    ) {
+      const element = document.getElementById(`message-${message.id}`);
+      if (element) {
+        element.style.borderRadius = "8px";
+        element.style.padding = "8px";
+        element.style.marginTop = "8px";
+        element.style.backgroundColor = "#e91e63";
+        element.style.transition = "all 0.5s ease";
+        element.style.transform = "scaleY(0.5)";
+        element.style.opacity = "0";
+      }
+      setTimeout(() => {
+        deleteMessage(message.id);
+      }, 500);
+    }
+  };
 
   return (
     <CSSTransition key={message.id} timeout={500} classNames="comment">
@@ -231,7 +254,7 @@ const MessageComponent = ({
                 <MessageButtons
                   message={message}
                   handleEditMessage={() => setEditing(message)}
-                  handleDeleteMessage={() => deleteMessage(message.id)}
+                  handleDeleteMessage={handleDeleteMessage}
                   toggleEmojiPicker={toggleEmojiPicker}
                   user={user}
                   boxRef={boxRef}

@@ -430,20 +430,27 @@ const Chat = ({
   };
 
   const deleteMessage = async (messageId: string) => {
-    if (
-      await confirmIt(
-        "Are you sure you want to delete this message?",
-        "Delete",
-        "Keep"
-      )
-    ) {
+    try {
+      if (!messageId) return;
       const commentRef = getMessageDocRef(messageId);
       await updateDoc(commentRef, {
         deleted: true,
       });
+
       recordLogs({
         action: "Deleted a message",
         messageId: messageId,
+      });
+    } catch (error: any) {
+      recordLogs({
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+        messageId: messageId,
+        at: "deleteMessage",
       });
     }
   };
@@ -524,8 +531,8 @@ const Chat = ({
 
   const renderMessages = (messages: IChatMessage[]) => {
     return (
-      <TransitionGroup>
-        {messages.map((message) => (
+      <Box>
+        {[...messages].map((message) => (
           <MessageComponent
             key={message.id}
             message={message}
@@ -550,7 +557,7 @@ const Chat = ({
           />
         ))}
         <Box ref={scrollingRef}></Box>
-      </TransitionGroup>
+      </Box>
     );
   };
   return (
@@ -671,7 +678,9 @@ const Chat = ({
               </Box>
             </Box>
           ) : (
-            <Box sx={{ px: 2, mb: "133px" }}>{renderMessages(messages)}</Box>
+            <Box sx={{ px: 2, mb: "133px" }}>
+              {renderMessages([...messages])}
+            </Box>
           )}
         </Box>
         <Box
