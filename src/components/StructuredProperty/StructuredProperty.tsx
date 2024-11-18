@@ -895,7 +895,7 @@ const StructuredProperty = ({
                     DISPLAY[property] || property
                   )}`}{" "}
                 </Button>
-                {property !== "generalizations" && (
+                {property !== "generalizations" && property !== "isPartOf" && (
                   <SelectInheritance
                     currentVisibleNode={currentVisibleNode}
                     property={property}
