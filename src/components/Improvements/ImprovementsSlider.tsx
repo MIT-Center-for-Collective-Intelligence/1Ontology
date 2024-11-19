@@ -7,7 +7,7 @@ type IProposalSliderProps = {
   proposals: any;
   setCurrentImprovement: any;
   currentImprovement: any;
-  handleAcceptChange: any;
+  handleAcceptChange: Function;
   setImprovements: any;
   setCurrentVisibleNode: any;
   onNavigateToNode: any;

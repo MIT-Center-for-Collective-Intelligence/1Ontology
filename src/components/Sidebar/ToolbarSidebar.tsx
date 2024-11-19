@@ -602,8 +602,7 @@ const ToolbarSidebar = ({
       if (response.improvements.length <= 0 && response.new_nodes.length <= 0) {
         confirmIt(
           <Box>
-            No enhancements or additional nodes have been suggested to the
-            sub-ontology around the node{" "}
+            {`I've analyzed your sub-ontology graph and found no areas for improvement or new nodes to add.`}{" "}
             <strong style={{ color: "orange" }}>
               {currentVisibleNode.title}
             </strong>
@@ -616,7 +615,7 @@ const ToolbarSidebar = ({
 
       setCopilotMessage(response.message);
       const improvements: Improvement[] = await filterProposals(
-        response.improvements,
+        response?.improvements || [],
         nodesByTitle
       );
 
@@ -641,7 +640,7 @@ const ToolbarSidebar = ({
         first_generalization: string;
         reasoning: string;
         newNode: boolean;
-      }[] = getNewNodes(response.new_nodes);
+      }[] = getNewNodes(response?.new_nodes || []);
       if (improvements.length > 0 || newNodes.length > 0) {
         setImprovements([...newNodes, ...improvementsDivided]);
       }

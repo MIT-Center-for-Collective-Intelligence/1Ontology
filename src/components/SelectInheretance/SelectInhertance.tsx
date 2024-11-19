@@ -157,6 +157,7 @@ const SelectInheritance = ({
           sx: {
             height: "40px",
             borderRadius: "18px",
+            color: inheritanceRef === "inheritance-overridden" ? "gray" : "",
           },
         }}
         InputLabelProps={{

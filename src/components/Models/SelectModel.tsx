@@ -65,6 +65,7 @@ const SelectModelModal = ({
   addACloneNodeQueue,
   setClonedNodesQueue,
   clonedNodesQueue,
+  newOnes,
 }: {
   openSelectModel: any;
   handleCloseAddLinksModel: any;
@@ -97,6 +98,7 @@ const SelectModelModal = ({
   addACloneNodeQueue: (nodeId: string, title?: string) => void;
   setClonedNodesQueue: Function;
   clonedNodesQueue: { [nodeId: string]: { title: string; id: string } };
+  newOnes: any;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -180,7 +182,7 @@ const SelectModelModal = ({
   };
 
   const getNumOfGeneralizations = (id: string) => {
-    if (!nodes[id]) {
+    if (!nodes[id] || newOnes.has(id)) {
       return false;
     }
     const generalizations = nodes[id].generalizations

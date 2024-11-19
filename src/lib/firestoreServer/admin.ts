@@ -37,12 +37,6 @@ if (!admin.apps.filter((a: any) => a.name === "[DEFAULT]").length) {
     credential: cert(configs as any),
   };
 
-  if (process.env.NODE_ENV === "test") {
-    initializationConfigs = {
-      projectId: "test",
-      credential: admin.credential.applicationDefault(),
-    };
-  }
   app = initializeApp(initializationConfigs);
   getFirestore().settings({ ignoreUndefinedProperties: true });
 }

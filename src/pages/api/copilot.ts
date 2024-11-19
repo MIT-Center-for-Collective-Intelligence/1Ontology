@@ -76,10 +76,6 @@ const sendLLMRequest = async ({ messages, model, uname }: any) => {
         });
       }
       const response = await askGemini(contents);
-      saveLogs(uname, "info", {
-        response,
-        model,
-      });
       return response;
     }
     const temperature = model === "gpt-4o" ? 0 : 1;
@@ -113,10 +109,6 @@ const sendLLMRequest = async ({ messages, model, uname }: any) => {
     if (!isJSONObject.isJSON) {
       throw new Error("Failed to get a complete JSON object");
     }
-    saveLogs(uname, "info", {
-      response: isJSONObject.jsonObject,
-      model,
-    });
     return isJSONObject.jsonObject;
   } catch (error: any) {
     saveLogs(uname, "info", {
@@ -281,7 +273,10 @@ export const generateProposals = async (
 async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
   try {
     const { userMessage, model, deepNumber, nodeId, user } = req.body.data;
-    const { uname } = user;
+    if (!user?.userData) {
+      throw new Error("Access forbidden");
+    }
+    const { uname } = user?.userData;
 
     console.log(" userMessage, model, deepNumber, nodeId", {
       userMessage,
@@ -297,6 +292,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       nodeId,
       uname
     );
+    saveLogs(uname, "info", {
+      response,
+      nodeId,
+      model,
+      at: "copilot",
+    });
 
     console.log("Response: ", JSON.stringify(response, null, 2));
     return res.status(200).send(response);

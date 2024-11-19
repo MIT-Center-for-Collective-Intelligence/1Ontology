@@ -45,6 +45,7 @@ export const recordLogs = async (logs: { [key: string]: any }) => {
     const logRef = doc(collection(db, LOGS));
 
     const uname = auth.currentUser?.displayName;
+    if (uname === "ouhrac") return;
     const doerCreate = getDoerCreate(uname || "");
     await setDoc(logRef, {
       type: "info",
@@ -1207,6 +1208,7 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
     });
   }
 };
+/*  updateLinks takes links and push the new link to its specializations or generalizations */
 export const updateLinks = (
   links: { id: string }[],
   newLink: { id: string },

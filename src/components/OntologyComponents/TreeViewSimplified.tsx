@@ -95,8 +95,9 @@ const TreeViewSimplified = ({
                 display: "flex",
                 alignItems: "center",
                 py: "8px",
+                pr: "8px",
                 paddingLeft: "4px",
-                borderRadius: "4px",
+                borderRadius: "10px",
                 backgroundColor:
                   currentVisibleNode?.id === nodeId
                     ? (theme) =>
@@ -173,7 +174,10 @@ const TreeViewSimplified = ({
                           padding: "2px 12px",
                           fontSize: "0.8rem",
                           backgroundColor:
-                            currentVisibleNode?.id === nodeId ? "#E8F5E9" : "",
+                            currentVisibleNode?.id === nodeId &&
+                            !checkedItems.has(treeVisualization[nodeId]?.id)
+                              ? "#E8F5E9"
+                              : "",
                         }}
                         disabled={
                           (disabledAddButton ||

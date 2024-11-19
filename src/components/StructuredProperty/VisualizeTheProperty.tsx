@@ -275,7 +275,6 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
               )}
             </Typography>
           </Tooltip>
-          <Typography sx={{ ml: "5px", color: "green" }}>(modified)</Typography>
         </Box>
         {renderValue(mergedValue)}
       </Box>

@@ -182,6 +182,7 @@ const Node = ({
   const [clonedNodesQueue, setClonedNodesQueue] = useState<{
     [nodeId: string]: { title: string; id: string };
   }>({});
+  const [newOnes, setNewOnes] = useState(new Set());
 
   const handleCloseAddLinksModel = () => {
     setCheckedItems(new Set());
@@ -189,6 +190,7 @@ const Node = ({
     setSelectedCategory("");
     setSearchValue("");
     setClonedNodesQueue({});
+    setNewOnes(new Set());
   };
 
   useEffect(() => {
@@ -239,6 +241,15 @@ const Node = ({
       }
       if (selectedProperty === "generalizations" && _oldChecked.size === 0) {
         return checkedItems;
+      }
+      return _oldChecked;
+    });
+    setNewOnes((newOnes) => {
+      let _oldChecked = new Set(newOnes);
+      if (_oldChecked.has(checkedId)) {
+        _oldChecked.delete(checkedId);
+      } else {
+        _oldChecked.add(checkedId);
       }
       return _oldChecked;
     });
@@ -628,7 +639,7 @@ const Node = ({
   const handleSaveLinkChanges = useCallback(async () => {
     try {
       // Close the modal or perform any other necessary actions
-
+      debugger;
       // Get the node document from the database
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)
@@ -703,10 +714,10 @@ const Node = ({
       );
 
       // Only keep the checked links
-      oldLinks = oldLinks.filter((link) => checkedItems.has(link.id));
+      const newLinks = oldLinks.filter((link) => checkedItems.has(link.id));
 
       // Prevent removing all generalizations
-      if (selectedProperty === "generalizations" && oldLinks.length === 0) {
+      if (selectedProperty === "generalizations" && newLinks.length === 0) {
         await confirmIt(
           "You cannot remove all the generalizations for this node. Make sure it links to at least one generalization.",
           "Ok",
@@ -733,7 +744,7 @@ const Node = ({
           (c: ICollection) => c.collectionName === selectedCategory
         );
         if (selectedCollection) {
-          selectedCollection.nodes = oldLinks;
+          selectedCollection.nodes = newLinks;
           newValue = JSON.parse(JSON.stringify(nodeData[selectedProperty]));
         }
       } else {
@@ -742,7 +753,7 @@ const Node = ({
             nodeData.properties[selectedProperty] || []
           ).find((c: ICollection) => c.collectionName === selectedCategory);
           if (selectedCollection) {
-            selectedCollection.nodes = oldLinks;
+            selectedCollection.nodes = newLinks;
             newValue = JSON.parse(
               JSON.stringify(nodeData.properties[selectedProperty])
             );
@@ -760,7 +771,7 @@ const Node = ({
         selectedProperty === "generalizations"
       ) {
         updateLinks(
-          oldLinks,
+          newLinks,
           { id: currentVisibleNode.id },
           selectedProperty === "specializations"
             ? "generalizations"
@@ -773,7 +784,7 @@ const Node = ({
       // Update parts/isPartOf links
       if (selectedProperty === "parts" || selectedProperty === "isPartOf") {
         updatePartsAndPartsOf(
-          oldLinks,
+          newLinks,
           { id: currentVisibleNode.id },
           selectedProperty === "parts" ? "isPartOf" : "parts",
           db,
@@ -816,7 +827,7 @@ const Node = ({
         )
       ) {
         updatePropertyOf(
-          oldLinks,
+          newLinks,
           { id: currentVisibleNode.id },
           selectedProperty,
           nodes,
@@ -834,7 +845,7 @@ const Node = ({
           addedLinks,
           removedLinks,
           currentVisibleNode,
-          oldLinks,
+          newLinks,
           nodes
         );
       }
@@ -845,7 +856,7 @@ const Node = ({
           addedLinks,
           removedLinks,
           currentVisibleNode,
-          oldLinks,
+          newLinks,
           nodes
         );
       }
@@ -1275,6 +1286,7 @@ const Node = ({
         addACloneNodeQueue={addACloneNodeQueue}
         setClonedNodesQueue={setClonedNodesQueue}
         clonedNodesQueue={clonedNodesQueue}
+        newOnes={newOnes}
       />
 
       {ConfirmDialog}

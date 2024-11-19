@@ -1,5 +1,6 @@
 import { ICollection, INode } from " @components/types/INode";
 import { Improvement } from "./copilotPrompts";
+import { recordLogs } from "./helpers";
 
 export const compareProperty = (
   change: any,
@@ -103,8 +104,8 @@ export const filterProposals = async (
     const improvementsCopy = JSON.parse(JSON.stringify(improvements));
     const filteredImprovements = [];
     for (let improvement of improvementsCopy) {
-      const nodeData = nodesByTitle[improvement.title];
-      if (nodeData) {
+      const nodeData = nodesByTitle[improvement?.title];
+      if (improvement?.title && nodeData) {
         const changes = [];
         for (let _change of improvement.changes) {
           const change = JSON.parse(JSON.stringify(_change));
@@ -161,8 +162,17 @@ export const filterProposals = async (
     }
 
     return filteredImprovements;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error comparing proposals:", error);
+    recordLogs({
+      type: "error",
+      error: JSON.stringify({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      }),
+      at: "filterProposals",
+    });
     return [];
   }
 };

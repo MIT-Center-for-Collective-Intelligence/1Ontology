@@ -73,12 +73,13 @@ const Improvements = ({
     async (
       property: string,
       newValue: ICollection[],
-      addedLinks: { id: string }[],
-      removedLinks: { id: string }[]
+      addedLinks: string[],
+      removedLinks: string[]
     ) => {
       try {
+        debugger;
         if (!user?.uname) return;
-        const oldLinks = newValue?.flatMap((c) => c.nodes);
+        const newLinks = newValue?.flatMap((c) => c.nodes);
         // Close the modal or perform any other necessary actions
         // Get the node document from the database
         const nodeDoc = await getDoc(
@@ -94,13 +95,13 @@ const Improvements = ({
         // Handle specializations or generalizations
 
         for (let link of removedLinks) {
-          await unlinkPropertyOf(db, property, currentVisibleNode.id, link.id);
+          await unlinkPropertyOf(db, property, currentVisibleNode.id, link);
         }
 
         // Update links for specializations/generalizations
         if (property === "specializations" || property === "generalizations") {
           updateLinks(
-            oldLinks,
+            newLinks,
             { id: currentVisibleNode.id },
             property === "specializations"
               ? "generalizations"
@@ -113,7 +114,7 @@ const Improvements = ({
         // Update parts/isPartOf links
         if (property === "parts" || property === "isPartOf") {
           updatePartsAndPartsOf(
-            oldLinks,
+            newLinks,
             { id: currentVisibleNode.id },
             property === "parts" ? "isPartOf" : "parts",
             db,
@@ -155,7 +156,7 @@ const Improvements = ({
           )
         ) {
           updatePropertyOf(
-            oldLinks,
+            newLinks,
             { id: currentVisibleNode.id },
             property,
             nodes,
@@ -170,15 +171,23 @@ const Improvements = ({
         // Update the node document in the database
         await updateDoc(nodeDoc.ref, nodeData);
 
+        const _addedLinks: { id: string }[] = [];
+        addedLinks.forEach((id) => {
+          _addedLinks.push({ id });
+        });
+        const _removedLinks: { id: string }[] = [];
+        removedLinks.forEach((id) => {
+          _removedLinks.push({ id });
+        });
         //the user modified generalizations
         if (property === "generalizations") {
           await updateLinksForInheritance(
             db,
             currentVisibleNode.id,
-            addedLinks,
-            removedLinks,
+            _addedLinks,
+            _removedLinks,
             currentVisibleNode,
-            oldLinks,
+            newLinks,
             nodes
           );
         }
@@ -186,10 +195,10 @@ const Improvements = ({
           await updateLinksForInheritanceSpecializations(
             db,
             currentVisibleNode.id,
-            addedLinks,
-            removedLinks,
+            _addedLinks,
+            _removedLinks,
             currentVisibleNode,
-            oldLinks,
+            newLinks,
             nodes
           );
         }
