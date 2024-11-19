@@ -639,7 +639,6 @@ const Node = ({
   const handleSaveLinkChanges = useCallback(async () => {
     try {
       // Close the modal or perform any other necessary actions
-      debugger;
       // Get the node document from the database
       const nodeDoc = await getDoc(
         doc(collection(db, NODES), currentVisibleNode.id)

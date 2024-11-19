@@ -77,7 +77,6 @@ const Improvements = ({
       removedLinks: string[]
     ) => {
       try {
-        debugger;
         if (!user?.uname) return;
         const newLinks = newValue?.flatMap((c) => c.nodes);
         // Close the modal or perform any other necessary actions
