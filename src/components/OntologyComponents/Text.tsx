@@ -275,6 +275,7 @@ const Text = ({
 
   return (
     <Paper
+      id={`property-${property}`}
       elevation={9}
       sx={{
         borderRadius: "20px",

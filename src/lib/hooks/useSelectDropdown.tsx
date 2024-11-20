@@ -86,7 +86,10 @@ const useSelectDropdown = () => {
 
   const dropdownDialog = (
     <Dialog open={isOpen} onClose={() => closeDialog()} fullWidth maxWidth="md">
-      <DialogTitle>Copilot Settings:</DialogTitle>
+      <DialogTitle>
+        Improving the sub-ontology around{" "}
+        <strong style={{ color: "orange" }}>{nodeTitle}</strong>:
+      </DialogTitle>
       <DialogContent>
         <TextField
           autoFocus

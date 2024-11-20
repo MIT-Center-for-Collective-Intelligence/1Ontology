@@ -783,7 +783,7 @@ const StructuredProperty = ({
     setEditCollection(collectionName);
     setNewEditCollection(collectionName);
   };
-  console.log("currentImprovement ==>", currentImprovement);
+
   if (
     currentImprovement &&
     !currentImprovement.implemented &&
@@ -804,6 +804,7 @@ const StructuredProperty = ({
 
   return (
     <Paper
+      id={`property-${property}`}
       elevation={9}
       sx={{
         borderRadius: property !== "context" ? "30px" : "",

@@ -391,24 +391,21 @@ const ToolbarSidebar = ({
           setSelectedChatTab(index);
         }
       }
-      setTimeout(
-        () => {
-          const element = document.getElementById(`message-${messageId}`);
-          if (element) {
-            element.scrollIntoView({ behavior: "smooth", block: "center" });
-            element.style.borderRadius = "8px";
-            element.style.padding = "8px";
-            element.style.marginTop = "8px";
-            element.style.backgroundColor = `#deab8b99`;
-            element.style.transition = "background-color 0.5s ease";
-            setTimeout(() => {
-              element.style.border = "none";
-              element.style.backgroundColor = ``;
-            }, 3000);
-          }
-        },
-        type === "node" ? 2000 : 1000
-      );
+      setTimeout(() => {
+        const element = document.getElementById(`message-${messageId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          element.style.borderRadius = "8px";
+          element.style.padding = "8px";
+          element.style.marginTop = "8px";
+          element.style.backgroundColor = `#deab8b99`;
+          element.style.transition = "background-color 0.5s ease";
+          setTimeout(() => {
+            element.style.border = "none";
+            element.style.backgroundColor = ``;
+          }, 3000);
+        }
+      }, 500);
     },
     [db, user]
   );
@@ -575,7 +572,7 @@ const ToolbarSidebar = ({
             ) {
               const value = [];
               for (let nodeT of propertyValue) {
-                if (nodesByTitle[nodeT].id) {
+                if (nodesByTitle[nodeT]?.id) {
                   value.push({ id: nodesByTitle[nodeT].id });
                 }
               }
@@ -618,6 +615,21 @@ const ToolbarSidebar = ({
       setSelectedDiffNode(null);
     }
 
+    if (improvement.changes) {
+      const change = improvement.changes[0];
+      const property = Object.keys(change || {}).filter(
+        (p) => p !== "reasoning"
+      )[0];
+
+      const element = document.getElementById(`property-${property}`);
+
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 500);
+      }
+    }
+
     if (!improvement) {
       setCurrentImprovement(null);
       setImprovements([]);
@@ -641,6 +653,7 @@ const ToolbarSidebar = ({
       userMessage: string;
       deepNumber: number;
     };
+
     if (!options) return;
     const { model, userMessage, deepNumber } = options;
     setIsLoadingCopilot(true);

@@ -115,7 +115,7 @@ export const filterProposals = async (
 
           if (
             typeof nodeData.properties[property] === "string" ||
-            property === "title"
+            typeof change[property] === "string"
           ) {
             const newValue = change[property];
             const previousValue =
