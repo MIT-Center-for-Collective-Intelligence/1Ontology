@@ -17,10 +17,12 @@ import { INode } from " @components/types/INode";
 import fbAuth from " @components/middlewares/fbAuth";
 import { getDoerCreate, recordLogs } from " @components/lib/utils/helpers";
 import {
+  copilotNewNode,
   Improvement,
-  newNodeProposal,
   PROPOSALS_SCHEMA,
 } from " @components/lib/utils/copilotPrompts";
+import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import { ChatModel } from "openai/resources/chat/chat";
 
 const saveLogs = (
   uname: string,
@@ -58,23 +60,31 @@ const extractJSON = (text: string) => {
     return { jsonObject: {}, isJSON: false };
   }
 };
-const sendLLMRequest = async ({ messages, model, uname }: any) => {
+const sendLLMRequest = async ({
+  prompt,
+  model = process.env.MODEL as ChatModel,
+  uname,
+}: {
+  prompt: string;
+  model: ChatModel | "Gemini 1.5 PRO";
+  uname: string;
+}) => {
   try {
-    if (messages.length <= 0) {
-      throw new Error("Prompt is required");
+    if (!prompt.trim() || !model.trim()) {
+      throw new Error("Prompt and model are required");
     }
     if (model === "Gemini 1.5 PRO") {
       const contents: Content[] = [];
-      for (let message of messages) {
-        contents.push({
-          role: "user",
-          parts: [
-            {
-              text: message.content,
-            },
-          ],
-        });
-      }
+
+      contents.push({
+        role: "user",
+        parts: [
+          {
+            text: prompt,
+          },
+        ],
+      });
+
       const response = await askGemini(contents);
       return response;
     }
@@ -85,9 +95,16 @@ const sendLLMRequest = async ({ messages, model, uname }: any) => {
     };
     for (let i = 0; i < 4; i++) {
       try {
+        const messages: Array<ChatCompletionMessageParam> = [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ];
+
         const completion = await openai.chat.completions.create({
           messages,
-          model: model || process.env.MODEL,
+          model,
           temperature,
         });
 
@@ -125,7 +142,7 @@ const sendLLMRequest = async ({ messages, model, uname }: any) => {
 let guidelines: any = null;
 const proposerAgent = async (
   userMessage: string,
-  model: string,
+  model: ChatModel | "Gemini 1.5 PRO",
   nodesArray: any[],
   uname: string,
   proposalsJSON: any = {},
@@ -185,14 +202,9 @@ ${JSON.stringify(guidelines, null, 2)}
 
     const response: {
       improvements: Improvement[];
-      newNodeProposal: newNodeProposal[];
+      new_nodes: copilotNewNode[];
     } = await sendLLMRequest({
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
+      prompt,
       model,
       uname,
     });
@@ -227,7 +239,7 @@ const getNodes = async (): Promise<Record<string, INode>> => {
 
 export const generateProposals = async (
   userMessage: string,
-  model: string,
+  model: ChatModel | "Gemini 1.5 PRO",
   deepNumber: number,
   nodeId: string,
   uname: string,
@@ -273,9 +285,16 @@ export const generateProposals = async (
 async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
   try {
     const { userMessage, model, deepNumber, nodeId, user } = req.body.data;
-    if (!user?.userData) {
+
+    if (
+      !user?.userData ||
+      (model !== "o1-preview" &&
+        model !== "gpt-4o" &&
+        model !== "Gemini 1.5 PRO")
+    ) {
       throw new Error("Access forbidden");
     }
+    
     const { uname } = user?.userData;
 
     console.log(" userMessage, model, deepNumber, nodeId", {

@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -27,16 +28,22 @@ const useSelectDropdown = () => {
     title: string;
   }>({ id: "o1-preview", title: "O1" });
   const [inputValue, setInputValue] = useState<string>("");
-  const [numberValue, setNumberValue] = useState<number>(7);
+  const [numberValue, setNumberValue] = useState<number>(12);
+  const [nodeTitle, setNodeTitle] = useState("");
   const resolveRef = React.useRef<any>(null);
   // localStorage.setItem(
   //   `lastSearches_${user?.userId}`,
   //   JSON.stringify(validSearches)
   // );
-  const showDialog = useCallback(() => {
+  const showDialog = useCallback((nodeTitle: string) => {
     setIsOpen(true);
+    setNodeTitle(nodeTitle);
     const savedInputValue = localStorage.getItem(`user-copilot-message`);
+    const savedNumberValue = localStorage.getItem(`user-number-value`);
     setInputValue(savedInputValue || "");
+    if (savedNumberValue) {
+      setNumberValue(Number(savedNumberValue));
+    }
     return new Promise<{
       userMessage: string;
       model: string;
@@ -50,6 +57,7 @@ const useSelectDropdown = () => {
     (start: boolean = false) => {
       setIsOpen(false);
       localStorage.setItem(`user-copilot-message`, inputValue);
+      localStorage.setItem(`user-number-value`, String(numberValue));
       setNumberValue(7);
 
       if (resolveRef.current && start) {
@@ -80,16 +88,13 @@ const useSelectDropdown = () => {
     <Dialog open={isOpen} onClose={() => closeDialog()} fullWidth maxWidth="md">
       <DialogTitle>Copilot Settings:</DialogTitle>
       <DialogContent>
-        <DialogContentText sx={{ mb: "15px" }}>
-          Select the LLM model you want to use:
-        </DialogContentText>
         <TextField
           autoFocus
           margin="dense"
           id="prompt-input"
+          label="Please write your instructions to co-pilot here:"
           type="text"
           value={inputValue}
-          placeholder="Your message to the LLM"
           onChange={handleInputChange}
           fullWidth
           multiline
@@ -98,6 +103,9 @@ const useSelectDropdown = () => {
             mx: "auto",
             display: "block",
             textAlign: "center",
+            "& .MuiInputLabel-root": {
+              color: "gray",
+            },
           }}
         />
 
@@ -119,7 +127,13 @@ const useSelectDropdown = () => {
           margin="dense"
           id="number-input"
           type="number"
-          label="How far away from this node should I explore to propose improvements?"
+          label={
+            <Box>
+              How far away from this node{" "}
+              <strong style={{ color: "orange" }}>{nodeTitle} </strong>
+              should I explore to propose improvements?
+            </Box>
+          }
           value={numberValue || ""}
           onChange={handleNumberChange}
           fullWidth
@@ -160,7 +174,10 @@ const useSelectDropdown = () => {
     </Dialog>
   );
 
-  const selectIt = useCallback(() => showDialog(), [showDialog]);
+  const selectIt = useCallback(
+    (nodeTitle: string) => showDialog(nodeTitle),
+    [showDialog]
+  );
 
   return { selectIt, dropdownDialog };
 };

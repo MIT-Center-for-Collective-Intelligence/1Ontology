@@ -25,12 +25,43 @@ export const sendLLMRequest = async (
   }
 };
 
-export type newNodeProposal = {
+export type copilotNewNode = {
   title: string;
   description: string;
-  first_generalization: string;
-  reasoning: string;
+  generalizations: string[];
+  parts: string[];
+  isPartOf: string[];
+  nodeType:
+    | "activity"
+    | "actor"
+    | "group"
+    | "object"
+    | "evaluationDimension"
+    | "reward"
+    | "incentive";
+  actor?: string[];
+  objectsActedOn?: string[];
+  evaluationDimension?: string[];
+  postConditions?: string;
+  preConditions?: string;
+  abilities?: string;
+  typeOfActor?: string;
+  listOfIndividualsInGroup?: string;
+  numberOfIndividualsInGroup?: number;
+  lifeSpan?: string;
+  modifiability?: string;
+  perceivableProperties?: string;
+  criteriaForAcceptability?: string;
+  directionOfDesirability?: string;
+  evaluationType?: string;
+  measurementUnits?: string;
+  units?: string;
+  capabilitiesRequired?: string;
+  rewardFunction?: string;
+  reward?: string[];
+  reasoning?: string;
 };
+
 export type Improvement = {
   title: string;
   nodeType:
@@ -325,10 +356,47 @@ Each item should represent an object proposing a new node. Please structure each
 {
    "title": "The title of the new node.",
    "description": "The description of the node.",
-   "first_generalization": "A string representing the title of the node that you would like to specify as the first generalization of this new node; i.e., the new node should be classified as one of its specializations.
-   "reasoning": "Your reasoning for proposing this new node"
+   "generalizations": [], // An array of titles (as strings) of nodes that are generalizations of this node. These are nodes that this node is a specific type of. Example: "Turn around aircraft" is a generalization of "Change user of physical object" because turning around an aircraft changes its users.
+   "parts": [], // An array of titles (as strings) of nodes that are parts of this node. These are the components or sub-nodes that make up this node. For activities, parts are the sub-activities needed to achieve the overall activity goal.
+   "isPartOf": [], // An array of titles (as strings) of nodes that this node is a part of. These are larger nodes that this node is a component of. For activities, it includes larger activities of which this is a sub-activity. Example: The activity "Dress seats" is part of "Clean aircraft."
+   // The following objects should only be included if "nodeType" is "activity":
+   "actor": [], // An array of titles (as strings) of nodes that are individuals or groups that perform the original activity node.
+   "Objects Acted on": [], // An array of titles (as strings) of nodes that are objects that the original activity node is performed on.
+   "evaluationDimension": [], // An array of titles (as strings) of nodes that are evaluation dimensions of the original node. These are criteria used to assess the performance of this activity.
+   "postConditions": "The conditions that must be met before this activity can be performed.",
+   "preConditions": "The pre-conditions of the activity that must be met before this activity can be performed.",
+   // The following fields should only be included if "nodeType" is "actor":
+   "abilities": "The skills or abilities required of this actor.",
+   "typeOfActor": "The type of actor.",
+   // The following fields should only be included if "nodeType" is "group":
+   "abilities": "The skills or abilities required of the actors that belong to this group.",
+   "typeOfActor": "The specific types of actors that belong to this group.",
+   "listOfIndividualsInGroup": "The list of individuals that make up this group.",
+   "numberOfIndividualsInGroup": "The number of individuals in the group.",
+   // The following fields should only be included if "nodeType" is "object":
+   "LifeSpan": "The lifespan of the object.",
+   "modifiability": "The modifiability of the object.",
+   "perceivableProperties": "The perceivable properties of the object.",
+   // The following fields should only be included if "nodeType" is "evaluationDimension":
+   "criteriaForAcceptability": "The standards used to determine if the activity's performance meets expectations according to this evaluation dimension.",
+   "directionOfDesirability": "Indicates whether an increase or decrease in measurement would be considered desirable for this activity's performance.",
+   "evaluationType": "The evaluation type of the evaluation dimension.",
+   "measurementUnits": "The units used to quantify this evaluation dimension.",
+   // The following fields should only be included if "nodeType" is "reward":
+   "units": "The units of the reward.",
+   // The following fields should only be included if "nodeType" is "incentive":
+   "capabilitiesRequired": "The capabilities that actors must possess to achieve this incentive.",
+   "rewardFunction": "The way in which the reward is structured or provided.",
+   "evaluationDimension": [], // An array of titles (as strings) of nodes that are evaluation dimensions of the original incentive node.
+   "reward": [], // An array of titles (as strings) of nodes that are rewards of the original incentive node.
+   "reasoning": "Your reasoning for proposing this new node with these specific properties."
 }
 
-IMPORTANT: Please do not propose any new node that already exists in the ontology. Ensure that each node is unique.
+IMPORTANT NOTES:
+- Please do not propose any new node that already exists in the ontology. Ensure that each node is unique.
+- If a 'Main' collection does not exist, please do not create it. 
+- Please note the difference between "Generalizations" and "IsPartOf" properties.
+  - "Generalizations" is an array of entities that this entity is a specific type of. Example: 'Turn around aircraft' is a generalization of 'Change user of physical object' because turning around an aircraft changes its user.
+  - "Is Part Of" is an array of the larger entities that this entity is a component of. For activities, it includes larger activities of which this is a sub-activity. Example: The activity "Dress seats" is part of "Clean aircraft."
 '''
 `;

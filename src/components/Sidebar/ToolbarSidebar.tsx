@@ -86,8 +86,8 @@ import {
 } from " @components/lib/utils/copilotHelpers";
 import useSelectDropdown from " @components/lib/hooks/useSelectDropdown";
 import {
+  copilotNewNode,
   Improvement,
-  newNodeProposal,
   sendLLMRequest,
 } from " @components/lib/utils/copilotPrompts";
 import OntologyHistory from "../ActiveUsers/OntologyHistory";
@@ -489,7 +489,7 @@ const ToolbarSidebar = ({
   };
 
   useEffect(() => {
-    if (user?.uname === "ouhrac" || user?.uname === "1man") {
+    if (!!user?.admin) {
       const nodesByT: { [nodeTitle: string]: INode } = {};
       for (let nodeId in nodes) {
         const nodeTitle = nodes[nodeId].title;
@@ -499,14 +499,7 @@ const ToolbarSidebar = ({
     }
   }, [nodes, user]);
 
-  const getNewNodes = (
-    newNodes: {
-      title: string;
-      description: string;
-      first_generalization: string;
-      reasoning: string;
-    }[]
-  ): any => {
+  const getNewNodes = (newNodes: copilotNewNode[]): any => {
     try {
       if (!user?.uname) return;
       const _NODES = [];
@@ -515,7 +508,8 @@ const ToolbarSidebar = ({
         if (!!nodesByTitle[node.title]) {
           continue;
         }
-        const generalization = nodesByTitle[node?.first_generalization];
+        const first_generalization = node.generalizations[0];
+        const generalization = nodesByTitle[first_generalization];
         if (!generalization) continue;
 
         const newId = doc(collection(db, NODES)).id;
@@ -532,6 +526,73 @@ const ToolbarSidebar = ({
           generalization.id,
           user?.uname
         );
+
+        for (let p in node) {
+          const property:
+            | "title"
+            | "description"
+            | "generalizations"
+            | "parts"
+            | "isPartOf"
+            | "nodeType"
+            | "actor"
+            | "objectsActedOn"
+            | "evaluationDimension"
+            | "postConditions"
+            | "preConditions"
+            | "abilities"
+            | "typeOfActor"
+            | "listOfIndividualsInGroup"
+            | "numberOfIndividualsInGroup"
+            | "lifeSpan"
+            | "modifiability"
+            | "perceivableProperties"
+            | "criteriaForAcceptability"
+            | "directionOfDesirability"
+            | "evaluationType"
+            | "measurementUnits"
+            | "units"
+            | "capabilitiesRequired"
+            | "rewardFunction"
+            | "reward"
+            | "reasoning" = p as any;
+          if (
+            property === "title" ||
+            property === "generalizations" ||
+            property === "reasoning"
+          ) {
+            continue;
+          }
+
+          const propertyValue: any = node[property];
+          if (newNode.properties.hasOwnProperty(property)) {
+            if (inheritance[property]) {
+              inheritance[property].ref = null;
+            }
+            if (
+              Array.isArray(newNode.properties[property]) &&
+              Array.isArray(propertyValue)
+            ) {
+              const value = [];
+              for (let nodeT of propertyValue) {
+                if (nodesByTitle[nodeT].id) {
+                  value.push({ id: nodesByTitle[nodeT].id });
+                }
+              }
+              newNode.properties[property] = [
+                {
+                  collectionName: "main",
+                  nodes: value,
+                },
+              ];
+            } else if (
+              typeof newNode.properties[property] === "string" &&
+              typeof propertyValue === "string"
+            ) {
+              newNode.properties[property] = propertyValue;
+            }
+          }
+        }
         if (!!node?.description) {
           inheritance.description.ref = null;
           newNode.properties.description = node.description;
@@ -541,7 +602,7 @@ const ToolbarSidebar = ({
           newNode: true,
           reasoning: node.reasoning,
           generalizationId: generalization.id,
-          first_generalization: node?.first_generalization,
+          first_generalization: first_generalization,
         });
       }
 
@@ -575,7 +636,7 @@ const ToolbarSidebar = ({
   };
 
   const handleImproveClick = async () => {
-    const options = (await selectIt()) as {
+    const options = (await selectIt(currentVisibleNode.title)) as {
       model: string;
       userMessage: string;
       deepNumber: number;
@@ -592,7 +653,7 @@ const ToolbarSidebar = ({
         currentVisibleNode.id
       )) as {
         improvements: Improvement[];
-        new_nodes: newNodeProposal[];
+        new_nodes: copilotNewNode[];
         message: string;
       };
       if (!response) {
