@@ -168,6 +168,7 @@ const Ontology = () => {
   const [displayGuidelines, setDisplayGuidelines] = useState(false);
   const [prevHash, setPrevHash] = useState("");
   const [lastSearches, setLastSearches] = useState<any[]>([]);
+  const [selectedChatTab, setSelectedChatTab] = useState<number>(0);
 
   useEffect(() => {
     if (user) {
@@ -838,6 +839,7 @@ const Ontology = () => {
       if (activeSidebar === sidebarName) {
         setActiveSidebar(null);
       } else {
+        setSelectedChatTab(0);
         handleExpandSidebar(sidebarName);
       }
     },
@@ -1077,6 +1079,8 @@ const Ontology = () => {
             setCurrentImprovement={setCurrentImprovement}
             lastSearches={lastSearches}
             updateLastSearches={updateLastSearches}
+            selectedChatTab={selectedChatTab}
+            setSelectedChatTab={setSelectedChatTab}
           />
         </Container>
         {ConfirmDialog}

@@ -116,6 +116,8 @@ type MainSidebarProps = {
   setCurrentImprovement: any;
   lastSearches: string[];
   updateLastSearches: Function;
+  selectedChatTab: any;
+  setSelectedChatTab: any;
 };
 
 const ToolbarSidebar = ({
@@ -142,6 +144,8 @@ const ToolbarSidebar = ({
   setCurrentImprovement,
   lastSearches,
   updateLastSearches,
+  selectedChatTab,
+  setSelectedChatTab,
 }: MainSidebarProps) => {
   const theme = useTheme();
   const db = getFirestore();
@@ -164,7 +168,7 @@ const ToolbarSidebar = ({
   const isProfileMenuOpen = Boolean(profileMenuOpen);
   const [activeUsers, setActiveUsers] = useState<any>({});
   const [previousNodeId, setPreviousNodeId] = useState("");
-  const [selectedChatTab, setSelectedChatTab] = useState<number>(0);
+
   const [isLoadingCopilot, setIsLoadingCopilot] = useState(false);
   const [nodesByTitle, setNodesByTitle] = useState<{
     [nodeTitle: string]: INode;
