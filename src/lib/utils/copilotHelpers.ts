@@ -1,270 +1,176 @@
-import { ICollection, INode } from " @components/types/INode";
-import { Improvement } from "./copilotPrompts";
+import { ICollection, ILinkNode, INode } from " @components/types/INode";
+import { IChange, Improvement } from "./copilotPrompts";
 import { recordLogs } from "./helpers";
 
-export const compareProperty = (
-  change: any,
-  nodeData: INode,
-  property: string,
-  nodesByTitle: { [nodeTitle: string]: INode }
-) => {
+export const getChangeComparison = ({
+  change,
+  nodeData,
+  nodesByTitle,
+}: {
+  change: Partial<IChange>;
+  nodeData: INode;
+  nodesByTitle: { [title: string]: { id: string } };
+}) => {
   try {
-    let changedProperty = false;
-    const isParentOrChild =
-      property === "specializations" || property === "generalizations";
-    const propertyValue = isParentOrChild
-      ? nodeData[property as "specializations" | "generalizations"]
-      : nodeData.properties[property];
-    if (!Array.isArray(propertyValue)) return;
+    const modifiedProperty: string = change.modified_property as string;
+    const addedNonExistentElements: string[] = [];
 
-    const nodePropertyIds = propertyValue
-      .flatMap((spec) => spec.nodes)
-      .map((n) => n.id);
+    const propertyType = nodeData.propertyType[modifiedProperty];
+    const result: ICollection[] = [];
+    const final_result: ICollection[] = [];
+    /*  */
+    if (
+      modifiedProperty === "specializations" &&
+      Array.isArray(change.new_value)
+    ) {
+      const addedCollections = [];
+      const specializations = nodeData[modifiedProperty as "specializations"];
+      const _collections = specializations.flatMap((c) => c.collectionName);
+      const nodesToRemove = new Set();
+      for (let collection of change.new_value) {
+        if (!_collections.includes(collection.collectionName)) {
+          addedCollections.push(collection.collectionName);
+        }
 
-    const existingCollectionNames = propertyValue.map(
-      (c: ICollection) => c.collectionName
-    );
-    let addedNonExistentElements = [];
-    const proposalPropertyIds: string[] = [];
-    for (let collection of change[property]) {
-      const newNodes = [];
-      for (let nodeTitle of collection.nodes) {
-        const id = nodesByTitle[nodeTitle]?.id;
-        if (id) {
-          newNodes.push({
-            id,
-          });
-          proposalPropertyIds.push(id);
+        const nodes = [];
+        const final_nodes = [];
+        for (let title of collection.collection_changes.final_array) {
+          const nodeId = nodesByTitle[title].id;
+          if (!nodeId) {
+            addedNonExistentElements.push(title);
+            continue;
+          }
+          if (collection.collection_changes.nodes_to_add.includes(title)) {
+            nodes.push({ id: nodeId, change: "added" });
+          } else {
+            nodes.push({ id: nodeId });
+          }
+          final_nodes.push({ id: nodeId });
+        }
+        for (let title of collection.collection_changes.nodes_to_delete) {
+          const nodeId = nodesByTitle[title].id;
+          if (nodeId) {
+            nodes.push({ id: nodeId, change: "removed" });
+            nodesToRemove.add(nodeId);
+          }
+        }
+
+        result.push({
+          collectionName: collection.collectionName,
+          nodes: nodes,
+        });
+        final_result.push({
+          collectionName: collection.collectionName,
+          nodes: final_nodes,
+        });
+      }
+      return {
+        result,
+        final_result,
+        addedNonExistentElements,
+        addedCollections,
+      };
+    }
+    /*  */
+    if (
+      change.modified_property !== "specializations" &&
+      propertyType !== "string-array" &&
+      propertyType !== "string" &&
+      change.new_value
+    ) {
+      const newValue = change.new_value as {
+        nodes_to_add: string[];
+        nodes_to_delete: string[];
+        final_array: string[];
+      };
+      const nodes = [];
+      const final_nodes = [];
+      const nodesToRemove = new Set();
+      for (let title of newValue.final_array) {
+        const nodeId = nodesByTitle[title].id;
+        if (!nodeId) {
+          addedNonExistentElements.push(title);
+          continue;
+        }
+        if (newValue.nodes_to_add.includes(title)) {
+          nodes.push({ id: nodeId, change: "added" });
         } else {
-          addedNonExistentElements.push(nodeTitle);
+          nodes.push({ id: nodeId });
+        }
+        final_nodes.push({
+          id: nodeId,
+        });
+      }
+      for (let title of newValue.nodes_to_delete) {
+        const nodeId = nodesByTitle[title].id;
+        if (nodeId) {
+          nodes.push({ id: nodeId, change: "removed" });
+          nodesToRemove.add(nodeId);
         }
       }
-      collection.nodes = newNodes;
-    }
-
-    const addedLinks = proposalPropertyIds.filter(
-      (id: string) => !nodePropertyIds.includes(id)
-    );
-    const removedLinks = nodePropertyIds.filter(
-      (id: string) => !proposalPropertyIds.includes(id)
-    );
-    if (removedLinks.length > 0) {
-      changedProperty = true;
-    }
-    if (addedLinks.length > 0) {
-      changedProperty = true;
-    }
-
-    const proposedCollectionNames = change[property].map(
-      (c: ICollection) => c.collectionName
-    );
-
-    const removedCollections = existingCollectionNames.filter(
-      (name: string) => !proposedCollectionNames.includes(name)
-    );
-
-    const addedCollections = proposedCollectionNames.filter(
-      (name: string) => !existingCollectionNames.includes(name)
-    );
-    let collectionsModified = false;
-    if (removedCollections.length > 0) {
-      changedProperty = true;
-      collectionsModified = true;
-    }
-
-    if (addedCollections.length > 0) {
-      changedProperty = true;
-      collectionsModified = true;
-    }
-    const collectionMainIdx = change[property].findIndex(
-      (c: ICollection) => c.collectionName === "main"
-    );
-    if (collectionMainIdx === -1) {
-      change[property].push({
+      result.push({
         collectionName: "main",
-        nodes: [],
+        nodes,
       });
+      final_result.push({
+        collectionName: "main",
+        nodes: final_nodes,
+      });
+      return {
+        result,
+        final_result,
+        addedNonExistentElements: [],
+        addedCollections: [],
+        nodesToRemove,
+      };
     }
-    return {
-      changedProperty,
-      removedLinks,
-      addedLinks,
-      collectionsModified,
-      addedNonExistentElements,
-    };
-  } catch (error) {
-    console.error("error at compareProperty", error);
-  }
-};
-export const filterProposals = async (
-  improvements: any[],
-  nodesByTitle: { [nodeTitle: string]: INode }
-): Promise<Improvement[]> => {
-  try {
-    const improvementsCopy = JSON.parse(JSON.stringify(improvements));
-    const filteredImprovements = [];
-    for (let improvement of improvementsCopy) {
-      const nodeData = nodesByTitle[improvement?.title];
-      if (improvement?.title && nodeData) {
-        const changes = [];
-        for (let _change of improvement.changes) {
-          const change = JSON.parse(JSON.stringify(_change));
-          const property = Object.keys(change).filter(
-            (k) => k !== "reasoning"
-          )[0];
+    /*  */
+    if (
+      propertyType === "string-array" &&
+      (change.modified_property === "postConditions" ||
+        change.modified_property === "preConditions")
+    ) {
+      const newValue = change.new_value as {
+        conditions_to_add: string[];
+        conditions_to_delete: string[];
+        final_array: string[];
+      };
 
-          if (
-            typeof nodeData.properties[property] === "string" ||
-            typeof change[property] === "string"
-          ) {
-            const newValue = change[property];
-            const previousValue =
-              property === "title"
-                ? nodeData.title
-                : nodeData.properties[property];
-            if (newValue !== previousValue) {
-              changes.push(change);
-            }
-          } else {
-            if (property !== "specializations") {
-              change[property] = [
-                { collectionName: "main", nodes: change[property] },
-              ];
-            } else {
-              const mainCollectionIdx = change[property].findIndex(
-                (c: any) => c.collectionName === "main"
-              );
-              if (mainCollectionIdx === -1) {
-                change[property].push({
-                  collectionName: "main",
-                  nodes: [],
-                });
-              }
-            }
-            const response: any = compareProperty(
-              change,
-              nodeData,
-              property,
-              nodesByTitle
-            );
-            const { changedProperty } = response;
+      return {
+        changeDetails: {
+          addedElements: newValue.conditions_to_add,
+          removedElements: newValue.conditions_to_delete,
+          newValue: newValue.final_array,
+        },
+      };
+    }
+    /*  */
+    if (propertyType === "string" || modifiedProperty === "title") {
+      const _change = { ...change } as {
+        modified_property: string;
+        new_value: string;
+        reasoning: string;
+      };
+      const propertyValue =
+        modifiedProperty === "title"
+          ? nodeData.title
+          : nodeData.properties[modifiedProperty];
 
-            if (changedProperty) {
-              changes.push(_change);
-            }
-          }
-        }
-        if (changes.length > 0) {
-          improvement.changes = changes;
-          filteredImprovements.push(improvement);
-        }
+      if (_change.new_value !== propertyValue) {
+        return {
+          changeDetails: {
+            newValue: _change.new_value,
+            previousValue: propertyValue,
+          },
+        };
+      } else {
+        return null;
       }
     }
 
-    return filteredImprovements;
-  } catch (error: any) {
-    console.error("Error comparing proposals:", error);
-    recordLogs({
-      type: "error",
-      error: JSON.stringify({
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      }),
-      at: "filterProposals",
-    });
-    return [];
-  }
-};
-
-export const compareProposals = async (
-  improvements: any[],
-  nodesByTitle: { [nodeTitle: string]: INode }
-) => {
-  try {
-    const improvementsCopy = JSON.parse(JSON.stringify(improvements));
-
-    for (let improvement of improvementsCopy) {
-      const nodeData = nodesByTitle[improvement.title];
-      if (nodeData) {
-        const detailsOfChange = [];
-        const modifiedProperties: any = {};
-        for (let change of improvement.changes) {
-          const property = Object.keys(change).filter(
-            (k) => k !== "reasoning"
-          )[0];
-
-          if (
-            typeof nodeData.properties[property] === "string" ||
-            property === "title"
-          ) {
-            modifiedProperties[property] = change.reasoning;
-            detailsOfChange.push({
-              modifiedProperty: property,
-              previousValue:
-                property === "title"
-                  ? nodeData.title
-                  : nodeData.properties[property],
-              newValue: change[property],
-            });
-          } else {
-            if (property !== "specializations") {
-              change[property] = [
-                { collectionName: "main", nodes: change[property] },
-              ];
-            } else {
-              const mainCollectionIdx = change[property].findIndex(
-                (c: any) => c.collectionName === "main"
-              );
-              if (mainCollectionIdx === -1) {
-                change[property].push({
-                  collectionName: "main",
-                  nodes: [],
-                });
-              }
-            }
-            const response: any = compareProperty(
-              change,
-              nodeData,
-              property,
-              nodesByTitle
-            );
-            const {
-              changedProperty,
-              removedLinks,
-              addedLinks,
-              collectionsModified,
-            } = response;
-
-            const isParentOrChild =
-              property === "specializations" || property === "generalizations";
-            const previousValue = isParentOrChild
-              ? nodeData[property as "specializations" | "generalizations"]
-              : nodeData.properties[property];
-
-            if (changedProperty) {
-              modifiedProperties[property] = change.reasoning;
-              detailsOfChange.push({
-                modifiedProperty: property,
-                previousValue,
-                newValue: change[property],
-                collectionsModified,
-                structuredProperty: true,
-                removedLinks: removedLinks,
-                addedLinks: addedLinks,
-              });
-            }
-          }
-        }
-        improvement.detailsOfChange = detailsOfChange;
-        improvement.nodeId = nodeData.id;
-        improvement.modifiedProperties = modifiedProperties;
-      }
-    }
-
-    return improvementsCopy;
+    return null;
   } catch (error) {
-    console.error("Error comparing proposals:", error);
+    console.error(error);
   }
 };
 
@@ -276,86 +182,54 @@ export const compareImprovement = (
   const nodeData = nodesByTitle[improvement.title];
 
   if (nodeData) {
-    const detailsOfChange = [];
-    const modifiedProperties: any = {};
-    for (let change of _improvement.changes) {
-      const property = Object.keys(change).filter((k) => k !== "reasoning")[0];
-      if (!property) {
-        continue;
-      }
-      if (!!_improvement?.implemented) {
-        modifiedProperties[property] = { reasoning: change.reasoning };
-        continue;
-      }
-      if (
-        typeof nodeData.properties[property] === "string" ||
-        property === "title"
-      ) {
-        modifiedProperties[property] = { reasoning: change.reasoning };
-        detailsOfChange.push({
-          modifiedProperty: property,
-          previousValue:
-            property === "title"
-              ? nodeData.title
-              : nodeData.properties[property],
-          newValue: change[property],
-        });
-      } else {
-        if (property !== "specializations") {
-          change[property] = [
-            { collectionName: "main", nodes: change[property] },
-          ];
-        } else {
-          const mainCollectionIdx = change[property].findIndex(
-            (c: any) => c.collectionName === "main"
-          );
-          if (mainCollectionIdx === -1) {
-            change[property].push({
-              collectionName: "main",
-              nodes: [],
-            });
-          }
-        }
-        const response: any = compareProperty(
-          change,
-          nodeData,
-          property,
-          nodesByTitle
-        );
-        const {
-          changedProperty,
-          removedLinks,
-          addedLinks,
-          collectionsModified,
-          addedNonExistentElements,
-        } = response;
+    const change = _improvement.change;
+    const modifiedProperty = change.modified_property;
+    const propertyType = nodeData.propertyType[modifiedProperty];
+    const response: any = getChangeComparison({
+      change,
+      nodeData,
+      nodesByTitle,
+    });
+    let propertyValue: any = null;
+    if (
+      modifiedProperty === "specializations" ||
+      modifiedProperty === "generalizations" ||
+      modifiedProperty === "title"
+    ) {
+      propertyValue =
+        nodeData[
+          modifiedProperty as "specializations" | "generalizations" | "title"
+        ];
+    } else {
+      propertyValue = nodeData.properties[modifiedProperty];
+    }
 
-        const isParentOrChild =
-          property === "specializations" || property === "generalizations";
-        const previousValue = isParentOrChild
-          ? nodeData[property as "specializations" | "generalizations"]
-          : nodeData.properties[property];
-
-        modifiedProperties[property] = {
-          reasoning: change.reasoning,
-          addedNonExistentElements,
+    console.log("response==>", response);
+    if (response !== null) {
+      if (propertyType !== "string" && propertyType !== "string-array") {
+        _improvement.detailsOfChange = {
+          comparison: response.result,
+          newValue: response.final_result,
+          previousValue: propertyValue,
+          addedNonExistentElements: response.addedNonExistentElements,
+          addedCollections: response.addedCollections,
         };
-        if (changedProperty) {
-          detailsOfChange.push({
-            modifiedProperty: property,
-            previousValue,
-            newValue: change[property],
-            collectionsModified,
-            structuredProperty: true,
-            removedLinks: removedLinks,
-            addedLinks: addedLinks,
-          });
-        }
+      } else if (propertyType === "string" || propertyType === "string-array") {
+        _improvement.detailsOfChange = response.changeDetails;
       }
     }
-    _improvement.detailsOfChange = detailsOfChange;
     _improvement.nodeId = nodeData.id;
-    _improvement.modifiedProperties = modifiedProperties;
+    _improvement.modifiedProperty = modifiedProperty;
+    if (modifiedProperty !== "specializations") {
+      _improvement.modiPropertyType = propertyType;
+    }
   }
   return _improvement;
+};
+
+export const filterProposals = (
+  improvements: Improvement[],
+  nodesByTitle: { [title: string]: { id: string } }
+) => {
+  return improvements;
 };

@@ -1081,6 +1081,7 @@ const Ontology = () => {
             updateLastSearches={updateLastSearches}
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
+            displayGuidelines={displayGuidelines}
           />
         </Container>
         {ConfirmDialog}

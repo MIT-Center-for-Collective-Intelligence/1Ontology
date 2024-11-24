@@ -1,5 +1,6 @@
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import { LoadingButton } from "@mui/lab";
 import { Box, Button, Paper, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
@@ -27,6 +28,8 @@ const ImprovementsSlider = ({
   currentIndex,
   setCurrentIndex,
 }: IProposalSliderProps) => {
+  const [implementingProposal, setImplementingProposal] =
+    useState<boolean>(false);
   useEffect(() => {
     if (!proposals[currentIndex]) {
       return;
@@ -82,19 +85,27 @@ const ImprovementsSlider = ({
   };
 
   const onHandleAcceptChange = async () => {
-    const diffChange = await handleAcceptChange(currentImprovement);
-    setImprovements((prev: any) => {
-      prev[currentIndex].implemented = true;
-      if (diffChange) {
-        prev[currentIndex].diffChange = diffChange;
-      }
-      return prev;
-    });
-    setCurrentImprovement((prev: any) => {
-      const _prev = { ...prev };
-      _prev.implemented = true;
-      return _prev;
-    });
+    try {
+      setImplementingProposal(true);
+      const diffChange = await handleAcceptChange(currentImprovement);
+
+      setImprovements((prev: any) => {
+        prev[currentIndex].implemented = true;
+        if (diffChange) {
+          prev[currentIndex].diffChange = diffChange;
+        }
+        return prev;
+      });
+      setCurrentImprovement((prev: any) => {
+        const _prev = { ...prev };
+        _prev.implemented = true;
+        return _prev;
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setImplementingProposal(false);
+    }
   };
   const onHandleRejectChange = () => {
     setImprovements((prev: any) => {
@@ -121,143 +132,137 @@ const ImprovementsSlider = ({
           transform: `translateX(-${currentIndex * 100}%)`,
         }}
       >
-        {currentImprovement &&
-          proposals.map((proposal: any, index: number) => (
-            <Box key={index} sx={{ display: "flex", minWidth: "100%" }}>
-              <Button
-                variant="contained"
-                sx={{
-                  minWidth: "32px",
-                  p: 0,
-                  m: 0,
-                  // ml: "-14px",
-                  backgroundColor: "#1973d3",
-                  borderTopLeftRadius: "0px",
-                  borderBottomLeftRadius: "0px",
-                  ":hover": { backgroundColor: "#084694" },
-                  zIndex: 99999,
-                }}
-                onClick={() => handlePrevious()}
-                disabled={proposal === null}
-              >
-                <ArrowBackIosNewIcon />
-              </Button>
+        {proposals.map((proposal: any, index: number) => (
+          <Box key={index} sx={{ display: "flex", minWidth: "100%" }}>
+            <Button
+              variant="contained"
+              sx={{
+                minWidth: "32px",
+                p: 0,
+                m: 0,
+                // ml: "-14px",
+                backgroundColor: "#1973d3",
+                borderTopLeftRadius: "0px",
+                borderBottomLeftRadius: "0px",
+                ":hover": { backgroundColor: "#084694" },
+                zIndex: 99999,
+              }}
+              onClick={() => handlePrevious()}
+              disabled={proposal === null}
+            >
+              <ArrowBackIosNewIcon />
+            </Button>
 
-              <Paper
-                sx={{
-                  p: "15px",
-                  mx: "5px",
-                  width: "400px",
-                  textAlign: "left",
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "light" ? "#d0d5dd" : "",
-                }}
-              >
-                {currentImprovement?.newNode && (
-                  <Box>
-                    <Typography>
-                      This proposal adds a new node titled:
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontWeight: "bold",
+            <Paper
+              sx={{
+                p: "15px",
+                mx: "5px",
+                width: "400px",
+                textAlign: "left",
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "light" ? "#d0d5dd" : "",
+              }}
+            >
+              {proposal?.newNode && (
+                <Box>
+                  <Typography>This proposal adds a new node titled:</Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      color: "orange",
+                      my: "13px",
+                      fontSize: "17px",
+                    }}
+                  >
+                    {proposal.node.title}
+                  </Typography>
+                  <Typography sx={{ mt: "15px" }}>Reasoning:</Typography>
+                  <Typography>{proposal.reasoning}</Typography>
+                </Box>
+              )}
+
+              {!proposal?.newNode && proposal?.change?.modified_property && (
+                <Box
+                  key={proposal?.change?.modified_property}
+                  sx={{ mb: "15px" }}
+                >
+                  <Typography
+                    sx={{
+                      // fontWeight: "bold",
+                      // color: "orange",
+                      mb: "5px",
+                    }}
+                  >
+                    Changing{" "}
+                    <strong
+                      style={{
                         color: "orange",
-                        my: "13px",
-                        fontSize: "17px",
+                        textTransform: "capitalize",
                       }}
                     >
-                      {currentImprovement.node.title}
-                    </Typography>
-                    <Typography sx={{ mt: "15px" }}>Reasoning:</Typography>
-                    <Typography>{currentImprovement.reasoning}</Typography>
-                  </Box>
-                )}
-
-                {!currentImprovement?.newNode &&
-                  Object.keys(currentImprovement.modifiedProperties).map(
-                    (p: string) => (
-                      <Box key={p} sx={{ mb: "15px" }}>
-                        <Typography
-                          sx={{
-                            // fontWeight: "bold",
-                            // color: "orange",
-                            mb: "5px",
-                          }}
-                        >
-                          Changing{" "}
-                          <strong
-                            style={{
-                              color: "orange",
-                              textTransform: "capitalize",
-                            }}
-                          >
-                            {p}
-                          </strong>{" "}
-                          because:
-                        </Typography>
-                        <Typography>
-                          {" "}
-                          {currentImprovement.modifiedProperties[p].reasoning}
-                        </Typography>
+                      {proposal.change.modified_property}
+                    </strong>{" "}
+                    because:
+                  </Typography>
+                  <Typography> {proposal.change.reasoning}</Typography>
+                  {/*      {(
+                    currentImprovement.modifiedProperties[p]
+                      ?.addedNonExistentElements || []
+                  ).length > 0 && (
+                    <Typography>
+                      Co-pilot is proposing to add
+                      <ul>
                         {(
                           currentImprovement.modifiedProperties[p]
                             ?.addedNonExistentElements || []
-                        ).length > 0 && (
-                          <Typography>
-                            Co-pilot is proposing to add
-                            <ul>
-                              {(
-                                currentImprovement.modifiedProperties[p]
-                                  ?.addedNonExistentElements || []
-                              ).map((nodeTitle: string) => (
-                                <li key={nodeTitle} style={{ color: "orange" }}>
-                                  {nodeTitle}
-                                </li>
-                              ))}
-                            </ul>
-                            as a new {p}, but such{" "}
-                            {(
-                              currentImprovement.modifiedProperties[p]
-                                ?.addedNonExistentElements || []
-                            ).length > 2
-                              ? "nodes do"
-                              : "a node does"}{" "}
-                            not exist.
-                          </Typography>
-                        )}
-                      </Box>
-                    )
-                  )}
+                        ).map((nodeTitle: string) => (
+                          <li key={nodeTitle} style={{ color: "orange" }}>
+                            {nodeTitle}
+                          </li>
+                        ))}
+                      </ul>
+                      as a new {p}, but such{" "}
+                      {(
+                        currentImprovement.modifiedProperties[p]
+                          ?.addedNonExistentElements || []
+                      ).length > 2
+                        ? "nodes do"
+                        : "a node does"}{" "}
+                      not exist.
+                    </Typography>
+                  )} */}
+                </Box>
+              )}
 
-                <Typography
-                  sx={{ mr: "15px", mt: "5px", ml: "5px", fontWeight: "bold" }}
-                >
-                  {index + 1}/{proposals.length}
-                </Typography>
-                {currentImprovement.implemented && (
-                  <Typography
-                    sx={{ mt: "15px", fontWeight: "bold", color: "green" }}
-                  >
-                    Suggested improvement is implemented!
-                  </Typography>
-                )}
-              </Paper>
-              <Button
-                variant="contained"
-                sx={{
-                  minWidth: "32px",
-                  p: 0,
-                  m: 0 /* , mr: "-14px" */,
-                  borderTopRightRadius: "0px",
-                  borderBottomRightRadius: "0px",
-                }}
-                onClick={() => handleNext()}
-                // disabled={currentImprovement === null}
+              <Typography
+                sx={{ mr: "15px", mt: "5px", ml: "5px", fontWeight: "bold" }}
               >
-                <ArrowForwardIosIcon />
-              </Button>
-            </Box>
-          ))}
+                {index + 1}/{proposals.length}
+              </Typography>
+              {currentImprovement.implemented && (
+                <Typography
+                  sx={{ mt: "15px", fontWeight: "bold", color: "green" }}
+                >
+                  Suggested improvement is implemented!
+                </Typography>
+              )}
+            </Paper>
+            <Button
+              variant="contained"
+              sx={{
+                minWidth: "32px",
+                p: 0,
+                m: 0 /* , mr: "-14px" */,
+                borderTopRightRadius: "0px",
+                borderBottomRightRadius: "0px",
+              }}
+              onClick={() => handleNext()}
+              // disabled={currentImprovement === null}
+            >
+              <ArrowForwardIosIcon />
+            </Button>
+          </Box>
+        ))}
       </Box>
 
       {!currentImprovement?.implemented && (
@@ -276,7 +281,23 @@ const ImprovementsSlider = ({
           >
             Delete Improvement
           </Button>
-          <Button
+          <LoadingButton
+            loading={implementingProposal}
+            onClick={onHandleAcceptChange}
+            variant="contained"
+            sx={{
+              ml: "auto",
+              color: "white",
+              backgroundColor: "#115f07",
+              ":hover": {
+                backgroundColor: "green",
+              },
+            }}
+          >
+            {" "}
+            Implement Improvement
+          </LoadingButton>
+          {/* <Button
             onClick={onHandleAcceptChange}
             autoFocus
             variant="contained"
@@ -290,7 +311,7 @@ const ImprovementsSlider = ({
             }}
           >
             Implement Improvement
-          </Button>
+          </Button> */}
         </Box>
       )}
     </Box>

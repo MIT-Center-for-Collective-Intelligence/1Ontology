@@ -176,7 +176,7 @@ const LinkNode = ({
           doc(collection(db, NODES), currentVisibleNode.id)
         );
         if (nodeDoc.exists()) {
-          const nodeData = nodeDoc.data() as INode;
+          const nodeData = nodeDoc.data() as any;
 
           const nodeId = nodeData.inheritance[property]?.ref || null;
           if (nodeId) {
@@ -190,7 +190,9 @@ const LinkNode = ({
           );
           if (
             linkIndex !== -1 &&
-            Array.isArray(nodeData.properties[property])
+            Array.isArray(nodeData.properties[property]) &&
+            nodeData.propertyType[property] !== "string" &&
+            nodeData.propertyType[property] !== "string-array"
           ) {
             nodeData.properties[property][collectionIndex].nodes.splice(
               linkIndex,
@@ -222,7 +224,9 @@ const LinkNode = ({
               reference &&
               nodes[reference].textValue &&
               nodes[reference].textValue.hasOwnProperty(property) &&
-              Array.isArray(nodeData.properties[property])
+              Array.isArray(nodeData.properties[property]) &&
+              nodeData.propertyType[property] !== "string" &&
+              nodeData.propertyType[property] !== "string-array"
             ) {
               const links = nodeData.properties[property].flatMap(
                 (c) => c.nodes

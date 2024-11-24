@@ -81,7 +81,6 @@ import { CHAT_DISCUSSION_TABS, development } from " @components/lib/CONSTANTS";
 
 import {
   compareImprovement,
-  compareProposals,
   filterProposals,
 } from " @components/lib/utils/copilotHelpers";
 import useSelectDropdown from " @components/lib/hooks/useSelectDropdown";
@@ -112,6 +111,7 @@ type MainSidebarProps = {
   setExpandedNodes: any;
   onOpenNodesTree: any;
   setDisplayGuidelines: Function;
+  displayGuidelines: boolean;
   currentImprovement: any;
   setCurrentImprovement: any;
   lastSearches: string[];
@@ -140,6 +140,7 @@ const ToolbarSidebar = ({
   setExpandedNodes,
   onOpenNodesTree,
   setDisplayGuidelines,
+  displayGuidelines,
   currentImprovement,
   setCurrentImprovement,
   lastSearches,
@@ -619,21 +620,6 @@ const ToolbarSidebar = ({
       setSelectedDiffNode(null);
     }
 
-    if (improvement.changes) {
-      const change = improvement.changes[0];
-      const property = Object.keys(change || {}).filter(
-        (p) => p !== "reasoning"
-      )[0];
-
-      const element = document.getElementById(`property-${property}`);
-
-      if (element) {
-        setTimeout(() => {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 500);
-      }
-    }
-
     if (!improvement) {
       setCurrentImprovement(null);
       setImprovements([]);
@@ -649,6 +635,16 @@ const ToolbarSidebar = ({
     const result = compareImprovement(improvement, nodesByTitle);
 
     setCurrentImprovement(result);
+    setTimeout(() => {
+      if (improvement.change.modified_property) {
+        const element = document.getElementById(
+          `property-${improvement.change.modified_property}`
+        );
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
+    }, 900);
   };
 
   const handleImproveClick = async () => {
@@ -692,26 +688,11 @@ const ToolbarSidebar = ({
       }
 
       setCopilotMessage(response.message);
-      const improvements: Improvement[] = await filterProposals(
+      const improvements: Improvement[] = filterProposals(
         response?.improvements || [],
         nodesByTitle
       );
 
-      const improvementsDivided = [];
-
-      for (let improvement of improvements) {
-        if (improvement.changes.length >= 2) {
-          for (let change of improvement.changes) {
-            const _improvement = {
-              ...improvement,
-              changes: [{ ...change }],
-            };
-            improvementsDivided.push(_improvement);
-          }
-        } else {
-          improvementsDivided.push(improvement);
-        }
-      }
       const newNodes: {
         title: string;
         description: string;
@@ -720,7 +701,7 @@ const ToolbarSidebar = ({
         newNode: boolean;
       }[] = getNewNodes(response?.new_nodes || []);
       if (improvements.length > 0 || newNodes.length > 0) {
-        setImprovements([...newNodes, ...improvementsDivided]);
+        setImprovements([...newNodes, ...improvements]);
       }
     } catch (error) {
       confirmIt(
@@ -1186,12 +1167,17 @@ const ToolbarSidebar = ({
 
             <SidebarButton
               id="toolbar-theme-button"
-              icon={<AutoStoriesIcon />}
+              icon={
+                <AutoStoriesIcon
+                  sx={{ color: displayGuidelines ? "white" : "" }}
+                />
+              }
               onClick={() => {
                 setDisplayGuidelines((prev: boolean) => !prev);
               }}
               text={"Guidelines"}
               toolbarIsOpen={hovered}
+              variant={displayGuidelines ? "fill" : undefined}
             />
 
             <SidebarButton

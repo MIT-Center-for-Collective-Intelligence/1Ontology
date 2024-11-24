@@ -603,7 +603,9 @@ const Node = ({
         if (collectionName === "main") {
           let checked = [];
           for (let collection of propertyCollection) {
-            checked.push(...collection.nodes.map((link) => link.id));
+            checked.push(
+              ...collection.nodes.map((link: { id: string }) => link.id)
+            );
           }
           previousCheckedItems = checked;
         } else {
@@ -611,7 +613,9 @@ const Node = ({
             (col) => col.collectionName === collectionName
           );
           if (collection) {
-            previousCheckedItems = collection.nodes.map((link) => link.id);
+            previousCheckedItems = collection.nodes.map(
+              (link: { id: string }) => link.id
+            );
           }
         }
       }

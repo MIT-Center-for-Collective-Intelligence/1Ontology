@@ -19,6 +19,7 @@ import {
 } from " @components/lib/utils/helpers";
 import AddPropertyForm from "../AddPropertyForm/AddPropertyForm";
 import { useAuth } from "../context/AuthContext";
+import ChipsProperty from "../StructuredProperty/ChipsProperty";
 
 interface NodeBodyProps {
   currentVisibleNode: INode;
@@ -262,7 +263,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
 
         if (indexB !== -1) return 1;
 
-        return 0;
+        return a.localeCompare(b);
       });
 
     return sortedKeys;
@@ -273,7 +274,17 @@ const NodeBody: React.FC<NodeBodyProps> = ({
       <Box>
         {orderOfProperties.map((property: string, index) => (
           <Box key={property} sx={{ mt: "15px" }}>
-            {currentNode.propertyType[property] !== "string" ? (
+            {currentNode.propertyType[property] === "string-array" ? (
+              <ChipsProperty
+                currentVisibleNode={currentVisibleNode}
+                property={property}
+                nodes={nodes}
+                locked={locked}
+                currentImprovement={currentImprovement}
+                selectedDiffNode={selectedDiffNode}
+                user={user}
+              />
+            ) : currentNode.propertyType[property] !== "string" ? (
               <StructuredProperty
                 key={property + index}
                 confirmIt={confirmIt}

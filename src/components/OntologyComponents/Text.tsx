@@ -102,15 +102,14 @@ const Text = ({
   const [switchToWebsocket, setSwitchToWebSocket] = useState(true);
 
   const currentImprovementChange = useMemo(() => {
-    if (currentImprovement?.newNode) return null;
-    const uIndex = (currentImprovement?.detailsOfChange || []).findIndex(
-      (c: any) => c.modifiedProperty === property
-    );
-    if (uIndex !== -1) {
-      return currentImprovement.detailsOfChange[uIndex];
+    if (currentImprovement?.newNode || !currentImprovement) return null;
+
+    if (currentImprovement?.modifiedProperty === property) {
+      return currentImprovement.detailsOfChange;
     }
     return null;
   }, [currentImprovement]);
+
   // // Maintain focus after inheritance change
   // useEffect(() => {
   //   if (focusAfterSaveRef.current && textAreaRef.current) {
@@ -151,7 +150,7 @@ const Text = ({
         setSwitchToWebSocket(false);
         const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
         if (structured) {
-          const referencedNode = nodes[reference];
+          const referencedNode: any = nodes[reference];
           await updateDoc(nodeRef, {
             [`textValue.${property}`]: copyValue,
             [`properties.${property}`]: referencedNode.properties[property],
@@ -356,7 +355,7 @@ const Text = ({
                 navigateToNode={navigateToNode}
                 displaySidebar={displaySidebar}
                 activeSidebar={activeSidebar}
-                unclassified={currentVisibleNode.unclassified}
+                unclassified={!!currentVisibleNode.unclassified}
               />
             )}
           {property !== "title" && !currentImprovement && (

@@ -16,7 +16,7 @@ import React, { useCallback, useState } from "react";
 import { DESIGN_SYSTEM_COLORS } from "../theme/colors";
 const OPTIONS = [
   { id: "o1-preview", title: "O1" },
-  { id: "gpt-4o", title: "GPT-4o" },
+  { id: "chatgpt-4o-latest", title: "GPT-4o latest" },
   { id: "Gemini 1.5 PRO", title: "Gemini 1.5 PRO" },
 ];
 

@@ -2,7 +2,7 @@ import { getNewAddedProperties } from " @components/lib/utils/helpers";
 import { INode } from " @components/types/INode";
 
 describe("getNewAddedProperties", () => {
-  const mockNodes: { [nodeId: string]: INode } = {
+  const mockNodes: any = {
     "1": {
       id: "1",
       title: "Parent Node",
@@ -45,7 +45,7 @@ describe("getNewAddedProperties", () => {
     },
   };
 
-  const mockSpecializationData: INode = {
+  const mockSpecializationData: any = {
     id: "2",
     title: "Specialized Node",
     deleted: false,

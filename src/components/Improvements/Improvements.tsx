@@ -411,6 +411,60 @@ const Improvements = ({
       db,
     ]
   );
+
+  const updateStringArray = async ({
+    newValue,
+    added,
+    removed,
+    property,
+  }: {
+    newValue: string[];
+    added: string[];
+    removed: string[];
+    property: string;
+  }) => {
+    try {
+      const previousValue: string[] = currentVisibleNode.properties[
+        property
+      ] as string[];
+
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+
+      await updateDoc(nodeRef, {
+        [`properties.${property}`]: newValue,
+        [`inheritance.${property}.ref`]: null,
+      });
+      if (!!currentVisibleNode.inheritance[property]?.ref) {
+        await updateInheritance({
+          nodeId: currentVisibleNode.id,
+          updatedProperties: [property],
+          db,
+        });
+      }
+      let changeMessage: "add element" | "remove element" | "modify elements" =
+        "add element";
+
+      if (added.length === 1) {
+        changeMessage = "add element";
+      }
+      if (removed.length === 1) {
+        changeMessage = "remove element";
+      }
+      if (added.length > 1 || removed.length > 1) {
+        changeMessage = "modify elements";
+      }
+      return {
+        changeMessage,
+        changeDetails: {
+          addedElements: added,
+          removedElements: removed,
+        },
+      };
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const onAcceptChange = async (change: any) => {
     try {
       if (change?.newNode) {
@@ -418,53 +472,70 @@ const Improvements = ({
         return;
       }
 
-      for (let dChange of change.detailsOfChange) {
-        const reasoning =
-          change.modifiedProperties[dChange.modifiedProperty].reasoning;
+      const reasoning = change.change.reasoning;
 
-        let changeType: any = null;
+      let changeType: any = null;
+      let detailsChange = null;
+      if (
+        change.modifiedProperty === "specializations" ||
+        (change.modiPropertyType !== "string" &&
+          change.modiPropertyType !== "string-array")
+      ) {
+        changeType = "modify elements";
 
-        if (dChange.structuredProperty) {
-          changeType = "modify elements";
-          await handleSaveLinkChanges(
-            dChange.modifiedProperty,
-            dChange.newValue,
-            dChange.addedLinks,
-            dChange.removedLinks
-          );
-        } else {
-          changeType = "change text";
-          await updateStringProperty(
-            change.nodeId,
-            dChange.modifiedProperty,
-            dChange.newValue
-          );
+        const addedLinks = [];
+        const removedLinks = [];
+        for (let collection of change.detailsOfChange.comparison) {
+          for (let node of collection.nodes) {
+            if (node.change === "added") {
+              addedLinks.push(node.id);
+            }
+            if (node.change === "removed") {
+              removedLinks.push(node.id);
+            }
+          }
         }
-        if (user?.uname && changeType) {
-          const changeLog = {
-            nodeId: currentVisibleNode.id,
-            modifiedBy: user?.uname,
-            modifiedProperty: dChange.modifiedProperty,
-            previousValue: dChange.previousValue,
-            newValue: dChange.newValue,
-            modifiedAt: new Date(),
-            changeType,
-            fullNode: currentVisibleNode,
-            reasoning,
-          };
-          saveNewChangeLog(db, {
-            nodeId: currentVisibleNode.id,
-            modifiedBy: user?.uname,
-            modifiedProperty: dChange.modifiedProperty,
-            previousValue: dChange.previousValue,
-            newValue: dChange.newValue,
-            modifiedAt: new Date(),
-            changeType,
-            fullNode: currentVisibleNode,
-            reasoning,
-          });
-          return changeLog;
+
+        await handleSaveLinkChanges(
+          change.modifiedProperty,
+          change.detailsOfChange.newValue,
+          addedLinks,
+          removedLinks
+        );
+      } else if (change.modiPropertyType === "string") {
+        changeType = "change text";
+        await updateStringProperty(
+          change.nodeId,
+          change.modifiedProperty,
+          change.newValue
+        );
+      } else if (change.modiPropertyType === "string-array") {
+        const { changeMessage, changeDetails } = (await updateStringArray({
+          newValue: change.detailsOfChange.final_array,
+          added: change.detailsOfChange.addedElements,
+          removed: change.detailsOfChange.removedElements,
+          property: change.modifiedProperty,
+        })) as any;
+        changeType = changeMessage;
+        detailsChange = changeDetails;
+      }
+      if (user?.uname && changeType) {
+        const changeLog: any = {
+          nodeId: currentVisibleNode.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: change.modifiedProperty,
+          previousValue: change.detailsOfChange.previousValue,
+          newValue: change.detailsOfChange.newValue,
+          modifiedAt: new Date(),
+          changeType,
+          fullNode: currentVisibleNode,
+          reasoning: reasoning || "",
+        };
+        if (detailsChange) {
+          changeLog.detailsChange = detailsChange;
         }
+        saveNewChangeLog(db, changeLog);
+        return changeLog;
       }
     } catch (error) {
       console.error(error);

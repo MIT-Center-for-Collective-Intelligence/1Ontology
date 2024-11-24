@@ -149,9 +149,12 @@ export const getStructureForJSON = (
   const properties: any = { ...data.properties };
   const textValue = { ...data.textValue };
   for (let property in properties) {
-    if (property in data.inheritance && data.inheritance[property].ref) {
+    if (property in data.inheritance && !!data.inheritance[property].ref) {
       delete properties[property];
-    } else if (typeof properties[property] !== "string") {
+    } else if (
+      typeof properties[property] !== "string" &&
+      data.propertyType[property] !== "string-array"
+    ) {
       properties[property] = getTitles(properties[property]);
     }
   }
@@ -192,10 +195,13 @@ export const getNodesInThreeLevels = (
   items.push(...specializations);
   items.push(...generalizations);
   for (let property in nodeData.properties) {
-    if (Array.isArray(nodeData.properties[property])) {
-      const propertyNodes = nodeData.properties[property].flatMap(
-        (c: ICollection) => c.nodes
-      );
+    if (
+      Array.isArray(nodeData.properties[property]) &&
+      nodeData.propertyType[property] !== "string-array"
+    ) {
+      const propertyNodes = (
+        nodeData.properties[property] as ICollection[]
+      ).flatMap((c: ICollection) => c.nodes);
       items.push(...propertyNodes);
     }
   }

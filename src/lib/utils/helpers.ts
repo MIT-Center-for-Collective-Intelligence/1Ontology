@@ -565,7 +565,7 @@ export const getChangeDescription = (
     case "remove element":
       return `Removed an element under "${displayText}" in:`;
     case "modify elements":
-      return `Added a new "${displayText}" Under:`;
+      return `Added new elements "${displayText}" Under:`;
     case "add property":
       return `Added "${changeDetails?.addedProperty}" in:`;
     case "remove property":
@@ -702,7 +702,7 @@ export const createNewNode = (
     propertyOf: {},
     locked: false,
     root: parentNodeData.root || "",
-    numberOfGeneralizations: parentNodeData.numberOfGeneralizations + 1,
+    numberOfGeneralizations: (parentNodeData.numberOfGeneralizations || 0) + 1,
     properties: {
       ...parentNodeData.properties,
       isPartOf: [{ collectionName: "main", nodes: [] }],

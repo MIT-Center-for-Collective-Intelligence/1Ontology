@@ -3,19 +3,10 @@ import {
   capitalizeFirstLetter,
   getTooltipHelper,
 } from " @components/lib/utils/string.utils";
-import {
-  Paper,
-  Typography,
-  Box,
-  Tooltip,
-  List,
-  ListItem,
-  Button,
-} from "@mui/material";
+import { Paper, Typography, Box, Tooltip, List, ListItem } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ICollection } from " @components/types/INode";
-import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 
 type CollectionListProps = {
   currentImprovement: any;
@@ -30,84 +21,82 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
   getTitle,
   nodes,
 }) => {
-  const [mergedValue, setMergedValue] = useState([]);
   const [addedLinks, setAddLinks] = useState(new Set());
   const [removedLinks, setRemovedLinks] = useState(new Set());
 
-  useEffect(() => {
-    if (!currentImprovement?.detailsOfChange) {
-      setMergedValue([]);
-      return;
-    }
-    const propertyIdx = currentImprovement.detailsOfChange.findIndex(
-      (c: any) => c.modifiedProperty === property
-    );
-    if (!currentImprovement?.detailsOfChange[propertyIdx]) {
-      return;
-    }
-    const newValue = JSON.parse(
-      JSON.stringify(currentImprovement.detailsOfChange[propertyIdx].newValue)
-    );
+  // useEffect(() => {
+  //   if (!currentImprovement?.detailsOfChange) {
+  //     setMergedValue([]);
+  //     return;
+  //   }
+  //   const propertyIdx = currentImprovement.detailsOfChange.findIndex(
+  //     (c: any) => c.modifiedProperty === property
+  //   );
+  //   if (!currentImprovement?.detailsOfChange[propertyIdx]) {
+  //     return;
+  //   }
+  //   const newValue = JSON.parse(
+  //     JSON.stringify(currentImprovement.detailsOfChange[propertyIdx].newValue)
+  //   );
 
-    setAddLinks(
-      new Set(currentImprovement.detailsOfChange[propertyIdx].addedLinks)
-    );
-    setRemovedLinks(
-      new Set(currentImprovement.detailsOfChange[propertyIdx].removedLinks)
-    );
-    const previousValue = JSON.parse(
-      JSON.stringify(
-        currentImprovement.detailsOfChange[propertyIdx].previousValue
-      )
-    );
+  //   setAddLinks(
+  //     new Set(currentImprovement.detailsOfChange[propertyIdx].addedLinks)
+  //   );
+  //   setRemovedLinks(
+  //     new Set(currentImprovement.detailsOfChange[propertyIdx].removedLinks)
+  //   );
+  //   const previousValue = JSON.parse(
+  //     JSON.stringify(
+  //       currentImprovement.detailsOfChange[propertyIdx].previousValue
+  //     )
+  //   );
 
-    for (let collection of newValue) {
-      const collectionIdx = previousValue.findIndex(
-        (c: ICollection) => c.collectionName === collection.collectionName
-      );
-      if (collectionIdx === -1) {
-        collection.change = "added";
-        for (let node of collection.nodes) {
-          node.change = "added";
-        }
-      } else {
-        const _previousNodes = previousValue[collectionIdx].nodes.map(
-          (n: { id: string }) => n.id
-        );
-        const previousNodes = new Set(_previousNodes);
-        for (let node of [...collection.nodes]) {
-          if (!previousNodes.has(node.id)) {
-            node = { ...node, change: "added" };
-          }
-        }
-      }
-    }
-    for (let collection of previousValue) {
-      const collectionIdx = newValue.findIndex(
-        (c: ICollection) => c.collectionName === collection.collectionName
-      );
-      if (collectionIdx === -1) {
-        newValue.push(collection);
-        collection.change = "removed";
-        for (let node of collection.nodes) {
-          node = { ...node, change: "removed" };
-        }
-      } else {
-        const _newNodes = newValue[collectionIdx].nodes.map(
-          (n: { id: string }) => n.id
-        );
-        const newNodes = new Set(_newNodes);
-        for (let node of [...collection.nodes]) {
-          if (!newNodes.has(node.id)) {
-            newValue[collectionIdx].nodes.push({ ...node, change: "removed" });
-          }
-        }
-      }
-    }
+  //   for (let collection of newValue) {
+  //     const collectionIdx = previousValue.findIndex(
+  //       (c: ICollection) => c.collectionName === collection.collectionName
+  //     );
+  //     if (collectionIdx === -1) {
+  //       collection.change = "added";
+  //       for (let node of collection.nodes) {
+  //         node.change = "added";
+  //       }
+  //     } else {
+  //       const _previousNodes = previousValue[collectionIdx].nodes.map(
+  //         (n: { id: string }) => n.id
+  //       );
+  //       const previousNodes = new Set(_previousNodes);
+  //       for (let node of [...collection.nodes]) {
+  //         if (!previousNodes.has(node.id)) {
+  //           node = { ...node, change: "added" };
+  //         }
+  //       }
+  //     }
+  //   }
+  //   for (let collection of previousValue) {
+  //     const collectionIdx = newValue.findIndex(
+  //       (c: ICollection) => c.collectionName === collection.collectionName
+  //     );
+  //     if (collectionIdx === -1) {
+  //       newValue.push(collection);
+  //       collection.change = "removed";
+  //       for (let node of collection.nodes) {
+  //         node = { ...node, change: "removed" };
+  //       }
+  //     } else {
+  //       const _newNodes = newValue[collectionIdx].nodes.map(
+  //         (n: { id: string }) => n.id
+  //       );
+  //       const newNodes = new Set(_newNodes);
+  //       for (let node of [...collection.nodes]) {
+  //         if (!newNodes.has(node.id)) {
+  //           newValue[collectionIdx].nodes.push({ ...node, change: "removed" });
+  //         }
+  //       }
+  //     }
+  //   }
 
-    setMergedValue(newValue);
-  }, [currentImprovement]);
-
+  //   setMergedValue(newValue);
+  // }, [currentImprovement]);
 
   const renderValue = (value: ICollection[]) => {
     return (
@@ -205,7 +194,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                   >
                     {getTitle(nodes, node.id)}
                   </Typography>
-                  {((!removedLinks.has(node.id) && node.change === "removed") ||
+                  {/*  {((!removedLinks.has(node.id) && node.change === "removed") ||
                     (!addedLinks.has(node.id) && node.change === "added")) && (
                     <SwapHorizIcon
                       sx={{
@@ -213,7 +202,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                         pl: "5px",
                       }}
                     />
-                  )}
+                  )} */}
                   {/* {(node.change === "removed" || node.change === "added") && (
                     <Button
                       sx={{
@@ -276,7 +265,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
             </Typography>
           </Tooltip>
         </Box>
-        {renderValue(mergedValue)}
+        {renderValue(currentImprovement.detailsOfChange.comparison)}
       </Box>
     </Paper>
   );

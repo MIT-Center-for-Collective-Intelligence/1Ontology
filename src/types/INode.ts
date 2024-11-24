@@ -57,23 +57,28 @@ export type INode = {
   title: string;
   deleted: boolean;
   properties: {
-    [propertyName: string]: ICollection[] | string | boolean | number;
+    [propertyName: string]: any;
+    parts: ICollection[];
+    isPartOf: ICollection[];
   };
   inheritance: IInheritance;
   specializations: ICollection[];
   generalizations: ICollection[];
+  root: string;
+  propertyType: { [key: string]: string | "string" | "string-array" };
+  nodeType: INodeTypes;
+  textValue: { [propertyName: string]: string };
+  createdBy: string;
+  //optional keys
   propertyOf?: {
     [propertyName: string]: ICollection[];
   };
-  root: string;
-  propertyType: { [key: string]: string };
-  nodeType: INodeTypes;
+  numberOfGeneralizations?: number;
+  unclassified?: boolean;
+  contributorsByProperty?: { [property: string]: string[] };
+  contributors?: string[];
   category?: boolean;
   locked?: boolean;
-  numberOfGeneralizations: number;
-  textValue: { [propertyName: string]: string };
-  unclassified: boolean;
-  createdBy: string;
 };
 
 export type TreeVisual = {

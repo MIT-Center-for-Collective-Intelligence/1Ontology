@@ -252,7 +252,9 @@ export const generateProposals = async (
     throw new Error("Node doesn't exist");
   }
   const currentNode = nodes[nodeId];
-
+  if (currentNode.nodeType !== "activity") {
+    throw new Error("Node type not supported yet!");
+  }
   const currentNodeD = getStructureForJSON(currentNode, nodes);
   nodesArray.push(currentNodeD);
   const _nodesArray = getNodesInThreeLevels(
@@ -316,8 +318,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       model,
       at: "copilot",
     });
-
+    const improvements: Improvement[] = [];
+    for (let improvement of response?.improvements || []) {
+      for (let change of improvement.changes) {
+        improvements.push({
+          ...improvement,
+          change,
+        });
+      }
+    }
+    response.improvements = improvements;
     console.log("Response: ", JSON.stringify(response, null, 2));
+
     return res.status(200).send(response);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
