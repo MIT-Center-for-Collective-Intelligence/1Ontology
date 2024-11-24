@@ -180,7 +180,6 @@ export const compareImprovement = (
 ) => {
   const _improvement = JSON.parse(JSON.stringify(improvement));
   const nodeData = nodesByTitle[improvement.title];
-
   if (nodeData) {
     const change = _improvement.change;
     const modifiedProperty = change.modified_property;
@@ -205,7 +204,7 @@ export const compareImprovement = (
     }
 
     console.log("response==>", response);
-    if (response !== null) {
+    if (!!response) {
       if (propertyType !== "string" && propertyType !== "string-array") {
         _improvement.detailsOfChange = {
           comparison: response.result,
@@ -229,7 +228,23 @@ export const compareImprovement = (
 
 export const filterProposals = (
   improvements: Improvement[],
-  nodesByTitle: { [title: string]: { id: string } }
+  nodesByTitle: { [title: string]: INode }
 ) => {
-  return improvements;
+  const _improvements = [];
+  for (let impv of improvements) {
+    const change = impv.change;
+    const nodeData = nodesByTitle[impv.title];
+
+    if (change && nodeData) {
+      const response: any = getChangeComparison({
+        change,
+        nodeData,
+        nodesByTitle,
+      });
+      if (!!response) {
+        _improvements.push(impv);
+      }
+    }
+  }
+  return _improvements;
 };

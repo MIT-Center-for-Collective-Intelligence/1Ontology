@@ -159,6 +159,18 @@ Each item should represent an object that proposes an improvement to an existing
        }
      },
 
+   - For "generalizations" changes:
+     {
+       "modified_property": "generalizations",
+        "new_value": {
+         "nodes_to_add": [An array of nodes to add to the existing property.],
+         "nodes_to_delete": [An array of nodes to remove from the existing property.],
+         "final_array": [An array representing the final state of the property after additions and deletions.]
+       },
+        "reasoning": "Your reasoning for proposing this change to the specializations of the node."
+       }
+     },
+
    - For other array property changes (other than "title", "description", and "specializations"), each change object should have the following properties:
      {
        "modified_property": "[PROPERTY_NAME]",
