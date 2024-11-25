@@ -162,11 +162,6 @@ const proposerAgent = async (
     let prompt = `
 Objective:
 '''
-Carefully improving and expanding the knowledge graph.
-'''
-
-User Message:
-'''
 ${userMessage}
 '''
 
