@@ -370,7 +370,8 @@ const Text = ({
       <Typography color="red" sx={{ pl: "5px" }}>
         {error}
       </Typography>
-      {currentImprovement?.newNode ||
+      {!!currentVisibleNode.unclassified ||
+      currentImprovement?.newNode ||
       locked ||
       (selectedDiffNode &&
         (selectedDiffNode.modifiedProperty !== property || structured)) ||

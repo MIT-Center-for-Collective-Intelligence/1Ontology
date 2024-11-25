@@ -246,29 +246,33 @@ const Improvements = ({
           [`inheritance.${property}.ref`]: null,
         });
       }
+      try {
+        const serverURL = development
+          ? process.env.NEXT_PUBLIC_DEV_WS_SERVER
+          : process.env.NEXT_PUBLIC_WS_SERVER;
 
-      const serverURL = development
-        ? process.env.NEXT_PUBLIC_DEV_WS_SERVER
-        : process.env.NEXT_PUBLIC_WS_SERVER;
+        const response = await fetch(
+          `http://${serverURL}/update/${nodeId}-${property}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              newValue,
+            }),
+          }
+        );
 
-      const response = await fetch(
-        `http://${serverURL}/update/${nodeId}-${property}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            newValue,
-          }),
+        if (response.ok) {
+          await response.json();
+        } else {
+          await response.json();
         }
-      );
-
-      if (response.ok) {
-        await response.json();
-      } else {
-        await response.json();
+      } catch (error) {
+        console.error(error);
       }
+
       if (nodeData.inheritance && !!nodeData.inheritance[property]?.ref) {
         await updateInheritance({
           nodeId: nodeId,
@@ -507,7 +511,7 @@ const Improvements = ({
         await updateStringProperty(
           change.nodeId,
           change.modifiedProperty,
-          change.newValue
+          change.detailsOfChange.newValue
         );
       } else if (change.modiPropertyType === "string-array") {
         const { changeMessage, changeDetails } = (await updateStringArray({

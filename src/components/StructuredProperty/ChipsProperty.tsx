@@ -192,7 +192,7 @@ const ChipsProperty = ({
           </Typography>
         </Tooltip>
 
-        {!currentImprovement && (
+        {!currentImprovement && !currentVisibleNode.unclassified && (
           <SelectInheritance
             currentVisibleNode={currentVisibleNode}
             property={property}
@@ -219,7 +219,7 @@ const ChipsProperty = ({
             ? selectedDiffNode?.changeDetails?.removedElements || []
             : []
         }
-        readOnly={!!selectedDiffNode}
+        readOnly={!!selectedDiffNode || !!currentVisibleNode.unclassified}
       />
     </Paper>
   );
