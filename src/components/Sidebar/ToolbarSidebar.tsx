@@ -1128,42 +1128,45 @@ const ToolbarSidebar = ({
                 toolbarIsOpen={hovered}
               />
             )}
-            {!!user?.admin && (
-              <SidebarButton
-                id="toolbar-theme-button"
-                icon={
-                  isLoadingCopilot ? (
-                    <CircularProgress size={27} />
-                  ) : (
-                    <AutoAwesomeIcon
-                      sx={{
-                        color:
-                          improvements.filter((i: any) => !i.implemented)
-                            .length > 0
-                            ? "#00d000"
-                            : "",
-                      }}
-                    />
-                  )
-                }
-                onClick={async () => {
-                  if (
-                    improvements.filter((i: any) => !i.implemented).length > 0
-                  ) {
-                    handleExpandSidebar("improvements");
-                    if (improvements[0]?.newNode) {
-                      setCurrentImprovement(improvements[0]);
-                    } else {
-                      compareThisImprovement(improvements[0]);
-                    }
-                  } else {
-                    handleImproveClick();
+            {!!user?.admin &&
+              (window.location.origin.startsWith("http://localhost") ||
+                window.location.origin ===
+                  "https://ontology-app-163479774214.us-central1.run.app") && (
+                <SidebarButton
+                  id="toolbar-theme-button"
+                  icon={
+                    isLoadingCopilot ? (
+                      <CircularProgress size={27} />
+                    ) : (
+                      <AutoAwesomeIcon
+                        sx={{
+                          color:
+                            improvements.filter((i: any) => !i.implemented)
+                              .length > 0
+                              ? "#00d000"
+                              : "",
+                        }}
+                      />
+                    )
                   }
-                }}
-                text={"Copilot"}
-                toolbarIsOpen={hovered}
-              />
-            )}
+                  onClick={async () => {
+                    if (
+                      improvements.filter((i: any) => !i.implemented).length > 0
+                    ) {
+                      handleExpandSidebar("improvements");
+                      if (improvements[0]?.newNode) {
+                        setCurrentImprovement(improvements[0]);
+                      } else {
+                        compareThisImprovement(improvements[0]);
+                      }
+                    } else {
+                      handleImproveClick();
+                    }
+                  }}
+                  text={"Copilot"}
+                  toolbarIsOpen={hovered}
+                />
+              )}
 
             <SidebarButton
               id="toolbar-theme-button"
