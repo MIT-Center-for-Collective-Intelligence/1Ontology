@@ -37,7 +37,7 @@ import { DISPLAY, WS_URL } from " @components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
 import YjsEditor from "../YJSEditor/YjsEditor";
 import SimpleEditor from "../YJSEditor/SimpleEditor";
-import SelectInheritance from "../SelectInheretance/SelectInhertance";
+import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import { WebsocketProvider } from "y-websocket";
 // import YjsEditor from "../YJSEditor/YjsEditor";
 

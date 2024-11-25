@@ -48,7 +48,7 @@ import {
   updateInheritance,
 } from " @components/lib/utils/helpers";
 import NewCollection from "../Collection/NewCollection";
-import SelectInheritance from "../SelectInheretance/SelectInhertance";
+import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import VisualizeTheProperty from "./VisualizeTheProperty";
 

@@ -8,7 +8,7 @@ import {
 } from " @components/lib/utils/string.utils";
 import { Box, Paper, Tooltip, Typography } from "@mui/material";
 import { DISPLAY } from " @components/lib/CONSTANTS";
-import SelectInheritance from "../SelectInheretance/SelectInhertance";
+import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import {
   saveNewChangeLog,
   updateInheritance,
