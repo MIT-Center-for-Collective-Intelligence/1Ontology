@@ -14,11 +14,7 @@ import {
 } from "@mui/material";
 import React, { useCallback, useState } from "react";
 import { DESIGN_SYSTEM_COLORS } from "../theme/colors";
-const OPTIONS = [
-  { id: "o1-preview", title: "O1" },
-  { id: "chatgpt-4o-latest", title: "GPT-4o latest" },
-  { id: "Gemini 1.5 PRO", title: "Gemini 1.5 PRO" },
-];
+import { MODELS_OPTIONS } from "../utils/copilotPrompts";
 
 const useSelectDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -71,7 +67,9 @@ const useSelectDropdown = () => {
   );
 
   const handleSelectChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    const selected = OPTIONS.find((option) => option.id === event.target.value);
+    const selected = MODELS_OPTIONS.find(
+      (option) => option.id === event.target.value
+    );
     setSelectedOption(selected || { id: "", title: "" });
   };
 
@@ -118,7 +116,7 @@ const useSelectDropdown = () => {
             onChange={(e: any) => handleSelectChange(e)}
             label="Select an Option"
           >
-            {OPTIONS.map((option) => (
+            {MODELS_OPTIONS.map((option) => (
               <MenuItem key={option.id} value={option.id}>
                 {option.title}
               </MenuItem>

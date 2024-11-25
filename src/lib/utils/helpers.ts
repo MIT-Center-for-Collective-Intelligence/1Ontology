@@ -507,7 +507,7 @@ const updateProperty = async (
 };
 
 export const saveNewChangeLog = (db: any, data: NodeChange) => {
-  if (!data.modifiedBy || data.modifiedBy === "ouhrac") return;
+  if (!data.modifiedBy /* || data.modifiedBy === "ouhrac" */) return;
   const changeUseRef = doc(collection(db, NODES_LOGS));
   setDoc(changeUseRef, data);
   const userRef = doc(collection(db, USERS), data.modifiedBy);

@@ -19,10 +19,12 @@ import { getDoerCreate, recordLogs } from " @components/lib/utils/helpers";
 import {
   copilotNewNode,
   Improvement,
+  MODELS_OPTIONS,
   PROPOSALS_SCHEMA,
 } from " @components/lib/utils/copilotPrompts";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { ChatModel } from "openai/resources/chat/chat";
+const GEMINI_MODEL = "gemini-exp-1121";
 
 const saveLogs = (
   uname: string,
@@ -66,14 +68,14 @@ const sendLLMRequest = async ({
   uname,
 }: {
   prompt: string;
-  model: ChatModel | "Gemini 1.5 PRO";
+  model: ChatModel | "gemini-exp-1121";
   uname: string;
 }) => {
   try {
     if (!prompt.trim() || !model.trim()) {
       throw new Error("Prompt and model are required");
     }
-    if (model === "Gemini 1.5 PRO") {
+    if (model === GEMINI_MODEL) {
       const contents: Content[] = [];
 
       contents.push({
@@ -142,7 +144,7 @@ const sendLLMRequest = async ({
 let guidelines: any = null;
 const proposerAgent = async (
   userMessage: string,
-  model: ChatModel | "Gemini 1.5 PRO",
+  model: ChatModel | "gemini-exp-1121",
   nodesArray: any[],
   uname: string,
   proposalsJSON: any = {},
@@ -239,7 +241,7 @@ const getNodes = async (): Promise<Record<string, INode>> => {
 
 export const generateProposals = async (
   userMessage: string,
-  model: ChatModel | "Gemini 1.5 PRO",
+  model: ChatModel | "gemini-exp-1121",
   deepNumber: number,
   nodeId: string,
   uname: string,
@@ -285,18 +287,15 @@ export const generateProposals = async (
 };
 
 async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
+  const { userMessage, model, deepNumber, nodeId, user } = req.body.data;
+  const { uname } = user?.userData;
   try {
-    const { userMessage, model, deepNumber, nodeId, user } = req.body.data;
-    if (
-      !user?.userData ||
-      (model !== "o1-preview" &&
-        model !== "gpt-4o" &&
-        model !== "Gemini 1.5 PRO")
-    ) {
+    const model_index = MODELS_OPTIONS.findIndex(
+      (option) => option.id === model
+    );
+    if (!user?.userData || model_index === -1) {
       throw new Error("Access forbidden");
     }
-
-    const { uname } = user?.userData;
 
     console.log(" userMessage, model, deepNumber, nodeId", {
       userMessage,
@@ -316,6 +315,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       response,
       nodeId,
       model,
+      userMessage,
+      deepNumber,
       at: "copilot",
     });
     const improvements: Improvement[] = [];
@@ -332,7 +333,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
 
     return res.status(200).send(response);
   } catch (error: any) {
+    console.error("error", error);
     res.status(500).json({ error: error.message });
+    recordLogs({
+      type: "error",
+      error: JSON.stringify({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      }),
+      at: "copilot",
+    });
   }
 }
 

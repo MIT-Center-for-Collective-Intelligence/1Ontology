@@ -171,7 +171,7 @@ Each item should represent an object that proposes an improvement to an existing
        }
      },
 
-   - For other array property changes (other than "title", "description", and "specializations"), each change object should have the following properties:
+   - For other array property changes (other than "specializations" and "generalizations"), each change object should have the following properties:
      {
        "modified_property": "[PROPERTY_NAME]",
        "new_value": {
@@ -256,3 +256,9 @@ IMPORTANT NOTES:
   - "isPartOf" is an array of larger entities that this entity is a component of.
 '''
 `;
+
+export const MODELS_OPTIONS = [
+  { id: "o1-preview", title: "O1" },
+  { id: "chatgpt-4o-latest", title: "GPT-4o latest" },
+  { id: "gemini-exp-1121", title: "Gemini 1.5 PRO" },
+];
