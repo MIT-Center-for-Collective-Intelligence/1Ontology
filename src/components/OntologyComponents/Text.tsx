@@ -358,13 +358,15 @@ const Text = ({
                 unclassified={!!currentVisibleNode.unclassified}
               />
             )}
-          {property !== "title" && !currentImprovement && (
-            <SelectInheritance
-              currentVisibleNode={currentVisibleNode}
-              property={property}
-              nodes={nodes}
-            />
-          )}
+          {property !== "title" &&
+            !currentImprovement &&
+            !currentVisibleNode.unclassified && (
+              <SelectInheritance
+                currentVisibleNode={currentVisibleNode}
+                property={property}
+                nodes={nodes}
+              />
+            )}
         </Box>
       )}
       <Typography color="red" sx={{ pl: "5px" }}>
