@@ -517,20 +517,23 @@ const LinkNode = ({
         {link.changeType === "sort" && (
           <SwapHorizIcon sx={{ color: getLinkColor(link.change), pl: "5px" }} />
         )}
-        {!locked && !linkLocked && !selectedDiffNode && (
-          <Button
-            sx={{
-              ml: "8px",
-              borderRadius: "18px",
-              backgroundColor: BUTTON_COLOR,
-              fontSize: "12px",
-            }}
-            variant="outlined"
-            onClick={handleUnlinkNode}
-          >
-            Unlink
-          </Button>
-        )}
+        {!locked &&
+          !linkLocked &&
+          !selectedDiffNode &&
+          property !== "isPartOf" && (
+            <Button
+              sx={{
+                ml: "8px",
+                borderRadius: "18px",
+                backgroundColor: BUTTON_COLOR,
+                fontSize: "12px",
+              }}
+              variant="outlined"
+              onClick={handleUnlinkNode}
+            >
+              Unlink
+            </Button>
+          )}
       </Box>
 
       {ConfirmDialog}

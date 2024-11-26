@@ -877,7 +877,8 @@ const StructuredProperty = ({
           {!currentVisibleNode.unclassified &&
             !selectedDiffNode &&
             !currentImprovement &&
-            property !== "specializations" && (
+            property !== "specializations" &&
+            property !== "isPartOf" && (
               <Box sx={{ ml: "auto", display: "flex", gap: "14px" }}>
                 <Button
                   onClick={() => showListToSelect(property, "main")}
