@@ -144,18 +144,17 @@ Each item should represent an object that proposes an improvement to an existing
        "reasoning": "Your reasoning for proposing this change to the description of the node."
      },
 
-   - For "specializations" changes:
+     - For "specializations" changes:
      {
-       "modified_property": "specializations",
-       "new_value": [], // An array of objects, each representing a collection with the following structure: 
+       "specializations": "specializations": [], // "Specializations" of a node are nodes that are specific types of that node. Example: Specializations of the node "Buy" can be classified into the following collections: 1- "Buy what?", including specializations such as "Buy fuel", "Buy parts", "Buy services", and "Buy information". 2- "Buy how?", including specializations such as "Buy online" and "Buy in person". 3- "Buy by whom?" including specializations such as: "Buy by marine operations company". The value of this field should be an array of objects, each representing a collection with the following structure: 
        {
          "collectionName": "The title of the collection",
-         "collection_changes": {
+         "changes": {
            "nodes_to_add": [An array of titles (as strings) of nodes to add to this collection.],
            "nodes_to_delete": [An array of titles (as strings) of nodes to remove from this collection.],
            "final_array": [An array of titles (as strings) representing the final set of nodes in this collection after additions and deletions.]
          },
-        "reasoning": "Your reasoning for proposing this change to the specializations of the node."
+         "reasoning": "Your reasoning for proposing this change to the specializations of the node."
        }
      },
 
@@ -163,9 +162,9 @@ Each item should represent an object that proposes an improvement to an existing
      {
        "modified_property": "generalizations",
         "new_value": {
-         "nodes_to_add": [An array of nodes to add to the existing property.],
-         "nodes_to_delete": [An array of nodes to remove from the existing property.],
-         "final_array": [An array representing the final state of the property after additions and deletions.]
+         "nodes_to_add": [An array of titles (as strings) of nodes to add to generalizations.],
+         "nodes_to_delete": [An array of titles (as strings) of nodes to remove from the generalizations.],
+         "final_array": [An array of titles (as strings) of nodes representing the final state of the property after additions and deletions.]
        },
         "reasoning": "Your reasoning for proposing this change to the specializations of the node."
        }
@@ -202,7 +201,7 @@ Each item should represent an object proposing a new node. Please structure each
    "title": "The title of the new node.",
    "description": "The description of the node.",
    "nodeType": "The type of the node, which could be 'activity', 'actor', 'object', 'evaluationDimension', 'incentive', 'reward', or 'context'.",
-   "generalizations": [An array of titles (as strings) of nodes that are generalizations of this node.],
+   "generalizations": [An array of titles (as strings) of nodes that are generalizations of this node. These are nodes that this node is a specific type of. Example, "But" is a generalization of nodes such as "Buy fuel", "Buy parts", "Buy services", and "Buy information".],
    "parts": [An array of titles (as strings) of nodes that are parts of this node.],
    "isPartOf": [An array of titles (as strings) of nodes that this node is a part of.],
 
@@ -251,9 +250,9 @@ IMPORTANT NOTES:
 - Take as much time as needed to generate as many high-quality improvements and new nodes as possible.
 - Thoroughly analyze the ontology and the user's message to identify all possible improvements and additions.
 - If a 'Main' collection does not exist, please do not create it.
-- Please note the difference between "generalizations" and "isPartOf" properties.
-  - "generalizations" is an array of entities that this entity is a specific type of.
-  - "isPartOf" is an array of larger entities that this entity is a component of.
+- Please note the difference between "specializations" and "parts" properties.
+  - "specializations" is an array of specialized nodes that are specific types of this node.
+  - "parts" is an array of smaller nodes that are components of this node.
 '''
 `;
 

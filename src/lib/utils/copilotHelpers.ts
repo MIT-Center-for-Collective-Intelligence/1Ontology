@@ -231,24 +231,23 @@ export const filterProposals = (
   nodesByTitle: { [title: string]: INode }
 ) => {
   const _improvements = [];
-  console.log("improvements", improvements);
+
   for (let impv of improvements) {
     const change = impv.change;
     const nodeData = nodesByTitle[impv.title];
-    console.log("nodeData", nodeData, change);
+
     if (change && nodeData) {
       const response: any = getChangeComparison({
         change,
         nodeData,
         nodesByTitle,
       });
-      console.log("response==>", response);
+
       if (!!response) {
         _improvements.push(impv);
       }
     }
   }
-  console.log("_improvements ????", _improvements);
 
   return _improvements;
 };
