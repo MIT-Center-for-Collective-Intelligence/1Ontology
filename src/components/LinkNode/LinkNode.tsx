@@ -520,6 +520,8 @@ const LinkNode = ({
         {!locked &&
           !linkLocked &&
           !selectedDiffNode &&
+          (!currentVisibleNode.unclassified ||
+            property !== "generalizations") &&
           property !== "isPartOf" && (
             <Button
               sx={{
