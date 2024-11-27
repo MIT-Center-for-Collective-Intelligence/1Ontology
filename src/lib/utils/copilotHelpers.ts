@@ -40,7 +40,7 @@ export const getChangeComparison = ({
         const nodes = [];
         const final_nodes = [];
         for (let title of collection.collection_changes.final_array) {
-          const nodeId = nodesByTitle[title].id;
+          const nodeId = nodesByTitle[title]?.id;
           if (!nodeId) {
             addedNonExistentElements.push(title);
             continue;
@@ -57,7 +57,7 @@ export const getChangeComparison = ({
           final_nodes.push({ id: nodeId });
         }
         for (let title of collection.collection_changes.nodes_to_delete) {
-          const nodeId = nodesByTitle[title].id;
+          const nodeId = nodesByTitle[title]?.id;
           if (nodeId && previousState.includes(nodeId)) {
             nodes.push({ id: nodeId, change: "removed" });
             nodesToRemove.add(nodeId);
