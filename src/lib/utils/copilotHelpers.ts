@@ -16,6 +16,13 @@ export const getChangeComparison = ({
     const addedNonExistentElements: string[] = [];
 
     const propertyType = nodeData.propertyType[modifiedProperty];
+    if (
+      !propertyType &&
+      modifiedProperty !== "specializations" &&
+      modifiedProperty !== "generalizations"
+    )
+      return;
+
     const result: ICollection[] = [];
     const final_result: ICollection[] = [];
     /*  */
@@ -109,7 +116,7 @@ export const getChangeComparison = ({
 
       let modified = false;
       for (let title of newValue.final_array) {
-        const nodeId = nodesByTitle[title].id;
+        const nodeId = nodesByTitle[title]?.id;
         if (!nodeId) {
           addedNonExistentElements.push(title);
           continue;
@@ -128,7 +135,7 @@ export const getChangeComparison = ({
         });
       }
       for (let title of newValue.nodes_to_delete) {
-        const nodeId = nodesByTitle[title].id;
+        const nodeId = nodesByTitle[title]?.id;
         if (nodeId && !previousState.includes(nodeId)) {
           modified = true;
           nodes.push({ id: nodeId, change: "removed" });

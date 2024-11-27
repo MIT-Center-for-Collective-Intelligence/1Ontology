@@ -161,10 +161,11 @@ const ImprovementsSlider = ({
                 textAlign: "left",
                 backgroundColor: (theme) =>
                   theme.palette.mode === "light" ? "#d0d5dd" : "",
+                position: "relative",
               }}
             >
               {proposal?.newNode && (
-                <Box>
+                <Box sx={{ mb: "50px" }}>
                   <Typography>This proposal adds a new node titled:</Typography>
                   <Typography
                     sx={{
@@ -202,7 +203,7 @@ const ImprovementsSlider = ({
                     >
                       {proposal.change.modified_property}
                     </strong>{" "}
-                    because:
+                    {proposal.change.reasoning ? "because" : ""}:
                   </Typography>
                   <Typography> {proposal.change.reasoning}</Typography>
                   {/*      {(
@@ -235,18 +236,30 @@ const ImprovementsSlider = ({
               )}
 
               <Typography
-                sx={{ mr: "15px", mt: "5px", ml: "5px", fontWeight: "bold" }}
+                sx={{
+                  position: "absolute",
+                  bottom: "15px",
+                  left: "15px",
+                  display: "flex",
+                  // flexDirection: "inline",
+                  fontWeight: "bold",
+                  gap: "13px",
+                }}
               >
                 {index + 1}/{proposals.length}
+                {!currentImprovement.implemented && (
+                  <Typography
+                    sx={{
+                      /* my: "25px", */ fontWeight: "bold",
+                      color: "green",
+                    }}
+                  >
+                    Suggested improvement is implemented!
+                  </Typography>
+                )}
               </Typography>
-              {currentImprovement.implemented && (
-                <Typography
-                  sx={{ mt: "15px", fontWeight: "bold", color: "green" }}
-                >
-                  Suggested improvement is implemented!
-                </Typography>
-              )}
             </Paper>
+
             <Button
               variant="contained"
               sx={{
