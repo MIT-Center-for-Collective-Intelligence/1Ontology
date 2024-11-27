@@ -247,7 +247,7 @@ const ImprovementsSlider = ({
                 }}
               >
                 {index + 1}/{proposals.length}
-                {!currentImprovement.implemented && (
+                {currentImprovement.implemented && (
                   <Typography
                     sx={{
                       /* my: "25px", */ fontWeight: "bold",
