@@ -89,7 +89,12 @@ const ChipsProperty = ({
     removed: string[]
   ) => {
     try {
-      if (!!currentImprovement || !!selectedDiffNode) return;
+      if (
+        !!currentImprovement ||
+        !!selectedDiffNode ||
+        !!currentVisibleNode.unclassified
+      )
+        return;
 
       setValue(newValue);
 
@@ -219,7 +224,11 @@ const ChipsProperty = ({
             ? selectedDiffNode?.changeDetails?.removedElements || []
             : []
         }
-        readOnly={!!selectedDiffNode || !!currentVisibleNode.unclassified}
+        readOnly={
+          !!selectedDiffNode ||
+          !!currentVisibleNode.unclassified ||
+          !!currentImprovement
+        }
       />
     </Paper>
   );
