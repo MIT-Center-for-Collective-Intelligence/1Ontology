@@ -688,10 +688,8 @@ const ToolbarSidebar = ({
       }
 
       setCopilotMessage(response.message);
-      const improvements: Improvement[] = filterProposals(
-        response?.improvements || [],
-        nodesByTitle
-      );
+      const improvements: Improvement[] =
+        filterProposals(response?.improvements || [], nodesByTitle) || [];
 
       const newNodes: {
         title: string;
