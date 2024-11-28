@@ -180,9 +180,10 @@ const NodeLabel = ({
           variant={isChecked ? "contained" : "outlined"}
           sx={{ borderRadius: "25px", ml: "auto", fontSize: "0.8rem" }}
           disabled={
-            (isChecked && disabledAddButton) ||
-            (selectedProperty === "specializations" &&
-              getNumOfGeneralizations(node.id))
+            isChecked &&
+            (disabledAddButton ||
+              (selectedProperty === "specializations" &&
+                getNumOfGeneralizations(node.id)))
           }
         >
           {/* i have fixed  */}
