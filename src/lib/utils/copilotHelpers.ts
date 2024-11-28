@@ -136,7 +136,7 @@ export const getChangeComparison = ({
       }
       for (let title of newValue.nodes_to_delete) {
         const nodeId = nodesByTitle[title]?.id;
-        if (nodeId && !previousState.includes(nodeId)) {
+        if (nodeId && previousState.includes(nodeId)) {
           modified = true;
           nodes.push({ id: nodeId, change: "removed" });
           nodesToRemove.add(nodeId);

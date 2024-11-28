@@ -180,9 +180,8 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                   <Typography
                     variant="body1"
                     sx={{
-                      textDecoration: removedLinks.has(node.id)
-                        ? "line-through"
-                        : "",
+                      textDecoration:
+                        node.change === "removed" ? "line-through" : "",
                       color:
                         addedLinks.has(node.id) || node.change === "added"
                           ? "green"

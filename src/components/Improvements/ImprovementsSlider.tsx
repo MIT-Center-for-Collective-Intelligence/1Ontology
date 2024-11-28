@@ -165,7 +165,7 @@ const ImprovementsSlider = ({
               }}
             >
               {proposal?.newNode && (
-                <Box sx={{ mb: "50px" }}>
+                <Box sx={{ mb: "160px" }}>
                   <Typography>This proposal adds a new node titled:</Typography>
                   <Typography
                     sx={{
@@ -205,7 +205,7 @@ const ImprovementsSlider = ({
                     </strong>{" "}
                     {proposal.change.reasoning ? "because" : ""}:
                   </Typography>
-                  <Typography> {proposal.change.reasoning}</Typography>
+                  <Typography sx={{pb:"24px"}}> {proposal.change.reasoning}</Typography>
                   {/*      {(
                     currentImprovement.modifiedProperties[p]
                       ?.addedNonExistentElements || []
@@ -250,7 +250,7 @@ const ImprovementsSlider = ({
                 {currentImprovement.implemented && (
                   <Typography
                     sx={{
-                      /* my: "25px", */ fontWeight: "bold",
+                      fontWeight: "bold",
                       color: "green",
                     }}
                   >

@@ -381,6 +381,51 @@ const Improvements = ({
         // Update the parent node's specializations
         updateSpecializations(nodeParentData, newNodeRef.id, collectionName);
 
+        if (newNode.properties["parts"][0].nodes.length > 0) {
+          for (let { id: partId } of newNode.properties["parts"][0].nodes) {
+            const partRef = doc(collection(db, NODES), partId);
+            const partDoc = await getDoc(partRef);
+            const partData = partDoc.data() as INode;
+            const isPartOfNodes = partData.properties["isPartOf"][0].nodes;
+            const index = isPartOfNodes.findIndex((n) => n.id === partId);
+            if (index === -1) {
+              isPartOfNodes.push({
+                id: partId,
+              });
+              updateDoc(partRef, {
+                "properties.isPartOf": [
+                  {
+                    collectionName: "main",
+                    nodes: isPartOfNodes,
+                  },
+                ],
+              });
+            }
+          }
+        }
+
+        if (newNode.properties["isPartOf"][0].nodes.length > 0) {
+          for (let { id: partId } of newNode.properties["isPartOf"][0].nodes) {
+            const partRef = doc(collection(db, NODES), partId);
+            const partDoc = await getDoc(partRef);
+            const partData = partDoc.data() as INode;
+            const partsNodes = partData.properties["parts"][0].nodes;
+            const index = partsNodes.findIndex((n) => n.id === partId);
+            if (index === -1) {
+              partsNodes.push({
+                id: partId,
+              });
+              updateDoc(partRef, {
+                "properties.parts": [
+                  {
+                    collectionName: "main",
+                    nodes: partsNodes,
+                  },
+                ],
+              });
+            }
+          }
+        }
         // Add the new node to the database
         await addNewNode({ id: newNodeRef.id, newNode, reasoning });
 
