@@ -23,6 +23,7 @@ import { useAuth } from " @components/components/context/AuthContext";
 const useSelectDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [{ user }] = useAuth();
+  const editPrompt = user?.uname === "ouhrac" || user?.uname === "1man";
 
   const [selectedOption, setSelectedOption] = useState<{
     id: string;
@@ -110,7 +111,7 @@ const useSelectDropdown = () => {
           },
         }}
       >
-        {user?.uname === "ouhrac" && <CopilotPrompt />}
+        {editPrompt && <CopilotPrompt />}
         <TextField
           autoFocus
           margin="dense"
@@ -130,7 +131,7 @@ const useSelectDropdown = () => {
             },
           }}
         />
-        {user?.uname === "ouhrac" && (
+        {editPrompt && (
           <Box
             sx={{
               display: "flex",
@@ -151,7 +152,7 @@ const useSelectDropdown = () => {
             <Typography sx={{ ml: "15px" }}> Generate New Nodes</Typography>
           </Box>
         )}
-        {user?.uname === "ouhrac" && (
+        {editPrompt && (
           <Box
             sx={{
               display: "flex",
@@ -171,13 +172,11 @@ const useSelectDropdown = () => {
             <Typography sx={{ ml: "15px" }}> Generate improvement</Typography>
           </Box>
         )}
-        {!generateNewNodes &&
-          !generateImprovement &&
-          user?.uname === "ouhrac" && (
-            <Typography sx={{ color: "red", mb: "15px" }}>
-              {`Select at least one option: 'Generate New Nodes,' 'Generate Improvement' or both!`}
-            </Typography>
-          )}
+        {!generateNewNodes && !generateImprovement && editPrompt && (
+          <Typography sx={{ color: "red", mb: "15px" }}>
+            {`Select at least one option: 'Generate New Nodes,' 'Generate Improvement' or both!`}
+          </Typography>
+        )}
         <FormControl fullWidth sx={{ mb: 2, mt: "15px" }}>
           <InputLabel>Select an LLM Option</InputLabel>
           <Select

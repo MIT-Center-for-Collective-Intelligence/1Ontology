@@ -868,7 +868,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
                   onClick={() => {
                     setShowPromptHistory(false);
                     // setDiffChanges(log.changeDetails);
-                    setPreviousVersion(log.newValue.systemPrompt);
+                    setPreviousVersion(log.previousValue.systemPrompt);
                     setPreviousVersionId(log.id);
                     setDiffChanges(null);
                   }}
@@ -1129,7 +1129,9 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
                           suppressContentEditableWarning
                           sx={{
                             display: "inline",
-                            borderBottom: "1.5px dashed #ff6d00",
+                            borderBottom: !previousVersionId
+                              ? "1.5px dashed #ff6d00"
+                              : "",
                             paddingBottom: "2px",
                             cursor: "text",
                             px: "4px",
