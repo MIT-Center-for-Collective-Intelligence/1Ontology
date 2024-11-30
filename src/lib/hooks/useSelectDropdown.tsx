@@ -72,7 +72,13 @@ const useSelectDropdown = () => {
         });
       }
     },
-    [inputValue, selectedOption, numberValue]
+    [
+      inputValue,
+      numberValue,
+      selectedOption.id,
+      generateNewNodes,
+      generateImprovement,
+    ]
   );
 
   const handleSelectChange = (event: React.ChangeEvent<{ value: unknown }>) => {
@@ -125,26 +131,43 @@ const useSelectDropdown = () => {
           }}
         />
         {user?.uname === "ouhrac" && (
-          <Box sx={{ display: "flex", my: "25px" }}>
-            <Checkbox
-              checked={generateNewNodes}
-              sx={{ p: 0 }}
-              onChange={() => {
-                setGenerateNewNodes((prev) => !prev);
-              }}
-            />
+          <Box
+            sx={{
+              display: "flex",
+              mt: "25px",
+              mb: "10px",
+              p: 1,
+              cursor: "pointer",
+              ":hover": {
+                backgroundColor: "#766a57",
+                borderRadius: "25px",
+              },
+            }}
+            onClick={() => {
+              setGenerateNewNodes((prev) => !prev);
+            }}
+          >
+            <Checkbox checked={generateNewNodes} sx={{ p: 0 }} />
             <Typography sx={{ ml: "15px" }}> Generate New Nodes</Typography>
           </Box>
         )}
         {user?.uname === "ouhrac" && (
-          <Box sx={{ display: "flex", my: "25px" }}>
-            <Checkbox
-              checked={generateImprovement}
-              sx={{ p: 0 }}
-              onChange={() => {
-                setGenerateImprovement((prev) => !prev);
-              }}
-            />
+          <Box
+            sx={{
+              display: "flex",
+              mb: "25px",
+              cursor: "pointer",
+              p: 1,
+              ":hover": {
+                backgroundColor: "#766a57",
+                borderRadius: "25px",
+              },
+            }}
+            onClick={() => {
+              setGenerateImprovement((prev) => !prev);
+            }}
+          >
+            <Checkbox checked={generateImprovement} sx={{ p: 0 }} />
             <Typography sx={{ ml: "15px" }}> Generate improvement</Typography>
           </Box>
         )}
@@ -152,8 +175,7 @@ const useSelectDropdown = () => {
           !generateImprovement &&
           user?.uname === "ouhrac" && (
             <Typography sx={{ color: "red", mb: "15px" }}>
-              {`Select at least one option: "Generate New Nodes" or "Generate
-            Improvement!"`}
+              {`Select at least one option: 'Generate New Nodes,' 'Generate Improvement' or both!`}
             </Typography>
           )}
         <FormControl fullWidth sx={{ mb: 2, mt: "15px" }}>
