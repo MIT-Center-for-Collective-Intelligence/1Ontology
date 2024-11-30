@@ -5,7 +5,9 @@ export const sendLLMRequest = async (
   userMessage: string,
   model: string,
   deepNumber: number,
-  nodeId: string
+  nodeId: string,
+  generateNewNodes: boolean,
+  generateImprovement: boolean
 ) => {
   try {
     const response = await Post("/copilot", {
@@ -13,6 +15,8 @@ export const sendLLMRequest = async (
       model,
       deepNumber,
       nodeId,
+      generateNewNodes,
+      generateImprovement,
     });
     recordLogs({
       reason: "sendLLMRequest",

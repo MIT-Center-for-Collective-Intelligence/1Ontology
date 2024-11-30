@@ -137,3 +137,35 @@ export type NodeChange = {
   changeDetails?: { [key: string]: any };
   reasoning?: string;
 };
+
+export type PromptChange = {
+  previousValue: {
+    systemPrompt: {
+      id: string;
+      value?: string;
+      editablePart?: string;
+      endClose?: string;
+    }[];
+  };
+  newValue: {
+    systemPrompt: {
+      id: string;
+      value?: string;
+      editablePart?: string;
+      endClose?: string;
+    }[];
+  };
+  changeDetails: {
+    [id: string]: {
+      previousValue: string;
+      newValue: string;
+    };
+  };
+  modifiedAt: any;
+  modifiedBy: string;
+  modifiedByDetails: {
+    fName: string;
+    lName: string;
+    imageUrl: string;
+  };
+};

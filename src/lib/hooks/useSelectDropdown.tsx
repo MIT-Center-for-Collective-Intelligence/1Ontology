@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -11,13 +12,17 @@ import {
   MenuItem,
   Select,
   TextField,
+  Typography,
 } from "@mui/material";
 import React, { useCallback, useState } from "react";
 import { DESIGN_SYSTEM_COLORS } from "../theme/colors";
 import { MODELS_OPTIONS } from "../utils/copilotPrompts";
+import CopilotPrompt from " @components/components/CopilotPrompt/CopilotPrompt";
+import { useAuth } from " @components/components/context/AuthContext";
 
 const useSelectDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [{ user }] = useAuth();
 
   const [selectedOption, setSelectedOption] = useState<{
     id: string;
@@ -26,6 +31,8 @@ const useSelectDropdown = () => {
   const [inputValue, setInputValue] = useState<string>("");
   const [numberValue, setNumberValue] = useState<number>(12);
   const [nodeTitle, setNodeTitle] = useState("");
+  const [generateNewNodes, setGenerateNewNodes] = useState(true);
+  const [generateImprovement, setGenerateImprovement] = useState(true);
   const resolveRef = React.useRef<any>(null);
   // localStorage.setItem(
   //   `lastSearches_${user?.userId}`,
@@ -60,6 +67,8 @@ const useSelectDropdown = () => {
           userMessage: inputValue,
           model: selectedOption.id,
           deepNumber: numberValue,
+          generateNewNodes,
+          generateImprovement,
         });
       }
     },
@@ -87,7 +96,15 @@ const useSelectDropdown = () => {
         Improving the sub-ontology around{" "}
         <strong style={{ color: "orange" }}>{nodeTitle}</strong>:
       </DialogTitle>
-      <DialogContent>
+
+      <DialogContent
+        sx={{
+          "&::-webkit-scrollbar": {
+            display: "none",
+          },
+        }}
+      >
+        {user?.uname === "ouhrac" && <CopilotPrompt />}
         <TextField
           autoFocus
           margin="dense"
@@ -99,7 +116,6 @@ const useSelectDropdown = () => {
           fullWidth
           multiline
           sx={{
-            mt: 3,
             mx: "auto",
             display: "block",
             textAlign: "center",
@@ -108,7 +124,38 @@ const useSelectDropdown = () => {
             },
           }}
         />
-
+        {user?.uname === "ouhrac" && (
+          <Box sx={{ display: "flex", my: "25px" }}>
+            <Checkbox
+              checked={generateNewNodes}
+              sx={{ p: 0 }}
+              onChange={() => {
+                setGenerateNewNodes((prev) => !prev);
+              }}
+            />
+            <Typography sx={{ ml: "15px" }}> Generate New Nodes</Typography>
+          </Box>
+        )}
+        {user?.uname === "ouhrac" && (
+          <Box sx={{ display: "flex", my: "25px" }}>
+            <Checkbox
+              checked={generateImprovement}
+              sx={{ p: 0 }}
+              onChange={() => {
+                setGenerateImprovement((prev) => !prev);
+              }}
+            />
+            <Typography sx={{ ml: "15px" }}> Generate improvement</Typography>
+          </Box>
+        )}
+        {!generateNewNodes &&
+          !generateImprovement &&
+          user?.uname === "ouhrac" && (
+            <Typography sx={{ color: "red", mb: "15px" }}>
+              {`Select at least one option: "Generate New Nodes" or "Generate
+            Improvement!"`}
+            </Typography>
+          )}
         <FormControl fullWidth sx={{ mb: 2, mt: "15px" }}>
           <InputLabel>Select an LLM Option</InputLabel>
           <Select
@@ -157,7 +204,9 @@ const useSelectDropdown = () => {
             borderRadius: "26px",
             backgroundColor: DESIGN_SYSTEM_COLORS.primary800,
           }}
-          disabled={numberValue === 0}
+          disabled={
+            numberValue === 0 || (!generateNewNodes && !generateImprovement)
+          }
         >
           Start
         </Button>

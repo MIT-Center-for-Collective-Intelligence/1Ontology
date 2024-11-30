@@ -4,6 +4,7 @@ import { askGemini } from "./helpers";
 import { Content } from "@google/generative-ai";
 
 import {
+  COPILOT_PROMPTS,
   GUIDELINES,
   LOGS,
   NODES,
@@ -147,11 +148,11 @@ const proposerAgent = async (
   model: ChatModel | "gemini-exp-1121",
   nodesArray: any[],
   uname: string,
+  SYSTEM_PROMPT: string,
   proposalsJSON: any = {},
   evaluation: string = ""
 ) => {
   try {
-    console.log(guidelines, "guidelines===>");
     if (!guidelines) {
       const guidelinesSnapshot = await db.collection(GUIDELINES).get();
       guidelines = guidelinesSnapshot.docs
@@ -170,7 +171,7 @@ The knowledge Graph:
 ${JSON.stringify(nodesArray, null, 2)}
 '''
 
-${PROPOSALS_SCHEMA}
+${SYSTEM_PROMPT}
 
 Guidelines:
 '''
@@ -240,6 +241,7 @@ export const generateProposals = async (
   deepNumber: number,
   nodeId: string,
   uname: string,
+  SYSTEM_PROMPT: string,
   proposalsJSON: any = {},
   evaluation: string = ""
 ): Promise<any> => {
@@ -272,17 +274,106 @@ export const generateProposals = async (
         model,
         nodesArray,
         uname,
+        SYSTEM_PROMPT,
         proposalsJSON,
         evaluation
       );
     } else {
-      return await proposerAgent(userMessage, model, nodesArray, uname);
+      return await proposerAgent(
+        userMessage,
+        model,
+        nodesArray,
+        uname,
+        SYSTEM_PROMPT
+      );
     }
+  }
+};
+// const RESPONSE = {
+//   message:
+//     "After carefully analyzing the ontology, I have identified several improvements to better organize the specializations and parts of the nodes, as well as a few new nodes that can enhance the clarity and structure of the ontology.",
+//   improvements: [
+//     {
+//       title: "NodeA",
+//       nodeType: "activity",
+//       change: {
+//         modified_property: "generalizations",
+//         new_value: {
+//           nodes_to_add: ["Node6"],
+//           nodes_to_delete: ["Gate Arrival"],
+//           final_array: ["Node6"],
+//         },
+//         reasoning:
+//           "The activity 'Define key performance indicators (KPIs)' is an integral part of 'Measure organizational performance' and should be classified under it instead of 'Unclassified'.",
+//       },
+//     },
+//   ],
+//   new_nodes: [],
+// };
+
+const getPrompt = async (
+  uname: string,
+  generateNewNodes: boolean,
+  generateImprovement: boolean
+) => {
+  const promptDoc = await db.collection("copilotPrompts").doc(uname).get();
+  let prompt = "";
+  if (promptDoc.exists) {
+    const promptData = promptDoc.data() as {
+      systemPrompt: {
+        id: string;
+        value?: string;
+        editablePart?: string;
+        endClose?: string;
+        newNode?: boolean;
+        improvement?: boolean;
+      }[];
+    };
+
+    let systemPrompt = promptData.systemPrompt;
+
+    if (!generateNewNodes && generateImprovement) {
+      systemPrompt = systemPrompt.filter(
+        (p) =>
+          !!p.improvement ||
+          (!p.hasOwnProperty("newNode") && !p.hasOwnProperty("improvement"))
+      );
+    }
+    if (generateNewNodes && !generateImprovement) {
+      systemPrompt = systemPrompt.filter(
+        (p) =>
+          !!p.newNode ||
+          (!p.hasOwnProperty("newNode") && !p.hasOwnProperty("improvement"))
+      );
+    }
+    for (let p of systemPrompt) {
+      if (p.value) {
+        prompt = prompt + p.value;
+      }
+      if (p.editablePart) {
+        prompt = prompt + p.editablePart;
+      }
+      if (p.endClose) {
+        prompt = prompt + p.endClose;
+      }
+      prompt = prompt + "\n";
+    }
+    return prompt;
+  } else {
+    throw new Error("System prompt missing!");
   }
 };
 
 async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
-  const { userMessage, model, deepNumber, nodeId, user } = req.body.data;
+  const {
+    userMessage,
+    model,
+    deepNumber,
+    nodeId,
+    user,
+    generateNewNodes,
+    generateImprovement,
+  } = req.body.data;
   const { uname } = user?.userData;
   try {
     const model_index = MODELS_OPTIONS.findIndex(
@@ -292,19 +383,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       throw new Error("Access forbidden");
     }
 
-    console.log(" userMessage, model, deepNumber, nodeId", {
-      userMessage,
-      model,
-      deepNumber,
-      nodeId,
-    });
-
+    const SYSTEM_PROMPT = await getPrompt(
+      uname,
+      generateNewNodes,
+      generateImprovement
+    );
     const response = await generateProposals(
       userMessage,
       model,
       deepNumber,
       nodeId,
-      uname
+      uname,
+      SYSTEM_PROMPT
     );
     saveLogs(uname, "info", {
       response,
@@ -320,11 +410,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
         improvements.push({
           ...improvement,
           change,
+          changes: [],
         });
       }
     }
+    if (!response.new_nodes) {
+      response.new_nodes = [];
+    }
     response.improvements = improvements;
-    console.log("Response: ", JSON.stringify(response, null, 2));
 
     return res.status(200).send(response);
   } catch (error: any) {

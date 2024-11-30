@@ -652,10 +652,18 @@ const ToolbarSidebar = ({
       model: string;
       userMessage: string;
       deepNumber: number;
+      generateNewNodes: boolean;
+      generateImprovement: boolean;
     };
 
     if (!options) return;
-    const { model, userMessage, deepNumber } = options;
+    const {
+      model,
+      userMessage,
+      deepNumber,
+      generateNewNodes,
+      generateImprovement,
+    } = options;
     setIsLoadingCopilot(true);
     setCurrentIndex(0);
     try {
@@ -663,7 +671,9 @@ const ToolbarSidebar = ({
         userMessage,
         model,
         deepNumber,
-        currentVisibleNode.id
+        currentVisibleNode.id,
+        generateNewNodes,
+        generateImprovement
       )) as {
         improvements: Improvement[];
         new_nodes: copilotNewNode[];

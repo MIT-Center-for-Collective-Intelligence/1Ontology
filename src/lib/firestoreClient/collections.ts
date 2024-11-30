@@ -6,3 +6,5 @@ export const LOCKS = "locks";
 export const MESSAGES = "messages";
 export const NODES_LOGS = "nodeLogs";
 export const GUIDELINES = "guidelines";
+export const PROMPT_LOGS = "promptLogs";
+export const COPILOT_PROMPTS = "copilotPrompts";

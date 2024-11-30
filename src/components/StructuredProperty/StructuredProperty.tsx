@@ -93,14 +93,18 @@ const StructuredProperty = ({
 
   const propertyValue: ICollection[] = useMemo(() => {
     try {
-      let result =
-        getPropertyValue(
-          nodes,
-          currentVisibleNode.inheritance[property]?.ref,
-          property
-        ) ||
-        currentVisibleNode?.properties[property] ||
-        currentVisibleNode[property as "specializations" | "generalizations"];
+      let result = null;
+      if (property === "specializations" || property === "generalizations") {
+        result =
+          currentVisibleNode[property as "specializations" | "generalizations"];
+      } else {
+        result =
+          getPropertyValue(
+            nodes,
+            currentVisibleNode.inheritance[property]?.ref,
+            property
+          ) || currentVisibleNode?.properties[property];
+      }
 
       if (
         selectedDiffNode &&
@@ -191,13 +195,7 @@ const StructuredProperty = ({
     } catch (error) {
       console.error(error);
     }
-  }, [
-    currentVisibleNode,
-    nodes,
-    property,
-    selectedDiffNode,
-    currentImprovement,
-  ]) as ICollection[];
+  }, [currentVisibleNode, nodes, property, selectedDiffNode]) as ICollection[];
 
   const unlinkVisible = useCallback(
     (nodeId: string) => {
