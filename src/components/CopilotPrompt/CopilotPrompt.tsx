@@ -542,7 +542,6 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
     null
   );
 
-  const [error, setError] = useState<string | null>(null);
   const [promptHistory, setPromptHistory] = useState<
     (PromptChange & { id: string })[]
   >([]);
@@ -586,15 +585,18 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
     const unsubscribeNodes = onSnapshot(promptHistoryQuery, (snapshot) => {
       const docChanges = snapshot.docChanges();
       setPromptHistory((prev: (PromptChange & { id: string })[]) => {
+        const _prev = [...prev];
         for (let change of docChanges) {
-          // const index = prev.findIndex((c) => c.id === change.doc.id);
-          // if (index === -1) {
-          const changeData = change.doc.data() as PromptChange;
-          const id = change.doc.id;
-          prev.push({ ...changeData, id });
-          // }
+          const index = _prev.findIndex((c) => c.id === change.doc.id);
+          if (index === -1 && change.type === "added") {
+            const changeData = change.doc.data() as PromptChange;
+            const id = change.doc.id;
+            _prev.push({ ...changeData, id });
+          } else if (index !== -1 && change.type === "removed") {
+            _prev.splice(index, 1);
+          }
         }
-        return prev;
+        return _prev;
       });
       // setLoading(false);
     });
@@ -626,7 +628,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
           ...edit,
         };
       }
-
+      setEditedParts([]);
       // JSON.parse(schema.replace(/`/g, ""));
       // setError(null);
       const promptRef = doc(collection(db, COPILOT_PROMPTS), user?.uname);
@@ -645,6 +647,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
           createdAt: new Date(),
         });
       }
+
       if (!promptData) return;
       saveLogPrompt({
         previousValue: {
@@ -662,7 +665,6 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
           imageUrl: user.imageUrl,
         },
       });
-      setEditedParts([]);
     } catch (e) {
       console.error(e);
     }
@@ -811,63 +813,72 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
           gap: "14px",
         }}
       >
-        {promptHistory.map((log) => (
-          <ListItem
-            key={log.id}
-            disablePadding
-            sx={{
-              px: "7px",
-              py: "5px",
-              backgroundColor: log.id === previousVersionId ? "#2c5e2c" : "",
-            }}
-          >
-            <ListItemIcon>
-              <OptimizedAvatar
-                imageUrl={log.modifiedByDetails.imageUrl}
-                alt={log.modifiedByDetails.fName}
-                size={40}
-              />
-            </ListItemIcon>
+        {promptHistory
+          .sort((a: any, b: any) => {
+            return (
+              new Date(b.modifiedAt.toDate()).getTime() -
+              new Date(a.modifiedAt.toDate()).getTime()
+            );
+          })
+          .map((log) => (
+            <ListItem
+              key={log.id}
+              disablePadding
+              sx={{
+                px: "7px",
+                py: "5px",
+                backgroundColor: log.id === previousVersionId ? "#2c5e2c" : "",
+              }}
+            >
+              <ListItemIcon>
+                <OptimizedAvatar
+                  imageUrl={log.modifiedByDetails.imageUrl}
+                  alt={log.modifiedByDetails.fName}
+                  size={40}
+                />
+              </ListItemIcon>
 
-            <ListItemText
-              primary={
-                <Box>
-                  <Typography
-                    sx={{
-                      fontSize: "13px",
-                      color: log.id === previousVersionId ? "white" : "",
-                    }}
-                  >
-                    {moment(log.modifiedAt.toDate()).format("M/D/YY, h:mm A")}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: "13px",
-                      color: log.id === previousVersionId ? "white" : "",
-                    }}
-                  >
-                    {log.modifiedByDetails.fName} {log.modifiedByDetails.lName}
-                  </Typography>
-                </Box>
-              }
-            />
-            {log.id !== previousVersionId && (
-              <Button
-                variant="outlined"
-                sx={{ borderRadius: "25px" }}
-                onClick={() => {
-                  setShowPromptHistory(false);
-                  // setDiffChanges(log.changeDetails);
-                  setPreviousVersion(log.newValue.systemPrompt);
-                  setPreviousVersionId(log.id);
-                }}
-              >
-                {" "}
-                view
-              </Button>
-            )}
-          </ListItem>
-        ))}
+              <ListItemText
+                primary={
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontSize: "13px",
+                        color: log.id === previousVersionId ? "white" : "",
+                      }}
+                    >
+                      {moment(log.modifiedAt.toDate()).format("M/D/YY, h:mm A")}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: "13px",
+                        color: log.id === previousVersionId ? "white" : "",
+                      }}
+                    >
+                      {log.modifiedByDetails.fName}{" "}
+                      {log.modifiedByDetails.lName}
+                    </Typography>
+                  </Box>
+                }
+              />
+              {log.id !== previousVersionId && (
+                <Button
+                  variant="outlined"
+                  sx={{ borderRadius: "25px" }}
+                  onClick={() => {
+                    setShowPromptHistory(false);
+                    // setDiffChanges(log.changeDetails);
+                    setPreviousVersion(log.newValue.systemPrompt);
+                    setPreviousVersionId(log.id);
+                    setDiffChanges(null);
+                  }}
+                >
+                  {" "}
+                  view
+                </Button>
+              )}
+            </ListItem>
+          ))}
       </List>
       <Divider />
     </Box>
@@ -1137,12 +1148,6 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
             </Box>
           </AccordionDetails>
         </Accordion>
-
-        {error && (
-          <Typography color="error" sx={{ mt: 1 }}>
-            {error}
-          </Typography>
-        )}
       </Paper>
     </Box>
   );
