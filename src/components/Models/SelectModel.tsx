@@ -1,4 +1,7 @@
 import React, { useMemo, useRef, useState } from "react";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import {
   Modal,
   Box,
@@ -102,6 +105,7 @@ const SelectModelModal = ({
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [expanded, setExpanded] = useState(new Set());
 
   const db = getFirestore();
   const getSelectingModelTitle = (
@@ -230,36 +234,85 @@ const SelectModelModal = ({
       </Box>
       <Box sx={{ p: 3 }}>
         {Array.from(checkedItems).map((id: any) => (
-          <Box key={id} sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-            <Checkbox
-              checked={true}
-              onChange={() => {
-                markItemAsChecked(id);
-                setClonedNodesQueue((prev: any) => {
-                  const _prev = { ...prev };
-                  if (_prev[id]) {
-                    delete _prev[id];
-                  }
-                  return _prev;
-                });
-              }}
-              disabled={
-                isSaving ||
-                (checkedItems.size === 1 &&
-                  selectedProperty === "generalizations") ||
-                (selectedProperty === "specializations" &&
-                  getNumOfGeneralizations(id))
-              }
-            />
-            {clonedNodesQueue.hasOwnProperty(id) ? (
-              <LinkEditor
-                reviewId={id}
-                title={clonedNodesQueue[id]?.title || ""}
-                checkDuplicateTitle={checkDuplicateTitle}
-                setClonedNodesQueue={setClonedNodesQueue}
+          <Box key={id}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Checkbox
+                checked={true}
+                onChange={() => {
+                  markItemAsChecked(id);
+                  setClonedNodesQueue((prev: any) => {
+                    const _prev = { ...prev };
+                    if (_prev[id]) {
+                      delete _prev[id];
+                    }
+                    return _prev;
+                  });
+                }}
+                disabled={
+                  isSaving ||
+                  (checkedItems.size === 1 &&
+                    selectedProperty === "generalizations") ||
+                  (selectedProperty === "specializations" &&
+                    getNumOfGeneralizations(id))
+                }
               />
-            ) : (
-              <Typography>{nodes[id]?.title || ""}</Typography>
+              {clonedNodesQueue.hasOwnProperty(id) ? (
+                <LinkEditor
+                  reviewId={id}
+                  title={clonedNodesQueue[id]?.title || ""}
+                  checkDuplicateTitle={checkDuplicateTitle}
+                  setClonedNodesQueue={setClonedNodesQueue}
+                />
+              ) : (
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Typography>{nodes[id]?.title || ""}</Typography>
+
+                  {selectedProperty === "parts" && (
+                    <IconButton
+                      onClick={() => {
+                        setExpanded((prev) => {
+                          const _prev = new Set(...new Array(prev));
+                          if (_prev.has(id)) {
+                            _prev.delete(id);
+                          } else {
+                            _prev.add(id);
+                          }
+                          console.log("prev ==>", _prev);
+                          return _prev;
+                        });
+                      }}
+                      sx={{ ml: "15px" }}
+                    >
+                      {expanded.has(id) ? (
+                        <ExpandLessIcon />
+                      ) : (
+                        <ExpandMoreIcon />
+                      )}
+                    </IconButton>
+                  )}
+                </Box>
+              )}
+            </Box>
+            {expanded.has(id) && selectedProperty === "parts" && (
+              <Box>
+                <Button
+                  sx={{
+                    borderRadius: "25px",
+                    fontSize: "12px",
+                    ml: "23px",
+                    mb: "10px",
+                    height: "25px",
+                  }}
+                  variant="outlined"
+                  onClick={() => {
+                    addACloneNodeQueue(id);
+                    markItemAsChecked(id);
+                  }}
+                >
+                  Replace
+                  <SwapHorizIcon sx={{ ml: "7px" }} />
+                </Button>
+              </Box>
             )}
           </Box>
         ))}
