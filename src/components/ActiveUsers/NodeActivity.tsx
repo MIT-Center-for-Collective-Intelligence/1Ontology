@@ -130,15 +130,35 @@ const NodeActivity = ({
               new Date(a.modifiedAt.toDate()).getTime()
             );
           })
-          .map((log: NodeChange & { id: string }) => (
-            <ActivityDetails
-              key={log.id}
-              activity={log}
-              displayDiff={displayDiff}
-              modifiedByDetails={activeUsers[log.modifiedBy]}
-              isSelected={selectedDiffNode?.id === log.id}
-            />
-          ))}
+          .map((log: NodeChange & { id: string }) => {
+            let modifiedByDetails = null;
+            if (log.modifiedBy) {
+              // modifiedBy property is a type of string
+              modifiedByDetails = activeUsers[log.modifiedBy];
+              
+              // added a new property collaborators for Yjs history updates
+              if (log.collaborators && log.collaborators.length > 0) {
+                const collaboratorDetails = log.collaborators
+                  .map((uname: string) => activeUsers[uname])
+                  .filter(Boolean);
+                
+                if (collaboratorDetails.length > 0) {
+                  modifiedByDetails = [modifiedByDetails, ...collaboratorDetails].filter(Boolean);
+                }
+              }
+            }
+            
+            return (
+              <ActivityDetails
+                key={log.id}
+                activity={log}
+                displayDiff={displayDiff}
+                modifiedByDetails={modifiedByDetails}
+                isSelected={selectedDiffNode?.id === log.id}
+              />
+            );
+          })
+        }
     </Box>
   );
 };

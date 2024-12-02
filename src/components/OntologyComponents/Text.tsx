@@ -407,6 +407,7 @@ const Text = ({
           ) : !reference && switchToWebsocket ? (
             <YjsEditor
               fullname={`${user?.fName} ${user?.lName}`}
+              username={`${user?.uname}`}
               property={property}
               nodeId={currentVisibleNode.id}
               color={randomProminentColor()}
