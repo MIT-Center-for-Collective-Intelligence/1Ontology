@@ -35,7 +35,10 @@ const ImprovementsSlider = ({
       return;
     }
     setTimeout(() => {
-      if (proposals[currentIndex]?.newNode) {
+      if (proposals[currentIndex]?.deleteNode) {
+        setCurrentImprovement(proposals[currentIndex]);
+        onNavigateToNode(proposals[currentIndex].nodeId);
+      } else if (proposals[currentIndex]?.newNode) {
         setCurrentImprovement(proposals[currentIndex]);
         onNavigateToNode(proposals[currentIndex].first_generalization);
       } else {
@@ -49,7 +52,7 @@ const ImprovementsSlider = ({
     setCurrentIndex((prevIndex: number) => {
       const newPrev = prevIndex === proposals.length - 1 ? 0 : prevIndex + 1;
       if (display) {
-        if (proposals[newPrev]?.newNode) {
+        if (proposals[newPrev]?.newNode || proposals[newPrev]?.deleteNode) {
           setCurrentImprovement(proposals[newPrev]);
         } else {
           compareThisImprovement(proposals[newPrev]);
@@ -68,7 +71,7 @@ const ImprovementsSlider = ({
     setCurrentIndex((prevIndex: number) => {
       const newPrev = prevIndex === 0 ? proposals.length - 1 : prevIndex - 1;
       if (display) {
-        if (proposals[newPrev]?.newNode) {
+        if (proposals[newPrev]?.newNode || proposals[newPrev]?.deleteNode) {
           setCurrentImprovement(proposals[newPrev]);
         } else {
           compareThisImprovement(proposals[newPrev]);
@@ -164,9 +167,17 @@ const ImprovementsSlider = ({
                 position: "relative",
               }}
             >
-              {proposal?.newNode && (
+              {(proposal?.newNode || proposal?.deleteNode) && (
                 <Box sx={{ mb: "160px" }}>
-                  <Typography>This proposal adds a new node titled:</Typography>
+                  {proposal?.newNode ? (
+                    <Typography>
+                      This proposal adds a new node titled:
+                    </Typography>
+                  ) : (
+                    <Typography>
+                      This proposal suggest to delete the node titled:
+                    </Typography>
+                  )}
                   <Typography
                     sx={{
                       fontWeight: "bold",
@@ -175,38 +186,43 @@ const ImprovementsSlider = ({
                       fontSize: "17px",
                     }}
                   >
-                    {proposal.node.title}
+                    {proposal.node?.title || proposal?.title || ""}
                   </Typography>
                   <Typography sx={{ mt: "15px" }}>Reasoning:</Typography>
                   <Typography>{proposal.reasoning}</Typography>
                 </Box>
               )}
 
-              {!proposal?.newNode && proposal?.change?.modified_property && (
-                <Box
-                  key={proposal?.change?.modified_property}
-                  sx={{ mb: "15px" }}
-                >
-                  <Typography
-                    sx={{
-                      // fontWeight: "bold",
-                      // color: "orange",
-                      mb: "5px",
-                    }}
+              {!proposal?.newNode &&
+                !proposal.deleteNode &&
+                proposal?.change?.modified_property && (
+                  <Box
+                    key={proposal?.change?.modified_property}
+                    sx={{ mb: "15px" }}
                   >
-                    Changing{" "}
-                    <strong
-                      style={{
-                        color: "orange",
-                        textTransform: "capitalize",
+                    <Typography
+                      sx={{
+                        // fontWeight: "bold",
+                        // color: "orange",
+                        mb: "5px",
                       }}
                     >
-                      {proposal.change.modified_property}
-                    </strong>{" "}
-                    {proposal.change.reasoning ? "because" : ""}:
-                  </Typography>
-                  <Typography sx={{pb:"24px"}}> {proposal.change.reasoning}</Typography>
-                  {/*      {(
+                      Changing{" "}
+                      <strong
+                        style={{
+                          color: "orange",
+                          textTransform: "capitalize",
+                        }}
+                      >
+                        {proposal.change.modified_property}
+                      </strong>{" "}
+                      {proposal.change.reasoning ? "because" : ""}:
+                    </Typography>
+                    <Typography sx={{ pb: "24px" }}>
+                      {" "}
+                      {proposal.change.reasoning}
+                    </Typography>
+                    {/*      {(
                     currentImprovement.modifiedProperties[p]
                       ?.addedNonExistentElements || []
                   ).length > 0 && (
@@ -232,8 +248,8 @@ const ImprovementsSlider = ({
                       not exist.
                     </Typography>
                   )} */}
-                </Box>
-              )}
+                  </Box>
+                )}
 
               <Typography
                 sx={{

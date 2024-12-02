@@ -289,7 +289,8 @@ const Text = ({
             display: "flex",
             alignItems: "center",
             background: (theme: any) =>
-              selectedDiffNode?.changeType === "delete node" &&
+              (selectedDiffNode?.changeType === "delete node" ||
+                !!currentImprovement?.deleteNode) &&
               property === "title"
                 ? "red"
                 : (selectedDiffNode?.changeType === "add node" ||

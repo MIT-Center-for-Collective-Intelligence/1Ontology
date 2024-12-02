@@ -120,6 +120,7 @@ import {
   updateSpecializations,
   updateLinksForInheritanceSpecializations,
   updateLinks,
+  clearNotifications,
 } from " @components/lib/utils/helpers";
 
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
@@ -908,16 +909,7 @@ const Node = ({
     selectedProperty,
     nodes,
   ]);
-  const clearNotifications = async (nodeId: string) => {
-    if (!nodeId) return;
-    const batch = writeBatch(db);
-    const notificationDocs = await getDocs(
-      query(collection(db, "notifications"), where("nodeId", "==", nodeId))
-    );
-    for (let notDoc of notificationDocs.docs) {
-      batch.update(notDoc.ref, { seen: true });
-    }
-  };
+
   //  function to handle the deletion of a Node
   const deleteNode = useCallback(async () => {
     try {

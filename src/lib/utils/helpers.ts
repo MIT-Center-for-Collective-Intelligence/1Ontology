@@ -13,6 +13,9 @@ import {
   getFirestore,
   deleteField,
   arrayUnion,
+  getDocs,
+  where,
+  query,
 } from "firebase/firestore";
 import { LOGS, NODES, NODES_LOGS, USERS } from "../firestoreClient/collections";
 import { NodeChange } from " @components/types/INode";
@@ -1340,3 +1343,15 @@ export const updateLinks = (
 //     console.error(error);
 //   }
 // };
+
+export const clearNotifications = async (nodeId: string) => {
+  const db = getFirestore();
+  if (!nodeId) return;
+  const batch = writeBatch(db);
+  const notificationDocs = await getDocs(
+    query(collection(db, "notifications"), where("nodeId", "==", nodeId))
+  );
+  for (let notDoc of notificationDocs.docs) {
+    batch.update(notDoc.ref, { seen: true });
+  }
+};

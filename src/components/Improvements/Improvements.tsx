@@ -14,9 +14,12 @@ import { NODES } from " @components/lib/firestoreClient/collections";
 import { ICollection, INode } from " @components/types/INode";
 
 import {
+  checkIfCanDeleteANode,
+  clearNotifications,
   createNewNode,
   generateInheritance,
   recordLogs,
+  removeIsPartOf,
   saveNewChangeLog,
   unlinkPropertyOf,
   updateInheritance,
@@ -513,10 +516,90 @@ const Improvements = ({
       console.log(error);
     }
   };
+  //  function to handle the deletion of a Node
+  const deleteNode = useCallback(
+    async (nodeId: string) => {
+      try {
+        const nodeValue = nodes[nodeId];
+        // Confirm deletion with the user using a custom confirmation dialog
 
+        if (!user?.uname) return;
+
+        const specializations = nodeValue.specializations.flatMap(
+          (n) => n.nodes
+        );
+
+        if (specializations.length > 0) {
+          if (checkIfCanDeleteANode(nodes, specializations)) {
+            await confirmIt(
+              "To delete a node, you need to first delete its specializations or move them under a different generalization.",
+              "Ok",
+              ""
+            );
+            return;
+          }
+        }
+        if (
+          await confirmIt(
+            `Are you sure you want to delete this Node?`,
+            "Delete Node",
+            "Keep Node"
+          )
+        ) {
+          const currentNode: INode = JSON.parse(JSON.stringify(nodeValue));
+          // Retrieve the document reference of the node to be deleted
+          for (let collection of nodeValue.generalizations) {
+            if (collection.nodes.length > 0) {
+              setCurrentVisibleNode(nodes[collection.nodes[0].id]);
+              break;
+            }
+          }
+
+          const nodeRef = doc(collection(db, NODES), currentNode.id);
+          // call removeIsPartOf function to remove the node link from all the nodes where it's linked
+          await removeIsPartOf(db, currentNode as INode, user?.uname);
+          // Update the user document by removing the deleted node's ID
+          await updateDoc(nodeRef, { deleted: true, deletedAt: new Date() });
+
+          saveNewChangeLog(db, {
+            nodeId: currentNode.id,
+            modifiedBy: user?.uname,
+            modifiedProperty: null,
+            previousValue: null,
+            newValue: null,
+            modifiedAt: new Date(),
+            changeType: "delete node",
+            fullNode: currentNode,
+          });
+          // Record a log entry for the deletion action
+          clearNotifications(nodeRef.id);
+          recordLogs({
+            action: "Deleted Node",
+            node: nodeValue.id,
+          });
+        }
+      } catch (error: any) {
+        // Log any errors that occur during the execution of the function
+        console.error(error);
+        recordLogs({
+          type: "error",
+          error: JSON.stringify({
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          }),
+        });
+      }
+    },
+    [user?.uname, nodes]
+  );
   const onAcceptChange = async (change: any) => {
     try {
-      if (change?.newNode) {
+      if (!!change?.deleteNode) {
+        await deleteNode(change.nodeId);
+        return;
+      }
+      if (!!change?.newNode) {
         await addNewSpecialization("main", change.node, change.reasoning);
         return;
       }

@@ -417,7 +417,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     if (!response.new_nodes) {
       response.new_nodes = [];
     }
-    response.improvements = improvements;
+    if (!response.delete_nodes) response.delete_nodes = [];
 
     return res.status(200).send(response);
   } catch (error: any) {

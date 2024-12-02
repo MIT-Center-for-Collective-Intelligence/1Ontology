@@ -85,6 +85,7 @@ import {
 } from " @components/lib/utils/copilotHelpers";
 import useSelectDropdown from " @components/lib/hooks/useSelectDropdown";
 import {
+  copilotDeleteNode,
   copilotNewNode,
   Improvement,
   sendLLMRequest,
@@ -613,6 +614,30 @@ const ToolbarSidebar = ({
       console.error(error);
     }
   };
+  const getDeletedNode = (
+    deletedNodes: {
+      title: string;
+      reasoning: string;
+    }[]
+  ): {
+    title: string;
+    nodeId: string;
+    deleteNode: boolean;
+    reasoning: string;
+  }[] => {
+    const result = [];
+    for (let { title, reasoning } of deletedNodes) {
+      if (!!nodesByTitle[title]) {
+        result.push({
+          title,
+          nodeId: nodesByTitle[title].id,
+          deleteNode: true,
+          reasoning: reasoning,
+        });
+      }
+    }
+    return result;
+  };
   const compareThisImprovement = (improvement: any) => {
     if (improvement?.diffChange) {
       displayDiff(improvement.diffChange);
@@ -677,13 +702,18 @@ const ToolbarSidebar = ({
       )) as {
         improvements: Improvement[];
         new_nodes: copilotNewNode[];
+        deleted_nodes: copilotDeleteNode[];
         message: string;
       };
       if (!response) {
         throw new Error("Missing response in handleImproveClick!");
       }
 
-      if (response.improvements.length <= 0 && response.new_nodes.length <= 0) {
+      if (
+        response.improvements.length <= 0 &&
+        response.new_nodes.length <= 0 &&
+        response?.deleted_nodes.length <= 0
+      ) {
         confirmIt(
           <Box>
             {`I've analyzed your sub-ontology graph and found no areas for improvement or new nodes to add.`}{" "}
@@ -708,8 +738,19 @@ const ToolbarSidebar = ({
         reasoning: string;
         newNode: boolean;
       }[] = getNewNodes(response?.new_nodes || []);
-      if (improvements.length > 0 || newNodes.length > 0) {
-        setImprovements([...newNodes, ...improvements]);
+
+      const deletedNodes: {
+        title: string;
+        nodeId: string;
+        reasoning: string;
+        deleteNode: boolean;
+      }[] = getDeletedNode(response?.deleted_nodes || []);
+      if (
+        improvements.length > 0 ||
+        newNodes.length > 0 ||
+        deletedNodes.length > 0
+      ) {
+        setImprovements([...newNodes, ...deletedNodes, ...improvements]);
       }
     } catch (error) {
       confirmIt(
@@ -1162,7 +1203,10 @@ const ToolbarSidebar = ({
                       improvements.filter((i: any) => !i.implemented).length > 0
                     ) {
                       handleExpandSidebar("improvements");
-                      if (improvements[0]?.newNode) {
+                      if (
+                        improvements[0]?.newNode ||
+                        improvements[0]?.deleteNode
+                      ) {
                         setCurrentImprovement(improvements[0]);
                       } else {
                         compareThisImprovement(improvements[0]);

@@ -28,7 +28,10 @@ export const sendLLMRequest = async (
     throw error;
   }
 };
-
+export type copilotDeleteNode = {
+  title: string;
+  reasoning: string;
+};
 export type copilotNewNode = {
   title: string;
   description: string;
