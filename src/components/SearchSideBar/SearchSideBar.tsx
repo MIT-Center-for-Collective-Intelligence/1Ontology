@@ -54,15 +54,6 @@ const SearchSideBar = ({
     setIsFocused(false);
   };
 
-  const handleBlur = () => {
-    setTimeout(() => {
-      if (searchValue.trim() === "") {
-        setIsFocused(false);
-        setIsListOpen(false);
-      }
-    }, 100);
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchValue(value);
@@ -147,12 +138,10 @@ const SearchSideBar = ({
       <GlobalStyles
         styles={{
           "& input:-webkit-autofill": {
-            boxShadow: `0px 0px 0px 100px ${
-              theme.palette.mode === "dark" ? "black" : "white"
-            } inset !important`,
-            WebkitTextFillColor: `${
-              theme.palette.mode === "dark" ? "#fff" : "#000"
-            } !important`,
+            boxShadow: `0px 0px 0px 100px ${theme.palette.mode === "dark" ? "black" : "white"
+              } inset !important`,
+            WebkitTextFillColor: `${theme.palette.mode === "dark" ? "#fff" : "#000"
+              } !important`,
             caretColor: "#fff !important",
             borderRadius: "0 !important",
           },
@@ -163,7 +152,6 @@ const SearchSideBar = ({
         value={searchValue}
         onChange={handleInputChange}
         onFocus={handleFocus}
-        onBlur={handleBlur}
         fullWidth
         InputProps={{
           sx: {
@@ -210,8 +198,8 @@ const SearchSideBar = ({
           {searchResults.length > 0
             ? searchResults.map(renderListItem)
             : searchValue === "" &&
-              lastSearches.length > 0 &&
-              lastSearches.map(renderListItem)}
+            lastSearches.length > 0 &&
+            lastSearches.map(renderListItem)}
         </List>
       )}
     </Box>
