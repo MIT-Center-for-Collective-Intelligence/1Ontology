@@ -137,7 +137,7 @@ wss.on("connection", async (conn, req) => {
 
           const activeUsers = getActiveUsers(connectedClients, clientId, currentDoc);
           console.log('collaborators', activeUsers);
-          
+
           saveChangeLog(docId, activeUsers);
 
           // Cleanup the updates from document changelog map after saving the changelog
@@ -198,9 +198,11 @@ const saveChangeLog = async (docId, activeUsers) => {
       const textContent = doc.getText("quill").toString();
       const lastContent = lastSavedChangeLogContentMap.get(docId) || '';
 
+      const modifiedUser = Array.isArray(activeUsers) ? activeUsers[0] : activeUsers;
+
       const log = {
         nodeId: nodeId,
-        modifiedBy: Array.isArray(activeUsers) ? activeUsers[0] : activeUsers,
+        modifiedBy: modifiedUser,
         collaborators: Array.isArray(activeUsers) && activeUsers.length > 1 ? activeUsers.slice(1) : undefined, // If there is more than one users, add the remaining to collaborators
         modifiedProperty: property,
         previousValue: lastContent,
@@ -211,9 +213,40 @@ const saveChangeLog = async (docId, activeUsers) => {
       }
 
       if (lastContent !== textContent) {
+        // save changelog
         const nodeLogRef = db.collection("nodeLogs").doc();
         await nodeLogRef.set(log);
         console.log('changelog saved!');
+
+
+        // update user reuptation
+        const userRef = db.collection("users").doc(modifiedUser);
+        const userDoc = await userRef.get();
+        const currentReputation = userDoc.data().reputations || 0;
+        const userUpdateData = {
+          reputations: currentReputation + 1,
+          lasChangeMadeAt: new Date(),
+        };
+        await userRef.update(userUpdateData);
+
+        // Update node contributors
+        if (modifiedUser) {
+          const nodeRef = db.collection("nodes").doc(nodeId);
+          const nodeDoc = await nodeRef.get();
+          const currentContributors = nodeDoc.data().contributors || [];
+          const currentContributorsByProperty = nodeDoc.data().contributorsByProperty || {};
+
+          const updateData = {
+            contributors: Array.from(new Set([...currentContributors, modifiedUser])),
+          };
+
+          if (property) {
+            const propertyContributors = currentContributorsByProperty[property] || [];
+            updateData[`contributorsByProperty.${property}`] = Array.from(new Set([...propertyContributors, modifiedUser]));
+          }
+
+          await nodeRef.update(updateData);
+        }
       }
 
       lastSavedChangeLogContentMap.set(docId, textContent);
