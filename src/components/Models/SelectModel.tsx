@@ -1,16 +1,5 @@
-import React, {
-  useCallback,
-  useMemo,
-  useState,
-} from "react";
-import {
-  Modal,
-  Box,
-  Paper,
-  Typography,
-  Button,
-  Tooltip,
-} from "@mui/material";
+import React, { useCallback, useMemo, useState } from "react";
+import { Modal, Box, Paper, Typography, Button, Tooltip } from "@mui/material";
 
 import ExpandSearchResult from "../OntologyComponents/ExpandSearchResult";
 import TreeViewSimplified from "../OntologyComponents/TreeViewSimplified";
@@ -21,9 +10,7 @@ import {
   DISPLAY,
   UNCLASSIFIED,
 } from " @components/lib/CONSTANTS";
-import {
-  capitalizeFirstLetter,
-} from " @components/lib/utils/string.utils";
+import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
 import CloseIcon from "@mui/icons-material/Close";
 import { ICollection, ILinkNode, INodeTypes } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
@@ -116,8 +103,10 @@ const SelectModelModal = ({
   const [isSaving, setIsSaving] = useState(false);
   const [expanded, setExpanded] = useState(new Set());
   const [openAddCollection, setOpenAddCollection] = useState(false);
-  const [removedElements, setRemovedElements] = useState(new Set());
-  const [addedElements, setAddedElements] = useState(new Set());
+  const [removedElements, setRemovedElements] = useState<Set<string>>(
+    new Set()
+  );
+  const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
 
   const db = getFirestore();
   const getSelectingModelTitle = (
@@ -326,6 +315,10 @@ const SelectModelModal = ({
       });
       return _prev;
     });
+    setAddedElements((prev) => {
+      prev.add(id);
+      return prev;
+    });
   };
   const unlinkVisible = useCallback(
     (nodeId: string) => {
@@ -371,7 +364,18 @@ const SelectModelModal = ({
     if (unclassifiedNodeDocs.docs.length > 0) {
       const unclassifiedId = unclassifiedNodeDocs.docs[0].id;
       // handleCloning({ id: unclassifiedId }, searchValue);
-      addACloneNodeQueue(unclassifiedId, searchValue);
+      const id = addACloneNodeQueue(unclassifiedId, searchValue);
+      setEditableProperty((prev: ICollection[]) => {
+        const _prev = [...prev];
+        _prev[0].nodes.push({
+          id,
+        });
+        return _prev;
+      });
+      setAddedElements((prev) => {
+        prev.add(id);
+        return prev;
+      });
     }
   };
   const renderSearchOrTree = () =>
