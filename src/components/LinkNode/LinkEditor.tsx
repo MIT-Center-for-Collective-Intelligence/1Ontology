@@ -111,12 +111,12 @@ const LinkEditor: React.FC<LinkEditorProps> = ({
   //   }
   // };
   return (
-    <Box sx={{ display: "flex", alignItems: "center" }}>
+    <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
       <TextField
         inputRef={textFieldRef}
         value={editorContent}
         onChange={handleChanges}
-        // sx={{ width: "100%" }}
+        fullWidth
         placeholder="Node title..."
         onKeyDown={(e) => {
           if (e.key === "Enter") {
