@@ -67,6 +67,8 @@ In this example, `ChildNode` is used to display a child node with the given prop
  */
 import { NODES } from " @components/lib/firestoreClient/collections";
 import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
+import SwapVertIcon from "@mui/icons-material/SwapVert";
+import AddIcon from "@mui/icons-material/Add";
 import {
   recordLogs,
   saveNewChangeLog,
@@ -82,6 +84,8 @@ import {
   Button,
   IconButton,
   Link,
+  ListItem,
+  ListItemIcon,
   TextField,
   Tooltip,
   Typography,
@@ -97,15 +101,18 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import DoneIcon from "@mui/icons-material/Done";
+
 import CloseIcon from "@mui/icons-material/Close";
 import { useEffect, useRef, useState } from "react";
 import { getTitleDeleted } from " @components/lib/utils/string.utils";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import { UNCLASSIFIED } from " @components/lib/CONSTANTS";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import LinkEditor from "./LinkEditor";
 
 type ILinkNodeProps = {
+  provided: any;
   link: ILinkNode;
   currentVisibleNode: INode;
   sx?: { [key: string]: any };
@@ -122,9 +129,14 @@ type ILinkNodeProps = {
   linkIndex: number;
   collectionIndex: number;
   selectedDiffNode: any;
+  replaceWith: any;
+  saveNewAndSwapIt: any;
+  clonedNodesQueue?: any;
+  unlinkElement?: any;
 };
 
 const LinkNode = ({
+  provided,
   link,
   sx,
   property,
@@ -139,9 +151,16 @@ const LinkNode = ({
   user,
   collectionIndex,
   selectedDiffNode,
+  replaceWith,
+  saveNewAndSwapIt,
+  clonedNodesQueue = {},
+  unlinkElement,
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
+  const [swapIt, setSwapIt] = useState(false);
+  const [addNew, setAddNew] = useState(false);
+  const [newPart, setNewPart] = useState("");
 
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
 
@@ -483,6 +502,10 @@ const LinkNode = ({
   };
 
   const handleUnlinkNode = () => {
+    if (unlinkElement) {
+      unlinkElement(link.id, collectionIndex);
+      return;
+    }
     if (property === "specializations" || property === "generalizations") {
       unlinkSpecializationOrGeneralization();
     } else {
@@ -499,46 +522,222 @@ const LinkNode = ({
       : theme.palette.common.notebookMainBlack;
   };
 
+  const getSpecializations = (nodeId: string) => {
+    return nodes[nodeId].specializations
+      .flatMap((s) => s.nodes)
+      .filter((n) => !!nodes[n.id]?.title);
+  };
+
   return (
-    <Box sx={{ ...sx }}>
-      <Box style={{ display: "flex", alignItems: "center" }}>
-        <Link
-          underline="hover"
-          onClick={handleNavigateToNode}
-          sx={{
-            cursor: "pointer",
-            color: getLinkColor(link.change),
-            textDecoration: link.change === "removed" ? "line-through" : "none",
-          }}
-        >
-          {" "}
-          {title || regionalTitle}
-        </Link>
-        {link.changeType === "sort" && (
-          <SwapHorizIcon sx={{ color: getLinkColor(link.change), pl: "5px" }} />
+    <Box
+      sx={{
+        backgroundColor: !!swapIt ? "#5f5e5d" : "",
+        borderRadius: "25px",
+        p: !!swapIt ? 1 : "",
+        my: swapIt ? "5px" : "",
+      }}
+    >
+      <ListItem
+        ref={provided.innerRef}
+        {...provided.draggableProps}
+        {...provided.dragHandleProps}
+        sx={{
+          my: 1,
+          p: 0.3,
+          px: 1,
+          display: "flex",
+          borderRadius: "25px",
+
+          ":hover": {
+            backgroundColor: clonedNodesQueue.hasOwnProperty(link.id)
+              ? ""
+              : "#5f5e5d",
+          },
+        }}
+      >
+        <ListItemIcon sx={{ minWidth: 0 }}>
+          <DragIndicatorIcon
+            sx={{
+              color:
+                link.change === "added"
+                  ? "green"
+                  : link.change === "removed"
+                  ? "red"
+                  : "",
+            }}
+          />
+        </ListItemIcon>
+        {clonedNodesQueue.hasOwnProperty(link.id) ? (
+          <LinkEditor
+            reviewId={link.id}
+            title={clonedNodesQueue[link.id]?.title || ""}
+            checkDuplicateTitle={() => {}}
+            setClonedNodesQueue={() => {}}
+          />
+        ) : (
+          <Link
+            underline="hover"
+            onClick={handleNavigateToNode}
+            sx={{
+              cursor: "pointer",
+              color: getLinkColor(link.change),
+              textDecoration:
+                link.change === "removed" ? "line-through" : "none",
+            }}
+          >
+            {title || regionalTitle}
+          </Link>
         )}
-        {!locked &&
-          !linkLocked &&
-          !selectedDiffNode &&
-          (!currentVisibleNode.unclassified ||
-            property !== "generalizations") &&
-          property !== "isPartOf" && (
+
+        <Box sx={{ display: "flex", alignItems: "center", ml: "auto" }}>
+          {link.changeType === "sort" && (
+            <SwapHorizIcon
+              sx={{ color: getLinkColor(link.change), pl: "5px" }}
+            />
+          )}
+
+          {!locked &&
+            !linkLocked &&
+            unlinkVisible &&
+            !selectedDiffNode &&
+            (!currentVisibleNode.unclassified ||
+              property !== "generalizations") &&
+            property !== "isPartOf" && (
+              <Tooltip title="Unlink">
+                <IconButton
+                  sx={{
+                    ml: "18px",
+                    borderRadius: "18px",
+                    fontSize: "12px",
+                    p: 0.2,
+                  }}
+                  onClick={handleUnlinkNode}
+                >
+                  <CloseIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+          {property === "parts" &&
+            !clonedNodesQueue.hasOwnProperty(link.id) && (
+              <Tooltip title="Switch">
+                <IconButton
+                  sx={{
+                    p: 0.2,
+                    ml: 2,
+                    backgroundColor: swapIt ? "orange" : "",
+                  }}
+                  onClick={() => {
+                    setSwapIt((prev) => !prev);
+                  }}
+                >
+                  <SwapHorizIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+        </Box>
+
+        {ConfirmDialog}
+      </ListItem>
+      {swapIt && property === "parts" && (
+        <Box>
+          {getSpecializations(link.id).map((n) => (
+            <Box
+              key={n.id}
+              sx={{ display: "flex", alignItems: "center", px: 1, pl: 0 }}
+            >
+              <Tooltip title="Replace with" placement="left">
+                <IconButton
+                  sx={{ p: 0.2, m: "6px" }}
+                  onClick={() => {
+                    replaceWith(n.id, link.id);
+                  }}
+                >
+                  <SwapVertIcon />
+                </IconButton>
+              </Tooltip>
+              <Typography>{nodes[n.id]?.title}</Typography>
+            </Box>
+          ))}{" "}
+          {addNew && (
+            <Tooltip
+              title="Save"
+              placement="top"
+              sx={{ mt: "15px", alignItems: "center" }}
+            >
+              <IconButton
+                onClick={() => {
+                  setAddNew(false);
+                  saveNewAndSwapIt(newPart, link.id);
+                }}
+                sx={{ p: 0.3, m: "6px", bgcolor: "green" }}
+                disabled={!newPart.trim()}
+              >
+                <SwapVertIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {addNew && (
+            <Tooltip title="Cancel" placement="top">
+              <IconButton
+                onClick={() => {
+                  setAddNew(false);
+                  setNewPart("");
+                }}
+                sx={{ p: 0.3, m: "6px", bgcolor: "red" }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {addNew && (
+            <TextField
+              value={newPart}
+              onChange={(e: any) => {
+                setNewPart(e.target.value);
+              }}
+              sx={{ width: "80%", m: "6px" }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  // saveNodeTitle();
+                }
+              }}
+              placeholder="Node title..."
+              fullWidth
+              InputProps={{
+                inputProps: {
+                  style: {
+                    padding: 10,
+                  },
+                },
+              }}
+            />
+          )}
+          {!addNew && (
             <Button
               sx={{
-                ml: "8px",
-                borderRadius: "18px",
-                backgroundColor: BUTTON_COLOR,
-                fontSize: "12px",
+                display: "flex",
+                // backgroundColor: "orange",
+                borderRadius: "25px",
+                p: 0.3,
+                mt: 2,
+                cursor: "pointer",
+                width: "100%",
+                ":hover": {
+                  backgroundColor: "orange",
+                },
+                alignItems: "center",
+              }}
+              onClick={() => {
+                setAddNew(true);
               }}
               variant="outlined"
-              onClick={handleUnlinkNode}
             >
-              Unlink
+              <AddIcon />
+              <Typography>New Specialization</Typography>
             </Button>
           )}
-      </Box>
-
-      {ConfirmDialog}
+        </Box>
+      )}
     </Box>
   );
 };

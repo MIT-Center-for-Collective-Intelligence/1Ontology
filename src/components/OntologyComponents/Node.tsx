@@ -174,6 +174,9 @@ const Node = ({
   const [selectedProperty, setSelectedProperty] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [checkedItemsCopy, setCheckedItemsCopy] = useState<Set<string>>(
+    new Set()
+  );
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [searchValue, setSearchValue] = useState("");
   const [selectTitle, setSelectTitle] = useState(false);
@@ -184,7 +187,8 @@ const Node = ({
     [nodeId: string]: { title: string; id: string };
   }>({});
   const [newOnes, setNewOnes] = useState(new Set());
-
+  const [editableProperty, setEditableProperty] = useState<ICollection[]>([]);
+  /* */
   const handleCloseAddLinksModel = () => {
     setCheckedItems(new Set());
     setOpenSelectModel(false);
@@ -229,32 +233,6 @@ const Node = ({
     return [];
   }, [searchValue, selectedProperty]);
 
-  const markItemAsChecked = (checkedId: string, radioSelection = false) => {
-    setCheckedItems((checkedItems) => {
-      let _oldChecked = new Set(checkedItems);
-      if (_oldChecked.has(checkedId)) {
-        _oldChecked.delete(checkedId);
-      } else {
-        if (radioSelection) {
-          _oldChecked = new Set();
-        }
-        _oldChecked.add(checkedId);
-      }
-      if (selectedProperty === "generalizations" && _oldChecked.size === 0) {
-        return checkedItems;
-      }
-      return _oldChecked;
-    });
-    setNewOnes((newOnes) => {
-      let _oldChecked = new Set(newOnes);
-      if (_oldChecked.has(checkedId)) {
-        _oldChecked.delete(checkedId);
-      } else {
-        _oldChecked.add(checkedId);
-      }
-      return _oldChecked;
-    });
-  };
   const addACloneNodeQueue = (nodeId: string, title?: string) => {
     const newId = doc(collection(db, NODES)).id;
     const newTitle = title ? title : `New ${nodes[nodeId].title}`;
@@ -262,14 +240,15 @@ const Node = ({
       prev[newId] = { title: newTitle, id: nodeId };
       return prev;
     });
-    markItemAsChecked(newId);
+    return newId;
   };
 
   const cloneNode = useCallback(
     async (
       nodeId: string,
       searchValue: string | null,
-      newId: string | null
+      newId: string | null,
+      mProperty: string
     ): Promise<INode | null> => {
       try {
         setCloning(nodeId);
@@ -313,7 +292,7 @@ const Node = ({
         );
 
         // Handle specific property updates for `parts` and `isPartOf`
-        if (selectedProperty === "parts") {
+        if (mProperty === "parts") {
           if (
             newNode.properties.isPartOf &&
             Array.isArray(newNode.properties.isPartOf)
@@ -333,7 +312,7 @@ const Node = ({
             }
           }
         }
-        if (selectedProperty === "isPartOf") {
+        if (mProperty === "isPartOf") {
           if (
             newNode.properties.parts &&
             Array.isArray(newNode.properties.parts)
@@ -359,10 +338,10 @@ const Node = ({
 
         // Handle the addition of specializations or generalizations
         if (
-          selectedProperty === "specializations" ||
-          selectedProperty === "generalizations"
+          mProperty === "specializations" ||
+          mProperty === "generalizations"
         ) {
-          if (selectedProperty === "specializations") {
+          if (mProperty === "specializations") {
             const alreadyExistIndex =
               newNode.generalizations[0].nodes.findIndex(
                 (n) => n.id === currentVisibleNode.id
@@ -374,7 +353,7 @@ const Node = ({
             }
           }
 
-          if (selectedProperty === "generalizations") {
+          if (mProperty === "generalizations") {
             const alreadyExistIndex =
               newNode.specializations[0].nodes.findIndex(
                 (n) => n.id === currentVisibleNode.id
@@ -387,20 +366,16 @@ const Node = ({
           }
         } else {
           // Handling property updates
-          if (newNode.inheritance[selectedProperty]?.ref) {
-            newNode.properties[selectedProperty] = JSON.parse(
+          if (newNode.inheritance[mProperty]?.ref) {
+            newNode.properties[mProperty] = JSON.parse(
               JSON.stringify(
-                nodes[newNode.inheritance[selectedProperty].ref].properties[
-                  selectedProperty
-                ]
+                nodes[newNode.inheritance[mProperty].ref].properties[mProperty]
               )
             );
           }
 
-          if (Array.isArray(newNode.properties[selectedProperty])) {
-            const targetPropertyCollection = newNode.properties[
-              selectedProperty
-            ].find(
+          if (Array.isArray(newNode.properties[mProperty])) {
+            const targetPropertyCollection = newNode.properties[mProperty].find(
               (collection) =>
                 collection.collectionName === (selectedCategory || "main")
             );
@@ -408,7 +383,7 @@ const Node = ({
             // If the property collection does not exist, create it
 
             if (!targetPropertyCollection) {
-              newNode.properties[selectedProperty].push({
+              newNode.properties[mProperty].push({
                 collectionName: selectedCategory || "main",
                 nodes: [],
               });
@@ -416,7 +391,7 @@ const Node = ({
 
             // Push the new node ID into the corresponding property collection
             const propertyCollectionToUpdate = newNode.properties[
-              selectedProperty
+              mProperty
             ].find(
               (collection) =>
                 collection.collectionName === (selectedCategory || "main")
@@ -424,33 +399,28 @@ const Node = ({
             propertyCollectionToUpdate?.nodes.push({ id: newNode.id });
             if (!newNode.propertyOf) {
               newNode.propertyOf = {
-                [selectedProperty]: [{ collectionName: "main", nodes: [] }],
+                [mProperty]: [{ collectionName: "main", nodes: [] }],
               };
             }
-            if (!newNode.propertyOf[selectedProperty]) {
-              newNode.propertyOf[selectedProperty] = [
+            if (!newNode.propertyOf[mProperty]) {
+              newNode.propertyOf[mProperty] = [
                 { collectionName: "main", nodes: [] },
               ];
             }
-            newNode.propertyOf[selectedProperty][0].nodes.push({
+            newNode.propertyOf[mProperty][0].nodes.push({
               id: newNode.id,
             });
 
-            if (newNode.inheritance[selectedProperty]?.ref) {
+            if (newNode.inheritance[mProperty]?.ref) {
               const referencedProperty =
-                nodes[newNode.inheritance[selectedProperty].ref].properties[
-                  selectedProperty
-                ];
+                nodes[newNode.inheritance[mProperty].ref].properties[mProperty];
               if (Array.isArray(referencedProperty)) {
                 const links = referencedProperty.flatMap((c) => c.nodes);
-                if (
-                  selectedProperty === "parts" ||
-                  selectedProperty === "isPartOf"
-                ) {
+                if (mProperty === "parts" || mProperty === "isPartOf") {
                   updatePartsAndPartsOf(
                     links,
                     { id: currentVisibleNode.id },
-                    selectedProperty === "parts" ? "isPartOf" : "parts",
+                    mProperty === "parts" ? "isPartOf" : "parts",
                     db,
                     nodes
                   );
@@ -458,7 +428,7 @@ const Node = ({
                   updatePropertyOf(
                     links,
                     { id: currentVisibleNode.id },
-                    selectedProperty,
+                    mProperty,
                     nodes,
                     db
                   );
@@ -468,20 +438,19 @@ const Node = ({
 
             if (newNode) {
               let updateObject: any = {
-                [`properties.${selectedProperty}`]:
-                  newNode.properties[selectedProperty],
-                [`inheritance.${selectedProperty}.ref`]: null,
+                [`properties.${mProperty}`]: newNode.properties[mProperty],
+                [`inheritance.${mProperty}.ref`]: null,
               };
-              const reference = newNode.inheritance[selectedProperty]?.ref;
+              const reference = newNode.inheritance[mProperty]?.ref;
               if (reference) {
                 if (
                   nodes[reference].textValue &&
-                  nodes[reference].textValue.hasOwnProperty(selectedProperty)
+                  nodes[reference].textValue.hasOwnProperty(mProperty)
                 ) {
                   updateObject = {
                     ...updateObject,
-                    [`textValue.${selectedProperty}`]:
-                      nodes[reference].textValue[selectedProperty],
+                    [`textValue.${mProperty}`]:
+                      nodes[reference].textValue[mProperty],
                   };
                 }
               }
@@ -491,7 +460,7 @@ const Node = ({
           // Update inheritance (if needed)
           updateInheritance({
             nodeId: currentVisibleNode.id,
-            updatedProperties: [selectedProperty],
+            updatedProperties: [mProperty],
             db,
           });
         }
@@ -542,14 +511,7 @@ const Node = ({
         return null;
       }
     },
-    [
-      db,
-      user.uname,
-      selectedCategory,
-      selectedProperty,
-      nodes,
-      currentVisibleNode.id,
-    ]
+    [db, user.uname, selectedCategory, nodes, currentVisibleNode.id]
   );
 
   // This function handles the cloning of a node.
@@ -561,38 +523,22 @@ const Node = ({
     // Call the asynchronous function to clone the node with the given ID.
     // Close the modal or perform any necessary cleanup.
     // handleCloseAddLinksModel();
-    await cloneNode(node.id, searchValue, newId);
+    await cloneNode(node.id, searchValue, newId, selectedProperty);
   };
 
-  const showListToSelect = async (
-    property: string,
-    collectionName: string,
-    collectionIdx: number
-  ) => {
+  const showListToSelect = async (property: string, collectionIdx: number) => {
     setOpenSelectModel(true);
     setSelectedProperty(property);
-    setSelectedCategory(collectionName);
 
     let previousCheckedItems: string[] = [];
 
     // Handle specializations or generalizations
     if (property === "specializations" || property === "generalizations") {
-      // Find the collection based on the collection name
-
-      /*       if (collectionName === "main") {
-        let checked = [];
-        for (let collection of currentVisibleNode[property]) {
-          checked.push(...collection.nodes.map((link) => link.id));
-        }
-        previousCheckedItems = checked;
-      } else { */
-      const collection = currentVisibleNode[property].find(
-        (col) => col.collectionName === collectionName
-      );
-      if (collection) {
-        previousCheckedItems = collection.nodes.map((link) => link.id);
-      }
-      // }
+      const _p = JSON.parse(JSON.stringify(currentVisibleNode[property]));
+      setEditableProperty(_p);
+      previousCheckedItems = _p
+        .flatMap((l: ICollection) => l.nodes)
+        .map((n: { id: string }) => n.id);
     } else {
       // Handle properties case
       let propertyCollection = currentVisibleNode.properties[property];
@@ -600,29 +546,14 @@ const Node = ({
       if (reference) {
         propertyCollection = nodes[reference].properties[property];
       }
-      if (Array.isArray(propertyCollection)) {
-        if (collectionName === "main") {
-          let checked = [];
-          for (let collection of propertyCollection) {
-            checked.push(
-              ...collection.nodes.map((link: { id: string }) => link.id)
-            );
-          }
-          previousCheckedItems = checked;
-        } else {
-          const collection = propertyCollection.find(
-            (col) => col.collectionName === collectionName
-          );
-          if (collection) {
-            previousCheckedItems = collection.nodes.map(
-              (link: { id: string }) => link.id
-            );
-          }
-        }
-      }
-    }
+      previousCheckedItems = propertyCollection
+        .flatMap((l: ICollection) => l.nodes)
+        .map((n: { id: string }) => n.id);
 
+      setEditableProperty(JSON.parse(JSON.stringify(propertyCollection)));
+    }
     setCheckedItems(new Set(previousCheckedItems));
+    setCheckedItemsCopy(new Set(previousCheckedItems));
   };
 
   const selectFromTree = () => {
@@ -641,274 +572,217 @@ const Node = ({
     }
   };
 
-  const handleSaveLinkChanges = useCallback(async () => {
-    try {
-      // Close the modal or perform any other necessary actions
-      // Get the node document from the database
-      const nodeDoc = await getDoc(
-        doc(collection(db, NODES), currentVisibleNode.id)
-      );
-      let previousValue: ICollection[] | null = null;
-      let newValue: ICollection[] | null = null;
-
-      // If the node document does not exist, return early
-      if (!nodeDoc.exists()) return;
-
-      // Extract existing node data from the document
-      const nodeData = nodeDoc.data() as INode;
-
-      // Initialize a new array for storing updated children
-      let oldLinks: ILinkNode[] = [];
-      let allLinks: ILinkNode[] = [];
-
-      // Handle specializations or generalizations
-      if (
-        selectedProperty === "specializations" ||
-        selectedProperty === "generalizations"
-      ) {
-        const selectedCollection = nodeData[selectedProperty].find(
-          (c: ICollection) => c.collectionName === selectedCategory
-        );
-        if (selectedCollection) {
-          oldLinks = [...(selectedCollection.nodes || [])];
-          allLinks = nodeData[selectedProperty].flatMap(
-            (collection) => collection.nodes
-          );
+  const handleSaveLinkChanges = useCallback(
+    async (removedElements: Set<string>, addedElements: Set<string>) => {
+      try {
+        debugger;
+        if (removedElements.size === 0 && addedElements.size === 0) {
+          return;
         }
 
-        previousValue = JSON.parse(JSON.stringify(nodeData[selectedProperty]));
-      } else {
-        if (Array.isArray(nodeData.properties[selectedProperty])) {
-          const selectedCollection = (
-            nodeData.properties[selectedProperty] || []
-          ).find((c: ICollection) => c.collectionName === selectedCategory);
-          if (selectedCollection) {
-            oldLinks = [...selectedCollection.nodes];
-            allLinks = nodeData.properties[selectedProperty].flatMap(
-              (collection) => collection.nodes
-            );
+        const addedLinks = new Array(...addedElements).map((l) => ({
+          id: l,
+        }));
+        const removedLinks = new Array(...removedElements).map((l) => ({
+          id: l,
+        }));
+
+        // Close the modal or perform any other necessary actions
+        // Get the node document from the database
+        const nodeDoc = await getDoc(
+          doc(collection(db, NODES), currentVisibleNode.id)
+        );
+        let previousValue: ICollection[] | null = null;
+
+        // If the node document does not exist, return early
+        if (!nodeDoc.exists()) return;
+
+        // Extract existing node data from the document
+        const nodeData = nodeDoc.data() as INode;
+
+        // Handle specializations or generalizations
+        if (
+          selectedProperty === "specializations" ||
+          selectedProperty === "generalizations"
+        ) {
+          previousValue = JSON.parse(
+            JSON.stringify(nodeData[selectedProperty])
+          );
+        } else {
+          if (Array.isArray(nodeData.properties[selectedProperty])) {
             previousValue = JSON.parse(
               JSON.stringify(nodeData.properties[selectedProperty])
             );
           }
         }
-      }
-      const addedLinks: { id: string }[] = [];
-      // Iterate through checkedItems to add new children
-      checkedItems.forEach((checked) => {
-        // Check if the node is not already present in oldLinks
-        const indexFound = allLinks.findIndex(
-          (link: ILinkNode) => link.id === checked
-        );
-
-        if (indexFound === -1) {
-          // Add the node to oldLinks if not present
-          oldLinks.push({
-            id: checked,
-          });
-          addedLinks.push({
-            id: checked,
-          });
+        const newLinks = editableProperty.flatMap((n) => n.nodes);
+        // Prevent removing all generalizations
+        if (selectedProperty === "generalizations" && newLinks.length === 0) {
+          await confirmIt(
+            "You cannot remove all the generalizations for this node. Make sure it links to at least one generalization.",
+            "Ok",
+            ""
+          );
+          return;
         }
-      });
 
-      // Filter out any children that are not in the checkedItems array
-      const removedLinks = oldLinks.filter(
-        (link) => !checkedItems.has(link.id)
-      );
-
-      // Only keep the checked links
-      const newLinks = oldLinks.filter((link) => checkedItems.has(link.id));
-
-      // Prevent removing all generalizations
-      if (selectedProperty === "generalizations" && newLinks.length === 0) {
-        await confirmIt(
-          "You cannot remove all the generalizations for this node. Make sure it links to at least one generalization.",
-          "Ok",
-          ""
-        );
-        return;
-      }
-
-      for (let link of removedLinks) {
-        await unlinkPropertyOf(
-          db,
-          selectedProperty,
-          currentVisibleNode.id,
-          link.id
-        );
-      }
-
-      // Update the node data with the new children
-      if (
-        selectedProperty === "specializations" ||
-        selectedProperty === "generalizations"
-      ) {
-        const selectedCollection = nodeData[selectedProperty].find(
-          (c: ICollection) => c.collectionName === selectedCategory
-        );
-        if (selectedCollection) {
-          selectedCollection.nodes = newLinks;
-          newValue = JSON.parse(JSON.stringify(nodeData[selectedProperty]));
+        for (let linkId of removedElements) {
+          await unlinkPropertyOf(
+            db,
+            selectedProperty,
+            currentVisibleNode.id,
+            linkId
+          );
         }
-      } else {
-        if (Array.isArray(nodeData.properties[selectedProperty])) {
-          const selectedCollection = (
-            nodeData.properties[selectedProperty] || []
-          ).find((c: ICollection) => c.collectionName === selectedCategory);
-          if (selectedCollection) {
-            selectedCollection.nodes = newLinks;
-            newValue = JSON.parse(
-              JSON.stringify(nodeData.properties[selectedProperty])
-            );
-          }
+
+        // Update links for specializations/generalizations
+        if (
+          selectedProperty === "specializations" ||
+          selectedProperty === "generalizations"
+        ) {
+          updateLinks(
+            newLinks,
+            { id: currentVisibleNode.id },
+            selectedProperty === "specializations"
+              ? "generalizations"
+              : "specializations",
+            nodes,
+            db
+          );
+          nodeData[selectedProperty] = editableProperty;
+        } else {
+          nodeData.properties[selectedProperty] = editableProperty;
         }
-      }
-      if (JSON.stringify(newValue) === JSON.stringify(previousValue)) {
-        //no change
-        return;
-      }
 
-      // Update links for specializations/generalizations
-      if (
-        selectedProperty === "specializations" ||
-        selectedProperty === "generalizations"
-      ) {
-        updateLinks(
-          newLinks,
-          { id: currentVisibleNode.id },
-          selectedProperty === "specializations"
-            ? "generalizations"
-            : "specializations",
-          nodes,
-          db
-        );
-      }
+        // Update parts/isPartOf links
+        if (selectedProperty === "parts" || selectedProperty === "isPartOf") {
+          updatePartsAndPartsOf(
+            newLinks,
+            { id: currentVisibleNode.id },
+            selectedProperty === "parts" ? "isPartOf" : "parts",
+            db,
+            nodes
+          );
+        }
 
-      // Update parts/isPartOf links
-      if (selectedProperty === "parts" || selectedProperty === "isPartOf") {
-        updatePartsAndPartsOf(
-          newLinks,
-          { id: currentVisibleNode.id },
-          selectedProperty === "parts" ? "isPartOf" : "parts",
-          db,
-          nodes
-        );
-      }
-
-      // Reset inheritance if applicable
-      if (
-        nodeData.inheritance &&
-        !["specializations", "generalizations", "parts", "isPartOf"].includes(
-          selectedProperty
-        )
-      ) {
-        if (nodeData.inheritance[selectedProperty]) {
-          const reference = nodeData.inheritance[selectedProperty].ref;
-          if (
-            reference &&
-            nodes[reference].textValue &&
-            nodes[reference].textValue.hasOwnProperty(selectedProperty)
-          ) {
-            if (!nodeData.textValue) {
-              nodeData.textValue = {
-                [selectedProperty]:
-                  nodes[reference].textValue[selectedProperty],
-              };
-            } else {
-              nodeData.textValue[selectedProperty] =
-                nodes[reference].textValue[selectedProperty];
+        // Reset inheritance if applicable
+        if (
+          nodeData.inheritance &&
+          !["specializations", "generalizations", "parts", "isPartOf"].includes(
+            selectedProperty
+          )
+        ) {
+          if (nodeData.inheritance[selectedProperty]) {
+            const reference = nodeData.inheritance[selectedProperty].ref;
+            if (
+              reference &&
+              nodes[reference].textValue &&
+              nodes[reference].textValue.hasOwnProperty(selectedProperty)
+            ) {
+              if (!nodeData.textValue) {
+                nodeData.textValue = {
+                  [selectedProperty]:
+                    nodes[reference].textValue[selectedProperty],
+                };
+              } else {
+                nodeData.textValue[selectedProperty] =
+                  nodes[reference].textValue[selectedProperty];
+              }
             }
+            nodeData.inheritance[selectedProperty].ref = null;
           }
-          nodeData.inheritance[selectedProperty].ref = null;
         }
-      }
 
-      // Update other properties if applicable
-      if (
-        !["specializations", "generalizations", "parts", "isPartOf"].includes(
-          selectedProperty
-        )
-      ) {
-        updatePropertyOf(
-          newLinks,
-          { id: currentVisibleNode.id },
-          selectedProperty,
-          nodes,
-          db
-        );
-      }
+        // Update other properties if applicable
 
-      // Update the node document in the database
-      await updateDoc(nodeDoc.ref, nodeData);
-      //the user modified generalizations
-      if (selectedProperty === "generalizations") {
-        await updateLinksForInheritance(
-          db,
-          currentVisibleNode.id,
-          addedLinks,
-          removedLinks,
-          currentVisibleNode,
-          newLinks,
-          nodes
-        );
-      }
-      if (selectedProperty === "specializations") {
-        await updateLinksForInheritanceSpecializations(
-          db,
-          currentVisibleNode.id,
-          addedLinks,
-          removedLinks,
-          currentVisibleNode,
-          newLinks,
-          nodes
-        );
-      }
-      // Update inheritance for non-specialization/generalization properties
-      if (
-        !["specializations", "generalizations", "isPartOf"].includes(
-          selectedProperty
-        )
-      ) {
-        updateInheritance({
+        if (
+          !new Set([
+            "specializations",
+            "generalizations",
+            "parts",
+            "isPartOf",
+          ]).has(selectedProperty)
+        ) {
+          updatePropertyOf(
+            newLinks,
+            { id: currentVisibleNode.id },
+            selectedProperty,
+            nodes,
+            db
+          );
+        }
+
+        // Update the node document in the database
+        await updateDoc(nodeDoc.ref, nodeData);
+        //the user modified generalizations
+        if (selectedProperty === "generalizations") {
+          await updateLinksForInheritance(
+            db,
+            currentVisibleNode.id,
+            addedLinks,
+            removedLinks,
+            currentVisibleNode,
+            newLinks,
+            nodes
+          );
+        }
+        if (selectedProperty === "specializations") {
+          await updateLinksForInheritanceSpecializations(
+            db,
+            currentVisibleNode.id,
+            addedLinks,
+            removedLinks,
+            currentVisibleNode,
+            newLinks,
+            nodes
+          );
+        }
+        // Update inheritance for non-specialization/generalization properties
+        if (
+          !["specializations", "generalizations", "isPartOf"].includes(
+            selectedProperty
+          )
+        ) {
+          updateInheritance({
+            nodeId: currentVisibleNode.id,
+            updatedProperties: [selectedProperty],
+            db,
+          });
+        }
+
+        saveNewChangeLog(db, {
           nodeId: currentVisibleNode.id,
-          updatedProperties: [selectedProperty],
-          db,
+          modifiedBy: user?.uname,
+          modifiedProperty: selectedProperty,
+          previousValue,
+          newValue: editableProperty,
+          modifiedAt: new Date(),
+          changeType: "modify elements",
+          fullNode: currentVisibleNode,
+        });
+      } catch (error: any) {
+        // Handle any errors that occur during the process
+        console.error(error);
+        recordLogs({
+          type: "error",
+          error: JSON.stringify({
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          }),
+          at: "handleSaveLinkChanges",
         });
       }
-
-      saveNewChangeLog(db, {
-        nodeId: currentVisibleNode.id,
-        modifiedBy: user?.uname,
-        modifiedProperty: selectedProperty,
-        previousValue,
-        newValue,
-        modifiedAt: new Date(),
-        changeType: "modify elements",
-        fullNode: currentVisibleNode,
-      });
-    } catch (error: any) {
-      // Handle any errors that occur during the process
-      console.error(error);
-      recordLogs({
-        type: "error",
-        error: JSON.stringify({
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        }),
-        at: "handleSaveLinkChanges",
-      });
-    }
-  }, [
-    checkedItems,
-    currentVisibleNode.id,
-    currentVisibleNode.title,
-    db,
-    selectedCategory,
-    selectedProperty,
-    nodes,
-  ]);
+    },
+    [
+      checkedItems,
+      currentVisibleNode.id,
+      currentVisibleNode.title,
+      db,
+      selectedProperty,
+      nodes,
+    ]
+  );
 
   //  function to handle the deletion of a Node
   const deleteNode = useCallback(async () => {
@@ -1228,6 +1102,7 @@ const Node = ({
               locked={locked}
               onGetPropertyValue={onGetPropertyValue}
               currentImprovement={currentImprovement}
+              cloneNode={cloneNode}
             />
           ))}
         </Stack>
@@ -1260,7 +1135,8 @@ const Node = ({
         selectedCategory={selectedCategory}
         checkedItems={checkedItems}
         setCheckedItems={setCheckedItems}
-        markItemAsChecked={markItemAsChecked}
+        setCheckedItemsCopy={setCheckedItemsCopy}
+        checkedItemsCopy={checkedItemsCopy}
         handleCloning={handleCloning}
         user={user}
         nodes={nodes}
@@ -1282,6 +1158,9 @@ const Node = ({
         setClonedNodesQueue={setClonedNodesQueue}
         clonedNodesQueue={clonedNodesQueue}
         newOnes={newOnes}
+        setNewOnes={setNewOnes}
+        editableProperty={editableProperty}
+        setEditableProperty={setEditableProperty}
       />
 
       {ConfirmDialog}

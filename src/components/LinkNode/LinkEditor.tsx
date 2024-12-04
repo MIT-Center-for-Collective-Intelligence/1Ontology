@@ -116,7 +116,8 @@ const LinkEditor: React.FC<LinkEditorProps> = ({
         inputRef={textFieldRef}
         value={editorContent}
         onChange={handleChanges}
-        sx={{ width: "300px" }}
+        // sx={{ width: "100%" }}
+        placeholder="Node title..."
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             saveNodeTitle();

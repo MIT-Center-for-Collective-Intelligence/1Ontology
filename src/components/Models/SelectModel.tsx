@@ -1,16 +1,14 @@
-import React, { useMemo, useRef, useState } from "react";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import React, {
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 import {
   Modal,
   Box,
   Paper,
   Typography,
   Button,
-  Checkbox,
-  IconButton,
-  TextField,
   Tooltip,
 } from "@mui/material";
 
@@ -23,9 +21,11 @@ import {
   DISPLAY,
   UNCLASSIFIED,
 } from " @components/lib/CONSTANTS";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import LinkEditor from "../LinkNode/LinkEditor";
-import { INodeTypes } from " @components/types/INode";
+import {
+  capitalizeFirstLetter,
+} from " @components/lib/utils/string.utils";
+import CloseIcon from "@mui/icons-material/Close";
+import { ICollection, ILinkNode, INodeTypes } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import {
   getDocs,
@@ -35,6 +35,7 @@ import {
   getFirestore,
 } from "firebase/firestore";
 import { LoadingButton } from "@mui/lab";
+import CollectionStructure from "../StructuredProperty/CollectionStructure";
 
 const SelectModelModal = ({
   openSelectModel,
@@ -47,7 +48,8 @@ const SelectModelModal = ({
   selectedCategory,
   checkedItems,
   setCheckedItems,
-  markItemAsChecked,
+  setCheckedItemsCopy,
+  checkedItemsCopy,
   handleCloning,
   user,
   nodes,
@@ -69,6 +71,9 @@ const SelectModelModal = ({
   setClonedNodesQueue,
   clonedNodesQueue,
   newOnes,
+  setNewOnes,
+  editableProperty,
+  setEditableProperty,
 }: {
   openSelectModel: any;
   handleCloseAddLinksModel: any;
@@ -79,8 +84,9 @@ const SelectModelModal = ({
   searchResultsForSelection: any;
   selectedCategory: any;
   setCheckedItems: any;
+  setCheckedItemsCopy: any;
+  checkedItemsCopy: any;
   checkedItems: any;
-  markItemAsChecked: any;
   handleCloning: any;
   user: any;
   nodes: any;
@@ -98,14 +104,20 @@ const SelectModelModal = ({
   setCurrentVisibleNode: any;
   checkDuplicateTitle: any;
   cloning: string | null;
-  addACloneNodeQueue: (nodeId: string, title?: string) => void;
+  addACloneNodeQueue: (nodeId: string, title?: string) => string;
   setClonedNodesQueue: Function;
   clonedNodesQueue: { [nodeId: string]: { title: string; id: string } };
   newOnes: any;
+  setNewOnes: any;
+  editableProperty: ICollection[];
+  setEditableProperty: any;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [expanded, setExpanded] = useState(new Set());
+  const [openAddCollection, setOpenAddCollection] = useState(false);
+  const [removedElements, setRemovedElements] = useState(new Set());
+  const [addedElements, setAddedElements] = useState(new Set());
 
   const db = getFirestore();
   const getSelectingModelTitle = (
@@ -176,7 +188,7 @@ const SelectModelModal = ({
           nId
         );
       }
-      await handleSaveLinkChanges();
+      await handleSaveLinkChanges(removedElements, addedElements);
     } catch (error) {
       console.error(error);
     } finally {
@@ -196,130 +208,172 @@ const SelectModelModal = ({
     return generalizations.length === 0;
   };
 
-  const renderSelectedItems = () => (
-    <Box
-      sx={{
-        borderRadius: "19px",
-        height: "700px",
-        overflowY: "auto",
-        "&::-webkit-scrollbar": { display: "none" },
-        px: "5px",
-        mr: "15px",
-        width: "350px",
-      }}
-    >
-      <Box
-        sx={{
-          position: "sticky",
-          top: 0,
-          zIndex: 5,
-          backgroundColor: (theme) =>
-            theme.palette.mode === "dark" ? "#303134" : "#f0f0f0",
-          textAlign: "center",
-          p: 1,
-        }}
-      >
-        <Typography variant="h6">Selected Entities</Typography>{" "}
-        {selectedProperty === "parts" && checkedItems.size > 0 && (
-          <Button
-            onClick={() => {
-              setCheckedItems(new Set());
-            }}
-            variant="outlined"
-            sx={{ borderRadius: "25px" }}
-          >
-            Uncheck All
-          </Button>
-        )}
-      </Box>
-      <Box sx={{ p: 3 }}>
-        {Array.from(checkedItems).map((id: any) => (
-          <Box key={id}>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <Checkbox
-                checked={true}
-                onChange={() => {
-                  markItemAsChecked(id);
-                  setClonedNodesQueue((prev: any) => {
-                    const _prev = { ...prev };
-                    if (_prev[id]) {
-                      delete _prev[id];
-                    }
-                    return _prev;
-                  });
-                }}
-                disabled={
-                  isSaving ||
-                  (checkedItems.size === 1 &&
-                    selectedProperty === "generalizations") ||
-                  (selectedProperty === "specializations" &&
-                    getNumOfGeneralizations(id))
-                }
-              />
-              {clonedNodesQueue.hasOwnProperty(id) ? (
-                <LinkEditor
-                  reviewId={id}
-                  title={clonedNodesQueue[id]?.title || ""}
-                  checkDuplicateTitle={checkDuplicateTitle}
-                  setClonedNodesQueue={setClonedNodesQueue}
-                />
-              ) : (
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <Typography>{nodes[id]?.title || ""}</Typography>
+  const markItemAsChecked = (checkedId: string, radioSelection = false) => {
+    setEditableProperty((prev: ICollection[]) => {
+      const _prev = [...prev];
+      if (checkedItems.has(checkedId)) {
+        for (let collection of _prev) {
+          collection.nodes = collection.nodes.filter((n) => n.id !== checkedId);
+        }
+      } else {
+        _prev[0].nodes.push({
+          id: checkedId,
+        });
+      }
+      return _prev;
+    });
+    setAddedElements((prev) => {
+      if (prev.has(checkedId)) {
+        prev.delete(checkedId);
+      } else {
+        prev.add(checkedId);
+      }
+      return prev;
+    });
 
-                  {selectedProperty === "parts" && (
-                    <IconButton
-                      onClick={() => {
-                        setExpanded((prev) => {
-                          const _prev = new Set(...new Array(prev));
-                          if (_prev.has(id)) {
-                            _prev.delete(id);
-                          } else {
-                            _prev.add(id);
-                          }
-                          console.log("prev ==>", _prev);
-                          return _prev;
-                        });
-                      }}
-                      sx={{ ml: "15px" }}
-                    >
-                      {expanded.has(id) ? (
-                        <ExpandLessIcon />
-                      ) : (
-                        <ExpandMoreIcon />
-                      )}
-                    </IconButton>
-                  )}
-                </Box>
-              )}
-            </Box>
-            {expanded.has(id) && selectedProperty === "parts" && (
-              <Box>
-                <Button
-                  sx={{
-                    borderRadius: "25px",
-                    fontSize: "12px",
-                    ml: "23px",
-                    mb: "10px",
-                    height: "25px",
-                  }}
-                  variant="outlined"
-                  onClick={() => {
-                    addACloneNodeQueue(id);
-                    markItemAsChecked(id);
-                  }}
-                >
-                  Replace
-                  <SwapHorizIcon sx={{ ml: "7px" }} />
-                </Button>
-              </Box>
-            )}
-          </Box>
-        ))}
-      </Box>
-    </Box>
+    // setRemovedElements((prev) => {
+    //   if (prev.has(checkedId)) {
+    //     prev.delete(checkedId);
+    //   } else {
+    //     prev.add(checkedId);
+    //   }
+    //   return prev;
+    // });
+
+    setCheckedItems((checkedItems: any) => {
+      let _oldChecked = new Set(checkedItems);
+      if (_oldChecked.has(checkedId)) {
+        _oldChecked.delete(checkedId);
+      } else {
+        if (radioSelection) {
+          _oldChecked = new Set();
+        }
+        _oldChecked.add(checkedId);
+      }
+      if (selectedProperty === "generalizations" && _oldChecked.size === 0) {
+        return checkedItems;
+      }
+      return _oldChecked;
+    });
+    setNewOnes((newOnes: any) => {
+      let _oldChecked = new Set(newOnes);
+      if (_oldChecked.has(checkedId)) {
+        _oldChecked.delete(checkedId);
+      } else {
+        _oldChecked.add(checkedId);
+      }
+      return _oldChecked;
+    });
+  };
+
+  const unlinkElement = (id: string, collectionIdx: number) => {
+    setEditableProperty((prev: ICollection[]) => {
+      const _prev = [...prev];
+      _prev[collectionIdx].nodes = _prev[collectionIdx].nodes.filter(
+        (n: ILinkNode) => n.id !== id
+      );
+      return _prev;
+    });
+    setRemovedElements((prev) => {
+      if (checkedItemsCopy.has(id)) {
+        prev.add(id);
+      }
+      return prev;
+    });
+    setAddedElements((prev) => {
+      prev.delete(id);
+      return prev;
+    });
+  };
+
+  // const propertyValue: ICollection[] = useMemo(() => {
+  //   try {
+  //     let result = null;
+  //     if (
+  //       selectedProperty === "specializations" ||
+  //       selectedProperty === "generalizations"
+  //     ) {
+  //       result =
+  //         currentVisibleNode[
+  //           selectedProperty as "specializations" | "generalizations"
+  //         ];
+  //     } else {
+  //       result =
+  //         getPropertyValue(
+  //           nodes,
+  //           currentVisibleNode.inheritance[selectedProperty]?.ref,
+  //           selectedProperty
+  //         ) || currentVisibleNode?.properties[selectedProperty];
+  //     }
+  //     return result;
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // }, [
+  //   currentVisibleNode,
+  //   nodes,
+  //   selectedProperty,
+  //   selectedDiffNode,
+  // ]) as ICollection[];
+
+  const _add = (nodeId: string, title?: string) => {
+    const id = addACloneNodeQueue(nodeId, title);
+
+    setEditableProperty((prev: ICollection[]) => {
+      const _prev = [...prev];
+      _prev[0].nodes.push({
+        id,
+      });
+      return _prev;
+    });
+  };
+  const unlinkVisible = useCallback(
+    (nodeId: string) => {
+      if (!!selectedDiffNode) {
+        return false;
+      }
+      let numberOfGeneralizations = 0;
+      if (selectedProperty === "specializations") {
+        for (let colGeneralization of nodes[nodeId]?.generalizations || []) {
+          numberOfGeneralizations += colGeneralization.nodes.length;
+        }
+      }
+
+      return (
+        (selectedProperty === "generalizations" &&
+          editableProperty.flatMap((n) => n.nodes).length !== 1) ||
+        (selectedProperty === "specializations" &&
+          numberOfGeneralizations > 1) ||
+        (selectedProperty !== "generalizations" &&
+          selectedProperty !== "specializations")
+      );
+    },
+    [editableProperty, selectedProperty, nodes, selectedDiffNode]
   );
 
+  const cloneUnclassifiedNode = async () => {
+    let nodeType = currentVisibleNode.propertyType[selectedProperty];
+    if (
+      selectedProperty === "parts" ||
+      selectedProperty === "isPartOf" ||
+      selectedProperty === "specializations" ||
+      selectedProperty === "generalizations"
+    ) {
+      nodeType = currentVisibleNode.nodeType;
+    }
+    const unclassifiedNodeDocs = await getDocs(
+      query(
+        collection(db, NODES),
+        where("unclassified", "==", true),
+        where("nodeType", "==", nodeType)
+      )
+    );
+    if (unclassifiedNodeDocs.docs.length > 0) {
+      const unclassifiedId = unclassifiedNodeDocs.docs[0].id;
+      // handleCloning({ id: unclassifiedId }, searchValue);
+      addACloneNodeQueue(unclassifiedId, searchValue);
+    }
+  };
   const renderSearchOrTree = () =>
     searchValue ? (
       <ExpandSearchResult
@@ -330,7 +384,7 @@ const SelectModelModal = ({
         user={user}
         nodes={nodes}
         cloning={cloning}
-        addACloneNodeQueue={addACloneNodeQueue}
+        addACloneNodeQueue={_add}
         isSaving={isSaving}
         disabledAddButton={
           selectedProperty === "generalizations" && checkedItems.size === 1
@@ -356,7 +410,7 @@ const SelectModelModal = ({
         preventLoops={getPath(currentVisibleNode.id, selectedCategory)}
         manageLock={user?.manageLock}
         cloning={cloning}
-        addACloneNodeQueue={addACloneNodeQueue}
+        addACloneNodeQueue={_add}
         isSaving={isSaving}
         disabledAddButton={
           checkedItems.size === 1 && selectedProperty === "generalizations"
@@ -366,29 +420,6 @@ const SelectModelModal = ({
         currentVisibleNode={currentVisibleNode}
       />
     );
-  const cloneUnclassifiedNode = async () => {
-    let nodeType = currentVisibleNode.propertyType[selectedProperty];
-    if (
-      selectedProperty === "parts" ||
-      selectedProperty === "isPartOf" ||
-      selectedProperty === "specializations" ||
-      selectedProperty === "generalizations"
-    ) {
-      nodeType = currentVisibleNode.nodeType;
-    }
-    const unclassifiedNodeDocs = await getDocs(
-      query(
-        collection(db, NODES),
-        where("unclassified", "==", true),
-        where("nodeType", "==", nodeType)
-      )
-    );
-    if (unclassifiedNodeDocs.docs.length > 0) {
-      const unclassifiedId = unclassifiedNodeDocs.docs[0].id;
-      // handleCloning({ id: unclassifiedId }, searchValue);
-      addACloneNodeQueue(unclassifiedId, searchValue);
-    }
-  };
   return (
     <Modal
       sx={{
@@ -400,202 +431,245 @@ const SelectModelModal = ({
       open={isSaving || openSelectModel}
       onClose={handleCloseAddLinksModel}
     >
-      <Box sx={{ display: "flex", height: "700px" }}>
-        <Paper sx={{ display: "flex", borderRadius: "19px" }}>
+      <Paper
+        sx={{
+          display: "flex",
+          borderRadius: "19px",
+          width: "100%",
+          height: "100%",
+          m: "19px",
+        }}
+      >
+        {" "}
+        <Tooltip title="Close">
+          <CloseIcon
+            onClick={handleCloseAddLinksModel}
+            sx={{
+              borderRadius: "50%",
+              fontSize: "30px",
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark" ? "black" : "white",
+              ":hover": {
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark" ? "gray" : "gray",
+              },
+            }}
+          />
+        </Tooltip>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            overflowY: "auto",
+            borderRadius: "19px",
+            ...SCROLL_BAR_STYLE,
+            flexGrow: 1,
+          }}
+        >
           <Box
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              overflowY: "auto",
-              borderRadius: "19px",
-              ...SCROLL_BAR_STYLE,
-              flexGrow: 1,
+              position: "sticky",
+              top: 0,
+              // width: "950px",
+              zIndex: 1,
+              backgroundColor: (theme) =>
+                theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
             }}
           >
-            <Box
-              sx={{
-                position: "sticky",
-                top: 0,
-                width: "950px",
-                zIndex: 1,
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
-              }}
-            >
-              <Box sx={{ textAlign: "center" }}>
-                <Typography sx={{ pt: "15px", pl: "15px", fontSize: "20px" }}>
-                  Editing{" "}
-                  <strong style={{ color: "orange" }}>
-                    {currentVisibleNode.title}
-                  </strong>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography sx={{ pt: "15px", pl: "15px", fontSize: "20px" }}>
+                Editing{" "}
+                <strong style={{ color: "orange" }}>
+                  {currentVisibleNode.title}
+                </strong>
+              </Typography>
+            </Box>
+            <Box sx={{ pt: "15px" }}>
+              {selectedProperty === "specializations" ? (
+                <Typography sx={{ pl: "15px" }}>
+                  Select the{" "}
+                  <strong style={{ color: "orange" }}>Specialization</strong> to
+                  add, by either:
+                  <strong style={{ color: "orange" }}> A) </strong> Searching
+                  existing{" "}
+                  {currentVisibleNode.nodeType === "activity"
+                    ? "activities"
+                    : currentVisibleNode.nodeType === "evaluationDimension"
+                    ? "Evaluation Dimensions"
+                    : currentVisibleNode.nodeType + "s"}
+                  , <strong style={{ color: "orange" }}> B) </strong> Navigating
+                  through the ontology,{" "}
+                  <strong style={{ color: "orange" }}> C) </strong>
+                  Creating what you searched as a new specialization
                 </Typography>
-              </Box>
-              <Box sx={{ pt: "15px" }}>
-                {selectedProperty === "specializations" ? (
-                  <Typography sx={{ pl: "15px" }}>
-                    Select the{" "}
-                    <strong style={{ color: "orange" }}>Specialization</strong>{" "}
-                    to add, by either:
-                    <strong style={{ color: "orange" }}> A) </strong> Searching
-                    existing{" "}
-                    {currentVisibleNode.nodeType === "activity"
-                      ? "activities"
-                      : currentVisibleNode.nodeType === "evaluationDimension"
-                      ? "Evaluation Dimensions"
-                      : currentVisibleNode.nodeType + "s"}
-                    , <strong style={{ color: "orange" }}> B) </strong>{" "}
-                    Navigating through the ontology,{" "}
-                    <strong style={{ color: "orange" }}> C) </strong>
-                    Creating what you searched as a new specialization
-                  </Typography>
-                ) : (
-                  <Typography sx={{ pl: "15px" }}>
-                    {getSelectingModelTitle(
-                      selectedProperty,
-                      currentVisibleNode.nodeType,
-                      currentVisibleNode.propertyType[selectedProperty]
-                    )}
-                  </Typography>
-                )}
+              ) : (
+                <Typography sx={{ pl: "15px" }}>
+                  {getSelectingModelTitle(
+                    selectedProperty,
+                    currentVisibleNode.nodeType,
+                    currentVisibleNode.propertyType[selectedProperty]
+                  )}
+                </Typography>
+              )}
 
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
 
-                    pr: "5px",
-                  }}
-                >
-                  <SearchBox
-                    setSearchValue={setSearchValue}
-                    label="Search ..."
-                  />
-                  <Tooltip
-                    title={`Create as a new Specialization 
+                  pr: "5px",
+                }}
+              >
+                <SearchBox setSearchValue={setSearchValue} label="Search ..." />
+                <Tooltip
+                  title={`Create as a new Specialization 
                     ${
                       selectedProperty !== "specializations"
                         ? `Under ${getCreateNewButtonText}`
                         : ""
                     } Node`}
-                  >
-                    <Button
-                      onClick={async () => {
-                        setDisabledButton(true);
-                        if (selectedProperty === "specializations") {
-                          addACloneNodeQueue(
-                            currentVisibleNode.id,
-                            searchValue
-                          );
-                          // await addNewSpecialization(
-                          //   selectedCategory || "main",
-                          //   searchValue
-                          // );
-                        } else {
-                          await cloneUnclassifiedNode();
-                        }
-                        setDisabledButton(false);
-                      }}
-                      sx={{ borderRadius: "18px", minWidth: "300px" }}
-                      variant="outlined"
-                      disabled={
-                        isSaving ||
-                        searchValue.length < 3 ||
-                        searchResultsForSelection[0]?.title.trim() ===
-                          searchValue.trim() ||
-                        disabledButton
+                >
+                  <Button
+                    onClick={async () => {
+                      setDisabledButton(true);
+                      if (selectedProperty === "specializations") {
+                        addACloneNodeQueue(currentVisibleNode.id, searchValue);
+                        // await addNewSpecialization(
+                        //   selectedCategory || "main",
+                        //   searchValue
+                        // );
+                      } else {
+                        await cloneUnclassifiedNode();
                       }
-                    >
-                      Create{" "}
-                      {selectedProperty !== "specializations"
-                        ? "Under " + getCreateNewButtonText
-                        : ""}
-                    </Button>
-                  </Tooltip>
-                </Box>
+                      setDisabledButton(false);
+                    }}
+                    sx={{ borderRadius: "18px", minWidth: "300px" }}
+                    variant="outlined"
+                    disabled={
+                      isSaving ||
+                      searchValue.length < 3 ||
+                      searchResultsForSelection[0]?.title.trim() ===
+                        searchValue.trim() ||
+                      disabledButton
+                    }
+                  >
+                    Create{" "}
+                    {selectedProperty !== "specializations"
+                      ? "Under " + getCreateNewButtonText
+                      : ""}
+                  </Button>
+                </Tooltip>
               </Box>
             </Box>
+          </Box>
 
+          <Box
+            sx={{
+              flexGrow: 1,
+              overflowY: "auto",
+              px: "4px",
+              ...SCROLL_BAR_STYLE,
+            }}
+          >
+            {renderSearchOrTree()}
+          </Box>
+
+          {selectedProperty !== "context" && (
             <Box
               sx={{
-                flexGrow: 1,
-                overflowY: "auto",
-                px: "4px",
-                ...SCROLL_BAR_STYLE,
-              }}
-            >
-              {renderSearchOrTree()}
-            </Box>
-
-            {selectedProperty !== "context" && (
-              <Box
-                sx={{
-                  p: "16px",
-                  mt: "auto",
-                  width: "950px",
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
-                }}
-              >
-                <Typography sx={{ mb: "4px" }}>
-                  If you cannot find the existing{" "}
-                  <strong>
-                    {capitalizeFirstLetter(
-                      DISPLAY[selectedProperty] || selectedProperty
-                    )}
-                  </strong>{" "}
-                  to link, you can describe them below:
-                </Typography>
-                <Text
-                  text={onGetPropertyValue(selectedProperty, true) as string}
-                  currentVisibleNode={currentVisibleNode}
-                  property={selectedProperty}
-                  setCurrentVisibleNode={setCurrentVisibleNode}
-                  nodes={nodes}
-                  locked={locked}
-                  selectedDiffNode={selectedDiffNode}
-                  confirmIt={confirmIt}
-                  structured
-                  currentImprovement={currentImprovement}
-                  sx={{ borderRadius: "none", backgroundColor: "" }}
-                  getTitleNode={() => {}}
-                />
-              </Box>
-            )}
-
-            {/* Save/Cancel Buttons */}
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                p: 3,
-                pt: 0,
+                p: "16px",
+                mt: "auto",
+                // width: "950px",
                 backgroundColor: (theme) =>
                   theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
               }}
             >
-              <Button
-                variant="contained"
-                onClick={handleCloseAddLinksModel}
-                color="primary"
-              >
-                Cancel
-              </Button>
-              <LoadingButton
-                size="small"
-                onClick={onSave}
-                loading={isSaving}
-                color="success"
-                variant="contained"
-              >
-                Save
-              </LoadingButton>
+              <Typography sx={{ mb: "4px" }}>
+                If you cannot find the existing{" "}
+                <strong>
+                  {capitalizeFirstLetter(
+                    DISPLAY[selectedProperty] || selectedProperty
+                  )}
+                </strong>{" "}
+                to link, you can describe them below:
+              </Typography>
+              <Text
+                text={onGetPropertyValue(selectedProperty, true) as string}
+                currentVisibleNode={currentVisibleNode}
+                property={selectedProperty}
+                setCurrentVisibleNode={setCurrentVisibleNode}
+                nodes={nodes}
+                locked={locked}
+                selectedDiffNode={selectedDiffNode}
+                confirmIt={confirmIt}
+                structured
+                currentImprovement={currentImprovement}
+                sx={{ borderRadius: "none", backgroundColor: "" }}
+                getTitleNode={() => {}}
+              />
             </Box>
-          </Box>
+          )}
 
-          {/* Selected Items Section */}
-          {renderSelectedItems()}
-        </Paper>
-      </Box>
+          {/* Save/Cancel Buttons */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              p: 3,
+              pt: 0,
+              backgroundColor: (theme) =>
+                theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
+            }}
+          >
+            <Button
+              variant="contained"
+              onClick={handleCloseAddLinksModel}
+              color="primary"
+              sx={{ borderRadius: "25px" }}
+            >
+              Cancel
+            </Button>
+            <LoadingButton
+              size="small"
+              onClick={onSave}
+              loading={isSaving}
+              color="success"
+              variant="contained"
+              sx={{ borderRadius: "25px" }}
+            >
+              Save
+            </LoadingButton>
+          </Box>
+        </Box>{" "}
+        {/* Selected Items Section */}
+        <Box sx={{ width: "30%" }}>
+          <CollectionStructure
+            model={true}
+            locked={locked}
+            selectedDiffNode={selectedDiffNode}
+            currentImprovement={currentImprovement}
+            property={selectedProperty}
+            propertyValue={editableProperty}
+            openAddCollection={openAddCollection}
+            setOpenAddCollection={setOpenAddCollection}
+            clonedNodesQueue={clonedNodesQueue}
+            currentVisibleNode={currentVisibleNode}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            nodes={nodes}
+            confirmIt={confirmIt}
+            setEditableProperty={setEditableProperty}
+            unlinkElement={unlinkElement}
+            addACloneNodeQueue={addACloneNodeQueue}
+            unlinkVisible={unlinkVisible}
+            getCategoryStyle={() => {}}
+            navigateToNode={() => {}}
+            setSnackbarMessage={() => {}}
+            showListToSelect={() => {}}
+            logChange={() => {}}
+          />
+        </Box>
+        {/* {renderSelectedItems()} */}
+      </Paper>
     </Modal>
   );
 };

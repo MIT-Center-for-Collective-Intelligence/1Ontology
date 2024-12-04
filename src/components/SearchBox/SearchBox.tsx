@@ -10,8 +10,9 @@ import SearchIcon from "@mui/icons-material/Search";
 type IProps = {
   setSearchValue: any;
   label: string;
+  sx?: any;
 };
-export const SearchBox = ({ setSearchValue, label }: IProps) => {
+export const SearchBox = ({ setSearchValue, label, sx }: IProps) => {
   const [search, setSearch] = useState("");
   const [inputValue, setInputValue] = useState("");
 
@@ -26,6 +27,7 @@ export const SearchBox = ({ setSearchValue, label }: IProps) => {
     <FormControl
       sx={{
         m: 0,
+        ...sx,
       }}
       fullWidth
     >
