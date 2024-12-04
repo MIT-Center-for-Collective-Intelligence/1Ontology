@@ -440,6 +440,7 @@ const Ontology = () => {
         unclassified: !!node.unclassified,
         parts,
         specializations: {},
+        generalizations: {},
       };
 
       // Iterate through each collection in the specializations child-nodes
@@ -460,6 +461,7 @@ const Ontology = () => {
               visited
             ),
           };
+          newSpecializationsTree[node.id].generalizations = node.generalizations[0].nodes;
         } else {
           newSpecializationsTree[node.id].specializations[
             collection.collectionName
@@ -473,6 +475,7 @@ const Ontology = () => {
               [...path, node.id],
               visited
             ),
+            generalizations: node.generalizations[0].nodes,
           };
         }
       }
@@ -966,7 +969,7 @@ const Ontology = () => {
                     expandedNodes={expandedNodes}
                     onOpenNodeDagre={onOpenNodeDagre}
                     currentVisibleNode={currentVisibleNode}
-                    // nodes={nodes}
+                  // nodes={nodes}
                   />
                 </TabPanel>
               </Box>
