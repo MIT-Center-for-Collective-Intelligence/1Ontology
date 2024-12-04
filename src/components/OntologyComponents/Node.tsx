@@ -240,6 +240,15 @@ const Node = ({
       prev[newId] = { title: newTitle, id: nodeId };
       return prev;
     });
+    setNewOnes((newOnes: any) => {
+      let _oldChecked = new Set(newOnes);
+      if (_oldChecked.has(newId)) {
+        _oldChecked.delete(newId);
+      } else {
+        _oldChecked.add(newId);
+      }
+      return _oldChecked;
+    });
     return newId;
   };
 

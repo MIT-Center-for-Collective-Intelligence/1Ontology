@@ -322,6 +322,9 @@ const SelectModelModal = ({
   };
   const unlinkVisible = useCallback(
     (nodeId: string) => {
+      if (newOnes.has(nodeId)) {
+        return true;
+      }
       if (!!selectedDiffNode) {
         return false;
       }
@@ -341,7 +344,7 @@ const SelectModelModal = ({
           selectedProperty !== "specializations")
       );
     },
-    [editableProperty, selectedProperty, nodes, selectedDiffNode]
+    [editableProperty, selectedProperty, nodes, selectedDiffNode, newOnes]
   );
 
   const cloneUnclassifiedNode = async () => {
@@ -537,7 +540,21 @@ const SelectModelModal = ({
                     onClick={async () => {
                       setDisabledButton(true);
                       if (selectedProperty === "specializations") {
-                        addACloneNodeQueue(currentVisibleNode.id, searchValue);
+                        const id = addACloneNodeQueue(
+                          currentVisibleNode.id,
+                          searchValue
+                        );
+                        setEditableProperty((prev: ICollection[]) => {
+                          const _prev = [...prev];
+                          _prev[0].nodes.push({
+                            id,
+                          });
+                          return _prev;
+                        });
+                        setAddedElements((prev) => {
+                          prev.add(id);
+                          return prev;
+                        });
                         // await addNewSpecialization(
                         //   selectedCategory || "main",
                         //   searchValue
