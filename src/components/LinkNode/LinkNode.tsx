@@ -618,6 +618,7 @@ const LinkNode = ({
               </Tooltip>
             )}
           {property === "parts" &&
+            !selectedDiffNode &&
             !clonedNodesQueue.hasOwnProperty(link.id) && (
               <Tooltip title="Switch">
                 <IconButton
@@ -638,7 +639,7 @@ const LinkNode = ({
 
         {ConfirmDialog}
       </ListItem>
-      {swapIt && property === "parts" && (
+      {swapIt && property === "parts" && !selectedDiffNode && (
         <Box>
           {getSpecializations(link.id).map((n) => (
             <Box
