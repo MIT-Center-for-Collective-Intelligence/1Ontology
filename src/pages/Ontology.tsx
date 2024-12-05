@@ -421,8 +421,10 @@ const Ontology = () => {
   ) => {
     let newSpecializationsTree: any = {};
 
+    if (_nodes.length === 0) return {};
+    
     for (let node of _nodes) {
-      if (!node /* || visited.has(node.id) */) {
+      if (!node || visited.has(node.id)) {
         continue;
       }
       visited.add(node.id);
@@ -443,7 +445,6 @@ const Ontology = () => {
       };
 
       // Iterate through each collection in the specializations child-nodes
-
       for (let collection of node.specializations) {
         // Filter nodes based on the current collection
         const specializations: INode[] = [];
@@ -816,22 +817,22 @@ const Ontology = () => {
   }, [viewValue, currentVisibleNode]);
 
   const navigateToNode = async (nodeId: string) => {
-    if (nodes[nodeId]) {
-      setCurrentVisibleNode(nodes[nodeId]);
-      initializeExpanded(eachOntologyPath[nodeId]);
-      setSelectedDiffNode(null);
-      setTimeout(() => {
-        // Retrieve elements with the class name based on the nodeId
-        // Since the same node may be displayed multiple times across different parents, using unique IDs alone is not sufficient.
-        // MUI TreeView handles IDs internally, so adding an additional class to each node allows for easier access and manipulation later on.
-        const elements = document.getElementsByClassName("node-" + nodeId);
-        const firstElement = elements.length > 0 ? elements[0] : null; // Safely access the first element
-
-        if (firstElement) {
-          firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 1000);
-    }
+      if (nodes[nodeId]) {
+        setCurrentVisibleNode(nodes[nodeId]);
+        initializeExpanded(eachOntologyPath[nodeId]);
+        setSelectedDiffNode(null);
+        setTimeout(() => {
+          // Retrieve elements with the class name based on the nodeId
+          // Since the same node may be displayed multiple times across different parents, using unique IDs alone is not sufficient.
+          // MUI TreeView handles IDs internally, so adding an additional class to each node allows for easier access and manipulation later on.
+          const elements = document.getElementsByClassName("node-" + nodeId);
+          const firstElement = elements.length > 0 ? elements[0] : null; // Safely access the first element
+  
+          if (firstElement) {
+            firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }, 1000);
+      }
   };
 
   const displaySidebar = useCallback(
