@@ -308,17 +308,15 @@ export const getCopilotPrompt = ({
     "message": "A string message to the user, which may include your analysis, questions, or explanations regarding the proposed changes.",
     ${
       improvement
-        ? `"improvements": [], // An array of improvements to existing nodes.`
+        ? `"improvements": [], // An array of improvements to existing nodes.\n    `
         : ""
-    }
-    "new_nodes": [], // An array of new nodes. Note that you should not propose a new node if a node with the same meaning already exists in the ontology, even if their titles are different.
+    }"new_nodes": [], // An array of new nodes. Note that you should not propose a new node if a node with the same meaning already exists in the ontology, even if their titles are different.
     "delete_nodes": [], // An array of nodes proposed for deletion. If it is not necessary to delete any node, and you think all the nodes in the ontology are relevant, you can leave this array empty.
   }
   
  ${
    improvement
      ? ` ------------------
-  
   For the "improvements" array:
   Each item should be an object proposing an improvement to an existing node, structured as follows:
   {
@@ -328,9 +326,9 @@ export const getCopilotPrompt = ({
       // Change objects as detailed below.
     ]
   }
-  
+
   Each change object should include the necessary fields for the property being changed and a **reasoning** field explaining your rationale.
-  
+
  ${
    improveProperties.has("title") ||
    improveProperties.has("description") ||
@@ -428,10 +426,9 @@ ${
      ? `---
      **For "activity" nodes:**`
      : ""
- }
-  ${
-    improveProperties.has("actor")
-      ? `- **Actor changes**:
+ }${
+         improveProperties.has("actor")
+           ? `- **Actor changes**:
   {
     "modifiedProperty": "actor",
     "new_value": {
@@ -441,12 +438,10 @@ ${
     },
     "reasoning": "Reason for proposing these changes to the actor."
   }`
-      : ""
-  }
-  
-    ${
-      improveProperties.has("objectsActedOn")
-        ? `- **ObjectsActedOn changes**:
+           : ""
+       }${
+         improveProperties.has("objectsActedOn")
+           ? `- **ObjectsActedOn changes**:
   {
     "modifiedProperty": "objectsActedOn",
     "new_value": {
@@ -456,11 +451,10 @@ ${
     },
     "reasoning": "Reason for proposing these changes to the objectsActedOn."
   }`
-        : ""
-    }
-     ${
-       improveProperties.has("evaluationDimension")
-         ? `- **EvaluationDimension changes**:
+           : ""
+       }${
+         improveProperties.has("evaluationDimension")
+           ? `- **EvaluationDimension changes**:
   {
     "modifiedProperty": "evaluationDimension",
     "new_value": {
@@ -470,12 +464,10 @@ ${
     },
     "reasoning": "Reason for proposing these changes to the evaluationDimension."
   }`
-         : ""
-     }
-  
-     ${
-       improveProperties.has("postConditions")
-         ? `- **PostConditions changes**:
+           : ""
+       }${
+         improveProperties.has("postConditions")
+           ? `- **PostConditions changes**:
   {
     "modifiedProperty": "postConditions",
     "new_value": {
@@ -485,12 +477,10 @@ ${
     },
     "reasoning": "Reason for proposing these changes to the postConditions."
   }`
-         : ""
-     }
-
-      ${
-        improveProperties.has("PreConditions")
-          ? `- **PreConditions changes**:
+           : ""
+       }${
+         improveProperties.has("PreConditions")
+           ? `- **PreConditions changes**:
   {
     "modifiedProperty":"preConditions", 
     "new_value": {
@@ -500,17 +490,15 @@ ${
     },
     "reasoning": "Reason for proposing these changes to the preConditions."
   }`
-          : ""
-      }
-
-  ${
-    improveProperties.has("abilities") || improveProperties.has("typeOfActor")
-      ? `**For "actor" nodes:**`
-      : ""
-  }
-  ${
-    improveProperties.has("abilities")
-      ? `- **Abilities changes**:
+           : ""
+       }${
+         improveProperties.has("abilities") ||
+         improveProperties.has("typeOfActor")
+           ? `**For "actor" nodes:**`
+           : ""
+       }${
+         improveProperties.has("abilities")
+           ? `- **Abilities changes**:
   {
     "modifiedProperty":"abilities",
     "new_value": {
@@ -520,11 +508,10 @@ ${
     },
     "reasoning": "Reason for proposing these changes to the abilities."
   }`
-      : ""
-  }
-  ${
-    improveProperties.has("typeOfActor")
-      ? `- **TypeOfActor changes**:
+           : ""
+       }${
+         improveProperties.has("typeOfActor")
+           ? `- **TypeOfActor changes**:
   {
     "modifiedProperty":"typeOfActor",
     "new_value": {
@@ -534,28 +521,25 @@ ${
     },
     "reasoning": "Reason for proposing these changes to the typeOfActor."
   }`
-      : ""
-  }
-  ${
-    improveProperties.has("lifeSpan") ||
-    improveProperties.has("modifiability") ||
-    improveProperties.has("perceivableProperties")
-      ? `---
+           : ""
+       }${
+         improveProperties.has("lifeSpan") ||
+         improveProperties.has("modifiability") ||
+         improveProperties.has("perceivableProperties")
+           ? `---
       **For "object" nodes:**`
-      : ""
-  }
-  
-    ${
-      improveProperties.has("lifeSpan")
-        ? `
+           : ""
+       }${
+         improveProperties.has("lifeSpan")
+           ? `
   - **LifeSpan change**:
   {
     "modifiedProperty": "lifeSpan",
     "new_value": "New details about the lifespan of the object.",
     "reasoning": "Reason for changing the lifeSpan."
   }`
-        : ""
-    }
+           : ""
+       }
  
     ${
       improveProperties.has("modifiability")
@@ -567,11 +551,9 @@ ${
     "reasoning": "Reason for changing the modifiability."
   }`
         : ""
-    }
-
-  ${
-    improveProperties.has("perceivableProperties")
-      ? `
+    }${
+         improveProperties.has("perceivableProperties")
+           ? `
    - **PerceivableProperties changes**:
   {
     "modifiedProperty": "perceivableProperties",
@@ -582,22 +564,19 @@ ${
     },
     "reasoning": "Reason for proposing these changes to the perceivableProperties."
   }`
-      : ""
-  }
-  ${
-    improveProperties.has("criteriaForAcceptability") ||
-    improveProperties.has("directionOfDesirability") ||
-    improveProperties.has("evaluationType") ||
-    improveProperties.has("measurementUnits")
-      ? `
+           : ""
+       }${
+         improveProperties.has("criteriaForAcceptability") ||
+         improveProperties.has("directionOfDesirability") ||
+         improveProperties.has("evaluationType") ||
+         improveProperties.has("measurementUnits")
+           ? `
         ---
         **For "evaluationDimension" nodes:**`
-      : ""
-  }
-
-  ${
-    improveProperties.has("criteriaForAcceptability")
-      ? `  
+           : ""
+       }${
+         improveProperties.has("criteriaForAcceptability")
+           ? `  
   - **CriteriaForAcceptability changes**:
   {
     "modifiedProperty": "criteriaForAcceptability",
@@ -608,22 +587,20 @@ ${
     },
     "reasoning": "Reason for proposing these changes to the criteriaForAcceptability."
   }`
-      : ""
-  }
-    ${
-      improveProperties.has("directionOfDesirability")
-        ? `
+           : ""
+       }${
+         improveProperties.has("directionOfDesirability")
+           ? `
   - **DirectionOfDesirability change**:
   {
     "modifiedProperty": "directionOfDesirability",
     "new_value": "New direction (e.g., 'Increase is desirable').",
     "reasoning": "Reason for changing the directionOfDesirability."
   }`
-        : ""
-    }
-   ${
-     improveProperties.has("evaluationType")
-       ? `
+           : ""
+       }${
+         improveProperties.has("evaluationType")
+           ? `
   - **EvaluationType changes**:
   {
     "modifiedProperty": "evaluationType",
@@ -635,11 +612,10 @@ ${
     "reasoning": "Reason for proposing these changes to the evaluationType."
   }
    `
-       : ""
-   }
-     ${
-       improveProperties.has("measurementUnits")
-         ? `
+           : ""
+       }${
+         improveProperties.has("measurementUnits")
+           ? `
 - **MeasurementUnits changes**:
   {
     "modifiedProperty": "measurementUnits",
@@ -650,20 +626,18 @@ ${
     },
     "reasoning": "Reason for proposing these changes to the measurementUnits."
   }`
-         : ""
-     }
-  ${
-    improveProperties.has("units") ||
-    improveProperties.has("capabilitiesRequired") ||
-    improveProperties.has("rewardFunction") ||
-    improveProperties.has("evaluationDimension") ||
-    improveProperties.has("reward")
-      ? `**For "reward" nodes:**`
-      : ""
-  }
-  ${
-    improveProperties.has("units")
-      ? `
+           : ""
+       }${
+         improveProperties.has("units") ||
+         improveProperties.has("capabilitiesRequired") ||
+         improveProperties.has("rewardFunction") ||
+         improveProperties.has("evaluationDimension") ||
+         improveProperties.has("reward")
+           ? `**For "reward" nodes:**`
+           : ""
+       }${
+         improveProperties.has("units")
+           ? `
   ---
   - **Units changes**:
   {
@@ -676,9 +650,8 @@ ${
     "reasoning": "Reason for proposing these changes to the units."
   }
   `
-      : ""
-  }
-       ${
+           : ""
+       }${
          improveProperties.has("capabilitiesRequired")
            ? `
   ---
@@ -698,10 +671,9 @@ ${
   `
            : ""
        }
-
-       ${
-         improveProperties.has("rewardFunction")
-           ? `     
+${
+  improveProperties.has("rewardFunction")
+    ? `     
   - **RewardFunction changes**:
   {
     "modifiedProperty": "rewardFunction",
@@ -713,13 +685,11 @@ ${
     "reasoning": "Reason for proposing these changes to the rewardFunction."
   }
   `
-           : ""
-       }
-         
-       
-  ${
-    improveProperties.has("evaluationDimension")
-      ? `  
+    : ""
+}
+${
+  improveProperties.has("evaluationDimension")
+    ? `  
   - **EvaluationDimension changes**:
   {
     "modifiedProperty": "evaluationDimension",
@@ -731,8 +701,8 @@ ${
     "reasoning": "Reason for proposing these changes to the evaluationDimension."
   }
   `
-      : ""
-  }
+    : ""
+}
      ${
        improveProperties.has("reward")
          ? `   

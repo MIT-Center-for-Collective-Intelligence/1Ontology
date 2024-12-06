@@ -51,6 +51,7 @@ import MarkdownRender from "../Markdown/MarkdownRender";
 import { TreeItem, TreeView } from "@mui/lab";
 import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
 import { DISPLAY } from " @components/lib/CONSTANTS";
+import { getCopilotPrompt } from " @components/lib/utils/copilotPrompts";
 
 const glowGreen = keyframes`
   0% {
@@ -330,6 +331,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
     e.stopPropagation();
     setForceUpdate((prev: any) => !prev);
     setEditedParts([]);
+    setSystemPrompt(JSON.parse(JSON.stringify(systemPromptCopy)));
   };
   const compareToLatest = (e: any) => {
     e.preventDefault();
@@ -826,9 +828,16 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                     {/*    <Box sx={{ mt: "14px" }}>
                       <MarkdownRender text={p.value || ""} />
                     </Box> */}
-                    <Typography style={{ whiteSpace: "pre-wrap" }}>
-                      {p.value}
-                    </Typography>
+                    {p.value && (
+                      <Typography style={{ whiteSpace: "pre-wrap" }}>
+                        {getCopilotPrompt({
+                          improvement: selectedProperties.size > 0,
+                          newNodes: generateNewNodes,
+                          improveProperties: selectedProperties,
+                          editedPart: "",
+                        })}
+                      </Typography>
+                    )}
                     {diffChanges && diffChanges[p.id] && (
                       <Typography
                         sx={{
