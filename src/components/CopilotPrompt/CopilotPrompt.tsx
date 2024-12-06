@@ -521,7 +521,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
           <Box
             sx={{
               display: "flex",
-              // mt: "25px",
+              ml: "7px",
               mb: "10px",
               p: 1,
               cursor: "pointer",
@@ -540,13 +540,10 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
           <Accordion
           /* expanded={expanded} */
           >
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              sx={{ flexDirection: "row-reverse" }}
-            >
+            <AccordionSummary>
               <Checkbox
                 checked={selectedProperties.size > 0}
-                sx={{ p: 0, ml: "15px" }}
+                sx={{ p: 0 }}
                 onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
@@ -554,13 +551,17 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                     if (prev.size > 0) {
                       return new Set();
                     }
-                    return new Set(propertiesToImprove[nodeType]);
+                    return new Set([
+                      ...propertiesToImprove.allTypes,
+                      ...(propertiesToImprove[nodeType] || []),
+                    ]);
                   });
                 }}
               />
               <Typography sx={{ ml: "5px" }}>Generate improvement</Typography>
+              <ExpandMoreIcon sx={{ ml: "12px" }} />
             </AccordionSummary>
-            <AccordionDetails sx={{ ml: "56px" }}>
+            <AccordionDetails sx={{ ml: "20px" }}>
               {[
                 ...propertiesToImprove.allTypes,
                 ...(propertiesToImprove[nodeType] || []),
@@ -581,7 +582,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                       });
                     }}
                   />
-                  <Typography sx={{ ml: "15px" }}>
+                  <Typography sx={{ ml: "5px" }}>
                     {capitalizeFirstLetter(
                       DISPLAY[property] ? DISPLAY[property] : property
                     )}
@@ -822,9 +823,12 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                     }}
                   >
                     {" "}
-                    <Box sx={{ mt: "14px" }}>
+                    {/*    <Box sx={{ mt: "14px" }}>
                       <MarkdownRender text={p.value || ""} />
-                    </Box>
+                    </Box> */}
+                    <Typography style={{ whiteSpace: "pre-wrap" }}>
+                      {p.value}
+                    </Typography>
                     {diffChanges && diffChanges[p.id] && (
                       <Typography
                         sx={{
