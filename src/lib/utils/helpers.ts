@@ -679,7 +679,7 @@ export const createNewNode = (
   generalizationId: string,
   uname: string
 ): INode => {
-  return {
+  const newNode = {
     ...parentNodeData,
     createdBy: uname,
     unclassified: false,
@@ -713,6 +713,9 @@ export const createNewNode = (
     propertyType: { ...parentNodeData.propertyType },
     nodeType: parentNodeData.nodeType,
   };
+  delete newNode.textValue.specializations;
+  delete newNode.textValue.generalizations;
+  return newNode;
 };
 
 export const updateSpecializations = (
