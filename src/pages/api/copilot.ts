@@ -314,7 +314,8 @@ export const generateProposals = async (
 const getPrompt = async (
   uname: string,
   generateNewNodes: boolean,
-  improveProperties: string[]
+  improveProperties: string[],
+  proposeDeleteNode: boolean
 ) => {
   let promptDoc = await db.collection("copilotPrompts").doc(uname).get();
   if (!promptDoc.exists) {
@@ -339,6 +340,7 @@ const getPrompt = async (
       newNodes: generateNewNodes,
       improveProperties: new Set(improveProperties),
       editedPart: systemPrompt,
+      proposeDeleteNode,
     });
     return prompt;
   } else {
@@ -355,6 +357,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     user,
     generateNewNodes,
     improveProperties,
+    proposeDeleteNode,
   } = req.body.data;
 
   const { uname } = user?.userData;
@@ -369,7 +372,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     const SYSTEM_PROMPT = await getPrompt(
       uname,
       generateNewNodes,
-      improveProperties
+      improveProperties,
+      proposeDeleteNode
     );
 
     const response = await generateProposals(
