@@ -28,6 +28,7 @@ export const DISPLAY: {
   parts: "Parts",
   isPartOf: "Is Part of",
   actor: "Actors",
+  objectsActedOn: "Objects Acted On",
 };
 
 export const NO_IMAGE_USER =
@@ -112,5 +113,3 @@ export const CHAT_DISCUSSION_TABS = [
   { id: "feature_request", title: "Feature Requests" },
   { id: "help", title: "Help" },
 ];
-
-

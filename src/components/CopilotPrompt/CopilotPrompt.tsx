@@ -18,6 +18,7 @@ import {
   ListItemIcon,
   ListItemText,
   keyframes,
+  Checkbox,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import HistoryIcon from "@mui/icons-material/History";
@@ -46,6 +47,10 @@ import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import moment from "moment";
+import MarkdownRender from "../Markdown/MarkdownRender";
+import { TreeItem, TreeView } from "@mui/lab";
+import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
+import { DISPLAY } from " @components/lib/CONSTANTS";
 
 const glowGreen = keyframes`
   0% {
@@ -59,453 +64,63 @@ const glowGreen = keyframes`
   }
 `;
 
-interface EditableSchemaProps {}
+interface EditableSchemaProps {
+  setGenerateNewNodes: any;
+  setGenerateImprovement: any;
+  generateNewNodes: boolean;
+  generateImprovement: boolean;
+  nodeType: string;
+  selectedProperties: Set<string>;
+  setSelectedProperties: any;
+}
 
-const prompt: {
-  id?: string;
-  value?: string;
-  editablePart?: string;
-  endClose?: string;
-}[] = [
-  { value: "Response Structure:" },
-  {
-    value:
-      "Please carefully generate a JSON object with the following structure:",
-  },
-  {
-    value: "{",
-  },
-  {
-    value: `"message": "A string message`,
-    editablePart:
-      "that you would send to the user in response to their message. This could include your analysis, questions, or explanations regarding the requested changes.",
-    endClose: `",`,
-  },
-  {
-    value: `"improvements": [], // An array`,
-    editablePart: `of improvements to existing nodes.`,
-  },
-  {
-    value: `"new_nodes": [] // An array of new nodes.`,
-    editablePart: `Note that you should not propose a new node if a node with the same meaning already exists in the ontology, even if their titles are different.`,
-  },
-  {
-    value: "}",
-  },
-  {
-    value: `For the "improvements" array:`,
-  },
-  {
-    editablePart:
-      "Each item should represent an object that proposes an improvement to an existing node. Please structure each object as follows:",
-  },
-  {
-    value: "{",
-  },
-  {
-    value: `"title":"`,
-    editablePart: "The current title of the node.",
-    endClose: `",`,
-  },
-  {
-    value: `"nodeType":"`,
-    editablePart:
-      "The type of the node, which could be 'activity', 'actor', 'object', 'evaluationDimension', 'incentive', 'reward', or 'context'.",
-    endClose: `",`,
-  },
-  {
-    value: `"changes": [] //`,
-    editablePart:
-      "An array of objects, each representing a change to a single property of the node that requires modification.",
-  },
-  {
-    editablePart:
-      'Each change object should include the necessary fields for the property being changed and a "reasoning" field explaining your reasoning for proposing this change.',
-  },
-  {
-    value: '- For "title" changes:',
-  },
-  {
-    value: "{",
-  },
-  {
-    value: `"modified_property": "title",`,
-  },
-  {
-    value: `"new_value":"`,
-    editablePart: `The improved title of the node.`,
-    endClose: `",`,
-  },
-  {
-    value: `"reasoning":" `,
-    editablePart: `Your reasoning for proposing this change to the title of the node.`,
-    endClose: `"`,
-  },
-  {
-    value: "},",
-  },
-  {
-    value: '- For "description" changes:',
-  },
-  {
-    value: "{",
-  },
-  {
-    value: `"modified_property": "description",`,
-  },
-  {
-    value: `"new_value": "`,
-    editablePart: "The improved description of the node.",
-    endClose: `",`,
-  },
-  {
-    value: `"reasoning": "`,
-    editablePart:
-      "Your reasoning for proposing this change to the description of the node.",
-    endClose: `"`,
-  },
-  {
-    value: "},",
-  },
-  {
-    value: '- For "specializations" changes:',
-  },
-  {
-    value: "{",
-  },
-  {
-    value: `"modified_property": "specializations",`,
-  },
-  {
-    value: `"new_value": [], // An array of objects,`,
-    editablePart: "each representing a collection with the following structure",
-    endClose: `:`,
-  },
-  {
-    value: "{",
-  },
-  {
-    value: `"collectionName": "`,
-    editablePart: "The title of the collection",
-    endClose: `",`,
-  },
-  {
-    value: `"collection_changes": {`,
-  },
-  {
-    value: `"nodes_to_add": [An array`,
-    editablePart: "of titles (as strings) of nodes to add to this collection.",
-    endClose: `],`,
-  },
-  {
-    value: `"nodes_to_delete": [An array`,
-    editablePart:
-      "of titles (as strings) of nodes to remove from this collection.",
-    endClose: `],`,
-  },
-  {
-    value: `"final_array": [An array`,
-    editablePart:
-      "of titles (as strings) representing the final set of nodes in this collection after additions and deletions.",
-    endClose: "]",
-  },
-  {
-    value: "},",
-  },
-  {
-    value: `"reasoning": "`,
-    editablePart:
-      "Your reasoning for proposing this change to the specializations of the node.",
-    endClose: `"`,
-  },
-  {
-    value: "}",
-  },
-  {
-    value: "},",
-  },
-  {
-    value: '- For "generalizations" changes:',
-  },
-  {
-    value: "{",
-  },
-  {
-    value: `"modified_property": "generalizations",`,
-  },
-  {
-    value: `"new_value": {`,
-  },
-  {
-    value: `"nodes_to_add": [An array`,
-    editablePart: "of nodes to add to the existing property.",
-    endClose: "],",
-  },
-  {
-    value: `"nodes_to_delete": [An array],`,
-    editablePart: "of nodes to remove from the existing property.",
-    endClose: "]",
-  },
-  {
-    value: `"final_array": [An array`,
-    editablePart:
-      "representing the final state of the property after additions and deletions.",
-    endClose: "]",
-  },
-  {
-    value: "},",
-  },
-  {
-    value: `"reasoning": "`,
-    editablePart:
-      "Your reasoning for proposing this change to the specializations of the node.",
-    endClose: `"`,
-  },
-  {
-    value: "},",
-  },
-  {
-    editablePart: `- For other array property changes (other than "specializations" and "generalizations"), each change object should have the following properties:`,
-  },
-  {
-    value: "{",
-  },
-  {
-    value: `"modified_property": "`,
-    editablePart: "[PROPERTY_NAME]",
-    endClose: `",`,
-  },
-  {
-    value: `"new_value": {`,
-  },
-  {
-    value: `"nodes_to_add": [An array`,
-    editablePart: "of nodes to add to the existing property.",
-    endClose: `],`,
-  },
-  {
-    value: `"nodes_to_delete": [An array`,
-    editablePart: "of nodes to remove from the existing property.",
-    endClose: `],`,
-  },
-  {
-    value: `"final_array": [An array`,
-    editablePart:
-      "representing the final state of the property after additions and deletions.",
-    endClose: `]`,
-  },
-  {
-    value: "},",
-  },
-  {
-    value: `"reasoning": "`,
-    editablePart:
-      "Your reasoning for proposing this change to the [PROPERTY_NAME] of the node.",
-    endClose: `"`,
-  },
-  {
-    value: "},",
-  },
-  {
-    editablePart:
-      'If "nodeType" is "activity" and the property you want to change is "postConditions" or "preConditions":',
-  },
-  {
-    value: "{",
-  },
-  {
-    value: `"modifiedProperty":`,
-    editablePart: "[postConditions|preConditions]",
-    endClose: `",`,
-  },
-  {
-    value: `"new_value": {`,
-  },
-  {
-    value: `"conditions_to_add": [An array `,
-    editablePart: "of conditions to add to the existing property.",
-    endClose: "],",
-  },
-  {
-    value: `"conditions_to_delete": [An array `,
-    editablePart: "of conditions to remove from the existing property.",
-    endClose: "],",
-  },
-  {
-    value: `"final_array": [An array`,
-    editablePart:
-      "representing the final state of the property after additions and deletions.",
-    endClose: "]",
-  },
-  {
-    value: "},",
-  },
-  {
-    value: `"reasoning": "`,
-    editablePart:
-      "Your reasoning for proposing this change to the [postConditions|preConditions] of the node.",
-    endClose: `"`,
-  },
-  {
-    value: "},",
-  },
-  {
-    value: `For the "new_nodes" array:`,
-  },
-  {
-    editablePart:
-      "Each item should represent an object proposing a new node. Please structure each object as follows:",
-  },
-  {
-    value: "{",
-  },
-  {
-    value: `"title": "`,
-    editablePart: "The title of the new node.",
-    endClose: `",`,
-  },
-  {
-    value: `"description": "`,
-    editablePart: "The description of the node.",
-    endClose: `",`,
-  },
-  {
-    value: `"nodeType": "`,
-    editablePart:
-      "The type of the node, which could be 'activity', 'actor', 'object', 'evaluationDimension', 'incentive', 'reward', or 'context'.",
-    endClose: `",`,
-  },
-  {
-    value: `"generalizations": [An array `,
-    editablePart:
-      "of titles (as strings) of nodes that are generalizations of this node.",
-    endClose: `],`,
-  },
-  {
-    value: `"parts": [An array of`,
-    editablePart: "titles (as strings) of nodes that are parts of this node.",
-    endClose: `],`,
-  },
-  {
-    value: `"isPartOf": [An array of `,
-    editablePart: "titles (as strings) of nodes that this node is a part of.",
-    endClose: `],`,
-  },
-  {
-    value: "// NodeType-specific fields:",
-  },
-  {
-    value: '// If "nodeType" is "activity":',
-  },
-  {
-    value: `"actor": [An array `,
-    editablePart:
-      "of titles (as strings) of nodes that are individuals or groups that perform this activity.",
-    endClose: `],`,
-  },
-  {
-    value: `"objectsActedOn": [An array `,
-    editablePart:
-      "of titles (as strings) of nodes that are objects that this activity is performed on.",
-    endClose: `],`,
-  },
-  {
-    value: `"evaluationDimension": [An array `,
-    editablePart:
-      "of titles (as strings) of nodes that are evaluation dimensions of this activity.",
-    endClose: `],`,
-  },
-  {
-    value: `"postConditions": [An array of `,
-    editablePart:
-      "conditions that must be met after this activity is performed.",
-    endClose: `],`,
-  },
-  {
-    value: `"preConditions": [An array of `,
-    editablePart:
-      "conditions that must be met before this activity can be performed.",
-    endClose: `],`,
-  },
-  {
-    value: '// If "nodeType" is "actor" or "group":',
-  },
-  {
-    value: `"abilities": [An array of `,
-    editablePart: "abilities required of this actor or group.",
-    endClose: `],`,
-  },
-  {
-    value: `"typeOfActor": [`,
-    editablePart: "An array of types of actors.",
-    endClose: `],`,
-  },
-  {
-    value: '// Additional fields for "group":',
-  },
-  {
-    value: `"listOfIndividualsInGroup": [`,
-    editablePart: "An array of individuals that make up this group.",
-    endClose: `],`,
-  },
-  {
-    value: `"numberOfIndividualsInGroup": [`,
-    editablePart: "The number of individuals in the group.",
-    endClose: `],`,
-  },
-  {
-    value: '// If "nodeType" is "object":',
-  },
-  {
-    value: `"lifeSpan": [`,
-    editablePart: "Details about the lifespan of the object.",
-    endClose: `],`,
-  },
-  {
-    value: `"modifiability": [`,
-    editablePart: "Details about the modifiability of the object.",
-    endClose: `],`,
-  },
-  {
-    value: "}",
-  },
-  {
-    value: "IMPORTANT NOTES:",
-  },
+const propertiesToImprove: { [nodeType: string]: string[] } | any = {
+  allTypes: [
+    "title",
+    "description",
+    "specializations",
+    "generalizations",
+    "parts",
+    "isPartOf",
+  ],
+  actor: ["abilities", "typeOfActor"],
+  activity: ["actor", "objectsActedOn", "evaluationDimension", "PreConditions"],
+  object: ["lifeSpan", "modifiability", "perceivableProperties"],
+  evaluationDEmention: [
+    "criteriaForAcceptability",
+    "directionOfDesirability",
+    "evaluationType",
+    "measurementUnits",
+  ],
+  reward: [
+    "units",
+    "capabilitiesRequired",
+    "rewardFunction",
+    "evaluationDimension",
+    "reward",
+  ],
+};
 
-  {
-    editablePart:
-      "- Please do not propose any new node that already exists in the ontology, even if their titles are different. Ensure that each node is unique in meaning.",
-  },
-  {
-    editablePart:
-      "- Take as much time as needed to generate as many high-quality improvements and new nodes as possible.",
-  },
-  {
-    editablePart:
-      "- Thoroughly analyze the ontology and the user's message to identify all possible improvements and additions.",
-  },
-  {
-    editablePart:
-      "- If a 'Main' collection does not exist, please do not create it.",
-  },
-  {
-    editablePart: `- Please note the difference between "specializations" and "parts" properties.`,
-  },
-  {
-    value: "\t\t",
-    editablePart: `- "specializations" is an array of specialized nodes that are specific types of this node.`,
-  },
-  {
-    value: "\t\t",
-    editablePart: `- "parts" is an array of smaller nodes that are components of this node.`,
-  },
-];
-
-const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
+const CopilotPrompt: React.FC<EditableSchemaProps> = ({
+  setGenerateNewNodes,
+  setGenerateImprovement,
+  generateNewNodes,
+  generateImprovement,
+  nodeType,
+  selectedProperties,
+  setSelectedProperties,
+}) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
   const [systemPrompt, setSystemPrompt] = useState<
+    {
+      id: string;
+      value?: string;
+      editablePart?: string;
+      endClose?: string;
+    }[]
+  >([]);
+  const [systemPromptCopy, setSystemPromptCopy] = useState<
     {
       id: string;
       value?: string;
@@ -549,9 +164,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
   const [glowIds, setGlowIds] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState(false);
 
-  for (let p of prompt) {
-    p.id = doc(collection(db, PROMPT_LOGS)).id;
-  }
+  const editPrompt = user?.uname === "ouhrac" || user?.uname === "1man";
 
   useEffect(() => {
     if (!user?.uname) return;
@@ -566,6 +179,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
       if (docChanges.length > 0) {
         const docChange = docChanges[0].doc.data();
         setSystemPrompt([...docChange.systemPrompt]);
+        setSystemPromptCopy(JSON.parse(JSON.stringify(docChange.systemPrompt)));
       }
       // setLoading(false);
     });
@@ -673,29 +287,36 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
     setShowPromptHistory(newOpen);
   };
 
-  const handleInput = (id: string, event: React.FormEvent<HTMLSpanElement>) => {
-    const newValue = (event.target as HTMLSpanElement).innerText;
+  const handleInput = (id: string, event: any) => {
+    const newValue = event.target.value;
+    setSystemPrompt((prev) => {
+      const _prev = [...prev];
+
+      const idx = prev.findIndex((p) => p.id === id);
+      _prev[idx].editablePart = newValue;
+      return _prev;
+    });
 
     setEditedParts((prev) => {
       const _prev = [...prev];
       const prIdx = _prev.findIndex((p) => p.editedId === id);
-      const idx = systemPrompt.findIndex((p) => p.id === id);
+      const idx = systemPromptCopy.findIndex((p) => p.id === id);
 
       if (prIdx !== -1 && idx !== -1) {
-        if (systemPrompt[idx].editablePart !== newValue) {
+        if (systemPromptCopy[idx].editablePart !== newValue) {
           _prev[prIdx].newValue = newValue;
         } else {
           _prev.splice(prIdx, 1);
         }
       } else if (
         idx !== -1 &&
-        systemPrompt[idx].hasOwnProperty("editablePart") &&
-        systemPrompt[idx].editablePart !== newValue
+        systemPromptCopy[idx].hasOwnProperty("editablePart") &&
+        systemPromptCopy[idx].editablePart !== newValue
       ) {
         _prev.push({
           editedId: id,
           newValue,
-          previousValue: systemPrompt[idx].editablePart || "",
+          previousValue: systemPromptCopy[idx].editablePart || "",
         });
       }
       return _prev;
@@ -883,6 +504,8 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
       <Divider />
     </Box>
   );
+
+
   return (
     <Box sx={{ mb: 10 }}>
       <Drawer
@@ -894,7 +517,120 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
       >
         {promptHistoryList}
       </Drawer>
+      {editPrompt && (
+        <Box>
+          <Box
+            sx={{
+              display: "flex",
+              // mt: "25px",
+              mb: "10px",
+              p: 1,
+              cursor: "pointer",
+              ":hover": {
+                backgroundColor: "#766a57",
+                borderRadius: "25px",
+              },
+            }}
+            onClick={() => {
+              setGenerateNewNodes((prev: boolean) => !prev);
+            }}
+          >
+            <Checkbox checked={generateNewNodes} sx={{ p: 0, zIndex: 0 }} />
+            <Typography sx={{ ml: "15px" }}> Generate New Nodes</Typography>
+          </Box>
+          <Accordion
+          /* expanded={expanded} */
+          >
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              sx={{ flexDirection: "row-reverse" }}
+            >
+              <Checkbox
+                checked={selectedProperties.size > 0}
+                sx={{ p: 0, ml: "15px" }}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setSelectedProperties((prev: Set<string>) => {
+                    if (prev.size > 0) {
+                      return new Set();
+                    }
+                    return new Set(propertiesToImprove[nodeType]);
+                  });
+                }}
+              />
+              <Typography sx={{ ml: "5px" }}>Generate improvement</Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ ml: "56px" }}>
+              {(propertiesToImprove[nodeType] || []).map((property: string) => (
+                <Box key={property} sx={{ display: "flex", mb: "12px" }}>
+                  <Checkbox
+                    checked={selectedProperties.has(property)}
+                    sx={{ p: 0 }}
+                    onClick={() => {
+                      setSelectedProperties((prev: Set<string>) => {
+                        const _prev = new Set(prev);
+                        if (_prev.has(property)) {
+                          _prev.delete(property);
+                        } else {
+                          _prev.add(property);
+                        }
+                        return _prev;
+                      });
+                    }}
+                  />
+                  <Typography sx={{ ml: "15px" }}>
+                    {capitalizeFirstLetter(
+                      DISPLAY[property] ? DISPLAY[property] : property
+                    )}
+                  </Typography>
+                </Box>
+              ))}
+            </AccordionDetails>
+          </Accordion>
+          {/*         <TreeView
+            defaultCollapseIcon={<ExpandMoreIcon />}
+            defaultExpandIcon={<ChevronRightIcon />}
+          >
+            <TreeItem nodeId="generate-improvement" label="">
+              <Box
+                sx={{
+                  display: "flex",
+                  mb: "25px",
+                  cursor: "pointer",
+                  p: 1,
+                  ":hover": {
+                    backgroundColor: "#766a57",
+                    borderRadius: "25px",
+                  },
+                }}
+                onClick={() => setGenerateImprovement((prev) => !prev)}
+              >
 
+              </Box>
+              {generateImprovement && (
+                <TreeView>
+                  {(propertiesToImprove[nodeType] || []).map((p) => (
+                    <TreeItem key={p} nodeId={p} label={p} />
+                  ))}
+                </TreeView>
+              )}
+            </TreeItem>
+          </TreeView> */}
+        </Box>
+      )}{" "}
+      {diffChanges !== null && Object.keys(diffChanges).length <= 0 && (
+        <Typography
+          id="no-diff"
+          sx={{
+            color: "#7cacf8",
+            fontSize: "19px",
+            mb: "17px",
+          }}
+        >
+          This version is the same as the latest version!
+        </Typography>
+      )}
       <Paper elevation={5}>
         <Accordion
           expanded={expanded}
@@ -911,6 +647,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
               backgroundColor: (theme) =>
                 theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
               m: 0,
+              zIndex: 5,
               flexDirection: "row-reverse",
               // height: "50px",
               // msFlexDirection: "c",
@@ -1058,19 +795,6 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
                 boxSizing: "border-box",
               }}
             >
-              {" "}
-              {diffChanges !== null && Object.keys(diffChanges).length <= 0 && (
-                <Typography
-                  id="no-diff"
-                  sx={{
-                    color: "#7cacf8",
-                    fontSize: "19px",
-                    mb: "17px",
-                  }}
-                >
-                  This version is the same as the latest version!
-                </Typography>
-              )}
               {(previousVersion || systemPrompt).map((p) => (
                 <Box
                   key={p.id}
@@ -1082,6 +806,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
                     flexDirection: { xs: "column", sm: "row" },
                   }}
                 >
+                  {" "}
                   <Typography
                     sx={{
                       flexShrink: 0,
@@ -1094,7 +819,10 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
                         : "",
                     }}
                   >
-                    {p.value}
+                    {" "}
+                    <Box sx={{ mt: "14px" }}>
+                      <MarkdownRender text={p.value || ""} />
+                    </Box>
                     {diffChanges && diffChanges[p.id] && (
                       <Typography
                         sx={{
@@ -1119,29 +847,35 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = () => {
                         {diffChanges[p.id].newValue}
                       </Typography>
                     )}
-
                     {p.hasOwnProperty("editablePart") &&
                       (!diffChanges || !diffChanges[p.id]) && (
-                        <Typography
-                          key={forceUpdate}
-                          component="span"
-                          contentEditable={!previousVersionId}
-                          suppressContentEditableWarning
-                          sx={{
-                            display: "inline",
-                            borderBottom: !previousVersionId
-                              ? "1.5px dashed #ff6d00"
-                              : "",
-                            paddingBottom: "2px",
-                            cursor: "text",
-                            px: "4px",
-                            color: "inherit",
-                            fontSize: { xs: "16px", sm: "20px" },
-                          }}
-                          onInput={(event) => handleInput(p.id, event)}
-                        >
-                          {p.editablePart}
-                        </Typography>
+                        <TextField
+                          value={p.editablePart}
+                          onChange={(event) => handleInput(p.id, event)}
+                          fullWidth
+                          // rows={14}
+                          multiline
+                        />
+                        // <Typography
+                        //   key={forceUpdate}
+                        //   component="span"
+                        //   contentEditable={!previousVersionId}
+                        //   suppressContentEditableWarning
+                        //   sx={{
+                        //     display: "inline",
+                        //     borderBottom: !previousVersionId
+                        //       ? "1.5px dashed #ff6d00"
+                        //       : "",
+                        //     paddingBottom: "2px",
+                        //     cursor: "text",
+                        //     px: "4px",
+                        //     color: "inherit",
+                        //     fontSize: { xs: "16px", sm: "20px" },
+                        //   }}
+                        //   onInput={(event) => handleInput(p.id, event)}
+                        // >
+                        //   {p.editablePart}
+                        // </Typography>
                       )}
                     {p.endClose}
                   </Typography>

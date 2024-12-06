@@ -673,12 +673,16 @@ const ToolbarSidebar = ({
   };
 
   const handleImproveClick = async () => {
-    const options = (await selectIt(currentVisibleNode.title)) as {
+    const options = (await selectIt(
+      currentVisibleNode.title,
+      currentVisibleNode.nodeType
+    )) as {
       model: string;
       userMessage: string;
       deepNumber: number;
       generateNewNodes: boolean;
       generateImprovement: boolean;
+      selectedProperties: Set<string>;
     };
 
     if (!options) return;
@@ -688,6 +692,7 @@ const ToolbarSidebar = ({
       deepNumber,
       generateNewNodes,
       generateImprovement,
+      selectedProperties,
     } = options;
     setIsLoadingCopilot(true);
     setCurrentIndex(0);
@@ -698,13 +703,15 @@ const ToolbarSidebar = ({
         deepNumber,
         currentVisibleNode.id,
         generateNewNodes,
-        generateImprovement
+        generateImprovement,
+        selectedProperties
       )) as {
         improvements: Improvement[];
         new_nodes: copilotNewNode[];
         deleted_nodes: copilotDeleteNode[];
         message: string;
       };
+
       if (!response) {
         throw new Error("Missing response in handleImproveClick!");
       }

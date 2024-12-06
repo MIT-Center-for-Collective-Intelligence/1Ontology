@@ -34,14 +34,20 @@ const useSelectDropdown = () => {
   const [nodeTitle, setNodeTitle] = useState("");
   const [generateNewNodes, setGenerateNewNodes] = useState(true);
   const [generateImprovement, setGenerateImprovement] = useState(true);
+  const [nodeType, setNodeType] = useState<string>("");
+  const [selectedProperties, setSelectedProperties] = useState<Set<string>>(
+    new Set()
+  );
+
   const resolveRef = React.useRef<any>(null);
   // localStorage.setItem(
   //   `lastSearches_${user?.userId}`,
   //   JSON.stringify(validSearches)
   // );
-  const showDialog = useCallback((nodeTitle: string) => {
+  const showDialog = useCallback((nodeTitle: string, nodeType: string) => {
     setIsOpen(true);
     setNodeTitle(nodeTitle);
+    setNodeType(nodeType);
     const savedInputValue = localStorage.getItem(`user-copilot-message`);
     const savedNumberValue = localStorage.getItem(`user-number-value`);
     setInputValue(savedInputValue || "");
@@ -62,7 +68,7 @@ const useSelectDropdown = () => {
       setIsOpen(false);
       localStorage.setItem(`user-copilot-message`, inputValue);
       localStorage.setItem(`user-number-value`, String(numberValue));
-
+      console.log("selectedProperties ==>", selectedProperties);
       if (resolveRef.current && start) {
         resolveRef.current({
           userMessage: inputValue,
@@ -70,6 +76,7 @@ const useSelectDropdown = () => {
           deepNumber: numberValue,
           generateNewNodes,
           generateImprovement,
+          selectedProperties,
         });
       }
     },
@@ -79,6 +86,7 @@ const useSelectDropdown = () => {
       selectedOption.id,
       generateNewNodes,
       generateImprovement,
+      selectedProperties,
     ]
   );
 
@@ -98,7 +106,15 @@ const useSelectDropdown = () => {
   };
 
   const dropdownDialog = (
-    <Dialog open={isOpen} onClose={() => closeDialog()} fullWidth maxWidth="md">
+    <Dialog
+      open={isOpen}
+      onClose={() => closeDialog()}
+      fullScreen
+      sx={{
+        width: "100%",
+        height: "100%",
+      }}
+    >
       <DialogTitle>
         Improving the sub-ontology around{" "}
         <strong style={{ color: "orange" }}>{nodeTitle}</strong>:
@@ -111,7 +127,17 @@ const useSelectDropdown = () => {
           },
         }}
       >
-        {editPrompt && <CopilotPrompt />}
+        {editPrompt && (
+          <CopilotPrompt
+            setGenerateNewNodes={setGenerateNewNodes}
+            setGenerateImprovement={setGenerateImprovement}
+            generateNewNodes={generateNewNodes}
+            generateImprovement={generateImprovement}
+            nodeType={nodeType}
+            selectedProperties={selectedProperties}
+            setSelectedProperties={setSelectedProperties}
+          />
+        )}
         <TextField
           autoFocus
           margin="dense"
@@ -131,47 +157,7 @@ const useSelectDropdown = () => {
             },
           }}
         />
-        {editPrompt && (
-          <Box
-            sx={{
-              display: "flex",
-              mt: "25px",
-              mb: "10px",
-              p: 1,
-              cursor: "pointer",
-              ":hover": {
-                backgroundColor: "#766a57",
-                borderRadius: "25px",
-              },
-            }}
-            onClick={() => {
-              setGenerateNewNodes((prev) => !prev);
-            }}
-          >
-            <Checkbox checked={generateNewNodes} sx={{ p: 0 }} />
-            <Typography sx={{ ml: "15px" }}> Generate New Nodes</Typography>
-          </Box>
-        )}
-        {editPrompt && (
-          <Box
-            sx={{
-              display: "flex",
-              mb: "25px",
-              cursor: "pointer",
-              p: 1,
-              ":hover": {
-                backgroundColor: "#766a57",
-                borderRadius: "25px",
-              },
-            }}
-            onClick={() => {
-              setGenerateImprovement((prev) => !prev);
-            }}
-          >
-            <Checkbox checked={generateImprovement} sx={{ p: 0 }} />
-            <Typography sx={{ ml: "15px" }}> Generate improvement</Typography>
-          </Box>
-        )}
+
         {!generateNewNodes && !generateImprovement && editPrompt && (
           <Typography sx={{ color: "red", mb: "15px" }}>
             {`Select at least one option: 'Generate New Nodes,' 'Generate Improvement' or both!`}
@@ -245,7 +231,7 @@ const useSelectDropdown = () => {
   );
 
   const selectIt = useCallback(
-    (nodeTitle: string) => showDialog(nodeTitle),
+    (nodeTitle: string, nodeType: string) => showDialog(nodeTitle, nodeType),
     [showDialog]
   );
 

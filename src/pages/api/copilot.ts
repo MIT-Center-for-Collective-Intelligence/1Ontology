@@ -19,6 +19,7 @@ import fbAuth from " @components/middlewares/fbAuth";
 import { getDoerCreate, recordLogs } from " @components/lib/utils/helpers";
 import {
   copilotNewNode,
+  getCopilotPrompt,
   Improvement,
   MODELS_OPTIONS,
   PROPOSALS_SCHEMA,
@@ -161,21 +162,20 @@ const proposerAgent = async (
     }
 
     let prompt = `
-Objective:
+${SYSTEM_PROMPT}
+Guidelines:
 '''
-${userMessage}
+${JSON.stringify(guidelines, null, 2)}
 '''
 
-The knowledge Graph:
+Ontology Data:
 '''
 ${JSON.stringify(nodesArray, null, 2)}
 '''
 
-${SYSTEM_PROMPT}
-
-Guidelines:
+User Message:
 '''
-${JSON.stringify(guidelines, null, 2)}
+${userMessage}
 '''
 `;
     if (
@@ -314,9 +314,12 @@ export const generateProposals = async (
 const getPrompt = async (
   uname: string,
   generateNewNodes: boolean,
-  generateImprovement: boolean
+  improveProperties: string[]
 ) => {
-  const promptDoc = await db.collection("copilotPrompts").doc(uname).get();
+  let promptDoc = await db.collection("copilotPrompts").doc(uname).get();
+  if (!promptDoc.exists) {
+    promptDoc = await db.collection("copilotPrompts").doc("1man").get();
+  }
   let prompt = "";
   if (promptDoc.exists) {
     const promptData = promptDoc.data() as {
@@ -330,34 +333,13 @@ const getPrompt = async (
       }[];
     };
 
-    let systemPrompt = promptData.systemPrompt;
-
-    if (!generateNewNodes && generateImprovement) {
-      systemPrompt = systemPrompt.filter(
-        (p) =>
-          !!p.improvement ||
-          (!p.hasOwnProperty("newNode") && !p.hasOwnProperty("improvement"))
-      );
-    }
-    if (generateNewNodes && !generateImprovement) {
-      systemPrompt = systemPrompt.filter(
-        (p) =>
-          !!p.newNode ||
-          (!p.hasOwnProperty("newNode") && !p.hasOwnProperty("improvement"))
-      );
-    }
-    for (let p of systemPrompt) {
-      if (p.value) {
-        prompt = prompt + p.value;
-      }
-      if (p.editablePart) {
-        prompt = prompt + p.editablePart;
-      }
-      if (p.endClose) {
-        prompt = prompt + p.endClose;
-      }
-      prompt = prompt + "\n";
-    }
+    let systemPrompt = promptData.systemPrompt[0].editablePart as string;
+    prompt = getCopilotPrompt({
+      improvement: improveProperties.length > 0,
+      newNodes: generateNewNodes,
+      improveProperties: new Set(improveProperties),
+      editedPart: systemPrompt,
+    });
     return prompt;
   } else {
     throw new Error("System prompt missing!");
@@ -372,8 +354,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     nodeId,
     user,
     generateNewNodes,
-    generateImprovement,
+    improveProperties,
   } = req.body.data;
+
   const { uname } = user?.userData;
   try {
     const model_index = MODELS_OPTIONS.findIndex(
@@ -386,8 +369,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     const SYSTEM_PROMPT = await getPrompt(
       uname,
       generateNewNodes,
-      generateImprovement
+      improveProperties
     );
+
     const response = await generateProposals(
       userMessage,
       model,
@@ -422,7 +406,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     return res.status(200).send(response);
   } catch (error: any) {
     console.error("error", error);
-    res.status(500).json({ error: error.message });
     recordLogs({
       type: "error",
       error: JSON.stringify({
@@ -432,6 +415,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       }),
       at: "copilot",
     });
+    return res.status(500).json({ error: error.message });
   }
 }
 
