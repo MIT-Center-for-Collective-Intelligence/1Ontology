@@ -683,6 +683,7 @@ const ToolbarSidebar = ({
       generateNewNodes: boolean;
       generateImprovement: boolean;
       selectedProperties: Set<string>;
+      proposeDeleteNode: boolean;
     };
 
     if (!options) return;
@@ -691,8 +692,8 @@ const ToolbarSidebar = ({
       userMessage,
       deepNumber,
       generateNewNodes,
-      generateImprovement,
       selectedProperties,
+      proposeDeleteNode,
     } = options;
     setIsLoadingCopilot(true);
     setCurrentIndex(0);
@@ -703,8 +704,8 @@ const ToolbarSidebar = ({
         deepNumber,
         currentVisibleNode.id,
         generateNewNodes,
-        generateImprovement,
-        selectedProperties
+        selectedProperties,
+        proposeDeleteNode
       )) as {
         improvements: Improvement[];
         new_nodes: copilotNewNode[];

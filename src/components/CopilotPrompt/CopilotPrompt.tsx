@@ -67,9 +67,9 @@ const glowGreen = keyframes`
 
 interface EditableSchemaProps {
   setGenerateNewNodes: any;
-  setGenerateImprovement: any;
   generateNewNodes: boolean;
-  generateImprovement: boolean;
+  proposeDeleteNode: boolean;
+  setProposeDeleteNodes: any;
   nodeType: string;
   selectedProperties: Set<string>;
   setSelectedProperties: any;
@@ -104,9 +104,9 @@ const propertiesToImprove: { [nodeType: string]: string[] } | any = {
 
 const CopilotPrompt: React.FC<EditableSchemaProps> = ({
   setGenerateNewNodes,
-  setGenerateImprovement,
   generateNewNodes,
-  generateImprovement,
+  proposeDeleteNode,
+  setProposeDeleteNodes,
   nodeType,
   selectedProperties,
   setSelectedProperties,
@@ -518,6 +518,14 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
       >
         {promptHistoryList}
       </Drawer>
+      {!generateNewNodes &&
+        selectedProperties.size <= 0 &&
+        !proposeDeleteNode &&
+        editPrompt && (
+          <Typography sx={{ color: "red", mb: "15px" }}>
+            {`Select at least one option: 'Propose New Nodes,' 'Propose Improvement' or "Propose Node Deletion"!`}
+          </Typography>
+        )}
       {editPrompt && (
         <Box>
           <Box
@@ -537,7 +545,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
             }}
           >
             <Checkbox checked={generateNewNodes} sx={{ p: 0, zIndex: 0 }} />
-            <Typography sx={{ ml: "15px" }}> Generate New Nodes</Typography>
+            <Typography sx={{ ml: "15px" }}> Propose New Nodes</Typography>
           </Box>
           <Accordion
           /* expanded={expanded} */
@@ -560,7 +568,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                   });
                 }}
               />
-              <Typography sx={{ ml: "5px" }}>Generate improvement</Typography>
+              <Typography sx={{ ml: "5px" }}>Propose improvement</Typography>
               <ExpandMoreIcon sx={{ ml: "12px" }} />
             </AccordionSummary>
             <AccordionDetails sx={{ ml: "20px" }}>
@@ -593,35 +601,25 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
               ))}
             </AccordionDetails>
           </Accordion>
-          {/*         <TreeView
-            defaultCollapseIcon={<ExpandMoreIcon />}
-            defaultExpandIcon={<ChevronRightIcon />}
+          <Box
+            sx={{
+              display: "flex",
+              ml: "7px",
+              mb: "10px",
+              p: 1,
+              cursor: "pointer",
+              ":hover": {
+                backgroundColor: "#766a57",
+                borderRadius: "25px",
+              },
+            }}
+            onClick={() => {
+              setProposeDeleteNodes((prev: boolean) => !prev);
+            }}
           >
-            <TreeItem nodeId="generate-improvement" label="">
-              <Box
-                sx={{
-                  display: "flex",
-                  mb: "25px",
-                  cursor: "pointer",
-                  p: 1,
-                  ":hover": {
-                    backgroundColor: "#766a57",
-                    borderRadius: "25px",
-                  },
-                }}
-                onClick={() => setGenerateImprovement((prev) => !prev)}
-              >
-
-              </Box>
-              {generateImprovement && (
-                <TreeView>
-                  {(propertiesToImprove[nodeType] || []).map((p) => (
-                    <TreeItem key={p} nodeId={p} label={p} />
-                  ))}
-                </TreeView>
-              )}
-            </TreeItem>
-          </TreeView> */}
+            <Checkbox checked={proposeDeleteNode} sx={{ p: 0, zIndex: 0 }} />
+            <Typography sx={{ ml: "15px" }}>Propose Node Deletion</Typography>
+          </Box>
         </Box>
       )}{" "}
       {diffChanges !== null && Object.keys(diffChanges).length <= 0 && (
@@ -834,6 +832,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                           improvement: selectedProperties.size > 0,
                           newNodes: generateNewNodes,
                           improveProperties: selectedProperties,
+                          proposeDeleteNode,
                           editedPart: "",
                         })}
                       </Typography>

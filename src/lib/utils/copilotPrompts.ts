@@ -7,8 +7,8 @@ export const sendLLMRequest = async (
   deepNumber: number,
   nodeId: string,
   generateNewNodes: boolean,
-  generateImprovement: boolean,
-  improveProperties: Set<string>
+  improveProperties: Set<string>,
+  proposeDeleteNode: boolean
 ) => {
   try {
     console.log("sendLLMRequest", improveProperties);
@@ -18,7 +18,7 @@ export const sendLLMRequest = async (
       deepNumber,
       nodeId,
       generateNewNodes,
-      generateImprovement,
+      proposeDeleteNode,
       improveProperties: new Array(...improveProperties),
     });
     recordLogs({
@@ -292,11 +292,13 @@ const properties = {
 export const getCopilotPrompt = ({
   improvement,
   newNodes,
+  proposeDeleteNode,
   improveProperties,
   editedPart,
 }: {
   improvement: boolean;
   newNodes: boolean;
+  proposeDeleteNode: boolean;
   improveProperties: Set<string>;
   editedPart: string;
 }) => {
@@ -311,8 +313,11 @@ export const getCopilotPrompt = ({
         ? `"improvements": [], // An array of improvements to existing nodes.\n    `
         : ""
     }"new_nodes": [], // An array of new nodes. Note that you should not propose a new node if a node with the same meaning already exists in the ontology, even if their titles are different.
-    "delete_nodes": [], // An array of nodes proposed for deletion. If it is not necessary to delete any node, and you think all the nodes in the ontology are relevant, you can leave this array empty.
-  }
+    ${
+      proposeDeleteNode
+        ? `"delete_nodes": [], // An array of nodes proposed for deletion. If it is not necessary to delete any node, and you think all the nodes in the ontology are relevant, you can leave this array empty.\n`
+        : ""
+    }}
   
  ${
    improvement
@@ -784,9 +789,9 @@ ${
   "reasoning": "Reason for proposing this new node."
   }`
       : ""
-  }
-  
-  ------------------
+  }${
+    proposeDeleteNode
+      ? ` ------------------
   
   **For the "delete_nodes" array**:
   Each item should be an object proposing the deletion of an existing node:
@@ -794,6 +799,8 @@ ${
   {
   "title": "The title of the node to delete.",
   "reasoning": "Reason for proposing this deletion."
+  }`
+      : ""
   }
   '''
   
