@@ -505,7 +505,6 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
     </Box>
   );
 
-
   return (
     <Box sx={{ mb: 10 }}>
       <Drawer
@@ -562,7 +561,10 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
               <Typography sx={{ ml: "5px" }}>Generate improvement</Typography>
             </AccordionSummary>
             <AccordionDetails sx={{ ml: "56px" }}>
-              {(propertiesToImprove[nodeType] || []).map((property: string) => (
+              {[
+                ...propertiesToImprove.allTypes,
+                ...(propertiesToImprove[nodeType] || []),
+              ].map((property: string) => (
                 <Box key={property} sx={{ display: "flex", mb: "12px" }}>
                   <Checkbox
                     checked={selectedProperties.has(property)}
