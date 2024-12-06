@@ -33,7 +33,7 @@ const useSelectDropdown = () => {
   const [numberValue, setNumberValue] = useState<number>(12);
   const [nodeTitle, setNodeTitle] = useState("");
   const [generateNewNodes, setGenerateNewNodes] = useState(true);
-  const [generateImprovement, setGenerateImprovement] = useState(true);
+  const [proposeDeleteNode, setProposeDeleteNodes] = useState(true);
   const [nodeType, setNodeType] = useState<string>("");
   const [selectedProperties, setSelectedProperties] = useState<Set<string>>(
     new Set()
@@ -75,8 +75,8 @@ const useSelectDropdown = () => {
           model: selectedOption.id,
           deepNumber: numberValue,
           generateNewNodes,
-          generateImprovement,
           selectedProperties,
+          proposeDeleteNode,
         });
       }
     },
@@ -85,8 +85,8 @@ const useSelectDropdown = () => {
       numberValue,
       selectedOption.id,
       generateNewNodes,
-      generateImprovement,
       selectedProperties,
+      proposeDeleteNode,
     ]
   );
 
@@ -130,9 +130,9 @@ const useSelectDropdown = () => {
         {editPrompt && (
           <CopilotPrompt
             setGenerateNewNodes={setGenerateNewNodes}
-            setGenerateImprovement={setGenerateImprovement}
+            proposeDeleteNode={proposeDeleteNode}
+            setProposeDeleteNodes={setProposeDeleteNodes}
             generateNewNodes={generateNewNodes}
-            generateImprovement={generateImprovement}
             nodeType={nodeType}
             selectedProperties={selectedProperties}
             setSelectedProperties={setSelectedProperties}
@@ -158,11 +158,6 @@ const useSelectDropdown = () => {
           }}
         />
 
-        {!generateNewNodes && !generateImprovement && editPrompt && (
-          <Typography sx={{ color: "red", mb: "15px" }}>
-            {`Select at least one option: 'Generate New Nodes,' 'Generate Improvement' or both!`}
-          </Typography>
-        )}
         <FormControl fullWidth sx={{ mb: 2, mt: "15px" }}>
           <InputLabel>Select an LLM Option</InputLabel>
           <Select
@@ -212,7 +207,11 @@ const useSelectDropdown = () => {
             backgroundColor: DESIGN_SYSTEM_COLORS.primary800,
           }}
           disabled={
-            numberValue === 0 || (!generateNewNodes && !generateImprovement)
+            numberValue === 0 ||
+            (!generateNewNodes &&
+              selectedProperties.size <= 0 &&
+              !proposeDeleteNode &&
+              editPrompt)
           }
         >
           Start
