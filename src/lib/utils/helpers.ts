@@ -713,8 +713,12 @@ export const createNewNode = (
     propertyType: { ...parentNodeData.propertyType },
     nodeType: parentNodeData.nodeType,
   };
-  delete newNode.textValue.specializations;
-  delete newNode.textValue.generalizations;
+  if (newNode?.textValue?.specializations) {
+    delete newNode.textValue.specializations;
+  }
+  if (newNode?.textValue?.generalizations) {
+    delete newNode.textValue.generalizations;
+  }
   return newNode;
 };
 
