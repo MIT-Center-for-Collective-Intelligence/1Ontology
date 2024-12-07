@@ -68,7 +68,7 @@ const useSelectDropdown = () => {
       setIsOpen(false);
       localStorage.setItem(`user-copilot-message`, inputValue);
       localStorage.setItem(`user-number-value`, String(numberValue));
-      console.log("selectedProperties ==>", selectedProperties);
+
       if (resolveRef.current && start) {
         resolveRef.current({
           userMessage: inputValue,

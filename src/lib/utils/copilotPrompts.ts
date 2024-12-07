@@ -11,7 +11,6 @@ export const sendLLMRequest = async (
   proposeDeleteNode: boolean
 ) => {
   try {
-    console.log("sendLLMRequest", improveProperties);
     const response = await Post("/copilot", {
       userMessage,
       model,
@@ -812,6 +811,5 @@ ${
   - Thoroughly analyze the ontology and the user's message for all possible enhancements.
   '''
   `;
-  console.log(`${editedPart}\n${p}`, "ppppp");
   return `${editedPart}\n${p}`;
 };

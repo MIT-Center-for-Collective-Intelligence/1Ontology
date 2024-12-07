@@ -718,9 +718,9 @@ const ToolbarSidebar = ({
       }
 
       if (
-        response.improvements.length <= 0 &&
-        response.new_nodes.length <= 0 &&
-        response?.deleted_nodes.length <= 0
+        (response?.improvements || []).length <= 0 &&
+        (response?.new_nodes || []).length <= 0 &&
+        (response?.deleted_nodes || []).length <= 0
       ) {
         confirmIt(
           <Box>

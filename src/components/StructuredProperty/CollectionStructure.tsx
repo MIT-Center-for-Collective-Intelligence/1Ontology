@@ -448,7 +448,7 @@ const CollectionStructure = ({
         const nodeId = partId;
         const newId = doc(collection(db, NODES)).id;
         const clonedNode = cloneNode(nodeId, newPartTitle, newId, property);
-        console.log("clonedNode==>", clonedNode);
+
         replaceWith(newId, partId);
       }
     } catch (error) {
@@ -469,7 +469,7 @@ const CollectionStructure = ({
           });
           return;
         }
-        console.log("partId==>", partId, currentVisibleNode.id, property);
+
         if (property === "parts" && currentVisibleNode.id) {
           propertyValue[0].nodes = propertyValue[0].nodes.filter(
             (n: { id: string }) => n.id !== id
@@ -478,7 +478,7 @@ const CollectionStructure = ({
             id: partId,
           });
           const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-          console.log("newValue -==-", propertyValue);
+
 
           updateDoc(nodeRef, {
             "properties.parts": propertyValue,
