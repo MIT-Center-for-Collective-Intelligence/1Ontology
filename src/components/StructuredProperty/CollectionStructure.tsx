@@ -723,19 +723,21 @@ const CollectionStructure = ({
 
   return (
     <Box sx={{ p: "15px", pt: 0 }}>
-      <Typography
-        sx={{
-          pt: "12px",
-          fontSize: "20px",
-          fontWeight: 500,
-          fontFamily: "Roboto, sans-serif",
-        }}
-      >
-        {capitalizeFirstLetter(
-          DISPLAY[property] ? DISPLAY[property] : property
-        )}
-        :
-      </Typography>
+      {model && (
+        <Typography
+          sx={{
+            pt: "12px",
+            fontSize: "20px",
+            fontWeight: 500,
+            fontFamily: "Roboto, sans-serif",
+          }}
+        >
+          {capitalizeFirstLetter(
+            DISPLAY[property] ? DISPLAY[property] : property
+          )}
+          :
+        </Typography>
+      )}
       {openAddCollection && (
         <NewCollection
           onAdd={addCollection}
