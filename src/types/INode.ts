@@ -116,6 +116,7 @@ export type MainSpecializations = {
 export type NodeChange = {
   nodeId: string;
   modifiedBy: string;
+  collaborators?: string[];
   modifiedProperty: string | null;
   previousValue: any;
   newValue: any;

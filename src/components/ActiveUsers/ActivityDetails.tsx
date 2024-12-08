@@ -15,6 +15,9 @@ const ActivityDetails = ({
   modifiedByDetails?: any;
   isSelected?: boolean;
 }) => {
+  const userDetails = Array.isArray(modifiedByDetails)
+    ? modifiedByDetails
+    : (modifiedByDetails ? [modifiedByDetails] : []);
   return (
     <Box sx={{ display: "flex", flexDirection: "column", mt: "8px" }}>
       <Typography
@@ -51,8 +54,8 @@ const ActivityDetails = ({
                 ? "rgba(173, 216, 230, 0.5)"
                 : "#303134"
               : isSelected
-              ? "rgba(173, 216, 230, 0.5)"
-              : "#e9ebf5",
+                ? "rgba(173, 216, 230, 0.5)"
+                : "#e9ebf5",
         }}
       >
         <Box
@@ -64,10 +67,10 @@ const ActivityDetails = ({
             left: 12,
           }}
         >
-          {modifiedByDetails && (
+          {userDetails.length > 0 && (
             <OptimizedAvatar
-              alt={modifiedByDetails.fName + " " + modifiedByDetails.lName}
-              imageUrl={modifiedByDetails.imageUrl || ""}
+              alt={userDetails[0].fName + " " + userDetails[0].lName}
+              imageUrl={userDetails[0].imageUrl || ""}
               size={40}
               sx={{
                 width: "40px",
@@ -78,15 +81,28 @@ const ActivityDetails = ({
             />
           )}
 
-          {modifiedByDetails && (
+          {userDetails.length > 0 && (
             <Typography
               sx={{
                 marginLeft: 1,
                 fontSize: "14px",
                 color: "text.primary",
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
             >
-              {modifiedByDetails.fName} {modifiedByDetails.lName}{" "}
+              <Typography
+                sx={{
+                  fontSize: "14px",
+                  maxWidth: "250px",
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {userDetails.map(user => `${user.fName} ${user.lName}`).join(', ')}{" "}
+              </Typography>
               {modifiedByDetails && (
                 <Typography
                   variant="body2"
