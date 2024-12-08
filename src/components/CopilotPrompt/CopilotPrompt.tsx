@@ -892,9 +892,14 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                 </AccordionSummary>
                 <AccordionDetails>
                   {selectedProperties.size > 0 && (
-                    <Accordion>
+                    <Accordion
+                      sx={{
+                        backgroundColor: (theme) =>
+                          theme.palette.mode === "dark" ? "#1e1919" : "#d0d5dd",
+                      }}
+                    >
                       <AccordionSummary>
-                        <Typography sx={{ fontSize: "15px" }}>
+                        <Typography sx={{ fontSize: "17px" }}>
                           Improvements
                         </Typography>
                         <ExpandMoreIcon sx={{ ml: "12px" }} />
@@ -912,7 +917,12 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                     </Accordion>
                   )}
                   {generateNewNodes && (
-                    <Accordion>
+                    <Accordion
+                      sx={{
+                        backgroundColor: (theme) =>
+                          theme.palette.mode === "dark" ? "#1e1919" : "#d0d5dd",
+                      }}
+                    >
                       <AccordionSummary>
                         <Typography sx={{ fontSize: "15px" }}>
                           New Nodes
@@ -929,7 +939,12 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                     </Accordion>
                   )}
                   {proposeDeleteNode && (
-                    <Accordion>
+                    <Accordion
+                      sx={{
+                        backgroundColor: (theme) =>
+                          theme.palette.mode === "dark" ? "#1e1919" : "#d0d5dd",
+                      }}
+                    >
                       <AccordionSummary>
                         <Typography sx={{ fontSize: "15px" }}>
                           Delete nodes
