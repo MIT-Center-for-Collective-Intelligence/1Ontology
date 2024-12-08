@@ -251,9 +251,9 @@ export const generateProposals = async (
     throw new Error("Node doesn't exist");
   }
   const currentNode = nodes[nodeId];
-  if (currentNode.nodeType !== "activity") {
+  /*   if (currentNode.nodeType !== "activity") {
     throw new Error("Node type not supported yet!");
-  }
+  } */
   const currentNodeD = getStructureForJSON(currentNode, nodes);
   nodesArray.push(currentNodeD);
   const _nodesArray = getNodesInThreeLevels(
@@ -334,12 +334,13 @@ const getPrompt = async (
       }[];
     };
 
-    let systemPrompt = promptData.systemPrompt[0].editablePart as string;
+    let objective = promptData.systemPrompt[0].editablePart as string;
+    let definition = promptData.systemPrompt[1].editablePart as string;
     prompt = getCopilotPrompt({
       improvement: improveProperties.length > 0,
       newNodes: generateNewNodes,
       improveProperties: new Set(improveProperties),
-      editedPart: systemPrompt,
+      editedPart: {objective, definition},
       proposeDeleteNode,
     });
     return prompt;

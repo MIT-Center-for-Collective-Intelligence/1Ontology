@@ -288,22 +288,12 @@ const properties = {
     "reward",
   ],
 };
-export const getCopilotPrompt = ({
-  improvement,
-  newNodes,
-  proposeDeleteNode,
-  improveProperties,
-  editedPart,
-}: {
-  improvement: boolean;
-  newNodes: boolean;
-  proposeDeleteNode: boolean;
-  improveProperties: Set<string>;
-  editedPart: string;
-}) => {
-  const p = `
-  Response Structure:
-  '''
+
+export const getResponseStructure = (
+  improvement: boolean,
+  proposeDeleteNode: boolean
+) => {
+  return `
   Please carefully generate a JSON object with the following structure:
   {
     "message": "A string message to the user, which may include your analysis, questions, or explanations regarding the proposed changes.",
@@ -318,428 +308,436 @@ export const getCopilotPrompt = ({
         : ""
     }}
   
- ${
-   improvement
-     ? ` ------------------
-  For the "improvements" array:
-  Each item should be an object proposing an improvement to an existing node, structured as follows:
-  {
-    "title": "The current title of the node.",
-    "nodeType": "The type of the node (e.g., 'activity', 'actor', etc.).",
-    "changes": [  // An array of change objects for this node.
-      // Change objects as detailed below.
-    ]
-  }
+`;
+};
 
-  Each change object should include the necessary fields for the property being changed and a **reasoning** field explaining your rationale.
-
- ${
-   improveProperties.has("title") ||
-   improveProperties.has("description") ||
-   improveProperties.has("specializations") ||
-   improveProperties.has("generalizations") ||
-   improveProperties.has("parts") ||
-   improveProperties.has("isPartOf")
-     ? "**For all node types:**"
-     : ""
- }
-${
-  improveProperties.has("title")
-    ? `- **Title changes**:
-  {
-    "title": "The improved title of the node.",
-    "reasoning": "Reason for proposing this title change."
-  }`
-    : ""
-}
-  ${
-    improveProperties.has("description")
-      ? `- **Description changes**:
-  {
-    "description": "The improved description of the node.",
-    "reasoning": "Reason for proposing this description change."
-  }`
-      : ""
-  }
-  ${
-    improveProperties.has("specializations")
-      ? `- **Specializations changes**:
-  {
-    "specializations": [
-      {
-        "collectionName": "The title of the collection",
-        "changes": {
-          "nodes_to_add": [Titles of nodes to add],
-          "nodes_to_delete": [Titles of nodes to remove],
-          "final_array": [Final list of node titles in this collection]
-        },
-        "reasoning": "Reason for proposing these changes to the collection."
-      }
-    ]
-  }`
-      : ""
-  }
- ${
-   improveProperties.has("generalizations")
-     ? `- **Generalizations changes**:
-  {
-    "modified_property": "generalizations",
-    "new_value": {
-      "nodes_to_add": [Titles of nodes to add],
-      "nodes_to_delete": [Titles of nodes to remove],
-      "final_array": [Final list of generalizations after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the generalizations."
-  }`
-     : ""
- }
-  ${
-    improveProperties.has("parts")
-      ? `- **Parts changes**:
-  {
-    "modified_property": "parts",
-    "new_value": {
-      "nodes_to_add": [Titles of nodes to add],
-      "nodes_to_delete": [Titles of nodes to remove],
-      "final_array": [Final list of parts after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the parts."
-  }`
-      : ""
-  }
- ${
-   improveProperties.has("isPartOf")
-     ? `- **IsPartOf changes**:
-  {
-    "modifiedProperty": "isPartOf",
-    "new_value": {
-      "nodes_to_add": [Titles of nodes to add],
-      "nodes_to_delete": [Titles of nodes to remove],
-      "final_array": [Final list of isPartOf relationships after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the isPartOf."
-  }
- `
-     : ""
- } 
- ${
-   improveProperties.has("actor") ||
-   improveProperties.has("objectsActedOn") ||
-   improveProperties.has("evaluationDimension") ||
-   improveProperties.has("PreConditions")
-     ? `---
-     **For "activity" nodes:**`
-     : ""
- }${
-         improveProperties.has("actor")
-           ? `- **Actor changes**:
-  {
-    "modifiedProperty": "actor",
-    "new_value": {
-      "nodes_to_add": [Titles of actors to add],
-      "nodes_to_delete": [Titles of actors to remove],
-      "final_array": [Final list of actor after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the actor."
-  }`
-           : ""
-       }${
-         improveProperties.has("objectsActedOn")
-           ? `- **ObjectsActedOn changes**:
-  {
-    "modifiedProperty": "objectsActedOn",
-    "new_value": {
-      "nodes_to_add": [Titles of objects to add],
-      "nodes_to_delete": [Titles of objects to remove],
-      "final_array": [Final list of objectsActedOn after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the objectsActedOn."
-  }`
-           : ""
-       }${
-         improveProperties.has("evaluationDimension")
-           ? `- **EvaluationDimension changes**:
-  {
-    "modifiedProperty": "evaluationDimension",
-    "new_value": {
-      "nodes_to_add": [Titles of evaluation dimensions to add],
-      "nodes_to_delete": [Titles of evaluation dimensions to remove],
-      "final_array": [Final list of evaluationDimension after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the evaluationDimension."
-  }`
-           : ""
-       }${
-         improveProperties.has("postConditions")
-           ? `- **PostConditions changes**:
-  {
-    "modifiedProperty": "postConditions",
-    "new_value": {
-      "conditions_to_add": [Conditions to add],
-      "conditions_to_delete": [Conditions to remove],
-      "final_array": [Final list of postConditions after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the postConditions."
-  }`
-           : ""
-       }${
-         improveProperties.has("PreConditions")
-           ? `- **PreConditions changes**:
-  {
-    "modifiedProperty":"preConditions", 
-    "new_value": {
-      "conditions_to_add": [Conditions to add],
-      "conditions_to_delete": [Conditions to remove],
-      "final_array": [Final list of preConditions after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the preConditions."
-  }`
-           : ""
-       }${
-         improveProperties.has("abilities") ||
-         improveProperties.has("typeOfActor")
-           ? `**For "actor" nodes:**`
-           : ""
-       }${
-         improveProperties.has("abilities")
-           ? `- **Abilities changes**:
-  {
-    "modifiedProperty":"abilities",
-    "new_value": {
-      "abilities_to_add": [Abilities to add],
-      "abilities_to_delete": [Abilities to remove],
-      "final_array": [Final list of abilities after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the abilities."
-  }`
-           : ""
-       }${
-         improveProperties.has("typeOfActor")
-           ? `- **TypeOfActor changes**:
-  {
-    "modifiedProperty":"typeOfActor",
-    "new_value": {
-      "types_to_add": [Types of actors to add],
-      "types_to_delete": [Types of actors to remove],
-      "final_array": [Final list of typeOfActor after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the typeOfActor."
-  }`
-           : ""
-       }${
-         improveProperties.has("lifeSpan") ||
-         improveProperties.has("modifiability") ||
-         improveProperties.has("perceivableProperties")
-           ? `---
-      **For "object" nodes:**`
-           : ""
-       }${
-         improveProperties.has("lifeSpan")
-           ? `
-  - **LifeSpan change**:
-  {
-    "modifiedProperty": "lifeSpan",
-    "new_value": "New details about the lifespan of the object.",
-    "reasoning": "Reason for changing the lifeSpan."
-  }`
-           : ""
-       }
+export const getImprovementsStructurePrompt = (
+  improvement: boolean,
+  improveProperties: Set<string>
+) => {
+  return `${
+    improvement
+      ? ` ------------------
+   For the "improvements" array:
+   Each item should be an object proposing an improvement to an existing node, structured as follows:
+   {
+     "title": "The current title of the node.",
+     "nodeType": "The type of the node (e.g., 'activity', 'actor', etc.).",
+     "changes": [  // An array of change objects for this node.
+       // Change objects as detailed below.
+     ]
+   }
  
-    ${
-      improveProperties.has("modifiability")
-        ? `
-  - **Modifiability change**:
-  {
-    "modifiedProperty": "modifiability",
-    "new_value": "New details about the modifiability of the object.",
-    "reasoning": "Reason for changing the modifiability."
-  }`
-        : ""
-    }${
-         improveProperties.has("perceivableProperties")
-           ? `
-   - **PerceivableProperties changes**:
-  {
-    "modifiedProperty": "perceivableProperties",
-    "new_value": {
-      "properties_to_add": [Properties to add],
-      "properties_to_delete": [Properties to remove],
-      "final_array": [Final list of perceivableProperties after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the perceivableProperties."
-  }`
-           : ""
-       }${
-         improveProperties.has("criteriaForAcceptability") ||
-         improveProperties.has("directionOfDesirability") ||
-         improveProperties.has("evaluationType") ||
-         improveProperties.has("measurementUnits")
-           ? `
-        ---
-        **For "evaluationDimension" nodes:**`
-           : ""
-       }${
-         improveProperties.has("criteriaForAcceptability")
-           ? `  
-  - **CriteriaForAcceptability changes**:
-  {
-    "modifiedProperty": "criteriaForAcceptability",
-    "new_value": {
-      "criteria_to_add": [Criteria to add],
-      "criteria_to_delete": [Criteria to remove],
-      "final_array": [Final list of criteriaForAcceptability after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the criteriaForAcceptability."
-  }`
-           : ""
-       }${
-         improveProperties.has("directionOfDesirability")
-           ? `
-  - **DirectionOfDesirability change**:
-  {
-    "modifiedProperty": "directionOfDesirability",
-    "new_value": "New direction (e.g., 'Increase is desirable').",
-    "reasoning": "Reason for changing the directionOfDesirability."
-  }`
-           : ""
-       }${
-         improveProperties.has("evaluationType")
-           ? `
-  - **EvaluationType changes**:
-  {
-    "modifiedProperty": "evaluationType",
-    "new_value": {
-      "types_to_add": [Evaluation types to add],
-      "types_to_delete": [Evaluation types to remove],
-      "final_array": [Final list of evaluationType after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the evaluationType."
+   Each change object should include the necessary fields for the property being changed and a **reasoning** field explaining your rationale.
+ 
+  ${
+    improveProperties.has("title") ||
+    improveProperties.has("description") ||
+    improveProperties.has("specializations") ||
+    improveProperties.has("generalizations") ||
+    improveProperties.has("parts") ||
+    improveProperties.has("isPartOf")
+      ? "**For all node types:**"
+      : ""
   }
-   `
-           : ""
-       }${
-         improveProperties.has("measurementUnits")
-           ? `
-- **MeasurementUnits changes**:
-  {
-    "modifiedProperty": "measurementUnits",
-    "new_value": {
-      "units_to_add": [Units to add],
-      "units_to_delete": [Units to remove],
-      "final_array": [Final list of measurementUnits after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the measurementUnits."
-  }`
-           : ""
-       }${
-         improveProperties.has("units") ||
-         improveProperties.has("capabilitiesRequired") ||
-         improveProperties.has("rewardFunction") ||
-         improveProperties.has("evaluationDimension") ||
-         improveProperties.has("reward")
-           ? `**For "reward" nodes:**`
-           : ""
-       }${
-         improveProperties.has("units")
-           ? `
-  ---
-  - **Units changes**:
-  {
-    "modifiedProperty": "units",
-    "new_value": {
-      "units_to_add": [Units to add],
-      "units_to_delete": [Units to remove],
-      "final_array": [Final list of units after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the units."
-  }
-  `
-           : ""
-       }${
-         improveProperties.has("capabilitiesRequired")
-           ? `
-  ---
-  
-  **For "incentive" nodes:**
-  
-  - **CapabilitiesRequired changes**:
-  {
-    "modifiedProperty": "capabilitiesRequired",
-    "new_value": {
-      "capabilities_to_add": [Capabilities to add],
-      "capabilities_to_delete": [Capabilities to remove],
-      "final_array": [Final list of capabilitiesRequired after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the capabilitiesRequired."
-  }
-  `
-           : ""
-       }
-${
-  improveProperties.has("rewardFunction")
-    ? `     
-  - **RewardFunction changes**:
-  {
-    "modifiedProperty": "rewardFunction",
-    "new_value": {
-      "functions_to_add": [Reward functions to add],
-      "functions_to_delete": [Reward functions to remove],
-      "final_array": [Final list of rewardFunction after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the rewardFunction."
-  }
-  `
-    : ""
-}
-${
-  improveProperties.has("evaluationDimension")
-    ? `  
-  - **EvaluationDimension changes**:
-  {
-    "modifiedProperty": "evaluationDimension",
-    "new_value": {
-      "nodes_to_add": [Titles of evaluation dimensions to add],
-      "nodes_to_delete": [Titles of evaluation dimensions to remove],
-      "final_array": [Final list of evaluationDimension after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the evaluationDimension."
-  }
-  `
-    : ""
-}
-     ${
-       improveProperties.has("reward")
-         ? `   
-  - **Reward changes**:
-  {
-   "modifiedProperty": "reward",
-    "new_value": {
-      "nodes_to_add": [Titles of rewards to add],
-      "nodes_to_delete": [Titles of rewards to remove],
-      "final_array": [Final list of reward after changes]
-    },
-    "reasoning": "Reason for proposing these changes to the reward."
-  }
-  `
-         : ""
-     }
-  **Important Notes:**
-  
-  - Each change object should directly reference the property name and follow the format provided.
-  - Ensure that for each property, you include:
-  
-    - The property name as the key.
-    - The changes to be made (additions, deletions, final state).
-    - A **reasoning** field explaining why you are proposing these changes.
-  
-  - For properties that are single values (like **lifeSpan**, **modifiability**, **directionOfDesirability**, **numberOfIndividualsInGroup**), provide the new value directly along with the reasoning.
-  - Do not propose creating new nodes within "specializations" or "generalizations" in an improvement object. New nodes should only be proposed under the "new_nodes" array.
-  
-  `
+ ${
+   improveProperties.has("title")
+     ? `- **Title changes**:
+   {
+     "title": "The improved title of the node.",
+     "reasoning": "Reason for proposing this title change."
+   }`
      : ""
  }
-
+   ${
+     improveProperties.has("description")
+       ? `- **Description changes**:
+   {
+     "description": "The improved description of the node.",
+     "reasoning": "Reason for proposing this description change."
+   }`
+       : ""
+   }
+   ${
+     improveProperties.has("specializations")
+       ? `- **Specializations changes**:
+   {
+     "specializations": [
+       {
+         "collectionName": "The title of the collection",
+         "changes": {
+           "nodes_to_add": [Titles of nodes to add],
+           "nodes_to_delete": [Titles of nodes to remove],
+           "final_array": [Final list of node titles in this collection]
+         },
+         "reasoning": "Reason for proposing these changes to the collection."
+       }
+     ]
+   }`
+       : ""
+   }
   ${
+    improveProperties.has("generalizations")
+      ? `- **Generalizations changes**:
+   {
+     "modified_property": "generalizations",
+     "new_value": {
+       "nodes_to_add": [Titles of nodes to add],
+       "nodes_to_delete": [Titles of nodes to remove],
+       "final_array": [Final list of generalizations after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the generalizations."
+   }`
+      : ""
+  }
+   ${
+     improveProperties.has("parts")
+       ? `- **Parts changes**:
+   {
+     "modified_property": "parts",
+     "new_value": {
+       "nodes_to_add": [Titles of nodes to add],
+       "nodes_to_delete": [Titles of nodes to remove],
+       "final_array": [Final list of parts after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the parts."
+   }`
+       : ""
+   }
+  ${
+    improveProperties.has("isPartOf")
+      ? `- **IsPartOf changes**:
+   {
+     "modifiedProperty": "isPartOf",
+     "new_value": {
+       "nodes_to_add": [Titles of nodes to add],
+       "nodes_to_delete": [Titles of nodes to remove],
+       "final_array": [Final list of isPartOf relationships after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the isPartOf."
+   }
+  `
+      : ""
+  } 
+  ${
+    improveProperties.has("actor") ||
+    improveProperties.has("objectsActedOn") ||
+    improveProperties.has("evaluationDimension") ||
+    improveProperties.has("PreConditions")
+      ? `---
+      **For "activity" nodes:**`
+      : ""
+  }${
+          improveProperties.has("actor")
+            ? `- **Actor changes**:
+   {
+     "modifiedProperty": "actor",
+     "new_value": {
+       "nodes_to_add": [Titles of actors to add],
+       "nodes_to_delete": [Titles of actors to remove],
+       "final_array": [Final list of actor after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the actor."
+   }`
+            : ""
+        }${
+          improveProperties.has("objectsActedOn")
+            ? `- **ObjectsActedOn changes**:
+   {
+     "modifiedProperty": "objectsActedOn",
+     "new_value": {
+       "nodes_to_add": [Titles of objects to add],
+       "nodes_to_delete": [Titles of objects to remove],
+       "final_array": [Final list of objectsActedOn after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the objectsActedOn."
+   }`
+            : ""
+        }${
+          improveProperties.has("evaluationDimension")
+            ? `- **EvaluationDimension changes**:
+   {
+     "modifiedProperty": "evaluationDimension",
+     "new_value": {
+       "nodes_to_add": [Titles of evaluation dimensions to add],
+       "nodes_to_delete": [Titles of evaluation dimensions to remove],
+       "final_array": [Final list of evaluationDimension after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the evaluationDimension."
+   }`
+            : ""
+        }${
+          improveProperties.has("postConditions")
+            ? `- **PostConditions changes**:
+   {
+     "modifiedProperty": "postConditions",
+     "new_value": {
+       "conditions_to_add": [Conditions to add],
+       "conditions_to_delete": [Conditions to remove],
+       "final_array": [Final list of postConditions after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the postConditions."
+   }`
+            : ""
+        }${
+          improveProperties.has("PreConditions")
+            ? `- **PreConditions changes**:
+   {
+     "modifiedProperty":"preConditions", 
+     "new_value": {
+       "conditions_to_add": [Conditions to add],
+       "conditions_to_delete": [Conditions to remove],
+       "final_array": [Final list of preConditions after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the preConditions."
+   }`
+            : ""
+        }${
+          improveProperties.has("abilities") ||
+          improveProperties.has("typeOfActor")
+            ? `**For "actor" nodes:**`
+            : ""
+        }${
+          improveProperties.has("abilities")
+            ? `- **Abilities changes**:
+   {
+     "modifiedProperty":"abilities",
+     "new_value": {
+       "abilities_to_add": [Abilities to add],
+       "abilities_to_delete": [Abilities to remove],
+       "final_array": [Final list of abilities after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the abilities."
+   }`
+            : ""
+        }${
+          improveProperties.has("typeOfActor")
+            ? `- **TypeOfActor changes**:
+   {
+     "modifiedProperty":"typeOfActor",
+     "new_value": {
+       "types_to_add": [Types of actors to add],
+       "types_to_delete": [Types of actors to remove],
+       "final_array": [Final list of typeOfActor after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the typeOfActor."
+   }`
+            : ""
+        }${
+          improveProperties.has("lifeSpan") ||
+          improveProperties.has("modifiability") ||
+          improveProperties.has("perceivableProperties")
+            ? `---
+       **For "object" nodes:**`
+            : ""
+        }${
+          improveProperties.has("lifeSpan")
+            ? `
+   - **LifeSpan change**:
+   {
+     "modifiedProperty": "lifeSpan",
+     "new_value": "New details about the lifespan of the object.",
+     "reasoning": "Reason for changing the lifeSpan."
+   }`
+            : ""
+        }
+  
+     ${
+       improveProperties.has("modifiability")
+         ? `
+   - **Modifiability change**:
+   {
+     "modifiedProperty": "modifiability",
+     "new_value": "New details about the modifiability of the object.",
+     "reasoning": "Reason for changing the modifiability."
+   }`
+         : ""
+     }${
+          improveProperties.has("perceivableProperties")
+            ? `
+    - **PerceivableProperties changes**:
+   {
+     "modifiedProperty": "perceivableProperties",
+     "new_value": {
+       "properties_to_add": [Properties to add],
+       "properties_to_delete": [Properties to remove],
+       "final_array": [Final list of perceivableProperties after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the perceivableProperties."
+   }`
+            : ""
+        }${
+          improveProperties.has("criteriaForAcceptability") ||
+          improveProperties.has("directionOfDesirability") ||
+          improveProperties.has("evaluationType") ||
+          improveProperties.has("measurementUnits")
+            ? `
+         ---
+         **For "evaluationDimension" nodes:**`
+            : ""
+        }${
+          improveProperties.has("criteriaForAcceptability")
+            ? `  
+   - **CriteriaForAcceptability changes**:
+   {
+     "modifiedProperty": "criteriaForAcceptability",
+     "new_value": {
+       "criteria_to_add": [Criteria to add],
+       "criteria_to_delete": [Criteria to remove],
+       "final_array": [Final list of criteriaForAcceptability after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the criteriaForAcceptability."
+   }`
+            : ""
+        }${
+          improveProperties.has("directionOfDesirability")
+            ? `
+   - **DirectionOfDesirability change**:
+   {
+     "modifiedProperty": "directionOfDesirability",
+     "new_value": "New direction (e.g., 'Increase is desirable').",
+     "reasoning": "Reason for changing the directionOfDesirability."
+   }`
+            : ""
+        }${
+          improveProperties.has("evaluationType")
+            ? `
+   - **EvaluationType changes**:
+   {
+     "modifiedProperty": "evaluationType",
+     "new_value": {
+       "types_to_add": [Evaluation types to add],
+       "types_to_delete": [Evaluation types to remove],
+       "final_array": [Final list of evaluationType after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the evaluationType."
+   }
+    `
+            : ""
+        }${
+          improveProperties.has("measurementUnits")
+            ? `
+ - **MeasurementUnits changes**:
+   {
+     "modifiedProperty": "measurementUnits",
+     "new_value": {
+       "units_to_add": [Units to add],
+       "units_to_delete": [Units to remove],
+       "final_array": [Final list of measurementUnits after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the measurementUnits."
+   }`
+            : ""
+        }${
+          improveProperties.has("units") ||
+          improveProperties.has("capabilitiesRequired") ||
+          improveProperties.has("rewardFunction") ||
+          improveProperties.has("evaluationDimension") ||
+          improveProperties.has("reward")
+            ? `**For "reward" nodes:**`
+            : ""
+        }${
+          improveProperties.has("units")
+            ? `
+   ---
+   - **Units changes**:
+   {
+     "modifiedProperty": "units",
+     "new_value": {
+       "units_to_add": [Units to add],
+       "units_to_delete": [Units to remove],
+       "final_array": [Final list of units after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the units."
+   }
+   `
+            : ""
+        }${
+          improveProperties.has("capabilitiesRequired")
+            ? `
+   ---
+   
+   **For "incentive" nodes:**
+   
+   - **CapabilitiesRequired changes**:
+   {
+     "modifiedProperty": "capabilitiesRequired",
+     "new_value": {
+       "capabilities_to_add": [Capabilities to add],
+       "capabilities_to_delete": [Capabilities to remove],
+       "final_array": [Final list of capabilitiesRequired after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the capabilitiesRequired."
+   }
+   `
+            : ""
+        }
+ ${
+   improveProperties.has("rewardFunction")
+     ? `     
+   - **RewardFunction changes**:
+   {
+     "modifiedProperty": "rewardFunction",
+     "new_value": {
+       "functions_to_add": [Reward functions to add],
+       "functions_to_delete": [Reward functions to remove],
+       "final_array": [Final list of rewardFunction after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the rewardFunction."
+   }
+   `
+     : ""
+ }
+ ${
+   improveProperties.has("evaluationDimension")
+     ? `  
+   - **EvaluationDimension changes**:
+   {
+     "modifiedProperty": "evaluationDimension",
+     "new_value": {
+       "nodes_to_add": [Titles of evaluation dimensions to add],
+       "nodes_to_delete": [Titles of evaluation dimensions to remove],
+       "final_array": [Final list of evaluationDimension after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the evaluationDimension."
+   }
+   `
+     : ""
+ }
+      ${
+        improveProperties.has("reward")
+          ? `   
+   - **Reward changes**:
+   {
+    "modifiedProperty": "reward",
+     "new_value": {
+       "nodes_to_add": [Titles of rewards to add],
+       "nodes_to_delete": [Titles of rewards to remove],
+       "final_array": [Final list of reward after changes]
+     },
+     "reasoning": "Reason for proposing these changes to the reward."
+   }
+   `
+          : ""
+      }
+   **Important Notes:**
+   
+   - Each change object should directly reference the property name and follow the format provided.
+   - Ensure that for each property, you include:
+   
+     - The property name as the key.
+     - The changes to be made (additions, deletions, final state).
+     - A **reasoning** field explaining why you are proposing these changes.
+   
+   - For properties that are single values (like **lifeSpan**, **modifiability**, **directionOfDesirability**, **numberOfIndividualsInGroup**), provide the new value directly along with the reasoning.
+   - Do not propose creating new nodes within "specializations" or "generalizations" in an improvement object. New nodes should only be proposed under the "new_nodes" array.
+   
+   `
+      : ""
+  }`;
+};
+export const getNewNodesPrompt = (newNodes: boolean) => {
+  return `${
     newNodes
       ? `------------------
   **For the "new_nodes" array**:
@@ -788,7 +786,10 @@ ${
   "reasoning": "Reason for proposing this new node."
   }`
       : ""
-  }${
+  }`;
+};
+export const getDeleteNodesPrompt = (proposeDeleteNode: boolean) => {
+  return `${
     proposeDeleteNode
       ? ` ------------------
   
@@ -800,16 +801,60 @@ ${
   "reasoning": "Reason for proposing this deletion."
   }`
       : ""
-  }
-  '''
-  
-  IMPORTANT NOTES:
-  - Do not create a 'Main' collection if it doesn't exist.
-  - Avoid keeping specializations under "Unclassified" nodes; reassign them to appropriate generalizations.
-  - Distinguish between "specializations" (specific types) and "parts" (components).
+  }`;
+};
+export const getNotesPrompt = () => {
+  return `- Do not create a 'Main' collection if it doesn't exist.
+  - Specializations of a node should have the exact same node type as the original node." I moved the former to guidelines.
   - Take ample time to generate high-quality improvements and additions.
-  - Thoroughly analyze the ontology and the user's message for all possible enhancements.
-  '''
-  `;
-  return `${editedPart}\n${p}`;
+  - A panel of experts will review your proposals and for every satisfactory proposal, you will be rewarded $100. For every unsatisfactory proposal, you will lose $100.`;
+};
+
+export const getCopilotPrompt = ({
+  improvement,
+  newNodes,
+  proposeDeleteNode,
+  improveProperties,
+  editedPart,
+}: {
+  improvement: boolean;
+  newNodes: boolean;
+  proposeDeleteNode: boolean;
+  improveProperties: Set<string>;
+  editedPart: { objective: string; definition: string };
+}) => {
+  let prompt = "";
+  /* editedPart.objective */
+  if (!!editedPart.objective.trim()) {
+    prompt =
+      prompt +
+      `Objective:
+'''
+  ${editedPart.objective}
+'''`;
+  }
+  /* Ontology Definition */
+  if (!!editedPart.definition.trim()) {
+    prompt =
+      prompt +
+      `Ontology Definition:
+'''
+  ${editedPart.definition}
+'''`;
+  }
+  /* Response structure */
+  prompt = prompt + "'''";
+  prompt =
+    prompt +
+    `Response Structure:
+    ${getResponseStructure(improvement, proposeDeleteNode)}`;
+
+  prompt =
+    prompt + getImprovementsStructurePrompt(improvement, improveProperties);
+
+  prompt = prompt + getNewNodesPrompt(newNodes);
+  prompt = prompt + getDeleteNodesPrompt(proposeDeleteNode);
+  prompt = prompt + "IMPORTANT NOTES:\n" + getNotesPrompt();
+  prompt = prompt + "'''";
+  return prompt;
 };

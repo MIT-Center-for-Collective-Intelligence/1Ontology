@@ -50,8 +50,16 @@ import moment from "moment";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import { TreeItem, TreeView } from "@mui/lab";
 import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import { DISPLAY } from " @components/lib/CONSTANTS";
-import { getCopilotPrompt } from " @components/lib/utils/copilotPrompts";
+import { DISPLAY, PROPERTIES_TO_IMPROVE } from " @components/lib/CONSTANTS";
+import {
+  getCopilotPrompt,
+  getDeleteNodesPrompt,
+  getImprovementsStructurePrompt,
+  getNewNodesPrompt,
+  getNotesPrompt,
+  getResponseStructure,
+} from " @components/lib/utils/copilotPrompts";
+import GuidLines from "../Guidlines/GuidLines";
 
 const glowGreen = keyframes`
   0% {
@@ -75,33 +83,6 @@ interface EditableSchemaProps {
   setSelectedProperties: any;
 }
 
-const propertiesToImprove: { [nodeType: string]: string[] } | any = {
-  allTypes: [
-    "title",
-    "description",
-    "specializations",
-    "generalizations",
-    "parts",
-    "isPartOf",
-  ],
-  actor: ["abilities", "typeOfActor"],
-  activity: ["actor", "objectsActedOn", "evaluationDimension", "PreConditions"],
-  object: ["lifeSpan", "modifiability", "perceivableProperties"],
-  evaluationDEmention: [
-    "criteriaForAcceptability",
-    "directionOfDesirability",
-    "evaluationType",
-    "measurementUnits",
-  ],
-  reward: [
-    "units",
-    "capabilitiesRequired",
-    "rewardFunction",
-    "evaluationDimension",
-    "reward",
-  ],
-};
-
 const CopilotPrompt: React.FC<EditableSchemaProps> = ({
   setGenerateNewNodes,
   generateNewNodes,
@@ -116,6 +97,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
   const [systemPrompt, setSystemPrompt] = useState<
     {
       id: string;
+      type?: string;
       value?: string;
       editablePart?: string;
       endClose?: string;
@@ -124,6 +106,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
   const [systemPromptCopy, setSystemPromptCopy] = useState<
     {
       id: string;
+      type?: string;
       value?: string;
       editablePart?: string;
       endClose?: string;
@@ -562,8 +545,8 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                       return new Set();
                     }
                     return new Set([
-                      ...propertiesToImprove.allTypes,
-                      ...(propertiesToImprove[nodeType] || []),
+                      ...PROPERTIES_TO_IMPROVE.allTypes,
+                      ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
                     ]);
                   });
                 }}
@@ -573,8 +556,8 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
             </AccordionSummary>
             <AccordionDetails sx={{ ml: "20px" }}>
               {[
-                ...propertiesToImprove.allTypes,
-                ...(propertiesToImprove[nodeType] || []),
+                ...PROPERTIES_TO_IMPROVE.allTypes,
+                ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
               ].map((property: string) => (
                 <Box key={property} sx={{ display: "flex", mb: "12px" }}>
                   <Checkbox
@@ -798,7 +781,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                 boxSizing: "border-box",
               }}
             >
-              {(previousVersion || systemPrompt).map((p) => (
+              {(previousVersion || systemPrompt).map((p: any) => (
                 <Box
                   key={p.id}
                   id={p.id}
@@ -807,6 +790,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                     alignItems: "flex-start",
                     mt: 1,
                     flexDirection: { xs: "column", sm: "row" },
+                    mb: "25px",
                   }}
                 >
                   {" "}
@@ -826,17 +810,6 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                     {/*    <Box sx={{ mt: "14px" }}>
                       <MarkdownRender text={p.value || ""} />
                     </Box> */}
-                    {p.value && (
-                      <Typography style={{ whiteSpace: "pre-wrap" }}>
-                        {getCopilotPrompt({
-                          improvement: selectedProperties.size > 0,
-                          newNodes: generateNewNodes,
-                          improveProperties: selectedProperties,
-                          proposeDeleteNode,
-                          editedPart: "",
-                        })}
-                      </Typography>
-                    )}
                     {diffChanges && diffChanges[p.id] && (
                       <Typography
                         sx={{
@@ -868,6 +841,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                           onChange={(event) => handleInput(p.id, event)}
                           fullWidth
                           // rows={14}
+                          label={p.type}
                           multiline
                         />
                         // <Typography
@@ -895,6 +869,108 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                   </Typography>
                 </Box>
               ))}
+              <Accordion>
+                <AccordionSummary>
+                  <Typography sx={{ fontSize: "23px" }}>
+                    Response Structure
+                  </Typography>
+                  <ExpandMoreIcon sx={{ ml: "12px", mt: "7px" }} />
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
+                    {getResponseStructure(
+                      selectedProperties.size > 0,
+                      proposeDeleteNode
+                    )}
+                  </Typography>
+                </AccordionDetails>
+              </Accordion>
+              <Accordion>
+                <AccordionSummary sx={{ alignItems: "center" }}>
+                  <Typography sx={{ fontSize: "23px" }}>Details</Typography>
+                  <ExpandMoreIcon sx={{ ml: "12px", mt: "7px" }} />
+                </AccordionSummary>
+                <AccordionDetails>
+                  {selectedProperties.size > 0 && (
+                    <Accordion>
+                      <AccordionSummary>
+                        <Typography sx={{ fontSize: "15px" }}>
+                          Improvements
+                        </Typography>
+                        <ExpandMoreIcon sx={{ ml: "12px" }} />
+                      </AccordionSummary>
+
+                      <AccordionDetails>
+                        {" "}
+                        <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
+                          {getImprovementsStructurePrompt(
+                            selectedProperties.size > 0,
+                            selectedProperties
+                          )}
+                        </Typography>
+                      </AccordionDetails>
+                    </Accordion>
+                  )}
+                  {generateNewNodes && (
+                    <Accordion>
+                      <AccordionSummary>
+                        <Typography sx={{ fontSize: "15px" }}>
+                          New Nodes
+                        </Typography>
+                        <ExpandMoreIcon sx={{ ml: "12px" }} />
+                      </AccordionSummary>
+
+                      <AccordionDetails>
+                        {" "}
+                        <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
+                          {getNewNodesPrompt(generateNewNodes)}
+                        </Typography>
+                      </AccordionDetails>
+                    </Accordion>
+                  )}
+                  {proposeDeleteNode && (
+                    <Accordion>
+                      <AccordionSummary>
+                        <Typography sx={{ fontSize: "15px" }}>
+                          Delete nodes
+                        </Typography>
+                        <ExpandMoreIcon sx={{ ml: "12px" }} />
+                      </AccordionSummary>
+
+                      <AccordionDetails>
+                        {" "}
+                        <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
+                          {getDeleteNodesPrompt(proposeDeleteNode)}
+                        </Typography>
+                      </AccordionDetails>
+                    </Accordion>
+                  )}
+                </AccordionDetails>
+              </Accordion>
+              <Accordion>
+                <AccordionSummary>
+                  <Typography sx={{ fontSize: "23px" }}>
+                    IMPORTANT NOTES
+                  </Typography>
+                  <ExpandMoreIcon sx={{ ml: "12px" }} />
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
+                    {getNotesPrompt()}
+                  </Typography>
+                </AccordionDetails>
+              </Accordion>
+              <Accordion>
+                <AccordionSummary>
+                  <Typography sx={{ fontSize: "23px" }}>Guidelines</Typography>
+                  <ExpandMoreIcon sx={{ ml: "12px", mt: "7px" }} />
+                </AccordionSummary>
+
+                <AccordionDetails>
+                  {" "}
+                  <GuidLines />
+                </AccordionDetails>
+              </Accordion>
             </Box>
           </AccordionDetails>
         </Accordion>

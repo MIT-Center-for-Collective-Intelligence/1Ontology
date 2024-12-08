@@ -63,7 +63,7 @@ const ManageNodeButtons = ({
             alignContent: "center",
           }}
         >
-          {root && (
+          {/* {root && (
             <Box
               sx={{
                 display: "flex",
@@ -96,7 +96,7 @@ const ManageNodeButtons = ({
                 {getTitleNode(root)}
               </Link>
             </Box>
-          )}
+          )} */}
         </Box>
         {(locked || manageLock) && (
           <Tooltip
@@ -104,8 +104,8 @@ const ManageNodeButtons = ({
               !manageLock
                 ? "This node is locked"
                 : lockedInductor
-                  ? "This node is locked for everyone else"
-                  : "Lock this node"
+                ? "This node is locked for everyone else"
+                : "Lock this node"
             }
           >
             {manageLock ? (

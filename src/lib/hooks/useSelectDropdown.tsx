@@ -19,6 +19,7 @@ import { DESIGN_SYSTEM_COLORS } from "../theme/colors";
 import { MODELS_OPTIONS } from "../utils/copilotPrompts";
 import CopilotPrompt from " @components/components/CopilotPrompt/CopilotPrompt";
 import { useAuth } from " @components/components/context/AuthContext";
+import { PROPERTIES_TO_IMPROVE } from "../CONSTANTS";
 
 const useSelectDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -48,12 +49,20 @@ const useSelectDropdown = () => {
     setIsOpen(true);
     setNodeTitle(nodeTitle);
     setNodeType(nodeType);
+    setSelectedProperties(
+      new Set([
+        ...PROPERTIES_TO_IMPROVE.allTypes,
+        ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+      ])
+    );
     const savedInputValue = localStorage.getItem(`user-copilot-message`);
     const savedNumberValue = localStorage.getItem(`user-number-value`);
+
     setInputValue(savedInputValue || "");
     if (savedNumberValue) {
       setNumberValue(Number(savedNumberValue));
     }
+
     return new Promise<{
       userMessage: string;
       model: string;

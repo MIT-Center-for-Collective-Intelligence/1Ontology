@@ -113,3 +113,30 @@ export const CHAT_DISCUSSION_TABS = [
   { id: "feature_request", title: "Feature Requests" },
   { id: "help", title: "Help" },
 ];
+
+export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
+  allTypes: [
+    "title",
+    "description",
+    "specializations",
+    "generalizations",
+    "parts",
+    "isPartOf",
+  ],
+  actor: ["abilities", "typeOfActor"],
+  activity: ["actor", "objectsActedOn", "evaluationDimension", "PreConditions"],
+  object: ["lifeSpan", "modifiability", "perceivableProperties"],
+  evaluationDEmention: [
+    "criteriaForAcceptability",
+    "directionOfDesirability",
+    "evaluationType",
+    "measurementUnits",
+  ],
+  reward: [
+    "units",
+    "capabilitiesRequired",
+    "rewardFunction",
+    "evaluationDimension",
+    "reward",
+  ],
+};

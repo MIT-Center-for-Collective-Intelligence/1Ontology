@@ -584,7 +584,6 @@ const Node = ({
   const handleSaveLinkChanges = useCallback(
     async (removedElements: Set<string>, addedElements: Set<string>) => {
       try {
-        debugger;
         if (removedElements.size === 0 && addedElements.size === 0) {
           return;
         }

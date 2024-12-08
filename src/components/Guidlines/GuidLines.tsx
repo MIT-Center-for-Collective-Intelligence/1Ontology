@@ -24,7 +24,11 @@ import { GUIDELINES } from " @components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
 import GuidLineText from "./GuidLineText";
 
-const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
+const GuidLines = ({
+  setDisplayGuidelines,
+}: {
+  setDisplayGuidelines?: any;
+}) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
   const [guidelines, setGuidelines] = useState<{ [id: string]: any }>({});
@@ -85,30 +89,32 @@ const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
 
   return (
     <Box>
-      <Box
-        sx={{
-          position: "sticky",
-          top: 0,
-          zIndex: 3,
-          py: 3,
-          backgroundColor: (theme) =>
-            theme.palette.mode === "dark" ? "#1b1a1a" : "white",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Typography sx={{ fontSize: "45px" }}>Guidelines</Typography>
-        <Button
-          variant="contained"
-          sx={{ mb: "3px", mr: 2, ml: "auto" }}
-          onClick={() => {
-            setDisplayGuidelines(false);
+      {setDisplayGuidelines && (
+        <Box
+          sx={{
+            position: "sticky",
+            top: 0,
+            zIndex: 3,
+            py: 3,
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark" ? "#1b1a1a" : "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          Hide guidelines
-        </Button>
-      </Box>
+          <Typography sx={{ fontSize: "45px" }}>Guidelines</Typography>
+          <Button
+            variant="contained"
+            sx={{ mb: "3px", mr: 2, ml: "auto" }}
+            onClick={() => {
+              setDisplayGuidelines(false);
+            }}
+          >
+            Hide guidelines
+          </Button>
+        </Box>
+      )}
 
       {sortedCategories.map((catId) => (
         <Accordion
@@ -117,7 +123,12 @@ const GuidLines = ({ setDisplayGuidelines }: { setDisplayGuidelines: any }) => {
           sx={{ borderRadius: "16px", border: "none" }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography sx={{ fontSize: "29px", fontWeight: "bold" }}>
+            <Typography
+              sx={{
+                fontSize: setDisplayGuidelines ? "29px" : "20px",
+                fontWeight: "bold",
+              }}
+            >
               {guidelines[catId].category}
             </Typography>
           </AccordionSummary>
