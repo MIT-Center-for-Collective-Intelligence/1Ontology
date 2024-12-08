@@ -125,7 +125,7 @@ const useSelectDropdown = () => {
   );
   const nodes_Array = useMemo(() => {
     const nodeData = nodes[nodeId];
-    if (!nodeData) {
+    if (!nodeData || !editPrompt) {
       return;
     }
     const n = getNodesInThreeLevels(nodeData, nodes, new Set(), numberValue);
