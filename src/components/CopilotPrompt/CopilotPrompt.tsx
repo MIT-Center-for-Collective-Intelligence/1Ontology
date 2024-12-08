@@ -28,7 +28,7 @@ import {
   PROMPT_LOGS,
 } from " @components/lib/firestoreClient/collections";
 import { db } from " @components/lib/firestoreServer/admin";
-import { NodeChange, PromptChange } from " @components/types/INode";
+import { PromptChange } from " @components/types/INode";
 import {
   query,
   collection,
@@ -60,6 +60,7 @@ import {
   getResponseStructure,
 } from " @components/lib/utils/copilotPrompts";
 import GuidLines from "../Guidlines/GuidLines";
+import { getNodesInThreeLevels } from " @components/lib/utils/helpersCopilot";
 
 const glowGreen = keyframes`
   0% {
@@ -81,6 +82,9 @@ interface EditableSchemaProps {
   nodeType: string;
   selectedProperties: Set<string>;
   setSelectedProperties: any;
+  inputProperties: any;
+  setInputProperties: any;
+  nodes: any;
 }
 
 const CopilotPrompt: React.FC<EditableSchemaProps> = ({
@@ -91,6 +95,9 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
   nodeType,
   selectedProperties,
   setSelectedProperties,
+  inputProperties,
+  setInputProperties,
+  nodes,
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -551,7 +558,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                   });
                 }}
               />
-              <Typography sx={{ ml: "5px" }}>Propose improvement</Typography>
+              <Typography sx={{ ml: "5px" }}>Output Components</Typography>
               <ExpandMoreIcon sx={{ ml: "12px" }} />
             </AccordionSummary>
             <AccordionDetails sx={{ ml: "20px" }}>
@@ -584,11 +591,64 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
               ))}
             </AccordionDetails>
           </Accordion>
+          <Accordion>
+            <AccordionSummary>
+              <Checkbox
+                checked={inputProperties.size > 0}
+                sx={{ p: 0 }}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setInputProperties((prev: Set<string>) => {
+                    if (prev.size > 0) {
+                      return new Set();
+                    }
+                    return new Set([
+                      ...PROPERTIES_TO_IMPROVE.allTypes,
+                      ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+                    ]);
+                  });
+                }}
+              />
+              <Typography sx={{ ml: "5px" }}>Input Components</Typography>
+              <ExpandMoreIcon sx={{ ml: "12px" }} />
+            </AccordionSummary>
+            <AccordionDetails sx={{ ml: "20px" }}>
+              {[
+                ...PROPERTIES_TO_IMPROVE.allTypes,
+                ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+              ].map((property: string) => (
+                <Box key={property} sx={{ display: "flex", mb: "12px" }}>
+                  <Checkbox
+                    checked={inputProperties.has(property)}
+                    sx={{ p: 0 }}
+                    onClick={() => {
+                      setInputProperties((prev: Set<string>) => {
+                        const _prev = new Set(prev);
+                        if (_prev.has(property)) {
+                          _prev.delete(property);
+                        } else {
+                          _prev.add(property);
+                        }
+                        return _prev;
+                      });
+                    }}
+                  />
+                  <Typography sx={{ ml: "5px" }}>
+                    {capitalizeFirstLetter(
+                      DISPLAY[property] ? DISPLAY[property] : property
+                    )}
+                  </Typography>
+                </Box>
+              ))}
+            </AccordionDetails>
+          </Accordion>
           <Box
             sx={{
               display: "flex",
               ml: "7px",
               mb: "10px",
+              mt: "5px",
               p: 1,
               cursor: "pointer",
               ":hover": {
@@ -984,6 +1044,22 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                 <AccordionDetails>
                   {" "}
                   <GuidLines />
+                </AccordionDetails>
+              </Accordion>
+              <Accordion>
+                <AccordionSummary>
+                  <Typography sx={{ fontSize: "23px" }}>
+                    Nodes Array:{" "}
+                    <strong style={{ color: "orange", fontSize: "19px" }}>
+                      {nodes.length}
+                    </strong>{" "}
+                  </Typography>
+                  <ExpandMoreIcon sx={{ ml: "12px", mt: "7px" }} />
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
+                    {JSON.stringify(nodes, null, 2)}
+                  </Typography>
                 </AccordionDetails>
               </Accordion>
             </Box>

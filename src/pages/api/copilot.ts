@@ -26,6 +26,7 @@ import {
 } from " @components/lib/utils/copilotPrompts";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { ChatModel } from "openai/resources/chat/chat";
+import { PROPERTIES_TO_IMPROVE } from " @components/lib/CONSTANTS";
 const GEMINI_MODEL = "gemini-exp-1121";
 
 const saveLogs = (
@@ -222,7 +223,7 @@ ${userMessage}
   }
 };
 
-const getNodes = async (): Promise<Record<string, INode>> => {
+export const getNodes = async (): Promise<Record<string, INode>> => {
   const noneDeletedNodes = await db
     .collection(NODES)
     .where("deleted", "==", false)
@@ -242,6 +243,7 @@ export const generateProposals = async (
   nodeId: string,
   uname: string,
   SYSTEM_PROMPT: string,
+  inputProperties: Set<string>,
   proposalsJSON: any = {},
   evaluation: string = ""
 ): Promise<any> => {
@@ -263,7 +265,20 @@ export const generateProposals = async (
     deepNumber === 0 ? 7 : deepNumber
   );
   nodesArray.push(..._nodesArray);
-
+  if (
+    nodesArray &&
+    inputProperties.size !==
+      PROPERTIES_TO_IMPROVE[currentNode.nodeType].length +
+        PROPERTIES_TO_IMPROVE["allTypes"].length
+  ) {
+    for (let node of nodesArray) {
+      for (let property in node) {
+        if (!inputProperties.has(property) && property !== "nodeType") {
+          delete node[property];
+        }
+      }
+    }
+  }
   if (nodesArray.length === 0) {
     // "No related nodes found!"
   } else {
@@ -340,7 +355,7 @@ const getPrompt = async (
       improvement: improveProperties.length > 0,
       newNodes: generateNewNodes,
       improveProperties: new Set(improveProperties),
-      editedPart: {objective, definition},
+      editedPart: { objective, definition },
       proposeDeleteNode,
     });
     return prompt;
@@ -359,6 +374,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     generateNewNodes,
     improveProperties,
     proposeDeleteNode,
+    inputProperties,
   } = req.body.data;
 
   const { uname } = user?.userData;
@@ -383,7 +399,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       deepNumber,
       nodeId,
       uname,
-      SYSTEM_PROMPT
+      SYSTEM_PROMPT,
+      new Set(inputProperties)
     );
     saveLogs(uname, "info", {
       response,

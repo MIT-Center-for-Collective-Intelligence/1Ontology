@@ -675,7 +675,9 @@ const ToolbarSidebar = ({
   const handleImproveClick = async () => {
     const options = (await selectIt(
       currentVisibleNode.title,
-      currentVisibleNode.nodeType
+      currentVisibleNode.nodeType,
+      nodes,
+      currentVisibleNode.id
     )) as {
       model: string;
       userMessage: string;
@@ -684,6 +686,7 @@ const ToolbarSidebar = ({
       generateImprovement: boolean;
       selectedProperties: Set<string>;
       proposeDeleteNode: boolean;
+      inputProperties: Set<string>;
     };
 
     if (!options) return;
@@ -694,6 +697,7 @@ const ToolbarSidebar = ({
       generateNewNodes,
       selectedProperties,
       proposeDeleteNode,
+      inputProperties,
     } = options;
     setIsLoadingCopilot(true);
     setCurrentIndex(0);
@@ -705,12 +709,14 @@ const ToolbarSidebar = ({
         currentVisibleNode.id,
         generateNewNodes,
         selectedProperties,
-        proposeDeleteNode
+        proposeDeleteNode,
+        inputProperties
       )) as {
         improvements: Improvement[];
         new_nodes: copilotNewNode[];
         deleted_nodes: copilotDeleteNode[];
         message: string;
+        inputProperties: Set<string>;
       };
 
       if (!response) {

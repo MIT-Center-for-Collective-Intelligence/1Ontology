@@ -8,7 +8,8 @@ export const sendLLMRequest = async (
   nodeId: string,
   generateNewNodes: boolean,
   improveProperties: Set<string>,
-  proposeDeleteNode: boolean
+  proposeDeleteNode: boolean,
+  inputProperties: Set<string>
 ) => {
   try {
     const response = await Post("/copilot", {
@@ -19,6 +20,7 @@ export const sendLLMRequest = async (
       generateNewNodes,
       proposeDeleteNode,
       improveProperties: new Array(...improveProperties),
+      inputProperties: new Array(...inputProperties),
     });
     recordLogs({
       reason: "sendLLMRequest",
