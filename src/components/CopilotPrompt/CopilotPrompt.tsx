@@ -689,6 +689,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
             sx={{
               backgroundColor: (theme) =>
                 theme.palette.mode === "dark" ? "#37373a" : "#e1e1e1",
+              marginBottom: "150px",
             }}
           >
             <Box
@@ -944,7 +945,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                           }}
                         />
                         <Typography sx={{ ml: "5px" }}>
-                          Output Components
+                          Propose Improvements to Existing Nodes
                         </Typography>
                         <ExpandMoreIcon sx={{ ml: "12px" }} />
                       </AccordionSummary>
@@ -1119,7 +1120,12 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
             </Box>
           </AccordionDetails>
         </Accordion>
-        <Accordion defaultExpanded={true}>
+        <Accordion
+          defaultExpanded={true}
+          sx={{
+            overflowAnchor: "none",
+          }}
+        >
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             sx={{
