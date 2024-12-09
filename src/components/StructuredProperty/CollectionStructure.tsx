@@ -60,7 +60,7 @@ const CollectionStructure = ({
   setCurrentVisibleNode,
   nodes,
   unlinkVisible,
-  showListToSelect,
+  editStructuredProperty,
   confirmIt,
   logChange,
   cloneNode,
@@ -70,6 +70,9 @@ const CollectionStructure = ({
   setEditableProperty,
   unlinkElement,
   addACloneNodeQueue,
+  selectedProperty,
+  setModifiedOrder,
+  glowIds,
 }: {
   model?: boolean;
   locked: boolean;
@@ -84,7 +87,7 @@ const CollectionStructure = ({
   setCurrentVisibleNode: any;
   nodes: { [inodeId: string]: INode };
   unlinkVisible: any;
-  showListToSelect: any;
+  editStructuredProperty: any;
   confirmIt: any;
   logChange: any;
   cloneNode?: any;
@@ -94,6 +97,9 @@ const CollectionStructure = ({
   setEditableProperty?: any;
   unlinkElement?: any;
   addACloneNodeQueue?: any;
+  selectedProperty: string;
+  setModifiedOrder: any;
+  glowIds: Set<string>;
 }) => {
   const db = getFirestore();
   const [{ emailVerified, user }] = useAuth();
@@ -127,6 +133,7 @@ const CollectionStructure = ({
             newArray.splice(destinationIndex, 0, movedElement);
             return newArray;
           });
+          setModifiedOrder(true);
           return;
         }
         const nodeData = { ...currentVisibleNode } as INode;
@@ -236,6 +243,7 @@ const CollectionStructure = ({
             );
             return prev;
           });
+          setModifiedOrder(true);
           return;
         }
         // Ensure defined source and destination categories
@@ -479,7 +487,6 @@ const CollectionStructure = ({
           });
           const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
 
-
           updateDoc(nodeRef, {
             "properties.parts": propertyValue,
           });
@@ -500,6 +507,7 @@ const CollectionStructure = ({
   const saveEditCollection = useCallback(
     async (newCollection: string) => {
       try {
+        debugger;
         if (!newCollection || !user?.uname || newCollection === editCollection)
           return;
 
@@ -530,13 +538,16 @@ const CollectionStructure = ({
           const collection = nodeData[propertyPath].find(
             (c: ICollection) => c.collectionName === editCollection
           );
-
-          collection.collectionName = newCollection;
+          if (collection) {
+            collection.collectionName = newCollection;
+          }
         } else {
           const collection = nodeData.properties[property].find(
             (c: ICollection) => c.collectionName === editCollection
           );
-          collection.collectionName = newCollection;
+          if (collection) {
+            collection.collectionName = newCollection;
+          }
         }
 
         // Log the edited category
@@ -563,6 +574,17 @@ const CollectionStructure = ({
             ? nodeData[propertyPath]
             : nodeData.properties[property],
         };
+
+        setEditableProperty((prev: ICollection[]) => {
+          const _prev = [...prev];
+          const collection = _prev.find(
+            (c: ICollection) => c.collectionName === editCollection
+          );
+          if (collection) {
+            collection.collectionName = newCollection;
+          }
+          return _prev;
+        });
         await updateDoc(nodeDoc.ref, updateData);
 
         // Save the change log
@@ -723,21 +745,6 @@ const CollectionStructure = ({
 
   return (
     <Box sx={{ p: "15px", pt: 0 }}>
-      {model && (
-        <Typography
-          sx={{
-            pt: "12px",
-            fontSize: "20px",
-            fontWeight: 500,
-            fontFamily: "Roboto, sans-serif",
-          }}
-        >
-          {capitalizeFirstLetter(
-            DISPLAY[property] ? DISPLAY[property] : property
-          )}
-          :
-        </Typography>
-      )}
       {openAddCollection && (
         <NewCollection
           onAdd={addCollection}
@@ -1045,6 +1052,10 @@ const CollectionStructure = ({
                                                 clonedNodesQueue
                                               }
                                               unlinkElement={unlinkElement}
+                                              selectedProperty={
+                                                selectedProperty
+                                              }
+                                              glowIds={glowIds}
                                             />
                                           )}
                                         </Draggable>

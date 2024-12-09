@@ -73,7 +73,7 @@ The `Node` component is intended to be used within an application that requires 
 - The component is designed to work with a specific data structure and may require adaptation for different use cases.
 
 This documentation provides a high-level overview of the `Node` component and its capabilities. For detailed implementation and integration, refer to the source code and the specific application context in which the component is used.*/
-import { Stack, useMediaQuery } from "@mui/material";
+import { Popover, Stack, useMediaQuery } from "@mui/material";
 import { Box } from "@mui/system";
 import {
   collection,
@@ -126,8 +126,6 @@ import {
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
 import { NodeChange } from " @components/types/INode";
 import { User } from " @components/types/IAuth";
-import SelectModelModal from "../Models/SelectModel";
-import VisualizeTheProperty from "../StructuredProperty/VisualizeTheProperty";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -188,7 +186,13 @@ const Node = ({
   }>({});
   const [newOnes, setNewOnes] = useState(new Set());
   const [editableProperty, setEditableProperty] = useState<ICollection[]>([]);
+  const [removedElements, setRemovedElements] = useState<Set<string>>(
+    new Set()
+  );
+  const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
   /* */
+  const [glowIds, setGlowIds] = useState<Set<string>>(new Set());
+
   const handleCloseAddLinksModel = () => {
     setCheckedItems(new Set());
     setOpenSelectModel(false);
@@ -196,6 +200,9 @@ const Node = ({
     setSearchValue("");
     setClonedNodesQueue({});
     setNewOnes(new Set());
+    setSelectedProperty("");
+    setAddedElements(new Set());
+    setRemovedElements(new Set());
   };
 
   useEffect(() => {
@@ -535,7 +542,10 @@ const Node = ({
     await cloneNode(node.id, searchValue, newId, selectedProperty);
   };
 
-  const showListToSelect = async (property: string, collectionIdx: number) => {
+  const editStructuredProperty = async (property: string) => {
+    if (selectedProperty) {
+      handleCloseAddLinksModel();
+    }
     setOpenSelectModel(true);
     setSelectedProperty(property);
 
@@ -582,9 +592,17 @@ const Node = ({
   };
 
   const handleSaveLinkChanges = useCallback(
-    async (removedElements: Set<string>, addedElements: Set<string>) => {
+    async (
+      removedElements: Set<string>,
+      addedElements: Set<string>,
+      selectedProperty: string
+    ) => {
       try {
-        if (removedElements.size === 0 && addedElements.size === 0) {
+        debugger;
+        if (
+          (removedElements.size === 0 && addedElements.size === 0) ||
+          !selectedProperty
+        ) {
           return;
         }
 
@@ -782,14 +800,7 @@ const Node = ({
         });
       }
     },
-    [
-      checkedItems,
-      currentVisibleNode.id,
-      currentVisibleNode.title,
-      db,
-      selectedProperty,
-      nodes,
-    ]
+    [checkedItems, currentVisibleNode.id, currentVisibleNode.title, db, nodes]
   );
 
   //  function to handle the deletion of a Node
@@ -999,6 +1010,7 @@ const Node = ({
           currentImprovement={currentImprovement}
           checkDuplicateTitle={checkDuplicateTitle}
         />
+
         {/* {currentVisibleNode.nodeType === "context" && (
           <StructuredProperty
             selectedDiffNode={selectedDiffNode}
@@ -1048,7 +1060,7 @@ const Node = ({
             selectedDiffNode={selectedDiffNode}
             confirmIt={confirmIt}
             currentVisibleNode={currentVisibleNode}
-            showListToSelect={showListToSelect}
+            editStructuredProperty={editStructuredProperty}
             setSelectedProperty={setSelectedProperty}
             navigateToNode={navigateToNode}
             setSnackbarMessage={setSnackbarMessage}
@@ -1058,6 +1070,39 @@ const Node = ({
             locked={locked}
             onGetPropertyValue={onGetPropertyValue}
             currentImprovement={currentImprovement}
+            handleCloseAddLinksModel={handleCloseAddLinksModel}
+            selectedProperty={selectedProperty}
+            setSearchValue={setSearchValue}
+            searchValue={searchValue}
+            searchResultsForSelection={searchResultsForSelection}
+            selectedCategory={selectedCategory}
+            checkedItems={checkedItems}
+            setCheckedItems={setCheckedItems}
+            setCheckedItemsCopy={setCheckedItemsCopy}
+            checkedItemsCopy={checkedItemsCopy}
+            handleCloning={handleCloning}
+            user={user}
+            selectFromTree={selectFromTree}
+            expandedNodes={expandedNodes}
+            setExpandedNodes={setExpandedNodes}
+            handleToggle={handleToggle}
+            getPath={getPath}
+            handleSaveLinkChanges={handleSaveLinkChanges}
+            checkDuplicateTitle={checkDuplicateTitle}
+            cloning={cloning}
+            addACloneNodeQueue={addACloneNodeQueue}
+            setClonedNodesQueue={setClonedNodesQueue}
+            clonedNodesQueue={clonedNodesQueue}
+            newOnes={newOnes}
+            setNewOnes={setNewOnes}
+            editableProperty={editableProperty}
+            setEditableProperty={setEditableProperty}
+            removedElements={removedElements}
+            setRemovedElements={setRemovedElements}
+            addedElements={addedElements}
+            setAddedElements={setAddedElements}
+            glowIds={glowIds}
+            setGlowIds={setGlowIds}
           />
         )}
         {/* specializations and generalizations*/}
@@ -1073,7 +1118,7 @@ const Node = ({
               confirmIt={confirmIt}
               selectedDiffNode={selectedDiffNode}
               currentVisibleNode={currentVisibleNode}
-              showListToSelect={showListToSelect}
+              editStructuredProperty={editStructuredProperty}
               setSelectedProperty={setSelectedProperty}
               navigateToNode={navigateToNode}
               setSnackbarMessage={setSnackbarMessage}
@@ -1083,6 +1128,39 @@ const Node = ({
               locked={locked}
               onGetPropertyValue={onGetPropertyValue}
               currentImprovement={currentImprovement}
+              handleCloseAddLinksModel={handleCloseAddLinksModel}
+              selectedProperty={selectedProperty}
+              setSearchValue={setSearchValue}
+              searchValue={searchValue}
+              searchResultsForSelection={searchResultsForSelection}
+              selectedCategory={selectedCategory}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+              setCheckedItemsCopy={setCheckedItemsCopy}
+              checkedItemsCopy={checkedItemsCopy}
+              handleCloning={handleCloning}
+              user={user}
+              selectFromTree={selectFromTree}
+              expandedNodes={expandedNodes}
+              setExpandedNodes={setExpandedNodes}
+              handleToggle={handleToggle}
+              getPath={getPath}
+              handleSaveLinkChanges={handleSaveLinkChanges}
+              checkDuplicateTitle={checkDuplicateTitle}
+              cloning={cloning}
+              addACloneNodeQueue={addACloneNodeQueue}
+              setClonedNodesQueue={setClonedNodesQueue}
+              clonedNodesQueue={clonedNodesQueue}
+              newOnes={newOnes}
+              setNewOnes={setNewOnes}
+              editableProperty={editableProperty}
+              setEditableProperty={setEditableProperty}
+              removedElements={removedElements}
+              setRemovedElements={setRemovedElements}
+              addedElements={addedElements}
+              setAddedElements={setAddedElements}
+              glowIds={glowIds}
+              setGlowIds={setGlowIds}
             />
           ))}
         </Stack>
@@ -1100,7 +1178,7 @@ const Node = ({
               confirmIt={confirmIt}
               selectedDiffNode={selectedDiffNode}
               currentVisibleNode={currentVisibleNode}
-              showListToSelect={showListToSelect}
+              editStructuredProperty={editStructuredProperty}
               setSelectedProperty={setSelectedProperty}
               navigateToNode={navigateToNode}
               setSnackbarMessage={setSnackbarMessage}
@@ -1111,6 +1189,39 @@ const Node = ({
               onGetPropertyValue={onGetPropertyValue}
               currentImprovement={currentImprovement}
               cloneNode={cloneNode}
+              handleCloseAddLinksModel={handleCloseAddLinksModel}
+              selectedProperty={selectedProperty}
+              setSearchValue={setSearchValue}
+              searchValue={searchValue}
+              searchResultsForSelection={searchResultsForSelection}
+              selectedCategory={selectedCategory}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+              setCheckedItemsCopy={setCheckedItemsCopy}
+              checkedItemsCopy={checkedItemsCopy}
+              handleCloning={handleCloning}
+              user={user}
+              selectFromTree={selectFromTree}
+              expandedNodes={expandedNodes}
+              setExpandedNodes={setExpandedNodes}
+              handleToggle={handleToggle}
+              getPath={getPath}
+              handleSaveLinkChanges={handleSaveLinkChanges}
+              checkDuplicateTitle={checkDuplicateTitle}
+              cloning={cloning}
+              addACloneNodeQueue={addACloneNodeQueue}
+              setClonedNodesQueue={setClonedNodesQueue}
+              clonedNodesQueue={clonedNodesQueue}
+              newOnes={newOnes}
+              setNewOnes={setNewOnes}
+              editableProperty={editableProperty}
+              setEditableProperty={setEditableProperty}
+              removedElements={removedElements}
+              setRemovedElements={setRemovedElements}
+              addedElements={addedElements}
+              setAddedElements={setAddedElements}
+              glowIds={glowIds}
+              setGlowIds={setGlowIds}
             />
           ))}
         </Stack>
@@ -1119,7 +1230,7 @@ const Node = ({
         <NodeBody
           currentVisibleNode={currentVisibleNode}
           setCurrentVisibleNode={setCurrentVisibleNode}
-          showListToSelect={showListToSelect}
+          showListToSelect={editStructuredProperty}
           navigateToNode={navigateToNode}
           setSnackbarMessage={setSnackbarMessage}
           setSelectedProperty={setSelectedProperty}
@@ -1130,47 +1241,40 @@ const Node = ({
           confirmIt={confirmIt}
           onGetPropertyValue={onGetPropertyValue}
           currentImprovement={currentImprovement}
+          handleCloseAddLinksModel={handleCloseAddLinksModel}
+          selectedProperty={selectedProperty}
+          setSearchValue={setSearchValue}
+          searchValue={searchValue}
+          searchResultsForSelection={searchResultsForSelection}
+          selectedCategory={selectedCategory}
+          checkedItems={checkedItems}
+          setCheckedItems={setCheckedItems}
+          setCheckedItemsCopy={setCheckedItemsCopy}
+          checkedItemsCopy={checkedItemsCopy}
+          handleCloning={handleCloning}
+          selectFromTree={selectFromTree}
+          expandedNodes={expandedNodes}
+          setExpandedNodes={setExpandedNodes}
+          handleToggle={handleToggle}
+          getPath={getPath}
+          handleSaveLinkChanges={handleSaveLinkChanges}
+          checkDuplicateTitle={checkDuplicateTitle}
+          cloning={cloning}
+          addACloneNodeQueue={addACloneNodeQueue}
+          setClonedNodesQueue={setClonedNodesQueue}
+          clonedNodesQueue={clonedNodesQueue}
+          newOnes={newOnes}
+          setNewOnes={setNewOnes}
+          editableProperty={editableProperty}
+          setEditableProperty={setEditableProperty}
+          removedElements={removedElements}
+          setRemovedElements={setRemovedElements}
+          addedElements={addedElements}
+          setAddedElements={setAddedElements}
+          glowIds={glowIds}
+          setGlowIds={setGlowIds}
         />
-      </Box>
-      <SelectModelModal
-        openSelectModel={openSelectModel}
-        handleCloseAddLinksModel={handleCloseAddLinksModel}
-        selectedProperty={selectedProperty}
-        currentVisibleNode={currentVisibleNode}
-        setSearchValue={setSearchValue}
-        searchValue={searchValue}
-        searchResultsForSelection={searchResultsForSelection}
-        selectedCategory={selectedCategory}
-        checkedItems={checkedItems}
-        setCheckedItems={setCheckedItems}
-        setCheckedItemsCopy={setCheckedItemsCopy}
-        checkedItemsCopy={checkedItemsCopy}
-        handleCloning={handleCloning}
-        user={user}
-        nodes={nodes}
-        selectFromTree={selectFromTree}
-        expandedNodes={expandedNodes}
-        setExpandedNodes={setExpandedNodes}
-        handleToggle={handleToggle}
-        getPath={getPath}
-        locked={locked}
-        selectedDiffNode={selectedDiffNode}
-        confirmIt={confirmIt}
-        currentImprovement={currentImprovement}
-        handleSaveLinkChanges={handleSaveLinkChanges}
-        onGetPropertyValue={onGetPropertyValue}
-        setCurrentVisibleNode={setCurrentVisibleNode}
-        checkDuplicateTitle={checkDuplicateTitle}
-        cloning={cloning}
-        addACloneNodeQueue={addACloneNodeQueue}
-        setClonedNodesQueue={setClonedNodesQueue}
-        clonedNodesQueue={clonedNodesQueue}
-        newOnes={newOnes}
-        setNewOnes={setNewOnes}
-        editableProperty={editableProperty}
-        setEditableProperty={setEditableProperty}
-      />
-
+      </Box>{" "}
       {ConfirmDialog}
     </Box>
   );

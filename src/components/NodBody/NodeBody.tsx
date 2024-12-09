@@ -35,6 +35,39 @@ interface NodeBodyProps {
   confirmIt: any;
   onGetPropertyValue: any;
   currentImprovement: any;
+  /*  */
+  handleCloseAddLinksModel?: any;
+  selectedProperty?: any;
+  setSearchValue?: any;
+  searchValue?: any;
+  searchResultsForSelection?: any;
+  selectedCategory?: any;
+  checkedItems?: any;
+  setCheckedItems?: any;
+  setCheckedItemsCopy?: any;
+  checkedItemsCopy?: any;
+  handleCloning?: any;
+  selectFromTree?: any;
+  expandedNodes?: any;
+  setExpandedNodes?: any;
+  handleToggle?: any;
+  getPath?: any;
+  handleSaveLinkChanges?: any;
+  checkDuplicateTitle?: any;
+  cloning?: any;
+  addACloneNodeQueue?: any;
+  setClonedNodesQueue?: any;
+  clonedNodesQueue?: any;
+  newOnes?: any;
+  setNewOnes?: any;
+  editableProperty?: ICollection[];
+  setEditableProperty?: any;
+  removedElements: any;
+  setRemovedElements: any;
+  addedElements: any;
+  setAddedElements: any;
+  glowIds: Set<string>;
+  setGlowIds: any;
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -51,6 +84,39 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   confirmIt,
   onGetPropertyValue,
   currentImprovement,
+  /*  */
+  handleCloseAddLinksModel,
+  selectedProperty,
+  setSearchValue,
+  searchValue,
+  searchResultsForSelection,
+  selectedCategory,
+  checkedItems,
+  setCheckedItems,
+  setCheckedItemsCopy,
+  checkedItemsCopy,
+  handleCloning,
+  selectFromTree,
+  expandedNodes,
+  setExpandedNodes,
+  handleToggle,
+  getPath,
+  handleSaveLinkChanges,
+  checkDuplicateTitle,
+  cloning,
+  addACloneNodeQueue,
+  setClonedNodesQueue,
+  clonedNodesQueue,
+  newOnes,
+  setNewOnes,
+  editableProperty,
+  setEditableProperty,
+  removedElements,
+  setRemovedElements,
+  addedElements,
+  setAddedElements,
+  glowIds,
+  setGlowIds,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -290,7 +356,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 confirmIt={confirmIt}
                 selectedDiffNode={selectedDiffNode}
                 currentVisibleNode={currentNode}
-                showListToSelect={showListToSelect}
+                editStructuredProperty={showListToSelect}
                 setSelectedProperty={setSelectedProperty}
                 navigateToNode={navigateToNode}
                 setSnackbarMessage={setSnackbarMessage}
@@ -300,6 +366,40 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 locked={locked}
                 onGetPropertyValue={onGetPropertyValue}
                 currentImprovement={currentImprovement}
+                /*  */
+                handleCloseAddLinksModel={handleCloseAddLinksModel}
+                selectedProperty={selectedProperty}
+                setSearchValue={setSearchValue}
+                searchValue={searchValue}
+                searchResultsForSelection={searchResultsForSelection}
+                selectedCategory={selectedCategory}
+                checkedItems={checkedItems}
+                setCheckedItems={setCheckedItems}
+                setCheckedItemsCopy={setCheckedItemsCopy}
+                checkedItemsCopy={checkedItemsCopy}
+                handleCloning={handleCloning}
+                user={user}
+                selectFromTree={selectFromTree}
+                expandedNodes={expandedNodes}
+                setExpandedNodes={setExpandedNodes}
+                handleToggle={handleToggle}
+                getPath={getPath}
+                handleSaveLinkChanges={handleSaveLinkChanges}
+                checkDuplicateTitle={checkDuplicateTitle}
+                cloning={cloning}
+                addACloneNodeQueue={addACloneNodeQueue}
+                setClonedNodesQueue={setClonedNodesQueue}
+                clonedNodesQueue={clonedNodesQueue}
+                newOnes={newOnes}
+                setNewOnes={setNewOnes}
+                editableProperty={editableProperty}
+                setEditableProperty={setEditableProperty}
+                removedElements={removedElements}
+                setRemovedElements={setRemovedElements}
+                addedElements={addedElements}
+                setAddedElements={setAddedElements}
+                glowIds={glowIds}
+                setGlowIds={setGlowIds}
               />
             ) : (
               property !== "description" &&

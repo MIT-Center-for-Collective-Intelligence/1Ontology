@@ -1,10 +1,19 @@
 import React, { useState } from "react";
 import { TreeView, TreeItem, treeItemClasses } from "@mui/lab";
-import { ListItem, Typography, Button } from "@mui/material";
+import {
+  ListItem,
+  Typography,
+  Button,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LockIcon from "@mui/icons-material/Lock";
 import { INode } from " @components/types/INode";
+import InsertLinkIcon from "@mui/icons-material/InsertLink";
+import LinkOffIcon from "@mui/icons-material/LinkOff";
 
 const ExpandSearchResult = ({
   searchResultsForSelection,
@@ -159,8 +168,10 @@ const NodeLabel = ({
         alignItems: "center",
         color: "white",
         cursor: "pointer",
-        borderRadius: "4px",
-        py: "2px",
+        // borderRadius: "4px",
+        borderRadius: "25px",
+        py: "0px",
+        px: "0px",
         paddingLeft: "4px",
         transition: "background-color 0.3s",
         gap: "2px",
@@ -172,12 +183,12 @@ const NodeLabel = ({
       <Typography variant="body1">{node.title}</Typography>
 
       {!isLocked ? (
-        <Button
+        <IconButton
           onClick={(e) => {
             e.stopPropagation();
             markItemAsChecked(node.id);
           }}
-          variant={isChecked ? "contained" : "outlined"}
+          /*           variant={isChecked ? "contained" : "outlined"} */
           sx={{ borderRadius: "25px", ml: "auto", fontSize: "0.8rem" }}
           disabled={
             isChecked &&
@@ -186,27 +197,31 @@ const NodeLabel = ({
                 getNumOfGeneralizations(node.id)))
           }
         >
-          {/* i have fixed  */}
-          {isChecked ? "Unselect" : "Select"}
-        </Button>
+          <Tooltip title={isChecked ? "Unlink" : "Link"} placement="left">
+            {isChecked ? (
+              <LinkOffIcon sx={{ color: isChecked ? "orange" : "" }} />
+            ) : (
+              <InsertLinkIcon />
+            )}
+          </Tooltip>
+        </IconButton>
       ) : (
         <LockIcon sx={{ color: "orange", mx: "15px" }} />
       )}
 
       {handleCloning && !isSaving && (
-        <Button
-          variant="outlined"
-          sx={{ m: "9px", borderRadius: "25px", fontSize: "0.8rem" }}
-          onClick={(e) => {
-            e.stopPropagation();
-            addACloneNodeQueue(node.id);
-          }}
-          disabled={!!cloning}
-        >
-          <span style={{ color: "green", paddingInline: "10px" }}>
-            Add Specialization
-          </span>
-        </Button>
+        <Tooltip title={"Add Specialization"}>
+          <IconButton
+            sx={{ m: "9px", borderRadius: "25px", fontSize: "0.8rem" }}
+            onClick={(e) => {
+              e.stopPropagation();
+              addACloneNodeQueue(node.id);
+            }}
+            disabled={!!cloning}
+          >
+            <AddIcon />
+          </IconButton>
+        </Tooltip>
       )}
     </ListItem>
   );

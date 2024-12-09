@@ -1,11 +1,13 @@
 import {
   Button,
   FormControl,
+  IconButton,
   InputAdornment,
   OutlinedInput,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import SearchIcon from "@mui/icons-material/Search";
+import CloseIcon from "@mui/icons-material/Close";
 
 type IProps = {
   setSearchValue: any;
@@ -68,6 +70,22 @@ export const SearchBox = ({ setSearchValue, label, sx }: IProps) => {
               />
             </InputAdornment>
           }
+          endAdornment={
+            search && (
+              <InputAdornment position="end">
+                <IconButton
+                  sx={{}}
+                  onClick={() => {
+                    setSearch("");
+                  }}
+                  color="primary"
+                  edge="end"
+                >
+                  <CloseIcon />
+                </IconButton>
+              </InputAdornment>
+            )
+          }
         />
       )}
 
@@ -100,16 +118,8 @@ export const SearchBox = ({ setSearchValue, label, sx }: IProps) => {
           }
           endAdornment={
             <InputAdornment position="end">
-              <Button
-                variant="contained"
+              <IconButton
                 color="primary"
-                sx={{
-                  mr: "-14px",
-                  minWidth: "42px",
-                  width: "42px",
-                  minHeight: "42px",
-                  height: "42px",
-                }}
                 onClick={() => {
                   setSearch(inputValue);
                   setInputValue("");
@@ -123,10 +133,13 @@ export const SearchBox = ({ setSearchValue, label, sx }: IProps) => {
               >
                 <SearchIcon
                   sx={{
-                    color: "white!important",
+                    color: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "white!important"
+                        : "gray",
                   }}
                 />
-              </Button>
+              </IconButton>
             </InputAdornment>
           }
         />

@@ -83,6 +83,7 @@ import {
   Box,
   Button,
   IconButton,
+  keyframes,
   Link,
   ListItem,
   ListItemIcon,
@@ -111,6 +112,17 @@ import { UNCLASSIFIED } from " @components/lib/CONSTANTS";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import LinkEditor from "./LinkEditor";
 
+const glowGreen = keyframes`
+  0% {
+    box-shadow: 0 0 5px #26C281, 0 0 10px #26C281, 0 0 20px #26C281, 0 0 30px #26C281;
+  }
+  50% {
+    box-shadow: 0 0 10px #26C281, 0 0 20px #26C281, 0 0 30px #26C281, 0 0 40px #26C281;
+  }
+  100% {
+    box-shadow: 0 0 5px #26C281, 0 0 10px #26C281, 0 0 20px #26C281, 0 0 30px #26C281;
+  }
+`;
 type ILinkNodeProps = {
   provided: any;
   link: ILinkNode;
@@ -133,6 +145,8 @@ type ILinkNodeProps = {
   saveNewAndSwapIt: any;
   clonedNodesQueue?: any;
   unlinkElement?: any;
+  selectedProperty: string;
+  glowIds: Set<string>;
 };
 
 const LinkNode = ({
@@ -155,6 +169,8 @@ const LinkNode = ({
   saveNewAndSwapIt,
   clonedNodesQueue = {},
   unlinkElement,
+  selectedProperty,
+  glowIds,
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -502,7 +518,7 @@ const LinkNode = ({
   };
 
   const handleUnlinkNode = () => {
-    if (unlinkElement) {
+    if (selectedProperty === property) {
       unlinkElement(link.id, collectionIndex);
       return;
     }
@@ -530,11 +546,15 @@ const LinkNode = ({
 
   return (
     <Box
+      id={`${link.id}-${property}`}
       sx={{
         backgroundColor: !!swapIt ? "#5f5e5d" : "",
         borderRadius: "25px",
         p: !!swapIt ? 1 : "",
         my: swapIt ? "5px" : "",
+        animation: glowIds.has(`${link.id}-${property}`)
+          ? `${glowGreen} 1.5s ease-in-out infinite`
+          : "",
       }}
     >
       <ListItem
@@ -595,28 +615,30 @@ const LinkNode = ({
               sx={{ color: getLinkColor(link.change), pl: "5px" }}
             />
           )}
-
-          {!locked &&
+          {((!locked &&
             !linkLocked &&
             unlinkVisible &&
             !selectedDiffNode &&
             (!currentVisibleNode.unclassified ||
               property !== "generalizations") &&
-            property !== "isPartOf" && (
-              <Tooltip title="Unlink">
-                <IconButton
-                  sx={{
-                    ml: "18px",
-                    borderRadius: "18px",
-                    fontSize: "12px",
-                    p: 0.2,
-                  }}
-                  onClick={handleUnlinkNode}
-                >
-                  <CloseIcon />
-                </IconButton>
-              </Tooltip>
-            )}
+            property !== "isPartOf") ||
+            (clonedNodesQueue.hasOwnProperty(link.id) &&
+              property !== "generalizations")) && (
+            <Tooltip title="Unlink">
+              <IconButton
+                sx={{
+                  ml: "18px",
+                  borderRadius: "18px",
+                  fontSize: "12px",
+                  p: 0.2,
+                }}
+                onClick={handleUnlinkNode}
+              >
+                <LinkOffIcon sx={{ color: "orange" }} />
+              </IconButton>
+            </Tooltip>
+          )}
+
           {property === "parts" &&
             !selectedDiffNode &&
             !clonedNodesQueue.hasOwnProperty(link.id) && (

@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { TreeView, TreeItem, treeItemClasses, LoadingButton } from "@mui/lab";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography, Button, Tooltip, IconButton } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockIcon from "@mui/icons-material/Lock";
 import { TreeVisual } from " @components/types/INode";
+import LinkOffIcon from "@mui/icons-material/LinkOff";
+import InsertLinkIcon from "@mui/icons-material/InsertLink";
+import AddIcon from "@mui/icons-material/Add";
 
 type ITreeViewSimplifiedProps = {
   onOpenNodesTree: (nodeId: string) => void;
@@ -56,7 +59,7 @@ const TreeViewSimplified = ({
   getNumOfGeneralizations,
 }: ITreeViewSimplifiedProps) => {
   const [expanded, setExpanded] = useState<string[]>([]);
-
+  const [addingNew, setAddingNew] = useState(false);
   const sortedKeys = categoriesOrder
     ? Object.keys(treeVisualization).sort((a, b) =>
         categoriesOrder.indexOf(a) !== -1
@@ -109,6 +112,13 @@ const TreeViewSimplified = ({
                 e.stopPropagation();
                 e.preventDefault();
                 if (
+                  currentVisibleNode.id === nodeId &&
+                  (selectedProperty === "specializations" ||
+                    selectedProperty === "generalizations")
+                ) {
+                  return;
+                }
+                if (
                   selectedProperty &&
                   (disabledAddButton ||
                     (selectedProperty === "specializations" &&
@@ -157,39 +167,69 @@ const TreeViewSimplified = ({
                 !preventLoops?.has(treeVisualization[nodeId]?.id) && (
                   <>
                     {manageLock || !treeVisualization[nodeId].locked ? (
-                      <Button
+                      <IconButton
                         onClick={(e) => {
+                          if (
+                            currentVisibleNode.id === nodeId &&
+                            (selectedProperty === "specializations" ||
+                              selectedProperty === "generalizations")
+                          ) {
+                            return;
+                          }
                           e.stopPropagation();
                           markItemAsChecked(treeVisualization[nodeId]?.id);
                         }}
-                        variant={
-                          checkedItems.has(treeVisualization[nodeId]?.id)
-                            ? "contained"
-                            : "outlined"
-                        }
                         sx={{
                           borderRadius: "16px",
                           textTransform: "none",
-                          marginLeft: "12px",
-                          padding: "2px 12px",
+                          // marginLeft: "12px",
+                          padding: "3px",
                           fontSize: "0.8rem",
                           backgroundColor:
                             currentVisibleNode?.id === nodeId &&
                             !checkedItems.has(treeVisualization[nodeId]?.id)
                               ? "#E8F5E9"
                               : "",
+                          display:
+                            (currentVisibleNode.id === nodeId &&
+                              (selectedProperty === "specializations" ||
+                                selectedProperty === "generalizations")) ||
+                            ((disabledAddButton ||
+                              (selectedProperty === "specializations" &&
+                                getNumOfGeneralizations(nodeId))) &&
+                              checkedItems.has(treeVisualization[nodeId]?.id))
+                              ? "none"
+                              : "",
                         }}
                         disabled={
-                          (disabledAddButton ||
+                          (currentVisibleNode.id === nodeId &&
+                            (selectedProperty === "specializations" ||
+                              selectedProperty === "generalizations")) ||
+                          ((disabledAddButton ||
                             (selectedProperty === "specializations" &&
                               getNumOfGeneralizations(nodeId))) &&
-                          checkedItems.has(treeVisualization[nodeId]?.id)
+                            checkedItems.has(treeVisualization[nodeId]?.id))
                         }
                       >
-                        {checkedItems.has(treeVisualization[nodeId]?.id)
-                          ? "Unselect"
-                          : "Select"}
-                      </Button>
+                        <Tooltip
+                          title={
+                            checkedItems.has(treeVisualization[nodeId]?.id)
+                              ? "Unlink"
+                              : "Link"
+                          }
+                          placement="left"
+                        >
+                          {checkedItems.has(treeVisualization[nodeId]?.id) ? (
+                            <LinkOffIcon
+                              sx={{
+                                color: "orange",
+                              }}
+                            />
+                          ) : (
+                            <InsertLinkIcon />
+                          )}
+                        </Tooltip>
+                      </IconButton>
                     ) : (
                       <LockIcon sx={{ color: "#FF6F00", marginLeft: "12px" }} />
                     )}
@@ -201,15 +241,13 @@ const TreeViewSimplified = ({
                 !treeVisualization[nodeId].isCategory &&
                 !treeVisualization[nodeId].locked &&
                 !preventLoops?.has(treeVisualization[nodeId]?.id) && (
-                  <LoadingButton
-                    loading={cloning === treeVisualization[nodeId]?.id}
-                    variant="outlined"
+                  <IconButton
                     sx={{
                       borderRadius: "16px",
-                      marginLeft: "10px",
+                      marginLeft: "3px",
                       textTransform: "none",
                       fontSize: "0.8rem",
-                      padding: "2px 12px",
+                      padding: "0px",
                       color:
                         currentVisibleNode?.id === nodeId
                           ? "#251306"
@@ -226,13 +264,19 @@ const TreeViewSimplified = ({
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
+                      setAddingNew(true);
                       // handleCloning(treeVisualization[nodeId]);
                       addACloneNodeQueue(nodeId);
+                      setTimeout(() => {
+                        setAddingNew(false);
+                      }, 500);
                     }}
-                    disabled={!!cloning}
+                    disabled={!!cloning || addingNew}
                   >
-                    Add Specialization
-                  </LoadingButton>
+                    <Tooltip title="Add Specialization">
+                      <AddIcon />
+                    </Tooltip>
+                  </IconButton>
                 )}
 
               {sendNode && !treeVisualization[nodeId].isCategory && (

@@ -1,5 +1,13 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { Modal, Box, Paper, Typography, Button, Tooltip } from "@mui/material";
+import {
+  Modal,
+  Box,
+  Paper,
+  Typography,
+  Button,
+  Tooltip,
+  Divider,
+} from "@mui/material";
 
 import ExpandSearchResult from "../OntologyComponents/ExpandSearchResult";
 import TreeViewSimplified from "../OntologyComponents/TreeViewSimplified";
@@ -22,11 +30,10 @@ import {
   getFirestore,
 } from "firebase/firestore";
 import { LoadingButton } from "@mui/lab";
-import CollectionStructure from "../StructuredProperty/CollectionStructure";
 
 const SelectModelModal = ({
-  openSelectModel,
   handleCloseAddLinksModel,
+  onSave,
   selectedProperty,
   currentVisibleNode,
   setSearchValue,
@@ -35,7 +42,6 @@ const SelectModelModal = ({
   selectedCategory,
   checkedItems,
   setCheckedItems,
-  setCheckedItemsCopy,
   checkedItemsCopy,
   handleCloning,
   user,
@@ -49,20 +55,21 @@ const SelectModelModal = ({
   selectedDiffNode,
   confirmIt,
   currentImprovement,
-  handleSaveLinkChanges,
   onGetPropertyValue,
   setCurrentVisibleNode,
-  checkDuplicateTitle,
   cloning,
   addACloneNodeQueue,
-  setClonedNodesQueue,
-  clonedNodesQueue,
   newOnes,
   setNewOnes,
-  editableProperty,
   setEditableProperty,
+  removedElements,
+  addedElements,
+  setRemovedElements,
+  setAddedElements,
+  isSaving,
+  scrollToElement,
 }: {
-  openSelectModel: any;
+  onSave: any;
   handleCloseAddLinksModel: any;
   selectedProperty: any;
   currentVisibleNode: any;
@@ -96,17 +103,16 @@ const SelectModelModal = ({
   clonedNodesQueue: { [nodeId: string]: { title: string; id: string } };
   newOnes: any;
   setNewOnes: any;
-  editableProperty: ICollection[];
+  editableProperty: ICollection[] | undefined;
   setEditableProperty: any;
+  removedElements: Set<string>;
+  setRemovedElements: any;
+  addedElements: Set<string>;
+  setAddedElements: any;
+  isSaving: boolean;
+  scrollToElement: (nodeId: string) => void;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [expanded, setExpanded] = useState(new Set());
-  const [openAddCollection, setOpenAddCollection] = useState(false);
-  const [removedElements, setRemovedElements] = useState<Set<string>>(
-    new Set()
-  );
-  const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
 
   const db = getFirestore();
   const getSelectingModelTitle = (
@@ -167,24 +173,6 @@ const SelectModelModal = ({
     currentVisibleNode.propertyType,
     selectedProperty,
   ]);
-  const onSave = async () => {
-    try {
-      setIsSaving(true);
-      for (let nId in clonedNodesQueue) {
-        await handleCloning(
-          { id: clonedNodesQueue[nId].id },
-          clonedNodesQueue[nId].title,
-          nId
-        );
-      }
-      await handleSaveLinkChanges(removedElements, addedElements);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsSaving(false);
-      handleCloseAddLinksModel();
-    }
-  };
 
   const getNumOfGeneralizations = (id: string) => {
     if (!nodes[id] || newOnes.has(id)) {
@@ -211,23 +199,17 @@ const SelectModelModal = ({
       }
       return _prev;
     });
-    setAddedElements((prev) => {
-      if (prev.has(checkedId)) {
-        prev.delete(checkedId);
+    scrollToElement(checkedId);
+    setAddedElements((prev: Set<string>) => {
+      const _prev = new Set(prev);
+      if (_prev.has(checkedId)) {
+        _prev.delete(checkedId);
       } else {
-        prev.add(checkedId);
+        _prev.add(checkedId);
       }
-      return prev;
-    });
 
-    // setRemovedElements((prev) => {
-    //   if (prev.has(checkedId)) {
-    //     prev.delete(checkedId);
-    //   } else {
-    //     prev.add(checkedId);
-    //   }
-    //   return prev;
-    // });
+      return _prev;
+    });
 
     setCheckedItems((checkedItems: any) => {
       let _oldChecked = new Set(checkedItems);
@@ -263,13 +245,13 @@ const SelectModelModal = ({
       );
       return _prev;
     });
-    setRemovedElements((prev) => {
+    setRemovedElements((prev: Set<string>) => {
       if (checkedItemsCopy.has(id)) {
         prev.add(id);
       }
       return prev;
     });
-    setAddedElements((prev) => {
+    setAddedElements((prev: Set<string>) => {
       prev.delete(id);
       return prev;
     });
@@ -315,37 +297,12 @@ const SelectModelModal = ({
       });
       return _prev;
     });
-    setAddedElements((prev) => {
+    setAddedElements((prev: Set<string>) => {
       prev.add(id);
       return prev;
     });
+    scrollToElement(id);
   };
-  const unlinkVisible = useCallback(
-    (nodeId: string) => {
-      if (newOnes.has(nodeId)) {
-        return true;
-      }
-      if (!!selectedDiffNode) {
-        return false;
-      }
-      let numberOfGeneralizations = 0;
-      if (selectedProperty === "specializations") {
-        for (let colGeneralization of nodes[nodeId]?.generalizations || []) {
-          numberOfGeneralizations += colGeneralization.nodes.length;
-        }
-      }
-
-      return (
-        (selectedProperty === "generalizations" &&
-          editableProperty.flatMap((n) => n.nodes).length !== 1) ||
-        (selectedProperty === "specializations" &&
-          numberOfGeneralizations > 1) ||
-        (selectedProperty !== "generalizations" &&
-          selectedProperty !== "specializations")
-      );
-    },
-    [editableProperty, selectedProperty, nodes, selectedDiffNode, newOnes]
-  );
 
   const cloneUnclassifiedNode = async () => {
     let nodeType = currentVisibleNode.propertyType[selectedProperty];
@@ -375,7 +332,7 @@ const SelectModelModal = ({
         });
         return _prev;
       });
-      setAddedElements((prev) => {
+      setAddedElements((prev: Set<string>) => {
         prev.add(id);
         return prev;
       });
@@ -428,271 +385,244 @@ const SelectModelModal = ({
       />
     );
   return (
-    <Modal
+    <Paper
       sx={{
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "transparent",
+        borderRadius: "19px",
+        /*      width: "100%",
+        height: "100%", */
+        // m: "19px",
       }}
-      open={isSaving || openSelectModel}
-      onClose={handleCloseAddLinksModel}
     >
-      <Paper
+      <Box
         sx={{
           display: "flex",
+          flexDirection: "column",
+          overflowY: "auto",
           borderRadius: "19px",
-          width: "100%",
-          height: "100%",
-          m: "19px",
+          ...SCROLL_BAR_STYLE,
+          width: "00px",
+          flexGrow: 1,
         }}
       >
-        {" "}
-        <Tooltip title="Close">
-          <CloseIcon
-            onClick={handleCloseAddLinksModel}
-            sx={{
-              borderRadius: "50%",
-              fontSize: "30px",
-              backgroundColor: (theme) =>
-                theme.palette.mode === "dark" ? "black" : "white",
-              ":hover": {
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "dark" ? "gray" : "gray",
-              },
-            }}
-          />
-        </Tooltip>
         <Box
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            overflowY: "auto",
-            borderRadius: "19px",
-            ...SCROLL_BAR_STYLE,
-            flexGrow: 1,
+            position: "sticky",
+            top: 0,
+            // width: "950px",
+            // zIndex: 1,
+            backgroundColor: (theme) =>
+              theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
           }}
         >
           <Box
             sx={{
-              position: "sticky",
-              top: 0,
-              // width: "950px",
-              zIndex: 1,
-              backgroundColor: (theme) =>
-                theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
+              display: "flex",
+              alignItems: "center",
+              pr: "5px",
             }}
           >
-            <Box sx={{ textAlign: "center" }}>
-              <Typography sx={{ pt: "15px", pl: "15px", fontSize: "20px" }}>
-                Editing{" "}
-                <strong style={{ color: "orange" }}>
-                  {currentVisibleNode.title}
-                </strong>
-              </Typography>
-            </Box>
-            <Box sx={{ pt: "15px" }}>
-              {selectedProperty === "specializations" ? (
-                <Typography sx={{ pl: "15px" }}>
-                  Select the{" "}
-                  <strong style={{ color: "orange" }}>Specialization</strong> to
-                  add, by either:
-                  <strong style={{ color: "orange" }}> A) </strong> Searching
-                  existing{" "}
-                  {currentVisibleNode.nodeType === "activity"
-                    ? "activities"
-                    : currentVisibleNode.nodeType === "evaluationDimension"
-                    ? "Evaluation Dimensions"
-                    : currentVisibleNode.nodeType + "s"}
-                  , <strong style={{ color: "orange" }}> B) </strong> Navigating
-                  through the ontology,{" "}
-                  <strong style={{ color: "orange" }}> C) </strong>
-                  Creating what you searched as a new specialization
-                </Typography>
-              ) : (
-                <Typography sx={{ pl: "15px" }}>
-                  {getSelectingModelTitle(
-                    selectedProperty,
-                    currentVisibleNode.nodeType,
-                    currentVisibleNode.propertyType[selectedProperty]
-                  )}
-                </Typography>
-              )}
-
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-
-                  pr: "5px",
-                }}
-              >
-                <SearchBox setSearchValue={setSearchValue} label="Search ..." />
-                <Tooltip
-                  title={`Create as a new Specialization 
+            <SearchBox setSearchValue={setSearchValue} label="Search ..." />
+            <Tooltip
+              title={`Create as a new Specialization 
                     ${
                       selectedProperty !== "specializations"
                         ? `Under ${getCreateNewButtonText}`
                         : ""
                     } Node`}
-                >
-                  <Button
-                    onClick={async () => {
-                      setDisabledButton(true);
-                      if (selectedProperty === "specializations") {
-                        const id = addACloneNodeQueue(
-                          currentVisibleNode.id,
-                          searchValue
-                        );
-                        setEditableProperty((prev: ICollection[]) => {
-                          const _prev = [...prev];
-                          _prev[0].nodes.push({
-                            id,
-                          });
-                          return _prev;
-                        });
-                        setAddedElements((prev) => {
-                          prev.add(id);
-                          return prev;
-                        });
-                        // await addNewSpecialization(
-                        //   selectedCategory || "main",
-                        //   searchValue
-                        // );
-                      } else {
-                        await cloneUnclassifiedNode();
-                      }
-                      setDisabledButton(false);
-                    }}
-                    sx={{ borderRadius: "18px", minWidth: "300px" }}
-                    variant="outlined"
-                    disabled={
-                      isSaving ||
-                      searchValue.length < 3 ||
-                      searchResultsForSelection[0]?.title.trim() ===
-                        searchValue.trim() ||
-                      disabledButton
-                    }
-                  >
-                    Create{" "}
-                    {selectedProperty !== "specializations"
-                      ? "Under " + getCreateNewButtonText
-                      : ""}
-                  </Button>
-                </Tooltip>
-              </Box>
-            </Box>
-          </Box>
-
-          <Box
-            sx={{
-              flexGrow: 1,
-              overflowY: "auto",
-              px: "4px",
-              ...SCROLL_BAR_STYLE,
-            }}
-          >
-            {renderSearchOrTree()}
-          </Box>
-
-          {selectedProperty !== "context" && (
-            <Box
-              sx={{
-                p: "16px",
-                mt: "auto",
-                // width: "950px",
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
-              }}
             >
-              <Typography sx={{ mb: "4px" }}>
-                If you cannot find the existing{" "}
-                <strong>
-                  {capitalizeFirstLetter(
-                    DISPLAY[selectedProperty] || selectedProperty
-                  )}
-                </strong>{" "}
-                to link, you can describe them below:
-              </Typography>
-              <Text
-                text={onGetPropertyValue(selectedProperty, true) as string}
-                currentVisibleNode={currentVisibleNode}
-                property={selectedProperty}
-                setCurrentVisibleNode={setCurrentVisibleNode}
-                nodes={nodes}
-                locked={locked}
-                selectedDiffNode={selectedDiffNode}
-                confirmIt={confirmIt}
-                structured
-                currentImprovement={currentImprovement}
-                sx={{ borderRadius: "none", backgroundColor: "" }}
-                getTitleNode={() => {}}
-              />
-            </Box>
-          )}
-
-          {/* Save/Cancel Buttons */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              p: 3,
-              pt: 0,
-              backgroundColor: (theme) =>
-                theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
-            }}
-          >
-            <Button
-              variant="contained"
-              onClick={handleCloseAddLinksModel}
-              color="primary"
-              sx={{ borderRadius: "25px" }}
-            >
-              Cancel
-            </Button>
-            <LoadingButton
-              size="small"
-              onClick={onSave}
-              loading={isSaving}
-              color="success"
-              variant="contained"
-              sx={{ borderRadius: "25px" }}
-            >
-              Save
-            </LoadingButton>
+              <Button
+                onClick={async () => {
+                  setDisabledButton(true);
+                  if (selectedProperty === "specializations") {
+                    const id = addACloneNodeQueue(
+                      currentVisibleNode.id,
+                      searchValue
+                    );
+                    setEditableProperty((prev: ICollection[]) => {
+                      const _prev = [...prev];
+                      _prev[0].nodes.push({
+                        id,
+                      });
+                      return _prev;
+                    });
+                    setAddedElements((prev: Set<string>) => {
+                      prev.add(id);
+                      return prev;
+                    });
+                    // await addNewSpecialization(
+                    //   selectedCategory || "main",
+                    //   searchValue
+                    // );
+                  } else {
+                    await cloneUnclassifiedNode();
+                  }
+                  setDisabledButton(false);
+                }}
+                sx={{ borderRadius: "18px" /* , minWidth: "300px" */ }}
+                variant="outlined"
+                disabled={
+                  isSaving ||
+                  searchValue.length < 3 ||
+                  searchResultsForSelection[0]?.title.trim() ===
+                    searchValue.trim() ||
+                  disabledButton
+                }
+              >
+                Create{" "}
+                {selectedProperty !== "specializations"
+                  ? "Under " + getCreateNewButtonText
+                  : ""}
+              </Button>
+            </Tooltip>
           </Box>
-        </Box>{" "}
-        {/* Selected Items Section */}
-        <Box sx={{ width: "30%" }}>
-          <CollectionStructure
-            model={true}
-            locked={locked}
-            selectedDiffNode={selectedDiffNode}
-            currentImprovement={currentImprovement}
-            property={selectedProperty}
-            propertyValue={editableProperty}
-            openAddCollection={openAddCollection}
-            setOpenAddCollection={setOpenAddCollection}
-            clonedNodesQueue={clonedNodesQueue}
-            currentVisibleNode={currentVisibleNode}
-            setCurrentVisibleNode={setCurrentVisibleNode}
-            nodes={nodes}
-            confirmIt={confirmIt}
-            setEditableProperty={setEditableProperty}
-            unlinkElement={unlinkElement}
-            addACloneNodeQueue={addACloneNodeQueue}
-            unlinkVisible={unlinkVisible}
-            getCategoryStyle={() => {}}
-            navigateToNode={() => {}}
-            setSnackbarMessage={() => {}}
-            showListToSelect={() => {}}
-            logChange={() => {}}
-          />
         </Box>
-        {/* {renderSelectedItems()} */}
-      </Paper>
-    </Modal>
+        {selectedProperty === "specializations" ? (
+          <Typography sx={{ pl: "15px" }}>
+            Select the{" "}
+            <strong style={{ color: "orange" }}>Specialization</strong> to add,
+            by either:
+            <ul>
+              <li>
+                {" "}
+                <strong style={{ color: "orange" }}> A) </strong> Searching
+                existing{" "}
+                {currentVisibleNode.nodeType === "activity"
+                  ? "activities"
+                  : currentVisibleNode.nodeType === "evaluationDimension"
+                  ? "Evaluation Dimensions"
+                  : currentVisibleNode.nodeType + "s"}
+              </li>
+              <li>
+                <strong style={{ color: "orange" }}> B) </strong> Navigating
+                through the ontology{" "}
+              </li>
+              <li>
+                <strong style={{ color: "orange" }}> C) </strong>
+                Creating what you searched as a new specialization
+              </li>
+            </ul>
+          </Typography>
+        ) : (
+          <Typography sx={{ pl: "15px" }}>
+            {getSelectingModelTitle(
+              selectedProperty,
+              currentVisibleNode.nodeType,
+              currentVisibleNode.propertyType[selectedProperty]
+            )}
+          </Typography>
+        )}
+        <Box
+          sx={{
+            flexGrow: 1,
+            overflowY: "auto",
+            px: "4px",
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+            py: "12px",
+            ...SCROLL_BAR_STYLE,
+          }}
+        >
+          {renderSearchOrTree()}
+        </Box>
+        {selectedProperty !== "context" && (
+          <Box
+            sx={{
+              p: "16px",
+              mt: "auto",
+              // width: "950px",
+            }}
+          >
+            <Typography sx={{ mb: "4px" }}>
+              If you cannot find the existing{" "}
+              <strong>
+                {capitalizeFirstLetter(
+                  DISPLAY[selectedProperty] || selectedProperty
+                )}
+              </strong>{" "}
+              to link, you can describe them below:
+            </Typography>
+            <Text
+              text={onGetPropertyValue(selectedProperty, true) as string}
+              currentVisibleNode={currentVisibleNode}
+              property={selectedProperty}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              nodes={nodes}
+              locked={locked}
+              selectedDiffNode={selectedDiffNode}
+              confirmIt={confirmIt}
+              structured
+              currentImprovement={currentImprovement}
+              sx={{ borderRadius: "none", backgroundColor: "" }}
+              getTitleNode={() => {}}
+            />
+          </Box>
+        )}
+        {/* Save/Cancel Buttons */}
+        <Box
+          sx={{
+            display: "flex",
+            pt: 0,
+            ml: "auto",
+            gap: "14px",
+            justifyContent: "space-between",
+            m: 2,
+          }}
+        >
+          <Button
+            variant="contained"
+            onClick={handleCloseAddLinksModel}
+            color="error"
+            sx={{ borderRadius: "25px" }}
+          >
+            Cancel
+          </Button>
+          <LoadingButton
+            size="small"
+            onClick={onSave}
+            loading={isSaving}
+            color="success"
+            variant="contained"
+            sx={{ borderRadius: "25px", color: "white" }}
+            disabled={addedElements.size === 0 && removedElements.size === 0}
+          >
+            Save
+          </LoadingButton>
+        </Box>
+      </Box>{" "}
+    </Paper>
   );
 };
 
 export default SelectModelModal;
+{
+  /* Selected Items Section */
+}
+{
+  /*       <Box sx={{ width: "30%" }}>
+        <CollectionStructure
+          model={true}
+          locked={locked}
+          selectedDiffNode={selectedDiffNode}
+          currentImprovement={currentImprovement}
+          property={selectedProperty}
+          propertyValue={editableProperty}
+          openAddCollection={openAddCollection}
+          setOpenAddCollection={setOpenAddCollection}
+          clonedNodesQueue={clonedNodesQueue}
+          currentVisibleNode={currentVisibleNode}
+          setCurrentVisibleNode={setCurrentVisibleNode}
+          nodes={nodes}
+          confirmIt={confirmIt}
+          setEditableProperty={setEditableProperty}
+          unlinkElement={unlinkElement}
+          addACloneNodeQueue={addACloneNodeQueue}
+          unlinkVisible={unlinkVisible}
+          getCategoryStyle={() => {}}
+          navigateToNode={() => {}}
+          setSnackbarMessage={() => {}}
+          showListToSelect={() => {}}
+          logChange={() => {}}
+        />
+      </Box> */
+}
