@@ -1119,7 +1119,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
             </Box>
           </AccordionDetails>
         </Accordion>
-        <Accordion>
+        <Accordion defaultExpanded={true}>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             sx={{
