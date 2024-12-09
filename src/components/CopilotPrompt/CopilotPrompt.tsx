@@ -1146,7 +1146,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
               autoFocus
               margin="dense"
               id="prompt-input"
-              label="Please write your instructions to co-pilot here:"
+              label="Please write your instructions to AI Assistant here:"
               type="text"
               value={inputValue}
               onChange={handleInputChange}

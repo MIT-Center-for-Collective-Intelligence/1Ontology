@@ -227,7 +227,7 @@ const ImprovementsSlider = ({
                       ?.addedNonExistentElements || []
                   ).length > 0 && (
                     <Typography>
-                      Co-pilot is proposing to add
+                      AI Assistant is proposing to add
                       <ul>
                         {(
                           currentImprovement.modifiedProperties[p]

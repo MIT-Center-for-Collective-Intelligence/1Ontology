@@ -697,7 +697,7 @@ const Improvements = ({
             <Typography
               sx={{ textAlign: "left", fontWeight: "bold", fontSize: "22px" }}
             >
-              Copilot Message:
+              AI Assistant Message:
             </Typography>
             <Typography sx={{ textAlign: "left" }}>{copilotMessage}</Typography>
           </Box>
