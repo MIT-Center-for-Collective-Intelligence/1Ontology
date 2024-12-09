@@ -1,20 +1,15 @@
 import {
-  Box,
   Button,
-  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   FormControl,
   InputLabel,
   MenuItem,
   Select,
-  TextField,
-  Typography,
 } from "@mui/material";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { DESIGN_SYSTEM_COLORS } from "../theme/colors";
 import { MODELS_OPTIONS } from "../utils/copilotPrompts";
 import CopilotPrompt from " @components/components/CopilotPrompt/CopilotPrompt";
@@ -184,40 +179,6 @@ const useSelectDropdown = () => {
           },
         }}
       >
-        {editPrompt && (
-          <CopilotPrompt
-            setGenerateNewNodes={setGenerateNewNodes}
-            proposeDeleteNode={proposeDeleteNode}
-            setProposeDeleteNodes={setProposeDeleteNodes}
-            generateNewNodes={generateNewNodes}
-            nodeType={nodeType}
-            selectedProperties={selectedProperties}
-            setSelectedProperties={setSelectedProperties}
-            inputProperties={inputProperties}
-            setInputProperties={setInputProperties}
-            nodes={nodes_Array}
-          />
-        )}
-        <TextField
-          autoFocus
-          margin="dense"
-          id="prompt-input"
-          label="Please write your instructions to co-pilot here:"
-          type="text"
-          value={inputValue}
-          onChange={handleInputChange}
-          fullWidth
-          multiline
-          sx={{
-            mx: "auto",
-            display: "block",
-            textAlign: "center",
-            "& .MuiInputLabel-root": {
-              color: "gray",
-            },
-          }}
-        />
-
         <FormControl fullWidth sx={{ mb: 2, mt: "15px" }}>
           <InputLabel>Select an LLM Option</InputLabel>
           <Select
@@ -232,31 +193,25 @@ const useSelectDropdown = () => {
             ))}
           </Select>
         </FormControl>
-        <TextField
-          margin="dense"
-          id="number-input"
-          type="number"
-          label={
-            <Box>
-              How far away from this node{" "}
-              <strong style={{ color: "orange" }}>{nodeTitle} </strong>
-              should I explore to propose improvements?
-            </Box>
-          }
-          value={numberValue || ""}
-          onChange={handleNumberChange}
-          fullWidth
-          inputProps={{ min: 0 }}
-          sx={{
-            mt: 3,
-            mx: "auto",
-            display: "block",
-            textAlign: "center",
-            "& .MuiInputLabel-root": {
-              color: "gray",
-            },
-          }}
-        />
+        {editPrompt && (
+          <CopilotPrompt
+            setGenerateNewNodes={setGenerateNewNodes}
+            proposeDeleteNode={proposeDeleteNode}
+            setProposeDeleteNodes={setProposeDeleteNodes}
+            generateNewNodes={generateNewNodes}
+            nodeType={nodeType}
+            selectedProperties={selectedProperties}
+            setSelectedProperties={setSelectedProperties}
+            inputProperties={inputProperties}
+            setInputProperties={setInputProperties}
+            nodes={nodes_Array}
+            nodeTitle={nodeTitle}
+            numberValue={numberValue}
+            handleNumberChange={handleNumberChange}
+            inputValue={inputValue}
+            handleInputChange={handleInputChange}
+          />
+        )}
       </DialogContent>
       <DialogActions sx={{ justifyContent: "center", mb: "5px" }}>
         <Button
