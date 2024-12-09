@@ -21,7 +21,6 @@ import { getNodesInThreeLevels } from "../utils/helpersCopilot";
 const useSelectDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [{ user }] = useAuth();
-  const editPrompt = user?.uname === "ouhrac" || user?.uname === "1man";
 
   const [selectedOption, setSelectedOption] = useState<{
     id: string;
@@ -120,7 +119,7 @@ const useSelectDropdown = () => {
   );
   const nodes_Array = useMemo(() => {
     const nodeData = nodes[nodeId];
-    if (!nodeData || !editPrompt) {
+    if (!nodeData) {
       return;
     }
     const n = getNodesInThreeLevels(nodeData, nodes, new Set(), numberValue);
@@ -193,25 +192,24 @@ const useSelectDropdown = () => {
             ))}
           </Select>
         </FormControl>
-        {editPrompt && (
-          <CopilotPrompt
-            setGenerateNewNodes={setGenerateNewNodes}
-            proposeDeleteNode={proposeDeleteNode}
-            setProposeDeleteNodes={setProposeDeleteNodes}
-            generateNewNodes={generateNewNodes}
-            nodeType={nodeType}
-            selectedProperties={selectedProperties}
-            setSelectedProperties={setSelectedProperties}
-            inputProperties={inputProperties}
-            setInputProperties={setInputProperties}
-            nodes={nodes_Array}
-            nodeTitle={nodeTitle}
-            numberValue={numberValue}
-            handleNumberChange={handleNumberChange}
-            inputValue={inputValue}
-            handleInputChange={handleInputChange}
-          />
-        )}
+
+        <CopilotPrompt
+          setGenerateNewNodes={setGenerateNewNodes}
+          proposeDeleteNode={proposeDeleteNode}
+          setProposeDeleteNodes={setProposeDeleteNodes}
+          generateNewNodes={generateNewNodes}
+          nodeType={nodeType}
+          selectedProperties={selectedProperties}
+          setSelectedProperties={setSelectedProperties}
+          inputProperties={inputProperties}
+          setInputProperties={setInputProperties}
+          nodes={nodes_Array}
+          nodeTitle={nodeTitle}
+          numberValue={numberValue}
+          handleNumberChange={handleNumberChange}
+          inputValue={inputValue}
+          handleInputChange={handleInputChange}
+        />
       </DialogContent>
       <DialogActions sx={{ justifyContent: "center", mb: "5px" }}>
         <Button
@@ -225,8 +223,7 @@ const useSelectDropdown = () => {
             numberValue === 0 ||
             (!generateNewNodes &&
               selectedProperties.size <= 0 &&
-              !proposeDeleteNode &&
-              editPrompt)
+              !proposeDeleteNode)
           }
         >
           Start
