@@ -97,7 +97,12 @@ const Chat = ({
     setIsLoading(true);
 
     const onSynchronize = (changes: chatChange[]) => {
-      setMessages((prev) => changes.reduce(synchronizeStuff, [...prev]));
+      setMessages((prev) => {
+        const updatedMessages = changes.reduce(synchronizeStuff, [...prev]);
+        return updatedMessages.sort((a, b) => 
+          b.createdAt.seconds - a.createdAt.seconds
+        );
+      });
       setIsLoading(false);
     };
 
