@@ -755,7 +755,7 @@ const Ontology = () => {
         if (firstElement) {
           firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-      }, 1000);
+      }, 500);
       // initializeExpanded(eachOntologyPath[node.id]);
       // Record the click action in logs
       if (searched) {
@@ -820,6 +820,8 @@ const Ontology = () => {
   }, [viewValue, currentVisibleNode]);
 
   const navigateToNode = async (nodeId: string) => {
+    // adding timeout to test if truncated issue persists
+    setTimeout(() => {
       if (nodes[nodeId]) {
         setCurrentVisibleNode(nodes[nodeId]);
         initializeExpanded(eachOntologyPath[nodeId]);
@@ -834,8 +836,9 @@ const Ontology = () => {
           if (firstElement) {
             firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
           }
-        }, 1000);
+        }, 500);
       }
+    }, 300);
   };
 
   const displaySidebar = useCallback(

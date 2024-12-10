@@ -5,6 +5,7 @@ import {
   CircularProgress,
   Paper,
   Typography,
+  Pagination,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import {
@@ -24,6 +25,8 @@ import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import ActivityDetails from "./ActivityDetails";
 
+const ITEMS_PER_PAGE = 15;
+
 const UserActivity = ({
   openLogsFor,
   displayDiff,
@@ -36,10 +39,13 @@ const UserActivity = ({
   const db = getFirestore();
   const [logs, setLogs] = useState<(NodeChange & { id: string })[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   useEffect(() => {
     if (!openLogsFor?.uname) return;
+
     setLogs([]);
+    setCurrentPage(1);
 
     const nodesQuery = query(
       collection(db, NODES_LOGS),
@@ -50,19 +56,26 @@ const UserActivity = ({
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
       const docChanges = snapshot.docChanges();
-      setLogs((prev: (NodeChange & { id: string })[]) => {
-        for (let change of docChanges) {
-          const changeData = change.doc.data() as NodeChange;
-          const id = change.doc.id;
-          prev.push({ ...changeData, id });
-        }
-        return prev;
+      const fetchedLogs = docChanges.map(change => {
+        const changeData = change.doc.data() as NodeChange;
+        const id = change.doc.id;
+        return { ...changeData, id };
       });
+
+      setLogs(fetchedLogs);
       setLoading(false);
     });
 
     return () => unsubscribeNodes();
   }, [db, openLogsFor?.uname]);
+
+  const indexOfLastLog = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstLog = indexOfLastLog - ITEMS_PER_PAGE;
+  const currentLogs = logs.slice(indexOfFirstLog, indexOfLastLog);
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setCurrentPage(value);
+  };
 
   if (loading) {
     return (
@@ -120,15 +133,10 @@ const UserActivity = ({
           </Box>
         </Box>
       )}
-      {logs.length > 0 &&
-        logs
-          .sort((a: any, b: any) => {
-            return (
-              new Date(b.modifiedAt.toDate()).getTime() -
-              new Date(a.modifiedAt.toDate()).getTime()
-            );
-          })
-          .map((log) => (
+
+      {logs.length > 0 && (
+        <>
+          {currentLogs.map((log) => (
             <ActivityDetails
               key={log.id}
               activity={log}
@@ -136,6 +144,26 @@ const UserActivity = ({
               isSelected={selectedDiffNode?.id === log.id}
             />
           ))}
+
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              mt: 8,
+              mb: 2,
+            }}
+          >
+            <Pagination
+              count={Math.ceil(logs.length / ITEMS_PER_PAGE)}
+              page={currentPage}
+              onChange={handlePageChange}
+              color="primary"
+              showFirstButton
+              showLastButton
+            />
+          </Box>
+        </>
+      )}
     </Box>
   );
 };
