@@ -8,3 +8,4 @@ export const NODES_LOGS = "nodeLogs";
 export const GUIDELINES = "guidelines";
 export const PROMPT_LOGS = "promptLogs";
 export const COPILOT_PROMPTS = "copilotPrompts";
+export const NODES_ONET = "oNetNodes";
