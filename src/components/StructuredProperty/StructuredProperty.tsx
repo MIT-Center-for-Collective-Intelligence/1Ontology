@@ -567,6 +567,7 @@ const StructuredProperty = ({
             model={!!selectedProperty}
             setModifiedOrder={setModifiedOrder}
             glowIds={glowIds}
+            scrollToElement={scrollToElement}
           />
         )}
       </Box>

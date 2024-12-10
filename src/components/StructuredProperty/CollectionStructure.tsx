@@ -73,6 +73,7 @@ const CollectionStructure = ({
   selectedProperty,
   setModifiedOrder,
   glowIds,
+  scrollToElement,
 }: {
   model?: boolean;
   locked: boolean;
@@ -100,6 +101,7 @@ const CollectionStructure = ({
   selectedProperty: string;
   setModifiedOrder: any;
   glowIds: Set<string>;
+  scrollToElement: (elementId: string) => void;
 }) => {
   const db = getFirestore();
   const [{ emailVerified, user }] = useAuth();
@@ -466,25 +468,23 @@ const CollectionStructure = ({
   const replaceWith = useCallback(
     async (partId: string, id: string) => {
       try {
+        scrollToElement(partId);
         if (model) {
           setEditableProperty((prev: ICollection[]) => {
             const _prev = [...prev];
-            _prev[0].nodes = _prev[0].nodes.filter((n) => n.id !== id);
-            propertyValue[0].nodes.push({
-              id: partId,
-            });
+            const elementIdx = _prev[0].nodes.findIndex((n) => n.id === id);
+            _prev[0].nodes[elementIdx].id = partId;
             return _prev;
           });
           return;
         }
 
         if (property === "parts" && currentVisibleNode.id) {
-          propertyValue[0].nodes = propertyValue[0].nodes.filter(
-            (n: { id: string }) => n.id !== id
+          const elementIdx = propertyValue[0].nodes.findIndex(
+            (n: { id: string }) => n.id === id
           );
-          propertyValue[0].nodes.push({
-            id: partId,
-          });
+          propertyValue[0].nodes[elementIdx].id = partId;
+
           const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
 
           updateDoc(nodeRef, {

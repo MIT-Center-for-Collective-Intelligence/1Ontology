@@ -698,7 +698,7 @@ const LinkNode = ({
                 sx={{ p: 0.3, m: "6px", bgcolor: "green" }}
                 disabled={!newPart.trim()}
               >
-                <SwapVertIcon />
+                <SwapVertIcon sx={{ color: !!newPart.trim() ? "white" : "" }} />
               </IconButton>
             </Tooltip>
           )}
@@ -711,7 +711,7 @@ const LinkNode = ({
                 }}
                 sx={{ p: 0.3, m: "6px", bgcolor: "red" }}
               >
-                <CloseIcon />
+                <CloseIcon sx={{ color: "white" }} />
               </IconButton>
             </Tooltip>
           )}
