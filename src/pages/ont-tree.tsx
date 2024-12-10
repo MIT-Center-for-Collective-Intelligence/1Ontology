@@ -76,7 +76,8 @@ function OntTree() {
           fontSize: "35px",
           position: "sticky",
           top: 0,
-          backgroundColor: "white",
+          backgroundColor: (theme) =>
+            theme.palette.mode === "dark" ? "#28282a" : "white",
           zIndex: 5,
         }}
       >
