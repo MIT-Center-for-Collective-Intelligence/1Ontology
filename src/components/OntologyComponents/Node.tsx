@@ -251,10 +251,12 @@ const Node = ({
   const addACloneNodeQueue = (nodeId: string, title?: string) => {
     const newId = doc(collection(db, NODES)).id;
     const newTitle = title ? title : `New ${nodes[nodeId].title}`;
-    setClonedNodesQueue((prev) => {
-      prev[newId] = { title: newTitle, id: nodeId };
-      return prev;
-    });
+    setClonedNodesQueue(
+      (prev: { [nodeId: string]: { title: string; id: string } }) => {
+        prev[newId] = { title: newTitle, id: nodeId };
+        return prev;
+      }
+    );
     setNewOnes((newOnes: any) => {
       let _oldChecked = new Set(newOnes);
       if (_oldChecked.has(newId)) {
