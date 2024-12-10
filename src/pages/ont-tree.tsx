@@ -77,6 +77,7 @@ function OntTree() {
           position: "sticky",
           top: 0,
           backgroundColor: "white",
+          zIndex: 5,
         }}
       >
         ONet
