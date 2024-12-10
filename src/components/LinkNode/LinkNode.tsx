@@ -548,7 +548,9 @@ const LinkNode = ({
     <Box
       id={`${link.id}-${property}`}
       sx={{
-        backgroundColor: !!swapIt ? "#5f5e5d" : "",
+        backgroundColor: !!swapIt
+          ? (theme) => (theme.palette.mode === "dark" ? "#5f5e5d" : "#d9dfe6")
+          : "",
         borderRadius: "25px",
         p: !!swapIt ? 1 : "",
         my: swapIt ? "5px" : "",
