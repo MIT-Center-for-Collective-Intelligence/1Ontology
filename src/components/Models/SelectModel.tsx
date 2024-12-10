@@ -39,7 +39,7 @@ const SelectModelModal = ({
   setSearchValue,
   searchValue,
   searchResultsForSelection,
-  selectedCategory,
+
   checkedItems,
   setCheckedItems,
   checkedItemsCopy,
@@ -76,7 +76,6 @@ const SelectModelModal = ({
   setSearchValue: any;
   searchValue: any;
   searchResultsForSelection: any;
-  selectedCategory: any;
   setCheckedItems: any;
   setCheckedItemsCopy: any;
   checkedItemsCopy: any;
@@ -371,7 +370,7 @@ const SelectModelModal = ({
         stopPropagation={
           selectedProperty === "generalizations" ? currentVisibleNode.id : ""
         }
-        preventLoops={getPath(currentVisibleNode.id, selectedCategory)}
+        preventLoops={getPath(currentVisibleNode.id, selectedProperty)}
         manageLock={user?.manageLock}
         cloning={cloning}
         addACloneNodeQueue={_add}

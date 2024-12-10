@@ -169,6 +169,32 @@ const Ontology = () => {
   const [prevHash, setPrevHash] = useState("");
   const [lastSearches, setLastSearches] = useState<any[]>([]);
   const [selectedChatTab, setSelectedChatTab] = useState<number>(0);
+  /*  */
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [checkedItemsCopy, setCheckedItemsCopy] = useState<Set<string>>(
+    new Set()
+  );
+  const [searchValue, setSearchValue] = useState("");
+  const [clonedNodesQueue, setClonedNodesQueue] = useState<{
+    [nodeId: string]: { title: string; id: string };
+  }>({});
+  const [newOnes, setNewOnes] = useState(new Set());
+  const [selectedProperty, setSelectedProperty] = useState("");
+  const [removedElements, setRemovedElements] = useState<Set<string>>(
+    new Set()
+  );
+  const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
+
+  const handleCloseAddLinksModel = () => {
+    setCheckedItems(new Set());
+    setSearchValue("");
+    setClonedNodesQueue({});
+    setNewOnes(new Set());
+    setSelectedProperty("");
+    setAddedElements(new Set());
+    setRemovedElements(new Set());
+    setCheckedItemsCopy(new Set());
+  };
 
   useEffect(() => {
     if (user) {
@@ -422,7 +448,7 @@ const Ontology = () => {
     let newSpecializationsTree: any = {};
 
     if (_nodes.length === 0) return {};
-    
+
     for (let node of _nodes) {
       if (!node || visited.has(node.id)) {
         continue;
@@ -462,7 +488,8 @@ const Ontology = () => {
               visited
             ),
           };
-          newSpecializationsTree[node.id].generalizations = node.generalizations[0].nodes;
+          newSpecializationsTree[node.id].generalizations =
+            node.generalizations[0].nodes;
         } else {
           newSpecializationsTree[node.id].specializations[
             collection.collectionName
@@ -820,22 +847,23 @@ const Ontology = () => {
   }, [viewValue, currentVisibleNode]);
 
   const navigateToNode = async (nodeId: string) => {
-      if (nodes[nodeId]) {
-        setCurrentVisibleNode(nodes[nodeId]);
-        initializeExpanded(eachOntologyPath[nodeId]);
-        setSelectedDiffNode(null);
-        setTimeout(() => {
-          // Retrieve elements with the class name based on the nodeId
-          // Since the same node may be displayed multiple times across different parents, using unique IDs alone is not sufficient.
-          // MUI TreeView handles IDs internally, so adding an additional class to each node allows for easier access and manipulation later on.
-          const elements = document.getElementsByClassName("node-" + nodeId);
-          const firstElement = elements.length > 0 ? elements[0] : null; // Safely access the first element
-  
-          if (firstElement) {
-            firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
-          }
-        }, 1000);
-      }
+    if (nodes[nodeId]) {
+      setCurrentVisibleNode(nodes[nodeId]);
+      initializeExpanded(eachOntologyPath[nodeId]);
+      setSelectedDiffNode(null);
+      setTimeout(() => {
+        // Retrieve elements with the class name based on the nodeId
+        // Since the same node may be displayed multiple times across different parents, using unique IDs alone is not sufficient.
+        // MUI TreeView handles IDs internally, so adding an additional class to each node allows for easier access and manipulation later on.
+        const elements = document.getElementsByClassName("node-" + nodeId);
+        const firstElement = elements.length > 0 ? elements[0] : null; // Safely access the first element
+
+        if (firstElement) {
+          firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 1000);
+      handleCloseAddLinksModel();
+    }
   };
 
   const displaySidebar = useCallback(
@@ -970,7 +998,7 @@ const Ontology = () => {
                     expandedNodes={expandedNodes}
                     onOpenNodeDagre={onOpenNodeDagre}
                     currentVisibleNode={currentVisibleNode}
-                  // nodes={nodes}
+                    // nodes={nodes}
                   />
                 </TabPanel>
               </Box>
@@ -1053,6 +1081,23 @@ const Ontology = () => {
                   activeSidebar={activeSidebar}
                   currentImprovement={currentImprovement}
                   setNodes={setNodes}
+                  checkedItems={checkedItems}
+                  setCheckedItems={setCheckedItems}
+                  checkedItemsCopy={checkedItemsCopy}
+                  setCheckedItemsCopy={setCheckedItemsCopy}
+                  searchValue={searchValue}
+                  setSearchValue={setSearchValue}
+                  clonedNodesQueue={clonedNodesQueue}
+                  setClonedNodesQueue={setClonedNodesQueue}
+                  newOnes={newOnes}
+                  setNewOnes={setNewOnes}
+                  selectedProperty={selectedProperty}
+                  setSelectedProperty={setSelectedProperty}
+                  removedElements={removedElements}
+                  setRemovedElements={setRemovedElements}
+                  addedElements={addedElements}
+                  setAddedElements={setAddedElements}
+                  handleCloseAddLinksModel={handleCloseAddLinksModel}
                 />
               )}
             </Box>

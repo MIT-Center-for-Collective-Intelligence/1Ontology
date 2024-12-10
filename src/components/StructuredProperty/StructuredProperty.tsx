@@ -46,7 +46,7 @@ type IStructuredPropertyProps = {
   setSearchValue?: any;
   searchValue?: any;
   searchResultsForSelection?: any;
-  selectedCategory?: any;
+
   checkedItems?: any;
   setCheckedItems?: any;
   setCheckedItemsCopy?: any;
@@ -95,7 +95,6 @@ const StructuredProperty = ({
   setSearchValue,
   searchValue,
   searchResultsForSelection,
-  selectedCategory,
   checkedItems,
   setCheckedItems,
   setCheckedItemsCopy,
@@ -581,7 +580,6 @@ const StructuredProperty = ({
           setSearchValue={setSearchValue}
           searchValue={searchValue}
           searchResultsForSelection={searchResultsForSelection}
-          selectedCategory={selectedCategory}
           checkedItems={checkedItems}
           setCheckedItems={setCheckedItems}
           setCheckedItemsCopy={setCheckedItemsCopy}

@@ -143,6 +143,23 @@ type INodeProps = {
   activeSidebar: any;
   currentImprovement: any;
   setNodes: any;
+  checkedItems: any;
+  setCheckedItems: any;
+  checkedItemsCopy: any;
+  setCheckedItemsCopy: any;
+  searchValue: any;
+  setSearchValue: any;
+  clonedNodesQueue: any;
+  setClonedNodesQueue: any;
+  newOnes: any;
+  setNewOnes: any;
+  selectedProperty: any;
+  setSelectedProperty: any;
+  removedElements: any;
+  setRemovedElements: any;
+  addedElements: any;
+  setAddedElements: any;
+  handleCloseAddLinksModel: any;
 };
 
 const Node = ({
@@ -161,49 +178,40 @@ const Node = ({
   currentImprovement,
   eachOntologyPath,
   setNodes,
+  checkedItems,
+  setCheckedItems,
+  checkedItemsCopy,
+  setCheckedItemsCopy,
+  searchValue,
+  setSearchValue,
+  clonedNodesQueue,
+  setClonedNodesQueue,
+  newOnes,
+  setNewOnes,
+  selectedProperty,
+  setSelectedProperty,
+  removedElements,
+  setRemovedElements,
+  addedElements,
+  setAddedElements,
+  handleCloseAddLinksModel,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
   const isSmallScreen = useMediaQuery("(max-width: 600px)");
 
-  const [openSelectModel, setOpenSelectModel] = useState(false);
   const [cloning, setCloning] = useState<string | null>(null);
 
-  const [selectedProperty, setSelectedProperty] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
-  const [checkedItemsCopy, setCheckedItemsCopy] = useState<Set<string>>(
-    new Set()
-  );
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
-  const [searchValue, setSearchValue] = useState("");
   const [selectTitle, setSelectTitle] = useState(false);
   const db = getFirestore();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [width, setWidth] = useState<number>(0);
-  const [clonedNodesQueue, setClonedNodesQueue] = useState<{
-    [nodeId: string]: { title: string; id: string };
-  }>({});
-  const [newOnes, setNewOnes] = useState(new Set());
+
   const [editableProperty, setEditableProperty] = useState<ICollection[]>([]);
-  const [removedElements, setRemovedElements] = useState<Set<string>>(
-    new Set()
-  );
-  const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
+
   /* */
   const [glowIds, setGlowIds] = useState<Set<string>>(new Set());
-
-  const handleCloseAddLinksModel = () => {
-    setCheckedItems(new Set());
-    setOpenSelectModel(false);
-    setSelectedCategory("");
-    setSearchValue("");
-    setClonedNodesQueue({});
-    setNewOnes(new Set());
-    setSelectedProperty("");
-    setAddedElements(new Set());
-    setRemovedElements(new Set());
-  };
 
   useEffect(() => {
     const element = document.getElementById("node-section");
@@ -392,15 +400,14 @@ const Node = ({
 
           if (Array.isArray(newNode.properties[mProperty])) {
             const targetPropertyCollection = newNode.properties[mProperty].find(
-              (collection) =>
-                collection.collectionName === (selectedCategory || "main")
+              (collection) => collection.collectionName === "main"
             );
 
             // If the property collection does not exist, create it
 
             if (!targetPropertyCollection) {
               newNode.properties[mProperty].push({
-                collectionName: selectedCategory || "main",
+                collectionName: "main",
                 nodes: [],
               });
             }
@@ -408,10 +415,7 @@ const Node = ({
             // Push the new node ID into the corresponding property collection
             const propertyCollectionToUpdate = newNode.properties[
               mProperty
-            ].find(
-              (collection) =>
-                collection.collectionName === (selectedCategory || "main")
-            );
+            ].find((collection) => collection.collectionName === "main");
             propertyCollectionToUpdate?.nodes.push({ id: newNode.id });
             if (!newNode.propertyOf) {
               newNode.propertyOf = {
@@ -527,7 +531,7 @@ const Node = ({
         return null;
       }
     },
-    [db, user.uname, selectedCategory, nodes, currentVisibleNode.id]
+    [db, user.uname, nodes, currentVisibleNode.id]
   );
 
   // This function handles the cloning of a node.
@@ -546,7 +550,7 @@ const Node = ({
     if (selectedProperty) {
       handleCloseAddLinksModel();
     }
-    setOpenSelectModel(true);
+
     setSelectedProperty(property);
 
     let previousCheckedItems: string[] = [];
@@ -952,11 +956,11 @@ const Node = ({
     }
   };
   const getPath = useCallback(
-    (nodeId: string, selectedCategory: string): Set<string> => {
-      if (selectedCategory === "generalizations") {
+    (nodeId: string, selectedProperty: string): Set<string> => {
+      if (selectedProperty === "generalizations") {
         return new Set([nodeId]);
       }
-      if (selectedCategory === "specializations") {
+      if (selectedProperty === "specializations") {
         return new Set(eachOntologyPath[nodeId].map((p: any) => p.id));
       }
       return new Set();
@@ -1075,7 +1079,6 @@ const Node = ({
             setSearchValue={setSearchValue}
             searchValue={searchValue}
             searchResultsForSelection={searchResultsForSelection}
-            selectedCategory={selectedCategory}
             checkedItems={checkedItems}
             setCheckedItems={setCheckedItems}
             setCheckedItemsCopy={setCheckedItemsCopy}
@@ -1133,7 +1136,6 @@ const Node = ({
               setSearchValue={setSearchValue}
               searchValue={searchValue}
               searchResultsForSelection={searchResultsForSelection}
-              selectedCategory={selectedCategory}
               checkedItems={checkedItems}
               setCheckedItems={setCheckedItems}
               setCheckedItemsCopy={setCheckedItemsCopy}
@@ -1194,7 +1196,6 @@ const Node = ({
               setSearchValue={setSearchValue}
               searchValue={searchValue}
               searchResultsForSelection={searchResultsForSelection}
-              selectedCategory={selectedCategory}
               checkedItems={checkedItems}
               setCheckedItems={setCheckedItems}
               setCheckedItemsCopy={setCheckedItemsCopy}
@@ -1246,7 +1247,6 @@ const Node = ({
           setSearchValue={setSearchValue}
           searchValue={searchValue}
           searchResultsForSelection={searchResultsForSelection}
-          selectedCategory={selectedCategory}
           checkedItems={checkedItems}
           setCheckedItems={setCheckedItems}
           setCheckedItemsCopy={setCheckedItemsCopy}

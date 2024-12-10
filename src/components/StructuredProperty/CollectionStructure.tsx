@@ -473,7 +473,10 @@ const CollectionStructure = ({
           setEditableProperty((prev: ICollection[]) => {
             const _prev = [...prev];
             const elementIdx = _prev[0].nodes.findIndex((n) => n.id === id);
-            _prev[0].nodes[elementIdx].id = partId;
+            const existIdx = _prev[0].nodes.findIndex((n) => n.id === partId);
+            if (existIdx === -1) {
+              _prev[0].nodes[elementIdx].id = partId;
+            }
             return _prev;
           });
           return;
@@ -483,19 +486,23 @@ const CollectionStructure = ({
           const elementIdx = propertyValue[0].nodes.findIndex(
             (n: { id: string }) => n.id === id
           );
-          propertyValue[0].nodes[elementIdx].id = partId;
+          const existIdx = propertyValue[0].nodes.findIndex(
+            (n: { id: string }) => n.id === partId
+          );
+          if (existIdx === -1) {
+            propertyValue[0].nodes[elementIdx].id = partId;
+            const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
 
-          const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-
-          updateDoc(nodeRef, {
-            "properties.parts": propertyValue,
-          });
-          if (currentVisibleNode.inheritance.parts.ref) {
-            updateInheritance({
-              nodeId: currentVisibleNode.id,
-              updatedProperties: ["parts"],
-              db,
+            updateDoc(nodeRef, {
+              "properties.parts": propertyValue,
             });
+            if (currentVisibleNode.inheritance.parts.ref) {
+              updateInheritance({
+                nodeId: currentVisibleNode.id,
+                updatedProperties: ["parts"],
+                db,
+              });
+            }
           }
         }
       } catch (error) {
