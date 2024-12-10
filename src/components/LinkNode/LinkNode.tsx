@@ -571,7 +571,8 @@ const LinkNode = ({
           ":hover": {
             backgroundColor: clonedNodesQueue.hasOwnProperty(link.id)
               ? ""
-              : "#5f5e5d",
+              : (theme) =>
+                  theme.palette.mode === "dark" ? "#5f5e5d" : "#d9dfe6",
           },
         }}
       >
