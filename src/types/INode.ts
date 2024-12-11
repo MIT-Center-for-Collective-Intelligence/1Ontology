@@ -79,6 +79,18 @@ export type INode = {
   contributors?: string[];
   category?: boolean;
   locked?: boolean;
+  images?: {
+    url: string;
+    path: string;
+    uploadedAt: Timestamp;
+    uploadedBy: {
+      fName: string;
+      lName: string;
+      uname: string;
+      imageUrl: string;
+      userId: string;
+    }
+  }[];
 };
 
 export type TreeVisual = {
@@ -132,7 +144,9 @@ export type NodeChange = {
     | "add node"
     | "add collection"
     | "delete collection"
-    | "edit collection";
+    | "edit collection"
+    | "add images"
+    | "remove images";
   fullNode: INode | null;
   changeDetails?: { [key: string]: any };
   reasoning?: string;
