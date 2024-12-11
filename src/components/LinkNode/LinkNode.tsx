@@ -667,9 +667,8 @@ const LinkNode = ({
       {swapIt && property === "parts" && !selectedDiffNode && (
         <Box>
           {getSpecializations(link.id).map((n) => (
-            <Tooltip title="Replace with" placement="left">
+            <Tooltip key={n.id} title="Replace with" placement="left">
               <Box
-                key={n.id}
                 sx={{
                   display: "flex",
                   alignItems: "center",
