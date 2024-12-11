@@ -128,6 +128,8 @@ import { NodeChange } from " @components/types/INode";
 import { User } from " @components/types/IAuth";
 import SelectModelModal from "../Models/SelectModel";
 import VisualizeTheProperty from "../StructuredProperty/VisualizeTheProperty";
+import { NodeImageManager } from "../NodBody/NodeImageManager";
+import { getStorage } from "firebase/storage";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -181,6 +183,7 @@ const Node = ({
   const [searchValue, setSearchValue] = useState("");
   const [selectTitle, setSelectTitle] = useState(false);
   const db = getFirestore();
+  const storage = getStorage();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [width, setWidth] = useState<number>(0);
   const [clonedNodesQueue, setClonedNodesQueue] = useState<{
@@ -1131,6 +1134,18 @@ const Node = ({
           onGetPropertyValue={onGetPropertyValue}
           currentImprovement={currentImprovement}
         />
+
+        <NodeImageManager
+          nodeId={currentVisibleNode.id}
+          currentVisibleNode={currentVisibleNode}
+          user={user}
+          firestore={db}
+          storage={storage}
+          confirmIt={confirmIt}
+          saveNewChangeLog={saveNewChangeLog}
+          selectedDiffNode={selectedDiffNode}
+        />
+
       </Box>
       <SelectModelModal
         openSelectModel={openSelectModel}
