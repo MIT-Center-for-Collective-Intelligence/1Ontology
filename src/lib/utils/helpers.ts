@@ -585,6 +585,10 @@ export const getChangeDescription = (
           ? "Generalization"
           : capitalizeFirstLetter(modifiedProperty || "")
       } Under:`;
+    case "add images":
+      return `Added new "Image" in:`
+    case "remove images":
+      return `Removed "Image" in:`
     default:
       return `Made an unknown change to:`;
   }
