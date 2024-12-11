@@ -126,6 +126,8 @@ import {
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
 import { NodeChange } from " @components/types/INode";
 import { User } from " @components/types/IAuth";
+import { NodeImageManager } from "../NodBody/NodeImageManager";
+import { getStorage } from "firebase/storage";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -205,6 +207,7 @@ const Node = ({
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [selectTitle, setSelectTitle] = useState(false);
   const db = getFirestore();
+  const storage = getStorage();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [width, setWidth] = useState<number>(0);
 
@@ -972,7 +975,7 @@ const Node = ({
 
   /* "root": "T
   of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'.
-  The user should not be able to modify the value of this field. Please automatically specify
+  The user should not be able to modify the value of this field. Please automatically specify
   it by tracing the generalizations of this descendent activity back to reach one of the direct specializations 
   of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. So, obviously the root of the node 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'
   itself and its direct specializations would be empty string because they are already roots."*/
@@ -1276,6 +1279,18 @@ const Node = ({
           glowIds={glowIds}
           setGlowIds={setGlowIds}
         />
+
+        <NodeImageManager
+          nodeId={currentVisibleNode.id}
+          currentVisibleNode={currentVisibleNode}
+          user={user}
+          firestore={db}
+          storage={storage}
+          confirmIt={confirmIt}
+          saveNewChangeLog={saveNewChangeLog}
+          selectedDiffNode={selectedDiffNode}
+        />
+        
       </Box>{" "}
       {ConfirmDialog}
     </Box>
