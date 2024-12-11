@@ -667,26 +667,36 @@ const LinkNode = ({
       {swapIt && property === "parts" && !selectedDiffNode && (
         <Box>
           {getSpecializations(link.id).map((n) => (
-            <Box
-              key={n.id}
-              sx={{ display: "flex", alignItems: "center", px: 1, pl: 0 }}
-            >
-              <Tooltip title="Replace with" placement="left">
-                <IconButton
-                  sx={{ p: 0.2, m: "6px" }}
-                  onClick={() => {
-                    replaceWith(n.id, link.id);
-                  }}
-                >
-                  <SwapVertIcon />
+            <Tooltip title="Replace with" placement="left">
+              <Box
+                key={n.id}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  px: 1,
+                  pl: 0,
+                  borderRadius: "25px",
+                  cursor: "pointer",
+                  ":hover": {
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark" ? "#858381" : "#bec4cc",
+                  },
+                }}
+                onClick={() => {
+                  replaceWith(n.id, link.id);
+                }}
+              >
+                <IconButton sx={{ p: 0.2, m: "6px" }}>
+                  <SwapHorizIcon />
                 </IconButton>
-              </Tooltip>
-              <Typography>{nodes[n.id]?.title}</Typography>
-            </Box>
+
+                <Typography>{nodes[n.id]?.title}</Typography>
+              </Box>
+            </Tooltip>
           ))}{" "}
           {addNew && (
             <Tooltip
-              title="Save"
+              title="Save and replace with"
               placement="top"
               sx={{ mt: "15px", alignItems: "center" }}
             >
@@ -698,7 +708,9 @@ const LinkNode = ({
                 sx={{ p: 0.3, m: "6px", bgcolor: "green" }}
                 disabled={!newPart.trim()}
               >
-                <SwapVertIcon sx={{ color: !!newPart.trim() ? "white" : "" }} />
+                <SwapHorizIcon
+                  sx={{ color: !!newPart.trim() ? "white" : "" }}
+                />
               </IconButton>
             </Tooltip>
           )}

@@ -481,7 +481,8 @@ const StructuredProperty = ({
               </LoadingButton>
             </Box>
           )}
-          {!currentVisibleNode.unclassified &&
+          {(!currentVisibleNode.unclassified ||
+            property === "specializations") &&
             selectedProperty !== property &&
             !selectedDiffNode &&
             !currentImprovement &&
