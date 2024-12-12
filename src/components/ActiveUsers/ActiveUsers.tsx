@@ -19,6 +19,7 @@ const ActiveUsers = ({
   handleExpand,
   fullVersion,
   activeUsers,
+  currentUser,
 }: {
   nodes: any;
   displayUserLogs: any;
@@ -26,6 +27,7 @@ const ActiveUsers = ({
   handleExpand: any;
   fullVersion: any;
   activeUsers: any;
+  currentUser: any;
 }) => {
   const theme = useTheme();
 
@@ -144,7 +146,7 @@ const ActiveUsers = ({
                       borderRadius: "50%",
                       objectFit: "cover",
                     }}
-                    online={isOnline(u.lastInteracted)}
+                    online={(currentUser?.uname && u.uname && currentUser.uname === u.uname) || isOnline(u.lastInteracted)}
                   />
                 </Badge>
               </Box>
