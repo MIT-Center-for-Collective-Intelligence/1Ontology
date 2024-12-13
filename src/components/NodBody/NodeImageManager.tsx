@@ -42,6 +42,7 @@ import OptimizedAvatar from '../Chat/OptimizedAvatar';
 import dayjs from 'dayjs';
 import useDialog from ' @components/lib/hooks/useConfirmDialog';
 import { INode, NodeChange } from ' @components/types/INode';
+import PropertyContributors from '../StructuredProperty/PropertyContributors';
 
 type UploadUserInfo = {
   userId: string;
@@ -364,6 +365,10 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
           >
             Images
           </Typography>
+          <PropertyContributors
+            currentVisibleNode={currentVisibleNode}
+            property={'images'}
+          />
         </Box>
         <Box sx={{ p: '16px', mt: 'auto' }}>
           <Box

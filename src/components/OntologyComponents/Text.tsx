@@ -39,6 +39,7 @@ import YjsEditor from "../YJSEditor/YjsEditor";
 import SimpleEditor from "../YJSEditor/SimpleEditor";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import { WebsocketProvider } from "y-websocket";
+import PropertyContributors from "../StructuredProperty/PropertyContributors";
 // import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ITextProps = {
@@ -325,49 +326,55 @@ const Text = ({
               )}
             </Typography>
           </Tooltip>
+          <Box sx={{ display: "flex", ml: "auto", gap: "14px" }}>
+            <PropertyContributors
+              currentVisibleNode={currentVisibleNode}
+              property={property}
+            />
 
-          {selectedDiffNode &&
-            selectedDiffNode.changeType === "delete node" &&
-            property === "title" && (
-              <Typography sx={{ mx: "5px", ml: "145px", fontWeight: "bold" }}>
-                DELETED NODE
+            {selectedDiffNode &&
+              selectedDiffNode.changeType === "delete node" &&
+              property === "title" && (
+                <Typography sx={{ mx: "5px", ml: "145px", fontWeight: "bold" }}>
+                  DELETED NODE
+                </Typography>
+              )}
+            {currentVisibleNode.inheritance[property]?.ref && (
+              <Typography sx={{ fontSize: "14px", ml: "9px" }}>
+                {'(Inherited from "'}
+                {getTitleNode(currentVisibleNode.inheritance[property].ref || "")}
+                {'")'}
               </Typography>
             )}
-          {currentVisibleNode.inheritance[property]?.ref && (
-            <Typography sx={{ fontSize: "14px", ml: "9px" }}>
-              {'(Inherited from "'}
-              {getTitleNode(currentVisibleNode.inheritance[property].ref || "")}
-              {'")'}
-            </Typography>
-          )}
 
-          {property === "title" &&
-            !selectedDiffNode &&
-            displaySidebar &&
-            !currentImprovement && (
-              <ManageNodeButtons
-                locked={locked}
-                lockedInductor={!!currentVisibleNode.locked}
-                root={root}
-                manageLock={manageLock}
-                deleteNode={deleteNode}
-                getTitleNode={getTitleNode}
-                handleLockNode={handleLockNode}
-                navigateToNode={navigateToNode}
-                displaySidebar={displaySidebar}
-                activeSidebar={activeSidebar}
-                unclassified={!!currentVisibleNode.unclassified}
-              />
-            )}
-          {property !== "title" &&
-            !currentImprovement &&
-            !currentVisibleNode.unclassified && (
-              <SelectInheritance
-                currentVisibleNode={currentVisibleNode}
-                property={property}
-                nodes={nodes}
-              />
-            )}
+            {property === "title" &&
+              !selectedDiffNode &&
+              displaySidebar &&
+              !currentImprovement && (
+                <ManageNodeButtons
+                  locked={locked}
+                  lockedInductor={!!currentVisibleNode.locked}
+                  root={root}
+                  manageLock={manageLock}
+                  deleteNode={deleteNode}
+                  getTitleNode={getTitleNode}
+                  handleLockNode={handleLockNode}
+                  navigateToNode={navigateToNode}
+                  displaySidebar={displaySidebar}
+                  activeSidebar={activeSidebar}
+                  unclassified={!!currentVisibleNode.unclassified}
+                />
+              )}
+            {property !== "title" &&
+              !currentImprovement &&
+              !currentVisibleNode.unclassified && (
+                <SelectInheritance
+                  currentVisibleNode={currentVisibleNode}
+                  property={property}
+                  nodes={nodes}
+                />
+              )}
+          </Box>
         </Box>
       )}
       <Typography color="red" sx={{ pl: "5px" }}>
