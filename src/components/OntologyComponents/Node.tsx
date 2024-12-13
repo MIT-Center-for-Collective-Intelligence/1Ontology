@@ -128,6 +128,7 @@ import { NodeChange } from " @components/types/INode";
 import { User } from " @components/types/IAuth";
 import { NodeImageManager } from "../NodBody/NodeImageManager";
 import { getStorage } from "firebase/storage";
+import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -1231,6 +1232,8 @@ const Node = ({
             />
           ))}
         </Stack>
+
+        <NodeActivityFlow node={currentVisibleNode} nodes={nodes}/>
 
         {/* rest of the properties in the NodeBody*/}
         <NodeBody
