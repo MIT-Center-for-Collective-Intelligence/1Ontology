@@ -262,7 +262,7 @@ IMPORTANT NOTES:
 export const MODELS_OPTIONS = [
   { id: "o1-preview", title: "O1" },
   { id: "chatgpt-4o-latest", title: "GPT-4o latest" },
-  { id: "gemini-exp-1121", title: "Gemini 1.5 PRO" },
+  { id: "gemini-2.0-flash-exp", title: "GEMINI-2.0 FLASH EXP" },
 ];
 const properties = {
   allTypes: [
