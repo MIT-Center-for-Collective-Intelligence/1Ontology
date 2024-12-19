@@ -15,6 +15,7 @@ import {
 } from " @components/lib/utils/helpers";
 import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
 import { NODES } from " @components/lib/firestoreClient/collections";
+import PropertyContributors from "./PropertyContributors";
 
 const ChipsProperty = ({
   currentVisibleNode,
@@ -61,10 +62,10 @@ const ChipsProperty = ({
     }
     const result = currentVisibleNode.inheritance[property]?.ref
       ? getPropertyValue(
-          nodes,
-          currentVisibleNode.inheritance[property]?.ref,
-          property
-        )
+        nodes,
+        currentVisibleNode.inheritance[property]?.ref,
+        property
+      )
       : currentVisibleNode.properties[property];
 
     return Array.isArray(result) &&
@@ -197,13 +198,19 @@ const ChipsProperty = ({
           </Typography>
         </Tooltip>
 
-        {!currentImprovement && !currentVisibleNode.unclassified && (
-          <SelectInheritance
+        <Box sx={{ display: "flex", ml: "auto", gap: "14px" }}>
+          <PropertyContributors
             currentVisibleNode={currentVisibleNode}
             property={property}
-            nodes={nodes}
           />
-        )}
+          {!currentImprovement && !currentVisibleNode.unclassified && (
+            <SelectInheritance
+              currentVisibleNode={currentVisibleNode}
+              property={property}
+              nodes={nodes}
+            />
+          )}
+        </Box>
       </Box>
       <ChipInput
         tags={value}
