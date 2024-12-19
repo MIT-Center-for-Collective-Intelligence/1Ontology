@@ -166,7 +166,6 @@ const YjsEditorWrapper = ({
       });
 
       // const intervalId = setInterval(() => {
-      //   console.log('timeout working', TIMEOUT);
       //   saveChangeLog(changeHistoryRef.current);
       //   changeHistoryRef.current = [];
       // }, TIMEOUT);

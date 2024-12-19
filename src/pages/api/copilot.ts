@@ -32,7 +32,7 @@ const GEMINI_MODEL = "gemini-exp-1121";
 const saveLogs = (
   uname: string,
   type: "info" | "error",
-  logs: { [key: string]: any }
+  logs: { [key: string]: any },
 ) => {
   try {
     const logRef = db.collection(LOGS).doc();
@@ -119,10 +119,10 @@ const sendLLMRequest = async ({
         if (isJSONObject.isJSON) {
           break;
         }
-        console.log(
+        console.error(
           "Failed to get a complete JSON object. Retrying for the ",
           i + 1,
-          " time."
+          " time.",
         );
       } catch (error) {
         console.error("Error in generating content: ", error);
@@ -152,7 +152,7 @@ const proposerAgent = async (
   uname: string,
   SYSTEM_PROMPT: string,
   proposalsJSON: any = {},
-  evaluation: string = ""
+  evaluation: string = "",
 ) => {
   try {
     if (!guidelines) {
@@ -245,7 +245,7 @@ export const generateProposals = async (
   SYSTEM_PROMPT: string,
   inputProperties: Set<string>,
   proposalsJSON: any = {},
-  evaluation: string = ""
+  evaluation: string = "",
 ): Promise<any> => {
   const nodesArray: any = [];
   const nodes = await getNodes();
@@ -262,7 +262,7 @@ export const generateProposals = async (
     currentNode,
     nodes,
     new Set(),
-    deepNumber === 0 ? 7 : deepNumber
+    deepNumber === 0 ? 7 : deepNumber,
   );
   nodesArray.push(..._nodesArray);
   if (
@@ -291,7 +291,7 @@ export const generateProposals = async (
         uname,
         SYSTEM_PROMPT,
         proposalsJSON,
-        evaluation
+        evaluation,
       );
     } else {
       return await proposerAgent(
@@ -299,7 +299,7 @@ export const generateProposals = async (
         model,
         nodesArray,
         uname,
-        SYSTEM_PROMPT
+        SYSTEM_PROMPT,
       );
     }
   }
@@ -330,7 +330,7 @@ const getPrompt = async (
   uname: string,
   generateNewNodes: boolean,
   improveProperties: string[],
-  proposeDeleteNode: boolean
+  proposeDeleteNode: boolean,
 ) => {
   let promptDoc = await db.collection("copilotPrompts").doc(uname).get();
   if (!promptDoc.exists) {
@@ -380,7 +380,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
   const { uname } = user?.userData;
   try {
     const model_index = MODELS_OPTIONS.findIndex(
-      (option) => option.id === model
+      (option) => option.id === model,
     );
     if (!user?.userData || model_index === -1) {
       throw new Error("Access forbidden");
@@ -390,7 +390,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       uname,
       generateNewNodes,
       improveProperties,
-      proposeDeleteNode
+      proposeDeleteNode,
     );
 
     const response = await generateProposals(
@@ -400,7 +400,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       nodeId,
       uname,
       SYSTEM_PROMPT,
-      new Set(inputProperties)
+      new Set(inputProperties),
     );
     saveLogs(uname, "info", {
       response,

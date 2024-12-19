@@ -80,10 +80,10 @@ export const askGemini = async (contents: Content[]) => {
       if (isJSONObject.isJSON) {
         break;
       }
-      console.log(
+      console.error(
         "Failed to get a complete JSON object. Retrying for the ",
         i + 1,
-        " time."
+        " time.",
       );
     } catch (error) {
       console.error("Error in generating content: ", error);

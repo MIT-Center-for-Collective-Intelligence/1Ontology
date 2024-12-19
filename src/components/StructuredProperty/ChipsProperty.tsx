@@ -63,7 +63,7 @@ const ChipsProperty = ({
       ? getPropertyValue(
           nodes,
           currentVisibleNode.inheritance[property]?.ref,
-          property
+          property,
         )
       : currentVisibleNode.properties[property];
 
@@ -86,7 +86,7 @@ const ChipsProperty = ({
   const updateValue = async (
     newValue: string[],
     added: string[],
-    removed: string[]
+    removed: string[],
   ) => {
     try {
       if (
@@ -143,7 +143,7 @@ const ChipsProperty = ({
         },
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -192,7 +192,7 @@ const ChipsProperty = ({
             }}
           >
             {capitalizeFirstLetter(
-              DISPLAY[property] ? DISPLAY[property] : property
+              DISPLAY[property] ? DISPLAY[property] : property,
             )}
           </Typography>
         </Tooltip>
@@ -214,15 +214,15 @@ const ChipsProperty = ({
           currentImprovement?.modifiedProperty === property
             ? currentImprovement.detailsOfChange.addedElements || []
             : selectedDiffNode?.modifiedProperty === property
-            ? selectedDiffNode?.changeDetails?.addedElements || []
-            : []
+              ? selectedDiffNode?.changeDetails?.addedElements || []
+              : []
         }
         removed={
           currentImprovement?.modifiedProperty === property
             ? currentImprovement.detailsOfChange.removedElements || []
             : selectedDiffNode?.modifiedProperty === property
-            ? selectedDiffNode?.changeDetails?.removedElements || []
-            : []
+              ? selectedDiffNode?.changeDetails?.removedElements || []
+              : []
         }
         readOnly={
           !!selectedDiffNode ||
