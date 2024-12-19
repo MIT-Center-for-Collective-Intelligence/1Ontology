@@ -1271,6 +1271,7 @@ const ToolbarSidebar = ({
             handleExpand={handleExpandSidebar}
             fullVersion={hovered}
             activeUsers={activeUsers}
+            currentUser={user}
           />
         </>
       )}
