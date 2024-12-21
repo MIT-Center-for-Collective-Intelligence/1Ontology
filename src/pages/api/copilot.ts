@@ -27,7 +27,17 @@ import {
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { ChatModel } from "openai/resources/chat/chat";
 import { PROPERTIES_TO_IMPROVE } from " @components/lib/CONSTANTS";
-const GEMINI_MODEL = "gemini-exp-1121";
+
+const GEMINI_MODELS = [
+  "gemini-2.0-flash-exp",
+  "gemini-2.0-flash-thinking-exp",
+  "gemini-exp-1206",
+];
+
+type GeminiModels =
+  | "gemini-2.0-flash-exp"
+  | "gemini-2.0-flash-thinking-exp"
+  | "gemini-exp-1206";
 
 const saveLogs = (
   uname: string,
@@ -67,18 +77,18 @@ const extractJSON = (text: string) => {
 };
 const sendLLMRequest = async ({
   prompt,
-  model = process.env.MODEL as ChatModel,
+  model = process.env.MODEL as ChatModel | GeminiModels,
   uname,
 }: {
   prompt: string;
-  model: ChatModel | "gemini-exp-1121";
+  model: ChatModel | GeminiModels;
   uname: string;
 }) => {
   try {
     if (!prompt.trim() || !model.trim()) {
       throw new Error("Prompt and model are required");
     }
-    if (model === GEMINI_MODEL) {
+    if (GEMINI_MODELS.includes(model)) {
       const contents: Content[] = [];
 
       contents.push({
@@ -147,7 +157,7 @@ const sendLLMRequest = async ({
 let guidelines: any = null;
 const proposerAgent = async (
   userMessage: string,
-  model: ChatModel | "gemini-exp-1121",
+  model: ChatModel | GeminiModels,
   nodesArray: any[],
   uname: string,
   SYSTEM_PROMPT: string,
@@ -238,7 +248,7 @@ export const getNodes = async (): Promise<Record<string, INode>> => {
 
 export const generateProposals = async (
   userMessage: string,
-  model: ChatModel | "gemini-exp-1121",
+  model: ChatModel | GeminiModels,
   deepNumber: number,
   nodeId: string,
   uname: string,

@@ -9,7 +9,7 @@ export const sendLLMRequest = async (
   generateNewNodes: boolean,
   improveProperties: Set<string>,
   proposeDeleteNode: boolean,
-  inputProperties: Set<string>
+  inputProperties: Set<string>,
 ) => {
   try {
     const response = await Post("/copilot", {
@@ -263,6 +263,15 @@ export const MODELS_OPTIONS = [
   { id: "o1-preview", title: "O1" },
   { id: "chatgpt-4o-latest", title: "GPT-4o latest" },
   { id: "gemini-2.0-flash-exp", title: "GEMINI-2.0 FLASH EXP" },
+  { id: "o1-mini", title: "O1 mini" },
+  {
+    id: "gemini-2.0-flash-thinking-exp",
+    title: "GEMINI-2.0 FLASH THINKING EXP",
+  },
+  {
+    id: "gemini-exp-1206",
+    title: "Gemini Exp 1206",
+  },
 ];
 const properties = {
   allTypes: [
@@ -293,7 +302,7 @@ const properties = {
 
 export const getResponseStructure = (
   improvement: boolean,
-  proposeDeleteNode: boolean
+  proposeDeleteNode: boolean,
 ) => {
   return `
   Please carefully generate a JSON object with the following structure:
@@ -315,7 +324,7 @@ export const getResponseStructure = (
 
 export const getImprovementsStructurePrompt = (
   improvement: boolean,
-  improveProperties: Set<string>
+  improveProperties: Set<string>,
 ) => {
   return `${
     improvement
@@ -430,8 +439,8 @@ export const getImprovementsStructurePrompt = (
       **For "activity" nodes:**`
       : ""
   }${
-          improveProperties.has("actor")
-            ? `- **Actor changes**:
+    improveProperties.has("actor")
+      ? `- **Actor changes**:
    {
      "modifiedProperty": "actor",
      "new_value": {
@@ -441,10 +450,10 @@ export const getImprovementsStructurePrompt = (
      },
      "reasoning": "Reason for proposing these changes to the actor."
    }`
-            : ""
-        }${
-          improveProperties.has("objectsActedOn")
-            ? `- **ObjectsActedOn changes**:
+      : ""
+  }${
+    improveProperties.has("objectsActedOn")
+      ? `- **ObjectsActedOn changes**:
    {
      "modifiedProperty": "objectsActedOn",
      "new_value": {
@@ -454,10 +463,10 @@ export const getImprovementsStructurePrompt = (
      },
      "reasoning": "Reason for proposing these changes to the objectsActedOn."
    }`
-            : ""
-        }${
-          improveProperties.has("evaluationDimension")
-            ? `- **EvaluationDimension changes**:
+      : ""
+  }${
+    improveProperties.has("evaluationDimension")
+      ? `- **EvaluationDimension changes**:
    {
      "modifiedProperty": "evaluationDimension",
      "new_value": {
@@ -467,10 +476,10 @@ export const getImprovementsStructurePrompt = (
      },
      "reasoning": "Reason for proposing these changes to the evaluationDimension."
    }`
-            : ""
-        }${
-          improveProperties.has("postConditions")
-            ? `- **PostConditions changes**:
+      : ""
+  }${
+    improveProperties.has("postConditions")
+      ? `- **PostConditions changes**:
    {
      "modifiedProperty": "postConditions",
      "new_value": {
@@ -480,10 +489,10 @@ export const getImprovementsStructurePrompt = (
      },
      "reasoning": "Reason for proposing these changes to the postConditions."
    }`
-            : ""
-        }${
-          improveProperties.has("PreConditions")
-            ? `- **PreConditions changes**:
+      : ""
+  }${
+    improveProperties.has("PreConditions")
+      ? `- **PreConditions changes**:
    {
      "modifiedProperty":"preConditions", 
      "new_value": {
@@ -493,15 +502,14 @@ export const getImprovementsStructurePrompt = (
      },
      "reasoning": "Reason for proposing these changes to the preConditions."
    }`
-            : ""
-        }${
-          improveProperties.has("abilities") ||
-          improveProperties.has("typeOfActor")
-            ? `**For "actor" nodes:**`
-            : ""
-        }${
-          improveProperties.has("abilities")
-            ? `- **Abilities changes**:
+      : ""
+  }${
+    improveProperties.has("abilities") || improveProperties.has("typeOfActor")
+      ? `**For "actor" nodes:**`
+      : ""
+  }${
+    improveProperties.has("abilities")
+      ? `- **Abilities changes**:
    {
      "modifiedProperty":"abilities",
      "new_value": {
@@ -511,10 +519,10 @@ export const getImprovementsStructurePrompt = (
      },
      "reasoning": "Reason for proposing these changes to the abilities."
    }`
-            : ""
-        }${
-          improveProperties.has("typeOfActor")
-            ? `- **TypeOfActor changes**:
+      : ""
+  }${
+    improveProperties.has("typeOfActor")
+      ? `- **TypeOfActor changes**:
    {
      "modifiedProperty":"typeOfActor",
      "new_value": {
@@ -524,25 +532,25 @@ export const getImprovementsStructurePrompt = (
      },
      "reasoning": "Reason for proposing these changes to the typeOfActor."
    }`
-            : ""
-        }${
-          improveProperties.has("lifeSpan") ||
-          improveProperties.has("modifiability") ||
-          improveProperties.has("perceivableProperties")
-            ? `---
+      : ""
+  }${
+    improveProperties.has("lifeSpan") ||
+    improveProperties.has("modifiability") ||
+    improveProperties.has("perceivableProperties")
+      ? `---
        **For "object" nodes:**`
-            : ""
-        }${
-          improveProperties.has("lifeSpan")
-            ? `
+      : ""
+  }${
+    improveProperties.has("lifeSpan")
+      ? `
    - **LifeSpan change**:
    {
      "modifiedProperty": "lifeSpan",
      "new_value": "New details about the lifespan of the object.",
      "reasoning": "Reason for changing the lifeSpan."
    }`
-            : ""
-        }
+      : ""
+  }
   
      ${
        improveProperties.has("modifiability")
@@ -555,8 +563,8 @@ export const getImprovementsStructurePrompt = (
    }`
          : ""
      }${
-          improveProperties.has("perceivableProperties")
-            ? `
+       improveProperties.has("perceivableProperties")
+         ? `
     - **PerceivableProperties changes**:
    {
      "modifiedProperty": "perceivableProperties",
@@ -567,19 +575,19 @@ export const getImprovementsStructurePrompt = (
      },
      "reasoning": "Reason for proposing these changes to the perceivableProperties."
    }`
-            : ""
-        }${
-          improveProperties.has("criteriaForAcceptability") ||
-          improveProperties.has("directionOfDesirability") ||
-          improveProperties.has("evaluationType") ||
-          improveProperties.has("measurementUnits")
-            ? `
+         : ""
+     }${
+       improveProperties.has("criteriaForAcceptability") ||
+       improveProperties.has("directionOfDesirability") ||
+       improveProperties.has("evaluationType") ||
+       improveProperties.has("measurementUnits")
+         ? `
          ---
          **For "evaluationDimension" nodes:**`
-            : ""
-        }${
-          improveProperties.has("criteriaForAcceptability")
-            ? `  
+         : ""
+     }${
+       improveProperties.has("criteriaForAcceptability")
+         ? `  
    - **CriteriaForAcceptability changes**:
    {
      "modifiedProperty": "criteriaForAcceptability",
@@ -590,20 +598,20 @@ export const getImprovementsStructurePrompt = (
      },
      "reasoning": "Reason for proposing these changes to the criteriaForAcceptability."
    }`
-            : ""
-        }${
-          improveProperties.has("directionOfDesirability")
-            ? `
+         : ""
+     }${
+       improveProperties.has("directionOfDesirability")
+         ? `
    - **DirectionOfDesirability change**:
    {
      "modifiedProperty": "directionOfDesirability",
      "new_value": "New direction (e.g., 'Increase is desirable').",
      "reasoning": "Reason for changing the directionOfDesirability."
    }`
-            : ""
-        }${
-          improveProperties.has("evaluationType")
-            ? `
+         : ""
+     }${
+       improveProperties.has("evaluationType")
+         ? `
    - **EvaluationType changes**:
    {
      "modifiedProperty": "evaluationType",
@@ -615,10 +623,10 @@ export const getImprovementsStructurePrompt = (
      "reasoning": "Reason for proposing these changes to the evaluationType."
    }
     `
-            : ""
-        }${
-          improveProperties.has("measurementUnits")
-            ? `
+         : ""
+     }${
+       improveProperties.has("measurementUnits")
+         ? `
  - **MeasurementUnits changes**:
    {
      "modifiedProperty": "measurementUnits",
@@ -629,18 +637,18 @@ export const getImprovementsStructurePrompt = (
      },
      "reasoning": "Reason for proposing these changes to the measurementUnits."
    }`
-            : ""
-        }${
-          improveProperties.has("units") ||
-          improveProperties.has("capabilitiesRequired") ||
-          improveProperties.has("rewardFunction") ||
-          improveProperties.has("evaluationDimension") ||
-          improveProperties.has("reward")
-            ? `**For "reward" nodes:**`
-            : ""
-        }${
-          improveProperties.has("units")
-            ? `
+         : ""
+     }${
+       improveProperties.has("units") ||
+       improveProperties.has("capabilitiesRequired") ||
+       improveProperties.has("rewardFunction") ||
+       improveProperties.has("evaluationDimension") ||
+       improveProperties.has("reward")
+         ? `**For "reward" nodes:**`
+         : ""
+     }${
+       improveProperties.has("units")
+         ? `
    ---
    - **Units changes**:
    {
@@ -653,10 +661,10 @@ export const getImprovementsStructurePrompt = (
      "reasoning": "Reason for proposing these changes to the units."
    }
    `
-            : ""
-        }${
-          improveProperties.has("capabilitiesRequired")
-            ? `
+         : ""
+     }${
+       improveProperties.has("capabilitiesRequired")
+         ? `
    ---
    
    **For "incentive" nodes:**
@@ -672,8 +680,8 @@ export const getImprovementsStructurePrompt = (
      "reasoning": "Reason for proposing these changes to the capabilitiesRequired."
    }
    `
-            : ""
-        }
+         : ""
+     }
  ${
    improveProperties.has("rewardFunction")
      ? `     
