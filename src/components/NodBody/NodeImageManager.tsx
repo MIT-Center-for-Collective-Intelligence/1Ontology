@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -10,39 +10,40 @@ import {
   Paper,
   Dialog,
   DialogContent,
-  MobileStepper
-} from '@mui/material';
+  MobileStepper,
+} from "@mui/material";
 import {
   Close as CloseIcon,
   Collections as CollectionsIcon,
   Add as AddIcon,
   KeyboardArrowLeft,
   KeyboardArrowRight,
-  Delete as DeleteIcon
-} from '@mui/icons-material';
+  Delete as DeleteIcon,
+} from "@mui/icons-material";
 import {
   doc,
   updateDoc,
   arrayUnion,
   collection,
   onSnapshot,
-  arrayRemove
-} from 'firebase/firestore';
+  arrayRemove,
+  Timestamp,
+} from "firebase/firestore";
 import {
   deleteObject,
   FirebaseStorage,
   getDownloadURL,
   ref,
-  uploadBytesResumable
-} from 'firebase/storage';
-import { useUploadImage } from ' @components/hooks/useUploadImage';
-import { isValidHttpUrl } from ' @components/lib/utils/utils';
-import { User } from ' @components/types/IAuth';
-import OptimizedAvatar from '../Chat/OptimizedAvatar';
-import dayjs from 'dayjs';
-import useDialog from ' @components/lib/hooks/useConfirmDialog';
-import { INode, NodeChange } from ' @components/types/INode';
-import PropertyContributors from '../StructuredProperty/PropertyContributors';
+  uploadBytesResumable,
+} from "firebase/storage";
+import { useUploadImage } from " @components/hooks/useUploadImage";
+import { isValidHttpUrl } from " @components/lib/utils/utils";
+import { User } from " @components/types/IAuth";
+import OptimizedAvatar from "../Chat/OptimizedAvatar";
+import dayjs from "dayjs";
+import useDialog from " @components/lib/hooks/useConfirmDialog";
+import { INode, NodeChange } from " @components/types/INode";
+import PropertyContributors from "../StructuredProperty/PropertyContributors";
 
 type UploadUserInfo = {
   userId: string;
@@ -82,10 +83,10 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
   user,
   firestore,
   storage,
-  nodeCollection = 'nodes',
+  nodeCollection = "nodes",
   confirmIt,
   saveNewChangeLog,
-  selectedDiffNode
+  selectedDiffNode,
 }) => {
   const [nodeImages, setNodeImages] = useState<NodeImage[]>([]);
   const [selectedImages, setSelectedImages] = useState<PreviewImage[]>([]);
@@ -102,7 +103,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
   };
 
   const getImageDiffStatus = (image: NodeImage) => {
-    if (!selectedDiffNode || selectedDiffNode.modifiedProperty !== 'images') {
+    if (!selectedDiffNode || selectedDiffNode.modifiedProperty !== "images") {
       return null;
     }
 
@@ -111,12 +112,12 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
     const newUrls =
       selectedDiffNode.newValue?.map((img: NodeImage) => img.url) || [];
 
-    if (selectedDiffNode.changeType === 'add images') {
-      return !previousUrls.includes(image.url) ? 'added' : null;
+    if (selectedDiffNode.changeType === "add images") {
+      return !previousUrls.includes(image.url) ? "added" : null;
     }
 
-    if (selectedDiffNode.changeType === 'remove images') {
-      return !newUrls.includes(image.url) ? 'removed' : null;
+    if (selectedDiffNode.changeType === "remove images") {
+      return !newUrls.includes(image.url) ? "removed" : null;
     }
 
     return null;
@@ -125,11 +126,11 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
   const getDisplayImages = () => {
     if (!selectedDiffNode) return nodeImages;
 
-    if (selectedDiffNode.changeType === 'add images') {
+    if (selectedDiffNode.changeType === "add images") {
       return selectedDiffNode.newValue || [];
     }
 
-    if (selectedDiffNode.changeType === 'remove images') {
+    if (selectedDiffNode.changeType === "remove images") {
       return selectedDiffNode.previousValue || [];
     }
 
@@ -140,14 +141,14 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
 
   const handleDeleteClick = async (
     image: NodeImage,
-    event: React.MouseEvent
+    event: React.MouseEvent,
   ) => {
     event.stopPropagation();
 
     const confirmed = await confirmIt(
-      'Are you sure you want to delete this image?',
-      'Delete',
-      'Cancel'
+      "Are you sure you want to delete this image?",
+      "Delete",
+      "Cancel",
     );
 
     if (confirmed) {
@@ -160,7 +161,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
         // Remove from Node's Firestore
         const nodeRef = doc(collection(firestore, nodeCollection), nodeId);
         await updateDoc(nodeRef, {
-          images: arrayRemove(image)
+          images: arrayRemove(image),
         });
 
         // Remove from Firebase Storage
@@ -181,23 +182,23 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
         saveNewChangeLog(firestore, {
           nodeId,
           modifiedBy: user.uname,
-          modifiedProperty: 'images',
+          modifiedProperty: "images",
           previousValue: originalImages,
           newValue: originalImages.filter((img) => img.url !== image.url),
           modifiedAt: new Date(),
-          changeType: 'remove images',
+          changeType: "remove images",
           fullNode: currentVisibleNode,
           changeDetails: {
             removedImage: {
               url: image.url,
               uploadedAt: image.uploadedAt,
-              uploadedBy: image.uploadedBy
-            }
-          }
+              uploadedBy: image.uploadedBy,
+            },
+          },
         });
       } catch (error) {
-        console.error('Error deleting image:', error);
-        alert('Failed to delete image. Please try again.');
+        console.error("Error deleting image:", error);
+        alert("Failed to delete image. Please try again.");
       } finally {
         setIsDeleting(false);
       }
@@ -205,7 +206,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
   };
 
   const { isUploading, percentageUploaded, uploadImage } = useUploadImage({
-    storage
+    storage,
   });
 
   const { userId } = user;
@@ -234,13 +235,13 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
 
     const newImages = Array.from(files).map((file) => ({
       file,
-      previewUrl: URL.createObjectURL(file)
+      previewUrl: URL.createObjectURL(file),
     }));
 
     setSelectedImages((prev) => [...prev, ...newImages]);
 
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -256,7 +257,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
   const handleUploadSelectedImages = async () => {
     try {
       let bucket =
-        process.env.NODE_ENV === 'development'
+        process.env.NODE_ENV === "development"
           ? process.env.NEXT_PUBLIC_DEV_STORAGE_BUCKET
           : process.env.NEXT_PUBLIC_STORAGE_BUCKET;
 
@@ -272,7 +273,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
         fName: user.fName,
         lName: user.lName,
         uname: user.uname,
-        imageUrl: user.imageUrl
+        imageUrl: user.imageUrl,
       };
 
       // Store original images for change logging
@@ -287,44 +288,44 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
         const url = await uploadImage({
           event,
           path,
-          imageFileName
+          imageFileName,
         });
 
         const newImage = {
           url,
           path: `${path}/${imageFileName}`,
           uploadedAt: new Date(),
-          uploadedBy: uploadUserInfo
+          uploadedBy: uploadUserInfo,
         };
 
         uploadedImages.push(newImage);
 
         const nodeRef = doc(collection(firestore, nodeCollection), nodeId);
         await updateDoc(nodeRef, {
-          images: arrayUnion(newImage)
+          images: arrayUnion(newImage),
         });
       }
 
       saveNewChangeLog(firestore, {
         nodeId,
         modifiedBy: user.uname,
-        modifiedProperty: 'images',
+        modifiedProperty: "images",
         previousValue: originalImages,
         newValue: [...originalImages, ...uploadedImages],
         modifiedAt: new Date(),
-        changeType: 'add images',
+        changeType: "add images",
         fullNode: currentVisibleNode,
         changeDetails: {
-          addedImagesCount: uploadedImages.length
-        }
+          addedImagesCount: uploadedImages.length,
+        },
       });
 
       // Cleanup
       selectedImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
       setSelectedImages([]);
     } catch (error) {
-      console.error('Image upload error', error);
-      confirmIt('Sorry, your images could not be uploaded', 'ok');
+      console.error("Image upload error", error);
+      confirmIt("Sorry, your images could not be uploaded", "ok");
     }
   };
 
@@ -332,51 +333,51 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
     <Paper
       elevation={9}
       sx={{
-        borderRadius: '30px',
-        borderBottomRightRadius: '18px',
-        borderBottomLeftRadius: '18px',
-        minWidth: '500px',
-        width: '100%',
-        minHeight: '150px',
-        maxHeight: '100%',
-        overflow: 'auto',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        overflowX: 'hidden'
+        borderRadius: "30px",
+        borderBottomRightRadius: "18px",
+        borderBottomLeftRadius: "18px",
+        minWidth: "500px",
+        width: "100%",
+        minHeight: "150px",
+        maxHeight: "100%",
+        overflow: "auto",
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        overflowX: "hidden",
       }}
     >
       <Box>
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             background: (theme: any) =>
-              theme.palette.mode === 'dark' ? '#242425' : '#d0d5dd',
-            p: 3
+              theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+            p: 3,
           }}
         >
           <Typography
             sx={{
-              fontSize: '20px',
+              fontSize: "20px",
               fontWeight: 500,
-              fontFamily: 'Roboto, sans-serif'
+              fontFamily: "Roboto, sans-serif",
             }}
           >
             Images
           </Typography>
           <PropertyContributors
             currentVisibleNode={currentVisibleNode}
-            property={'images'}
+            property={"images"}
           />
         </Box>
-        <Box sx={{ p: '16px', mt: 'auto' }}>
+        <Box sx={{ p: "16px", mt: "auto" }}>
           <Box
             sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
+              display: "flex",
+              flexWrap: "wrap",
               gap: 3,
-              mb: 3
+              mb: 3,
             }}
           >
             {isLoading ? (
@@ -384,10 +385,10 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
             ) : displayImages.length === 0 ? (
               <Box
                 sx={{
-                  width: '100%',
-                  textAlign: 'center',
+                  width: "100%",
+                  textAlign: "center",
                   py: 6,
-                  color: 'text.secondary'
+                  color: "text.secondary",
                 }}
               >
                 <Typography variant="body1">
@@ -401,62 +402,62 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
                   <Box
                     key={index}
                     sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 1
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1,
                     }}
                   >
                     <Box
                       sx={{
-                        position: 'relative',
-                        width: '150px',
-                        height: '150px',
-                        cursor: 'pointer',
-                        '&:hover': {
+                        position: "relative",
+                        width: "150px",
+                        height: "150px",
+                        cursor: "pointer",
+                        "&:hover": {
                           opacity: 0.9,
-                          '& .delete-icon': {
-                            opacity: 1
-                          }
+                          "& .delete-icon": {
+                            opacity: 1,
+                          },
                         },
                         border:
-                          diffStatus === 'added'
-                            ? '3px solid green'
-                            : diffStatus === 'removed'
-                              ? '3px solid #f44336'
-                              : 'none',
-                        borderRadius: '12px',
+                          diffStatus === "added"
+                            ? "3px solid green"
+                            : diffStatus === "removed"
+                              ? "3px solid #f44336"
+                              : "none",
+                        borderRadius: "12px",
                         ...(diffStatus && {
-                          '&::after': {
+                          "&::after": {
                             content: `"${
-                              diffStatus === 'added' ? 'New' : 'Removed'
+                              diffStatus === "added" ? "New" : "Removed"
                             }"`,
-                            position: 'absolute',
+                            position: "absolute",
                             top: -12,
                             right: 8,
                             backgroundColor:
-                              diffStatus === 'added' ? 'green' : '#f44336',
-                            color: 'white',
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            zIndex: 1
-                          }
-                        })
+                              diffStatus === "added" ? "green" : "#f44336",
+                            color: "white",
+                            padding: "2px 8px",
+                            borderRadius: "12px",
+                            fontSize: "12px",
+                            zIndex: 1,
+                          },
+                        }),
                       }}
                       onClick={() => handleImageClick(index)}
                     >
                       <img
-                        src={image.url || ''}
+                        src={image.url || ""}
                         alt=""
                         style={{
-                          width: '100%',
-                          height: '100%',
-                          borderRadius: '8px',
-                          objectFit: 'cover',
-                          ...(diffStatus === 'removed' && {
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: "8px",
+                          objectFit: "cover",
+                          ...(diffStatus === "removed" && {
                             opacity: 0.7,
-                            filter: 'grayscale(50%)'
-                          })
+                            filter: "grayscale(50%)",
+                          }),
                         }}
                       />
                       {!selectedDiffNode && (
@@ -465,24 +466,24 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
                             className="delete-icon"
                             onClick={(e) => handleDeleteClick(image, e)}
                             sx={{
-                              position: 'absolute',
+                              position: "absolute",
                               top: -14,
                               right: -14,
                               opacity: 0,
-                              transition: 'opacity 0.3s',
-                              bgcolor: '#ff9800',
-                              padding: '6px',
+                              transition: "opacity 0.3s",
+                              bgcolor: "#ff9800",
+                              padding: "6px",
                               zIndex: 1,
-                              '&:hover': {
-                                bgcolor: '#f57c00'
+                              "&:hover": {
+                                bgcolor: "#f57c00",
                               },
-                              width: '32px',
-                              height: '32px',
-                              minWidth: '32px',
-                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                              width: "32px",
+                              height: "32px",
+                              minWidth: "32px",
+                              boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                             }}
                           >
-                            <DeleteIcon sx={{ fontSize: 16, color: 'white' }} />
+                            <DeleteIcon sx={{ fontSize: 16, color: "white" }} />
                           </IconButton>
                         </Tooltip>
                       )}
@@ -490,22 +491,24 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
                     <Typography
                       variant="caption"
                       sx={{
-                        color: 'white',
-                        opacity: diffStatus === 'removed' ? 0.5 : 0.7,
-                        maxWidth: '150px'
+                        color: "white",
+                        opacity: diffStatus === "removed" ? 0.5 : 0.7,
+                        maxWidth: "150px",
                       }}
                     >
-                      Uploaded by {image.uploadedBy.fName}{' '}
+                      Uploaded by {image.uploadedBy.fName}{" "}
                       {image.uploadedBy.lName}
-                      <Typography variant="subtitle2">
-                        {dayjs(new Date(image.uploadedAt.toDate()))
-                          .fromNow()
-                          .includes('NaN')
-                          ? 'a few minutes ago'
-                          : `${dayjs(
-                              new Date(image.uploadedAt.toDate())
-                            ).fromNow()}`}
-                      </Typography>
+                      {image.uploadedAt instanceof Timestamp && (
+                        <Typography variant="subtitle2">
+                          {dayjs(new Date(image.uploadedAt.toDate()))
+                            .fromNow()
+                            .includes("NaN")
+                            ? "a few minutes ago"
+                            : `${dayjs(
+                                new Date(image.uploadedAt.toDate()),
+                              ).fromNow()}`}
+                        </Typography>
+                      )}
                     </Typography>
                   </Box>
                 );
@@ -523,10 +526,10 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
                 }
                 isDiffView={!!selectedDiffNode}
                 diffStatus={
-                  selectedDiffNode?.changeType === 'add images'
-                    ? 'added'
-                    : selectedDiffNode?.changeType === 'remove images'
-                      ? 'removed'
+                  selectedDiffNode?.changeType === "add images"
+                    ? "added"
+                    : selectedDiffNode?.changeType === "remove images"
+                      ? "removed"
                       : null
                 }
               />
@@ -536,52 +539,52 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
           {selectedImages.length > 0 && (
             <Box
               sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
+                display: "flex",
+                flexWrap: "wrap",
                 gap: 2,
                 mb: 2,
                 p: 2,
-                border: '1px solid orange',
-                borderRadius: '15px'
+                border: "1px solid orange",
+                borderRadius: "15px",
               }}
             >
               {selectedImages.map((image, index) => (
                 <Box
                   key={index}
                   sx={{
-                    position: 'relative',
-                    width: '100px',
-                    height: '100px',
-                    '&:hover .close-icon': { opacity: 1 }
+                    position: "relative",
+                    width: "100px",
+                    height: "100px",
+                    "&:hover .close-icon": { opacity: 1 },
                   }}
                 >
                   <IconButton
                     className="close-icon"
                     onClick={() => removeSelectedImage(index)}
                     sx={{
-                      position: 'absolute',
+                      position: "absolute",
                       top: -8,
                       right: -8,
                       zIndex: 1,
                       opacity: 0,
-                      transition: 'opacity 0.3s',
-                      bgcolor: 'grey.700',
+                      transition: "opacity 0.3s",
+                      bgcolor: "grey.700",
                       p: 0.5,
-                      '&:hover': {
-                        bgcolor: 'grey.600'
-                      }
+                      "&:hover": {
+                        bgcolor: "grey.600",
+                      },
                     }}
                   >
-                    <CloseIcon sx={{ fontSize: 16, color: 'white' }} />
+                    <CloseIcon sx={{ fontSize: 16, color: "white" }} />
                   </IconButton>
                   <img
                     src={image.previewUrl}
                     alt=""
                     style={{
-                      width: '100%',
-                      height: '100%',
-                      borderRadius: '8px',
-                      objectFit: 'cover'
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "8px",
+                      objectFit: "cover",
                     }}
                   />
                 </Box>
@@ -591,11 +594,11 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
 
           <Box
             sx={{
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'flex-end',
+              width: "100%",
+              display: "flex",
+              justifyContent: "flex-end",
               mt: 2,
-              gap: 2
+              gap: 2,
             }}
           >
             <input
@@ -608,9 +611,9 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
             />
 
             {isUploading ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <CircularProgress size={24} />
-                <Typography variant="caption" sx={{ color: 'white' }}>
+                <Typography variant="caption" sx={{ color: "white" }}>
                   {percentageUploaded}%
                 </Typography>
               </Box>
@@ -623,12 +626,12 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
                       onClick={handleUploadClick}
                       startIcon={<AddIcon />}
                       sx={{
-                        borderColor: 'orange.main',
-                        color: 'orange.main',
-                        '&:hover': {
-                          borderColor: 'orange.dark',
-                          bgcolor: 'rgba(255, 165, 0, 0.04)'
-                        }
+                        borderColor: "orange.main",
+                        color: "orange.main",
+                        "&:hover": {
+                          borderColor: "orange.dark",
+                          bgcolor: "rgba(255, 165, 0, 0.04)",
+                        },
                       }}
                     >
                       Select More
@@ -639,10 +642,10 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
                       onClick={handleUploadSelectedImages}
                       startIcon={<CollectionsIcon />}
                       sx={{
-                        bgcolor: 'orange.main',
-                        '&:hover': {
-                          bgcolor: 'orange.dark'
-                        }
+                        bgcolor: "orange.main",
+                        "&:hover": {
+                          bgcolor: "orange.dark",
+                        },
                       }}
                     >
                       Upload Selected ({selectedImages.length})
@@ -656,10 +659,10 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
                     onClick={handleUploadClick}
                     startIcon={<CollectionsIcon />}
                     sx={{
-                      bgcolor: 'orange.main',
-                      '&:hover': {
-                        bgcolor: 'orange.dark'
-                      }
+                      bgcolor: "orange.main",
+                      "&:hover": {
+                        bgcolor: "orange.dark",
+                      },
                     }}
                   >
                     Upload Images
@@ -681,7 +684,7 @@ type ImageViewerDialogProps = {
   initialIndex?: number;
   onDeleteImage?: (image: NodeImage, event: React.MouseEvent) => void;
   isDiffView?: boolean;
-  diffStatus?: 'added' | 'removed' | null;
+  diffStatus?: "added" | "removed" | null;
 };
 
 const ImageViewerDialog: React.FC<ImageViewerDialogProps> = ({
@@ -691,7 +694,7 @@ const ImageViewerDialog: React.FC<ImageViewerDialogProps> = ({
   initialIndex = 0,
   onDeleteImage,
   isDiffView,
-  diffStatus
+  diffStatus,
 }) => {
   const [activeStep, setActiveStep] = useState(initialIndex);
 
@@ -719,22 +722,22 @@ const ImageViewerDialog: React.FC<ImageViewerDialogProps> = ({
       onClose={onClose}
       maxWidth="xl"
       fullWidth
-      sx={{ borderRadius: '25px' }}
+      sx={{ borderRadius: "25px" }}
     >
-      <DialogContent sx={{ p: 0, position: 'relative' }}>
+      <DialogContent sx={{ p: 0, position: "relative" }}>
         <IconButton
           onClick={onClose}
           sx={{
-            position: 'absolute',
+            position: "absolute",
             right: 8,
             top: 8,
-            bgcolor: 'rgba(0, 0, 0, 0.4)',
-            '&:hover': {
-              bgcolor: 'white',
-              color: 'black'
+            bgcolor: "rgba(0, 0, 0, 0.4)",
+            "&:hover": {
+              bgcolor: "white",
+              color: "black",
             },
-            color: 'white',
-            zIndex: 2
+            color: "white",
+            zIndex: 2,
           }}
         >
           <CloseIcon />
@@ -743,44 +746,44 @@ const ImageViewerDialog: React.FC<ImageViewerDialogProps> = ({
         {isDiffView && (
           <Box
             sx={{
-              position: 'absolute',
+              position: "absolute",
               top: 8,
               left: 8,
-              bgcolor: diffStatus === 'added' ? '#4CAF50' : '#f44336',
-              color: 'white',
-              padding: '4px 12px',
-              borderRadius: '25px',
+              bgcolor: diffStatus === "added" ? "#4CAF50" : "#f44336",
+              color: "white",
+              padding: "4px 12px",
+              borderRadius: "25px",
               zIndex: 2,
-              fontSize: '14px'
+              fontSize: "14px",
             }}
           >
-            {diffStatus === 'added' ? 'New Image' : 'Removed Image'}
+            {diffStatus === "added" ? "New Image" : "Removed Image"}
           </Box>
         )}
 
         {/* Main Image */}
         <Box
           sx={{
-            width: '100%',
-            height: '70vh',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            bgcolor: 'black',
-            position: 'relative'
+            width: "100%",
+            height: "70vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            bgcolor: "black",
+            position: "relative",
           }}
         >
           <img
             src={currentImage.url}
             alt=""
             style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain',
-              ...(diffStatus === 'removed' && {
+              maxWidth: "100%",
+              maxHeight: "100%",
+              objectFit: "contain",
+              ...(diffStatus === "removed" && {
                 opacity: 0.7,
-                filter: 'grayscale(50%)'
-              })
+                filter: "grayscale(50%)",
+              }),
             }}
           />
         </Box>
@@ -788,40 +791,42 @@ const ImageViewerDialog: React.FC<ImageViewerDialogProps> = ({
         {/* Image Info */}
         <Paper
           sx={{
-            position: 'absolute',
+            position: "absolute",
             bottom: 45,
             left: 0,
             right: 0,
-            bgcolor: 'rgba(0, 0, 0, 0.2)',
-            color: 'white',
-            p: 2
+            bgcolor: "rgba(0, 0, 0, 0.2)",
+            color: "white",
+            p: 2,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <OptimizedAvatar
               alt={`${currentImage.uploadedBy.fName} ${currentImage.uploadedBy.lName}`}
-              imageUrl={currentImage.uploadedBy.imageUrl || ''}
+              imageUrl={currentImage.uploadedBy.imageUrl || ""}
               size={30}
               sx={{
                 width: 32,
                 height: 32,
-                borderRadius: '50%',
-                objectFit: 'cover'
+                borderRadius: "50%",
+                objectFit: "cover",
               }}
             />
             <Box>
-              <Typography sx={{ color: 'white' }}>
+              <Typography sx={{ color: "white" }}>
                 {currentImage.uploadedBy.fName} {currentImage.uploadedBy.lName}
               </Typography>
-              <Typography variant="subtitle2" sx={{ opacity: 0.7 }}>
-                {dayjs(new Date(currentImage.uploadedAt.toDate()))
-                  .fromNow()
-                  .includes('NaN')
-                  ? 'a few minutes ago'
-                  : `${dayjs(
-                      new Date(currentImage.uploadedAt.toDate())
-                    ).fromNow()}`}
-              </Typography>
+              {currentImage.uploadedAt instanceof Timestamp && (
+                <Typography variant="subtitle2" sx={{ opacity: 0.7 }}>
+                  {dayjs(new Date(currentImage.uploadedAt.toDate()))
+                    .fromNow()
+                    .includes("NaN")
+                    ? "a few minutes ago"
+                    : `${dayjs(
+                        new Date(currentImage.uploadedAt.toDate()),
+                      ).fromNow()}`}
+                </Typography>
+              )}
             </Box>
           </Box>
         </Paper>
@@ -832,19 +837,19 @@ const ImageViewerDialog: React.FC<ImageViewerDialogProps> = ({
           position="static"
           activeStep={activeStep}
           sx={{
-            bgcolor: 'black',
-            '& .MuiMobileStepper-dot': {
-              bgcolor: 'grey.500'
+            bgcolor: "black",
+            "& .MuiMobileStepper-dot": {
+              bgcolor: "grey.500",
             },
-            '& .MuiMobileStepper-dotActive': {
-              bgcolor: 'white'
-            }
+            "& .MuiMobileStepper-dotActive": {
+              bgcolor: "white",
+            },
           }}
           nextButton={
             <IconButton
               onClick={handleNext}
               disabled={activeStep === images.length - 1}
-              sx={{ color: 'white' }}
+              sx={{ color: "white" }}
             >
               <KeyboardArrowRight />
             </IconButton>
@@ -853,7 +858,7 @@ const ImageViewerDialog: React.FC<ImageViewerDialogProps> = ({
             <IconButton
               onClick={handleBack}
               disabled={activeStep === 0}
-              sx={{ color: 'white' }}
+              sx={{ color: "white" }}
             >
               <KeyboardArrowLeft />
             </IconButton>

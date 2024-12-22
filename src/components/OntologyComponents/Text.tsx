@@ -103,7 +103,7 @@ const Text = ({
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
   const [switchToWebsocket, setSwitchToWebSocket] = useState(true);
 
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(true);
 
   const currentImprovementChange = useMemo(() => {
     if (currentImprovement?.newNode || !currentImprovement) return null;
