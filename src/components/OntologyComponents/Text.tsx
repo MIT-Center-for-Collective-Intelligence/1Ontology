@@ -140,7 +140,7 @@ const Text = ({
         fullNode: currentVisibleNode,
       });
     },
-    [currentVisibleNode.id, db, property, user]
+    [currentVisibleNode.id, db, property, user],
   );
 
   const onSaveTextChange = useCallback(
@@ -163,7 +163,7 @@ const Text = ({
 
           if (Array.isArray(referencedNode.properties[property])) {
             const links = referencedNode.properties[property].flatMap(
-              (c) => c.nodes
+              (c) => c.nodes,
             );
             if (property === "parts" || property === "isPartOf") {
               updatePartsAndPartsOf(
@@ -171,7 +171,7 @@ const Text = ({
                 { id: currentVisibleNode.id },
                 property === "parts" ? "isPartOf" : "parts",
                 db,
-                nodes
+                nodes,
               );
             } else {
               updatePropertyOf(
@@ -179,7 +179,7 @@ const Text = ({
                 { id: currentVisibleNode.id },
                 property,
                 nodes,
-                db
+                db,
               );
             }
           }
@@ -198,7 +198,7 @@ const Text = ({
           {
             connect: true,
             params: { type: structured ? "structured" : "" },
-          }
+          },
         );
 
         setTimeout(() => {
@@ -216,7 +216,7 @@ const Text = ({
         });
       }
     },
-    [user?.uname, currentVisibleNode.id, reference, property, db, nodes]
+    [user?.uname, currentVisibleNode.id, reference, property, db, nodes],
   );
 
   useEffect(() => {
@@ -295,11 +295,11 @@ const Text = ({
             background: (theme: any) =>
               (selectedDiffNode?.changeType === "delete node" ||
                 !!currentImprovement?.deleteNode) &&
-                property === "title"
+              property === "title"
                 ? "red"
                 : (selectedDiffNode?.changeType === "add node" ||
-                  !!currentImprovement?.newNode) &&
-                  property === "title"
+                      !!currentImprovement?.newNode) &&
+                    property === "title"
                   ? "green"
                   : theme.palette.mode === "dark"
                     ? "#242425"
@@ -310,8 +310,8 @@ const Text = ({
             borderTopLeftRadius: property !== "title" ? "18px" : "",
             backgroundColor:
               selectedDiffNode &&
-                selectedDiffNode.changeType === "add property" &&
-                selectedDiffNode.changeDetails.addedProperty === property
+              selectedDiffNode.changeType === "add property" &&
+              selectedDiffNode.changeDetails.addedProperty === property
                 ? "green"
                 : "",
           }}
@@ -325,7 +325,7 @@ const Text = ({
               }}
             >
               {capitalizeFirstLetter(
-                DISPLAY[property] ? DISPLAY[property] : property
+                DISPLAY[property] ? DISPLAY[property] : property,
               )}
             </Typography>
           </Tooltip>
@@ -334,7 +334,6 @@ const Text = ({
               currentVisibleNode={currentVisibleNode}
               property={property}
             />
-
             {selectedDiffNode &&
               selectedDiffNode.changeType === "delete node" &&
               property === "title" && (
@@ -345,11 +344,12 @@ const Text = ({
             {currentVisibleNode.inheritance[property]?.ref && (
               <Typography sx={{ fontSize: "14px", ml: "9px" }}>
                 {'(Inherited from "'}
-                {getTitleNode(currentVisibleNode.inheritance[property].ref || "")}
+                {getTitleNode(
+                  currentVisibleNode.inheritance[property].ref || "",
+                )}
                 {'")'}
               </Typography>
             )}
-
             {property === "title" &&
               !selectedDiffNode &&
               displaySidebar &&
@@ -367,7 +367,57 @@ const Text = ({
                   activeSidebar={activeSidebar}
                   unclassified={!!currentVisibleNode.unclassified}
                 />
-              )}
+              )}{" "}
+            {!locked && property !== "title" && (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  px: 2,
+                  pt: 0.5,
+                  pb: 0.5,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: "0.75rem",
+                      fontWeight: isPreviewMode ? 400 : 500,
+                      color: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? `rgba(255, 255, 255, ${isPreviewMode ? 0.5 : 0.9})`
+                          : `rgba(0, 0, 0, ${isPreviewMode ? 0.5 : 0.9})`,
+                    }}
+                  >
+                    Edit
+                  </Typography>
+                  <Switch
+                    checked={isPreviewMode}
+                    onChange={() => setIsPreviewMode(!isPreviewMode)}
+                    size="small"
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: "0.75rem",
+                      fontWeight: isPreviewMode ? 500 : 400,
+                      color: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? `rgba(255, 255, 255, ${isPreviewMode ? 0.9 : 0.5})`
+                          : `rgba(0, 0, 0, ${isPreviewMode ? 0.9 : 0.5})`,
+                    }}
+                  >
+                    Preview
+                  </Typography>
+                </Box>
+              </Box>
+            )}
             {property !== "title" &&
               !currentImprovement &&
               !currentVisibleNode.unclassified && (
@@ -384,11 +434,11 @@ const Text = ({
         {error}
       </Typography>
       {!!currentVisibleNode.unclassified ||
-        currentImprovement?.newNode ||
-        locked ||
-        (selectedDiffNode &&
-          (selectedDiffNode.modifiedProperty !== property || structured)) ||
-        (currentVisibleNode.unclassified && property === "title") ? (
+      currentImprovement?.newNode ||
+      locked ||
+      (selectedDiffNode &&
+        (selectedDiffNode.modifiedProperty !== property || structured)) ||
+      (currentVisibleNode.unclassified && property === "title") ? (
         <Typography
           sx={{ fontSize: property === "title" ? "34px" : "19px", p: "19px" }}
         >
@@ -411,76 +461,26 @@ const Text = ({
               <Box sx={{ display: "flow", gap: "3px", p: "14px" }}>
                 {renderDiff(
                   selectedDiffNode.previousValue,
-                  selectedDiffNode.newValue
+                  selectedDiffNode.newValue,
                 )}
               </Box>
             </Box>
           ) : (
             <>
-              {!locked && property !== "title" && (
-                <Box sx={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  alignItems: 'center',
-                  px: 2,
-                  pt: 0.5,
-                  pb: 0.5,
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(255, 255, 255, 0.03)'
-                      : 'rgba(0, 0, 0, 0.02)',
-                }}>
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
-                  }}>
-                    <Typography
-                      sx={{
-                        fontSize: '0.75rem',
-                        fontWeight: isPreviewMode ? 400 : 500,
-                        color: (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? `rgba(255, 255, 255, ${isPreviewMode ? 0.5 : 0.9})`
-                            : `rgba(0, 0, 0, ${isPreviewMode ? 0.5 : 0.9})`
-                      }}
-                    >
-                      Edit
-                    </Typography>
-                    <Switch
-                      checked={isPreviewMode}
-                      onChange={() => setIsPreviewMode(!isPreviewMode)}
-                      size="small"
-                    />
-                    <Typography
-                      sx={{
-                        fontSize: '0.75rem',
-                        fontWeight: isPreviewMode ? 500 : 400,
-                        color: (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? `rgba(255, 255, 255, ${isPreviewMode ? 0.9 : 0.5})`
-                            : `rgba(0, 0, 0, ${isPreviewMode ? 0.9 : 0.5})`
-                      }}
-                    >
-                      Preview
-                    </Typography>
-                  </Box>
-                </Box>
-              )}
-              <Box sx={{ position: 'relative' }}>
+              <Box sx={{ position: "relative" }}>
                 <Box
                   sx={{
-                    display: isPreviewMode ? 'block' : 'none',
+                    display: isPreviewMode ? "block" : "none",
                     p: 2,
-                    userSelect: 'text',
-                    '& *': { cursor: 'text' }
+                    userSelect: "text",
+                    "& *": { cursor: "text" },
                   }}
                 >
                   <MarkdownRender text={editorContent} />
                 </Box>
                 <Box
                   sx={{
-                    display: isPreviewMode ? 'none' : 'block'
+                    display: isPreviewMode ? "none" : "block",
                   }}
                 >
                   {!reference && switchToWebsocket ? (
