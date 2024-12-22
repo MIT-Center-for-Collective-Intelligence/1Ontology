@@ -25,6 +25,7 @@ import VisualizeTheProperty from "./VisualizeTheProperty";
 import CollectionStructure from "./CollectionStructure";
 import SelectModelModal from "../Models/SelectModel";
 import { LoadingButton } from "@mui/lab";
+import PropertyContributors from "./PropertyContributors";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
@@ -258,7 +259,7 @@ const StructuredProperty = ({
       return (
         (property === "generalizations" &&
           (editableProperty || propertyValue).flatMap((n) => n.nodes).length !==
-            1) ||
+          1) ||
         (property === "specializations" && numberOfGeneralizations > 1) ||
         (property !== "generalizations" && property !== "specializations")
       );
@@ -496,6 +497,13 @@ const StructuredProperty = ({
             !currentImprovement &&
             property !== "isPartOf" && (
               <Box sx={{ ml: "auto", display: "flex", gap: "14px" }}>
+                {(property !== "generalizations" && property !== "specializations" &&
+                  property !== "isPartOf" && property !== "parts") && (
+                    <PropertyContributors
+                      currentVisibleNode={currentVisibleNode}
+                      property={property}
+                    />
+                  )}
                 {property === "specializations" && !locked && (
                   <Button
                     onClick={() => {
@@ -649,6 +657,13 @@ const StructuredProperty = ({
               currentImprovement={currentImprovement}
             /> */}
           </Box>
+        )}
+      {(property === "generalizations" || property === "specializations" ||
+        property === "isPartOf" || property === "parts") && (
+          <PropertyContributors
+            currentVisibleNode={currentVisibleNode}
+            property={property}
+          />
         )}
     </Paper>
   );
