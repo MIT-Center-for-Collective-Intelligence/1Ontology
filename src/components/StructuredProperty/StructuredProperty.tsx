@@ -25,6 +25,7 @@ import VisualizeTheProperty from "./VisualizeTheProperty";
 import CollectionStructure from "./CollectionStructure";
 import SelectModelModal from "../Models/SelectModel";
 import { LoadingButton } from "@mui/lab";
+import PropertyContributors from "./PropertyContributors";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
@@ -140,7 +141,7 @@ const StructuredProperty = ({
           getPropertyValue(
             nodes,
             currentVisibleNode.inheritance[property]?.ref,
-            property
+            property,
           ) || currentVisibleNode?.properties[property];
       }
 
@@ -179,7 +180,7 @@ const StructuredProperty = ({
         const sourceCollectionIndex = parseInt(source.droppableId, 10);
         const destinationCollectionIndex = parseInt(
           destination?.droppableId || "0",
-          10
+          10,
         );
         const previousValue = selectedDiffNode.previousValue;
         previousValue[sourceCollectionIndex].nodes[source.index].change =
@@ -189,7 +190,7 @@ const StructuredProperty = ({
         previousValue[destinationCollectionIndex].nodes.splice(
           destination.index,
           0,
-          { id: draggableNodeId, change: "added", changeType: "sort" }
+          { id: draggableNodeId, change: "added", changeType: "sort" },
         );
         return previousValue;
       }
@@ -203,7 +204,7 @@ const StructuredProperty = ({
 
               collectionNewValue.nodes.forEach((nodeLink) => {
                 const foundInPrevious = collectionPrevious.nodes.find(
-                  (prevElement: ILinkNode) => prevElement.id === nodeLink.id
+                  (prevElement: ILinkNode) => prevElement.id === nodeLink.id,
                 );
                 if (!foundInPrevious) {
                   nodeLink.change = "added";
@@ -212,7 +213,7 @@ const StructuredProperty = ({
               });
               collectionPrevious.nodes.forEach((prevElement: any) => {
                 const foundInNew = collectionNewValue.nodes.find(
-                  (newElement: ILinkNode) => newElement.id === prevElement.id
+                  (newElement: ILinkNode) => newElement.id === prevElement.id,
                 );
                 if (!foundInNew) {
                   collectionNewValue.nodes.push({
@@ -222,7 +223,7 @@ const StructuredProperty = ({
                 }
               });
               finalResult.push(collectionNewValue);
-            }
+            },
           );
 
           return [...finalResult];
@@ -258,7 +259,7 @@ const StructuredProperty = ({
       return (
         (property === "generalizations" &&
           (editableProperty || propertyValue).flatMap((n) => n.nodes).length !==
-            1) ||
+          1) ||
         (property === "specializations" && numberOfGeneralizations > 1) ||
         (property !== "generalizations" && property !== "specializations")
       );
@@ -270,7 +271,7 @@ const StructuredProperty = ({
       selectedDiffNode,
       newOnes,
       editableProperty,
-    ]
+    ],
   );
 
   const getCategoryStyle = useCallback(
@@ -291,7 +292,7 @@ const StructuredProperty = ({
         return "red";
       }
     },
-    [selectedDiffNode, property]
+    [selectedDiffNode, property],
   );
 
   // Function to handle sorting of draggable items
@@ -299,7 +300,7 @@ const StructuredProperty = ({
     setEditableProperty((prev: ICollection[]) => {
       const _prev = [...prev];
       _prev[collectionIdx].nodes = _prev[collectionIdx].nodes.filter(
-        (n: ILinkNode) => n.id !== id
+        (n: ILinkNode) => n.id !== id,
       );
       return _prev;
     });
@@ -320,7 +321,7 @@ const StructuredProperty = ({
     prevValue: any,
     newValue: any,
     nodeDoc: any,
-    property: any
+    property: any,
   ) => {
     recordLogs({
       action,
@@ -332,22 +333,30 @@ const StructuredProperty = ({
   };
   const onSave = useCallback(async () => {
     try {
-      debugger;
       setIsSaving(true);
       for (let nId in clonedNodesQueue) {
         await handleCloning(
           { id: clonedNodesQueue[nId].id },
           clonedNodesQueue[nId].title,
-          nId
+          nId,
         );
       }
       await handleSaveLinkChanges(
         removedElements,
         addedElements,
-        selectedProperty
+        selectedProperty,
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      recordLogs({
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+        at: "recordLogs",
+      });
     } finally {
       setIsSaving(false);
       handleCloseAddLinksModel();
@@ -445,7 +454,7 @@ const StructuredProperty = ({
               }}
             >
               {capitalizeFirstLetter(
-                DISPLAY[property] ? DISPLAY[property] : property
+                DISPLAY[property] ? DISPLAY[property] : property,
               )}
             </Typography>
           </Tooltip>
@@ -488,6 +497,13 @@ const StructuredProperty = ({
             !currentImprovement &&
             property !== "isPartOf" && (
               <Box sx={{ ml: "auto", display: "flex", gap: "14px" }}>
+                {(property !== "generalizations" && property !== "specializations" &&
+                  property !== "isPartOf" && property !== "parts") && (
+                    <PropertyContributors
+                      currentVisibleNode={currentVisibleNode}
+                      property={property}
+                    />
+                  )}
                 {property === "specializations" && !locked && (
                   <Button
                     onClick={() => {
@@ -512,7 +528,7 @@ const StructuredProperty = ({
                   variant="outlined"
                 >
                   {`Edit ${capitalizeFirstLetter(
-                    DISPLAY[property] || property
+                    DISPLAY[property] || property,
                   )}`}{" "}
                 </Button>
                 {property !== "generalizations" &&
@@ -533,7 +549,7 @@ const StructuredProperty = ({
             {'(Inherited from "'}
             {getTitle(
               nodes,
-              currentVisibleNode.inheritance[property].ref || ""
+              currentVisibleNode.inheritance[property].ref || "",
             )}
             {'")'}
           </Typography>
@@ -641,6 +657,13 @@ const StructuredProperty = ({
               currentImprovement={currentImprovement}
             /> */}
           </Box>
+        )}
+      {(property === "generalizations" || property === "specializations" ||
+        property === "isPartOf" || property === "parts") && (
+          <PropertyContributors
+            currentVisibleNode={currentVisibleNode}
+            property={property}
+          />
         )}
     </Paper>
   );

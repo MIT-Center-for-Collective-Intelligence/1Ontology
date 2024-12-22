@@ -1,9 +1,9 @@
-import { NODES_ONET } from " @components/lib/firestoreClient/collections";
-import { collection, getDocs, getFirestore } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
-import { TreeView, TreeItem } from "@mui/lab";
-import { ExpandMore, ChevronRight } from "@mui/icons-material";
-import { Box, Typography } from "@mui/material";
+import { NODES_ONET } from ' @components/lib/firestoreClient/collections';
+import { collection, getDocs, getFirestore } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { TreeView, TreeItem } from '@mui/lab';
+import { ExpandMore, ChevronRight } from '@mui/icons-material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 
 type TreeNode = {
   title: string;
@@ -35,14 +35,17 @@ const buildTree = (
 function OntTree() {
   const db = getFirestore();
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const getData = async () => {
+    setLoading(true);
     const nodesDocs = await getDocs(collection(db, NODES_ONET));
     const nodes_data: any = [];
     nodesDocs.docs.forEach((doc) => {
       nodes_data.push(doc.data());
     });
     setTreeData(buildTree(nodes_data));
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -66,19 +69,35 @@ function OntTree() {
       </TreeItem>
     );
   };
-
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          flexDirection: 'column'
+        }}
+      >
+        <CircularProgress />
+        {/* <br /> */}
+        <Typography sx={{ mt: '5px' }}> Loading...</Typography>
+      </Box>
+    );
+  }
   return (
     <Box>
       <Typography
         sx={{
-          alignItems: "center",
-          textAlign: "center",
-          fontSize: "35px",
-          position: "sticky",
+          alignItems: 'center',
+          textAlign: 'center',
+          fontSize: '35px',
+          position: 'sticky',
           top: 0,
           backgroundColor: (theme) =>
-            theme.palette.mode === "dark" ? "#28282a" : "white",
-          zIndex: 5,
+            theme.palette.mode === 'dark' ? '#28282a' : 'white',
+          zIndex: 5
         }}
       >
         ONet
