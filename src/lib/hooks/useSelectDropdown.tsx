@@ -33,10 +33,10 @@ const useSelectDropdown = () => {
   const [proposeDeleteNode, setProposeDeleteNodes] = useState(true);
   const [nodeType, setNodeType] = useState<string>("");
   const [selectedProperties, setSelectedProperties] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [inputProperties, setInputProperties] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [nodes, setNodes] = useState<{ [nodeId: string]: INode }>({});
   const [nodeId, setNodeId] = useState("");
@@ -51,7 +51,7 @@ const useSelectDropdown = () => {
       nodeTitle: string,
       nodeType: string,
       nodes: { [nodeId: string]: INode },
-      nodeId: string
+      nodeId: string,
     ) => {
       setIsOpen(true);
       setNodeTitle(nodeTitle);
@@ -62,13 +62,13 @@ const useSelectDropdown = () => {
         new Set([
           ...PROPERTIES_TO_IMPROVE.allTypes,
           ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
-        ])
+        ]),
       );
       setInputProperties(
         new Set([
           ...PROPERTIES_TO_IMPROVE.allTypes,
           ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
-        ])
+        ]),
       );
       const savedInputValue = localStorage.getItem(`user-copilot-message`);
       const savedNumberValue = localStorage.getItem(`user-number-value`);
@@ -86,7 +86,7 @@ const useSelectDropdown = () => {
         resolveRef.current = resolve;
       });
     },
-    []
+    [],
   );
 
   const closeDialog = useCallback(
@@ -115,7 +115,7 @@ const useSelectDropdown = () => {
       selectedProperties,
       proposeDeleteNode,
       inputProperties,
-    ]
+    ],
   );
   const nodes_Array = useMemo(() => {
     const nodeData = nodes[nodeId];
@@ -127,8 +127,8 @@ const useSelectDropdown = () => {
     if (
       n &&
       inputProperties.size !==
-        PROPERTIES_TO_IMPROVE[nodeType].length +
-          PROPERTIES_TO_IMPROVE["allTypes"].length
+        (PROPERTIES_TO_IMPROVE[nodeType]?.length || 0) +
+          (PROPERTIES_TO_IMPROVE["allTypes"]?.length || 0)
     ) {
       for (let node of n) {
         for (let property in node) {
@@ -143,7 +143,7 @@ const useSelectDropdown = () => {
 
   const handleSelectChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     const selected = MODELS_OPTIONS.find(
-      (option) => option.id === event.target.value
+      (option) => option.id === event.target.value,
     );
     setSelectedOption(selected || { id: "", title: "" });
   };
@@ -246,9 +246,9 @@ const useSelectDropdown = () => {
       nodeTitle: string,
       nodeType: string,
       nodes: { [nodeId: string]: INode },
-      nodeId: string
+      nodeId: string,
     ) => showDialog(nodeTitle, nodeType, nodes, nodeId),
-    [showDialog]
+    [showDialog],
   );
 
   return { selectIt, dropdownDialog };
