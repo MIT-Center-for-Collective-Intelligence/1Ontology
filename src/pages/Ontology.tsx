@@ -782,7 +782,7 @@ const Ontology = () => {
         if (firstElement) {
           firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-      }, 1000);
+      }, 500);
       // initializeExpanded(eachOntologyPath[node.id]);
       // Record the click action in logs
       if (searched) {
@@ -847,23 +847,25 @@ const Ontology = () => {
   }, [viewValue, currentVisibleNode]);
 
   const navigateToNode = async (nodeId: string) => {
-    if (nodes[nodeId]) {
-      setCurrentVisibleNode(nodes[nodeId]);
-      initializeExpanded(eachOntologyPath[nodeId]);
-      setSelectedDiffNode(null);
-      setTimeout(() => {
-        // Retrieve elements with the class name based on the nodeId
-        // Since the same node may be displayed multiple times across different parents, using unique IDs alone is not sufficient.
-        // MUI TreeView handles IDs internally, so adding an additional class to each node allows for easier access and manipulation later on.
-        const elements = document.getElementsByClassName("node-" + nodeId);
-        const firstElement = elements.length > 0 ? elements[0] : null; // Safely access the first element
-
-        if (firstElement) {
-          firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 1000);
-      handleCloseAddLinksModel();
-    }
+    // adding timeout to test if truncated issue persists
+    setTimeout(() => {
+      if (nodes[nodeId]) {
+        setCurrentVisibleNode(nodes[nodeId]);
+        initializeExpanded(eachOntologyPath[nodeId]);
+        setSelectedDiffNode(null);
+        setTimeout(() => {
+          // Retrieve elements with the class name based on the nodeId
+          // Since the same node may be displayed multiple times across different parents, using unique IDs alone is not sufficient.
+          // MUI TreeView handles IDs internally, so adding an additional class to each node allows for easier access and manipulation later on.
+          const elements = document.getElementsByClassName("node-" + nodeId);
+          const firstElement = elements.length > 0 ? elements[0] : null; // Safely access the first element
+  
+          if (firstElement) {
+            firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }, 500);
+      }
+    }, 300);
   };
 
   const displaySidebar = useCallback(
