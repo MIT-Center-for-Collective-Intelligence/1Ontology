@@ -83,6 +83,7 @@ import {
   Box,
   Button,
   IconButton,
+  keyframes,
   Link,
   ListItem,
   ListItemIcon,
@@ -111,6 +112,17 @@ import { UNCLASSIFIED } from " @components/lib/CONSTANTS";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import LinkEditor from "./LinkEditor";
 
+const glowGreen = keyframes`
+  0% {
+    box-shadow: 0 0 5px #26C281, 0 0 10px #26C281, 0 0 20px #26C281, 0 0 30px #26C281;
+  }
+  50% {
+    box-shadow: 0 0 10px #26C281, 0 0 20px #26C281, 0 0 30px #26C281, 0 0 40px #26C281;
+  }
+  100% {
+    box-shadow: 0 0 5px #26C281, 0 0 10px #26C281, 0 0 20px #26C281, 0 0 30px #26C281;
+  }
+`;
 type ILinkNodeProps = {
   provided: any;
   link: ILinkNode;
@@ -133,6 +145,8 @@ type ILinkNodeProps = {
   saveNewAndSwapIt: any;
   clonedNodesQueue?: any;
   unlinkElement?: any;
+  selectedProperty: string;
+  glowIds: Set<string>;
 };
 
 const LinkNode = ({
@@ -155,6 +169,8 @@ const LinkNode = ({
   saveNewAndSwapIt,
   clonedNodesQueue = {},
   unlinkElement,
+  selectedProperty,
+  glowIds,
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -502,7 +518,7 @@ const LinkNode = ({
   };
 
   const handleUnlinkNode = () => {
-    if (unlinkElement) {
+    if (selectedProperty === property) {
       unlinkElement(link.id, collectionIndex);
       return;
     }
@@ -530,11 +546,17 @@ const LinkNode = ({
 
   return (
     <Box
+      id={`${link.id}-${property}`}
       sx={{
-        backgroundColor: !!swapIt ? "#5f5e5d" : "",
+        backgroundColor: !!swapIt
+          ? (theme) => (theme.palette.mode === "dark" ? "#5f5e5d" : "#d9dfe6")
+          : "",
         borderRadius: "25px",
         p: !!swapIt ? 1 : "",
         my: swapIt ? "5px" : "",
+        animation: glowIds.has(`${link.id}-${property}`)
+          ? `${glowGreen} 1.5s ease-in-out infinite`
+          : "",
       }}
     >
       <ListItem
@@ -551,7 +573,8 @@ const LinkNode = ({
           ":hover": {
             backgroundColor: clonedNodesQueue.hasOwnProperty(link.id)
               ? ""
-              : "#5f5e5d",
+              : (theme) =>
+                  theme.palette.mode === "dark" ? "#5f5e5d" : "#d9dfe6",
           },
         }}
       >
@@ -595,28 +618,30 @@ const LinkNode = ({
               sx={{ color: getLinkColor(link.change), pl: "5px" }}
             />
           )}
-
-          {!locked &&
+          {((!locked &&
             !linkLocked &&
             unlinkVisible &&
             !selectedDiffNode &&
             (!currentVisibleNode.unclassified ||
               property !== "generalizations") &&
-            property !== "isPartOf" && (
-              <Tooltip title="Unlink">
-                <IconButton
-                  sx={{
-                    ml: "18px",
-                    borderRadius: "18px",
-                    fontSize: "12px",
-                    p: 0.2,
-                  }}
-                  onClick={handleUnlinkNode}
-                >
-                  <CloseIcon />
-                </IconButton>
-              </Tooltip>
-            )}
+            property !== "isPartOf") ||
+            (clonedNodesQueue.hasOwnProperty(link.id) &&
+              property !== "generalizations")) && (
+            <Tooltip title="Unlink">
+              <IconButton
+                sx={{
+                  ml: "18px",
+                  borderRadius: "18px",
+                  fontSize: "12px",
+                  p: 0.2,
+                }}
+                onClick={handleUnlinkNode}
+              >
+                <LinkOffIcon sx={{ color: "orange" }} />
+              </IconButton>
+            </Tooltip>
+          )}
+
           {property === "parts" &&
             !selectedDiffNode &&
             !clonedNodesQueue.hasOwnProperty(link.id) && (
@@ -642,26 +667,35 @@ const LinkNode = ({
       {swapIt && property === "parts" && !selectedDiffNode && (
         <Box>
           {getSpecializations(link.id).map((n) => (
-            <Box
-              key={n.id}
-              sx={{ display: "flex", alignItems: "center", px: 1, pl: 0 }}
-            >
-              <Tooltip title="Replace with" placement="left">
-                <IconButton
-                  sx={{ p: 0.2, m: "6px" }}
-                  onClick={() => {
-                    replaceWith(n.id, link.id);
-                  }}
-                >
-                  <SwapVertIcon />
+            <Tooltip key={n.id} title="Replace with" placement="left">
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  px: 1,
+                  pl: 0,
+                  borderRadius: "25px",
+                  cursor: "pointer",
+                  ":hover": {
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark" ? "#858381" : "#bec4cc",
+                  },
+                }}
+                onClick={() => {
+                  replaceWith(n.id, link.id);
+                }}
+              >
+                <IconButton sx={{ p: 0.2, m: "6px" }}>
+                  <SwapHorizIcon />
                 </IconButton>
-              </Tooltip>
-              <Typography>{nodes[n.id]?.title}</Typography>
-            </Box>
+
+                <Typography>{nodes[n.id]?.title}</Typography>
+              </Box>
+            </Tooltip>
           ))}{" "}
           {addNew && (
             <Tooltip
-              title="Save"
+              title="Save and replace with"
               placement="top"
               sx={{ mt: "15px", alignItems: "center" }}
             >
@@ -673,7 +707,9 @@ const LinkNode = ({
                 sx={{ p: 0.3, m: "6px", bgcolor: "green" }}
                 disabled={!newPart.trim()}
               >
-                <SwapVertIcon />
+                <SwapHorizIcon
+                  sx={{ color: !!newPart.trim() ? "white" : "" }}
+                />
               </IconButton>
             </Tooltip>
           )}
@@ -686,7 +722,7 @@ const LinkNode = ({
                 }}
                 sx={{ p: 0.3, m: "6px", bgcolor: "red" }}
               >
-                <CloseIcon />
+                <CloseIcon sx={{ color: "white" }} />
               </IconButton>
             </Tooltip>
           )}

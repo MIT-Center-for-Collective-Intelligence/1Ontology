@@ -77,7 +77,7 @@ const Improvements = ({
       property: string,
       newValue: ICollection[],
       addedLinks: string[],
-      removedLinks: string[]
+      removedLinks: string[],
     ) => {
       try {
         if (!user?.uname) return;
@@ -85,7 +85,7 @@ const Improvements = ({
         // Close the modal or perform any other necessary actions
         // Get the node document from the database
         const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id)
+          doc(collection(db, NODES), currentVisibleNode.id),
         );
 
         // If the node document does not exist, return early
@@ -109,7 +109,7 @@ const Improvements = ({
               ? "generalizations"
               : "specializations",
             nodes,
-            db
+            db,
           );
         }
 
@@ -120,7 +120,7 @@ const Improvements = ({
             { id: currentVisibleNode.id },
             property === "parts" ? "isPartOf" : "parts",
             db,
-            nodes
+            nodes,
           );
         }
 
@@ -128,7 +128,7 @@ const Improvements = ({
         if (
           nodeData.inheritance &&
           !["specializations", "generalizations", "parts", "isPartOf"].includes(
-            property
+            property,
           )
         ) {
           if (nodeData.inheritance[property]) {
@@ -154,7 +154,7 @@ const Improvements = ({
         // Update other properties if applicable
         if (
           !["specializations", "generalizations", "parts", "isPartOf"].includes(
-            property
+            property,
           )
         ) {
           updatePropertyOf(
@@ -162,7 +162,7 @@ const Improvements = ({
             { id: currentVisibleNode.id },
             property,
             nodes,
-            db
+            db,
           );
         }
         if (property === "specializations" || property === "generalizations") {
@@ -190,7 +190,7 @@ const Improvements = ({
             _removedLinks,
             currentVisibleNode,
             newLinks,
-            nodes
+            nodes,
           );
         }
         if (property === "specializations") {
@@ -201,7 +201,7 @@ const Improvements = ({
             _removedLinks,
             currentVisibleNode,
             newLinks,
-            nodes
+            nodes,
           );
         }
         // Update inheritance for non-specialization/generalization properties
@@ -228,13 +228,13 @@ const Improvements = ({
         });
       }
     },
-    [currentVisibleNode.id, currentVisibleNode.title, db, nodes, user]
+    [currentVisibleNode.id, currentVisibleNode.title, db, nodes, user],
   );
 
   const updateStringProperty = async (
     nodeId: string,
     property: string,
-    newValue: string
+    newValue: string,
   ) => {
     try {
       const nodeRef = doc(collection(db, NODES), nodeId);
@@ -264,7 +264,7 @@ const Improvements = ({
             body: JSON.stringify({
               newValue,
             }),
-          }
+          },
         );
 
         if (response.ok) {
@@ -344,7 +344,7 @@ const Improvements = ({
         console.error(error);
       }
     },
-    [nodes, user?.uname]
+    [nodes, user?.uname],
   );
 
   // Function to add a new specialization to a node
@@ -352,7 +352,7 @@ const Improvements = ({
     async (
       collectionName: string = "main",
       newNode: INode,
-      reasoning: string
+      reasoning: string,
     ) => {
       try {
         if (!user?.uname) return;
@@ -370,7 +370,7 @@ const Improvements = ({
         // Retrieve the parent node data
         const nodeParentData = nodes[parentId];
         const previousParentValue = JSON.parse(
-          JSON.stringify(nodeParentData.specializations)
+          JSON.stringify(nodeParentData.specializations),
         );
 
         // Create a new node document reference
@@ -461,7 +461,7 @@ const Improvements = ({
       currentVisibleNode.root,
       currentVisibleNode.title,
       db,
-    ]
+    ],
   );
 
   const updateStringArray = async ({
@@ -513,7 +513,7 @@ const Improvements = ({
         },
       };
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
   //  function to handle the deletion of a Node
@@ -526,7 +526,7 @@ const Improvements = ({
         if (!user?.uname) return;
 
         const specializations = nodeValue.specializations.flatMap(
-          (n) => n.nodes
+          (n) => n.nodes,
         );
 
         if (specializations.length > 0) {
@@ -534,7 +534,7 @@ const Improvements = ({
             await confirmIt(
               "To delete a node, you need to first delete its specializations or move them under a different generalization.",
               "Ok",
-              ""
+              "",
             );
             return;
           }
@@ -543,7 +543,7 @@ const Improvements = ({
           await confirmIt(
             `Are you sure you want to delete this Node?`,
             "Delete Node",
-            "Keep Node"
+            "Keep Node",
           )
         ) {
           const currentNode: INode = JSON.parse(JSON.stringify(nodeValue));
@@ -591,7 +591,7 @@ const Improvements = ({
         });
       }
     },
-    [user?.uname, nodes]
+    [user?.uname, nodes],
   );
   const onAcceptChange = async (change: any) => {
     try {
@@ -632,14 +632,14 @@ const Improvements = ({
           change.modifiedProperty,
           change.detailsOfChange.newValue,
           addedLinks,
-          removedLinks
+          removedLinks,
         );
       } else if (change.modiPropertyType === "string") {
         changeType = "change text";
         await updateStringProperty(
           change.nodeId,
           change.modifiedProperty,
-          change.detailsOfChange.newValue
+          change.detailsOfChange.newValue,
         );
       } else if (change.modiPropertyType === "string-array") {
         const { changeMessage, changeDetails } = (await updateStringArray({
@@ -697,7 +697,7 @@ const Improvements = ({
             <Typography
               sx={{ textAlign: "left", fontWeight: "bold", fontSize: "22px" }}
             >
-              Copilot Message:
+              AI Assistant Message:
             </Typography>
             <Typography sx={{ textAlign: "left" }}>{copilotMessage}</Typography>
           </Box>

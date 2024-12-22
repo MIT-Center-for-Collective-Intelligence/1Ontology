@@ -1,20 +1,15 @@
 import {
-  Box,
   Button,
-  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   FormControl,
   InputLabel,
   MenuItem,
   Select,
-  TextField,
-  Typography,
 } from "@mui/material";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { DESIGN_SYSTEM_COLORS } from "../theme/colors";
 import { MODELS_OPTIONS } from "../utils/copilotPrompts";
 import CopilotPrompt from " @components/components/CopilotPrompt/CopilotPrompt";
@@ -26,7 +21,6 @@ import { getNodesInThreeLevels } from "../utils/helpersCopilot";
 const useSelectDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [{ user }] = useAuth();
-  const editPrompt = user?.uname === "ouhrac" || user?.uname === "1man";
 
   const [selectedOption, setSelectedOption] = useState<{
     id: string;
@@ -39,10 +33,10 @@ const useSelectDropdown = () => {
   const [proposeDeleteNode, setProposeDeleteNodes] = useState(true);
   const [nodeType, setNodeType] = useState<string>("");
   const [selectedProperties, setSelectedProperties] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [inputProperties, setInputProperties] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [nodes, setNodes] = useState<{ [nodeId: string]: INode }>({});
   const [nodeId, setNodeId] = useState("");
@@ -57,7 +51,7 @@ const useSelectDropdown = () => {
       nodeTitle: string,
       nodeType: string,
       nodes: { [nodeId: string]: INode },
-      nodeId: string
+      nodeId: string,
     ) => {
       setIsOpen(true);
       setNodeTitle(nodeTitle);
@@ -68,13 +62,13 @@ const useSelectDropdown = () => {
         new Set([
           ...PROPERTIES_TO_IMPROVE.allTypes,
           ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
-        ])
+        ]),
       );
       setInputProperties(
         new Set([
           ...PROPERTIES_TO_IMPROVE.allTypes,
           ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
-        ])
+        ]),
       );
       const savedInputValue = localStorage.getItem(`user-copilot-message`);
       const savedNumberValue = localStorage.getItem(`user-number-value`);
@@ -92,7 +86,7 @@ const useSelectDropdown = () => {
         resolveRef.current = resolve;
       });
     },
-    []
+    [],
   );
 
   const closeDialog = useCallback(
@@ -121,11 +115,11 @@ const useSelectDropdown = () => {
       selectedProperties,
       proposeDeleteNode,
       inputProperties,
-    ]
+    ],
   );
   const nodes_Array = useMemo(() => {
     const nodeData = nodes[nodeId];
-    if (!nodeData || !editPrompt) {
+    if (!nodeData) {
       return;
     }
     const n = getNodesInThreeLevels(nodeData, nodes, new Set(), numberValue);
@@ -133,8 +127,8 @@ const useSelectDropdown = () => {
     if (
       n &&
       inputProperties.size !==
-        PROPERTIES_TO_IMPROVE[nodeType].length +
-          PROPERTIES_TO_IMPROVE["allTypes"].length
+        (PROPERTIES_TO_IMPROVE[nodeType]?.length || 0) +
+          (PROPERTIES_TO_IMPROVE["allTypes"]?.length || 0)
     ) {
       for (let node of n) {
         for (let property in node) {
@@ -149,7 +143,7 @@ const useSelectDropdown = () => {
 
   const handleSelectChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     const selected = MODELS_OPTIONS.find(
-      (option) => option.id === event.target.value
+      (option) => option.id === event.target.value,
     );
     setSelectedOption(selected || { id: "", title: "" });
   };
@@ -184,40 +178,6 @@ const useSelectDropdown = () => {
           },
         }}
       >
-        {editPrompt && (
-          <CopilotPrompt
-            setGenerateNewNodes={setGenerateNewNodes}
-            proposeDeleteNode={proposeDeleteNode}
-            setProposeDeleteNodes={setProposeDeleteNodes}
-            generateNewNodes={generateNewNodes}
-            nodeType={nodeType}
-            selectedProperties={selectedProperties}
-            setSelectedProperties={setSelectedProperties}
-            inputProperties={inputProperties}
-            setInputProperties={setInputProperties}
-            nodes={nodes_Array}
-          />
-        )}
-        <TextField
-          autoFocus
-          margin="dense"
-          id="prompt-input"
-          label="Please write your instructions to co-pilot here:"
-          type="text"
-          value={inputValue}
-          onChange={handleInputChange}
-          fullWidth
-          multiline
-          sx={{
-            mx: "auto",
-            display: "block",
-            textAlign: "center",
-            "& .MuiInputLabel-root": {
-              color: "gray",
-            },
-          }}
-        />
-
         <FormControl fullWidth sx={{ mb: 2, mt: "15px" }}>
           <InputLabel>Select an LLM Option</InputLabel>
           <Select
@@ -232,30 +192,23 @@ const useSelectDropdown = () => {
             ))}
           </Select>
         </FormControl>
-        <TextField
-          margin="dense"
-          id="number-input"
-          type="number"
-          label={
-            <Box>
-              How far away from this node{" "}
-              <strong style={{ color: "orange" }}>{nodeTitle} </strong>
-              should I explore to propose improvements?
-            </Box>
-          }
-          value={numberValue || ""}
-          onChange={handleNumberChange}
-          fullWidth
-          inputProps={{ min: 0 }}
-          sx={{
-            mt: 3,
-            mx: "auto",
-            display: "block",
-            textAlign: "center",
-            "& .MuiInputLabel-root": {
-              color: "gray",
-            },
-          }}
+
+        <CopilotPrompt
+          setGenerateNewNodes={setGenerateNewNodes}
+          proposeDeleteNode={proposeDeleteNode}
+          setProposeDeleteNodes={setProposeDeleteNodes}
+          generateNewNodes={generateNewNodes}
+          nodeType={nodeType}
+          selectedProperties={selectedProperties}
+          setSelectedProperties={setSelectedProperties}
+          inputProperties={inputProperties}
+          setInputProperties={setInputProperties}
+          nodes={nodes_Array}
+          nodeTitle={nodeTitle}
+          numberValue={numberValue}
+          handleNumberChange={handleNumberChange}
+          inputValue={inputValue}
+          handleInputChange={handleInputChange}
         />
       </DialogContent>
       <DialogActions sx={{ justifyContent: "center", mb: "5px" }}>
@@ -270,8 +223,7 @@ const useSelectDropdown = () => {
             numberValue === 0 ||
             (!generateNewNodes &&
               selectedProperties.size <= 0 &&
-              !proposeDeleteNode &&
-              editPrompt)
+              !proposeDeleteNode)
           }
         >
           Start
@@ -294,9 +246,9 @@ const useSelectDropdown = () => {
       nodeTitle: string,
       nodeType: string,
       nodes: { [nodeId: string]: INode },
-      nodeId: string
+      nodeId: string,
     ) => showDialog(nodeTitle, nodeType, nodes, nodeId),
-    [showDialog]
+    [showDialog],
   );
 
   return { selectIt, dropdownDialog };

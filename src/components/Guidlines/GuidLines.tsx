@@ -88,7 +88,7 @@ const GuidLines = ({
   };
 
   return (
-    <Box>
+    <Box sx={{ mb: "25px" }}>
       {setDisplayGuidelines && (
         <Box
           sx={{
@@ -120,7 +120,17 @@ const GuidLines = ({
         <Accordion
           defaultExpanded={true}
           key={catId}
-          sx={{ borderRadius: "16px", border: "none" }}
+          sx={{
+            borderRadius: "16px",
+            border: "none",
+            // mb: "15px",
+            backgroundColor: (theme) =>
+              !setDisplayGuidelines
+                ? theme.palette.mode === "dark"
+                  ? "#1e1919"
+                  : "#d0d5dd"
+                : "",
+          }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography

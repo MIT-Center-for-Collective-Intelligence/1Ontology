@@ -23,6 +23,7 @@ const SelectInheritance = ({
   property: string;
   nodes: { [nodeId: string]: INode };
 }) => {
+  const db = getFirestore();
   const [generalizations, setGeneralizations] = useState<
     { id: string; title: string }[]
   >([]);
@@ -31,14 +32,21 @@ const SelectInheritance = ({
     currentVisibleNode.inheritance?.[property]?.ref || "inheritance-overridden";
 
   useEffect(() => {
-    const _generalizations = [
+    let _generalizations = [
       ...currentVisibleNode.generalizations.flatMap(
-        (gen: ICollection) => gen.nodes
+        (gen: ICollection) => gen.nodes,
       ),
     ].map((node: ILinkNode) => ({
       id: node.id,
       title: getTitle(nodes, node.id),
     }));
+
+    _generalizations = _generalizations.filter((g) => {
+      return (
+        !nodes[g.id].inheritance[property]?.ref ||
+        nodes[g.id].inheritance[property]?.ref !== inheritanceRef
+      );
+    });
     const index = _generalizations.findIndex((g) => g.id === inheritanceRef);
     if (index === -1) {
       _generalizations.push({
@@ -50,11 +58,9 @@ const SelectInheritance = ({
       });
     }
     setGeneralizations(_generalizations);
-  }, [currentVisibleNode.generalizations, inheritanceRef]);
+  }, [currentVisibleNode.generalizations, inheritanceRef, nodes]);
 
   // Map the generalizations to get the title and id
-
-  const db = getFirestore();
 
   const updateSpecializationsInheritance = async (
     specializations: ICollection[],
@@ -62,7 +68,7 @@ const SelectInheritance = ({
     property: string,
     ref: string,
     generalizationId: string,
-    modifiedInheritanceFor: string
+    modifiedInheritanceFor: string,
   ) => {
     let newBatch = batch;
     for (let { nodes: links } of specializations) {
@@ -93,7 +99,7 @@ const SelectInheritance = ({
           property,
           ref,
           link.id,
-          modifiedInheritanceFor
+          modifiedInheritanceFor,
         );
       }
     }
@@ -102,7 +108,7 @@ const SelectInheritance = ({
   };
   const changeInheritance = (
     event: React.ChangeEvent<HTMLInputElement>,
-    property: string
+    property: string,
   ) => {
     try {
       let newGeneralizationId = event.target.value;
@@ -125,7 +131,7 @@ const SelectInheritance = ({
               property,
               newGeneralizationId,
               currentVisibleNode.id,
-              currentVisibleNode.id
+              currentVisibleNode.id,
             );
             await batch.commit();
           })

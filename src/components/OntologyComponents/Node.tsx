@@ -73,7 +73,7 @@ The `Node` component is intended to be used within an application that requires 
 - The component is designed to work with a specific data structure and may require adaptation for different use cases.
 
 This documentation provides a high-level overview of the `Node` component and its capabilities. For detailed implementation and integration, refer to the source code and the specific application context in which the component is used.*/
-import { Stack, useMediaQuery } from "@mui/material";
+import { Popover, Stack, useMediaQuery } from "@mui/material";
 import { Box } from "@mui/system";
 import {
   collection,
@@ -126,8 +126,8 @@ import {
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
 import { NodeChange } from " @components/types/INode";
 import { User } from " @components/types/IAuth";
-import SelectModelModal from "../Models/SelectModel";
-import VisualizeTheProperty from "../StructuredProperty/VisualizeTheProperty";
+import { NodeImageManager } from "../NodBody/NodeImageManager";
+import { getStorage } from "firebase/storage";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -145,6 +145,23 @@ type INodeProps = {
   activeSidebar: any;
   currentImprovement: any;
   setNodes: any;
+  checkedItems: any;
+  setCheckedItems: any;
+  checkedItemsCopy: any;
+  setCheckedItemsCopy: any;
+  searchValue: any;
+  setSearchValue: any;
+  clonedNodesQueue: any;
+  setClonedNodesQueue: any;
+  newOnes: any;
+  setNewOnes: any;
+  selectedProperty: any;
+  setSelectedProperty: any;
+  removedElements: any;
+  setRemovedElements: any;
+  addedElements: any;
+  setAddedElements: any;
+  handleCloseAddLinksModel: any;
 };
 
 const Node = ({
@@ -163,40 +180,41 @@ const Node = ({
   currentImprovement,
   eachOntologyPath,
   setNodes,
+  checkedItems,
+  setCheckedItems,
+  checkedItemsCopy,
+  setCheckedItemsCopy,
+  searchValue,
+  setSearchValue,
+  clonedNodesQueue,
+  setClonedNodesQueue,
+  newOnes,
+  setNewOnes,
+  selectedProperty,
+  setSelectedProperty,
+  removedElements,
+  setRemovedElements,
+  addedElements,
+  setAddedElements,
+  handleCloseAddLinksModel,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
   const isSmallScreen = useMediaQuery("(max-width: 600px)");
 
-  const [openSelectModel, setOpenSelectModel] = useState(false);
   const [cloning, setCloning] = useState<string | null>(null);
 
-  const [selectedProperty, setSelectedProperty] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
-  const [checkedItemsCopy, setCheckedItemsCopy] = useState<Set<string>>(
-    new Set()
-  );
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
-  const [searchValue, setSearchValue] = useState("");
   const [selectTitle, setSelectTitle] = useState(false);
   const db = getFirestore();
+  const storage = getStorage();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [width, setWidth] = useState<number>(0);
-  const [clonedNodesQueue, setClonedNodesQueue] = useState<{
-    [nodeId: string]: { title: string; id: string };
-  }>({});
-  const [newOnes, setNewOnes] = useState(new Set());
+
   const [editableProperty, setEditableProperty] = useState<ICollection[]>([]);
+
   /* */
-  const handleCloseAddLinksModel = () => {
-    setCheckedItems(new Set());
-    setOpenSelectModel(false);
-    setSelectedCategory("");
-    setSearchValue("");
-    setClonedNodesQueue({});
-    setNewOnes(new Set());
-  };
+  const [glowIds, setGlowIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const element = document.getElementById("node-section");
@@ -236,10 +254,12 @@ const Node = ({
   const addACloneNodeQueue = (nodeId: string, title?: string) => {
     const newId = doc(collection(db, NODES)).id;
     const newTitle = title ? title : `New ${nodes[nodeId].title}`;
-    setClonedNodesQueue((prev) => {
-      prev[newId] = { title: newTitle, id: nodeId };
-      return prev;
-    });
+    setClonedNodesQueue(
+      (prev: { [nodeId: string]: { title: string; id: string } }) => {
+        prev[newId] = { title: newTitle, id: nodeId };
+        return prev;
+      },
+    );
     setNewOnes((newOnes: any) => {
       let _oldChecked = new Set(newOnes);
       if (_oldChecked.has(newId)) {
@@ -257,7 +277,7 @@ const Node = ({
       nodeId: string,
       searchValue: string | null,
       newId: string | null,
-      mProperty: string
+      mProperty: string,
     ): Promise<INode | null> => {
       try {
         setCloning(nodeId);
@@ -280,14 +300,14 @@ const Node = ({
         // Generate a unique title based on existing specializations
         const specializationsTitles = parentNodeData.specializations.flatMap(
           (collection) =>
-            collection.nodes.map((spec) => nodes[spec.id]?.title || "")
+            collection.nodes.map((spec) => nodes[spec.id]?.title || ""),
         );
         newTitle = generateUniqueTitle(newTitle, specializationsTitles);
 
         // Generate new inheritance structure
         const inheritance = generateInheritance(
           parentNodeData.inheritance,
-          nodeId
+          nodeId,
         );
 
         // Create the new node object
@@ -297,7 +317,7 @@ const Node = ({
           newTitle,
           inheritance,
           nodeId,
-          user.uname
+          user.uname,
         );
 
         // Handle specific property updates for `parts` and `isPartOf`
@@ -307,7 +327,7 @@ const Node = ({
             Array.isArray(newNode.properties.isPartOf)
           ) {
             const mainIdx = newNode.properties.isPartOf.findIndex(
-              (c) => c.collectionName === "main"
+              (c) => c.collectionName === "main",
             );
             if (mainIdx === -1) {
               newNode.properties.isPartOf.push({
@@ -327,7 +347,7 @@ const Node = ({
             Array.isArray(newNode.properties.parts)
           ) {
             const mainIdx = newNode.properties.parts.findIndex(
-              (c) => c.collectionName === "main"
+              (c) => c.collectionName === "main",
             );
             if (mainIdx === -1) {
               newNode.properties.parts.push({
@@ -353,7 +373,7 @@ const Node = ({
           if (mProperty === "specializations") {
             const alreadyExistIndex =
               newNode.generalizations[0].nodes.findIndex(
-                (n) => n.id === currentVisibleNode.id
+                (n) => n.id === currentVisibleNode.id,
               );
             if (alreadyExistIndex === -1) {
               newNode.generalizations[0].nodes.push({
@@ -365,7 +385,7 @@ const Node = ({
           if (mProperty === "generalizations") {
             const alreadyExistIndex =
               newNode.specializations[0].nodes.findIndex(
-                (n) => n.id === currentVisibleNode.id
+                (n) => n.id === currentVisibleNode.id,
               );
             if (alreadyExistIndex === -1) {
               newNode.specializations[0].nodes.push({
@@ -378,22 +398,21 @@ const Node = ({
           if (newNode.inheritance[mProperty]?.ref) {
             newNode.properties[mProperty] = JSON.parse(
               JSON.stringify(
-                nodes[newNode.inheritance[mProperty].ref].properties[mProperty]
-              )
+                nodes[newNode.inheritance[mProperty].ref].properties[mProperty],
+              ),
             );
           }
 
           if (Array.isArray(newNode.properties[mProperty])) {
             const targetPropertyCollection = newNode.properties[mProperty].find(
-              (collection) =>
-                collection.collectionName === (selectedCategory || "main")
+              (collection) => collection.collectionName === "main",
             );
 
             // If the property collection does not exist, create it
 
             if (!targetPropertyCollection) {
               newNode.properties[mProperty].push({
-                collectionName: selectedCategory || "main",
+                collectionName: "main",
                 nodes: [],
               });
             }
@@ -401,10 +420,7 @@ const Node = ({
             // Push the new node ID into the corresponding property collection
             const propertyCollectionToUpdate = newNode.properties[
               mProperty
-            ].find(
-              (collection) =>
-                collection.collectionName === (selectedCategory || "main")
-            );
+            ].find((collection) => collection.collectionName === "main");
             propertyCollectionToUpdate?.nodes.push({ id: newNode.id });
             if (!newNode.propertyOf) {
               newNode.propertyOf = {
@@ -431,7 +447,7 @@ const Node = ({
                     { id: currentVisibleNode.id },
                     mProperty === "parts" ? "isPartOf" : "parts",
                     db,
-                    nodes
+                    nodes,
                   );
                 } else {
                   updatePropertyOf(
@@ -439,7 +455,7 @@ const Node = ({
                     { id: currentVisibleNode.id },
                     mProperty,
                     nodes,
-                    db
+                    db,
                   );
                 }
               }
@@ -510,24 +526,33 @@ const Node = ({
 
         // Return the newly created node
         return newNode;
-      } catch (error) {
+      } catch (error: any) {
         confirmIt(
           "There was an error while creating the new node, please try again",
           "OK",
-          ""
+          "",
         );
         console.error(error);
+        recordLogs({
+          type: "error",
+          error: JSON.stringify({
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          }),
+          at: "saveChangeLog",
+        });
         return null;
       }
     },
-    [db, user.uname, selectedCategory, nodes, currentVisibleNode.id]
+    [db, user.uname, nodes, currentVisibleNode.id],
   );
 
   // This function handles the cloning of a node.
   const handleCloning = async (
     node: { id: string },
     searchValue = null,
-    newId = null
+    newId = null,
   ) => {
     // Call the asynchronous function to clone the node with the given ID.
     // Close the modal or perform any necessary cleanup.
@@ -535,8 +560,11 @@ const Node = ({
     await cloneNode(node.id, searchValue, newId, selectedProperty);
   };
 
-  const showListToSelect = async (property: string, collectionIdx: number) => {
-    setOpenSelectModel(true);
+  const editStructuredProperty = async (property: string) => {
+    if (selectedProperty) {
+      handleCloseAddLinksModel();
+    }
+
     setSelectedProperty(property);
 
     let previousCheckedItems: string[] = [];
@@ -568,7 +596,7 @@ const Node = ({
   const selectFromTree = () => {
     if (
       ["parts", "isPartOf", "specializations", "generalizations"].includes(
-        selectedProperty
+        selectedProperty,
       )
     ) {
       return (
@@ -582,9 +610,16 @@ const Node = ({
   };
 
   const handleSaveLinkChanges = useCallback(
-    async (removedElements: Set<string>, addedElements: Set<string>) => {
+    async (
+      removedElements: Set<string>,
+      addedElements: Set<string>,
+      selectedProperty: string,
+    ) => {
       try {
-        if (removedElements.size === 0 && addedElements.size === 0) {
+        if (
+          (removedElements.size === 0 && addedElements.size === 0) ||
+          !selectedProperty
+        ) {
           return;
         }
 
@@ -598,7 +633,7 @@ const Node = ({
         // Close the modal or perform any other necessary actions
         // Get the node document from the database
         const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id)
+          doc(collection(db, NODES), currentVisibleNode.id),
         );
         let previousValue: ICollection[] | null = null;
 
@@ -614,12 +649,12 @@ const Node = ({
           selectedProperty === "generalizations"
         ) {
           previousValue = JSON.parse(
-            JSON.stringify(nodeData[selectedProperty])
+            JSON.stringify(nodeData[selectedProperty]),
           );
         } else {
           if (Array.isArray(nodeData.properties[selectedProperty])) {
             previousValue = JSON.parse(
-              JSON.stringify(nodeData.properties[selectedProperty])
+              JSON.stringify(nodeData.properties[selectedProperty]),
             );
           }
         }
@@ -629,7 +664,7 @@ const Node = ({
           await confirmIt(
             "You cannot remove all the generalizations for this node. Make sure it links to at least one generalization.",
             "Ok",
-            ""
+            "",
           );
           return;
         }
@@ -639,7 +674,7 @@ const Node = ({
             db,
             selectedProperty,
             currentVisibleNode.id,
-            linkId
+            linkId,
           );
         }
 
@@ -655,7 +690,7 @@ const Node = ({
               ? "generalizations"
               : "specializations",
             nodes,
-            db
+            db,
           );
           nodeData[selectedProperty] = editableProperty;
         } else {
@@ -669,7 +704,7 @@ const Node = ({
             { id: currentVisibleNode.id },
             selectedProperty === "parts" ? "isPartOf" : "parts",
             db,
-            nodes
+            nodes,
           );
         }
 
@@ -677,7 +712,7 @@ const Node = ({
         if (
           nodeData.inheritance &&
           !["specializations", "generalizations", "parts", "isPartOf"].includes(
-            selectedProperty
+            selectedProperty,
           )
         ) {
           if (nodeData.inheritance[selectedProperty]) {
@@ -716,7 +751,7 @@ const Node = ({
             { id: currentVisibleNode.id },
             selectedProperty,
             nodes,
-            db
+            db,
           );
         }
 
@@ -731,7 +766,7 @@ const Node = ({
             removedLinks,
             currentVisibleNode,
             newLinks,
-            nodes
+            nodes,
           );
         }
         if (selectedProperty === "specializations") {
@@ -742,13 +777,13 @@ const Node = ({
             removedLinks,
             currentVisibleNode,
             newLinks,
-            nodes
+            nodes,
           );
         }
         // Update inheritance for non-specialization/generalization properties
         if (
           !["specializations", "generalizations", "isPartOf"].includes(
-            selectedProperty
+            selectedProperty,
           )
         ) {
           updateInheritance({
@@ -782,14 +817,7 @@ const Node = ({
         });
       }
     },
-    [
-      checkedItems,
-      currentVisibleNode.id,
-      currentVisibleNode.title,
-      db,
-      selectedProperty,
-      nodes,
-    ]
+    [checkedItems, currentVisibleNode.id, currentVisibleNode.title, db, nodes],
   );
 
   //  function to handle the deletion of a Node
@@ -800,7 +828,7 @@ const Node = ({
       if (!user?.uname) return;
 
       const specializations = currentVisibleNode.specializations.flatMap(
-        (n) => n.nodes
+        (n) => n.nodes,
       );
 
       if (specializations.length > 0) {
@@ -808,7 +836,7 @@ const Node = ({
           await confirmIt(
             "To delete a node, you need to first delete its specializations or move them under a different generalization.",
             "Ok",
-            ""
+            "",
           );
           return;
         }
@@ -817,11 +845,11 @@ const Node = ({
         await confirmIt(
           `Are you sure you want to delete this Node?`,
           "Delete Node",
-          "Keep Node"
+          "Keep Node",
         )
       ) {
         const currentNode: INode = JSON.parse(
-          JSON.stringify(currentVisibleNode)
+          JSON.stringify(currentVisibleNode),
         );
         // Retrieve the document reference of the node to be deleted
         for (let collection of currentVisibleNode.generalizations) {
@@ -880,7 +908,7 @@ const Node = ({
         return newExpanded;
       });
     },
-    [setExpandedNodes]
+    [setExpandedNodes],
   );
 
   const handleLockNode = () => {
@@ -898,7 +926,7 @@ const Node = ({
     (nodeId: string) => {
       return getTitle(nodes, nodeId);
     },
-    [nodes]
+    [nodes],
   );
   const onGetPropertyValue = useCallback(
     (property: string, structured: boolean = false) => {
@@ -906,7 +934,7 @@ const Node = ({
         nodes,
         currentVisibleNode.inheritance[property]?.ref,
         property,
-        structured
+        structured,
       );
 
       if (inheritedProperty !== null) {
@@ -923,7 +951,7 @@ const Node = ({
         return currentVisibleNode.properties[property];
       }
     },
-    [currentVisibleNode, nodes]
+    [currentVisibleNode, nodes],
   );
   const checkDuplicateTitle = (newTitle: string) => {
     try {
@@ -933,7 +961,7 @@ const Node = ({
         fuseSearch.some(
           (s) =>
             s.title.toLowerCase().trim() === newTitle.toLowerCase().trim() &&
-            currentVisibleNode.id !== s.id
+            currentVisibleNode.id !== s.id,
         )
       );
     } catch (error) {
@@ -941,21 +969,21 @@ const Node = ({
     }
   };
   const getPath = useCallback(
-    (nodeId: string, selectedCategory: string): Set<string> => {
-      if (selectedCategory === "generalizations") {
+    (nodeId: string, selectedProperty: string): Set<string> => {
+      if (selectedProperty === "generalizations") {
         return new Set([nodeId]);
       }
-      if (selectedCategory === "specializations") {
+      if (selectedProperty === "specializations") {
         return new Set(eachOntologyPath[nodeId].map((p: any) => p.id));
       }
       return new Set();
     },
-    [eachOntologyPath]
+    [eachOntologyPath],
   );
 
   /* "root": "T
   of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'.
-  The user should not be able to modify the value of this field. Please automatically specify
+  The user should not be able to modify the value of this field. Please automatically specify
   it by tracing the generalizations of this descendent activity back to reach one of the direct specializations 
   of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'. So, obviously the root of the node 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'
   itself and its direct specializations would be empty string because they are already roots."*/
@@ -999,6 +1027,7 @@ const Node = ({
           currentImprovement={currentImprovement}
           checkDuplicateTitle={checkDuplicateTitle}
         />
+
         {/* {currentVisibleNode.nodeType === "context" && (
           <StructuredProperty
             selectedDiffNode={selectedDiffNode}
@@ -1048,7 +1077,7 @@ const Node = ({
             selectedDiffNode={selectedDiffNode}
             confirmIt={confirmIt}
             currentVisibleNode={currentVisibleNode}
-            showListToSelect={showListToSelect}
+            editStructuredProperty={editStructuredProperty}
             setSelectedProperty={setSelectedProperty}
             navigateToNode={navigateToNode}
             setSnackbarMessage={setSnackbarMessage}
@@ -1058,6 +1087,38 @@ const Node = ({
             locked={locked}
             onGetPropertyValue={onGetPropertyValue}
             currentImprovement={currentImprovement}
+            handleCloseAddLinksModel={handleCloseAddLinksModel}
+            selectedProperty={selectedProperty}
+            setSearchValue={setSearchValue}
+            searchValue={searchValue}
+            searchResultsForSelection={searchResultsForSelection}
+            checkedItems={checkedItems}
+            setCheckedItems={setCheckedItems}
+            setCheckedItemsCopy={setCheckedItemsCopy}
+            checkedItemsCopy={checkedItemsCopy}
+            handleCloning={handleCloning}
+            user={user}
+            selectFromTree={selectFromTree}
+            expandedNodes={expandedNodes}
+            setExpandedNodes={setExpandedNodes}
+            handleToggle={handleToggle}
+            getPath={getPath}
+            handleSaveLinkChanges={handleSaveLinkChanges}
+            checkDuplicateTitle={checkDuplicateTitle}
+            cloning={cloning}
+            addACloneNodeQueue={addACloneNodeQueue}
+            setClonedNodesQueue={setClonedNodesQueue}
+            clonedNodesQueue={clonedNodesQueue}
+            newOnes={newOnes}
+            setNewOnes={setNewOnes}
+            editableProperty={editableProperty}
+            setEditableProperty={setEditableProperty}
+            removedElements={removedElements}
+            setRemovedElements={setRemovedElements}
+            addedElements={addedElements}
+            setAddedElements={setAddedElements}
+            glowIds={glowIds}
+            setGlowIds={setGlowIds}
           />
         )}
         {/* specializations and generalizations*/}
@@ -1073,7 +1134,7 @@ const Node = ({
               confirmIt={confirmIt}
               selectedDiffNode={selectedDiffNode}
               currentVisibleNode={currentVisibleNode}
-              showListToSelect={showListToSelect}
+              editStructuredProperty={editStructuredProperty}
               setSelectedProperty={setSelectedProperty}
               navigateToNode={navigateToNode}
               setSnackbarMessage={setSnackbarMessage}
@@ -1083,6 +1144,38 @@ const Node = ({
               locked={locked}
               onGetPropertyValue={onGetPropertyValue}
               currentImprovement={currentImprovement}
+              handleCloseAddLinksModel={handleCloseAddLinksModel}
+              selectedProperty={selectedProperty}
+              setSearchValue={setSearchValue}
+              searchValue={searchValue}
+              searchResultsForSelection={searchResultsForSelection}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+              setCheckedItemsCopy={setCheckedItemsCopy}
+              checkedItemsCopy={checkedItemsCopy}
+              handleCloning={handleCloning}
+              user={user}
+              selectFromTree={selectFromTree}
+              expandedNodes={expandedNodes}
+              setExpandedNodes={setExpandedNodes}
+              handleToggle={handleToggle}
+              getPath={getPath}
+              handleSaveLinkChanges={handleSaveLinkChanges}
+              checkDuplicateTitle={checkDuplicateTitle}
+              cloning={cloning}
+              addACloneNodeQueue={addACloneNodeQueue}
+              setClonedNodesQueue={setClonedNodesQueue}
+              clonedNodesQueue={clonedNodesQueue}
+              newOnes={newOnes}
+              setNewOnes={setNewOnes}
+              editableProperty={editableProperty}
+              setEditableProperty={setEditableProperty}
+              removedElements={removedElements}
+              setRemovedElements={setRemovedElements}
+              addedElements={addedElements}
+              setAddedElements={setAddedElements}
+              glowIds={glowIds}
+              setGlowIds={setGlowIds}
             />
           ))}
         </Stack>
@@ -1100,7 +1193,7 @@ const Node = ({
               confirmIt={confirmIt}
               selectedDiffNode={selectedDiffNode}
               currentVisibleNode={currentVisibleNode}
-              showListToSelect={showListToSelect}
+              editStructuredProperty={editStructuredProperty}
               setSelectedProperty={setSelectedProperty}
               navigateToNode={navigateToNode}
               setSnackbarMessage={setSnackbarMessage}
@@ -1111,6 +1204,38 @@ const Node = ({
               onGetPropertyValue={onGetPropertyValue}
               currentImprovement={currentImprovement}
               cloneNode={cloneNode}
+              handleCloseAddLinksModel={handleCloseAddLinksModel}
+              selectedProperty={selectedProperty}
+              setSearchValue={setSearchValue}
+              searchValue={searchValue}
+              searchResultsForSelection={searchResultsForSelection}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+              setCheckedItemsCopy={setCheckedItemsCopy}
+              checkedItemsCopy={checkedItemsCopy}
+              handleCloning={handleCloning}
+              user={user}
+              selectFromTree={selectFromTree}
+              expandedNodes={expandedNodes}
+              setExpandedNodes={setExpandedNodes}
+              handleToggle={handleToggle}
+              getPath={getPath}
+              handleSaveLinkChanges={handleSaveLinkChanges}
+              checkDuplicateTitle={checkDuplicateTitle}
+              cloning={cloning}
+              addACloneNodeQueue={addACloneNodeQueue}
+              setClonedNodesQueue={setClonedNodesQueue}
+              clonedNodesQueue={clonedNodesQueue}
+              newOnes={newOnes}
+              setNewOnes={setNewOnes}
+              editableProperty={editableProperty}
+              setEditableProperty={setEditableProperty}
+              removedElements={removedElements}
+              setRemovedElements={setRemovedElements}
+              addedElements={addedElements}
+              setAddedElements={setAddedElements}
+              glowIds={glowIds}
+              setGlowIds={setGlowIds}
             />
           ))}
         </Stack>
@@ -1119,7 +1244,7 @@ const Node = ({
         <NodeBody
           currentVisibleNode={currentVisibleNode}
           setCurrentVisibleNode={setCurrentVisibleNode}
-          showListToSelect={showListToSelect}
+          showListToSelect={editStructuredProperty}
           navigateToNode={navigateToNode}
           setSnackbarMessage={setSnackbarMessage}
           setSelectedProperty={setSelectedProperty}
@@ -1130,47 +1255,50 @@ const Node = ({
           confirmIt={confirmIt}
           onGetPropertyValue={onGetPropertyValue}
           currentImprovement={currentImprovement}
+          handleCloseAddLinksModel={handleCloseAddLinksModel}
+          selectedProperty={selectedProperty}
+          setSearchValue={setSearchValue}
+          searchValue={searchValue}
+          searchResultsForSelection={searchResultsForSelection}
+          checkedItems={checkedItems}
+          setCheckedItems={setCheckedItems}
+          setCheckedItemsCopy={setCheckedItemsCopy}
+          checkedItemsCopy={checkedItemsCopy}
+          handleCloning={handleCloning}
+          selectFromTree={selectFromTree}
+          expandedNodes={expandedNodes}
+          setExpandedNodes={setExpandedNodes}
+          handleToggle={handleToggle}
+          getPath={getPath}
+          handleSaveLinkChanges={handleSaveLinkChanges}
+          checkDuplicateTitle={checkDuplicateTitle}
+          cloning={cloning}
+          addACloneNodeQueue={addACloneNodeQueue}
+          setClonedNodesQueue={setClonedNodesQueue}
+          clonedNodesQueue={clonedNodesQueue}
+          newOnes={newOnes}
+          setNewOnes={setNewOnes}
+          editableProperty={editableProperty}
+          setEditableProperty={setEditableProperty}
+          removedElements={removedElements}
+          setRemovedElements={setRemovedElements}
+          addedElements={addedElements}
+          setAddedElements={setAddedElements}
+          glowIds={glowIds}
+          setGlowIds={setGlowIds}
         />
-      </Box>
-      <SelectModelModal
-        openSelectModel={openSelectModel}
-        handleCloseAddLinksModel={handleCloseAddLinksModel}
-        selectedProperty={selectedProperty}
-        currentVisibleNode={currentVisibleNode}
-        setSearchValue={setSearchValue}
-        searchValue={searchValue}
-        searchResultsForSelection={searchResultsForSelection}
-        selectedCategory={selectedCategory}
-        checkedItems={checkedItems}
-        setCheckedItems={setCheckedItems}
-        setCheckedItemsCopy={setCheckedItemsCopy}
-        checkedItemsCopy={checkedItemsCopy}
-        handleCloning={handleCloning}
-        user={user}
-        nodes={nodes}
-        selectFromTree={selectFromTree}
-        expandedNodes={expandedNodes}
-        setExpandedNodes={setExpandedNodes}
-        handleToggle={handleToggle}
-        getPath={getPath}
-        locked={locked}
-        selectedDiffNode={selectedDiffNode}
-        confirmIt={confirmIt}
-        currentImprovement={currentImprovement}
-        handleSaveLinkChanges={handleSaveLinkChanges}
-        onGetPropertyValue={onGetPropertyValue}
-        setCurrentVisibleNode={setCurrentVisibleNode}
-        checkDuplicateTitle={checkDuplicateTitle}
-        cloning={cloning}
-        addACloneNodeQueue={addACloneNodeQueue}
-        setClonedNodesQueue={setClonedNodesQueue}
-        clonedNodesQueue={clonedNodesQueue}
-        newOnes={newOnes}
-        setNewOnes={setNewOnes}
-        editableProperty={editableProperty}
-        setEditableProperty={setEditableProperty}
-      />
 
+        <NodeImageManager
+          nodeId={currentVisibleNode.id}
+          currentVisibleNode={currentVisibleNode}
+          user={user}
+          firestore={db}
+          storage={storage}
+          confirmIt={confirmIt}
+          saveNewChangeLog={saveNewChangeLog}
+          selectedDiffNode={selectedDiffNode}
+        />
+      </Box>{" "}
       {ConfirmDialog}
     </Box>
   );

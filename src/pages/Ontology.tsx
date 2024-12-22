@@ -169,6 +169,32 @@ const Ontology = () => {
   const [prevHash, setPrevHash] = useState("");
   const [lastSearches, setLastSearches] = useState<any[]>([]);
   const [selectedChatTab, setSelectedChatTab] = useState<number>(0);
+  /*  */
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [checkedItemsCopy, setCheckedItemsCopy] = useState<Set<string>>(
+    new Set()
+  );
+  const [searchValue, setSearchValue] = useState("");
+  const [clonedNodesQueue, setClonedNodesQueue] = useState<{
+    [nodeId: string]: { title: string; id: string };
+  }>({});
+  const [newOnes, setNewOnes] = useState(new Set());
+  const [selectedProperty, setSelectedProperty] = useState("");
+  const [removedElements, setRemovedElements] = useState<Set<string>>(
+    new Set()
+  );
+  const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
+
+  const handleCloseAddLinksModel = () => {
+    setCheckedItems(new Set());
+    setSearchValue("");
+    setClonedNodesQueue({});
+    setNewOnes(new Set());
+    setSelectedProperty("");
+    setAddedElements(new Set());
+    setRemovedElements(new Set());
+    setCheckedItemsCopy(new Set());
+  };
 
   useEffect(() => {
     if (user) {
@@ -422,7 +448,7 @@ const Ontology = () => {
     let newSpecializationsTree: any = {};
 
     if (_nodes.length === 0) return {};
-    
+
     for (let node of _nodes) {
       if (!node || visited.has(node.id)) {
         continue;
@@ -442,6 +468,7 @@ const Ontology = () => {
         unclassified: !!node.unclassified,
         parts,
         specializations: {},
+        generalizations: {},
       };
 
       // Iterate through each collection in the specializations child-nodes
@@ -461,6 +488,8 @@ const Ontology = () => {
               visited
             ),
           };
+          newSpecializationsTree[node.id].generalizations =
+            node.generalizations[0].nodes;
         } else {
           newSpecializationsTree[node.id].specializations[
             collection.collectionName
@@ -474,6 +503,7 @@ const Ontology = () => {
               [...path, node.id],
               visited
             ),
+            generalizations: node.generalizations[0].nodes,
           };
         }
       }
@@ -1053,6 +1083,23 @@ const Ontology = () => {
                   activeSidebar={activeSidebar}
                   currentImprovement={currentImprovement}
                   setNodes={setNodes}
+                  checkedItems={checkedItems}
+                  setCheckedItems={setCheckedItems}
+                  checkedItemsCopy={checkedItemsCopy}
+                  setCheckedItemsCopy={setCheckedItemsCopy}
+                  searchValue={searchValue}
+                  setSearchValue={setSearchValue}
+                  clonedNodesQueue={clonedNodesQueue}
+                  setClonedNodesQueue={setClonedNodesQueue}
+                  newOnes={newOnes}
+                  setNewOnes={setNewOnes}
+                  selectedProperty={selectedProperty}
+                  setSelectedProperty={setSelectedProperty}
+                  removedElements={removedElements}
+                  setRemovedElements={setRemovedElements}
+                  addedElements={addedElements}
+                  setAddedElements={setAddedElements}
+                  handleCloseAddLinksModel={handleCloseAddLinksModel}
                 />
               )}
             </Box>

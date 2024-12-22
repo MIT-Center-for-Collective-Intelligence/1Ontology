@@ -85,6 +85,11 @@ interface EditableSchemaProps {
   inputProperties: any;
   setInputProperties: any;
   nodes: any;
+  nodeTitle: string;
+  numberValue: number;
+  handleNumberChange: any;
+  inputValue: string;
+  handleInputChange: any;
 }
 
 const CopilotPrompt: React.FC<EditableSchemaProps> = ({
@@ -98,6 +103,11 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
   inputProperties,
   setInputProperties,
   nodes,
+  nodeTitle,
+  numberValue,
+  handleNumberChange,
+  inputValue,
+  handleInputChange,
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -516,155 +526,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
             {`Select at least one option: 'Propose New Nodes,' 'Propose Improvement' or "Propose Node Deletion"!`}
           </Typography>
         )}
-      {editPrompt && (
-        <Box>
-          <Box
-            sx={{
-              display: "flex",
-              ml: "7px",
-              mb: "10px",
-              p: 1,
-              cursor: "pointer",
-              ":hover": {
-                backgroundColor: "#766a57",
-                borderRadius: "25px",
-              },
-            }}
-            onClick={() => {
-              setGenerateNewNodes((prev: boolean) => !prev);
-            }}
-          >
-            <Checkbox checked={generateNewNodes} sx={{ p: 0, zIndex: 0 }} />
-            <Typography sx={{ ml: "15px" }}> Propose New Nodes</Typography>
-          </Box>
-          <Accordion
-          /* expanded={expanded} */
-          >
-            <AccordionSummary>
-              <Checkbox
-                checked={selectedProperties.size > 0}
-                sx={{ p: 0 }}
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  setSelectedProperties((prev: Set<string>) => {
-                    if (prev.size > 0) {
-                      return new Set();
-                    }
-                    return new Set([
-                      ...PROPERTIES_TO_IMPROVE.allTypes,
-                      ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
-                    ]);
-                  });
-                }}
-              />
-              <Typography sx={{ ml: "5px" }}>Output Components</Typography>
-              <ExpandMoreIcon sx={{ ml: "12px" }} />
-            </AccordionSummary>
-            <AccordionDetails sx={{ ml: "20px" }}>
-              {[
-                ...PROPERTIES_TO_IMPROVE.allTypes,
-                ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
-              ].map((property: string) => (
-                <Box key={property} sx={{ display: "flex", mb: "12px" }}>
-                  <Checkbox
-                    checked={selectedProperties.has(property)}
-                    sx={{ p: 0 }}
-                    onClick={() => {
-                      setSelectedProperties((prev: Set<string>) => {
-                        const _prev = new Set(prev);
-                        if (_prev.has(property)) {
-                          _prev.delete(property);
-                        } else {
-                          _prev.add(property);
-                        }
-                        return _prev;
-                      });
-                    }}
-                  />
-                  <Typography sx={{ ml: "5px" }}>
-                    {capitalizeFirstLetter(
-                      DISPLAY[property] ? DISPLAY[property] : property
-                    )}
-                  </Typography>
-                </Box>
-              ))}
-            </AccordionDetails>
-          </Accordion>
-          <Accordion>
-            <AccordionSummary>
-              <Checkbox
-                checked={inputProperties.size > 0}
-                sx={{ p: 0 }}
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  setInputProperties((prev: Set<string>) => {
-                    if (prev.size > 0) {
-                      return new Set();
-                    }
-                    return new Set([
-                      ...PROPERTIES_TO_IMPROVE.allTypes,
-                      ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
-                    ]);
-                  });
-                }}
-              />
-              <Typography sx={{ ml: "5px" }}>Input Components</Typography>
-              <ExpandMoreIcon sx={{ ml: "12px" }} />
-            </AccordionSummary>
-            <AccordionDetails sx={{ ml: "20px" }}>
-              {[
-                ...PROPERTIES_TO_IMPROVE.allTypes,
-                ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
-              ].map((property: string) => (
-                <Box key={property} sx={{ display: "flex", mb: "12px" }}>
-                  <Checkbox
-                    checked={inputProperties.has(property)}
-                    sx={{ p: 0 }}
-                    onClick={() => {
-                      setInputProperties((prev: Set<string>) => {
-                        const _prev = new Set(prev);
-                        if (_prev.has(property)) {
-                          _prev.delete(property);
-                        } else {
-                          _prev.add(property);
-                        }
-                        return _prev;
-                      });
-                    }}
-                  />
-                  <Typography sx={{ ml: "5px" }}>
-                    {capitalizeFirstLetter(
-                      DISPLAY[property] ? DISPLAY[property] : property
-                    )}
-                  </Typography>
-                </Box>
-              ))}
-            </AccordionDetails>
-          </Accordion>
-          <Box
-            sx={{
-              display: "flex",
-              ml: "7px",
-              mb: "10px",
-              mt: "5px",
-              p: 1,
-              cursor: "pointer",
-              ":hover": {
-                backgroundColor: "#766a57",
-                borderRadius: "25px",
-              },
-            }}
-            onClick={() => {
-              setProposeDeleteNodes((prev: boolean) => !prev);
-            }}
-          >
-            <Checkbox checked={proposeDeleteNode} sx={{ p: 0, zIndex: 0 }} />
-            <Typography sx={{ ml: "15px" }}>Propose Node Deletion</Typography>
-          </Box>
-        </Box>
-      )}{" "}
+
       {diffChanges !== null && Object.keys(diffChanges).length <= 0 && (
         <Typography
           id="no-diff"
@@ -681,13 +543,11 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
         <Accordion
           expanded={expanded}
           sx={{ p: 0, m: 0, position: "sticky", top: 0 }}
+          TransitionProps={{ timeout: 150 }}
         >
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             sx={{
-              fontSize: "19px",
-              fontWeight: "bold",
-              color: "orange",
               position: "sticky",
               top: 0,
               backgroundColor: (theme) =>
@@ -712,7 +572,6 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                 sx={{
                   fontSize: "24px",
                   fontWeight: "bold",
-                  color: "orange",
                   pl: "13px",
                 }}
               >
@@ -830,6 +689,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
             sx={{
               backgroundColor: (theme) =>
                 theme.palette.mode === "dark" ? "#37373a" : "#e1e1e1",
+              marginBottom: "150px",
             }}
           >
             <Box
@@ -841,95 +701,192 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                 boxSizing: "border-box",
               }}
             >
-              {(previousVersion || systemPrompt).map((p: any) => (
-                <Box
-                  key={p.id}
-                  id={p.id}
-                  sx={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    mt: 1,
-                    flexDirection: { xs: "column", sm: "row" },
-                    mb: "25px",
-                  }}
-                >
-                  {" "}
-                  <Typography
-                    sx={{
-                      flexShrink: 0,
-                      fontSize: { xs: "16px", sm: "20px" },
-                      lineHeight: "1.5",
-                      textAlign: { xs: "center", sm: "left" },
-                      width: "100%",
-                      animation: glowIds.has(p.id)
-                        ? `${glowGreen} 1.5s ease-in-out infinite`
-                        : "",
-                    }}
-                  >
-                    {" "}
-                    {/*    <Box sx={{ mt: "14px" }}>
+              <Accordion>
+                <AccordionSummary>
+                  <Typography sx={{ fontSize: "23px" }}>Definitions</Typography>
+                  <ExpandMoreIcon sx={{ ml: "12px" }} />
+                </AccordionSummary>
+                <AccordionDetails>
+                  {(previousVersion || systemPrompt).map((p: any) => (
+                    <Box
+                      key={p.id}
+                      id={p.id}
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        mt: 1,
+                        flexDirection: { xs: "column", sm: "row" },
+                        mb: "25px",
+                      }}
+                    >
+                      {" "}
+                      <Typography
+                        sx={{
+                          flexShrink: 0,
+                          fontSize: { xs: "16px", sm: "20px" },
+                          lineHeight: "1.5",
+                          textAlign: { xs: "center", sm: "left" },
+                          width: "100%",
+                          animation: glowIds.has(p.id)
+                            ? `${glowGreen} 1.5s ease-in-out infinite`
+                            : "",
+                        }}
+                      >
+                        {" "}
+                        {/*    <Box sx={{ mt: "14px" }}>
                       <MarkdownRender text={p.value || ""} />
                     </Box> */}
-                    {diffChanges && diffChanges[p.id] && (
-                      <Typography
-                        sx={{
-                          color: "red",
-                          display: "inline",
-                          px: "4px",
-                          textDecoration: "line-through",
-                          fontSize: { xs: "16px", sm: "20px" },
-                        }}
-                      >
-                        {diffChanges[p.id].previousValue}
+                        {diffChanges && diffChanges[p.id] && (
+                          <Typography
+                            sx={{
+                              color: "red",
+                              display: "inline",
+                              px: "4px",
+                              textDecoration: "line-through",
+                              fontSize: { xs: "16px", sm: "20px" },
+                            }}
+                          >
+                            {diffChanges[p.id].previousValue}
+                          </Typography>
+                        )}
+                        {diffChanges && diffChanges[p.id] && (
+                          <Typography
+                            sx={{
+                              color: "green",
+                              display: "inline",
+                              fontSize: { xs: "16px", sm: "20px" },
+                            }}
+                          >
+                            {diffChanges[p.id].newValue}
+                          </Typography>
+                        )}
+                        {p.hasOwnProperty("editablePart") &&
+                          (!diffChanges || !diffChanges[p.id]) && (
+                            <TextField
+                              value={p.editablePart}
+                              onChange={(event) => handleInput(p.id, event)}
+                              fullWidth
+                              // rows={14}
+                              label={p.type}
+                              multiline
+                            />
+                            // <Typography
+                            //   key={forceUpdate}
+                            //   component="span"
+                            //   contentEditable={!previousVersionId}
+                            //   suppressContentEditableWarning
+                            //   sx={{
+                            //     display: "inline",
+                            //     borderBottom: !previousVersionId
+                            //       ? "1.5px dashed #ff6d00"
+                            //       : "",
+                            //     paddingBottom: "2px",
+                            //     cursor: "text",
+                            //     px: "4px",
+                            //     color: "inherit",
+                            //     fontSize: { xs: "16px", sm: "20px" },
+                            //   }}
+                            //   onInput={(event) => handleInput(p.id, event)}
+                            // >
+                            //   {p.editablePart}
+                            // </Typography>
+                          )}
+                        {p.endClose}
                       </Typography>
-                    )}
-                    {diffChanges && diffChanges[p.id] && (
-                      <Typography
-                        sx={{
-                          color: "green",
-                          display: "inline",
-                          fontSize: { xs: "16px", sm: "20px" },
-                        }}
-                      >
-                        {diffChanges[p.id].newValue}
-                      </Typography>
-                    )}
-                    {p.hasOwnProperty("editablePart") &&
-                      (!diffChanges || !diffChanges[p.id]) && (
-                        <TextField
-                          value={p.editablePart}
-                          onChange={(event) => handleInput(p.id, event)}
-                          fullWidth
-                          // rows={14}
-                          label={p.type}
-                          multiline
-                        />
-                        // <Typography
-                        //   key={forceUpdate}
-                        //   component="span"
-                        //   contentEditable={!previousVersionId}
-                        //   suppressContentEditableWarning
-                        //   sx={{
-                        //     display: "inline",
-                        //     borderBottom: !previousVersionId
-                        //       ? "1.5px dashed #ff6d00"
-                        //       : "",
-                        //     paddingBottom: "2px",
-                        //     cursor: "text",
-                        //     px: "4px",
-                        //     color: "inherit",
-                        //     fontSize: { xs: "16px", sm: "20px" },
-                        //   }}
-                        //   onInput={(event) => handleInput(p.id, event)}
-                        // >
-                        //   {p.editablePart}
-                        // </Typography>
-                      )}
-                    {p.endClose}
+                    </Box>
+                  ))}
+                </AccordionDetails>
+              </Accordion>
+              <Accordion defaultExpanded={true}>
+                <AccordionSummary>
+                  <Typography sx={{ fontSize: "23px" }}>
+                    Input Components
                   </Typography>
-                </Box>
-              ))}
-              <Accordion>
+                  <ExpandMoreIcon sx={{ ml: "12px" }} />
+                </AccordionSummary>
+                <AccordionDetails sx={{ ml: "20px" }}>
+                  {[
+                    ...PROPERTIES_TO_IMPROVE.allTypes,
+                    ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+                  ].map((property: string) => (
+                    <Box key={property} sx={{ display: "flex", mb: "12px" }}>
+                      <Checkbox
+                        checked={inputProperties.has(property)}
+                        sx={{ p: 0 }}
+                        onClick={() => {
+                          setInputProperties((prev: Set<string>) => {
+                            const _prev = new Set(prev);
+                            if (_prev.has(property)) {
+                              _prev.delete(property);
+                            } else {
+                              _prev.add(property);
+                            }
+                            return _prev;
+                          });
+                        }}
+                        disabled={property === "title"}
+                      />
+                      <Typography sx={{ ml: "5px" }}>
+                        {capitalizeFirstLetter(
+                          DISPLAY[property] ? DISPLAY[property] : property
+                        )}
+                      </Typography>
+                    </Box>
+                  ))}
+                </AccordionDetails>
+                <TextField
+                  margin="dense"
+                  id="number-input"
+                  type="number"
+                  label={
+                    <Box>
+                      How far away from this node{" "}
+                      <strong style={{ color: "orange" }}>{nodeTitle} </strong>
+                      should I explore to propose improvements?
+                    </Box>
+                  }
+                  value={numberValue || ""}
+                  onChange={handleNumberChange}
+                  inputProps={{ min: 0 }}
+                  fullWidth
+                  sx={{
+                    mt: 3,
+                    ml: "18px",
+                    mr: "18px",
+                    width: "auto",
+                    display: "block",
+                    textAlign: "center",
+                    "& .MuiInputLabel-root": {
+                      color: "gray",
+                    },
+                  }}
+                />
+                <Accordion
+                  sx={{
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark" ? "#1e1919" : "#d0d5dd",
+                    mx: "19px",
+                  }}
+                  TransitionProps={{ timeout: 150 }}
+                >
+                  <AccordionSummary>
+                    <Typography sx={{ fontSize: "17px" }}>
+                      <strong style={{ color: "orange", fontSize: "19px" }}>
+                        {nodes.length}
+                      </strong>{" "}
+                      Nodes:{" "}
+                    </Typography>
+                    <ExpandMoreIcon sx={{ ml: "12px", mt: "3px" }} />
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
+                      {JSON.stringify(nodes, null, 2)}
+                    </Typography>
+                  </AccordionDetails>
+                </Accordion>
+              </Accordion>
+
+              <Accordion TransitionProps={{ timeout: 150 }}>
                 <AccordionSummary>
                   <Typography sx={{ fontSize: "23px" }}>
                     Response Structure
@@ -937,20 +894,127 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                   <ExpandMoreIcon sx={{ ml: "12px", mt: "7px" }} />
                 </AccordionSummary>
                 <AccordionDetails>
+                  <Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        ml: "7px",
+                        mb: "10px",
+                        p: 1,
+                        cursor: "pointer",
+                        ":hover": {
+                          backgroundColor: "#766a57",
+                          borderRadius: "25px",
+                        },
+                      }}
+                      onClick={() => {
+                        setGenerateNewNodes((prev: boolean) => !prev);
+                      }}
+                    >
+                      <Checkbox
+                        checked={generateNewNodes}
+                        sx={{ p: 0, zIndex: 0 }}
+                      />
+                      <Typography sx={{ ml: "15px" }}>
+                        {" "}
+                        Propose New Nodes
+                      </Typography>
+                    </Box>
+                    <Accordion
+                      sx={{
+                        backgroundColor: (theme) =>
+                          theme.palette.mode === "dark" ? "#1e1919" : "#d0d5dd",
+                      }}
+                    >
+                      <AccordionSummary>
+                        <Checkbox
+                          checked={selectedProperties.size > 0}
+                          sx={{ p: 0 }}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            setSelectedProperties((prev: Set<string>) => {
+                              if (prev.size > 0) {
+                                return new Set();
+                              }
+                              return new Set([
+                                ...PROPERTIES_TO_IMPROVE.allTypes,
+                                ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+                              ]);
+                            });
+                          }}
+                        />
+                        <Typography sx={{ ml: "5px" }}>
+                          Propose Improvements to Existing Nodes
+                        </Typography>
+                        <ExpandMoreIcon sx={{ ml: "12px" }} />
+                      </AccordionSummary>
+                      <AccordionDetails sx={{ ml: "20px" }}>
+                        {[
+                          ...PROPERTIES_TO_IMPROVE.allTypes,
+                          ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+                        ].map((property: string) => (
+                          <Box
+                            key={property}
+                            sx={{ display: "flex", mb: "12px" }}
+                          >
+                            <Checkbox
+                              checked={selectedProperties.has(property)}
+                              sx={{ p: 0 }}
+                              onClick={() => {
+                                setSelectedProperties((prev: Set<string>) => {
+                                  const _prev = new Set(prev);
+                                  if (_prev.has(property)) {
+                                    _prev.delete(property);
+                                  } else {
+                                    _prev.add(property);
+                                  }
+                                  return _prev;
+                                });
+                              }}
+                            />
+                            <Typography sx={{ ml: "5px" }}>
+                              {capitalizeFirstLetter(
+                                DISPLAY[property] ? DISPLAY[property] : property
+                              )}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </AccordionDetails>
+                    </Accordion>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        ml: "7px",
+                        mb: "10px",
+                        mt: "5px",
+                        p: 1,
+                        cursor: "pointer",
+                        ":hover": {
+                          backgroundColor: "#766a57",
+                          borderRadius: "25px",
+                        },
+                      }}
+                      onClick={() => {
+                        setProposeDeleteNodes((prev: boolean) => !prev);
+                      }}
+                    >
+                      <Checkbox
+                        checked={proposeDeleteNode}
+                        sx={{ p: 0, zIndex: 0 }}
+                      />
+                      <Typography sx={{ ml: "15px" }}>
+                        Propose Node Deletion
+                      </Typography>
+                    </Box>
+                  </Box>
                   <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
                     {getResponseStructure(
                       selectedProperties.size > 0,
                       proposeDeleteNode
                     )}
                   </Typography>
-                </AccordionDetails>
-              </Accordion>
-              <Accordion>
-                <AccordionSummary sx={{ alignItems: "center" }}>
-                  <Typography sx={{ fontSize: "23px" }}>Details</Typography>
-                  <ExpandMoreIcon sx={{ ml: "12px", mt: "7px" }} />
-                </AccordionSummary>
-                <AccordionDetails>
                   {selectedProperties.size > 0 && (
                     <Accordion
                       sx={{
@@ -1020,22 +1084,29 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                       </AccordionDetails>
                     </Accordion>
                   )}
+
+                  <Accordion
+                    sx={{
+                      backgroundColor: (theme) =>
+                        theme.palette.mode === "dark" ? "#1e1919" : "#d0d5dd",
+                    }}
+                  >
+                    <AccordionSummary>
+                      <Typography sx={{ fontSize: "15px" }}>
+                        IMPORTANT NOTES
+                      </Typography>
+                      <ExpandMoreIcon sx={{ ml: "12px" }} />
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
+                        {getNotesPrompt()}
+                      </Typography>
+                    </AccordionDetails>
+                  </Accordion>
                 </AccordionDetails>
               </Accordion>
-              <Accordion>
-                <AccordionSummary>
-                  <Typography sx={{ fontSize: "23px" }}>
-                    IMPORTANT NOTES
-                  </Typography>
-                  <ExpandMoreIcon sx={{ ml: "12px" }} />
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
-                    {getNotesPrompt()}
-                  </Typography>
-                </AccordionDetails>
-              </Accordion>
-              <Accordion>
+
+              <Accordion sx={{ mb: "40px" }}>
                 <AccordionSummary>
                   <Typography sx={{ fontSize: "23px" }}>Guidelines</Typography>
                   <ExpandMoreIcon sx={{ ml: "12px", mt: "7px" }} />
@@ -1046,23 +1117,50 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                   <GuidLines />
                 </AccordionDetails>
               </Accordion>
-              <Accordion>
-                <AccordionSummary>
-                  <Typography sx={{ fontSize: "23px" }}>
-                    Nodes Array:{" "}
-                    <strong style={{ color: "orange", fontSize: "19px" }}>
-                      {nodes.length}
-                    </strong>{" "}
-                  </Typography>
-                  <ExpandMoreIcon sx={{ ml: "12px", mt: "7px" }} />
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
-                    {JSON.stringify(nodes, null, 2)}
-                  </Typography>
-                </AccordionDetails>
-              </Accordion>
             </Box>
+          </AccordionDetails>
+        </Accordion>
+        <Accordion
+          defaultExpanded={true}
+          sx={{
+            overflowAnchor: "none",
+          }}
+        >
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            sx={{
+              flexDirection: "row-reverse",
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+              fontWeight: "bold",
+            }}
+          >
+            <Typography
+              sx={{ pl: "13px", fontSize: "19px", fontWeight: "bold" }}
+            >
+              User Prompt
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <TextField
+              autoFocus
+              margin="dense"
+              id="prompt-input"
+              label="Please write your instructions to AI Assistant here:"
+              type="text"
+              value={inputValue}
+              onChange={handleInputChange}
+              fullWidth
+              multiline
+              sx={{
+                mx: "auto",
+                display: "block",
+                textAlign: "center",
+                "& .MuiInputLabel-root": {
+                  color: "gray",
+                },
+              }}
+            />
           </AccordionDetails>
         </Accordion>
       </Paper>

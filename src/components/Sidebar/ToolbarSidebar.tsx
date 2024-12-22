@@ -951,7 +951,7 @@ const ToolbarSidebar = ({
       case "inheritanceSettings":
         return "Node's Inheritance Settings";
       case "improvements":
-        return "Copilot Improvements:";
+        return "AI Assistant Improvements:";
       case "history":
         return "Edit History:";
       default:
@@ -1229,7 +1229,7 @@ const ToolbarSidebar = ({
                       handleImproveClick();
                     }
                   }}
-                  text={"Copilot"}
+                  text={"AI Assistant"}
                   toolbarIsOpen={hovered}
                 />
               )}
@@ -1271,6 +1271,7 @@ const ToolbarSidebar = ({
             handleExpand={handleExpandSidebar}
             fullVersion={hovered}
             activeUsers={activeUsers}
+            currentUser={user}
           />
         </>
       )}

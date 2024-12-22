@@ -118,17 +118,18 @@ const DagGraph = ({
         label: node.title, // Use node title as the label for the node.
         style: `fill: ${
           currentVisibleNode?.id === nodeId
-            ? "#87D37C"
-            : node.isCategory
+          ? "#87D37C"
+          : node.isCategory
             ? "#ffbe48"
             : "white"
         }; stroke: ${
           currentVisibleNode?.id === nodeId ? "white" : "black"
-        }; stroke-width: 0.1px; cursor: pointer;`, // Set node style based on node category.
+          }; stroke-width: 0.1px; cursor: pointer;`, // Set node style based on node category.
         labelStyle: `fill: ${"black"}; cursor: pointer;`, // Set style for the node label.
         shape: "rect", // Set the shape to rectangle
         rx: 25, // Horizontal radius for rounded corners
         ry: 25, // Vertical radius for rounded corners
+        dataAttr: { "data-node-id": nodeId },
       });
     }
 
@@ -148,6 +149,63 @@ const DagGraph = ({
           minlen: 2, // Set minimum length for the edge.
         });
       }
+    }
+  };
+
+  const indicateHiddenNodes = (node: any, graph: any) => {  
+    if (!currentVisibleNode) return;
+
+    const nodeId = node?.id || "";
+
+    const nodeSelection = d3.select(`g[data-node-id="${nodeId}"]`);
+
+    // Check if an indicator already exists
+    const existingPolygon = nodeSelection.select("polygon");
+
+    // If indicator exists, exit process
+    if (!existingPolygon.empty()) {
+      return;
+    }
+
+    const bbox = nodeSelection.node() ? (nodeSelection.node() as SVGGraphicsElement).getBBox() : null;
+    const nodeXPosition = bbox ? bbox.width / 2 : 0;
+
+    const hasHiddenSpecializations =
+      !expandedNodes.has(nodeId) &&
+      node.specializations &&
+      Object.keys(node.specializations).length > 0;
+
+    const hasHiddenGeneralizations =
+      currentVisibleNode.id !== nodeId &&
+      node.generalizations &&
+      Object.keys(node.generalizations).length > 0 &&
+      node.generalizations.some((gen: any) => {
+        if (!expandedNodes.has(gen.id)) {
+          return true;
+        } else {
+          return false;
+        }
+      });
+
+    if (hasHiddenSpecializations) {
+      nodeSelection
+        .append("polygon")
+        .attr("points", "10,0 0,-5 0,5")
+        .attr("fill", "orange")
+        .attr("transform", `translate(${nodeXPosition + 10}, 10)`);
+    }
+
+    if (hasHiddenGeneralizations) {
+      nodeSelection
+        .append("polygon")
+        .attr("points", "0,0 10,-5 10,5")
+        .attr("fill", "orange")
+        .attr("transform", `translate(${-nodeXPosition - 20}, 10)`);
+    }
+
+    const children: any = Object.values(node.specializations || {});
+    for (let childNode of children) {
+      indicateHiddenNodes(childNode, graph);
     }
   };
 
@@ -175,6 +233,14 @@ const DagGraph = ({
     // Render the graph
     render(svgGroup, graph);
 
+    d3.select("svg")
+      .selectAll("g.node")
+      .attr("data-node-id", (d) => graph.node(d).dataAttr["data-node-id"]);
+
+    for (let node of Object.values(treeVisualization)) {
+      indicateHiddenNodes(node, graph);
+    }
+
     const zoom: any = d3.zoom().on("zoom", function (event) {
       svgGroup.attr("transform", event.transform);
       setZoomState({
@@ -183,7 +249,7 @@ const DagGraph = ({
         scale: event.transform.k,
       }); // Save zoom state
     });
-  
+
     svg.call(zoom);
 
     // Handle node click
