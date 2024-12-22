@@ -36,8 +36,10 @@ const NodeActivity = ({
         sx={{
           position: "sticky",
           top: 0,
-          backgroundColor: "black",
+          backgroundColor: (theme) =>
+            theme.palette.mode === "dark" ? "black" : "#d0d5dd",
           zIndex: 5,
+          width: "100%",
         }}
         value={tabIndex}
         onChange={handleTabChange}
