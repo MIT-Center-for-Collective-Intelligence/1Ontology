@@ -292,6 +292,7 @@ const Text = ({
           sx={{
             display: "flex",
             alignItems: "center",
+            textAlign: "center",
             background: (theme: any) =>
               (selectedDiffNode?.changeType === "delete node" ||
                 !!currentImprovement?.deleteNode) &&
@@ -329,11 +330,14 @@ const Text = ({
               )}
             </Typography>
           </Tooltip>
-          <Box sx={{ display: "flex", ml: "auto", gap: "14px" }}>
-            <PropertyContributors
-              currentVisibleNode={currentVisibleNode}
-              property={property}
-            />
+          <Box
+            sx={{
+              display: "flex",
+              ml: "auto",
+              gap: "14px",
+              alignItems: "center",
+            }}
+          >
             {selectedDiffNode &&
               selectedDiffNode.changeType === "delete node" &&
               property === "title" && (
@@ -341,6 +345,10 @@ const Text = ({
                   DELETED NODE
                 </Typography>
               )}
+            <PropertyContributors
+              currentVisibleNode={currentVisibleNode}
+              property={property}
+            />
             {currentVisibleNode.inheritance[property]?.ref && (
               <Typography sx={{ fontSize: "14px", ml: "9px" }}>
                 {'(Inherited from "'}

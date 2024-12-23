@@ -1,9 +1,9 @@
-import React from 'react';
-import { Box, AvatarGroup, Tooltip } from '@mui/material';
-import type { SxProps, Theme } from '@mui/material';
-import OptimizedAvatar from '../Chat/OptimizedAvatar';
-import { useUsers } from ' @components/hooks/useUsers';
-import { INode } from ' @components/types/INode';
+import React from "react";
+import { Box, AvatarGroup, Tooltip } from "@mui/material";
+import type { SxProps, Theme } from "@mui/material";
+import OptimizedAvatar from "../Chat/OptimizedAvatar";
+import { useUsers } from " @components/hooks/useUsers";
+import { INode } from " @components/types/INode";
 
 interface PropertyContributorsProps {
   currentVisibleNode: INode;
@@ -14,10 +14,11 @@ interface PropertyContributorsProps {
 const PropertyContributors: React.FC<PropertyContributorsProps> = ({
   currentVisibleNode,
   property,
-  sx = {}
+  sx = {},
 }) => {
   const { usersData, isLoading } = useUsers();
-  const contributors = currentVisibleNode?.contributorsByProperty?.[property] || [];
+  const contributors =
+    currentVisibleNode?.contributorsByProperty?.[property] || [];
 
   if (!contributors.length) return null;
   if (isLoading) return null;
@@ -37,63 +38,63 @@ const PropertyContributors: React.FC<PropertyContributorsProps> = ({
     if (user) {
       return user.imageUrl;
     }
-    return '';
+    return "";
   };
 
   return (
     <Box
       sx={{
-        position: 'relative',
-        display: 'flex',
-        justifyContent: 'flex-end',
-        p: 2,
-        mt: 'auto',
-        ml: 'auto',
-        ...sx
+        // position: 'relative',
+        display: "flex",
+        // justifyContent: 'flex-end',
+
+        /*         mt: 'auto',
+        ml: 'auto', */
+        ...sx,
       }}
     >
       <AvatarGroup
         max={3}
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          '& .MuiAvatarGroup-avatar': {
-            border: 'none',
-            width: '24px',
-            height: '24px',
-            fontSize: '0.6rem',
+          display: "flex",
+          alignItems: "center",
+          "& .MuiAvatarGroup-avatar": {
+            border: "none",
+            width: "24px",
+            height: "24px",
+            fontSize: "0.6rem",
           },
-          '& .MuiAvatar-root': {
-            marginRight: '-4px',
+          "& .MuiAvatar-root": {
+            // marginRight: '-4px',
           },
-          '& > *': {
-            display: 'flex',
-            alignItems: 'center',
+          "& > *": {
+            display: "flex",
+            alignItems: "center",
           },
-          '& .MuiAvatarGroup-avatar:last-child': {
+          "& .MuiAvatarGroup-avatar:last-child": {
             marginRight: 0,
-            color: theme => theme.palette.mode === 'dark' ? '#fff' : '#000',
-          }
+            color: (theme) => (theme.palette.mode === "dark" ? "#fff" : "#000"),
+          },
         }}
       >
-        {contributors.map((username: string, index: number) => (
+        {["1man", "ouhrac"].map((username: string, index: number) => (
           <Tooltip
             key={`${username}-${index}`}
             title={getFullName(username)}
             arrow
             placement="top"
           >
-            <span style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={{ display: "flex", alignItems: "center" }}>
               <OptimizedAvatar
                 imageUrl={getImageUrl(username)}
                 alt={getFullName(username)}
                 size={24}
                 quality={50}
                 sx={{
-                  cursor: 'default',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
+                  cursor: "default",
+                  border: "none",
+                  display: "flex",
+                  alignItems: "center",
                 }}
               />
             </span>
