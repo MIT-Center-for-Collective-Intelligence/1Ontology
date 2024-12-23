@@ -259,7 +259,7 @@ const StructuredProperty = ({
       return (
         (property === "generalizations" &&
           (editableProperty || propertyValue).flatMap((n) => n.nodes).length !==
-          1) ||
+            1) ||
         (property === "specializations" && numberOfGeneralizations > 1) ||
         (property !== "generalizations" && property !== "specializations")
       );
@@ -497,8 +497,10 @@ const StructuredProperty = ({
             !currentImprovement &&
             property !== "isPartOf" && (
               <Box sx={{ ml: "auto", display: "flex", gap: "14px" }}>
-                {(property !== "generalizations" && property !== "specializations" &&
-                  property !== "isPartOf" && property !== "parts") && (
+                {property !== "generalizations" &&
+                  property !== "specializations" &&
+                  property !== "isPartOf" &&
+                  property !== "parts" && (
                     <PropertyContributors
                       currentVisibleNode={currentVisibleNode}
                       property={property}
@@ -658,13 +660,16 @@ const StructuredProperty = ({
             /> */}
           </Box>
         )}
-      {(property === "generalizations" || property === "specializations" ||
-        property === "isPartOf" || property === "parts") && (
-          <PropertyContributors
-            currentVisibleNode={currentVisibleNode}
-            property={property}
-          />
-        )}
+      {(property === "generalizations" ||
+        property === "specializations" ||
+        property === "isPartOf" ||
+        property === "parts") && (
+        <PropertyContributors
+          currentVisibleNode={currentVisibleNode}
+          property={property}
+          sx={{ p: 2, ml: "auto" }}
+        />
+      )}
     </Paper>
   );
 };
