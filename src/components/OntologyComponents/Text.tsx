@@ -465,12 +465,11 @@ const Text = ({
                 )}
               </Box>
             </Box>
-          ) : (
+          ) : isPreviewMode && property !== "title" ? (
             <>
               <Box sx={{ position: "relative" }}>
                 <Box
                   sx={{
-                    display: isPreviewMode ? "block" : "none",
                     p: 2,
                     userSelect: "text",
                     "& *": { cursor: "text" },
@@ -478,35 +477,32 @@ const Text = ({
                 >
                   <MarkdownRender text={editorContent} />
                 </Box>
-                <Box
-                  sx={{
-                    display: isPreviewMode ? "none" : "block",
-                  }}
-                >
-                  {!reference && switchToWebsocket ? (
-                    <YjsEditor
-                      fullname={`${user?.fName} ${user?.lName}`}
-                      property={property}
-                      nodeId={currentVisibleNode.id}
-                      color={randomProminentColor()}
-                      saveChangeHistory={saveChangeHistory}
-                      structured={structured}
-                      checkDuplicateTitle={checkDuplicateTitle}
-                      autoFocus={autoFocus}
-                      cursorPosition={cursorPosition}
-                    />
-                  ) : (
-                    <SimpleEditor
-                      property={property}
-                      text={text}
-                      breakInheritance={onSaveTextChange}
-                      nodeId={currentVisibleNode.id}
-                      setCursorPosition={setCursorPosition}
-                    />
-                  )}
-                </Box>
               </Box>
             </>
+          ) : (
+            <Box>
+              {!reference && switchToWebsocket ? (
+                <YjsEditor
+                  fullname={`${user?.fName} ${user?.lName}`}
+                  property={property}
+                  nodeId={currentVisibleNode.id}
+                  color={randomProminentColor()}
+                  saveChangeHistory={saveChangeHistory}
+                  structured={structured}
+                  checkDuplicateTitle={checkDuplicateTitle}
+                  autoFocus={autoFocus}
+                  cursorPosition={cursorPosition}
+                />
+              ) : (
+                <SimpleEditor
+                  property={property}
+                  text={text}
+                  breakInheritance={onSaveTextChange}
+                  nodeId={currentVisibleNode.id}
+                  setCursorPosition={setCursorPosition}
+                />
+              )}
+            </Box>
           )}
         </>
       )}
