@@ -89,7 +89,7 @@ export type INode = {
       uname: string;
       imageUrl: string;
       userId: string;
-    }
+    };
   }[];
 };
 
@@ -182,4 +182,13 @@ export type PromptChange = {
     lName: string;
     imageUrl: string;
   };
+};
+
+export type TreeData = {
+  id: string;
+  name: string;
+  children?: TreeData[];
+  category?: boolean;
+  nodeType: string;
+  nodeId: string;
 };

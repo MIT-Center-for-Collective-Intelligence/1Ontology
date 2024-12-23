@@ -1223,7 +1223,7 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
   }
 };
 /*  updateLinks takes links and push the new link to its specializations or generalizations */
-export const updateLinks = (
+export const updateLinks = async (
   links: { id: string }[],
   newLink: { id: string },
   linkType: "specializations" | "generalizations",
@@ -1264,7 +1264,7 @@ export const updateLinks = (
       };
       childLinks.push(newCollection);
       const childRef = doc(collection(db, NODES), child.id);
-      updateDoc(childRef, {
+      await updateDoc(childRef, {
         [linkType]: childLinks,
       });
     }

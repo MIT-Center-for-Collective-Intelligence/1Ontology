@@ -56,6 +56,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Switch,
   Tab,
   Tabs,
   Typography,
@@ -86,6 +87,7 @@ import {
   INodePath,
   INodeTypes,
   MainSpecializations,
+  TreeData,
   TreeVisual,
 } from " @components/types/INode";
 import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
@@ -105,6 +107,8 @@ import { NodeChange } from " @components/types/INode";
 import GuidLines from " @components/components/Guidlines/GuidLines";
 import SearchSideBar from " @components/components/SearchSideBar/SearchSideBar";
 import Head from "next/head";
+import DraggableTree from " @components/components/OntologyComponents/DraggableTree";
+import { TreeApi } from "react-arborist";
 
 const AddContext = (nodes: any, nodesObject: any): INode[] => {
   for (let node of nodes) {
@@ -128,7 +132,7 @@ const Ontology = () => {
   const isMobile = useMediaQuery("(max-width:599px)") && true;
   const [nodes, setNodes] = useState<{ [id: string]: INode }>({});
   const [currentVisibleNode, setCurrentVisibleNode] = useState<INode | null>(
-    null
+    null,
   );
   // const [ontologyPath, setOntologyPath] = useState<INodePath[]>([]);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
@@ -147,11 +151,11 @@ const Ontology = () => {
 
   //last interaction date from the user
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
-    new Date(Date.now())
+    new Date(Date.now()),
   );
 
   const [selectedDiffNode, setSelectedDiffNode] = useState<NodeChange | null>(
-    null
+    null,
   );
   const scrolling = useRef<any>();
 
@@ -172,7 +176,7 @@ const Ontology = () => {
   /*  */
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [checkedItemsCopy, setCheckedItemsCopy] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [searchValue, setSearchValue] = useState("");
   const [clonedNodesQueue, setClonedNodesQueue] = useState<{
@@ -181,9 +185,13 @@ const Ontology = () => {
   const [newOnes, setNewOnes] = useState(new Set());
   const [selectedProperty, setSelectedProperty] = useState("");
   const [removedElements, setRemovedElements] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
+  const [treeViewData, setTreeViewData] = useState([]);
+
+  const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
+  const [firstLoad, setFirstLoad] = useState(false);
 
   const handleCloseAddLinksModel = () => {
     setCheckedItems(new Set());
@@ -263,14 +271,14 @@ const Ontology = () => {
 
         localStorage.setItem(
           `lastSearches_${user?.userId}`,
-          JSON.stringify(validSearches)
+          JSON.stringify(validSearches),
         );
         return validSearches;
       }
 
       // Proceed with the usual update if searchedNode is not null
       const filteredSearches = prevSearches.filter(
-        (s) => s.id !== searchedNode.id
+        (s) => s.id !== searchedNode.id,
       );
       const updatedSearches = [searchedNode, ...filteredSearches];
 
@@ -284,7 +292,7 @@ const Ontology = () => {
       // Update localStorage with the new list of searches
       localStorage.setItem(
         `lastSearches_${user?.userId}`,
-        JSON.stringify(limitedSearches)
+        JSON.stringify(limitedSearches),
       );
       return limitedSearches;
     });
@@ -305,7 +313,7 @@ const Ontology = () => {
         (item: INode) =>
           !item.deleted &&
           !item.category &&
-          (!nodeType || nodeType === item.nodeType)
+          (!nodeType || nodeType === item.nodeType),
       );
   };
 
@@ -381,7 +389,7 @@ const Ontology = () => {
             const specializationsData: INode[] = [];
 
             collection.nodes.forEach((n: ILinkNode) =>
-              specializationsData.push(nodes[n.id])
+              specializationsData.push(nodes[n.id]),
             );
 
             const subPath = [...path];
@@ -423,7 +431,7 @@ const Ontology = () => {
         });
       }
     },
-    [nodes]
+    [nodes],
   );
 
   useEffect(() => {
@@ -443,7 +451,7 @@ const Ontology = () => {
   const getSpecializationsTree = (
     _nodes: INode[],
     path: string[],
-    visited: Set<string> = new Set()
+    visited: Set<string> = new Set(),
   ) => {
     let newSpecializationsTree: any = {};
 
@@ -485,7 +493,7 @@ const Ontology = () => {
             ...getSpecializationsTree(
               specializations,
               [...path, node.id],
-              visited
+              visited,
             ),
           };
           newSpecializationsTree[node.id].generalizations =
@@ -501,7 +509,7 @@ const Ontology = () => {
             specializations: getSpecializationsTree(
               specializations,
               [...path, node.id],
-              visited
+              visited,
             ),
             generalizations: node.generalizations[0].nodes,
           };
@@ -517,7 +525,7 @@ const Ontology = () => {
     // Create a query for the NODES collection where "deleted" is false
     const nodesQuery = query(
       collection(db, NODES),
-      where("deleted", "==", false)
+      where("deleted", "==", false),
     );
 
     // Set up a snapshot listener to track changes in the nodes collection
@@ -552,10 +560,83 @@ const Ontology = () => {
     return () => unsubscribeNodes();
   }, [db]);
 
+  const getTreeView = (
+    mainCategories: INode[],
+    path: string[],
+    parentId?: string,
+  ): any => {
+    const newNodes = [];
+    for (let node of mainCategories) {
+      const specializations = node.specializations;
+      let collections = [];
+      let mainChildren = [];
+      for (let collection of specializations) {
+        const children = [];
+        for (let _node of collection.nodes) {
+          if (nodes[_node.id]) {
+            children.push(nodes[_node.id]);
+          }
+        }
+        // if (children.length > 0) {
+        if (collection.collectionName !== "main") {
+          collections.push({
+            id: parentId
+              ? `${parentId}-${node.id}-${collection.collectionName}`
+              : `${node.id}-${collection.collectionName}`,
+            nodeId: node.id,
+            nodeType: node.nodeType,
+            name: collection.collectionName,
+            children: getTreeView(
+              children,
+              [
+                ...path,
+                parentId ? `${parentId}-${node.id}` : `${node.id}`,
+                parentId
+                  ? `${parentId}-${node.id}-${collection.collectionName}`
+                  : `${node.id}-${collection.collectionName}`,
+              ],
+              node.category ? node.id : undefined,
+            ),
+            path: [...path, parentId ? `${parentId}-${node.id}` : `${node.id}`],
+            category: true,
+          });
+        } else {
+          mainChildren.push(...children);
+        }
+
+        // } else {
+        //   collections.push({
+        //     id: `${parentId}-${node.id}`,
+        //     nodeId: node.id,
+        //     name: node.title,
+        //     category: !!parentId
+        //   });
+        // }
+      }
+      newNodes.push({
+        id: parentId ? `${parentId}-${node.id}` : `${node.id}`,
+        nodeId: node.id,
+        name: node.title,
+        nodeType: node.nodeType,
+        children: [
+          ...collections,
+          ...getTreeView(
+            mainChildren,
+            [...path, parentId ? `${parentId}-${node.id}` : `${node.id}`],
+            node.category ? node.id : undefined,
+          ),
+        ],
+        path,
+        category: node.category,
+      });
+    }
+    return newNodes;
+  };
+
   useEffect(() => {
     // Filter nodes to get only those with a defined category
     const mainCategories = Object.values(nodes).filter(
-      (node: INode) => node.category
+      (node: INode) => node.category,
     );
 
     // Sort main nodes based on a predefined order
@@ -572,6 +653,10 @@ const Ontology = () => {
     });
     // Generate a tree structure of specializations from the sorted main nodes
     let treeOfSpecializations = getSpecializationsTree(mainCategories, []);
+
+    const _result = getTreeView(mainCategories, []);
+
+    setTreeViewData(_result);
     // Set the generated tree structure for visualization
     setTreeVisualization(treeOfSpecializations);
   }, [nodes]);
@@ -621,7 +706,7 @@ const Ontology = () => {
     const nodeGeneralizations = node.generalizations[0].nodes;
 
     const generlizationSet: Set<string> = new Set(
-      nodeGeneralizations.map((g) => g.id)
+      nodeGeneralizations.map((g) => g.id),
     );
 
     // Initialize the expanded set with the current node's ID
@@ -652,14 +737,14 @@ const Ontology = () => {
               ) {
                 addGeneralizationsToSet(
                   `${currentNode.id}-${specialization.collectionName.trim()}`,
-                  expandedSet
+                  expandedSet,
                 );
               }
             });
           }
         });
         generalizations.forEach((g) =>
-          addGeneralizationsToSet(g.id, expandedSet)
+          addGeneralizationsToSet(g.id, expandedSet),
         );
       }
     };
@@ -708,7 +793,7 @@ const Ontology = () => {
       }
     },
     // Dependency array includes ontologies and user, ensuring the function re-renders when these values change.
-    [nodes, user]
+    [nodes, user],
   );
 
   // Function to handle opening node tree
@@ -718,7 +803,7 @@ const Ontology = () => {
 
       if (!user) return;
       //update the expanded state
-      setExpandedNodes((prevExpanded: Set<string>) => {
+      /*    setExpandedNodes((prevExpanded: Set<string>) => {
         const newExpanded = new Set(prevExpanded); // Create a new set to avoid mutating the previous state
         if (newExpanded.has(nodeId)) {
           // newExpanded.delete(nodeId); // Remove the nodeId if it exists
@@ -726,7 +811,7 @@ const Ontology = () => {
           newExpanded.add(nodeId); // Otherwise, add it
         }
         return newExpanded;
-      });
+      }); */
 
       // Check if node exists and has a category
       if (nodes[nodeId] && !nodes[nodeId].category) {
@@ -740,7 +825,7 @@ const Ontology = () => {
         });
       }
     },
-    [nodes, user]
+    [nodes, user],
   );
 
   // Function to retrieve main specializations from tree visualization data
@@ -841,31 +926,28 @@ const Ontology = () => {
   // Navigate to the currentVisibleNode when the viewValue is 0 (Outline View)
   // Note: This functionality might be implemented without useEffect in the future.
   useEffect(() => {
-    if (viewValue === 0 && currentVisibleNode) {
-      navigateToNode(currentVisibleNode.id);
+    if (viewValue === 0 && currentVisibleNode && !firstLoad) {
+      setTimeout(() => {
+        navigateToNode(currentVisibleNode.id);
+        setFirstLoad(true);
+      }, 3000);
     }
-  }, [viewValue, currentVisibleNode]);
+  }, [viewValue, currentVisibleNode, nodes]);
 
   const navigateToNode = async (nodeId: string) => {
     // adding timeout to test if truncated issue persists
-    setTimeout(() => {
-      if (nodes[nodeId]) {
-        setCurrentVisibleNode(nodes[nodeId]);
-        initializeExpanded(eachOntologyPath[nodeId]);
-        setSelectedDiffNode(null);
-        setTimeout(() => {
-          // Retrieve elements with the class name based on the nodeId
-          // Since the same node may be displayed multiple times across different parents, using unique IDs alone is not sufficient.
-          // MUI TreeView handles IDs internally, so adding an additional class to each node allows for easier access and manipulation later on.
-          const elements = document.getElementsByClassName("node-" + nodeId);
-          const firstElement = elements.length > 0 ? elements[0] : null; // Safely access the first element
-  
-          if (firstElement) {
-            firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
-          }
-        }, 500);
-      }
-    }, 300);
+
+    if (nodes[nodeId]) {
+      setCurrentVisibleNode(nodes[nodeId]);
+      initializeExpanded(eachOntologyPath[nodeId]);
+      setSelectedDiffNode(null);
+      const generalizationId = nodes[nodeId].generalizations[0]?.nodes[0]?.id;
+      setTimeout(() => {
+        expandNodeById(
+          generalizationId ? `${generalizationId}-${nodeId}` : nodeId,
+        );
+      }, 500);
+    }
   };
 
   const displaySidebar = useCallback(
@@ -877,8 +959,20 @@ const Ontology = () => {
         handleExpandSidebar(sidebarName);
       }
     },
-    [activeSidebar]
+    [activeSidebar],
   );
+
+  const expandNodeById = async (nodeId: string) => {
+    await tree?.scrollTo(nodeId);
+    setTimeout(() => {
+      const targetNode = tree?.get(nodeId);
+      if (targetNode) {
+        targetNode.select();
+        const element = document.getElementById(nodeId);
+        element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 500);
+  };
 
   if (Object.keys(nodes).length <= 0) {
     return (
@@ -975,22 +1069,36 @@ const Ontology = () => {
                     height: "100%",
                     overflowX: "auto",
                     whiteSpace: "nowrap",
-                    ...SCROLL_BAR_STYLE,
+                    "&::-webkit-scrollbar": {
+                      display: "none",
+                    },
                   }}
                 >
                   <Box
                     sx={{
-                      display: "inline-block", // Keep it inline for horizontal scroll
-                      minWidth: "100%", // Ensures it takes at least the width of the container
+                      display: "inline-block",
+                      minWidth: "100%",
                     }}
                   >
-                    <TreeViewSimplified
+                    <DraggableTree
+                      treeViewData={treeViewData}
+                      setSnackbarMessage={setSnackbarMessage}
+                      expandedNodes={expandedNodes}
+                      currentVisibleNode={currentVisibleNode}
+                      nodes={nodes}
+                      onOpenNodesTree={onOpenNodesTree}
+                      tree={tree}
+                      setTree={setTree}
+                      expandNodeById={expandNodeById}
+                    />
+
+                    {/* <TreeViewSimplified
                       treeVisualization={treeVisualization}
                       onOpenNodesTree={onOpenNodesTree}
                       expandedNodes={expandedNodes}
                       setExpandedNodes={setExpandedNodes}
                       currentVisibleNode={currentVisibleNode}
-                    />
+                    /> */}
                   </Box>
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
