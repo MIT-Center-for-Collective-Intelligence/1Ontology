@@ -77,7 +77,7 @@ const PropertyContributors: React.FC<PropertyContributorsProps> = ({
           },
         }}
       >
-        {["1man", "ouhrac"].map((username: string, index: number) => (
+        {contributors.map((username: string, index: number) => (
           <Tooltip
             key={`${username}-${index}`}
             title={getFullName(username)}
