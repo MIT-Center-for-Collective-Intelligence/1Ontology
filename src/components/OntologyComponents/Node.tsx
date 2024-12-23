@@ -1288,7 +1288,7 @@ const Node = ({
           setGlowIds={setGlowIds}
         />
 
-        {/* <NodeImageManager
+        <NodeImageManager
           nodeId={currentVisibleNode.id}
           currentVisibleNode={currentVisibleNode}
           user={user}
@@ -1297,7 +1297,7 @@ const Node = ({
           confirmIt={confirmIt}
           saveNewChangeLog={saveNewChangeLog}
           selectedDiffNode={selectedDiffNode}
-        /> */}
+        />
       </Box>{" "}
       {ConfirmDialog}
     </Box>

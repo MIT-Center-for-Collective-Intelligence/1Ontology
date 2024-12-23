@@ -23,12 +23,7 @@ import {
 import { property } from "lodash";
 import theme from "quill/core/theme";
 import React, { useCallback, useState } from "react";
-import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult,
-} from "react-beautiful-dnd";
+
 import NewCollection from "../Collection/NewCollection";
 import LinkNode from "../LinkNode/LinkNode";
 import { useAuth } from "../context/AuthContext";
@@ -45,6 +40,12 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { NODES } from " @components/lib/firestoreClient/collections";
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  DropResult,
+} from "@hello-pangea/dnd";
 
 const CollectionStructure = ({
   model,
@@ -112,7 +113,6 @@ const CollectionStructure = ({
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
 
- 
   const handleCollectionSorting = useCallback(
     (e: any) => {
       try {

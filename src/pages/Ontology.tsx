@@ -191,7 +191,6 @@ const Ontology = () => {
   const [treeViewData, setTreeViewData] = useState([]);
 
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
-  const [firstLoad, setFirstLoad] = useState(false);
 
   const handleCloseAddLinksModel = () => {
     setCheckedItems(new Set());
@@ -560,11 +559,7 @@ const Ontology = () => {
     return () => unsubscribeNodes();
   }, [db]);
 
-  const getTreeView = (
-    mainCategories: INode[],
-    path: string[],
-    parentId?: string,
-  ): any => {
+  const getTreeView = (mainCategories: INode[], parentId?: string): any => {
     const newNodes = [];
     for (let node of mainCategories) {
       const specializations = node.specializations;
@@ -579,25 +574,19 @@ const Ontology = () => {
         }
         // if (children.length > 0) {
         if (collection.collectionName !== "main") {
+          const id = parentId
+            ? `${parentId}-${node.id}-${collection.collectionName}`
+            : `${node.id}-${collection.collectionName}`;
           collections.push({
-            id: parentId
-              ? `${parentId}-${node.id}-${collection.collectionName}`
-              : `${node.id}-${collection.collectionName}`,
+            id: id,
             nodeId: node.id,
             nodeType: node.nodeType,
             name: collection.collectionName,
             children: getTreeView(
               children,
-              [
-                ...path,
-                parentId ? `${parentId}-${node.id}` : `${node.id}`,
-                parentId
-                  ? `${parentId}-${node.id}-${collection.collectionName}`
-                  : `${node.id}-${collection.collectionName}`,
-              ],
               node.category ? node.id : undefined,
             ),
-            path: [...path, parentId ? `${parentId}-${node.id}` : `${node.id}`],
+
             category: true,
           });
         } else {
@@ -613,21 +602,15 @@ const Ontology = () => {
         //   });
         // }
       }
+      const id = parentId ? `${parentId}-${node.id}` : `${node.id}`;
       newNodes.push({
-        id: parentId ? `${parentId}-${node.id}` : `${node.id}`,
+        id,
         nodeId: node.id,
         name: node.title,
         nodeType: node.nodeType,
-        children: [
-          ...collections,
-          ...getTreeView(
-            mainChildren,
-            [...path, parentId ? `${parentId}-${node.id}` : `${node.id}`],
-            node.category ? node.id : undefined,
-          ),
-        ],
-        path,
-        category: node.category,
+        children: [...collections, ...getTreeView(mainChildren, node.id)],
+
+        category: !!node.category,
       });
     }
     return newNodes;
@@ -654,7 +637,7 @@ const Ontology = () => {
     // Generate a tree structure of specializations from the sorted main nodes
     let treeOfSpecializations = getSpecializationsTree(mainCategories, []);
 
-    const _result = getTreeView(mainCategories, []);
+    const _result = getTreeView(mainCategories);
 
     setTreeViewData(_result);
     // Set the generated tree structure for visualization
@@ -923,17 +906,6 @@ const Ontology = () => {
     return () => clearInterval(intervalId);
   }, [lastInteractionDate]);
 
-  // Navigate to the currentVisibleNode when the viewValue is 0 (Outline View)
-  // Note: This functionality might be implemented without useEffect in the future.
-  useEffect(() => {
-    if (viewValue === 0 && currentVisibleNode && !firstLoad) {
-      setTimeout(() => {
-        navigateToNode(currentVisibleNode.id);
-        setFirstLoad(true);
-      }, 3000);
-    }
-  }, [viewValue, currentVisibleNode, nodes]);
-
   const navigateToNode = async (nodeId: string) => {
     // adding timeout to test if truncated issue persists
 
@@ -943,9 +915,7 @@ const Ontology = () => {
       setSelectedDiffNode(null);
       const generalizationId = nodes[nodeId].generalizations[0]?.nodes[0]?.id;
       setTimeout(() => {
-        expandNodeById(
-          generalizationId ? `${generalizationId}-${nodeId}` : nodeId,
-        );
+        expandNodeById(`${generalizationId}-${nodeId}`);
       }, 500);
     }
   };

@@ -1,11 +1,11 @@
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { NodeApi, NodeRendererProps, Tree } from "react-arborist";
-import styles from "./cities.module.css";
+import styles from "./drag.tree.module.css";
 import { BsMapFill, BsGeoFill } from "react-icons/bs";
 import { FillFlexParent } from "./fill-flex-parent";
 import { MdArrowDropDown, MdArrowRight } from "react-icons/md";
-import { Box, Switch, Tooltip } from "@mui/material";
+import { Box, Button, Switch, Tooltip } from "@mui/material";
 import {
   unlinkPropertyOf,
   updateLinksForInheritance,
@@ -31,13 +31,27 @@ function DraggableTree({
 
   const [active, setActive] = useState<TreeData | null>(null);
   const [focused, setFocused] = useState<TreeData | null>(null);
-  const [selectedCount, setSelectedCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [count, setCount] = useState(0);
   const [followsFocus, setFollowsFocus] = useState(false);
   const [disableMulti, setDisableMulti] = useState(true);
   const [treeData, setTreeData] = useState<TreeData[]>([]);
   const [editEnabled, setEditEnabled] = useState(false);
+  const [firstLoad, setFirstLoad] = useState(true);
+
+  useEffect(() => {
+    if (tree && currentVisibleNode?.id && firstLoad) {
+      // Wait for the tree to initialize its nodes before scrolling
+      const timeout = setTimeout(() => {
+        const generalizationId =
+          currentVisibleNode.generalizations[0]?.nodes[0]?.id;
+        expandNodeById(`${generalizationId}-${currentVisibleNode.id}`);
+        setFirstLoad(false);
+      }, 0);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [tree, currentVisibleNode]);
 
   useEffect(() => {
     setCount(tree?.visibleNodes.length ?? 0);
@@ -129,6 +143,7 @@ function DraggableTree({
       });
       return;
     }
+
     setSnackbarMessage(
       `Node${draggedNodes.length > 1 ? "s" : ""} has been moved to ${toParent.name}`,
     );
@@ -297,19 +312,19 @@ function Node({ node, style, dragHandle }: NodeRendererProps<TreeData>) {
       </div>
       <FolderArrow node={node} />
       {/* <Icon className={styles.icon} />{' '} */}
-      <Tooltip title={node.data.id}>
-        <span
-          className={clsx(styles.text, {
-            [styles.categoryText]: node.data.category,
-          })}
-        >
-          {node.isEditing ? (
-            <Input node={node} inputRef={inputRef} />
-          ) : (
-            node.data.name
-          )}
-        </span>
-      </Tooltip>
+      {/* <Tooltip title={node.data.id}> */}
+      <span
+        className={clsx(styles.text, {
+          [styles.categoryText]: node.data.category,
+        })}
+      >
+        {node.isEditing ? (
+          <Input node={node} inputRef={inputRef} />
+        ) : (
+          node.data.name
+        )}
+      </span>
+      {/* </Tooltip> */}
     </div>
   );
 }
@@ -353,9 +368,11 @@ function sortData(data: TreeData[]) {
 }
 
 function FolderArrow({ node }: { node: NodeApi<TreeData> }) {
+  const hasChildren = node.isInternal && (node.children || []).length > 0;
+
   return (
     <span className={styles.arrow}>
-      {node.isInternal ? (
+      {node.isInternal && hasChildren ? (
         node.isOpen ? (
           <MdArrowDropDown />
         ) : (

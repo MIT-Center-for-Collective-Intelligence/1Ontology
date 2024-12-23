@@ -204,11 +204,11 @@ const LinkNode = ({
         await confirmIt(
           `Are you sure you want remove this item the list?`,
           `Remove`,
-          "Keep"
+          "Keep",
         )
       ) {
         const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id)
+          doc(collection(db, NODES), currentVisibleNode.id),
         );
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as any;
@@ -217,11 +217,11 @@ const LinkNode = ({
           if (nodeId) {
             const inheritedNode = nodes[nodeId as string];
             nodeData.properties[property] = JSON.parse(
-              JSON.stringify(inheritedNode.properties[property])
+              JSON.stringify(inheritedNode.properties[property]),
             );
           }
           const previousValue = JSON.parse(
-            JSON.stringify(nodeData.properties[property])
+            JSON.stringify(nodeData.properties[property]),
           );
           if (
             linkIndex !== -1 &&
@@ -231,7 +231,7 @@ const LinkNode = ({
           ) {
             nodeData.properties[property][collectionIndex].nodes.splice(
               linkIndex,
-              1
+              1,
             );
           }
 
@@ -264,7 +264,7 @@ const LinkNode = ({
               nodeData.propertyType[property] !== "string-array"
             ) {
               const links = nodeData.properties[property].flatMap(
-                (c) => c.nodes
+                (c) => c.nodes,
               );
               if (property === "isPartOf") {
                 updatePartsAndPartsOf(
@@ -272,7 +272,7 @@ const LinkNode = ({
                   { id: currentVisibleNode.id },
                   "isPartOf",
                   db,
-                  nodes
+                  nodes,
                 );
               } else {
                 updatePropertyOf(
@@ -280,7 +280,7 @@ const LinkNode = ({
                   { id: currentVisibleNode.id },
                   property,
                   nodes,
-                  db
+                  db,
                 );
               }
               updateObject = {
@@ -319,7 +319,7 @@ const LinkNode = ({
       await confirmIt(
         `There is an issue with unlinking the node, please try again.`,
         `Ok`,
-        ""
+        "",
       );
     }
   };
@@ -327,7 +327,7 @@ const LinkNode = ({
   const removeNodeLink = async (
     type: "specializations" | "generalizations",
     removeNodeId: string,
-    removeIdFrom: string
+    removeIdFrom: string,
   ) => {
     const specOrGenDoc = await getDoc(doc(collection(db, NODES), removeIdFrom));
     let removeFrom: "specializations" | "generalizations" = "specializations";
@@ -339,7 +339,7 @@ const LinkNode = ({
       const specOrGenData = specOrGenDoc.data() as INode;
       for (let collection of specOrGenData[removeFrom]) {
         collection.nodes = collection.nodes.filter(
-          (c: { id: string }) => c.id !== removeNodeId
+          (c: { id: string }) => c.id !== removeNodeId,
         );
       }
 
@@ -377,18 +377,18 @@ const LinkNode = ({
             )}
           </Box>,
           "Unlink",
-          "Keep"
+          "Keep",
         )
       ) {
         const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id)
+          doc(collection(db, NODES), currentVisibleNode.id),
         );
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as INode;
           const previousValue = JSON.parse(
             JSON.stringify(
-              nodeData[property as "specializations" | "generalizations"]
-            )
+              nodeData[property as "specializations" | "generalizations"],
+            ),
           );
           if (linkIndex !== -1) {
             nodeData[property as "specializations" | "generalizations"][
@@ -400,13 +400,13 @@ const LinkNode = ({
           const shouldBeRemovedFromParent = !nodeData[
             property as "specializations" | "generalizations"
           ].some((c: { nodes: ILinkNode[] }) =>
-            c.nodes.includes({ id: link.id })
+            c.nodes.includes({ id: link.id }),
           );
           if (shouldBeRemovedFromParent) {
             await removeNodeLink(
               property as "specializations" | "generalizations",
               currentVisibleNode.id,
-              link.id
+              link.id,
             );
           }
           if (!unlinkVisible && shouldBeRemovedFromParent) {
@@ -415,8 +415,8 @@ const LinkNode = ({
               query(
                 collection(db, NODES),
                 where("unclassified", "==", true),
-                where("nodeType", "==", nodeType)
-              )
+                where("nodeType", "==", nodeType),
+              ),
             );
             if (unclassifiedNodeDocs.docs.length > 0) {
               const unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
@@ -425,7 +425,7 @@ const LinkNode = ({
                 const generalizations = nodes[link.id].generalizations;
 
                 const mCollectionIdx = generalizations.findIndex(
-                  (c) => c.collectionName === "main"
+                  (c) => c.collectionName === "main",
                 );
                 if (mCollectionIdx !== -1) {
                   generalizations[mCollectionIdx].nodes = generalizations[
@@ -442,7 +442,7 @@ const LinkNode = ({
                   nodes[unclassifiedNodeDoc.id].specializations;
 
                 const mainCollectionIdx = specializations.findIndex(
-                  (c) => c.collectionName === "main"
+                  (c) => c.collectionName === "main",
                 );
                 if (mainCollectionIdx !== -1) {
                   specializations[mainCollectionIdx].nodes.push({
@@ -462,7 +462,7 @@ const LinkNode = ({
                   nodes[unclassifiedNodeDoc.id].specializations;
 
                 const mainCollectionIdx = specializations.findIndex(
-                  (c) => c.collectionName === "main"
+                  (c) => c.collectionName === "main",
                 );
                 specializations[mainCollectionIdx].nodes.push({
                   id: nodeDoc.id,
@@ -490,7 +490,7 @@ const LinkNode = ({
               db,
               link.id,
               nodeData,
-              nodes
+              nodes,
             );
           }
           if (property === "specializations") {
@@ -498,7 +498,7 @@ const LinkNode = ({
               db,
               nodeDoc.id,
               nodes[link.id],
-              nodes
+              nodes,
             );
           }
         }
@@ -532,10 +532,10 @@ const LinkNode = ({
     return changeType === "added"
       ? "green"
       : changeType === "removed"
-      ? "red"
-      : theme.palette.mode === "dark"
-      ? theme.palette.common.gray50
-      : theme.palette.common.notebookMainBlack;
+        ? "red"
+        : theme.palette.mode === "dark"
+          ? theme.palette.common.gray50
+          : theme.palette.common.notebookMainBlack;
   };
 
   const getSpecializations = (nodeId: string) => {
@@ -585,8 +585,8 @@ const LinkNode = ({
                 link.change === "added"
                   ? "green"
                   : link.change === "removed"
-                  ? "red"
-                  : "",
+                    ? "red"
+                    : "",
             }}
           />
         </ListItemIcon>
