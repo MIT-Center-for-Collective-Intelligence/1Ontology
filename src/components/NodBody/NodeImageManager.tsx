@@ -362,6 +362,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
               fontSize: "20px",
               fontWeight: 500,
               fontFamily: "Roboto, sans-serif",
+              mr: "auto",
             }}
           >
             Images

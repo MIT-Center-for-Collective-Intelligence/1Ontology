@@ -7,12 +7,14 @@ import { FillFlexParent } from "./fill-flex-parent";
 import { MdArrowDropDown, MdArrowRight } from "react-icons/md";
 import { Box, Button, Switch, Tooltip } from "@mui/material";
 import {
+  saveNewChangeLog,
   unlinkPropertyOf,
   updateLinksForInheritance,
 } from " @components/lib/utils/helpers";
 import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
 import { ICollection, TreeData } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
+import { useAuth } from "../context/AuthContext";
 
 const INDENT_STEP = 15;
 
@@ -36,7 +38,7 @@ function DraggableTree({
   setTree: any;
 }) {
   const db = getFirestore();
-
+  const [{ user }] = useAuth();
   const [active, setActive] = useState<TreeData | null>(null);
   const [focused, setFocused] = useState<TreeData | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -103,91 +105,94 @@ function DraggableTree({
     parentNode: NodeApi<TreeData> | null;
     index: number;
   }) => {
-    if (!editEnabled) return;
+    try {
+      if (!editEnabled || !user?.uname) return;
 
-    const draggedNodes = args.dragNodes.map((node) => node.data);
-    if (draggedNodes[0].category) {
-      return;
-    }
-    const fromParents: any = args.dragNodes.map(
-      (node) =>
-        node.parent?.data || { id: "root", name: "Root", nodeType: null },
-    );
-    const toParent: any = args.parentNode?.data || {
-      id: "root",
-      name: "Root",
-      nodeType: null,
-    };
-
-    const newPosition = args.index;
-    const differentNodeType = draggedNodes.some(
-      (n) => n.nodeType !== toParent.nodeType,
-    );
-
-    if (
-      differentNodeType ||
-      toParent.id === "root" ||
-      fromParents[0].id === "__REACT_ARBORIST_INTERNAL_ROOT__"
-    ) {
-      return;
-    }
-    const newData = [...treeData];
-    args.dragNodes.forEach((node) => {
-      removeNode(newData, node.data.id);
-    });
-
-    const targetParent = args.parentId
-      ? findNode(newData, args.parentId)
-      : { children: newData };
-    args.dragNodes.forEach((node) => {
-      targetParent?.children?.splice(args.index, 0, node.data);
-    });
-
-    setTreeData(newData);
-
-    if (toParent.nodeId === fromParents[0].nodeId) {
-      const nodeRef = doc(collection(db, NODES), toParent.nodeId);
-      const nodeData = nodes[toParent.nodeId];
-      let from = "main";
-      if (fromParents[0].category) {
-        from = fromParents[0].name;
-      }
-      let to = "main";
-      if (toParent.category) {
-        to = toParent.name;
-      }
-      if (toParent.name === from) {
+      const draggedNodes = args.dragNodes.map((node) => node.data);
+      if (draggedNodes[0].category) {
         return;
       }
-      const specializations = nodeData.specializations;
-      const fromCollectionIdx = specializations.findIndex(
-        (s: ICollection) => s.collectionName === from,
+      const fromParents: any = args.dragNodes.map(
+        (node) =>
+          node.parent?.data || { id: "root", name: "Root", nodeType: null },
       );
-      if (fromCollectionIdx !== -1) {
-        specializations[fromCollectionIdx].nodes = specializations[
-          fromCollectionIdx
-        ].nodes.filter((n: { id: string }) => n.id !== draggedNodes[0].nodeId);
+      const toParent: any = args.parentNode?.data || {
+        id: "root",
+        name: "Root",
+        nodeType: null,
+      };
+
+      const newPosition = args.index;
+      const differentNodeType = draggedNodes.some(
+        (n) => n.nodeType !== toParent.nodeType,
+      );
+
+      if (
+        differentNodeType ||
+        toParent.id === "root" ||
+        fromParents[0].id === "__REACT_ARBORIST_INTERNAL_ROOT__"
+      ) {
+        return;
+      }
+      const newData = [...treeData];
+      args.dragNodes.forEach((node) => {
+        removeNode(newData, node.data.id);
+      });
+
+      const targetParent = args.parentId
+        ? findNode(newData, args.parentId)
+        : { children: newData };
+      args.dragNodes.forEach((node) => {
+        targetParent?.children?.splice(args.index, 0, node.data);
+      });
+
+      setTreeData(newData);
+
+      if (toParent.nodeId === fromParents[0].nodeId) {
+        const nodeRef = doc(collection(db, NODES), toParent.nodeId);
+        const nodeData = nodes[toParent.nodeId];
+        let from = "main";
+        if (fromParents[0].category) {
+          from = fromParents[0].name;
+        }
+        let to = "main";
+        if (toParent.category) {
+          to = toParent.name;
+        }
+        if (toParent.name === from) {
+          return;
+        }
+        const specializations = nodeData.specializations;
+        const fromCollectionIdx = specializations.findIndex(
+          (s: ICollection) => s.collectionName === from,
+        );
+        if (fromCollectionIdx !== -1) {
+          specializations[fromCollectionIdx].nodes = specializations[
+            fromCollectionIdx
+          ].nodes.filter(
+            (n: { id: string }) => n.id !== draggedNodes[0].nodeId,
+          );
+        }
+
+        const toCollectionIdx = specializations.findIndex(
+          (s: ICollection) => s.collectionName === to,
+        );
+        specializations[toCollectionIdx].nodes.push({
+          id: draggedNodes[0].nodeId,
+        });
+
+        await updateDoc(nodeRef, {
+          specializations,
+        });
+        return;
       }
 
-      const toCollectionIdx = specializations.findIndex(
-        (s: ICollection) => s.collectionName === to,
+      setSnackbarMessage(
+        `Node${draggedNodes.length > 1 ? "s" : ""} has been moved to ${toParent.name}`,
       );
-      specializations[toCollectionIdx].nodes.push({
-        id: draggedNodes[0].nodeId,
-      });
-
-      await updateDoc(nodeRef, {
-        specializations,
-      });
-      return;
-    }
-
-    setSnackbarMessage(
-      `Node${draggedNodes.length > 1 ? "s" : ""} has been moved to ${toParent.name}`,
-    );
-    if (draggedNodes[0].category) {
-      return;
-      /*  updateLinksForInheritance(
+      if (draggedNodes[0].category) {
+        return;
+        /*  updateLinksForInheritance(
         db,
         specializationId,
         addedLinks,
@@ -196,69 +201,102 @@ function DraggableTree({
         newLinks,
         nodes,
       ); */
-    } else {
-      const generalizationId = fromParents[0].nodeId;
-      const addedLinks = [toParent.nodeId];
-      const removedLinks = [generalizationId];
-      const specializationId = draggedNodes[0].nodeId;
-      const specializationData = nodes[specializationId];
-      const newLinks = [toParent.nodeId];
+      } else {
+        const generalizationId = fromParents[0].nodeId;
+        const addedLinks = [toParent.nodeId];
+        const removedLinks = [generalizationId];
+        const specializationId = draggedNodes[0].nodeId;
+        const specializationData = nodes[specializationId];
+        const newLinks = [toParent.nodeId];
 
-      const newGeneralizations = nodes[specializationId].generalizations;
-      newGeneralizations[0].nodes = newGeneralizations[0].nodes.filter(
-        (n: { id: string }) => n.id !== generalizationId,
-      );
+        const newGeneralizations = nodes[specializationId].generalizations;
+        const previousValue = JSON.parse(JSON.stringify(newGeneralizations));
 
-      newGeneralizations[0].nodes.push({
-        id: toParent.nodeId,
-      });
+        newGeneralizations[0].nodes = newGeneralizations[0].nodes.filter(
+          (n: { id: string }) => n.id !== generalizationId,
+        );
 
-      const docRef = doc(collection(db, NODES), specializationId);
-
-      await updateDoc(docRef, {
-        generalizations: newGeneralizations,
-      });
-
-      for (let linkId of removedLinks) {
-        await unlinkPropertyOf(db, "generalizations", specializationId, linkId);
-      }
-      const newGeneralizationData = nodes[toParent.nodeId];
-      const specializations = newGeneralizationData.specializations;
-      const alreadyExist = newGeneralizationData.specializations
-        .flatMap((c: ICollection) => c.nodes)
-        .map((n: { id: string }) => n.id);
-      if (!alreadyExist.includes(specializationId)) {
-        specializations[0].nodes.push({
-          id: specializationId,
+        newGeneralizations[0].nodes.push({
+          id: toParent.nodeId,
         });
-        await updateDoc(doc(collection(db, NODES), toParent.nodeId), {
-          specializations,
+
+        const docRef = doc(collection(db, NODES), specializationId);
+
+        await updateDoc(docRef, {
+          generalizations: newGeneralizations,
         });
+
+        for (let linkId of removedLinks) {
+          await unlinkPropertyOf(
+            db,
+            "generalizations",
+            specializationId,
+            linkId,
+          );
+        }
+        const newGeneralizationData = nodes[toParent.nodeId];
+        const specializations = newGeneralizationData.specializations;
+        const previousSValue = JSON.parse(JSON.stringify(specializations));
+
+        const alreadyExist = newGeneralizationData.specializations
+          .flatMap((c: ICollection) => c.nodes)
+          .map((n: { id: string }) => n.id);
+        if (!alreadyExist.includes(specializationId)) {
+          specializations[0].nodes.push({
+            id: specializationId,
+          });
+          await updateDoc(doc(collection(db, NODES), toParent.nodeId), {
+            specializations,
+          });
+        }
+        /* Specialization Change Log */
+        saveNewChangeLog(db, {
+          nodeId: specializationId,
+          modifiedBy: user?.uname,
+          modifiedProperty: "generalizations",
+          previousValue,
+          newValue: newGeneralizations,
+          modifiedAt: new Date(),
+          changeType: "modify elements",
+          fullNode: nodes[specializationId],
+        });
+
+        saveNewChangeLog(db, {
+          nodeId: toParent.nodeId,
+          modifiedBy: user?.uname,
+          modifiedProperty: "specializations",
+          previousValue: previousSValue,
+          newValue: specializations,
+          modifiedAt: new Date(),
+          changeType: "modify elements",
+          fullNode: nodes[toParent.nodeId],
+        });
+        // await updateLinks(
+        //   newLinks,
+        //   { id: specializationId },
+        //   "specializations",
+        //   nodes,
+        //   db,
+        // );
+
+        await updateLinksForInheritance(
+          db,
+          specializationId,
+          addedLinks.map((id) => {
+            return { id };
+          }),
+          removedLinks.map((id) => {
+            return { id };
+          }),
+          specializationData,
+          newLinks.map((id) => {
+            return { id };
+          }),
+          nodes,
+        );
       }
-
-      // await updateLinks(
-      //   newLinks,
-      //   { id: specializationId },
-      //   "specializations",
-      //   nodes,
-      //   db,
-      // );
-
-      await updateLinksForInheritance(
-        db,
-        specializationId,
-        addedLinks.map((id) => {
-          return { id };
-        }),
-        removedLinks.map((id) => {
-          return { id };
-        }),
-        specializationData,
-        newLinks.map((id) => {
-          return { id };
-        }),
-        nodes,
-      );
+    } catch (error) {
+      console.error(error);
     }
   };
 
