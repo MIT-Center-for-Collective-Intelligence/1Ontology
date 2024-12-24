@@ -914,9 +914,21 @@ export const updateLinksForInheritance = async (
   removedLinks: { id: string }[],
   specializationData: INode,
   newLinks: { id: string }[],
-  nodes: { [nodeId: string]: INode },
+  nodes: { [nodeId: string]: INode } | any,
 ) => {
   try {
+    if (!specializationData) {
+      const specializationDoc = await getDoc(
+        doc(collection(db, NODES), specializationId),
+      );
+      specializationData = specializationDoc.data() as INode;
+    }
+    if (!nodes) {
+      for (let link of newLinks) {
+        const nodeDoc = await getDoc(doc(collection(db, NODES), link.id));
+        nodes[link.id] = nodeDoc.data() as INode;
+      }
+    }
     const deletedProperties = [];
     const updatedProperties: {
       [ref: string]: string[];

@@ -25,8 +25,16 @@ function DraggableTree({
   onOpenNodesTree,
   tree,
   setTree,
-  expandNodeById,
-}: any) {
+}: {
+  treeViewData: any;
+  setSnackbarMessage: any;
+  nodes: any;
+  expandedNodes: any;
+  currentVisibleNode: any;
+  onOpenNodesTree: any;
+  tree: any;
+  setTree: any;
+}) {
   const db = getFirestore();
 
   const [active, setActive] = useState<TreeData | null>(null);
@@ -39,23 +47,53 @@ function DraggableTree({
   const [editEnabled, setEditEnabled] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
 
+  const expandNodeById = async (nodeId: string) => {
+    if (!tree || !nodeId) return;
+
+    // Step 1: Expand all parent nodes
+    let currentNode = tree.get(nodeId);
+    if (currentNode) {
+      let parentNode = currentNode.parent;
+      while (parentNode) {
+        parentNode.open();
+        parentNode = parentNode.parent;
+      }
+    }
+
+    // Step 2: Scroll to the target node
+    await tree.scrollTo(nodeId);
+
+    setTimeout(() => {
+      const targetNode = tree.get(nodeId);
+      if (targetNode) {
+        targetNode.select();
+        const element = document.getElementById(nodeId);
+        element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 500);
+  };
+
   useEffect(() => {
-    if (tree && currentVisibleNode?.id && firstLoad) {
+    if (tree && currentVisibleNode?.id) {
       // Wait for the tree to initialize its nodes before scrolling
       const timeout = setTimeout(() => {
         const generalizationId =
           currentVisibleNode.generalizations[0]?.nodes[0]?.id;
-        expandNodeById(`${generalizationId}-${currentVisibleNode.id}`);
+        expandNodeById(
+          generalizationId
+            ? `${generalizationId}-${currentVisibleNode.id}`
+            : `${currentVisibleNode.id}`,
+        );
         setFirstLoad(false);
-      }, 0);
+      }, 2000);
 
       return () => clearTimeout(timeout);
     }
-  }, [tree, currentVisibleNode]);
+  }, [tree, currentVisibleNode?.id]);
 
   useEffect(() => {
     setCount(tree?.visibleNodes.length ?? 0);
-    setTreeData(sortData(treeViewData));
+    setTreeData(treeViewData);
   }, [tree, searchTerm, treeViewData]);
 
   const handleMove = async (args: {
@@ -205,7 +243,8 @@ function DraggableTree({
       //   nodes,
       //   db,
       // );
-      updateLinksForInheritance(
+
+      await updateLinksForInheritance(
         db,
         specializationId,
         addedLinks,
@@ -312,19 +351,19 @@ function Node({ node, style, dragHandle }: NodeRendererProps<TreeData>) {
       </div>
       <FolderArrow node={node} />
       {/* <Icon className={styles.icon} />{' '} */}
-      {/* <Tooltip title={node.data.id}> */}
-      <span
-        className={clsx(styles.text, {
-          [styles.categoryText]: node.data.category,
-        })}
-      >
-        {node.isEditing ? (
-          <Input node={node} inputRef={inputRef} />
-        ) : (
-          node.data.name
-        )}
-      </span>
-      {/* </Tooltip> */}
+      <Tooltip title={node.data.id}>
+        <span
+          className={clsx(styles.text, {
+            [styles.categoryText]: node.data.category,
+          })}
+        >
+          {node.isEditing ? (
+            <Input node={node} inputRef={inputRef} />
+          ) : (
+            node.data.name
+          )}
+        </span>
+      </Tooltip>
     </div>
   );
 }

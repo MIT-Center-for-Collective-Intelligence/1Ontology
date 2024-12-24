@@ -559,9 +559,17 @@ const Ontology = () => {
     return () => unsubscribeNodes();
   }, [db]);
 
-  const getTreeView = (mainCategories: INode[], parentId?: string): any => {
+  const getTreeView = (
+    mainCategories: INode[],
+    visited: Set<string> = new Set(),
+    parentId?: string,
+  ): any => {
     const newNodes = [];
     for (let node of mainCategories) {
+      if (!node || visited.has(node.id)) {
+        continue;
+      }
+      visited.add(node.id);
       const specializations = node.specializations;
       let collections = [];
       let mainChildren = [];
@@ -584,6 +592,7 @@ const Ontology = () => {
             name: collection.collectionName,
             children: getTreeView(
               children,
+              visited,
               node.category ? node.id : undefined,
             ),
 
@@ -608,7 +617,14 @@ const Ontology = () => {
         nodeId: node.id,
         name: node.title,
         nodeType: node.nodeType,
-        children: [...collections, ...getTreeView(mainChildren, node.id)],
+        children: [
+          ...collections,
+          ...getTreeView(
+            mainChildren,
+            visited,
+            !node.category ? node.id : undefined,
+          ),
+        ],
 
         category: !!node.category,
       });
@@ -933,6 +949,7 @@ const Ontology = () => {
   );
 
   const expandNodeById = async (nodeId: string) => {
+    console.log("expand nodeId -->>", nodeId);
     await tree?.scrollTo(nodeId);
     setTimeout(() => {
       const targetNode = tree?.get(nodeId);
@@ -1059,10 +1076,9 @@ const Ontology = () => {
                       onOpenNodesTree={onOpenNodesTree}
                       tree={tree}
                       setTree={setTree}
-                      expandNodeById={expandNodeById}
                     />
 
-                    {/* <TreeViewSimplified
+                    {/*  <TreeViewSimplified
                       treeVisualization={treeVisualization}
                       onOpenNodesTree={onOpenNodesTree}
                       expandedNodes={expandedNodes}
