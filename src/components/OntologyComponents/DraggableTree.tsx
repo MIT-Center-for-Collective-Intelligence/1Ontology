@@ -247,10 +247,16 @@ function DraggableTree({
       await updateLinksForInheritance(
         db,
         specializationId,
-        addedLinks,
-        removedLinks,
+        addedLinks.map((id) => {
+          return { id };
+        }),
+        removedLinks.map((id) => {
+          return { id };
+        }),
         specializationData,
-        newLinks,
+        newLinks.map((id) => {
+          return { id };
+        }),
         nodes,
       );
     }
