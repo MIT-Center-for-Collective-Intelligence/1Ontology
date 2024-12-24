@@ -395,19 +395,19 @@ function Node({ node, style, dragHandle }: NodeRendererProps<TreeData>) {
       </div>
       <FolderArrow node={node} />
       {/* <Icon className={styles.icon} />{' '} */}
-      <Tooltip title={node.data.id}>
-        <span
-          className={clsx(styles.text, {
-            [styles.categoryText]: node.data.category,
-          })}
-        >
-          {node.isEditing ? (
-            <Input node={node} inputRef={inputRef} />
-          ) : (
-            node.data.name
-          )}
-        </span>
-      </Tooltip>
+      {/* <Tooltip title={node.data.id}> */}
+      <span
+        className={clsx(styles.text, {
+          [styles.categoryText]: node.data.category,
+        })}
+      >
+        {node.isEditing ? (
+          <Input node={node} inputRef={inputRef} />
+        ) : (
+          node.data.name
+        )}
+      </span>
+      {/* </Tooltip> */}
     </div>
   );
 }
