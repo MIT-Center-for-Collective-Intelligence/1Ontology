@@ -99,8 +99,8 @@ const Chat = ({
     const onSynchronize = (changes: chatChange[]) => {
       setMessages((prev) => {
         const updatedMessages = changes.reduce(synchronizeStuff, [...prev]);
-        return updatedMessages.sort((a, b) => 
-          b.createdAt.seconds - a.createdAt.seconds
+        return updatedMessages.sort(
+          (a, b) => a.createdAt.seconds - b.createdAt.seconds,
         );
       });
       setIsLoading(false);
@@ -109,7 +109,7 @@ const Chat = ({
     const killSnapshot = getMessagesSnapshot(
       db,
       { nodeId: nodeId, type: chatType, lastVisible: null },
-      onSynchronize
+      onSynchronize,
     );
     return () => killSnapshot();
   }, [db, user, nodeId, chatType]);
@@ -141,7 +141,7 @@ const Chat = ({
   const toggleEmojiPicker = (
     event: any,
     boxRef: any,
-    comment?: IChatMessage
+    comment?: IChatMessage,
   ) => {
     commentRef.current.comment = comment || null;
     setAnchorEl(boxRef.current);
@@ -165,7 +165,7 @@ const Chat = ({
     if (!message.parentMessage) {
       setMessages((prevComments) => {
         const commentIdx = prevComments.findIndex(
-          (m: any) => m.id === message.id
+          (m: any) => m.id === message.id,
         );
         prevComments[commentIdx].reactions.push({
           user: user?.uname,
@@ -202,7 +202,7 @@ const Chat = ({
       emoji,
       message.text,
       message?.parentMessage || message?.id,
-      new Set([message.sender])
+      new Set([message.sender]),
     );
 
     recordLogs({
@@ -216,12 +216,12 @@ const Chat = ({
     if (!message.parentMessage) {
       setMessages((prevMessages: any) => {
         const messageIdx = prevMessages.findIndex(
-          (m: any) => m.id === message.id
+          (m: any) => m.id === message.id,
         );
         prevMessages[messageIdx].reactions = prevMessages[
           messageIdx
         ].reactions.filter(
-          (r: any) => r.emoji !== emoji && r.user !== user?.uname
+          (r: any) => r.emoji !== emoji && r.user !== user?.uname,
         );
         return prevMessages;
       });
@@ -250,7 +250,7 @@ const Chat = ({
   const toggleReaction = (message: IChatMessage, emoji: string) => {
     if (!message?.id || !user?.uname) return;
     const reactionIdx = message.reactions.findIndex(
-      (r: any) => r.user === user?.uname && r.emoji === emoji
+      (r: any) => r.user === user?.uname && r.emoji === emoji,
     );
     if (reactionIdx !== -1) {
       removeReaction(message, emoji);
@@ -272,7 +272,7 @@ const Chat = ({
         return { ...document, parentMessage: showReplies, id: doc.id };
       }) as any;
       repliesDocuments.sort(
-        (a: any, b: any) => a.createdAt.toMillis() - b.createdAt.toMillis()
+        (a: any, b: any) => a.createdAt.toMillis() - b.createdAt.toMillis(),
       );
       setReplies(repliesDocuments);
     });
@@ -293,7 +293,7 @@ const Chat = ({
     title: string,
     body: string,
     entityId: string,
-    taggedUsers: Set<string> = new Set()
+    taggedUsers: Set<string> = new Set(),
   ) => {
     const batch = writeBatch(db);
     for (const userData of users) {
@@ -331,7 +331,7 @@ const Chat = ({
   const addMessage = async (
     text: string,
     imageUrls: string[],
-    taggedUsers: Set<string>
+    taggedUsers: Set<string>,
   ) => {
     if (!user?.uname) return;
     const commentData = {
@@ -365,7 +365,7 @@ const Chat = ({
       `New Message from ${user.fName + " " + user.lName}`,
       text,
       docRef.id,
-      taggedUsers
+      taggedUsers,
     );
     recordLogs({
       action: "Send a message",
@@ -381,7 +381,7 @@ const Chat = ({
     text: string,
     imageUrls: string[],
     messageId: string,
-    taggedUsers: Set<string>
+    taggedUsers: Set<string>,
   ) => {
     if (!user?.uname) return;
     const reply = {
@@ -411,7 +411,7 @@ const Chat = ({
       `Reply by ${user.fName + " " + user.lName}`,
       text,
       messageId,
-      taggedUsers
+      taggedUsers,
     );
 
     recordLogs({
@@ -424,7 +424,7 @@ const Chat = ({
   const editMessage = async (
     text: string,
     imageUrls: string[],
-    messageId: string
+    messageId: string,
   ) => {
     await updateDoc(getMessageDocRef(messageId), {
       text: text,
@@ -464,7 +464,7 @@ const Chat = ({
     text: string,
     imageUrls: string[],
     messageId: string,
-    replyId: string
+    replyId: string,
   ) => {
     const commentRef = getMessageDocRef(messageId);
     const replyRef = doc(commentRef, "replies", replyId);
@@ -487,7 +487,7 @@ const Chat = ({
       await confirmIt(
         "Are you sure you want to delete this reply?",
         "Delete",
-        "Keep"
+        "Keep",
       )
     ) {
       const commentRef = getMessageDocRef(messageId);

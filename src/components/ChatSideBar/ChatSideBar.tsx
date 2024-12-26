@@ -147,7 +147,7 @@ const ChatSideBar = ({
       await addDoc(collection(db, MESSAGES), messageData);
       scrollToBottom();
     },
-    [selectedChatTab, currentVisibleNode?.id, user]
+    [selectedChatTab, currentVisibleNode?.id, user],
   );
 
   // useEffect(() => {
@@ -200,7 +200,6 @@ const ChatSideBar = ({
           value={selectedChatTab}
           onChange={handleChatTabsChange}
           aria-label="basic tabs example"
-          variant="scrollable"
           sx={{
             background: (theme) =>
               theme.palette.mode === "dark" ? "#000000" : "#c3c3c3",
