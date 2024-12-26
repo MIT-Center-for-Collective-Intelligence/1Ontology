@@ -86,7 +86,7 @@ const SneakMessage = (props: ISneakMessageProps) => {
   return (
     <Snackbar
       open={open}
-      autoHideDuration={4000}
+      autoHideDuration={3000}
       onClose={close}
       message={<span style={{ fontSize: "16px", padding: 0 }}>{message}</span>}
       sx={{ margin: 0 }}

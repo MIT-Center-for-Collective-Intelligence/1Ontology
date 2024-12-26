@@ -1,10 +1,9 @@
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
-import { NodeApi, NodeRendererProps, Tree } from "react-arborist";
+import { NodeApi, NodeRendererProps, Tree, TreeApi } from "react-arborist";
 import styles from "./drag.tree.module.css";
-import { BsMapFill, BsGeoFill } from "react-icons/bs";
-import { FillFlexParent } from "./fill-flex-parent";
-import { MdArrowDropDown, MdArrowRight } from "react-icons/md";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { Box, Button, Switch, Tooltip } from "@mui/material";
 import {
   saveNewChangeLog,
@@ -15,6 +14,7 @@ import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
 import { ICollection, TreeData } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
+import { FillFlexParent } from "./fill-flex-parent";
 
 const INDENT_STEP = 15;
 
@@ -34,7 +34,7 @@ function DraggableTree({
   expandedNodes: any;
   currentVisibleNode: any;
   onOpenNodesTree: any;
-  tree: any;
+  tree: TreeApi<TreeData> | null | undefined;
   setTree: any;
 }) {
   const db = getFirestore();
@@ -49,10 +49,20 @@ function DraggableTree({
   const [editEnabled, setEditEnabled] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
 
+  const isNodeVisible = (nodeId: string): boolean => {
+    const element = document.getElementById(nodeId);
+    if (!element) return false;
+
+    const rect = element.getBoundingClientRect();
+    const viewportHeight =
+      window.innerHeight || document.documentElement.clientHeight;
+
+    return rect.top >= 0 && rect.bottom <= viewportHeight;
+  };
   const expandNodeById = async (nodeId: string) => {
     if (!tree || !nodeId) return;
 
-    // Step 1: Expand all parent nodes
+    //  Expand all parent nodes
     let currentNode = tree.get(nodeId);
     if (currentNode) {
       let parentNode = currentNode.parent;
@@ -62,15 +72,16 @@ function DraggableTree({
       }
     }
 
-    // Step 2: Scroll to the target node
-    await tree.scrollTo(nodeId);
+    if (!isNodeVisible(nodeId)) {
+      await tree.scrollTo(nodeId);
+    }
 
     setTimeout(() => {
       const targetNode = tree.get(nodeId);
       if (targetNode) {
         targetNode.select();
-        const element = document.getElementById(nodeId);
-        element?.scrollIntoView({ behavior: "smooth", block: "center" });
+        /*const element = document.getElementById(nodeId);
+        element?.scrollIntoView({ behavior: "smooth", block: "center" }); */
       }
     }, 500);
   };
@@ -87,7 +98,7 @@ function DraggableTree({
             : `${currentVisibleNode.id}`,
         );
         setFirstLoad(false);
-      }, 2000);
+      }, 500);
 
       return () => clearTimeout(timeout);
     }
@@ -106,6 +117,7 @@ function DraggableTree({
     index: number;
   }) => {
     try {
+      debugger;
       if (!editEnabled || !user?.uname) return;
 
       const draggedNodes = args.dragNodes.map((node) => node.data);
@@ -147,6 +159,7 @@ function DraggableTree({
       });
 
       setTreeData(newData);
+      console.log("args.index ==>", args.index);
 
       if (toParent.nodeId === fromParents[0].nodeId) {
         const nodeRef = doc(collection(db, NODES), toParent.nodeId);
@@ -177,7 +190,7 @@ function DraggableTree({
         const toCollectionIdx = specializations.findIndex(
           (s: ICollection) => s.collectionName === to,
         );
-        specializations[toCollectionIdx].nodes.push({
+        specializations[toCollectionIdx].nodes.splice(args.index, 0, {
           id: draggedNodes[0].nodeId,
         });
 
@@ -242,7 +255,7 @@ function DraggableTree({
           .flatMap((c: ICollection) => c.nodes)
           .map((n: { id: string }) => n.id);
         if (!alreadyExist.includes(specializationId)) {
-          specializations[0].nodes.push({
+          specializations[0].nodes.splice(args.index, 0, {
             id: specializationId,
           });
           await updateDoc(doc(collection(db, NODES), toParent.nodeId), {
@@ -319,9 +332,8 @@ function DraggableTree({
                 className={styles.tree}
                 rowClassName={styles.row}
                 paddingTop={15}
-                rowHeight={30}
                 indent={INDENT_STEP}
-                overscanCount={8}
+                // overscanCount={2}
                 // onSelect={(selected) => setSelectedCount(selected.length)}
                 onActivate={(node) => {
                   onOpenNodesTree(node.data.nodeId);
@@ -367,35 +379,23 @@ function DraggableTree({
 export default DraggableTree;
 
 function Node({ node, style, dragHandle }: NodeRendererProps<TreeData>) {
-  const Icon = node.isInternal ? BsMapFill : BsGeoFill;
   const indentSize = Number.parseFloat(`${style.paddingLeft || 0}`);
-
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleEditClick = () => {
-    if (node.isEditing) {
-      const value = inputRef.current?.value || node.data.name;
-      node.submit(value);
-    } else {
-      node.edit();
-    }
-  };
   return (
-    <div
+    <Box
       ref={dragHandle}
       style={style}
       className={clsx(styles.node, node.state)}
       onClick={() => node.isInternal && node.toggle()}
       id={node.data.id}
     >
-      <div className={styles.indentLines}>
+      <Box className={styles.indentLines}>
         {new Array(indentSize / INDENT_STEP).fill(0).map((_, index) => {
           return <div key={index}></div>;
         })}
-      </div>
+      </Box>
       <FolderArrow node={node} />
-      {/* <Icon className={styles.icon} />{' '} */}
-      {/* <Tooltip title={node.data.id}> */}
+
       <span
         className={clsx(styles.text, {
           [styles.categoryText]: node.data.category,
@@ -407,8 +407,7 @@ function Node({ node, style, dragHandle }: NodeRendererProps<TreeData>) {
           node.data.name
         )}
       </span>
-      {/* </Tooltip> */}
-    </div>
+    </Box>
   );
 }
 
@@ -457,9 +456,9 @@ function FolderArrow({ node }: { node: NodeApi<TreeData> }) {
     <span className={styles.arrow}>
       {node.isInternal && hasChildren ? (
         node.isOpen ? (
-          <MdArrowDropDown />
+          <KeyboardArrowDownIcon sx={{ pr: "5px" }} />
         ) : (
-          <MdArrowRight />
+          <KeyboardArrowRightIcon sx={{ pr: "5px" }} />
         )
       ) : null}
     </span>

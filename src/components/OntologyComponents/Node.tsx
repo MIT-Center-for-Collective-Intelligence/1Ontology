@@ -614,6 +614,7 @@ const Node = ({
       removedElements: Set<string>,
       addedElements: Set<string>,
       selectedProperty: string,
+      nodeId: string,
     ) => {
       try {
         if (
@@ -632,9 +633,7 @@ const Node = ({
 
         // Close the modal or perform any other necessary actions
         // Get the node document from the database
-        const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id),
-        );
+        const nodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
         let previousValue: ICollection[] | null = null;
 
         // If the node document does not exist, return early
@@ -670,12 +669,7 @@ const Node = ({
         }
 
         for (let linkId of removedElements) {
-          await unlinkPropertyOf(
-            db,
-            selectedProperty,
-            currentVisibleNode.id,
-            linkId,
-          );
+          await unlinkPropertyOf(db, selectedProperty, nodeId, linkId);
         }
 
         // Update links for specializations/generalizations
@@ -685,7 +679,7 @@ const Node = ({
         ) {
           updateLinks(
             newLinks,
-            { id: currentVisibleNode.id },
+            { id: nodeId },
             selectedProperty === "specializations"
               ? "generalizations"
               : "specializations",
@@ -701,7 +695,7 @@ const Node = ({
         if (selectedProperty === "parts" || selectedProperty === "isPartOf") {
           updatePartsAndPartsOf(
             newLinks,
-            { id: currentVisibleNode.id },
+            { id: nodeId },
             selectedProperty === "parts" ? "isPartOf" : "parts",
             db,
             nodes,
@@ -711,7 +705,7 @@ const Node = ({
         // Reset inheritance if applicable
         if (
           nodeData.inheritance &&
-          !["specializations", "generalizations", "parts", "isPartOf"].includes(
+          !["specializations", "generalizations", "isPartOf"].includes(
             selectedProperty,
           )
         ) {
@@ -748,7 +742,7 @@ const Node = ({
         ) {
           updatePropertyOf(
             newLinks,
-            { id: currentVisibleNode.id },
+            { id: nodeId },
             selectedProperty,
             nodes,
             db,
@@ -761,10 +755,10 @@ const Node = ({
         if (selectedProperty === "generalizations") {
           await updateLinksForInheritance(
             db,
-            currentVisibleNode.id,
+            nodeId,
             addedLinks,
             removedLinks,
-            currentVisibleNode,
+            nodeData,
             newLinks,
             nodes,
           );
@@ -772,10 +766,10 @@ const Node = ({
         if (selectedProperty === "specializations") {
           await updateLinksForInheritanceSpecializations(
             db,
-            currentVisibleNode.id,
+            nodeId,
             addedLinks,
             removedLinks,
-            currentVisibleNode,
+            nodeData,
             newLinks,
             nodes,
           );
@@ -787,21 +781,21 @@ const Node = ({
           )
         ) {
           updateInheritance({
-            nodeId: currentVisibleNode.id,
+            nodeId,
             updatedProperties: [selectedProperty],
             db,
           });
         }
 
         saveNewChangeLog(db, {
-          nodeId: currentVisibleNode.id,
+          nodeId: nodeId,
           modifiedBy: user?.uname,
           modifiedProperty: selectedProperty,
           previousValue,
           newValue: editableProperty,
           modifiedAt: new Date(),
           changeType: "modify elements",
-          fullNode: currentVisibleNode,
+          fullNode: nodeData,
         });
       } catch (error: any) {
         // Handle any errors that occur during the process
@@ -817,7 +811,7 @@ const Node = ({
         });
       }
     },
-    [checkedItems, currentVisibleNode.id, currentVisibleNode.title, db, nodes],
+    [checkedItems, db, nodes],
   );
 
   //  function to handle the deletion of a Node

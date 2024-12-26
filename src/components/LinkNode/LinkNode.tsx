@@ -134,7 +134,6 @@ type ILinkNodeProps = {
   navigateToNode: (nodeID: string) => void;
   title: string;
   nodes: { [nodeId: string]: INode };
-  unlinkVisible: boolean;
   linkLocked: any;
   locked: boolean;
   user: any;
@@ -159,7 +158,6 @@ const LinkNode = ({
   title,
   nodes,
   linkIndex: linkIndex,
-  unlinkVisible,
   linkLocked,
   locked,
   user,
@@ -367,14 +365,14 @@ const LinkNode = ({
             <Typography sx={{ fontWeight: "bold" }}>
               Are you sure you want unlink this node?
             </Typography>
-            {!unlinkVisible && (
+            {
               <Typography sx={{ mt: "15px" }}>
                 {`There's no other generalization linked to this node. Are you
                 sure you want to unlink it and move it as a specialization under
               ${UNCLASSIFIED[nodes[link.id].nodeType]}`}
                 ?
               </Typography>
-            )}
+            }
           </Box>,
           "Unlink",
           "Keep",
@@ -409,7 +407,7 @@ const LinkNode = ({
               link.id,
             );
           }
-          if (!unlinkVisible && shouldBeRemovedFromParent) {
+          if (shouldBeRemovedFromParent) {
             const nodeType = nodes[link.id].nodeType;
             const unclassifiedNodeDocs = await getDocs(
               query(
@@ -620,7 +618,6 @@ const LinkNode = ({
           )}
           {((!locked &&
             !linkLocked &&
-            unlinkVisible &&
             !selectedDiffNode &&
             (!currentVisibleNode.unclassified ||
               property !== "generalizations") &&

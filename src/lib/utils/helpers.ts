@@ -917,7 +917,6 @@ export const updateLinksForInheritance = async (
   nodes: { [nodeId: string]: INode } | any,
 ) => {
   try {
-    debugger;
     const deletedProperties = [];
     const updatedProperties: {
       [ref: string]: string[];
@@ -961,7 +960,7 @@ export const updateLinksForInheritance = async (
 
         if (canDelete) {
           deletedProperties.push(property);
-        } else if (inheritFromId) {
+        } else if (inheritFromId && nodes[inheritFromId]) {
           const referenceTo =
             nodes[inheritFromId].inheritance[property]?.ref || inheritFromId;
           if (!updatedProperties[referenceTo]) {

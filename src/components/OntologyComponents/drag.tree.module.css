@@ -114,12 +114,13 @@
     border-radius: 8px;
     display: flex;
     align-items: center;
-    margin: 0 20px;
+    margin: 0 10px;
     height: 100%;
 }
 
 .node:global(.willReceiveDrop) {
     background: #bbb;
+    color: black;
 }
 
 .node:global(.isSelected) {
@@ -247,9 +248,5 @@
 @media (prefers-color-scheme: dark) {
     .tree {
         background: transparent;
-    }
-
-    .row:focus-visible .node {
-        color: black;
     }
 }

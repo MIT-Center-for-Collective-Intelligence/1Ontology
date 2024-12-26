@@ -170,7 +170,7 @@ const Ontology = () => {
 
   const [currentImprovement, setCurrentImprovement] = useState<any>(null);
   const [displayGuidelines, setDisplayGuidelines] = useState(false);
-  const [prevHash, setPrevHash] = useState("");
+  const prevHash = useRef<string>();
   const [lastSearches, setLastSearches] = useState<any[]>([]);
   const [selectedChatTab, setSelectedChatTab] = useState<number>(0);
   /*  */
@@ -231,20 +231,17 @@ const Ontology = () => {
       if (window.location.hash) {
         // Call updateUserDoc with the hash split into an array
         const visibleNodeId = window.location.hash.split("#").reverse()[0];
-        if (nodes[visibleNodeId]) {
-          setCurrentVisibleNode(nodes[visibleNodeId]);
-          if (window.location.hash !== prevHash) {
-            initializeExpanded(eachOntologyPath[visibleNodeId]);
-          }
+
+        if (visibleNodeId !== prevHash.current) {
+          navigateToNode(visibleNodeId);
+          prevHash.current = visibleNodeId;
         }
+
         // Update the previous hash
-        setPrevHash(window.location.hash);
       }
     };
 
     if (typeof window !== "undefined") {
-      setPrevHash(window.location.hash);
-
       // Call handleHashChange immediately to handle any initial hash
       handleHashChange();
 
@@ -256,7 +253,7 @@ const Ontology = () => {
     return () => {
       window.removeEventListener("hashchange", handleHashChange);
     };
-  }, [eachOntologyPath, prevHash]);
+  }, [eachOntologyPath]);
 
   // Function to update last searches
   const updateLastSearches = (searchedNode: any) => {
@@ -561,15 +558,15 @@ const Ontology = () => {
 
   const getTreeView = (
     mainCategories: INode[],
-    visited: Set<string> = new Set(),
+    visited: Map<string, any> = new Map(),
     parentId?: string,
   ): any => {
     const newNodes = [];
     for (let node of mainCategories) {
-      if (!node || visited.has(node.id)) {
+      if (!node) {
         continue;
       }
-      visited.add(node.id);
+
       const specializations = node.specializations;
       let collections = [];
       let mainChildren = [];
@@ -580,11 +577,17 @@ const Ontology = () => {
             children.push(nodes[_node.id]);
           }
         }
+
         // if (children.length > 0) {
         if (collection.collectionName !== "main") {
           const id = parentId
             ? `${parentId}-${node.id}-${collection.collectionName}`
             : `${node.id}-${collection.collectionName}`;
+          if (visited.has(id)) {
+            continue;
+          }
+          visited.set(id, true);
+
           collections.push({
             id: id,
             nodeId: node.id,
@@ -593,7 +596,7 @@ const Ontology = () => {
             children: getTreeView(
               children,
               visited,
-              node.category ? node.id : undefined,
+              !node.category ? node.id : undefined,
             ),
 
             category: true,
@@ -612,6 +615,10 @@ const Ontology = () => {
         // }
       }
       const id = parentId ? `${parentId}-${node.id}` : `${node.id}`;
+      if (visited.has(id)) {
+        continue;
+      }
+      visited.set(id, true);
       newNodes.push({
         id,
         nodeId: node.id,
@@ -625,7 +632,6 @@ const Ontology = () => {
             !node.category ? node.id : undefined,
           ),
         ],
-
         category: !!node.category,
       });
     }
@@ -704,7 +710,7 @@ const Ontology = () => {
     const node = nodes[ontologyPath[ontologyPath.length - 1].id];
     const nodeGeneralizations = node.generalizations[0].nodes;
 
-    const generlizationSet: Set<string> = new Set(
+    const generalizationSet: Set<string> = new Set(
       nodeGeneralizations.map((g) => g.id),
     );
 
@@ -731,7 +737,7 @@ const Ontology = () => {
           if (specialization.collectionName !== "main") {
             specialization.nodes.forEach((spec) => {
               if (
-                generlizationSet.has(spec.id) ||
+                generalizationSet.has(spec.id) ||
                 newExpandedSet.has(spec.id)
               ) {
                 addGeneralizationsToSet(
@@ -930,9 +936,9 @@ const Ontology = () => {
       initializeExpanded(eachOntologyPath[nodeId]);
       setSelectedDiffNode(null);
       const generalizationId = nodes[nodeId].generalizations[0]?.nodes[0]?.id;
-      setTimeout(() => {
-        expandNodeById(`${generalizationId}-${nodeId}`);
-      }, 500);
+      // setTimeout(() => {
+      expandNodeById(`${generalizationId}-${nodeId}`);
+      // }, 1000);
     }
   };
 
@@ -949,14 +955,13 @@ const Ontology = () => {
   );
 
   const expandNodeById = async (nodeId: string) => {
-    console.log("expand nodeId -->>", nodeId);
     await tree?.scrollTo(nodeId);
     setTimeout(() => {
       const targetNode = tree?.get(nodeId);
       if (targetNode) {
         targetNode.select();
-        const element = document.getElementById(nodeId);
-        element?.scrollIntoView({ behavior: "smooth", block: "center" });
+        /*         const element = document.getElementById(nodeId);
+        element?.scrollIntoView({ behavior: "smooth", block: "center" }); */
       }
     }, 500);
   };
