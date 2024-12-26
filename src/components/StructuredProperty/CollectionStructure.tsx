@@ -1033,9 +1033,9 @@ const CollectionStructure = ({
                                               title={getTitle(nodes, link.id)}
                                               nodes={nodes}
                                               linkIndex={index}
-                                              unlinkVisible={unlinkVisible(
+                                              /* unlinkVisible={unlinkVisible(
                                                 link.id,
-                                              )}
+                                              )} */
                                               linkLocked={false}
                                               locked={
                                                 locked || !!currentImprovement
