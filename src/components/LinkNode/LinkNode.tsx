@@ -642,7 +642,7 @@ const LinkNode = ({
           {property === "parts" &&
             !selectedDiffNode &&
             !clonedNodesQueue.hasOwnProperty(link.id) && (
-              <Tooltip title="Switch">
+              <Tooltip title={swapIt ? "Specialize" : "Close"}>
                 <IconButton
                   sx={{
                     p: 0.2,
@@ -653,7 +653,7 @@ const LinkNode = ({
                     setSwapIt((prev) => !prev);
                   }}
                 >
-                  <SwapHorizIcon />
+                  {swapIt ? <CloseIcon /> : <SwapHorizIcon />}
                 </IconButton>
               </Tooltip>
             )}

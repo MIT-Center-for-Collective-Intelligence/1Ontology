@@ -117,7 +117,7 @@ const SelectModelModal = ({
   const getSelectingModelTitle = (
     property: string,
     nodeType: string,
-    propertyType: INodeTypes
+    propertyType: INodeTypes,
   ) => {
     if (property === "specializations") {
       property = "specialization";
@@ -240,7 +240,7 @@ const SelectModelModal = ({
     setEditableProperty((prev: ICollection[]) => {
       const _prev = [...prev];
       _prev[collectionIdx].nodes = _prev[collectionIdx].nodes.filter(
-        (n: ILinkNode) => n.id !== id
+        (n: ILinkNode) => n.id !== id,
       );
       return _prev;
     });
@@ -317,8 +317,8 @@ const SelectModelModal = ({
       query(
         collection(db, NODES),
         where("unclassified", "==", true),
-        where("nodeType", "==", nodeType)
-      )
+        where("nodeType", "==", nodeType),
+      ),
     );
     if (unclassifiedNodeDocs.docs.length > 0) {
       const unclassifiedId = unclassifiedNodeDocs.docs[0].id;
@@ -436,7 +436,7 @@ const SelectModelModal = ({
                   if (selectedProperty === "specializations") {
                     const id = addACloneNodeQueue(
                       currentVisibleNode.id,
-                      searchValue
+                      searchValue,
                     );
                     setEditableProperty((prev: ICollection[]) => {
                       const _prev = [...prev];
@@ -489,8 +489,8 @@ const SelectModelModal = ({
                 {currentVisibleNode.nodeType === "activity"
                   ? "activities"
                   : currentVisibleNode.nodeType === "evaluationDimension"
-                  ? "Evaluation Dimensions"
-                  : currentVisibleNode.nodeType + "s"}
+                    ? "Evaluation Dimensions"
+                    : currentVisibleNode.nodeType + "s"}
               </li>
               <li>
                 <strong style={{ color: "orange" }}> B) </strong> Navigating
@@ -507,7 +507,7 @@ const SelectModelModal = ({
             {getSelectingModelTitle(
               selectedProperty,
               currentVisibleNode.nodeType,
-              currentVisibleNode.propertyType[selectedProperty]
+              currentVisibleNode.propertyType[selectedProperty],
             )}
           </Typography>
         )}
@@ -536,7 +536,7 @@ const SelectModelModal = ({
               If you cannot find the existing{" "}
               <strong>
                 {capitalizeFirstLetter(
-                  DISPLAY[selectedProperty] || selectedProperty
+                  DISPLAY[selectedProperty] || selectedProperty,
                 )}
               </strong>{" "}
               to link, you can describe them below:

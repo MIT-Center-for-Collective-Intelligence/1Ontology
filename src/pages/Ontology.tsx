@@ -667,7 +667,7 @@ const Ontology = () => {
   }, [nodes]);
 
   useEffect(() => {
-    if (currentVisibleNode) return;
+    // if (currentVisibleNode) return;
     if (user?.currentNode && nodes[user.currentNode]) {
       setCurrentVisibleNode(nodes[user.currentNode]);
     } else {
