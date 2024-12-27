@@ -210,10 +210,4 @@ function OntTree() {
   );
 }
 
-export default function App() {
-  return (
-    <Box sx={{ display: "flex", gap: "16px", padding: "16px" }}>
-      <OntTree />
-    </Box>
-  );
-}
+export default OntTree;

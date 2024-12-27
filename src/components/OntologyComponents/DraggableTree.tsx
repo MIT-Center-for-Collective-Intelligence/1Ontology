@@ -27,6 +27,7 @@ function DraggableTree({
   onOpenNodesTree,
   tree,
   setTree,
+  treeType,
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -36,6 +37,7 @@ function DraggableTree({
   onOpenNodesTree: any;
   tree: TreeApi<TreeData> | null | undefined;
   setTree: any;
+  treeType?: string;
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -355,24 +357,26 @@ function DraggableTree({
           </FillFlexParent>
         </Box>
       </Box>
-      <Box
-        sx={{
-          position: "sticky",
-          bottom: 0,
-          backgroundColor: (theme) =>
-            theme.palette.mode === "dark" ? "#303134" : "#efefef",
-          alignItems: "center",
-          textAlign: "center",
-        }}
-      >
-        <Switch
-          checked={editEnabled}
-          onChange={() => {
-            setEditEnabled((prev) => !prev);
+      {treeType !== "oNet" && (
+        <Box
+          sx={{
+            position: "sticky",
+            bottom: 0,
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark" ? "#303134" : "#efefef",
+            alignItems: "center",
+            textAlign: "center",
           }}
-        />
-        Edit {editEnabled ? "On" : "Off"}
-      </Box>
+        >
+          <Switch
+            checked={editEnabled}
+            onChange={() => {
+              setEditEnabled((prev) => !prev);
+            }}
+          />
+          Edit {editEnabled ? "On" : "Off"}
+        </Box>
+      )}
     </Box>
   );
 }
