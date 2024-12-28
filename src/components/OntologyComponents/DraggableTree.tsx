@@ -314,6 +314,45 @@ function DraggableTree({
     }
   };
 
+  function Node({ node, style, dragHandle }: NodeRendererProps<TreeData>) {
+    const indentSize = Number.parseFloat(`${style.paddingLeft || 0}`);
+    const inputRef = useRef<HTMLInputElement>(null);
+    return (
+      <Box
+        ref={dragHandle}
+        style={style}
+        className={clsx(styles.node, node.state)}
+        onClick={() => node.isInternal && node.toggle()}
+        id={node.data.id}
+        sx={{
+          backgroundColor:
+            node.data.nodeId === currentVisibleNode.id && !node.data.category
+              ? "#26631c"
+              : "",
+        }}
+      >
+        <Box className={styles.indentLines}>
+          {new Array(indentSize / INDENT_STEP).fill(0).map((_, index) => {
+            return <div key={index}></div>;
+          })}
+        </Box>
+        <FolderArrow node={node} />
+
+        <span
+          className={clsx(styles.text, {
+            [styles.categoryText]: node.data.category,
+          })}
+        >
+          {node.isEditing ? (
+            <Input node={node} inputRef={inputRef} />
+          ) : (
+            `${node.data.name}-${node.data.id}`
+          )}
+        </span>
+      </Box>
+    );
+  }
+
   return (
     <Box className={styles.container}>
       <Box className={styles.split}>
@@ -329,7 +368,6 @@ function DraggableTree({
                 ref={(t) => setTree(t)}
                 openByDefault={false}
                 searchTerm={searchTerm}
-                selection={"NC7UEjEIVkxoHcdp6cPn-prg28paWo3J5oJZKpwqW"}
                 className={styles.tree}
                 rowClassName={styles.row}
                 paddingTop={15}
@@ -380,39 +418,6 @@ function DraggableTree({
   );
 }
 export default DraggableTree;
-
-function Node({ node, style, dragHandle }: NodeRendererProps<TreeData>) {
-  const indentSize = Number.parseFloat(`${style.paddingLeft || 0}`);
-  const inputRef = useRef<HTMLInputElement>(null);
-  return (
-    <Box
-      ref={dragHandle}
-      style={style}
-      className={clsx(styles.node, node.state)}
-      onClick={() => node.isInternal && node.toggle()}
-      id={node.data.id}
-    >
-      <Box className={styles.indentLines}>
-        {new Array(indentSize / INDENT_STEP).fill(0).map((_, index) => {
-          return <div key={index}></div>;
-        })}
-      </Box>
-      <FolderArrow node={node} />
-
-      <span
-        className={clsx(styles.text, {
-          [styles.categoryText]: node.data.category,
-        })}
-      >
-        {node.isEditing ? (
-          <Input node={node} inputRef={inputRef} />
-        ) : (
-          node.data.name
-        )}
-      </span>
-    </Box>
-  );
-}
 
 function Input({
   node,
