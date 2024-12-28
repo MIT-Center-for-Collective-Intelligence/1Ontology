@@ -123,11 +123,6 @@
     color: black;
 }
 
-.node:global(.isSelected) {
-    background: #26631c;
-    color: white;
-    border-radius: 0;
-}
 
 .node:global(.isSelectedStart) {
     border-radius: 8px 8px 0 0;
@@ -171,9 +166,7 @@
     background: #ddd;
 } */
 
-.row:focus .node:global(.isSelected) {
-    background: #26631c;
-}
+
 
 .icon {
     margin: 0 10px;

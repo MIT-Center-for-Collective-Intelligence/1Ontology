@@ -375,6 +375,9 @@ function DraggableTree({
                 overscanCount={50}
                 // onSelect={(selected) => setSelectedCount(selected.length)}
                 onActivate={(node) => {
+                  if (!!node.data.category) {
+                    return;
+                  }
                   onOpenNodesTree(node.data.nodeId);
                 }}
                 onFocus={(node) => setFocused(node.data)}
