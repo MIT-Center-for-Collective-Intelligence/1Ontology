@@ -683,7 +683,7 @@ export const createNewNode = (
   generalizationId: string,
   uname: string,
 ): INode => {
-  const newNode = {
+  const newNode: any = {
     ...parentNodeData,
     createdBy: uname,
     unclassified: false,
@@ -719,6 +719,10 @@ export const createNewNode = (
   };
   if (newNode?.textValue?.specializations) {
     delete newNode.textValue.specializations;
+  }
+  if (newNode.properties["O*Net ID"]) {
+    delete newNode.properties["O*Net ID"];
+    delete newNode.propertyType["O*Net ID"];
   }
   if (newNode?.textValue?.generalizations) {
     delete newNode.textValue.generalizations;

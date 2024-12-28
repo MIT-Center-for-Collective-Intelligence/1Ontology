@@ -376,7 +376,7 @@ const Text = ({
                   unclassified={!!currentVisibleNode.unclassified}
                 />
               )}{" "}
-            {!locked && property !== "title" && (
+            {!locked && property !== "title" && property !== "O*Net ID" && (
               <Box
                 sx={{
                   display: "flex",
@@ -427,6 +427,7 @@ const Text = ({
               </Box>
             )}
             {property !== "title" &&
+              property !== "O*Net ID" &&
               !currentImprovement &&
               !currentVisibleNode.unclassified && (
                 <SelectInheritance
