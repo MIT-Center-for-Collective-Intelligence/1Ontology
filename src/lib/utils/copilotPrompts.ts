@@ -260,7 +260,7 @@ IMPORTANT NOTES:
 `;
 
 export const MODELS_OPTIONS = [
-  { id: "o1-preview", title: "O1" },
+  { id: "o1", title: "O1" },
   { id: "chatgpt-4o-latest", title: "GPT-4o latest" },
   { id: "gemini-2.0-flash-exp", title: "GEMINI-2.0 FLASH EXP" },
   { id: "o1-mini", title: "O1 mini" },
