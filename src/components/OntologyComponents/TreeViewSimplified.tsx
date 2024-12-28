@@ -242,7 +242,7 @@ const NodeLabel = ({
         e.preventDefault();
 
         if (
-          currentVisibleNode.id === nodeId &&
+          currentVisibleNode?.id === nodeId &&
           (selectedProperty === "specializations" ||
             selectedProperty === "generalizations")
         ) {
@@ -298,7 +298,7 @@ const NodeLabel = ({
               <IconButton
                 onClick={(e) => {
                   if (
-                    currentVisibleNode.id === nodeId &&
+                    currentVisibleNode?.id === nodeId &&
                     (selectedProperty === "specializations" ||
                       selectedProperty === "generalizations")
                   ) {
@@ -319,7 +319,7 @@ const NodeLabel = ({
                       ? "#E8F5E9"
                       : "",
                   display:
-                    (currentVisibleNode.id === nodeId &&
+                    (currentVisibleNode?.id === nodeId &&
                       (selectedProperty === "specializations" ||
                         selectedProperty === "generalizations")) ||
                     ((disabledAddButton ||
@@ -330,7 +330,7 @@ const NodeLabel = ({
                       : "",
                 }}
                 disabled={
-                  (currentVisibleNode.id === nodeId &&
+                  (currentVisibleNode?.id === nodeId &&
                     (selectedProperty === "specializations" ||
                       selectedProperty === "generalizations")) ||
                   ((disabledAddButton ||

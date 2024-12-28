@@ -179,7 +179,7 @@ const SelectModelModal = ({
     }
     const generalizations = nodes[id].generalizations
       .flatMap((c: any) => c.nodes)
-      .filter((n: { id: string }) => n.id !== currentVisibleNode.id);
+      .filter((n: { id: string }) => n.id !== currentVisibleNode?.id);
 
     return generalizations.length === 0;
   };
@@ -368,9 +368,9 @@ const SelectModelModal = ({
         handleCloning={handleCloning}
         clone
         stopPropagation={
-          selectedProperty === "generalizations" ? currentVisibleNode.id : ""
+          selectedProperty === "generalizations" ? currentVisibleNode?.id : ""
         }
-        preventLoops={getPath(currentVisibleNode.id, selectedProperty)}
+        preventLoops={getPath(currentVisibleNode?.id, selectedProperty)}
         manageLock={user?.manageLock}
         cloning={cloning}
         addACloneNodeQueue={_add}
@@ -435,7 +435,7 @@ const SelectModelModal = ({
                   setDisabledButton(true);
                   if (selectedProperty === "specializations") {
                     const id = addACloneNodeQueue(
-                      currentVisibleNode.id,
+                      currentVisibleNode?.id,
                       searchValue,
                     );
                     setEditableProperty((prev: ICollection[]) => {

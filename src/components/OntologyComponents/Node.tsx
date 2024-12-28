@@ -332,11 +332,11 @@ const Node = ({
             if (mainIdx === -1) {
               newNode.properties.isPartOf.push({
                 collectionName: "main",
-                nodes: [{ id: currentVisibleNode.id }],
+                nodes: [{ id: currentVisibleNode?.id }],
               });
             } else {
               newNode.properties.isPartOf[mainIdx].nodes.push({
-                id: currentVisibleNode.id,
+                id: currentVisibleNode?.id,
               });
             }
           }
@@ -352,11 +352,11 @@ const Node = ({
             if (mainIdx === -1) {
               newNode.properties.parts.push({
                 collectionName: "main",
-                nodes: [{ id: currentVisibleNode.id }],
+                nodes: [{ id: currentVisibleNode?.id }],
               });
             } else {
               newNode.properties.parts[mainIdx].nodes.push({
-                id: currentVisibleNode.id,
+                id: currentVisibleNode?.id,
               });
             }
           }
@@ -373,11 +373,11 @@ const Node = ({
           if (mProperty === "specializations") {
             const alreadyExistIndex =
               newNode.generalizations[0].nodes.findIndex(
-                (n) => n.id === currentVisibleNode.id,
+                (n) => n.id === currentVisibleNode?.id,
               );
             if (alreadyExistIndex === -1) {
               newNode.generalizations[0].nodes.push({
-                id: currentVisibleNode.id,
+                id: currentVisibleNode?.id,
               });
             }
           }
@@ -385,11 +385,11 @@ const Node = ({
           if (mProperty === "generalizations") {
             const alreadyExistIndex =
               newNode.specializations[0].nodes.findIndex(
-                (n) => n.id === currentVisibleNode.id,
+                (n) => n.id === currentVisibleNode?.id,
               );
             if (alreadyExistIndex === -1) {
               newNode.specializations[0].nodes.push({
-                id: currentVisibleNode.id,
+                id: currentVisibleNode?.id,
               });
             }
           }
@@ -444,7 +444,7 @@ const Node = ({
                 if (mProperty === "parts" || mProperty === "isPartOf") {
                   updatePartsAndPartsOf(
                     links,
-                    { id: currentVisibleNode.id },
+                    { id: currentVisibleNode?.id },
                     mProperty === "parts" ? "isPartOf" : "parts",
                     db,
                     nodes,
@@ -452,7 +452,7 @@ const Node = ({
                 } else {
                   updatePropertyOf(
                     links,
-                    { id: currentVisibleNode.id },
+                    { id: currentVisibleNode?.id },
                     mProperty,
                     nodes,
                     db,
@@ -484,7 +484,7 @@ const Node = ({
 
           // Update inheritance (if needed)
           updateInheritance({
-            nodeId: currentVisibleNode.id,
+            nodeId: currentVisibleNode?.id,
             updatedProperties: [mProperty],
             db,
           });
@@ -545,7 +545,7 @@ const Node = ({
         return null;
       }
     },
-    [db, user.uname, nodes, currentVisibleNode.id],
+    [db, user.uname, nodes, currentVisibleNode?.id],
   );
 
   // This function handles the cloning of a node.
@@ -873,7 +873,7 @@ const Node = ({
         clearNotifications(nodeRef.id);
         recordLogs({
           action: "Deleted Node",
-          node: currentVisibleNode.id,
+          node: currentVisibleNode?.id,
         });
       }
     } catch (error: any) {
@@ -888,7 +888,7 @@ const Node = ({
         }),
       });
     }
-  }, [currentVisibleNode.id, user?.uname, nodes, currentVisibleNode]);
+  }, [currentVisibleNode?.id, user?.uname, nodes, currentVisibleNode]);
 
   const handleToggle = useCallback(
     (nodeId: string) => {
@@ -907,7 +907,7 @@ const Node = ({
 
   const handleLockNode = () => {
     try {
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
       updateDoc(nodeRef, {
         locked: !currentVisibleNode.locked,
       });
@@ -955,7 +955,7 @@ const Node = ({
         fuseSearch.some(
           (s) =>
             s.title.toLowerCase().trim() === newTitle.toLowerCase().trim() &&
-            currentVisibleNode.id !== s.id,
+            currentVisibleNode?.id !== s.id,
         )
       );
     } catch (error) {
@@ -1283,7 +1283,7 @@ const Node = ({
         />
 
         <NodeImageManager
-          nodeId={currentVisibleNode.id}
+          nodeId={currentVisibleNode?.id}
           currentVisibleNode={currentVisibleNode}
           user={user}
           firestore={db}

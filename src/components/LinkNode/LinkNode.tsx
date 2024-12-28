@@ -206,7 +206,7 @@ const LinkNode = ({
         )
       ) {
         const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id),
+          doc(collection(db, NODES), currentVisibleNode?.id),
         );
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as any;
@@ -242,7 +242,7 @@ const LinkNode = ({
           // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
           // const childData = childDoc.data() as INode;
           if (shouldBeRemovedFromParent) {
-            unlinkPropertyOf(db, property, currentVisibleNode.id, link.id);
+            unlinkPropertyOf(db, property, currentVisibleNode?.id, link.id);
           }
 
           await updateDoc(nodeDoc.ref, {
@@ -267,7 +267,7 @@ const LinkNode = ({
               if (property === "isPartOf") {
                 updatePartsAndPartsOf(
                   links,
-                  { id: currentVisibleNode.id },
+                  { id: currentVisibleNode?.id },
                   "isPartOf",
                   db,
                   nodes,
@@ -275,7 +275,7 @@ const LinkNode = ({
               } else {
                 updatePropertyOf(
                   links,
-                  { id: currentVisibleNode.id },
+                  { id: currentVisibleNode?.id },
                   property,
                   nodes,
                   db,
@@ -295,7 +295,7 @@ const LinkNode = ({
             });
           }
           saveNewChangeLog(db, {
-            nodeId: currentVisibleNode.id,
+            nodeId: currentVisibleNode?.id,
             modifiedBy: user?.uname,
             modifiedProperty: property,
             previousValue,
@@ -379,7 +379,7 @@ const LinkNode = ({
         )
       ) {
         const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id),
+          doc(collection(db, NODES), currentVisibleNode?.id),
         );
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as INode;
@@ -403,7 +403,7 @@ const LinkNode = ({
           if (shouldBeRemovedFromParent) {
             await removeNodeLink(
               property as "specializations" | "generalizations",
-              currentVisibleNode.id,
+              currentVisibleNode?.id,
               link.id,
             );
           }
@@ -473,7 +473,7 @@ const LinkNode = ({
           }
           await updateDoc(nodeDoc.ref, nodeData);
           saveNewChangeLog(db, {
-            nodeId: currentVisibleNode.id,
+            nodeId: currentVisibleNode?.id,
             modifiedBy: user?.uname,
             modifiedProperty: property,
             previousValue,

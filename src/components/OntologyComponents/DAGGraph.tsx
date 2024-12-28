@@ -176,7 +176,7 @@ const DagGraph = ({
       Object.keys(node.specializations).length > 0;
 
     const hasHiddenGeneralizations =
-      currentVisibleNode.id !== nodeId &&
+      currentVisibleNode?.id !== nodeId &&
       node.generalizations &&
       Object.keys(node.generalizations).length > 0 &&
       node.generalizations.some((gen: any) => {
@@ -293,7 +293,7 @@ const DagGraph = ({
 
   useEffect(() => {
     if (graph && currentVisibleNode) {
-      const nodeId = currentVisibleNode.id;
+      const nodeId = currentVisibleNode?.id;
 
       if (graph.node(nodeId)) {
         const nodePosition = graph.node(nodeId);

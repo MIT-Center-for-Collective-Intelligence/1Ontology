@@ -160,7 +160,7 @@ const CollectionStructure = ({
           const newArray = [...propertyValue];
           const [movedElement] = newArray.splice(sourceIndex, 1);
           newArray.splice(destinationIndex, 0, movedElement);
-          const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+          const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
 
           if (
             property === "specializations" ||
@@ -179,7 +179,7 @@ const CollectionStructure = ({
             });
 
             updateInheritance({
-              nodeId: currentVisibleNode.id,
+              nodeId: currentVisibleNode?.id,
               updatedProperties: [property],
               db,
             });
@@ -194,7 +194,7 @@ const CollectionStructure = ({
             message: error.message,
             stack: error.stack,
           }),
-          nodeId: currentVisibleNode.id,
+          nodeId: currentVisibleNode?.id,
         });
       }
     },
@@ -272,7 +272,7 @@ const CollectionStructure = ({
             );
           }
           // Update the nodeData with the new property values
-          const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+          const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
           if (
             property === "specializations" ||
             property === "generalizations"
@@ -286,14 +286,14 @@ const CollectionStructure = ({
               [`inheritance.${property}.ref`]: null,
             });
             updateInheritance({
-              nodeId: currentVisibleNode.id,
+              nodeId: currentVisibleNode?.id,
               updatedProperties: [property],
               db,
             });
           }
 
           saveNewChangeLog(db, {
-            nodeId: currentVisibleNode.id,
+            nodeId: currentVisibleNode?.id,
             modifiedBy: user?.uname,
             modifiedProperty: property,
             previousValue,
@@ -314,7 +314,7 @@ const CollectionStructure = ({
             field: property,
             sourceCategory: sourceCollection,
             destinationCategory: destinationCollection,
-            nodeId: currentVisibleNode.id,
+            nodeId: currentVisibleNode?.id,
           });
         }
       } catch (error: any) {
@@ -346,7 +346,7 @@ const CollectionStructure = ({
         if (!newCollection || !user?.uname) return;
 
         const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id),
+          doc(collection(db, NODES), currentVisibleNode?.id),
         );
         if (!nodeDoc.exists()) return;
 
@@ -415,7 +415,7 @@ const CollectionStructure = ({
 
         // Save the change log
         saveNewChangeLog(db, {
-          nodeId: currentVisibleNode.id,
+          nodeId: currentVisibleNode?.id,
           modifiedBy: user?.uname,
           modifiedProperty: property,
           previousValue,
@@ -440,7 +440,7 @@ const CollectionStructure = ({
         });
       }
     },
-    [user?.uname, db, currentVisibleNode.id, property],
+    [user?.uname, db, currentVisibleNode?.id, property],
   );
   const saveNewAndSwapIt = (newPartTitle: string, partId: string) => {
     try {
@@ -477,7 +477,7 @@ const CollectionStructure = ({
           return;
         }
 
-        if (property === "parts" && currentVisibleNode.id) {
+        if (property === "parts" && currentVisibleNode?.id) {
           const elementIdx = propertyValue[0].nodes.findIndex(
             (n: { id: string }) => n.id === id,
           );
@@ -486,14 +486,14 @@ const CollectionStructure = ({
           );
           if (existIdx === -1) {
             propertyValue[0].nodes[elementIdx].id = partId;
-            const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+            const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
 
             updateDoc(nodeRef, {
               "properties.parts": propertyValue,
             });
             if (currentVisibleNode.inheritance.parts.ref) {
               updateInheritance({
-                nodeId: currentVisibleNode.id,
+                nodeId: currentVisibleNode?.id,
                 updatedProperties: ["parts"],
                 db,
               });
@@ -504,7 +504,7 @@ const CollectionStructure = ({
         console.error(error);
       }
     },
-    [currentVisibleNode.id, db, property, propertyValue, model],
+    [currentVisibleNode?.id, db, property, propertyValue, model],
   );
   const saveEditCollection = useCallback(
     async (newCollection: string) => {
@@ -513,7 +513,7 @@ const CollectionStructure = ({
           return;
 
         const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id),
+          doc(collection(db, NODES), currentVisibleNode?.id),
         );
         if (!nodeDoc.exists()) return;
 
@@ -590,7 +590,7 @@ const CollectionStructure = ({
 
         // Save the change log
         saveNewChangeLog(db, {
-          nodeId: currentVisibleNode.id,
+          nodeId: currentVisibleNode?.id,
           modifiedBy: user?.uname,
           modifiedProperty: property,
           previousValue,
@@ -631,7 +631,7 @@ const CollectionStructure = ({
       ) {
         try {
           const nodeDoc = await getDoc(
-            doc(collection(db, NODES), currentVisibleNode.id),
+            doc(collection(db, NODES), currentVisibleNode?.id),
           );
           if (nodeDoc.exists()) {
             let previousValue = null;
@@ -708,7 +708,7 @@ const CollectionStructure = ({
 
             // Log the changes
             saveNewChangeLog(db, {
-              nodeId: currentVisibleNode.id,
+              nodeId: currentVisibleNode?.id,
               modifiedBy: user?.uname,
               modifiedProperty: property,
               previousValue,

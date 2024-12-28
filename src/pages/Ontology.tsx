@@ -191,6 +191,7 @@ const Ontology = () => {
   const [treeViewData, setTreeViewData] = useState([]);
 
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
+  const firstLoad = useRef(true);
 
   const handleCloseAddLinksModel = () => {
     setCheckedItems(new Set());
@@ -555,7 +556,11 @@ const Ontology = () => {
     // Unsubscribe from the snapshot listener when the component is unmounted
     return () => unsubscribeNodes();
   }, [db]);
-
+  useEffect(() => {
+    if (currentVisibleNode?.id) {
+      setCurrentVisibleNode(nodes[currentVisibleNode?.id]);
+    }
+  }, [nodes]);
   const getTreeView = (
     mainCategories: INode[],
     visited: Map<string, any> = new Map(),
@@ -677,12 +682,18 @@ const Ontology = () => {
 
   useEffect(() => {
     // if (currentVisibleNode) return;
-    if (user?.currentNode && nodes[user.currentNode]) {
-      setCurrentVisibleNode(nodes[user.currentNode]);
-    } else {
-      setCurrentVisibleNode(nodes["hn9pGQNxmQe9Xod5MuKK"]!);
+    if (firstLoad) {
+      const nodeFromHash = window.location.hash.split("#").reverse()[0];
+      if (nodeFromHash && nodes[nodeFromHash]) {
+        setCurrentVisibleNode(nodes[nodeFromHash]);
+      } else if (user?.currentNode && nodes[user.currentNode]) {
+        setCurrentVisibleNode(nodes[user.currentNode]);
+      } else {
+        setCurrentVisibleNode(nodes["hn9pGQNxmQe9Xod5MuKK"]!);
+      }
+      firstLoad.current = false;
     }
-  }, [user?.currentNode, nodes]);
+  }, [user?.currentNode]);
 
   // Function to update the user document with the current ontology path
   const openedANode = async (currentNode: string) => {
@@ -776,7 +787,7 @@ const Ontology = () => {
       return;
     }
 
-    openedANode(currentVisibleNode.id);
+    openedANode(currentVisibleNode?.id);
     if (expandedNodes.size === 0) {
       initializeExpanded(eachOntologyPath[currentVisibleNode?.id]);
     }

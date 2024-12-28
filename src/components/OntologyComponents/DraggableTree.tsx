@@ -96,8 +96,8 @@ function DraggableTree({
           currentVisibleNode.generalizations[0]?.nodes[0]?.id;
         expandNodeById(
           generalizationId
-            ? `${generalizationId}-${currentVisibleNode.id}`
-            : `${currentVisibleNode.id}`,
+            ? `${generalizationId}-${currentVisibleNode?.id}`
+            : `${currentVisibleNode?.id}`,
         );
         setFirstLoad(false);
       }, 500);
@@ -119,7 +119,6 @@ function DraggableTree({
     index: number;
   }) => {
     try {
-      debugger;
       if (!editEnabled || !user?.uname) return;
 
       const draggedNodes = args.dragNodes.map((node) => node.data);
@@ -326,7 +325,7 @@ function DraggableTree({
         id={node.data.id}
         sx={{
           backgroundColor:
-            node.data.nodeId === currentVisibleNode.id && !node.data.category
+            node.data.nodeId === currentVisibleNode?.id && !node.data.category
               ? "#26631c"
               : "",
         }}

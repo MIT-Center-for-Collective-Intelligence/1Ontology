@@ -345,7 +345,7 @@ const StructuredProperty = ({
         removedElements,
         addedElements,
         selectedProperty,
-        currentVisibleNode.id,
+        currentVisibleNode?.id,
       );
     } catch (error: any) {
       console.error(error);
@@ -368,7 +368,7 @@ const StructuredProperty = ({
     removedElements,
     selectedProperty,
     modifiedOrder,
-    currentVisibleNode.id,
+    currentVisibleNode?.id,
   ]);
 
   const scrollToElement = (elementId: string) => {

@@ -157,14 +157,14 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         "Keep"
       )
     ) {
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
       const properties = currentVisibleNode.properties;
       const propertyType = currentVisibleNode.propertyType;
       delete properties[property];
       await updateDoc(nodeRef, { propertyType, properties });
       recordLogs({
         action: "removeProperty",
-        node: currentVisibleNode.id,
+        node: currentVisibleNode?.id,
         property,
       });
     }
@@ -233,7 +233,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         return;
       }
       if (!newProperty.trim() || !newPropertyType.trim()) return;
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
       const properties = currentVisibleNode.properties;
       const previousValue = JSON.parse(
         JSON.stringify(currentVisibleNode.properties)
@@ -258,7 +258,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         inheritance,
       });
       saveNewChangeLog(db, {
-        nodeId: currentVisibleNode.id,
+        nodeId: currentVisibleNode?.id,
         modifiedBy: user?.uname,
         modifiedProperty: null,
         previousValue,
@@ -277,14 +277,14 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         batch,
         newProperty,
         properties[newProperty],
-        currentVisibleNode.id,
+        currentVisibleNode?.id,
         newPropertyType.toLowerCase()
       );
       await batch.commit();
 
       recordLogs({
         action: "add new property",
-        node: currentVisibleNode.id,
+        node: currentVisibleNode?.id,
         newProperty,
         newPropertyType,
       });

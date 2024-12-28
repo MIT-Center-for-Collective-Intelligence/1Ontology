@@ -487,7 +487,7 @@ const ToolbarSidebar = ({
     }, 500);
 
     if (!previousNodeId) {
-      setPreviousNodeId(currentVisibleNode.id);
+      setPreviousNodeId(currentVisibleNode?.id);
     }
   };
 
@@ -677,7 +677,7 @@ const ToolbarSidebar = ({
       currentVisibleNode.title,
       currentVisibleNode.nodeType,
       nodes,
-      currentVisibleNode.id
+      currentVisibleNode?.id
     )) as {
       model: string;
       userMessage: string;
@@ -706,7 +706,7 @@ const ToolbarSidebar = ({
         userMessage,
         model,
         deepNumber,
-        currentVisibleNode.id,
+        currentVisibleNode?.id,
         generateNewNodes,
         selectedProperties,
         proposeDeleteNode,

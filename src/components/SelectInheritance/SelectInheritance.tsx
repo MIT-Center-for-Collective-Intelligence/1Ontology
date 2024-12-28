@@ -114,7 +114,7 @@ const SelectInheritance = ({
       let newGeneralizationId = event.target.value;
 
       if (newGeneralizationId && newGeneralizationId !== inheritanceRef) {
-        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+        const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
         const newGeneralization = nodes[newGeneralizationId];
         if (newGeneralization.inheritance[property].ref) {
           newGeneralizationId = newGeneralization.inheritance[property].ref;
@@ -126,12 +126,12 @@ const SelectInheritance = ({
           .then(async () => {
             let batch = writeBatch(db);
             batch = await updateSpecializationsInheritance(
-              nodes[currentVisibleNode.id].specializations,
+              nodes[currentVisibleNode?.id].specializations,
               batch,
               property,
               newGeneralizationId,
-              currentVisibleNode.id,
-              currentVisibleNode.id,
+              currentVisibleNode?.id,
+              currentVisibleNode?.id,
             );
             await batch.commit();
           })

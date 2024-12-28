@@ -103,7 +103,7 @@ const ChipsProperty = ({
         property
       ] as string[];
 
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
 
       await updateDoc(nodeRef, {
         [`properties.${property}`]: newValue,
@@ -111,7 +111,7 @@ const ChipsProperty = ({
       });
       if (!!currentVisibleNode.inheritance[property]?.ref) {
         await updateInheritance({
-          nodeId: currentVisibleNode.id,
+          nodeId: currentVisibleNode?.id,
           updatedProperties: [property],
           db,
         });
@@ -130,7 +130,7 @@ const ChipsProperty = ({
       }
 
       saveNewChangeLog(db, {
-        nodeId: currentVisibleNode.id,
+        nodeId: currentVisibleNode?.id,
         modifiedBy: user?.uname,
         modifiedProperty: property,
         previousValue,

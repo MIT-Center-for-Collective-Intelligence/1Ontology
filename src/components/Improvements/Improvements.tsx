@@ -85,7 +85,7 @@ const Improvements = ({
         // Close the modal or perform any other necessary actions
         // Get the node document from the database
         const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id),
+          doc(collection(db, NODES), currentVisibleNode?.id),
         );
 
         // If the node document does not exist, return early
@@ -97,14 +97,14 @@ const Improvements = ({
         // Handle specializations or generalizations
 
         for (let link of removedLinks) {
-          await unlinkPropertyOf(db, property, currentVisibleNode.id, link);
+          await unlinkPropertyOf(db, property, currentVisibleNode?.id, link);
         }
 
         // Update links for specializations/generalizations
         if (property === "specializations" || property === "generalizations") {
           updateLinks(
             newLinks,
-            { id: currentVisibleNode.id },
+            { id: currentVisibleNode?.id },
             property === "specializations"
               ? "generalizations"
               : "specializations",
@@ -117,7 +117,7 @@ const Improvements = ({
         if (property === "parts" || property === "isPartOf") {
           updatePartsAndPartsOf(
             newLinks,
-            { id: currentVisibleNode.id },
+            { id: currentVisibleNode?.id },
             property === "parts" ? "isPartOf" : "parts",
             db,
             nodes,
@@ -159,7 +159,7 @@ const Improvements = ({
         ) {
           updatePropertyOf(
             newLinks,
-            { id: currentVisibleNode.id },
+            { id: currentVisibleNode?.id },
             property,
             nodes,
             db,
@@ -185,7 +185,7 @@ const Improvements = ({
         if (property === "generalizations") {
           await updateLinksForInheritance(
             db,
-            currentVisibleNode.id,
+            currentVisibleNode?.id,
             _addedLinks,
             _removedLinks,
             currentVisibleNode,
@@ -196,7 +196,7 @@ const Improvements = ({
         if (property === "specializations") {
           await updateLinksForInheritanceSpecializations(
             db,
-            currentVisibleNode.id,
+            currentVisibleNode?.id,
             _addedLinks,
             _removedLinks,
             currentVisibleNode,
@@ -209,7 +209,7 @@ const Improvements = ({
           !["specializations", "generalizations", "isPartOf"].includes(property)
         ) {
           updateInheritance({
-            nodeId: currentVisibleNode.id,
+            nodeId: currentVisibleNode?.id,
             updatedProperties: [property],
             db,
           });
@@ -228,7 +228,7 @@ const Improvements = ({
         });
       }
     },
-    [currentVisibleNode.id, currentVisibleNode.title, db, nodes, user],
+    [currentVisibleNode?.id, currentVisibleNode.title, db, nodes, user],
   );
 
   const updateStringProperty = async (
@@ -457,7 +457,7 @@ const Improvements = ({
     [
       addNewNode,
       confirmIt,
-      currentVisibleNode.id,
+      currentVisibleNode?.id,
       currentVisibleNode.root,
       currentVisibleNode.title,
       db,
@@ -480,7 +480,7 @@ const Improvements = ({
         property
       ] as string[];
 
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
 
       await updateDoc(nodeRef, {
         [`properties.${property}`]: newValue,
@@ -488,7 +488,7 @@ const Improvements = ({
       });
       if (!!currentVisibleNode.inheritance[property]?.ref) {
         await updateInheritance({
-          nodeId: currentVisibleNode.id,
+          nodeId: currentVisibleNode?.id,
           updatedProperties: [property],
           db,
         });
@@ -653,7 +653,7 @@ const Improvements = ({
       }
       if (user?.uname && changeType) {
         const changeLog: any = {
-          nodeId: currentVisibleNode.id,
+          nodeId: currentVisibleNode?.id,
           modifiedBy: user?.uname,
           modifiedProperty: change.modifiedProperty,
           previousValue: change.detailsOfChange.previousValue,

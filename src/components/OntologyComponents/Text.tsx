@@ -130,7 +130,7 @@ const Text = ({
     (previousValue: string, newValue: string) => {
       if (!user?.uname) return;
       saveNewChangeLog(db, {
-        nodeId: currentVisibleNode.id,
+        nodeId: currentVisibleNode?.id,
         modifiedBy: user.uname,
         modifiedProperty: property,
         previousValue: previousValue,
@@ -140,7 +140,7 @@ const Text = ({
         fullNode: currentVisibleNode,
       });
     },
-    [currentVisibleNode.id, db, property, user],
+    [currentVisibleNode?.id, db, property, user],
   );
 
   const onSaveTextChange = useCallback(
@@ -152,7 +152,7 @@ const Text = ({
 
       if (reference) {
         setSwitchToWebSocket(false);
-        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+        const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
         if (structured) {
           const referencedNode: any = nodes[reference];
           await updateDoc(nodeRef, {
@@ -168,7 +168,7 @@ const Text = ({
             if (property === "parts" || property === "isPartOf") {
               updatePartsAndPartsOf(
                 links,
-                { id: currentVisibleNode.id },
+                { id: currentVisibleNode?.id },
                 property === "parts" ? "isPartOf" : "parts",
                 db,
                 nodes,
@@ -176,7 +176,7 @@ const Text = ({
             } else {
               updatePropertyOf(
                 links,
-                { id: currentVisibleNode.id },
+                { id: currentVisibleNode?.id },
                 property,
                 nodes,
                 db,
@@ -193,7 +193,7 @@ const Text = ({
         const ydoc = new Y.Doc();
         const websocketProvider = new WebsocketProvider(
           WS_URL,
-          `${currentVisibleNode.id}-${property}`,
+          `${currentVisibleNode?.id}-${property}`,
           ydoc,
           {
             connect: true,
@@ -210,13 +210,13 @@ const Text = ({
         }, 5000);
 
         updateInheritance({
-          nodeId: currentVisibleNode.id,
+          nodeId: currentVisibleNode?.id,
           updatedProperties: [property],
           db,
         });
       }
     },
-    [user?.uname, currentVisibleNode.id, reference, property, db, nodes],
+    [user?.uname, currentVisibleNode?.id, reference, property, db, nodes],
   );
 
   useEffect(() => {
@@ -235,7 +235,7 @@ const Text = ({
   //       textAreaRef.current.blur();
   //     }
   //   }
-  // }, [currentVisibleNode.id]);
+  // }, [currentVisibleNode?.id]);
 
   const renderDiff = (previousValue: string, newValue: string) => {
     try {
@@ -494,7 +494,7 @@ const Text = ({
                 <YjsEditor
                   fullname={`${user?.fName} ${user?.lName}`}
                   property={property}
-                  nodeId={currentVisibleNode.id}
+                  nodeId={currentVisibleNode?.id}
                   color={randomProminentColor()}
                   saveChangeHistory={saveChangeHistory}
                   structured={structured}
@@ -507,7 +507,7 @@ const Text = ({
                   property={property}
                   text={text}
                   breakInheritance={onSaveTextChange}
-                  nodeId={currentVisibleNode.id}
+                  nodeId={currentVisibleNode?.id}
                   setCursorPosition={setCursorPosition}
                 />
               )}

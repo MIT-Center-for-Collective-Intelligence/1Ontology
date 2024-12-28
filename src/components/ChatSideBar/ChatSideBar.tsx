@@ -125,7 +125,7 @@ const ChatSideBar = ({
     async (nodeId: string, title: string) => {
       if (!user || !currentVisibleNode?.id) return;
       const messageData = {
-        nodeId: currentVisibleNode.id,
+        nodeId: currentVisibleNode?.id,
         text: title,
         sender: user.uname,
         senderDetail: {

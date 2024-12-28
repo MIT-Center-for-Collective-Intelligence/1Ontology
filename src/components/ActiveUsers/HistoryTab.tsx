@@ -34,7 +34,7 @@ const NodeActivity = ({
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    if (!currentVisibleNode.id) return;
+    if (!currentVisibleNode?.id) return;
     setLogs([]);
 
     let nodesQuery = null;
@@ -90,7 +90,7 @@ const NodeActivity = ({
     });
 
     return () => unsubscribeNodes();
-  }, [db, currentVisibleNode.id, changeType, selectedUser]);
+  }, [db, currentVisibleNode?.id, changeType, selectedUser]);
 
   if (loading) {
     return (
