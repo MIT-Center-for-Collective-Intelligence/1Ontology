@@ -346,7 +346,7 @@ function DraggableTree({
           {node.isEditing ? (
             <Input node={node} inputRef={inputRef} />
           ) : (
-            `${node.data.name}-${node.data.id}`
+            `${node.data.name}`
           )}
         </span>
       </Box>
