@@ -161,7 +161,6 @@ function DraggableTree({
       });
 
       setTreeData(newData);
-      console.log("args.index ==>", args.index);
 
       if (toParent.nodeId === fromParents[0].nodeId) {
         const nodeRef = doc(collection(db, NODES), toParent.nodeId);
@@ -335,7 +334,7 @@ function DraggableTree({
                 rowClassName={styles.row}
                 paddingTop={15}
                 indent={INDENT_STEP}
-                // overscanCount={2}
+                overscanCount={50}
                 // onSelect={(selected) => setSelectedCount(selected.length)}
                 onActivate={(node) => {
                   onOpenNodesTree(node.data.nodeId);

@@ -416,7 +416,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     const model_index = MODELS_OPTIONS.findIndex(
       (option) => option.id === model,
     );
-    console.log(model, "model==>");
     if (!user?.userData || model_index === -1) {
       throw new Error("Access forbidden");
     }

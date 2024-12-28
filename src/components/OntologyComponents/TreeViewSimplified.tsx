@@ -438,7 +438,6 @@ const NodeLabel = ({
               return nodeId;
             }
           });
-          console.log('clicked button to edit ==>');
         }}
       >
         {editTitle === nodeId ? (

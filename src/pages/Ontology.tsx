@@ -584,11 +584,13 @@ const Ontology = () => {
             ? `${parentId}-${node.id}-${collection.collectionName}`
             : `${node.id}-${collection.collectionName}`;
           if (visited.has(id)) {
+            if (typeof visited.get(id) !== "boolean") {
+              newNodes.push(visited.get(id));
+            }
             continue;
           }
           visited.set(id, true);
-
-          collections.push({
+          const record = {
             id: id,
             nodeId: node.id,
             nodeType: node.nodeType,
@@ -600,7 +602,9 @@ const Ontology = () => {
             ),
 
             category: true,
-          });
+          };
+          collections.push(record);
+          visited.set(id, record);
         } else {
           mainChildren.push(...children);
         }
@@ -616,10 +620,13 @@ const Ontology = () => {
       }
       const id = parentId ? `${parentId}-${node.id}` : `${node.id}`;
       if (visited.has(id)) {
+        if (typeof visited.get(id) !== "boolean") {
+          newNodes.push(visited.get(id));
+        }
         continue;
       }
       visited.set(id, true);
-      newNodes.push({
+      const record = {
         id,
         nodeId: node.id,
         name: node.title,
@@ -633,7 +640,9 @@ const Ontology = () => {
           ),
         ],
         category: !!node.category,
-      });
+      };
+      visited.set(id, record);
+      newNodes.push(record);
     }
     return newNodes;
   };
@@ -661,7 +670,6 @@ const Ontology = () => {
     let treeOfSpecializations = getSpecializationsTree(mainCategories, []);
 
     const _result = getTreeView(mainCategories);
-
     setTreeViewData(_result);
     // Set the generated tree structure for visualization
     setTreeVisualization(treeOfSpecializations);
