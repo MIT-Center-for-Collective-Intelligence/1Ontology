@@ -16,7 +16,7 @@ import {
 } from " @components/lib/utils/helpersCopilot";
 import { INode } from " @components/types/INode";
 import fbAuth from " @components/middlewares/fbAuth";
-import { getDoerCreate, recordLogs } from " @components/lib/utils/helpers";
+import { getDoerCreate } from " @components/lib/utils/helpers";
 import {
   copilotNewNode,
   getCopilotPrompt,
@@ -38,6 +38,26 @@ type GeminiModels =
   | "gemini-2.0-flash-exp"
   | "gemini-2.0-flash-thinking-exp"
   | "gemini-exp-1206";
+
+export const recordLogs = async (
+  logs: { [key: string]: any },
+  uname: string,
+) => {
+  try {
+    if (uname === "ouhrac") return;
+    const logRef = db.collection(LOGS).doc();
+    const doerCreate = getDoerCreate(uname || "");
+    await logRef.set({
+      type: "info",
+      ...logs,
+      createdAt: new Date(),
+      doer: uname,
+      doerCreate,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};
 
 const saveLogs = (
   uname: string,
@@ -150,7 +170,7 @@ const sendLLMRequest = async ({
         message: error.message,
         stack: error.stack,
       }),
-      at: "recordLogs",
+      at: "sendLLMRequest",
     });
   }
 };
@@ -221,15 +241,18 @@ ${userMessage}
     return response;
   } catch (error: any) {
     console.error(error);
-    recordLogs({
-      type: "error",
-      error: JSON.stringify({
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      }),
-      at: "proposerAgent",
-    });
+    recordLogs(
+      {
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+        at: "proposerAgent",
+      },
+      uname,
+    );
   }
 };
 
@@ -393,6 +416,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     const model_index = MODELS_OPTIONS.findIndex(
       (option) => option.id === model,
     );
+    console.log(model, "model==>");
     if (!user?.userData || model_index === -1) {
       throw new Error("Access forbidden");
     }
@@ -439,15 +463,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     return res.status(200).send(response);
   } catch (error: any) {
     console.error("error", error);
-    recordLogs({
-      type: "error",
-      error: JSON.stringify({
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      }),
-      at: "copilot",
-    });
+    recordLogs(
+      {
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+        at: "copilot",
+      },
+      uname,
+    );
     return res.status(500).json({ error: error.message });
   }
 }

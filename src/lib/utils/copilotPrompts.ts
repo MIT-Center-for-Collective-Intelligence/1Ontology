@@ -835,7 +835,7 @@ export const getCopilotPrompt = ({
 }) => {
   let prompt = "";
   /* editedPart.objective */
-  if (!!editedPart.objective.trim()) {
+  if (!!editedPart.objective && !!editedPart.objective.trim()) {
     prompt =
       prompt +
       `Objective:
@@ -844,7 +844,7 @@ export const getCopilotPrompt = ({
 '''`;
   }
   /* Ontology Definition */
-  if (!!editedPart.definition.trim()) {
+  if (!!editedPart.definition && !!editedPart.definition.trim()) {
     prompt =
       prompt +
       `Ontology Definition:
