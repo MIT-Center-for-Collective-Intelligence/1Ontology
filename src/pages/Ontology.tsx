@@ -651,6 +651,7 @@ const Ontology = () => {
         "WHO: Actors",
         "WHY: Evaluation",
         "Where: Context",
+        "ONet",
       ];
       const nodeATitle = nodeA.title;
       const nodeBTitle = nodeB.title;
