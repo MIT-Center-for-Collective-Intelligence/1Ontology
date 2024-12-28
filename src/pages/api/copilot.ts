@@ -273,6 +273,7 @@ export const generateProposals = async (
     nodes,
     new Set(),
     deepNumber === 0 ? 7 : deepNumber,
+    inputProperties,
   );
   nodesArray.push(..._nodesArray);
   if (

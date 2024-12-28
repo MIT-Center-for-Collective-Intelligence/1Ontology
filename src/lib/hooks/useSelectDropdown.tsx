@@ -122,7 +122,13 @@ const useSelectDropdown = () => {
     if (!nodeData) {
       return;
     }
-    const n = getNodesInThreeLevels(nodeData, nodes, new Set(), numberValue);
+    const n = getNodesInThreeLevels(
+      nodeData,
+      nodes,
+      new Set(),
+      numberValue,
+      inputProperties,
+    );
 
     if (
       n &&
