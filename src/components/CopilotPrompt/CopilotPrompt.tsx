@@ -155,7 +155,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
     | null
   >(null);
   const [previousVersionId, setPreviousVersionId] = useState<string | null>(
-    null
+    null,
   );
 
   const [promptHistory, setPromptHistory] = useState<
@@ -173,7 +173,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
     const promptsQuery = query(
       collection(db, COPILOT_PROMPTS),
       where("editor", "==", user.uname),
-      limit(1)
+      limit(1),
     );
     const unsubscribePrompt = onSnapshot(promptsQuery, (snapshot) => {
       const docChanges = snapshot.docChanges();
@@ -194,7 +194,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
     const promptHistoryQuery = query(
       collection(db, PROMPT_LOGS),
       orderBy("modifiedAt", "desc"),
-      limit(100)
+      limit(100),
     );
 
     const unsubscribeNodes = onSnapshot(promptHistoryQuery, (snapshot) => {
@@ -236,9 +236,10 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
       e.stopPropagation();
       if (!user?.uname) return;
       const changeDetails: { [key: string]: any } = {};
+      const _systemPrompt = previousVersion || systemPrompt;
       for (let edit of editedParts) {
-        const index = systemPrompt.findIndex((p) => p.id === edit.editedId);
-        systemPrompt[index].editablePart = edit.newValue;
+        const index = _systemPrompt.findIndex((p) => p.id === edit.editedId);
+        _systemPrompt[index].editablePart = edit.newValue;
         changeDetails[edit.editedId] = {
           ...edit,
         };
@@ -252,7 +253,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
 
       if (promptDoc.exists()) {
         updateDoc(promptRef, {
-          systemPrompt,
+          systemPrompt: _systemPrompt,
           updatedAt: new Date(),
         });
       } else {
@@ -269,7 +270,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
           systemPrompt: promptData.systemPrompt,
         },
         newValue: {
-          systemPrompt,
+          systemPrompt: _systemPrompt,
         },
         changeDetails,
         modifiedAt: new Date(),
@@ -280,6 +281,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
           imageUrl: user.imageUrl,
         },
       });
+      setPreviousVersion(null);
     } catch (e) {
       console.error(e);
     }
@@ -290,13 +292,23 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
 
   const handleInput = (id: string, event: any) => {
     const newValue = event.target.value;
-    setSystemPrompt((prev) => {
-      const _prev = [...prev];
+    if (previousVersion) {
+      setPreviousVersion((prev: any) => {
+        const _prev = [...prev];
 
-      const idx = prev.findIndex((p) => p.id === id);
-      _prev[idx].editablePart = newValue;
-      return _prev;
-    });
+        const idx = prev.findIndex((p: any) => p.id === id);
+        _prev[idx].editablePart = newValue;
+        return _prev;
+      });
+    } else {
+      setSystemPrompt((prev) => {
+        const _prev = [...prev];
+
+        const idx = prev.findIndex((p) => p.id === id);
+        _prev[idx].editablePart = newValue;
+        return _prev;
+      });
+    }
 
     setEditedParts((prev) => {
       const _prev = [...prev];
@@ -332,6 +344,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
     setForceUpdate((prev: any) => !prev);
     setEditedParts([]);
     setSystemPrompt(JSON.parse(JSON.stringify(systemPromptCopy)));
+    setPreviousVersion(null);
   };
   const compareToLatest = (e: any) => {
     e.preventDefault();
@@ -828,7 +841,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                       />
                       <Typography sx={{ ml: "5px" }}>
                         {capitalizeFirstLetter(
-                          DISPLAY[property] ? DISPLAY[property] : property
+                          DISPLAY[property] ? DISPLAY[property] : property,
                         )}
                       </Typography>
                     </Box>
@@ -975,7 +988,9 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                             />
                             <Typography sx={{ ml: "5px" }}>
                               {capitalizeFirstLetter(
-                                DISPLAY[property] ? DISPLAY[property] : property
+                                DISPLAY[property]
+                                  ? DISPLAY[property]
+                                  : property,
                               )}
                             </Typography>
                           </Box>
@@ -1012,7 +1027,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                   <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
                     {getResponseStructure(
                       selectedProperties.size > 0,
-                      proposeDeleteNode
+                      proposeDeleteNode,
                     )}
                   </Typography>
                   {selectedProperties.size > 0 && (
@@ -1034,7 +1049,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                         <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
                           {getImprovementsStructurePrompt(
                             selectedProperties.size > 0,
-                            selectedProperties
+                            selectedProperties,
                           )}
                         </Typography>
                       </AccordionDetails>
