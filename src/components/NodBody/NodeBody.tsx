@@ -154,7 +154,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           <strong>{DISPLAY[property] || property}</strong>?
         </Typography>,
         "Delete",
-        "Keep"
+        "Keep",
       )
     ) {
       const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
@@ -176,7 +176,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     property: string,
     propertyValue: any,
     ref: string,
-    propertyType: string
+    propertyType: string,
   ) => {
     try {
       let newBatch = batch;
@@ -207,7 +207,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
             property,
             propertyValue,
             ref,
-            propertyType
+            propertyType,
           );
         }
       }
@@ -220,7 +220,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
 
   const addNewProperty = async (
     newProperty: string,
-    newPropertyType: string
+    newPropertyType: string,
   ) => {
     try {
       if (!user) return;
@@ -228,7 +228,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         await confirmIt(
           `The property ${newProperty} already exist under this node`,
           "Ok",
-          ""
+          "",
         );
         return;
       }
@@ -236,7 +236,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
       const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
       const properties = currentVisibleNode.properties;
       const previousValue = JSON.parse(
-        JSON.stringify(currentVisibleNode.properties)
+        JSON.stringify(currentVisibleNode.properties),
       );
       const propertyType = currentVisibleNode.propertyType;
       const inheritance = currentVisibleNode.inheritance;
@@ -278,7 +278,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         newProperty,
         properties[newProperty],
         currentVisibleNode?.id,
-        newPropertyType.toLowerCase()
+        newPropertyType.toLowerCase(),
       );
       await batch.commit();
 
@@ -311,7 +311,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           p !== "isPartOf" &&
           p !== "description" &&
           p !== "actor" &&
-          p !== "context"
+          p !== "context" &&
+          p !== "images",
       )
       .sort((a, b) => {
         const indexA = priorityOrder.indexOf(a);

@@ -28,6 +28,7 @@ import {
   onSnapshot,
   arrayRemove,
   Timestamp,
+  getFirestore,
 } from "firebase/firestore";
 import {
   deleteObject,
@@ -44,6 +45,7 @@ import dayjs from "dayjs";
 import useDialog from " @components/lib/hooks/useConfirmDialog";
 import { INode, NodeChange } from " @components/types/INode";
 import PropertyContributors from "../StructuredProperty/PropertyContributors";
+import { updateInheritance } from " @components/lib/utils/helpers";
 
 type UploadUserInfo = {
   userId: string;
@@ -75,6 +77,8 @@ type NodeImageManagerProps = {
   confirmIt: any;
   saveNewChangeLog: Function;
   selectedDiffNode: NodeChange | null;
+  nodes: { [id: string]: INode };
+  getTitleNode: any;
 };
 
 export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
@@ -87,15 +91,18 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
   confirmIt,
   saveNewChangeLog,
   selectedDiffNode,
+  nodes,
+  getTitleNode,
 }) => {
   const [nodeImages, setNodeImages] = useState<NodeImage[]>([]);
   const [selectedImages, setSelectedImages] = useState<PreviewImage[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const db = getFirestore();
 
   const handleImageClick = (index: number) => {
     setSelectedImageIndex(index);
@@ -160,9 +167,27 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
 
         // Remove from Node's Firestore
         const nodeRef = doc(collection(firestore, nodeCollection), nodeId);
-        await updateDoc(nodeRef, {
-          images: arrayRemove(image),
-        });
+        const reference = nodes[nodeId]?.inheritance["images"]?.ref;
+        if (reference) {
+          let previousImages = nodes[reference].properties.images || [];
+          previousImages = previousImages.filter(
+            (img: NodeImage) => img.url !== image.url,
+          );
+
+          await updateDoc(nodeRef, {
+            "properties.images": previousImages,
+            "inheritance.images.ref": null,
+          });
+          updateInheritance({
+            nodeId,
+            updatedProperties: ["images"],
+            db,
+          });
+        } else {
+          await updateDoc(nodeRef, {
+            images: arrayRemove(image),
+          });
+        }
 
         // Remove from Firebase Storage
         // Temporarily commented out to retain the node's image history for review
@@ -212,18 +237,15 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
   const { userId } = user;
 
   useEffect(() => {
-    const nodeRef = doc(collection(firestore, nodeCollection), nodeId);
-
-    const unsubscribe = onSnapshot(nodeRef, (doc) => {
-      if (doc.exists()) {
-        const data = doc.data();
-        setNodeImages(data.images || []);
-      }
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [nodeId, firestore, nodeCollection]);
+    let _images = [];
+    const reference = nodes[nodeId]?.inheritance["images"]?.ref;
+    if (reference) {
+      _images = nodes[reference].properties.images || [];
+    } else {
+      _images = nodes[nodeId].properties.images || [];
+    }
+    setNodeImages(_images || []);
+  }, [nodes]);
 
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();
@@ -301,9 +323,24 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
         uploadedImages.push(newImage);
 
         const nodeRef = doc(collection(firestore, nodeCollection), nodeId);
-        await updateDoc(nodeRef, {
-          images: arrayUnion(newImage),
-        });
+        const reference = nodes[nodeId]?.inheritance["images"]?.ref;
+        if (reference) {
+          const previousImages = nodes[reference].properties.images || [];
+          previousImages.push(newImage);
+          await updateDoc(nodeRef, {
+            "properties.images": previousImages,
+            "inheritance.images.ref": null,
+          });
+          updateInheritance({
+            nodeId,
+            updatedProperties: ["images"],
+            db,
+          });
+        } else {
+          await updateDoc(nodeRef, {
+            "properties.images": arrayUnion(newImage),
+          });
+        }
       }
 
       saveNewChangeLog(firestore, {
@@ -367,6 +404,13 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
           >
             Images
           </Typography>
+          {currentVisibleNode.inheritance["images"]?.ref && (
+            <Typography sx={{ fontSize: "14px", ml: "9px" }}>
+              {'(Inherited from "'}
+              {getTitleNode(currentVisibleNode.inheritance["images"].ref || "")}
+              {'")'}
+            </Typography>
+          )}
           <PropertyContributors
             currentVisibleNode={currentVisibleNode}
             property={"images"}
@@ -381,9 +425,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
               mb: 3,
             }}
           >
-            {isLoading ? (
-              <CircularProgress size={24} />
-            ) : displayImages.length === 0 ? (
+            {displayImages.length === 0 ? (
               <Box
                 sx={{
                   width: "100%",

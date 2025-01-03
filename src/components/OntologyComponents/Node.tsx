@@ -1291,6 +1291,8 @@ const Node = ({
           confirmIt={confirmIt}
           saveNewChangeLog={saveNewChangeLog}
           selectedDiffNode={selectedDiffNode}
+          nodes={nodes}
+          getTitleNode={getTitleNode}
         />
       </Box>{" "}
       {ConfirmDialog}

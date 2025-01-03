@@ -305,7 +305,7 @@ export const updateInheritance = async ({
     let batch: any = writeBatch(db);
 
     const nodeRef = doc(collection(db, NODES), nodeId);
-    let ObjectUpdates = {};
+    let ObjectUpdates = {};                                                              
     for (let property of updatedProperties) {
       ObjectUpdates = {
         ...ObjectUpdates,
@@ -772,11 +772,17 @@ export const updatePartsAndPartsOf = async (
         collection.nodes.map((spec) => spec.id),
       );
       if (!existingIds.includes(newLink.id)) {
+        debugger;
         const propertyData = childData.properties[property];
         if (Array.isArray(propertyData)) {
-          const mainCollection = propertyData.find(
+          let mainCollection = propertyData.find(
             (collection) => collection.collectionName === "main",
           ) as ICollection;
+          if (!mainCollection) {
+            mainCollection = { collectionName: "main", nodes: [] };
+            propertyData.unshift(mainCollection);
+          }
+
           // Add the new link to the property data
           const linkIdx = mainCollection.nodes.findIndex(
             (l) => l.id === newLink.id,
