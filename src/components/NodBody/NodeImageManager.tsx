@@ -245,7 +245,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
       _images = nodes[nodeId].properties.images || [];
     }
     setNodeImages(_images || []);
-  }, [nodes]);
+  }, [nodes, nodeId]);
 
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();
