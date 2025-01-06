@@ -310,6 +310,7 @@ const Ontology = () => {
         (item: INode) =>
           !item.deleted &&
           !item.category &&
+          !item.oNet &&
           (!nodeType || nodeType === item.nodeType),
       );
   };

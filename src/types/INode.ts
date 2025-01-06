@@ -91,6 +91,7 @@ export type INode = {
       userId: string;
     };
   }[];
+  oNet?: boolean;
 };
 
 export type TreeVisual = {
