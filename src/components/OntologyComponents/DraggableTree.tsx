@@ -28,6 +28,7 @@ function DraggableTree({
   tree,
   setTree,
   treeType,
+  eachOntologyPath,
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -38,6 +39,7 @@ function DraggableTree({
   tree: TreeApi<TreeData> | null | undefined;
   setTree: any;
   treeType?: string;
+  eachOntologyPath?: any;
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -92,13 +94,15 @@ function DraggableTree({
     if (tree && currentVisibleNode?.id) {
       // Wait for the tree to initialize its nodes before scrolling
       const timeout = setTimeout(() => {
-        const generalizationId =
-          currentVisibleNode.generalizations[0]?.nodes[0]?.id;
-        expandNodeById(
-          generalizationId
-            ? `${generalizationId}-${currentVisibleNode?.id}`
-            : `${currentVisibleNode?.id}`,
-        );
+        /*         const generalizationId =
+          currentVisibleNode.generalizations[0]?.nodes[0]?.id; */
+        const first =
+          eachOntologyPath[currentVisibleNode.id][0].id.split("-")[0];
+        const path = eachOntologyPath[currentVisibleNode.id]
+          .filter((p: any) => !p.category)
+          .map((c: { id: string }) => c.id)
+          .join("-");
+        expandNodeById(`${first}-${path}`);
         setFirstLoad(false);
       }, 500);
 
@@ -342,6 +346,7 @@ function DraggableTree({
           className={clsx(styles.text, {
             [styles.categoryText]: node.data.category,
           })}
+          // style={{ color: "white" }}
         >
           {node.isEditing ? (
             <Input node={node} inputRef={inputRef} />

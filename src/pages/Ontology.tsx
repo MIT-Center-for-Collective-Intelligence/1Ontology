@@ -565,7 +565,7 @@ const Ontology = () => {
   const getTreeView = (
     mainCategories: INode[],
     visited: Map<string, any> = new Map(),
-    parentId?: string,
+    path: string[],
   ): any => {
     const newNodes = [];
     for (let node of mainCategories) {
@@ -586,9 +586,8 @@ const Ontology = () => {
 
         // if (children.length > 0) {
         if (collection.collectionName !== "main") {
-          const id = parentId
-            ? `${parentId}-${node.id}-${collection.collectionName}`
-            : `${node.id}-${collection.collectionName}`;
+          const id = [...path, node.id, collection.collectionName].join("-");
+
           if (visited.has(id)) {
             if (typeof visited.get(id) !== "boolean") {
               newNodes.push(visited.get(id));
@@ -601,11 +600,7 @@ const Ontology = () => {
             nodeId: node.id,
             nodeType: node.nodeType,
             name: collection.collectionName,
-            children: getTreeView(
-              children,
-              visited,
-              !node.category ? node.id : undefined,
-            ),
+            children: getTreeView(children, visited, [...path, node.id]),
 
             category: true,
           };
@@ -624,7 +619,7 @@ const Ontology = () => {
         //   });
         // }
       }
-      const id = parentId ? `${parentId}-${node.id}` : `${node.id}`;
+      const id = [...path, node.id].join("-");
       if (visited.has(id)) {
         if (typeof visited.get(id) !== "boolean") {
           newNodes.push(visited.get(id));
@@ -639,11 +634,7 @@ const Ontology = () => {
         nodeType: node.nodeType,
         children: [
           ...collections,
-          ...getTreeView(
-            mainChildren,
-            visited,
-            !node.category ? node.id : undefined,
-          ),
+          ...getTreeView(mainChildren, visited, [...path, node.id]),
         ],
         category: !!node.category,
       };
@@ -675,7 +666,7 @@ const Ontology = () => {
     // Generate a tree structure of specializations from the sorted main nodes
     let treeOfSpecializations = getSpecializationsTree(mainCategories, []);
 
-    const _result = getTreeView(mainCategories);
+    const _result = getTreeView(mainCategories, new Map(), []);
     setTreeViewData(_result);
     // Set the generated tree structure for visualization
     setTreeVisualization(treeOfSpecializations);
@@ -1102,6 +1093,7 @@ const Ontology = () => {
                       onOpenNodesTree={onOpenNodesTree}
                       tree={tree}
                       setTree={setTree}
+                      eachOntologyPath={eachOntologyPath}
                     />
 
                     {/*  <TreeViewSimplified

@@ -53,17 +53,25 @@ const SearchSideBar = ({
     setIsListOpen(false);
     setIsFocused(false);
   };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
     const value = e.target.value;
-    setSearchValue(value);
-    if (value.trim()) {
-      setIsListOpen(true);
-      setIsFocused(true);
-    } else {
-      setIsListOpen(false);
-      setIsFocused(false);
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
     }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      setSearchValue(value);
+      if (value.trim()) {
+        setIsListOpen(true);
+        setIsFocused(true);
+      } else {
+        setIsListOpen(false);
+        setIsFocused(false);
+      }
+    }, 4000);
   };
 
   const handleNodeClick = (node: any) => {
@@ -138,10 +146,12 @@ const SearchSideBar = ({
       <GlobalStyles
         styles={{
           "& input:-webkit-autofill": {
-            boxShadow: `0px 0px 0px 100px ${theme.palette.mode === "dark" ? "black" : "white"
-              } inset !important`,
-            WebkitTextFillColor: `${theme.palette.mode === "dark" ? "#fff" : "#000"
-              } !important`,
+            boxShadow: `0px 0px 0px 100px ${
+              theme.palette.mode === "dark" ? "black" : "white"
+            } inset !important`,
+            WebkitTextFillColor: `${
+              theme.palette.mode === "dark" ? "#fff" : "#000"
+            } !important`,
             caretColor: "#fff !important",
             borderRadius: "0 !important",
           },
@@ -198,8 +208,8 @@ const SearchSideBar = ({
           {searchResults.length > 0
             ? searchResults.map(renderListItem)
             : searchValue === "" &&
-            lastSearches.length > 0 &&
-            lastSearches.map(renderListItem)}
+              lastSearches.length > 0 &&
+              lastSearches.map(renderListItem)}
         </List>
       )}
     </Box>
