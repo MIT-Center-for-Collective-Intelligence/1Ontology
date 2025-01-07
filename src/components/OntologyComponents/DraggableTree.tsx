@@ -326,7 +326,8 @@ function DraggableTree({
         sx={{
           backgroundColor:
             node.data.nodeId === currentVisibleNode?.id && !node.data.category
-              ? "#26631c"
+              ? (theme) =>
+                  theme.palette.mode === "dark" ? "#26631c" : "#4ccf37"
               : "",
         }}
       >
