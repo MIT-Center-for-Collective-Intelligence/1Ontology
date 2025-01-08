@@ -256,7 +256,11 @@ const ChatSideBar = ({
         >
           <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <SearchBox setSearchValue={setSearchValue} label={"Search ..."} />
+              <SearchBox
+                setSearch={setSearchValue}
+                search={searchValue}
+                label={"Search ..."}
+              />
               <IconButton
                 onClick={() => {
                   setOpenModel(false);

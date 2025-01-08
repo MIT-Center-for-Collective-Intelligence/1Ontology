@@ -75,6 +75,7 @@ type IStructuredPropertyProps = {
   setAddedElements: any;
   glowIds: Set<string>;
   setGlowIds: any;
+  selectedCollection: any;
 };
 
 const StructuredProperty = ({
@@ -123,6 +124,7 @@ const StructuredProperty = ({
   setAddedElements,
   glowIds,
   setGlowIds,
+  selectedCollection,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
   const [openAddCollection, setOpenAddCollection] = useState(false);
@@ -460,7 +462,7 @@ const StructuredProperty = ({
               )}
             </Typography>
           </Tooltip>
-          {selectedProperty === property && (
+          {selectedProperty === property && !selectedCollection && (
             <Box
               sx={{
                 display: "flex",
@@ -519,22 +521,24 @@ const StructuredProperty = ({
                     Add Collection
                   </Button>
                 )}
-                <Button
-                  onClick={() => editStructuredProperty(property)}
-                  sx={{
-                    borderRadius: "18px",
-                    backgroundColor: BUTTON_COLOR,
-                    ":hover": {
-                      backgroundColor:
-                        theme.palette.mode === "light" ? "#f0f0f0" : "",
-                    },
-                  }}
-                  variant="outlined"
-                >
-                  {`Edit ${capitalizeFirstLetter(
-                    DISPLAY[property] || property,
-                  )}`}{" "}
-                </Button>
+                {property !== "specializations" && (
+                  <Button
+                    onClick={() => editStructuredProperty(property)}
+                    sx={{
+                      borderRadius: "18px",
+                      backgroundColor: BUTTON_COLOR,
+                      ":hover": {
+                        backgroundColor:
+                          theme.palette.mode === "light" ? "#f0f0f0" : "",
+                      },
+                    }}
+                    variant="outlined"
+                  >
+                    {`Edit ${capitalizeFirstLetter(
+                      DISPLAY[property] || property,
+                    )}`}{" "}
+                  </Button>
+                )}
                 {property !== "generalizations" &&
                   property !== "specializations" &&
                   property !== "isPartOf" &&
@@ -588,54 +592,88 @@ const StructuredProperty = ({
             setModifiedOrder={setModifiedOrder}
             glowIds={glowIds}
             scrollToElement={scrollToElement}
+            selectedCollection={selectedCollection}
+            handleCloseAddLinksModel={handleCloseAddLinksModel}
+            onSave={onSave}
+            isSaving={isSaving}
+            addedElements={addedElements}
+            removedElements={removedElements}
+            setSearchValue={setSearchValue}
+            searchValue={searchValue}
+            searchResultsForSelection={searchResultsForSelection}
+            checkedItems={checkedItems}
+            setCheckedItems={setCheckedItems}
+            setCheckedItemsCopy={setCheckedItemsCopy}
+            checkedItemsCopy={checkedItemsCopy}
+            handleCloning={handleCloning}
+            user={user}
+            selectFromTree={selectFromTree}
+            expandedNodes={expandedNodes}
+            setExpandedNodes={setExpandedNodes}
+            handleToggle={handleToggle}
+            getPath={getPath}
+            handleSaveLinkChanges={handleSaveLinkChanges}
+            checkDuplicateTitle={checkDuplicateTitle}
+            cloning={cloning}
+            setClonedNodesQueue={setClonedNodesQueue}
+            newOnes={newOnes}
+            setNewOnes={setNewOnes}
+            editableProperty={editableProperty}
+            onGetPropertyValue={onGetPropertyValue}
+            setRemovedElements={setRemovedElements}
+            setAddedElements={setAddedElements}
+            addACloneNodeQueue={addACloneNodeQueue}
           />
         )}
       </Box>
-      {handleCloseAddLinksModel && selectedProperty === property && (
-        <SelectModelModal
-          onSave={onSave}
-          currentVisibleNode={currentVisibleNode}
-          nodes={nodes}
-          handleCloseAddLinksModel={handleCloseAddLinksModel}
-          selectedProperty={selectedProperty}
-          setSearchValue={setSearchValue}
-          searchValue={searchValue}
-          searchResultsForSelection={searchResultsForSelection}
-          checkedItems={checkedItems}
-          setCheckedItems={setCheckedItems}
-          setCheckedItemsCopy={setCheckedItemsCopy}
-          checkedItemsCopy={checkedItemsCopy}
-          handleCloning={handleCloning}
-          user={user}
-          selectFromTree={selectFromTree}
-          expandedNodes={expandedNodes}
-          setExpandedNodes={setExpandedNodes}
-          handleToggle={handleToggle}
-          getPath={getPath}
-          handleSaveLinkChanges={handleSaveLinkChanges}
-          checkDuplicateTitle={checkDuplicateTitle}
-          cloning={cloning}
-          addACloneNodeQueue={addACloneNodeQueue}
-          setClonedNodesQueue={setClonedNodesQueue}
-          clonedNodesQueue={clonedNodesQueue}
-          newOnes={newOnes}
-          setNewOnes={setNewOnes}
-          editableProperty={editableProperty}
-          setEditableProperty={setEditableProperty}
-          locked={locked}
-          selectedDiffNode={selectedDiffNode}
-          confirmIt={confirmIt}
-          currentImprovement={currentImprovement}
-          onGetPropertyValue={onGetPropertyValue}
-          setCurrentVisibleNode={setCurrentVisibleNode}
-          removedElements={removedElements}
-          addedElements={addedElements}
-          setRemovedElements={setRemovedElements}
-          setAddedElements={setAddedElements}
-          isSaving={isSaving}
-          scrollToElement={scrollToElement}
-        />
-      )}
+      {handleCloseAddLinksModel &&
+        selectedProperty === property &&
+        !selectedCollection && (
+          <SelectModelModal
+            onSave={onSave}
+            currentVisibleNode={currentVisibleNode}
+            nodes={nodes}
+            handleCloseAddLinksModel={handleCloseAddLinksModel}
+            selectedProperty={selectedProperty}
+            setSearchValue={setSearchValue}
+            searchValue={searchValue}
+            searchResultsForSelection={searchResultsForSelection}
+            checkedItems={checkedItems}
+            setCheckedItems={setCheckedItems}
+            setCheckedItemsCopy={setCheckedItemsCopy}
+            checkedItemsCopy={checkedItemsCopy}
+            handleCloning={handleCloning}
+            user={user}
+            selectFromTree={selectFromTree}
+            expandedNodes={expandedNodes}
+            setExpandedNodes={setExpandedNodes}
+            handleToggle={handleToggle}
+            getPath={getPath}
+            handleSaveLinkChanges={handleSaveLinkChanges}
+            checkDuplicateTitle={checkDuplicateTitle}
+            cloning={cloning}
+            addACloneNodeQueue={addACloneNodeQueue}
+            setClonedNodesQueue={setClonedNodesQueue}
+            clonedNodesQueue={clonedNodesQueue}
+            newOnes={newOnes}
+            setNewOnes={setNewOnes}
+            editableProperty={editableProperty}
+            setEditableProperty={setEditableProperty}
+            locked={locked}
+            selectedDiffNode={selectedDiffNode}
+            confirmIt={confirmIt}
+            currentImprovement={currentImprovement}
+            onGetPropertyValue={onGetPropertyValue}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            removedElements={removedElements}
+            addedElements={addedElements}
+            setRemovedElements={setRemovedElements}
+            setAddedElements={setAddedElements}
+            isSaving={isSaving}
+            scrollToElement={scrollToElement}
+            selectedCollection={selectedCollection}
+          />
+        )}
       {handleCloseAddLinksModel &&
         onGetPropertyValue(property, true).trim() && (
           <Box sx={{ p: "16px", mt: "auto" }}>

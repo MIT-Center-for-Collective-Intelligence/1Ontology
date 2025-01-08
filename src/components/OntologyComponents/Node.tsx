@@ -162,6 +162,8 @@ type INodeProps = {
   addedElements: any;
   setAddedElements: any;
   handleCloseAddLinksModel: any;
+  setSelectedCollection: any;
+  selectedCollection: string;
 };
 
 const Node = ({
@@ -197,6 +199,8 @@ const Node = ({
   addedElements,
   setAddedElements,
   handleCloseAddLinksModel,
+  setSelectedCollection,
+  selectedCollection,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -560,11 +564,16 @@ const Node = ({
     await cloneNode(node.id, searchValue, newId, selectedProperty);
   };
 
-  const editStructuredProperty = async (property: string) => {
+  const editStructuredProperty = async (
+    property: string,
+    collectionName: string,
+  ) => {
     if (selectedProperty) {
       handleCloseAddLinksModel();
     }
-
+    if (collectionName) {
+      setSelectedCollection(collectionName);
+    }
     setSelectedProperty(property);
 
     let previousCheckedItems: string[] = [];
@@ -1113,6 +1122,7 @@ const Node = ({
             setAddedElements={setAddedElements}
             glowIds={glowIds}
             setGlowIds={setGlowIds}
+            selectedCollection={selectedCollection}
           />
         )}
         {/* specializations and generalizations*/}
@@ -1170,6 +1180,7 @@ const Node = ({
               setAddedElements={setAddedElements}
               glowIds={glowIds}
               setGlowIds={setGlowIds}
+              selectedCollection={selectedCollection}
             />
           ))}
         </Stack>
@@ -1230,6 +1241,7 @@ const Node = ({
               setAddedElements={setAddedElements}
               glowIds={glowIds}
               setGlowIds={setGlowIds}
+              selectedCollection={selectedCollection}
             />
           ))}
         </Stack>

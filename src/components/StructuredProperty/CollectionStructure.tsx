@@ -23,6 +23,7 @@ import {
 import { property } from "lodash";
 import theme from "quill/core/theme";
 import React, { useCallback, useState } from "react";
+import AddIcon from "@mui/icons-material/Add";
 
 import NewCollection from "../Collection/NewCollection";
 import LinkNode from "../LinkNode/LinkNode";
@@ -46,6 +47,8 @@ import {
   Droppable,
   DropResult,
 } from "@hello-pangea/dnd";
+import { LoadingButton } from "@mui/lab";
+import SelectModelModal from "../Models/SelectModel";
 
 const CollectionStructure = ({
   model,
@@ -75,6 +78,35 @@ const CollectionStructure = ({
   setModifiedOrder,
   glowIds,
   scrollToElement,
+  selectedCollection,
+  handleCloseAddLinksModel,
+  onSave,
+  isSaving,
+  addedElements,
+  removedElements,
+  setSearchValue,
+  searchValue,
+  searchResultsForSelection,
+  checkedItems,
+  setCheckedItems,
+  setCheckedItemsCopy,
+  checkedItemsCopy,
+  handleCloning,
+  selectFromTree,
+  expandedNodes,
+  setExpandedNodes,
+  handleToggle,
+  getPath,
+  handleSaveLinkChanges,
+  checkDuplicateTitle,
+  cloning,
+  setClonedNodesQueue,
+  newOnes,
+  setNewOnes,
+  editableProperty,
+  onGetPropertyValue,
+  setRemovedElements,
+  setAddedElements,
 }: {
   model?: boolean;
   locked: boolean;
@@ -95,14 +127,44 @@ const CollectionStructure = ({
   cloneNode?: any;
   openAddCollection: any;
   setOpenAddCollection: any;
-  clonedNodesQueue?: { [nodeId: string]: { title: string; id: string } };
-  setEditableProperty?: any;
-  unlinkElement?: any;
-  addACloneNodeQueue?: any;
+  clonedNodesQueue: any;
+  setEditableProperty: any;
+  unlinkElement: any;
+  addACloneNodeQueue: any;
   selectedProperty: string;
   setModifiedOrder: any;
   glowIds: Set<string>;
   scrollToElement: (elementId: string) => void;
+  selectedCollection: string;
+  handleCloseAddLinksModel: any;
+  onSave: any;
+  isSaving: any;
+  addedElements: any;
+  removedElements: any;
+  setSearchValue: any;
+  searchValue: any;
+  searchResultsForSelection: any;
+  checkedItems: any;
+  setCheckedItems: any;
+  setCheckedItemsCopy: any;
+  checkedItemsCopy: any;
+  handleCloning: any;
+  user: any;
+  selectFromTree: any;
+  expandedNodes: any;
+  setExpandedNodes: any;
+  handleToggle: any;
+  getPath: any;
+  handleSaveLinkChanges: any;
+  checkDuplicateTitle: any;
+  cloning: any;
+  setClonedNodesQueue: any;
+  newOnes: any;
+  setNewOnes: any;
+  editableProperty: any;
+  onGetPropertyValue: any;
+  setRemovedElements: any;
+  setAddedElements: any;
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -858,7 +920,6 @@ const CollectionStructure = ({
                                   ) : (
                                     <></>
                                   )}
-
                                   {!selectedDiffNode &&
                                     collection.collectionName !== "main" &&
                                     !currentImprovement &&
@@ -895,6 +956,45 @@ const CollectionStructure = ({
                                             <DeleteIcon />
                                           </IconButton>
                                         </Tooltip>
+                                      </Box>
+                                    )}{" "}
+                                  {selectedProperty === property &&
+                                    !!selectedCollection &&
+                                    selectedCollection ===
+                                      collection.collectionName && (
+                                      <Box
+                                        sx={{
+                                          display: "flex",
+                                          pt: 0,
+                                          ml: "auto",
+                                          gap: "14px",
+                                        }}
+                                      >
+                                        <Button
+                                          variant="contained"
+                                          onClick={handleCloseAddLinksModel}
+                                          color="error"
+                                          sx={{ borderRadius: "25px" }}
+                                        >
+                                          Cancel
+                                        </Button>
+                                        <LoadingButton
+                                          size="small"
+                                          onClick={onSave}
+                                          loading={isSaving}
+                                          color="success"
+                                          variant="contained"
+                                          sx={{
+                                            borderRadius: "25px",
+                                            color: "white",
+                                          }}
+                                          disabled={
+                                            addedElements.size === 0 &&
+                                            removedElements.size === 0
+                                          }
+                                        >
+                                          Save
+                                        </LoadingButton>
                                       </Box>
                                     )}
                                 </Box>
@@ -1081,13 +1181,68 @@ const CollectionStructure = ({
                               )}
                             </Droppable>
                           </List>
-                          {/*{property === "specializations" &&
-                            !currentImprovement?.newNode && (
+
+                          {handleCloseAddLinksModel &&
+                            selectedProperty === property &&
+                            !!selectedProperty &&
+                            selectedCollection ===
+                              collection.collectionName && (
+                              <SelectModelModal
+                                onSave={onSave}
+                                currentVisibleNode={currentVisibleNode}
+                                nodes={nodes}
+                                handleCloseAddLinksModel={
+                                  handleCloseAddLinksModel
+                                }
+                                selectedProperty={selectedProperty}
+                                setSearchValue={setSearchValue}
+                                searchValue={searchValue}
+                                searchResultsForSelection={
+                                  searchResultsForSelection
+                                }
+                                checkedItems={checkedItems}
+                                setCheckedItems={setCheckedItems}
+                                setCheckedItemsCopy={setCheckedItemsCopy}
+                                checkedItemsCopy={checkedItemsCopy}
+                                handleCloning={handleCloning}
+                                user={user}
+                                selectFromTree={selectFromTree}
+                                expandedNodes={expandedNodes}
+                                setExpandedNodes={setExpandedNodes}
+                                handleToggle={handleToggle}
+                                getPath={getPath}
+                                handleSaveLinkChanges={handleSaveLinkChanges}
+                                checkDuplicateTitle={checkDuplicateTitle}
+                                cloning={cloning}
+                                setClonedNodesQueue={setClonedNodesQueue}
+                                newOnes={newOnes}
+                                setNewOnes={setNewOnes}
+                                editableProperty={editableProperty}
+                                onGetPropertyValue={onGetPropertyValue}
+                                setRemovedElements={setRemovedElements}
+                                setAddedElements={setAddedElements}
+                                clonedNodesQueue={clonedNodesQueue}
+                                isSaving={isSaving}
+                                scrollToElement={scrollToElement}
+                                addACloneNodeQueue={addACloneNodeQueue}
+                                removedElements={removedElements}
+                                addedElements={addedElements}
+                                setCurrentVisibleNode={setCurrentVisibleNode}
+                                setEditableProperty={setEditableProperty}
+                                locked={locked}
+                                selectedDiffNode={selectedDiffNode}
+                                confirmIt={confirmIt}
+                                currentImprovement={currentImprovement}
+                                selectedCollection={selectedCollection}
+                              />
+                            )}
+                          {property === "specializations" &&
+                            selectedProperty !== property && (
                               <Button
                                 onClick={() =>
-                                  showListToSelect(
+                                  editStructuredProperty(
                                     property,
-                                    collection.collectionName
+                                    collection.collectionName,
                                   )
                                 }
                                 sx={{
@@ -1100,15 +1255,16 @@ const CollectionStructure = ({
                                         : "",
                                   },
                                   // ml: "auto",
-                                  m: "5px",
                                 }}
+                                fullWidth
                                 variant="outlined"
                               >
+                                <AddIcon />{" "}
                                 {`Add ${capitalizeFirstLetter(
-                                  DISPLAY[property] || property
+                                  DISPLAY[property] || property,
                                 )}`}{" "}
                               </Button>
-                            )} */}
+                            )}
                         </Paper>
                       )}
                     </Draggable>

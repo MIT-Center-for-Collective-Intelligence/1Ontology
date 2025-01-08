@@ -184,6 +184,8 @@ const Ontology = () => {
   }>({});
   const [newOnes, setNewOnes] = useState(new Set());
   const [selectedProperty, setSelectedProperty] = useState("");
+  const [selectedCollection, setSelectedCollection] = useState("");
+
   const [removedElements, setRemovedElements] = useState<Set<string>>(
     new Set(),
   );
@@ -194,14 +196,15 @@ const Ontology = () => {
   const firstLoad = useRef(true);
 
   const handleCloseAddLinksModel = () => {
-    setCheckedItems(new Set());
-    setSearchValue("");
-    setClonedNodesQueue({});
-    setNewOnes(new Set());
     setSelectedProperty("");
+    setSelectedCollection("");
+    setSearchValue("");
     setAddedElements(new Set());
     setRemovedElements(new Set());
     setCheckedItemsCopy(new Set());
+    setNewOnes(new Set());
+    setCheckedItems(new Set());
+    setClonedNodesQueue({});
   };
 
   useEffect(() => {
@@ -310,7 +313,6 @@ const Ontology = () => {
         (item: INode) =>
           !item.deleted &&
           !item.category &&
-          !item.oNet &&
           (!nodeType || nodeType === item.nodeType),
       );
   };
@@ -1212,6 +1214,8 @@ const Ontology = () => {
                   addedElements={addedElements}
                   setAddedElements={setAddedElements}
                   handleCloseAddLinksModel={handleCloseAddLinksModel}
+                  setSelectedCollection={setSelectedCollection}
+                  selectedCollection={selectedCollection}
                 />
               )}
             </Box>

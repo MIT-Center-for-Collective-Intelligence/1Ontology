@@ -68,6 +68,7 @@ const SelectModelModal = ({
   setAddedElements,
   isSaving,
   scrollToElement,
+  selectedCollection,
 }: {
   onSave: any;
   handleCloseAddLinksModel: any;
@@ -110,6 +111,7 @@ const SelectModelModal = ({
   setAddedElements: any;
   isSaving: boolean;
   scrollToElement: (nodeId: string) => void;
+  selectedCollection: string;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
 
@@ -192,9 +194,20 @@ const SelectModelModal = ({
           collection.nodes = collection.nodes.filter((n) => n.id !== checkedId);
         }
       } else {
-        _prev[0].nodes.push({
-          id: checkedId,
-        });
+        if (selectedCollection) {
+          const collectionIdx = _prev.findIndex(
+            (c) => c.collectionName === selectedCollection,
+          );
+          if (collectionIdx !== -1) {
+            _prev[collectionIdx].nodes.push({
+              id: checkedId,
+            });
+          }
+        } else {
+          _prev[0].nodes.push({
+            id: checkedId,
+          });
+        }
       }
       return _prev;
     });
@@ -291,9 +304,20 @@ const SelectModelModal = ({
 
     setEditableProperty((prev: ICollection[]) => {
       const _prev = [...prev];
-      _prev[0].nodes.push({
-        id,
-      });
+      if (selectedCollection) {
+        const collectionIdx = _prev.findIndex(
+          (c) => c.collectionName === selectedCollection,
+        );
+        if (collectionIdx !== -1) {
+          _prev[collectionIdx].nodes.push({
+            id,
+          });
+        }
+      } else {
+        _prev[0].nodes.push({
+          id,
+        });
+      }
       return _prev;
     });
     setAddedElements((prev: Set<string>) => {
@@ -337,10 +361,11 @@ const SelectModelModal = ({
       });
     }
   };
+
   const renderSearchOrTree = () =>
     searchValue ? (
       <ExpandSearchResult
-        searchResultsForSelection={searchResultsForSelection}
+        searchResultsForSelection={searchResultsForSelection.slice(0, 10)}
         markItemAsChecked={markItemAsChecked}
         handleCloning={handleCloning}
         checkedItems={checkedItems}
@@ -421,7 +446,11 @@ const SelectModelModal = ({
               pr: "5px",
             }}
           >
-            <SearchBox setSearchValue={setSearchValue} label="Search ..." />
+            <SearchBox
+              setSearch={setSearchValue}
+              search={searchValue}
+              label="Search ..."
+            />
             <Tooltip
               title={`Create as a new Specialization 
                     ${
@@ -440,9 +469,20 @@ const SelectModelModal = ({
                     );
                     setEditableProperty((prev: ICollection[]) => {
                       const _prev = [...prev];
-                      _prev[0].nodes.push({
-                        id,
-                      });
+                      if (selectedCollection) {
+                        const collectionIdx = _prev.findIndex(
+                          (c) => c.collectionName === selectedCollection,
+                        );
+                        if (collectionIdx !== -1) {
+                          _prev[collectionIdx].nodes.push({
+                            id,
+                          });
+                        }
+                      } else {
+                        _prev[0].nodes.push({
+                          id,
+                        });
+                      }
                       return _prev;
                     });
                     setAddedElements((prev: Set<string>) => {
@@ -456,6 +496,7 @@ const SelectModelModal = ({
                   } else {
                     await cloneUnclassifiedNode();
                   }
+                  setSearchValue("");
                   setDisabledButton(false);
                 }}
                 sx={{ borderRadius: "18px" /* , minWidth: "300px" */ }}
