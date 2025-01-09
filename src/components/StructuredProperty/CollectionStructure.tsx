@@ -807,7 +807,12 @@ const CollectionStructure = ({
   };
 
   return (
-    <Box sx={{ p: "15px", pt: 0 }}>
+    <Box
+      sx={{
+        p: "15px",
+        pt: 0,
+      }}
+    >
       {openAddCollection && (
         <NewCollection
           onAdd={addCollection}
@@ -849,6 +854,12 @@ const CollectionStructure = ({
                           sx={{
                             mt: "15px",
                             borderRadius: "20px",
+                            border:
+                              selectedCollection ===
+                                collection.collectionName &&
+                              selectedProperty === property
+                                ? "2px solid green"
+                                : "",
                           }}
                           elevation={property !== "specializations" ? 0 : 3}
                         >

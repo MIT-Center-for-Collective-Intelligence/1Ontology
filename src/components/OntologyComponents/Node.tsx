@@ -976,7 +976,10 @@ const Node = ({
       if (selectedProperty === "generalizations") {
         return new Set([nodeId]);
       }
-      if (selectedProperty === "specializations") {
+      if (
+        selectedProperty === "specializations" &&
+        !!eachOntologyPath[nodeId]
+      ) {
         return new Set(eachOntologyPath[nodeId].map((p: any) => p.id));
       }
       return new Set();

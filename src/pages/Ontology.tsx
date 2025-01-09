@@ -97,7 +97,7 @@ import withAuthUser from " @components/components/hoc/withAuthUser";
 import { useAuth } from " @components/components/context/AuthContext";
 import { useRouter } from "next/router";
 import DagGraph from " @components/components/OntologyComponents/DAGGraph";
-import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
+import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import { NODES, USERS } from " @components/lib/firestoreClient/collections";
 
 import { recordLogs, saveNewChangeLog } from " @components/lib/utils/helpers";
@@ -109,6 +109,7 @@ import SearchSideBar from " @components/components/SearchSideBar/SearchSideBar";
 import Head from "next/head";
 import DraggableTree from " @components/components/OntologyComponents/DraggableTree";
 import { TreeApi } from "react-arborist";
+import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
 
 const AddContext = (nodes: any, nodesObject: any): INode[] => {
   for (let node of nodes) {
@@ -941,20 +942,44 @@ const Ontology = () => {
 
     return () => clearInterval(intervalId);
   }, [lastInteractionDate]);
+  console.log("I ==>", {
+    selectedProperty,
+    addedElements,
+    removedElements,
+  });
 
-  const navigateToNode = async (nodeId: string) => {
-    // adding timeout to test if truncated issue persists
+  const navigateToNode = useCallback(
+    async (nodeId: string) => {
+      // adding timeout to test if truncated issue persists
 
-    if (nodes[nodeId]) {
-      setCurrentVisibleNode(nodes[nodeId]);
-      initializeExpanded(eachOntologyPath[nodeId]);
-      setSelectedDiffNode(null);
-      const generalizationId = nodes[nodeId].generalizations[0]?.nodes[0]?.id;
-      // setTimeout(() => {
-      expandNodeById(`${generalizationId}-${nodeId}`);
-      // }, 1000);
-    }
-  };
+      if (
+        selectedProperty &&
+        (addedElements.size > 0 || removedElements.size > 0) &&
+        (await confirmIt(
+          `Unsaved changes detected in ${capitalizeFirstLetter(
+            DISPLAY[selectedProperty]
+              ? DISPLAY[selectedProperty]
+              : selectedProperty,
+          )}. Do you want to discard them?`,
+          "Keep Changes",
+          "Discard Changes",
+        ))
+      ) {
+        return;
+      }
+      if (nodes[nodeId]) {
+        setCurrentVisibleNode(nodes[nodeId]);
+        initializeExpanded(eachOntologyPath[nodeId]);
+        setSelectedDiffNode(null);
+        const generalizationId = nodes[nodeId].generalizations[0]?.nodes[0]?.id;
+        // setTimeout(() => {
+        expandNodeById(`${generalizationId}-${nodeId}`);
+        // }, 1000);
+        handleCloseAddLinksModel();
+      }
+    },
+    [selectedProperty, addedElements, removedElements, nodes, eachOntologyPath],
+  );
 
   const displaySidebar = useCallback(
     (sidebarName: "chat" | "nodeHistory" | "inheritanceSettings") => {

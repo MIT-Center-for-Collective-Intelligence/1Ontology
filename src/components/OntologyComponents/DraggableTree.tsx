@@ -96,6 +96,9 @@ function DraggableTree({
       const timeout = setTimeout(() => {
         /*         const generalizationId =
           currentVisibleNode.generalizations[0]?.nodes[0]?.id; */
+        if (!eachOntologyPath[currentVisibleNode.id]) {
+          return;
+        }
         const first =
           eachOntologyPath[currentVisibleNode.id][0].id.split("-")[0];
         const path = eachOntologyPath[currentVisibleNode.id]

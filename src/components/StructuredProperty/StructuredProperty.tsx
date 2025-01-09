@@ -429,7 +429,10 @@ const StructuredProperty = ({
         display: "flex",
         flexDirection: "column",
         overflowX: "hidden",
-        border: selectedProperty === property ? "2px solid green" : "",
+        border:
+          selectedProperty === property && !selectedCollection
+            ? "2px solid green"
+            : "",
       }}
     >
       <Box>
