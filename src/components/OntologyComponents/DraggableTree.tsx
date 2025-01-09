@@ -183,6 +183,8 @@ function DraggableTree({
           return;
         }
         const specializations = nodeData.specializations;
+        const previousValue = JSON.parse(JSON.stringify(specializations));
+
         const fromCollectionIdx = specializations.findIndex(
           (s: ICollection) => s.collectionName === from,
         );
@@ -203,6 +205,16 @@ function DraggableTree({
 
         await updateDoc(nodeRef, {
           specializations,
+        });
+        saveNewChangeLog(db, {
+          nodeId: toParent.nodeId,
+          modifiedBy: user?.uname,
+          modifiedProperty: "specializations",
+          previousValue,
+          newValue: specializations,
+          modifiedAt: new Date(),
+          changeType: "sort elements",
+          fullNode: nodes[toParent.nodeId],
         });
         return;
       }
@@ -406,7 +418,9 @@ function DraggableTree({
         </Box>
       </Box>
       {treeType !== "oNet" &&
-        (user?.uname === "1man" || user?.uname === "malonetw") && (
+        (user?.uname === "ouhrac" ||
+          user?.uname === "1man" ||
+          user?.uname === "malonetw") && (
           <Box
             sx={{
               position: "sticky",
