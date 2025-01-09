@@ -942,11 +942,6 @@ const Ontology = () => {
 
     return () => clearInterval(intervalId);
   }, [lastInteractionDate]);
-  console.log("I ==>", {
-    selectedProperty,
-    addedElements,
-    removedElements,
-  });
 
   const navigateToNode = useCallback(
     async (nodeId: string) => {

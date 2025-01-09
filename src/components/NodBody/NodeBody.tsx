@@ -67,6 +67,7 @@ interface NodeBodyProps {
   setAddedElements: any;
   glowIds: Set<string>;
   setGlowIds: any;
+  selectedCollection: string;
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -115,6 +116,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   setAddedElements,
   glowIds,
   setGlowIds,
+  selectedCollection,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -398,6 +400,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 setAddedElements={setAddedElements}
                 glowIds={glowIds}
                 setGlowIds={setGlowIds}
+                selectedCollection={selectedCollection}
               />
             ) : (
               property !== "description" &&

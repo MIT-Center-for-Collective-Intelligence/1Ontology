@@ -1295,6 +1295,7 @@ const Node = ({
           setAddedElements={setAddedElements}
           glowIds={glowIds}
           setGlowIds={setGlowIds}
+          selectedCollection={selectedCollection}
         />
 
         <NodeImageManager
