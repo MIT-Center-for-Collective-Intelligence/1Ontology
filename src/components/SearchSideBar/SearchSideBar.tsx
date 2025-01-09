@@ -37,7 +37,7 @@ const SearchSideBar = ({
       action: "Searched",
       query: searchValue,
     }); */
-    return searchWithFuse(searchValue);
+    return searchWithFuse(searchValue).slice(0, 40);
   }, [searchValue]);
 
   const handleFocus = () => {
@@ -138,10 +138,12 @@ const SearchSideBar = ({
       <GlobalStyles
         styles={{
           "& input:-webkit-autofill": {
-            boxShadow: `0px 0px 0px 100px ${theme.palette.mode === "dark" ? "black" : "white"
-              } inset !important`,
-            WebkitTextFillColor: `${theme.palette.mode === "dark" ? "#fff" : "#000"
-              } !important`,
+            boxShadow: `0px 0px 0px 100px ${
+              theme.palette.mode === "dark" ? "black" : "white"
+            } inset !important`,
+            WebkitTextFillColor: `${
+              theme.palette.mode === "dark" ? "#fff" : "#000"
+            } !important`,
             caretColor: "#fff !important",
             borderRadius: "0 !important",
           },
@@ -198,8 +200,8 @@ const SearchSideBar = ({
           {searchResults.length > 0
             ? searchResults.map(renderListItem)
             : searchValue === "" &&
-            lastSearches.length > 0 &&
-            lastSearches.map(renderListItem)}
+              lastSearches.length > 0 &&
+              lastSearches.map(renderListItem)}
         </List>
       )}
     </Box>
