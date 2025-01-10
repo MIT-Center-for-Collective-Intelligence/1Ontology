@@ -11,12 +11,14 @@ const SimpleEditor = ({
   breakInheritance,
   nodeId,
   setCursorPosition,
+  onEditorReady
 }: {
   property: string;
   text: string;
   breakInheritance: (updatedText: string) => void;
   nodeId: string;
   setCursorPosition: Function;
+  onEditorReady?: (editor: any) => void;
 }) => {
   return (
     <QuillEditor
@@ -25,6 +27,7 @@ const SimpleEditor = ({
       breakInheritance={breakInheritance}
       nodeId={nodeId}
       setCursorPosition={setCursorPosition}
+      onEditorReady={onEditorReady}
     />
   );
 };

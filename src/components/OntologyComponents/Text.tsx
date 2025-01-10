@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { Box, Paper, Switch, Tooltip, Typography } from "@mui/material";
+import { Box, IconButton, Paper, Switch, Tooltip, Typography } from "@mui/material";
 import {
   getDoc,
   collection,
@@ -41,6 +41,9 @@ import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import { WebsocketProvider } from "y-websocket";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import PropertyContributors from "../StructuredProperty/PropertyContributors";
+import EditIcon from '@mui/icons-material/Edit';
+import EditOffIcon from '@mui/icons-material/EditOff';
+import MarkdownEditor from "../Markdown/MarkdownEditor";
 // import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ITextProps = {
@@ -296,11 +299,11 @@ const Text = ({
             background: (theme: any) =>
               (selectedDiffNode?.changeType === "delete node" ||
                 !!currentImprovement?.deleteNode) &&
-              property === "title"
+                property === "title"
                 ? "red"
                 : (selectedDiffNode?.changeType === "add node" ||
-                      !!currentImprovement?.newNode) &&
-                    property === "title"
+                  !!currentImprovement?.newNode) &&
+                  property === "title"
                   ? "green"
                   : theme.palette.mode === "dark"
                     ? "#242425"
@@ -311,8 +314,8 @@ const Text = ({
             borderTopLeftRadius: property !== "title" ? "18px" : "",
             backgroundColor:
               selectedDiffNode &&
-              selectedDiffNode.changeType === "add property" &&
-              selectedDiffNode.changeDetails.addedProperty === property
+                selectedDiffNode.changeType === "add property" &&
+                selectedDiffNode.changeDetails.addedProperty === property
                 ? "green"
                 : "",
           }}
@@ -380,50 +383,33 @@ const Text = ({
               <Box
                 sx={{
                   display: "flex",
-                  justifyContent: "flex-end",
                   alignItems: "center",
-                  px: 2,
-                  pt: 0.5,
-                  pb: 0.5,
+                  gap: 1,
                 }}
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                  }}
-                >
-                  <Typography
+                <Tooltip title={isPreviewMode ? "Enter edit mode" : "Exit edit mode"}>
+                  <IconButton
+                    onClick={() => setIsPreviewMode(!isPreviewMode)}
                     sx={{
-                      fontSize: "0.75rem",
-                      fontWeight: isPreviewMode ? 400 : 500,
-                      color: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? `rgba(255, 255, 255, ${isPreviewMode ? 0.5 : 0.9})`
-                          : `rgba(0, 0, 0, ${isPreviewMode ? 0.5 : 0.9})`,
+                      color: theme => !isPreviewMode
+                        ? theme.palette.primary.main
+                        : theme.palette.mode === "dark"
+                          ? 'rgba(255, 255, 255, 1)'
+                          : 'rgba(0, 0, 0, 0.5)',
+                      '&:hover': {
+                        backgroundColor: theme => theme.palette.mode === "dark"
+                          ? 'rgba(255, 255, 255, 0.08)'
+                          : 'rgba(0, 0, 0, 0.04)',
+                      },
                     }}
                   >
-                    Edit
-                  </Typography>
-                  <Switch
-                    checked={isPreviewMode}
-                    onChange={() => setIsPreviewMode(!isPreviewMode)}
-                    size="small"
-                  />
-                  <Typography
-                    sx={{
-                      fontSize: "0.75rem",
-                      fontWeight: isPreviewMode ? 500 : 400,
-                      color: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? `rgba(255, 255, 255, ${isPreviewMode ? 0.9 : 0.5})`
-                          : `rgba(0, 0, 0, ${isPreviewMode ? 0.9 : 0.5})`,
-                    }}
-                  >
-                    Preview
-                  </Typography>
-                </Box>
+                    {isPreviewMode ? (
+                      <EditIcon fontSize="small" />
+                    ) : (
+                      <EditOffIcon fontSize="small" />
+                    )}
+                  </IconButton>
+                </Tooltip>
               </Box>
             )}
             {property !== "title" &&
@@ -443,11 +429,11 @@ const Text = ({
         {error}
       </Typography>
       {!!currentVisibleNode.unclassified ||
-      currentImprovement?.newNode ||
-      locked ||
-      (selectedDiffNode &&
-        (selectedDiffNode.modifiedProperty !== property || structured)) ||
-      (currentVisibleNode.unclassified && property === "title") ? (
+        currentImprovement?.newNode ||
+        locked ||
+        (selectedDiffNode &&
+          (selectedDiffNode.modifiedProperty !== property || structured)) ||
+        (currentVisibleNode.unclassified && property === "title") ? (
         <Typography
           sx={{ fontSize: property === "title" ? "34px" : "19px", p: "19px" }}
         >
@@ -474,44 +460,34 @@ const Text = ({
                 )}
               </Box>
             </Box>
-          ) : isPreviewMode && property !== "title" ? (
-            <>
-              <Box sx={{ position: "relative" }}>
-                <Box
-                  sx={{
-                    p: 2,
-                    userSelect: "text",
-                    "& *": { cursor: "text" },
-                  }}
-                >
-                  <MarkdownRender text={editorContent} />
-                </Box>
-              </Box>
-            </>
           ) : (
-            <Box>
-              {!reference && switchToWebsocket ? (
-                <YjsEditor
-                  fullname={`${user?.fName} ${user?.lName}`}
-                  property={property}
-                  nodeId={currentVisibleNode?.id}
-                  color={randomProminentColor()}
-                  saveChangeHistory={saveChangeHistory}
-                  structured={structured}
-                  checkDuplicateTitle={checkDuplicateTitle}
-                  autoFocus={autoFocus}
-                  cursorPosition={cursorPosition}
-                />
-              ) : (
-                <SimpleEditor
-                  property={property}
-                  text={text}
-                  breakInheritance={onSaveTextChange}
-                  nodeId={currentVisibleNode?.id}
-                  setCursorPosition={setCursorPosition}
-                />
-              )}
-            </Box>
+            <>
+              <MarkdownEditor
+                content={{
+                  text: editorContent,
+                  property: property,
+                  structured: structured,
+                  onSave: onSaveTextChange
+                }}
+                mode={{
+                  isPreview: isPreviewMode,
+                  useWebsocket: switchToWebsocket,
+                  reference: reference
+                }}
+                editor={{
+                  autoFocus: autoFocus,
+                  cursorPosition: cursorPosition,
+                  onCursorChange: setCursorPosition,
+                  checkDuplicateTitle: checkDuplicateTitle,
+                  saveChangeHistory: saveChangeHistory
+                }}
+                collaborationData={{
+                  fullName: `${user?.fName} ${user?.lName}`,
+                  nodeId: currentVisibleNode?.id,
+                  randomProminentColor: randomProminentColor()
+                }}
+              />
+            </>
           )}
         </>
       )}
