@@ -55,14 +55,12 @@ const UserActivity = ({
     );
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
-      const docChanges = snapshot.docChanges();
-      const fetchedLogs = docChanges.map(change => {
-        const changeData = change.doc.data() as NodeChange;
-        const id = change.doc.id;
-        return { ...changeData, id };
-      });
-
-      setLogs(fetchedLogs);
+      const docs = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      })) as (NodeChange & { id: string })[];
+      
+      setLogs(docs);
       setLoading(false);
     });
 
