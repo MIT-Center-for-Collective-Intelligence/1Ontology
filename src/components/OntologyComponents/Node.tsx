@@ -1296,19 +1296,8 @@ const Node = ({
           glowIds={glowIds}
           setGlowIds={setGlowIds}
           selectedCollection={selectedCollection}
-        />
-
-        <NodeImageManager
-          nodeId={currentVisibleNode?.id}
-          currentVisibleNode={currentVisibleNode}
-          user={user}
-          firestore={db}
           storage={storage}
-          confirmIt={confirmIt}
           saveNewChangeLog={saveNewChangeLog}
-          selectedDiffNode={selectedDiffNode}
-          nodes={nodes}
-          getTitleNode={getTitleNode}
         />
       </Box>{" "}
       {ConfirmDialog}
