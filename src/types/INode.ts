@@ -14,7 +14,8 @@ export type INodeTypes =
   | "incentive"
   | "reward"
   | "group"
-  | "context";
+  | "context"
+  | "object";
 
 export type INodePath = {
   id: string;
@@ -60,6 +61,7 @@ export type INode = {
     [propertyName: string]: any;
     parts: ICollection[];
     isPartOf: ICollection[];
+    // can add properties that will be default
   };
   inheritance: IInheritance;
   specializations: ICollection[];

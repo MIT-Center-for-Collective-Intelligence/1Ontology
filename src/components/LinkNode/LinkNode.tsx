@@ -77,6 +77,8 @@ import {
   updatePartsAndPartsOf,
   updatePropertyOf,
   updateInheritanceWhenUnlinkAGeneralization,
+  updateActivityActorRelations,
+  updateActivityObjectRelations,
 } from " @components/lib/utils/helpers";
 import { INode, INodePath, ILinkNode } from " @components/types/INode";
 import {
@@ -248,6 +250,15 @@ const LinkNode = ({
           await updateDoc(nodeDoc.ref, {
             [`properties.${property}`]: nodeData.properties[property],
           });
+          
+          if (property === "actor" && nodeData.nodeType === "activity") {
+            await updateActivityActorRelations(currentVisibleNode?.id, link.id, false, nodes, db);
+          }
+
+          if (property === "Objects" && nodeData.nodeType === "activity") {
+            await updateActivityObjectRelations(currentVisibleNode?.id, link.id, false, nodes, db);
+          }
+          
           if (property !== "isPartOf" || nodeData.inheritance[property]) {
             const reference = nodeData.inheritance[property].ref;
             let updateObject: any = {

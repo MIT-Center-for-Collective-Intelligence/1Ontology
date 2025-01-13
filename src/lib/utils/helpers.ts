@@ -509,6 +509,174 @@ const updateProperty = async (
   return batch;
 };
 
+export const updateActivityActorRelations = async (
+  activityId: string,
+  actorId: string,
+  isLinking: boolean,  // true for linking, false for unlinking
+  nodes: { [nodeId: string]: INode },
+  db: Firestore,
+) => {
+  const actorDoc = await getDoc(doc(collection(db, NODES), actorId));
+  const activityDoc = await getDoc(doc(collection(db, NODES), activityId));
+
+  if (!actorDoc.exists() || !activityDoc.exists()) return;
+
+  const actorData = actorDoc.data() as INode;
+  const activityData = activityDoc.data() as INode;
+
+  if (actorData.nodeType !== 'actor' || activityData.nodeType !== 'activity') return;
+
+  const batch = writeBatch(db);
+
+  // Initialize activities array if it doesn't exist
+  if (!actorData.properties.activities) {
+    actorData.properties.activities = [{
+      collectionName: "main",
+      nodes: []
+    }];
+  }
+
+  if (isLinking) {
+    // Add activity to actor's activities if not already present
+    const actorActivitiesCollection = actorData.properties.activities.find(
+      (c: { collectionName: string; }) => c.collectionName === "main"
+    );
+    if (actorActivitiesCollection && 
+        !actorActivitiesCollection.nodes.some((n: { id: string; }) => n.id === activityId)) {
+      actorActivitiesCollection.nodes.push({ id: activityId });
+      batch.update(actorDoc.ref, {
+        "properties.activities": actorData.properties.activities
+      });
+    }
+  } else {
+    // Remove activity from actor's activities
+    actorData.properties.activities = actorData.properties.activities.map((collection: { nodes: any[]; }) => ({
+      ...collection,
+      nodes: collection.nodes.filter(n => n.id !== activityId)
+    }));
+    batch.update(actorDoc.ref, {
+      "properties.activities": actorData.properties.activities
+    });
+  }
+
+  await batch.commit();
+};
+
+export const updateActivityObjectRelations = async (
+  activityId: string,
+  objectId: string,
+  isLinking: boolean,  // true for linking, false for unlinking
+  nodes: { [nodeId: string]: INode },
+  db: Firestore,
+) => {
+  const objectDoc = await getDoc(doc(collection(db, NODES), objectId));
+  const activityDoc = await getDoc(doc(collection(db, NODES), activityId));
+
+  if (!objectDoc.exists() || !activityDoc.exists()) return;
+
+  const objectData = objectDoc.data() as INode;
+  const activityData = activityDoc.data() as INode;
+
+  if (objectData.nodeType !== 'object' || activityData.nodeType !== 'activity') return;
+
+  const batch = writeBatch(db);
+
+  // Initialize activities array if it doesn't exist
+  if (!objectData.properties.activities) {
+    objectData.properties.activities = [{
+      collectionName: "main",
+      nodes: []
+    }];
+  }
+
+  if (isLinking) {
+    // Add activity to object's activities if not already present
+    const objectActivitiesCollection = objectData.properties.activities.find(
+      (c: { collectionName: string; }) => c.collectionName === "main"
+    );
+    if (objectActivitiesCollection && 
+        !objectActivitiesCollection.nodes.some((n: { id: string; }) => n.id === activityId)) {
+      objectActivitiesCollection.nodes.push({ id: activityId });
+      batch.update(objectDoc.ref, {
+        "properties.activities": objectData.properties.activities
+      });
+    }
+  } else {
+    // Remove activity from object's activities
+    objectData.properties.activities = objectData.properties.activities.map((collection: { nodes: any[]; }) => ({
+      ...collection,
+      nodes: collection.nodes.filter((n: { id: string; }) => n.id !== activityId)
+    }));
+    batch.update(objectDoc.ref, {
+      "properties.activities": objectData.properties.activities
+    });
+  }
+
+  await batch.commit();
+};
+
+export const updateLinkedNodesOnClone = async (
+  parentNode: INode,
+  newNode: INode,
+  db: Firestore,
+  nodes: { [nodeId: string]: INode }
+) => {
+  // Define property mappings with type safety
+  const propertyMappings: Record<string, string> = {
+    'actor': 'activities',
+    'Objects': 'activities',
+    'parts': 'isPartOf',
+    'isPartOf': 'parts'
+  } as const;
+
+  // Type guard to check if a property is one we want to handle
+  const isValidProperty = (prop: string): prop is keyof typeof propertyMappings => {
+    return prop in propertyMappings;
+  };
+
+  // For each property in the parent node
+  for (const [propertyName, propertyValue] of Object.entries(parentNode.properties)) {
+    // Skip if not one of our target properties
+    if (!isValidProperty(propertyName)) continue;
+
+    // Get the corresponding property to update in linked node
+    const reciprocalProperty = propertyMappings[propertyName];
+
+    // Get all nodes from the property collection
+    const propertyNodes = propertyValue?.flatMap(
+      (      collection: { nodes: any; }) => collection.nodes
+    ) || [];
+
+    // For each node in the property
+    for (const nodeRef of propertyNodes) {
+      const linkedNode = nodes[nodeRef.id];
+      
+      // Skip if node doesn't exist or doesn't have the reciprocal property
+      if (!linkedNode || !linkedNode.properties[reciprocalProperty]) continue;
+
+      // Find or create main collection in reciprocal property
+      let reciprocalCollection = linkedNode.properties[reciprocalProperty].find(
+        (        c: { collectionName: string; }) => c.collectionName === "main"
+      );
+      
+      if (!reciprocalCollection) {
+        reciprocalCollection = { collectionName: "main", nodes: [] };
+        linkedNode.properties[reciprocalProperty].push(reciprocalCollection);
+      }
+
+      // Add new node to reciprocal collection if not already present
+      if (!reciprocalCollection.nodes.some((n: { id: string; }) => n.id === newNode.id)) {
+        reciprocalCollection.nodes.push({ id: newNode.id });
+        
+        // Update the linked node in Firestore
+        await updateDoc(doc(collection(db, NODES), linkedNode.id), {
+          [`properties.${reciprocalProperty}`]: linkedNode.properties[reciprocalProperty]
+        });
+      }
+    }
+  }
+};
+
 export const saveNewChangeLog = (db: any, data: NodeChange) => {
   if (!data.modifiedBy || data.modifiedBy === "ouhrac") return;
   const changeUseRef = doc(collection(db, NODES_LOGS));
