@@ -12,18 +12,33 @@ import type Quill from 'quill';
 
 interface MarkdownToolbarProps {
   editor: Quill | null;
+  selection: { index: number; length: number } | null;
 }
 
-const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ editor }) => {
+const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ editor, selection }) => {
   const theme = useTheme();
 
   const insertMarkdown = (type: string) => {
     if (!editor) return;
 
-    const selection = editor.getSelection();
-    if (!selection) return;
+    // Try to get a valid selection using multiple fallbacks
+    let currentSelection = selection;
+    
+    if (!currentSelection) {
+      editor.focus();
+      currentSelection = editor.getSelection();
+    }
 
-    const selectedText = editor.getText(selection.index, selection.length);
+    if (!currentSelection) {
+      // If still no selection, place cursor at end
+      const length = editor.getText().length;
+      editor.setSelection(length, 0);
+      currentSelection = editor.getSelection();
+    }
+
+    if (!currentSelection) return; // Final safety check
+
+    const selectedText = editor.getText(currentSelection.index, currentSelection.length);
     let formattedText = '';
 
     // Helper function to check if text has specific formatting
@@ -57,6 +72,29 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ editor }) => {
       return match ? match[1] : text;
     };
 
+    const applyFormatting = (text: string, format: string) => {
+      switch (format) {
+        case 'bullet':
+          return `- ${text}`;
+        case 'number':
+          return `1. ${text}`;
+        case 'bold':
+          return `**${text}**`;
+        case 'italic':
+          return `*${text}*`;
+        case 'heading':
+          return `### ${text}`;
+        case 'quote':
+          return `> ${text}`;
+        case 'code':
+          return `\`${text}\``;
+        case 'link':
+          return `[${text}](url)`;
+        default:
+          return text;
+      }
+    };
+
     switch (type) {
       case 'bullet':
       case 'number': {
@@ -64,7 +102,6 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ editor }) => {
         formattedText = lines.map((line, index) => {
           if (!line.trim()) return line;
           
-          // Check for present formats
           const hasCurrentFormat = type === 'bullet' 
             ? hasFormatting(line, 'bullet')
             : hasFormatting(line, 'number');
@@ -77,79 +114,36 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ editor }) => {
               : `${index + 1}. ${line}`;
           }
         }).join('\n');
-        
-        editor.deleteText(selection.index, selection.length);
-        editor.insertText(selection.index, formattedText);
-        editor.setSelection(selection.index + formattedText.length, 0);
         break;
       }
-      case 'bold': {
-        if (hasFormatting(selectedText, 'bold')) {
-          formattedText = removeFormatting(selectedText, 'bold');
-        } else {
-          formattedText = `**${selectedText}**`;
-        }
-        editor.deleteText(selection.index, selection.length);
-        editor.insertText(selection.index, formattedText);
-        editor.setSelection(selection.index + formattedText.length, 0);
-        break;
-      }
-      case 'italic': {
-        if (hasFormatting(selectedText, 'italic')) {
-          formattedText = removeFormatting(selectedText, 'italic');
-        } else {
-          formattedText = `*${selectedText}*`;
-        }
-        editor.deleteText(selection.index, selection.length);
-        editor.insertText(selection.index, formattedText);
-        editor.setSelection(selection.index + formattedText.length, 0);
-        break;
-      }
-      case 'heading': {
-        if (hasFormatting(selectedText, 'heading')) {
-          formattedText = removeFormatting(selectedText, 'heading');
-        } else {
-          formattedText = `### ${selectedText}`;
-        }
-        editor.deleteText(selection.index, selection.length);
-        editor.insertText(selection.index, formattedText);
-        editor.setSelection(selection.index + formattedText.length, 0);
-        break;
-      }
-      case 'quote': {
-        if (hasFormatting(selectedText, 'quote')) {
-          formattedText = removeFormatting(selectedText, 'quote');
-        } else {
-          formattedText = `> ${selectedText}`;
-        }
-        editor.deleteText(selection.index, selection.length);
-        editor.insertText(selection.index, formattedText);
-        editor.setSelection(selection.index + formattedText.length, 0);
-        break;
-      }
-      case 'code': {
-        if (hasFormatting(selectedText, 'code')) {
-          formattedText = removeFormatting(selectedText, 'code');
-        } else {
-          formattedText = `\`${selectedText}\``;
-        }
-        editor.deleteText(selection.index, selection.length);
-        editor.insertText(selection.index, formattedText);
-        editor.setSelection(selection.index + formattedText.length, 0);
-        break;
-      }
+      case 'bold':
+      case 'italic':
+      case 'heading':
+      case 'quote':
+      case 'code':
       case 'link': {
-        if (hasFormatting(selectedText, 'link')) {
-          formattedText = removeFormatting(selectedText, 'link');
+        if (hasFormatting(selectedText, type)) {
+          formattedText = removeFormatting(selectedText, type);
         } else {
-          formattedText = `[${selectedText}](url)`;
+          formattedText = applyFormatting(selectedText, type);
         }
-        editor.deleteText(selection.index, selection.length);
-        editor.insertText(selection.index, formattedText);
-        editor.setSelection(selection.index + formattedText.length, 0);
         break;
       }
     }
+
+    // Apply the formatting
+    editor.deleteText(currentSelection.index, currentSelection.length);
+    editor.insertText(currentSelection.index, formattedText);
+    
+    // Set selection after formatting
+    const newPosition = currentSelection.index + formattedText.length;
+    editor.setSelection(newPosition, 0);
+    
+    // Update selection immediately after formatting
+    setTimeout(() => {
+      editor.focus();
+      editor.setSelection(newPosition, 0);
+    }, 0);
   };
 
   interface DividerItem {

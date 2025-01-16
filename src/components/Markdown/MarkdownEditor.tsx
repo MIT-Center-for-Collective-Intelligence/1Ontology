@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Box, Divider, Typography, useTheme } from '@mui/material';
 import MarkdownRender from './MarkdownRender';
 import SimpleEditor from '../YJSEditor/SimpleEditor';
@@ -40,10 +40,56 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 }) => {
   const theme = useTheme();
   const editorRef = useRef<Quill | null>(null);
+  const previousModeRef = useRef(mode.isPreview);
+  const [selection, setSelection] = useState<{ index: number; length: number } | null>(null);
 
   const handleEditorReady = (textEditor: Quill) => {
     editorRef.current = textEditor;
+
+    // Add selection change handler
+    textEditor.on('selection-change', (range) => {
+      if (range) {
+        setSelection(range);
+      }
+    });
+    
+    if (previousModeRef.current && !mode.isPreview) {
+      setTimeout(() => {
+        if (editorRef.current) {
+          editorRef.current.focus();
+          
+          // Restore previous selection if it exists, otherwise select end of content
+          if (selection) {
+            editorRef.current.setSelection(selection.index, selection.length);
+          } else {
+            const length = editorRef.current.getText().length;
+            editorRef.current.setSelection(length, 0);
+          }
+          
+          // Update selection after a brief delay
+          setTimeout(() => {
+            if (editorRef.current) {
+              editorRef.current.focus();
+              const currentLength = editorRef.current.getText().length;
+              editorRef.current.setSelection(currentLength, 0);
+            }
+          }, 0);
+        }
+      }, 100);
+    }
   };
+
+  // Track mode changes
+  useEffect(() => {
+    // Store current selection before mode change
+    if (editorRef.current && mode.isPreview) {
+      const currentSelection = editorRef.current.getSelection();
+      if (currentSelection) {
+        setSelection(currentSelection);
+      }
+    }
+    previousModeRef.current = mode.isPreview;
+  }, [mode.isPreview]);
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -54,7 +100,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       ) : (
         <>
           {content.property !== "title" && (
-            <MarkdownToolbar editor={editorRef.current} />
+            <MarkdownToolbar editor={editorRef.current} selection={selection} />
           )}
 
           <Box sx={{
