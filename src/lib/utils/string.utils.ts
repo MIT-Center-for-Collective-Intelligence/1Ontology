@@ -11,6 +11,13 @@ export function capitalizeFirstLetter(str: string): string {
   return capitalized;
 }
 
+export function lowercaseFirstLetter(str: string): string {
+  if (typeof str !== "string") {
+    return "";
+  }
+  return str.charAt(0).toLowerCase() + str.slice(1);
+}
+
 // Function to capitalize each word in a string
 export const capitalizeString = (str: string): string => {
   return str
