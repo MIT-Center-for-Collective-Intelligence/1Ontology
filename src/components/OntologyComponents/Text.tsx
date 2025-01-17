@@ -31,6 +31,7 @@ import { diffWords, diffLines } from "diff"; // Using diffLines for line-by-line
 import {
   capitalizeFirstLetter,
   getTooltipHelper as getTooltipHelper,
+  lowercaseFirstLetter,
 } from " @components/lib/utils/string.utils";
 import ManageNodeButtons from "./ManageNodeButtons";
 import { DISPLAY, WS_URL } from " @components/lib/CONSTANTS";
@@ -320,7 +321,7 @@ const Text = ({
                 : "",
           }}
         >
-          <Tooltip title={getTooltipHelper(property)}>
+          <Tooltip title={getTooltipHelper(lowercaseFirstLetter(property))}>
             <Typography
               sx={{
                 fontSize: "20px",
