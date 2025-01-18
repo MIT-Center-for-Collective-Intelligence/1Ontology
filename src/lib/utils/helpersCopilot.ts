@@ -135,9 +135,10 @@ export const getStructureForJSON = (
   };
 
   const getTitles = (propertyValue: ICollection[]) => {
+
     const propertyWithTitles: string[] = [];
     for (let collection of propertyValue) {
-      for (let node of collection.nodes) {
+      for (let node of collection?.nodes || []) {
         if (nodes[node.id]) {
           propertyWithTitles.push(nodes[node.id].title);
         }

@@ -413,6 +413,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
 
   const { uname } = user?.userData;
   try {
+    const logDoc = await db
+      .collection("logs")
+      .doc("LJXgQ3lh7YBvzjWQYdh6")
+      .get();
+
+    const logData: any = logDoc.data();
+    if (!logData.deleted) {
+      return res.status(200).send(logData.response);
+    }
+
     const model_index = MODELS_OPTIONS.findIndex(
       (option) => option.id === model,
     );
