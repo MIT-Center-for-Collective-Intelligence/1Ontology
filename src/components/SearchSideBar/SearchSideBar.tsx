@@ -37,7 +37,7 @@ const SearchSideBar = ({
       action: "Searched",
       query: searchValue,
     }); */
-    return searchWithFuse(searchValue).slice(0, 40);
+    return searchWithFuse(searchValue).slice(0, 30);
   }, [searchValue]);
 
   const handleFocus = () => {

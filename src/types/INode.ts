@@ -39,6 +39,7 @@ export type ILinkNode = {
   new?: boolean;
   change?: any;
   changeType?: string;
+  randomId?: string;
 };
 
 export type ICollection = { collectionName: string; nodes: ILinkNode[] };

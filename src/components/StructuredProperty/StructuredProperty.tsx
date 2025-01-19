@@ -17,7 +17,7 @@ import {
 import { ICollection, ILinkNode, INode } from " @components/types/INode";
 import { DISPLAY } from " @components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
-import { getFirestore } from "firebase/firestore";
+import { collection, doc, getFirestore } from "firebase/firestore";
 import { recordLogs } from " @components/lib/utils/helpers";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import MarkdownRender from "../Markdown/MarkdownRender";
@@ -26,6 +26,7 @@ import CollectionStructure from "./CollectionStructure";
 import SelectModelModal from "../Models/SelectModel";
 import { LoadingButton } from "@mui/lab";
 import PropertyContributors from "./PropertyContributors";
+import { NODES } from " @components/lib/firestoreClient/collections";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
@@ -131,6 +132,7 @@ const StructuredProperty = ({
   const [isSaving, setIsSaving] = useState(false);
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   const [modifiedOrder, setModifiedOrder] = useState(false);
+  const db = getFirestore();
 
   const propertyValue: ICollection[] = useMemo(() => {
     try {
@@ -146,7 +148,9 @@ const StructuredProperty = ({
             property,
           ) || currentVisibleNode?.properties[property];
       }
-
+      if (!selectedDiffNode) {
+        return result;
+      }
       if (
         selectedDiffNode &&
         selectedDiffNode.modifiedProperty === property &&
@@ -167,7 +171,7 @@ const StructuredProperty = ({
           selectedDiffNode.changeType === "modify elements" ||
           selectedDiffNode.changeType === "add element")
       ) {
-        listOfChanges.push(selectedDiffNode);
+        listOfChanges.push(JSON.parse(JSON.stringify(selectedDiffNode)));
       }
 
       if (
@@ -184,7 +188,9 @@ const StructuredProperty = ({
           destination?.droppableId || "0",
           10,
         );
-        const previousValue = selectedDiffNode.previousValue;
+        const previousValue = JSON.parse(
+          JSON.stringify(selectedDiffNode.previousValue),
+        );
         previousValue[sourceCollectionIndex].nodes[source.index].change =
           "removed";
         previousValue[sourceCollectionIndex].nodes[source.index].changeType =
@@ -192,7 +198,12 @@ const StructuredProperty = ({
         previousValue[destinationCollectionIndex].nodes.splice(
           destination.index,
           0,
-          { id: draggableNodeId, change: "added", changeType: "sort" },
+          {
+            id: draggableNodeId,
+            change: "added",
+            changeType: "sort",
+            randomId: doc(collection(db, NODES)).id,
+          },
         );
         return previousValue;
       }
@@ -210,7 +221,11 @@ const StructuredProperty = ({
                 );
                 if (!foundInPrevious) {
                   nodeLink.change = "added";
-                  return { ...nodeLink, change: "added" };
+                  return {
+                    ...nodeLink,
+                    change: "added",
+                    randomId: doc(collection(db, NODES)).id,
+                  };
                 }
               });
               collectionPrevious.nodes.forEach((prevElement: any) => {
@@ -221,17 +236,18 @@ const StructuredProperty = ({
                   collectionNewValue.nodes.push({
                     ...prevElement,
                     change: "removed",
+                    randomId: doc(collection(db, NODES)).id,
                   });
                 }
               });
               finalResult.push(collectionNewValue);
             },
           );
-
-          return [...finalResult];
         }
       }
-
+      if (listOfChanges.length > 0) {
+        return [...finalResult];
+      }
       return result;
     } catch (error) {
       console.error(error);

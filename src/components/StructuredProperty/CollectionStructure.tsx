@@ -1121,7 +1121,7 @@ const CollectionStructure = ({
                                     propertyValue[collectionIndex].nodes.map(
                                       (link: ILinkNode, index: number) => (
                                         <Draggable
-                                          key={link.id}
+                                          key={link.randomId || link.id}
                                           draggableId={link.id}
                                           index={index}
                                         >

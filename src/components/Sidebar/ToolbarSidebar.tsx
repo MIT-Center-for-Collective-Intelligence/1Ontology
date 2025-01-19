@@ -211,7 +211,7 @@ const ToolbarSidebar = ({
         navigateToNode(nodeId);
       }
     },
-    [nodesByTitle]
+    [nodesByTitle],
   );
 
   const handleImageChange = useCallback(
@@ -229,7 +229,7 @@ const ToolbarSidebar = ({
           confirmIt(
             "Oops! Something went wrong with the image upload. Please try uploading a different image.",
             "Ok",
-            ""
+            "",
           );
         } else if (
           image.type !== "image/jpg" &&
@@ -239,13 +239,13 @@ const ToolbarSidebar = ({
           confirmIt(
             "We only accept JPG, JPEG, or PNG images. Please upload another image.",
             "Ok",
-            ""
+            "",
           );
         } else if (image.size > 1024 * 1024) {
           confirmIt(
             "We only accept file sizes less than 1MB for profile images. Please upload another image.",
             "Ok",
-            ""
+            "",
           );
         } else {
           setIsUploading(true);
@@ -266,7 +266,7 @@ const ToolbarSidebar = ({
             userId + "/" + new Date().toUTCString() + "." + imageExtension;
           const storageRef = refStorage(
             storage,
-            picturesFolder + imageFileName
+            picturesFolder + imageFileName,
           );
           const task = uploadBytesResumable(storageRef, image);
           task.on(
@@ -274,8 +274,8 @@ const ToolbarSidebar = ({
             function progress(snapshot) {
               setPercentageUploaded(
                 Math.ceil(
-                  (100 * snapshot.bytesTransferred) / snapshot.totalBytes
-                )
+                  (100 * snapshot.bytesTransferred) / snapshot.totalBytes,
+                ),
               );
             },
             function error(err) {
@@ -283,7 +283,7 @@ const ToolbarSidebar = ({
               confirmIt(
                 "There is an error with uploading your picture. Please try again! If the problem persists, try another picture.",
                 "Ok",
-                ""
+                "",
               );
             },
             async function complete() {
@@ -297,7 +297,7 @@ const ToolbarSidebar = ({
               setIsUploading(false);
               setProfileMenuOpen(null);
               setPercentageUploaded(100);
-            }
+            },
           );
         }
       } catch (err) {
@@ -305,7 +305,7 @@ const ToolbarSidebar = ({
         setIsUploading(false);
       }
     },
-    [user]
+    [user],
   );
 
   const handleEditImage = useCallback(() => {
@@ -365,13 +365,13 @@ const ToolbarSidebar = ({
             new Date(b.createdAt.toDate()).getTime() -
             new Date(a.createdAt.toDate()).getTime()
           );
-        })
+        }),
       );
     };
     const killSnapshot = getNotificationsSnapshot(
       db,
       { uname: user.uname, lastVisible: null },
-      onSynchronize
+      onSynchronize,
     );
     return () => killSnapshot();
   }, [db, user]);
@@ -381,7 +381,7 @@ const ToolbarSidebar = ({
       notificationId: string,
       messageId: string,
       type: string,
-      nodeId?: string
+      nodeId?: string,
     ) => {
       const notificationRef = doc(db, "notifications", notificationId);
       updateDoc(notificationRef, {
@@ -413,7 +413,7 @@ const ToolbarSidebar = ({
         }
       }, 500);
     },
-    [db, user]
+    [db, user],
   );
 
   useEffect(() => {
@@ -472,13 +472,13 @@ const ToolbarSidebar = ({
       setSelectedDiffNode(null);
       setActiveSidebar("userActivity");
     },
-    [openLogsFor]
+    [openLogsFor],
   );
 
   const displayDiff = (data: NodeChange) => {
     if (currentVisibleNode?.id !== data.nodeId) {
       setCurrentVisibleNode(
-        nodes[data.nodeId] ? nodes[data.nodeId] : data.fullNode
+        nodes[data.nodeId] ? nodes[data.nodeId] : data.fullNode,
       );
     }
 
@@ -518,7 +518,7 @@ const ToolbarSidebar = ({
         const newId = doc(collection(db, NODES)).id;
         const inheritance = generateInheritance(
           generalization.inheritance,
-          generalization.id
+          generalization.id,
         );
 
         const newNode = createNewNode(
@@ -527,7 +527,7 @@ const ToolbarSidebar = ({
           node.title,
           inheritance,
           generalization.id,
-          user?.uname
+          user?.uname,
         );
 
         for (let p in node) {
@@ -618,7 +618,7 @@ const ToolbarSidebar = ({
     deletedNodes: {
       title: string;
       reasoning: string;
-    }[]
+    }[],
   ): {
     title: string;
     nodeId: string;
@@ -663,7 +663,7 @@ const ToolbarSidebar = ({
     setTimeout(() => {
       if (improvement.change.modified_property) {
         const element = document.getElementById(
-          `property-${improvement.change.modified_property}`
+          `property-${improvement.change.modified_property}`,
         );
         if (element) {
           element.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -677,7 +677,7 @@ const ToolbarSidebar = ({
       currentVisibleNode.title,
       currentVisibleNode.nodeType,
       nodes,
-      currentVisibleNode?.id
+      currentVisibleNode?.id,
     )) as {
       model: string;
       userMessage: string;
@@ -710,7 +710,7 @@ const ToolbarSidebar = ({
         generateNewNodes,
         selectedProperties,
         proposeDeleteNode,
-        inputProperties
+        inputProperties,
       )) as {
         improvements: Improvement[];
         new_nodes: copilotNewNode[];
@@ -736,7 +736,7 @@ const ToolbarSidebar = ({
             </strong>
             .
           </Box>,
-          "Ok"
+          "Ok",
         );
         return;
       }
@@ -769,7 +769,7 @@ const ToolbarSidebar = ({
     } catch (error) {
       confirmIt(
         "Sorry! There was an error generating proposals, please try again!",
-        "Ok"
+        "Ok",
       );
       console.error("Error fetching improvements:", error);
     } finally {
@@ -1064,7 +1064,7 @@ const ToolbarSidebar = ({
                     {[
                       "All",
                       ...Object.keys(activeUsers).filter(
-                        (u) => activeUsers[u]?.reputations > 0
+                        (u) => activeUsers[u]?.reputations > 0,
                       ),
                     ].map((uname) => (
                       <MenuItem key={uname} value={uname}>
@@ -1092,6 +1092,7 @@ const ToolbarSidebar = ({
                   setActiveSidebar(null);
                   setOpenLogsFor(null);
                   setCurrentImprovement(null);
+                  setSelectedDiffNode(null);
                 }}
                 sx={{
                   ml: "auto",

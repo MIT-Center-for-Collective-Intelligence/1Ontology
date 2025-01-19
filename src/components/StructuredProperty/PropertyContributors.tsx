@@ -50,6 +50,7 @@ const PropertyContributors: React.FC<PropertyContributorsProps> = ({
 
         /*         mt: 'auto',
         ml: 'auto', */
+        mt: "auto",
         ...sx,
       }}
     >
