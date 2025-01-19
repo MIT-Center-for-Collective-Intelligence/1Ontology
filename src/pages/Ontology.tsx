@@ -996,7 +996,6 @@ const Ontology = () => {
 
   const expandNodeById = useCallback(
     async (nodeId: string) => {
-      console.log("eachOntologyPath[nodeId]", eachOntologyPath[nodeId], nodeId);
       if (!eachOntologyPath[nodeId]) {
         return;
       }
@@ -1010,7 +1009,6 @@ const Ontology = () => {
       await tree?.scrollTo(scrollId);
       setTimeout(() => {
         const targetNode = tree?.get(scrollId);
-        console.log("targetNode ==>", targetNode);
         if (targetNode) {
           targetNode.select();
           const element = document.getElementById(scrollId);
@@ -1020,8 +1018,6 @@ const Ontology = () => {
     },
     [eachOntologyPath],
   );
-
-  console.log("currentVisibleNode ==>", currentVisibleNode);
 
   if (Object.keys(nodes).length <= 0) {
     return (
