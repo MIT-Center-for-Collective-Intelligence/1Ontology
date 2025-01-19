@@ -896,9 +896,8 @@ const Ontology = () => {
         setCurrentVisibleNode(nodes[nodeId]);
         initializeExpanded(eachOntologyPath[nodeId]);
         setSelectedDiffNode(null);
-        const generalizationId = nodes[nodeId].generalizations[0]?.nodes[0]?.id;
         // setTimeout(() => {
-        expandNodeById(`${generalizationId}-${nodeId}`);
+        expandNodeById(nodeId);
         // }, 1000);
       }
     },
@@ -983,7 +982,6 @@ const Ontology = () => {
     return () => clearInterval(intervalId);
   }, [lastInteractionDate]);
 
-
   const displaySidebar = useCallback(
     (sidebarName: "chat" | "nodeHistory" | "inheritanceSettings") => {
       if (activeSidebar === sidebarName) {
@@ -996,17 +994,34 @@ const Ontology = () => {
     [activeSidebar],
   );
 
-  const expandNodeById = async (nodeId: string) => {
-    await tree?.scrollTo(nodeId);
-    setTimeout(() => {
-      const targetNode = tree?.get(nodeId);
-      if (targetNode) {
-        targetNode.select();
-        /*         const element = document.getElementById(nodeId);
-        element?.scrollIntoView({ behavior: "smooth", block: "center" }); */
+  const expandNodeById = useCallback(
+    async (nodeId: string) => {
+      console.log("eachOntologyPath[nodeId]", eachOntologyPath[nodeId], nodeId);
+      if (!eachOntologyPath[nodeId]) {
+        return;
       }
-    }, 500);
-  };
+
+      const first = eachOntologyPath[nodeId][0].id.split("-")[0];
+      const path = eachOntologyPath[nodeId]
+        .filter((p: any) => !p.category)
+        .map((c: { id: string }) => c.id)
+        .join("-");
+      const scrollId = `${first}-${path}`;
+      await tree?.scrollTo(scrollId);
+      setTimeout(() => {
+        const targetNode = tree?.get(scrollId);
+        console.log("targetNode ==>", targetNode);
+        if (targetNode) {
+          targetNode.select();
+          const element = document.getElementById(scrollId);
+          element?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 500);
+    },
+    [eachOntologyPath],
+  );
+
+  console.log("currentVisibleNode ==>", currentVisibleNode);
 
   if (Object.keys(nodes).length <= 0) {
     return (
