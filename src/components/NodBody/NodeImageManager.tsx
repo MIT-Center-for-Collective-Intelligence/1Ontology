@@ -237,7 +237,6 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
   const { userId } = user;
 
   useEffect(() => {
-    debugger;
     let _images = [];
     const reference = nodes[nodeId]?.inheritance["images"]?.ref;
     if (!nodes[nodeId]) {

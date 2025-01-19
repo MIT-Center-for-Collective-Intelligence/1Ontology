@@ -104,7 +104,7 @@ import {
 } from "firebase/firestore";
 
 import CloseIcon from "@mui/icons-material/Close";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getTitleDeleted } from " @components/lib/utils/string.utils";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
@@ -192,9 +192,9 @@ const LinkNode = ({
   }, [link.id, nodes, title]);
 
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
-  const handleNavigateToNode = () => {
+  const handleNavigateToNode = useCallback(() => {
     navigateToNode(link.id);
-  };
+  }, [navigateToNode, link.id]);
 
   const unlinkNodeRelation = async () => {
     try {

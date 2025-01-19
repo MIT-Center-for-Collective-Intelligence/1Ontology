@@ -872,34 +872,74 @@ const Ontology = () => {
     return getMainSpecializations(treeVisualization);
   }, [treeVisualization]);
 
-  // This function is called when a search result node is clicked.
-  const openSearchedNode = (node: INode, searched = true) => {
-    try {
-      // Set the clicked node as the open currentVisibleNode
-      // setCurrentVisibleNode(node);
+  const navigateToNode = useCallback(
+    async (nodeId: string) => {
+      // adding timeout to test if truncated issue persists
 
-      navigateToNode(node.id);
-
-      setTimeout(() => {
-        const elements = document.getElementsByClassName("node-" + node?.id);
-        const firstElement = elements.length > 0 ? elements[0] : null;
-
-        if (firstElement) {
-          firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 500);
-      // initializeExpanded(eachOntologyPath[node.id]);
-      // Record the click action in logs
-      if (searched) {
-        recordLogs({
-          action: "Search result clicked",
-          clicked: node.id,
-        });
+      if (
+        selectedProperty &&
+        (addedElements.size > 0 || removedElements.size > 0) &&
+        (await confirmIt(
+          `Unsaved changes detected in ${capitalizeFirstLetter(
+            DISPLAY[selectedProperty]
+              ? DISPLAY[selectedProperty]
+              : selectedProperty,
+          )}. Do you want to discard them?`,
+          "Keep Changes",
+          "Discard Changes",
+        ))
+      ) {
+        return;
       }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+      if (nodes[nodeId]) {
+        handleCloseAddLinksModel();
+        setCurrentVisibleNode(nodes[nodeId]);
+        initializeExpanded(eachOntologyPath[nodeId]);
+        setSelectedDiffNode(null);
+        const generalizationId = nodes[nodeId].generalizations[0]?.nodes[0]?.id;
+        // setTimeout(() => {
+        expandNodeById(`${generalizationId}-${nodeId}`);
+        // }, 1000);
+      }
+    },
+    [selectedProperty, addedElements, removedElements, nodes, eachOntologyPath],
+  );
+
+  // This function is called when a search result node is clicked.
+  const openSearchedNode = useCallback(
+    (node: INode, searched = true) => {
+      try {
+        // Set the clicked node as the open currentVisibleNode
+        // setCurrentVisibleNode(node);
+
+        navigateToNode(node.id);
+
+        setTimeout(() => {
+          const elements = document.getElementsByClassName("node-" + node?.id);
+          const firstElement = elements.length > 0 ? elements[0] : null;
+
+          if (firstElement) {
+            firstElement.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }
+        }, 500);
+        // initializeExpanded(eachOntologyPath[node.id]);
+        // Record the click action in logs
+        if (searched) {
+          recordLogs({
+            action: "Search result clicked",
+            clicked: node.id,
+          });
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [navigateToNode],
+  );
+
   useEffect(() => {
     if (process.env.NODE_ENV === "development") return;
     const handleUserActivity = () => {
@@ -943,38 +983,6 @@ const Ontology = () => {
     return () => clearInterval(intervalId);
   }, [lastInteractionDate]);
 
-  const navigateToNode = useCallback(
-    async (nodeId: string) => {
-      // adding timeout to test if truncated issue persists
-
-      if (
-        selectedProperty &&
-        (addedElements.size > 0 || removedElements.size > 0) &&
-        (await confirmIt(
-          `Unsaved changes detected in ${capitalizeFirstLetter(
-            DISPLAY[selectedProperty]
-              ? DISPLAY[selectedProperty]
-              : selectedProperty,
-          )}. Do you want to discard them?`,
-          "Keep Changes",
-          "Discard Changes",
-        ))
-      ) {
-        return;
-      }
-      if (nodes[nodeId]) {
-        setCurrentVisibleNode(nodes[nodeId]);
-        initializeExpanded(eachOntologyPath[nodeId]);
-        setSelectedDiffNode(null);
-        const generalizationId = nodes[nodeId].generalizations[0]?.nodes[0]?.id;
-        // setTimeout(() => {
-        expandNodeById(`${generalizationId}-${nodeId}`);
-        // }, 1000);
-        handleCloseAddLinksModel();
-      }
-    },
-    [selectedProperty, addedElements, removedElements, nodes, eachOntologyPath],
-  );
 
   const displaySidebar = useCallback(
     (sidebarName: "chat" | "nodeHistory" | "inheritanceSettings") => {

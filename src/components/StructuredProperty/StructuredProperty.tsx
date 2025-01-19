@@ -336,6 +336,10 @@ const StructuredProperty = ({
   const onSave = useCallback(async () => {
     try {
       setIsSaving(true);
+      const _removedElements = new Set(removedElements);
+      const _addedElements = new Set(addedElements);
+      const _selectedProperty = selectedProperty;
+      handleCloseAddLinksModel();
       for (let nId in clonedNodesQueue) {
         await handleCloning(
           { id: clonedNodesQueue[nId].id },
@@ -344,9 +348,9 @@ const StructuredProperty = ({
         );
       }
       await handleSaveLinkChanges(
-        removedElements,
-        addedElements,
-        selectedProperty,
+        _removedElements,
+        _addedElements,
+        _selectedProperty,
         currentVisibleNode?.id,
       );
     } catch (error: any) {
@@ -362,7 +366,6 @@ const StructuredProperty = ({
       });
     } finally {
       setIsSaving(false);
-      handleCloseAddLinksModel();
     }
   }, [
     clonedNodesQueue,

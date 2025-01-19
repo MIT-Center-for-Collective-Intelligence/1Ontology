@@ -772,7 +772,6 @@ export const updatePartsAndPartsOf = async (
         collection.nodes.map((spec) => spec.id),
       );
       if (!existingIds.includes(newLink.id)) {
-        debugger;
         const propertyData = childData.properties[property];
         if (Array.isArray(propertyData)) {
           let mainCollection = propertyData.find(

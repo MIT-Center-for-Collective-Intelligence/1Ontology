@@ -204,9 +204,23 @@ const SelectModelModal = ({
             });
           }
         } else {
-          _prev[0].nodes.push({
-            id: checkedId,
-          });
+          const collectionIdx = _prev.findIndex(
+            (c) => c.collectionName === "main",
+          );
+          if (collectionIdx !== -1) {
+            _prev[collectionIdx].nodes.push({
+              id: checkedId,
+            });
+          } else {
+            _prev.push({
+              collectionName: "main",
+              nodes: [
+                {
+                  id: checkedId,
+                },
+              ],
+            });
+          }
         }
       }
       return _prev;
@@ -314,9 +328,24 @@ const SelectModelModal = ({
           });
         }
       } else {
-        _prev[0].nodes.push({
-          id,
-        });
+        const collectionIdx = _prev.findIndex(
+          (c) => c.collectionName === "main",
+        );
+
+        if (collectionIdx !== -1) {
+          _prev[collectionIdx].nodes.push({
+            id,
+          });
+        } else {
+          _prev.push({
+            collectionName: "main",
+            nodes: [
+              {
+                id,
+              },
+            ],
+          });
+        }
       }
       return _prev;
     });
