@@ -44,13 +44,7 @@ const PropertyContributors: React.FC<PropertyContributorsProps> = ({
   return (
     <Box
       sx={{
-        // position: 'relative',
         display: "flex",
-        // justifyContent: 'flex-end',
-
-        /*         mt: 'auto',
-        ml: 'auto', */
-        mt: "auto",
         ...sx,
       }}
     >
