@@ -729,7 +729,7 @@ const StructuredProperty = ({
         <PropertyContributors
           currentVisibleNode={currentVisibleNode}
           property={property}
-          sx={{ p: 2, ml: "auto" }}
+          sx={{ p: 2, ml: "auto", mt: "auto" }}
         />
       )}
     </Paper>
