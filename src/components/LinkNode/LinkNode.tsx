@@ -78,7 +78,12 @@ import {
   updatePropertyOf,
   updateInheritanceWhenUnlinkAGeneralization,
 } from " @components/lib/utils/helpers";
-import { INode, INodePath, ILinkNode } from " @components/types/INode";
+import {
+  INode,
+  INodePath,
+  ILinkNode,
+  ICollection,
+} from " @components/types/INode";
 import {
   Box,
   Button,
@@ -349,6 +354,11 @@ const LinkNode = ({
 
   const unlinkSpecializationOrGeneralization = async () => {
     try {
+      const nodeD =
+        property === "generalizations"
+          ? nodes[currentVisibleNode.id]
+          : nodes[link.id];
+      const linksLength = nodeD.generalizations.flatMap((c) => c.nodes).length;
       if (
         await confirmIt(
           <Box>
@@ -365,14 +375,16 @@ const LinkNode = ({
             <Typography sx={{ fontWeight: "bold" }}>
               Are you sure you want unlink this node?
             </Typography>
-            {
+            {linksLength <= 1 ? (
               <Typography sx={{ mt: "15px" }}>
                 {`There's no other generalization linked to this node. Are you
                 sure you want to unlink it and move it as a specialization under
               ${UNCLASSIFIED[nodes[link.id].nodeType]}`}
                 ?
               </Typography>
-            }
+            ) : (
+              ""
+            )}
           </Box>,
           "Unlink",
           "Keep",
@@ -416,58 +428,82 @@ const LinkNode = ({
                 where("nodeType", "==", nodeType),
               ),
             );
-            if (unclassifiedNodeDocs.docs.length > 0) {
+
+            if (unclassifiedNodeDocs.docs.length > 0 && previousValue) {
               const unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
               if (property === "specializations") {
                 const nodeRef = doc(collection(db, NODES), link.id);
                 const generalizations = nodes[link.id].generalizations;
+                const generalizationsLength = generalizations.flatMap(
+                  (c) => c.nodes,
+                ).length;
 
-                const mCollectionIdx = generalizations.findIndex(
+                let mCollectionIdx = generalizations.findIndex(
                   (c) => c.collectionName === "main",
                 );
+                if (mCollectionIdx === -1) {
+                  generalizations.unshift({
+                    collectionName: "main",
+                    nodes: [],
+                  });
+                  mCollectionIdx = 0;
+                }
                 if (mCollectionIdx !== -1) {
                   generalizations[mCollectionIdx].nodes = generalizations[
                     mCollectionIdx
                   ].nodes.filter((g) => g.id !== nodeDoc.id);
+                  if (generalizationsLength === 1) {
+                    generalizations[0].nodes.push({
+                      id: unclassifiedNodeDoc.id,
+                    });
+                  }
 
-                  generalizations[0].nodes.push({ id: unclassifiedNodeDoc.id });
                   updateDoc(nodeRef, {
                     generalizations,
                   });
                 }
+                if (generalizationsLength === 1) {
+                  const specializations =
+                    nodes[unclassifiedNodeDoc.id].specializations;
 
-                const specializations =
-                  nodes[unclassifiedNodeDoc.id].specializations;
-
-                const mainCollectionIdx = specializations.findIndex(
-                  (c) => c.collectionName === "main",
-                );
-                if (mainCollectionIdx !== -1) {
-                  specializations[mainCollectionIdx].nodes.push({
-                    id: link.id,
-                  });
-                  updateDoc(unclassifiedNodeDoc.ref, {
-                    specializations,
-                  });
+                  const mainCollectionIdx = specializations.findIndex(
+                    (c) => c.collectionName === "main",
+                  );
+                  if (mainCollectionIdx !== -1) {
+                    specializations[mainCollectionIdx].nodes.push({
+                      id: link.id,
+                    });
+                    updateDoc(unclassifiedNodeDoc.ref, {
+                      specializations,
+                    });
+                  }
                 }
               }
 
               if (property === "generalizations") {
+                const nodesLength = previousValue.flatMap(
+                  (c: ICollection) => c.nodes,
+                ).length;
+
                 const generalizations = nodeData.generalizations;
-                generalizations[0].nodes.push({ id: unclassifiedNodeDoc.id });
+                if (nodesLength === 1) {
+                  generalizations[0].nodes.push({ id: unclassifiedNodeDoc.id });
 
-                const specializations =
-                  nodes[unclassifiedNodeDoc.id].specializations;
+                  const specializations =
+                    nodes[unclassifiedNodeDoc.id].specializations;
 
-                const mainCollectionIdx = specializations.findIndex(
-                  (c) => c.collectionName === "main",
-                );
-                specializations[mainCollectionIdx].nodes.push({
-                  id: nodeDoc.id,
-                });
-                updateDoc(unclassifiedNodeDoc.ref, {
-                  specializations,
-                });
+                  const mainCollectionIdx = specializations.findIndex(
+                    (c) => c.collectionName === "main",
+                  );
+
+                  specializations[mainCollectionIdx].nodes.push({
+                    id: nodeDoc.id,
+                  });
+
+                  updateDoc(unclassifiedNodeDoc.ref, {
+                    specializations,
+                  });
+                }
               }
             }
           }
