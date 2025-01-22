@@ -29,6 +29,7 @@ export const DISPLAY: {
   isPartOf: "Is Part of",
   actor: "Actors",
   objectsActedOn: "Objects Acted On",
+  ONetID: "O*Net ID",
 };
 
 export const NO_IMAGE_USER =

@@ -720,9 +720,9 @@ export const createNewNode = (
   if (newNode?.textValue?.specializations) {
     delete newNode.textValue.specializations;
   }
-  if (newNode.properties["O*Net ID"]) {
-    delete newNode.properties["O*Net ID"];
-    delete newNode.propertyType["O*Net ID"];
+  if (newNode.properties["ONetID"]) {
+    delete newNode.properties["ONetID"];
+    delete newNode.propertyType["ONetID"];
   }
   if (newNode?.textValue?.generalizations) {
     delete newNode.textValue.generalizations;
