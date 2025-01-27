@@ -301,7 +301,9 @@ const StructuredProperty = ({
         selectedDiffNode.changeType === "add collection" &&
         collection === selectedDiffNode.changeDetails.addedCollection
       ) {
-        return "green";
+        return theme.palette.mode === "dark" 
+        ? "green"
+        : "#4ccf37";
       }
       if (
         selectedDiffNode.changeType === "delete collection" &&
