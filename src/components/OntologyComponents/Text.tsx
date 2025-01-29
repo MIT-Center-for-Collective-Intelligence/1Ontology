@@ -305,7 +305,9 @@ const Text = ({
                 : (selectedDiffNode?.changeType === "add node" ||
                   !!currentImprovement?.newNode) &&
                   property === "title"
-                  ? "green"
+                  ? theme.palette.mode === "dark"
+                    ? "green"
+                    : "#4ccf37"
                   : theme.palette.mode === "dark"
                     ? "#242425"
                     : "#d0d5dd",
@@ -317,7 +319,9 @@ const Text = ({
               selectedDiffNode &&
                 selectedDiffNode.changeType === "add property" &&
                 selectedDiffNode.changeDetails.addedProperty === property
-                ? "green"
+                ? theme.palette.mode === "dark"
+                  ? "green"
+                  : "#4ccf37"
                 : "",
           }}
         >

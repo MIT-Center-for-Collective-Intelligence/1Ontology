@@ -1,5 +1,4 @@
-import AddReactionIcon from "@mui/icons-material/AddReaction";
-import { Button, IconButton, Tooltip, Typography } from "@mui/material";
+import { Button, Tooltip, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import React, { useEffect, useState } from "react";
 import { IChatMessage, Reaction } from " @components/types/IChat";
@@ -107,11 +106,11 @@ export const Emoticons = ({
           </Button>
         </Tooltip>
       ))}
-      {Object.keys(reactions)?.length > 0 && (
+      {/* {Object.keys(reactions)?.length > 0 && (
         <IconButton onClick={handleAddReaction}>
           <AddReactionIcon color="secondary" />
         </IconButton>
-      )}
+      )} */}
     </Box>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography, Button, IconButton } from "@mui/material";
 import { CSSTransition } from "react-transition-group";
 
 import LinkIcon from "@mui/icons-material/Link";
@@ -13,6 +13,7 @@ import ChatInput from "./ChatInput";
 import dayjs from "dayjs";
 import { getTitle } from " @components/lib/utils/string.utils";
 import { INode } from " @components/types/INode";
+import { AddReactionOutlined } from "@mui/icons-material";
 
 const MessageComponent = ({
   message,
@@ -276,20 +277,23 @@ const MessageComponent = ({
                   user={user}
                   boxRef={boxRef}
                 />
+                <IconButton onClick={(e) => toggleEmojiPicker(e, boxRef, message)}>
+                  <AddReactionOutlined color="secondary" sx={{ fontSize: "19px" }} />
+                </IconButton>
+                <Button
+                  onClick={() =>
+                    setShowReplies(showReplies !== message.id ? message.id : null)
+                  }
+                  style={{ border: "none", fontSize: "14px", marginLeft: "auto" }}
+                >
+                  {showReplies === message.id
+                    ? "Hide"
+                    : message?.totalReplies || null}{" "}
+                  {message?.totalReplies && message.totalReplies > 1
+                    ? "Replies"
+                    : "Reply"}
+                </Button>
               </Box>
-              <Button
-                onClick={() =>
-                  setShowReplies(showReplies !== message.id ? message.id : null)
-                }
-                style={{ border: "none", fontSize: "14px" }}
-              >
-                {showReplies === message.id
-                  ? "Hide"
-                  : message?.totalReplies || null}{" "}
-                {message?.totalReplies && message.totalReplies > 1
-                  ? "Replies"
-                  : "Reply"}
-              </Button>
             </Box>
           )}
 
