@@ -371,6 +371,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
 
   return (
     <Paper
+      id="property-images"
       elevation={9}
       sx={{
         borderRadius: "30px",

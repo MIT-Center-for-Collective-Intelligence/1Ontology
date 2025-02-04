@@ -489,6 +489,26 @@ const ToolbarSidebar = ({
     if (!previousNodeId) {
       setPreviousNodeId(currentVisibleNode?.id);
     }
+
+    setTimeout(() => {
+      const modifiedProperty = data.modifiedProperty;
+      const changedProperty = data.changeDetails?.addedProperty;
+    
+      if (modifiedProperty) {
+        const element = document.getElementById(`property-${modifiedProperty}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+      }
+    
+      if (changedProperty) {
+        const element = document.getElementById(`property-${changedProperty}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
+    }, 1000);    
   };
 
   useEffect(() => {

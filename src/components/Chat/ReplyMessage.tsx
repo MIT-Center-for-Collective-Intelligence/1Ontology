@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, IconButton, Typography } from "@mui/material";
 import moment from "moment";
 import OptimizedAvatar from "./OptimizedAvatar";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
@@ -8,6 +8,7 @@ import { Emoticons } from "./Emoticons";
 import { MessageButtons } from "./MessageButtons";
 import { IChatMessage } from " @components/types/IChat";
 import ChatInput from "./ChatInput";
+import { AddReactionOutlined } from "@mui/icons-material";
 
 interface ReplyMessageProps {
   reply: any;
@@ -166,6 +167,7 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
                 flexWrap: "wrap",
                 alignItems: "center",
                 gap: "5px",
+                paddingTop: "5px"
               }}
             >
               <Emoticons
@@ -176,6 +178,9 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
                 user={user}
                 boxRef={boxRef}
               />
+              <IconButton onClick={(e) => toggleEmojiPicker(e, boxRef, reply)}>
+                <AddReactionOutlined color="secondary" sx={{ fontSize: "19px" }} />
+              </IconButton>
             </Box>
           </Box>
         )}
