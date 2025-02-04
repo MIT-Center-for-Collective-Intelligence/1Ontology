@@ -1,4 +1,4 @@
-import { NODES_ONET } from " @components/lib/firestoreClient/collections";
+// import { NODES_ONET } from " @components/lib/firestoreClient/collections";
 import { collection, getDocs, getFirestore, query } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { TreeItem } from "@mui/lab";
@@ -6,7 +6,7 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 import { INode, TreeData } from " @components/types/INode";
 import DraggableTree from " @components/components/OntologyComponents/DraggableTree";
 import { TreeApi } from "react-arborist";
-
+const NODES_ONET = "oNetNodesDecomposed";
 type TreeNode = {
   title: string;
   children: TreeNode[];
@@ -36,7 +36,7 @@ const getTreeView = (
       }
 
       // if (children.length > 0) {
-      if (collection.collectionName !== "main") {
+      if (collection.collectionName !== "main" && collection.collectionName) {
         const id = parentId
           ? `${parentId}-${node.id}-${collection.collectionName}`
           : `${node.id}-${collection.collectionName}`;
@@ -98,15 +98,139 @@ const getTreeView = (
 };
 
 const buildTree = (data: any[], nodes: any): TreeNode[] => {
-  const mainCategories = Object.values(data).filter((node: INode) => node.root);
+  const mainCategories = Object.values(data).filter(
+    (node: INode) => node.generalizations[0].nodes.length <= 0,
+  );
 
   // Sort main nodes based on a predefined order
   mainCategories.sort((nodeA: any, nodeB: any) => {
     const order = [
-      "Information Input",
-      "Interacting With Others",
-      "Mental Processes",
-      "Work Output",
+      "Oversee/supervise/direct/monitor",
+      "Oversee/supervise/direct",
+      "Oversee/supervise/direct/manage/administer",
+      "Oversee/supervise/direct/manage",
+      "Engage/take part/participate",
+      "Promote/motivate/encourage",
+      "Provide/deliver/administer/dispense",
+      "Oversee/supervise/direct/guide",
+      "Route/guide/direct/supervise/oversee/instruct/command",
+      "Oversee/supervise/direct/manage/monitor",
+      "Supervise/oversee/direct/lead/manage",
+      "Organize/manage/coordinate/align",
+      "Conduct/facilitate/administer",
+      "Provide/deliver/administer/dispense/apply",
+      "Manage/oversee/direct/supervise",
+      "Supervise/oversee/direct/guide",
+      "Organize/align/coordinate/facilitate",
+      "Supervise/oversee/direct/manage",
+      "Provide/deliver/administer",
+      "Initiate/begin/start",
+      "Supervise/oversee/direct",
+      "Manage/oversee/administer",
+      "Organize/manage/coordinate",
+      "Immediate/direct",
+      "Provide/deliver/administer/perform/offer",
+      "Inform/alert/notify",
+      "Guide/lead/direct/control/instruct/train",
+      "Organize/manage/coordinate/arrange/align",
+      "Analyze/evaluate/interpret",
+      "Convey/move/transport",
+      "Conduct/lead/direct",
+      "Evaluate/assess/review",
+      "Manage/control/direct/oversee/supervise",
+      "Redirect/reroute",
+      "Align/organize/coordinate",
+      "Arrange/structure/organize",
+      "Rank/order/prioritize",
+      "Oversee/supervise/direct/instruct/guide/lead/manage",
+      "Oversee/supervise/direct/lead",
+      "Instruct/guide/direct",
+      "Provide/dispense/administer",
+      "Guide/lead/direct",
+      "Supervise/oversee/direct/manage/guide/proctor",
+      "Log/document/record",
+      "Supervise/oversee/direct/monitor/observe",
+      "Bandage/wrap",
+      "Care for/treat",
+      "Direct/refer",
+      "Alert/warn",
+      "Manage/oversee/administer/supervise/direct/lead/conduct/facilitate",
+      "Guide/command/direct",
+      "Conduct/perform/administer/oversee/carry out",
+      "Request/prescribe/order",
+      "Direct",
+      "Set/determine/establish/define",
+      "Plan/organize/schedule",
+      "Monitor/follow/track",
+      "Offer/deliver/provide",
+      "Guarantee/confirm/ensure",
+      "Implement/carry out/execute",
+      "Conduct/oversee/administer",
+      "Assess/review/evaluate/examine",
+      "Oversee/supervise/direct/monitor/manage",
+      "Review/examine/search/inspect",
+      "Delegate/assign",
+      "Assess/review/evaluate",
+      "Recommend/counsel/advise",
+      "Coordinate/arrange/stage",
+      "Perform/carry out/conduct",
+      "Choose/pick/select",
+      "Allocate/deliver/distribute",
+      "Supervise/direct/oversee",
+      "Execute/carry out/perform",
+      "Evaluate/appraise/assess/review",
+      "Convey/relay/communicate",
+      "Oversee/track/monitor",
+      "Help/support/assist",
+      "Observe/track/monitor/supervise",
+      "Guide/instruct/direct/lead",
+      "Enforce/implement/administer",
+      "Examine/evaluate/analyze",
+      "Create/formulate/develop",
+      "Authorize/sanction/approve",
+      "Lead/guide/direct",
+      "Assist/aid/support",
+      "Organize/align/coordinate",
+      "Organize/coordinate",
+      "Set up/deploy/install",
+      "Terminate/discontinue/cancel",
+      "Engage/take part/participate/contribute",
+      "Instruct/command/direct",
+      "Manage/direct",
+      "Accompany/escort",
+      "Observe/monitor",
+      "Administer",
+      "Engage/contribute/participate",
+      "File/present/submit",
+      "Guide/direct/instruct",
+      "Conduct/administer",
+      "Question/interview",
+      "Request/order/requisition",
+      "Verify/inspect/check",
+      "Toggle/change/switch",
+      "Assume/take",
+      "Assist/aid/help",
+      "Inspire/encourage/motivate",
+      "Oversee/supervise/monitor",
+      "Design/strategize/plan",
+      "Execute/enforce/implement",
+      "Oversee/supervise/direct/monitor/manage/observe",
+      "Organize/align/coordinate/manage",
+      "Distribute/dispense",
+      "Recommend/prescribe",
+      "Instruct/teach/train",
+      "Instruct/educate/train",
+      "Combine/incorporate/integrate",
+      "Evaluate/grade/score",
+      "Organize/set up/arrange",
+      "Conduct/perform/administer",
+      "Allocate/assign",
+      "Verify/confirm/ensure",
+      "Utilize/use/apply",
+      "Grade/evaluate/score",
+      "Modify/adjust",
+      "Organize/facilitate/coordinate",
+      "Advocate/suggest/recommend",
     ];
     const nodeATitle = nodeA.title;
     const nodeBTitle = nodeB.title;
@@ -129,7 +253,10 @@ function OntTree() {
     const nodes: any = {};
     nodesDocs.docs.forEach((doc) => {
       nodes_data.push(doc.data());
-      nodes[doc.id] = doc.data();
+      nodes[doc.id] = {
+        ...doc.data(),
+        category: doc.data().title.endsWith("?"),
+      };
     });
     setTreeData(buildTree(nodes_data, nodes));
     setLoading(false);
