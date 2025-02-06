@@ -6,7 +6,11 @@ import {
   ListItemText,
   ListItemIcon,
   Typography,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
 } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 const domainsEmojis = [
   {
@@ -226,7 +230,6 @@ const domainsEmojis = [
     emoji: "🐾",
   },
 ];
-
 const DomainLookupSidebar: React.FC = () => {
   return (
     <Box
@@ -234,22 +237,32 @@ const DomainLookupSidebar: React.FC = () => {
         width: "100%",
         bgcolor: "background.paper",
         padding: 2,
-        height: "90px",
       }}
     >
-      <Typography variant="h6" gutterBottom>
-        Domain Lookup
-      </Typography>
-      <List>
-        {domainsEmojis.map(({ domain, emoji }) => (
-          <ListItem sx={{ p: 0, m: 0 }} key={domain}>
-            <ListItemIcon sx={{ p: 0, minWidth: 0, m: "8px", mb: "2px" }}>
-              {emoji}
-            </ListItemIcon>
-            <ListItemText sx={{ p: 0, m: 0 }} primary={domain} />
-          </ListItem>
-        ))}
-      </List>
+      <Accordion>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h6" gutterBottom>
+            Domain Lookup
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails
+          sx={{
+            maxHeight: "90vh",
+            overflowY: "auto",
+            padding: 0,
+            p: 4,
+          }}
+        >
+          <List>
+            {domainsEmojis.map(({ domain, emoji }) => (
+              <ListItem sx={{ p: 0, m: 0 }} key={domain}>
+                <ListItemIcon sx={{ minWidth: 32 }}>{emoji}</ListItemIcon>
+                <ListItemText primary={domain} />
+              </ListItem>
+            ))}
+          </List>
+        </AccordionDetails>
+      </Accordion>
     </Box>
   );
 };

@@ -302,11 +302,14 @@ function OntTree() {
   }
 
   return (
-    <Box sx={{ width: "100%" }}>
+    <Box
+      sx={{
+        width: "100%",
+        height: "100vh",
+        ml: "13px",
+      }}
+    >
       <Grid container spacing={2}>
-        <Grid item xs={4}>
-          <DomainLookupSidebar />
-        </Grid>
         <Grid item xs={8}>
           <DraggableTree
             treeViewData={treeData}
@@ -320,6 +323,9 @@ function OntTree() {
             alternatives={alternatives}
             treeType="oNet"
           />
+        </Grid>
+        <Grid item xs={3}>
+          <DomainLookupSidebar />
         </Grid>
       </Grid>
     </Box>
