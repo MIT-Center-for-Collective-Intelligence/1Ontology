@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { NodeApi, NodeRendererProps, Tree, TreeApi } from "react-arborist";
+import SyncAltIcon from "@mui/icons-material/SyncAlt";
 import styles from "./drag.tree.module.css";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -29,6 +30,7 @@ function DraggableTree({
   setTree,
   treeType,
   eachOntologyPath,
+  alternatives,
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -40,6 +42,7 @@ function DraggableTree({
   setTree: any;
   treeType?: string;
   eachOntologyPath?: any;
+  alternatives?: { [key: string]: string[] };
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -335,6 +338,7 @@ function DraggableTree({
   function Node({ node, style, dragHandle }: NodeRendererProps<TreeData>) {
     const indentSize = Number.parseFloat(`${style.paddingLeft || 0}`);
     const inputRef = useRef<HTMLInputElement>(null);
+
     return (
       <Box
         ref={dragHandle}
@@ -356,19 +360,40 @@ function DraggableTree({
           })}
         </Box>
         <FolderArrow node={node} />
-
-        <span
-          className={clsx(styles.text, {
-            [styles.categoryText]: node.data.category,
-          })}
-          // style={{ color: "white" }}
-        >
-          {node.isEditing ? (
-            <Input node={node} inputRef={inputRef} />
-          ) : (
-            `${node.data.name}`
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <span
+            className={clsx(styles.text, {
+              [styles.categoryText]: node.data.category,
+            })}
+          >
+            {node.isEditing ? (
+              <Input node={node} inputRef={inputRef} />
+            ) : (
+              `${node.data.name}`
+            )}
+          </span>
+          {((alternatives && alternatives[node.data.name.toLowerCase()]) || [])
+            .length > 0 && (
+            <Tooltip
+              title={
+                <Box sx={{ display: "flex", gap: "8px" }}>
+                  <Box sx={{ color: "orange", fontWeight: "bold" }}>
+                    Alternatives:
+                  </Box>
+                  <Box>
+                    {alternatives
+                      ? (alternatives[node.data.name.toLowerCase()] || []).join(
+                          ", ",
+                        )
+                      : ""}
+                  </Box>
+                </Box>
+              }
+            >
+              <SyncAltIcon sx={{ fontSize: 16, cursor: "pointer" }} />
+            </Tooltip>
           )}
-        </span>
+        </Box>
       </Box>
     );
   }

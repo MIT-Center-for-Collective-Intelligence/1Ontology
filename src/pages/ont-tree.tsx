@@ -2,14 +2,84 @@
 import { collection, getDocs, getFirestore, query } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { TreeItem } from "@mui/lab";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { Box, CircularProgress, Grid, Typography } from "@mui/material";
 import { INode, TreeData } from " @components/types/INode";
 import DraggableTree from " @components/components/OntologyComponents/DraggableTree";
 import { TreeApi } from "react-arborist";
+import DomainLookupSidebar from " @components/components/DomainLookup/DomainLookupSidebar";
 const NODES_ONET = "oNetNodesDecomposed";
 type TreeNode = {
   title: string;
   children: TreeNode[];
+};
+const alternatives = {
+  direct: [
+    "Oversee",
+    "Supervise",
+    "Manage",
+    "Monitor",
+    "Guide",
+    "Instruct",
+    "Command",
+    "Lead",
+  ],
+  engage: ["Take part", "Participate", "Contribute"],
+  inspire: ["Motivate", "Encourage"],
+  provide: ["Deliver", "Administer", "Dispense", "Apply", "Offer"],
+  organize: [
+    "Manage",
+    "Coordinate",
+    "Align",
+    "Arrange",
+    "Set up",
+    "Deploy",
+    "Install",
+    "Facilitate",
+  ],
+  conduct: ["Facilitate", "Perform", "Execute", "Carry out", "Implement"],
+  evaluate: ["Assess", "Review", "Appraise", "Examine", "Grade", "Score"],
+  inform: ["Alert", "Notify", "Convey", "Relay", "Communicate"],
+  initiate: [
+    "Begin",
+    "Start",
+    "Set",
+    "Determine",
+    "Establish",
+    "Define",
+    "Plan",
+    "Strategize",
+  ],
+  observe: ["Monitor", "Follow", "Track"],
+  assist: ["Help", "Support", "Aid"],
+  request: [
+    "Prescribe",
+    "Order",
+    "Requisition",
+    "Delegate",
+    "Assign",
+    "Allocate",
+  ],
+  log: ["Document", "Record"],
+  alert: ["Warn"],
+  recommend: ["Counsel", "Advise", "Prescribe", "Advocate", "Suggest"],
+  redirect: ["Reroute"],
+  rank: ["Order", "Prioritize"],
+  toggle: ["Change", "Switch"],
+  assume: ["Take"],
+  utilize: ["Use", "Apply"],
+  terminate: ["Discontinue", "Cancel"],
+  create: ["Formulate", "Develop"],
+  authorize: ["Sanction", "Approve"],
+  distribute: ["Allocate", "Deliver", "Dispense"],
+  modify: ["Adjust"],
+  combine: ["Incorporate", "Integrate"],
+  file: ["Present", "Submit"],
+  question: ["Interview"],
+  verify: ["Inspect", "Check", "Confirm", "Ensure"],
+  care: ["Treat", "Bandage", "Wrap"],
+  select: ["Choose", "Pick"],
+  accompany: ["Escort"],
+  instruct: ["Teach", "Educate", "Train"],
 };
 
 const getTreeView = (
@@ -105,136 +175,47 @@ const buildTree = (data: any[], nodes: any): TreeNode[] => {
   // Sort main nodes based on a predefined order
   mainCategories.sort((nodeA: any, nodeB: any) => {
     const order = [
-      "Oversee/supervise/direct/monitor",
-      "Oversee/supervise/direct",
-      "Oversee/supervise/direct/manage/administer",
-      "Oversee/supervise/direct/manage",
-      "Engage/take part/participate",
-      "Promote/motivate/encourage",
-      "Provide/deliver/administer/dispense",
-      "Oversee/supervise/direct/guide",
-      "Route/guide/direct/supervise/oversee/instruct/command",
-      "Oversee/supervise/direct/manage/monitor",
-      "Supervise/oversee/direct/lead/manage",
-      "Organize/manage/coordinate/align",
-      "Conduct/facilitate/administer",
-      "Provide/deliver/administer/dispense/apply",
-      "Manage/oversee/direct/supervise",
-      "Supervise/oversee/direct/guide",
-      "Organize/align/coordinate/facilitate",
-      "Supervise/oversee/direct/manage",
-      "Provide/deliver/administer",
-      "Initiate/begin/start",
-      "Supervise/oversee/direct",
-      "Manage/oversee/administer",
-      "Organize/manage/coordinate",
-      "Immediate/direct",
-      "Provide/deliver/administer/perform/offer",
-      "Inform/alert/notify",
-      "Guide/lead/direct/control/instruct/train",
-      "Organize/manage/coordinate/arrange/align",
-      "Analyze/evaluate/interpret",
-      "Convey/move/transport",
-      "Conduct/lead/direct",
-      "Evaluate/assess/review",
-      "Manage/control/direct/oversee/supervise",
-      "Redirect/reroute",
-      "Align/organize/coordinate",
-      "Arrange/structure/organize",
-      "Rank/order/prioritize",
-      "Oversee/supervise/direct/instruct/guide/lead/manage",
-      "Oversee/supervise/direct/lead",
-      "Instruct/guide/direct",
-      "Provide/dispense/administer",
-      "Guide/lead/direct",
-      "Supervise/oversee/direct/manage/guide/proctor",
-      "Log/document/record",
-      "Supervise/oversee/direct/monitor/observe",
-      "Bandage/wrap",
-      "Care for/treat",
-      "Direct/refer",
-      "Alert/warn",
-      "Manage/oversee/administer/supervise/direct/lead/conduct/facilitate",
-      "Guide/command/direct",
-      "Conduct/perform/administer/oversee/carry out",
-      "Request/prescribe/order",
-      "Direct",
-      "Set/determine/establish/define",
-      "Plan/organize/schedule",
-      "Monitor/follow/track",
-      "Offer/deliver/provide",
-      "Guarantee/confirm/ensure",
-      "Implement/carry out/execute",
-      "Conduct/oversee/administer",
-      "Assess/review/evaluate/examine",
-      "Oversee/supervise/direct/monitor/manage",
-      "Review/examine/search/inspect",
-      "Delegate/assign",
-      "Assess/review/evaluate",
-      "Recommend/counsel/advise",
-      "Coordinate/arrange/stage",
-      "Perform/carry out/conduct",
-      "Choose/pick/select",
-      "Allocate/deliver/distribute",
-      "Supervise/direct/oversee",
-      "Execute/carry out/perform",
-      "Evaluate/appraise/assess/review",
-      "Convey/relay/communicate",
-      "Oversee/track/monitor",
-      "Help/support/assist",
-      "Observe/track/monitor/supervise",
-      "Guide/instruct/direct/lead",
-      "Enforce/implement/administer",
-      "Examine/evaluate/analyze",
-      "Create/formulate/develop",
-      "Authorize/sanction/approve",
-      "Lead/guide/direct",
-      "Assist/aid/support",
-      "Organize/align/coordinate",
-      "Organize/coordinate",
-      "Set up/deploy/install",
-      "Terminate/discontinue/cancel",
-      "Engage/take part/participate/contribute",
-      "Instruct/command/direct",
-      "Manage/direct",
-      "Accompany/escort",
-      "Observe/monitor",
-      "Administer",
-      "Engage/contribute/participate",
-      "File/present/submit",
-      "Guide/direct/instruct",
-      "Conduct/administer",
-      "Question/interview",
-      "Request/order/requisition",
-      "Verify/inspect/check",
-      "Toggle/change/switch",
-      "Assume/take",
-      "Assist/aid/help",
-      "Inspire/encourage/motivate",
-      "Oversee/supervise/monitor",
-      "Design/strategize/plan",
-      "Execute/enforce/implement",
-      "Oversee/supervise/direct/monitor/manage/observe",
-      "Organize/align/coordinate/manage",
-      "Distribute/dispense",
-      "Recommend/prescribe",
-      "Instruct/teach/train",
-      "Instruct/educate/train",
-      "Combine/incorporate/integrate",
-      "Evaluate/grade/score",
-      "Organize/set up/arrange",
-      "Conduct/perform/administer",
-      "Allocate/assign",
-      "Verify/confirm/ensure",
-      "Utilize/use/apply",
-      "Grade/evaluate/score",
-      "Modify/adjust",
-      "Organize/facilitate/coordinate",
-      "Advocate/suggest/recommend",
+      "direct",
+      "engage",
+      "inspire",
+      "provide",
+      "organize",
+      "conduct",
+      "evaluate",
+      "inform",
+      "initiate",
+      "observe",
+      "assist",
+      "request",
+      "log",
+      "alert",
+      "recommend",
+      "redirect",
+      "rank",
+      "toggle",
+      "assume",
+      "utilize",
+      "terminate",
+      "create",
+      "authorize",
+      "distribute",
+      "modify",
+      "combine",
+      "file",
+      "question",
+      "verify",
+      "care",
+      "select",
+      "accompany",
+      "instruct",
     ];
-    const nodeATitle = nodeA.title;
-    const nodeBTitle = nodeB.title;
-    return order.indexOf(nodeATitle) - order.indexOf(nodeBTitle);
+
+    const getIndex = (title: string): number => {
+      const index = order.indexOf(title);
+      return index !== -1 ? index : order.length;
+    };
+
+    return getIndex(nodeA.title) - getIndex(nodeB.title);
   });
 
   return getTreeView(mainCategories, new Map(), nodes);
@@ -322,17 +303,25 @@ function OntTree() {
 
   return (
     <Box sx={{ width: "100%" }}>
-      <DraggableTree
-        treeViewData={treeData}
-        setSnackbarMessage={() => {}}
-        expandedNodes={new Set()}
-        currentVisibleNode={null}
-        nodes={{}}
-        onOpenNodesTree={() => {}}
-        tree={tree}
-        setTree={setTree}
-        treeType="oNet"
-      />
+      <Grid container spacing={2}>
+        <Grid item xs={4}>
+          <DomainLookupSidebar />
+        </Grid>
+        <Grid item xs={8}>
+          <DraggableTree
+            treeViewData={treeData}
+            setSnackbarMessage={() => {}}
+            expandedNodes={new Set()}
+            currentVisibleNode={null}
+            nodes={{}}
+            onOpenNodesTree={() => {}}
+            tree={tree}
+            setTree={setTree}
+            alternatives={alternatives}
+            treeType="oNet"
+          />
+        </Grid>
+      </Grid>
     </Box>
   );
 }
