@@ -369,30 +369,38 @@ function DraggableTree({
             {node.isEditing ? (
               <Input node={node} inputRef={inputRef} />
             ) : (
-              `${node.data.name}`
+              <>
+                {treeType === "oNet" && (
+                  <Tooltip
+                    title={
+                      <Box sx={{ display: "flex", gap: "8px" }}>
+                        <Box sx={{ color: "orange", fontWeight: "bold" }}>
+                          Alternatives:
+                        </Box>
+                        <Box>
+                          {alternatives
+                            ? (
+                                alternatives[
+                                  node.data.name.split(" ")[0].toLowerCase()
+                                ] || []
+                              ).join(", ")
+                            : ""}
+                        </Box>
+                      </Box>
+                    }
+                  >
+                    <em style={{ marginRight: "7px" }}>
+                      {node.data.name.split(" ")[0]}
+                    </em>
+                  </Tooltip>
+                )}
+
+                {treeType === "oNet"
+                  ? node.data.name.split(" ").slice(1).join(" ")
+                  : node.data.name}
+              </>
             )}
           </span>
-          {((alternatives && alternatives[node.data.name.toLowerCase()]) || [])
-            .length > 0 && (
-            <Tooltip
-              title={
-                <Box sx={{ display: "flex", gap: "8px" }}>
-                  <Box sx={{ color: "orange", fontWeight: "bold" }}>
-                    Alternatives:
-                  </Box>
-                  <Box>
-                    {alternatives
-                      ? (alternatives[node.data.name.toLowerCase()] || []).join(
-                          ", ",
-                        )
-                      : ""}
-                  </Box>
-                </Box>
-              }
-            >
-              <SyncAltIcon sx={{ fontSize: 16, cursor: "pointer" }} />
-            </Tooltip>
-          )}
         </Box>
       </Box>
     );
