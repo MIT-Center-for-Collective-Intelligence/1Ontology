@@ -164,7 +164,7 @@ const getTreeView = (
       category: !!node.category,
     });
   }
-  return newNodes;
+  return newNodes.sort((a, b) => b.children.length - a.children.length);
 };
 
 const buildTree = (data: any[], nodes: any): TreeNode[] => {
