@@ -93,6 +93,7 @@ export type INode = {
     };
   }[];
   oNet?: boolean;
+  actionAlternatives?: string[];
 };
 
 export type TreeVisual = {
@@ -193,4 +194,5 @@ export type TreeData = {
   category?: boolean;
   nodeType: string;
   nodeId: string;
+  actionAlternatives?: string[];
 };
