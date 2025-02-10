@@ -375,7 +375,7 @@ function DraggableTree({
             ) : (
               <Typography sx={{ color: node.data.category ? "orange" : "" }}>
                 {node.data.name}{" "}
-                {node.data.name.split(" ").length === 1 &&
+                {/*      {node.data.name.split(" ").length === 1 &&
                   (
                     (alternatives &&
                       alternatives[
@@ -401,7 +401,7 @@ function DraggableTree({
                         ).join(", ")
                       : ""}
                   </span>
-                )}
+                )} */}
               </Typography>
             )}
           </span>
