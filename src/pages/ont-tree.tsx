@@ -2,7 +2,17 @@
 import { collection, getDocs, getFirestore, query } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { TreeItem } from "@mui/lab";
-import { Box, CircularProgress, Grid, Typography } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import WorkspacesIcon from "@mui/icons-material/Workspaces";
+import {
+  Box,
+  CircularProgress,
+  Drawer,
+  Grid,
+  IconButton,
+  Typography,
+} from "@mui/material";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { INode, TreeData } from " @components/types/INode";
 import DraggableTree from " @components/components/OntologyComponents/DraggableTree";
 import { TreeApi } from "react-arborist";
@@ -80,6 +90,62 @@ const alternatives = {
   select: ["Choose", "Pick"],
   accompany: ["Escort"],
   instruct: ["Teach", "Educate", "Train"],
+};
+
+const domainsEmojis: Record<string, string> = {
+  "🌾": "Agriculture & Farming",
+  "📒": "Accounting & Bookkeeping",
+  "📁": "Administration & Clerical",
+  "🤖": "AI & Machine Learning",
+  "🐟": "Aquaculture Management",
+  "✈️": "Aviation Management",
+  "🧬": "Bioinformatics & Computational Biology",
+  "🏗️": "Construction & Infrastructure Management",
+  "💼": "Consulting & Advisory",
+  "🎨": "Creative & Design",
+  "🍽️": "Culinary & Food Services",
+  "🔒": "Cybersecurity",
+  "🛠️": "Design & Manufacturing",
+  "🎓": "Education & Academic Research",
+  "🚑": "Emergency Services",
+  "⚡": "Energy Management",
+  "⚙️": "Engineering & Technical Support",
+  "🌱": "Environmental Management",
+  "🎉": "Event Coordination",
+  "🏢": "Facilities Management",
+  "💰": "Finance",
+  "🧯": "Fire Safety & Protection Systems",
+  "🏋️": "Fitness & Wellness",
+  "⚰️": "Funeral Services",
+  "🏛️": "Government & Policy",
+  "🩺": "Healthcare & Clinical Services",
+  "🏥": "Healthcare Management",
+  "🏨": "Hospitality Management",
+  "👥": "Human Resources",
+  "💻": "Information Technology",
+  "⚖️": "Legal Services",
+  "📚": "Library & Information Services",
+  "🚚": "Logistics & Supply Chain Management",
+  "🧑‍💼": "Management & Administration",
+  "🏭": "Manufacturing & Operations",
+  "📣": "Marketing & Customer Acquisition",
+  "🎥": "Media Production",
+  "🖼️": "Museum & Gallery Management",
+  "💸": "Nonprofit & Educational Fundraising",
+  "🐛": "Pest & Weed Management",
+  "🎭": "Performing Arts",
+  "🗓️": "Project Management",
+  "🏠": "Property Management",
+  "🌐": "Public Health",
+  "✔️": "Quality Assurance & Testing",
+  "✅": "Regulatory Compliance",
+  "🔬": "Research & Development",
+  "💵": "Sales & Business Development",
+  "🛡️": "Security & Loss Prevention",
+  "📱": "Social Media Management",
+  "🧑‍💻": "Software Development",
+  "🚦": "Traffic Management",
+  "🐾": "Veterinary Services",
 };
 
 const getTreeView = (
@@ -226,6 +292,7 @@ function OntTree() {
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
   const [loading, setLoading] = useState(false);
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   const getData = async () => {
     setLoading(true);
@@ -306,11 +373,11 @@ function OntTree() {
       sx={{
         width: "100%",
         height: "100vh",
-        ml: "13px",
+
       }}
     >
-      <Grid container spacing={2}>
-        <Grid item xs={8}>
+      <Box sx={{ display: "flex" }}>
+        <Box sx={{ width: isExpanded ? "80%" : "98%" }}>
           <DraggableTree
             treeViewData={treeData}
             setSnackbarMessage={() => {}}
@@ -321,13 +388,54 @@ function OntTree() {
             tree={tree}
             setTree={setTree}
             alternatives={alternatives}
+            domainsEmojis={domainsEmojis}
             treeType="oNet"
           />
-        </Grid>
-        <Grid item xs={3}>
-          <DomainLookupSidebar />
-        </Grid>
-      </Grid>
+        </Box>
+        <Box
+          sx={{
+            width: isExpanded ? "20%" : "2%",
+            backgroundColor: isExpanded ? "#424242" : "",
+            borderRadius: "25px",
+          }}
+        >
+          <Box
+            display="flex"
+            alignItems="center"
+            sx={{
+              position: !isExpanded ? "absolute" : "sticky",
+              backgroundColor: isExpanded ? "#424242" : "",
+              zIndex: isExpanded ? 7 : "",
+              top: 0,
+              right: 0,
+              alignContent: "center",
+              alignItems: "center",
+              borderRadius: "25px",
+            }}
+          >
+            <IconButton
+              onClick={() => setIsExpanded(!isExpanded)}
+              sx={{ mr: "10px" }}
+            >
+              {isExpanded ? <CloseIcon /> : <WorkspacesIcon />}
+            </IconButton>{" "}
+            {isExpanded && (
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{ alignItems: "center" }}
+              >
+                Domain Lookup
+              </Typography>
+            )}
+          </Box>
+          {isExpanded && (
+            <Box sx={{ height: "100vh" }}>
+              <DomainLookupSidebar />
+            </Box>
+          )}
+        </Box>
+      </Box>
     </Box>
   );
 }

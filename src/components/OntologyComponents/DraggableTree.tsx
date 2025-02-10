@@ -2,10 +2,12 @@ import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { NodeApi, NodeRendererProps, Tree, TreeApi } from "react-arborist";
 import SyncAltIcon from "@mui/icons-material/SyncAlt";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import styles from "./drag.tree.module.css";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { Box, Button, Switch, Tooltip } from "@mui/material";
+import { Box, Button, Switch, Tooltip, Typography } from "@mui/material";
+
 import {
   saveNewChangeLog,
   unlinkPropertyOf,
@@ -31,6 +33,7 @@ function DraggableTree({
   treeType,
   eachOntologyPath,
   alternatives,
+  domainsEmojis,
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -43,6 +46,7 @@ function DraggableTree({
   treeType?: string;
   eachOntologyPath?: any;
   alternatives?: { [key: string]: string[] };
+  domainsEmojis?: Record<string, string>;
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -369,36 +373,38 @@ function DraggableTree({
             {node.isEditing ? (
               <Input node={node} inputRef={inputRef} />
             ) : (
-              <>
-                {treeType === "oNet" && (
-                  <Tooltip
-                    title={
-                      <Box sx={{ display: "flex", gap: "8px" }}>
-                        <Box sx={{ color: "orange", fontWeight: "bold" }}>
-                          Alternatives:
-                        </Box>
-                        <Box>
-                          {alternatives
-                            ? (
-                                alternatives[
-                                  node.data.name.split(" ")[0].toLowerCase()
-                                ] || []
-                              ).join(", ")
-                            : ""}
-                        </Box>
-                      </Box>
-                    }
-                  >
-                    <em style={{ marginRight: "7px" }}>
-                      {node.data.name.split(" ")[0]}
-                    </em>
-                  </Tooltip>
-                )}
-
-                {treeType === "oNet"
-                  ? node.data.name.split(" ").slice(1).join(" ")
-                  : node.data.name}
-              </>
+              <Box>
+                <Typography>
+                  {node.data.name}{" "}
+                  {node.data.name.split(" ").length === 1 &&
+                    (
+                      (alternatives &&
+                        alternatives[
+                          node.data.name.split(" ")[0].toLowerCase()
+                        ]) ||
+                      []
+                    ).length > 0 && (
+                      <ArrowForwardIcon
+                        sx={{
+                          fontSize: "13px",
+                          mr: "10px",
+                          color: "orange",
+                        }}
+                      />
+                    )}
+                  {node.data.name.split(" ").length === 1 && (
+                    <span style={{ fontSize: "14px" }}>
+                      {alternatives
+                        ? (
+                            alternatives[
+                              node.data.name.split(" ")[0].toLowerCase()
+                            ] || []
+                          ).join(", ")
+                        : ""}
+                    </span>
+                  )}
+                </Typography>
+              </Box>
             )}
           </span>
         </Box>

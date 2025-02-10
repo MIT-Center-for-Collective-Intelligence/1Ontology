@@ -237,32 +237,18 @@ const DomainLookupSidebar: React.FC = () => {
         width: "100%",
         bgcolor: "background.paper",
         padding: 2,
+        height: "100vh",
+        overflowY: "auto",
       }}
     >
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" gutterBottom>
-            Domain Lookup
-          </Typography>
-        </AccordionSummary>
-        <AccordionDetails
-          sx={{
-            maxHeight: "90vh",
-            overflowY: "auto",
-            padding: 0,
-            p: 4,
-          }}
-        >
-          <List>
-            {domainsEmojis.map(({ domain, emoji }) => (
-              <ListItem sx={{ p: 0, m: 0 }} key={domain}>
-                <ListItemIcon sx={{ minWidth: 32 }}>{emoji}</ListItemIcon>
-                <ListItemText primary={domain} />
-              </ListItem>
-            ))}
-          </List>
-        </AccordionDetails>
-      </Accordion>
+      <List>
+        {domainsEmojis.map(({ domain, emoji }) => (
+          <ListItem sx={{ p: 0, m: 0 }} key={domain}>
+            <ListItemIcon sx={{ minWidth: 32 }}>{emoji}</ListItemIcon>
+            <ListItemText primary={domain} />
+          </ListItem>
+        ))}
+      </List>
     </Box>
   );
 };
