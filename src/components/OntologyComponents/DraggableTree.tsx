@@ -375,33 +375,16 @@ function DraggableTree({
             ) : (
               <Typography sx={{ color: node.data.category ? "orange" : "" }}>
                 {node.data.name}{" "}
-                {/*      {node.data.name.split(" ").length === 1 &&
-                  (
-                    (alternatives &&
-                      alternatives[
-                        node.data.name.split(" ")[0].toLowerCase()
-                      ]) ||
-                    []
-                  ).length > 0 && (
-                    <ArrowForwardIcon
-                      sx={{
-                        fontSize: "13px",
-                        mr: "10px",
-                        color: "orange",
-                      }}
-                    />
-                  )}
-                {node.data.name.split(" ").length === 1 && (
-                  <span style={{ fontSize: "14px" }}>
-                    {alternatives
-                      ? (
-                          alternatives[
-                            node.data.name.split(" ")[0].toLowerCase()
-                          ] || []
-                        ).join(", ")
-                      : ""}
+                {(node.data.actionAlternatives || []).length > 0 && (
+                  <span style={{ color: "orange", marginRight: "8px" }}>
+                    Alternatives:
                   </span>
-                )} */}
+                )}
+                {(node.data.actionAlternatives || []).length >= 0 && (
+                  <span style={{ fontSize: "14px" }}>
+                    {(node.data.actionAlternatives || []).join(", ")}
+                  </span>
+                )}
               </Typography>
             )}
           </span>

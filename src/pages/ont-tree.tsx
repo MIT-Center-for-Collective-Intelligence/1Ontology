@@ -192,7 +192,7 @@ const getTreeView = (
             nodes,
             !node.category ? node.id : undefined,
           ),
-
+          actionAlternatives: node.actionAlternatives,
           category: true,
         });
       } else {
@@ -227,6 +227,7 @@ const getTreeView = (
           !node.category ? node.id : undefined,
         ),
       ],
+      actionAlternatives: node.actionAlternatives,
       category: !!node.category,
     });
   }
@@ -277,7 +278,7 @@ const buildTree = (data: any[], nodes: any): TreeNode[] => {
     ];
 
     const getIndex = (title: string): number => {
-      const index = order.indexOf(title);
+      const index = order.indexOf(title.toLowerCase());
       return index !== -1 ? index : order.length;
     };
 
@@ -373,7 +374,6 @@ function OntTree() {
       sx={{
         width: "100%",
         height: "100vh",
-
       }}
     >
       <Box sx={{ display: "flex" }}>
