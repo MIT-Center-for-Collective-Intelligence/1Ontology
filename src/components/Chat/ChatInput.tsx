@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { getStorage } from "firebase/storage";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Mention, MentionsInput } from "react-mentions";
+import { Mention, MentionsInput, MentionsInputStyle } from "react-mentions";
 import { MentionUser } from "./MentionUser";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import { IChatMessage } from " @components/types/IChat";
@@ -60,7 +60,7 @@ const ChatInput = ({
   const storage = getStorage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageUrls, setImageUrls] = useState<string[]>(
-    editing?.imageUrls || []
+    editing?.imageUrls || [],
   );
   const [inputValue, setInputValue] = useState<string>(editing?.text || "");
   const { isUploading, percentageUploaded, uploadImage } = useUploadImage({
@@ -71,7 +71,7 @@ const ChatInput = ({
     fileInputRef?.current?.click();
   }, [fileInputRef]);
 
-  let style = {
+  let style: MentionsInputStyle = {
     highlighter: {
       boxSizing: "border-box",
       overflow: "hidden",
@@ -123,7 +123,7 @@ const ChatInput = ({
 
   useEffect(() => {
     const savedInputValue = localStorage.getItem(
-      `chatInputValue-${type}-${chatType}`
+      `chatInputValue-${type}-${chatType}`,
     );
     if (isEditing) {
       setInputValue(editing?.text);
@@ -164,13 +164,13 @@ const ChatInput = ({
           },
           (message: any) => {
             confirmIt(message, "ok", "");
-          }
+          },
         );
       } catch (error) {
         confirmIt("Sorry, Your image could't get uploaded", "ok", "");
       }
     },
-    [setImageUrls, user]
+    [setImageUrls, user],
   );
   const onKeyDown = (event: any) => {
     if (
@@ -186,7 +186,7 @@ const ChatInput = ({
               inputValue,
               imageUrls,
               message?.parentMessage,
-              message?.id
+              message?.id,
             );
           } else {
             const subscribed = [
