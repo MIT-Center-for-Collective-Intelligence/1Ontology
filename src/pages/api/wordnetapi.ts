@@ -114,11 +114,72 @@ function buildHypernymTree(nodes: TreeNode[]): any {
     const pos = posToString(node.synset.pos);
     const children = buildHypernymTree(node.children);
     return {
-      children,
       id: db.collection("nodes").id,
-      name: `${synonyms} ${pos} - ${node.synset.gloss}`,
+      name: `${synonyms} [${pos}] - ${node.synset.gloss}`,
+      children,
     };
   });
+}
+async function buildMeronymTree(
+  synset: Synset,
+  visited: Set<string> = new Set(),
+): Promise<any> {
+  const id = `${synset.synsetOffset}_${synset.pos}`;
+  if (visited.has(id)) {
+    return null;
+  }
+  visited.add(id);
+
+  const partPtrs = synset.ptrs.filter((ptr) => ptr.pointerSymbol === "%p");
+  if (partPtrs.length === 0) return null;
+
+  const children: TreeNode[] = [];
+
+  for (const ptr of partPtrs) {
+    const partSynset: Synset | null = await new Promise((resolve) => {
+      wordnet.get(
+        ptr.synsetOffset,
+        ptr.pos,
+        (err: Error | null, res: unknown) => {
+          resolve(err || !res ? null : (res as Synset));
+        },
+      );
+    });
+    if (partSynset) {
+      const childNode = await buildMeronymTree(partSynset, new Set(visited));
+      if (childNode) {
+        children.push(childNode);
+      }
+    }
+  }
+
+  return {
+    id: db.collection("nodes").id,
+    name: `${getSynonymString(synset)} [${posToString(synset.pos)}] - ${synset.gloss}`,
+    children,
+  };
+}
+
+async function buildPartOfTrees(nodes: TreeNode[]): Promise<any> {
+  const result = [];
+  for (const node of nodes) {
+    // Check if this synset has any part meronym pointers.
+    const partPtrs = node.synset.ptrs.filter(
+      (ptr) => ptr.pointerSymbol === "%p",
+    );
+    if (partPtrs.length > 0) {
+      result.push({
+        name: `${getSynonymString(node.synset)} [${posToString(
+          node.synset.pos,
+        )}] part of:`,
+        children: [await buildMeronymTree(node.synset)],
+      });
+    }
+
+    const _R = await buildPartOfTrees(node.children);
+    result.push(..._R);
+  }
+  return result;
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -147,8 +208,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const hypernymTree = buildHypernymTree(treeRoots);
+  console.log(treeRoots);
+  const partsTree = await buildPartOfTrees(treeRoots);
 
-  res.status(200).json({ word: query, hypernymTree });
+  res.status(200).json({ word: query, hypernymTree, partsTree });
 }
 
 export default handler;
