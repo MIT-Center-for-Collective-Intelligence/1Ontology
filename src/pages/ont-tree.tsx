@@ -377,7 +377,7 @@ function OntTree() {
       }}
     >
       <Box sx={{ display: "flex" }}>
-        <Box sx={{ width: isExpanded ? "80%" : "98%" }}>
+        <Box sx={{ width: /* isExpanded ? "80%" : "98%" */ "100%" }}>
           <DraggableTree
             treeViewData={treeData}
             setSnackbarMessage={() => {}}
@@ -392,7 +392,7 @@ function OntTree() {
             treeType="oNet"
           />
         </Box>
-        <Box
+        {/*  <Box
           sx={{
             width: isExpanded ? "20%" : "2%",
             backgroundColor: isExpanded ? "#424242" : "",
@@ -434,7 +434,7 @@ function OntTree() {
               <DomainLookupSidebar />
             </Box>
           )}
-        </Box>
+        </Box> */}
       </Box>
     </Box>
   );
