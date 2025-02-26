@@ -237,7 +237,7 @@ Below is an **illustrative** JSON structure to demonstrate the **format** and **
     const response: any = extractJSON(
       completion.choices[0].message.content || "",
     );
-    if (!response?.groupHierarchy || !response?.nodes || response?.links) {
+    if (!response?.groupHierarchy || !response?.nodes || !response?.links) {
       throw Error("Incomplete JSON");
     }
     return res.status(200).json({ response });
