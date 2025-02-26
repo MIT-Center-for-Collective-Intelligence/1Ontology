@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { OpenAI } from "openai";
-import { askGemini } from "./helpers";
+import { askGemini, openai } from "./helpers";
 import { Content } from "@google/generative-ai";
 
 import {
@@ -77,24 +77,8 @@ const saveLogs = (
     console.error(error);
   }
 };
-const openai = new OpenAI({
-  apiKey: process.env.MIT_CCI_API_KEY,
-  organization: process.env.MIT_CCI_API_ORG_ID,
-});
 
-const extractJSON = (text: string) => {
-  try {
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
-    if (end === -1 || start === -1) {
-      return { jsonObject: {}, isJSON: false };
-    }
-    const jsonArrayString = text.slice(start, end + 1);
-    return { jsonObject: JSON.parse(jsonArrayString), isJSON: true };
-  } catch (error) {
-    return { jsonObject: {}, isJSON: false };
-  }
-};
+
 const sendLLMRequest = async ({
   prompt,
   model = process.env.MODEL as ChatModel | GeminiModels,

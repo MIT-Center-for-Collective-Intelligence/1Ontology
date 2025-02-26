@@ -13,6 +13,7 @@ import {
   HarmBlockThreshold,
   HarmCategory,
 } from "@google/generative-ai";
+import OpenAI from "openai";
 
 const apiKey = process.env.GEMINI_API_KEY;
 
@@ -95,3 +96,8 @@ export const askGemini = async (contents: Content[]) => {
   }
   return isJSONObject.jsonObject;
 };
+
+export const openai = new OpenAI({
+  apiKey: process.env.MIT_CCI_API_KEY,
+  organization: process.env.MIT_CCI_API_ORG_ID,
+});

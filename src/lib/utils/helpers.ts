@@ -1375,3 +1375,17 @@ export const clearNotifications = async (nodeId: string) => {
     batch.update(notDoc.ref, { seen: true });
   }
 };
+
+export const extractJSON = (text: string) => {
+  try {
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (end === -1 || start === -1) {
+      return { jsonObject: {}, isJSON: false };
+    }
+    const jsonArrayString = text.slice(start, end + 1);
+    return { jsonObject: JSON.parse(jsonArrayString), isJSON: true };
+  } catch (error) {
+    return { jsonObject: {}, isJSON: false };
+  }
+};
