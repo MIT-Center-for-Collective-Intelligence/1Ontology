@@ -16,7 +16,7 @@ import {
 } from " @components/lib/utils/helpersCopilot";
 import { INode } from " @components/types/INode";
 import fbAuth from " @components/middlewares/fbAuth";
-import { getDoerCreate } from " @components/lib/utils/helpers";
+import { extractJSON, getDoerCreate } from " @components/lib/utils/helpers";
 import {
   copilotNewNode,
   getCopilotPrompt,
@@ -77,7 +77,6 @@ const saveLogs = (
     console.error(error);
   }
 };
-
 
 const sendLLMRequest = async ({
   prompt,
