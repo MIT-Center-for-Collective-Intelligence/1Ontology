@@ -6,8 +6,7 @@ import { extractJSON } from " @components/lib/utils/helpers";
 
 async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
   try {
-    const { documentDetailed } = req.body.data;
-
+    const { documentDetailed } = req.body;
     const prompt = `**You are an expert in systems thinking and causal loop diagrams.** You will be provided with a large text document describing a business case. Your task is to **deeply analyze** the document and generate a **causal loop diagram** in **JSON** format with the following specifications:
 
 ---
@@ -243,7 +242,8 @@ Below is an **illustrative** JSON structure to demonstrate the **format** and **
     }
     return res.status(200).json({ response });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    console.error(error);
+    return res.status(500).json({ error: true });
   }
 }
 
