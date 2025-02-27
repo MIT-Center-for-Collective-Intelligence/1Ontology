@@ -1,10 +1,31 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import Cors from "cors";
 
+const cors = Cors({
+  methods: ["POST", "GET", "OPTIONS"],
+  origin: "*",
+  optionsSuccessStatus: 200,
+});
+function runMiddleware(
+  req: NextApiRequest,
+  res: NextApiResponse,
+  fn: Function,
+) {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result: any) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+}
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { openai } from "./helpers";
 import { extractJSON } from " @components/lib/utils/helpers";
 
 async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
+  await runMiddleware(req, res, cors);
   try {
     const { documentDetailed } = req.body;
     const prompt = `**You are an expert in systems thinking and causal loop diagrams.** You will be provided with a large text document describing a business case. Your task is to **deeply analyze** the document and generate a **causal loop diagram** in **JSON** format with the following specifications:
