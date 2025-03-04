@@ -149,7 +149,7 @@ const domainsEmojis: Record<string, string> = {
 };
 
 const getTreeView = (
-  mainCategories: INode[],
+  mainCategories: any[],
   visited: Map<string, any> = new Map(),
   nodes: any,
   parentId?: string,
@@ -229,9 +229,30 @@ const getTreeView = (
       ],
       actionAlternatives: node.actionAlternatives,
       category: !!node.category,
+      task: !!node.task,
+      comments: !!node.comments,
     });
   }
-  return newNodes.sort((a, b) => b.children.length - a.children.length);
+  return newNodes.sort((a, b) => {
+    // If both nodes are "sentences" or "comments", return 0 (no change in order)
+    if (
+      (a.name === "sentences" || a.name === "comments") &&
+      (b.name === "sentences" || b.name === "comments")
+    ) {
+      return 0;
+    }
+
+    // If one of the nodes is "sentences" or "comments", put it at the end
+    if (a.name === "sentences" || a.name === "comments") {
+      return 1;
+    }
+    if (b.name === "sentences" || b.name === "comments") {
+      return -1;
+    }
+
+    // Otherwise, sort based on the number of children
+    return b.children.length - a.children.length;
+  });
 };
 
 const buildTree = (data: any[], nodes: any): TreeNode[] => {
@@ -294,6 +315,7 @@ function OntTree() {
   const [loading, setLoading] = useState(false);
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [expandDefault, setExpandDefault] = useState("");
 
   const getData = async () => {
     setLoading(true);
@@ -302,12 +324,17 @@ function OntTree() {
     );
     const nodes_data: any = [];
     const nodes: any = {};
+    let actId = "";
     nodesDocs.docs.forEach((doc) => {
       nodes_data.push(doc.data());
       nodes[doc.id] = {
         ...doc.data(),
         category: doc.data().title.endsWith("?"),
       };
+      if (doc.data().title === "act") {
+        actId = doc.id;
+      }
+      setExpandDefault(actId);
     });
     setTreeData(buildTree(nodes_data, nodes));
     setLoading(false);
@@ -392,6 +419,7 @@ function OntTree() {
             alternatives={alternatives}
             domainsEmojis={domainsEmojis}
             treeType="oNet"
+            expandDefault={expandDefault}
           />
         </Box>
         {/*  <Box

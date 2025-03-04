@@ -34,6 +34,7 @@ function DraggableTree({
   eachOntologyPath,
   alternatives,
   domainsEmojis,
+  expandDefault,
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -47,6 +48,7 @@ function DraggableTree({
   eachOntologyPath?: any;
   alternatives?: { [key: string]: string[] };
   domainsEmojis?: Record<string, string>;
+  expandDefault?: string;
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -119,6 +121,15 @@ function DraggableTree({
       return () => clearTimeout(timeout);
     }
   }, [tree, currentVisibleNode?.id]);
+
+  useEffect(() => {
+    if (expandDefault) {
+      console.log("expandDefault ==>", expandDefault);
+      setTimeout(() => {
+        expandNodeById(expandDefault);
+      }, 3000);
+    }
+  }, [expandDefault]);
 
   useEffect(() => {
     setCount(tree?.visibleNodes.length ?? 0);
@@ -373,7 +384,16 @@ function DraggableTree({
             {node.isEditing ? (
               <Input node={node} inputRef={inputRef} />
             ) : (
-              <Typography sx={{ color: node.data.category ? "orange" : "" }}>
+              <Typography
+                sx={{
+                  color:
+                    node.data.task || node.data.comments
+                      ? "gray"
+                      : node.data.category
+                        ? "orange"
+                        : "",
+                }}
+              >
                 {node.data.name}{" "}
                 {(node.data.actionAlternatives || []).length > 0 && (
                   <span style={{ color: "orange", marginRight: "8px" }}>

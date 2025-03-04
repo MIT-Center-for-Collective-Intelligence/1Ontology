@@ -195,4 +195,6 @@ export type TreeData = {
   nodeType: string;
   nodeId: string;
   actionAlternatives?: string[];
+  task?: boolean;
+  comments?: boolean;
 };
