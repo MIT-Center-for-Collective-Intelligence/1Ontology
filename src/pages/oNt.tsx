@@ -234,23 +234,17 @@ const getTreeView = (
     });
   }
   return newNodes.sort((a, b) => {
-    // If both nodes are "sentences" or "comments", return 0 (no change in order)
-    if (
-      (a.name === "sentences" || a.name === "comments") &&
-      (b.name === "sentences" || b.name === "comments")
-    ) {
+    if ((!!a.task || !!a.comments) && (!!b.task || !!b.comments)) {
       return 0;
     }
 
-    // If one of the nodes is "sentences" or "comments", put it at the end
-    if (a.name === "sentences" || a.name === "comments") {
+    if (!!a.task || b.comments) {
       return 1;
     }
-    if (b.name === "sentences" || b.name === "comments") {
+    if (!!b.task || !!b.comments) {
       return -1;
     }
 
-    // Otherwise, sort based on the number of children
     return b.children.length - a.children.length;
   });
 };
