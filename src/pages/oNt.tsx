@@ -214,7 +214,7 @@ const getTreeView = (
     }
     visited.set(id, true);
     newNodes.push({
-      id,
+      id: node.title.toLowerCase() === "act" ? "root" : id,
       nodeId: node.id,
       name: node.title,
       nodeType: node.nodeType,

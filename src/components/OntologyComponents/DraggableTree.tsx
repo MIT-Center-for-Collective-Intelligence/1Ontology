@@ -123,13 +123,16 @@ function DraggableTree({
   }, [tree, currentVisibleNode?.id]);
 
   useEffect(() => {
-    if (expandDefault) {
-      console.log("expandDefault ==>", expandDefault);
-      setTimeout(() => {
-        expandNodeById(expandDefault);
-      }, 3000);
+    if (tree && treeData.length > 0 && firstLoad) {
+      const rootNode = tree.get("root");
+      console.log("rootNode==>", rootNode);
+      if (rootNode) {
+        rootNode.open();
+      }
+
+      setFirstLoad(false);
     }
-  }, [expandDefault]);
+  }, [tree, treeData, firstLoad]);
 
   useEffect(() => {
     setCount(tree?.visibleNodes.length ?? 0);
