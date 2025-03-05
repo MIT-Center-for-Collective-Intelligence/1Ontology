@@ -39,6 +39,7 @@ export interface ApiKeyInfo {
   userId: string;
   uname: string;
   clientId: string;
+  key?: string;
   createdAt: Date;
   lastUsed: Date;
   isActive: boolean;

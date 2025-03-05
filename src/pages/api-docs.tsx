@@ -1,8 +1,17 @@
-// pages/api-docs.tsx
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import type { GetStaticProps, NextPage } from 'next';
-import { Box, useTheme } from '@mui/material';
+import type { GetStaticProps } from 'next';
+import { 
+  Box, 
+  Button, 
+  Dialog, 
+  DialogContent, 
+  DialogTitle, 
+  IconButton,
+  useTheme 
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import KeyIcon from '@mui/icons-material/Key';
 import ApiAuthDashboard from ' @components/components/ApiAuthDashboard/ApiAuthDashboard';
 import { OpenAPIGenerator } from ' @components/lib/utils/openApiGenerator';
 import path from 'path';
@@ -71,6 +80,7 @@ export const getStaticProps: GetStaticProps<ApiDocsProps> = async () => {
 const ApiDocs = ({ spec }: ApiDocsProps) => {
   const theme = useTheme();
   const [handleThemeSwitch] = useThemeChange();
+  const [openAuthDialog, setOpenAuthDialog] = useState(false);
 
   // Custom themes to match your app
   const themes = {
@@ -112,14 +122,27 @@ const ApiDocs = ({ spec }: ApiDocsProps) => {
     }
   }, [spec]);
 
-  // if (error) {
-  //   return (
-  //     <Box sx={{ p: 4, color: 'error.main' }}>
-  //       <h1>Error Loading API Documentation</h1>
-  //       <p>{error}</p>
-  //     </Box>
-  //   );
-  // }
+  const handleOpenAuthDialog = () => {
+    setOpenAuthDialog(true);
+  };
+
+  const handleCloseAuthDialog = () => {
+    setOpenAuthDialog(false);
+  };
+
+  // Function to handle API key updates from the dialog
+  const handleApiKeyGenerated = (apiKey: string) => {
+    // Update the RapiDoc authentication field
+    const authInput = document.querySelector('rapi-doc input[data-tab="authentication"]') as HTMLInputElement;
+    if (authInput) {
+      authInput.value = apiKey;
+      // Trigger the SET button click if it exists
+      const setButton = authInput.parentElement?.querySelector('button');
+      if (setButton) {
+        setButton.click();
+      }
+    }
+  };
 
   return (
     <>
@@ -131,6 +154,7 @@ const ApiDocs = ({ spec }: ApiDocsProps) => {
       </Head>
 
       <div className="docs-container">
+        {/* Theme toggle button */}
         <button
           onClick={handleThemeSwitch}
           className="theme-toggle"
@@ -141,14 +165,14 @@ const ApiDocs = ({ spec }: ApiDocsProps) => {
           </span>
         </button>
 
-        <Box sx={{ 
-          p: 3, 
-          bgcolor: theme.palette.background.default,
-          borderBottom: 1,
-          borderColor: 'divider'
-        }}>
-          <ApiAuthDashboard />
-        </Box>
+        {/* API Key management button */}
+        <button
+          onClick={handleOpenAuthDialog}
+          className="api-key-button"
+          aria-label="Manage API Keys"
+        >
+          <span className="material-icons">key</span>
+        </button>
 
         <rapi-doc
           id="rapidoc-element"
@@ -175,16 +199,48 @@ const ApiDocs = ({ spec }: ApiDocsProps) => {
           default-schema-tab="example"
           response-area-bg-color={currentTheme.responseAreaBgColor}
           font-size="large"
-        >
-          <div slot='footer'
-            style={{
-              padding: theme.spacing(3),
-              borderTop: `1px solid ${theme.palette.divider}`
-            }}>
-            {/* <ApiAuthDashboard /> */}
-          </div>
-        </rapi-doc>
+        />
       </div>
+
+      {/* API Auth Dashboard Dialog */}
+      <Dialog
+        open={openAuthDialog}
+        onClose={handleCloseAuthDialog}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: theme.palette.background.paper,
+            borderRadius: 2,
+            boxShadow: theme.shadows[10]
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          pr: 1
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <KeyIcon sx={{ mr: 1, color: currentTheme.primaryColor }} />
+            API Key Management
+          </Box>
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseAuthDialog}
+            sx={{ color: 'text.secondary' }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 3 }}>
+          <ApiAuthDashboard 
+            onKeyGenerated={handleApiKeyGenerated}
+            isPopup={true}
+          />
+        </DialogContent>
+      </Dialog>
 
       <style jsx global>{`
         body {
@@ -227,6 +283,34 @@ const ApiDocs = ({ spec }: ApiDocsProps) => {
           font-size: 24px;
         }
 
+        /* API Key button styles */
+        .api-key-button {
+          position: fixed;
+          top: 1rem;
+          right: 4rem; /* Position it to the left of theme toggle */
+          z-index: 1000;
+          background-color: ${theme.palette.mode === "dark" ? '#333333' : '#FFFFFF'};
+          border: 1px solid ${currentTheme.borderColor};
+          border-radius: 8px;
+          padding: 8px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .api-key-button:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .api-key-button .material-icons {
+          color: ${currentTheme.primaryColor};
+          font-size: 24px;
+        }
+
         rapi-doc {
           width: 100%;
           height: 100vh;
@@ -244,14 +328,6 @@ const ApiDocs = ({ spec }: ApiDocsProps) => {
         rapi-doc::part(section-navbar) {
           border-right: 1px solid ${currentTheme.borderColor};
         }
-
-        // rapi-doc::part(section-operation-tag) {
-        //   padding: 1rem;
-        //   margin: 1rem 0;
-        //   border-radius: 8px;
-        //   background-color: ${currentTheme.navBgColor};
-        //   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        // }
 
         rapi-doc::part(section-operation) {
           padding: 1rem;

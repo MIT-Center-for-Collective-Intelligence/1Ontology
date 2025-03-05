@@ -1,5 +1,5 @@
 /**
-* @openapi
+* @
 * /api/keys:
 *   get:
 *     tags:
@@ -216,7 +216,12 @@ async function handler(
   res: NextApiResponse<ApiResponse>
 ) {
   const { method } = req;
-
+  
+  // Handle API key retrieval by clientId
+  if (method === 'GET' && req.query.clientId && req.query.userId) {
+    return handleGetKeyByClientId(req, res);
+  }
+  
   switch (method) {
     case 'GET': {
       try {
@@ -228,7 +233,6 @@ async function handler(
             metadata: { clientId: 'system' }
           });
         }
-
         const keys = await apiKeyManager.listKeys(userId as string);
         return res.status(200).json({
           success: true,
@@ -244,11 +248,9 @@ async function handler(
         });
       }
     }
-
     case 'POST': {
       try {
         const { userId, uname, description } = req.body;
-        
         if (!userId || !uname) {
           return res.status(400).json({
             success: false,
@@ -256,14 +258,12 @@ async function handler(
             metadata: { clientId: 'system' }
           });
         }
-
         const { apiKey, keyData } = await apiKeyManager.generateKey({
           userId,
           uname,
           clientId: `client_${Date.now()}`,
           description: description || `API Key generated on ${new Date().toLocaleDateString()}`
         });
-
         return res.status(201).json({
           success: true,
           data: { apiKey, keyData },
@@ -278,11 +278,9 @@ async function handler(
         });
       }
     }
-
     case 'DELETE': {
       try {
         const { clientId, userId } = req.query;
-        
         if (!clientId || !userId) {
           return res.status(400).json({
             success: false,
@@ -290,9 +288,7 @@ async function handler(
             metadata: { clientId: 'system' }
           });
         }
-
         const success = await apiKeyManager.deactivateKey(clientId as string, userId as string);
-        
         if (!success) {
           return res.status(404).json({
             success: false,
@@ -300,7 +296,6 @@ async function handler(
             metadata: { clientId: 'system' }
           });
         }
-
         return res.status(200).json({
           success: true,
           metadata: { clientId: 'system' }
@@ -313,7 +308,6 @@ async function handler(
         });
       }
     }
-
     default:
       res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
       return res.status(405).json({
@@ -321,6 +315,50 @@ async function handler(
         error: `Method ${method} Not Allowed`,
         metadata: { clientId: 'system' }
       });
+  }
+}
+
+/**
+ * Handles the retrieval of a specific API key by client ID
+ */
+async function handleGetKeyByClientId(
+  req: NextApiRequest, 
+  res: NextApiResponse<ApiResponse>
+) {
+  try {
+    const { clientId, userId } = req.query;
+    
+    if (!clientId || !userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client ID and User ID are required',
+        metadata: { clientId: 'system' }
+      });
+    }
+
+    const apiKey = await apiKeyManager.getKeyByClientId(clientId as string, userId as string);
+    
+    if (!apiKey) {
+      return res.status(404).json({
+        success: false,
+        error: 'API key not found or inactive',
+        metadata: { clientId: 'system' }
+      });
+    }
+
+    // Return the API key
+    return res.status(200).json({
+      success: true,
+      data: { apiKey },
+      metadata: { clientId: 'system' }
+    });
+  } catch (error) {
+    console.error('Error retrieving API key:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve API key',
+      metadata: { clientId: 'system' }
+    });
   }
 }
 
