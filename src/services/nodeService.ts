@@ -135,7 +135,7 @@ export class NodeService {
           // Create a main collection with all generalization nodes
           normalizedGeneralizations.push({
             collectionName: 'main',
-            nodes: allNodes.filter(n => n && n.id) // Ensure we only include valid nodes
+            nodes: allNodes.filter(n => n && n.id)
           });
         }
       }
@@ -145,8 +145,6 @@ export class NodeService {
       const parentData = await NodeInheritanceService.getParentNodeData(normalizedGeneralizations);
       const parentId = normalizedGeneralizations[0]?.nodes[0]?.id;
 
-      // Instead of using the generated inheritance structure, we'll build our own
-      // to ensure the references are set correctly
       const inheritance: IInheritance = {};
 
       // Create a working copy of properties to modify
@@ -167,12 +165,9 @@ export class NodeService {
 
       // For each property in the parent, set up the inheritance structure correctly
       for (const key in parentData.properties) {
-        // If the property doesn't exist in the child, inherit it
         if (!(key in node.properties)) {
-          // Inherit the property value
           properties[key] = parentData.properties[key];
 
-          // For parts and isPartOf, ensure they have the main collection
           if (key === 'parts' || key === 'isPartOf') {
             properties[key] = NodePartsService.normalizeCollection(properties[key]);
           }
@@ -192,8 +187,6 @@ export class NodeService {
               inheritanceType: "inheritUnlessAlreadyOverRidden"
             };
           } else {
-            // Values are the same, but property exists in request
-            // We should still consider it from parent
             inheritance[key] = {
               ref: parentId,
               inheritanceType: parentData.inheritance[key]?.inheritanceType || "inheritUnlessAlreadyOverRidden"
@@ -238,7 +231,7 @@ export class NodeService {
             normalizedSpecializations = [
               {
                 collectionName: 'main',
-                nodes: allNodes.filter(n => n && n.id) // Ensure we only include valid nodes
+                nodes: allNodes.filter(n => n && n.id)
               }
             ];
           }
@@ -500,7 +493,7 @@ export class NodeService {
       return [
         {
           collectionName: 'main',
-          nodes: allNodes.filter(n => n && n.id) // Ensure we only include valid nodes
+          nodes: allNodes.filter(n => n && n.id)
         }
       ];
     } else {
@@ -752,8 +745,6 @@ export class NodeService {
                     inheritanceType: "inheritUnlessAlreadyOverRidden"
                   };
                 } else {
-                  // Values are the same, but property is explicitly set
-                  // We should still consider it from parent
                   newInheritance[key] = {
                     ref: newParentId,
                     inheritanceType: parentData.inheritance[key]?.inheritanceType || "inheritUnlessAlreadyOverRidden"
@@ -1493,7 +1484,6 @@ export class NodeService {
         // Step 2: Prepare updates
         const updates: { [key: string]: any } = {};
 
-        // Create a deep copy of the properties and inheritance so we can modify them
         const updatedProperties = { ...currentNode.properties };
         const updatedInheritance = { ...currentNode.inheritance };
         const updatedPropertyType = { ...currentNode.propertyType };
@@ -1799,7 +1789,7 @@ export class NodeService {
         idCount.set(id, (idCount.get(id) || 0) + 1);
 
         if (idCount.get(id) === 2) {
-          // Only add to duplicates the first time we find a duplicate
+          // Only add to duplicates the first time there is a duplicate
           duplicates.push(id);
         }
       });

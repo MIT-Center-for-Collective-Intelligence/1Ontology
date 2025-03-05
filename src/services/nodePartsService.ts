@@ -571,9 +571,16 @@ export class NodePartsService {
     * 
     * This method reorders nodes within the main collection of parts.
     */
+  /**
+    * Reorders parts within a collection
+    * 
+    * This method reorders nodes within the main collection of parts.
+    */
   static async reorderParts(
     nodeId: string,
-    updatedParts: ICollection[],
+    nodes: { id: string }[],
+    newIndices: number[],
+    collectionName: string = 'main',
     uname: string,
     reasoning: string
   ): Promise<INode> {
@@ -581,8 +588,11 @@ export class NodePartsService {
       if (!nodeId?.trim()) {
         throw new Error('Invalid node ID');
       }
-      if (!Array.isArray(updatedParts)) {
-        throw new Error('Updated parts must be an array');
+      if (!Array.isArray(nodes) || nodes.length === 0) {
+        throw new Error('No nodes provided for reordering');
+      }
+      if (!Array.isArray(newIndices) || newIndices.length !== nodes.length) {
+        throw new Error('New indices array must match nodes array length');
       }
       if (!uname?.trim()) {
         throw new Error('Username is required');
@@ -602,10 +612,75 @@ export class NodePartsService {
           throw new Error('Cannot modify a deleted node');
         }
 
+        // Ensure the parts property exists with the specified collection
+        if (!Array.isArray(currentNode.properties.parts)) {
+          currentNode.properties.parts = [{ collectionName: 'main', nodes: [] }];
+        }
+
+        // Find the collection to reorder
+        const collectionIndex = currentNode.properties.parts.findIndex(c => c.collectionName === collectionName);
+        if (collectionIndex === -1) {
+          throw new Error(`Collection '${collectionName}' not found in node's parts`);
+        }
+
+        const collection = currentNode.properties.parts[collectionIndex];
+
+        // Verify all nodes exist in the collection
+        const existingNodeMap = new Map(collection.nodes.map((node, index) => [node.id, index]));
+        for (const node of nodes) {
+          if (!existingNodeMap.has(node.id)) {
+            throw new Error(`Node ${node.id} not found in collection ${collectionName}`);
+          }
+        }
+
         // Save original parts for changelog
         const originalParts = JSON.parse(JSON.stringify(currentNode.properties.parts || []));
 
-        // Step 2: Prepare the update
+        // Create a new array with all the current nodes
+        const updatedNodes = [...collection.nodes];
+
+        // Prepare changeDetails for the changelog
+        const changeDetails: any = {
+          draggableNodeId: '',
+          source: { droppableId: '' + collectionIndex, index: 0 },
+          destination: { droppableId: '' + collectionIndex, index: 0 }
+        };
+
+        // Process each node to be moved
+        for (let i = 0; i < nodes.length; i++) {
+          const nodeId = nodes[i].id;
+          const currentIndex = existingNodeMap.get(nodeId);
+          const newIndex = Math.min(newIndices[i], updatedNodes.length - 1);
+
+          if (currentIndex !== undefined && currentIndex !== newIndex) {
+            // Store change details for the first moved node (for changelog)
+            if (changeDetails.draggableNodeId === '') {
+              changeDetails.draggableNodeId = nodeId;
+              changeDetails.source.index = currentIndex;
+              changeDetails.destination.index = newIndex;
+            }
+
+            // Remove the node from its current position
+            const [node] = updatedNodes.splice(currentIndex, 1);
+
+            // Insert the node at its new position
+            updatedNodes.splice(newIndex, 0, node);
+
+            // Update indices for remaining operations
+            existingNodeMap.clear();
+            updatedNodes.forEach((n, idx) => existingNodeMap.set(n.id, idx));
+          }
+        }
+
+        // Update the collection with the reordered nodes
+        const updatedParts = currentNode.properties.parts.map((c, idx) => {
+          if (idx === collectionIndex) {
+            return { ...c, nodes: updatedNodes };
+          }
+          return c;
+        });
+
+        // Update the node
         const updatedNode: INode = {
           ...currentNode,
           properties: {
@@ -615,7 +690,7 @@ export class NodePartsService {
           contributors: Array.from(new Set([...(currentNode.contributors || []), uname]))
         };
 
-        // Step 3: Execute the update
+        // Execute the update
         const updates = {
           'properties.parts': updatedParts,
           contributors: updatedNode.contributors
@@ -623,7 +698,7 @@ export class NodePartsService {
 
         transaction.update(nodeRef, updates);
 
-        // Step 4: Create changelog entry
+        // Create changelog entry with proper change details
         await ChangelogService.log(
           nodeId,
           uname,
@@ -633,6 +708,7 @@ export class NodePartsService {
           'parts',
           originalParts,
           updatedParts,
+          changeDetails
         );
 
         return updatedNode;
@@ -1219,13 +1295,15 @@ export class NodePartsService {
 
 
   /**
-   * Reorders isPartOf relationships within the main collection
+   * Reorders isPartOf relationships within a collection
    * 
    * This method reorders container nodes within the main collection of isPartOf.
    */
   static async reorderIsPartOf(
     nodeId: string,
-    updatedIsPartOf: ICollection[],
+    nodes: { id: string }[],
+    newIndices: number[],
+    collectionName: string = 'main',
     uname: string,
     reasoning: string
   ): Promise<INode> {
@@ -1233,8 +1311,11 @@ export class NodePartsService {
       if (!nodeId?.trim()) {
         throw new Error('Invalid node ID');
       }
-      if (!Array.isArray(updatedIsPartOf)) {
-        throw new Error('Updated isPartOf must be an array');
+      if (!Array.isArray(nodes) || nodes.length === 0) {
+        throw new Error('No nodes provided for reordering');
+      }
+      if (!Array.isArray(newIndices) || newIndices.length !== nodes.length) {
+        throw new Error('New indices array must match nodes array length');
       }
       if (!uname?.trim()) {
         throw new Error('Username is required');
@@ -1254,10 +1335,75 @@ export class NodePartsService {
           throw new Error('Cannot modify a deleted node');
         }
 
+        // Ensure the isPartOf property exists with the specified collection
+        if (!Array.isArray(currentNode.properties.isPartOf)) {
+          currentNode.properties.isPartOf = [{ collectionName: 'main', nodes: [] }];
+        }
+
+        // Find the collection to reorder
+        const collectionIndex = currentNode.properties.isPartOf.findIndex(c => c.collectionName === collectionName);
+        if (collectionIndex === -1) {
+          throw new Error(`Collection '${collectionName}' not found in node's isPartOf`);
+        }
+
+        const collection = currentNode.properties.isPartOf[collectionIndex];
+
+        // Verify all nodes exist in the collection
+        const existingNodeMap = new Map(collection.nodes.map((node, index) => [node.id, index]));
+        for (const node of nodes) {
+          if (!existingNodeMap.has(node.id)) {
+            throw new Error(`Node ${node.id} not found in collection ${collectionName}`);
+          }
+        }
+
         // Save original isPartOf for changelog
         const originalIsPartOf = JSON.parse(JSON.stringify(currentNode.properties.isPartOf || []));
 
-        // Step 2: Prepare the update
+        // Create a new array with all the current nodes
+        const updatedNodes = [...collection.nodes];
+
+        // Prepare changeDetails for the changelog
+        const changeDetails: any = {
+          draggableNodeId: '',
+          source: { droppableId: '' + collectionIndex, index: 0 },
+          destination: { droppableId: '' + collectionIndex, index: 0 }
+        };
+
+        // Process each node to be moved
+        for (let i = 0; i < nodes.length; i++) {
+          const nodeId = nodes[i].id;
+          const currentIndex = existingNodeMap.get(nodeId);
+          const newIndex = Math.min(newIndices[i], updatedNodes.length - 1);
+
+          if (currentIndex !== undefined && currentIndex !== newIndex) {
+            // Store change details for the first moved node (for changelog)
+            if (changeDetails.draggableNodeId === '') {
+              changeDetails.draggableNodeId = nodeId;
+              changeDetails.source.index = currentIndex;
+              changeDetails.destination.index = newIndex;
+            }
+
+            // Remove the node from its current position
+            const [node] = updatedNodes.splice(currentIndex, 1);
+
+            // Insert the node at its new position
+            updatedNodes.splice(newIndex, 0, node);
+
+            // Update indices for remaining operations
+            existingNodeMap.clear();
+            updatedNodes.forEach((n, idx) => existingNodeMap.set(n.id, idx));
+          }
+        }
+
+        // Update the collection with the reordered nodes
+        const updatedIsPartOf = currentNode.properties.isPartOf.map((c, idx) => {
+          if (idx === collectionIndex) {
+            return { ...c, nodes: updatedNodes };
+          }
+          return c;
+        });
+
+        // Update the node
         const updatedNode: INode = {
           ...currentNode,
           properties: {
@@ -1267,7 +1413,7 @@ export class NodePartsService {
           contributors: Array.from(new Set([...(currentNode.contributors || []), uname]))
         };
 
-        // Step 3: Execute the update
+        // Execute the update
         const updates = {
           'properties.isPartOf': updatedIsPartOf,
           contributors: updatedNode.contributors
@@ -1275,7 +1421,7 @@ export class NodePartsService {
 
         transaction.update(nodeRef, updates);
 
-        // Step 4: Create changelog entry
+        // Create changelog entry with proper change details
         await ChangelogService.log(
           nodeId,
           uname,
@@ -1285,6 +1431,7 @@ export class NodePartsService {
           'isPartOf',
           originalIsPartOf,
           updatedIsPartOf,
+          changeDetails
         );
 
         return updatedNode;

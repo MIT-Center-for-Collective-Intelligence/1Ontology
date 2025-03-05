@@ -321,8 +321,6 @@ export class NodeInheritanceService {
           }
         );
 
-        // Now we need to handle the specializations that might inherit from this node
-        // Let's find all specializations that need to be updated
         const specializations = await this.findNodeSpecializations(nodeId, transaction);
 
         // Update each specialization if needed
@@ -493,8 +491,6 @@ export class NodeInheritanceService {
           }
         );
 
-        // Now we need to handle the specializations that might inherit from this node
-        // Let's find all specializations that need to be updated
         const specializations = await this.findNodeSpecializations(nodeId, transaction);
 
         // Update each specialization if needed
@@ -962,12 +958,10 @@ export class NodeInheritanceService {
       db.collection(NODES).doc(id)
     );
 
-    // Step 1: Perform ALL reads first (transactions should do reads before writes)
     const specializationDocs = await Promise.all(
       specializationRefs.map(ref => transaction.get(ref))
     );
 
-    // Step 2: Prepare all updates (without performing writes yet)
     const updateOperations: Array<{
       ref: FirebaseFirestore.DocumentReference,
       data: { [key: string]: any }
@@ -997,7 +991,6 @@ export class NodeInheritanceService {
       }
     }
 
-    // Step 3: Now perform all writes
     for (const operation of updateOperations) {
       transaction.update(operation.ref, operation.data);
     }

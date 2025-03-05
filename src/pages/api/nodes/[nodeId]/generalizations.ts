@@ -697,7 +697,6 @@ async function addGeneralizations(
     // If no collection name is provided, use 'main' as default
     const collectionName = request.collectionName || 'main';
 
-    // For this implementation, we'll use a new method in NodeService for adding generalizations
     const updatedNode = await NodeRelationshipService.addGeneralizations(
       nodeId,
       request.nodes,

@@ -811,7 +811,6 @@ async function addIsPartOf(
     // If no collection name is provided, use 'main' as default
     const collectionName = request.collectionName || 'main';
 
-    // For this implementation, we'll use a new method in NodeService for adding isPartOf
     const updatedNode = await NodePartsService.addIsPartOf(
       nodeId,
       request.nodes,
@@ -922,9 +921,8 @@ const validateReorderIsPartOfRequest = (request: any): void => {
 };
 
 /**
- * Reorders isPartOf relationships within the main collection
- * 
- * This method reorders the container nodes within the main collection of isPartOf.
+ * PUT /api/nodes/{nodeId}/isPartOf
+ * Reorders isPartOf relationships within a collection
  */
 async function reorderIsPartOf(
   req: NextApiRequestWithAuth,
@@ -946,63 +944,30 @@ async function reorderIsPartOf(
       throw new NodeOperationError('Cannot modify a deleted node');
     }
 
-    // Ensure the isPartOf property exists and has a main collection
-    if (!currentNode.properties.isPartOf || !Array.isArray(currentNode.properties.isPartOf)) {
-      currentNode.properties.isPartOf = [{ collectionName: 'main', nodes: [] }];
+    // Use default 'main' collection if not specified
+    const collectionName = request.collectionName || 'main';
+
+    // Find the collection
+    const collection = currentNode.properties.isPartOf?.find(c => c.collectionName === collectionName);
+    if (!collection) {
+      throw new CollectionOperationError(`Collection "${collectionName}" not found in node's isPartOf`);
     }
 
-    // Find the main collection
-    const mainCollection = currentNode.properties.isPartOf.find(c => c.collectionName === 'main');
-    if (!mainCollection) {
-      throw new CollectionOperationError('Main collection not found in node\'s isPartOf');
-    }
-
-    // Verify all nodes exist in the main collection
-    const existingNodeMap = new Map(mainCollection.nodes.map((node, index) => [node.id, index]));
+    // Verify all nodes exist in the collection
+    const existingNodeMap = new Map(collection.nodes.map((node, index) => [node.id, index]));
 
     for (const node of request.nodes) {
       if (!existingNodeMap.has(node.id)) {
-        throw new NodeOperationError(`Node ${node.id} not found in isPartOf collection`);
+        throw new NodeOperationError(`Node ${node.id} not found in isPartOf collection "${collectionName}"`);
       }
     }
 
-    // Create a deep copy of the original isPartOf for comparison and changelog
-    const originalIsPartOf = JSON.parse(JSON.stringify(currentNode.properties.isPartOf));
-
-    // Create a new array with all the current nodes
-    const updatedNodes = [...mainCollection.nodes];
-
-    // Process each node to be moved
-    for (let i = 0; i < request.nodes.length; i++) {
-      const nodeId = request.nodes[i].id;
-      const currentIndex = existingNodeMap.get(nodeId);
-      const newIndex = Math.min(request.newIndices[i], updatedNodes.length - 1);
-
-      if (currentIndex !== undefined && currentIndex !== newIndex) {
-        // Remove the node from its current position
-        const [node] = updatedNodes.splice(currentIndex, 1);
-
-        // Insert the node at its new position
-        updatedNodes.splice(newIndex, 0, node);
-
-        // Update indices for remaining operations
-        existingNodeMap.clear();
-        updatedNodes.forEach((n, idx) => existingNodeMap.set(n.id, idx));
-      }
-    }
-
-    // Update the main collection with the reordered nodes
-    const updatedIsPartOf = currentNode.properties.isPartOf.map(collection => {
-      if (collection.collectionName === 'main') {
-        return { ...collection, nodes: updatedNodes };
-      }
-      return collection;
-    });
-
-    // Execute the update
+    // Reorder the isPartOf relationships
     const updatedNode = await NodePartsService.reorderIsPartOf(
       nodeId,
-      updatedIsPartOf,
+      request.nodes,
+      request.newIndices,
+      collectionName,
       req.apiKeyInfo.uname,
       request.reasoning
     );
@@ -1028,7 +993,6 @@ async function moveIsPartOf(
   res: NextApiResponse<IsPartOfApiResponse>,
   nodeId: string
 ) {
-  // Now this is a wrapper for reorderIsPartOf
   return reorderIsPartOf(req, res, nodeId);
 }
 

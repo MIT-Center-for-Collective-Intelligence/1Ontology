@@ -137,7 +137,7 @@ export class ChangelogService {
     property: string | null = null,
     previousValue: any = null,
     newValue: any = null,
-    details: Record<string, any> = {}
+    changeDetails?: any,
   ): Promise<string> {
     return this.createChangeLog({
       nodeId,
@@ -149,7 +149,7 @@ export class ChangelogService {
       changeType,
       fullNode: node,
       reasoning,
-      changeDetails: details
+      changeDetails,
     });
   }
 

@@ -559,7 +559,6 @@ export class NodeRelationshipService {
           }
         });
 
-        // Note: We no longer filter out empty collections
         // Collections persist even when they have no nodes
 
         // Add contributorsByProperty tracking
@@ -669,10 +668,12 @@ export class NodeRelationshipService {
         }
 
         // Find the collection to reorder
-        const collection = currentNode.specializations.find(c => c.collectionName === collectionName);
-        if (!collection) {
+        const collectionIndex = currentNode.specializations.findIndex(c => c.collectionName === collectionName);
+        if (collectionIndex === -1) {
           throw new Error(`Collection '${collectionName}' not found in node's specializations`);
         }
+
+        const collection = currentNode.specializations[collectionIndex];
 
         // Verify all nodes exist in the collection
         const existingNodeMap = new Map(collection.nodes.map((node, index) => [node.id, index]));
@@ -687,6 +688,13 @@ export class NodeRelationshipService {
         // Create a new array with all the current nodes
         const updatedNodes = [...collection.nodes];
 
+        // Prepare changeDetails for the changelog
+        const changeDetails: any = {
+          draggableNodeId: '',
+          source: { droppableId: '' + collectionIndex, index: 0 },
+          destination: { droppableId: '' + collectionIndex, index: 0 }
+        };
+
         // Process each node to be moved
         for (let i = 0; i < nodes.length; i++) {
           const nodeId = nodes[i].id;
@@ -694,6 +702,13 @@ export class NodeRelationshipService {
           const newIndex = Math.min(newIndices[i], updatedNodes.length - 1);
 
           if (currentIndex !== undefined && currentIndex !== newIndex) {
+            // Store change details for the first moved node (for changelog)
+            if (changeDetails.draggableNodeId === '') {
+              changeDetails.draggableNodeId = nodeId;
+              changeDetails.source.index = currentIndex;
+              changeDetails.destination.index = newIndex;
+            }
+
             // Remove the node from its current position
             const [node] = updatedNodes.splice(currentIndex, 1);
 
@@ -707,8 +722,8 @@ export class NodeRelationshipService {
         }
 
         // Update the collection with the reordered nodes
-        const updatedSpecializations = currentNode.specializations.map(c => {
-          if (c.collectionName === collectionName) {
+        const updatedSpecializations = currentNode.specializations.map((c, idx) => {
+          if (idx === collectionIndex) {
             return { ...c, nodes: updatedNodes };
           }
           return c;
@@ -741,7 +756,7 @@ export class NodeRelationshipService {
 
         transaction.update(nodeRef, updates);
 
-        // Create changelog entry
+        // Create changelog entry with proper change details
         await ChangelogService.log(
           nodeId,
           uname,
@@ -751,6 +766,7 @@ export class NodeRelationshipService {
           'specializations',
           originalSpecializations,
           [...updatedNode.specializations],
+          changeDetails
         );
 
         return updatedNode;
@@ -1114,7 +1130,6 @@ export class NodeRelationshipService {
               await this.updateInheritanceAfterRemovingGeneralization(nodeId, node.id);
             } catch (inheritanceError) {
               console.error('Error updating inheritance:', inheritanceError);
-              // We don't want to fail the entire operation if inheritance update fails
             }
           }
         } finally {
@@ -1191,10 +1206,12 @@ export class NodeRelationshipService {
         }
 
         // Find the collection to reorder
-        const collection = currentNode.generalizations.find(c => c.collectionName === collectionName);
-        if (!collection) {
+        const collectionIndex = currentNode.generalizations.findIndex(c => c.collectionName === collectionName);
+        if (collectionIndex === -1) {
           throw new Error(`Collection '${collectionName}' not found in node's generalizations`);
         }
+
+        const collection = currentNode.generalizations[collectionIndex];
 
         // Verify all nodes exist in the collection
         const existingNodeMap = new Map(collection.nodes.map((node, index) => [node.id, index]));
@@ -1209,6 +1226,13 @@ export class NodeRelationshipService {
         // Create a new array with all the current nodes
         const updatedNodes = [...collection.nodes];
 
+        // Prepare changeDetails for the changelog
+        const changeDetails: any = {
+          draggableNodeId: '',
+          source: { droppableId: '' + collectionIndex, index: 0 },
+          destination: { droppableId: '' + collectionIndex, index: 0 }
+        };
+
         // Process each node to be moved
         for (let i = 0; i < nodes.length; i++) {
           const nodeId = nodes[i].id;
@@ -1216,6 +1240,13 @@ export class NodeRelationshipService {
           const newIndex = Math.min(newIndices[i], updatedNodes.length - 1);
 
           if (currentIndex !== undefined && currentIndex !== newIndex) {
+            // Store change details for the first moved node (for changelog)
+            if (changeDetails.draggableNodeId === '') {
+              changeDetails.draggableNodeId = nodeId;
+              changeDetails.source.index = currentIndex;
+              changeDetails.destination.index = newIndex;
+            }
+
             // Remove the node from its current position
             const [node] = updatedNodes.splice(currentIndex, 1);
 
@@ -1229,8 +1260,8 @@ export class NodeRelationshipService {
         }
 
         // Update the collection with the reordered nodes
-        const updatedGeneralizations = currentNode.generalizations.map(c => {
-          if (c.collectionName === collectionName) {
+        const updatedGeneralizations = currentNode.generalizations.map((c, idx) => {
+          if (idx === collectionIndex) {
             return { ...c, nodes: updatedNodes };
           }
           return c;
@@ -1263,7 +1294,7 @@ export class NodeRelationshipService {
 
         transaction.update(nodeRef, updates);
 
-        // Create changelog entry
+        // Create changelog entry with proper change details
         await ChangelogService.log(
           nodeId,
           uname,
@@ -1273,6 +1304,7 @@ export class NodeRelationshipService {
           'generalizations',
           originalGeneralizations,
           [...updatedNode.generalizations],
+          changeDetails
         );
 
         return updatedNode;
@@ -1382,7 +1414,7 @@ export class NodeRelationshipService {
 
       // Get node references for all remaining generalizations for later processing
       const genRefs = remainingGeneralizations
-        .slice(1) // Skip primary which we already loaded
+        .slice(1) // Skip primary
         .map(g => db.collection(NODES).doc(g.id));
 
       const genDocs = await Promise.all(genRefs.map(ref => ref.get()));

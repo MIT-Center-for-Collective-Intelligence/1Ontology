@@ -963,9 +963,8 @@ const validateReorderPartsRequest = (request: any): void => {
 };
 
 /**
- * Reorders parts within the main collection
- * 
- * This method reorders the nodes within the main collection of parts.
+ * PUT /api/nodes/{nodeId}/parts
+ * Reorders parts within a collection
  */
 async function reorderParts(
   req: NextApiRequestWithAuth,
@@ -987,63 +986,28 @@ async function reorderParts(
       throw new NodeOperationError('Cannot modify a deleted node');
     }
 
-    // Ensure the parts property exists and has a main collection
-    if (!currentNode.properties.parts || !Array.isArray(currentNode.properties.parts)) {
-      currentNode.properties.parts = [{ collectionName: 'main', nodes: [] }];
+    const collectionName = request.collectionName || 'main';
+
+    const collection = currentNode.properties.parts?.find(c => c.collectionName === collectionName);
+    if (!collection) {
+      throw new CollectionOperationError(`Collection "${collectionName}" not found in node's parts`);
     }
 
-    // Find the main collection
-    const mainCollection = currentNode.properties.parts.find(c => c.collectionName === 'main');
-    if (!mainCollection) {
-      throw new CollectionOperationError('Main collection not found in node\'s parts');
-    }
-
-    // Verify all nodes exist in the main collection
-    const existingNodeMap = new Map(mainCollection.nodes.map((node, index) => [node.id, index]));
+    // Verify all nodes exist in the collection
+    const existingNodeMap = new Map(collection.nodes.map((node, index) => [node.id, index]));
 
     for (const node of request.nodes) {
       if (!existingNodeMap.has(node.id)) {
-        throw new NodeOperationError(`Node ${node.id} not found in parts collection`);
+        throw new NodeOperationError(`Node ${node.id} not found in parts collection "${collectionName}"`);
       }
     }
 
-    // Create a deep copy of the original parts for comparison and changelog
-    const originalParts = JSON.parse(JSON.stringify(currentNode.properties.parts));
-
-    // Create a new array with all the current nodes
-    const updatedNodes = [...mainCollection.nodes];
-
-    // Process each node to be moved
-    for (let i = 0; i < request.nodes.length; i++) {
-      const nodeId = request.nodes[i].id;
-      const currentIndex = existingNodeMap.get(nodeId);
-      const newIndex = Math.min(request.newIndices[i], updatedNodes.length - 1);
-
-      if (currentIndex !== undefined && currentIndex !== newIndex) {
-        // Remove the node from its current position
-        const [node] = updatedNodes.splice(currentIndex, 1);
-
-        // Insert the node at its new position
-        updatedNodes.splice(newIndex, 0, node);
-
-        // Update indices for remaining operations
-        existingNodeMap.clear();
-        updatedNodes.forEach((n, idx) => existingNodeMap.set(n.id, idx));
-      }
-    }
-
-    // Update the main collection with the reordered nodes
-    const updatedParts = currentNode.properties.parts.map(collection => {
-      if (collection.collectionName === 'main') {
-        return { ...collection, nodes: updatedNodes };
-      }
-      return collection;
-    });
-
-    // Execute the update
+    // Reorder the parts
     const updatedNode = await NodePartsService.reorderParts(
       nodeId,
-      updatedParts,
+      request.nodes,
+      request.newIndices,
+      collectionName,
       req.apiKeyInfo.uname,
       request.reasoning
     );
@@ -1053,7 +1017,7 @@ async function reorderParts(
       data: {
         node: updatedNode
       },
-      metadata: createMetadata(req.apiKeyInfo.clientId)
+      metadata: createMetadata(req.apiKeyInfo.clientId, req.apiKeyInfo.uname)
     });
   } catch (error) {
     handleApiError(error, res, req.apiKeyInfo?.clientId);
