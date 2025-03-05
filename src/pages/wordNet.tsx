@@ -34,7 +34,8 @@ const WordNet: React.FC = () => {
       setResultParts(response.partsTree || []);
       setLastQuery(query);
     } catch (err) {
-      setError("Failed to fetch data");
+      console.log(err, "err");
+      setError(`No synsets found`);
     } finally {
       setLoading(false);
     }
@@ -99,7 +100,11 @@ const WordNet: React.FC = () => {
             </Button>
           </Box>
           {loading && <CircularProgress />}
-          {error && <Typography color="error">{error}</Typography>}
+          {error && (
+            <Box sx={{ display: "flex" }}>
+              <Typography color="error">{error}</Typography>
+            </Box>
+          )}
         </Box>
       </Box>
       {result && (
