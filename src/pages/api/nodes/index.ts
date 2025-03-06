@@ -1,5 +1,10 @@
 /**
  * @openapi
+ * tags:
+ *   - name: Nodes
+ *     description: Node CRUD operations
+ *     x-order: 1
+ * 
  * /api/nodes/create:
  *   post:
  *     tags:

@@ -1448,13 +1448,140 @@ export class NodeService {
    * - Tracking contributors
    * 
    * @param nodeId - ID of the node to update
-   * @param properties - New property values
+   * @param propertyName - Name of the property to add
+   * @param propertyValue - Value for the new property
    * @param uname - Username of the user performing the update
+   * @param reasoning - Reason for adding the property
+   * @param inheritanceType - Optional inheritance type, defaults to "inheritUnlessAlreadyOverRidden"
+   * @param propertyType - Optional explicit property type
+   * @returns Promise<INode> - The updated node
+   * @throws Error if node not found or already deleted
+   */
+  static async addNodeProperty(
+    nodeId: string,
+    propertyName: string,
+    propertyValue: any,
+    uname: string,
+    reasoning: string,
+    inheritanceType: string = "inheritUnlessAlreadyOverRidden",
+    propertyType?: string
+  ): Promise<INode> {
+    try {
+      const nodeRef = db.collection(NODES).doc(nodeId);
+
+      // First get the current node
+      const nodeDoc = await nodeRef.get();
+      if (!nodeDoc.exists) {
+        throw new Error('Node not found');
+      }
+
+      const currentNode = nodeDoc.data() as INode;
+      if (currentNode.deleted) {
+        throw new Error('Cannot add property to deleted node');
+      }
+
+      // Check if property already exists
+      if (propertyName in currentNode.properties) {
+        throw new Error(`Property '${propertyName}' already exists on node`);
+      }
+
+      // Infer property type if not provided
+      if (!propertyType) {
+        propertyType = this.inferPropertyType(propertyValue);
+      }
+
+      // Update contributors properly without using arrayUnion
+      const updatedContributors = [...new Set([
+        ...(currentNode.contributors || []),
+        uname
+      ])];
+
+      // Create update object
+      const updateObject = {
+        // Add the property to properties
+        [`properties.${propertyName}`]: propertyValue,
+
+        // Set inheritance with null reference by default
+        [`inheritance.${propertyName}`]: {
+          ref: null,
+          inheritanceType: inheritanceType
+        },
+
+        // Set property type
+        [`propertyType.${propertyName}`]: propertyType,
+
+        // Update contributors manually, not using arrayUnion
+        [`contributorsByProperty.${propertyName}`]: [uname],
+        contributors: updatedContributors
+      };
+
+      // Execute the update directly (bypassing transaction for performance)
+      await nodeRef.update(updateObject);
+
+      // Create changelog entry
+      await ChangelogService.log(
+        nodeId,
+        uname,
+        'add property',
+        currentNode,
+        reasoning,
+        propertyName,
+        null, // Previous value
+        propertyValue, // New value
+        {
+          addedProperty: propertyName,
+          propertyType: propertyType
+        }
+      );
+
+      // Get the updated node to return
+      const updatedNode = await this.getNode(nodeId);
+      return updatedNode;
+    } catch (error) {
+      console.error('Error adding node property:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Helper method to infer the property type from a value
+   * 
+   * @param value - The value to infer type from
+   * @returns The inferred property type as a string
+   */
+  private static inferPropertyType(value: any): string {
+    if (Array.isArray(value)) {
+      // Check if it's a collection of nodes
+      if (value.length > 0 && value[0]?.collectionName === 'main' && value[0]?.nodes) {
+        return 'string-array';
+      } else {
+        return 'string-array';
+      }
+    } else if (typeof value === 'object' && value !== null) {
+      return 'object';
+    } else if (typeof value === 'string') {
+      return 'string';
+    } else if (typeof value === 'number') {
+      return 'number';
+    } else if (typeof value === 'boolean') {
+      return 'boolean';
+    }
+
+    return 'string'; // Default type
+  }
+
+
+  /**
+   * Updates properties of a node
+   * 
+   * @param nodeId - ID of the node to update
+   * @param properties - Object containing property name/value pairs to update
+   * @param uname - Username of the user making the changes
    * @param reasoning - Reason for the update
    * @param inheritanceRules - Optional rules for property inheritance
    * @param deletedProperties - Optional list of properties to delete
    * @param propertyTypeUpdates - Optional updates to property types
-   * @returns Promise<UpdateNodePropertiesResult> - Updated node and modified properties
+   * @returns Promise<UpdateNodePropertiesResult> - The updated node and modified properties
    * @throws Error if node not found or deleted
    */
   static async updateNodeProperties(
@@ -1469,133 +1596,263 @@ export class NodeService {
     try {
       const nodeRef = db.collection(NODES).doc(nodeId);
 
-      return await db.runTransaction(async (transaction) => {
-        // Step 1: Get current node state
-        const nodeDoc = await transaction.get(nodeRef);
-        if (!nodeDoc.exists) {
-          throw new Error('Node not found');
+      const nodeDoc = await nodeRef.get();
+      if (!nodeDoc.exists) {
+        throw new Error('Node not found');
+      }
+
+      const currentNode = nodeDoc.data() as INode;
+      if (currentNode.deleted) {
+        throw new Error('Cannot update properties of deleted node');
+      }
+
+      const updateObject: { [key: string]: any } = {};
+      const modifiedPropertyNames: string[] = [];
+
+      // Process property updates
+      for (const [key, value] of Object.entries(properties)) {
+        if (JSON.stringify(currentNode.properties[key]) === JSON.stringify(value)) {
+          continue;
         }
 
-        const currentNode = nodeDoc.data() as INode;
-        if (currentNode.deleted) {
-          throw new Error('Cannot update properties of deleted node');
+        updateObject[`properties.${key}`] = value;
+        modifiedPropertyNames.push(key);
+
+        // Update inheritance rules if provided
+        if (inheritanceRules && inheritanceRules[key]) {
+          updateObject[`inheritance.${key}.inheritanceType`] = inheritanceRules[key];
         }
+      }
 
-        // Step 2: Prepare updates
-        const updates: { [key: string]: any } = {};
+      // Add property type updates
+      if (propertyTypeUpdates) {
+        for (const [key, value] of Object.entries(propertyTypeUpdates)) {
+          const propertyName = key.replace('propertyType.', '');
+          updateObject[`propertyType.${propertyName}`] = value;
+        }
+      }
 
-        const updatedProperties = { ...currentNode.properties };
-        const updatedInheritance = { ...currentNode.inheritance };
-        const updatedPropertyType = { ...currentNode.propertyType };
+      // Process property deletions
+      if (deletedProperties && deletedProperties.length > 0) {
+        for (const propertyName of deletedProperties) {
+          // Remove properties
+          updateObject[`properties.${propertyName}`] = deleteField();
+          updateObject[`inheritance.${propertyName}`] = deleteField();
+          updateObject[`propertyType.${propertyName}`] = deleteField();
 
-        const modifiedPropertyNames: string[] = [];
-
-        // Step 3: Process each property update
-        for (const [key, value] of Object.entries(properties)) {
-          // Skip if value hasn't changed
-          if (JSON.stringify(currentNode.properties[key]) === JSON.stringify(value)) {
-            continue;
+          if (!modifiedPropertyNames.includes(propertyName)) {
+            modifiedPropertyNames.push(propertyName);
           }
 
-          updatedProperties[key] = value;
-          modifiedPropertyNames.push(key);
-
-          // Update inheritance rules if provided
-          if (inheritanceRules && inheritanceRules[key]) {
-            updatedInheritance[key] = {
-              ...currentNode.inheritance[key],
-              inheritanceType: inheritanceRules[key]
-            };
+          // Also remove from textValue if it exists
+          if (currentNode.textValue && propertyName in currentNode.textValue) {
+            updateObject[`textValue.${propertyName}`] = deleteField();
           }
         }
+      }
 
-        // Add any property type updates
-        if (propertyTypeUpdates) {
-          for (const [key, value] of Object.entries(propertyTypeUpdates)) {
-            const propertyName = key.replace('propertyType.', '');
-            updatedPropertyType[propertyName] = value;
-          }
-        }
-
-        // Step 4: Process property deletions
-        if (deletedProperties && deletedProperties.length > 0) {
-          for (const propertyName of deletedProperties) {
-            // Remove properties
-            delete updatedProperties[propertyName];
-            delete updatedInheritance[propertyName];
-            delete updatedPropertyType[propertyName];
-
-            if (!modifiedPropertyNames.includes(propertyName)) {
-              modifiedPropertyNames.push(propertyName);
-            }
-
-            // Also remove from textValue if it exists
-            if (currentNode.textValue && propertyName in currentNode.textValue) {
-              updates['textValue.' + propertyName] = deleteField();
-            }
-          }
-        }
-
-        // If no properties changed, return current state
-        if (modifiedPropertyNames.length === 0) {
-          return {
-            node: currentNode,
-            updatedProperties: []
-          };
-        }
-
-        // Step 5: Update contributors
-        const contributors = new Set([...(currentNode.contributors || []), uname]);
-        updates.contributors = Array.from(contributors);
-
-        // Update property-specific contributors
-        const updatedContributorsByProperty = { ...currentNode.contributorsByProperty };
-        for (const property of modifiedPropertyNames) {
-          // Skip deleted properties for contributor updates
-          if (deletedProperties && deletedProperties.includes(property)) {
-            // If the property is being deleted, remove it from contributorsByProperty
-            delete updatedContributorsByProperty[property];
-            continue;
-          }
-
-          const propertyContributors = new Set([
-            ...(currentNode.contributorsByProperty?.[property] || []),
-            uname
-          ]);
-          updatedContributorsByProperty[property] = Array.from(propertyContributors);
-        }
-
-        // Step 6: Add all updates to the update object
-        updates.properties = updatedProperties;
-        updates.inheritance = updatedInheritance;
-        updates.propertyType = updatedPropertyType;
-        updates.contributorsByProperty = updatedContributorsByProperty;
-
-        // Step 7: Execute the update
-        transaction.update(nodeRef, updates);
-
-        // Flag for handling deletions after transaction
-        let hasDeletions = deletedProperties && deletedProperties.length > 0;
-        if (hasDeletions) {
-          transaction.update(nodeRef, { _pendingInheritanceUpdate: true });
-        }
-
-        // Return updated node data
-        const updatedNode: INode = {
-          ...currentNode,
-          properties: updatedProperties,
-          inheritance: updatedInheritance,
-          propertyType: updatedPropertyType,
-          contributorsByProperty: updatedContributorsByProperty,
-          contributors: Array.from(contributors)
+      // If no properties changed, return current state
+      if (modifiedPropertyNames.length === 0) {
+        return {
+          node: currentNode,
+          updatedProperties: []
         };
+      }
 
+      // Update contributors
+      const updatedContributors = [...new Set([...(currentNode.contributors || []), uname])];
+      updateObject.contributors = updatedContributors;
 
+      // Update property-specific contributors
+      for (const property of modifiedPropertyNames) {
+        // Skip deleted properties for contributor updates
+        if (deletedProperties && deletedProperties.includes(property)) {
+          updateObject[`contributorsByProperty.${property}`] = deleteField();
+          continue;
+        }
 
-        // Step 8: Create changelog entries for updated properties
-        const propertiesUpdated = modifiedPropertyNames.filter(p => !deletedProperties?.includes(p));
+        const propertyContributors = [...new Set([
+          ...(currentNode.contributorsByProperty?.[property] || []),
+          uname
+        ])];
+        updateObject[`contributorsByProperty.${property}`] = propertyContributors;
+      }
 
-        for (const property of propertiesUpdated) {
+      await nodeRef.update(updateObject);
+
+      const updatedNode = JSON.parse(JSON.stringify(currentNode)) as INode;
+
+      this.applyUpdatesToNode(updatedNode, updateObject);
+
+      this.createChangelogEntriesAsync(
+        nodeId,
+        uname,
+        reasoning,
+        currentNode,
+        updatedNode,
+        modifiedPropertyNames,
+        deletedProperties || []
+      );
+
+      if (deletedProperties && deletedProperties.length > 0) {
+        setTimeout(async () => {
+          try {
+            await nodeRef.update({ _pendingInheritanceUpdate: true });
+
+            // Handle inheritance updates as needed
+            // Not being implemented
+
+            await nodeRef.update({ _pendingInheritanceUpdate: deleteField() });
+          } catch (error) {
+            console.error('Error in async inheritance update:', error);
+          }
+        }, 100);
+      }
+
+      return {
+        node: updatedNode,
+        updatedProperties: modifiedPropertyNames
+      };
+    } catch (error) {
+      console.error('Error in updateNodeProperties:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Applies update object to a node in a type-safe way
+   * @param node - The node to update
+   * @param updates - The update object with key-value pairs
+   */
+  private static applyUpdatesToNode(node: INode, updates: { [key: string]: any }): void {
+    for (const [path, value] of Object.entries(updates)) {
+      // Handle deleteField operations
+      if (value && typeof value === 'object' && value._methodName === 'deleteField') {
+        this.removeFieldFromNode(node, path);
+        continue;
+      }
+
+      const pathParts = path.split('.');
+
+      // Handle top-level properties
+      if (pathParts.length === 1) {
+        const key = pathParts[0];
+        // Type-safe approach using type assertion
+        (node as any)[key] = value;
+        continue;
+      }
+
+      // Handle nested properties
+      if (pathParts[0] === 'properties') {
+        if (pathParts.length === 2) {
+          const propertyName = pathParts[1];
+          node.properties[propertyName] = value;
+        }
+      }
+      else if (pathParts[0] === 'inheritance') {
+        if (pathParts.length === 2) {
+          // Set the entire inheritance object for a property
+          (node.inheritance as any)[pathParts[1]] = value;
+        }
+        else if (pathParts.length === 3) {
+          // Set a specific field within an inheritance object
+          if (!node.inheritance[pathParts[1]]) {
+            node.inheritance[pathParts[1]] = { ref: null, inheritanceType: 'inheritUnlessAlreadyOverRidden' };
+          }
+          (node.inheritance[pathParts[1]] as any)[pathParts[2]] = value;
+        }
+      }
+      else if (pathParts[0] === 'propertyType') {
+        if (pathParts.length === 2) {
+          node.propertyType[pathParts[1]] = value;
+        }
+      }
+      else if (pathParts[0] === 'textValue' && node.textValue) {
+        if (pathParts.length === 2) {
+          (node.textValue as any)[pathParts[1]] = value;
+        }
+      }
+      else if (pathParts[0] === 'contributorsByProperty') {
+        if (pathParts.length === 2) {
+          if (!node.contributorsByProperty) {
+            node.contributorsByProperty = {};
+          }
+          node.contributorsByProperty[pathParts[1]] = value;
+        }
+      }
+      else {
+        // For any other properties, use type assertion carefully
+        let current: any = node;
+
+        // Navigate to the parent object
+        for (let i = 0; i < pathParts.length - 1; i++) {
+          const part = pathParts[i];
+
+          if (!current[part]) {
+            current[part] = {};
+          }
+          current = current[part];
+        }
+
+        // Set the value on the leaf property
+        current[pathParts[pathParts.length - 1]] = value;
+      }
+    }
+  }
+
+  /**
+   * Removes a field from a node by path
+   * @param node - The node to modify
+   * @param path - The dot-notation path to the field
+   */
+  private static removeFieldFromNode(node: INode, path: string): void {
+    const pathParts = path.split('.');
+
+    if (pathParts.length === 1) {
+      // Remove top-level field
+      delete (node as any)[pathParts[0]];
+      return;
+    }
+
+    // Handle nested fields
+    let current: any = node;
+
+    // Navigate to the parent object
+    for (let i = 0; i < pathParts.length - 1; i++) {
+      const part = pathParts[i];
+
+      if (!current[part]) {
+        // Path doesn't exist, nothing to remove
+        return;
+      }
+      current = current[part];
+    }
+
+    // Delete the leaf property
+    delete current[pathParts[pathParts.length - 1]];
+  }
+
+  /**
+   * Create changelog entries asynchronously without blocking the response
+   */
+  private static createChangelogEntriesAsync(
+    nodeId: string,
+    uname: string,
+    reasoning: string,
+    originalNode: INode,
+    updatedNode: INode,
+    modifiedProperties: string[],
+    deletedProperties: string[]
+  ): void {
+    // Skip for specific user
+    if (!uname || uname === "ouhrac") return;
+
+    // Run in next tick to avoid blocking
+    setTimeout(async () => {
+      try {
+        // For updated properties
+        const updatedProps = modifiedProperties.filter(p => !deletedProperties.includes(p));
+        for (const property of updatedProps) {
           await ChangelogService.log(
             nodeId,
             uname,
@@ -1603,64 +1860,36 @@ export class NodeService {
             updatedNode,
             reasoning,
             property,
-            currentNode.properties[property],
-            updatedProperties[property],
+            originalNode.properties[property],
+            updatedNode.properties[property],
             {
               propertyName: property,
-              inheritanceRule: inheritanceRules?.[property] || updatedNode.inheritance[property]?.inheritanceType
+              inheritanceRule: updatedNode.inheritance[property]?.inheritanceType
             }
           );
         }
 
         // For deleted properties
-        if (deletedProperties && deletedProperties.length > 0) {
-          for (const property of deletedProperties) {
-            await ChangelogService.log(
-              nodeId,
-              uname,
-              'remove property',
-              updatedNode,
-              reasoning,
-              property,
-              currentNode.properties[property],
-              null,
-              {
-                removedProperty: property,
-                previousInheritanceRule: currentNode.inheritance[property]?.inheritanceType
-              }
-            );
-          }
+        for (const property of deletedProperties) {
+          await ChangelogService.log(
+            nodeId,
+            uname,
+            'remove property',
+            updatedNode,
+            reasoning,
+            property,
+            originalNode.properties[property],
+            null,
+            {
+              removedProperty: property,
+              previousInheritanceRule: originalNode.inheritance[property]?.inheritanceType
+            }
+          );
         }
-
-        return {
-          node: updatedNode,
-          updatedProperties: modifiedPropertyNames
-        };
-      }).then(async result => {
-        // Process deletedProperties after transaction completes
-        if (deletedProperties && deletedProperties.length > 0) {
-          // Note: This would typically call an external utility to update inheritance
-          // Uncomment and adjust the import path as needed
-          // const { updateInheritance } = require('@components/utils/node.utils');
-          // await updateInheritance({
-          //   nodeId,
-          //   updatedProperties: [],
-          //   deletedProperties,
-          //   db
-          // });
-
-          // Remove the temporary flag
-          await db.collection(NODES).doc(nodeId).update({
-            _pendingInheritanceUpdate: deleteField()
-          });
-        }
-
-        return result;
-      });
-    } catch (error) {
-      console.error('Error in updateNodeProperties:', error);
-      throw error;
-    }
+      } catch (error) {
+        console.error('Error creating changelog entries:', error);
+      }
+    }, 0);
   }
 
   //===========================================================================

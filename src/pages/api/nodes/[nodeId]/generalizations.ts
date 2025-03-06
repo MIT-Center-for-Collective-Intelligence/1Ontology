@@ -1,20 +1,25 @@
 /**
  * @openapi
+ * tags:
+ *   - name: Node Generalizations
+ *     description: Management of node generalizations and hierarchy
+ *     x-order: 3
+ * 
  * /api/nodes/{nodeId}/generalizations:
  *   get:
  *     tags:
  *       - Node Generalizations
- *     summary: Get node generalizations
- *     description: Retrieves all generalizations for a node, organized by collections
+ *     summary: Get generalizations of a node
+ *     description: Retrieves all generalizations of a specified node
  *     security:
  *       - apiKey: []
  *     parameters:
- *       - in: path
- *         name: nodeId
+ *       - name: nodeId
+ *         in: path
  *         required: true
  *         schema:
  *           type: string
- *         description: ID of the node
+ *         description: ID of the node to retrieve generalizations for
  *     responses:
  *       '200':
  *         description: Generalizations retrieved successfully
@@ -31,31 +36,111 @@
  *                   properties:
  *                     generalizations:
  *                       type: array
+ *                       description: Collections of generalizations
  *                       items:
- *                         $ref: '#/components/schemas/Collection'
+ *                         type: object
+ *                         properties:
+ *                           collectionName:
+ *                             type: string
+ *                             description: Name of the collection
+ *                           nodes:
+ *                             type: array
+ *                             description: Nodes in this collection
+ *                             items:
+ *                               type: object
+ *                               properties:
+ *                                 id:
+ *                                   type: string
+ *                                   description: ID of the generalization node
  *                 metadata:
- *                   $ref: '#/components/schemas/Metadata'
+ *                   type: object
+ *                   properties:
+ *                     clientId:
+ *                       type: string
+ *                     timestamp:
+ *                       type: string
+ *                     version:
+ *                       type: string
  *       '400':
- *         $ref: '#/components/responses/ValidationError'
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 code:
+ *                   type: string
+ *                   enum: [VALIDATION_ERROR, NODE_OPERATION_ERROR, COLLECTION_OPERATION_ERROR]
+ *                 metadata:
+ *                   type: object
+ *       '401':
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 metadata:
+ *                   type: object
  *       '404':
- *         $ref: '#/components/responses/NodeNotFound'
+ *         description: Node not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 code:
+ *                   type: string
+ *                   example: NODE_NOT_FOUND
+ *                 metadata:
+ *                   type: object
  *       '500':
- *         $ref: '#/components/responses/InternalServerError'
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 code:
+ *                   type: string
+ *                   example: INTERNAL_SERVER_ERROR
+ *                 metadata:
+ *                   type: object
  *   
  *   post:
  *     tags:
  *       - Node Generalizations
  *     summary: Add generalizations to a node
- *     description: Adds one or more nodes as generalizations of the given node
+ *     description: Adds new generalizations to a node in a specified collection
  *     security:
  *       - apiKey: []
  *     parameters:
- *       - in: path
- *         name: nodeId
+ *       - name: nodeId
+ *         in: path
  *         required: true
  *         schema:
  *           type: string
- *         description: ID of the node
+ *         description: ID of the node to add generalizations to
  *     requestBody:
  *       required: true
  *       content:
@@ -68,21 +153,24 @@
  *             properties:
  *               nodes:
  *                 type: array
+ *                 description: Nodes to add as generalizations
  *                 items:
- *                   $ref: '#/components/schemas/NodeReference'
- *                 minItems: 1
- *                 maxItems: 100
- *                 description: Array of nodes to add as generalizations
+ *                   type: object
+ *                   required:
+ *                     - id
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       description: ID of the node to add as a generalization
  *               collectionName:
  *                 type: string
- *                 pattern: '^[a-zA-Z0-9-_]+$'
+ *                 description: Name of the collection to add the generalizations to (defaults to 'main')
+ *                 pattern: ^[a-zA-Z0-9-_]+$
  *                 maxLength: 50
- *                 description: Optional name of the collection to add the nodes to (defaults to 'main')
  *               reasoning:
  *                 type: string
- *                 minLength: 1
+ *                 description: Reasoning for adding the generalizations
  *                 maxLength: 1000
- *                 description: Reason for adding the generalizations
  *     responses:
  *       '200':
  *         description: Generalizations added successfully
@@ -98,30 +186,97 @@
  *                   type: object
  *                   properties:
  *                     node:
- *                       $ref: '#/components/schemas/Node'
+ *                       type: object
+ *                       description: Updated node with new generalizations
  *                 metadata:
- *                   $ref: '#/components/schemas/Metadata'
+ *                   type: object
+ *                   properties:
+ *                     clientId:
+ *                       type: string
+ *                     timestamp:
+ *                       type: string
+ *                     version:
+ *                       type: string
  *       '400':
- *         $ref: '#/components/responses/ValidationError'
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 code:
+ *                   type: string
+ *                   enum: [VALIDATION_ERROR, NODE_OPERATION_ERROR, COLLECTION_OPERATION_ERROR]
+ *                 metadata:
+ *                   type: object
+ *       '401':
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 metadata:
+ *                   type: object
  *       '404':
- *         $ref: '#/components/responses/NodeNotFound'
+ *         description: Node not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 code:
+ *                   type: string
+ *                   example: NODE_NOT_FOUND
+ *                 metadata:
+ *                   type: object
  *       '500':
- *         $ref: '#/components/responses/InternalServerError'
- *   
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 code:
+ *                   type: string
+ *                   example: INTERNAL_SERVER_ERROR
+ *                 metadata:
+ *                   type: object
+ *
  *   delete:
  *     tags:
  *       - Node Generalizations
  *     summary: Remove generalizations from a node
- *     description: Removes one or more nodes from the generalizations of the given node
+ *     description: Removes specified generalizations from a node
  *     security:
  *       - apiKey: []
  *     parameters:
- *       - in: path
- *         name: nodeId
+ *       - name: nodeId
+ *         in: path
  *         required: true
  *         schema:
  *           type: string
- *         description: ID of the node
+ *         description: ID of the node to remove generalizations from
  *     requestBody:
  *       required: true
  *       content:
@@ -134,16 +289,19 @@
  *             properties:
  *               nodes:
  *                 type: array
+ *                 description: Nodes to remove from generalizations
  *                 items:
- *                   $ref: '#/components/schemas/NodeReference'
- *                 minItems: 1
- *                 maxItems: 100
- *                 description: Array of nodes to remove from generalizations
+ *                   type: object
+ *                   required:
+ *                     - id
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       description: ID of the node to remove from generalizations
  *               reasoning:
  *                 type: string
- *                 minLength: 1
+ *                 description: Reasoning for removing the generalizations
  *                 maxLength: 1000
- *                 description: Reason for removing the generalizations
  *     responses:
  *       '200':
  *         description: Generalizations removed successfully
@@ -159,125 +317,242 @@
  *                   type: object
  *                   properties:
  *                     node:
- *                       $ref: '#/components/schemas/Node'
+ *                       type: object
+ *                       description: Updated node with generalizations removed
  *                 metadata:
- *                   $ref: '#/components/schemas/Metadata'
+ *                   type: object
+ *                   properties:
+ *                     clientId:
+ *                       type: string
+ *                     timestamp:
+ *                       type: string
+ *                     version:
+ *                       type: string
  *       '400':
- *         $ref: '#/components/responses/ValidationError'
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 code:
+ *                   type: string
+ *                   enum: [VALIDATION_ERROR, NODE_OPERATION_ERROR, COLLECTION_OPERATION_ERROR]
+ *                 metadata:
+ *                   type: object
+ *       '401':
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 metadata:
+ *                   type: object
  *       '404':
- *         $ref: '#/components/responses/NodeNotFound'
+ *         description: Node not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 code:
+ *                   type: string
+ *                   example: NODE_NOT_FOUND
+ *                 metadata:
+ *                   type: object
  *       '500':
- *         $ref: '#/components/responses/InternalServerError'
- * 
- * components:
- *   schemas:
- *     NodeReference:
- *       type: object
- *       required:
- *         - id
- *       properties:
- *         id:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 code:
+ *                   type: string
+ *                   example: INTERNAL_SERVER_ERROR
+ *                 metadata:
+ *                   type: object
+ *
+ *   put:
+ *     tags:
+ *       - Node Generalizations
+ *     summary: Reorder generalizations within a collection
+ *     description: Reorders generalizations within a specified collection of a node
+ *     security:
+ *       - apiKey: []
+ *     parameters:
+ *       - name: nodeId
+ *         in: path
+ *         required: true
+ *         schema:
  *           type: string
- *           description: ID of the referenced node
- *     
- *     Collection:
- *       type: object
- *       properties:
- *         collectionName:
- *           type: string
- *           description: Name of the collection
- *         nodes:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/NodeReference'
- *     
- *     Node:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *         title:
- *           type: string
- *         deleted:
- *           type: boolean
- *         specializations:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Collection'
- *         generalizations:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Collection'
- *     
- *     Metadata:
- *       type: object
- *       properties:
- *         clientId:
- *           type: string
- *         uname:
- *           type: string
- *         timestamp:
- *           type: string
- *           format: date-time
- *         version:
- *           type: string
- *   
- *   responses:
- *     ValidationError:
- *       description: Validation error
+ *         description: ID of the node to reorder generalizations for
+ *     requestBody:
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - nodes
+ *               - newIndices
+ *               - reasoning
  *             properties:
- *               success:
- *                 type: boolean
- *                 example: false
- *               error:
+ *               nodes:
+ *                 type: array
+ *                 description: Nodes to reorder
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - id
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       description: ID of the node to reorder
+ *               newIndices:
+ *                 type: array
+ *                 description: New indices for the nodes (must match length of nodes)
+ *                 items:
+ *                   type: integer
+ *                   minimum: 0
+ *               collectionName:
  *                 type: string
- *               code:
+ *                 description: Name of the collection to reorder (defaults to 'main')
+ *               reasoning:
  *                 type: string
- *                 example: VALIDATION_ERROR
- *               metadata:
- *                 $ref: '#/components/schemas/Metadata'
- *     
- *     NodeNotFound:
- *       description: Node not found
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               success:
- *                 type: boolean
- *                 example: false
- *               error:
- *                 type: string
- *                 example: 'Node with ID "123" not found'
- *               code:
- *                 type: string
- *                 example: NODE_NOT_FOUND
- *               metadata:
- *                 $ref: '#/components/schemas/Metadata'
- *     
- *     InternalServerError:
- *       description: Internal server error
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               success:
- *                 type: boolean
- *                 example: false
- *               error:
- *                 type: string
- *                 example: 'An unexpected error occurred. Please try again later.'
- *               code:
- *                 type: string
- *                 example: INTERNAL_SERVER_ERROR
- *               metadata:
- *                 $ref: '#/components/schemas/Metadata'
+ *                 description: Reasoning for reordering the generalizations
+ *                 maxLength: 1000
+ *     responses:
+ *       '200':
+ *         description: Generalizations reordered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     node:
+ *                       type: object
+ *                       description: Updated node with reordered generalizations
+ *                 metadata:
+ *                   type: object
+ *                   properties:
+ *                     clientId:
+ *                       type: string
+ *                     timestamp:
+ *                       type: string
+ *                     version:
+ *                       type: string
+ *                     uname:
+ *                       type: string
+ *       '400':
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 code:
+ *                   type: string
+ *                   enum: [VALIDATION_ERROR, NODE_OPERATION_ERROR, COLLECTION_OPERATION_ERROR]
+ *                 metadata:
+ *                   type: object
+ *       '401':
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 metadata:
+ *                   type: object
+ *       '404':
+ *         description: Node not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 code:
+ *                   type: string
+ *                   example: NODE_NOT_FOUND
+ *                 metadata:
+ *                   type: object
+ *       '405':
+ *         description: Method not allowed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 code:
+ *                   type: string
+ *                   example: METHOD_NOT_ALLOWED
+ *                 metadata:
+ *                   type: object
+ *       '500':
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                 code:
+ *                   type: string
+ *                   example: INTERNAL_SERVER_ERROR
+ *                 metadata:
+ *                   type: object
  */
 
 import { NextApiRequest, NextApiResponse } from 'next';

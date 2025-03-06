@@ -20,7 +20,7 @@
 
 import { db } from " @components/lib/firestoreServer/admin";
 import { ApiKeyValidationError } from " @components/types/api";
-import { INode, ICollection } from " @components/types/INode";
+import { INode, ICollection, IInheritance } from " @components/types/INode";
 import { NODES } from " @components/lib/firestoreClient/collections";
 import { ChangelogService } from "./changelog";
 import { NodeInheritanceService } from "./nodeInheritanceService";
@@ -981,18 +981,18 @@ export class NodeRelationshipService {
   }
 
   /**
-     * Removes generalizations from a node
-     * 
-     * This method removes generalization relationships while maintaining
-     * data consistency and updating inheritance relationships.
-     * 
-     * @param nodeId - ID of the child node
-     * @param nodes - Array of node IDs to remove from generalizations
-     * @param uname - Username performing the operation
-     * @param reasoning - Reason for the change
-     * @returns Promise<INode> - Updated node without removed generalizations
-     * @throws Error for validation failures or database errors
-     */
+   * Removes generalizations from a node
+   * 
+   * This method removes generalization relationships while maintaining
+   * data consistency and updating inheritance relationships.
+   * 
+   * @param nodeId - ID of the child node
+   * @param nodes - Array of node IDs to remove from generalizations
+   * @param uname - Username performing the operation
+   * @param reasoning - Reason for the change
+   * @returns Promise<INode> - Updated node without removed generalizations
+   * @throws Error for validation failures or database errors
+   */
   static async removeGeneralizations(
     nodeId: string,
     nodes: { id: string }[],
@@ -1073,24 +1073,23 @@ export class NodeRelationshipService {
         ]);
         updatedContributorsByProperty['generalizations'] = Array.from(propertyContributors);
 
+        // Flag node for inheritance update
         updates.set(nodeRef.path, {
           generalizations: cleanedGeneralizations,
           contributors: updatedContributors,
           contributorsByProperty: updatedContributorsByProperty,
-          // Set a boolean flag instead of using deleteField() later
-          _pendingInheritanceUpdate: true
+          pendingInheritanceUpdate: true // Flag for post-transaction processing
         });
 
         updatedNode.contributorsByProperty = updatedContributorsByProperty;
 
-        // Update removed nodes and handle inheritance
-        const nodesMap = new Map<string, INode>();
+        // Update removed nodes and handle bidirectional relationships
         for (const doc of generalizationDocs) {
           if (!doc.exists) continue;
 
           const genData = doc.data() as INode;
-          nodesMap.set(doc.id, genData);
 
+          // Remove the specialization from generalizations
           const specializations = (genData.specializations || []).map(collection => ({
             ...collection,
             nodes: collection.nodes.filter(n => n.id !== nodeId)
@@ -1122,9 +1121,10 @@ export class NodeRelationshipService {
 
         return updatedNode;
       }).then(async (result) => {
-        // Handle inheritance updates after the transaction completes
+        // Process inheritance updates after transaction completes
         try {
           // For each removed generalization, update inheritance
+          // using the new client-compatible approach
           for (const node of nodes) {
             try {
               await this.updateInheritanceAfterRemovingGeneralization(nodeId, node.id);
@@ -1133,9 +1133,9 @@ export class NodeRelationshipService {
             }
           }
         } finally {
-          // Set the flag to null instead of using deleteField()
+          // Clear the pending flag when done
           await db.collection(NODES).doc(nodeId).update({
-            _pendingInheritanceUpdate: null
+            pendingInheritanceUpdate: deleteField()
           });
         }
 
@@ -1365,7 +1365,7 @@ export class NodeRelationshipService {
    * This helper method is called after the transaction completes to update inheritance
    * based on remaining generalizations after a generalization is removed.
    * 
-   * @param nodeId - ID of the child node
+   * @param nodeId - ID of the child node (specialization)
    * @param removedGeneralizationId - ID of the removed generalization
    * @returns Promise<void>
    * @private
@@ -1380,147 +1380,362 @@ export class NodeRelationshipService {
       const nodeDoc = await nodeRef.get();
 
       if (!nodeDoc.exists) {
-        throw new Error('Node not found');
+        throw new Error(`Node ${nodeId} not found`);
       }
 
-      const nodeData = nodeDoc.data() as INode;
-      const remainingGeneralizations = nodeData.generalizations?.flatMap(c => c.nodes) || [];
+      const specializationData = nodeDoc.data() as INode;
 
-      // If no generalizations left, no need for inheritance updates
+      if (specializationData.deleted) {
+        return;
+      }
+
+      const remainingGeneralizations = specializationData.generalizations
+        ?.flatMap(collection => collection.nodes) || [];
+
       if (remainingGeneralizations.length === 0) {
         return;
       }
 
-      // Get the removed generalization node
-      const removedGenRef = db.collection(NODES).doc(removedGeneralizationId);
-      const removedGenDoc = await removedGenRef.get();
+      // Load all nodes needed for processing
+      const nodeIds = [
+        removedGeneralizationId,
+        ...remainingGeneralizations.map(node => node.id)
+      ];
 
-      if (!removedGenDoc.exists) {
-        return; // Removed node doesn't exist, no need to update
-      }
+      const nodeDocs = await Promise.all(
+        nodeIds.map(id => db.collection(NODES).doc(id).get())
+      );
 
-      const removedGenData = removedGenDoc.data() as INode;
+      const nodesMap: { [nodeId: string]: INode } = {};
+      nodeDocs.forEach(doc => {
+        if (doc.exists) {
+          nodesMap[doc.id] = doc.data() as INode;
+        }
+      });
 
-      // Get the first remaining generalization as the new primary parent
-      const newPrimaryGenId = remainingGeneralizations[0].id;
-      const newPrimaryGenRef = db.collection(NODES).doc(newPrimaryGenId);
-      const newPrimaryGenDoc = await newPrimaryGenRef.get();
+      const addedProperties: {
+        propertyName: string;
+        propertyType: string;
+        propertyValue: any;
+      }[] = [];
 
-      if (!newPrimaryGenDoc.exists) {
-        return; // New primary doesn't exist, skip update
-      }
+      const updatedProperties: {
+        [ref: string]: string[];
+      } = {};
 
-      const newPrimaryGenData = newPrimaryGenDoc.data() as INode;
-
-      // Get node references for all remaining generalizations for later processing
-      const genRefs = remainingGeneralizations
-        .slice(1) // Skip primary
-        .map(g => db.collection(NODES).doc(g.id));
-
-      const genDocs = await Promise.all(genRefs.map(ref => ref.get()));
-      const genNodes = genDocs
-        .filter(doc => doc.exists)
-        .map(doc => doc.data() as INode);
-
-      // Build a map of all nodes for easier access
-      const nodesMap: { [nodeId: string]: INode } = {
-        [removedGeneralizationId]: removedGenData,
-        [newPrimaryGenId]: newPrimaryGenData
-      };
-
-      for (const genNode of genNodes) {
-        nodesMap[genNode.id] = genNode;
-      }
-
-      // Begin processing inheritance updates
       const deletedProperties: string[] = [];
-      const updatedProperties: { [ref: string]: string[] } = {};
 
-      // Check each property in the current inheritance
-      for (const property in nodeData.inheritance) {
-        const currentRef = nodeData.inheritance[property]?.ref;
+      const nextGeneralization = remainingGeneralizations[0];
+      const nextGeneralizationData = nodesMap[nextGeneralization.id];
+      const removedGeneralization = nodesMap[removedGeneralizationId];
 
-        // Skip properties not inherited from the removed generalization
-        if (!currentRef || (currentRef !== removedGeneralizationId &&
-          !NodeInheritanceService.isPropertyInheritedThrough(property, currentRef, removedGeneralizationId, nodesMap))) {
+      if (!nextGeneralizationData || !removedGeneralization) {
+        console.error('Missing required nodes for inheritance update');
+        return;
+      }
+
+      // Process each property in the current inheritance structure
+      for (const property in specializationData.inheritance) {
+        // Skip properties with no inheritance reference or invalid data
+        if (
+          !specializationData.inheritance[property] ||
+          specializationData.inheritance[property].ref === null
+        ) {
           continue;
         }
 
-        // Find a new source for this property
-        let newSourceFound = false;
-        let newSourceId: string | null = null;
+        // Check if property was inherited from the removed generalization 
+        // or through its chain
+        const currentInheritanceRef = specializationData.inheritance[property].ref;
 
-        // Try the new primary generalization first
-        if (newPrimaryGenData.properties.hasOwnProperty(property)) {
-          newSourceFound = true;
-          newSourceId = NodeInheritanceService.getPropertyInheritanceSource(property, newPrimaryGenId, nodesMap);
-        } else {
-          // Try other remaining generalizations
-          for (const genNode of genNodes) {
-            if (genNode.properties.hasOwnProperty(property)) {
-              newSourceFound = true;
-              newSourceId = NodeInheritanceService.getPropertyInheritanceSource(property, genNode.id, nodesMap);
-              break;
+        const isAffectedProperty =
+          currentInheritanceRef === removedGeneralizationId ||
+          (removedGeneralization.inheritance[property]?.ref === currentInheritanceRef);
+
+        if (isAffectedProperty) {
+          // Check if the next generalization has this property
+          if (!nextGeneralizationData.properties.hasOwnProperty(property)) {
+            let canDelete = true;
+            let inheritFrom = null;
+
+            // Look through all remaining generalizations for this property
+            for (const generalization of remainingGeneralizations) {
+              const generalizationData = nodesMap[generalization.id];
+              if (generalizationData?.properties.hasOwnProperty(property)) {
+                canDelete = false;
+                inheritFrom = generalization.id;
+                break;
+              }
             }
+
+            // Either mark for deletion or update from another generalization
+            if (canDelete) {
+              deletedProperties.push(property);
+            } else if (inheritFrom) {
+              if (!updatedProperties[inheritFrom]) {
+                updatedProperties[inheritFrom] = [];
+              }
+              updatedProperties[inheritFrom].push(property);
+            }
+          } else {
+            // Next generalization has the property, update from it
+            if (!updatedProperties[nextGeneralization.id]) {
+              updatedProperties[nextGeneralization.id] = [];
+            }
+            updatedProperties[nextGeneralization.id].push(property);
           }
         }
+      }
 
-        if (newSourceFound && newSourceId) {
-          // Update the property to inherit from the new source
-          if (!updatedProperties[newSourceId]) {
-            updatedProperties[newSourceId] = [];
-          }
-          updatedProperties[newSourceId].push(property);
+      // Add properties from next generalization that don't exist in specialization
+      for (const property in nextGeneralizationData.properties) {
+        if (!specializationData.properties.hasOwnProperty(property)) {
+          addedProperties.push({
+            propertyName: property,
+            propertyType: nextGeneralizationData.propertyType?.[property] || '',
+            propertyValue: nextGeneralizationData.properties[property]
+          });
+        }
+      }
+
+      let batch = db.batch();
+
+      let needsNewBatch = false;
+
+      const batchResult = await this.updateNodeInheritanceBatch(
+        nodeId,
+        [],
+        deletedProperties,
+        addedProperties,
+        true, // nested call
+        batch,
+        removedGeneralization.inheritance,
+        nextGeneralization.id,
+        nodesMap
+      );
+
+      batch = batchResult.batch;
+      needsNewBatch = needsNewBatch || batchResult.isCommitted;
+
+      // Apply property updates from each source
+      for (const [inheritFrom, properties] of Object.entries(updatedProperties)) {
+        const inheritanceSource = nodesMap[inheritFrom];
+        if (inheritanceSource) {
+          const updateResult = await this.updateNodeInheritanceBatch(
+            nodeId,
+            properties,
+            [],
+            [],
+            true, // nested call
+            needsNewBatch ? db.batch() : batch,
+            inheritanceSource.inheritance,
+            inheritFrom,
+            nodesMap
+          );
+
+          batch = updateResult.batch;
+          needsNewBatch = needsNewBatch || updateResult.isCommitted;
+        }
+      }
+
+      // Commit updates if there are any pending mutations
+      try {
+        // Only commit if batch has operations to perform
+        await batch.commit();
+      } catch (commitError) {
+        const error = commitError as Error;
+        // Check if the error message contains information about empty batch
+        if (error.message &&
+          (error.message.includes('no operations') ||
+            error.message.includes('empty batch') ||
+            error.message.includes('no-ops-in-batch'))) {
+          // ignore
+          console.log('Batch was empty, skipping commit');
         } else {
-          // No new source found, mark for deletion
-          deletedProperties.push(property);
+          throw error;
         }
       }
 
-      // Apply the inheritance updates
-      const batch = db.batch();
+      // Update specializations recursively
+      const specializations = specializationData.specializations || [];
+      const childSpecializations = specializations.flatMap(collection => collection.nodes) || [];
 
-      // Handle property deletions
-      if (deletedProperties.length > 0) {
-        const updates: { [key: string]: any } = {};
-
-        for (const property of deletedProperties) {
-          updates[`inheritance.${property}`] = deleteField();
-          updates[`properties.${property}`] = deleteField();
-          updates[`textValue.${property}`] = deleteField();
-          updates[`propertyType.${property}`] = deleteField();
-        }
-
-        batch.update(nodeRef, updates);
+      for (const childSpecialization of childSpecializations) {
+        await this.updateInheritanceAfterRemovingGeneralization(
+          childSpecialization.id,
+          removedGeneralizationId
+        );
       }
-
-      // Handle property reference updates
-      for (const [sourceId, properties] of Object.entries(updatedProperties)) {
-        const updates: { [key: string]: any } = {};
-
-        for (const property of properties) {
-          updates[`inheritance.${property}.ref`] = sourceId;
-
-          // Update the property value to match the source
-          const sourceNode = nodesMap[sourceId];
-          if (sourceNode) {
-            updates[`properties.${property}`] = sourceNode.properties[property];
-          }
-        }
-
-        batch.update(nodeRef, updates);
-      }
-
-      await batch.commit();
-
-      // Recursively update specializations
-      await NodeInheritanceService.updateSpecializationsInheritance(nodeId, deletedProperties, updatedProperties, nodesMap);
     } catch (error) {
       console.error('Error updating inheritance after removing generalization:', error);
       throw error;
     }
   }
 
+  // Static counter to track batch sizes since _mutations cannot be accessed directly
+  private static batchSizeCounter: number = 0;
+
+  /**
+   * Helper method for updating node inheritance in batches
+   * 
+   * @param nodeId - ID of the node to update
+   * @param updatedProperties - Properties to update inheritance references for
+   * @param deletedProperties - Properties to remove
+   * @param addedProperties - New properties to add from a generalization
+   * @param nestedCall - Whether this is a recursive call
+   * @param batch - Current Firestore batch
+   * @param inheritanceType - Inheritance type definitions
+   * @param generalizationId - ID of the generalization to inherit from
+   * @param nodesMap - Map of node IDs to node data
+   * @returns Promise<{batch: FirebaseFirestore.WriteBatch, isCommitted: boolean}> - Updated batch and commit status
+   * @private
+   */
+  private static async updateNodeInheritanceBatch(
+    nodeId: string,
+    updatedProperties: string[],
+    deletedProperties: string[],
+    addedProperties: {
+      propertyName: string;
+      propertyType: string;
+      propertyValue: any;
+    }[],
+    nestedCall: boolean = false,
+    batch: FirebaseFirestore.WriteBatch,
+    inheritanceType: IInheritance,
+    generalizationId: string | null,
+    nodesMap: { [nodeId: string]: INode }
+  ): Promise<{ batch: FirebaseFirestore.WriteBatch, isCommitted: boolean }> {
+    try {
+      // Get current node data
+      const nodeRef = db.collection(NODES).doc(nodeId);
+      let nodeSnapshot;
+
+      // Always get data directly for nested calls
+      nodeSnapshot = await nodeRef.get();
+
+      if (!nodeSnapshot.exists) {
+        return { batch, isCommitted: false };
+      }
+
+      const nodeData = nodeSnapshot.data() as INode;
+      const inheritance: IInheritance = nodeData.inheritance || {};
+
+      // Apply inheritance type filtering for nested calls
+      if (nestedCall) {
+        // Filter updated properties based on inheritance rules
+        updatedProperties = updatedProperties.filter(property => {
+          // Skip properties with neverInherit rule
+          if (inheritanceType[property]?.inheritanceType === 'neverInherit') {
+            return false;
+          }
+
+          // Include only properties that can be inherited based on rules
+          const canInherit =
+            (inheritanceType[property]?.inheritanceType === 'inheritUnlessAlreadyOverRidden' &&
+              inheritance[property]?.ref !== null) ||
+            inheritanceType[property]?.inheritanceType === 'alwaysInherit';
+
+          return canInherit;
+        });
+
+        // Filter deleted properties based on inheritance rules
+        deletedProperties = deletedProperties.filter(property => {
+          // Skip properties with neverInherit rule
+          if (inheritanceType[property]?.inheritanceType === 'neverInherit') {
+            return false;
+          }
+
+          // Include only properties that can be inherited based on rules
+          const canInherit =
+            (inheritanceType[property]?.inheritanceType === 'inheritUnlessAlreadyOverRidden' &&
+              !!inheritance[property]?.ref) ||
+            inheritanceType[property]?.inheritanceType === 'alwaysInherit';
+
+          return canInherit;
+        });
+      }
+
+      const updateObject: { [key: string]: any } = {};
+
+      for (const property of updatedProperties) {
+        updateObject[`inheritance.${property}.ref`] = generalizationId;
+
+        // Update property value if there is ganeralization data
+        if (generalizationId && nodesMap[generalizationId]?.properties[property] !== undefined) {
+          updateObject[`properties.${property}`] = nodesMap[generalizationId].properties[property];
+        }
+      }
+
+      // Handle deleted properties
+      for (const property of deletedProperties) {
+        updateObject[`inheritance.${property}`] = deleteField();
+        updateObject[`properties.${property}`] = deleteField();
+        updateObject[`textValue.${property}`] = deleteField();
+        updateObject[`propertyType.${property}`] = deleteField();
+      }
+
+      // Handle added properties
+      for (const property of addedProperties) {
+        updateObject[`inheritance.${property.propertyName}`] = {
+          inheritanceType: 'inheritUnlessAlreadyOverRidden',
+          ref: generalizationId
+        };
+        updateObject[`properties.${property.propertyName}`] = property.propertyValue;
+
+        if (property.propertyType) {
+          updateObject[`propertyType.${property.propertyName}`] = property.propertyType;
+        }
+      }
+
+      // Only update if there are changes to apply
+      let isCommitted = false;
+      if (Object.keys(updateObject).length > 0) {
+        // Add the update to batch
+        batch.update(nodeRef, updateObject);
+
+        if (!this.batchSizeCounter) {
+          this.batchSizeCounter = 0;
+        }
+
+        this.batchSizeCounter++;
+
+        if (this.batchSizeCounter >= 400) {
+          await batch.commit();
+          batch = db.batch();
+          this.batchSizeCounter = 0;
+          isCommitted = true;
+        }
+      }
+
+      // Find and process specializations for recursive updates
+      if (!nestedCall) {
+        const specializations = nodeData.specializations?.flatMap(c => c.nodes) || [];
+
+        for (const specialization of specializations) {
+          const result = await this.updateNodeInheritanceBatch(
+            specialization.id,
+            updatedProperties,
+            deletedProperties,
+            addedProperties,
+            true, // nested call
+            isCommitted ? db.batch() : batch,
+            inheritance,
+            generalizationId,
+            nodesMap
+          );
+
+          batch = result.batch;
+          isCommitted = isCommitted || result.isCommitted;
+        }
+      }
+
+      return { batch, isCommitted };
+    } catch (error) {
+      console.error('Error updating node inheritance batch:', error);
+      // Create a new batch if needed
+      return { batch, isCommitted: false };
+    }
+  }
 
   // SECTION 3: COLLECTION MANAGEMENT
   // ===============================
