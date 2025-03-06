@@ -1053,6 +1053,9 @@ export class NodeRelationshipService {
           throw new Error(`Cannot update deleted node ${nodeId}`);
         }
 
+        // validate that every node must have at least one generalization
+        this.validateGeneralizationRemoval(currentNode, nodes);
+
         const originalGeneralizations = JSON.parse(JSON.stringify(currentNode.generalizations || []));
 
         // Step 4: Prepare updates
@@ -1161,6 +1164,35 @@ export class NodeRelationshipService {
       console.error('Error removing generalizations:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       throw new Error(`Failed to remove generalizations: ${errorMessage}`);
+    }
+  }
+
+  /**
+ * Validates that a node will still have at least one generalization after removal
+ * This ensures that no node can exist without a generalization
+ * 
+ * @param currentNode - The current node data
+ * @param nodesToRemove - Array of node IDs to be removed
+ * @throws ApiKeyValidationError if removal would leave the node without generalizations
+ */
+  private static validateGeneralizationRemoval(
+    currentNode: INode,
+    nodesToRemove: { id: string }[]
+  ): void {
+    // Get all current generalizations
+    const allGeneralizations = currentNode.generalizations?.flatMap(c => c.nodes) || [];
+
+    // Count how many generalizations would remain after removal
+    const remainingCount = allGeneralizations.filter(
+      gen => !nodesToRemove.some(node => node.id === gen.id)
+    ).length;
+
+    // If no generalizations would remain, throw an error
+    if (remainingCount === 0) {
+      throw new ApiKeyValidationError(
+        'Cannot remove all generalizations from a node. Every node must have at least one generalization. ' +
+        'Please add a new generalization before removing the existing one.'
+      );
     }
   }
 

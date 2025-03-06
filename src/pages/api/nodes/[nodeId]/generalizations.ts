@@ -743,6 +743,7 @@ const handleApiError = (
 
   // Determine the error type based on multiple properties
   let errorType = 'UNKNOWN';
+  let errorMessage = error.message || 'An unexpected error occurred';
 
   if (error instanceof ApiKeyValidationError ||
     error.name === 'ApiKeyValidationError' ||
@@ -764,8 +765,11 @@ const handleApiError = (
     error.code === 'COLLECTION_OPERATION_ERROR') {
     errorType = 'COLLECTION_OPERATION_ERROR';
   }
-  // Check for specific error messages
-  else if (error.message && error.message.includes('circular reference')) {
+  // Check for error messages related to removing all generalizations
+  else if (error.message && (
+    error.message.includes('Cannot remove all generalizations') ||
+    error.message.includes('must have at least one generalization')
+  )) {
     errorType = 'VALIDATION_ERROR';
   }
 
@@ -774,7 +778,7 @@ const handleApiError = (
     case 'VALIDATION_ERROR':
       res.status(400).json({
         success: false,
-        error: error.message,
+        error: errorMessage,
         code: 'VALIDATION_ERROR',
         metadata: createMetadata(clientId)
       });
@@ -783,7 +787,7 @@ const handleApiError = (
     case 'NODE_NOT_FOUND':
       res.status(404).json({
         success: false,
-        error: error.message,
+        error: errorMessage,
         code: 'NODE_NOT_FOUND',
         metadata: createMetadata(clientId)
       });
@@ -792,7 +796,7 @@ const handleApiError = (
     case 'NODE_OPERATION_ERROR':
       res.status(400).json({
         success: false,
-        error: error.message,
+        error: errorMessage,
         code: 'NODE_OPERATION_ERROR',
         metadata: createMetadata(clientId)
       });
@@ -801,7 +805,7 @@ const handleApiError = (
     case 'COLLECTION_OPERATION_ERROR':
       res.status(400).json({
         success: false,
-        error: error.message,
+        error: errorMessage,
         code: 'COLLECTION_OPERATION_ERROR',
         metadata: createMetadata(clientId)
       });
