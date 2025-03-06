@@ -35,7 +35,6 @@ export function validateApiKey<T>(handler: (
         req.url
       );
 
-      console.log('KeyData', keyData);
 
       if (!keyData) {
         throw new ApiKeyUnauthorizedError('Invalid or inactive API key');
