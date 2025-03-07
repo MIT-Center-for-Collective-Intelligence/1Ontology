@@ -1639,17 +1639,9 @@ export class NodeService {
               if (!partNodeData || !partNodeData.properties) continue;
 
               if (partNodeData.properties.isPartOf) {
-                for (let i = 0; i < partNodeData.properties.isPartOf.length; i++) {
-                  const isPartOfCollection = partNodeData.properties.isPartOf[i];
-                  if (hasNodeInCollection(isPartOfCollection)) {
-                    impactSummary.parts.push(partNode.id);
-
-                    // Remove this node from the part node's isPartOf
-                    const updatedIsPartOf = removeNodeFromCollection(partNodeData.properties.isPartOf);
-                    addUpdate(partNode.id, 'properties.isPartOf', updatedIsPartOf);
-                    break;
-                  }
-                }
+                impactSummary.parts.push(partNode.id);
+                const updatedIsPartOf = removeNodeFromCollection(partNodeData.properties.isPartOf);
+                addUpdate(partNode.id, 'properties.isPartOf', updatedIsPartOf);
               }
             }
           }
@@ -1701,22 +1693,14 @@ export class NodeService {
                   const refNodeData = nodesMap.get(refNode.id);
                   if (!refNodeData) continue;
 
-                  // Check if the referenced node has a propertyOf field
-                  if (refNodeData.propertyOf && refNodeData.propertyOf[propName]) {
-                    for (let i = 0; i < refNodeData.propertyOf[propName].length; i++) {
-                      const propertyOfCollection = refNodeData.propertyOf[propName][i];
-                      if (hasNodeInCollection(propertyOfCollection)) {
-                        if (!impactSummary.properties[propName]) {
-                          impactSummary.properties[propName] = [];
-                        }
-                        impactSummary.properties[propName].push(refNode.id);
+                  if (!impactSummary.properties[propName]) {
+                    impactSummary.properties[propName] = [];
+                  }
+                  impactSummary.properties[propName].push(refNode.id);
 
-                        // Remove this node from the referenced node's propertyOf
-                        const updatedPropertyOf = removeNodeFromCollection(refNodeData.propertyOf[propName]);
-                        addUpdate(refNode.id, `propertyOf.${propName}`, updatedPropertyOf);
-                        break;
-                      }
-                    }
+                  if (refNodeData.propertyOf && refNodeData.propertyOf[propName]) {
+                    const updatedPropertyOf = removeNodeFromCollection(refNodeData.propertyOf[propName]);
+                    addUpdate(refNode.id, `propertyOf.${propName}`, updatedPropertyOf);
                   }
                 }
               }
