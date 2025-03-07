@@ -334,7 +334,7 @@
 
 import { withApiLogger } from " @components/middlewares/apiLogger";
 import { validateApiKey } from " @components/middlewares/validateApiKey";
-import { NodeService } from " @components/services/nodeService";
+import { INodeDeletionImpactSummary, NodeService } from " @components/services/nodeService";
 import { ApiResponse, ApiKeyValidationError, NextApiRequestWithAuth } from " @components/types/api";
 import { INode } from " @components/types/INode";
 import { NextApiResponse, NextApiRequest } from "next";
@@ -356,6 +356,16 @@ type NodeResponse = ApiResponse<{
   node: INode;
   nodeId?: string;
 }>;
+
+interface INodeDeletionResult {
+  updatedNode: INode;
+  impactSummary: {
+    generalizations: string[];
+    specializations: string[];
+    parts: string[];
+    wholes: string[];
+  };
+}
 
 // Metadata generation helper
 const createMetadata = (clientId: string) => ({
@@ -492,11 +502,15 @@ async function handlePatch(
 }
 
 /**
- * Handles DELETE requests to remove a node
+ * Handles DELETE requests to soft delete a node and update all relationships
  */
 async function handleDelete(
   req: NextApiRequestWithAuth,
-  res: NextApiResponse<NodeResponse>
+  res: NextApiResponse<ApiResponse<{
+    nodeId: string;
+    node: INode;
+    impactSummary: INodeDeletionImpactSummary;
+  }>>
 ): Promise<void> {
   const nodeId = req.query.nodeId as string;
   const reasoning = req.query.reasoning as string;
@@ -511,23 +525,27 @@ async function handleDelete(
       });
     }
 
-    const deletedNode = await NodeService.deleteNode(
+    // Call the enhanced delete service that returns the node and impact summary
+    const deletionResult = await NodeService.deleteNode(
       nodeId,
-      req.apiKeyInfo.clientId,
+      req.apiKeyInfo.uname,
       reasoning
     );
 
+    // Return successful response with the deleted node and impact summary
     return res.status(200).json({
       success: true,
       data: {
         nodeId,
-        node: deletedNode
+        node: deletionResult.node,
+        impactSummary: deletionResult.impactSummary
       },
       metadata: createMetadata(clientId)
     });
   } catch (error: any) {
     console.error('Error deleting node:', error);
 
+    // Handle specific error cases
     if (error.message === 'Node not found') {
       return res.status(404).json({
         success: false,
@@ -544,6 +562,7 @@ async function handleDelete(
       });
     }
 
+    // Generic error response
     return res.status(500).json({
       success: false,
       error: 'Failed to delete node',

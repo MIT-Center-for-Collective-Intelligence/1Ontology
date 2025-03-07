@@ -74,6 +74,26 @@ interface ListNodesParams {
   deleted?: boolean;
 }
 
+/**
+ * Interface for the impact summary of a node deletion
+ */
+export interface INodeDeletionImpactSummary {
+  generalizations: string[];
+  specializations: string[];
+  parts: string[];
+  partsOf: string[];
+  properties: Record<string, string[]>;
+  propertyOf: Record<string, string[]>;
+}
+
+/**
+ * Interface for the result of a node deletion operation
+ */
+interface INodeDeletionResult {
+  node: INode;                  // The deleted node
+  impactSummary: INodeDeletionImpactSummary; // Summary of the deletion impact
+}
+
 export class NodeService {
   //===========================================================================
   // SECTION 1: NODE BASIC OPERATIONS (CRUD)
@@ -213,7 +233,7 @@ export class NodeService {
         };
       }
 
-      // Normalize specializations to ensure they use the "main" collection if not specified
+      // Initialize specializations with a main collection and empty nodes array if not provided
       let normalizedSpecializations: ICollection[] = [];
       if (node.specializations && node.specializations.length > 0) {
         // Check if any collections are defined
@@ -227,15 +247,16 @@ export class NodeService {
         } else {
           // Create a main collection with all specialization nodes
           const allNodes = node.specializations.flatMap(collection => collection.nodes || []);
-          if (allNodes.length > 0) {
-            normalizedSpecializations = [
-              {
-                collectionName: 'main',
-                nodes: allNodes.filter(n => n && n.id)
-              }
-            ];
-          }
+          normalizedSpecializations = [
+            {
+              collectionName: 'main',
+              nodes: allNodes.filter(n => n && n.id)
+            }
+          ];
         }
+      } else {
+        // Initialize with main collection and empty nodes array
+        normalizedSpecializations = [{ collectionName: 'main', nodes: [] }];
       }
 
       const nodeData: INode = {
@@ -309,6 +330,17 @@ export class NodeService {
         const nodeDocs = await Promise.all(
           nodeRefs.map(ref => transaction.get(ref))
         );
+
+        // Check if any referenced nodes are marked as deleted
+        const deletedNodes = nodeDocs
+          .filter(doc => doc.exists && (doc.data() as INode).deleted)
+          .map(doc => doc.id);
+
+        if (deletedNodes.length > 0) {
+          throw new ApiKeyValidationError(
+            `The following referenced nodes have been deleted and cannot be used: ${deletedNodes.join(', ')}`
+          );
+        }
 
         // Create a map of node data
         const nodeDataMap = new Map(
@@ -1293,33 +1325,409 @@ export class NodeService {
   }
 
   /**
-   * Soft deletes a node by marking it as deleted
+   * Enhanced node deletion service with comprehensive relationship management
+   * 
+   * This implementation handles all types of node relationships:
+   * 1. Taxonomy relationships (generalizations/specializations)
+   * 2. Composition relationships (parts/isPartOf)
+   * 3. Property relationships (actor, context, evaluationDimension, etc.)
+   * 4. PropertyOf backlinks
+   * 
+   * The deletion process:
+   * 1. Finds all nodes referencing the node to be deleted
+   * 2. Updates all these nodes to remove references to the deleted node
+   * 3. Marks the node as deleted only after all references are cleaned up
+   * 4. Performs all operations in a transaction to ensure data consistency
    * 
    * @param nodeId - ID of the node to delete
    * @param uname - Username of the user performing the deletion
    * @param reasoning - Reason for deletion
-   * @returns Promise<INode> - The deleted node data
+   * @returns Promise<INode> - The deleted node
    * @throws Error if node not found or already deleted
    */
   static async deleteNode(
     nodeId: string,
     uname: string,
     reasoning: string
-  ): Promise<INode> {
+  ): Promise<INodeDeletionResult> {
     try {
       const nodeRef = db.collection(NODES).doc(nodeId);
 
-      const nodeData = await db.runTransaction(async (transaction) => {
+      const result = await db.runTransaction(async (transaction) => {
+        // Get the node to be deleted
         const nodeDoc = await transaction.get(nodeRef);
-
         if (!nodeDoc.exists) {
           throw new Error('Node not found');
         }
 
         const node = nodeDoc.data() as INode;
-
         if (node.deleted) {
           throw new Error('Node is already deleted');
+        }
+
+        // Track impact of this deletion for logging
+        const impactSummary = {
+          generalizations: [] as string[],
+          specializations: [] as string[],
+          parts: [] as string[],
+          partsOf: [] as string[],
+          properties: {} as Record<string, string[]>,
+          propertyOf: {} as Record<string, string[]>  // PropertyOf backlinks
+        };
+
+        // Query all nodes to find relationships
+        const allNodesQuery = db.collection(NODES).where('deleted', '==', false);
+        const allNodesDocs = await transaction.get(allNodesQuery);
+
+        // Map of all node data
+        const nodesMap = new Map<string, INode>();
+        allNodesDocs.forEach(doc => {
+          nodesMap.set(doc.id, doc.data() as INode);
+        });
+
+        // Track nodes that need updates
+        const nodesToUpdate = new Map<string, Record<string, any>>();
+
+        // Helper function to check if a collection contains current node
+        const hasNodeInCollection = (collection: any): boolean => {
+          if (!collection || !collection.nodes) return false;
+          return collection.nodes.some((n: { id: string }) => n && n.id === nodeId);
+        };
+
+        // Helper function to remove node references from a collection
+        const removeNodeFromCollection = (collections: any[]): any[] => {
+          return collections.map(collection => {
+            if (!collection.nodes) return collection;
+
+            // Filter out the node being deleted
+            const filteredNodes = collection.nodes.filter((n: { id: string }) => n && n.id !== nodeId);
+            return {
+              ...collection,
+              nodes: filteredNodes
+            };
+          });
+        };
+
+        // Helper to add an update to the node updates map
+        const addUpdate = (nodeToUpdateId: string, field: string, value: any) => {
+          if (!nodesToUpdate.has(nodeToUpdateId)) {
+            nodesToUpdate.set(nodeToUpdateId, {});
+          }
+
+          const updates = nodesToUpdate.get(nodeToUpdateId)!; // assume this won't be null
+          updates[field] = value;
+        };
+
+        // Process taxonomy relationships (generalizations/specializations)
+        // handling specializations
+        allNodesDocs.forEach(doc => {
+          const relatedNode = doc.data() as INode;
+          const relatedNodeId = doc.id;
+
+          // Skip the node itself
+          if (relatedNodeId === nodeId) return;
+
+          // Handle specializations - where this node is a generalization for others
+          if (relatedNode.specializations) {
+            for (let i = 0; i < relatedNode.specializations.length; i++) {
+              const collection = relatedNode.specializations[i];
+              if (hasNodeInCollection(collection)) {
+                impactSummary.generalizations.push(relatedNodeId);
+                const updatedSpecializations = removeNodeFromCollection(relatedNode.specializations);
+                addUpdate(relatedNodeId, 'specializations', updatedSpecializations);
+                break;
+              }
+            }
+          }
+
+          // Handle generalizations - where this node is a specialization
+          if (relatedNode.generalizations) {
+            for (let i = 0; i < relatedNode.generalizations.length; i++) {
+              const collection = relatedNode.generalizations[i];
+              if (hasNodeInCollection(collection)) {
+                impactSummary.specializations.push(relatedNodeId);
+                const updatedGeneralizations = removeNodeFromCollection(relatedNode.generalizations);
+                addUpdate(relatedNodeId, 'generalizations', updatedGeneralizations);
+                break;
+              }
+            }
+          }
+        });
+
+        // Process parts/isPartOf relationships
+        allNodesDocs.forEach(doc => {
+          const relatedNode = doc.data() as INode;
+          const relatedNodeId = doc.id;
+
+          if (relatedNodeId === nodeId) return;
+
+          // Handle parts - where this node is contained in others
+          if (relatedNode.properties?.parts) {
+            for (let i = 0; i < relatedNode.properties.parts.length; i++) {
+              const collection = relatedNode.properties.parts[i];
+              if (hasNodeInCollection(collection)) {
+                impactSummary.partsOf.push(relatedNodeId);
+                const updatedParts = removeNodeFromCollection(relatedNode.properties.parts);
+                addUpdate(relatedNodeId, 'properties.parts', updatedParts);
+                break;
+              }
+            }
+          }
+
+          // Handle isPartOf - where other nodes are contained in this node
+          if (relatedNode.properties?.isPartOf) {
+            for (let i = 0; i < relatedNode.properties.isPartOf.length; i++) {
+              const collection = relatedNode.properties.isPartOf[i];
+              if (hasNodeInCollection(collection)) {
+                impactSummary.parts.push(relatedNodeId);
+                const updatedIsPartOf = removeNodeFromCollection(relatedNode.properties.isPartOf);
+                addUpdate(relatedNodeId, 'properties.isPartOf', updatedIsPartOf);
+                break;
+              }
+            }
+          }
+        });
+
+        // Process other properties in nodes referencing this node
+        allNodesDocs.forEach(doc => {
+          const relatedNode = doc.data() as INode;
+          const relatedNodeId = doc.id;
+
+          if (relatedNodeId === nodeId) return;
+
+          if (relatedNode.properties) {
+            for (const propName in relatedNode.properties) {
+              // Skip parts and isPartOf as they're already processed
+              if (propName === 'parts' || propName === 'isPartOf') continue;
+
+              const propValue = relatedNode.properties[propName];
+
+              // Only process array properties that might contain node collections
+              if (Array.isArray(propValue)) {
+                let hasReference = false;
+
+                // Check if this property has collections with node references
+                for (let i = 0; i < propValue.length; i++) {
+                  const collection = propValue[i];
+                  if (hasNodeInCollection(collection)) {
+                    hasReference = true;
+
+                    // Log impact by property type
+                    if (!impactSummary.properties[propName]) {
+                      impactSummary.properties[propName] = [];
+                    }
+                    impactSummary.properties[propName].push(relatedNodeId);
+
+                    // Remove this node from the related node's property
+                    const updatedProp = removeNodeFromCollection(propValue);
+                    addUpdate(relatedNodeId, `properties.${propName}`, updatedProp);
+                    break;
+                  }
+                }
+
+                // Update propertyOf if needed
+                if (hasReference && node.nodeType) {
+                  if (node.propertyOf && node.propertyOf[propName]) {
+                    if (!impactSummary.propertyOf[propName]) {
+                      impactSummary.propertyOf[propName] = [];
+                    }
+                    impactSummary.propertyOf[propName].push(relatedNodeId);
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        // Handle propertyOf references in this node
+        if (node.propertyOf) {
+          for (const propName in node.propertyOf) {
+            const collections = node.propertyOf[propName];
+
+            if (Array.isArray(collections)) {
+              for (const collection of collections) {
+                if (collection.nodes) {
+                  for (const refNode of collection.nodes) {
+                    if (!refNode.id) continue;
+
+                    const refNodeData = nodesMap.get(refNode.id);
+                    if (!refNodeData || !refNodeData.properties) continue;
+
+                    const refNodeProperty = refNodeData.properties[propName];
+
+                    if (Array.isArray(refNodeProperty)) {
+                      if (!impactSummary.propertyOf[propName]) {
+                        impactSummary.propertyOf[propName] = [];
+                      }
+                      impactSummary.propertyOf[propName].push(refNode.id);
+                      const updatedProp = removeNodeFromCollection(refNodeProperty);
+                      addUpdate(refNode.id, `properties.${propName}`, updatedProp);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Process outgoing references from the node being deleted
+        // Handle generalizations
+        if (node.generalizations) {
+          for (const collection of node.generalizations) {
+            if (!collection.nodes) continue;
+
+            for (const genNode of collection.nodes) {
+              if (!genNode.id) continue;
+
+              // Find the generalization node
+              const genNodeData = nodesMap.get(genNode.id);
+              if (!genNodeData) continue;
+              if (genNodeData.specializations) {
+                for (let i = 0; i < genNodeData.specializations.length; i++) {
+                  const specCollection = genNodeData.specializations[i];
+                  if (hasNodeInCollection(specCollection)) {
+                    impactSummary.generalizations.push(genNode.id);
+
+                    // Remove this node from the generalization node's specializations
+                    const updatedSpecializations = removeNodeFromCollection(genNodeData.specializations);
+                    addUpdate(genNode.id, 'specializations', updatedSpecializations);
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Handle Specializations
+        if (node.specializations) {
+          for (const collection of node.specializations) {
+            if (!collection.nodes) continue;
+
+            for (const specNode of collection.nodes) {
+              if (!specNode.id) continue;
+
+              const specNodeData = nodesMap.get(specNode.id);
+              if (!specNodeData) continue;
+
+              if (specNodeData.generalizations) {
+                for (let i = 0; i < specNodeData.generalizations.length; i++) {
+                  const genCollection = specNodeData.generalizations[i];
+                  if (hasNodeInCollection(genCollection)) {
+                    impactSummary.specializations.push(specNode.id);
+
+                    // Remove this node from the specialization node's generalizations
+                    const updatedGeneralizations = removeNodeFromCollection(specNodeData.generalizations);
+                    addUpdate(specNode.id, 'generalizations', updatedGeneralizations);
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Handle Parts
+        if (node.properties?.parts) {
+          for (const collection of node.properties.parts) {
+            if (!collection.nodes) continue;
+
+            for (const partNode of collection.nodes) {
+              if (!partNode.id) continue;
+
+              const partNodeData = nodesMap.get(partNode.id);
+              if (!partNodeData || !partNodeData.properties) continue;
+
+              if (partNodeData.properties.isPartOf) {
+                for (let i = 0; i < partNodeData.properties.isPartOf.length; i++) {
+                  const isPartOfCollection = partNodeData.properties.isPartOf[i];
+                  if (hasNodeInCollection(isPartOfCollection)) {
+                    impactSummary.parts.push(partNode.id);
+
+                    // Remove this node from the part node's isPartOf
+                    const updatedIsPartOf = removeNodeFromCollection(partNodeData.properties.isPartOf);
+                    addUpdate(partNode.id, 'properties.isPartOf', updatedIsPartOf);
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Handle isPartOf
+        if (node.properties?.isPartOf) {
+          for (const collection of node.properties.isPartOf) {
+            if (!collection.nodes) continue;
+
+            for (const wholeNode of collection.nodes) {
+              if (!wholeNode.id) continue;
+
+              // Find the whole node
+              const wholeNodeData = nodesMap.get(wholeNode.id);
+              if (!wholeNodeData || !wholeNodeData.properties) continue;
+
+              if (wholeNodeData.properties.parts) {
+                for (let i = 0; i < wholeNodeData.properties.parts.length; i++) {
+                  const partsCollection = wholeNodeData.properties.parts[i];
+                  if (hasNodeInCollection(partsCollection)) {
+                    impactSummary.partsOf.push(wholeNode.id);
+
+                    // Remove this node from the whole node's parts
+                    const updatedParts = removeNodeFromCollection(wholeNodeData.properties.parts);
+                    addUpdate(wholeNode.id, 'properties.parts', updatedParts);
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Handle other properties in this node
+        if (node.properties) {
+          for (const propName in node.properties) {
+            if (propName === 'parts' || propName === 'isPartOf') continue;
+
+            const propValue = node.properties[propName];
+
+            if (Array.isArray(propValue)) {
+              for (const collection of propValue) {
+                if (!collection.nodes) continue;
+
+                for (const refNode of collection.nodes) {
+                  if (!refNode.id) continue;
+
+                  const refNodeData = nodesMap.get(refNode.id);
+                  if (!refNodeData) continue;
+
+                  // Check if the referenced node has a propertyOf field
+                  if (refNodeData.propertyOf && refNodeData.propertyOf[propName]) {
+                    for (let i = 0; i < refNodeData.propertyOf[propName].length; i++) {
+                      const propertyOfCollection = refNodeData.propertyOf[propName][i];
+                      if (hasNodeInCollection(propertyOfCollection)) {
+                        if (!impactSummary.properties[propName]) {
+                          impactSummary.properties[propName] = [];
+                        }
+                        impactSummary.properties[propName].push(refNode.id);
+
+                        // Remove this node from the referenced node's propertyOf
+                        const updatedPropertyOf = removeNodeFromCollection(refNodeData.propertyOf[propName]);
+                        addUpdate(refNode.id, `propertyOf.${propName}`, updatedPropertyOf);
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Apply all updates in the transaction
+        for (const [nodeToUpdateId, updates] of nodesToUpdate.entries()) {
+          const nodeToUpdateRef = db.collection(NODES).doc(nodeToUpdateId);
+          transaction.update(nodeToUpdateRef, updates);
         }
 
         // Mark the node as deleted
@@ -1331,13 +1739,19 @@ export class NodeService {
         // Update the node
         transaction.update(nodeRef, { deleted: true });
 
-        // Create changelog
-        await this.createNodeChangeLog(nodeId, uname, updatedNode, reasoning);
+        const enhancedReasoning = `${reasoning} [Impact Summary: ${JSON.stringify({
+          ...impactSummary
+        })}]`;
 
-        return updatedNode;
+        await ChangelogService.log(nodeId, uname, "delete node", updatedNode, enhancedReasoning);
+
+        return {
+          node: updatedNode,
+          impactSummary
+        };
       });
 
-      return nodeData;
+      return result;
     } catch (error) {
       console.error('Error deleting node:', error);
       throw error;
