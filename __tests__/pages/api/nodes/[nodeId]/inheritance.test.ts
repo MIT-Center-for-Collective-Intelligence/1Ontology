@@ -5,7 +5,6 @@ import { NodeInheritanceService } from ' @components/services/nodeInheritanceSer
 import { ApiKeyValidationError, ApiResponse, NextApiRequestWithAuth } from ' @components/types/api';
 import { INode, IInheritance, InheritanceType, INodeTypes } from ' @components/types/INode';
 import { NextApiResponse } from 'next';
-import { ChangelogService } from ' @components/services/changelog';
 
 // Mock the NodeService
 jest.mock(' @components/services/nodeService', () => ({
@@ -485,21 +484,6 @@ describe('Node Inheritance API Tests', () => {
   //==========================================================================
   
   describe('Error handling', () => {
-    // it('should return 401 when apiKeyInfo is missing', async () => {
-    //   const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-    //     method: 'GET',
-    //     query: {
-    //       nodeId: 'test-node-id'
-    //     }
-    //   });
-      
-    //   // Explicitly remove apiKeyInfo
-    //   delete (req as any).apiKeyInfo;
-      
-    //   await inheritanceHandler(req, res);
-      
-    //   expectErrorResponse(res, 401, 'Authentication required');
-    // });
 
     it('should return 400 when node is deleted', async () => {
       const deletedNode = {
@@ -516,20 +500,6 @@ describe('Node Inheritance API Tests', () => {
       expectErrorResponse(res, 400, 'Cannot modify a deleted node');
       expect(JSON.parse(res._getData()).code).toBe('NODE_OPERATION_ERROR');
     });
-
-    // it('should return 500 when an unexpected error occurs', async () => {
-    //   (NodeService.getNode as jest.Mock).mockRejectedValue(new Error('Database connection error'));
-
-    //   const { req, res } = createInheritanceRequest('test-node-id', 'GET');
-
-    //   await inheritanceHandler(req, res);
-
-    //   expect(res.statusCode).toBe(500);
-    //   const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
-    //   expect(responseData.success).toBe(false);
-    //   expect(responseData.error).toBe('An unexpected error occurred. Please try again later.');
-    //   expect(responseData.code).toBe('INTERNAL_SERVER_ERROR');
-    // });
 
     it('should return 400 when NodeInheritanceService throws a validation error', async () => {
       (NodeInheritanceService.updateInheritance as jest.Mock).mockRejectedValue(

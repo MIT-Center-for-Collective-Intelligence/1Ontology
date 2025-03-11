@@ -243,25 +243,6 @@ describe('Node Specific Property API Tests', () => {
       expectErrorResponse(res, 404, "Property 'non-existent-property' not found on node");
     });
 
-    // it('should return 401 when apiKeyInfo is missing', async () => {
-    //   // Create mock request without apiKeyInfo
-    //   const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-    //     method: 'GET',
-    //     query: {
-    //       nodeId: 'test-node-id',
-    //       propertyName: 'description'
-    //     }
-    //   });
-      
-    //   // Explicitly remove apiKeyInfo
-    //   delete (req as any).apiKeyInfo;
-      
-    //   // Call the handler
-    //   await specificPropertyHandler(req, res);
-      
-    //   expectErrorResponse(res, 401, 'Authentication required');
-    // });
-
     it('should require reasoning for property deletion', async () => {
       const { req, res } = createSpecificPropertyRequest('test-node-id', 'status', 'DELETE', {});
 

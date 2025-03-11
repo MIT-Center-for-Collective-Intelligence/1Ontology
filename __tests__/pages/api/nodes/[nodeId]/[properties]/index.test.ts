@@ -304,22 +304,6 @@ describe('Node Properties API Tests', () => {
       expectErrorResponse(res, 404, 'Node not found');
     });
 
-    // it('should return 401 when apiKeyInfo is missing', async () => {
-    //   const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-    //     method: 'GET',
-    //     query: {
-    //       nodeId: 'test-node-id'
-    //     }
-    //   });
-      
-    //   // Explicitly remove apiKeyInfo
-    //   delete (req as any).apiKeyInfo;
-      
-    //   await nodePropertiesHandler(req, res);
-      
-    //   expectErrorResponse(res, 401, 'Authentication required');
-    // });
-
     it('should validate property name when creating property', async () => {
       const invalidRequest = {
         value: 'test value',

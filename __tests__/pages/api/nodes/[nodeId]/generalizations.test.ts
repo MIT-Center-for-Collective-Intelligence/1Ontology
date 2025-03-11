@@ -2,10 +2,8 @@ import { createMocks, MockResponse, RequestMethod } from 'node-mocks-http';
 import generalizationsHandler from ' @components/pages/api/nodes/[nodeId]/generalizations';
 import { NodeService } from ' @components/services/nodeService';
 import { NodeRelationshipService } from ' @components/services/nodeRelationshipService';
-import { ApiKeyValidationError, ApiResponse, NextApiRequestWithAuth } from ' @components/types/api';
-import { INode, ICollection } from ' @components/types/INode';
+import { NextApiRequestWithAuth } from ' @components/types/api';
 import { NextApiResponse } from 'next';
-import { RequestMeta } from 'next/dist/server/request-meta';
 
 // Mock NodeService
 jest.mock(' @components/services/nodeService', () => ({
@@ -117,12 +115,17 @@ const expectErrorResponse = (
   return responseData;
 };
 
-describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
+describe('Node Generalizations API Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
   });
 
-  describe('Common validations', () => {
+  //==========================================================================
+  // SECTION 1: BASIC ENDPOINT FUNCTIONALITY TESTS
+  //==========================================================================
+  
+  describe('Basic functionality', () => {
     it('should return 404 when using unsupported methods with valid nodeId', async () => {
       (NodeService.getNode as jest.Mock).mockRejectedValue(new Error('Node not found'));
       
@@ -134,8 +137,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
     
     it('should return 405 for unsupported methods after node validation', async () => {
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const { req, res } = createRequest('PATCH', 'test-node-id');
       
       await generalizationsHandler(req, res);
@@ -182,11 +183,12 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
   });
 
-  describe('GET /api/nodes/[nodeId]/generalizations', () => {
+  //==========================================================================
+  // SECTION 2: GET ENDPOINT TESTS
+  //==========================================================================
+  
+  describe('GET Endpoint', () => {
     it('should return generalizations for a valid node', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
       const { req, res } = createRequest('GET', 'test-node-id');
       
       await generalizationsHandler(req, res);
@@ -197,20 +199,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
       expect(responseData.data.generalizations[0].collectionName).toBe('main');
       expect(responseData.data.generalizations[0].nodes).toHaveLength(2);
     });
-
-    // it('should return empty array when node has no generalizations', async () => {
-    //   const nodeWithoutGeneralizations = createTestNode({ generalizations: [] });
-    //   (NodeService.getNode as jest.Mock).mockResolvedValue(nodeWithoutGeneralizations);
-      
-    //   const { req, res } = createRequest('GET', 'test-node-id');
-      
-    //   await generalizationsHandler(req, res);
-      
-    //   const responseData = expectSuccessResponse(res);
-    //   expect(responseData.data.generalizations).toBeDefined();
-    //   expect(responseData.data.generalizations[0].collectionName).toBe('main');
-    //   expect(responseData.data.generalizations[0].nodes).toHaveLength(0);
-    // });
 
     it('should handle undefined generalizations property', async () => {
       const nodeWithUndefinedGeneralizations = createTestNode({ generalizations: undefined });
@@ -227,7 +215,11 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
   });
 
-  describe('POST /api/nodes/[nodeId]/generalizations', () => {
+  //==========================================================================
+  // SECTION 3: POST ENDPOINT TESTS
+  //==========================================================================
+  
+  describe('POST Endpoint', () => {
     it('should add generalizations successfully', async () => {
       const testNode = createTestNode();
       const updatedNode = {
@@ -243,7 +235,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
         ]
       };
       
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
       (NodeRelationshipService.addGeneralizations as jest.Mock).mockResolvedValue(updatedNode);
       
       const requestPayload = {
@@ -282,7 +273,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
         ]
       };
       
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
       (NodeRelationshipService.addGeneralizations as jest.Mock).mockResolvedValue(updatedNode);
       
       const requestPayload = {
@@ -308,9 +298,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
 
     it('should return 400 when nodes array is empty', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
       const requestPayload = {
         nodes: [],
         reasoning: 'Adding empty nodes array'
@@ -325,9 +312,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
 
     it('should return 400 when reasoning is missing', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
       const requestPayload = {
         nodes: [{ id: 'new-general-node' }]
       };
@@ -341,9 +325,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
 
     it('should return 400 when reasoning is empty', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
       const requestPayload = {
         nodes: [{ id: 'new-general-node' }],
         reasoning: '   '
@@ -358,9 +339,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
 
     it('should return 400 when node ID is missing in nodes array', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
       const requestPayload = {
         nodes: [{ /* id is missing */ }],
         reasoning: 'Adding node without ID'
@@ -375,9 +353,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
 
     it('should return 400 when collection name format is invalid', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
       const requestPayload = {
         nodes: [{ id: 'new-general-node' }],
         reasoning: 'Adding with invalid collection',
@@ -393,9 +368,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
 
     it('should return 400 when adding a self-referential generalization', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
       const requestPayload = {
         nodes: [{ id: 'test-node-id' }],
         reasoning: 'Adding self as generalization'
@@ -410,9 +382,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
 
     it('should return 400 when adding a generalization that already exists', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
       const requestPayload = {
         nodes: [{ id: 'general-node-1' }],
         reasoning: 'Adding existing generalization'
@@ -427,7 +396,11 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
   });
 
-  describe('DELETE /api/nodes/[nodeId]/generalizations', () => {
+  //==========================================================================
+  // SECTION 4: DELETE ENDPOINT TESTS
+  //==========================================================================
+  
+  describe('DELETE Endpoint', () => {
     it('should remove generalizations successfully', async () => {
       const testNode = createTestNode();
       const updatedNode = {
@@ -442,7 +415,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
         ]
       };
       
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
       (NodeRelationshipService.removeGeneralizations as jest.Mock).mockResolvedValue(updatedNode);
       
       const requestPayload = {
@@ -466,9 +438,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
 
     it('should return 400 when removing a non-existent generalization', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
       const requestPayload = {
         nodes: [{ id: 'non-existent-node' }],
         reasoning: 'Removing non-existent generalization'
@@ -483,9 +452,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
 
     it('should validate request payload', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
       const requestPayload = {
         reasoning: 'Invalid delete request'
       };
@@ -499,7 +465,11 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
   });
 
-  describe('PUT /api/nodes/[nodeId]/generalizations', () => {
+  //==========================================================================
+  // SECTION 5: PUT ENDPOINT TESTS
+  //==========================================================================
+  
+  describe('PUT Endpoint', () => {
     it('should reorder generalizations successfully', async () => {
       const testNode = createTestNode();
       const updatedNode = {
@@ -515,7 +485,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
         ]
       };
       
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
       (NodeRelationshipService.reorderGeneralizations as jest.Mock).mockResolvedValue(updatedNode);
       
       const requestPayload = {
@@ -610,9 +579,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
 
     it('should return 400 when nodes and newIndices arrays have different lengths', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
       const requestPayload = {
         nodes: [
           { id: 'general-node-1' },
@@ -631,9 +597,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
 
     it('should return 400 when newIndices contains invalid values', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
       const requestPayload = {
         nodes: [
           { id: 'general-node-1' },
@@ -652,9 +615,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
 
     it('should return 400 when collection does not exist', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
       const requestPayload = {
         nodes: [
           { id: 'general-node-1' },
@@ -674,9 +634,6 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
 
     it('should return 400 when node ID is not in the collection', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
       const requestPayload = {
         nodes: [
           { id: 'non-existent-node' },
@@ -695,21 +652,12 @@ describe('/api/nodes/[nodeId]/generalizations endpoint', () => {
     });
   });
 
-  describe('Error handling', () => {
-    // it('should handle unexpected errors', async () => {
-    //   (NodeService.getNode as jest.Mock).mockRejectedValue(new Error('Unexpected database error'));
-      
-    //   const { req, res } = createRequest('GET', 'test-node-id');
-      
-    //   await generalizationsHandler(req, res);
-      
-    //   expectErrorResponse(res, 500, 'INTERNAL_SERVER_ERROR');
-    // });
-    
-    it('should include username in metadata when available', async () => {
-      const testNode = createTestNode();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
-      
+  //==========================================================================
+  // SECTION 6: METADATA AND EDGE CASES
+  //==========================================================================
+  
+  describe('Metadata and Edge Cases', () => {
+    it('should include proper metadata in responses', async () => {
       const { req, res } = createRequest('GET', 'test-node-id');
       
       await generalizationsHandler(req, res);

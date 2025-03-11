@@ -133,13 +133,17 @@ const expectErrorResponse = (
   return responseData;
 };
 
-describe('/api/nodes/[nodeId]/specializations endpoint', () => {
+describe('Node Specializations API Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
   });
 
-  describe('Common validations', () => {
+  //==========================================================================
+  // SECTION 1: BASIC ENDPOINT FUNCTIONALITY TESTS
+  //==========================================================================
+  
+  describe('Basic functionality', () => {
     it('should return 400 when nodeId is missing', async () => {
       const { req, res } = createRequest('GET', undefined);
       
@@ -184,9 +188,23 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
       expectErrorResponse(res, 405, 'METHOD_NOT_ALLOWED');
       expect(res._getHeaders().allow).toEqual(['GET', 'POST', 'DELETE', 'PUT']);
     });
+    
+    it('should include metadata in the response', async () => {
+      const { req, res } = createRequest('GET', 'test-node-id');
+      
+      await specializationsHandler(req, res);
+      
+      const responseData = expectSuccessResponse(res);
+      expect(responseData.metadata.clientId).toBe('test-client-id');
+      expect(responseData.metadata.version).toBe('1.0');
+    });
   });
 
-  describe('GET /api/nodes/[nodeId]/specializations', () => {
+  //==========================================================================
+  // SECTION 2: GET ENDPOINT TESTS
+  //==========================================================================
+  
+  describe('GET Endpoint', () => {
     it('should return specializations for a valid node', async () => {
       const { req, res } = createRequest('GET', 'test-node-id');
       
@@ -200,24 +218,27 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
       expect(responseData.data?.specializations?.[1].collectionName).toBe('secondary');
       expect(responseData.data?.specializations?.[1].nodes).toHaveLength(1);
     });
-
-    // it('should handle undefined specializations property', async () => {
-    //   // Create a node with undefined specializations and override the mock
-    //   const nodeWithUndefinedSpecs = createTestNode({ specializations: undefined });
-    //   (NodeService.getNode as jest.Mock).mockResolvedValueOnce(nodeWithUndefinedSpecs);
+    
+    it('should handle unexpected errors during retrieval', async () => {
+      (NodeService.getNode as jest.Mock).mockImplementationOnce(() => {
+        const error = new Error('Unexpected database error');
+        error.name = 'NodeNotFoundError';
+        throw error;
+      });
       
-    //   const { req, res } = createRequest('GET', 'test-node-id');
+      const { req, res } = createRequest('GET', 'test-node-id');
       
-    //   await specializationsHandler(req, res);
+      await specializationsHandler(req, res);
       
-    //   const responseData = expectSuccessResponse(res);
-    //   expect(responseData.data?.specializations).toBeDefined();
-    //   expect(responseData.data?.specializations?.[0].collectionName).toBe('main');
-    //   expect(responseData.data?.specializations?.[0].nodes).toHaveLength(0);
-    // });
+      expectErrorResponse(res, 404, 'NODE_NOT_FOUND');
+    });
   });
 
-  describe('POST /api/nodes/[nodeId]/specializations', () => {
+  //==========================================================================
+  // SECTION 3: POST ENDPOINT TESTS
+  //==========================================================================
+  
+  describe('POST Endpoint', () => {
     it('should add specializations successfully', async () => {
       const testNode = createTestNode();
       const updatedNode: INode = {
@@ -258,9 +279,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should add specializations to a specific collection', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const testNode = createTestNode();
       const updatedNode: INode = {
         ...testNode,
@@ -300,9 +318,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should return 400 when nodes array is empty', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         nodes: [],
         reasoning: 'Adding empty nodes array'
@@ -317,9 +332,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should return 400 when reasoning is missing', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         nodes: [{ id: 'new-special-node' }]
       };
@@ -333,9 +345,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should return 400 when collection name format is invalid', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         nodes: [{ id: 'new-special-node' }],
         reasoning: 'Adding with invalid collection',
@@ -351,9 +360,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should return 400 when adding a self-referential specialization', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         nodes: [{ id: 'test-node-id' }],
         reasoning: 'Adding self as specialization'
@@ -368,9 +374,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should return 400 when adding a specialization that already exists', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         nodes: [{ id: 'special-node-1' }],
         reasoning: 'Adding existing specialization'
@@ -385,11 +388,12 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
   });
 
-  describe('DELETE /api/nodes/[nodeId]/specializations', () => {
+  //==========================================================================
+  // SECTION 4: DELETE ENDPOINT TESTS
+  //==========================================================================
+  
+  describe('DELETE Endpoint', () => {
     it('should remove specializations successfully', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const testNode = createTestNode();
       const updatedNode: INode = {
         ...testNode,
@@ -427,9 +431,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should return 400 when removing a non-existent specialization', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         nodes: [{ id: 'non-existent-node' }],
         reasoning: 'Removing non-existent specialization'
@@ -444,9 +445,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should validate request payload', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         reasoning: 'Invalid delete request'
       };
@@ -460,11 +458,12 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
   });
 
-  describe('PUT /api/nodes/[nodeId]/specializations - Move nodes', () => {
+  //==========================================================================
+  // SECTION 5: PUT ENDPOINT - MOVE NODES TESTS
+  //==========================================================================
+  
+  describe('PUT Endpoint - Move Nodes', () => {
     it('should move specializations between collections successfully', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const testNode = createTestNode();
       const updatedNode: INode = {
         ...testNode,
@@ -512,9 +511,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should return 400 when source collection does not exist', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         nodes: [{ id: 'special-node-1' }],
         sourceCollection: 'nonExistentCollection',
@@ -531,9 +527,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should return 400 when target collection does not exist', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         nodes: [{ id: 'special-node-1' }],
         sourceCollection: 'main',
@@ -550,9 +543,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should return 400 when nodes do not exist in source collection', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         nodes: [{ id: 'special-node-3' }],
         sourceCollection: 'main',
@@ -569,9 +559,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should validate collection name format', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         nodes: [{ id: 'special-node-1' }],
         sourceCollection: 'main',
@@ -588,11 +575,12 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
   });
 
-  describe('PUT /api/nodes/[nodeId]/specializations - Reorder nodes', () => {
+  //==========================================================================
+  // SECTION 6: PUT ENDPOINT - REORDER NODES TESTS
+  //==========================================================================
+  
+  describe('PUT Endpoint - Reorder Nodes', () => {
     it('should reorder specializations within a collection successfully', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const testNode = createTestNode();
       const updatedNode: INode = {
         ...testNode,
@@ -637,8 +625,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should reorder specializations in a specific collection', async () => {
-      jest.clearAllMocks();
-      
       const nodeWithExtraNodes: INode = {
         ...createTestNode(),
         specializations: [
@@ -705,9 +691,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should return 400 when collection does not exist for reordering', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         nodes: [
           { id: 'special-node-1' },
@@ -727,9 +710,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should return 400 when nodes do not exist in the collection for reordering', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         nodes: [
           { id: 'special-node-1' },
@@ -749,9 +729,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should return 400 when nodes and newIndices arrays have different lengths', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         nodes: [
           { id: 'special-node-1' },
@@ -770,9 +747,6 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
     });
 
     it('should return 400 when newIndices contains invalid values', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
       const requestPayload = {
         nodes: [
           { id: 'special-node-1' },
@@ -789,11 +763,14 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
       expectErrorResponse(res, 400, 'VALIDATION_ERROR');
       expect(NodeRelationshipService.reorderSpecializations).not.toHaveBeenCalled();
     });
+  });
 
-    it('should return 400 when neither sourceCollection/targetCollection nor newIndices is provided', async () => {
-      jest.clearAllMocks();
-      (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
-      
+  //==========================================================================
+  // SECTION 7: COMPLEX ERROR HANDLING TESTS
+  //==========================================================================
+  
+  describe('Complex Error Handling', () => {
+    it('should return 400 when neither sourceCollection/targetCollection nor newIndices is provided for PUT', async () => {
       const requestPayload = {
         nodes: [{ id: 'special-node-1' }],
         reasoning: 'Invalid PUT request'
@@ -807,12 +784,8 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
       expect(NodeRelationshipService.moveSpecializations).not.toHaveBeenCalled();
       expect(NodeRelationshipService.reorderSpecializations).not.toHaveBeenCalled();
     });
-  });
 
-  describe('Error handling', () => {
-    it('should handle unexpected errors', async () => {
-      jest.clearAllMocks();
-      
+    it('should handle unexpected errors during operation', async () => {
       (NodeService.getNode as jest.Mock).mockImplementationOnce(() => {
         const error = new Error('Unexpected database error');
         error.name = 'NodeNotFoundError';
@@ -826,14 +799,21 @@ describe('/api/nodes/[nodeId]/specializations endpoint', () => {
       expectErrorResponse(res, 404, 'NODE_NOT_FOUND');
     });
     
-    it('should include metadata in the response', async () => {
-      const { req, res } = createRequest('GET', 'test-node-id');
+    it('should handle service validation errors properly', async () => {
+      const requestPayload = {
+        nodes: [{ id: 'new-special-node' }],
+        reasoning: 'Adding a new specialization'
+      };
+      
+      (NodeRelationshipService.addSpecializations as jest.Mock).mockRejectedValueOnce(
+        new ApiKeyValidationError('Node validation failed')
+      );
+      
+      const { req, res } = createRequest('POST', 'test-node-id', requestPayload);
       
       await specializationsHandler(req, res);
       
-      const responseData = expectSuccessResponse(res);
-      expect(responseData.metadata.clientId).toBe('test-client-id');
-      expect(responseData.metadata.version).toBe('1.0');
+      expectErrorResponse(res, 400, 'VALIDATION_ERROR');
     });
   });
 });

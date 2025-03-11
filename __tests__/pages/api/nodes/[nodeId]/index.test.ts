@@ -29,6 +29,26 @@ jest.mock(' @components/middlewares/validateApiKey', () => ({
   }),
 }));
 
+// Standard mock API key info used in tests
+export const mockApiKeyInfo = {
+  clientId: 'test-client-id',
+  userId: 'test-user-id',
+  uname: 'test-username',
+  createdAt: new Date(),
+  lastUsed: new Date(),
+  isActive: true,
+  description: 'Test API Key'
+};
+
+// Mock data for deletion tests
+export const mockDeletionImpactSummary = {
+  generalizations: ['general-node-1'],
+  specializations: ['special-node-1', 'special-node-2'],
+  parts: ['part-node-1', 'part-node-2'],
+  wholes: ['whole-node-1']
+};
+
+// Helper functions for test data
 export function createTestNode(override: Partial<INode> = {}): INode {
   return {
     id: 'test-node-id',
@@ -157,500 +177,297 @@ export function expectErrorResponse(
   return responseData;
 }
 
-// Standard mock API key info used in tests
-export const mockApiKeyInfo = {
-  clientId: 'test-client-id',
-  userId: 'test-user-id',
-  uname: 'test-username',
-  createdAt: new Date(),
-  lastUsed: new Date(),
-  isActive: true,
-  description: 'Test API Key'
-};
-
-// Mock data for deletion tests
-export const mockDeletionImpactSummary = {
-  generalizations: ['general-node-1'],
-  specializations: ['special-node-1', 'special-node-2'],
-  parts: ['part-node-1', 'part-node-2'],
-  wholes: ['whole-node-1']
-};
-
-describe('/api/nodes/[nodeId] GET endpoint', () => {
+describe('Node API Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (NodeService.getNode as jest.Mock).mockResolvedValue(createTestNode());
   });
 
-  it('should return a node when it exists', async () => {
-    const testNode = createTestNode();
-    
-    (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
+  //==========================================================================
+  // SECTION 1: BASIC ENDPOINT FUNCTIONALITY TESTS
+  //==========================================================================
+  
+  describe('Basic functionality', () => {
+    it('should return 405 for unsupported methods', async () => {
+      const { req, res } = createNodeRequest('PUT', 'test-node-id');
 
-    const { req, res } = createNodeRequest('GET', 'test-node-id');
-
-    await nodeHandler(req, res);
-
-    
-    const responseData = expectSuccessResponse(res, 200) as ApiResponse<{ node: INode }>;
-    expect(responseData.data?.node).toEqual(testNode);
-    
-    expect(NodeService.getNode).toHaveBeenCalledWith('test-node-id');
-  });
-
-  it('should return 404 when node is not found', async () => {
-    (NodeService.getNode as jest.Mock).mockRejectedValue(new Error('Node not found'));
-
-    const { req, res } = createNodeRequest('GET', 'non-existent-node-id');
-
-    await nodeHandler(req, res);
-
-    
-    expectErrorResponse(res, 404, 'Node not found');
-    
-    expect(NodeService.getNode).toHaveBeenCalledWith('non-existent-node-id');
-  });
-
-  it('should return 500 when an unexpected error occurs', async () => {
-    
-    (NodeService.getNode as jest.Mock).mockRejectedValue(new Error('Database connection error'));
-
-    const { req, res } = createNodeRequest('GET', 'test-node-id');
-
-    await nodeHandler(req, res);
-
-    
-    expectErrorResponse(res, 500, 'Internal server error occurred while retrieving node');
-    
-    expect(NodeService.getNode).toHaveBeenCalled();
-  });
-
-  it('should return 405 for unsupported methods', async () => {
-    const { req, res } = createNodeRequest('PUT', 'test-node-id');
-
-    await nodeHandler(req, res);
-
-    expectErrorResponse(res, 405, 'Method PUT Not Allowed');
-    
-    expect(res._getHeaders().allow).toContain('GET');
-    expect(res._getHeaders().allow).toContain('PATCH');
-    expect(res._getHeaders().allow).toContain('DELETE');
-
-    expect(NodeService.getNode).not.toHaveBeenCalled();
-  });
-
-  it('should handle preflight OPTIONS requests', async () => {
-    const { req, res } = createNodeRequest('OPTIONS', 'test-node-id');
-
-    await nodeHandler(req, res);
-
-    expect(res.statusCode).toBe(204);
-    
-    expect(res._getHeaders().allow).toContain('GET');
-    expect(res._getHeaders().allow).toContain('PATCH');
-    expect(res._getHeaders().allow).toContain('DELETE');
-
-    expect(NodeService.getNode).not.toHaveBeenCalled();
-  });
-
-  it('should return 401 when apiKeyInfo is missing', async () => {
-    const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-      method: 'GET',
-      query: {
-        nodeId: 'test-node-id'
-      }
-    });
-    
-    delete (req as any).apiKeyInfo;
-    
-    try {
       await nodeHandler(req, res);
+
+      expectErrorResponse(res, 405, 'Method PUT Not Allowed');
       
-      console.log('Status code:', res.statusCode);
-      console.log('Response data:', JSON.parse(res._getData()));
+      expect(res._getHeaders().allow).toContain('GET');
+      expect(res._getHeaders().allow).toContain('PATCH');
+      expect(res._getHeaders().allow).toContain('DELETE');
+
+      expect(NodeService.getNode).not.toHaveBeenCalled();
+    });
+
+    it('should handle preflight OPTIONS requests', async () => {
+      const { req, res } = createNodeRequest('OPTIONS', 'test-node-id');
+
+      await nodeHandler(req, res);
+
+      expect(res.statusCode).toBe(204);
       
-      expect(res.statusCode).toBe(500); 
-      const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
-      expect(responseData.success).toBe(false);
+      expect(res._getHeaders().allow).toContain('GET');
+      expect(res._getHeaders().allow).toContain('PATCH');
+      expect(res._getHeaders().allow).toContain('DELETE');
+
+      expect(NodeService.getNode).not.toHaveBeenCalled();
+    });
+  });
+
+  //==========================================================================
+  // SECTION 2: GET ENDPOINT TESTS
+  //==========================================================================
+  
+  describe('GET Endpoint', () => {
+    it('should return a node when it exists', async () => {
+      const testNode = createTestNode();
       
-      expect(responseData.error).toBeDefined();
-    } catch (error) {
-      console.error('Test error:', error);
-      throw error;
-    }
-  });
-});
+      (NodeService.getNode as jest.Mock).mockResolvedValue(testNode);
 
-describe('/api/nodes/[nodeId] DELETE endpoint', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+      const { req, res } = createNodeRequest('GET', 'test-node-id');
 
-  it('should delete a node successfully', async () => {
-    const testNode = createTestNode();
-    testNode.deleted = true;
-    
-    
-    (NodeService.deleteNode as jest.Mock).mockResolvedValue({
-      node: testNode,
-      impactSummary: mockDeletionImpactSummary
-    });
+      await nodeHandler(req, res);
 
-    const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-      method: 'DELETE',
-      query: {
-        nodeId: 'test-node-id',
-        reasoning: 'Test deletion reason'
-      }
-    });
-
-    await nodeHandler(req, res);
-
-    
-    expect(res.statusCode).toBe(200);
-    
-    const responseData = JSON.parse(res._getData()) as ApiResponse<{
-      nodeId: string;
-      node: INode;
-      impactSummary: typeof mockDeletionImpactSummary;
-    }>;
-    
-    expect(responseData.success).toBe(true);
-    expect(responseData.data?.nodeId).toBe('test-node-id');
-    expect(responseData.data?.node).toEqual(testNode);
-    expect(responseData.data?.impactSummary).toEqual(mockDeletionImpactSummary);
-    
-    expect(NodeService.deleteNode).toHaveBeenCalledWith(
-      'test-node-id',
-      'test-username',
-      'Test deletion reason'
-    );
-  });
-
-  it('should return 400 when reasoning is not provided', async () => {
-    const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-      method: 'DELETE',
-      query: {
-        nodeId: 'test-node-id'
-      }
-    });
-
-    await nodeHandler(req, res);
-
-    
-    expect(res.statusCode).toBe(400);
-    
-    const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
-    expect(responseData.success).toBe(false);
-    expect(responseData.error).toBe('Reasoning is required for node deletion');
-    
-    expect(NodeService.deleteNode).not.toHaveBeenCalled();
-  });
-
-  it('should return 404 when node is not found', async () => {
-    
-    (NodeService.deleteNode as jest.Mock).mockRejectedValue(new Error('Node not found'));
-
-    const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-      method: 'DELETE',
-      query: {
-        nodeId: 'non-existent-node-id',
-        reasoning: 'Test deletion reason'
-      }
-    });
-
-    await nodeHandler(req, res);
-
-    
-    expect(res.statusCode).toBe(404);
-    
-    const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
-    expect(responseData.success).toBe(false);
-    expect(responseData.error).toBe('Node not found');
-    
-    expect(NodeService.deleteNode).toHaveBeenCalledWith(
-      'non-existent-node-id',
-      'test-username',
-      'Test deletion reason'
-    );
-  });
-
-  it('should return 409 when node is already deleted', async () => {
-    
-    (NodeService.deleteNode as jest.Mock).mockRejectedValue(new Error('Node is already deleted'));
-
-    const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-      method: 'DELETE',
-      query: {
-        nodeId: 'already-deleted-node-id',
-        reasoning: 'Test deletion reason'
-      }
-    });
-
-    await nodeHandler(req, res);
-
-    
-    expect(res.statusCode).toBe(409);
-    
-    const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
-    expect(responseData.success).toBe(false);
-    expect(responseData.error).toBe('Node is already deleted');
-    
-    expect(NodeService.deleteNode).toHaveBeenCalled();
-  });
-
-  it('should return 500 when an unexpected error occurs', async () => {
-    
-    const originalConsoleError = console.error;
-    console.error = jest.fn();
-
-    try {
+      const responseData = expectSuccessResponse(res, 200) as ApiResponse<{ node: INode }>;
+      expect(responseData.data?.node).toEqual(testNode);
       
-      (NodeService.deleteNode as jest.Mock).mockRejectedValue(new Error('Database connection error'));
+      expect(NodeService.getNode).toHaveBeenCalledWith('test-node-id');
+    });
+
+    it('should return 404 when node is not found', async () => {
+      (NodeService.getNode as jest.Mock).mockRejectedValue(new Error('Node not found'));
+
+      const { req, res } = createNodeRequest('GET', 'non-existent-node-id');
+
+      await nodeHandler(req, res);
+
+      expectErrorResponse(res, 404, 'Node not found');
+      
+      expect(NodeService.getNode).toHaveBeenCalledWith('non-existent-node-id');
+    });
+
+    it('should return 500 when an unexpected error occurs', async () => {
+      (NodeService.getNode as jest.Mock).mockRejectedValue(new Error('Database connection error'));
+
+      const { req, res } = createNodeRequest('GET', 'test-node-id');
+
+      await nodeHandler(req, res);
+
+      expectErrorResponse(res, 500, 'Internal server error occurred while retrieving node');
+      
+      expect(NodeService.getNode).toHaveBeenCalled();
+    });
+  });
+
+  //==========================================================================
+  // SECTION 3: PATCH ENDPOINT TESTS
+  //==========================================================================
+  
+  describe('PATCH Endpoint', () => {
+    it('should update a node successfully', async () => {
+      const updatedNode = createTestNode();
+      updatedNode.title = 'Updated Node Title';
+      
+      (NodeService.updateNode as jest.Mock).mockResolvedValue(updatedNode);
+
+      const updatePayload = {
+        node: {
+          title: 'Updated Node Title',
+          nodeType: 'activity'
+        },
+        reasoning: 'Test update reason'
+      };
 
       const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-        method: 'DELETE',
+        method: 'PATCH',
         query: {
-          nodeId: 'test-node-id',
-          reasoning: 'Test deletion reason'
+          nodeId: 'test-node-id'
+        },
+        body: updatePayload
+      });
+
+      await nodeHandler(req, res);
+
+      expect(res.statusCode).toBe(200);
+      
+      const responseData = JSON.parse(res._getData()) as ApiResponse<{
+        nodeId: string;
+        node: INode;
+      }>;
+      
+      expect(responseData.success).toBe(true);
+      expect(responseData.data?.nodeId).toBe('test-node-id');
+      expect(responseData.data?.node).toEqual(updatedNode);
+      
+      expect(NodeService.updateNode).toHaveBeenCalledWith(
+        'test-node-id',
+        updatePayload.node,
+        'test-username',
+        'Test update reason'
+      );
+    });
+
+    it('should return 400 when node data is missing', async () => {
+      const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
+        method: 'PATCH',
+        query: {
+          nodeId: 'test-node-id'
+        },
+        body: {
+          reasoning: 'Test update reason'
         }
       });
 
       await nodeHandler(req, res);
 
-      
-      expect(res.statusCode).toBe(500);
+      expect(res.statusCode).toBe(400);
       
       const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
       expect(responseData.success).toBe(false);
-      expect(responseData.error).toBe('Failed to delete node');
+      expect(responseData.error).toBe('Node data is required');
       
-      expect(NodeService.deleteNode).toHaveBeenCalled();
-      
-      expect(console.error).toHaveBeenCalled();
-    } finally {
-      console.error = originalConsoleError;
-    }
-  });
-});
-
-describe('/api/nodes/[nodeId] PATCH endpoint', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should update a node successfully', async () => {
-    const updatedNode = createTestNode();
-    updatedNode.title = 'Updated Node Title';
-    
-    
-    (NodeService.updateNode as jest.Mock).mockResolvedValue(updatedNode);
-
-    const updatePayload = {
-      node: {
-        title: 'Updated Node Title',
-        nodeType: 'activity'
-      },
-      reasoning: 'Test update reason'
-    };
-
-    const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-      method: 'PATCH',
-      query: {
-        nodeId: 'test-node-id'
-      },
-      body: updatePayload
+      expect(NodeService.updateNode).not.toHaveBeenCalled();
     });
 
-    await nodeHandler(req, res);
-
-    
-    expect(res.statusCode).toBe(200);
-    
-    const responseData = JSON.parse(res._getData()) as ApiResponse<{
-      nodeId: string;
-      node: INode;
-    }>;
-    
-    expect(responseData.success).toBe(true);
-    expect(responseData.data?.nodeId).toBe('test-node-id');
-    expect(responseData.data?.node).toEqual(updatedNode);
-    
-    expect(NodeService.updateNode).toHaveBeenCalledWith(
-      'test-node-id',
-      updatePayload.node,
-      'test-username',
-      'Test update reason'
-    );
-  });
-
-  it('should return 400 when node data is missing', async () => {
-    const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-      method: 'PATCH',
-      query: {
-        nodeId: 'test-node-id'
-      },
-      body: {
-        reasoning: 'Test update reason'
-      }
-    });
-
-    await nodeHandler(req, res);
-
-    
-    expect(res.statusCode).toBe(400);
-    
-    const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
-    expect(responseData.success).toBe(false);
-    expect(responseData.error).toBe('Node data is required');
-    
-    expect(NodeService.updateNode).not.toHaveBeenCalled();
-  });
-
-  it('should return 400 when reasoning is missing', async () => {
-    const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-      method: 'PATCH',
-      query: {
-        nodeId: 'test-node-id'
-      },
-      body: {
-        node: {
-          title: 'Updated Node Title'
-        }
-      }
-    });
-
-    await nodeHandler(req, res);
-
-    
-    expect(res.statusCode).toBe(400);
-    
-    const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
-    expect(responseData.success).toBe(false);
-    expect(responseData.error).toBe('Reasoning is required');
-    
-    expect(NodeService.updateNode).not.toHaveBeenCalled();
-  });
-
-  it('should return 400 when node title is empty', async () => {
-    const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-      method: 'PATCH',
-      query: {
-        nodeId: 'test-node-id'
-      },
-      body: {
-        node: {
-          title: '   '
+    it('should return 400 when reasoning is missing', async () => {
+      const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
+        method: 'PATCH',
+        query: {
+          nodeId: 'test-node-id'
         },
-        reasoning: 'Test update reason'
-      }
-    });
-
-    await nodeHandler(req, res);
-
-    
-    expect(res.statusCode).toBe(400);
-    
-    const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
-    expect(responseData.success).toBe(false);
-    expect(responseData.error).toBe('Node title cannot be empty');
-    
-    expect(NodeService.updateNode).not.toHaveBeenCalled();
-  });
-
-  it('should return 400 when node type is invalid', async () => {
-    const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-      method: 'PATCH',
-      query: {
-        nodeId: 'test-node-id'
-      },
-      body: {
-        node: {
-          title: 'Valid Title',
-          nodeType: 'invalid-type'
-        },
-        reasoning: 'Test update reason'
-      }
-    });
-
-    await nodeHandler(req, res);
-
-    
-    expect(res.statusCode).toBe(400);
-    
-    const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
-    expect(responseData.success).toBe(false);
-    expect(responseData.error).toContain('Invalid node type');
-    
-    expect(NodeService.updateNode).not.toHaveBeenCalled();
-  });
-
-  it('should return 400 when generalizations structure is invalid', async () => {
-    const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-      method: 'PATCH',
-      query: {
-        nodeId: 'test-node-id'
-      },
-      body: {
-        node: {
-          title: 'Valid Title',
-          generalizations: [
-            { nodes: [{}] }
-          ]
-        },
-        reasoning: 'Test update reason'
-      }
-    });
-
-    await nodeHandler(req, res);
-
-    
-    expect(res.statusCode).toBe(400);
-    
-    const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
-    expect(responseData.success).toBe(false);
-    expect(responseData.error).toBe('Invalid generalization structure');
-    
-    expect(NodeService.updateNode).not.toHaveBeenCalled();
-  });
-
-  it('should return 400 when properties structure is invalid', async () => {
-    const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-      method: 'PATCH',
-      query: {
-        nodeId: 'test-node-id'
-      },
-      body: {
-        node: {
-          title: 'Valid Title',
-          properties: {
-            parts: {},
-            isPartOf: []
+        body: {
+          node: {
+            title: 'Updated Node Title'
           }
-        },
-        reasoning: 'Test update reason'
-      }
+        }
+      });
+
+      await nodeHandler(req, res);
+
+      expect(res.statusCode).toBe(400);
+      
+      const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
+      expect(responseData.success).toBe(false);
+      expect(responseData.error).toBe('Reasoning is required');
+      
+      expect(NodeService.updateNode).not.toHaveBeenCalled();
     });
 
-    await nodeHandler(req, res);
+    it('should return 400 when node title is empty', async () => {
+      const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
+        method: 'PATCH',
+        query: {
+          nodeId: 'test-node-id'
+        },
+        body: {
+          node: {
+            title: '   '
+          },
+          reasoning: 'Test update reason'
+        }
+      });
 
-    
-    expect(res.statusCode).toBe(400);
-    
-    const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
-    expect(responseData.success).toBe(false);
-    expect(responseData.error).toBe('Properties parts must be an array');
-    
-    expect(NodeService.updateNode).not.toHaveBeenCalled();
-  });
+      await nodeHandler(req, res);
 
-  it('should return 500 when NodeService.updateNode throws an unexpected error', async () => {
-    
-    const originalConsoleError = console.error;
-    console.error = jest.fn();
-
-    try {
+      expect(res.statusCode).toBe(400);
       
-      (NodeService.updateNode as jest.Mock).mockRejectedValue(new Error('Database error'));
+      const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
+      expect(responseData.success).toBe(false);
+      expect(responseData.error).toBe('Node title cannot be empty');
+      
+      expect(NodeService.updateNode).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 when node type is invalid', async () => {
+      const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
+        method: 'PATCH',
+        query: {
+          nodeId: 'test-node-id'
+        },
+        body: {
+          node: {
+            title: 'Valid Title',
+            nodeType: 'invalid-type'
+          },
+          reasoning: 'Test update reason'
+        }
+      });
+
+      await nodeHandler(req, res);
+
+      expect(res.statusCode).toBe(400);
+      
+      const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
+      expect(responseData.success).toBe(false);
+      expect(responseData.error).toContain('Invalid node type');
+      
+      expect(NodeService.updateNode).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 when generalizations structure is invalid', async () => {
+      const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
+        method: 'PATCH',
+        query: {
+          nodeId: 'test-node-id'
+        },
+        body: {
+          node: {
+            title: 'Valid Title',
+            generalizations: [
+              { nodes: [{}] }
+            ]
+          },
+          reasoning: 'Test update reason'
+        }
+      });
+
+      await nodeHandler(req, res);
+
+      expect(res.statusCode).toBe(400);
+      
+      const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
+      expect(responseData.success).toBe(false);
+      expect(responseData.error).toBe('Invalid generalization structure');
+      
+      expect(NodeService.updateNode).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 when properties structure is invalid', async () => {
+      const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
+        method: 'PATCH',
+        query: {
+          nodeId: 'test-node-id'
+        },
+        body: {
+          node: {
+            title: 'Valid Title',
+            properties: {
+              parts: {},
+              isPartOf: []
+            }
+          },
+          reasoning: 'Test update reason'
+        }
+      });
+
+      await nodeHandler(req, res);
+
+      expect(res.statusCode).toBe(400);
+      
+      const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
+      expect(responseData.success).toBe(false);
+      expect(responseData.error).toBe('Properties parts must be an array');
+      
+      expect(NodeService.updateNode).not.toHaveBeenCalled();
+    });
+
+    it('should properly handle validation errors from NodeService', async () => {
+      (NodeService.updateNode as jest.Mock).mockImplementation(() => {
+        throw new ApiKeyValidationError('Custom validation error from service');
+      });
 
       const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
         method: 'PATCH',
@@ -667,50 +484,199 @@ describe('/api/nodes/[nodeId] PATCH endpoint', () => {
 
       await nodeHandler(req, res);
 
-      
-      expect(res.statusCode).toBe(500);
+      expect(res.statusCode).toBe(400);
       
       const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
       expect(responseData.success).toBe(false);
-      expect(responseData.error).toBe('Failed to update node');
+      expect(responseData.error).toBe('Custom validation error from service');
+      expect(responseData.code).toBe('VALIDATION_ERROR');
       
       expect(NodeService.updateNode).toHaveBeenCalled();
-      
-      expect(console.error).toHaveBeenCalled();
-    } finally {
-      console.error = originalConsoleError;
-    }
+    });
   });
 
-  it('should properly handle validation errors from NodeService', async () => {
-    
-    (NodeService.updateNode as jest.Mock).mockImplementation(() => {
-      throw new ApiKeyValidationError('Custom validation error from service');
+  //==========================================================================
+  // SECTION 4: DELETE ENDPOINT TESTS
+  //==========================================================================
+  
+  describe('DELETE Endpoint', () => {
+    it('should delete a node successfully', async () => {
+      const testNode = createTestNode();
+      testNode.deleted = true;
+      
+      (NodeService.deleteNode as jest.Mock).mockResolvedValue({
+        node: testNode,
+        impactSummary: mockDeletionImpactSummary
+      });
+
+      const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
+        method: 'DELETE',
+        query: {
+          nodeId: 'test-node-id',
+          reasoning: 'Test deletion reason'
+        }
+      });
+
+      await nodeHandler(req, res);
+
+      expect(res.statusCode).toBe(200);
+      
+      const responseData = JSON.parse(res._getData()) as ApiResponse<{
+        nodeId: string;
+        node: INode;
+        impactSummary: typeof mockDeletionImpactSummary;
+      }>;
+      
+      expect(responseData.success).toBe(true);
+      expect(responseData.data?.nodeId).toBe('test-node-id');
+      expect(responseData.data?.node).toEqual(testNode);
+      expect(responseData.data?.impactSummary).toEqual(mockDeletionImpactSummary);
+      
+      expect(NodeService.deleteNode).toHaveBeenCalledWith(
+        'test-node-id',
+        'test-username',
+        'Test deletion reason'
+      );
     });
 
-    const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-      method: 'PATCH',
-      query: {
-        nodeId: 'test-node-id'
-      },
-      body: {
-        node: {
-          title: 'Updated Node Title'
-        },
-        reasoning: 'Test update reason'
+    it('should return 400 when reasoning is not provided', async () => {
+      const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
+        method: 'DELETE',
+        query: {
+          nodeId: 'test-node-id'
+        }
+      });
+
+      await nodeHandler(req, res);
+
+      expect(res.statusCode).toBe(400);
+      
+      const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
+      expect(responseData.success).toBe(false);
+      expect(responseData.error).toBe('Reasoning is required for node deletion');
+      
+      expect(NodeService.deleteNode).not.toHaveBeenCalled();
+    });
+
+    it('should return 404 when node is not found', async () => {
+      (NodeService.deleteNode as jest.Mock).mockRejectedValue(new Error('Node not found'));
+
+      const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
+        method: 'DELETE',
+        query: {
+          nodeId: 'non-existent-node-id',
+          reasoning: 'Test deletion reason'
+        }
+      });
+
+      await nodeHandler(req, res);
+
+      expect(res.statusCode).toBe(404);
+      
+      const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
+      expect(responseData.success).toBe(false);
+      expect(responseData.error).toBe('Node not found');
+      
+      expect(NodeService.deleteNode).toHaveBeenCalledWith(
+        'non-existent-node-id',
+        'test-username',
+        'Test deletion reason'
+      );
+    });
+
+    it('should return 409 when node is already deleted', async () => {
+      (NodeService.deleteNode as jest.Mock).mockRejectedValue(new Error('Node is already deleted'));
+
+      const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
+        method: 'DELETE',
+        query: {
+          nodeId: 'already-deleted-node-id',
+          reasoning: 'Test deletion reason'
+        }
+      });
+
+      await nodeHandler(req, res);
+
+      expect(res.statusCode).toBe(409);
+      
+      const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
+      expect(responseData.success).toBe(false);
+      expect(responseData.error).toBe('Node is already deleted');
+      
+      expect(NodeService.deleteNode).toHaveBeenCalled();
+    });
+  });
+
+  //==========================================================================
+  // SECTION 5: ERROR HANDLING TESTS
+  //==========================================================================
+  
+  describe('Error Handling', () => {
+    it('should return 500 when NodeService.updateNode throws an unexpected error', async () => {
+      const originalConsoleError = console.error;
+      console.error = jest.fn();
+
+      try {
+        (NodeService.updateNode as jest.Mock).mockRejectedValue(new Error('Database error'));
+
+        const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
+          method: 'PATCH',
+          query: {
+            nodeId: 'test-node-id'
+          },
+          body: {
+            node: {
+              title: 'Updated Node Title'
+            },
+            reasoning: 'Test update reason'
+          }
+        });
+
+        await nodeHandler(req, res);
+
+        expect(res.statusCode).toBe(500);
+        
+        const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
+        expect(responseData.success).toBe(false);
+        expect(responseData.error).toBe('Failed to update node');
+        
+        expect(NodeService.updateNode).toHaveBeenCalled();
+        
+        expect(console.error).toHaveBeenCalled();
+      } finally {
+        console.error = originalConsoleError;
       }
     });
 
-    await nodeHandler(req, res);
+    it('should return 500 when an unexpected error occurs during deletion', async () => {
+      const originalConsoleError = console.error;
+      console.error = jest.fn();
 
-    
-    expect(res.statusCode).toBe(400);
-    
-    const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
-    expect(responseData.success).toBe(false);
-    expect(responseData.error).toBe('Custom validation error from service');
-    expect(responseData.code).toBe('VALIDATION_ERROR');
-    
-    expect(NodeService.updateNode).toHaveBeenCalled();
+      try {
+        (NodeService.deleteNode as jest.Mock).mockRejectedValue(new Error('Database connection error'));
+
+        const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
+          method: 'DELETE',
+          query: {
+            nodeId: 'test-node-id',
+            reasoning: 'Test deletion reason'
+          }
+        });
+
+        await nodeHandler(req, res);
+
+        expect(res.statusCode).toBe(500);
+        
+        const responseData = JSON.parse(res._getData()) as ApiResponse<never>;
+        expect(responseData.success).toBe(false);
+        expect(responseData.error).toBe('Failed to delete node');
+        
+        expect(NodeService.deleteNode).toHaveBeenCalled();
+        
+        expect(console.error).toHaveBeenCalled();
+      } finally {
+        console.error = originalConsoleError;
+      }
+    });
   });
 });

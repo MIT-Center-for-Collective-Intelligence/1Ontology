@@ -209,26 +209,6 @@ describe('Node Creation API Tests', () => {
       
       expect(res._getHeaders().allow).toContain('POST');
     });
-
-    // it('should return 401 when apiKeyInfo is missing', async () => {
-    //   // Create mock request without apiKeyInfo
-    //   const { req, res } = createMocks<NextApiRequestWithAuth, NextApiResponse>({
-    //     method: 'POST',
-    //     body: validNodeRequest
-    //   });
-      
-    //   // Explicitly remove apiKeyInfo to ensure it's not present
-    //   delete (req as any).apiKeyInfo;
-      
-    //   // Call the handler
-    //   await nodeCreationHandler(req, res);
-      
-    //   // Verify the response
-    //   expectErrorResponse(res, 401, 'Authentication required');
-      
-    //   // Verify that NodeService.createNode was not called
-    //   expect(NodeService.createNode).not.toHaveBeenCalled();
-    // });
   });
 
   //==========================================================================
