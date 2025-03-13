@@ -8,7 +8,7 @@ import { getJoinUsernames } from " @components/lib/utils/string.utils";
 
 type EmoticonsProps = {
   message: IChatMessage;
-  reactionsMap: Reaction[];
+  reactionsMap: { [emoji: string]: Reaction[] };
   toggleEmojiPicker: (event: any, boxRef: any, message?: IChatMessage) => void;
   toggleReaction: (comment: IChatMessage, emoji: string) => void;
   user: any;
@@ -23,25 +23,12 @@ export const Emoticons = ({
   user,
   boxRef,
 }: EmoticonsProps) => {
-  const [reactions, setReactions] = useState<{ [emoji: string]: string[] }>({});
-
-  useEffect(() => {
-    setReactions(
-      reactionsMap.reduce(
-        (acu: { [emoji: string]: string[] }, cur: Reaction) => {
-          const userName = cur.fName ? cur.fName + " " + cur.lName : cur.user;
-          if (acu.hasOwnProperty(cur.emoji)) {
-            acu[cur.emoji].push(userName);
-          } else if (cur.emoji) {
-            acu[cur.emoji] = [userName];
-          }
-          return acu;
-        },
-        {}
-      )
-    );
-  }, [reactionsMap]);
-
+  if (Array.isArray(reactionsMap)) {
+    return;
+  }
+  if (message.id === "KrdzjY33okG5Z9mGuBBo") {
+    console.log(reactionsMap, "reactionsMap ==>", user);
+  }
   const handleAddReaction = (e: any) => toggleEmojiPicker(e, boxRef, message);
 
   return (
@@ -53,59 +40,61 @@ export const Emoticons = ({
         gap: "5px",
       }}
     >
-      {Object.keys(reactions)?.map((emoji: string) => (
-        <Tooltip
-          placement="top"
-          key={emoji}
-          title={
-            <Box sx={{ textAlign: "center" }}>
-              <Typography variant="body2">
-                {getJoinUsernames(reactions[emoji], user.uname)}
-                <span style={{ color: "black" }}>reacted with {emoji}</span>
-              </Typography>
-            </Box>
-          }
-          sx={{
-            "& .MuiTooltip-tooltip": {
-              backgroundColor: "black",
-              color: "white",
-            },
-          }}
-        >
-          <Button
-            sx={{
-              color: (theme) =>
-                theme.palette.mode === "dark"
-                  ? DESIGN_SYSTEM_COLORS.gray100
-                  : DESIGN_SYSTEM_COLORS.notebookG700,
-              fontSize: "15px",
-              minWidth: "0",
-              padding: "0px 10px",
-              borderRadius: "12px",
-              border: reactions[emoji].includes(user?.uname)
-                ? "1px solid orange"
-                : "",
-              background: (theme) =>
-                theme.palette.mode === "dark"
-                  ? DESIGN_SYSTEM_COLORS.notebookG500
-                  : DESIGN_SYSTEM_COLORS.gray300,
-            }}
-            onClick={() => toggleReaction(message, emoji)}
-          >
-            {emoji}{" "}
-            <span
-              style={{
-                fontWeight: reactions[emoji].includes(user?.uname)
-                  ? "bold"
-                  : "",
-                paddingLeft: "2px",
+      {Object.entries(reactionsMap).map(
+        ([emoji, reactors]: [string, Reaction[]]) => {
+          const reactedByCurrentUser =
+            reactors.findIndex((c) => c.user === user.uname) !== -1;
+          return (
+            <Tooltip
+              placement="top"
+              key={emoji}
+              title={
+                <Box sx={{ textAlign: "center" }}>
+                  <Typography variant="body2">
+                    {getJoinUsernames(reactors, user.uname)}
+                    <span style={{ color: "black" }}>reacted with {emoji}</span>
+                  </Typography>
+                </Box>
+              }
+              sx={{
+                "& .MuiTooltip-tooltip": {
+                  backgroundColor: "black",
+                  color: "white",
+                },
               }}
             >
-              {shortenNumber(reactions[emoji].length, 2, false)}
-            </span>
-          </Button>
-        </Tooltip>
-      ))}
+              <Button
+                sx={{
+                  color: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? DESIGN_SYSTEM_COLORS.gray100
+                      : DESIGN_SYSTEM_COLORS.notebookG700,
+                  fontSize: "15px",
+                  minWidth: "0",
+                  padding: "0px 10px",
+                  borderRadius: "12px",
+                  border: reactedByCurrentUser ? "1px solid orange" : "",
+                  background: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? DESIGN_SYSTEM_COLORS.notebookG500
+                      : DESIGN_SYSTEM_COLORS.gray300,
+                }}
+                onClick={() => toggleReaction(message, emoji)}
+              >
+                {emoji}{" "}
+                <span
+                  style={{
+                    fontWeight: reactedByCurrentUser ? "bold" : "",
+                    paddingLeft: "2px",
+                  }}
+                >
+                  {shortenNumber(reactors.length, 2, false)}
+                </span>
+              </Button>
+            </Tooltip>
+          );
+        },
+      )}
       {/* {Object.keys(reactions)?.length > 0 && (
         <IconButton onClick={handleAddReaction}>
           <AddReactionIcon color="secondary" />
