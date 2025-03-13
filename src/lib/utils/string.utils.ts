@@ -309,18 +309,19 @@ export const getJoinUsernames = (
   reactions: Reaction[],
   currentUser: string,
 ): string => {
-  const allReactions = reactions.findIndex((u) => u.user === currentUser)
-    ? [
-        { fName: "You", lName: "" },
-        ...reactions.filter((user) => user.user !== currentUser),
-      ]
-    : reactions;
+  const allReactions =
+    reactions.findIndex((u) => u.user === currentUser) !== -1
+      ? [
+          { fName: "You (click to remove)", lName: "" },
+          ...reactions.filter((user) => user.user !== currentUser),
+        ]
+      : reactions;
   if (allReactions.length > 2) {
     const lastEl = allReactions.splice(-1);
     return (
       allReactions
         .map((u) => {
-          return `${u.fName} ${u.lName}`;
+          return `${u.fName}`;
         })
         .join(", ") +
       ", and " +
@@ -331,7 +332,7 @@ export const getJoinUsernames = (
     return (
       allReactions
         .map((u) => {
-          return `${u.fName} ${u.lName}`;
+          return `${u.fName}`;
         })
         .join(" and ") + " "
     );
