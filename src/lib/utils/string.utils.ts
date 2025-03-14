@@ -312,7 +312,7 @@ export const getJoinUsernames = (
   const allReactions =
     reactions.findIndex((u) => u.user === currentUser) !== -1
       ? [
-          { fName: "You (click to remove)", lName: "" },
+          { fName: "You", lName: "" },
           ...reactions.filter((user) => user.user !== currentUser),
         ]
       : reactions;

@@ -661,35 +661,61 @@ const Chat = ({
           }}
         >
           {isLoading && (
-            <Box>
-              {Array.from(new Array(7)).map((_, index) => (
+            <Box sx={{ mt: "10px" }}>
+              {Array.from(new Array(10)).map((_, index) => (
                 <Box
                   key={index}
                   sx={{
                     display: "flex",
                     justifyContent: "flex-start",
                     p: 1,
+                    mt: "10px",
                   }}
                 >
                   <Skeleton
                     variant="circular"
                     width={50}
-                    height={50}
+                    height={45}
                     sx={{
                       bgcolor: "grey.500",
                       borderRadius: "50%",
                     }}
                   />
-                  <Skeleton
-                    variant="rectangular"
-                    width={410}
-                    height={90}
-                    sx={{
-                      bgcolor: "grey.300",
-                      borderRadius: "0px 10px 10px 10px",
-                      mt: "19px",
-                    }}
-                  />
+                  <Box sx={{ width: "100%" }}>
+                    <Box sx={{ display: "flex" }}>
+                      <Skeleton
+                        variant="rectangular"
+                        width={100}
+                        height={10}
+                        sx={{
+                          bgcolor: "grey.300",
+                          borderRadius: "10px",
+                          ml: "8px",
+                        }}
+                      />
+                      <Skeleton
+                        variant="rectangular"
+                        width={50}
+                        height={10}
+                        sx={{
+                          bgcolor: "grey.300",
+                          borderRadius: "10px",
+                          ml: "8px",
+                        }}
+                      />
+                    </Box>
+                    <Skeleton
+                      variant="rectangular"
+                      height={90}
+                      sx={{
+                        bgcolor: "grey.300",
+                        borderRadius: "10px",
+                        mt: "10px",
+                        ml: "8px",
+                        width: "97%",
+                      }}
+                    />
+                  </Box>
                 </Box>
               ))}
             </Box>

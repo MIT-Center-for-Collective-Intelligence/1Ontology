@@ -1,6 +1,13 @@
-import { Button, Tooltip, Typography } from "@mui/material";
+import {
+  Button,
+  styled,
+  Tooltip,
+  tooltipClasses,
+  TooltipProps,
+  Typography,
+} from "@mui/material";
 import { Box } from "@mui/system";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { IChatMessage, Reaction } from " @components/types/IChat";
 import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
 import { shortenNumber } from " @components/lib/utils/utils";
@@ -26,11 +33,21 @@ export const Emoticons = ({
   if (Array.isArray(reactionsMap)) {
     return;
   }
-  if (message.id === "KrdzjY33okG5Z9mGuBBo") {
-    console.log(reactionsMap, "reactionsMap ==>", user);
-  }
-  const handleAddReaction = (e: any) => toggleEmojiPicker(e, boxRef, message);
 
+  const HtmlTooltip = styled(({ className, ...props }: TooltipProps) => (
+    <Tooltip {...props} classes={{ popper: className }} />
+  ))(({ theme }) => ({
+    [`& .${tooltipClasses.tooltip}`]: {
+      backgroundColor: theme.palette.mode === "dark" ? "black" : "#f5f5f9",
+      color: "rgba(124, 118, 118, 0.87)",
+      maxWidth: 220,
+      fontSize: theme.typography.pxToRem(12),
+      border:
+        theme.palette.mode === "dark"
+          ? "1px solid #dadde9"
+          : "1px solid rgb(18, 18, 20)",
+    },
+  }));
   return (
     <Box
       sx={{
@@ -45,21 +62,30 @@ export const Emoticons = ({
           const reactedByCurrentUser =
             reactors.findIndex((c) => c.user === user.uname) !== -1;
           return (
-            <Tooltip
+            <HtmlTooltip
               placement="top"
               key={emoji}
               title={
-                <Box sx={{ textAlign: "center" }}>
+                <Box
+                  sx={{
+                    textAlign: "center",
+                    border: "1psx solid gray",
+                    borderRadius: "13px",
+                  }}
+                >
                   <Typography variant="body2">
                     {getJoinUsernames(reactors, user.uname)}
-                    <span style={{ color: "black" }}>reacted with {emoji}</span>
+                    <span style={{ color: "gray" }}>reacted with {emoji}</span>
                   </Typography>
                 </Box>
               }
               sx={{
+                p: 0,
+                borderRadius: "13px",
                 "& .MuiTooltip-tooltip": {
-                  backgroundColor: "black",
                   color: "white",
+                  padding: "5px !important",
+                  borderRadius: "13px",
                 },
               }}
             >
@@ -68,7 +94,7 @@ export const Emoticons = ({
                   color: (theme) =>
                     theme.palette.mode === "dark"
                       ? DESIGN_SYSTEM_COLORS.gray100
-                      : DESIGN_SYSTEM_COLORS.notebookG700,
+                      : "#51657a",
                   fontSize: "15px",
                   minWidth: "0",
                   padding: "0px 10px",
@@ -77,7 +103,9 @@ export const Emoticons = ({
                   background: (theme) =>
                     theme.palette.mode === "dark"
                       ? DESIGN_SYSTEM_COLORS.notebookG500
-                      : DESIGN_SYSTEM_COLORS.gray300,
+                      : reactedByCurrentUser
+                        ? "#9cc9ed"
+                        : DESIGN_SYSTEM_COLORS.gray300,
                 }}
                 onClick={() => toggleReaction(message, emoji)}
               >
@@ -91,7 +119,7 @@ export const Emoticons = ({
                   {shortenNumber(reactors.length, 2, false)}
                 </span>
               </Button>
-            </Tooltip>
+            </HtmlTooltip>
           );
         },
       )}
