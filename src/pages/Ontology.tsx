@@ -104,7 +104,7 @@ import { recordLogs, saveNewChangeLog } from " @components/lib/utils/helpers";
 import { useHover } from " @components/lib/hooks/useHover";
 import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarSidebar";
 import { NodeChange } from " @components/types/INode";
-import GuidLines from " @components/components/Guidlines/GuidLines";
+import GuidLines from " @components/components/Guidelines/GuideLines";
 import SearchSideBar from " @components/components/SearchSideBar/SearchSideBar";
 import Head from "next/head";
 import DraggableTree from " @components/components/OntologyComponents/DraggableTree";
