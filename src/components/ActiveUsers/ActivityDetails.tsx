@@ -15,7 +15,6 @@ const ActivityDetails = ({
   modifiedByDetails?: any;
   isSelected?: boolean;
 }) => {
-  console.log("activity==>", activity);
   return (
     <Box
       sx={{

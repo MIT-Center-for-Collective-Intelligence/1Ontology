@@ -185,7 +185,6 @@ async function buildPartOfTrees(nodes: TreeNode[]): Promise<any> {
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   // const { query } = req.body.data;
   const { query } = req.body;
-  console.log("query", query);
 
   if (!query || typeof query !== "string") {
     return res.status(400).json({ error: "Invalid word parameter" });
@@ -208,7 +207,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const hypernymTree = buildHypernymTree(treeRoots);
-  console.log(treeRoots);
   const partsTree = await buildPartOfTrees(treeRoots);
 
   res.status(200).json({ word: query, hypernymTree, partsTree });
