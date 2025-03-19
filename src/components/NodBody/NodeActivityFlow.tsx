@@ -387,7 +387,7 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
       collection(db, ALGORITHMS),
       where("__name__", "==", node.id),
     );
-
+    setAlgorithms([]);
     const fetchAlgorithms = async () => {
       if (development) {
         setAlgorithms(sampleAlgorithmsData.algorithms as any);
