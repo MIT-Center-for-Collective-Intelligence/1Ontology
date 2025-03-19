@@ -84,8 +84,13 @@ let guidelines: any = null;
 async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
   const { nodeId, user } = req.body.data;
 
-  const { uname } = user?.userData;
+  const { uname, claims } = user?.userData;
+
   try {
+    if (!claims.flowChart) {
+      throw new Error("Access denied!");
+    }
+
     const nodeDoc = await db.collection(NODES).doc(nodeId).get();
     const nodeData = nodeDoc.data();
     if (!nodeData) {

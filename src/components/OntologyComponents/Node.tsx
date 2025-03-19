@@ -1252,7 +1252,11 @@ const Node = ({
         </Stack>
 
         {(user.claims.flowChart || development) && (
-          <NodeActivityFlow node={currentVisibleNode} nodes={nodes} />
+          <NodeActivityFlow
+            node={currentVisibleNode}
+            nodes={nodes}
+            confirmIt={confirmIt}
+          />
         )}
 
         {/* rest of the properties in the NodeBody*/}

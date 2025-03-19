@@ -359,6 +359,7 @@ const sampleAlgorithmsData = {
  */
 interface NodeActivityFlowProps {
   node: INode;
+  confirmIt: any;
   nodes: { [id: string]: INode };
   onNodeAdd?: (parentId: string, newNodeData: Partial<INode>) => void;
 }
@@ -369,7 +370,10 @@ interface NodeActivityFlowProps {
  * This component shows algorithm flowcharts related to a specific node
  * and allows switching between different algorithms using tabs.
  */
-const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({ node }) => {
+const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
+  node,
+  confirmIt,
+}) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const db = getFirestore();
@@ -410,6 +414,9 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({ node }) => {
       setOpenAiRequestLoading(true);
       await Post("/flowchart", { nodeId: node.id });
     } catch (error) {
+      confirmIt(
+        "The was an error generating Activity Flows, please try again!",
+      );
       console.error(error);
     } finally {
       setOpenAiRequestLoading(false);
