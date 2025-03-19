@@ -198,3 +198,84 @@ export type TreeData = {
   task?: boolean;
   comments?: boolean;
 };
+
+/**
+ * Temporary types for activity flow implementation
+ */
+
+export const ACTIVITY_TYPES = {
+  SEQUENTIAL: 'sequential',
+  PARALLEL: 'parallel',
+  CONDITION: 'condition',
+  LOOP: 'loop',
+  TASK: 'task',
+} as const;
+
+export type ActivityType = typeof ACTIVITY_TYPES[keyof typeof ACTIVITY_TYPES];
+
+export interface IActivity {
+  name: string;
+  id: string;
+  type: ActivityType;
+  variables?: string[];
+  condition?: Record<string, boolean>;
+  loop_condition?: Record<string, boolean>;
+  sub_activities?: IActivity[];
+}
+
+export interface ISequentialActivity extends IActivity {
+  type: typeof ACTIVITY_TYPES.SEQUENTIAL;
+  sub_activities: IActivity[];
+}
+export interface IParallelActivity extends IActivity {
+  type: typeof ACTIVITY_TYPES.PARALLEL;
+  sub_activities: IActivity[];
+}
+export interface IConditionActivity extends IActivity {
+  type: typeof ACTIVITY_TYPES.CONDITION;
+  variables: string[];
+  condition: Record<string, boolean>;
+  sub_activities: IActivity[];
+}
+export interface ILoopActivity extends IActivity {
+  type: typeof ACTIVITY_TYPES.LOOP;
+  variables: string[];
+  loop_condition: Record<string, boolean>;
+  sub_activities: IActivity[];
+}
+export interface ITaskActivity extends IActivity {
+  type: typeof ACTIVITY_TYPES.TASK;
+}
+
+export type AlgorithmType = typeof ACTIVITY_TYPES.SEQUENTIAL | typeof ACTIVITY_TYPES.PARALLEL;
+
+export interface IAlgorithm {
+  name: string;
+  id?: string;
+  type: AlgorithmType;
+  sub_activities: IActivity[];
+  performance_model: string;
+  advantages: string;
+  disadvantages: string;
+}
+
+// Type guard functions
+export function isSequentialActivity(activity: IActivity): activity is ISequentialActivity {
+  return activity.type === ACTIVITY_TYPES.SEQUENTIAL;
+}
+
+export function isParallelActivity(activity: IActivity): activity is IParallelActivity {
+  return activity.type === ACTIVITY_TYPES.PARALLEL;
+}
+
+export function isConditionActivity(activity: IActivity): activity is IConditionActivity {
+  return activity.type === ACTIVITY_TYPES.CONDITION;
+}
+
+export function isLoopActivity(activity: IActivity): activity is ILoopActivity {
+  return activity.type === ACTIVITY_TYPES.LOOP;
+}
+
+export function isTaskActivity(activity: IActivity): activity is ITaskActivity {
+  return activity.type === ACTIVITY_TYPES.TASK;
+}
