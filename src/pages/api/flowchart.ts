@@ -376,6 +376,7 @@ ${description}
       algorithms,
       nodeId,
       createdAt: new Date(),
+      uname,
     });
 
     return res.status(200).send({});
