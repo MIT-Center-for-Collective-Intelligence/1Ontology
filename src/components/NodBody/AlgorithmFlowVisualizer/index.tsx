@@ -86,7 +86,7 @@ const AlgorithmFlowVisualizer: React.FC<AlgorithmFlowVisualizerProps> = ({
   }, [algorithm, isDarkMode]);
   
   // Set up React Flow state
-  const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<any>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   /**
