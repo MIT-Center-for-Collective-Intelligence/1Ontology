@@ -399,7 +399,7 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
           id: doc.id,
           ...doc.data(),
         }));
-        setAlgorithms(fetchedAlgorithms[0].algorithms);
+        setAlgorithms(fetchedAlgorithms[0]?.algorithms || []);
       });
       setLoading(false);
 
@@ -414,9 +414,9 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
       setOpenAiRequestLoading(true);
       await Post("/flowchart", { nodeId: node.id });
     } catch (error) {
-      confirmIt(
+      /*       confirmIt(
         "The was an error generating Activity Flows, please try again!",
-      );
+      ); */
       console.error(error);
     } finally {
       setOpenAiRequestLoading(false);
