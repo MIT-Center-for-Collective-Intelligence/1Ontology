@@ -377,6 +377,8 @@ ${description}
       nodeId,
       createdAt: new Date(),
       uname,
+      title,
+      description,
     });
 
     return res.status(200).send({});
