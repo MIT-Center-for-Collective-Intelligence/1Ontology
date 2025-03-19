@@ -1,6 +1,7 @@
 import { INode, INodeTypes } from " @components/types/INode";
 import { collection, doc, getDoc, Timestamp } from "firebase/firestore";
 import { NODES } from "../firestoreClient/collections";
+import { Reaction } from " @components/types/IChat";
 
 // Function to capitalize the first letter of a string
 export function capitalizeFirstLetter(str: string): string {
@@ -9,6 +10,13 @@ export function capitalizeFirstLetter(str: string): string {
   }
   const capitalized = str.charAt(0).toUpperCase() + str.slice(1);
   return capitalized;
+}
+
+export function lowercaseFirstLetter(str: string): string {
+  if (typeof str !== "string") {
+    return "";
+  }
+  return str.charAt(0).toLowerCase() + str.slice(1);
 }
 
 // Function to capitalize each word in a string
@@ -33,7 +41,7 @@ export const ellipsisString = (text: string, length: number) => {
 // Function to split a string into chunks based on a maximum number of characters
 export const getTextSplittedByCharacter = (
   text: string,
-  character: string
+  character: string,
 ): string => {
   return Array.from(text).join(character);
 };
@@ -41,7 +49,7 @@ export const getTextSplittedByCharacter = (
 // Function to split a sentence into chunks based on a maximum number of characters
 export function splitSentenceIntoChunks(
   sentence: string,
-  maxCharacters = 100
+  maxCharacters = 100,
 ): string[] {
   const words: string[] = sentence.split(" ");
   const chunks: string[] = [];
@@ -85,7 +93,7 @@ export const getTitleDeleted = async (
   nodes: { [id: string]: INode },
   id: string,
   forceGet = false,
-  db: any = null
+  db: any = null,
 ) => {
   if (nodes[id]) {
     return nodes[id].title;
@@ -104,7 +112,7 @@ export const getPropertyValue = (
   nodes: { [id: string]: INode },
   id: string | null,
   property: string,
-  structured?: boolean
+  structured?: boolean,
 ) => {
   if (id && nodes[id] && nodes[id].properties.hasOwnProperty(property)) {
     if (Array.isArray(nodes[id].properties[property]) && structured) {
@@ -140,7 +148,7 @@ export const timeAgo = (timestamp: Timestamp) => {
 // Function to generate a unique title
 export const generateUniqueTitle = (
   title: string,
-  existingTitles: string[]
+  existingTitles: string[],
 ) => {
   let uniqueTitle = title;
   let count = 1;
@@ -158,7 +166,7 @@ export const shortenNumber = function (
   number: number,
   maxPlaces: any,
   forcePlaces: any,
-  forceLetter?: any
+  forceLetter?: any,
 ) {
   number = Number(number);
   forceLetter = forceLetter || false;
@@ -182,7 +190,7 @@ function annotate(
   number: number,
   maxPlaces: any,
   forcePlaces: any,
-  abbr: string
+  abbr: string,
 ): string {
   // set places to false to not round
   let rounded: number = 0;
@@ -298,16 +306,35 @@ export const getTaggedUsers = (input: string): Set<string> => {
 };
 
 export const getJoinUsernames = (
-  reactions: string[],
-  currentUser: string
+  reactions: Reaction[],
+  currentUser: string,
 ): string => {
-  const allReactions = reactions.includes(currentUser)
-    ? ["You", ...reactions.filter((user) => user !== currentUser)]
-    : reactions;
+  const allReactions =
+    reactions.findIndex((u) => u.user === currentUser) !== -1
+      ? [
+          { fName: "You", lName: "" },
+          ...reactions.filter((user) => user.user !== currentUser),
+        ]
+      : reactions;
   if (allReactions.length > 2) {
     const lastEl = allReactions.splice(-1);
-    return allReactions.join(", ") + ", and " + lastEl + " ";
+    return (
+      allReactions
+        .map((u) => {
+          return `${u.fName}`;
+        })
+        .join(", ") +
+      ", and " +
+      lastEl +
+      " "
+    );
   } else {
-    return allReactions.join(" and ") + " ";
+    return (
+      allReactions
+        .map((u) => {
+          return `${u.fName}`;
+        })
+        .join(" and ") + " "
+    );
   }
 };

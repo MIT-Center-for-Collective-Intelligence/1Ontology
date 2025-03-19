@@ -11,12 +11,14 @@ const QuillEditor = ({
   breakInheritance,
   nodeId,
   setCursorPosition,
+  onEditorReady,
 }: {
   property: string;
   text: string;
   breakInheritance: (updatedText: string) => void;
   nodeId: string;
   setCursorPosition: Function;
+  onEditorReady?: (editor: Quill) => void;
 }) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
@@ -69,6 +71,11 @@ const QuillEditor = ({
 
       editor.setText(text);
 
+      // Notify parent component that editor is ready
+      if (onEditorReady) {
+        onEditorReady(editor);
+      }
+
       editor.on("text-change", () => {
         const updatedText = editor.getText();
         setTimeout(() => {
@@ -97,20 +104,20 @@ const QuillEditor = ({
 
   return (
     <>
-      <Box
-        ref={editorContainerRef}
-        sx={{
-          borderBottomRightRadius: "20px",
-          borderBottomLeftRadius: "20px",
-          minHeight: "70px",
-          border: "none !important",
+    <Box
+      ref={editorContainerRef}
+      sx={{
+        borderBottomRightRadius: "20px",
+        borderBottomLeftRadius: "20px",
+        minHeight: "70px",
+        border: "none !important",
           fontSize:
             property === "title" ? "24px !important" : "18px !important",
-          "& .ql-editor.ql-blank::before": {
-            color: "gray !important",
-          },
-        }}
-      />
+        "& .ql-editor.ql-blank::before": {
+          color: "gray !important",
+        },
+      }}
+    />
     </>
   );
 };

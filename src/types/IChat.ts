@@ -26,7 +26,7 @@ export type IChatMessage = {
   sender: string;
   senderDetail: senderDetail;
   read_by?: string[];
-  reactions: Reaction[];
+  reactions: { [emoji: string]: Reaction[] };
   mentions?: string[];
   pinned?: boolean;
   edited?: boolean;

@@ -56,6 +56,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Switch,
   Tab,
   Tabs,
   Typography,
@@ -86,6 +87,7 @@ import {
   INodePath,
   INodeTypes,
   MainSpecializations,
+  TreeData,
   TreeVisual,
 } from " @components/types/INode";
 import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
@@ -95,16 +97,19 @@ import withAuthUser from " @components/components/hoc/withAuthUser";
 import { useAuth } from " @components/components/context/AuthContext";
 import { useRouter } from "next/router";
 import DagGraph from " @components/components/OntologyComponents/DAGGraph";
-import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
+import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import { NODES, USERS } from " @components/lib/firestoreClient/collections";
 
 import { recordLogs, saveNewChangeLog } from " @components/lib/utils/helpers";
 import { useHover } from " @components/lib/hooks/useHover";
 import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarSidebar";
 import { NodeChange } from " @components/types/INode";
-import GuidLines from " @components/components/Guidlines/GuidLines";
+import GuidLines from " @components/components/Guidelines/GuideLines";
 import SearchSideBar from " @components/components/SearchSideBar/SearchSideBar";
 import Head from "next/head";
+import DraggableTree from " @components/components/OntologyComponents/DraggableTree";
+import { TreeApi } from "react-arborist";
+import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
 
 const AddContext = (nodes: any, nodesObject: any): INode[] => {
   for (let node of nodes) {
@@ -128,7 +133,7 @@ const Ontology = () => {
   const isMobile = useMediaQuery("(max-width:599px)") && true;
   const [nodes, setNodes] = useState<{ [id: string]: INode }>({});
   const [currentVisibleNode, setCurrentVisibleNode] = useState<INode | null>(
-    null
+    null,
   );
   // const [ontologyPath, setOntologyPath] = useState<INodePath[]>([]);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
@@ -147,11 +152,11 @@ const Ontology = () => {
 
   //last interaction date from the user
   const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
-    new Date(Date.now())
+    new Date(Date.now()),
   );
 
   const [selectedDiffNode, setSelectedDiffNode] = useState<NodeChange | null>(
-    null
+    null,
   );
   const scrolling = useRef<any>();
 
@@ -166,13 +171,13 @@ const Ontology = () => {
 
   const [currentImprovement, setCurrentImprovement] = useState<any>(null);
   const [displayGuidelines, setDisplayGuidelines] = useState(false);
-  const [prevHash, setPrevHash] = useState("");
+  const prevHash = useRef<string>();
   const [lastSearches, setLastSearches] = useState<any[]>([]);
   const [selectedChatTab, setSelectedChatTab] = useState<number>(0);
   /*  */
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [checkedItemsCopy, setCheckedItemsCopy] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [searchValue, setSearchValue] = useState("");
   const [clonedNodesQueue, setClonedNodesQueue] = useState<{
@@ -180,20 +185,27 @@ const Ontology = () => {
   }>({});
   const [newOnes, setNewOnes] = useState(new Set());
   const [selectedProperty, setSelectedProperty] = useState("");
+  const [selectedCollection, setSelectedCollection] = useState("");
+
   const [removedElements, setRemovedElements] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
+  const [treeViewData, setTreeViewData] = useState([]);
+
+  const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
+  const firstLoad = useRef(true);
 
   const handleCloseAddLinksModel = () => {
-    setCheckedItems(new Set());
-    setSearchValue("");
-    setClonedNodesQueue({});
-    setNewOnes(new Set());
     setSelectedProperty("");
+    setSelectedCollection("");
+    setSearchValue("");
     setAddedElements(new Set());
     setRemovedElements(new Set());
     setCheckedItemsCopy(new Set());
+    setNewOnes(new Set());
+    setCheckedItems(new Set());
+    setClonedNodesQueue({});
   };
 
   useEffect(() => {
@@ -224,20 +236,17 @@ const Ontology = () => {
       if (window.location.hash) {
         // Call updateUserDoc with the hash split into an array
         const visibleNodeId = window.location.hash.split("#").reverse()[0];
-        if (nodes[visibleNodeId]) {
-          setCurrentVisibleNode(nodes[visibleNodeId]);
-          if (window.location.hash !== prevHash) {
-            initializeExpanded(eachOntologyPath[visibleNodeId]);
-          }
+
+        if (visibleNodeId !== prevHash.current) {
+          navigateToNode(visibleNodeId);
+          prevHash.current = visibleNodeId;
         }
+
         // Update the previous hash
-        setPrevHash(window.location.hash);
       }
     };
 
     if (typeof window !== "undefined") {
-      setPrevHash(window.location.hash);
-
       // Call handleHashChange immediately to handle any initial hash
       handleHashChange();
 
@@ -249,7 +258,7 @@ const Ontology = () => {
     return () => {
       window.removeEventListener("hashchange", handleHashChange);
     };
-  }, [eachOntologyPath, prevHash]);
+  }, [eachOntologyPath]);
 
   // Function to update last searches
   const updateLastSearches = (searchedNode: any) => {
@@ -263,14 +272,14 @@ const Ontology = () => {
 
         localStorage.setItem(
           `lastSearches_${user?.userId}`,
-          JSON.stringify(validSearches)
+          JSON.stringify(validSearches),
         );
         return validSearches;
       }
 
       // Proceed with the usual update if searchedNode is not null
       const filteredSearches = prevSearches.filter(
-        (s) => s.id !== searchedNode.id
+        (s) => s.id !== searchedNode.id,
       );
       const updatedSearches = [searchedNode, ...filteredSearches];
 
@@ -284,7 +293,7 @@ const Ontology = () => {
       // Update localStorage with the new list of searches
       localStorage.setItem(
         `lastSearches_${user?.userId}`,
-        JSON.stringify(limitedSearches)
+        JSON.stringify(limitedSearches),
       );
       return limitedSearches;
     });
@@ -305,7 +314,7 @@ const Ontology = () => {
         (item: INode) =>
           !item.deleted &&
           !item.category &&
-          (!nodeType || nodeType === item.nodeType)
+          (!nodeType || nodeType === item.nodeType),
       );
   };
 
@@ -381,7 +390,7 @@ const Ontology = () => {
             const specializationsData: INode[] = [];
 
             collection.nodes.forEach((n: ILinkNode) =>
-              specializationsData.push(nodes[n.id])
+              specializationsData.push(nodes[n.id]),
             );
 
             const subPath = [...path];
@@ -423,7 +432,7 @@ const Ontology = () => {
         });
       }
     },
-    [nodes]
+    [nodes],
   );
 
   useEffect(() => {
@@ -443,7 +452,7 @@ const Ontology = () => {
   const getSpecializationsTree = (
     _nodes: INode[],
     path: string[],
-    visited: Set<string> = new Set()
+    visited: Set<string> = new Set(),
   ) => {
     let newSpecializationsTree: any = {};
 
@@ -485,7 +494,7 @@ const Ontology = () => {
             ...getSpecializationsTree(
               specializations,
               [...path, node.id],
-              visited
+              visited,
             ),
           };
           newSpecializationsTree[node.id].generalizations =
@@ -501,7 +510,7 @@ const Ontology = () => {
             specializations: getSpecializationsTree(
               specializations,
               [...path, node.id],
-              visited
+              visited,
             ),
             generalizations: node.generalizations[0].nodes,
           };
@@ -517,7 +526,7 @@ const Ontology = () => {
     // Create a query for the NODES collection where "deleted" is false
     const nodesQuery = query(
       collection(db, NODES),
-      where("deleted", "==", false)
+      where("deleted", "==", false),
     );
 
     // Set up a snapshot listener to track changes in the nodes collection
@@ -551,11 +560,97 @@ const Ontology = () => {
     // Unsubscribe from the snapshot listener when the component is unmounted
     return () => unsubscribeNodes();
   }, [db]);
+  useEffect(() => {
+    if (currentVisibleNode?.id) {
+      setCurrentVisibleNode(nodes[currentVisibleNode?.id]);
+    }
+  }, [nodes]);
+  const getTreeView = (
+    mainCategories: INode[],
+    visited: Map<string, any> = new Map(),
+    path: string[],
+  ): any => {
+    const newNodes = [];
+    for (let node of mainCategories) {
+      if (!node) {
+        continue;
+      }
+
+      const specializations = node.specializations;
+      let collections = [];
+      let mainChildren = [];
+      for (let collection of specializations) {
+        const children = [];
+        for (let _node of collection.nodes) {
+          if (nodes[_node.id]) {
+            children.push(nodes[_node.id]);
+          }
+        }
+
+        // if (children.length > 0) {
+        if (collection.collectionName !== "main") {
+          const id = [...path, node.id, collection.collectionName].join("-");
+
+          if (visited.has(id)) {
+            if (typeof visited.get(id) !== "boolean") {
+              newNodes.push(visited.get(id));
+            }
+            continue;
+          }
+          visited.set(id, true);
+          const record = {
+            id: id,
+            nodeId: node.id,
+            nodeType: node.nodeType,
+            name: collection.collectionName,
+            children: getTreeView(children, visited, [...path, node.id]),
+
+            category: true,
+          };
+          collections.push(record);
+          visited.set(id, record);
+        } else {
+          mainChildren.push(...children);
+        }
+
+        // } else {
+        //   collections.push({
+        //     id: `${parentId}-${node.id}`,
+        //     nodeId: node.id,
+        //     name: node.title,
+        //     category: !!parentId
+        //   });
+        // }
+      }
+      const id = [...path, node.id].join("-");
+      if (visited.has(id)) {
+        if (typeof visited.get(id) !== "boolean") {
+          newNodes.push(visited.get(id));
+        }
+        continue;
+      }
+      visited.set(id, true);
+      const record = {
+        id,
+        nodeId: node.id,
+        name: node.title,
+        nodeType: node.nodeType,
+        children: [
+          ...collections,
+          ...getTreeView(mainChildren, visited, [...path, node.id]),
+        ],
+        category: !!node.category,
+      };
+      visited.set(id, record);
+      newNodes.push(record);
+    }
+    return newNodes;
+  };
 
   useEffect(() => {
     // Filter nodes to get only those with a defined category
     const mainCategories = Object.values(nodes).filter(
-      (node: INode) => node.category
+      (node: INode) => node.category,
     );
 
     // Sort main nodes based on a predefined order
@@ -565,6 +660,7 @@ const Ontology = () => {
         "WHO: Actors",
         "WHY: Evaluation",
         "Where: Context",
+        "ONet",
       ];
       const nodeATitle = nodeA.title;
       const nodeBTitle = nodeB.title;
@@ -572,18 +668,27 @@ const Ontology = () => {
     });
     // Generate a tree structure of specializations from the sorted main nodes
     let treeOfSpecializations = getSpecializationsTree(mainCategories, []);
+
+    const _result = getTreeView(mainCategories, new Map(), []);
+    setTreeViewData(_result);
     // Set the generated tree structure for visualization
     setTreeVisualization(treeOfSpecializations);
   }, [nodes]);
 
   useEffect(() => {
-    if (currentVisibleNode) return;
-    if (user?.currentNode && nodes[user.currentNode]) {
-      setCurrentVisibleNode(nodes[user.currentNode]);
-    } else {
-      setCurrentVisibleNode(nodes["hn9pGQNxmQe9Xod5MuKK"]!);
+    // if (currentVisibleNode) return;
+    if (firstLoad) {
+      const nodeFromHash = window.location.hash.split("#").reverse()[0];
+      if (nodeFromHash && nodes[nodeFromHash]) {
+        setCurrentVisibleNode(nodes[nodeFromHash]);
+      } else if (user?.currentNode && nodes[user.currentNode]) {
+        setCurrentVisibleNode(nodes[user.currentNode]);
+      } else {
+        setCurrentVisibleNode(nodes["hn9pGQNxmQe9Xod5MuKK"]!);
+      }
+      firstLoad.current = false;
     }
-  }, [user?.currentNode, nodes]);
+  }, [user?.currentNode]);
 
   // Function to update the user document with the current ontology path
   const openedANode = async (currentNode: string) => {
@@ -620,8 +725,8 @@ const Ontology = () => {
     const node = nodes[ontologyPath[ontologyPath.length - 1].id];
     const nodeGeneralizations = node.generalizations[0].nodes;
 
-    const generlizationSet: Set<string> = new Set(
-      nodeGeneralizations.map((g) => g.id)
+    const generalizationSet: Set<string> = new Set(
+      nodeGeneralizations.map((g) => g.id),
     );
 
     // Initialize the expanded set with the current node's ID
@@ -647,19 +752,19 @@ const Ontology = () => {
           if (specialization.collectionName !== "main") {
             specialization.nodes.forEach((spec) => {
               if (
-                generlizationSet.has(spec.id) ||
+                generalizationSet.has(spec.id) ||
                 newExpandedSet.has(spec.id)
               ) {
                 addGeneralizationsToSet(
                   `${currentNode.id}-${specialization.collectionName.trim()}`,
-                  expandedSet
+                  expandedSet,
                 );
               }
             });
           }
         });
         generalizations.forEach((g) =>
-          addGeneralizationsToSet(g.id, expandedSet)
+          addGeneralizationsToSet(g.id, expandedSet),
         );
       }
     };
@@ -677,7 +782,7 @@ const Ontology = () => {
       return;
     }
 
-    openedANode(currentVisibleNode.id);
+    openedANode(currentVisibleNode?.id);
     if (expandedNodes.size === 0) {
       initializeExpanded(eachOntologyPath[currentVisibleNode?.id]);
     }
@@ -708,7 +813,7 @@ const Ontology = () => {
       }
     },
     // Dependency array includes ontologies and user, ensuring the function re-renders when these values change.
-    [nodes, user]
+    [nodes, user],
   );
 
   // Function to handle opening node tree
@@ -718,7 +823,7 @@ const Ontology = () => {
 
       if (!user) return;
       //update the expanded state
-      setExpandedNodes((prevExpanded: Set<string>) => {
+      /*    setExpandedNodes((prevExpanded: Set<string>) => {
         const newExpanded = new Set(prevExpanded); // Create a new set to avoid mutating the previous state
         if (newExpanded.has(nodeId)) {
           // newExpanded.delete(nodeId); // Remove the nodeId if it exists
@@ -726,7 +831,7 @@ const Ontology = () => {
           newExpanded.add(nodeId); // Otherwise, add it
         }
         return newExpanded;
-      });
+      }); */
 
       // Check if node exists and has a category
       if (nodes[nodeId] && !nodes[nodeId].category) {
@@ -740,7 +845,7 @@ const Ontology = () => {
         });
       }
     },
-    [nodes, user]
+    [nodes, user],
   );
 
   // Function to retrieve main specializations from tree visualization data
@@ -767,34 +872,73 @@ const Ontology = () => {
     return getMainSpecializations(treeVisualization);
   }, [treeVisualization]);
 
-  // This function is called when a search result node is clicked.
-  const openSearchedNode = (node: INode, searched = true) => {
-    try {
-      // Set the clicked node as the open currentVisibleNode
-      // setCurrentVisibleNode(node);
+  const navigateToNode = useCallback(
+    async (nodeId: string) => {
+      // adding timeout to test if truncated issue persists
 
-      navigateToNode(node.id);
-
-      setTimeout(() => {
-        const elements = document.getElementsByClassName("node-" + node?.id);
-        const firstElement = elements.length > 0 ? elements[0] : null;
-
-        if (firstElement) {
-          firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 1000);
-      // initializeExpanded(eachOntologyPath[node.id]);
-      // Record the click action in logs
-      if (searched) {
-        recordLogs({
-          action: "Search result clicked",
-          clicked: node.id,
-        });
+      if (
+        selectedProperty &&
+        (addedElements.size > 0 || removedElements.size > 0) &&
+        (await confirmIt(
+          `Unsaved changes detected in ${capitalizeFirstLetter(
+            DISPLAY[selectedProperty]
+              ? DISPLAY[selectedProperty]
+              : selectedProperty,
+          )}. Do you want to discard them?`,
+          "Keep Changes",
+          "Discard Changes",
+        ))
+      ) {
+        return;
       }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+      if (nodes[nodeId]) {
+        handleCloseAddLinksModel();
+        setCurrentVisibleNode(nodes[nodeId]);
+        initializeExpanded(eachOntologyPath[nodeId]);
+        setSelectedDiffNode(null);
+        // setTimeout(() => {
+        expandNodeById(nodeId);
+        // }, 1000);
+      }
+    },
+    [selectedProperty, addedElements, removedElements, nodes, eachOntologyPath],
+  );
+
+  // This function is called when a search result node is clicked.
+  const openSearchedNode = useCallback(
+    (node: INode, searched = true) => {
+      try {
+        // Set the clicked node as the open currentVisibleNode
+        // setCurrentVisibleNode(node);
+
+        navigateToNode(node.id);
+
+        setTimeout(() => {
+          const elements = document.getElementsByClassName("node-" + node?.id);
+          const firstElement = elements.length > 0 ? elements[0] : null;
+
+          if (firstElement) {
+            firstElement.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }
+        }, 500);
+        // initializeExpanded(eachOntologyPath[node.id]);
+        // Record the click action in logs
+        if (searched) {
+          recordLogs({
+            action: "Search result clicked",
+            clicked: node.id,
+          });
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [navigateToNode],
+  );
+
   useEffect(() => {
     if (process.env.NODE_ENV === "development") return;
     const handleUserActivity = () => {
@@ -838,34 +982,6 @@ const Ontology = () => {
     return () => clearInterval(intervalId);
   }, [lastInteractionDate]);
 
-  // Navigate to the currentVisibleNode when the viewValue is 0 (Outline View)
-  // Note: This functionality might be implemented without useEffect in the future.
-  useEffect(() => {
-    if (viewValue === 0 && currentVisibleNode) {
-      navigateToNode(currentVisibleNode.id);
-    }
-  }, [viewValue, currentVisibleNode]);
-
-  const navigateToNode = async (nodeId: string) => {
-    if (nodes[nodeId]) {
-      setCurrentVisibleNode(nodes[nodeId]);
-      initializeExpanded(eachOntologyPath[nodeId]);
-      setSelectedDiffNode(null);
-      setTimeout(() => {
-        // Retrieve elements with the class name based on the nodeId
-        // Since the same node may be displayed multiple times across different parents, using unique IDs alone is not sufficient.
-        // MUI TreeView handles IDs internally, so adding an additional class to each node allows for easier access and manipulation later on.
-        const elements = document.getElementsByClassName("node-" + nodeId);
-        const firstElement = elements.length > 0 ? elements[0] : null; // Safely access the first element
-
-        if (firstElement) {
-          firstElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 1000);
-      handleCloseAddLinksModel();
-    }
-  };
-
   const displaySidebar = useCallback(
     (sidebarName: "chat" | "nodeHistory" | "inheritanceSettings") => {
       if (activeSidebar === sidebarName) {
@@ -875,7 +991,32 @@ const Ontology = () => {
         handleExpandSidebar(sidebarName);
       }
     },
-    [activeSidebar]
+    [activeSidebar],
+  );
+
+  const expandNodeById = useCallback(
+    async (nodeId: string) => {
+      if (!eachOntologyPath[nodeId]) {
+        return;
+      }
+
+      const first = eachOntologyPath[nodeId][0].id.split("-")[0];
+      const path = eachOntologyPath[nodeId]
+        .filter((p: any) => !p.category)
+        .map((c: { id: string }) => c.id)
+        .join("-");
+      const scrollId = `${first}-${path}`;
+      await tree?.scrollTo(scrollId);
+      setTimeout(() => {
+        const targetNode = tree?.get(scrollId);
+        if (targetNode) {
+          targetNode.select();
+          const element = document.getElementById(scrollId);
+          element?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 500);
+    },
+    [eachOntologyPath],
   );
 
   if (Object.keys(nodes).length <= 0) {
@@ -973,22 +1114,36 @@ const Ontology = () => {
                     height: "100%",
                     overflowX: "auto",
                     whiteSpace: "nowrap",
-                    ...SCROLL_BAR_STYLE,
+                    "&::-webkit-scrollbar": {
+                      display: "none",
+                    },
                   }}
                 >
                   <Box
                     sx={{
-                      display: "inline-block", // Keep it inline for horizontal scroll
-                      minWidth: "100%", // Ensures it takes at least the width of the container
+                      display: "inline-block",
+                      minWidth: "100%",
                     }}
                   >
-                    <TreeViewSimplified
+                    <DraggableTree
+                      treeViewData={treeViewData}
+                      setSnackbarMessage={setSnackbarMessage}
+                      expandedNodes={expandedNodes}
+                      currentVisibleNode={currentVisibleNode}
+                      nodes={nodes}
+                      onOpenNodesTree={onOpenNodesTree}
+                      tree={tree}
+                      setTree={setTree}
+                      eachOntologyPath={eachOntologyPath}
+                    />
+
+                    {/*  <TreeViewSimplified
                       treeVisualization={treeVisualization}
                       onOpenNodesTree={onOpenNodesTree}
                       expandedNodes={expandedNodes}
                       setExpandedNodes={setExpandedNodes}
                       currentVisibleNode={currentVisibleNode}
-                    />
+                    /> */}
                   </Box>
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
@@ -1098,6 +1253,8 @@ const Ontology = () => {
                   addedElements={addedElements}
                   setAddedElements={setAddedElements}
                   handleCloseAddLinksModel={handleCloseAddLinksModel}
+                  setSelectedCollection={setSelectedCollection}
+                  selectedCollection={selectedCollection}
                 />
               )}
             </Box>

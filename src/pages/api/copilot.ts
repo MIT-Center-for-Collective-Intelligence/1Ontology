@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { OpenAI } from "openai";
-import { askGemini } from "./helpers";
+import { askGemini, openai } from "./helpers";
 import { Content } from "@google/generative-ai";
 
 import {
@@ -16,7 +16,7 @@ import {
 } from " @components/lib/utils/helpersCopilot";
 import { INode } from " @components/types/INode";
 import fbAuth from " @components/middlewares/fbAuth";
-import { getDoerCreate, recordLogs } from " @components/lib/utils/helpers";
+import { extractJSON, getDoerCreate } from " @components/lib/utils/helpers";
 import {
   copilotNewNode,
   getCopilotPrompt,
@@ -27,12 +27,42 @@ import {
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { ChatModel } from "openai/resources/chat/chat";
 import { PROPERTIES_TO_IMPROVE } from " @components/lib/CONSTANTS";
-const GEMINI_MODEL = "gemini-exp-1121";
+
+const GEMINI_MODELS = [
+  "gemini-2.0-flash-exp",
+  "gemini-2.0-flash-thinking-exp",
+  "gemini-exp-1206",
+];
+
+type GeminiModels =
+  | "gemini-2.0-flash-exp"
+  | "gemini-2.0-flash-thinking-exp"
+  | "gemini-exp-1206";
+
+export const recordLogs = async (
+  logs: { [key: string]: any },
+  uname: string,
+) => {
+  try {
+    if (uname === "ouhrac") return;
+    const logRef = db.collection(LOGS).doc();
+    const doerCreate = getDoerCreate(uname || "");
+    await logRef.set({
+      type: "info",
+      ...logs,
+      createdAt: new Date(),
+      doer: uname,
+      doerCreate,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};
 
 const saveLogs = (
   uname: string,
   type: "info" | "error",
-  logs: { [key: string]: any }
+  logs: { [key: string]: any },
 ) => {
   try {
     const logRef = db.collection(LOGS).doc();
@@ -47,38 +77,21 @@ const saveLogs = (
     console.error(error);
   }
 };
-const openai = new OpenAI({
-  apiKey: process.env.MIT_CCI_API_KEY,
-  organization: process.env.MIT_CCI_API_ORG_ID,
-});
 
-const extractJSON = (text: string) => {
-  try {
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
-    if (end === -1 || start === -1) {
-      return { jsonObject: {}, isJSON: false };
-    }
-    const jsonArrayString = text.slice(start, end + 1);
-    return { jsonObject: JSON.parse(jsonArrayString), isJSON: true };
-  } catch (error) {
-    return { jsonObject: {}, isJSON: false };
-  }
-};
 const sendLLMRequest = async ({
   prompt,
-  model = process.env.MODEL as ChatModel,
+  model = process.env.MODEL as ChatModel | GeminiModels,
   uname,
 }: {
   prompt: string;
-  model: ChatModel | "gemini-exp-1121";
+  model: ChatModel | GeminiModels;
   uname: string;
 }) => {
   try {
     if (!prompt.trim() || !model.trim()) {
       throw new Error("Prompt and model are required");
     }
-    if (model === GEMINI_MODEL) {
+    if (GEMINI_MODELS.includes(model)) {
       const contents: Content[] = [];
 
       contents.push({
@@ -119,10 +132,10 @@ const sendLLMRequest = async ({
         if (isJSONObject.isJSON) {
           break;
         }
-        console.log(
+        console.error(
           "Failed to get a complete JSON object. Retrying for the ",
           i + 1,
-          " time."
+          " time.",
         );
       } catch (error) {
         console.error("Error in generating content: ", error);
@@ -140,19 +153,19 @@ const sendLLMRequest = async ({
         message: error.message,
         stack: error.stack,
       }),
-      at: "recordLogs",
+      at: "sendLLMRequest",
     });
   }
 };
 let guidelines: any = null;
 const proposerAgent = async (
   userMessage: string,
-  model: ChatModel | "gemini-exp-1121",
+  model: ChatModel | GeminiModels,
   nodesArray: any[],
   uname: string,
   SYSTEM_PROMPT: string,
   proposalsJSON: any = {},
-  evaluation: string = ""
+  evaluation: string = "",
 ) => {
   try {
     if (!guidelines) {
@@ -211,15 +224,18 @@ ${userMessage}
     return response;
   } catch (error: any) {
     console.error(error);
-    recordLogs({
-      type: "error",
-      error: JSON.stringify({
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      }),
-      at: "proposerAgent",
-    });
+    recordLogs(
+      {
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+        at: "proposerAgent",
+      },
+      uname,
+    );
   }
 };
 
@@ -238,14 +254,14 @@ export const getNodes = async (): Promise<Record<string, INode>> => {
 
 export const generateProposals = async (
   userMessage: string,
-  model: ChatModel | "gemini-exp-1121",
+  model: ChatModel | GeminiModels,
   deepNumber: number,
   nodeId: string,
   uname: string,
   SYSTEM_PROMPT: string,
   inputProperties: Set<string>,
   proposalsJSON: any = {},
-  evaluation: string = ""
+  evaluation: string = "",
 ): Promise<any> => {
   const nodesArray: any = [];
   const nodes = await getNodes();
@@ -262,7 +278,8 @@ export const generateProposals = async (
     currentNode,
     nodes,
     new Set(),
-    deepNumber === 0 ? 7 : deepNumber
+    deepNumber === 0 ? 7 : deepNumber,
+    inputProperties,
   );
   nodesArray.push(..._nodesArray);
   if (
@@ -291,7 +308,7 @@ export const generateProposals = async (
         uname,
         SYSTEM_PROMPT,
         proposalsJSON,
-        evaluation
+        evaluation,
       );
     } else {
       return await proposerAgent(
@@ -299,7 +316,7 @@ export const generateProposals = async (
         model,
         nodesArray,
         uname,
-        SYSTEM_PROMPT
+        SYSTEM_PROMPT,
       );
     }
   }
@@ -330,7 +347,7 @@ const getPrompt = async (
   uname: string,
   generateNewNodes: boolean,
   improveProperties: string[],
-  proposeDeleteNode: boolean
+  proposeDeleteNode: boolean,
 ) => {
   let promptDoc = await db.collection("copilotPrompts").doc(uname).get();
   if (!promptDoc.exists) {
@@ -379,8 +396,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
 
   const { uname } = user?.userData;
   try {
+    const logDoc = await db
+      .collection("logs")
+      .doc("LJXgQ3lh7YBvzjWQYdh6")
+      .get();
+
+    const logData: any = logDoc.data();
+    if (!logData.deleted) {
+      return res.status(200).send(logData.response);
+    }
+
     const model_index = MODELS_OPTIONS.findIndex(
-      (option) => option.id === model
+      (option) => option.id === model,
     );
     if (!user?.userData || model_index === -1) {
       throw new Error("Access forbidden");
@@ -390,7 +417,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       uname,
       generateNewNodes,
       improveProperties,
-      proposeDeleteNode
+      proposeDeleteNode,
     );
 
     const response = await generateProposals(
@@ -400,7 +427,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       nodeId,
       uname,
       SYSTEM_PROMPT,
-      new Set(inputProperties)
+      new Set(inputProperties),
     );
     saveLogs(uname, "info", {
       response,
@@ -428,15 +455,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     return res.status(200).send(response);
   } catch (error: any) {
     console.error("error", error);
-    recordLogs({
-      type: "error",
-      error: JSON.stringify({
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      }),
-      at: "copilot",
-    });
+    recordLogs(
+      {
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+        at: "copilot",
+      },
+      uname,
+    );
     return res.status(500).json({ error: error.message });
   }
 }

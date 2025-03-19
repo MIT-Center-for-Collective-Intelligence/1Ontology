@@ -10,21 +10,14 @@ import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 
 type IProps = {
-  setSearchValue: any;
+  setSearch: any;
+  search: string;
   label: string;
   sx?: any;
 };
-export const SearchBox = ({ setSearchValue, label, sx }: IProps) => {
-  const [search, setSearch] = useState("");
+export const SearchBox = ({ setSearch, search, label, sx }: IProps) => {
   const [inputValue, setInputValue] = useState("");
 
-  useEffect(() => {
-    const typingTimeout = setTimeout(() => {
-      setSearchValue(search);
-    }, 500);
-
-    return () => clearTimeout(typingTimeout);
-  }, [search]);
   return (
     <FormControl
       sx={{
@@ -124,7 +117,7 @@ export const SearchBox = ({ setSearchValue, label, sx }: IProps) => {
                   setSearch(inputValue);
                   setInputValue("");
                   const element = document.getElementById(
-                    "notebook-sidebar-view"
+                    "notebook-sidebar-view",
                   ) as HTMLElement;
                   if (element) {
                     element.style.left = "-1000px";

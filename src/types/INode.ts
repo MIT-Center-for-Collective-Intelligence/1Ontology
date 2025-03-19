@@ -39,6 +39,7 @@ export type ILinkNode = {
   new?: boolean;
   change?: any;
   changeType?: string;
+  randomId?: string;
 };
 
 export type ICollection = { collectionName: string; nodes: ILinkNode[] };
@@ -89,8 +90,10 @@ export type INode = {
       uname: string;
       imageUrl: string;
       userId: string;
-    }
+    };
   }[];
+  oNet?: boolean;
+  actionAlternatives?: string[];
 };
 
 export type TreeVisual = {
@@ -182,4 +185,16 @@ export type PromptChange = {
     lName: string;
     imageUrl: string;
   };
+};
+
+export type TreeData = {
+  id: string;
+  name: string;
+  children?: TreeData[];
+  category?: boolean;
+  nodeType: string;
+  nodeId: string;
+  actionAlternatives?: string[];
+  task?: boolean;
+  comments?: boolean;
 };

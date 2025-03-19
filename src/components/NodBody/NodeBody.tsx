@@ -20,6 +20,7 @@ import {
 import AddPropertyForm from "../AddPropertyForm/AddPropertyForm";
 import { useAuth } from "../context/AuthContext";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
+import { NodeImageManager } from "./NodeImageManager";
 
 interface NodeBodyProps {
   currentVisibleNode: INode;
@@ -67,6 +68,9 @@ interface NodeBodyProps {
   setAddedElements: any;
   glowIds: Set<string>;
   setGlowIds: any;
+  selectedCollection: string;
+  storage: any,
+  saveNewChangeLog: any,
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -115,6 +119,9 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   setAddedElements,
   glowIds,
   setGlowIds,
+  selectedCollection,
+  storage,
+  saveNewChangeLog
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -154,17 +161,17 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           <strong>{DISPLAY[property] || property}</strong>?
         </Typography>,
         "Delete",
-        "Keep"
+        "Keep",
       )
     ) {
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
       const properties = currentVisibleNode.properties;
       const propertyType = currentVisibleNode.propertyType;
       delete properties[property];
       await updateDoc(nodeRef, { propertyType, properties });
       recordLogs({
         action: "removeProperty",
-        node: currentVisibleNode.id,
+        node: currentVisibleNode?.id,
         property,
       });
     }
@@ -176,7 +183,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     property: string,
     propertyValue: any,
     ref: string,
-    propertyType: string
+    propertyType: string,
   ) => {
     try {
       let newBatch = batch;
@@ -207,7 +214,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
             property,
             propertyValue,
             ref,
-            propertyType
+            propertyType,
           );
         }
       }
@@ -220,7 +227,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
 
   const addNewProperty = async (
     newProperty: string,
-    newPropertyType: string
+    newPropertyType: string,
   ) => {
     try {
       if (!user) return;
@@ -228,15 +235,15 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         await confirmIt(
           `The property ${newProperty} already exist under this node`,
           "Ok",
-          ""
+          "",
         );
         return;
       }
       if (!newProperty.trim() || !newPropertyType.trim()) return;
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
       const properties = currentVisibleNode.properties;
       const previousValue = JSON.parse(
-        JSON.stringify(currentVisibleNode.properties)
+        JSON.stringify(currentVisibleNode.properties),
       );
       const propertyType = currentVisibleNode.propertyType;
       const inheritance = currentVisibleNode.inheritance;
@@ -258,7 +265,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         inheritance,
       });
       saveNewChangeLog(db, {
-        nodeId: currentVisibleNode.id,
+        nodeId: currentVisibleNode?.id,
         modifiedBy: user?.uname,
         modifiedProperty: null,
         previousValue,
@@ -277,14 +284,14 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         batch,
         newProperty,
         properties[newProperty],
-        currentVisibleNode.id,
-        newPropertyType.toLowerCase()
+        currentVisibleNode?.id,
+        newPropertyType.toLowerCase(),
       );
       await batch.commit();
 
       recordLogs({
         action: "add new property",
-        node: currentVisibleNode.id,
+        node: currentVisibleNode?.id,
         newProperty,
         newPropertyType,
       });
@@ -311,7 +318,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           p !== "isPartOf" &&
           p !== "description" &&
           p !== "actor" &&
-          p !== "context"
+          p !== "context" &&
+          p !== "images",
       )
       .sort((a, b) => {
         const indexA = priorityOrder.indexOf(a);
@@ -333,90 +341,130 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     return sortedKeys;
   }, [currentVisibleNode, properties]);
 
+  const hasReferences = orderOfProperties.includes("References");
+
   return (
     <Box>
       <Box>
-        {orderOfProperties.map((property: string, index) => (
-          <Box key={property} sx={{ mt: "15px" }}>
-            {currentNode.propertyType[property] === "string-array" ? (
-              <ChipsProperty
-                currentVisibleNode={currentVisibleNode}
-                property={property}
-                nodes={nodes}
-                locked={locked}
-                currentImprovement={currentImprovement}
-                selectedDiffNode={selectedDiffNode}
-                user={user}
+        {orderOfProperties.map((property: string, index) => {
+          const shouldRenderImageManager = property === "References";
+          return (
+            <React.Fragment key={property}>
+              {shouldRenderImageManager  && user && (
+                <Box sx={{ mt: "15px" }}>
+                  <NodeImageManager
+                    nodeId={currentVisibleNode?.id}
+                    currentVisibleNode={currentVisibleNode}
+                    user={user}
+                    firestore={db}
+                    storage={storage}
+                    confirmIt={confirmIt}
+                    saveNewChangeLog={saveNewChangeLog}
+                    selectedDiffNode={selectedDiffNode} 
+                    nodes={nodes} 
+                    getTitleNode={getTitleNode}                  
+                    />
+                </Box>
+              )}
+              <Box sx={{ mt: "15px" }}>
+                {currentNode.propertyType[property] === "string-array" ? (
+                  <ChipsProperty
+                    currentVisibleNode={currentVisibleNode}
+                    property={property}
+                    nodes={nodes}
+                    locked={locked}
+                    currentImprovement={currentImprovement}
+                    selectedDiffNode={selectedDiffNode}
+                    user={user}
+                  />
+                ) : currentNode.propertyType[property] !== "string" ? (
+                  <StructuredProperty
+                    key={property + index}
+                    confirmIt={confirmIt}
+                    selectedDiffNode={selectedDiffNode}
+                    currentVisibleNode={currentNode}
+                    editStructuredProperty={showListToSelect}
+                    setSelectedProperty={setSelectedProperty}
+                    navigateToNode={navigateToNode}
+                    setSnackbarMessage={setSnackbarMessage}
+                    setCurrentVisibleNode={setCurrentVisibleNode}
+                    property={property}
+                    nodes={nodes}
+                    locked={locked}
+                    onGetPropertyValue={onGetPropertyValue}
+                    currentImprovement={currentImprovement}
+                    handleCloseAddLinksModel={handleCloseAddLinksModel}
+                    selectedProperty={selectedProperty}
+                    setSearchValue={setSearchValue}
+                    searchValue={searchValue}
+                    searchResultsForSelection={searchResultsForSelection}
+                    checkedItems={checkedItems}
+                    setCheckedItems={setCheckedItems}
+                    setCheckedItemsCopy={setCheckedItemsCopy}
+                    checkedItemsCopy={checkedItemsCopy}
+                    handleCloning={handleCloning}
+                    user={user}
+                    selectFromTree={selectFromTree}
+                    expandedNodes={expandedNodes}
+                    setExpandedNodes={setExpandedNodes}
+                    handleToggle={handleToggle}
+                    getPath={getPath}
+                    handleSaveLinkChanges={handleSaveLinkChanges}
+                    checkDuplicateTitle={checkDuplicateTitle}
+                    cloning={cloning}
+                    addACloneNodeQueue={addACloneNodeQueue}
+                    setClonedNodesQueue={setClonedNodesQueue}
+                    clonedNodesQueue={clonedNodesQueue}
+                    newOnes={newOnes}
+                    setNewOnes={setNewOnes}
+                    editableProperty={editableProperty}
+                    setEditableProperty={setEditableProperty}
+                    removedElements={removedElements}
+                    setRemovedElements={setRemovedElements}
+                    addedElements={addedElements}
+                    setAddedElements={setAddedElements}
+                    glowIds={glowIds}
+                    setGlowIds={setGlowIds}
+                selectedCollection={selectedCollection}
+                  />
+                ) : (
+                  property !== "description" &&
+                  currentNode.propertyType[property] === "string" && (
+                    <Text
+                      text={onGetPropertyValue(property)}
+                      currentVisibleNode={currentNode}
+                      property={property}
+                      setCurrentVisibleNode={setCurrentVisibleNode}
+                      nodes={nodes}
+                      locked={locked}
+                      selectedDiffNode={selectedDiffNode}
+                      getTitleNode={getTitleNode}
+                      confirmIt={confirmIt}
+                      currentImprovement={currentImprovement}
+                    />
+                  )
+                )}
+              </Box>
+            </React.Fragment>
+          )
+        }
+        )}
+        {!hasReferences && user && (
+          <Box sx={{ mt: "15px" }}>
+            <NodeImageManager
+              nodeId={currentVisibleNode?.id}
+              currentVisibleNode={currentVisibleNode}
+              user={user}
+              firestore={db}
+              storage={storage}
+              confirmIt={confirmIt}
+              saveNewChangeLog={saveNewChangeLog}
+              selectedDiffNode={selectedDiffNode}
+              nodes={nodes} 
+              getTitleNode={getTitleNode}     
               />
-            ) : currentNode.propertyType[property] !== "string" ? (
-              <StructuredProperty
-                key={property + index}
-                confirmIt={confirmIt}
-                selectedDiffNode={selectedDiffNode}
-                currentVisibleNode={currentNode}
-                editStructuredProperty={showListToSelect}
-                setSelectedProperty={setSelectedProperty}
-                navigateToNode={navigateToNode}
-                setSnackbarMessage={setSnackbarMessage}
-                setCurrentVisibleNode={setCurrentVisibleNode}
-                property={property}
-                nodes={nodes}
-                locked={locked}
-                onGetPropertyValue={onGetPropertyValue}
-                currentImprovement={currentImprovement}
-                /*  */
-                handleCloseAddLinksModel={handleCloseAddLinksModel}
-                selectedProperty={selectedProperty}
-                setSearchValue={setSearchValue}
-                searchValue={searchValue}
-                searchResultsForSelection={searchResultsForSelection}
-                checkedItems={checkedItems}
-                setCheckedItems={setCheckedItems}
-                setCheckedItemsCopy={setCheckedItemsCopy}
-                checkedItemsCopy={checkedItemsCopy}
-                handleCloning={handleCloning}
-                user={user}
-                selectFromTree={selectFromTree}
-                expandedNodes={expandedNodes}
-                setExpandedNodes={setExpandedNodes}
-                handleToggle={handleToggle}
-                getPath={getPath}
-                handleSaveLinkChanges={handleSaveLinkChanges}
-                checkDuplicateTitle={checkDuplicateTitle}
-                cloning={cloning}
-                addACloneNodeQueue={addACloneNodeQueue}
-                setClonedNodesQueue={setClonedNodesQueue}
-                clonedNodesQueue={clonedNodesQueue}
-                newOnes={newOnes}
-                setNewOnes={setNewOnes}
-                editableProperty={editableProperty}
-                setEditableProperty={setEditableProperty}
-                removedElements={removedElements}
-                setRemovedElements={setRemovedElements}
-                addedElements={addedElements}
-                setAddedElements={setAddedElements}
-                glowIds={glowIds}
-                setGlowIds={setGlowIds}
-              />
-            ) : (
-              property !== "description" &&
-              currentNode.propertyType[property] === "string" && (
-                <Text
-                  text={onGetPropertyValue(property)}
-                  currentVisibleNode={currentNode}
-                  property={property}
-                  setCurrentVisibleNode={setCurrentVisibleNode}
-                  nodes={nodes}
-                  locked={locked}
-                  selectedDiffNode={selectedDiffNode}
-                  getTitleNode={getTitleNode}
-                  confirmIt={confirmIt}
-                  currentImprovement={currentImprovement}
-                />
-              )
-            )}
           </Box>
-        ))}
+        )}
       </Box>
       {!locked && openAddProperty && (
         <AddPropertyForm

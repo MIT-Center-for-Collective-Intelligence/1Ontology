@@ -5,6 +5,7 @@ import {
   CircularProgress,
   Paper,
   Typography,
+  Pagination,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import {
@@ -24,6 +25,8 @@ import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import ActivityDetails from "./ActivityDetails";
 
+const ITEMS_PER_PAGE = 15;
+
 const NodeActivity = ({
   currentVisibleNode,
   selectedDiffNode,
@@ -38,33 +41,41 @@ const NodeActivity = ({
   const db = getFirestore();
   const [logs, setLogs] = useState<(NodeChange & { id: string })[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   useEffect(() => {
-    if (!currentVisibleNode.id) return;
+    if (!currentVisibleNode?.id) return;
+    
     setLogs([]);
-
+    setCurrentPage(1);
+    
     const nodesQuery = query(
       collection(db, NODES_LOGS),
-      where("nodeId", "==", currentVisibleNode.id),
+      where("nodeId", "==", currentVisibleNode?.id),
       orderBy("modifiedAt", "desc"),
       limit(100)
     );
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
-      const docChanges = snapshot.docChanges();
-      setLogs((prev: (NodeChange & { id: string })[]) => {
-        for (let change of docChanges) {
-          const changeData: any = change.doc.data();
-          const id = change.doc.id;
-          prev.push({ ...changeData, id });
-        }
-        return prev;
-      });
+      const docs = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      })) as (NodeChange & { id: string })[];
+      
+      setLogs(docs);
       setLoading(false);
     });
 
     return () => unsubscribeNodes();
-  }, [db, currentVisibleNode.id]);
+  }, [db, currentVisibleNode?.id]);
+
+  const indexOfLastLog = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstLog = indexOfLastLog - ITEMS_PER_PAGE;
+  const currentLogs = logs.slice(indexOfFirstLog, indexOfLastLog);
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setCurrentPage(value);
+  };
 
   if (loading) {
     return (
@@ -122,15 +133,10 @@ const NodeActivity = ({
           </Box>
         </Box>
       )}
-      {logs.length > 0 &&
-        logs
-          .sort((a: any, b: any) => {
-            return (
-              new Date(b.modifiedAt.toDate()).getTime() -
-              new Date(a.modifiedAt.toDate()).getTime()
-            );
-          })
-          .map((log: NodeChange & { id: string }) => (
+
+      {logs.length > 0 && (
+        <>
+          {currentLogs.map((log: NodeChange & { id: string }) => (
             <ActivityDetails
               key={log.id}
               activity={log}
@@ -139,6 +145,26 @@ const NodeActivity = ({
               isSelected={selectedDiffNode?.id === log.id}
             />
           ))}
+
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              mt: 8,
+              mb: 2,
+            }}
+          >
+            <Pagination
+              count={Math.ceil(logs.length / ITEMS_PER_PAGE)}
+              page={currentPage}
+              onChange={handlePageChange}
+              color="primary"
+              showFirstButton
+              showLastButton
+            />
+          </Box>
+        </>
+      )}
     </Box>
   );
 };

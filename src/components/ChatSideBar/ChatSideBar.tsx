@@ -125,7 +125,7 @@ const ChatSideBar = ({
     async (nodeId: string, title: string) => {
       if (!user || !currentVisibleNode?.id) return;
       const messageData = {
-        nodeId: currentVisibleNode.id,
+        nodeId: currentVisibleNode?.id,
         text: title,
         sender: user.uname,
         senderDetail: {
@@ -147,7 +147,7 @@ const ChatSideBar = ({
       await addDoc(collection(db, MESSAGES), messageData);
       scrollToBottom();
     },
-    [selectedChatTab, currentVisibleNode?.id, user]
+    [selectedChatTab, currentVisibleNode?.id, user],
   );
 
   // useEffect(() => {
@@ -200,7 +200,6 @@ const ChatSideBar = ({
           value={selectedChatTab}
           onChange={handleChatTabsChange}
           aria-label="basic tabs example"
-          variant="scrollable"
           sx={{
             background: (theme) =>
               theme.palette.mode === "dark" ? "#000000" : "#c3c3c3",
@@ -257,7 +256,11 @@ const ChatSideBar = ({
         >
           <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <SearchBox setSearchValue={setSearchValue} label={"Search ..."} />
+              <SearchBox
+                setSearch={setSearchValue}
+                search={searchValue}
+                label={"Search ..."}
+              />
               <IconButton
                 onClick={() => {
                   setOpenModel(false);

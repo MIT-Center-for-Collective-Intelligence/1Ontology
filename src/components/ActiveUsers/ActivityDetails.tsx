@@ -15,23 +15,15 @@ const ActivityDetails = ({
   modifiedByDetails?: any;
   isSelected?: boolean;
 }) => {
+  console.log("activity==>", activity);
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", mt: "8px" }}>
-      <Typography
-        sx={{
-          fontSize: "12px",
-          fontWeight: "600",
-          ml: "auto",
-          mr: 5,
-          color: "text.secondary",
-        }}
-      >
-        {" "}
-        {dayjs(new Date(activity.modifiedAt.toDate())).fromNow().includes("NaN")
-          ? "a few minutes ago"
-          : `${dayjs(new Date(activity.modifiedAt.toDate())).fromNow()}`}
-      </Typography>
-
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        mt: "8px",
+      }}
+    >
       <Paper
         elevation={3}
         sx={{
@@ -43,7 +35,7 @@ const ActivityDetails = ({
           boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
           transition: "box-shadow 0.3s ease-in-out",
           "&:hover": {
-            boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.15)",
+            boxShadow: "0px 16px 40px rgba(0, 0, 0, 0.15)",
           },
           backgroundColor: (theme) =>
             theme.palette.mode === "dark"
@@ -51,8 +43,8 @@ const ActivityDetails = ({
                 ? "rgba(173, 216, 230, 0.5)"
                 : "#303134"
               : isSelected
-              ? "rgba(173, 216, 230, 0.5)"
-              : "#e9ebf5",
+                ? "rgba(173, 216, 230, 0.5)"
+                : "#e9ebf5",
         }}
       >
         <Box
@@ -79,14 +71,36 @@ const ActivityDetails = ({
           )}
 
           {modifiedByDetails && (
-            <Typography
+            <Box
               sx={{
                 marginLeft: 1,
                 fontSize: "14px",
                 color: "text.primary",
               }}
             >
-              {modifiedByDetails.fName} {modifiedByDetails.lName}{" "}
+              <Box sx={{ alignItems: "center", display: "flex", gap: "7px" }}>
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                  }}
+                >
+                  {modifiedByDetails.fName} {modifiedByDetails.lName}{" "}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    color: "text.secondary",
+                  }}
+                >
+                  {" "}
+                  {dayjs(new Date(activity.modifiedAt.toDate()))
+                    .fromNow()
+                    .includes("NaN")
+                    ? "a few minutes ago"
+                    : `${dayjs(new Date(activity.modifiedAt.toDate())).fromNow()}`}
+                </Typography>
+              </Box>
               {modifiedByDetails && (
                 <Typography
                   variant="body2"
@@ -101,7 +115,7 @@ const ActivityDetails = ({
                   {getChangeDescription(activity, "")}
                 </Typography>
               )}
-            </Typography>
+            </Box>
           )}
         </Box>
         {!modifiedByDetails && (
@@ -156,11 +170,26 @@ const ActivityDetails = ({
             {activity.fullNode?.title}
           </Typography>
           {activity.reasoning && (
-            <Box>
-              <Typography sx={{ mt: "15px", fontWeight: "bold" }}>
-                Comments:
+            <Box
+              sx={{
+                width: "100%",
+                overflow: "hidden",
+                wordWrap: "break-word",
+                p: 2,
+                border: "1px solid gray",
+                borderRadius: "17px",
+              }}
+            >
+              <Typography sx={{ fontWeight: "bold" }}>Comments:</Typography>
+              <Typography
+                sx={{
+                  wordWrap: "break-word",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {activity.reasoning}
               </Typography>
-              <Typography>{activity.reasoning}</Typography>
             </Box>
           )}
         </Box>

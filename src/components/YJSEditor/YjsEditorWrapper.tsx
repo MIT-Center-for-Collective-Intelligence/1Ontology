@@ -42,6 +42,7 @@ const YjsEditorWrapper = ({
   checkDuplicateTitle,
   autoFocus,
   cursorPosition,
+  onEditorReady
 }: {
   fullname: string;
   property: string;
@@ -52,6 +53,7 @@ const YjsEditorWrapper = ({
   checkDuplicateTitle: Function;
   autoFocus: boolean;
   cursorPosition: number | null;
+  onEditorReady?: (editor: Quill) => void;
 }) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
@@ -114,7 +116,7 @@ const YjsEditorWrapper = ({
     yTextRef.current = yText;
 
     if (editorContainerRef.current) {
-      editorRef.current = new Quill(editorContainerRef.current, {
+      const editor = new Quill(editorContainerRef.current, {
         modules: {
           cursors: true,
           toolbar: false,
@@ -122,8 +124,19 @@ const YjsEditorWrapper = ({
             userOnly: true,
           },
           clipboard: {
-            matchVisual: true,
-          },
+            matchVisual: false,
+            matchers: [
+              [
+                "span[style], div[style], p[style]",
+                (node: any, delta: any) => {
+                  const text = node.innerText;
+                  return {
+                    ops: [{ insert: text }]
+                  };
+                },
+              ],
+            ],
+          }
         },
         placeholder: `${capitalizeFirstLetter(
           DISPLAY[property] ? DISPLAY[property] : property
@@ -131,12 +144,17 @@ const YjsEditorWrapper = ({
         theme: "snow",
         formats: [],
       });
-    }
 
-    if (editorRef.current) {
+      editorRef.current = editor;
+
+      // Notify parent when editor is ready
+      if (onEditorReady) {
+        onEditorReady(editor);
+      }
+
       const binding = new QuillBinding(
         yText,
-        editorRef.current,
+        editor,
         provider.awareness
       );
 
@@ -145,7 +163,7 @@ const YjsEditorWrapper = ({
         color: color,
       });
 
-      editorRef.current.on("text-change", (delta, oldDelta, source) => {
+      editor.on("text-change", (delta, oldDelta, source) => {
         if (source === "user") {
           const previousText = (oldDelta.ops[0].insert || "") as string;
           const newText = applyDeltaToText(previousText, delta);
@@ -166,7 +184,6 @@ const YjsEditorWrapper = ({
       });
 
       // const intervalId = setInterval(() => {
-      //   console.log('timeout working', TIMEOUT);
       //   saveChangeLog(changeHistoryRef.current);
       //   changeHistoryRef.current = [];
       // }, TIMEOUT);
@@ -187,7 +204,7 @@ const YjsEditorWrapper = ({
         }
       };
 
-      editorRef.current.on("selection-change", handleSelectionChange);
+      editor.on("selection-change", handleSelectionChange);
 
       window.addEventListener("beforeunload", saveChanges);
 
@@ -196,8 +213,8 @@ const YjsEditorWrapper = ({
         provider.disconnect();
         provider.destroy();
         binding.destroy();
-        editorRef.current?.off("selection-change", handleSelectionChange);
-        editorRef.current?.off("text-change");
+        editor.off("selection-change", handleSelectionChange);
+        editor.off("text-change");
         window.removeEventListener("beforeunload", saveChanges);
       };
     }

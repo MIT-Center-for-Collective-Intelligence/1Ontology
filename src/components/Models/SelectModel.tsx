@@ -68,6 +68,7 @@ const SelectModelModal = ({
   setAddedElements,
   isSaving,
   scrollToElement,
+  selectedCollection,
 }: {
   onSave: any;
   handleCloseAddLinksModel: any;
@@ -110,6 +111,7 @@ const SelectModelModal = ({
   setAddedElements: any;
   isSaving: boolean;
   scrollToElement: (nodeId: string) => void;
+  selectedCollection: string;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
 
@@ -117,7 +119,7 @@ const SelectModelModal = ({
   const getSelectingModelTitle = (
     property: string,
     nodeType: string,
-    propertyType: INodeTypes
+    propertyType: INodeTypes,
   ) => {
     if (property === "specializations") {
       property = "specialization";
@@ -179,7 +181,7 @@ const SelectModelModal = ({
     }
     const generalizations = nodes[id].generalizations
       .flatMap((c: any) => c.nodes)
-      .filter((n: { id: string }) => n.id !== currentVisibleNode.id);
+      .filter((n: { id: string }) => n.id !== currentVisibleNode?.id);
 
     return generalizations.length === 0;
   };
@@ -192,9 +194,34 @@ const SelectModelModal = ({
           collection.nodes = collection.nodes.filter((n) => n.id !== checkedId);
         }
       } else {
-        _prev[0].nodes.push({
-          id: checkedId,
-        });
+        if (selectedCollection) {
+          const collectionIdx = _prev.findIndex(
+            (c) => c.collectionName === selectedCollection,
+          );
+          if (collectionIdx !== -1) {
+            _prev[collectionIdx].nodes.push({
+              id: checkedId,
+            });
+          }
+        } else {
+          const collectionIdx = _prev.findIndex(
+            (c) => c.collectionName === "main",
+          );
+          if (collectionIdx !== -1) {
+            _prev[collectionIdx].nodes.push({
+              id: checkedId,
+            });
+          } else {
+            _prev.push({
+              collectionName: "main",
+              nodes: [
+                {
+                  id: checkedId,
+                },
+              ],
+            });
+          }
+        }
       }
       return _prev;
     });
@@ -240,7 +267,7 @@ const SelectModelModal = ({
     setEditableProperty((prev: ICollection[]) => {
       const _prev = [...prev];
       _prev[collectionIdx].nodes = _prev[collectionIdx].nodes.filter(
-        (n: ILinkNode) => n.id !== id
+        (n: ILinkNode) => n.id !== id,
       );
       return _prev;
     });
@@ -291,9 +318,35 @@ const SelectModelModal = ({
 
     setEditableProperty((prev: ICollection[]) => {
       const _prev = [...prev];
-      _prev[0].nodes.push({
-        id,
-      });
+      if (selectedCollection) {
+        const collectionIdx = _prev.findIndex(
+          (c) => c.collectionName === selectedCollection,
+        );
+        if (collectionIdx !== -1) {
+          _prev[collectionIdx].nodes.push({
+            id,
+          });
+        }
+      } else {
+        const collectionIdx = _prev.findIndex(
+          (c) => c.collectionName === "main",
+        );
+
+        if (collectionIdx !== -1) {
+          _prev[collectionIdx].nodes.push({
+            id,
+          });
+        } else {
+          _prev.push({
+            collectionName: "main",
+            nodes: [
+              {
+                id,
+              },
+            ],
+          });
+        }
+      }
       return _prev;
     });
     setAddedElements((prev: Set<string>) => {
@@ -317,8 +370,8 @@ const SelectModelModal = ({
       query(
         collection(db, NODES),
         where("unclassified", "==", true),
-        where("nodeType", "==", nodeType)
-      )
+        where("nodeType", "==", nodeType),
+      ),
     );
     if (unclassifiedNodeDocs.docs.length > 0) {
       const unclassifiedId = unclassifiedNodeDocs.docs[0].id;
@@ -337,10 +390,11 @@ const SelectModelModal = ({
       });
     }
   };
+
   const renderSearchOrTree = () =>
     searchValue ? (
       <ExpandSearchResult
-        searchResultsForSelection={searchResultsForSelection}
+        searchResultsForSelection={searchResultsForSelection.slice(0, 10)}
         markItemAsChecked={markItemAsChecked}
         handleCloning={handleCloning}
         checkedItems={checkedItems}
@@ -368,9 +422,9 @@ const SelectModelModal = ({
         handleCloning={handleCloning}
         clone
         stopPropagation={
-          selectedProperty === "generalizations" ? currentVisibleNode.id : ""
+          selectedProperty === "generalizations" ? currentVisibleNode?.id : ""
         }
-        preventLoops={getPath(currentVisibleNode.id, selectedProperty)}
+        preventLoops={getPath(currentVisibleNode?.id, selectedProperty)}
         manageLock={user?.manageLock}
         cloning={cloning}
         addACloneNodeQueue={_add}
@@ -421,7 +475,11 @@ const SelectModelModal = ({
               pr: "5px",
             }}
           >
-            <SearchBox setSearchValue={setSearchValue} label="Search ..." />
+            <SearchBox
+              setSearch={setSearchValue}
+              search={searchValue}
+              label="Search ..."
+            />
             <Tooltip
               title={`Create as a new Specialization 
                     ${
@@ -435,14 +493,25 @@ const SelectModelModal = ({
                   setDisabledButton(true);
                   if (selectedProperty === "specializations") {
                     const id = addACloneNodeQueue(
-                      currentVisibleNode.id,
-                      searchValue
+                      currentVisibleNode?.id,
+                      searchValue,
                     );
                     setEditableProperty((prev: ICollection[]) => {
                       const _prev = [...prev];
-                      _prev[0].nodes.push({
-                        id,
-                      });
+                      if (selectedCollection) {
+                        const collectionIdx = _prev.findIndex(
+                          (c) => c.collectionName === selectedCollection,
+                        );
+                        if (collectionIdx !== -1) {
+                          _prev[collectionIdx].nodes.push({
+                            id,
+                          });
+                        }
+                      } else {
+                        _prev[0].nodes.push({
+                          id,
+                        });
+                      }
                       return _prev;
                     });
                     setAddedElements((prev: Set<string>) => {
@@ -456,6 +525,7 @@ const SelectModelModal = ({
                   } else {
                     await cloneUnclassifiedNode();
                   }
+                  setSearchValue("");
                   setDisabledButton(false);
                 }}
                 sx={{ borderRadius: "18px" /* , minWidth: "300px" */ }}
@@ -489,8 +559,8 @@ const SelectModelModal = ({
                 {currentVisibleNode.nodeType === "activity"
                   ? "activities"
                   : currentVisibleNode.nodeType === "evaluationDimension"
-                  ? "Evaluation Dimensions"
-                  : currentVisibleNode.nodeType + "s"}
+                    ? "Evaluation Dimensions"
+                    : currentVisibleNode.nodeType + "s"}
               </li>
               <li>
                 <strong style={{ color: "orange" }}> B) </strong> Navigating
@@ -507,7 +577,7 @@ const SelectModelModal = ({
             {getSelectingModelTitle(
               selectedProperty,
               currentVisibleNode.nodeType,
-              currentVisibleNode.propertyType[selectedProperty]
+              currentVisibleNode.propertyType[selectedProperty],
             )}
           </Typography>
         )}
@@ -536,7 +606,7 @@ const SelectModelModal = ({
               If you cannot find the existing{" "}
               <strong>
                 {capitalizeFirstLetter(
-                  DISPLAY[selectedProperty] || selectedProperty
+                  DISPLAY[selectedProperty] || selectedProperty,
                 )}
               </strong>{" "}
               to link, you can describe them below:

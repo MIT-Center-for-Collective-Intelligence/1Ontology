@@ -58,11 +58,11 @@ export const MessageButtons = ({
           </IconButton>
         </Tooltip>
       )}
-      <Tooltip title={"react"}>
+      {/* <Tooltip title={"react"}>
         <IconButton onClick={(e: any) => toggleEmojiPicker(e, boxRef, message)}>
           <AddReactionIcon color="secondary" sx={{ fontSize: "19px" }} />
         </IconButton>
-      </Tooltip>
+      </Tooltip> */}
       {!message.parentMessage && makeMessageUnread && (
         <Tooltip title={"unread"}>
           <IconButton onClick={() => makeMessageUnread(message)}>

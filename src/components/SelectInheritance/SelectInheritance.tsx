@@ -34,14 +34,18 @@ const SelectInheritance = ({
   useEffect(() => {
     let _generalizations = [
       ...currentVisibleNode.generalizations.flatMap(
-        (gen: ICollection) => gen.nodes
+        (gen: ICollection) => gen.nodes,
       ),
     ].map((node: ILinkNode) => ({
       id: node.id,
       title: getTitle(nodes, node.id),
     }));
+
     _generalizations = _generalizations.filter((g) => {
-      nodes[g.id].inheritance[property]?.ref !== inheritanceRef;
+      return (
+        !nodes[g.id].inheritance[property]?.ref ||
+        nodes[g.id].inheritance[property]?.ref !== inheritanceRef
+      );
     });
     const index = _generalizations.findIndex((g) => g.id === inheritanceRef);
     if (index === -1) {
@@ -64,7 +68,7 @@ const SelectInheritance = ({
     property: string,
     ref: string,
     generalizationId: string,
-    modifiedInheritanceFor: string
+    modifiedInheritanceFor: string,
   ) => {
     let newBatch = batch;
     for (let { nodes: links } of specializations) {
@@ -95,7 +99,7 @@ const SelectInheritance = ({
           property,
           ref,
           link.id,
-          modifiedInheritanceFor
+          modifiedInheritanceFor,
         );
       }
     }
@@ -104,13 +108,13 @@ const SelectInheritance = ({
   };
   const changeInheritance = (
     event: React.ChangeEvent<HTMLInputElement>,
-    property: string
+    property: string,
   ) => {
     try {
       let newGeneralizationId = event.target.value;
 
       if (newGeneralizationId && newGeneralizationId !== inheritanceRef) {
-        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+        const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
         const newGeneralization = nodes[newGeneralizationId];
         if (newGeneralization.inheritance[property].ref) {
           newGeneralizationId = newGeneralization.inheritance[property].ref;
@@ -122,12 +126,12 @@ const SelectInheritance = ({
           .then(async () => {
             let batch = writeBatch(db);
             batch = await updateSpecializationsInheritance(
-              nodes[currentVisibleNode.id].specializations,
+              nodes[currentVisibleNode?.id].specializations,
               batch,
               property,
               newGeneralizationId,
-              currentVisibleNode.id,
-              currentVisibleNode.id
+              currentVisibleNode?.id,
+              currentVisibleNode?.id,
             );
             await batch.commit();
           })

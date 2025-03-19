@@ -46,16 +46,15 @@ const ManageNodeButtons = ({
     displaySidebar("inheritanceSettings");
 
   return (
-    <Box sx={{ ml: "auto" }}>
+    <Box>
       <Box
         sx={{
           display: "flex",
-          ml: "auto",
           alignItems: "center",
           gap: "5px",
         }}
       >
-        <Box
+        {/* <Box
           sx={{
             display: "flex",
             px: "19px",
@@ -63,7 +62,7 @@ const ManageNodeButtons = ({
             alignContent: "center",
           }}
         >
-          {/* {root && (
+          {root && (
             <Box
               sx={{
                 display: "flex",
@@ -96,16 +95,16 @@ const ManageNodeButtons = ({
                 {getTitleNode(root)}
               </Link>
             </Box>
-          )} */}
-        </Box>
+          )}
+        </Box> */}
         {(locked || manageLock) && (
           <Tooltip
             title={
               !manageLock
                 ? "This node is locked"
                 : lockedInductor
-                ? "This node is locked for everyone else"
-                : "Lock this node"
+                  ? "This node is locked for everyone else"
+                  : "Lock this node"
             }
           >
             {manageLock ? (

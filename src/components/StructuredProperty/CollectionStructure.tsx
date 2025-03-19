@@ -23,12 +23,8 @@ import {
 import { property } from "lodash";
 import theme from "quill/core/theme";
 import React, { useCallback, useState } from "react";
-import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult,
-} from "react-beautiful-dnd";
+import AddIcon from "@mui/icons-material/Add";
+
 import NewCollection from "../Collection/NewCollection";
 import LinkNode from "../LinkNode/LinkNode";
 import { useAuth } from "../context/AuthContext";
@@ -45,6 +41,14 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { NODES } from " @components/lib/firestoreClient/collections";
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  DropResult,
+} from "@hello-pangea/dnd";
+import { LoadingButton } from "@mui/lab";
+import SelectModelModal from "../Models/SelectModel";
 
 const CollectionStructure = ({
   model,
@@ -74,6 +78,35 @@ const CollectionStructure = ({
   setModifiedOrder,
   glowIds,
   scrollToElement,
+  selectedCollection,
+  handleCloseAddLinksModel,
+  onSave,
+  isSaving,
+  addedElements,
+  removedElements,
+  setSearchValue,
+  searchValue,
+  searchResultsForSelection,
+  checkedItems,
+  setCheckedItems,
+  setCheckedItemsCopy,
+  checkedItemsCopy,
+  handleCloning,
+  selectFromTree,
+  expandedNodes,
+  setExpandedNodes,
+  handleToggle,
+  getPath,
+  handleSaveLinkChanges,
+  checkDuplicateTitle,
+  cloning,
+  setClonedNodesQueue,
+  newOnes,
+  setNewOnes,
+  editableProperty,
+  onGetPropertyValue,
+  setRemovedElements,
+  setAddedElements,
 }: {
   model?: boolean;
   locked: boolean;
@@ -94,29 +127,53 @@ const CollectionStructure = ({
   cloneNode?: any;
   openAddCollection: any;
   setOpenAddCollection: any;
-  clonedNodesQueue?: { [nodeId: string]: { title: string; id: string } };
-  setEditableProperty?: any;
-  unlinkElement?: any;
-  addACloneNodeQueue?: any;
+  clonedNodesQueue: any;
+  setEditableProperty: any;
+  unlinkElement: any;
+  addACloneNodeQueue: any;
   selectedProperty: string;
   setModifiedOrder: any;
   glowIds: Set<string>;
   scrollToElement: (elementId: string) => void;
+  selectedCollection: string;
+  handleCloseAddLinksModel: any;
+  onSave: any;
+  isSaving: any;
+  addedElements: any;
+  removedElements: any;
+  setSearchValue: any;
+  searchValue: any;
+  searchResultsForSelection: any;
+  checkedItems: any;
+  setCheckedItems: any;
+  setCheckedItemsCopy: any;
+  checkedItemsCopy: any;
+  handleCloning: any;
+  user: any;
+  selectFromTree: any;
+  expandedNodes: any;
+  setExpandedNodes: any;
+  handleToggle: any;
+  getPath: any;
+  handleSaveLinkChanges: any;
+  checkDuplicateTitle: any;
+  cloning: any;
+  setClonedNodesQueue: any;
+  newOnes: any;
+  setNewOnes: any;
+  editableProperty: any;
+  onGetPropertyValue: any;
+  setRemovedElements: any;
+  setAddedElements: any;
 }) => {
   const db = getFirestore();
-  const [{ emailVerified, user }] = useAuth();
+  const [{ user }] = useAuth();
 
   const [editCollection, setEditCollection] = useState<string | null>(null);
   const [newEditCollection, setNewEditCollection] = useState("");
 
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
-
-  // const handleSorting = (e: any, property: string, propertyValue: any) => {
-  //   console.log(e);
-  //   if (model) {
-  //   }
-  // };
 
   const handleCollectionSorting = useCallback(
     (e: any) => {
@@ -151,7 +208,7 @@ const CollectionStructure = ({
           const inheritedNode = nodes[nodeId as string];
 
           nodeData.properties[property] = JSON.parse(
-            JSON.stringify(inheritedNode.properties[property])
+            JSON.stringify(inheritedNode.properties[property]),
           );
         }
 
@@ -165,7 +222,7 @@ const CollectionStructure = ({
           const newArray = [...propertyValue];
           const [movedElement] = newArray.splice(sourceIndex, 1);
           newArray.splice(destinationIndex, 0, movedElement);
-          const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+          const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
 
           if (
             property === "specializations" ||
@@ -184,7 +241,7 @@ const CollectionStructure = ({
             });
 
             updateInheritance({
-              nodeId: currentVisibleNode.id,
+              nodeId: currentVisibleNode?.id,
               updatedProperties: [property],
               db,
             });
@@ -199,18 +256,18 @@ const CollectionStructure = ({
             message: error.message,
             stack: error.stack,
           }),
-          nodeId: currentVisibleNode.id,
+          nodeId: currentVisibleNode?.id,
         });
       }
     },
-    [property, currentVisibleNode]
+    [property, currentVisibleNode],
   );
 
   const handleSorting = useCallback(
     async (
       result: DropResult,
       property: string,
-      propertyValue: ICollection[]
+      propertyValue: ICollection[],
     ) => {
       try {
         // Destructure properties from the result object
@@ -230,7 +287,7 @@ const CollectionStructure = ({
         if (model) {
           setEditableProperty((prev: ICollection[]) => {
             const nodeIdx = prev[sourceCollectionIndex].nodes.findIndex(
-              (link: ILinkNode) => link.id === draggableId
+              (link: ILinkNode) => link.id === draggableId,
             );
             const moveValue = prev[sourceCollectionIndex].nodes[nodeIdx];
 
@@ -241,7 +298,7 @@ const CollectionStructure = ({
             prev[destinationCollectionIndex].nodes.splice(
               destination.index,
               0,
-              moveValue
+              moveValue,
             );
             return prev;
           });
@@ -258,7 +315,7 @@ const CollectionStructure = ({
           // Find the index of the draggable item in the source category
 
           const nodeIdx = propertyValue[sourceCollectionIndex].nodes.findIndex(
-            (link: ILinkNode) => link.id === draggableId
+            (link: ILinkNode) => link.id === draggableId,
           );
 
           // If the draggable item is found in the source category
@@ -273,11 +330,11 @@ const CollectionStructure = ({
             propertyValue[destinationCollectionIndex].nodes.splice(
               destination.index,
               0,
-              moveValue
+              moveValue,
             );
           }
           // Update the nodeData with the new property values
-          const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+          const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
           if (
             property === "specializations" ||
             property === "generalizations"
@@ -291,14 +348,14 @@ const CollectionStructure = ({
               [`inheritance.${property}.ref`]: null,
             });
             updateInheritance({
-              nodeId: currentVisibleNode.id,
+              nodeId: currentVisibleNode?.id,
               updatedProperties: [property],
               db,
             });
           }
 
           saveNewChangeLog(db, {
-            nodeId: currentVisibleNode.id,
+            nodeId: currentVisibleNode?.id,
             modifiedBy: user?.uname,
             modifiedProperty: property,
             previousValue,
@@ -319,7 +376,7 @@ const CollectionStructure = ({
             field: property,
             sourceCategory: sourceCollection,
             destinationCategory: destinationCollection,
-            nodeId: currentVisibleNode.id,
+            nodeId: currentVisibleNode?.id,
           });
         }
       } catch (error: any) {
@@ -335,7 +392,7 @@ const CollectionStructure = ({
         });
       }
     },
-    [currentVisibleNode, db, nodes, recordLogs, property]
+    [currentVisibleNode, db, nodes, recordLogs, property],
   );
 
   const addCollection = useCallback(
@@ -351,7 +408,7 @@ const CollectionStructure = ({
         if (!newCollection || !user?.uname) return;
 
         const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id)
+          doc(collection(db, NODES), currentVisibleNode?.id),
         );
         if (!nodeDoc.exists()) return;
 
@@ -364,14 +421,14 @@ const CollectionStructure = ({
           : `properties.${property}`;
 
         const existIndex = nodeData[propertyPath].findIndex(
-          (c: ICollection) => c.collectionName === newCollection
+          (c: ICollection) => c.collectionName === newCollection,
         );
         // Check if the collection already exists
         if (existIndex !== -1) {
           confirmIt(
             `This category already exists under the property ${property}`,
             "Ok",
-            ""
+            "",
           );
           return;
         }
@@ -381,8 +438,8 @@ const CollectionStructure = ({
           JSON.stringify(
             isSpecialization
               ? nodeData[propertyPath] || {}
-              : nodeData.properties[property] || {}
-          )
+              : nodeData.properties[property] || {},
+          ),
         );
 
         // Add new collection
@@ -420,7 +477,7 @@ const CollectionStructure = ({
 
         // Save the change log
         saveNewChangeLog(db, {
-          nodeId: currentVisibleNode.id,
+          nodeId: currentVisibleNode?.id,
           modifiedBy: user?.uname,
           modifiedProperty: property,
           previousValue,
@@ -445,7 +502,7 @@ const CollectionStructure = ({
         });
       }
     },
-    [user?.uname, db, currentVisibleNode.id, property]
+    [user?.uname, db, currentVisibleNode?.id, property],
   );
   const saveNewAndSwapIt = (newPartTitle: string, partId: string) => {
     try {
@@ -482,23 +539,23 @@ const CollectionStructure = ({
           return;
         }
 
-        if (property === "parts" && currentVisibleNode.id) {
+        if (property === "parts" && currentVisibleNode?.id) {
           const elementIdx = propertyValue[0].nodes.findIndex(
-            (n: { id: string }) => n.id === id
+            (n: { id: string }) => n.id === id,
           );
           const existIdx = propertyValue[0].nodes.findIndex(
-            (n: { id: string }) => n.id === partId
+            (n: { id: string }) => n.id === partId,
           );
           if (existIdx === -1) {
             propertyValue[0].nodes[elementIdx].id = partId;
-            const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+            const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
 
             updateDoc(nodeRef, {
               "properties.parts": propertyValue,
             });
             if (currentVisibleNode.inheritance.parts.ref) {
               updateInheritance({
-                nodeId: currentVisibleNode.id,
+                nodeId: currentVisibleNode?.id,
                 updatedProperties: ["parts"],
                 db,
               });
@@ -509,17 +566,16 @@ const CollectionStructure = ({
         console.error(error);
       }
     },
-    [currentVisibleNode.id, db, property, propertyValue, model]
+    [currentVisibleNode?.id, db, property, propertyValue, model],
   );
   const saveEditCollection = useCallback(
     async (newCollection: string) => {
       try {
-        debugger;
         if (!newCollection || !user?.uname || newCollection === editCollection)
           return;
 
         const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode.id)
+          doc(collection(db, NODES), currentVisibleNode?.id),
         );
         if (!nodeDoc.exists()) return;
 
@@ -536,21 +592,21 @@ const CollectionStructure = ({
           JSON.stringify(
             isSpecialization
               ? nodeData[propertyPath]
-              : nodeData.properties[property] || {}
-          )
+              : nodeData.properties[property] || {},
+          ),
         );
 
         // Find the collection to be edited
         if (isSpecialization) {
           const collection = nodeData[propertyPath].find(
-            (c: ICollection) => c.collectionName === editCollection
+            (c: ICollection) => c.collectionName === editCollection,
           );
           if (collection) {
             collection.collectionName = newCollection;
           }
         } else {
           const collection = nodeData.properties[property].find(
-            (c: ICollection) => c.collectionName === editCollection
+            (c: ICollection) => c.collectionName === editCollection,
           );
           if (collection) {
             collection.collectionName = newCollection;
@@ -563,7 +619,7 @@ const CollectionStructure = ({
           editCollection,
           newCollection,
           nodeDoc,
-          property
+          property,
         );
 
         // Update inheritance if necessary
@@ -585,7 +641,7 @@ const CollectionStructure = ({
         setEditableProperty((prev: ICollection[]) => {
           const _prev = [...prev];
           const collection = _prev.find(
-            (c: ICollection) => c.collectionName === editCollection
+            (c: ICollection) => c.collectionName === editCollection,
           );
           if (collection) {
             collection.collectionName = newCollection;
@@ -596,7 +652,7 @@ const CollectionStructure = ({
 
         // Save the change log
         saveNewChangeLog(db, {
-          nodeId: currentVisibleNode.id,
+          nodeId: currentVisibleNode?.id,
           modifiedBy: user?.uname,
           modifiedProperty: property,
           previousValue,
@@ -623,7 +679,7 @@ const CollectionStructure = ({
       }
       setEditCollection(null);
     },
-    [property, editCollection, user?.uname]
+    [property, editCollection, user?.uname],
   );
   const deleteCollection = useCallback(
     async (property: string, collectionIdx: number, collectionName: string) => {
@@ -632,12 +688,12 @@ const CollectionStructure = ({
         (await confirmIt(
           `Are you sure you want to delete the collection ${collectionName}?`,
           "Delete Collection",
-          "Keep Collection"
+          "Keep Collection",
         ))
       ) {
         try {
           const nodeDoc = await getDoc(
-            doc(collection(db, NODES), currentVisibleNode.id)
+            doc(collection(db, NODES), currentVisibleNode?.id),
           );
           if (nodeDoc.exists()) {
             let previousValue = null;
@@ -654,14 +710,14 @@ const CollectionStructure = ({
               JSON.stringify(
                 isSpecialization
                   ? nodeData[propertyPath]
-                  : nodeData.properties[property]
-              )
+                  : nodeData.properties[property],
+              ),
             );
 
             // Merge the category into "main" and delete the category
             if (isSpecialization) {
               let mainCollectionIdx = nodeData[propertyPath].findIndex(
-                (c: { collectionName: string }) => c.collectionName === "main"
+                (c: { collectionName: string }) => c.collectionName === "main",
               );
 
               if (mainCollectionIdx === -1) {
@@ -679,7 +735,7 @@ const CollectionStructure = ({
               nodeData[propertyPath].splice(collectionIdx, 1);
             } else {
               let mainCollectionIdx = nodeData.properties[property].findIndex(
-                (c: { collectionName: string }) => c.collectionName === "main"
+                (c: { collectionName: string }) => c.collectionName === "main",
               );
               if (mainCollectionIdx === -1) {
                 nodeData.properties[property].push({
@@ -714,7 +770,7 @@ const CollectionStructure = ({
 
             // Log the changes
             saveNewChangeLog(db, {
-              nodeId: currentVisibleNode.id,
+              nodeId: currentVisibleNode?.id,
               modifiedBy: user?.uname,
               modifiedProperty: property,
               previousValue,
@@ -743,7 +799,7 @@ const CollectionStructure = ({
         }
       }
     },
-    [confirmIt, currentVisibleNode, db, user?.uname]
+    [confirmIt, currentVisibleNode, db, user?.uname],
   );
   const handleEditCollection = (collectionName: string) => {
     setEditCollection(collectionName);
@@ -751,7 +807,12 @@ const CollectionStructure = ({
   };
 
   return (
-    <Box sx={{ p: "15px", pt: 0 }}>
+    <Box
+      sx={{
+        p: "15px",
+        pt: 0,
+      }}
+    >
       {openAddCollection && (
         <NewCollection
           onAdd={addCollection}
@@ -793,6 +854,12 @@ const CollectionStructure = ({
                           sx={{
                             mt: "15px",
                             borderRadius: "20px",
+                            border:
+                              selectedCollection ===
+                                collection.collectionName &&
+                              selectedProperty === property
+                                ? "2px solid green"
+                                : "",
                           }}
                           elevation={property !== "specializations" ? 0 : 3}
                         >
@@ -814,7 +881,7 @@ const CollectionStructure = ({
                                     p: 2,
                                     gap: "10px",
                                     backgroundColor: getCategoryStyle(
-                                      collection.collectionName
+                                      collection.collectionName,
                                     ),
                                   }}
                                 >
@@ -834,7 +901,7 @@ const CollectionStructure = ({
                                         }}
                                       >
                                         {capitalizeFirstLetter(
-                                          collection.collectionName
+                                          collection.collectionName,
                                         )}
                                       </Typography>
                                       <Typography
@@ -846,7 +913,7 @@ const CollectionStructure = ({
                                       >
                                         {capitalizeFirstLetter(
                                           selectedDiffNode.changeDetails
-                                            .newValue
+                                            .newValue,
                                         )}
                                       </Typography>
                                     </Box>
@@ -858,13 +925,12 @@ const CollectionStructure = ({
                                       }}
                                     >
                                       {capitalizeFirstLetter(
-                                        collection.collectionName
+                                        collection.collectionName,
                                       )}
                                     </Typography>
                                   ) : (
                                     <></>
                                   )}
-
                                   {!selectedDiffNode &&
                                     collection.collectionName !== "main" &&
                                     !currentImprovement &&
@@ -880,7 +946,7 @@ const CollectionStructure = ({
                                           <IconButton
                                             onClick={() => {
                                               handleEditCollection(
-                                                collection.collectionName
+                                                collection.collectionName,
                                               );
                                             }}
                                           >
@@ -894,13 +960,52 @@ const CollectionStructure = ({
                                               deleteCollection(
                                                 property,
                                                 collectionIndex,
-                                                collection.collectionName
+                                                collection.collectionName,
                                               )
                                             }
                                           >
                                             <DeleteIcon />
                                           </IconButton>
                                         </Tooltip>
+                                      </Box>
+                                    )}{" "}
+                                  {selectedProperty === property &&
+                                    !!selectedCollection &&
+                                    selectedCollection ===
+                                      collection.collectionName && (
+                                      <Box
+                                        sx={{
+                                          display: "flex",
+                                          pt: 0,
+                                          ml: "auto",
+                                          gap: "14px",
+                                        }}
+                                      >
+                                        <Button
+                                          variant="contained"
+                                          onClick={handleCloseAddLinksModel}
+                                          color="error"
+                                          sx={{ borderRadius: "25px" }}
+                                        >
+                                          Cancel
+                                        </Button>
+                                        <LoadingButton
+                                          size="small"
+                                          onClick={onSave}
+                                          loading={isSaving}
+                                          color="success"
+                                          variant="contained"
+                                          sx={{
+                                            borderRadius: "25px",
+                                            color: "white",
+                                          }}
+                                          disabled={
+                                            addedElements.size === 0 &&
+                                            removedElements.size === 0
+                                          }
+                                        >
+                                          Save
+                                        </LoadingButton>
                                       </Box>
                                     )}
                                 </Box>
@@ -920,7 +1025,7 @@ const CollectionStructure = ({
                                     p: 2,
                                     gap: "10px",
                                     backgroundColor: getCategoryStyle(
-                                      collection.collectionName
+                                      collection.collectionName,
                                     ),
                                   }}
                                 >
@@ -1016,7 +1121,7 @@ const CollectionStructure = ({
                                     propertyValue[collectionIndex].nodes.map(
                                       (link: ILinkNode, index: number) => (
                                         <Draggable
-                                          key={link.id}
+                                          key={link.randomId || link.id}
                                           draggableId={link.id}
                                           index={index}
                                         >
@@ -1039,9 +1144,9 @@ const CollectionStructure = ({
                                               title={getTitle(nodes, link.id)}
                                               nodes={nodes}
                                               linkIndex={index}
-                                              unlinkVisible={unlinkVisible(
-                                                link.id
-                                              )}
+                                              /* unlinkVisible={unlinkVisible(
+                                                link.id,
+                                              )} */
                                               linkLocked={false}
                                               locked={
                                                 locked || !!currentImprovement
@@ -1066,7 +1171,7 @@ const CollectionStructure = ({
                                             />
                                           )}
                                         </Draggable>
-                                      )
+                                      ),
                                     )
                                   ) : (
                                     <Typography
@@ -1087,13 +1192,68 @@ const CollectionStructure = ({
                               )}
                             </Droppable>
                           </List>
-                          {/*{property === "specializations" &&
-                            !currentImprovement?.newNode && (
+
+                          {handleCloseAddLinksModel &&
+                            selectedProperty === property &&
+                            !!selectedProperty &&
+                            selectedCollection ===
+                              collection.collectionName && (
+                              <SelectModelModal
+                                onSave={onSave}
+                                currentVisibleNode={currentVisibleNode}
+                                nodes={nodes}
+                                handleCloseAddLinksModel={
+                                  handleCloseAddLinksModel
+                                }
+                                selectedProperty={selectedProperty}
+                                setSearchValue={setSearchValue}
+                                searchValue={searchValue}
+                                searchResultsForSelection={
+                                  searchResultsForSelection
+                                }
+                                checkedItems={checkedItems}
+                                setCheckedItems={setCheckedItems}
+                                setCheckedItemsCopy={setCheckedItemsCopy}
+                                checkedItemsCopy={checkedItemsCopy}
+                                handleCloning={handleCloning}
+                                user={user}
+                                selectFromTree={selectFromTree}
+                                expandedNodes={expandedNodes}
+                                setExpandedNodes={setExpandedNodes}
+                                handleToggle={handleToggle}
+                                getPath={getPath}
+                                handleSaveLinkChanges={handleSaveLinkChanges}
+                                checkDuplicateTitle={checkDuplicateTitle}
+                                cloning={cloning}
+                                setClonedNodesQueue={setClonedNodesQueue}
+                                newOnes={newOnes}
+                                setNewOnes={setNewOnes}
+                                editableProperty={editableProperty}
+                                onGetPropertyValue={onGetPropertyValue}
+                                setRemovedElements={setRemovedElements}
+                                setAddedElements={setAddedElements}
+                                clonedNodesQueue={clonedNodesQueue}
+                                isSaving={isSaving}
+                                scrollToElement={scrollToElement}
+                                addACloneNodeQueue={addACloneNodeQueue}
+                                removedElements={removedElements}
+                                addedElements={addedElements}
+                                setCurrentVisibleNode={setCurrentVisibleNode}
+                                setEditableProperty={setEditableProperty}
+                                locked={locked}
+                                selectedDiffNode={selectedDiffNode}
+                                confirmIt={confirmIt}
+                                currentImprovement={currentImprovement}
+                                selectedCollection={selectedCollection}
+                              />
+                            )}
+                          {property === "specializations" &&
+                            selectedProperty !== property && (
                               <Button
                                 onClick={() =>
-                                  showListToSelect(
+                                  editStructuredProperty(
                                     property,
-                                    collection.collectionName
+                                    collection.collectionName,
                                   )
                                 }
                                 sx={{
@@ -1106,20 +1266,21 @@ const CollectionStructure = ({
                                         : "",
                                   },
                                   // ml: "auto",
-                                  m: "5px",
                                 }}
+                                fullWidth
                                 variant="outlined"
                               >
+                                <AddIcon />{" "}
                                 {`Add ${capitalizeFirstLetter(
-                                  DISPLAY[property] || property
+                                  DISPLAY[property] || property,
                                 )}`}{" "}
                               </Button>
-                            )} */}
+                            )}
                         </Paper>
                       )}
                     </Draggable>
                   );
-                }
+                },
               )}
               {provided.placeholder}
             </Box>

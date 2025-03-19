@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography, Button, IconButton } from "@mui/material";
 import { CSSTransition } from "react-transition-group";
 
 import LinkIcon from "@mui/icons-material/Link";
@@ -13,6 +13,7 @@ import ChatInput from "./ChatInput";
 import dayjs from "dayjs";
 import { getTitle } from " @components/lib/utils/string.utils";
 import { INode } from " @components/types/INode";
+import { AddReactionOutlined } from "@mui/icons-material";
 
 const MessageComponent = ({
   message,
@@ -62,7 +63,7 @@ const MessageComponent = ({
       await confirmIt(
         "Are you sure you want to delete this message?",
         "Delete",
-        "Keep"
+        "Keep",
       )
     ) {
       const element = document.getElementById(`message-${message.id}`);
@@ -113,7 +114,7 @@ const MessageComponent = ({
             sx={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
+              gap: 2,
             }}
           >
             <Box sx={{ display: "flex" }}>
@@ -135,7 +136,6 @@ const MessageComponent = ({
                 : `${dayjs(new Date(message.createdAt.toDate())).fromNow()}`}
             </Typography>
           </Box>
-
           {editing?.id === message.id ? (
             <ChatInput
               message={message}
@@ -185,8 +185,8 @@ const MessageComponent = ({
                           ? DESIGN_SYSTEM_COLORS.notebookG600
                           : DESIGN_SYSTEM_COLORS.notebookO800
                         : message.sender === "You"
-                        ? DESIGN_SYSTEM_COLORS.gray100
-                        : DESIGN_SYSTEM_COLORS.orange50,
+                          ? DESIGN_SYSTEM_COLORS.gray100
+                          : DESIGN_SYSTEM_COLORS.orange50,
                     mb: "10px",
                     ":hover": {
                       backgroundColor: "orange",
@@ -270,26 +270,40 @@ const MessageComponent = ({
               >
                 <Emoticons
                   message={message}
-                  reactionsMap={message.reactions}
+                  reactionsMap={message?.reactions || {}}
                   toggleEmojiPicker={toggleEmojiPicker}
                   toggleReaction={toggleReaction}
                   user={user}
                   boxRef={boxRef}
                 />
+                <IconButton
+                  onClick={(e) => toggleEmojiPicker(e, boxRef, message)}
+                >
+                  <AddReactionOutlined
+                    color="secondary"
+                    sx={{ fontSize: "19px" }}
+                  />
+                </IconButton>
+                <Button
+                  onClick={() =>
+                    setShowReplies(
+                      showReplies !== message.id ? message.id : null,
+                    )
+                  }
+                  style={{
+                    border: "none",
+                    fontSize: "14px",
+                    marginLeft: "auto",
+                  }}
+                >
+                  {showReplies === message.id
+                    ? "Hide"
+                    : message?.totalReplies || null}{" "}
+                  {message?.totalReplies && message.totalReplies > 1
+                    ? "Replies"
+                    : "Reply"}
+                </Button>
               </Box>
-              <Button
-                onClick={() =>
-                  setShowReplies(showReplies !== message.id ? message.id : null)
-                }
-                style={{ border: "none", fontSize: "14px" }}
-              >
-                {showReplies === message.id
-                  ? "Hide"
-                  : message?.totalReplies || null}{" "}
-                {message?.totalReplies && message.totalReplies > 1
-                  ? "Replies"
-                  : "Reply"}
-              </Button>
             </Box>
           )}
 
