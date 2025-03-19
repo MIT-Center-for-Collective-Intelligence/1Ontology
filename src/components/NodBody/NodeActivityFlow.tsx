@@ -554,14 +554,18 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
 
             <Divider />
             <Box>
-              <Typography sx={{ p: 2 }}>
-                <strong style={{ color: "orange" }}>Advantages:</strong>{" "}
-                {algorithms[activeTab].advantages}
-              </Typography>
-              <Typography sx={{ p: 2 }}>
-                <strong style={{ color: "orange" }}>Disadvantages:</strong>{" "}
-                {algorithms[activeTab].disadvantages}
-              </Typography>
+              {algorithms[activeTab]?.advantages && (
+                <Typography sx={{ p: 2 }}>
+                  <strong style={{ color: "orange" }}>Advantages:</strong>{" "}
+                  {algorithms[activeTab]?.advantages}
+                </Typography>
+              )}
+              {algorithms[activeTab]?.disadvantages && (
+                <Typography sx={{ p: 2 }}>
+                  <strong style={{ color: "orange" }}>Disadvantages:</strong>{" "}
+                  {algorithms[activeTab]?.disadvantages}
+                </Typography>
+              )}
             </Box>
           </>
         ) : (
