@@ -60,6 +60,7 @@ type ChatProps = {
   navigateToNode: any;
   nodes: { [nodeId: string]: INode };
   scrollingRef: any;
+  placeholder: string;
 };
 
 const Chat = ({
@@ -72,6 +73,7 @@ const Chat = ({
   navigateToNode,
   nodes,
   scrollingRef,
+  placeholder,
 }: ChatProps) => {
   const db = getFirestore();
   const [showReplies, setShowReplies] = useState<string | null>(null);
@@ -769,13 +771,14 @@ const Chat = ({
             position: "fixed",
             bottom: "13px",
             mt: "15px",
-            pl: 2,
-            width: "420px" /* width - 10 */,
+            p: 2,
+            width: "100%",
           }}
         >
           <ChatInput
             user={user}
             type="message"
+            placeholder={placeholder}
             onSubmit={addMessage}
             users={users}
             confirmIt={confirmIt}

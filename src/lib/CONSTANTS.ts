@@ -109,10 +109,22 @@ export const WS_URL = development
   : `wss://${process.env.NEXT_PUBLIC_WS_SERVER}/ws`;
 
 export const CHAT_DISCUSSION_TABS = [
-  { id: "discussion", title: "Discussion" },
-  { id: "bug_report", title: "Bug Reports" },
-  { id: "feature_request", title: "Feature Requests" },
-  { id: "help", title: "Help" },
+  {
+    id: "discussion",
+    title: "Discussion",
+    placeholder: "Share your thoughts or start a discussion...",
+  },
+  {
+    id: "bug_report",
+    title: "Bug Reports",
+    placeholder: "Describe the bug you encountered...",
+  },
+  {
+    id: "feature_request",
+    title: "Feature Requests",
+    placeholder: "Suggest a new feature or improvement...",
+  },
+  { id: "help", title: "Help", placeholder: "Ask for help or guidance..." },
 ];
 
 export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {

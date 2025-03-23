@@ -1,6 +1,8 @@
 import React, { useState, useRef } from "react";
 import { Box, Typography, Button, IconButton } from "@mui/material";
 import { CSSTransition } from "react-transition-group";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 import LinkIcon from "@mui/icons-material/Link";
 import moment from "moment";
@@ -149,6 +151,7 @@ const MessageComponent = ({
               setEditing={setEditing}
               chatType={chatType}
               editing={editing}
+              placeholder="Share your thoughts..."
             />
           ) : (
             <Box
@@ -291,11 +294,21 @@ const MessageComponent = ({
                     )
                   }
                   style={{
-                    border: "none",
                     fontSize: "14px",
                     marginLeft: "auto",
+                    borderRadius: "25px",
+                    padding: 1,
+                    paddingRight: "10px",
                   }}
+                  variant={
+                    showReplies === message.id ? "contained" : "outlined"
+                  }
                 >
+                  {showReplies === message.id ? (
+                    <KeyboardArrowUpIcon />
+                  ) : (
+                    <KeyboardArrowDownIcon />
+                  )}
                   {showReplies === message.id
                     ? "Hide"
                     : message?.totalReplies || null}{" "}
@@ -320,6 +333,7 @@ const MessageComponent = ({
                 setEditing={setEditing}
                 chatType={chatType}
                 editing={editing}
+                placeholder="Share your thoughts..."
               />
             </Box>
           )}
