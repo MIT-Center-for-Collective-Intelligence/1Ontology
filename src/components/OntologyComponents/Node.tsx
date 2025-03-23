@@ -1251,13 +1251,14 @@ const Node = ({
           ))}
         </Stack>
 
-        {(user.claims.flowChart || development) && (
-          <NodeActivityFlow
-            node={currentVisibleNode}
-            nodes={nodes}
-            confirmIt={confirmIt}
-          />
-        )}
+        {(user.claims.flowChart || development) &&
+          currentVisibleNode.nodeType === "activity" && (
+            <NodeActivityFlow
+              node={currentVisibleNode}
+              nodes={nodes}
+              confirmIt={confirmIt}
+            />
+          )}
 
         {/* rest of the properties in the NodeBody*/}
         <NodeBody
