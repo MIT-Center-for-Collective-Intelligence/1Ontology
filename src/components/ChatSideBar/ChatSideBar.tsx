@@ -199,18 +199,52 @@ const ChatSideBar = ({
           id="chat-tabs"
           value={selectedChatTab}
           onChange={handleChatTabsChange}
-          aria-label="basic tabs example"
+          aria-label="chat tabs"
           sx={{
             background: (theme) =>
-              theme.palette.mode === "dark" ? "#000000" : "#c3c3c3",
+              theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+            borderRadius: "10px",
+            boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
+            width: "100%",
+            ".MuiTab-root": {
+              transition: "0.3s ease-in-out",
+            },
             ".MuiTab-root.Mui-selected": {
               color: "#ff6d00",
+              fontWeight: "bold",
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark" ? "#080707" : "#e0e0e0",
+              borderRadius: "10px 10px 0 0",
             },
-            width: "190%",
+            ".MuiTabs-indicator": {
+              backgroundColor: "#ff6d00",
+              height: "3px",
+              borderRadius: "50%",
+              transition: "transform 0.3s ease-in-out",
+            },
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
           }}
         >
           {chatTabs.map((tab, idx) => (
-            <Tab key={tab.id} label={tab.title} {...a11yProps(idx)} />
+            <Tab
+              key={tab.id}
+              label={tab.title}
+              {...a11yProps(idx)}
+              sx={{
+                borderRadius: "10px",
+                /*                 margin: "0 10px", */
+                padding: "10px 20px",
+                minWidth: "auto",
+                transition: "all 0.3s ease-in-out",
+                "&:hover": {
+                  backgroundColor: "#ff6d00",
+                  color: "white",
+                  transform: "scale(1.05)",
+                },
+              }}
+            />
           ))}
         </Tabs>
       )}
