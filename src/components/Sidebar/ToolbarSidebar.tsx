@@ -16,7 +16,8 @@ import {
   Menu,
   MenuItem,
   SvgIcon,
-  TextField, // Changed from IconButton to Button
+  TextField,
+  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
@@ -493,7 +494,7 @@ const ToolbarSidebar = ({
     setTimeout(() => {
       const modifiedProperty = data.modifiedProperty;
       const changedProperty = data.changeDetails?.addedProperty;
-    
+
       if (modifiedProperty) {
         const element = document.getElementById(`property-${modifiedProperty}`);
         if (element) {
@@ -501,14 +502,14 @@ const ToolbarSidebar = ({
           return;
         }
       }
-    
+
       if (changedProperty) {
         const element = document.getElementById(`property-${changedProperty}`);
         if (element) {
           element.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }
-    }, 1000);    
+    }, 1000);
   };
 
   useEffect(() => {

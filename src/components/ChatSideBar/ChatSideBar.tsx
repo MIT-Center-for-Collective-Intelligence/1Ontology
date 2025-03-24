@@ -58,7 +58,7 @@ const ChatSideBar = ({
   setExpandedNodes: any;
   onOpenNodesTree: any;
   navigateToNode: any;
-  chatTabs: { title: string; id: string }[];
+  chatTabs: { title: string; id: string; placeholder: string }[];
   selectedChatTab: number;
   setSelectedChatTab: Function;
   nodes: { [nodeId: string]: INode };
@@ -263,6 +263,7 @@ const ChatSideBar = ({
               navigateToNode={navigateToNode}
               nodes={nodes}
               scrollingRef={scrollingRef}
+              placeholder={tab.placeholder}
             />
           </TabPanel>
         ))}
