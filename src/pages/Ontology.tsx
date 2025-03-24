@@ -1050,6 +1050,8 @@ const Ontology = () => {
             height: "100vh",
             display: "flex",
             overflow: "hidden",
+            backgroundColor:
+              theme.palette.mode === "dark" ? "#1b1a1a" : "#f8f9fa",
           }}
           columnResizerRef={columnResizerRef}
         >
