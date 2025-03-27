@@ -9,3 +9,4 @@ export const GUIDELINES = "guidelines";
 export const PROMPT_LOGS = "promptLogs";
 export const COPILOT_PROMPTS = "copilotPrompts";
 export const NODES_ONET = "oNetNodes";
+export const ALGORITHMS = "algorithms";

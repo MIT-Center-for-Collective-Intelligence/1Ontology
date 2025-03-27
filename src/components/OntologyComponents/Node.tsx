@@ -128,6 +128,8 @@ import { NodeChange } from " @components/types/INode";
 import { User } from " @components/types/IAuth";
 import { NodeImageManager } from "../NodBody/NodeImageManager";
 import { getStorage } from "firebase/storage";
+import NodeActivityFlow from "../NodBody/NodeActivityFlow";
+import { development } from " @components/lib/CONSTANTS";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -1248,6 +1250,15 @@ const Node = ({
             />
           ))}
         </Stack>
+
+        {(user.claims.flowChart || development) &&
+          currentVisibleNode.nodeType === "activity" && (
+            <NodeActivityFlow
+              node={currentVisibleNode}
+              nodes={nodes}
+              confirmIt={confirmIt}
+            />
+          )}
 
         {/* rest of the properties in the NodeBody*/}
         <NodeBody

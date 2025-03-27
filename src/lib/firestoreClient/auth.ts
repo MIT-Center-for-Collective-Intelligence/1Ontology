@@ -24,7 +24,7 @@ export const signUp = async (name: string, email: string, password: string) => {
   const newUser = await createUserWithEmailAndPassword(
     getAuth(),
     email,
-    password
+    password,
   );
   // Updating the profile with the user's name
   await updateProfile(newUser.user, { displayName: name });
@@ -35,7 +35,7 @@ export const signIn = async (email: string, password: string) => {
   const userCredential = await signInWithEmailAndPassword(
     getAuth(),
     email,
-    password
+    password,
   );
   // Returning the signed in user
   return userCredential.user;
@@ -79,7 +79,7 @@ export const getIdToken = async (): Promise<string | undefined> => {
 // Function to retrieve an authenticated user
 export const retrieveAuthenticatedUser = async (
   userId: string,
-  claims: { [key: string]: boolean }
+  claims: { [key: string]: boolean },
 ) => {
   let user: any = null;
   let theme: UserTheme = "Dark";
@@ -87,7 +87,7 @@ export const retrieveAuthenticatedUser = async (
   const q = query(
     collection(db, USERS),
     where("userId", "==", userId),
-    limit(1)
+    limit(1),
   );
   const userDoc = await getDocs(q);
   if (userDoc.size !== 0) {
@@ -104,6 +104,7 @@ export const retrieveAuthenticatedUser = async (
       admin: !!claims.admin,
       rightPanel: userData.rightPanel,
       currentNode: userData.currentNode,
+      claims,
       ...userData,
     };
     theme = userData.theme;
