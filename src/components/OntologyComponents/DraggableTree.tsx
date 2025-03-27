@@ -466,8 +466,9 @@ function DraggableTree({
           user?.uname === "malonetw") && (
           <Box
             sx={{
-              position: "sticky",
+              position: "absolute",
               bottom: 0,
+              left: "50%",
               backgroundColor: (theme) =>
                 theme.palette.mode === "dark" ? "#303134" : "#efefef",
               alignItems: "center",
