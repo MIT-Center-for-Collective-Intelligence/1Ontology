@@ -5,12 +5,16 @@ import React, {
   useRef,
   useState,
 } from "react";
+import CloseIcon from "@mui/icons-material/Close";
 import HistoryIcon from "@mui/icons-material/History";
 import CircularProgress from "@mui/material/CircularProgress";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
+import EditIcon from "@mui/icons-material/Edit";
 import {
+  Avatar,
   Button,
+  Divider,
   IconButton,
   LinearProgress,
   Menu,
@@ -120,6 +124,7 @@ type MainSidebarProps = {
   updateLastSearches: Function;
   selectedChatTab: any;
   setSelectedChatTab: any;
+  signOut: any;
 };
 
 const ToolbarSidebar = ({
@@ -149,12 +154,11 @@ const ToolbarSidebar = ({
   updateLastSearches,
   selectedChatTab,
   setSelectedChatTab,
+  signOut,
 }: MainSidebarProps) => {
   const theme = useTheme();
   const db = getFirestore();
-
   const [{ isAuthenticated }] = useAuth();
-  const router = useRouter();
   const [handleThemeSwitch] = useThemeChange();
   const [notifications, setNotifications] = useState<INotification[]>([]);
   const [openLogsFor, setOpenLogsFor] = useState<{
@@ -179,11 +183,6 @@ const ToolbarSidebar = ({
   const [improvements, setImprovements] = useState<any>([]);
   const [copilotMessage, setCopilotMessage] = useState("");
   const { selectIt, dropdownDialog } = useSelectDropdown();
-
-  const signOut = async () => {
-    router.push(ROUTES.signIn);
-    getAuth().signOut();
-  };
 
   const handleProfileMenuOpen = (event: any) => {
     setProfileMenuOpen(event.currentTarget);
@@ -310,8 +309,8 @@ const ToolbarSidebar = ({
   );
 
   const handleEditImage = useCallback(() => {
+    console.log(inputEl.current, "inputEl.current==>");
     if (!inputEl.current) return;
-    if (false) return;
     inputEl.current.click();
   }, [inputEl]);
 
@@ -321,24 +320,152 @@ const ToolbarSidebar = ({
       anchorEl={profileMenuOpen}
       open={isProfileMenuOpen}
       onClose={handleProfileMenuClose}
+      anchorOrigin={{
+        vertical: "bottom",
+        horizontal: "right",
+      }}
+      transformOrigin={{
+        vertical: "top",
+        horizontal: "right",
+      }}
+      PaperProps={{
+        sx: {
+          width: "280px",
+          padding: "8px 0",
+          borderRadius: "12px",
+        },
+      }}
     >
       {" "}
+      <IconButton
+        onClick={handleProfileMenuClose}
+        sx={{
+          position: "absolute",
+          right: 8,
+          top: 0.5,
+          color: "text.secondary",
+          zIndex: 1,
+          "&:hover": {
+            backgroundColor: "rgba(237, 228, 228, 0.04)",
+          },
+        }}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>{" "}
       {isAuthenticated && user && (
-        <Typography sx={{ p: "6px 16px" }}>
-          {capitalizeString(`${user?.fName ?? ""} ${user?.lName ?? ""}`)}
-        </Typography>
-      )}
+        <Box sx={{ pl: 3, textAlign: "center" }}>
+          <Typography sx={{ color: "gray" }}>{user?.email}</Typography>
+        </Box>
+      )}{" "}
       {isAuthenticated && user && (
-        <MenuItem sx={{ flexGrow: 3 }} onClick={handleEditImage}>
-          {isUploading ? (
-            <Box sx={{ mr: "15px" }}>
-              <LinearProgress sx={{ width: "18px" }} />
-            </Box>
-          ) : (
-            <CameraAltIcon sx={{ mr: "5px" }} />
-          )}
+        <Box
+          sx={{
+            padding: "12px 16px",
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            cursor: "pointer",
+            textAlign: "center",
+            mt: "15px",
+          }}
+        >
+          <Tooltip
+            title={
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+                  Update Your Profile Picture
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "text.secondary", fontStyle: "italic" }}
+                >
+                  Supported formats: JPG, PNG or JPEG Maximum size 1MB
+                </Typography>
+              </Box>
+            }
+            placement="left"
+          >
+            <Box
+              sx={{
+                position: "relative",
+                width: 80,
+                height: 80,
+                borderRadius: "50%",
+                ":hover": {
+                  boxShadow: !isUploading
+                    ? "0 0 10px 5px rgba(55, 185, 43, 0.5)"
+                    : "none",
+                },
+                transition: "box-shadow 0.3s ease",
+              }}
+              onClick={handleEditImage}
+            >
+              {isUploading && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: -2,
+                    left: -2,
+                    right: -2,
+                    bottom: -2,
+                    borderRadius: "50%",
+                    background: `conic-gradient(orange ${percentageUploaded * 3.6}deg, transparent 0deg)`,
+                    zIndex: 1,
+                  }}
+                />
+              )}
 
-          <span id="picture"> Change Photo</span>
+              <OptimizedAvatar
+                alt={`${user.fName} ${user.lName}`}
+                imageUrl={activeUsers[user?.uname]?.imageUrl || ""}
+                size={80}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  position: "relative",
+                  zIndex: 2,
+                }}
+              />
+
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: 0,
+                  right: 0,
+                  bgcolor: isUploading ? "orange" : theme.palette.primary.main,
+                  color: theme.palette.primary.contrastText,
+                  width: 24,
+                  height: 24,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: `2px solid ${theme.palette.background.paper}`,
+                  cursor: "pointer",
+                  "&:hover": {
+                    bgcolor: isUploading
+                      ? "darkorange"
+                      : theme.palette.primary.dark,
+                  },
+                  zIndex: 3,
+                }}
+              >
+                {isUploading ? (
+                  <Typography
+                    variant="caption"
+                    sx={{ fontSize: "8px", fontWeight: "bold" }}
+                  >
+                    {percentageUploaded}%
+                  </Typography>
+                ) : (
+                  <EditIcon sx={{ fontSize: "14px" }} />
+                )}
+              </Box>
+            </Box>
+          </Tooltip>
           <input
             type="file"
             ref={inputEl}
@@ -346,16 +473,48 @@ const ToolbarSidebar = ({
             accept="image/png, image/jpg, image/jpeg"
             hidden
           />
-        </MenuItem>
+        </Box>
       )}
       {isAuthenticated && user && (
-        <MenuItem sx={{ flexGrow: 3 }} onClick={signOut}>
-          <LogoutIcon sx={{ mr: "5px" }} /> <span id="LogoutText">Logout</span>
+        <Box sx={{ pl: 3, textAlign: "center", mt: "15px" }}>
+          <Typography sx={{ fontSize: "25px" }}>Hi, {user?.fName}!</Typography>
+        </Box>
+      )}
+      <Divider sx={{ my: 1 }} />
+      <Divider sx={{ my: 1 }} />
+      {isAuthenticated && user && (
+        <MenuItem
+          onClick={signOut}
+          sx={{
+            py: "6px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            "&:hover": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? "rgba(255, 255, 255, 0.08)"
+                  : "rgba(0, 0, 0, 0.04)",
+            },
+            borderRadius: "25px",
+            border: "1px solid gray",
+            mx: "13px",
+            cursor: "pointer",
+          }}
+        >
+          <Avatar
+            sx={{
+              bgcolor: theme.palette.error.light,
+              color: theme.palette.error.contrastText,
+            }}
+          >
+            <LogoutIcon fontSize="medium" />
+          </Avatar>
+          <Typography variant="body1">Logout</Typography>
         </MenuItem>
       )}
     </Menu>
   );
-
   useEffect(() => {
     if (!user) return;
     setNotifications([]);
@@ -1152,17 +1311,7 @@ const ToolbarSidebar = ({
 
           {/* Button for Avatar and Full Name */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Button
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-start",
-                padding: 0,
-                textTransform: "none",
-                minWidth: 0,
-              }}
-              onClick={handleProfileMenuOpen}
-            >
+            <Box onClick={handleProfileMenuOpen}>
               {user && (
                 <OptimizedAvatar
                   alt={`${user?.fName} ${user?.lName}`}
@@ -1174,10 +1323,15 @@ const ToolbarSidebar = ({
                     borderRadius: "50%",
                     objectFit: "cover",
                     transition: "transform 0.3s ease",
+                    ":hover": {
+                      boxShadow: !isUploading
+                        ? "0 0 10px 5px rgba(55, 185, 43, 0.5)"
+                        : "none",
+                    },
                   }}
                 />
               )}
-            </Button>
+            </Box>
 
             <Typography
               sx={{

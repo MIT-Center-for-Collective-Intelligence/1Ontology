@@ -110,6 +110,8 @@ import Head from "next/head";
 import DraggableTree from " @components/components/OntologyComponents/DraggableTree";
 import { TreeApi } from "react-arborist";
 import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
+import ROUTES from " @components/lib/utils/routes";
+import { getAuth } from "firebase/auth";
 
 const AddContext = (nodes: any, nodesObject: any): INode[] => {
   for (let node of nodes) {
@@ -195,6 +197,11 @@ const Ontology = () => {
 
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
   const firstLoad = useRef(true);
+
+  const signOut = async () => {
+    router.push(ROUTES.signIn);
+    getAuth().signOut();
+  };
 
   const handleCloseAddLinksModel = () => {
     setSelectedProperty("");
@@ -1290,6 +1297,7 @@ const Ontology = () => {
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
             displayGuidelines={displayGuidelines}
+            signOut={signOut}
           />
         </Container>
         {ConfirmDialog}
