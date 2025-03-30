@@ -332,7 +332,7 @@ const ToolbarSidebar = ({
         sx: {
           width: "280px",
           padding: "8px 0",
-          borderRadius: "12px",
+          borderRadius: "25px",
         },
       }}
     >
@@ -378,7 +378,7 @@ const ToolbarSidebar = ({
                 </Typography>
                 <Typography
                   variant="caption"
-                  sx={{ color: "text.secondary", fontStyle: "italic" }}
+                  sx={{ fontStyle: "italic", color: "white" }}
                 >
                   Supported formats: JPG, PNG or JPEG Maximum size 1MB
                 </Typography>
@@ -480,10 +480,8 @@ const ToolbarSidebar = ({
           <Typography sx={{ fontSize: "25px" }}>Hi, {user?.fName}!</Typography>
         </Box>
       )}
-      <Divider sx={{ my: 1 }} />
-      <Divider sx={{ my: 1 }} />
       {isAuthenticated && user && (
-        <MenuItem
+        <Button
           onClick={signOut}
           sx={{
             py: "6px",
@@ -498,20 +496,17 @@ const ToolbarSidebar = ({
             },
             borderRadius: "25px",
             border: "1px solid gray",
-            mx: "13px",
+
             cursor: "pointer",
+            width: "80%",
+            mt: "25px",
+            alignSelf: "center",
+            ml: "10%",
           }}
         >
-          <Avatar
-            sx={{
-              bgcolor: theme.palette.error.light,
-              color: theme.palette.error.contrastText,
-            }}
-          >
-            <LogoutIcon fontSize="medium" />
-          </Avatar>
-          <Typography variant="body1">Logout</Typography>
-        </MenuItem>
+          <LogoutIcon fontSize="medium" sx={{ color: "gray" }} />
+          <Typography variant="body1">Sign out</Typography>
+        </Button>
       )}
     </Menu>
   );
