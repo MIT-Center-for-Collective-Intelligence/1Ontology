@@ -28,7 +28,7 @@ const customJestConfig = {
     "components/**/*.{js,jsx,ts,tsx}",
     "pages/**/*.{js,jsx,ts,tsx}",
   ],
-  testEnvironment: "node",
+  testEnvironment: "jsdom",
   moduleNameMapper: {
     ...makeModuleNameMapper(SRC_PATH, TS_CONFIG_PATH),
     "^src/(.*)$": "<rootDir>/src/$1",
