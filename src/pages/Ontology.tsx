@@ -1074,6 +1074,9 @@ const Ontology = () => {
                 flexDirection: "column",
                 backgroundColor:
                   theme.palette.mode === "dark" ? "#303134" : "white",
+                borderTopRightRadius: "25px",
+                borderBottomRightRadius: "25px",
+                borderStyle: "none solid none none",
               }}
             >
               <Tabs
@@ -1184,11 +1187,12 @@ const Ontology = () => {
           )}
 
           <Bar
-            size={2}
+            size={0.1}
             style={{
-              background: "currentColor",
+              background: "transparent",
               cursor: "col-resize",
               position: "relative",
+              borderRadius: "4px",
             }}
           >
             <SettingsEthernetIcon
@@ -1201,6 +1205,10 @@ const Ontology = () => {
                   theme.palette.mode === "dark"
                     ? theme.palette.common.gray50
                     : theme.palette.common.notebookMainBlack,
+                borderRadius: "50%",
+                ":hover": {
+                  backgroundColor: "orange",
+                },
               }}
             />
           </Bar>

@@ -468,9 +468,7 @@ function DraggableTree({
             sx={{
               position: "absolute",
               bottom: 0,
-              left: "50%",
-              backgroundColor: (theme) =>
-                theme.palette.mode === "dark" ? "#303134" : "#efefef",
+              left: "35%",
               alignItems: "center",
               textAlign: "center",
             }}
