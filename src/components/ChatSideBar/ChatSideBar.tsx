@@ -257,9 +257,7 @@ const ChatSideBar = ({
               nodeId={tab.id === "node" ? currentVisibleNode?.id : ""}
               users={users}
               confirmIt={confirmIt}
-              setOpenSelectModel={() => {
-                setOpenModel(true);
-              }}
+              setOpenSelectModel={setOpenModel}
               navigateToNode={navigateToNode}
               nodes={nodes}
               scrollingRef={scrollingRef}
@@ -287,6 +285,9 @@ const ChatSideBar = ({
             borderRadius: 2,
             boxShadow: 24,
             ...SCROLL_BAR_STYLE,
+            "&::-webkit-scrollbar": {
+              display: "none",
+            },
           }}
         >
           <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>

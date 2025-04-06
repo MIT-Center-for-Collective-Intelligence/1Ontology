@@ -471,6 +471,12 @@ function DraggableTree({
               left: "35%",
               alignItems: "center",
               textAlign: "center",
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark" ? "#303134" : "#efefef",
+              borderRadius: "25px",
+              border: "1px solid orange",
+              px: "10px",
+              width: "180px",
             }}
           >
             <Switch
