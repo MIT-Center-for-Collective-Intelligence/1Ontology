@@ -166,7 +166,7 @@ You have to give me  new diagram
 
   const response = extractJSON(completion.choices[0]?.message?.content || "")
     .jsonObject as any;
-  console.log(response, "====> response ===>");
+
   if (!response?.groupHierarchy || !response?.nodes || !response?.links) {
     throw new Error("Incomplete JSON");
   }
@@ -274,14 +274,11 @@ export default async function handler(
         completion.choices[0]?.message?.content || "",
       ).jsonObject as SolutionsResponse;
 
-      console.log(solutions, "solutions");
-
       const previousDiagram: {
         nodes: any;
         groups: any;
         links: any;
       } = await getPreviousDiagram(diagramId);
-      console.log("previousDiagram ==>", previousDiagram);
 
       for (let solution of solutions) {
         const newRefSolutionRef = db.collection("diagramSolutions").doc();

@@ -69,8 +69,9 @@ interface NodeBodyProps {
   glowIds: Set<string>;
   setGlowIds: any;
   selectedCollection: string;
-  storage: any,
-  saveNewChangeLog: any,
+  storage: any;
+  saveNewChangeLog: any;
+  skillsFuture: boolean;
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -121,7 +122,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   setGlowIds,
   selectedCollection,
   storage,
-  saveNewChangeLog
+  saveNewChangeLog,
+  skillsFuture,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -350,7 +352,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           const shouldRenderImageManager = property === "References";
           return (
             <React.Fragment key={property}>
-              {shouldRenderImageManager  && user && (
+              {shouldRenderImageManager && user && !skillsFuture && (
                 <Box sx={{ mt: "15px" }}>
                   <NodeImageManager
                     nodeId={currentVisibleNode?.id}
@@ -360,10 +362,10 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     storage={storage}
                     confirmIt={confirmIt}
                     saveNewChangeLog={saveNewChangeLog}
-                    selectedDiffNode={selectedDiffNode} 
-                    nodes={nodes} 
-                    getTitleNode={getTitleNode}                  
-                    />
+                    selectedDiffNode={selectedDiffNode}
+                    nodes={nodes}
+                    getTitleNode={getTitleNode}
+                  />
                 </Box>
               )}
               <Box sx={{ mt: "15px" }}>
@@ -425,7 +427,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     setAddedElements={setAddedElements}
                     glowIds={glowIds}
                     setGlowIds={setGlowIds}
-                selectedCollection={selectedCollection}
+                    selectedCollection={selectedCollection}
                   />
                 ) : (
                   property !== "description" &&
@@ -446,10 +448,9 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 )}
               </Box>
             </React.Fragment>
-          )
-        }
-        )}
-        {!hasReferences && user && (
+          );
+        })}
+        {!hasReferences && user && !skillsFuture && (
           <Box sx={{ mt: "15px" }}>
             <NodeImageManager
               nodeId={currentVisibleNode?.id}
@@ -460,9 +461,9 @@ const NodeBody: React.FC<NodeBodyProps> = ({
               confirmIt={confirmIt}
               saveNewChangeLog={saveNewChangeLog}
               selectedDiffNode={selectedDiffNode}
-              nodes={nodes} 
-              getTitleNode={getTitleNode}     
-              />
+              nodes={nodes}
+              getTitleNode={getTitleNode}
+            />
           </Box>
         )}
       </Box>

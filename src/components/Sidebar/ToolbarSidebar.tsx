@@ -125,6 +125,7 @@ type MainSidebarProps = {
   selectedChatTab: any;
   setSelectedChatTab: any;
   signOut: any;
+  skillsFuture: boolean;
 };
 
 const ToolbarSidebar = ({
@@ -155,6 +156,7 @@ const ToolbarSidebar = ({
   selectedChatTab,
   setSelectedChatTab,
   signOut,
+  skillsFuture,
 }: MainSidebarProps) => {
   const theme = useTheme();
   const db = getFirestore();
@@ -309,7 +311,6 @@ const ToolbarSidebar = ({
   );
 
   const handleEditImage = useCallback(() => {
-    console.log(inputEl.current, "inputEl.current==>");
     if (!inputEl.current) return;
     inputEl.current.click();
   }, [inputEl]);
@@ -703,6 +704,7 @@ const ToolbarSidebar = ({
           inheritance,
           generalization.id,
           user?.uname,
+          skillsFuture,
         );
 
         for (let p in node) {

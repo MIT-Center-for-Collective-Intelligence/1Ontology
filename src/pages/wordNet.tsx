@@ -34,7 +34,7 @@ const WordNet: React.FC = () => {
       setResultParts(response.partsTree || []);
       setLastQuery(query);
     } catch (err) {
-      console.log(err, "err");
+      console.error(err, "err");
       setError(`No synsets found`);
     } finally {
       setLoading(false);

@@ -128,7 +128,7 @@ const AddContext = (nodes: any, nodesObject: any): INode[] => {
   return nodes;
 };
 
-const Ontology = () => {
+const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const db = getFirestore();
   const [{ emailVerified, user }] = useAuth();
   const router = useRouter();
@@ -531,11 +531,18 @@ const Ontology = () => {
 
   useEffect(() => {
     // Create a query for the NODES collection where "deleted" is false
-    const nodesQuery = query(
+    let nodesQuery = query(
       collection(db, NODES),
       where("deleted", "==", false),
     );
 
+    if (skillsFuture) {
+      nodesQuery = query(
+        collection(db, NODES),
+        where("deleted", "==", false),
+        where("skillsFuture", "==", true),
+      );
+    }
     // Set up a snapshot listener to track changes in the nodes collection
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
       // Get the changes (added, modified, removed) in the snapshot
@@ -1079,96 +1086,100 @@ const Ontology = () => {
                 borderStyle: "none solid none none",
               }}
             >
-              <Tabs
-                value={viewValue}
-                onChange={handleViewChange}
-                sx={{
-                  width: "100%",
-                  borderColor: "divider",
-                  position: "absolute",
-                  top: 76,
-                  zIndex: 9,
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                  ".MuiTab-root.Mui-selected": {
-                    color: "#ff6d00",
-                  },
-                }}
-              >
-                <Tab
-                  label="Outline"
-                  {...a11yProps(0)}
-                  sx={{ width: "50%", fontSize: "20px" }}
-                />
-                <Tab
-                  label="Graph View"
-                  {...a11yProps(1)}
-                  sx={{ width: "50%", fontSize: "20px" }}
-                />
-              </Tabs>
-
-              <Box
-                sx={{
-                  height: "100vh",
-                  marginTop: "126px",
-                  flexGrow: 1,
-                  overflow: "auto",
-                  ...SCROLL_BAR_STYLE,
-                  "&::-webkit-scrollbar": {
-                    display: "none",
-                  },
-                }}
-              >
-                <TabPanel
+              {!skillsFuture && (
+                <Tabs
                   value={viewValue}
-                  index={0}
+                  onChange={handleViewChange}
                   sx={{
-                    height: "100%",
-                    overflowX: "auto",
-                    whiteSpace: "nowrap",
+                    width: "100%",
+                    borderColor: "divider",
+                    position: "absolute",
+                    top: 76,
+                    zIndex: 9,
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                    ".MuiTab-root.Mui-selected": {
+                      color: "#ff6d00",
+                    },
+                  }}
+                >
+                  <Tab
+                    label="Outline"
+                    {...a11yProps(0)}
+                    sx={{ width: "50%", fontSize: "20px" }}
+                  />
+                  <Tab
+                    label="Graph View"
+                    {...a11yProps(1)}
+                    sx={{ width: "50%", fontSize: "20px" }}
+                  />
+                </Tabs>
+              )}
+
+              {!skillsFuture && (
+                <Box
+                  sx={{
+                    height: "100vh",
+                    marginTop: "126px",
+                    flexGrow: 1,
+                    overflow: "auto",
+                    ...SCROLL_BAR_STYLE,
                     "&::-webkit-scrollbar": {
                       display: "none",
                     },
                   }}
                 >
-                  <Box
+                  <TabPanel
+                    value={viewValue}
+                    index={0}
                     sx={{
-                      display: "inline-block",
-                      minWidth: "100%",
+                      height: "100%",
+                      overflowX: "auto",
+                      whiteSpace: "nowrap",
+                      "&::-webkit-scrollbar": {
+                        display: "none",
+                      },
                     }}
                   >
-                    <DraggableTree
-                      treeViewData={treeViewData}
-                      setSnackbarMessage={setSnackbarMessage}
-                      expandedNodes={expandedNodes}
-                      currentVisibleNode={currentVisibleNode}
-                      nodes={nodes}
-                      onOpenNodesTree={onOpenNodesTree}
-                      tree={tree}
-                      setTree={setTree}
-                      eachOntologyPath={eachOntologyPath}
-                    />
+                    <Box
+                      sx={{
+                        display: "inline-block",
+                        minWidth: "100%",
+                      }}
+                    >
+                      <DraggableTree
+                        treeViewData={treeViewData}
+                        setSnackbarMessage={setSnackbarMessage}
+                        expandedNodes={expandedNodes}
+                        currentVisibleNode={currentVisibleNode}
+                        nodes={nodes}
+                        onOpenNodesTree={onOpenNodesTree}
+                        tree={tree}
+                        setTree={setTree}
+                        eachOntologyPath={eachOntologyPath}
+                      />
 
-                    {/*  <TreeViewSimplified
+                      {/*  <TreeViewSimplified
                       treeVisualization={treeVisualization}
                       onOpenNodesTree={onOpenNodesTree}
                       expandedNodes={expandedNodes}
                       setExpandedNodes={setExpandedNodes}
                       currentVisibleNode={currentVisibleNode}
                     /> */}
-                  </Box>
-                </TabPanel>
-                <TabPanel value={viewValue} index={1}>
-                  <DagGraph
-                    treeVisualization={treeVisualization}
-                    setExpandedNodes={setExpandedNodes}
-                    expandedNodes={expandedNodes}
-                    onOpenNodeDagre={onOpenNodeDagre}
-                    currentVisibleNode={currentVisibleNode}
-                    // nodes={nodes}
-                  />
-                </TabPanel>
-              </Box>
+                    </Box>
+                  </TabPanel>
+                  <TabPanel value={viewValue} index={1}>
+                    <DagGraph
+                      treeVisualization={treeVisualization}
+                      setExpandedNodes={setExpandedNodes}
+                      expandedNodes={expandedNodes}
+                      onOpenNodeDagre={onOpenNodeDagre}
+                      currentVisibleNode={currentVisibleNode}
+                      // nodes={nodes}
+                    />
+                  </TabPanel>
+                </Box>
+              )}
               <Box
                 sx={{
                   position: "absolute",
@@ -1272,6 +1283,7 @@ const Ontology = () => {
                   handleCloseAddLinksModel={handleCloseAddLinksModel}
                   setSelectedCollection={setSelectedCollection}
                   selectedCollection={selectedCollection}
+                  skillsFuture={skillsFuture}
                 />
               )}
             </Box>
@@ -1306,6 +1318,7 @@ const Ontology = () => {
             setSelectedChatTab={setSelectedChatTab}
             displayGuidelines={displayGuidelines}
             signOut={signOut}
+            skillsFuture={skillsFuture}
           />
         </Container>
         {ConfirmDialog}
@@ -1317,7 +1330,4 @@ const Ontology = () => {
     </>
   );
 };
-export default withAuthUser({
-  shouldRedirectToLogin: true,
-  shouldRedirectToHomeIfAuthenticated: false,
-})(Ontology);
+export default Ontology;

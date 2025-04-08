@@ -90,7 +90,6 @@ export const askGemini = async (contents: Content[]) => {
       console.error("Error in generating content: ", error);
     }
   }
-  console.log("isJSONObject.jsonObject", isJSONObject.jsonObject);
   if (!isJSONObject.isJSON) {
     throw new Error("Failed to get a complete JSON object");
   }

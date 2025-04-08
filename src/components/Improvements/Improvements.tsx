@@ -16,7 +16,6 @@ import { ICollection, INode } from " @components/types/INode";
 import {
   checkIfCanDeleteANode,
   clearNotifications,
-  createNewNode,
   generateInheritance,
   recordLogs,
   removeIsPartOf,

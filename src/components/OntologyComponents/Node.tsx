@@ -126,7 +126,6 @@ import {
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
 import { NodeChange } from " @components/types/INode";
 import { User } from " @components/types/IAuth";
-import { NodeImageManager } from "../NodBody/NodeImageManager";
 import { getStorage } from "firebase/storage";
 import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 import { development } from " @components/lib/CONSTANTS";
@@ -166,6 +165,7 @@ type INodeProps = {
   handleCloseAddLinksModel: any;
   setSelectedCollection: any;
   selectedCollection: string;
+  skillsFuture: boolean;
 };
 
 const Node = ({
@@ -203,6 +203,7 @@ const Node = ({
   handleCloseAddLinksModel,
   setSelectedCollection,
   selectedCollection,
+  skillsFuture,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -324,6 +325,7 @@ const Node = ({
           inheritance,
           nodeId,
           user.uname,
+          skillsFuture,
         );
 
         // Handle specific property updates for `parts` and `isPartOf`
@@ -1067,18 +1069,20 @@ const Node = ({
         {/* title of the node */}
 
         {/* description of the node */}
-        <Text
-          nodes={nodes}
-          text={onGetPropertyValue("description") as string}
-          currentVisibleNode={currentVisibleNode}
-          property={"description"}
-          setCurrentVisibleNode={setCurrentVisibleNode}
-          locked={locked}
-          selectedDiffNode={selectedDiffNode}
-          getTitleNode={getTitleNode}
-          confirmIt={confirmIt}
-          currentImprovement={currentImprovement}
-        />
+        {!skillsFuture && (
+          <Text
+            nodes={nodes}
+            text={onGetPropertyValue("description") as string}
+            currentVisibleNode={currentVisibleNode}
+            property={"description"}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            locked={locked}
+            selectedDiffNode={selectedDiffNode}
+            getTitleNode={getTitleNode}
+            confirmIt={confirmIt}
+            currentImprovement={currentImprovement}
+          />
+        )}
         {/* actors of the node if it's exist */}
         {currentVisibleNode?.properties.hasOwnProperty("actor") && (
           <StructuredProperty
@@ -1252,7 +1256,8 @@ const Node = ({
         </Stack>
 
         {(user.claims.flowChart || development) &&
-          currentVisibleNode.nodeType === "activity" && (
+          currentVisibleNode.nodeType === "activity" &&
+          !skillsFuture && (
             <NodeActivityFlow
               node={currentVisibleNode}
               nodes={nodes}
@@ -1309,6 +1314,7 @@ const Node = ({
           selectedCollection={selectedCollection}
           storage={storage}
           saveNewChangeLog={saveNewChangeLog}
+          skillsFuture={skillsFuture}
         />
       </Box>{" "}
       {ConfirmDialog}

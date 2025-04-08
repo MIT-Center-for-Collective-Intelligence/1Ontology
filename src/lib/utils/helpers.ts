@@ -305,7 +305,7 @@ export const updateInheritance = async ({
     let batch: any = writeBatch(db);
 
     const nodeRef = doc(collection(db, NODES), nodeId);
-    let ObjectUpdates = {};                                                              
+    let ObjectUpdates = {};
     for (let property of updatedProperties) {
       ObjectUpdates = {
         ...ObjectUpdates,
@@ -682,6 +682,7 @@ export const createNewNode = (
   inheritance: IInheritance,
   generalizationId: string,
   uname: string,
+  skillsFuture: boolean,
 ): INode => {
   const newNode: any = {
     ...parentNodeData,
@@ -716,6 +717,7 @@ export const createNewNode = (
     },
     propertyType: { ...parentNodeData.propertyType },
     nodeType: parentNodeData.nodeType,
+    skillsFuture,
   };
   if (newNode?.textValue?.specializations) {
     delete newNode.textValue.specializations;
