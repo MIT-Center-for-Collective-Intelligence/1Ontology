@@ -717,7 +717,7 @@ export const createNewNode = (
     },
     propertyType: { ...parentNodeData.propertyType },
     nodeType: parentNodeData.nodeType,
-    skillsFuture,
+    skillsFuture: !!skillsFuture,
   };
   if (newNode?.textValue?.specializations) {
     delete newNode.textValue.specializations;

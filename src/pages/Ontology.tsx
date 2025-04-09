@@ -534,6 +534,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     let nodesQuery = query(
       collection(db, NODES),
       where("deleted", "==", false),
+      where("skillsFuture", "==", false),
     );
 
     if (skillsFuture) {
