@@ -1182,7 +1182,14 @@ const ToolbarSidebar = ({
             }}
           >
             {openLogsFor && activeSidebar === "userActivity" && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: "5px" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  mt: "14px",
+                }}
+              >
                 <Box sx={{ position: "relative", display: "inline-block" }}>
                   <OptimizedAvatar
                     alt={openLogsFor.fullname}
