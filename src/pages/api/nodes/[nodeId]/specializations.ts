@@ -495,7 +495,7 @@ const validateSpecializationRequest = (request: any): void => {
 /**
  * Validates move nodes request data
  */
-const validateMoveNodesRequest = (request: any): void => {
+const validateMoveNodesBetweenCollectionRequest = (request: any): void => {
   if (!request || typeof request !== 'object') {
     throw new ApiKeyValidationError('Invalid request format');
   }
@@ -858,7 +858,7 @@ async function removeSpecializations(
  * PUT /api/nodes/{nodeId}/specializations
  * Moves nodes between collections
  */
-async function moveSpecializations(
+async function moveSpecializationsBetweenCollections(
   req: NextApiRequestWithAuth,
   res: NextApiResponse<SpecializationsApiResponse>,
   nodeId: string
@@ -869,7 +869,7 @@ async function moveSpecializations(
     }
 
     const request: MoveNodesRequest = req.body;
-    validateMoveNodesRequest(request);
+    validateMoveNodesBetweenCollectionRequest(request);
 
     // Get current node state
     const currentNode = await NodeService.getNode(nodeId);
@@ -900,7 +900,7 @@ async function moveSpecializations(
     }
 
     // Move the nodes
-    const updatedNode = await NodeRelationshipService.moveSpecializations(
+    const updatedNode = await NodeRelationshipService.moveSpecializationsBetweenCollections(
       nodeId,
       request.nodes,
       request.sourceCollection,
@@ -940,7 +940,7 @@ async function putSpecializations(
     // Determine if this is a move between collections or a reordering request
     if (request.sourceCollection && request.targetCollection) {
       // This is a move between collections - handle with existing method
-      return moveSpecializations(req, res, nodeId);
+      return moveSpecializationsBetweenCollections(req, res, nodeId);
     } else if (request.newIndices) {
       // This is a reordering request
       validateReorderSpecializationsRequest(request);

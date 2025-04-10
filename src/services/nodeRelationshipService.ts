@@ -498,7 +498,7 @@ export class NodeRelationshipService {
    * @returns Promise<INode> - Updated node with moved specializations
    * @throws Error for validation failures or database errors
    */
-  static async moveSpecializations(
+  static async moveSpecializationsBetweenCollections(
     nodeId: string,
     nodes: { id: string }[],
     sourceCollection: string,
@@ -779,6 +779,329 @@ export class NodeRelationshipService {
     }
   }
 
+  /**
+ * Transfers specializations from one node to another
+ * 
+ * This method removes nodes from the specializations of one node and adds them
+ * to the specializations of another node, while maintaining bidirectional
+ * relationships and handling inheritance implications.
+ * 
+ * @param sourceNodeId - ID of the source node (current parent)
+ * @param targetNodeId - ID of the target node (new parent)
+ * @param nodes - Array of node IDs to transfer
+ * @param uname - Username performing the operation
+ * @param reasoning - Reason for the change
+ * @param targetCollectionName - Name of the target collection (defaults to 'main')
+ * @returns Promise with updated source and target nodes
+ * @throws Error for validation failures or database errors
+ */
+  static async transferSpecializations(
+    sourceNodeId: string,
+    targetNodeId: string,
+    nodes: { id: string }[],
+    uname: string,
+    reasoning: string,
+    targetCollectionName: string = 'main'
+  ): Promise<{ updatedSourceNode: INode, updatedTargetNode: INode }> {
+    try {
+      // Input validation
+      if (!sourceNodeId?.trim()) {
+        throw new ApiKeyValidationError('Invalid source node ID');
+      }
+      if (!targetNodeId?.trim()) {
+        throw new ApiKeyValidationError('Invalid target node ID');
+      }
+      if (sourceNodeId === targetNodeId) {
+        throw new ApiKeyValidationError('Source and target nodes cannot be the same');
+      }
+      if (!Array.isArray(nodes) || nodes.length === 0) {
+        throw new ApiKeyValidationError('No specialization nodes provided');
+      }
+      if (!uname?.trim()) {
+        throw new ApiKeyValidationError('Username is required');
+      }
+
+      const sourceNodeRef = db.collection(NODES).doc(sourceNodeId);
+      const targetNodeRef = db.collection(NODES).doc(targetNodeId);
+
+      return await db.runTransaction(async (transaction) => {
+        // Step 1: Collect all references that need to be read
+        const specializationRefs = nodes.map(node =>
+          db.collection(NODES).doc(node.id)
+        );
+        const allRefs = [sourceNodeRef, targetNodeRef, ...specializationRefs];
+
+        // Step 2: Execute all reads first (Firestore requirement)
+        const docs = await Promise.all(
+          allRefs.map(ref => transaction.get(ref))
+        );
+
+        // Step 3: Process the read results
+        const [sourceNodeDoc, targetNodeDoc, ...specializationDocs] = docs;
+
+        if (!sourceNodeDoc.exists) {
+          throw new Error(`Source node ${sourceNodeId} not found`);
+        }
+        if (!targetNodeDoc.exists) {
+          throw new Error(`Target node ${targetNodeId} not found`);
+        }
+
+        const sourceNode = sourceNodeDoc.data() as INode;
+        const targetNode = targetNodeDoc.data() as INode;
+
+        if (sourceNode.deleted) {
+          throw new Error(`Cannot update deleted source node ${sourceNodeId}`);
+        }
+        if (targetNode.deleted) {
+          throw new Error(`Cannot update deleted target node ${targetNodeId}`);
+        }
+
+        // Verify all specialization nodes exist and aren't deleted
+        const specializationNodesMap = new Map<string, INode>();
+        specializationDocs.forEach((doc, index) => {
+          const nodeId = nodes[index].id;
+          if (!doc.exists) {
+            throw new ApiKeyValidationError(
+              `Specialization node ${nodeId} not found. Please verify the node exists.`
+            );
+          }
+          const nodeData = doc.data() as INode;
+          if (nodeData.deleted) {
+            throw new ApiKeyValidationError(
+              `Specialization node ${nodeId} is deleted and cannot be transferred.`
+            );
+          }
+          specializationNodesMap.set(doc.id, nodeData);
+        });
+
+        // Check for circular references
+        for (const node of nodes) {
+          if (this.wouldCreateCircularReference(
+            node.id,
+            targetNodeId,
+            new Map([[targetNodeId, targetNode]])
+          )) {
+            throw new ApiKeyValidationError(
+              `Adding node ${node.id} as a specialization of ${targetNodeId} would create a circular reference.`
+            );
+          }
+        }
+
+        // Step 4: Make copies of the original data for changelog
+        const originalSourceSpecializations = JSON.parse(JSON.stringify(sourceNode.specializations || []));
+        const originalTargetSpecializations = JSON.parse(JSON.stringify(targetNode.specializations || []));
+
+        // Step 5: Prepare updates for source node
+        const sourceSpecializations = Array.isArray(sourceNode.specializations)
+          ? [...sourceNode.specializations]
+          : [{ collectionName: 'main', nodes: [] }];
+
+        // Remove nodes from all collections in source node
+        const updatedSourceSpecializations = sourceSpecializations.map(collection => ({
+          ...collection,
+          nodes: collection.nodes.filter(n => !nodes.some(node => node.id === n.id))
+        }));
+
+        // Keep 'main' collection even if empty
+        const cleanedSourceSpecializations = updatedSourceSpecializations.filter(collection =>
+          collection.nodes.length > 0 || collection.collectionName === 'main'
+        );
+
+        // Step 6: Prepare updates for target node
+        const targetSpecializations = Array.isArray(targetNode.specializations)
+          ? [...targetNode.specializations]
+          : [{ collectionName: 'main', nodes: [] }];
+
+        let targetCollection = targetSpecializations.find(c => c.collectionName === targetCollectionName);
+        if (!targetCollection) {
+          targetCollection = { collectionName: targetCollectionName, nodes: [] };
+          targetSpecializations.push(targetCollection);
+        }
+
+        // Add nodes to target collection
+        const existingTargetIds = new Set(targetCollection.nodes.map(n => n.id));
+        const nodesToAdd = nodes.filter(node => !existingTargetIds.has(node.id));
+        targetCollection.nodes.push(...nodesToAdd);
+
+        // Step 7: Prepare all updates
+        const updates = new Map<string, any>();
+
+        // Update source node
+        const updatedSourceNode: INode = {
+          ...sourceNode,
+          specializations: cleanedSourceSpecializations,
+          contributors: Array.from(new Set([...(sourceNode.contributors || []), uname]))
+        };
+
+        // Track contributorsByProperty for source node
+        const updatedSourceContributorsByProperty = { ...sourceNode.contributorsByProperty };
+        const sourcePropertyKey = 'specializations';
+        const sourcePropertyContributors = new Set([
+          ...(sourceNode.contributorsByProperty?.[sourcePropertyKey] || []),
+          uname
+        ]);
+        updatedSourceContributorsByProperty[sourcePropertyKey] = Array.from(sourcePropertyContributors);
+        updatedSourceNode.contributorsByProperty = updatedSourceContributorsByProperty;
+
+        updates.set(sourceNodeRef.path, {
+          specializations: cleanedSourceSpecializations,
+          contributors: updatedSourceNode.contributors,
+          contributorsByProperty: updatedSourceContributorsByProperty
+        });
+
+        // Update target node
+        const updatedTargetNode: INode = {
+          ...targetNode,
+          specializations: targetSpecializations,
+          contributors: Array.from(new Set([...(targetNode.contributors || []), uname]))
+        };
+
+        // Track contributorsByProperty for target node
+        const updatedTargetContributorsByProperty = { ...targetNode.contributorsByProperty };
+        const targetPropertyKey = 'specializations';
+        const targetPropertyContributors = new Set([
+          ...(targetNode.contributorsByProperty?.[targetPropertyKey] || []),
+          uname
+        ]);
+        updatedTargetContributorsByProperty[targetPropertyKey] = Array.from(targetPropertyContributors);
+        updatedTargetNode.contributorsByProperty = updatedTargetContributorsByProperty;
+
+        updates.set(targetNodeRef.path, {
+          specializations: targetSpecializations,
+          contributors: updatedTargetNode.contributors,
+          contributorsByProperty: updatedTargetContributorsByProperty
+        });
+
+        // Step 8: Update bidirectional relationships in specialization nodes
+        for (const node of nodes) {
+          const specDoc = specializationDocs[nodes.findIndex(n => n.id === node.id)];
+          const specData = specDoc.data() as INode;
+
+          // Update generalizations to reflect the new parent
+          const generalizations = Array.isArray(specData.generalizations)
+            ? [...specData.generalizations]
+            : [{ collectionName: 'main', nodes: [] }];
+
+          // Remove source node from all collections
+          const updatedGeneralizations = generalizations.map(collection => ({
+            ...collection,
+            nodes: collection.nodes.filter(n => n.id !== sourceNodeId)
+          }));
+
+          // Find or create main collection to add target node
+          let mainCollection = updatedGeneralizations.find(c => c.collectionName === 'main');
+          if (!mainCollection) {
+            mainCollection = { collectionName: 'main', nodes: [] };
+            updatedGeneralizations.push(mainCollection);
+          }
+
+          // Add target node if not already present
+          if (!mainCollection.nodes.some(n => n.id === targetNodeId)) {
+            mainCollection.nodes.push({ id: targetNodeId });
+          }
+
+          // Clean up empty collections (keeping 'main')
+          const cleanedGeneralizations = updatedGeneralizations.filter(collection =>
+            collection.nodes.length > 0 || collection.collectionName === 'main'
+          );
+
+          // Flag for inheritance updates
+          updates.set(specDoc.ref.path, {
+            generalizations: cleanedGeneralizations,
+            pendingInheritanceUpdate: true // Flag for post-transaction processing
+          });
+        }
+
+        // Step 9: Execute all writes
+        for (const [path, updateData] of updates) {
+          transaction.update(db.doc(path), updateData);
+        }
+
+        // Step 10: Create changelogs
+        await ChangelogService.log(
+          sourceNodeId,
+          uname,
+          'remove element',
+          updatedSourceNode,
+          reasoning,
+          'specializations',
+          originalSourceSpecializations,
+          [...updatedSourceNode.specializations]
+        );
+
+        await ChangelogService.log(
+          targetNodeId,
+          uname,
+          'add element',
+          updatedTargetNode,
+          reasoning,
+          'specializations',
+          originalTargetSpecializations,
+          [...updatedTargetNode.specializations]
+        );
+
+        return { updatedSourceNode, updatedTargetNode };
+      }).then(async (result) => {
+        // Handle inheritance updates after transaction completes
+        try {
+          // Process inheritance updates
+          for (const node of nodes) {
+            try {
+              // Get the node data
+              const nodeRef = db.collection(NODES).doc(node.id);
+              const nodeDoc = await nodeRef.get();
+
+              if (!nodeDoc.exists) continue;
+
+              const nodeData = nodeDoc.data() as INode;
+
+              // Load relevant nodes for inheritance processing
+              const allNodeIds = [
+                ...nodeData.generalizations?.flatMap(c => c.nodes.map(n => n.id)) || [],
+                sourceNodeId, // Include old parent even though it's no longer in generalizations
+                targetNodeId  // Include new parent
+              ];
+
+              const nodeDocs = await Promise.all(
+                allNodeIds.map(id => db.collection(NODES).doc(id).get())
+              );
+
+              const nodesMap: { [nodeId: string]: INode } = {};
+              nodeDocs.forEach(doc => {
+                if (doc.exists) {
+                  nodesMap[doc.id] = doc.data() as INode;
+                }
+              });
+
+              await NodeInheritanceService.updateInheritanceWhenUnlinkAGeneralization(
+                db,
+                sourceNodeId,
+                nodeData,
+                nodesMap
+              );
+            } catch (inheritanceError) {
+              console.error('Error updating inheritance after transfer:', inheritanceError);
+            }
+          }
+        } finally {
+          // Clear the pending flags after finished
+          const batch = db.batch();
+          for (const node of nodes) {
+            batch.update(db.collection(NODES).doc(node.id), {
+              pendingInheritanceUpdate: FieldValue.delete()
+            });
+          }
+          await batch.commit();
+        }
+
+        return result;
+      });
+    } catch (error) {
+      console.error('Error transferring specializations:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Failed to transfer specializations: ${errorMessage}`);
+    }
+  }
 
   // SECTION 2: GENERALIZATION MANAGEMENT
   // ====================================
@@ -1587,11 +1910,6 @@ export class NodeRelationshipService {
       const remainingGeneralizations = specializationData.generalizations
         ?.flatMap(collection => collection.nodes) || [];
 
-      if (remainingGeneralizations.length === 0) {
-        return;
-      }
-
-      // Load all nodes needed for processing
       const nodeIds = [
         removedGeneralizationId,
         ...remainingGeneralizations.map(node => node.id)
@@ -1608,159 +1926,13 @@ export class NodeRelationshipService {
         }
       });
 
-      const addedProperties: {
-        propertyName: string;
-        propertyType: string;
-        propertyValue: any;
-      }[] = [];
-
-      const updatedProperties: {
-        [ref: string]: string[];
-      } = {};
-
-      const deletedProperties: string[] = [];
-
-      const nextGeneralization = remainingGeneralizations[0];
-      const nextGeneralizationData = nodesMap[nextGeneralization.id];
-      const removedGeneralization = nodesMap[removedGeneralizationId];
-
-      if (!nextGeneralizationData || !removedGeneralization) {
-        console.error('Missing required nodes for inheritance update');
-        return;
-      }
-
-      // Process each property in the current inheritance structure
-      for (const property in specializationData.inheritance) {
-        // Skip properties with no inheritance reference or invalid data
-        if (
-          !specializationData.inheritance[property] ||
-          specializationData.inheritance[property].ref === null
-        ) {
-          continue;
-        }
-
-        // Check if property was inherited from the removed generalization 
-        // or through its chain
-        const currentInheritanceRef = specializationData.inheritance[property].ref;
-
-        const isAffectedProperty =
-          currentInheritanceRef === removedGeneralizationId ||
-          (removedGeneralization.inheritance[property]?.ref === currentInheritanceRef);
-
-        if (isAffectedProperty) {
-          // Check if the next generalization has this property
-          if (!nextGeneralizationData.properties.hasOwnProperty(property)) {
-            let canDelete = true;
-            let inheritFrom = null;
-
-            // Look through all remaining generalizations for this property
-            for (const generalization of remainingGeneralizations) {
-              const generalizationData = nodesMap[generalization.id];
-              if (generalizationData?.properties.hasOwnProperty(property)) {
-                canDelete = false;
-                inheritFrom = generalization.id;
-                break;
-              }
-            }
-
-            // Either mark for deletion or update from another generalization
-            if (canDelete) {
-              deletedProperties.push(property);
-            } else if (inheritFrom) {
-              if (!updatedProperties[inheritFrom]) {
-                updatedProperties[inheritFrom] = [];
-              }
-              updatedProperties[inheritFrom].push(property);
-            }
-          } else {
-            // Next generalization has the property, update from it
-            if (!updatedProperties[nextGeneralization.id]) {
-              updatedProperties[nextGeneralization.id] = [];
-            }
-            updatedProperties[nextGeneralization.id].push(property);
-          }
-        }
-      }
-
-      // Add properties from next generalization that don't exist in specialization
-      for (const property in nextGeneralizationData.properties) {
-        if (!specializationData.properties.hasOwnProperty(property)) {
-          addedProperties.push({
-            propertyName: property,
-            propertyType: nextGeneralizationData.propertyType?.[property] || '',
-            propertyValue: nextGeneralizationData.properties[property]
-          });
-        }
-      }
-
-      let batch = db.batch();
-
-      let needsNewBatch = false;
-
-      const batchResult = await this.updateNodeInheritanceBatch(
-        nodeId,
-        [],
-        deletedProperties,
-        addedProperties,
-        true, // nested call
-        batch,
-        removedGeneralization.inheritance,
-        nextGeneralization.id,
+      // Update affected inheritance
+      await NodeInheritanceService.updateInheritanceWhenUnlinkAGeneralization(
+        db,
+        removedGeneralizationId,
+        specializationData,
         nodesMap
       );
-
-      batch = batchResult.batch;
-      needsNewBatch = needsNewBatch || batchResult.isCommitted;
-
-      // Apply property updates from each source
-      for (const [inheritFrom, properties] of Object.entries(updatedProperties)) {
-        const inheritanceSource = nodesMap[inheritFrom];
-        if (inheritanceSource) {
-          const updateResult = await this.updateNodeInheritanceBatch(
-            nodeId,
-            properties,
-            [],
-            [],
-            true, // nested call
-            needsNewBatch ? db.batch() : batch,
-            inheritanceSource.inheritance,
-            inheritFrom,
-            nodesMap
-          );
-
-          batch = updateResult.batch;
-          needsNewBatch = needsNewBatch || updateResult.isCommitted;
-        }
-      }
-
-      // Commit updates if there are any pending mutations
-      try {
-        // Only commit if batch has operations to perform
-        await batch.commit();
-      } catch (commitError) {
-        const error = commitError as Error;
-        // Check if the error message contains information about empty batch
-        if (error.message &&
-          (error.message.includes('no operations') ||
-            error.message.includes('empty batch') ||
-            error.message.includes('no-ops-in-batch'))) {
-          // ignore
-          console.log('Batch was empty, skipping commit');
-        } else {
-          throw error;
-        }
-      }
-
-      // Update specializations recursively
-      const specializations = specializationData.specializations || [];
-      const childSpecializations = specializations.flatMap(collection => collection.nodes) || [];
-
-      for (const childSpecialization of childSpecializations) {
-        await this.updateInheritanceAfterRemovingGeneralization(
-          childSpecialization.id,
-          removedGeneralizationId
-        );
-      }
     } catch (error) {
       console.error('Error updating inheritance after removing generalization:', error);
       throw error;
