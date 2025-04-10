@@ -665,7 +665,8 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   useEffect(() => {
     // Filter nodes to get only those with a defined category
     const mainCategories = Object.values(nodes).filter(
-      (node: INode) => node.category,
+      (node: INode) =>
+        node.category || (typeof node.root === "boolean" && !!node.root),
     );
 
     // Sort main nodes based on a predefined order
