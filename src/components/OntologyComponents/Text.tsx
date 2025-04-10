@@ -5,7 +5,14 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { Box, IconButton, Paper, Switch, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  IconButton,
+  Paper,
+  Switch,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import {
   getDoc,
   collection,
@@ -42,8 +49,8 @@ import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import { WebsocketProvider } from "y-websocket";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import PropertyContributors from "../StructuredProperty/PropertyContributors";
-import EditIcon from '@mui/icons-material/Edit';
-import EditOffIcon from '@mui/icons-material/EditOff';
+import EditIcon from "@mui/icons-material/Edit";
+import EditOffIcon from "@mui/icons-material/EditOff";
 import MarkdownEditor from "../Markdown/MarkdownEditor";
 // import YjsEditor from "../YJSEditor/YjsEditor";
 
@@ -70,6 +77,7 @@ type ITextProps = {
   currentImprovement: any;
   checkDuplicateTitle?: any;
   sx?: any;
+  skillsFuture: boolean;
 };
 
 const Text = ({
@@ -94,6 +102,7 @@ const Text = ({
   currentImprovement,
   checkDuplicateTitle,
   sx,
+  skillsFuture,
 }: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -142,6 +151,7 @@ const Text = ({
         modifiedAt: new Date(),
         changeType: "change text",
         fullNode: currentVisibleNode,
+        skillsFuture,
       });
     },
     [currentVisibleNode?.id, db, property, user],
@@ -285,7 +295,7 @@ const Text = ({
       elevation={9}
       sx={{
         borderRadius: "20px",
-        minWidth: "500px",
+        /*         minWidth: "500px", */
         width: "100%",
         border: structured ? "1px solid white" : "",
         ...sx,
@@ -300,11 +310,11 @@ const Text = ({
             background: (theme: any) =>
               (selectedDiffNode?.changeType === "delete node" ||
                 !!currentImprovement?.deleteNode) &&
-                property === "title"
+              property === "title"
                 ? "red"
                 : (selectedDiffNode?.changeType === "add node" ||
-                  !!currentImprovement?.newNode) &&
-                  property === "title"
+                      !!currentImprovement?.newNode) &&
+                    property === "title"
                   ? theme.palette.mode === "dark"
                     ? "green"
                     : "#4ccf37"
@@ -317,8 +327,8 @@ const Text = ({
             borderTopLeftRadius: property !== "title" ? "18px" : "",
             backgroundColor:
               selectedDiffNode &&
-                selectedDiffNode.changeType === "add property" &&
-                selectedDiffNode.changeDetails.addedProperty === property
+              selectedDiffNode.changeType === "add property" &&
+              selectedDiffNode.changeDetails.addedProperty === property
                 ? theme.palette.mode === "dark"
                   ? "green"
                   : "#4ccf37"
@@ -392,19 +402,23 @@ const Text = ({
                   gap: 1,
                 }}
               >
-                <Tooltip title={isPreviewMode ? "Enter edit mode" : "Exit edit mode"}>
+                <Tooltip
+                  title={isPreviewMode ? "Enter edit mode" : "Exit edit mode"}
+                >
                   <IconButton
                     onClick={() => setIsPreviewMode(!isPreviewMode)}
                     sx={{
-                      color: theme => !isPreviewMode
-                        ? theme.palette.primary.main
-                        : theme.palette.mode === "dark"
-                          ? 'rgba(255, 255, 255, 1)'
-                          : 'rgba(0, 0, 0, 0.5)',
-                      '&:hover': {
-                        backgroundColor: theme => theme.palette.mode === "dark"
-                          ? 'rgba(255, 255, 255, 0.08)'
-                          : 'rgba(0, 0, 0, 0.04)',
+                      color: (theme) =>
+                        !isPreviewMode
+                          ? theme.palette.primary.main
+                          : theme.palette.mode === "dark"
+                            ? "rgba(255, 255, 255, 1)"
+                            : "rgba(0, 0, 0, 0.5)",
+                      "&:hover": {
+                        backgroundColor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255, 255, 255, 0.08)"
+                            : "rgba(0, 0, 0, 0.04)",
                       },
                     }}
                   >
@@ -434,11 +448,11 @@ const Text = ({
         {error}
       </Typography>
       {!!currentVisibleNode.unclassified ||
-        currentImprovement?.newNode ||
-        locked ||
-        (selectedDiffNode &&
-          (selectedDiffNode.modifiedProperty !== property || structured)) ||
-        (currentVisibleNode.unclassified && property === "title") ? (
+      currentImprovement?.newNode ||
+      locked ||
+      (selectedDiffNode &&
+        (selectedDiffNode.modifiedProperty !== property || structured)) ||
+      (currentVisibleNode.unclassified && property === "title") ? (
         <Typography
           sx={{ fontSize: property === "title" ? "34px" : "19px", p: "19px" }}
         >
@@ -472,24 +486,24 @@ const Text = ({
                   text: editorContent,
                   property: property,
                   structured: structured,
-                  onSave: onSaveTextChange
+                  onSave: onSaveTextChange,
                 }}
                 mode={{
                   isPreview: isPreviewMode,
                   useWebsocket: switchToWebsocket,
-                  reference: reference
+                  reference: reference,
                 }}
                 editor={{
                   autoFocus: autoFocus,
                   cursorPosition: cursorPosition,
                   onCursorChange: setCursorPosition,
                   checkDuplicateTitle: checkDuplicateTitle,
-                  saveChangeHistory: saveChangeHistory
+                  saveChangeHistory: saveChangeHistory,
                 }}
                 collaborationData={{
                   fullName: `${user?.fName} ${user?.lName}`,
                   nodeId: currentVisibleNode?.id,
-                  randomProminentColor: randomProminentColor()
+                  randomProminentColor: randomProminentColor(),
                 }}
               />
             </>

@@ -520,6 +520,7 @@ const Node = ({
           modifiedAt: new Date(),
           changeType: "add node",
           fullNode: newNode,
+          skillsFuture,
         });
 
         setCloning(null);
@@ -809,6 +810,7 @@ const Node = ({
           modifiedAt: new Date(),
           changeType: "modify elements",
           fullNode: nodeData,
+          skillsFuture,
         });
       } catch (error: any) {
         // Handle any errors that occur during the process
@@ -881,6 +883,7 @@ const Node = ({
           modifiedAt: new Date(),
           changeType: "delete node",
           fullNode: currentNode,
+          skillsFuture,
         });
         // Record a log entry for the deletion action
         clearNotifications(nodeRef.id);
@@ -1036,6 +1039,7 @@ const Node = ({
           activeSidebar={activeSidebar}
           currentImprovement={currentImprovement}
           checkDuplicateTitle={checkDuplicateTitle}
+          skillsFuture={skillsFuture}
         />
 
         {/* {currentVisibleNode.nodeType === "context" && (
@@ -1081,6 +1085,7 @@ const Node = ({
             getTitleNode={getTitleNode}
             confirmIt={confirmIt}
             currentImprovement={currentImprovement}
+            skillsFuture={skillsFuture}
           />
         )}
         {/* actors of the node if it's exist */}
@@ -1132,6 +1137,7 @@ const Node = ({
             glowIds={glowIds}
             setGlowIds={setGlowIds}
             selectedCollection={selectedCollection}
+            skillsFuture={skillsFuture}
           />
         )}
         {/* specializations and generalizations*/}
@@ -1190,6 +1196,7 @@ const Node = ({
               glowIds={glowIds}
               setGlowIds={setGlowIds}
               selectedCollection={selectedCollection}
+              skillsFuture={skillsFuture}
             />
           ))}
         </Stack>
@@ -1251,6 +1258,7 @@ const Node = ({
               glowIds={glowIds}
               setGlowIds={setGlowIds}
               selectedCollection={selectedCollection}
+              skillsFuture={skillsFuture}
             />
           ))}
         </Stack>

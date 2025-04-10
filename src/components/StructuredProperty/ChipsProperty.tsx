@@ -25,6 +25,7 @@ const ChipsProperty = ({
   locked,
   currentImprovement,
   user,
+  skillsFuture,
 }: {
   currentVisibleNode: INode;
   property: string;
@@ -33,6 +34,7 @@ const ChipsProperty = ({
   locked: boolean;
   currentImprovement: any;
   user: any;
+  skillsFuture: boolean;
 }) => {
   const db = getFirestore();
   const [value, setValue] = useState<string[]>([]);
@@ -142,6 +144,7 @@ const ChipsProperty = ({
           addedElements: added,
           removedElements: removed,
         },
+        skillsFuture,
       });
     } catch (error) {
       console.error(error);

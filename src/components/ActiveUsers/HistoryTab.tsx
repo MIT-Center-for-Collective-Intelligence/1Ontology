@@ -21,6 +21,7 @@ const NodeActivity = ({
   activeUsers,
   changeType,
   selectedUser,
+  skillsFuture,
 }: {
   selectedDiffNode: any;
   currentVisibleNode: any;
@@ -28,6 +29,7 @@ const NodeActivity = ({
   activeUsers: any;
   changeType: "add-node" | null;
   selectedUser: string;
+  skillsFuture: boolean;
 }) => {
   const db = getFirestore();
   const [logs, setLogs] = useState<(NodeChange & { id: string })[]>([]);
@@ -45,7 +47,7 @@ const NodeActivity = ({
           collection(db, NODES_LOGS),
           where("changeType", "==", "add node"),
           orderBy("modifiedAt", "desc"),
-          limit(100)
+          limit(100),
         );
       } else {
         nodesQuery = query(
@@ -53,7 +55,7 @@ const NodeActivity = ({
           where("changeType", "==", "add node"),
           where("modifiedBy", "==", selectedUser),
           orderBy("modifiedAt", "desc"),
-          limit(100)
+          limit(100),
         );
       }
     } else {
@@ -62,7 +64,7 @@ const NodeActivity = ({
           collection(db, NODES_LOGS),
           where("changeType", "!=", "add node"),
           orderBy("modifiedAt", "desc"),
-          limit(100)
+          limit(100),
         );
       } else {
         nodesQuery = query(
@@ -70,7 +72,7 @@ const NodeActivity = ({
           where("changeType", "!=", "add node"),
           where("modifiedBy", "==", selectedUser),
           orderBy("modifiedAt", "desc"),
-          limit(100)
+          limit(100),
         );
       }
     }
@@ -81,8 +83,13 @@ const NodeActivity = ({
         const updatedLogs = [...prev];
         for (let change of docChanges) {
           const changeData = change.doc.data();
-          const id = change.doc.id;
-          updatedLogs.push({ ...changeData, id });
+          if (
+            (skillsFuture && changeData.skillsFuture) ||
+            (!skillsFuture && !changeData.skillsFuture)
+          ) {
+            const id = change.doc.id;
+            updatedLogs.push({ ...changeData, id });
+          }
         }
         return updatedLogs; // Return the new array to trigger a re-render
       });

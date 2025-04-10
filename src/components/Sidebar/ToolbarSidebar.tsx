@@ -1063,6 +1063,7 @@ const ToolbarSidebar = ({
             displayDiff={displayDiff}
             activeUsers={activeUsers}
             selectedUser={selectedUser}
+            skillsFuture={skillsFuture}
           />
         );
       default:

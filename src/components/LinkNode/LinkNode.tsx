@@ -151,6 +151,7 @@ type ILinkNodeProps = {
   unlinkElement?: any;
   selectedProperty: string;
   glowIds: Set<string>;
+  skillsFuture: boolean;
 };
 
 const LinkNode = ({
@@ -174,6 +175,7 @@ const LinkNode = ({
   unlinkElement,
   selectedProperty,
   glowIds,
+  skillsFuture,
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -308,6 +310,7 @@ const LinkNode = ({
             modifiedAt: new Date(),
             changeType: "remove element",
             fullNode: currentVisibleNode,
+            skillsFuture,
           });
           recordLogs({
             action: "unlinked a node",
@@ -518,6 +521,7 @@ const LinkNode = ({
             modifiedAt: new Date(),
             changeType: "remove element",
             fullNode: currentVisibleNode,
+            skillsFuture,
           });
           if (property === "generalizations") {
             updateInheritanceWhenUnlinkAGeneralization(

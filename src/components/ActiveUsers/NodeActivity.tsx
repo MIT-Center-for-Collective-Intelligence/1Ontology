@@ -45,23 +45,23 @@ const NodeActivity = ({
 
   useEffect(() => {
     if (!currentVisibleNode?.id) return;
-    
+
     setLogs([]);
     setCurrentPage(1);
-    
+
     const nodesQuery = query(
       collection(db, NODES_LOGS),
       where("nodeId", "==", currentVisibleNode?.id),
       orderBy("modifiedAt", "desc"),
-      limit(100)
+      limit(100),
     );
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({
+      const docs = snapshot.docs.map((doc) => ({
         ...doc.data(),
-        id: doc.id
+        id: doc.id,
       })) as (NodeChange & { id: string })[];
-      
+
       setLogs(docs);
       setLoading(false);
     });
@@ -73,7 +73,10 @@ const NodeActivity = ({
   const indexOfFirstLog = indexOfLastLog - ITEMS_PER_PAGE;
   const currentLogs = logs.slice(indexOfFirstLog, indexOfLastLog);
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number,
+  ) => {
     setCurrentPage(value);
   };
 
@@ -94,7 +97,7 @@ const NodeActivity = ({
       </Box>
     );
   }
-
+  console.log("logs ==>", logs);
   return (
     <Box sx={{ height: "90vh", overflow: "auto", ...SCROLL_BAR_STYLE }}>
       {Object.keys(logs).length <= 0 && (
@@ -148,8 +151,8 @@ const NodeActivity = ({
 
           <Box
             sx={{
-              display: 'flex',
-              justifyContent: 'center',
+              display: "flex",
+              justifyContent: "center",
               mt: 8,
               mb: 2,
             }}

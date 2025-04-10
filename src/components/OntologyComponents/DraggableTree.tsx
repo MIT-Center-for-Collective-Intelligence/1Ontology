@@ -35,6 +35,7 @@ function DraggableTree({
   alternatives,
   domainsEmojis,
   expandDefault,
+  skillsFuture,
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -49,6 +50,7 @@ function DraggableTree({
   alternatives?: { [key: string]: string[] };
   domainsEmojis?: Record<string, string>;
   expandDefault?: string;
+  skillsFuture: boolean;
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -236,6 +238,7 @@ function DraggableTree({
           modifiedAt: new Date(),
           changeType: "sort elements",
           fullNode: nodes[toParent.nodeId],
+          skillsFuture,
         });
         return;
       }
@@ -312,6 +315,7 @@ function DraggableTree({
           modifiedAt: new Date(),
           changeType: "modify elements",
           fullNode: nodes[specializationId],
+          skillsFuture,
         });
 
         saveNewChangeLog(db, {
@@ -323,6 +327,7 @@ function DraggableTree({
           modifiedAt: new Date(),
           changeType: "modify elements",
           fullNode: nodes[toParent.nodeId],
+          skillsFuture,
         });
         // await updateLinks(
         //   newLinks,

@@ -96,11 +96,11 @@ import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
 import withAuthUser from " @components/components/hoc/withAuthUser";
 import { useAuth } from " @components/components/context/AuthContext";
 import { useRouter } from "next/router";
-import DagGraph from " @components/components/OntologyComponents/DAGGraph";
+import GraphView from " @components/components/OntologyComponents/GraphView";
 import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
 import { NODES, USERS } from " @components/lib/firestoreClient/collections";
 
-import { recordLogs, saveNewChangeLog } from " @components/lib/utils/helpers";
+import { recordLogs } from " @components/lib/utils/helpers";
 import { useHover } from " @components/lib/hooks/useHover";
 import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarSidebar";
 import { NodeChange } from " @components/types/INode";
@@ -443,7 +443,10 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   );
 
   useEffect(() => {
-    const mainNodes = Object.values(nodes).filter((node: any) => node.category);
+    const mainNodes = Object.values(nodes).filter(
+      (node: any) =>
+        node.category || (typeof node.root === "boolean" && !!node.root),
+    );
     if (mainNodes.length > 0) {
       let eachOntologyPath = findOntologyPath({
         mainNodes,
@@ -668,7 +671,6 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
       (node: INode) =>
         node.category || (typeof node.root === "boolean" && !!node.root),
     );
-
     // Sort main nodes based on a predefined order
     mainCategories.sort((nodeA: any, nodeB: any) => {
       const order = [
@@ -731,8 +733,8 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     path.forEach((p: any) => (newHash = newHash + `#${p.id.trim()}`));
     window.location.hash = newHash;
   };
-
   const initializeExpanded = (ontologyPath: INodePath[]) => {
+    console.log("ontologyPath ==>", ontologyPath);
     if (!ontologyPath) {
       return;
     }
@@ -792,6 +794,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     }
     setExpandedNodes(newExpandedSet);
   };
+  console.log("eachOntologyPath===>", eachOntologyPath);
 
   useEffect(() => {
     if (!currentVisibleNode?.id || !nodes[currentVisibleNode?.id]) {
@@ -1034,7 +1037,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     },
     [eachOntologyPath],
   );
-
+  console.log("expandedNodes==>", expandedNodes);
   if (Object.keys(nodes).length <= 0) {
     return (
       <Box
@@ -1156,6 +1159,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                       tree={tree}
                       setTree={setTree}
                       eachOntologyPath={eachOntologyPath}
+                      skillsFuture={skillsFuture}
                     />
 
                     {/*  <TreeViewSimplified
@@ -1168,7 +1172,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                   </Box>
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
-                  <DagGraph
+                  <GraphView
                     treeVisualization={treeVisualization}
                     setExpandedNodes={setExpandedNodes}
                     expandedNodes={expandedNodes}

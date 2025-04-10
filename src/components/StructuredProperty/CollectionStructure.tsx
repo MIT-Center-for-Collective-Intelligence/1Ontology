@@ -107,6 +107,7 @@ const CollectionStructure = ({
   onGetPropertyValue,
   setRemovedElements,
   setAddedElements,
+  skillsFuture,
 }: {
   model?: boolean;
   locked: boolean;
@@ -165,6 +166,7 @@ const CollectionStructure = ({
   onGetPropertyValue: any;
   setRemovedElements: any;
   setAddedElements: any;
+  skillsFuture: boolean;
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -368,6 +370,7 @@ const CollectionStructure = ({
               destination,
             },
             fullNode: currentVisibleNode,
+            skillsFuture,
           });
 
           // Record a log of the sorting action
@@ -488,6 +491,7 @@ const CollectionStructure = ({
           changeDetails: {
             addedCollection: newCollection || "",
           },
+          skillsFuture,
         });
       } catch (error: any) {
         console.error(error);
@@ -664,6 +668,7 @@ const CollectionStructure = ({
             modifiedCollection: editCollection || "",
             newValue: newCollection,
           },
+          skillsFuture,
         });
       } catch (error: any) {
         console.error(error);
@@ -783,6 +788,7 @@ const CollectionStructure = ({
               changeDetails: {
                 deletedCollection: collectionName || "",
               },
+              skillsFuture,
             });
           }
         } catch (error: any) {
@@ -1168,6 +1174,7 @@ const CollectionStructure = ({
                                                 selectedProperty
                                               }
                                               glowIds={glowIds}
+                                              skillsFuture={skillsFuture}
                                             />
                                           )}
                                         </Draggable>

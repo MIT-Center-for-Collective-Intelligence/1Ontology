@@ -153,6 +153,7 @@ export type NodeChange = {
   fullNode: INode | null;
   changeDetails?: { [key: string]: any };
   reasoning?: string;
+  skillsFuture?: boolean;
 };
 
 export type PromptChange = {
@@ -204,14 +205,14 @@ export type TreeData = {
  */
 
 export const ACTIVITY_TYPES = {
-  SEQUENTIAL: 'sequential',
-  PARALLEL: 'parallel',
-  CONDITION: 'condition',
-  LOOP: 'loop',
-  TASK: 'task',
+  SEQUENTIAL: "sequential",
+  PARALLEL: "parallel",
+  CONDITION: "condition",
+  LOOP: "loop",
+  TASK: "task",
 } as const;
 
-export type ActivityType = typeof ACTIVITY_TYPES[keyof typeof ACTIVITY_TYPES];
+export type ActivityType = (typeof ACTIVITY_TYPES)[keyof typeof ACTIVITY_TYPES];
 
 export interface IActivity {
   name: string;
@@ -247,7 +248,9 @@ export interface ITaskActivity extends IActivity {
   type: typeof ACTIVITY_TYPES.TASK;
 }
 
-export type AlgorithmType = typeof ACTIVITY_TYPES.SEQUENTIAL | typeof ACTIVITY_TYPES.PARALLEL;
+export type AlgorithmType =
+  | typeof ACTIVITY_TYPES.SEQUENTIAL
+  | typeof ACTIVITY_TYPES.PARALLEL;
 
 export interface IAlgorithm {
   name: string;
@@ -260,15 +263,21 @@ export interface IAlgorithm {
 }
 
 // Type guard functions
-export function isSequentialActivity(activity: IActivity): activity is ISequentialActivity {
+export function isSequentialActivity(
+  activity: IActivity,
+): activity is ISequentialActivity {
   return activity.type === ACTIVITY_TYPES.SEQUENTIAL;
 }
 
-export function isParallelActivity(activity: IActivity): activity is IParallelActivity {
+export function isParallelActivity(
+  activity: IActivity,
+): activity is IParallelActivity {
   return activity.type === ACTIVITY_TYPES.PARALLEL;
 }
 
-export function isConditionActivity(activity: IActivity): activity is IConditionActivity {
+export function isConditionActivity(
+  activity: IActivity,
+): activity is IConditionActivity {
   return activity.type === ACTIVITY_TYPES.CONDITION;
 }
 

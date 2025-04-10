@@ -14,8 +14,6 @@ import StructuredProperty from "../StructuredProperty/StructuredProperty";
 import { DISPLAY, PROPERTIES_ORDER } from " @components/lib/CONSTANTS";
 import {
   recordLogs,
-  saveNewChangeLog,
-  updateInheritance,
 } from " @components/lib/utils/helpers";
 import AddPropertyForm from "../AddPropertyForm/AddPropertyForm";
 import { useAuth } from "../context/AuthContext";
@@ -378,6 +376,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     currentImprovement={currentImprovement}
                     selectedDiffNode={selectedDiffNode}
                     user={user}
+                    skillsFuture={skillsFuture}
                   />
                 ) : currentNode.propertyType[property] !== "string" ? (
                   <StructuredProperty
@@ -428,6 +427,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     glowIds={glowIds}
                     setGlowIds={setGlowIds}
                     selectedCollection={selectedCollection}
+                    skillsFuture={skillsFuture}
                   />
                 ) : (
                   property !== "description" &&
@@ -443,6 +443,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       getTitleNode={getTitleNode}
                       confirmIt={confirmIt}
                       currentImprovement={currentImprovement}
+                      skillsFuture={skillsFuture}
                     />
                   )
                 )}

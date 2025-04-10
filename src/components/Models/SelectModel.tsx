@@ -445,17 +445,19 @@ const SelectModelModal = ({
         /*      width: "100%",
         height: "100%", */
         // m: "19px",
+        mx: "5px",
       }}
     >
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
-          overflowY: "auto",
+          overflowY: "hidden",
           borderRadius: "19px",
-          ...SCROLL_BAR_STYLE,
-          width: "00px",
           flexGrow: 1,
+          "&::-webkit-scrollbar": {
+            display: "none",
+          },
         }}
       >
         <Box

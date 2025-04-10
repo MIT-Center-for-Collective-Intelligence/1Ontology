@@ -80,7 +80,7 @@ type IDagGraphProps = {
   currentVisibleNode: any;
 };
 
-const DagGraph = ({
+const GraphView = ({
   treeVisualization,
   expandedNodes,
   setExpandedNodes,
@@ -89,7 +89,11 @@ const DagGraph = ({
 }: IDagGraphProps) => {
   const svgRef = useRef(null);
   const [graph, setGraph] = useState<any>(null);
-  const [zoomState, setZoomState] = useState<{ translateX: number, translateY: number, scale: number}>({
+  const [zoomState, setZoomState] = useState<{
+    translateX: number;
+    translateY: number;
+    scale: number;
+  }>({
     translateX: 0,
     translateY: 0,
     scale: 0,
@@ -118,13 +122,13 @@ const DagGraph = ({
         label: node.title, // Use node title as the label for the node.
         style: `fill: ${
           currentVisibleNode?.id === nodeId
-          ? "#87D37C"
-          : node.isCategory
-            ? "#ffbe48"
-            : "white"
+            ? "#87D37C"
+            : node.isCategory
+              ? "#ffbe48"
+              : "white"
         }; stroke: ${
           currentVisibleNode?.id === nodeId ? "white" : "black"
-          }; stroke-width: 0.1px; cursor: pointer;`, // Set node style based on node category.
+        }; stroke-width: 0.1px; cursor: pointer;`, // Set node style based on node category.
         labelStyle: `fill: ${"black"}; cursor: pointer;`, // Set style for the node label.
         shape: "rect", // Set the shape to rectangle
         rx: 25, // Horizontal radius for rounded corners
@@ -152,7 +156,7 @@ const DagGraph = ({
     }
   };
 
-  const indicateHiddenNodes = (node: any, graph: any) => {  
+  const indicateHiddenNodes = (node: any, graph: any) => {
     if (!currentVisibleNode) return;
 
     const nodeId = node?.id || "";
@@ -167,7 +171,9 @@ const DagGraph = ({
       return;
     }
 
-    const bbox = nodeSelection.node() ? (nodeSelection.node() as SVGGraphicsElement).getBBox() : null;
+    const bbox = nodeSelection.node()
+      ? (nodeSelection.node() as SVGGraphicsElement).getBBox()
+      : null;
     const nodeXPosition = bbox ? bbox.width / 2 : 0;
 
     const hasHiddenSpecializations =
@@ -273,13 +279,13 @@ const DagGraph = ({
         zoom.transform,
         d3.zoomIdentity
           .translate(zoomState.translateX, zoomState.translateY)
-          .scale(zoomState.scale)
+          .scale(zoomState.scale),
       );
     } else {
       // Apply initial zoom only if there is no existing zoom state
       svg.call(
         zoom.transform,
-        d3.zoomIdentity.translate(translateX, translateY).scale(zoomScale)
+        d3.zoomIdentity.translate(translateX, translateY).scale(zoomScale),
       );
     }
 
@@ -321,7 +327,7 @@ const DagGraph = ({
           .duration(1000)
           .attr(
             "transform",
-            `translate(${translateX}, ${translateY}) scale(${scale})`
+            `translate(${translateX}, ${translateY}) scale(${scale})`,
           );
 
         setTimeout(() => {
@@ -343,4 +349,4 @@ const DagGraph = ({
   );
 };
 
-export default DagGraph;
+export default GraphView;

@@ -77,6 +77,7 @@ type IStructuredPropertyProps = {
   glowIds: Set<string>;
   setGlowIds: any;
   selectedCollection: any;
+  skillsFuture: boolean;
 };
 
 const StructuredProperty = ({
@@ -126,6 +127,7 @@ const StructuredProperty = ({
   glowIds,
   setGlowIds,
   selectedCollection,
+  skillsFuture,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
   const [openAddCollection, setOpenAddCollection] = useState(false);
@@ -301,9 +303,7 @@ const StructuredProperty = ({
         selectedDiffNode.changeType === "add collection" &&
         collection === selectedDiffNode.changeDetails.addedCollection
       ) {
-        return theme.palette.mode === "dark" 
-        ? "green"
-        : "#4ccf37";
+        return theme.palette.mode === "dark" ? "green" : "#4ccf37";
       }
       if (
         selectedDiffNode.changeType === "delete collection" &&
@@ -445,11 +445,15 @@ const StructuredProperty = ({
         width: "100%",
         minHeight: "150px",
         maxHeight: "100%",
-        overflow: "auto",
+        overflow: "hidden",
         position: "relative",
         display: "flex",
         flexDirection: "column",
         overflowX: "hidden",
+        overflowY: "hidden",
+        "&::-webkit-scrollbar": {
+          display: "none",
+        },
         border:
           selectedProperty === property && !selectedCollection
             ? "2px solid green"
@@ -647,6 +651,7 @@ const StructuredProperty = ({
             setRemovedElements={setRemovedElements}
             setAddedElements={setAddedElements}
             addACloneNodeQueue={addACloneNodeQueue}
+            skillsFuture={skillsFuture}
           />
         )}
       </Box>
