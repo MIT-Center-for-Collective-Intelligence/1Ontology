@@ -16,7 +16,8 @@ import {
   Menu,
   MenuItem,
   SvgIcon,
-  TextField, // Changed from IconButton to Button
+  TextField,
+  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
@@ -493,7 +494,7 @@ const ToolbarSidebar = ({
     setTimeout(() => {
       const modifiedProperty = data.modifiedProperty;
       const changedProperty = data.changeDetails?.addedProperty;
-    
+
       if (modifiedProperty) {
         const element = document.getElementById(`property-${modifiedProperty}`);
         if (element) {
@@ -501,14 +502,14 @@ const ToolbarSidebar = ({
           return;
         }
       }
-    
+
       if (changedProperty) {
         const element = document.getElementById(`property-${changedProperty}`);
         if (element) {
           element.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }
-    }, 1000);    
+    }, 1000);
   };
 
   useEffect(() => {
@@ -836,7 +837,13 @@ const ToolbarSidebar = ({
             setExpandedNodes={setExpandedNodes}
             onOpenNodesTree={onOpenNodesTree}
             navigateToNode={navigateToNode}
-            chatTabs={[{ id: "node", title: "This node" }]}
+            chatTabs={[
+              {
+                id: "node",
+                title: "This node",
+                placeholder: "Share your thoughts...",
+              },
+            ]}
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
             nodes={nodes}
@@ -958,7 +965,7 @@ const ToolbarSidebar = ({
     );
   };
 
-  const getHeaderTitle = (activeSidebar: string) => {
+  const getHeaderTitle = useMemo(() => {
     switch (activeSidebar) {
       case "chat-discussion":
         return "Chatroom";
@@ -971,14 +978,13 @@ const ToolbarSidebar = ({
       case "inheritanceSettings":
         return "Node's Inheritance Settings";
       case "improvements":
-        return "AI Assistant Improvements:";
+        return "AI Assistant Improvements";
       case "history":
-        return "Edit History:";
+        return "Edit History";
       default:
         return "";
     }
-  };
-
+  }, [activeSidebar]);
   return (
     <Box
       ref={toolbarRef}
@@ -994,6 +1000,9 @@ const ToolbarSidebar = ({
         display: "flex",
         flexDirection: "column",
         padding: activeSidebar !== "improvements" ? "9px" : "",
+        borderTopLeftRadius: "25px",
+        borderBottomLeftRadius: "25px",
+        p: activeSidebar ? 0 : 2,
       }}
       onMouseEnter={() => {
         if (!activeSidebar) {
@@ -1010,7 +1019,10 @@ const ToolbarSidebar = ({
             sx={{
               display: "flex",
               justifyContent: "space-between",
+              alignItems: "center",
+              textAlign: "center",
               mb: 2,
+              px: "11px",
             }}
           >
             {openLogsFor && activeSidebar === "userActivity" && (
@@ -1038,7 +1050,7 @@ const ToolbarSidebar = ({
               </Box>
             )}
 
-            {getHeaderTitle(activeSidebar) && (
+            {getHeaderTitle && (
               <Box
                 sx={{
                   display: "flex",
@@ -1048,8 +1060,8 @@ const ToolbarSidebar = ({
                   pl: "5px",
                 }}
               >
-                <Typography sx={{ fontSize: "29px", fontWeight: "bold" }}>
-                  {getHeaderTitle(activeSidebar)}
+                <Typography sx={{ fontSize: "29px", color: "gray", pt: "7px" }}>
+                  {getHeaderTitle}
                 </Typography>
 
                 {activeSidebar === "history" && (
@@ -1098,34 +1110,36 @@ const ToolbarSidebar = ({
               </Box>
             )}
             {user && (
-              <IconButton
-                onClick={() => {
-                  if (previousNodeId) {
-                    // Checks if the node is deleted (null or undefined)
-                    if (nodes[currentVisibleNode?.id] == null) {
-                      navigateToNode(previousNodeId);
-                    } else {
-                      navigateToNode(currentVisibleNode?.id);
+              <Tooltip title={`Close ${getHeaderTitle || "Sidebar"}`}>
+                <IconButton
+                  onClick={() => {
+                    if (previousNodeId) {
+                      // Checks if the node is deleted (null or undefined)
+                      if (nodes[currentVisibleNode?.id] == null) {
+                        navigateToNode(previousNodeId);
+                      } else {
+                        navigateToNode(currentVisibleNode?.id);
+                      }
+                      setPreviousNodeId("");
                     }
-                    setPreviousNodeId("");
-                  }
-                  setActiveSidebar(null);
-                  setOpenLogsFor(null);
-                  setCurrentImprovement(null);
-                  setSelectedDiffNode(null);
-                }}
-                sx={{
-                  ml: "auto",
-                  zIndex: 100,
-                  mt: "5px",
-                  mr: "5px",
-                  backgroundColor: "gray",
-                  width: "26px",
-                  height: "26px",
-                }}
-              >
-                <ClearIcon />
-              </IconButton>
+                    setActiveSidebar(null);
+                    setOpenLogsFor(null);
+                    setCurrentImprovement(null);
+                    setSelectedDiffNode(null);
+                  }}
+                  sx={{
+                    ml: "auto",
+                    zIndex: 100,
+                    mt: "5px",
+                    mr: "5px",
+                    backgroundColor: "gray",
+                    width: "26px",
+                    height: "26px",
+                  }}
+                >
+                  <ClearIcon />
+                </IconButton>
+              </Tooltip>
             )}
           </Box>
           {renderContent(activeSidebar)}
@@ -1280,7 +1294,11 @@ const ToolbarSidebar = ({
                 )
               }
               onClick={handleThemeSwitch}
-              text={theme.palette.mode === "dark" ? "Light Mode" : "Dark Mode"}
+              text={
+                theme.palette.mode === "dark"
+                  ? "Turn on light"
+                  : "Turn off light"
+              }
               toolbarIsOpen={hovered}
             />
           </Box>

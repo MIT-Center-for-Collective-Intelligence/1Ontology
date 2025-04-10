@@ -1,7 +1,7 @@
 import { TextField } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
-const GuidLineText = ({
+const GuideLineText = ({
   guideline,
   index,
   onSaveGuideline,
@@ -24,7 +24,7 @@ const GuidLineText = ({
   const handleSave = () => {
     onSaveGuideline(text, catId, index);
   };
-  
+
   useEffect(() => {
     window.addEventListener("beforeunload", handleSave);
     return () => {
@@ -49,4 +49,4 @@ const GuidLineText = ({
   );
 };
 
-export default GuidLineText;
+export default GuideLineText;

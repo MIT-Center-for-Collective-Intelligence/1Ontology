@@ -125,7 +125,7 @@ function DraggableTree({
   useEffect(() => {
     if (tree && treeData.length > 0 && firstLoad) {
       const rootNode = tree.get("root");
-      console.log("rootNode==>", rootNode);
+
       if (rootNode) {
         rootNode.open();
       }

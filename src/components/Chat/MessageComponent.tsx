@@ -1,6 +1,8 @@
 import React, { useState, useRef } from "react";
 import { Box, Typography, Button, IconButton } from "@mui/material";
 import { CSSTransition } from "react-transition-group";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 import LinkIcon from "@mui/icons-material/Link";
 import moment from "moment";
@@ -63,7 +65,7 @@ const MessageComponent = ({
       await confirmIt(
         "Are you sure you want to delete this message?",
         "Delete",
-        "Keep"
+        "Keep",
       )
     ) {
       const element = document.getElementById(`message-${message.id}`);
@@ -136,7 +138,6 @@ const MessageComponent = ({
                 : `${dayjs(new Date(message.createdAt.toDate())).fromNow()}`}
             </Typography>
           </Box>
-
           {editing?.id === message.id ? (
             <ChatInput
               message={message}
@@ -150,6 +151,7 @@ const MessageComponent = ({
               setEditing={setEditing}
               chatType={chatType}
               editing={editing}
+              placeholder="Share your thoughts..."
             />
           ) : (
             <Box
@@ -186,8 +188,8 @@ const MessageComponent = ({
                           ? DESIGN_SYSTEM_COLORS.notebookG600
                           : DESIGN_SYSTEM_COLORS.notebookO800
                         : message.sender === "You"
-                        ? DESIGN_SYSTEM_COLORS.gray100
-                        : DESIGN_SYSTEM_COLORS.orange50,
+                          ? DESIGN_SYSTEM_COLORS.gray100
+                          : DESIGN_SYSTEM_COLORS.orange50,
                     mb: "10px",
                     ":hover": {
                       backgroundColor: "orange",
@@ -271,21 +273,42 @@ const MessageComponent = ({
               >
                 <Emoticons
                   message={message}
-                  reactionsMap={message.reactions}
+                  reactionsMap={message?.reactions || {}}
                   toggleEmojiPicker={toggleEmojiPicker}
                   toggleReaction={toggleReaction}
                   user={user}
                   boxRef={boxRef}
                 />
-                <IconButton onClick={(e) => toggleEmojiPicker(e, boxRef, message)}>
-                  <AddReactionOutlined color="secondary" sx={{ fontSize: "19px" }} />
+                <IconButton
+                  onClick={(e) => toggleEmojiPicker(e, boxRef, message)}
+                >
+                  <AddReactionOutlined
+                    color="secondary"
+                    sx={{ fontSize: "19px" }}
+                  />
                 </IconButton>
                 <Button
                   onClick={() =>
-                    setShowReplies(showReplies !== message.id ? message.id : null)
+                    setShowReplies(
+                      showReplies !== message.id ? message.id : null,
+                    )
                   }
-                  style={{ border: "none", fontSize: "14px", marginLeft: "auto" }}
+                  style={{
+                    fontSize: "14px",
+                    marginLeft: "auto",
+                    borderRadius: "25px",
+                    padding: 1,
+                    paddingRight: "10px",
+                  }}
+                  variant={
+                    showReplies === message.id ? "contained" : "outlined"
+                  }
                 >
+                  {showReplies === message.id ? (
+                    <KeyboardArrowUpIcon />
+                  ) : (
+                    <KeyboardArrowDownIcon />
+                  )}
                   {showReplies === message.id
                     ? "Hide"
                     : message?.totalReplies || null}{" "}
@@ -310,6 +333,7 @@ const MessageComponent = ({
                 setEditing={setEditing}
                 chatType={chatType}
                 editing={editing}
+                placeholder="Share your thoughts..."
               />
             </Box>
           )}

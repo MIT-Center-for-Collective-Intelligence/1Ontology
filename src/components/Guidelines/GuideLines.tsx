@@ -22,7 +22,7 @@ import {
 } from "firebase/firestore";
 import { GUIDELINES } from " @components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
-import GuidLineText from "./GuidLineText";
+import GuideLineText from "./GuideLineText";
 
 const GuidLines = ({
   setDisplayGuidelines,
@@ -33,7 +33,7 @@ const GuidLines = ({
   const [{ user }] = useAuth();
   const [guidelines, setGuidelines] = useState<{ [id: string]: any }>({});
   const [newGuidelines, setNewGuidelines] = useState<{ [id: string]: string }>(
-    {}
+    {},
   );
 
   useEffect(() => {
@@ -77,7 +77,7 @@ const GuidLines = ({
   };
 
   const sortedCategories = Object.keys(guidelines).sort(
-    (a, b) => guidelines[a].index - guidelines[b].index
+    (a, b) => guidelines[a].index - guidelines[b].index,
   );
 
   const modifyGuidelines = (newValue: string, gId: string, gIdx: number) => {
@@ -146,21 +146,21 @@ const GuidLines = ({
             {!!user?.copilot ? (
               guidelines[catId].guidelines.map(
                 (guideline: string, index: number) => (
-                  <GuidLineText
+                  <GuideLineText
                     key={index + catId}
                     guideline={guideline}
                     index={index}
                     onSaveGuideline={modifyGuidelines}
                     catId={catId}
                   />
-                )
+                ),
               )
             ) : (
               <ul>
                 {guidelines[catId].guidelines.map(
                   (guideline: string, index: number) => (
                     <li key={guideline + index}>{guideline}</li>
-                  )
+                  ),
                 )}
               </ul>
             )}

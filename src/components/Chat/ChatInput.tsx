@@ -39,6 +39,7 @@ type ChatInputProps = {
   setEditing: any;
   setOpenSelectModel?: React.Dispatch<React.SetStateAction<boolean>>;
   chatType: string;
+  placeholder: string;
 };
 
 const ChatInput = ({
@@ -54,6 +55,7 @@ const ChatInput = ({
   setEditing,
   setOpenSelectModel,
   chatType,
+  placeholder,
   sx,
 }: ChatInputProps) => {
   const theme = useTheme();
@@ -76,7 +78,7 @@ const ChatInput = ({
       boxSizing: "border-box",
       overflow: "hidden",
       height: "auto",
-      minHeight: "70px",
+      minHeight: "5px",
       maxHeight: "300px",
     },
     control: {
@@ -85,7 +87,7 @@ const ChatInput = ({
       boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.1)",
       border: "none",
       overflow: "hidden",
-      minHeight: "70px",
+      minHeight: "5px",
       maxHeight: "300px",
       height: "auto",
       resize: "none",
@@ -100,7 +102,7 @@ const ChatInput = ({
       padding: "15px",
       paddingBottom: "0px",
       fontFamily: "system-ui",
-      minHeight: "70px",
+      minHeight: "40px",
       maxHeight: "300px",
       height: "auto",
       resize: "none",
@@ -241,14 +243,13 @@ const ChatInput = ({
           `solid 1px ${
             theme.palette.mode === "light"
               ? DESIGN_SYSTEM_COLORS.gray300
-              : DESIGN_SYSTEM_COLORS.notebookG500
+              : "gray"
           }`,
         borderRadius: "10px",
         backgroundColor: (theme) =>
           theme.palette.mode === "dark"
             ? DESIGN_SYSTEM_COLORS.notebookG700
             : DESIGN_SYSTEM_COLORS.gray100,
-        ...sx,
         ...SCROLL_BAR_STYLE,
         pb: 0,
       }}
@@ -256,7 +257,7 @@ const ChatInput = ({
       <MentionsInput
         id="comment-mention"
         className="comment-input"
-        placeholder="Type your message here..."
+        placeholder={placeholder}
         style={style}
         value={inputValue}
         singleLine={false}
@@ -276,7 +277,7 @@ const ChatInput = ({
           appendSpaceOnAdd={true}
           style={{
             backgroundColor: "#0d8fad",
-            paddingRight: "5px",
+            // paddingRight: "5px",
           }}
         />
       </MentionsInput>

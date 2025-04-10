@@ -13,12 +13,15 @@ import {
   arrayRemove,
   arrayUnion,
   collection,
+  deleteField,
   doc,
+  FieldValue,
   getDoc,
   getFirestore,
   increment,
   onSnapshot,
   query,
+  runTransaction,
   updateDoc,
   where,
   writeBatch,
@@ -27,7 +30,7 @@ import dynamic from "next/dynamic";
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { TransitionGroup } from "react-transition-group";
 // import { NotFoundNotification } from "../Sidebar/SidebarV2/NotificationSidebar";
-import { IChatMessage } from " @components/types/IChat";
+import { IChatMessage, Reaction } from " @components/types/IChat";
 
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 import { MESSAGES, NODES } from " @components/lib/firestoreClient/collections";
@@ -57,6 +60,7 @@ type ChatProps = {
   navigateToNode: any;
   nodes: { [nodeId: string]: INode };
   scrollingRef: any;
+  placeholder: string;
 };
 
 const Chat = ({
@@ -69,6 +73,7 @@ const Chat = ({
   navigateToNode,
   nodes,
   scrollingRef,
+  placeholder,
 }: ChatProps) => {
   const db = getFirestore();
   const [showReplies, setShowReplies] = useState<string | null>(null);
@@ -163,41 +168,55 @@ const Chat = ({
     if (!message.id || !user?.uname) return;
 
     if (!message.parentMessage) {
-      setMessages((prevComments) => {
-        const commentIdx = prevComments.findIndex(
+      setMessages((prevMessages) => {
+        const messageIdx = prevMessages.findIndex(
           (m: any) => m.id === message.id,
         );
-        prevComments[commentIdx].reactions.push({
+        if (!prevMessages[messageIdx].reactions.hasOwnProperty(emoji)) {
+          prevMessages[messageIdx].reactions[emoji] = [];
+        }
+        prevMessages[messageIdx].reactions[emoji].push({
           user: user?.uname,
           emoji,
           fName: user.fName,
           lName: user.lName,
         });
-        return prevComments;
-      });
-    }
-    if (!message.parentMessage) {
-      const mRef = getMessageDocRef(message.id || "");
-      await updateDoc(mRef, {
-        reactions: arrayUnion({
-          user: user?.uname,
-          emoji,
-          fName: user.fName,
-          lName: user.lName,
-        }),
+        return prevMessages;
       });
     } else {
-      const cRef = getMessageDocRef(message.parentMessage);
-      const replyRef = doc(cRef, "replies", message?.id || "");
-      await updateDoc(replyRef, {
-        reactions: arrayUnion({
+      setReplies((prevReplies) => {
+        const messageIdx = prevReplies.findIndex(
+          (m: any) => m.id === message.id,
+        );
+        if (!prevReplies[messageIdx].reactions.hasOwnProperty(emoji)) {
+          prevReplies[messageIdx].reactions[emoji] = [];
+        }
+        prevReplies[messageIdx].reactions[emoji].push({
           user: user?.uname,
           emoji,
           fName: user.fName,
           lName: user.lName,
-        }),
+        });
+        return prevReplies;
       });
     }
+    let mRef = null;
+    if (!message.parentMessage) {
+      mRef = getMessageDocRef(message.id || "");
+    } else {
+      const cRef = getMessageDocRef(message.parentMessage);
+      mRef = doc(cRef, "replies", message?.id || "");
+    }
+
+    await updateDoc(mRef, {
+      [`reactions.${emoji}`]: arrayUnion({
+        user: user?.uname,
+        emoji,
+        fName: user.fName,
+        lName: user.lName,
+      }),
+    });
+
     createNotifications(
       emoji,
       message.text,
@@ -210,35 +229,66 @@ const Chat = ({
       messageId: message?.parentMessage || message?.id,
     });
   };
-
   const removeReaction = async (message: IChatMessage, emoji: string) => {
     if (!message.id) return;
     if (!message.parentMessage) {
-      setMessages((prevMessages: any) => {
-        const messageIdx = prevMessages.findIndex(
+      setMessages((prevMessages) => {
+        const _prevMessages = [...prevMessages];
+        const messageIdx = _prevMessages.findIndex(
           (m: any) => m.id === message.id,
         );
-        prevMessages[messageIdx].reactions = prevMessages[
+        _prevMessages[messageIdx].reactions[emoji] = _prevMessages[
           messageIdx
-        ].reactions.filter(
-          (r: any) => r.emoji !== emoji && r.user !== user?.uname,
-        );
-        return prevMessages;
-      });
-    }
+        ].reactions[emoji].filter((r: any) => r.user !== user?.uname);
+        if (_prevMessages[messageIdx].reactions[emoji].length === 0) {
+          delete _prevMessages[messageIdx].reactions[emoji];
+        }
 
-    if (!message.parentMessage) {
-      const cRef = getMessageDocRef(message.id);
-      await updateDoc(cRef, {
-        reactions: arrayRemove({ user: user?.uname, emoji }),
+        return _prevMessages;
       });
     } else {
-      const cRef = getMessageDocRef(message.parentMessage);
-      const replyRef = doc(cRef, "replies", message?.id || "");
-      await updateDoc(replyRef, {
-        reactions: arrayRemove({ user: user?.uname, emoji }),
+      setReplies((prevReplies) => {
+        const _prevMessages = [...prevReplies];
+        const messageIdx = _prevMessages.findIndex(
+          (m: any) => m.id === message.id,
+        );
+        _prevMessages[messageIdx].reactions[emoji] = _prevMessages[
+          messageIdx
+        ].reactions[emoji].filter((r: any) => r.user !== user?.uname);
+        if (_prevMessages[messageIdx].reactions[emoji].length === 0) {
+          delete _prevMessages[messageIdx].reactions[emoji];
+        }
+
+        return _prevMessages;
       });
     }
+    let messageRef = null;
+    if (!message.parentMessage) {
+      messageRef = getMessageDocRef(message.id);
+    } else {
+      const cRef = getMessageDocRef(message.parentMessage);
+      messageRef = doc(cRef, "replies", message?.id || "");
+    }
+
+    await runTransaction(db, async (transaction) => {
+      const docSnap = await transaction.get(messageRef);
+
+      if (!docSnap.exists()) return;
+
+      const reactions = docSnap.data().reactions || [];
+      const updatedReactions = reactions[emoji].filter(
+        (reaction: Reaction) => reaction.user !== user?.uname,
+      );
+      if (updatedReactions.length === 0) {
+        transaction.update(messageRef, {
+          [`reactions.${emoji}`]: deleteField(),
+        });
+      } else {
+        transaction.update(messageRef, {
+          [`reactions.${emoji}`]: updatedReactions,
+        });
+      }
+    });
     recordLogs({
       action: `Removed reaction from a ${
         message.parentMessage ? "reply" : "message"
@@ -249,9 +299,11 @@ const Chat = ({
 
   const toggleReaction = (message: IChatMessage, emoji: string) => {
     if (!message?.id || !user?.uname) return;
-    const reactionIdx = message.reactions.findIndex(
-      (r: any) => r.user === user?.uname && r.emoji === emoji,
-    );
+    const reactionIdx = (message.reactions || {})[emoji]
+      ? (message.reactions || {})[emoji].findIndex(
+          (r: any) => r.user === user?.uname,
+        )
+      : -1;
     if (reactionIdx !== -1) {
       removeReaction(message, emoji);
     } else {
@@ -611,35 +663,61 @@ const Chat = ({
           }}
         >
           {isLoading && (
-            <Box>
-              {Array.from(new Array(7)).map((_, index) => (
+            <Box sx={{ mt: "10px" }}>
+              {Array.from(new Array(10)).map((_, index) => (
                 <Box
                   key={index}
                   sx={{
                     display: "flex",
                     justifyContent: "flex-start",
                     p: 1,
+                    mt: "10px",
                   }}
                 >
                   <Skeleton
                     variant="circular"
                     width={50}
-                    height={50}
+                    height={45}
                     sx={{
                       bgcolor: "grey.500",
                       borderRadius: "50%",
                     }}
                   />
-                  <Skeleton
-                    variant="rectangular"
-                    width={410}
-                    height={90}
-                    sx={{
-                      bgcolor: "grey.300",
-                      borderRadius: "0px 10px 10px 10px",
-                      mt: "19px",
-                    }}
-                  />
+                  <Box sx={{ width: "100%" }}>
+                    <Box sx={{ display: "flex" }}>
+                      <Skeleton
+                        variant="rectangular"
+                        width={100}
+                        height={10}
+                        sx={{
+                          bgcolor: "grey.300",
+                          borderRadius: "10px",
+                          ml: "8px",
+                        }}
+                      />
+                      <Skeleton
+                        variant="rectangular"
+                        width={50}
+                        height={10}
+                        sx={{
+                          bgcolor: "grey.300",
+                          borderRadius: "10px",
+                          ml: "8px",
+                        }}
+                      />
+                    </Box>
+                    <Skeleton
+                      variant="rectangular"
+                      height={90}
+                      sx={{
+                        bgcolor: "grey.300",
+                        borderRadius: "10px",
+                        mt: "10px",
+                        ml: "8px",
+                        width: "97%",
+                      }}
+                    />
+                  </Box>
                 </Box>
               ))}
             </Box>
@@ -693,13 +771,14 @@ const Chat = ({
             position: "fixed",
             bottom: "13px",
             mt: "15px",
-            pl: 2,
-            width: "420px" /* width - 10 */,
+            p: 2,
+            width: "100%",
           }}
         >
           <ChatInput
             user={user}
             type="message"
+            placeholder={placeholder}
             onSubmit={addMessage}
             users={users}
             confirmIt={confirmIt}

@@ -70,12 +70,12 @@ const ActiveUsers = ({
         .map((u: any) => (
           <Tooltip
             key={`${u.fName} ${u.lName}`}
+            placement="left"
             title={
               <Box
                 sx={{
                   display: "flex",
                   flexWrap: "wrap",
-                  maxWidth: "300px",
                   whiteSpace: "normal",
                   p: 1,
                 }}
@@ -146,7 +146,12 @@ const ActiveUsers = ({
                       borderRadius: "50%",
                       objectFit: "cover",
                     }}
-                    online={(currentUser?.uname && u.uname && currentUser.uname === u.uname) || isOnline(u.lastInteracted)}
+                    online={
+                      (currentUser?.uname &&
+                        u.uname &&
+                        currentUser.uname === u.uname) ||
+                      isOnline(u.lastInteracted)
+                    }
                   />
                 </Badge>
               </Box>
