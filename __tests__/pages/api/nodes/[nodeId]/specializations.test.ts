@@ -18,7 +18,7 @@ jest.mock(' @components/services/nodeRelationshipService', () => ({
   NodeRelationshipService: {
     addSpecializations: jest.fn(),
     removeSpecializations: jest.fn(),
-    moveSpecializations: jest.fn(),
+    moveSpecializationsBetweenCollections: jest.fn(),
     reorderSpecializations: jest.fn()
   }
 }));
@@ -484,7 +484,7 @@ describe('Node Specializations API Tests', () => {
         ]
       };
       
-      (NodeRelationshipService.moveSpecializations as jest.Mock).mockResolvedValueOnce(updatedNode);
+      (NodeRelationshipService.moveSpecializationsBetweenCollections as jest.Mock).mockResolvedValueOnce(updatedNode);
       
       const requestPayload = {
         nodes: [{ id: 'special-node-1' }],
@@ -500,7 +500,7 @@ describe('Node Specializations API Tests', () => {
       const responseData = expectSuccessResponse(res);
       expect(responseData.data?.node).toEqual(updatedNode);
       
-      expect(NodeRelationshipService.moveSpecializations).toHaveBeenCalledWith(
+      expect(NodeRelationshipService.moveSpecializationsBetweenCollections).toHaveBeenCalledWith(
         'test-node-id',
         [{ id: 'special-node-1' }],
         'main',
@@ -523,7 +523,7 @@ describe('Node Specializations API Tests', () => {
       await specializationsHandler(req, res);
       
       expectErrorResponse(res, 400, 'COLLECTION_OPERATION_ERROR');
-      expect(NodeRelationshipService.moveSpecializations).not.toHaveBeenCalled();
+      expect(NodeRelationshipService.moveSpecializationsBetweenCollections).not.toHaveBeenCalled();
     });
 
     it('should return 400 when target collection does not exist', async () => {
@@ -539,7 +539,7 @@ describe('Node Specializations API Tests', () => {
       await specializationsHandler(req, res);
       
       expectErrorResponse(res, 400, 'COLLECTION_OPERATION_ERROR');
-      expect(NodeRelationshipService.moveSpecializations).not.toHaveBeenCalled();
+      expect(NodeRelationshipService.moveSpecializationsBetweenCollections).not.toHaveBeenCalled();
     });
 
     it('should return 400 when nodes do not exist in source collection', async () => {
@@ -555,7 +555,7 @@ describe('Node Specializations API Tests', () => {
       await specializationsHandler(req, res);
       
       expectErrorResponse(res, 400, 'NODE_OPERATION_ERROR');
-      expect(NodeRelationshipService.moveSpecializations).not.toHaveBeenCalled();
+      expect(NodeRelationshipService.moveSpecializationsBetweenCollections).not.toHaveBeenCalled();
     });
 
     it('should validate collection name format', async () => {
@@ -571,7 +571,7 @@ describe('Node Specializations API Tests', () => {
       await specializationsHandler(req, res);
       
       expectErrorResponse(res, 400, 'VALIDATION_ERROR');
-      expect(NodeRelationshipService.moveSpecializations).not.toHaveBeenCalled();
+      expect(NodeRelationshipService.moveSpecializationsBetweenCollections).not.toHaveBeenCalled();
     });
   });
 
@@ -781,7 +781,7 @@ describe('Node Specializations API Tests', () => {
       await specializationsHandler(req, res);
       
       expectErrorResponse(res, 400, 'VALIDATION_ERROR');
-      expect(NodeRelationshipService.moveSpecializations).not.toHaveBeenCalled();
+      expect(NodeRelationshipService.moveSpecializationsBetweenCollections).not.toHaveBeenCalled();
       expect(NodeRelationshipService.reorderSpecializations).not.toHaveBeenCalled();
     });
 
