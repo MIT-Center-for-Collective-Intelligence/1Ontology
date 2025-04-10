@@ -1087,100 +1087,97 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                 borderStyle: "none solid none none",
               }}
             >
-              {!skillsFuture && (
-                <Tabs
-                  value={viewValue}
-                  onChange={handleViewChange}
-                  sx={{
-                    width: "100%",
-                    borderColor: "divider",
-                    position: "absolute",
-                    top: 76,
-                    zIndex: 9,
-                    backgroundColor: (theme) =>
-                      theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                    ".MuiTab-root.Mui-selected": {
-                      color: "#ff6d00",
-                    },
-                  }}
-                >
-                  <Tab
-                    label="Outline"
-                    {...a11yProps(0)}
-                    sx={{ width: "50%", fontSize: "20px" }}
-                  />
-                  <Tab
-                    label="Graph View"
-                    {...a11yProps(1)}
-                    sx={{ width: "50%", fontSize: "20px" }}
-                  />
-                </Tabs>
-              )}
+              <Tabs
+                value={viewValue}
+                onChange={handleViewChange}
+                sx={{
+                  width: "100%",
+                  borderColor: "divider",
+                  position: "absolute",
+                  top: 76,
+                  zIndex: 9,
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                  ".MuiTab-root.Mui-selected": {
+                    color: "#ff6d00",
+                  },
+                }}
+              >
+                <Tab
+                  label="Outline"
+                  {...a11yProps(0)}
+                  sx={{ width: "50%", fontSize: "20px" }}
+                />
+                <Tab
+                  label="Graph View"
+                  {...a11yProps(1)}
+                  sx={{ width: "50%", fontSize: "20px" }}
+                />
+              </Tabs>
 
-              {!skillsFuture && (
-                <Box
+              <Box
+                sx={{
+                  height: "100vh",
+                  marginTop: "126px",
+                  flexGrow: 1,
+                  overflow: "auto",
+                  ...SCROLL_BAR_STYLE,
+                  "&::-webkit-scrollbar": {
+                    display: "none",
+                  },
+                }}
+              >
+                <TabPanel
+                  value={viewValue}
+                  index={0}
                   sx={{
-                    height: "100vh",
-                    marginTop: "126px",
-                    flexGrow: 1,
-                    overflow: "auto",
-                    ...SCROLL_BAR_STYLE,
+                    height: "100%",
+                    overflowX: "auto",
+                    whiteSpace: "nowrap",
                     "&::-webkit-scrollbar": {
                       display: "none",
                     },
                   }}
                 >
-                  <TabPanel
-                    value={viewValue}
-                    index={0}
+                  <Box
                     sx={{
-                      height: "100%",
-                      overflowX: "auto",
-                      whiteSpace: "nowrap",
-                      "&::-webkit-scrollbar": {
-                        display: "none",
-                      },
+                      display: "inline-block",
+                      minWidth: "100%",
                     }}
                   >
-                    <Box
-                      sx={{
-                        display: "inline-block",
-                        minWidth: "100%",
-                      }}
-                    >
-                      <DraggableTree
-                        treeViewData={treeViewData}
-                        setSnackbarMessage={setSnackbarMessage}
-                        expandedNodes={expandedNodes}
-                        currentVisibleNode={currentVisibleNode}
-                        nodes={nodes}
-                        onOpenNodesTree={onOpenNodesTree}
-                        tree={tree}
-                        setTree={setTree}
-                        eachOntologyPath={eachOntologyPath}
-                      />
+                    <DraggableTree
+                      treeViewData={treeViewData}
+                      setSnackbarMessage={setSnackbarMessage}
+                      expandedNodes={expandedNodes}
+                      currentVisibleNode={currentVisibleNode}
+                      nodes={nodes}
+                      onOpenNodesTree={onOpenNodesTree}
+                      tree={tree}
+                      setTree={setTree}
+                      eachOntologyPath={eachOntologyPath}
+                    />
 
-                      {/*  <TreeViewSimplified
+                    {/*  <TreeViewSimplified
                       treeVisualization={treeVisualization}
                       onOpenNodesTree={onOpenNodesTree}
                       expandedNodes={expandedNodes}
                       setExpandedNodes={setExpandedNodes}
                       currentVisibleNode={currentVisibleNode}
                     /> */}
-                    </Box>
-                  </TabPanel>
-                  <TabPanel value={viewValue} index={1}>
-                    <DagGraph
-                      treeVisualization={treeVisualization}
-                      setExpandedNodes={setExpandedNodes}
-                      expandedNodes={expandedNodes}
-                      onOpenNodeDagre={onOpenNodeDagre}
-                      currentVisibleNode={currentVisibleNode}
-                      // nodes={nodes}
-                    />
-                  </TabPanel>
-                </Box>
-              )}
+                  </Box>
+                </TabPanel>
+                <TabPanel value={viewValue} index={1}>
+                  <DagGraph
+                    treeVisualization={treeVisualization}
+                    setExpandedNodes={setExpandedNodes}
+                    expandedNodes={expandedNodes}
+                    onOpenNodeDagre={onOpenNodeDagre}
+                    currentVisibleNode={currentVisibleNode}
+                    // nodes={nodes}
+                  />
+                </TabPanel>
+              </Box>
+
               <Box
                 sx={{
                   position: "absolute",
