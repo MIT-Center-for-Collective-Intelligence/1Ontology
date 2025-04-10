@@ -104,7 +104,7 @@ import { recordLogs, saveNewChangeLog } from " @components/lib/utils/helpers";
 import { useHover } from " @components/lib/hooks/useHover";
 import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarSidebar";
 import { NodeChange } from " @components/types/INode";
-import GuidLines from " @components/components/Guidlines/GuidLines";
+import GuidLines from " @components/components/Guidelines/GuideLines";
 import SearchSideBar from " @components/components/SearchSideBar/SearchSideBar";
 import Head from "next/head";
 import DraggableTree from " @components/components/OntologyComponents/DraggableTree";
@@ -1050,6 +1050,8 @@ const Ontology = () => {
             height: "100vh",
             display: "flex",
             overflow: "hidden",
+            backgroundColor:
+              theme.palette.mode === "dark" ? "#1b1a1a" : "#f8f9fa",
           }}
           columnResizerRef={columnResizerRef}
         >

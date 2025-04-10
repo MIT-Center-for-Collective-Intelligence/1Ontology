@@ -59,8 +59,9 @@ import {
   getNotesPrompt,
   getResponseStructure,
 } from " @components/lib/utils/copilotPrompts";
-import GuidLines from "../Guidlines/GuidLines";
+
 import { getNodesInThreeLevels } from " @components/lib/utils/helpersCopilot";
+import GuidLines from "../Guidelines/GuideLines";
 
 const glowGreen = keyframes`
   0% {
@@ -1128,7 +1129,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                 </AccordionSummary>
 
                 <AccordionDetails>
-                  {" "}
+                  {" "}``
                   <GuidLines />
                 </AccordionDetails>
               </Accordion>

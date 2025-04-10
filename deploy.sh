@@ -8,7 +8,7 @@ REPO_NAME="ontology"
 TIMEOUT="2000s"
 
 # Authenticate with Google Cloud
-gcloud auth login
+#gcloud auth login
 gcloud config set project $PROJECT_ID
 
 # Build the Docker image

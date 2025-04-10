@@ -93,6 +93,7 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
             editing={editing}
             setEditing={setEditing}
             chatType={chatType}
+            placeholder="Share your thoughts..."
           />
         ) : (
           <Box
@@ -167,7 +168,7 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
                 flexWrap: "wrap",
                 alignItems: "center",
                 gap: "5px",
-                paddingTop: "5px"
+                paddingTop: "5px",
               }}
             >
               <Emoticons
@@ -179,7 +180,10 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
                 boxRef={boxRef}
               />
               <IconButton onClick={(e) => toggleEmojiPicker(e, boxRef, reply)}>
-                <AddReactionOutlined color="secondary" sx={{ fontSize: "19px" }} />
+                <AddReactionOutlined
+                  color="secondary"
+                  sx={{ fontSize: "19px" }}
+                />
               </IconButton>
             </Box>
           </Box>

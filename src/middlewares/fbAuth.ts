@@ -25,7 +25,8 @@ const retrieveAuthenticatedUser = async ({
     let errorMessage = "";
 
     const auth = getAuth();
-    await auth.getUser(uid);
+    const userRecord = await auth.getUser(uid);
+    const userClaims = userRecord.customClaims || {};
 
     if (uname) {
       query = db.doc(`/users/${uname}`);
@@ -40,6 +41,7 @@ const retrieveAuthenticatedUser = async ({
       } else if (uid) {
         userData = userDoc.docs[0].data();
       }
+      userData.claims = userClaims;
     } else {
       errorMessage = "The user does not exist!";
       console.error(errorMessage);

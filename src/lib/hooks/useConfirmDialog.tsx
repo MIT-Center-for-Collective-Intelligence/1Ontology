@@ -56,7 +56,7 @@ const useDialog = () => {
         resolveRef.current = resolve;
       });
     },
-    []
+    [],
   );
 
   const closeDialog = useCallback(
@@ -69,7 +69,7 @@ const useDialog = () => {
         resolveRef.current(isPrompt ? inputValue : confirmed);
       }
     },
-    [isPrompt, inputValue]
+    [isPrompt, inputValue],
   );
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,7 +109,7 @@ const useDialog = () => {
             backgroundColor: DESIGN_SYSTEM_COLORS.primary800,
           }}
         >
-          {confirmation}
+          {confirmation || "Ok"}
         </Button>
         {!isPrompt && cancel && (
           <Button
@@ -128,12 +128,12 @@ const useDialog = () => {
   const promptIt = useCallback(
     (message: string, confirmation: string, cancel: string) =>
       showDialog(message, true, confirmation, cancel),
-    [showDialog]
+    [showDialog],
   );
   const confirmIt = useCallback(
     (message: any, confirmation: string, cancel: string) =>
       showDialog(message, false, confirmation, cancel),
-    [showDialog]
+    [showDialog],
   );
 
   return { promptIt, confirmIt, ConfirmDialog };
