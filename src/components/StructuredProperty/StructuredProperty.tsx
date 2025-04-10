@@ -701,6 +701,7 @@ const StructuredProperty = ({
             isSaving={isSaving}
             scrollToElement={scrollToElement}
             selectedCollection={selectedCollection}
+            skillsFuture={skillsFuture}
           />
         )}
       {handleCloseAddLinksModel &&

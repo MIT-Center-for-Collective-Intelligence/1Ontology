@@ -35,7 +35,7 @@ function DraggableTree({
   alternatives,
   domainsEmojis,
   expandDefault,
-  skillsFuture,
+  skillsFuture = false,
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -50,7 +50,7 @@ function DraggableTree({
   alternatives?: { [key: string]: string[] };
   domainsEmojis?: Record<string, string>;
   expandDefault?: string;
-  skillsFuture: boolean;
+  skillsFuture?: boolean;
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();

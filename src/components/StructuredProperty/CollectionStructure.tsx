@@ -1252,6 +1252,7 @@ const CollectionStructure = ({
                                 confirmIt={confirmIt}
                                 currentImprovement={currentImprovement}
                                 selectedCollection={selectedCollection}
+                                skillsFuture={skillsFuture}
                               />
                             )}
                           {property === "specializations" &&

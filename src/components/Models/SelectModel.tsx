@@ -69,6 +69,7 @@ const SelectModelModal = ({
   isSaving,
   scrollToElement,
   selectedCollection,
+  skillsFuture,
 }: {
   onSave: any;
   handleCloseAddLinksModel: any;
@@ -112,6 +113,7 @@ const SelectModelModal = ({
   isSaving: boolean;
   scrollToElement: (nodeId: string) => void;
   selectedCollection: string;
+  skillsFuture: boolean;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
 
@@ -626,6 +628,7 @@ const SelectModelModal = ({
               currentImprovement={currentImprovement}
               sx={{ borderRadius: "none", backgroundColor: "" }}
               getTitleNode={() => {}}
+              skillsFuture={skillsFuture}
             />
           </Box>
         )}
