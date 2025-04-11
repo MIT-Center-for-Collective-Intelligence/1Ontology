@@ -734,7 +734,6 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     window.location.hash = newHash;
   };
   const initializeExpanded = (ontologyPath: INodePath[]) => {
-    console.log("ontologyPath ==>", ontologyPath);
     if (!ontologyPath) {
       return;
     }
@@ -794,7 +793,6 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     }
     setExpandedNodes(newExpandedSet);
   };
-  console.log("eachOntologyPath===>", eachOntologyPath);
 
   useEffect(() => {
     if (!currentVisibleNode?.id || !nodes[currentVisibleNode?.id]) {
@@ -1037,7 +1035,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     },
     [eachOntologyPath],
   );
-  console.log("expandedNodes==>", expandedNodes);
+
   if (Object.keys(nodes).length <= 0) {
     return (
       <Box

@@ -110,13 +110,14 @@ function DraggableTree({
         if (!eachOntologyPath[currentVisibleNode.id]) {
           return;
         }
-        const first =
+        const rootId =
           eachOntologyPath[currentVisibleNode.id][0].id.split("-")[0];
+
         const path = eachOntologyPath[currentVisibleNode.id]
           .filter((p: any) => !p.category)
           .map((c: { id: string }) => c.id)
           .join("-");
-        expandNodeById(`${first}-${path}`);
+        expandNodeById(skillsFuture ? `${path}` : `${rootId}-${path}`);
         setFirstLoad(false);
       }, 500);
 
