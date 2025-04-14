@@ -43,8 +43,8 @@ const SelectInheritance = ({
 
     _generalizations = _generalizations.filter((g) => {
       return (
-        !nodes[g.id].inheritance[property]?.ref ||
-        nodes[g.id].inheritance[property]?.ref !== inheritanceRef
+        !nodes[g.id]?.inheritance[property]?.ref ||
+        nodes[g.id]?.inheritance[property]?.ref !== inheritanceRef
       );
     });
     const index = _generalizations.findIndex((g) => g.id === inheritanceRef);

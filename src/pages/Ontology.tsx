@@ -56,6 +56,10 @@ import {
   Box,
   Button,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Switch,
   Tab,
   Tabs,
@@ -196,6 +200,11 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const [treeViewData, setTreeViewData] = useState([]);
 
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
+
+  const [appName, setAppName] = useState(
+    "Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
+  ); // this state is only been used for the Skills Future App
+
   const firstLoad = useRef(true);
 
   const signOut = async () => {
@@ -540,10 +549,12 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
       where("skillsFuture", "==", false),
     );
 
-    if (skillsFuture) {
+    if (skillsFuture && appName) {
+      setNodes({});
       nodesQuery = query(
         collection(db, NODES),
         where("deleted", "==", false),
+        where("appName", "==", appName),
         where("skillsFuture", "==", true),
       );
     }
@@ -577,7 +588,8 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
     // Unsubscribe from the snapshot listener when the component is unmounted
     return () => unsubscribeNodes();
-  }, [db]);
+  }, [db, appName]);
+
   useEffect(() => {
     if (currentVisibleNode?.id) {
       setCurrentVisibleNode(nodes[currentVisibleNode?.id]);
@@ -878,8 +890,10 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     }
 
     for (let type in mainSpecializations) {
-      mainSpecializations[nodes[mainSpecializations[type].id].nodeType] =
-        mainSpecializations[type];
+      if (nodes[mainSpecializations[type].id].nodeType) {
+        mainSpecializations[nodes[mainSpecializations[type].id].nodeType] =
+          mainSpecializations[type];
+      }
       delete mainSpecializations[type];
     }
     return mainSpecializations;
@@ -1120,7 +1134,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
               <Box
                 sx={{
                   height: "100vh",
-                  marginTop: "126px",
+                  marginTop: "156px",
                   flexGrow: 1,
                   overflow: "auto",
                   ...SCROLL_BAR_STYLE,
@@ -1188,6 +1202,36 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                   width: "100%",
                 }}
               >
+                {" "}
+                {skillsFuture && (
+                  <Box sx={{ m: "10px" }}>
+                    <FormControl
+                      variant="outlined"
+                      sx={{ borderRadius: "20px" }}
+                      fullWidth
+                    >
+                      <InputLabel id="property-type-label">
+                        Web App Type
+                      </InputLabel>
+                      <Select
+                        labelId="property-type-label"
+                        value={appName}
+                        onChange={(event) => setAppName(event.target.value)}
+                        label="Property Type"
+                        sx={{ borderRadius: "20px" }}
+                      >
+                        {[
+                          "Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
+                          "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
+                        ].map((item) => (
+                          <MenuItem key={item} value={item}>
+                            {item}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                )}
                 <SearchSideBar
                   openSearchedNode={openSearchedNode}
                   searchWithFuse={searchWithFuse}
