@@ -362,7 +362,7 @@ ${description}
     ];
     const completion = await openai.chat.completions.create({
       messages,
-      model: "o1",
+      model: "o3",
     });
     const response = completion.choices[0].message.content;
 

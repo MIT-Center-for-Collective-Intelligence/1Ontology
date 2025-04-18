@@ -25,7 +25,7 @@ const useSelectDropdown = () => {
   const [selectedOption, setSelectedOption] = useState<{
     id: string;
     title: string;
-  }>({ id: "o1", title: "O1" });
+  }>({ id: "o3", title: "O1" });
   const [inputValue, setInputValue] = useState<string>("");
   const [numberValue, setNumberValue] = useState<number>(12);
   const [nodeTitle, setNodeTitle] = useState("");

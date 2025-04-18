@@ -160,7 +160,7 @@ You have to give me  new diagram
 
   const completion = await openai.chat.completions.create({
     messages,
-    model: "o1",
+    model: "o3",
     reasoning_effort: "high",
   });
 
@@ -267,7 +267,7 @@ export default async function handler(
       ];
       const completion = await openai.chat.completions.create({
         messages,
-        model: "o1",
+        model: "o3",
         reasoning_effort: "high",
       });
       const { solutions }: any = extractJSON(

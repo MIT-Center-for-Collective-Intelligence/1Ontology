@@ -490,7 +490,7 @@ export default async function handler(
 
     const completion = await openai.chat.completions.create({
       messages: [{ content: openAIPrompt, role: "user" }],
-      model: "o1",
+      model: "o3",
       reasoning_effort: "high",
     });
 
