@@ -1073,7 +1073,8 @@ const Node = ({
         {/* title of the node */}
 
         {/* description of the node */}
-        {!skillsFuture && (
+        {(!skillsFuture ||
+          currentVisibleNode.appName === "O*Net Verbs o3 Deep Research") && (
           <Text
             nodes={nodes}
             text={onGetPropertyValue("description") as string}
