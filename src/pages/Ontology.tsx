@@ -1223,6 +1223,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                         {[
                           "Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
                           "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
+                          "O*Net Verbs o3 Deep Research",
                         ].map((item) => (
                           <MenuItem key={item} value={item}>
                             {item}

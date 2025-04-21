@@ -94,6 +94,7 @@ export type INode = {
   }[];
   oNet?: boolean;
   actionAlternatives?: string[];
+  appName?: string;
 };
 
 export type TreeVisual = {
