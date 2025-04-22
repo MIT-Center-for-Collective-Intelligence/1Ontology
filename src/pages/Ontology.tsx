@@ -201,9 +201,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
 
-  const [appName, setAppName] = useState(
-    "Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
-  ); // this state is only been used for the Skills Future App
+  const [appName, setAppName] = useState("O*Net Verbs o3 Deep Research"); // this state is only been used for the Skills Future App
 
   const firstLoad = useRef(true);
 
@@ -1211,7 +1209,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                       fullWidth
                     >
                       <InputLabel id="property-type-label">
-                        Web App Type
+                        Which Ontology
                       </InputLabel>
                       <Select
                         labelId="property-type-label"
@@ -1224,6 +1222,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                           "Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
                           "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
                           "O*Net Verbs o3 Deep Research",
+                          "O*Net Verbs - o1 Pro",
                         ].map((item) => (
                           <MenuItem key={item} value={item}>
                             {item}
