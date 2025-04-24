@@ -339,24 +339,12 @@ export const getImprovementsStructurePrompt = (
    Each item should be an object proposing an improvement to an existing node, structured as follows:
    {
      "title": "The current title of the node.",
-     "nodeType": "The type of the node (e.g., 'activity', 'actor', etc.).",
      "changes": [  // An array of change objects for this node.
        // Change objects as detailed below.
      ]
    }
  
    Each change object should include the necessary fields for the property being changed and a **reasoning** field explaining your rationale.
- 
-  ${
-    improveProperties.has("title") ||
-    improveProperties.has("description") ||
-    improveProperties.has("specializations") ||
-    improveProperties.has("generalizations") ||
-    improveProperties.has("parts") ||
-    improveProperties.has("isPartOf")
-      ? "**For all node types:**"
-      : ""
-  }
  ${
    improveProperties.has("title")
      ? `- **Title changes**:
@@ -762,44 +750,8 @@ export const getNewNodesPrompt = (newNodes: boolean) => {
   {
     "title": "The title of the new node.",
     "description": "The description of the new node.",
-    "nodeType": "The type of the node, which could be 'activity', 'actor', 'object', 'evaluationDimension', 'incentive', 'reward', or 'context'.",
     "generalizations": [An array of titles (as strings) of nodes that are generalizations of this node.],
-  
-  // Include nodeType-specific properties as applicable:
-  
-  // For "activity" nodes:
-  "actor": [],
-  "objectsActedOn": [],
-  "evaluationDimension": [],
-  "postConditions": [],
-  "preConditions": [],
-  
-  // For "actor" nodes:
-  "abilities": [],
-  "typeOfActor": [],
-  
-
-  // For "object" nodes:
-  "lifeSpan": "Details about lifespan",
-  "modifiability": "Details about modifiability",
-  "perceivableProperties": [],
-  
-  // For "evaluationDimension" nodes:
-  "criteriaForAcceptability": [],
-  "directionOfDesirability": [],
-  "evaluationType": [],
-  "measurementUnits": [],
-  
-  // For "reward" nodes:
-  "units": [],
-  
-  // For "incentive" nodes:
-  "capabilitiesRequired": [],
-  "rewardFunction": [],
-  "evaluationDimension": [],
-  "reward": [],
-  
-  "reasoning": "Reason for proposing this new node."
+    "reasoning": "Reason for proposing this new node."
   }`
       : ""
   }`;
@@ -820,8 +772,8 @@ export const getDeleteNodesPrompt = (proposeDeleteNode: boolean) => {
   }`;
 };
 export const getNotesPrompt = () => {
-  return `- Do not create a 'Main' collection if it doesn't exist.
-  - Specializations of a node should have the exact same node type as the original node." I moved the former to guidelines.
+  return `
+  - Do not create a 'Main' collection if it doesn't exist.
   - Take ample time to generate high-quality improvements and additions.
   - A panel of experts will review your proposals and for every satisfactory proposal, you will be rewarded $100. For every unsatisfactory proposal, you will lose $100.`;
 };

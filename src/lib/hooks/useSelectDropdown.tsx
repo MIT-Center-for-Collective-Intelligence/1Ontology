@@ -25,7 +25,10 @@ const useSelectDropdown = () => {
   const [selectedOption, setSelectedOption] = useState<{
     id: string;
     title: string;
-  }>({ id: "o3", title: "O1" });
+  }>({
+    id: "gemini-2.5-pro-exp-03-25",
+    title: "Gemini-2.5 PRO EXP 03-25",
+  });
   const [inputValue, setInputValue] = useState<string>("");
   const [numberValue, setNumberValue] = useState<number>(12);
   const [nodeTitle, setNodeTitle] = useState("");
@@ -66,8 +69,11 @@ const useSelectDropdown = () => {
       );
       setInputProperties(
         new Set([
-          ...PROPERTIES_TO_IMPROVE.allTypes,
-          ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+          "title",
+          "description",
+          "specializations",
+          "generalizations",
+          "parts",
         ]),
       );
       const savedInputValue = localStorage.getItem(`user-copilot-message`);
