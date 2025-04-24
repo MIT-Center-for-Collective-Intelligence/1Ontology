@@ -91,6 +91,12 @@ const YjsEditorWrapper = ({
       editorRef.current.setSelection(cursorPosition);
     }
   };
+  
+  // Reset error when nodeId changes (switching nodes)
+  useEffect(() => {
+    setErrorDuplicate(false);
+  }, [nodeId]);
+  
   useEffect(() => {
     if (!property || !fullname || !nodeId) return;
     // Create Yjs document and WebSocket provider
@@ -110,6 +116,17 @@ const YjsEditorWrapper = ({
     provider.on("sync", (isSynced: boolean) => {
       if (isSynced) {
         setSynced(true);
+        
+        // Initial check for duplicates when document first loads
+        if (property === "title") {
+          const initialText = ydoc.getText("quill").toString();
+          const isDuplicate = checkDuplicateTitle(initialText);
+
+          console.log("checking for duplicates", initialText);
+          console.log("isDuplicate", isDuplicate);
+          
+          setErrorDuplicate(isDuplicate);
+        }
       }
     });
     const yText = ydoc.getText("quill");
@@ -218,7 +235,9 @@ const YjsEditorWrapper = ({
         window.removeEventListener("beforeunload", saveChanges);
       };
     }
+    // Not adding checkDuplicateTitle to dependencies to prevent focus loss during typing
   }, [fullname, property, nodeId, structured]);
+  
   useEffect(() => {
     if (synced && autoFocus && editorRef.current) {
       setTimeout(() => {
@@ -226,9 +245,10 @@ const YjsEditorWrapper = ({
       }, 1000);
     }
   }, [synced, autoFocus, cursorPosition]);
+
   return (
     <>
-      {errorDuplicate && (
+      {property === "title" && errorDuplicate && (
         <Typography color="red" sx={{ ml: "15px" }}>
           There is already a node with this title! Please try to create a unique
           title.
