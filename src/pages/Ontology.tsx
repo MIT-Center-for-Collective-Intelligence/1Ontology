@@ -1224,6 +1224,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                           "Holistic Embedding (Sector, Title, JobRole, CWF, Parts) - Gemini 2.5 Pro",
                           "O*Net Verbs o3 Deep Research",
                           "O*Net Verbs - o1 Pro",
+                          "Top-Down Gemini 2.5 Pro",
                         ].map((item) => (
                           <MenuItem key={item} value={item}>
                             {item}

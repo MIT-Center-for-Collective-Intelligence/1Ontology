@@ -12,9 +12,7 @@ import {
 import { NODES } from " @components/lib/firestoreClient/collections";
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
 import { DISPLAY, PROPERTIES_ORDER } from " @components/lib/CONSTANTS";
-import {
-  recordLogs,
-} from " @components/lib/utils/helpers";
+import { recordLogs } from " @components/lib/utils/helpers";
 import AddPropertyForm from "../AddPropertyForm/AddPropertyForm";
 import { useAuth } from "../context/AuthContext";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
@@ -451,22 +449,25 @@ const NodeBody: React.FC<NodeBodyProps> = ({
             </React.Fragment>
           );
         })}
-        {!hasReferences && user && !skillsFuture && (
-          <Box sx={{ mt: "15px" }}>
-            <NodeImageManager
-              nodeId={currentVisibleNode?.id}
-              currentVisibleNode={currentVisibleNode}
-              user={user}
-              firestore={db}
-              storage={storage}
-              confirmIt={confirmIt}
-              saveNewChangeLog={saveNewChangeLog}
-              selectedDiffNode={selectedDiffNode}
-              nodes={nodes}
-              getTitleNode={getTitleNode}
-            />
-          </Box>
-        )}
+        {!hasReferences &&
+          user &&
+          (!skillsFuture ||
+            currentVisibleNode.appName === "Top-Down Gemini 2.5 Pro") && (
+            <Box sx={{ mt: "15px" }}>
+              <NodeImageManager
+                nodeId={currentVisibleNode?.id}
+                currentVisibleNode={currentVisibleNode}
+                user={user}
+                firestore={db}
+                storage={storage}
+                confirmIt={confirmIt}
+                saveNewChangeLog={saveNewChangeLog}
+                selectedDiffNode={selectedDiffNode}
+                nodes={nodes}
+                getTitleNode={getTitleNode}
+              />
+            </Box>
+          )}
       </Box>
       {!locked && openAddProperty && (
         <AddPropertyForm
