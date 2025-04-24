@@ -49,6 +49,7 @@ type ImprovementsProps = {
   currentIndex: number;
   setCurrentIndex: any;
   displayDiff: any;
+  skillsFutureApp: string;
 };
 const Improvements = ({
   currentImprovement,
@@ -67,6 +68,7 @@ const Improvements = ({
   currentIndex,
   setCurrentIndex,
   displayDiff,
+  skillsFutureApp,
 }: ImprovementsProps) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -427,6 +429,9 @@ const Improvements = ({
               });
             }
           }
+        }
+        if (skillsFutureApp) {
+          newNode.appName = skillsFutureApp;
         }
         // Add the new node to the database
         await addNewNode({ id: newNodeRef.id, newNode, reasoning });

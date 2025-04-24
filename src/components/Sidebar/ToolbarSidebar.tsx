@@ -126,6 +126,7 @@ type MainSidebarProps = {
   setSelectedChatTab: any;
   signOut: any;
   skillsFuture: boolean;
+  skillsFutureApp: string;
 };
 
 const ToolbarSidebar = ({
@@ -157,6 +158,7 @@ const ToolbarSidebar = ({
   setSelectedChatTab,
   signOut,
   skillsFuture,
+  skillsFutureApp,
 }: MainSidebarProps) => {
   const theme = useTheme();
   const db = getFirestore();
@@ -888,6 +890,7 @@ const ToolbarSidebar = ({
         selectedProperties,
         proposeDeleteNode,
         inputProperties,
+        currentVisibleNode?.appName ?? "",
       )) as {
         improvements: Improvement[];
         new_nodes: copilotNewNode[];
@@ -1053,6 +1056,7 @@ const ToolbarSidebar = ({
             currentIndex={currentIndex}
             setCurrentIndex={setCurrentIndex}
             displayDiff={displayDiff}
+            skillsFutureApp={skillsFutureApp}
           />
         );
       case "history":

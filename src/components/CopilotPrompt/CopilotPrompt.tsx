@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
   TextField,
@@ -165,6 +165,10 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
   const [showPromptHistory, setShowPromptHistory] = useState(false);
   const [glowIds, setGlowIds] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState(false);
+
+  const improvementsStructurePrompt = useMemo(() => {
+    return getImprovementsStructurePrompt(selectedProperties);
+  }, [selectedProperties]);
 
   const editPrompt = user?.uname === "ouhrac" || user?.uname === "1man";
 
@@ -1048,10 +1052,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                       <AccordionDetails>
                         {" "}
                         <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
-                          {getImprovementsStructurePrompt(
-                            selectedProperties.size > 0,
-                            selectedProperties,
-                          )}
+                          {improvementsStructurePrompt}
                         </Typography>
                       </AccordionDetails>
                     </Accordion>
@@ -1129,7 +1130,6 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                 </AccordionSummary>
 
                 <AccordionDetails>
-                  {" "}``
                   <GuidLines />
                 </AccordionDetails>
               </Accordion>

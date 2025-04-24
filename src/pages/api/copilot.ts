@@ -32,6 +32,7 @@ const GEMINI_MODELS = [
   "gemini-2.0-flash-exp",
   "gemini-2.0-flash-thinking-exp",
   "gemini-exp-1206",
+  "gemini-2.5-pro-exp-03-25",
 ];
 
 type GeminiModels =
@@ -103,7 +104,7 @@ const sendLLMRequest = async ({
         ],
       });
 
-      const response = await askGemini(contents);
+      const response = await askGemini(contents, model);
       return response;
     }
     const temperature = model === "gpt-4o" ? 0 : 1;
@@ -239,11 +240,16 @@ ${userMessage}
   }
 };
 
-export const getNodes = async (): Promise<Record<string, INode>> => {
-  const noneDeletedNodes = await db
-    .collection(NODES)
-    .where("deleted", "==", false)
-    .get();
+export const getNodes = async (
+  skillsFutureApp: string,
+): Promise<Record<string, INode>> => {
+  const noneDeletedNodes = await (skillsFutureApp
+    ? db
+        .collection(NODES)
+        .where("deleted", "==", false)
+        .where("appName", "==", skillsFutureApp)
+        .get()
+    : db.collection(NODES).where("deleted", "==", false).get());
   const nodes: Record<string, INode> = {};
   noneDeletedNodes.docs.forEach((doc) => {
     const data = doc.data() as INode;
@@ -260,11 +266,12 @@ export const generateProposals = async (
   uname: string,
   SYSTEM_PROMPT: string,
   inputProperties: Set<string>,
+  skillsFutureApp: string,
   proposalsJSON: any = {},
   evaluation: string = "",
 ): Promise<any> => {
   const nodesArray: any = [];
-  const nodes = await getNodes();
+  const nodes = await getNodes(skillsFutureApp);
   if (!nodes[nodeId]) {
     throw new Error("Node doesn't exist");
   }
@@ -392,6 +399,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     improveProperties,
     proposeDeleteNode,
     inputProperties,
+    skillsFutureApp,
   } = req.body.data;
 
   const { uname } = user?.userData;
@@ -428,6 +436,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       uname,
       SYSTEM_PROMPT,
       new Set(inputProperties),
+      skillsFutureApp,
     );
     saveLogs(uname, "info", {
       response,

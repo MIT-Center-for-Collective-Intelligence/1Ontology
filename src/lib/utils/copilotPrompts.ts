@@ -10,6 +10,7 @@ export const sendLLMRequest = async (
   improveProperties: Set<string>,
   proposeDeleteNode: boolean,
   inputProperties: Set<string>,
+  skillsFutureApp: string,
 ) => {
   try {
     const response = await Post("/copilot", {
@@ -21,6 +22,7 @@ export const sendLLMRequest = async (
       proposeDeleteNode,
       improveProperties: new Array(...improveProperties),
       inputProperties: new Array(...inputProperties),
+      skillsFutureApp,
     });
     recordLogs({
       reason: "sendLLMRequest",
@@ -273,6 +275,10 @@ export const MODELS_OPTIONS = [
     id: "gemini-exp-1206",
     title: "Gemini Exp 1206",
   },
+  {
+    id: "gemini-2.5-pro-exp-03-25",
+    title: "Gemini-2.5 PRO EXP 03-25",
+  },
 ];
 const properties = {
   allTypes: [
@@ -324,11 +330,10 @@ export const getResponseStructure = (
 };
 
 export const getImprovementsStructurePrompt = (
-  improvement: boolean,
   improveProperties: Set<string>,
 ) => {
   return `${
-    improvement
+    improveProperties.size > 0
       ? ` ------------------
    For the "improvements" array:
    Each item should be an object proposing an improvement to an existing node, structured as follows:
@@ -860,8 +865,7 @@ export const getCopilotPrompt = ({
     `Response Structure:
     ${getResponseStructure(improvement, proposeDeleteNode)}`;
 
-  prompt =
-    prompt + getImprovementsStructurePrompt(improvement, improveProperties);
+  prompt = prompt + getImprovementsStructurePrompt(improveProperties);
 
   prompt = prompt + getNewNodesPrompt(newNodes);
   prompt = prompt + getDeleteNodesPrompt(proposeDeleteNode);
