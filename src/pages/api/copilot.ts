@@ -22,7 +22,6 @@ import {
   getCopilotPrompt,
   Improvement,
   MODELS_OPTIONS,
-  PROPOSALS_SCHEMA,
 } from " @components/lib/utils/copilotPrompts";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { ChatModel } from "openai/resources/chat/chat";

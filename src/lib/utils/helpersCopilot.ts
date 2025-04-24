@@ -135,7 +135,6 @@ export const getStructureForJSON = (
   };
 
   const getTitles = (propertyValue: ICollection[]) => {
-
     const propertyWithTitles: string[] = [];
     for (let collection of propertyValue) {
       for (let node of collection?.nodes || []) {
@@ -158,6 +157,9 @@ export const getStructureForJSON = (
     ) {
       properties[property] = getTitles(properties[property]);
     }
+  }
+  if (!properties.hasOwnProperty("parts")) {
+    properties["parts"] = [];
   }
   if (textValue && Object.keys(textValue).length > 0) {
     properties.comments = textValue;

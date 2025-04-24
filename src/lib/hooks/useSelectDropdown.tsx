@@ -63,8 +63,11 @@ const useSelectDropdown = () => {
       setNodes(nodes);
       setSelectedProperties(
         new Set([
-          ...PROPERTIES_TO_IMPROVE.allTypes,
-          ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+          "title",
+          "description",
+          "specializations",
+          "generalizations",
+          "parts",
         ]),
       );
       setInputProperties(
