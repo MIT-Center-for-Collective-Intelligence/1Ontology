@@ -5,9 +5,12 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   getFirestore,
+  query,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import ReplayIcon from "@mui/icons-material/Replay";
 import { NODES } from " @components/lib/firestoreClient/collections";
@@ -16,6 +19,7 @@ import { ICollection, INode } from " @components/types/INode";
 import {
   checkIfCanDeleteANode,
   clearNotifications,
+  createNewNode,
   generateInheritance,
   recordLogs,
   removeIsPartOf,
@@ -32,6 +36,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { generateUniqueTitle } from " @components/lib/utils/string.utils";
 import { development } from " @components/lib/CONSTANTS";
+import { newId } from " @components/lib/utils/newFirestoreId";
 type ImprovementsProps = {
   currentImprovement: any;
   setCurrentImprovement: any;
@@ -50,6 +55,7 @@ type ImprovementsProps = {
   setCurrentIndex: any;
   displayDiff: any;
   skillsFutureApp: string;
+  skillsFuture: boolean;
 };
 const Improvements = ({
   currentImprovement,
@@ -69,6 +75,7 @@ const Improvements = ({
   setCurrentIndex,
   displayDiff,
   skillsFutureApp,
+  skillsFuture,
 }: ImprovementsProps) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -609,17 +616,67 @@ const Improvements = ({
       }
 
       const reasoning = change.change.reasoning;
+      const addedLinks = [];
+      if ((change.detailsOfChange?.addedNonExistentElements || []).length > 0) {
+        const nodeType = change.nodeType;
+        const unclassifiedNodeDocs = await getDocs(
+          query(
+            collection(db, NODES),
+            where("unclassified", "==", true),
+            where("nodeType", "==", nodeType),
+          ),
+        );
+        if (unclassifiedNodeDocs.docs.length > 0 && user?.uname) {
+          const unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
+          const generalization = unclassifiedNodeDoc.data() as INode;
+          for (let nodeTitle of change.detailsOfChange
+            ?.addedNonExistentElements) {
+            const newRef = doc(collection(db, NODES));
+            const inheritance = generateInheritance(
+              generalization.inheritance,
+              unclassifiedNodeDoc.id,
+            );
+            const newNode = createNewNode(
+              generalization,
+              newRef.id,
+              nodeTitle,
+              inheritance,
+              generalization.id,
+              user?.uname,
+              skillsFuture,
+            );
+            const specializations =
+              nodes[unclassifiedNodeDoc.id].specializations;
 
+            const mainCollectionIdx = specializations.findIndex(
+              (c) => c.collectionName === "main",
+            );
+
+            specializations[mainCollectionIdx].nodes.push({
+              id: newRef.id,
+            });
+            updateDoc(unclassifiedNodeDoc.ref, {
+              specializations,
+            });
+            await setDoc(newRef, {
+              ...newNode,
+              locked: false,
+              createdAt: new Date(),
+            });
+            addedLinks.push(newRef.id);
+          }
+        }
+      }
       let changeType: any = null;
       let detailsChange = null;
+      const nodeData = nodes[change.nodeId];
+      const propertyType = nodeData.propertyType[change.modifiedProperty];
       if (
         change.modifiedProperty === "specializations" ||
-        (change.modiPropertyType !== "string" &&
-          change.modiPropertyType !== "string-array")
+        (propertyType !== "string" && propertyType !== "string-array")
       ) {
         changeType = "modify elements";
 
-        const addedLinks = [];
         const removedLinks = [];
         for (let collection of change.detailsOfChange.comparison) {
           for (let node of collection.nodes) {
@@ -638,14 +695,14 @@ const Improvements = ({
           addedLinks,
           removedLinks,
         );
-      } else if (change.modiPropertyType === "string") {
+      } else if (propertyType === "string") {
         changeType = "change text";
         await updateStringProperty(
           change.nodeId,
           change.modifiedProperty,
           change.detailsOfChange.newValue,
         );
-      } else if (change.modiPropertyType === "string-array") {
+      } else if (propertyType === "string-array") {
         const { changeMessage, changeDetails } = (await updateStringArray({
           newValue: change.detailsOfChange.final_array,
           added: change.detailsOfChange.addedElements,
@@ -655,6 +712,7 @@ const Improvements = ({
         changeType = changeMessage;
         detailsChange = changeDetails;
       }
+
       if (user?.uname && changeType) {
         const changeLog: any = {
           nodeId: currentVisibleNode?.id,

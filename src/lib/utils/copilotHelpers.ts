@@ -19,12 +19,17 @@ export const getChangeComparison = ({
     if (
       !propertyType &&
       modifiedProperty !== "specializations" &&
-      modifiedProperty !== "generalizations"
+      modifiedProperty !== "generalizations" &&
+      modifiedProperty !== "parts" &&
+      modifiedProperty !== "isPartOf"
     )
       return;
 
     const result: ICollection[] = [];
     const final_result: ICollection[] = [];
+
+    if (modifiedProperty === "parts" || modifiedProperty === "isPartOf") {
+    }
     /*  */
     if (
       modifiedProperty === "specializations" &&
@@ -98,11 +103,13 @@ export const getChangeComparison = ({
       propertyType !== "string" &&
       change.new_value
     ) {
+      //new value from the model response
       const newValue = change.new_value as {
         nodes_to_add: string[];
         nodes_to_delete: string[];
         final_array: string[];
       };
+      //creating the array of changes
       const nodes = [];
       const final_nodes = [];
       const nodesToRemove = new Set();
@@ -154,7 +161,7 @@ export const getChangeComparison = ({
       return {
         result,
         final_result,
-        addedNonExistentElements: [],
+        addedNonExistentElements,
         addedCollections: [],
         nodesToRemove,
       };
@@ -220,7 +227,7 @@ export const getChangeComparison = ({
 
 export const compareImprovement = (
   improvement: any,
-  nodesByTitle: { [nodeTitle: string]: INode }
+  nodesByTitle: { [nodeTitle: string]: INode },
 ) => {
   try {
     const _improvement = JSON.parse(JSON.stringify(improvement));
@@ -266,10 +273,8 @@ export const compareImprovement = (
       }
       _improvement.nodeId = nodeData.id;
       _improvement.modifiedProperty = modifiedProperty;
-      if (modifiedProperty !== "specializations") {
-        _improvement.modiPropertyType = propertyType;
-      }
     }
+    _improvement.nodeType = nodeData.nodeType;
     return _improvement;
   } catch (error: any) {
     console.error(error);
@@ -287,7 +292,7 @@ export const compareImprovement = (
 
 export const filterProposals = (
   improvements: Improvement[],
-  nodesByTitle: { [title: string]: INode }
+  nodesByTitle: { [title: string]: INode },
 ) => {
   try {
     const _improvements = [];
@@ -302,8 +307,8 @@ export const filterProposals = (
           nodeData,
           nodesByTitle,
         });
-
         if (!!response) {
+          impv.details = response;
           _improvements.push(impv);
         }
       }

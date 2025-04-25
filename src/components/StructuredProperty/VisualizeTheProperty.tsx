@@ -24,80 +24,6 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
   const [addedLinks, setAddLinks] = useState(new Set());
   const [removedLinks, setRemovedLinks] = useState(new Set());
 
-  // useEffect(() => {
-  //   if (!currentImprovement?.detailsOfChange) {
-  //     setMergedValue([]);
-  //     return;
-  //   }
-  //   const propertyIdx = currentImprovement.detailsOfChange.findIndex(
-  //     (c: any) => c.modifiedProperty === property
-  //   );
-  //   if (!currentImprovement?.detailsOfChange[propertyIdx]) {
-  //     return;
-  //   }
-  //   const newValue = JSON.parse(
-  //     JSON.stringify(currentImprovement.detailsOfChange[propertyIdx].newValue)
-  //   );
-
-  //   setAddLinks(
-  //     new Set(currentImprovement.detailsOfChange[propertyIdx].addedLinks)
-  //   );
-  //   setRemovedLinks(
-  //     new Set(currentImprovement.detailsOfChange[propertyIdx].removedLinks)
-  //   );
-  //   const previousValue = JSON.parse(
-  //     JSON.stringify(
-  //       currentImprovement.detailsOfChange[propertyIdx].previousValue
-  //     )
-  //   );
-
-  //   for (let collection of newValue) {
-  //     const collectionIdx = previousValue.findIndex(
-  //       (c: ICollection) => c.collectionName === collection.collectionName
-  //     );
-  //     if (collectionIdx === -1) {
-  //       collection.change = "added";
-  //       for (let node of collection.nodes) {
-  //         node.change = "added";
-  //       }
-  //     } else {
-  //       const _previousNodes = previousValue[collectionIdx].nodes.map(
-  //         (n: { id: string }) => n.id
-  //       );
-  //       const previousNodes = new Set(_previousNodes);
-  //       for (let node of [...collection.nodes]) {
-  //         if (!previousNodes.has(node.id)) {
-  //           node = { ...node, change: "added" };
-  //         }
-  //       }
-  //     }
-  //   }
-  //   for (let collection of previousValue) {
-  //     const collectionIdx = newValue.findIndex(
-  //       (c: ICollection) => c.collectionName === collection.collectionName
-  //     );
-  //     if (collectionIdx === -1) {
-  //       newValue.push(collection);
-  //       collection.change = "removed";
-  //       for (let node of collection.nodes) {
-  //         node = { ...node, change: "removed" };
-  //       }
-  //     } else {
-  //       const _newNodes = newValue[collectionIdx].nodes.map(
-  //         (n: { id: string }) => n.id
-  //       );
-  //       const newNodes = new Set(_newNodes);
-  //       for (let node of [...collection.nodes]) {
-  //         if (!newNodes.has(node.id)) {
-  //           newValue[collectionIdx].nodes.push({ ...node, change: "removed" });
-  //         }
-  //       }
-  //     }
-  //   }
-
-  //   setMergedValue(newValue);
-  // }, [currentImprovement]);
-
   const renderValue = (value: ICollection[]) => {
     return (
       <Box sx={{ display: "flex", flexDirection: "column" }}>
@@ -135,8 +61,8 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                     collection.change === "removed"
                       ? "red"
                       : collection.change === "added"
-                      ? "green"
-                      : "",
+                        ? "green"
+                        : "",
                 }}
               >
                 {collection.collectionName !== "main"
@@ -172,9 +98,9 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                         addedLinks.has(node.id) || node.change === "added"
                           ? "green"
                           : removedLinks.has(node.id) ||
-                            node.change === "removed"
-                          ? "red"
-                          : "",
+                              node.change === "removed"
+                            ? "red"
+                            : "",
                     }}
                   />
                   <Typography
@@ -186,36 +112,39 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                         addedLinks.has(node.id) || node.change === "added"
                           ? "green"
                           : removedLinks.has(node.id) ||
-                            node.change === "removed"
-                          ? "red"
-                          : "",
+                              node.change === "removed"
+                            ? "red"
+                            : "",
                     }}
                   >
                     {getTitle(nodes, node.id)}
                   </Typography>
-                  {/*  {((!removedLinks.has(node.id) && node.change === "removed") ||
-                    (!addedLinks.has(node.id) && node.change === "added")) && (
-                    <SwapHorizIcon
-                      sx={{
-                        color: node.change === "removed" ? "red" : "green",
-                        pl: "5px",
-                      }}
-                    />
-                  )} */}
-                  {/* {(node.change === "removed" || node.change === "added") && (
-                    <Button
-                      sx={{
-                        borderRadius: "25px",
-                        fontSize: "11px",
-                        ml: "15px",
-                      }}
-                      onClick={() => {}}
-                    >
-                      Implement
-                    </Button>
-                  )} */}
                 </ListItem>
-              ))}
+              ))}{" "}
+              {collection.collectionName === "main" &&
+                currentImprovement.detailsOfChange.addedNonExistentElements
+                  ?.length > 0 && (
+                  <Box>
+                    {currentImprovement.detailsOfChange.addedNonExistentElements.map(
+                      (item: string, index: number) => (
+                        <ListItem key={item}>
+                          <DragIndicatorIcon
+                            sx={{
+                              color: "green",
+                            }}
+                          />
+                          <Typography
+                            key={index}
+                            variant="body1"
+                            sx={{ color: "green" }}
+                          >
+                            {item}
+                          </Typography>{" "}
+                        </ListItem>
+                      ),
+                    )}
+                  </Box>
+                )}
             </List>
           </Paper>
         ))}
@@ -259,7 +188,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
               }}
             >
               {capitalizeFirstLetter(
-                DISPLAY[property] ? DISPLAY[property] : property
+                DISPLAY[property] ? DISPLAY[property] : property,
               )}
             </Typography>
           </Tooltip>

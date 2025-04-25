@@ -201,7 +201,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
 
-  const [appName, setAppName] = useState("O*Net Verbs o3 Deep Research"); // this state is only been used for the Skills Future App
+  const [appName, setAppName] = useState("Top-Down Gemini 2.5 Pro"); // this state is only been used for the Skills Future App
 
   const firstLoad = useRef(true);
 

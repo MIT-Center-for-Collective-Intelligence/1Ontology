@@ -852,6 +852,8 @@ const ToolbarSidebar = ({
   };
 
   const handleImproveClick = async () => {
+    if (!currentVisibleNode) return;
+
     const options = (await selectIt(
       currentVisibleNode.title,
       currentVisibleNode.nodeType,
@@ -881,7 +883,7 @@ const ToolbarSidebar = ({
     setIsLoadingCopilot(true);
     setCurrentIndex(0);
     try {
-      const response = (await sendLLMRequest(
+      const response: any = (await sendLLMRequest(
         userMessage,
         model,
         deepNumber,
@@ -922,8 +924,20 @@ const ToolbarSidebar = ({
       }
 
       setCopilotMessage(response.message);
+      const newImprovements: Improvement[] = [];
+      for (let improvement of response?.improvements) {
+        for (let change of improvement.changes) {
+          if (change.modified_property) {
+            newImprovements.push({
+              title: improvement.title,
+              change,
+              changes: [change],
+            });
+          }
+        }
+      }
       const improvements: Improvement[] =
-        filterProposals(response?.improvements || [], nodesByTitle) || [];
+        filterProposals(newImprovements || [], nodesByTitle) || [];
 
       const newNodes: {
         title: string;
@@ -1057,6 +1071,7 @@ const ToolbarSidebar = ({
             setCurrentIndex={setCurrentIndex}
             displayDiff={displayDiff}
             skillsFutureApp={skillsFutureApp}
+            skillsFuture={skillsFuture}
           />
         );
       case "history":

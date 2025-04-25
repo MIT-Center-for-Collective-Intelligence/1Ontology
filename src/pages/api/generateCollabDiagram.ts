@@ -80,7 +80,6 @@ ${problemStatement}
       },
     ];
     const model = "o3";
-    console.log("messages", messages);
 
     const nodeTypesDocs = await db.collection("nodeTypes").get();
     const nodeTypes = [];
@@ -98,7 +97,7 @@ ${problemStatement}
     const response = extractJSON(
       completion.choices[0].message.content || "",
     ).jsonObject;
-    console.log(response);
+
     const resRef = db.collection("responsesAI").doc();
     await resRef.set({
       response,
@@ -123,7 +122,7 @@ ${problemStatement}
           deleted: false,
         };
         groups.push(_group);
-        console.log("group ==>", _group);
+
         groupRef.set(_group);
         if (group.subgroups) {
           createGroups(group.subgroups, diagramId);
@@ -147,11 +146,7 @@ ${problemStatement}
         ...node,
         createdAt: new Date(),
       };
-      console.log("node ==>", {
-        ..._node,
-        diagrams: [newDiagramRef.id],
-        deleted: false,
-      });
+
       if (!nodeTypes.includes(node.nodeType)) {
         const newTypeRef = db.collection("nodeTypes").doc();
         newTypeRef.set({
@@ -173,11 +168,7 @@ ${problemStatement}
         response["nodes"].find((c: any) => c.originalId === link.target)?.id ||
         "";
       const linkRef = db.collection("links").doc();
-      console.log("link ==>", {
-        ...link,
-        diagrams: [newDiagramRef.id],
-        deleted: false,
-      });
+
       linkRef.set({ ...link, diagrams: [newDiagramRef.id], deleted: false });
     }
     await newDiagramRef.set({

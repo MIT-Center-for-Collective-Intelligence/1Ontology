@@ -97,7 +97,7 @@ const NodeActivity = ({
       </Box>
     );
   }
-  console.log("logs ==>", logs);
+
   return (
     <Box sx={{ height: "90vh", overflow: "auto", ...SCROLL_BAR_STYLE }}>
       {Object.keys(logs).length <= 0 && (

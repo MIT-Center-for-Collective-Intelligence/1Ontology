@@ -54,7 +54,7 @@ export default async function handler(
   }
   try {
     const { prompt: userPrompt, diagramId, messageId } = req.body;
-    console.log("consultant ==>");
+
     const diagramDoc = await db.collection("diagrams").doc(diagramId).get();
     if (!diagramDoc.exists) {
       throw new Error("Diagram not found");
@@ -164,7 +164,6 @@ ${userPrompt}
       },
     ];
     const model = "o3";
-    console.log("messages", messages);
 
     const completion = await openai.chat.completions.create({
       messages,
@@ -210,7 +209,6 @@ ${userPrompt}
     const groups: any = [];
 
     const createGroups = (tree: any, diagramId: any) => {
-      console.log("tree ==>", tree);
       for (let group of tree) {
         const groupRef = db.collection("groups").doc();
         group.id = groupRef.id;
@@ -266,7 +264,7 @@ ${userPrompt}
       const linkRef = db.collection("links").doc();
       linkRef.set({ ...link, diagrams: [diagramId], deleted: false });
     }
-    console.log("response", _response);
+
     res.status(500).json({ _response });
   } catch (error) {
     console.error("Error in consultant API:", error);

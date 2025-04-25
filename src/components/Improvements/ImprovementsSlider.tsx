@@ -1,8 +1,9 @@
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { LoadingButton } from "@mui/lab";
-import { Box, Button, Paper, Typography } from "@mui/material";
+import { Box, Button, List, ListItem, Paper, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 
 type IProposalSliderProps = {
   proposals: any;
@@ -195,7 +196,7 @@ const ImprovementsSlider = ({
 
               {!proposal?.newNode &&
                 !proposal.deleteNode &&
-                proposal?.change?.modified_property && (
+                proposal?.changes[0]?.modified_property && (
                   <Box
                     key={proposal?.change?.modified_property}
                     sx={{ mb: "15px" }}
@@ -214,14 +215,42 @@ const ImprovementsSlider = ({
                           textTransform: "capitalize",
                         }}
                       >
-                        {proposal.change.modified_property}
+                        {proposal.changes[0].modified_property}
                       </strong>{" "}
-                      {proposal.change.reasoning ? "because" : ""}:
+                      {proposal.changes[0].reasoning ? "because" : ""}:
                     </Typography>
                     <Typography sx={{ pb: "24px" }}>
                       {" "}
-                      {proposal.change.reasoning}
+                      {proposal.changes[0].reasoning}
                     </Typography>
+                    {proposal.details.addedNonExistentElements.length > 0 && (
+                      <Typography>
+                        {`The nodes below don't exist in the ontology yet. By
+                        accepting this proposal, new nodes will be created.`}
+                      </Typography>
+                    )}
+                    {proposal.details.addedNonExistentElements.length > 0 && (
+                      <List>
+                        {proposal.details.addedNonExistentElements.map(
+                          (item: string, index: number) => (
+                            <ListItem key={item}>
+                              <DragIndicatorIcon
+                                sx={{
+                                  color: "green",
+                                }}
+                              />
+                              <Typography
+                                key={index}
+                                variant="body1"
+                                sx={{ color: "green" }}
+                              >
+                                {item}
+                              </Typography>{" "}
+                            </ListItem>
+                          ),
+                        )}
+                      </List>
+                    )}
                     {/*      {(
                     currentImprovement.modifiedProperties[p]
                       ?.addedNonExistentElements || []
@@ -263,7 +292,7 @@ const ImprovementsSlider = ({
                 }}
               >
                 {index + 1}/{proposals.length}
-                {currentImprovement.implemented && (
+                {!!currentImprovement?.implemented && (
                   <Typography
                     sx={{
                       fontWeight: "bold",

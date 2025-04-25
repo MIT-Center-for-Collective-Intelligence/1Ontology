@@ -74,7 +74,7 @@ export type copilotNewNode = {
   reward?: string[];
   reasoning?: string;
 };
-export type IChange =
+export type IChange = (
   | {
       modified_property: string;
       new_value: string;
@@ -108,11 +108,14 @@ export type IChange =
         final_array: string[];
       };
       reasoning: string;
-    };
+    }
+) & {
+  detailedComparison?: any;
+};
 
 export type Improvement = {
   title: string;
-  nodeType:
+  nodeType?:
     | "activity"
     | "actor"
     | "object"
@@ -122,6 +125,7 @@ export type Improvement = {
     | "context";
   changes: Array<IChange>;
   change?: IChange;
+  details?: any;
 };
 
 const PROPOSALS_SCHEMA = `
