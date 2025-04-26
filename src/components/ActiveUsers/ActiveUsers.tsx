@@ -1,4 +1,4 @@
-import { isOnline, timeAgo } from " @components/lib/utils/string.utils";
+import { isOnline, timeAgo } from "@components/lib/utils/string.utils";
 import {
   Badge,
   Box,
@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import React from "react";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
-import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
+import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 
 const ActiveUsers = ({
   nodes,

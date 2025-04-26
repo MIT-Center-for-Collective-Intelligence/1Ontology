@@ -1,7 +1,7 @@
 import { Box, Typography, Paper, Button } from "@mui/material";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
-import { getChangeDescription } from " @components/lib/utils/helpers";
-import { NodeChange } from " @components/types/INode";
+import { getChangeDescription } from "@components/lib/utils/helpers";
+import { NodeChange } from "@components/types/INode";
 import dayjs from "dayjs";
 
 const ActivityDetails = ({

@@ -6,15 +6,15 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 import LinkIcon from "@mui/icons-material/Link";
 import moment from "moment";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import { Emoticons } from "./Emoticons";
 import { MessageButtons } from "./MessageButtons";
 import OptimizedAvatar from "./OptimizedAvatar";
 import ChatInput from "./ChatInput";
 import dayjs from "dayjs";
-import { getTitle } from " @components/lib/utils/string.utils";
-import { INode } from " @components/types/INode";
+import { getTitle } from "@components/lib/utils/string.utils";
+import { INode } from "@components/types/INode";
 import { AddReactionOutlined } from "@mui/icons-material";
 
 const MessageComponent = ({

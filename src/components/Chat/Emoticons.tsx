@@ -8,10 +8,10 @@ import {
 } from "@mui/material";
 import { Box } from "@mui/system";
 import React from "react";
-import { IChatMessage, Reaction } from " @components/types/IChat";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
-import { shortenNumber } from " @components/lib/utils/utils";
-import { getJoinUsernames } from " @components/lib/utils/string.utils";
+import { IChatMessage, Reaction } from "@components/types/IChat";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
+import { shortenNumber } from "@components/lib/utils/utils";
+import { getJoinUsernames } from "@components/lib/utils/string.utils";
 
 type EmoticonsProps = {
   message: IChatMessage;

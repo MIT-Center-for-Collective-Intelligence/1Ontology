@@ -24,11 +24,11 @@
 
 This code assumes that you have set up Firebase authentication, Formik, Material UI, and the `notistack` library in your project. It also assumes that you have defined the `useAuth` hook, `AuthLayout` component, and other imported modules in your codebase.
  */
-import { useAuth } from " @components/components/context/AuthContext";
-import AuthLayout from " @components/components/layouts/AuthLayout";
-import { getFirebaseFriendlyError } from " @components/lib/utils/firebaseErrors";
-import ROUTES from " @components/lib/utils/routes";
-import { NextPageWithLayout } from " @components/types/IAuth";
+import { useAuth } from "@components/components/context/AuthContext";
+import AuthLayout from "@components/components/layouts/AuthLayout";
+import { getFirebaseFriendlyError } from "@components/lib/utils/firebaseErrors";
+import ROUTES from "@components/lib/utils/routes";
+import { NextPageWithLayout } from "@components/types/IAuth";
 import { LoadingButton } from "@mui/lab";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { FirebaseError } from "firebase/app";

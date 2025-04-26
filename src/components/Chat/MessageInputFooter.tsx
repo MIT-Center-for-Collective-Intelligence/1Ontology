@@ -3,7 +3,7 @@ import { Box, Tooltip, IconButton, Button } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import CollectionsIcon from "@mui/icons-material/Collections";
 import AddLinkIcon from "@mui/icons-material/AddLink";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 
 interface MessageInputFooterProps {
   imageUrls: string[];

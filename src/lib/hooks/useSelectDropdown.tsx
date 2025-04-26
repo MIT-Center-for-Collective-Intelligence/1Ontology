@@ -12,10 +12,10 @@ import {
 import React, { useCallback, useMemo, useState } from "react";
 import { DESIGN_SYSTEM_COLORS } from "../theme/colors";
 import { MODELS_OPTIONS } from "../utils/copilotPrompts";
-import CopilotPrompt from " @components/components/CopilotPrompt/CopilotPrompt";
-import { useAuth } from " @components/components/context/AuthContext";
+import CopilotPrompt from "@components/components/CopilotPrompt/CopilotPrompt";
+import { useAuth } from "@components/components/context/AuthContext";
 import { PROPERTIES_TO_IMPROVE } from "../CONSTANTS";
-import { INode } from " @components/types/INode";
+import { INode } from "@components/types/INode";
 import { getNodesInThreeLevels } from "../utils/helpersCopilot";
 
 const useSelectDropdown = () => {

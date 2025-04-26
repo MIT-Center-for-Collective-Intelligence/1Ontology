@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Box, TextField, Tooltip, IconButton } from "@mui/material";
 import DoneIcon from "@mui/icons-material/Done";
-import { NODES } from " @components/lib/firestoreClient/collections";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import { doc, collection, updateDoc, getFirestore } from "firebase/firestore";
 import { link } from "fs";
 import { useAuth } from "../context/AuthContext";

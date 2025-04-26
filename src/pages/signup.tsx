@@ -33,14 +33,14 @@ import {
   NextPageWithLayout,
   SignUpData,
   SignUpFormValues,
-} from " @components/types/IAuth";
-import { useAuth } from " @components/components/context/AuthContext";
-import { sendVerificationEmail } from " @components/lib/firestoreClient/auth";
-import { SignUpBasicInfo } from " @components/components/Auth/SignUpBasicInfo";
+} from "@components/types/IAuth";
+import { useAuth } from "@components/components/context/AuthContext";
+import { sendVerificationEmail } from "@components/lib/firestoreClient/auth";
+import { SignUpBasicInfo } from "@components/components/Auth/SignUpBasicInfo";
 import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
 import { collection, doc, getFirestore, setDoc } from "firebase/firestore";
-import ROUTES from " @components/lib/utils/routes";
-import { USERS } from " @components/lib/firestoreClient/collections";
+import ROUTES from "@components/lib/utils/routes";
+import { USERS } from "@components/lib/firestoreClient/collections";
 
 const getDateBySubstractYears = (years: number, date = new Date()) => {
   date.setFullYear(date.getFullYear() - years);

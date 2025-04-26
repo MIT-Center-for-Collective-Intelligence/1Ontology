@@ -13,12 +13,12 @@ import {
   getPropertyValue,
   getTitle,
   getTooltipHelper,
-} from " @components/lib/utils/string.utils";
-import { ICollection, ILinkNode, INode } from " @components/types/INode";
-import { DISPLAY } from " @components/lib/CONSTANTS";
+} from "@components/lib/utils/string.utils";
+import { ICollection, ILinkNode, INode } from "@components/types/INode";
+import { DISPLAY } from "@components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
 import { collection, doc, getFirestore } from "firebase/firestore";
-import { recordLogs } from " @components/lib/utils/helpers";
+import { recordLogs } from "@components/lib/utils/helpers";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import VisualizeTheProperty from "./VisualizeTheProperty";
@@ -26,7 +26,7 @@ import CollectionStructure from "./CollectionStructure";
 import SelectModelModal from "../Models/SelectModel";
 import { LoadingButton } from "@mui/lab";
 import PropertyContributors from "./PropertyContributors";
-import { NODES } from " @components/lib/firestoreClient/collections";
+import { NODES } from "@components/lib/firestoreClient/collections";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;

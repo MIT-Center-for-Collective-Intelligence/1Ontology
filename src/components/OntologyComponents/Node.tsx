@@ -89,22 +89,22 @@ import {
 } from "firebase/firestore";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Text from "./Text";
-import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
+import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import {
   ICollection,
   ILinkNode,
   INode,
   INodeTypes,
   MainSpecializations,
-} from " @components/types/INode";
-import { NODES } from " @components/lib/firestoreClient/collections";
+} from "@components/types/INode";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import NodeBody from "../NodBody/NodeBody";
 
 import {
   generateUniqueTitle,
   getPropertyValue,
   getTitle,
-} from " @components/lib/utils/string.utils";
+} from "@components/lib/utils/string.utils";
 import {
   checkIfCanDeleteANode,
   createNewNode,
@@ -121,14 +121,14 @@ import {
   updateLinksForInheritanceSpecializations,
   updateLinks,
   clearNotifications,
-} from " @components/lib/utils/helpers";
+} from "@components/lib/utils/helpers";
 
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
-import { NodeChange } from " @components/types/INode";
-import { User } from " @components/types/IAuth";
+import { NodeChange } from "@components/types/INode";
+import { User } from "@components/types/IAuth";
 import { getStorage } from "firebase/storage";
 import NodeActivityFlow from "../NodBody/NodeActivityFlow";
-import { development } from " @components/lib/CONSTANTS";
+import { development } from "@components/lib/CONSTANTS";
 
 type INodeProps = {
   currentVisibleNode: INode;

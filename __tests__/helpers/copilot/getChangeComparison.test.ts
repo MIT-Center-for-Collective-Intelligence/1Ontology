@@ -1,6 +1,6 @@
-import { getChangeComparison } from " @components/lib/utils/copilotHelpers";
-import { IChange } from " @components/lib/utils/copilotPrompts";
-import { INode } from " @components/types/INode";
+import { getChangeComparison } from "@components/lib/utils/copilotHelpers";
+import { IChange } from "@components/lib/utils/copilotPrompts";
+import { INode } from "@components/types/INode";
 
 const nodeData: INode = {
   deleted: false,

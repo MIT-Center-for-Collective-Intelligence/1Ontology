@@ -1,5 +1,5 @@
-import { compareImprovement } from " @components/lib/utils/copilotHelpers";
-import { INode } from " @components/types/INode";
+import { compareImprovement } from "@components/lib/utils/copilotHelpers";
+import { INode } from "@components/types/INode";
 import { convertLength } from "@mui/material/styles/cssUtils";
 const nodeTitles: { [id: string]: INode } = {
   "New unclassifiedd": {

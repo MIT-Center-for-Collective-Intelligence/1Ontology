@@ -18,12 +18,12 @@ This is a React component for a sign-in page. It uses Formik for form handling, 
 8. The `getLayout` function is defined on the component to specify the layout to be used for this page. It wraps the page in the `AuthLayout` component.
 
 9. The `SignInPage` component is exported as the default export of the module.*/
-import { useAuth } from " @components/components/context/AuthContext";
-import AuthLayout from " @components/components/layouts/AuthLayout";
-import { signIn } from " @components/lib/firestoreClient/auth";
-import { getFirebaseFriendlyError } from " @components/lib/utils/firebaseErrors";
-import ROUTES from " @components/lib/utils/routes";
-import { NextPageWithLayout } from " @components/types/IAuth";
+import { useAuth } from "@components/components/context/AuthContext";
+import AuthLayout from "@components/components/layouts/AuthLayout";
+import { signIn } from "@components/lib/firestoreClient/auth";
+import { getFirebaseFriendlyError } from "@components/lib/utils/firebaseErrors";
+import ROUTES from "@components/lib/utils/routes";
+import { NextPageWithLayout } from "@components/types/IAuth";
 import { LoadingButton } from "@mui/lab";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { FirebaseError } from "firebase/app";

@@ -12,10 +12,10 @@ import {
   saveNewChangeLog,
   unlinkPropertyOf,
   updateLinksForInheritance,
-} from " @components/lib/utils/helpers";
+} from "@components/lib/utils/helpers";
 import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
-import { ICollection, TreeData } from " @components/types/INode";
-import { NODES } from " @components/lib/firestoreClient/collections";
+import { ICollection, TreeData } from "@components/types/INode";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
 import { FillFlexParent } from "./fill-flex-parent";
 

@@ -16,13 +16,13 @@ import { getStorage } from "firebase/storage";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Mention, MentionsInput, MentionsInputStyle } from "react-mentions";
 import { MentionUser } from "./MentionUser";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
-import { IChatMessage } from " @components/types/IChat";
-import { useUploadImage } from " @components/hooks/useUploadImage";
-import { isValidHttpUrl } from " @components/lib/utils/utils";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
+import { IChatMessage } from "@components/types/IChat";
+import { useUploadImage } from "@components/hooks/useUploadImage";
+import { isValidHttpUrl } from "@components/lib/utils/utils";
 import defaultStyle from "./defaultStyle";
-import { getTaggedUsers } from " @components/lib/utils/string.utils";
-import { development, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
+import { getTaggedUsers } from "@components/lib/utils/string.utils";
+import { development, SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 import MessageInputFooter from "./MessageInputFooter";
 
 type ChatInputProps = {

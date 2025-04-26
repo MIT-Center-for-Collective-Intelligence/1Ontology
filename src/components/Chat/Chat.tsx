@@ -30,19 +30,19 @@ import dynamic from "next/dynamic";
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { TransitionGroup } from "react-transition-group";
 // import { NotFoundNotification } from "../Sidebar/SidebarV2/NotificationSidebar";
-import { IChatMessage, Reaction } from " @components/types/IChat";
+import { IChatMessage, Reaction } from "@components/types/IChat";
 
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
-import { MESSAGES, NODES } from " @components/lib/firestoreClient/collections";
+import { MESSAGES, NODES } from "@components/lib/firestoreClient/collections";
 import {
   chatChange,
   getMessagesSnapshot,
-} from " @components/client/firestore/messages.firestore";
-import { recordLogs, synchronizeStuff } from " @components/lib/utils/helpers";
+} from "@components/client/firestore/messages.firestore";
+import { recordLogs, synchronizeStuff } from "@components/lib/utils/helpers";
 import MessageComponent from "./MessageComponent";
 import ReplyMessage from "./ReplyMessage";
 import ChatInput from "./ChatInput";
-import { INode } from " @components/types/INode";
+import { INode } from "@components/types/INode";
 const DynamicMemoEmojiPicker = dynamic(() => import("./EmojiPicker"), {
   loading: () => <p>Loading...</p>,
   ssr: false,

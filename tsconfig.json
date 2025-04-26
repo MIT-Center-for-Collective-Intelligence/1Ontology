@@ -20,7 +20,7 @@
       }
     ],
     "paths": {
-      " @components/*": ["./src/*"]
+      "@components/*": ["./src/*"]
     },
     "forceConsistentCasingInFileNames": true
   },

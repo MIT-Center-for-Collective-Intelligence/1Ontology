@@ -1,12 +1,12 @@
-import { DISPLAY } from " @components/lib/CONSTANTS";
+import { DISPLAY } from "@components/lib/CONSTANTS";
 import {
   capitalizeFirstLetter,
   getTooltipHelper,
-} from " @components/lib/utils/string.utils";
+} from "@components/lib/utils/string.utils";
 import { Paper, Typography, Box, Tooltip, List, ListItem } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { useState } from "react";
-import { ICollection } from " @components/types/INode";
+import { ICollection } from "@components/types/INode";
 
 type CollectionListProps = {
   currentImprovement: any;

@@ -1,4 +1,4 @@
-import { INode } from " @components/types/INode";
+import { INode } from "@components/types/INode";
 import { query, collection, where, getDocs } from "firebase/firestore";
 import { NODES } from "../firestoreClient/collections";
 

@@ -9,24 +9,24 @@ import {
   GUIDELINES,
   LOGS,
   NODES,
-} from " @components/lib/firestoreClient/collections";
-import { db } from " @components/lib/firestoreServer/admin";
+} from "@components/lib/firestoreClient/collections";
+import { db } from "@components/lib/firestoreServer/admin";
 import {
   getNodesInThreeLevels,
   getStructureForJSON,
-} from " @components/lib/utils/helpersCopilot";
-import { INode } from " @components/types/INode";
-import fbAuth from " @components/middlewares/fbAuth";
-import { extractJSON, getDoerCreate } from " @components/lib/utils/helpers";
+} from "@components/lib/utils/helpersCopilot";
+import { INode } from "@components/types/INode";
+import fbAuth from "@components/middlewares/fbAuth";
+import { extractJSON, getDoerCreate } from "@components/lib/utils/helpers";
 import {
   copilotNewNode,
   getCopilotPrompt,
   Improvement,
   MODELS_OPTIONS,
-} from " @components/lib/utils/copilotPrompts";
+} from "@components/lib/utils/copilotPrompts";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { ChatModel } from "openai/resources/chat/chat";
-import { PROPERTIES_TO_IMPROVE } from " @components/lib/CONSTANTS";
+import { PROPERTIES_TO_IMPROVE } from "@components/lib/CONSTANTS";
 
 const GEMINI_MODELS = [
   "gemini-2.0-flash-exp",

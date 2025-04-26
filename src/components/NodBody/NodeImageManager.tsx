@@ -37,15 +37,15 @@ import {
   ref,
   uploadBytesResumable,
 } from "firebase/storage";
-import { useUploadImage } from " @components/hooks/useUploadImage";
-import { isValidHttpUrl } from " @components/lib/utils/utils";
-import { User } from " @components/types/IAuth";
+import { useUploadImage } from "@components/hooks/useUploadImage";
+import { isValidHttpUrl } from "@components/lib/utils/utils";
+import { User } from "@components/types/IAuth";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import dayjs from "dayjs";
-import useDialog from " @components/lib/hooks/useConfirmDialog";
-import { INode, NodeChange } from " @components/types/INode";
+import useDialog from "@components/lib/hooks/useConfirmDialog";
+import { INode, NodeChange } from "@components/types/INode";
 import PropertyContributors from "../StructuredProperty/PropertyContributors";
-import { updateInheritance } from " @components/lib/utils/helpers";
+import { updateInheritance } from "@components/lib/utils/helpers";
 
 type UploadUserInfo = {
   userId: string;

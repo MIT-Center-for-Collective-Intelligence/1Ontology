@@ -1,4 +1,4 @@
-import { db } from " @components/lib/firestoreServer/admin";
+import { db } from "@components/lib/firestoreServer/admin";
 import { NextApiRequest, NextApiResponse } from "next";
 // @ts-ignore
 import WordNet = require("node-wordnet");

@@ -3,7 +3,7 @@ import { common } from "@mui/material/colors";
 import { SxProps, Theme } from "@mui/system";
 import Image from "next/image";
 import React, { FC, useState } from "react";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 
 type Props = {
   imageUrl: string;

@@ -11,7 +11,7 @@ import {
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockIcon from "@mui/icons-material/Lock";
-import { TreeVisual } from " @components/types/INode";
+import { TreeVisual } from "@components/types/INode";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import InsertLinkIcon from "@mui/icons-material/InsertLink";
 import AddIcon from "@mui/icons-material/Add";

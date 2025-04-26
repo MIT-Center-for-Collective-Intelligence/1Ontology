@@ -73,7 +73,7 @@ import logoMIT from "/public/MIT-Logo-Dark.png";
 // import { use1AcademyTheme } from "../../context/ThemeContext";
 import ROUTES from "../../lib/utils/routes";
 import FullPageLogoLoading from "./FullPageLogoLoading";
-import { AppBackground, AuthLayoutActions } from " @components/types/IAuth";
+import { AppBackground, AuthLayoutActions } from "@components/types/IAuth";
 import { useAuth } from "../context/AuthContext";
 import mitLogoDark from "../../../public/MIT-Logo-small-Dark.png";
 const AuthLayoutContext = createContext<AuthLayoutActions | undefined>(

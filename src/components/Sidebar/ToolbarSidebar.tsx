@@ -36,18 +36,18 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
-import useThemeChange from " @components/lib/hooks/useThemeChange";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import useThemeChange from "@components/lib/hooks/useThemeChange";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import ClearIcon from "@mui/icons-material/Clear";
-import { Notifications } from " @components/components/Chat/Notifications";
-import { chatChange } from " @components/client/firestore/messages.firestore";
-import { INotification } from " @components/types/IChat";
+import { Notifications } from "@components/components/Chat/Notifications";
+import { chatChange } from "@components/client/firestore/messages.firestore";
+import { INotification } from "@components/types/IChat";
 import {
   createNewNode,
   generateInheritance,
   synchronizeStuff,
-} from " @components/lib/utils/helpers";
-import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
+} from "@components/lib/utils/helpers";
+import { getNotificationsSnapshot } from "@components/client/firestore/notifications.firestore";
 import {
   collection,
   doc,
@@ -64,37 +64,37 @@ import ChatSideBar from "../ChatSideBar/ChatSideBar";
 import Inheritance from "../Inheritance/Inheritance";
 import { SidebarButton } from "../SideBarButton/SidebarButton";
 import { Box, SxProps, Theme } from "@mui/material";
-import { capitalizeString } from " @components/lib/utils/string.utils";
+import { capitalizeString } from "@components/lib/utils/string.utils";
 import { getAuth } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
-import { isValidHttpUrl } from " @components/lib/utils/utils";
+import { isValidHttpUrl } from "@components/lib/utils/utils";
 import {
   getStorage,
   uploadBytesResumable,
   getDownloadURL,
   ref as refStorage,
 } from "firebase/storage";
-import { NODES, USERS } from " @components/lib/firestoreClient/collections";
+import { NODES, USERS } from "@components/lib/firestoreClient/collections";
 import { useRouter } from "next/router";
-import ROUTES from " @components/lib/utils/routes";
+import ROUTES from "@components/lib/utils/routes";
 
 import NodeActivity from "../ActiveUsers/NodeActivity";
-import { User } from " @components/types/IAuth";
-import { INode, NodeChange } from " @components/types/INode";
+import { User } from "@components/types/IAuth";
+import { INode, NodeChange } from "@components/types/INode";
 import Improvements from "../Improvements/Improvements";
-import { CHAT_DISCUSSION_TABS, development } from " @components/lib/CONSTANTS";
+import { CHAT_DISCUSSION_TABS, development } from "@components/lib/CONSTANTS";
 
 import {
   compareImprovement,
   filterProposals,
-} from " @components/lib/utils/copilotHelpers";
-import useSelectDropdown from " @components/lib/hooks/useSelectDropdown";
+} from "@components/lib/utils/copilotHelpers";
+import useSelectDropdown from "@components/lib/hooks/useSelectDropdown";
 import {
   copilotDeleteNode,
   copilotNewNode,
   Improvement,
   sendLLMRequest,
-} from " @components/lib/utils/copilotPrompts";
+} from "@components/lib/utils/copilotPrompts";
 import OntologyHistory from "../ActiveUsers/OntologyHistory";
 
 type MainSidebarProps = {

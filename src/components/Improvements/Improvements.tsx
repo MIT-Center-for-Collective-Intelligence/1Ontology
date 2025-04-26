@@ -13,8 +13,8 @@ import {
   where,
 } from "firebase/firestore";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { NODES } from " @components/lib/firestoreClient/collections";
-import { ICollection, INode } from " @components/types/INode";
+import { NODES } from "@components/lib/firestoreClient/collections";
+import { ICollection, INode } from "@components/types/INode";
 
 import {
   checkIfCanDeleteANode,
@@ -32,11 +32,11 @@ import {
   updatePartsAndPartsOf,
   updatePropertyOf,
   updateSpecializations,
-} from " @components/lib/utils/helpers";
+} from "@components/lib/utils/helpers";
 import { useAuth } from "../context/AuthContext";
-import { generateUniqueTitle } from " @components/lib/utils/string.utils";
-import { development } from " @components/lib/CONSTANTS";
-import { newId } from " @components/lib/utils/newFirestoreId";
+import { generateUniqueTitle } from "@components/lib/utils/string.utils";
+import { development } from "@components/lib/CONSTANTS";
+import { newId } from "@components/lib/utils/newFirestoreId";
 type ImprovementsProps = {
   currentImprovement: any;
   setCurrentImprovement: any;

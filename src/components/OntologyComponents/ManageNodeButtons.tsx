@@ -13,7 +13,7 @@ import ChatIcon from "@mui/icons-material/Chat";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import DeleteIcon from "@mui/icons-material/Delete";
 import HistoryIcon from "@mui/icons-material/History";
-import { getTooltipHelper } from " @components/lib/utils/string.utils";
+import { getTooltipHelper } from "@components/lib/utils/string.utils";
 
 const ManageNodeButtons = ({
   locked,

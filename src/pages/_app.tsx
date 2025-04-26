@@ -44,13 +44,13 @@ import { useEffect, useState } from "react";
 import { Hydrate, QueryClient, QueryClientProvider } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
 
-import ErrorBoundary from " @components/components/ErrorBoundary";
-import { AppPropsWithLayout } from " @components/types/IAuth";
-import { AuthProvider } from " @components/components/context/AuthContext";
-import { ThemeProvider } from " @components/components/context/ThemeContext";
-import { createEmotionCache } from " @components/lib/theme/createEmotionCache";
-import { initializeFirestore } from " @components/lib/firestoreClient/firestoreClient.config";
-import { LastDeploymentProvider } from " @components/components/context/LastDeploymentContext";
+import ErrorBoundary from "@components/components/ErrorBoundary";
+import { AppPropsWithLayout } from "@components/types/IAuth";
+import { AuthProvider } from "@components/components/context/AuthContext";
+import { ThemeProvider } from "@components/components/context/ThemeContext";
+import { createEmotionCache } from "@components/lib/theme/createEmotionCache";
+import { initializeFirestore } from "@components/lib/firestoreClient/firestoreClient.config";
+import { LastDeploymentProvider } from "@components/components/context/LastDeploymentContext";
 import {
   collection,
   getFirestore,
@@ -58,7 +58,7 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { LOGS } from " @components/lib/firestoreClient/collections";
+import { LOGS } from "@components/lib/firestoreClient/collections";
 
 const clientSideEmotionCache = createEmotionCache();
 

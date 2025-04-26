@@ -1,7 +1,7 @@
-import { INode, INodeTypes } from " @components/types/INode";
+import { INode, INodeTypes } from "@components/types/INode";
 import { collection, doc, getDoc, Timestamp } from "firebase/firestore";
 import { NODES } from "../firestoreClient/collections";
-import { Reaction } from " @components/types/IChat";
+import { Reaction } from "@components/types/IChat";
 
 // Function to capitalize the first letter of a string
 export function capitalizeFirstLetter(str: string): string {

@@ -1,4 +1,4 @@
-import { INodeTypes } from " @components/types/INode";
+import { INodeTypes } from "@components/types/INode";
 import { DESIGN_SYSTEM_COLORS } from "./theme/colors";
 
 // TO-DO: Consider storing this data in the database to identify node types in the project

@@ -5,7 +5,7 @@
 
 // Import necessary modules and components
 
-import { useAuth } from " @components/components/context/AuthContext";
+import { useAuth } from "@components/components/context/AuthContext";
 import {
   collection,
   doc,

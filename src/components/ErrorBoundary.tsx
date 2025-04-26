@@ -13,9 +13,9 @@ import { Button, Stack, Typography } from "@mui/material";
 import { getFirestore } from "firebase/firestore";
 import React, { ReactNode } from "react";
 
-import { addClientErrorLog } from " @components/lib/firestoreClient/errors.firestore";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
-import { CustomError } from " @components/lib/utils/customError";
+import { addClientErrorLog } from "@components/lib/firestoreClient/errors.firestore";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
+import { CustomError } from "@components/lib/utils/customError";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 type ErrorBoundaryProps = { children: ReactNode };

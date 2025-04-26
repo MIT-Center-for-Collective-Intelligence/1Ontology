@@ -65,8 +65,8 @@ In this example, `ChildNode` is used to display a child node with the given prop
 - Error handling is implemented in the `deleteSubOntologyEditable` function, but it is important to ensure that proper error handling is in place throughout the application.
 - The component does not directly mutate the state but uses provided functions to handle state changes, ensuring a unidirectional data flow.
  */
-import { NODES } from " @components/lib/firestoreClient/collections";
-import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
+import { NODES } from "@components/lib/firestoreClient/collections";
+import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import AddIcon from "@mui/icons-material/Add";
 import {
@@ -77,13 +77,13 @@ import {
   updatePartsAndPartsOf,
   updatePropertyOf,
   updateInheritanceWhenUnlinkAGeneralization,
-} from " @components/lib/utils/helpers";
+} from "@components/lib/utils/helpers";
 import {
   INode,
   INodePath,
   ILinkNode,
   ICollection,
-} from " @components/types/INode";
+} from "@components/types/INode";
 import {
   Box,
   Button,
@@ -110,10 +110,10 @@ import {
 
 import CloseIcon from "@mui/icons-material/Close";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getTitleDeleted } from " @components/lib/utils/string.utils";
+import { getTitleDeleted } from "@components/lib/utils/string.utils";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
-import { UNCLASSIFIED } from " @components/lib/CONSTANTS";
+import { UNCLASSIFIED } from "@components/lib/CONSTANTS";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import LinkEditor from "./LinkEditor";
 

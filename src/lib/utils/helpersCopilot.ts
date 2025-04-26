@@ -1,4 +1,4 @@
-import { ICollection, INode } from " @components/types/INode";
+import { ICollection, INode } from "@components/types/INode";
 import {
   collection,
   getDocs,

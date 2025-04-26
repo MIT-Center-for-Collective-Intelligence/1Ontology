@@ -2,11 +2,11 @@ import React, { useRef } from "react";
 import { Box, IconButton, Typography } from "@mui/material";
 import moment from "moment";
 import OptimizedAvatar from "./OptimizedAvatar";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import { Emoticons } from "./Emoticons";
 import { MessageButtons } from "./MessageButtons";
-import { IChatMessage } from " @components/types/IChat";
+import { IChatMessage } from "@components/types/IChat";
 import ChatInput from "./ChatInput";
 import { AddReactionOutlined } from "@mui/icons-material";
 

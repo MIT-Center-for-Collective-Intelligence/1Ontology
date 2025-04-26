@@ -18,11 +18,11 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { NodeChange } from " @components/types/INode";
-import { NODES_LOGS } from " @components/lib/firestoreClient/collections";
-import { getChangeDescription } from " @components/lib/utils/helpers";
+import { NodeChange } from "@components/types/INode";
+import { NODES_LOGS } from "@components/lib/firestoreClient/collections";
+import { getChangeDescription } from "@components/lib/utils/helpers";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
-import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
+import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 import ActivityDetails from "./ActivityDetails";
 
 const ITEMS_PER_PAGE = 15;

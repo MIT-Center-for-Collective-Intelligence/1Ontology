@@ -18,10 +18,10 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { INode, NodeChange } from " @components/types/INode";
-import { NODES_LOGS } from " @components/lib/firestoreClient/collections";
+import { INode, NodeChange } from "@components/types/INode";
+import { NODES_LOGS } from "@components/lib/firestoreClient/collections";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
-import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
+import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import ActivityDetails from "./ActivityDetails";
 

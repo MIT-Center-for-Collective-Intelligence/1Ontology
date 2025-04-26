@@ -26,9 +26,9 @@ import { useAuth } from "../context/AuthContext";
 import {
   COPILOT_PROMPTS,
   PROMPT_LOGS,
-} from " @components/lib/firestoreClient/collections";
-import { db } from " @components/lib/firestoreServer/admin";
-import { PromptChange } from " @components/types/INode";
+} from "@components/lib/firestoreClient/collections";
+import { db } from "@components/lib/firestoreServer/admin";
+import { PromptChange } from "@components/types/INode";
 import {
   query,
   collection,
@@ -49,8 +49,8 @@ import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import moment from "moment";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import { TreeItem, TreeView } from "@mui/lab";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import { DISPLAY, PROPERTIES_TO_IMPROVE } from " @components/lib/CONSTANTS";
+import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
+import { DISPLAY, PROPERTIES_TO_IMPROVE } from "@components/lib/CONSTANTS";
 import {
   getCopilotPrompt,
   getDeleteNodesPrompt,
@@ -58,9 +58,9 @@ import {
   getNewNodesPrompt,
   getNotesPrompt,
   getResponseStructure,
-} from " @components/lib/utils/copilotPrompts";
+} from "@components/lib/utils/copilotPrompts";
 
-import { getNodesInThreeLevels } from " @components/lib/utils/helpersCopilot";
+import { getNodesInThreeLevels } from "@components/lib/utils/helpersCopilot";
 import GuidLines from "../Guidelines/GuideLines";
 
 const glowGreen = keyframes`

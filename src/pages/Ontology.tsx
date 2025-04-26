@@ -81,9 +81,9 @@ import {
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // import markdownContent from "../components/OntologyComponents/Markdown-Here-Cheatsheet.md";
-import SneakMessage from " @components/components/OntologyComponents/SneakMessage";
-import Node from " @components/components/OntologyComponents/Node";
-import TreeViewSimplified from " @components/components/OntologyComponents/TreeViewSimplified";
+import SneakMessage from "@components/components/OntologyComponents/SneakMessage";
+import Node from "@components/components/OntologyComponents/Node";
+import TreeViewSimplified from "@components/components/OntologyComponents/TreeViewSimplified";
 import {
   ILinkNode,
   ILockedNode,
@@ -93,28 +93,28 @@ import {
   MainSpecializations,
   TreeData,
   TreeVisual,
-} from " @components/types/INode";
-import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
+} from "@components/types/INode";
+import { TabPanel, a11yProps } from "@components/lib/utils/TabPanel";
 
-import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
-import withAuthUser from " @components/components/hoc/withAuthUser";
-import { useAuth } from " @components/components/context/AuthContext";
+import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
+import withAuthUser from "@components/components/hoc/withAuthUser";
+import { useAuth } from "@components/components/context/AuthContext";
 import { useRouter } from "next/router";
-import GraphView from " @components/components/OntologyComponents/GraphView";
-import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
-import { NODES, USERS } from " @components/lib/firestoreClient/collections";
+import GraphView from "@components/components/OntologyComponents/GraphView";
+import { DISPLAY, SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
+import { NODES, USERS } from "@components/lib/firestoreClient/collections";
 
-import { recordLogs } from " @components/lib/utils/helpers";
-import { useHover } from " @components/lib/hooks/useHover";
-import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarSidebar";
-import { NodeChange } from " @components/types/INode";
-import GuidLines from " @components/components/Guidelines/GuideLines";
-import SearchSideBar from " @components/components/SearchSideBar/SearchSideBar";
+import { recordLogs } from "@components/lib/utils/helpers";
+import { useHover } from "@components/lib/hooks/useHover";
+import { MemoizedToolbarSidebar } from "@components/components/Sidebar/ToolbarSidebar";
+import { NodeChange } from "@components/types/INode";
+import GuidLines from "@components/components/Guidelines/GuideLines";
+import SearchSideBar from "@components/components/SearchSideBar/SearchSideBar";
 import Head from "next/head";
-import DraggableTree from " @components/components/OntologyComponents/DraggableTree";
+import DraggableTree from "@components/components/OntologyComponents/DraggableTree";
 import { TreeApi } from "react-arborist";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import ROUTES from " @components/lib/utils/routes";
+import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
+import ROUTES from "@components/lib/utils/routes";
 import { getAuth } from "firebase/auth";
 
 const AddContext = (nodes: any, nodesObject: any): INode[] => {

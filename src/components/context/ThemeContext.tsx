@@ -37,11 +37,11 @@ import {
 import React, { FC, ReactNode, useEffect, useMemo } from "react";
 
 import { useAuth } from "./AuthContext";
-import { UserTheme } from " @components/types/IAuth";
+import { UserTheme } from "@components/types/IAuth";
 import {
   getDesignTokens,
   getThemedComponents,
-} from " @components/lib/theme/brandingTheme";
+} from "@components/lib/theme/brandingTheme";
 
 // const ThemeActionsContext = createContext<ThemeActions | undefined>(undefined);
 
