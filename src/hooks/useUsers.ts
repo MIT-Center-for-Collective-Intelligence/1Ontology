@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
-import { collection, query, getDocs, getFirestore } from 'firebase/firestore';
-import { User } from ' @components/types/IAuth';
+import { useState, useEffect } from "react";
+import { collection, query, getDocs, getFirestore } from "firebase/firestore";
+import { User } from "@components/types/IAuth";
 
 let usersCache: { [key: string]: User } | null = null;
 
 // Fetch users data once and share across all PropertyContributors components through cache
 export const useUsers = () => {
-  const [usersData, setUsersData] = useState<{ [key: string]: User }>(usersCache || {});
+  const [usersData, setUsersData] = useState<{ [key: string]: User }>(
+    usersCache || {},
+  );
   const [isLoading, setIsLoading] = useState(!usersCache);
 
   useEffect(() => {
@@ -25,17 +27,17 @@ export const useUsers = () => {
           const data = doc.data();
           users[doc.id] = {
             userId: doc.id,
-            imageUrl: data.imageUrl || '',
-            fName: data.fName || '',
-            lName: data.lName || '',
+            imageUrl: data.imageUrl || "",
+            fName: data.fName || "",
+            lName: data.lName || "",
             uname: doc.id,
-            email: data.email || '',
+            email: data.email || "",
             claims: data.claims || {},
             rightPanel: data.rightPanel || false,
-            currentNode: data.currentNode || '',
+            currentNode: data.currentNode || "",
             manageLock: data.manageLock || false,
             copilot: data.copilot || false,
-            admin: data.admin || false
+            admin: data.admin || false,
           };
         });
 

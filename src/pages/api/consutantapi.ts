@@ -1,4 +1,4 @@
-import { db } from " @components/lib/firestoreServer/admin-exp";
+import { db } from "@components/lib/firestoreServer/admin-exp";
 import { NextApiRequest, NextApiResponse } from "next";
 import { openai } from "./helpers";
 
