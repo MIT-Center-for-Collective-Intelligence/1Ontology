@@ -201,7 +201,9 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
 
-  const [appName, setAppName] = useState("Top-Down Gemini 2.5 Pro"); // this state is only been used for the Skills Future App
+  const [appName, setAppName] = useState(
+    "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
+  ); // this state is only been used for the Skills Future App
 
   const firstLoad = useRef(true);
 
@@ -1219,14 +1221,14 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                         sx={{ borderRadius: "20px" }}
                       >
                         {[
+                          "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
+                          "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
                           "Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
                           "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
                           "Holistic Embedding (Sector, Title, JobRole, CWF, Parts) - Gemini 2.5 Pro",
                           "O*Net Verbs o3 Deep Research",
                           "O*Net Verbs - o1 Pro",
                           "Top-Down Gemini 2.5 Pro",
-                          "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
-                          "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
                         ].map((item) => (
                           <MenuItem key={item} value={item}>
                             {item}
