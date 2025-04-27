@@ -1225,6 +1225,8 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                           "O*Net Verbs o3 Deep Research",
                           "O*Net Verbs - o1 Pro",
                           "Top-Down Gemini 2.5 Pro",
+                          "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
+                          "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
                         ].map((item) => (
                           <MenuItem key={item} value={item}>
                             {item}
