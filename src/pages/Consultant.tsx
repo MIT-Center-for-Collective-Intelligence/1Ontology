@@ -899,8 +899,7 @@ const Consultant = () => {
                   <ConsultantChat
                     diagramId={"SoPXSns6R44IooeVuVRC"}
                     setSelectedSolutionId={setSelectedSolutionId}
-                    setSelectedSolId={setSelectedSolId}
-                    selectedSolutionId={""}
+                    selectedSolutionId={selectedSolutionId ?? ""}
                   />
                 </TabPanel>
                 <TabPanel value={tabIndex} index={1}>

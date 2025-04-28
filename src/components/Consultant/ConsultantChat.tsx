@@ -16,12 +16,10 @@ const ConsultantChat = ({
   diagramId,
   setSelectedSolutionId,
   selectedSolutionId,
-  setSelectedSolId,
 }: {
   diagramId: string;
   setSelectedSolutionId: any;
   selectedSolutionId: string;
-  setSelectedSolId: any;
 }) => {
   const db = getFirestore("causal-diagram");
   const [messages, setMessages] = useState<any[]>([]);
