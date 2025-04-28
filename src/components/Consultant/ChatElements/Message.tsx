@@ -25,6 +25,7 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   getFirestore,
   onSnapshot,
@@ -86,6 +87,7 @@ const Message = ({
   const isFirstNested = depth > 0; // Helper to identify the first nested message
   const [tempText, setTempText] = useState("");
   const [loadingResponse, setLoadingResponse] = useState(false);
+  const [loadingCopy, setLoadingCopy] = useState(false);
 
   useEffect(() => {
     if (!diagramId) return;
@@ -129,76 +131,46 @@ const Message = ({
       setLoadingResponse(false);
     }
   };
-  const copyCLD = async (diagramId: string) => {
-    try {
-      const groupsQuery = query(
-        collection(db, GROUPS),
-        where("diagrams", "array-contains", diagramId),
-        where("deleted", "==", false),
-      );
-      const linksQuery = query(
-        collection(db, LINKS),
-        where("diagrams", "array-contains", diagramId),
-        where("deleted", "==", false),
-      );
-      const nodesQuery = query(
-        collection(db, NODES),
-        where("diagrams", "array-contains", diagramId),
-        where("deleted", "==", false),
-      );
+  const getThreadOfMessages = async (messageId: string) => {
+    const messagesList: any = [];
+    const messageRef = doc(db, CONSULTANT_MESSAGES, messageId);
+    const messageDoc = await getDoc(messageRef);
 
-      const [groupsSnapshot, linksSnapshot, nodesSnapshot] = await Promise.all([
-        getDocs(groupsQuery),
-        getDocs(linksQuery),
-        getDocs(nodesQuery),
-      ]);
+    if (!messageDoc.exists()) {
+      return messagesList; // or handle the case when document doesn't exist
+    }
 
-      const nodes = nodesSnapshot.docs.reduce(
-        (acc, doc) => {
-          acc[doc.id] = doc.data();
-          return acc;
+    const messageData = messageDoc.data();
+    messagesList.push({
+      role: messageData.role ? "Consultee" : "Consultant",
+
+      text: JSON.stringify(
+        {
+          alternatives: [
+            {
+              response: messageData.text,
+              moves: messageData.moves,
+            },
+          ],
         },
-        {} as Record<string, any>,
-      );
+        null,
+        2,
+      ),
+    });
 
-      const _links = linksSnapshot.docs.map((doc) => doc.data());
-      const _groups = groupsSnapshot.docs.map((doc) => doc.data());
-
-      const _nodes: any = Object.values(JSON.parse(JSON.stringify(nodes)));
-
-      for (let node of _nodes) {
-        delete node.id;
-        delete node.diagrams;
-        delete node.deleted;
-        delete node.createdAt;
-        if (node.groups) {
-          node.groups = node.groups.map((c: any) => c.label);
-        }
-      }
-
-      for (let link of _links) {
-        link.source = nodes[link.source]?.label || link.source;
-        link.target = nodes[link.target]?.label || link.target;
-        delete link.id;
-        delete link.diagrams;
-        delete link.deleted;
-      }
-
-      for (let group of _groups) {
-        delete group.createdAt;
-        delete group.deleted;
-        delete group.diagrams;
-        delete group.id;
-      }
-
-      const responseFromModel = {
-        nodes: _nodes,
-        links: _links,
-        groups: _groups,
-      };
+    const nextLevel = messageData.root
+      ? []
+      : await getThreadOfMessages(messageData.parentMessage);
+    messagesList.push(...nextLevel);
+    return messagesList;
+  };
+  const copyThread = async (messageId: string) => {
+    try {
+      setLoadingCopy(true);
+      const messagesList = await getThreadOfMessages(messageId);
 
       await navigator.clipboard.writeText(
-        JSON.stringify(responseFromModel, null, 2),
+        JSON.stringify(messagesList, null, 2),
       );
       setTempText("Copied!");
 
@@ -211,6 +183,8 @@ const Message = ({
       setTimeout(() => {
         setTempText("");
       }, 1000);
+    } finally {
+      setLoadingCopy(false);
     }
   };
   const movesExtracted = useMemo(() => {
@@ -401,7 +375,7 @@ const Message = ({
                   <Tooltip title="Copy CLD">
                     <IconButton
                       onClick={() => {
-                        copyCLD(message.id);
+                        copyThread(message.id);
                       }}
                     >
                       <ContentCopyIcon sx={{ color: "orange" }} />
