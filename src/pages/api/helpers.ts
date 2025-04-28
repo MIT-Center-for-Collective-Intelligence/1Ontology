@@ -79,7 +79,7 @@ export const askGemini = async (contents: Content[], model: string) => {
     const completion: any = await openaiH.chat.completions.create({
       messages: openaiMessages,
       model: "o4-mini",
-      temperature: 0,
+      reasoning_effort: "high",
     });
 
     const completionContent = completion.choices[0].message.content || "";
