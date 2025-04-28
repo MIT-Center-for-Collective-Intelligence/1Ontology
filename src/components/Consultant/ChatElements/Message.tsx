@@ -234,7 +234,7 @@ const Message = ({
             backgroundColor: (theme) =>
               theme.palette.mode === "dark"
                 ? DESIGN_SYSTEM_COLORS.notebookG700
-                : DESIGN_SYSTEM_COLORS.gray300,
+                : "white",
             position: "relative",
           }}
         >

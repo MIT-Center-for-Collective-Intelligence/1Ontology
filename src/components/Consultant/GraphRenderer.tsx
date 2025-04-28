@@ -426,9 +426,9 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
     return () => {
       svg.selectAll("*").remove();
     };
-  }, [nodes, links, newNode, selectedGroups]);
+  }, [nodes, links, newNode, selectedGroups, selectedLoop]);
 
-  return <svg ref={svgRef} width="100%" height="600px"></svg>;
+  return <svg ref={svgRef} width="100%" height="100%"></svg>;
 };
 
 export default GraphRenderer;
