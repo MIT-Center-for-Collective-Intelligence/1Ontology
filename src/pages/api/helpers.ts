@@ -62,7 +62,11 @@ const safetySettings = [
 
 const isValidJSON = (jsonString: string) => {
   try {
-    return { jsonObject: JSON.parse(jsonString), isJSON: true };
+    const start = jsonString.indexOf("{");
+    const end = jsonString.lastIndexOf("}");
+    const objectString = jsonString.slice(start, end + 1);
+
+    return { jsonObject: JSON.parse(objectString), isJSON: true };
   } catch (error) {
     console.error(error);
     return { jsonObject: {}, isJSON: false };
