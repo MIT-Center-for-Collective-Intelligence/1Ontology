@@ -897,7 +897,7 @@ const Consultant = () => {
               <Box>
                 <TabPanel value={tabIndex} index={0} sx={{ pl: "15px" }}>
                   <ConsultantChat
-                    diagramId={"SoPXSns6R44IooeVuVRC"}
+                    diagramId={selectedDiagram.id}
                     setSelectedSolutionId={setSelectedSolutionId}
                     selectedSolutionId={selectedSolutionId ?? ""}
                   />

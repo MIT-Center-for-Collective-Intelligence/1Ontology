@@ -50,9 +50,8 @@ const ConsultantChat = ({
 
   const renderMessages = (messages: any) =>
     messages.map((msg: any, index: number) => (
-      <Box sx={{ mt: index === 0 ? "100px" : "" }}>
+      <Box key={msg.id} sx={{ mt: index === 0 ? "100px" : "" }}>
         <Message
-          key={msg.id}
           message={msg}
           showReplies={showReplies}
           setShowReplies={setShowReplies}
