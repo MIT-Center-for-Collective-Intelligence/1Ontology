@@ -186,7 +186,7 @@ const PromptDialogComponent = ({
           p: 1,
           borderRadius: "25px",
           backgroundColor: (theme) =>
-            theme.palette.mode === "dark" ? "#000000" : "#c0c0c0",
+            theme.palette.mode === "dark" ? "#000000" : "",
         }}
         elevation={6}
       >

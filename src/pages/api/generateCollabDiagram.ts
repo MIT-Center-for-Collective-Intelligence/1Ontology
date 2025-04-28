@@ -39,12 +39,11 @@ const generateTopMessage = async (
     alternatives: any;
   };
   if (response.alternatives) {
+    const messages = [];
+
     for (let responseToUser of response.alternatives) {
       const newMessageRef = dbCausal.collection(CONSULTANT_MESSAGES).doc();
-      let fullConversation = "";
-
-      fullConversation += `AI Consultant:\n\n ${responseToUser.response}`;
-      newMessageRef.set({
+      const newMessage = {
         id: newMessageRef.id,
         text: responseToUser.response,
         moves: responseToUser.moves,
@@ -53,7 +52,14 @@ const generateTopMessage = async (
         diagramId,
         cld: true,
         loadingCld: true,
-      });
+      };
+      messages.push(newMessage);
+      newMessageRef.set(newMessage);
+    }
+    for (let m of messages) {
+      let fullConversation = "";
+      const newMessageRef = dbCausal.collection(CONSULTANT_MESSAGES).doc(m.id);
+      fullConversation += `AI Consultant:\n\n ${m.text}`;
 
       await generateDiagram({
         caseDescription,

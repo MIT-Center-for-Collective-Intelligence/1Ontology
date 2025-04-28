@@ -181,17 +181,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     };
 
     if (consultantResponse.alternatives.length > 0) {
+      const newMessages = [];
       for (let alternative of consultantResponse.alternatives) {
         const newMessageRef = dbCausal.collection(CONSULTANT_MESSAGES).doc();
-        let fullConversation = "";
-        messagesArray.forEach((m) => {
-          if (m.role === "model") {
-            fullConversation += `AI Consultant:\n\n ${m.parts[0].text}`;
-          } else {
-            fullConversation += `Consultee:\n\n ${m.parts[0].text}`;
-          }
-        });
-        newMessageRef.set({
+
+        const newMessage = {
           id: newMessageRef.id,
           text: alternative.response,
           createdAt: new Date(),
@@ -200,13 +194,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           moves: alternative.moves,
           cld: true,
           loadingCld: true,
-        });
+        };
+        newMessages.push(newMessage);
+        newMessageRef.set(newMessage);
+      }
+      let fullConversation = "";
+      messagesArray.forEach((m) => {
+        if (m.role === "model") {
+          fullConversation += `AI Consultant:\n\n ${m.parts[0].text}`;
+        } else {
+          fullConversation += `Consultee:\n\n ${m.parts[0].text}`;
+        }
+      });
+      for (let m of newMessages) {
+        fullConversation += `AI Consultant:\n\n ${m.text}`;
+        const newMessageRef = dbCausal
+          .collection(CONSULTANT_MESSAGES)
+          .doc(m.id);
         await generateDiagram({
           caseDescription,
           problemStatement,
           fullConversation,
           previousCLD,
-          messageId: newMessageRef.id,
+          messageId: m.id,
           nodeTypes,
         });
         newMessageRef.update({

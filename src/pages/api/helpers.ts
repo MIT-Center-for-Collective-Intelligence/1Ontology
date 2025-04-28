@@ -17,6 +17,7 @@ export const openaiH = new OpenAI({
   organization: process.env.OPENAI_API_ORG_ID_H,
 });
 
+import { dbCausal } from "@components/lib/firestoreServer/admin";
 import {
   Content,
   GoogleGenerativeAI,
@@ -84,8 +85,8 @@ export const askGemini = async (contents: Content[], model: string) => {
 
     const completionContent = completion.choices[0].message.content || "";
 
-    /* const totalTokens = completion.usage["total_tokens"];
-    const tokenRef = db.collection("tokenUsage").doc();
+    const totalTokens = completion.usage["total_tokens"];
+    const tokenRef = dbCausal.collection("tokenUsage").doc();
     tokenRef.set({
       tokens: totalTokens,
       createdAt: new Date(),
@@ -93,7 +94,7 @@ export const askGemini = async (contents: Content[], model: string) => {
       messages: openaiMessages,
       response: completionContent,
       tokenLimit: 10 * 1000 * 1000,
-    }); */
+    });
     const isJSONObject = isValidJSON(completionContent);
 
     if (isJSONObject.isJSON) {
