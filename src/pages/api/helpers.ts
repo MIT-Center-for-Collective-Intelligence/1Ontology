@@ -8,6 +8,17 @@
  */
 
 import { dbCausal } from "@components/lib/firestoreServer/admin";
+import { db } from "@components/lib/firestoreServer/admin-exp";
+export const openai = new OpenAI({
+  apiKey: process.env.MIT_CCI_API_KEY,
+  organization: process.env.MIT_CCI_API_ORG_ID,
+});
+
+export const openaiH = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY_H,
+  organization: process.env.OPENAI_API_ORG_ID_H,
+});
+
 import {
   Content,
   GoogleGenerativeAI,
@@ -60,7 +71,41 @@ const isValidJSON = (jsonString: string) => {
 };
 
 export const askGemini = async (contents: Content[], model: string) => {
-  const apiKeys = [
+  try {
+    const openaiMessages: { role: "user" | "assistant"; content: string }[] =
+      contents.map((c) => ({
+        role: c.role === "user" ? "user" : "assistant",
+        content: c.parts.map((p) => p.text).join(" "),
+      }));
+
+    const completion: any = await openaiH.chat.completions.create({
+      messages: openaiMessages,
+      model: "o4-mini",
+      temperature: 0,
+    });
+
+    const completionContent = completion.choices[0].message.content || "";
+
+    const totalTokens = completion.usage["total_tokens"];
+    const tokenRef = db.collection("tokenUsage").doc();
+    tokenRef.set({
+      tokens: totalTokens,
+      createdAt: new Date(),
+      model,
+      messages: openaiMessages,
+      response: completionContent,
+      tokenLimit: 10 * 1000 * 1000,
+    });
+    const isJSONObject = isValidJSON(completionContent);
+
+    if (isJSONObject.isJSON) {
+      return isJSONObject.jsonObject;
+    }
+  } catch (error: any) {
+    console.log(error);
+  }
+
+  /*   const apiKeys = [
     process.env.GEMINI_API_KEY_1,
     process.env.GEMINI_API_KEY_2,
     process.env.GEMINI_API_KEY_3,
@@ -150,10 +195,5 @@ export const askGemini = async (contents: Content[], model: string) => {
 
   throw new Error(
     "All API keys exhausted - failed to get a complete JSON object",
-  );
+  ); */
 };
-
-export const openai = new OpenAI({
-  apiKey: process.env.MIT_CCI_API_KEY,
-  organization: process.env.MIT_CCI_API_ORG_ID,
-});
