@@ -7,8 +7,6 @@
  * https://ai.google.dev/gemini-api/docs/get-started/node
  */
 
-import { dbCausal } from "@components/lib/firestoreServer/admin";
-import { db } from "@components/lib/firestoreServer/admin-exp";
 export const openai = new OpenAI({
   apiKey: process.env.MIT_CCI_API_KEY,
   organization: process.env.MIT_CCI_API_ORG_ID,
@@ -86,7 +84,7 @@ export const askGemini = async (contents: Content[], model: string) => {
 
     const completionContent = completion.choices[0].message.content || "";
 
-    const totalTokens = completion.usage["total_tokens"];
+    /* const totalTokens = completion.usage["total_tokens"];
     const tokenRef = db.collection("tokenUsage").doc();
     tokenRef.set({
       tokens: totalTokens,
@@ -95,7 +93,7 @@ export const askGemini = async (contents: Content[], model: string) => {
       messages: openaiMessages,
       response: completionContent,
       tokenLimit: 10 * 1000 * 1000,
-    });
+    }); */
     const isJSONObject = isValidJSON(completionContent);
 
     if (isJSONObject.isJSON) {
