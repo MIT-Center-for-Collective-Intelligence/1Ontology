@@ -40,6 +40,7 @@ import {
   NODES,
 } from "@components/lib/firestoreClient/collections";
 import { extractMoves } from "@components/lib/utils/ConsultantUtils";
+import { LoadingButton } from "@mui/lab";
 
 // Assume you'll import the image yourself
 // import consultantImage from "@/public/consultant.png";
@@ -350,26 +351,22 @@ const Message = ({
                   ml: "auto",
                 }}
               >
-                {!message.cld && (
-                  <Button
-                    variant={
-                      selectedSolutionId === message.id
-                        ? "contained"
-                        : "outlined"
-                    }
-                    size="small"
-                    onClick={() =>
-                      setSelectedSolutionId((prev: any) =>
-                        prev === message.id ? null : message.id,
-                      )
-                    }
-                    sx={{ borderRadius: "25px" }}
-                  >
-                    {selectedSolutionId === message.id
-                      ? "Unselect"
-                      : "View CLD"}
-                  </Button>
-                )}
+                <LoadingButton
+                  loading={message.loadingCld}
+                  variant={
+                    selectedSolutionId === message.id ? "contained" : "outlined"
+                  }
+                  size="small"
+                  onClick={() => {
+                    setSelectedSolutionId((prev: any) =>
+                      prev === message.id ? null : message.id,
+                    );
+                  }}
+                  sx={{ borderRadius: "25px" }}
+                >
+                  {selectedSolutionId === message.id ? "Unselect" : "View CLD"}
+                </LoadingButton>
+
                 <Button
                   variant="outlined"
                   size="small"

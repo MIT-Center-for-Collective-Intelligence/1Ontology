@@ -958,7 +958,7 @@ const Consultant = () => {
                 <Box
                   sx={{
                     position: "absolute",
-                    bottom: "-3.5%",
+                    bottom: "0%",
                     left: openSideBar ? "51%" : "10px",
                     zIndex: "1000",
                     transform: "translateY(-50%)",
@@ -1198,7 +1198,7 @@ const Consultant = () => {
                           >
                             {" "}
                             <Box
-                              sx={{ mb: 2, mr: "10px", pt: "7px", pl: "7px" }}
+                              sx={{ mb: 0, mr: "10px", pt: "7px", pl: "7px" }}
                             >
                               <img
                                 src={mitLogoDarkLong.src}

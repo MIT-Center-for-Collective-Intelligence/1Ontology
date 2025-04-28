@@ -5,6 +5,7 @@ import fbAuth from "@components/middlewares/fbAuth";
 import { getConsultantPrompt } from "@components/lib/utils/copilotPrompts";
 import { GEMINI_MODEL } from "@components/lib/CONSTANTS";
 import { generateDiagram } from "@components/lib/utils/helpersConsultant";
+import { FieldValue } from "firebase-admin/firestore";
 
 const deleteAllPreviousData = async (diagramId: string) => {
   const collections = ["nodes", "groups", "links"];
@@ -190,16 +191,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             fullConversation += `Consultee:\n\n ${m.parts[0].text}`;
           }
         });
-
-        await generateDiagram({
-          caseDescription,
-          problemStatement,
-          fullConversation,
-          previousCLD,
-          messageId: newMessageRef.id,
-          nodeTypes,
-        });
-
         newMessageRef.set({
           id: newMessageRef.id,
           text: alternative.response,
@@ -208,6 +199,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           diagramId,
           moves: alternative.moves,
           cld: true,
+          loadingCld: true,
+        });
+        await generateDiagram({
+          caseDescription,
+          problemStatement,
+          fullConversation,
+          previousCLD,
+          messageId: newMessageRef.id,
+          nodeTypes,
+        });
+        newMessageRef.update({
+          loadingCld: FieldValue.delete(),
         });
       }
     }

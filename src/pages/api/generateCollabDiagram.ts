@@ -8,6 +8,7 @@ import {
   generateDiagram,
   createAColor,
 } from "@components/lib/utils/helpersConsultant";
+import { FieldValue } from "firebase-admin/firestore";
 
 const CONSULTANT_MESSAGES = "consultantMessages";
 
@@ -43,6 +44,16 @@ const generateTopMessage = async (
       let fullConversation = "";
 
       fullConversation += `AI Consultant:\n\n ${responseToUser.response}`;
+      newMessageRef.set({
+        id: newMessageRef.id,
+        text: responseToUser.response,
+        moves: responseToUser.moves,
+        createdAt: new Date(),
+        root: true,
+        diagramId,
+        cld: true,
+        loadingCld: true,
+      });
 
       await generateDiagram({
         caseDescription,
@@ -52,14 +63,8 @@ const generateTopMessage = async (
         messageId: newMessageRef.id,
         nodeTypes,
       });
-      newMessageRef.set({
-        id: newMessageRef.id,
-        text: responseToUser.response,
-        moves: responseToUser.moves,
-        createdAt: new Date(),
-        root: true,
-        diagramId,
-        cld: true,
+      newMessageRef.update({
+        loadingCld: FieldValue.delete(),
       });
     }
   }
