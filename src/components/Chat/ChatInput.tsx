@@ -40,6 +40,7 @@ type ChatInputProps = {
   setOpenSelectModel?: React.Dispatch<React.SetStateAction<boolean>>;
   chatType: string;
   placeholder: string;
+  consultant?: boolean;
 };
 
 const ChatInput = ({
@@ -56,6 +57,7 @@ const ChatInput = ({
   setOpenSelectModel,
   chatType,
   placeholder,
+  consultant,
   sx,
 }: ChatInputProps) => {
   const theme = useTheme();
@@ -124,6 +126,7 @@ const ChatInput = ({
   };
 
   useEffect(() => {
+    if (!!consultant) return;
     const savedInputValue = localStorage.getItem(
       `chatInputValue-${type}-${chatType}`,
     );
@@ -139,7 +142,7 @@ const ChatInput = ({
   }, [chatType, type, isEditing]);
 
   useEffect(() => {
-    if (!isEditing) {
+    if (!isEditing && !consultant) {
       localStorage.setItem(`chatInputValue-${type}-${chatType}`, inputValue);
     }
   }, [inputValue, chatType, type, isEditing]);
@@ -238,7 +241,6 @@ const ChatInput = ({
   return (
     <Box
       sx={{
-        mt: "10px",
         border: (theme) =>
           `solid 1px ${
             theme.palette.mode === "light"
@@ -247,9 +249,7 @@ const ChatInput = ({
           }`,
         borderRadius: "10px",
         backgroundColor: (theme) =>
-          theme.palette.mode === "dark"
-            ? DESIGN_SYSTEM_COLORS.notebookG700
-            : DESIGN_SYSTEM_COLORS.gray100,
+          theme.palette.mode === "dark" ? "#363636" : "#d4d6d7",
         ...SCROLL_BAR_STYLE,
         pb: 0,
       }}
@@ -292,6 +292,7 @@ const ChatInput = ({
         handleSendMessage={handleSendMessage}
         inputValue={inputValue}
         setImageUrls={setImageUrls}
+        chatType={chatType}
       />
       <input
         type="file"

@@ -7,6 +7,7 @@ import {
   where,
 } from "firebase/firestore";
 import { NODES } from "../firestoreClient/collections";
+import { GEMINI_MODEL } from "../CONSTANTS";
 const db = getFirestore();
 type IComparePropertiesReturn = {
   modifiedProperty: string;

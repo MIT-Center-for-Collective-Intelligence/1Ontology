@@ -16,6 +16,7 @@ interface MessageInputFooterProps {
   handleSendMessage: () => void;
   inputValue: string;
   setImageUrls: React.Dispatch<React.SetStateAction<string[]>>;
+  chatType: string;
 }
 
 const MessageInputFooter: React.FC<MessageInputFooterProps> = ({
@@ -29,6 +30,7 @@ const MessageInputFooter: React.FC<MessageInputFooterProps> = ({
   handleSendMessage,
   inputValue,
   setImageUrls,
+  chatType,
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -65,7 +67,7 @@ const MessageInputFooter: React.FC<MessageInputFooterProps> = ({
                 }}
                 onClick={() =>
                   setImageUrls((prev) =>
-                    prev.filter((image) => image !== imageUrl)
+                    prev.filter((image) => image !== imageUrl),
                   )
                 }
               />
@@ -108,7 +110,7 @@ const MessageInputFooter: React.FC<MessageInputFooterProps> = ({
                 >
                   {percentageUploaded + "%"}
                 </span>
-              ) : (
+              ) : chatType ? (
                 <Tooltip title="Upload Image">
                   <IconButton onClick={uploadImageClicked}>
                     <CollectionsIcon
@@ -121,6 +123,8 @@ const MessageInputFooter: React.FC<MessageInputFooterProps> = ({
                     />
                   </IconButton>
                 </Tooltip>
+              ) : (
+                <></>
               )}
             </Box>
             {setOpenSelectModel && (

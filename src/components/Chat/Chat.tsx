@@ -736,27 +736,25 @@ const Chat = ({
               <Box
                 sx={{ height: "100%", display: "grid", placeItems: "center" }}
               >
-                <Box>
-                  <Box
-                    sx={{
-                      width: { xs: "250px", sm: "300px" },
-                      height: { xs: "250px", sm: "200px" },
-                      "& .rive-canvas": {
-                        height: "100%",
-                      },
+                <Box
+                  sx={{
+                    width: { xs: "250px", sm: "300px" },
+                    height: { xs: "250px", sm: "200px" },
+                    "& .rive-canvas": {
+                      height: "100%",
+                    },
+                  }}
+                >
+                  <RiveComponentMemoized
+                    src="/rive/notification.riv"
+                    animations={"Timeline 1"}
+                    artboard="New Artboard"
+                    autoplay={true}
+                    style={{
+                      width: "100%",
+                      height: "100%",
                     }}
-                  >
-                    <RiveComponentMemoized
-                      src="/rive/notification.riv"
-                      animations={"Timeline 1"}
-                      artboard="New Artboard"
-                      autoplay={true}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                      }}
-                    />
-                  </Box>
+                  />
                 </Box>
               </Box>
             </Box>

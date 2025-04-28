@@ -32,7 +32,7 @@ export const MessageButtons = ({
   makeMessageUnread,
   boxRef,
 }: CommentButtonProps) => {
-  const isSender = user.uname === message.sender;
+  const isSender = user?.uname === message.sender;
 
   return (
     <Box

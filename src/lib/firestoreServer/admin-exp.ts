@@ -17,16 +17,15 @@ const configs = {
 };
 
 let app: App;
-if (!admin.apps.filter((a: any) => a.name === "[DEFAULT]").length) {
+if (!admin.apps.filter((a: any) => a.name === "exp").length) {
   let initializationConfigs: any = {
     credential: cert(configs as any),
   };
 
-  app = initializeApp(initializationConfigs);
+  app = initializeApp(initializationConfigs, "exp");
   getFirestore().settings({ ignoreUndefinedProperties: true });
 }
 export const MAX_TRANSACTION_WRITES = 499;
 const db = getFirestore();
 
 export { admin, db, app };
-

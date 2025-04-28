@@ -54,7 +54,12 @@ export const isValidHttpUrl = (possibleUrl?: string) => {
   return url.protocol === "http:" || url.protocol === "https:";
 };
 
-function annotate(number: number, maxPlaces: any, forcePlaces: any, abbr: string): string {
+function annotate(
+  number: number,
+  maxPlaces: any,
+  forcePlaces: any,
+  abbr: string,
+): string {
   // set places to false to not round
   let rounded: number = 0;
   switch (abbr) {
@@ -90,7 +95,12 @@ function annotate(number: number, maxPlaces: any, forcePlaces: any, abbr: string
   return rounded + abbr;
 }
 
-export const shortenNumber = function (number: number, maxPlaces: any, forcePlaces: any, forceLetter?: any) {
+export const shortenNumber = function (
+  number: number,
+  maxPlaces: any,
+  forcePlaces: any,
+  forceLetter?: any,
+) {
   number = Number(number);
   forceLetter = forceLetter || false;
   if (forceLetter !== false) {
@@ -107,4 +117,35 @@ export const shortenNumber = function (number: number, maxPlaces: any, forcePlac
     abbr = "K";
   }
   return annotate(number, maxPlaces, forcePlaces, abbr);
+};
+
+export const processChanges = (
+  prev: any,
+  changes: any,
+  object = false,
+  collection = null,
+) => {
+  const _prev = object ? { ...prev } : [...prev];
+
+  changes.forEach((change: any) => {
+    const index = object
+      ? -1
+      : _prev.findIndex((group: any) => group.id === change.doc.id);
+    if (change.type === "added" || change.type === "modified") {
+      if (object) {
+        _prev[change.doc.id] = { ...change.doc.data(), id: change.doc.id };
+      } else if (index === -1) {
+        _prev.push({ ...change.doc.data(), id: change.doc.id });
+      } else {
+        _prev[index] = { ...change.doc.data(), id: change.doc.id };
+      }
+    } else if (change.type === "removed") {
+      if (object) {
+        delete _prev[change.doc.id];
+      } else if (index !== -1) {
+        _prev.splice(index, 1);
+      }
+    }
+  });
+  return _prev;
 };

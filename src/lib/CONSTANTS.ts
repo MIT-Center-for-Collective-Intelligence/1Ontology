@@ -159,3 +159,6 @@ export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
     "reward",
   ],
 };
+
+export const MODEL = "o3";
+export const GEMINI_MODEL = "gemini-2.5-pro-exp-03-25";

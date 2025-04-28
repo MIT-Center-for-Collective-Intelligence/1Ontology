@@ -7,6 +7,7 @@
  * https://ai.google.dev/gemini-api/docs/get-started/node
  */
 
+import { dbCausal } from "@components/lib/firestoreServer/admin";
 import {
   Content,
   GoogleGenerativeAI,
@@ -27,7 +28,6 @@ const generationConfig = {
   temperature: 0,
   topP: 0.95,
   topK: 64,
-  maxOutputTokens: 8192,
   responseMimeType: "application/json",
 };
 
@@ -124,6 +124,14 @@ export const askGemini = async (contents: Content[], model: string) => {
           safetySettings,
         });
         response = result.response.text();
+
+        const newResponseRef = dbCausal.collection("responsesAI").doc();
+
+        newResponseRef.set({
+          contents,
+          response,
+          createdAt: new Date(),
+        });
         isJSONObject = isValidJSON(response);
 
         if (isJSONObject.isJSON) {

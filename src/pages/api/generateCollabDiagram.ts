@@ -1,30 +1,77 @@
-import { db } from "@components/lib/firestoreServer/admin-exp";
 import { NextApiRequest, NextApiResponse } from "next";
-import { openai } from "./helpers";
+import { askGemini, openai } from "./helpers";
 
-const extractJSON = (text: string) => {
-  try {
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
-    if (end === -1 || start === -1) {
-      return { jsonObject: {}, isJSON: false };
+import { dbCausal } from "@components/lib/firestoreServer/admin";
+import { GEMINI_MODEL } from "@components/lib/CONSTANTS";
+import { getConsultantPrompt } from "@components/lib/utils/copilotPrompts";
+import {
+  generateDiagram,
+  createAColor,
+} from "@components/lib/utils/helpersConsultant";
+
+const CONSULTANT_MESSAGES = "consultantMessages";
+
+const generateTopMessage = async (
+  caseDescription: string,
+  problemStatement: string,
+  diagramId: string,
+  previousCLD: {
+    groupHierarchy: any;
+    nodes: any;
+    links: any;
+  },
+  nodeTypes: string[],
+) => {
+  const prompt = getConsultantPrompt(caseDescription, problemStatement);
+  const messages: any = [
+    {
+      role: "user",
+      parts: [
+        {
+          text: prompt,
+        },
+      ],
+    },
+  ];
+
+  const response = (await askGemini(messages, GEMINI_MODEL)) as {
+    alternatives: any;
+  };
+  if (response.alternatives) {
+    for (let responseToUser of response.alternatives) {
+      const newMessageRef = dbCausal.collection(CONSULTANT_MESSAGES).doc();
+      let fullConversation = "";
+
+      fullConversation += `AI Consultant:\n\n ${responseToUser.response}`;
+
+      await generateDiagram({
+        caseDescription,
+        problemStatement,
+        fullConversation,
+        previousCLD,
+        messageId: newMessageRef.id,
+        nodeTypes,
+      });
+      newMessageRef.set({
+        id: newMessageRef.id,
+        text: responseToUser.response,
+        moves: responseToUser.moves,
+        createdAt: new Date(),
+        root: true,
+        diagramId,
+        cld: true,
+      });
     }
-    const jsonArrayString = text.slice(start, end + 1);
-    return { jsonObject: JSON.parse(jsonArrayString), isJSON: true };
-  } catch (error) {
-    return { jsonObject: {}, isJSON: false };
   }
-};
-const createAColor = () => {
-  const r = Math.floor(Math.random() * 256);
-  const g = Math.floor(Math.random() * 256);
-  const b = Math.floor(Math.random() * 256);
 
-  const hexR = r.toString(16).padStart(2, "0");
-  const hexG = g.toString(16).padStart(2, "0");
-  const hexB = b.toString(16).padStart(2, "0");
-
-  return `#${hexR}${hexG}${hexB}`.toLowerCase();
+  /* 
+  {
+  "alternatives": [
+    {
+      "moves": ["<Move1>", "<OptionalMove2>"],
+      "response": "<≤80-word instruction to the user>"
+    }
+  }*/
 };
 
 export default async function handler(
@@ -46,13 +93,14 @@ export default async function handler(
       ideaEvaluator,
       consultant,
     } = req.body;
+
     const promptDocs = ideaEvaluator
-      ? await db
+      ? await dbCausal
           .collection("diagramPrompts")
           .where("ideaEvaluator", "==", true)
           .where("type", "==", "generate")
           .get()
-      : await db
+      : await dbCausal
           .collection("diagramPrompts")
           .where("type", "==", "generate")
           .get();
@@ -73,45 +121,43 @@ ${documentDetailed}
 ${problemStatement}
 `;
     }
+
     const messages: any = [
       {
         role: "user",
-        content: prompt,
+        parts: [
+          {
+            text: prompt,
+          },
+        ],
       },
     ];
-    const model = "o3";
 
-    const nodeTypesDocs = await db.collection("nodeTypes").get();
+    const nodeTypesDocs = await dbCausal.collection("nodeTypes").get();
     const nodeTypes = [];
     for (let nodeDoc of nodeTypesDocs.docs) {
       const nodeData = nodeDoc.data();
       nodeTypes.push(nodeData.type);
     }
 
-    const completion = await openai.chat.completions.create({
-      messages,
-      model,
-      reasoning_effort: "high",
-    });
+    const responseCLD = (await askGemini(messages, GEMINI_MODEL)) as {
+      groupHierarchy: any;
+      nodes: any;
+      links: any;
+    };
 
-    const response = extractJSON(
-      completion.choices[0].message.content || "",
-    ).jsonObject;
-
-    const resRef = db.collection("responsesAI").doc();
-    await resRef.set({
-      response,
-      createdAt: new Date(),
-      llmPrompt,
-    });
-    if (!response?.groupHierarchy || !response?.nodes || !response?.links) {
+    if (
+      !responseCLD?.groupHierarchy ||
+      !responseCLD?.nodes ||
+      !responseCLD?.links
+    ) {
       throw Error("Incomplete JSON");
     }
-    const newDiagramRef = db.collection("diagrams").doc();
+    const newDiagramRef = dbCausal.collection("diagrams").doc();
     const groups: any = [];
     const createGroups = (tree: any, diagramId: any) => {
       for (let group of tree) {
-        const groupRef = db.collection("groups").doc();
+        const groupRef = dbCausal.collection("groups").doc();
         const id = groupRef.id;
         group.id = id;
         const _group = {
@@ -129,16 +175,19 @@ ${problemStatement}
         }
       }
     };
-    createGroups(response.groupHierarchy, newDiagramRef.id);
-    for (let node of response["nodes"]) {
-      const nodeRef = db.collection("nodes").doc();
+    createGroups(responseCLD.groupHierarchy, newDiagramRef.id);
+    for (let node of responseCLD["nodes"]) {
+      const nodeRef = dbCausal.collection("nodes").doc();
       const id = nodeRef.id;
-      const _groups = node.groups.map((c: any) => {
-        return {
-          id: groups.find((g: any) => g.label === c)?.id || "",
-          label: groups.find((g: any) => g.label === c)?.label || "",
-        };
-      });
+      const _groups = node.groups
+        .map((c: any) => {
+          return {
+            id: groups.find((g: any) => g.label === c)?.id || "",
+            label: groups.find((g: any) => g.label === c)?.label || "",
+          };
+        })
+        .filter((g: { id: string; label: string }) => !!g.id);
+
       node.groups = _groups;
       node.originalId = node.id;
       node.id = id;
@@ -148,7 +197,7 @@ ${problemStatement}
       };
 
       if (!nodeTypes.includes(node.nodeType)) {
-        const newTypeRef = db.collection("nodeTypes").doc();
+        const newTypeRef = dbCausal.collection("nodeTypes").doc();
         newTypeRef.set({
           type: node.nodeType,
           color: createAColor(),
@@ -160,14 +209,14 @@ ${problemStatement}
         deleted: false,
       });
     }
-    for (let link of response["links"]) {
+    for (let link of responseCLD["links"]) {
       link.source =
-        response["nodes"].find((c: any) => c.originalId === link.source)?.id ||
-        "";
+        responseCLD["nodes"].find((c: any) => c.originalId === link.source)
+          ?.id || "";
       link.target =
-        response["nodes"].find((c: any) => c.originalId === link.target)?.id ||
-        "";
-      const linkRef = db.collection("links").doc();
+        responseCLD["nodes"].find((c: any) => c.originalId === link.target)
+          ?.id || "";
+      const linkRef = dbCausal.collection("links").doc();
 
       linkRef.set({ ...link, diagrams: [newDiagramRef.id], deleted: false });
     }
@@ -178,6 +227,14 @@ ${problemStatement}
       documentDetailed,
       ...(consultant ? { problemStatement, consultant: true } : {}),
     });
+    await generateTopMessage(
+      documentDetailed,
+      problemStatement,
+      newDiagramRef.id,
+      responseCLD,
+      nodeTypes,
+    );
+
     return res.status(200).json({ diagramId: newDiagramRef.id });
   } catch (e: any) {
     console.error(e);

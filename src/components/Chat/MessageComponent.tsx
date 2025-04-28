@@ -95,21 +95,23 @@ const MessageComponent = ({
           pt: 5,
         }}
       >
-        <Box
-          sx={{
-            width: "40px",
-            height: "40px",
-            cursor: "pointer",
-            borderRadius: "50%",
-          }}
-        >
-          <OptimizedAvatar
-            alt={message.senderDetail.fullname || ""}
-            imageUrl={message.senderDetail.imageUrl || ""}
-            size={40}
-            sx={{ border: "none" }}
-          />
-        </Box>
+        {message.senderDetail && (
+          <Box
+            sx={{
+              width: "40px",
+              height: "40px",
+              cursor: "pointer",
+              borderRadius: "50%",
+            }}
+          >
+            <OptimizedAvatar
+              alt={message.senderDetail.fullname || ""}
+              imageUrl={message.senderDetail.imageUrl || ""}
+              size={40}
+              sx={{ border: "none" }}
+            />
+          </Box>
+        )}
 
         <Box sx={{ width: "90%" }}>
           <Box
@@ -119,24 +121,28 @@ const MessageComponent = ({
               gap: 2,
             }}
           >
-            <Box sx={{ display: "flex" }}>
-              <Typography
-                sx={{
-                  fontSize: "16px",
-                  fontWeight: "500",
-                  lineHeight: "24px",
-                }}
-              >
-                {message.senderDetail.fullname}
+            {message.senderDetail && (
+              <Box sx={{ display: "flex" }}>
+                <Typography
+                  sx={{
+                    fontSize: "16px",
+                    fontWeight: "500",
+                    lineHeight: "24px",
+                  }}
+                >
+                  {message.senderDetail.fullname}
+                </Typography>
+              </Box>
+            )}
+            {message.createdAt && (
+              <Typography sx={{ fontSize: "12px" }}>
+                {dayjs(new Date(message.createdAt.toDate()))
+                  .fromNow()
+                  .includes("NaN")
+                  ? "a few minutes ago"
+                  : `${dayjs(new Date(message.createdAt.toDate())).fromNow()}`}
               </Typography>
-            </Box>
-            <Typography sx={{ fontSize: "12px" }}>
-              {dayjs(new Date(message.createdAt.toDate()))
-                .fromNow()
-                .includes("NaN")
-                ? "a few minutes ago"
-                : `${dayjs(new Date(message.createdAt.toDate())).fromNow()}`}
-            </Typography>
+            )}
           </Box>
           {editing?.id === message.id ? (
             <ChatInput
