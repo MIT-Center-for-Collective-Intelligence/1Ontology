@@ -215,7 +215,7 @@ const Message = ({
   const movesExtracted = useMemo(() => {
     return extractMoves(message.moves || "") || [];
   }, message.moves);
-
+  // #cecfd2
   return (
     <Box
       ref={boxRef}

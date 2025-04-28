@@ -182,7 +182,7 @@ const Consultant = () => {
     fontWeight: 500,
     color: theme.palette.mode === "dark" ? "#ccc" : "#333",
     "&.Mui-selected": {
-      color: "orange",
+      color: "#ea7906",
       fontWeight: 600,
     },
     "&:hover": {
@@ -1172,7 +1172,7 @@ const Consultant = () => {
                           zIndex: 10,
                           p: 1,
                           backgroundColor:
-                            theme.palette.mode === "dark" ? "#333" : "#909090",
+                            theme.palette.mode === "dark" ? "#333" : "#cecfd2",
                           borderBottom:
                             theme.palette.mode === "dark"
                               ? "1px solid #444"
