@@ -58,7 +58,6 @@ class ErrorBoundary extends React.Component<
           sx={{
             p: "20px",
             minHeight: "100vh",
-            backgroundColor: "black",
           }}
         >
           <Typography
@@ -67,7 +66,6 @@ class ErrorBoundary extends React.Component<
               fontSize: { xs: "40px", md: "60px" },
               fontWeight: 500,
               textAlign: "center",
-              color: "white",
             }}
           >
             Oops, there is an error!
