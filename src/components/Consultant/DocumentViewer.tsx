@@ -31,7 +31,7 @@ const DocumentViewer = ({
   sentences: any;
 }) => {
   return (
-    <Box sx={{ height: "100%", overflow: "auto", width: "100%" }}>
+    <Box sx={{ overflow: "auto", width: "100%" }}>
       <Typography sx={{ padding: "4px" }}>
         <HighlightedText text={documentDetails} highlights={sentences} />
       </Typography>

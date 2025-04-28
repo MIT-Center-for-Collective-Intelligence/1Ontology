@@ -149,10 +149,54 @@ const LinkEditor = ({
               ))}
             </ul>
 
-            <DocumentViewer
-              documentDetails={selectedDiagram.documentDetailed}
-              sentences={selectedLink.sentences}
-            />
+            <Paper
+              elevation={3}
+              sx={{
+                p: 3,
+                mb: 3,
+                borderRadius: 2,
+                backgroundColor: "background.paper",
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: "bold",
+                  mb: 2,
+                  color: "primary.main",
+                }}
+              >
+                Case description:
+              </Typography>
+              <DocumentViewer
+                documentDetails={selectedDiagram.documentDetailed}
+                sentences={selectedLink.sentences}
+              />
+            </Paper>
+
+            <Paper
+              elevation={3}
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                backgroundColor: "background.paper",
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: "bold",
+                  mb: 2,
+                  color: "primary.main",
+                }}
+              >
+                Problem Statement:
+              </Typography>
+              <DocumentViewer
+                documentDetails={selectedDiagram.problemStatement}
+                sentences={selectedLink.sentences}
+              />
+            </Paper>
           </Box>
         )}
     </Box>
