@@ -149,3 +149,11 @@ export const processChanges = (
   });
   return _prev;
 };
+
+export const delay = (timeout: number) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve(true);
+    }, timeout);
+  });
+};

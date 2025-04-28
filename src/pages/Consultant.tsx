@@ -1,19 +1,16 @@
 import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import useThemeChange from "@components/lib/hooks/useThemeChange";
-import { a11yProps } from "@components/lib/utils/TabPanel";
+import { a11yProps, TabPanel } from "@components/lib/utils/TabPanel";
 import AddIcon from "@mui/icons-material/Add";
-import BedtimeIcon from "@mui/icons-material/Bedtime";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import TrendingFlatIcon from "@mui/icons-material/TrendingFlat";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
-import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import BedtimeIcon from "@mui/icons-material/Bedtime";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
 
 import {
   Box,
-  Grid,
   IconButton,
   Typography,
   Tooltip,
@@ -23,11 +20,9 @@ import {
   Select,
   MenuItem,
   FormControlLabel,
-  Paper,
   Tabs,
   Tab,
   useTheme,
-  useMediaQuery,
 } from "@mui/material";
 import AutoFixNormalIcon from "@mui/icons-material/AutoFixNormal";
 
@@ -45,7 +40,6 @@ import {
   getFirestore,
   onSnapshot,
   query,
-  runTransaction,
   setDoc,
   updateDoc,
   where,
@@ -59,7 +53,6 @@ import ConsultantChat from "@components/components/Consultant/ConsultantChat";
 import CollabTree from "@components/components/Consultant/CollabTree";
 import LinkEditor from "@components/components/Consultant/LinkEditor";
 import AddNodeTypeModal from "@components/components/Consultant/AddNodeTypeModal";
-import * as d3 from "d3";
 import GraphRenderer from "@components/components/Consultant/GraphRenderer";
 import { useAuth } from "@components/components/context/AuthContext";
 import withAuthUser from "@components/components/hoc/withAuthUser";
@@ -69,7 +62,6 @@ import {
   LINKS,
   NODES,
 } from "@components/lib/firestoreClient/collections";
-import mitLogoLightLong from "../../public/CCI-logo.gif";
 import mitLogoDarkLong from "../../public/MIT-Logo-Dark.png";
 import { Bar, Container, Section } from "@column-resizer/react";
 
@@ -173,6 +165,7 @@ const Consultant = () => {
   const [reinforcementLoops, setReinforcementLoops] = useState([]);
   const [selectedLoop, setSelectedLoop] = useState<any>(null);
   const [selectedSolutionId, setSelectedSolutionId] = useState(null);
+  const [selectedSolId, setSelectedSolId] = useState(null);
   const columnResizerRef = useRef<any>();
 
   // const svgRef: any = useRef();
@@ -359,19 +352,19 @@ const Consultant = () => {
     return (
       <Box
         sx={{
-          display: "flex",
+          display: "inline-flex",
           justifyContent: "center",
           alignItems: "center",
           bgcolor: props.color,
           color: "white",
           fontSize: 13,
           borderRadius: 2,
-          maxWidth: 100,
+          px: 2,
+          py: 1,
           ml: 0.9,
           mr: 0.5,
           mb: 0.5,
           textAlign: "center",
-          width: "100%",
           height: "40px",
           position: "relative",
           cursor: editor ? "pointer" : "",
@@ -415,40 +408,6 @@ const Consultant = () => {
       return _prev;
     });
   };
-  const removeChild = (child: any) => {
-    setNewNode((prev: any) => {
-      const _prev = { ...prev };
-      if (_prev.children.includes(child)) {
-        _prev.children.splice(_prev.children.indexOf(child), 1);
-      }
-      return _prev;
-    });
-  };
-  const modifyNode = async (nodeId: string) => {
-    const children = [];
-    for (let link of links) {
-      if (link.source === nodeId) {
-        children.push(link.target);
-      }
-    }
-    setNewNode({ ...nodes[nodeId], children, previous: true });
-    setTabIndex(3);
-    setOpenSideBar(true);
-    setSelectedLink(null);
-  };
-
-  const modifyLink = async (data: any) => {
-    const nodeId = data.v;
-    const childId = data.w;
-    const link = links.find(
-      (link: any) => link.source === nodeId && link.target === childId,
-    );
-
-    setSelectedLink({ ...link, ...data });
-    setTabIndex(3);
-    setOpenSideBar(true);
-    setNewNode(null);
-  };
 
   useEffect(() => {
     if (!selectedDiagram?.id) {
@@ -485,7 +444,7 @@ const Consultant = () => {
   const deleteDiagram = useCallback(async () => {
     if (
       !(await confirmIt(
-        "Are you sure you want to delete this diagram?",
+        `Are you sure you want to delete this diagram? ${selectedDiagram.id}`,
         "Delete",
         "Keep",
       ))
@@ -506,9 +465,16 @@ const Consultant = () => {
         const linkRef = doc(db, LINKS, link.id);
         await updateDoc(linkRef, { deleted: true });
       }
-      setSelectedDiagram({ id: "", title: "", documentDetailed: "" });
+      const filterDiagrams = diagrams.filter(
+        (c: { id: string }) => c.id !== selectedDiagram.id,
+      );
+      if (filterDiagrams.length >= 1) {
+        setSelectedDiagram(filterDiagrams[0]);
+      } else {
+        setSelectedDiagram({ id: "", title: "", documentDetailed: "" });
+      }
     }
-  }, [selectedDiagram?.id, nodes, links]);
+  }, [selectedDiagram?.id, nodes, links, diagrams]);
 
   const copyDiagram = () => {
     const _nodes: any = Object.values(JSON.parse(JSON.stringify(nodes)));
@@ -780,7 +746,7 @@ const Consultant = () => {
   useEffect(() => {
     setReinforcementLoops(getReinforcementLoops(links));
   }, [links]);
-
+  console.log("selectedDiagram", selectedDiagram);
   return (
     <Box
       sx={{
@@ -794,25 +760,18 @@ const Consultant = () => {
       }}
     >
       {diagrams.length > 0 && !generateNewDiagramState ? (
-        <Box
-          sx={{
+        <Container
+          style={{
+            display: "flex",
             overflow: "hidden",
-            "&::-webkit-scrollbar": {
-              display: "none",
-            },
+            backgroundColor:
+              theme.palette.mode === "dark" ? "#1b1a1a" : "#f8f9fa",
+            height: "100vh",
           }}
+          columnResizerRef={columnResizerRef}
         >
-          <Container
-            style={{
-              display: "flex",
-              overflow: "hidden",
-              backgroundColor:
-                theme.palette.mode === "dark" ? "#1b1a1a" : "#f8f9fa",
-            }}
-            columnResizerRef={columnResizerRef}
-          >
-            <Section minSize={0} defaultSize={500}>
-              <Paper
+          <Section minSize={0} defaultSize={500}>
+            {/*       <Paper
                 sx={{
                   height: "100vh",
                   direction: "rtl",
@@ -829,569 +788,560 @@ const Consultant = () => {
                   },
                   borderRadius: "25px",
                 }}
-              >
-                <Box
-                  sx={{
-                    direction: "ltr",
-                    "&::-webkit-scrollbar": {
-                      display: "none",
-                    },
-                    mb: 4,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 10,
-                      p: 1,
-                      backgroundColor: (theme) =>
-                        theme.palette.mode === "dark" ? "#4b4949" : "#f5f5f5",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        position: "sticky",
-                        top: 0,
-                        zIndex: 10,
-                        p: 1,
-                        backgroundColor:
-                          theme.palette.mode === "dark" ? "#333" : "#cecfd2",
-                        borderBottom:
-                          theme.palette.mode === "dark"
-                            ? "1px solid #444"
-                            : "1px solid #ddd",
-                        boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-                        borderRadius: "25px",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          overflowX: "auto",
-                          borderRadius: "25px",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: "100%",
-                            borderRadius: "25px",
-                            display: "flex",
-                          }}
-                        >
-                          {" "}
-                          <Box sx={{ mb: 0, mr: "10px", pt: "7px", pl: "7px" }}>
-                            <img
-                              src={mitLogoDarkLong.src}
-                              alt="mit logo"
-                              width={"auto"}
-                              height={"40px"}
-                            />
-                          </Box>
-                          <Tabs
-                            value={tabIndex}
-                            onChange={(e, newValue) => setTabIndex(newValue)}
-                            variant="scrollable"
-                            scrollButtons="auto"
-                            allowScrollButtonsMobile
-                            sx={{
-                              borderBottom: "none",
-                            }}
-                          >
-                            {" "}
-                            <Tab
-                              label="Consultant Chat"
-                              {...a11yProps(0)}
-                              sx={{
-                                ...TAB_STYLE,
-                              }}
-                            />
-                            <Tab
-                              label="Groups"
-                              {...a11yProps(1)}
-                              sx={{
-                                ...TAB_STYLE,
-                              }}
-                            />
-                            <Tab
-                              label="Feedback Loops"
-                              {...a11yProps(2)}
-                              sx={{
-                                ...TAB_STYLE,
-                              }}
-                            />
-                            {(newNode || selectedLink) && (
-                              <Tab
-                                label={`${newNode?.new ? "Add" : "Edit"} ${newNode ? "Node" : "Link"}`}
-                                {...a11yProps(3)}
-                                sx={{
-                                  ...TAB_STYLE,
-                                }}
-                              />
-                            )}
-                          </Tabs>
-                        </Box>
-                      </Box>
-                    </Box>
-                  </Box>
-                  <Box>
-                    <CustomTabPanel
-                      value={tabIndex}
-                      index={0}
-                      backgroundColor="red"
-                    >
-                      {selectedDiagram?.id && (
-                        <ConsultantChat
-                          diagramId={selectedDiagram?.id || ""}
-                          setSelectedSolutionId={setSelectedSolutionId}
-                          selectedSolutionId={selectedSolutionId ?? ""}
-                        />
-                      )}
-                    </CustomTabPanel>
-                    <CustomTabPanel value={tabIndex} index={1}>
-                      <Typography
-                        sx={{
-                          fontWeight: "bold",
-                          fontSize: "20px",
-                          mb: "15px",
-                        }}
-                      >
-                        Choose groups to show their causal relations:
-                      </Typography>
-                      <CollabTree
-                        data={groups}
-                        setData={setGroups}
-                        setSelectedGroups={setSelectedGroups}
-                        selectedGroups={selectedGroups}
-                        diagramId={selectedDiagram?.id}
-                      />
-                    </CustomTabPanel>
-                    <CustomTabPanel value={tabIndex} index={2}>
-                      {Object.keys(reinforcementLoops).length > 0 ? (
-                        <ReinforcementLoopsDisplay
-                          reinforcementLoops={reinforcementLoops}
-                          nodes={nodes}
-                          selectedLoop={selectedLoop}
-                          setSelectedLoop={setSelectedLoop}
-                        />
-                      ) : (
-                        <Box>No reinforcement loops detected!</Box>
-                      )}
-                    </CustomTabPanel>
-                    {(newNode || selectedLink) && (
-                      <CustomTabPanel value={tabIndex} index={3}>
-                        {" "}
-                        {newNode ? (
-                          <NodeEditor
-                            newNode={newNode}
-                            setNewNode={setNewNode}
-                            nodeTypes={nodeTypes}
-                            nodes={nodes}
-                            groups={groups}
-                            handleSave={handleSave}
-                            handleClose={handleClose}
-                            deleteNode={deleteNode}
-                            selectedDiagram={selectedDiagram}
-                          />
-                        ) : (
-                          <LinkEditor
-                            selectedLink={selectedLink}
-                            nodes={nodes}
-                            selectedDiagram={selectedDiagram}
-                            setSelectedLink={setSelectedLink}
-                            handleSaveLink={handleSaveLink}
-                            deleteLink={deleteLink}
-                            onCancel={() => {
-                              setSelectedLink(null);
-                              setTabIndex(0);
-                            }}
-                          />
-                        )}
-                      </CustomTabPanel>
-                    )}
-                  </Box>
-                </Box>
-              </Paper>
-            </Section>
-            <Bar
-              size={0.5}
-              style={{
-                background: "transparent",
-                cursor: "col-resize",
-                position: "relative",
-                borderRadius: "4px",
+              > */}
+            <Box
+              sx={{
+                direction: "ltr",
+                "&::-webkit-scrollbar": {
+                  display: "none",
+                },
+                mb: 4,
               }}
             >
-              <SettingsEthernetIcon
-                sx={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  color: (theme) =>
-                    theme.palette.mode === "dark"
-                      ? theme.palette.common.gray50
-                      : theme.palette.common.notebookMainBlack,
-                  borderRadius: "50%",
-                  ":hover": {
-                    backgroundColor: "orange",
-                  },
-                  zIndex: 100,
-                }}
-              />
-            </Bar>
-            <Section
-              minSize={0}
-              defaultSize={500}
-              style={{
-                height: "100vh",
-                overflow: "hidden",
-                position: "relative",
-                display: "flex",
-                flexDirection: "column",
-                backgroundColor:
-                  theme.palette.mode === "dark" ? "#303134" : "white",
-                borderStyle: "none solid none none",
-              }}
-            >
-              {" "}
               <Box
                 sx={{
-                  position: "absolute",
-                  top: "10px",
-                  right: "-5px",
-                  zIndex: "1000",
-                  display: "flex",
-                  gap: "22px",
-                  mt: "15px",
-                }}
-              >
-                {" "}
-                {tempText && (
-                  <Typography
-                    sx={{
-                      color: (theme) =>
-                        theme.palette.mode === "dark" ? "white" : "black",
-                    }}
-                  >
-                    {tempText}
-                  </Typography>
-                )}
-                <Tooltip title={"Generate a diagram"} sx={{ mt: "3px" }}>
-                  {loadingResponse &&
-                  (loadingResponse === "generate" ||
-                    loadingResponse === "improve") ? (
-                    <Box
-                      sx={{
-                        width: "35px",
-                        height: "35px",
-                        border: "1px solid gray",
-                        borderRadius: "10px",
-                        alignItems: "center",
-                        display: "flex",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <CircularProgress size={24} />
-                    </Box>
-                  ) : (
-                    <IconButton
-                      onClick={() => {
-                        setGenerateNewDiagramState(true);
-                      }}
-                      sx={{
-                        width: "35px",
-                        height: "35px",
-                        border: "1px solid gray",
-                        borderRadius: "10px",
-                      }}
-                      disabled={!!loadingResponse}
-                    >
-                      <AutoFixNormalIcon />
-                    </IconButton>
-                  )}
-                </Tooltip>
-                <Tooltip title={"Copy the JSON structure"}>
-                  <IconButton
-                    onClick={copyDiagram}
-                    sx={{
-                      width: "35px",
-                      height: "35px",
-                      border: "1px solid gray",
-                      borderRadius: "10px",
-                    }}
-                  >
-                    <ContentCopyIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title={"Delete current diagram"}>
-                  <IconButton
-                    sx={{
-                      width: "35px",
-                      height: "35px",
-                      border: "1px solid gray",
-                      borderRadius: "10px",
-                    }}
-                    onClick={deleteDiagram}
-                    disabled={!!loadingResponse}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title={"Add new node"}>
-                  <IconButton
-                    onClick={AddNewNode}
-                    sx={{
-                      width: "35px",
-                      height: "35px",
-                      border: "1px solid gray",
-                      borderRadius: "10px",
-                    }}
-                    disabled={newNode?.new || loadingResponse}
-                  >
-                    <AddIcon />
-                  </IconButton>
-                </Tooltip>
-                <Box
-                  sx={{
-                    alignItems: "center",
-                    display: "flex",
-                    justifyContent: "space-between",
-                  }}
-                ></Box>
-                {diagrams.length > 0 && (
-                  <FormControl disabled={!!loadingResponse}>
-                    <InputLabel>Diagram</InputLabel>
-                    <Select
-                      label="diagram"
-                      value={selectedDiagram?.title || ""}
-                      onChange={handleChangeDiagram}
-                      sx={{
-                        width: "200px",
-                        border: "1px",
-                        borderColor: "white",
-                        borderRadius: "25px",
-                        p: 0,
-                        "& .MuiSelect-select": {
-                          padding: 0,
-                          p: "10px",
-                        },
-                      }}
-                    >
-                      {[...diagrams].map((diagram) => (
-                        <MenuItem
-                          key={diagram.id}
-                          value={diagram.title}
-                          sx={{ display: "center" }}
-                        >
-                          {diagram.title}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                )}
-                <FormControlLabel
-                  label={false}
-                  control={
-                    <Tooltip
-                      title={
-                        theme.palette.mode === "dark"
-                          ? "Turn on the light"
-                          : "Turn off the light"
-                      }
-                    >
-                      <Box
-                        onClick={handleThemeSwitch}
-                        sx={{
-                          border: "1px solid gray",
-                          borderRadius: "10px",
-                          pt: 1,
-                          px: 1,
-                          pb: 0,
-                          ":hover": {
-                            backgroundColor: (theme) =>
-                              theme.palette.mode === "dark"
-                                ? "gray"
-                                : "#e0e0e0",
-                          },
-                        }}
-                      >
-                        {theme.palette.mode === "dark" ? (
-                          <WbSunnyIcon sx={{ color: "white" }} />
-                        ) : (
-                          <BedtimeIcon sx={{ color: "gray" }} />
-                        )}
-                      </Box>
-                    </Tooltip>
-                  }
-                />
-              </Box>
-              {Object.keys(nodes).length > 0 && (
-                <GraphRenderer
-                  nodes={nodes}
-                  links={links}
-                  nodeTypes={nodeTypes}
-                  selectedGroups={selectedGroups}
-                  selectedDiagram={selectedDiagram}
-                  selectedLoop={selectedLoop}
-                  selectedLink={selectedLink}
-                  newNode={newNode}
-                  setNewNode={setNewNode}
-                  setSelectedLink={setSelectedLink}
-                  setTabIndex={setTabIndex}
-                  setOpenSideBar={setOpenSideBar}
-                />
-              )}
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: "10px",
-                  right: "-5px",
-                  zIndex: "1000",
-                  display: "flex",
-                  gap: "22px",
-                  mt: "15px",
-                }}
-              ></Box>
-              <Box
-                sx={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  zIndex: "1000",
-                  p: 2,
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  p: 1,
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "dark" ? "#4b4949" : "#f5f5f5",
                 }}
               >
                 <Box
                   sx={{
-                    border: "5px solid orange",
-                    width: "120px",
-                    height: "35px",
-                    mb: 2,
-                    display: "flex",
-                    borderRadius: "10px",
-                    color: "orange",
-                    justifyContent: "center",
-                    mx: "auto",
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 10,
+                    p: 1,
+                    backgroundColor:
+                      theme.palette.mode === "dark" ? "#333" : "#cecfd2",
+                    borderBottom:
+                      theme.palette.mode === "dark"
+                        ? "1px solid #444"
+                        : "1px solid #ddd",
+                    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+                    borderRadius: "25px",
                   }}
                 >
-                  <Typography>leverage node</Typography>
-                </Box>
-
-                {Object.keys(nodes).length > 0 && (
                   <Box
                     sx={{
                       display: "flex",
-                      flexDirection: { xs: "column", sm: "row" },
+                      justifyContent: "space-between",
+                      overflowX: "auto",
+                      borderRadius: "25px",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: "100%",
+                        borderRadius: "25px",
+                        display: "flex",
+                      }}
+                    >
+                      {" "}
+                      <Box sx={{ mb: 0, mr: "10px", pt: "7px", pl: "7px" }}>
+                        <img
+                          src={mitLogoDarkLong.src}
+                          alt="mit logo"
+                          width={"auto"}
+                          height={"40px"}
+                        />
+                      </Box>
+                      <Tabs
+                        value={tabIndex}
+                        onChange={(e, newValue) => setTabIndex(newValue)}
+                        variant="scrollable"
+                        scrollButtons="auto"
+                        allowScrollButtonsMobile
+                        sx={{
+                          borderBottom: "none",
+                        }}
+                      >
+                        {" "}
+                        <Tab
+                          label="Consultant Chat"
+                          {...a11yProps(0)}
+                          sx={{
+                            ...TAB_STYLE,
+                          }}
+                        />
+                        <Tab
+                          label="Groups"
+                          {...a11yProps(1)}
+                          sx={{
+                            ...TAB_STYLE,
+                          }}
+                        />
+                        <Tab
+                          label="Feedback Loops"
+                          {...a11yProps(2)}
+                          sx={{
+                            ...TAB_STYLE,
+                          }}
+                        />
+                        {(newNode || selectedLink) && (
+                          <Tab
+                            label={`${newNode?.new ? "Add" : "Edit"} ${newNode ? "Node" : "Link"}`}
+                            {...a11yProps(3)}
+                            sx={{
+                              ...TAB_STYLE,
+                            }}
+                          />
+                        )}
+                      </Tabs>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+              <Box>
+                <TabPanel value={tabIndex} index={0} sx={{ pl: "15px" }}>
+                  <ConsultantChat
+                    diagramId={"SoPXSns6R44IooeVuVRC"}
+                    setSelectedSolutionId={setSelectedSolutionId}
+                    setSelectedSolId={setSelectedSolId}
+                    selectedSolutionId={""}
+                  />
+                </TabPanel>
+                <TabPanel value={tabIndex} index={1}>
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "20px",
+                      mb: "15px",
+                    }}
+                  >
+                    Choose groups to show their causal relations:
+                  </Typography>
+                  <CollabTree
+                    data={groups}
+                    setData={setGroups}
+                    setSelectedGroups={setSelectedGroups}
+                    selectedGroups={selectedGroups}
+                    diagramId={selectedDiagram?.id}
+                  />
+                </TabPanel>
+                <TabPanel value={tabIndex} index={2}>
+                  {Object.keys(reinforcementLoops).length > 0 ? (
+                    <ReinforcementLoopsDisplay
+                      reinforcementLoops={reinforcementLoops}
+                      nodes={nodes}
+                      selectedLoop={selectedLoop}
+                      setSelectedLoop={setSelectedLoop}
+                    />
+                  ) : (
+                    <Box>No reinforcement loops detected!</Box>
+                  )}
+                </TabPanel>
+                {(newNode || selectedLink) && (
+                  <TabPanel
+                    value={tabIndex}
+                    index={3}
+                    sx={{ pt: "30px", px: "10px" }}
+                  >
+                    {" "}
+                    {newNode ? (
+                      <NodeEditor
+                        newNode={newNode}
+                        setNewNode={setNewNode}
+                        nodeTypes={nodeTypes}
+                        nodes={nodes}
+                        groups={groups}
+                        handleSave={handleSave}
+                        handleClose={handleClose}
+                        deleteNode={deleteNode}
+                        selectedDiagram={selectedDiagram}
+                      />
+                    ) : (
+                      <LinkEditor
+                        selectedLink={selectedLink}
+                        nodes={nodes}
+                        selectedDiagram={selectedDiagram}
+                        setSelectedLink={setSelectedLink}
+                        handleSaveLink={handleSaveLink}
+                        deleteLink={deleteLink}
+                        onCancel={() => {
+                          setSelectedLink(null);
+                          setTabIndex(0);
+                        }}
+                      />
+                    )}
+                  </TabPanel>
+                )}
+              </Box>
+            </Box>
+            {/*            </Paper> */}
+          </Section>
+          <Bar
+            size={0.5}
+            style={{
+              background: "transparent",
+              cursor: "col-resize",
+              position: "relative",
+              borderRadius: "4px",
+            }}
+          >
+            <SettingsEthernetIcon
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                color: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? theme.palette.common.gray50
+                    : theme.palette.common.notebookMainBlack,
+                borderRadius: "50%",
+                ":hover": {
+                  backgroundColor: "orange",
+                },
+                zIndex: 100,
+              }}
+            />
+          </Bar>
+          <Section
+            minSize={0}
+            defaultSize={500}
+            style={{
+              height: "100vh",
+              overflow: "hidden",
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              backgroundColor:
+                theme.palette.mode === "dark" ? "#303134" : "white",
+              borderStyle: "none solid none none",
+            }}
+          >
+            {" "}
+            <Box
+              sx={{
+                position: "absolute",
+                top: "10px",
+                right: "-5px",
+                zIndex: "1000",
+                display: "flex",
+                gap: "22px",
+                mt: "15px",
+              }}
+            >
+              {" "}
+              {tempText && (
+                <Typography
+                  sx={{
+                    color: (theme) =>
+                      theme.palette.mode === "dark" ? "white" : "black",
+                  }}
+                >
+                  {tempText}
+                </Typography>
+              )}
+              <Tooltip title={"Generate a diagram"} sx={{ mt: "3px" }}>
+                {loadingResponse &&
+                (loadingResponse === "generate" ||
+                  loadingResponse === "improve") ? (
+                  <Box
+                    sx={{
+                      width: "35px",
+                      height: "35px",
+                      border: "1px solid gray",
+                      borderRadius: "10px",
+                      alignItems: "center",
+                      display: "flex",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <CircularProgress size={24} />
+                  </Box>
+                ) : (
+                  <IconButton
+                    onClick={() => {
+                      setGenerateNewDiagramState(true);
+                    }}
+                    sx={{
+                      width: "35px",
+                      height: "35px",
+                      border: "1px solid gray",
+                      borderRadius: "10px",
+                    }}
+                    disabled={!!loadingResponse}
+                  >
+                    <AutoFixNormalIcon />
+                  </IconButton>
+                )}
+              </Tooltip>
+              <Tooltip title={"Copy the JSON structure"}>
+                <IconButton
+                  onClick={copyDiagram}
+                  sx={{
+                    width: "35px",
+                    height: "35px",
+                    border: "1px solid gray",
+                    borderRadius: "10px",
+                  }}
+                >
+                  <ContentCopyIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={"Delete current diagram"}>
+                <IconButton
+                  sx={{
+                    width: "35px",
+                    height: "35px",
+                    border: "1px solid gray",
+                    borderRadius: "10px",
+                  }}
+                  onClick={deleteDiagram}
+                  disabled={!!loadingResponse}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={"Add new node"}>
+                <IconButton
+                  onClick={AddNewNode}
+                  sx={{
+                    width: "35px",
+                    height: "35px",
+                    border: "1px solid gray",
+                    borderRadius: "10px",
+                  }}
+                  disabled={newNode?.new || loadingResponse}
+                >
+                  <AddIcon />
+                </IconButton>
+              </Tooltip>
+              <Box
+                sx={{
+                  alignItems: "center",
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              ></Box>
+              {diagrams.length > 0 && (
+                <FormControl disabled={!!loadingResponse}>
+                  <InputLabel>Diagram</InputLabel>
+                  <Select
+                    label="diagram"
+                    value={selectedDiagram?.title || ""}
+                    onChange={handleChangeDiagram}
+                    sx={{
+                      width: "200px",
+                      border: "1px",
+                      borderColor: "white",
+                      borderRadius: "25px",
+                      p: 0,
+                      "& .MuiSelect-select": {
+                        padding: 0,
+                        p: "10px",
+                      },
+                    }}
+                  >
+                    {[...diagrams].map((diagram) => (
+                      <MenuItem
+                        key={diagram.id}
+                        value={diagram.title}
+                        sx={{ display: "center" }}
+                      >
+                        {diagram.title}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+              <FormControlLabel
+                label={false}
+                control={
+                  <Tooltip
+                    title={
+                      theme.palette.mode === "dark"
+                        ? "Turn on the light"
+                        : "Turn off the light"
+                    }
+                  >
+                    <Box
+                      onClick={handleThemeSwitch}
+                      sx={{
+                        border: "1px solid gray",
+                        borderRadius: "10px",
+                        pt: 1,
+                        px: 1,
+                        pb: 0,
+                        ":hover": {
+                          backgroundColor: (theme) =>
+                            theme.palette.mode === "dark" ? "gray" : "#e0e0e0",
+                        },
+                      }}
+                    >
+                      {theme.palette.mode === "dark" ? (
+                        <WbSunnyIcon sx={{ color: "white" }} />
+                      ) : (
+                        <BedtimeIcon sx={{ color: "gray" }} />
+                      )}
+                    </Box>
+                  </Tooltip>
+                }
+              />
+            </Box>
+            {Object.keys(nodes).length > 0 && (
+              <GraphRenderer
+                nodes={nodes}
+                links={links}
+                nodeTypes={nodeTypes}
+                selectedGroups={selectedGroups}
+                selectedDiagram={selectedDiagram}
+                selectedLoop={selectedLoop}
+                selectedLink={selectedLink}
+                newNode={newNode}
+                setNewNode={setNewNode}
+                setSelectedLink={setSelectedLink}
+                setTabIndex={setTabIndex}
+                setOpenSideBar={setOpenSideBar}
+              />
+            )}
+            <Box
+              sx={{
+                position: "absolute",
+                top: "10px",
+                right: "-5px",
+                zIndex: "1000",
+                display: "flex",
+                gap: "22px",
+                mt: "15px",
+              }}
+            ></Box>
+            <Box
+              sx={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                zIndex: "1000",
+                p: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  border: "5px solid orange",
+                  width: "120px",
+                  height: "35px",
+                  mb: 2,
+                  display: "flex",
+                  borderRadius: "10px",
+                  color: "orange",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography>leverage node</Typography>
+              </Box>
+
+              {Object.keys(nodes).length > 0 && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    flexWrap: "wrap",
+                    gap: "10px",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "10px",
+                    }}
+                  >
+                    {Object.values(nodeTypes)
+                      .filter((c: any) => usedTypes.has(c.type.toLowerCase()))
+                      .sort((a: any, b: any) => {
+                        const isOtherA = a.type.toLowerCase() === "other";
+                        const isOtherB = b.type.toLowerCase() === "other";
+                        if (isOtherA && !isOtherB) return 1;
+                        if (!isOtherA && isOtherB) return -1;
+                        return 0;
+                      })
+                      .map((resource: any, index) => (
+                        <ColorBox
+                          id={resource.id}
+                          key={resource.type + index}
+                          text={resource.type}
+                          color={resource.color}
+                        />
+                      ))}
+
+                    {editor && (
+                      <Tooltip title="Add new node type">
+                        <IconButton
+                          sx={{
+                            display: "flex",
+                            borderRadius: "50%",
+                            alignItems: "center",
+                            fontSize: 13,
+                            textAlign: "center",
+                            width: "40px",
+                            height: "40px",
+                            border: (theme) =>
+                              theme.palette.mode === "dark"
+                                ? "1px solid white"
+                                : "1px solid black",
+                          }}
+                          onClick={() => {
+                            setIsModalAddTypeOpen(true);
+                          }}
+                        >
+                          <AddIcon
+                            sx={{
+                              color:
+                                theme.palette.mode === "dark"
+                                  ? "white"
+                                  : "black",
+                            }}
+                          />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
+
+                  <Box
+                    sx={{
+                      display: "flex",
                       flexWrap: "wrap",
                       gap: "10px",
                       alignItems: "center",
                       justifyContent: "center",
                     }}
                   >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "10px",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {Object.values(nodeTypes)
-                        .filter((c: any) => usedTypes.has(c.type.toLowerCase()))
-                        .sort((a: any, b: any) => {
-                          const isOtherA = a.type.toLowerCase() === "other";
-                          const isOtherB = b.type.toLowerCase() === "other";
-                          if (isOtherA && !isOtherB) return 1;
-                          if (!isOtherA && isOtherB) return -1;
-                          return 0;
-                        })
-                        .map((resource: any, index) => (
-                          <ColorBox
-                            id={resource.id}
-                            key={resource.type + index}
-                            text={resource.type}
-                            color={resource.color}
-                          />
-                        ))}
-
-                      {editor && (
-                        <Tooltip title="Add new node type">
-                          <IconButton
-                            sx={{
-                              display: "flex",
-                              borderRadius: "50%",
-                              alignItems: "center",
-                              fontSize: 13,
-                              textAlign: "center",
-                              width: "40px",
-                              height: "40px",
-                              border: (theme) =>
-                                theme.palette.mode === "dark"
-                                  ? "1px solid white"
-                                  : "1px solid black",
-                            }}
-                            onClick={() => {
-                              setIsModalAddTypeOpen(true);
-                            }}
-                          >
-                            <AddIcon
-                              sx={{
-                                color:
-                                  theme.palette.mode === "dark"
-                                    ? "white"
-                                    : "black",
-                              }}
-                            />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </Box>
-
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "10px",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {Object.entries(LINKS_TYPES).map((resource: any) => (
-                        <Box
-                          key={resource[0]}
+                    {Object.entries(LINKS_TYPES).map((resource: any) => (
+                      <Box
+                        key={resource[0]}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px",
+                        }}
+                      >
+                        <TrendingFlatIcon
+                          style={{
+                            fontSize: "40px",
+                            color: resource[1].color,
+                          }}
+                        />
+                        <Typography
                           sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "5px",
+                            fontSize: "14px",
+                            color: resource[1].color,
                           }}
                         >
-                          <TrendingFlatIcon
-                            style={{
-                              fontSize: "40px",
-                              color: resource[1].color,
-                            }}
-                          />
-                          <Typography
-                            sx={{
-                              fontSize: "14px",
-                              color: resource[1].color,
-                            }}
-                          >
-                            {resource[0]}
-                          </Typography>
-                        </Box>
-                      ))}
-                    </Box>
+                          {resource[0]}
+                        </Typography>
+                      </Box>
+                    ))}
                   </Box>
-                )}
-              </Box>{" "}
-            </Section>{" "}
-          </Container>
-        </Box>
+                </Box>
+              )}
+            </Box>{" "}
+          </Section>{" "}
+        </Container>
       ) : (
         <Box
           sx={{
@@ -1409,6 +1359,7 @@ const Consultant = () => {
             loadingResponse={loadingResponse}
             generateNewDiagramState={generateNewDiagramState}
             setGenerateNewDiagramState={setGenerateNewDiagramState}
+            handleThemeSwitch={handleThemeSwitch}
           />
         </Box>
       )}

@@ -1,4 +1,12 @@
-import { Button, TextField, Grid, Typography } from "@mui/material";
+import {
+  Button,
+  TextField,
+  Grid,
+  Typography,
+  Tooltip,
+  useTheme,
+  Skeleton,
+} from "@mui/material";
 import React, { useEffect, useState, useCallback } from "react";
 
 import { Box, Paper } from "@mui/material";
@@ -13,6 +21,27 @@ import {
   setDoc,
   where,
 } from "firebase/firestore";
+import WbSunnyIcon from "@mui/icons-material/WbSunny";
+import BedtimeIcon from "@mui/icons-material/Bedtime";
+
+const LoadingConsultant = () => {
+  return (
+    <Box display="flex" width="100%" height="100%" sx={{ p: 2, gap: "14px" }}>
+      <Skeleton
+        variant="rectangular"
+        width="50%"
+        height="100%"
+        sx={{ borderRadius: "25px" }}
+      />
+      <Skeleton
+        variant="rectangular"
+        width="50%"
+        height="100%"
+        sx={{ borderRadius: "25px" }}
+      />
+    </Box>
+  );
+};
 
 const PromptDialogComponent = ({
   onClose,
@@ -20,12 +49,14 @@ const PromptDialogComponent = ({
   loadingResponse,
   generateNewDiagramState,
   setGenerateNewDiagramState,
+  handleThemeSwitch,
 }: {
   onClose: any;
   confirmation: any;
   loadingResponse: any;
   generateNewDiagramState: any;
   setGenerateNewDiagramState: any;
+  handleThemeSwitch: any;
 }) => {
   const db = getFirestore("causal-diagram");
   const admin = true; /* useRecoilValue(isAdminState) */
@@ -34,6 +65,7 @@ const PromptDialogComponent = ({
   const [consultingTopic, setConsultingTopic] = useState("");
   const [ideaEvaluator, setIdeaEvaluator] = useState(false);
   const [problemStatement, setProblemStatement] = useState("");
+  const theme = useTheme();
 
   useEffect(() => {
     getPrompt();
@@ -142,20 +174,7 @@ const PromptDialogComponent = ({
     };
   }, [debouncedSavePrompt]);
   if (loadingResponse === "generate") {
-    return (
-      <Box
-        sx={{
-          width: "100%",
-          height: "100%",
-          minHeight: "300px",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <CircularProgress size={80} />
-      </Box>
-    );
+    return <LoadingConsultant />;
   }
   return (
     <Box
@@ -168,19 +187,59 @@ const PromptDialogComponent = ({
         p: 2,
       }}
     >
-      <Typography
+      <Box
         sx={{
+          display: "flex",
           alignItems: "center",
           textAlign: "center",
-          fontSize: "26px",
-          fontWeight: "bold",
-          borderRadius: "25px",
-          mt: "17px",
-          color: (theme) => (theme.palette.mode === "dark" ? "white" : "black"),
+          position: "relative",
         }}
       >
-        Consulting using causal loop diagrams
-      </Typography>
+        <Typography
+          sx={{
+            fontSize: "26px",
+            fontWeight: "bold",
+            borderRadius: "25px",
+            mt: "17px",
+            color: (theme) =>
+              theme.palette.mode === "dark" ? "white" : "black",
+            mx: "auto", // center the text
+          }}
+        >
+          Consulting using causal loop diagrams
+        </Typography>
+
+        <Tooltip
+          title={
+            theme.palette.mode === "dark"
+              ? "Turn on the light"
+              : "Turn off the light"
+          }
+          sx={{ position: "absolute", right: 0, top: 0, mt: "17px", mr: 2 }}
+        >
+          <Box
+            onClick={handleThemeSwitch}
+            sx={{
+              border: "1px solid gray",
+              borderRadius: "10px",
+              pt: 1,
+              px: 1,
+              pb: 0,
+              ":hover": {
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark" ? "gray" : "#e0e0e0",
+              },
+            }}
+          >
+            {theme.palette.mode === "dark" ? (
+              <WbSunnyIcon sx={{ color: "white" }} />
+            ) : (
+              <BedtimeIcon sx={{ color: "gray" }} />
+            )}
+          </Box>
+        </Tooltip>
+      </Box>
+
       <Paper
         sx={{
           p: 1,

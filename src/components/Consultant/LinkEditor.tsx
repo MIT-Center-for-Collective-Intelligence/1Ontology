@@ -41,9 +41,10 @@ const LinkEditor = ({
         "&::-webkit-scrollbar": {
           display: "none",
         },
+        mt: "50px",
       }}
     >
-      <Box sx={{ borderRadius: "25px", border: "1px solid gray", p: 1 }}>
+      <Box sx={{ borderRadius: "25px", border: "1px solid gray", p: 3 }}>
         <Typography sx={{ fontWeight: "bold", fontSize: "19px", my: "15px" }}>
           Editing the link:
         </Typography>

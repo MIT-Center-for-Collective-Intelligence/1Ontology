@@ -18,6 +18,7 @@ export const openaiH = new OpenAI({
 });
 
 import { dbCausal } from "@components/lib/firestoreServer/admin";
+import { delay } from "@components/lib/utils/utils";
 import {
   Content,
   GoogleGenerativeAI,
@@ -75,128 +76,118 @@ const isValidJSON = (jsonString: string) => {
 
 export const askGemini = async (contents: Content[], model: string) => {
   try {
-    const openaiMessages: { role: "user" | "assistant"; content: string }[] =
-      contents.map((c) => ({
-        role: c.role === "user" ? "user" : "assistant",
-        content: c.parts.map((p) => p.text).join(" "),
-      }));
+    await delay(5 * 1000);
+    const apiKeys = [
+      process.env.GEMINI_API_KEY_1,
+      process.env.GEMINI_API_KEY_2,
+      process.env.GEMINI_API_KEY_3,
+      process.env.GEMINI_API_KEY_4,
+      process.env.GEMINI_API_KEY_5,
+      process.env.GEMINI_API_KEY_6,
+      process.env.GEMINI_API_KEY_7,
+      process.env.GEMINI_API_KEY_8,
+      process.env.GEMINI_API_KEY_9,
+      process.env.GEMINI_API_KEY_10,
+      process.env.GEMINI_API_KEY_11,
+      process.env.GEMINI_API_KEY_12,
+      process.env.GEMINI_API_KEY_13,
+      process.env.GEMINI_API_KEY_14,
+      process.env.GEMINI_API_KEY_15,
+      process.env.GEMINI_API_KEY_16,
+      process.env.GEMINI_API_KEY_17,
+      process.env.GEMINI_API_KEY_18,
+      process.env.GEMINI_API_KEY_19,
+      process.env.GEMINI_API_KEY_20,
+      process.env.GEMINI_API_KEY_21,
+      process.env.GEMINI_API_KEY_22,
+      process.env.GEMINI_API_KEY_23,
+      process.env.GEMINI_API_KEY_24,
+      process.env.GEMINI_API_KEY_25,
+      process.env.GEMINI_API_KEY_26,
+      process.env.GEMINI_API_KEY_27,
+      process.env.GEMINI_API_KEY_28,
+      process.env.GEMINI_API_KEY_29,
+      process.env.GEMINI_API_KEY_30,
+      process.env.GEMINI_API_KEY_31,
+      process.env.GEMINI_API_KEY_32,
+      process.env.GEMINI_API_KEY_33,
+      process.env.GEMINI_API_KEY_34,
+      process.env.GEMINI_API_KEY_35,
+      process.env.GEMINI_API_KEY_36,
+      process.env.GEMINI_API_KEY_37,
+      process.env.GEMINI_API_KEY_38,
+      process.env.GEMINI_API_KEY_39,
+      process.env.GEMINI_API_KEY_40,
+      process.env.GEMINI_API_KEY_41,
+      process.env.GEMINI_API_KEY_42,
+    ] as string[];
 
-    const completion: any = await openaiH.chat.completions.create({
-      messages: openaiMessages,
-      model: "o4-mini",
-      reasoning_effort: "high",
-    });
+    let response = "";
+    let isJSONObject = {
+      jsonObject: {},
+      isJSON: false,
+    };
 
-    const completionContent = completion.choices[0].message.content || "";
+    for (const apiKey of apiKeys) {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const genModel = genAI.getGenerativeModel({ model });
 
-    const totalTokens = completion.usage["total_tokens"];
-    const tokenRef = dbCausal.collection("tokenUsage").doc();
-    tokenRef.set({
-      tokens: totalTokens,
-      createdAt: new Date(),
-      model,
-      messages: openaiMessages,
-      response: completionContent,
-      tokenLimit: 10 * 1000 * 1000,
-    });
-    const isJSONObject = isValidJSON(completionContent);
+      for (let i = 0; i < 3; i++) {
+        try {
+          const result = await genModel.generateContent({
+            contents,
+            generationConfig,
+            safetySettings,
+          });
+          response = result.response.text();
 
-    if (isJSONObject.isJSON) {
-      return isJSONObject.jsonObject;
+          const newResponseRef = dbCausal.collection("responsesAI").doc();
+
+          newResponseRef.set({
+            contents,
+            response,
+            createdAt: new Date(),
+          });
+          isJSONObject = isValidJSON(response);
+
+          if (isJSONObject.isJSON) {
+            return isJSONObject.jsonObject;
+          }
+
+          console.error(
+            `Failed to get valid JSON (attempt ${i + 1} with key ${apiKey.slice(0, 8)}...). Retrying...`,
+          );
+        } catch (error) {
+          if (error instanceof Error) {
+            // Check if error has a code or status property
+            const errorCode =
+              (error as any).code ||
+              (error as any).status ||
+              (error as any).response?.status;
+
+            if (errorCode === 429) {
+              console.error(
+                `Rate limited (429) with key ${apiKey.slice(0, 8)}... Retrying after delay`,
+              );
+              break;
+            } else {
+              console.error(`Error with key ${apiKey.slice(0, 8)}...:`, error);
+            }
+          } else {
+            console.error(
+              `Unknown error structure with key ${apiKey.slice(0, 8)}...:`,
+              error,
+            );
+          }
+          await delay(5000);
+        }
+      }
     }
+
+    throw new Error(
+      "All API keys exhausted - failed to get a complete JSON object",
+    );
   } catch (error: any) {
     console.log(error);
   }
-
-  /*   const apiKeys = [
-    process.env.GEMINI_API_KEY_1,
-    process.env.GEMINI_API_KEY_2,
-    process.env.GEMINI_API_KEY_3,
-    process.env.GEMINI_API_KEY_4,
-    process.env.GEMINI_API_KEY_5,
-    process.env.GEMINI_API_KEY_6,
-    process.env.GEMINI_API_KEY_7,
-    process.env.GEMINI_API_KEY_8,
-    process.env.GEMINI_API_KEY_9,
-    process.env.GEMINI_API_KEY_10,
-    process.env.GEMINI_API_KEY_11,
-    process.env.GEMINI_API_KEY_12,
-    process.env.GEMINI_API_KEY_13,
-    process.env.GEMINI_API_KEY_14,
-    process.env.GEMINI_API_KEY_15,
-    process.env.GEMINI_API_KEY_16,
-    process.env.GEMINI_API_KEY_17,
-    process.env.GEMINI_API_KEY_18,
-    process.env.GEMINI_API_KEY_19,
-    process.env.GEMINI_API_KEY_20,
-    process.env.GEMINI_API_KEY_21,
-    process.env.GEMINI_API_KEY_22,
-    process.env.GEMINI_API_KEY_23,
-    process.env.GEMINI_API_KEY_24,
-    process.env.GEMINI_API_KEY_25,
-    process.env.GEMINI_API_KEY_26,
-    process.env.GEMINI_API_KEY_27,
-    process.env.GEMINI_API_KEY_28,
-    process.env.GEMINI_API_KEY_29,
-    process.env.GEMINI_API_KEY_30,
-    process.env.GEMINI_API_KEY_31,
-    process.env.GEMINI_API_KEY_32,
-    process.env.GEMINI_API_KEY_33,
-    process.env.GEMINI_API_KEY_34,
-    process.env.GEMINI_API_KEY_35,
-    process.env.GEMINI_API_KEY_36,
-    process.env.GEMINI_API_KEY_37,
-    process.env.GEMINI_API_KEY_38,
-    process.env.GEMINI_API_KEY_39,
-    process.env.GEMINI_API_KEY_40,
-    process.env.GEMINI_API_KEY_41,
-    process.env.GEMINI_API_KEY_42,
-    process.env.GEMINI_API_KEY,
-  ] as string[];
-
-  let response = "";
-  let isJSONObject = {
-    jsonObject: {},
-    isJSON: false,
-  };
-
-  for (const apiKey of apiKeys) {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const genModel = genAI.getGenerativeModel({ model });
-
-    for (let i = 0; i < 3; i++) {
-      try {
-        const result = await genModel.generateContent({
-          contents,
-          generationConfig,
-          safetySettings,
-        });
-        response = result.response.text();
-
-        const newResponseRef = dbCausal.collection("responsesAI").doc();
-
-        newResponseRef.set({
-          contents,
-          response,
-          createdAt: new Date(),
-        });
-        isJSONObject = isValidJSON(response);
-
-        if (isJSONObject.isJSON) {
-          return isJSONObject.jsonObject;
-        }
-
-        console.error(
-          `Failed to get valid JSON (attempt ${i + 1} with key ${apiKey.slice(0, 8)}...). Retrying...`,
-        );
-      } catch (error) {
-        console.error(`Error with key ${apiKey.slice(0, 8)}...:`, error);
-        break;
-      }
-    }
-  }
-
-  throw new Error(
-    "All API keys exhausted - failed to get a complete JSON object",
-  ); */
 };
