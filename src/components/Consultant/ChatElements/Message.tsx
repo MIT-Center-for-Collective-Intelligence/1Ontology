@@ -120,11 +120,11 @@ const Message = ({
       };
       await setDoc(messageRef, newMessage);
 
-      /*     await Post("/consultant", {
+      await Post("/consultant", {
         messageId: messageRef.id,
         diagramId,
         userPrompt: inputValue,
-      }); */
+      });
     } catch (error) {
       console.error(error);
     } finally {
