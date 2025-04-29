@@ -12,11 +12,6 @@ export const openai = new OpenAI({
   organization: process.env.MIT_CCI_API_ORG_ID,
 });
 
-export const openaiH = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY_H,
-  organization: process.env.OPENAI_API_ORG_ID_H,
-});
-
 import { dbCausal } from "@components/lib/firestoreServer/admin";
 import { delay } from "@components/lib/utils/utils";
 import {

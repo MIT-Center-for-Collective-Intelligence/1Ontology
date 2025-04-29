@@ -50,19 +50,18 @@ const ConsultantChat = ({
 
   const renderMessages = (messages: any) =>
     messages.map((msg: any, index: number) => (
-      <Box key={msg.id} sx={{ mt: index === 0 ? "100px" : "" }}>
-        <Message
-          message={msg}
-          showReplies={showReplies}
-          setShowReplies={setShowReplies}
-          user={user}
-          depth={0}
-          diagramId={diagramId}
-          setSelectedSolutionId={setSelectedSolutionId}
-          userImage={user?.imageUrl ?? ""}
-          selectedSolutionId={selectedSolutionId}
-        />
-      </Box>
+      <Message
+        key={msg.id}
+        message={msg}
+        showReplies={showReplies}
+        setShowReplies={setShowReplies}
+        user={user}
+        depth={0}
+        diagramId={diagramId}
+        setSelectedSolutionId={setSelectedSolutionId}
+        userImage={user?.imageUrl ?? ""}
+        selectedSolutionId={selectedSolutionId}
+      />
     ));
 
   return (
@@ -78,7 +77,7 @@ const ConsultantChat = ({
       }}
     >
       {renderMessages(messages)}
-      <div ref={messagesEndRef} />
+      {/*       <div ref={messagesEndRef} /> */}
     </Box>
   );
 };

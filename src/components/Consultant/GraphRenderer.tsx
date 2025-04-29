@@ -37,6 +37,7 @@ interface GraphRendererProps {
   setSelectedLink: any;
   setTabIndex: any;
   setOpenSideBar: any;
+  diagramId: string;
 }
 
 const GraphRenderer: React.FC<GraphRendererProps> = ({
@@ -52,6 +53,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
   setSelectedLink,
   setTabIndex,
   setOpenSideBar,
+  diagramId,
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const theme = useTheme();
@@ -63,10 +65,8 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
 
     Object.values(nodes).forEach((nodeData) => {
       const isBlurred =
-        selectedGroups[selectedDiagram.id] &&
-        !(selectedGroups[selectedDiagram.id] || new Set()).has(
-          nodeData.groups[0].id,
-        );
+        selectedGroups[diagramId] &&
+        !(selectedGroups[diagramId] || new Set()).has(nodeData.groups[0].id);
 
       let nodeColor = getColor(
         nodeData.nodeType,
@@ -90,13 +90,9 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
     links.forEach(({ source, target, polarity, certainty }) => {
       if (source && target) {
         const isBlurred =
-          selectedGroups[selectedDiagram.id] &&
-          (!selectedGroups[selectedDiagram.id].has(
-            nodes[source]?.groups[0]?.id,
-          ) ||
-            !selectedGroups[selectedDiagram.id].has(
-              nodes[target]?.groups[0]?.id,
-            ));
+          selectedGroups[diagramId] &&
+          (!selectedGroups[diagramId].has(nodes[source]?.groups[0]?.id) ||
+            !selectedGroups[diagramId].has(nodes[target]?.groups[0]?.id));
         const color =
           LINKS_TYPES[`${certainty.trim()} ${polarity.trim()}`]?.color || "";
 

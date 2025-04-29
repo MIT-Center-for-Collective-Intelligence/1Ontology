@@ -746,6 +746,7 @@ const Consultant = () => {
   useEffect(() => {
     setReinforcementLoops(getReinforcementLoops(links));
   }, [links]);
+
   console.log("selectedDiagram", selectedDiagram);
   return (
     <Box
@@ -908,6 +909,7 @@ const Consultant = () => {
                       fontWeight: "bold",
                       fontSize: "20px",
                       mb: "15px",
+                      p: "10px",
                     }}
                   >
                     Choose groups to show their causal relations:
@@ -917,7 +919,7 @@ const Consultant = () => {
                     setData={setGroups}
                     setSelectedGroups={setSelectedGroups}
                     selectedGroups={selectedGroups}
-                    diagramId={selectedDiagram?.id}
+                    diagramId={selectedSolutionId || selectedDiagram?.id}
                   />
                 </TabPanel>
                 <TabPanel value={tabIndex} index={2}>
@@ -1196,6 +1198,7 @@ const Consultant = () => {
                 setSelectedLink={setSelectedLink}
                 setTabIndex={setTabIndex}
                 setOpenSideBar={setOpenSideBar}
+                diagramId={selectedSolutionId || selectedDiagram?.id}
               />
             )}
             <Box

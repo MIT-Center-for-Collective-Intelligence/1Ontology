@@ -6,6 +6,7 @@ import {
   Tooltip,
   useTheme,
   Skeleton,
+  Container,
 } from "@mui/material";
 import React, { useEffect, useState, useCallback } from "react";
 
@@ -174,7 +175,24 @@ const PromptDialogComponent = ({
     };
   }, [debouncedSavePrompt]);
   if (loadingResponse === "generate") {
-    return <LoadingConsultant />;
+    return (
+      <Container
+        maxWidth="sm"
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+        }}
+      >
+        <Box
+          component="img"
+          src="loader.gif"
+          alt="Loading..."
+          sx={{ width: 500, height: 500, borderRadius: "25px" }}
+        />
+      </Container>
+    );
   }
   return (
     <Box
@@ -259,6 +277,11 @@ const PromptDialogComponent = ({
             onChange={(e) => setConsultingTopic(e.target.value)}
             fullWidth
             variant="outlined"
+            InputLabelProps={{
+              sx: {
+                color: "gray",
+              },
+            }}
             sx={{
               maxWidth: "500px",
               "& .MuiOutlinedInput-root": {

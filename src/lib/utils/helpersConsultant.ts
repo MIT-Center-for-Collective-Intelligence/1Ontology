@@ -3,9 +3,9 @@ import { dbCausal } from "../firestoreServer/admin";
 import { GEMINI_MODEL } from "../CONSTANTS";
 
 export const createAColor = () => {
-  const r = Math.floor(Math.random() * 256);
-  const g = Math.floor(Math.random() * 256);
-  const b = Math.floor(Math.random() * 256);
+  const r = Math.floor(Math.random() * 128);
+  const g = Math.floor(Math.random() * 128);
+  const b = Math.floor(Math.random() * 128);
 
   const hexR = r.toString(16).padStart(2, "0");
   const hexG = g.toString(16).padStart(2, "0");
@@ -13,7 +13,6 @@ export const createAColor = () => {
 
   return `#${hexR}${hexG}${hexB}`.toLowerCase();
 };
-
 export const generateDiagram = async ({
   caseDescription,
   problemStatement,

@@ -63,7 +63,7 @@ const CollabTree = ({
   };
 
   const renderTree = (groups: any) => (
-    <>
+    <Box sx={{ ml: "7px" }}>
       {groups.map((group: any) => (
         <TreeItem
           key={group.id}
@@ -90,7 +90,7 @@ const CollabTree = ({
                 });
               }}
             >
-              <Checkbox // Fixed component name - was CheckBox
+              <Checkbox
                 checked={
                   !selectedGroups[diagramId] ||
                   selectedGroups[diagramId].has(group.id)
@@ -125,11 +125,42 @@ const CollabTree = ({
             : null}
         </TreeItem>
       ))}
-    </>
+    </Box>
   );
 
   return (
     <Box>
+      <Checkbox
+        onClick={(e) => {
+          e.stopPropagation();
+          const allGroupsIds = data.map((c: any) => c.id);
+          setSelectedGroups((prev: any) => {
+            const _prev = { ...prev };
+
+            const elementsSet = new Set(
+              !_prev[diagramId] ? allGroupsIds : _prev[diagramId],
+            );
+            const allElementsSet = new Set(allGroupsIds);
+            console.log({
+              "allElementsSet.size": allElementsSet.size,
+              "elementsSet.size": elementsSet.size,
+              boolean: allElementsSet.size === elementsSet.size,
+              _prev,
+            });
+
+            if (allElementsSet.size === elementsSet.size) {
+              _prev[diagramId] = new Set();
+            } else {
+              _prev[diagramId] = allElementsSet;
+            }
+            return _prev;
+          });
+        }}
+        checked={
+          !selectedGroups[diagramId] ||
+          data.length === selectedGroups[diagramId].size
+        }
+      />
       <TreeView>{renderTree(data)}</TreeView>
     </Box>
   );

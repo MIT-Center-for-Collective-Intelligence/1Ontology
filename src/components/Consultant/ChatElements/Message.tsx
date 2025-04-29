@@ -15,7 +15,6 @@ import {
   Skeleton,
   Chip,
 } from "@mui/material";
-import { CSSTransition } from "react-transition-group";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import ChatInput from "@components/components/Chat/ChatInput";
@@ -26,7 +25,6 @@ import {
   collection,
   doc,
   getDoc,
-  getDocs,
   getFirestore,
   onSnapshot,
   query,
@@ -35,11 +33,6 @@ import {
 } from "firebase/firestore";
 import { processChanges } from "@components/lib/utils/utils";
 import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
-import {
-  GROUPS,
-  LINKS,
-  NODES,
-} from "@components/lib/firestoreClient/collections";
 import { extractMoves } from "@components/lib/utils/ConsultantUtils";
 import { LoadingButton } from "@mui/lab";
 
