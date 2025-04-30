@@ -29,6 +29,7 @@ import {
   onSnapshot,
   query,
   setDoc,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import { processChanges } from "@components/lib/utils/utils";
@@ -113,8 +114,16 @@ const Message = ({
       };
       await setDoc(messageRef, newMessage);
 
+      const parentMessageRef = doc(
+        collection(db, CONSULTANT_MESSAGES),
+        message.id,
+      );
+      updateDoc(parentMessageRef, {
+        loadingReply: true,
+      });
       await Post("/consultant", {
         messageId: messageRef.id,
+        parentMessageId: message.id,
         diagramId,
         userPrompt: inputValue,
       });
@@ -183,7 +192,6 @@ const Message = ({
   const movesExtracted = useMemo(() => {
     return extractMoves(message.moves || "") || [];
   }, message.moves);
-  // #cecfd2
   return (
     <Box
       ref={boxRef}
@@ -231,93 +239,91 @@ const Message = ({
             position: "relative",
           }}
         >
-          {
+          <Box
+            sx={{
+              display: "flex",
+              gap: "8px",
+              alignItems: "center",
+              borderColor: DESIGN_SYSTEM_COLORS.gray400,
+              pb: "6px",
+              mb: "10px",
+            }}
+          >
+            {" "}
+            <Avatar
+              src={message.role === "user" ? userImage : "/consultant.png"}
+              sx={{
+                width: 32,
+                height: 32,
+                fontSize: "14px",
+                mr: 1,
+                backgroundColor: DESIGN_SYSTEM_COLORS.gray500,
+              }}
+            />
+            {movesExtracted.map((move: any, idx: number) => {
+              return (
+                <Box
+                  key={idx}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "4px",
+                  }}
+                >
+                  <Tooltip title={getMoveTooltip(move.action)}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "9px",
+                      }}
+                    >
+                      {move.action === "ZOOM OUT" ? (
+                        <ZoomOutIcon sx={{ fontSize: "29px" }} />
+                      ) : move.action === "ZOOM IN" ? (
+                        <ZoomInIcon sx={{ fontSize: "29px" }} />
+                      ) : move.action === "ANALOGIZE" ? (
+                        <FilterNoneIcon sx={{ fontSize: "29px" }} />
+                      ) : move.action === "GROUPIFY" ? (
+                        <Diversity3Icon sx={{ fontSize: "29px" }} />
+                      ) : move.action === "COGNIFY" ? (
+                        <PsychologyIcon sx={{ fontSize: "29px" }} />
+                      ) : move.action === "TECHNIFY" ? (
+                        <PrecisionManufacturingIcon sx={{ fontSize: "29px" }} />
+                      ) : null}
+
+                      <Typography
+                        variant="caption"
+                        sx={{ fontWeight: "bold", mr: "4px" }}
+                      >
+                        {move.action}
+                      </Typography>
+                    </Box>
+                  </Tooltip>
+                  {move.detail
+                    .split(",")
+                    .filter((c: string) => !!c)
+                    .map((item: string, index: number) => (
+                      <Chip
+                        key={index}
+                        label={item.trim()}
+                        style={{ margin: 4 }}
+                      />
+                    ))}
+                </Box>
+              );
+            })}{" "}
             <Box
               sx={{
                 display: "flex",
+                justifyContent: "flex-end",
                 gap: "8px",
-                alignItems: "center",
-                borderColor: DESIGN_SYSTEM_COLORS.gray400,
-                pb: "6px",
-                mb: "10px",
+                ml: "auto",
               }}
             >
-              {" "}
-              <Avatar
-                src={message.role === "user" ? userImage : "/consultant.png"}
-                sx={{
-                  width: 32,
-                  height: 32,
-                  fontSize: "14px",
-                  mr: 1,
-                  backgroundColor: DESIGN_SYSTEM_COLORS.gray500,
-                }}
-              />
-              {movesExtracted.map((move: any, idx: number) => {
-                return (
-                  <Box
-                    key={idx}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "4px",
-                    }}
-                  >
-                    <Tooltip title={getMoveTooltip(move.action)}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "9px",
-                        }}
-                      >
-                        {move.action === "ZOOM OUT" ? (
-                          <ZoomOutIcon sx={{ fontSize: "29px" }} />
-                        ) : move.action === "ZOOM IN" ? (
-                          <ZoomInIcon sx={{ fontSize: "29px" }} />
-                        ) : move.action === "ANALOGIZE" ? (
-                          <FilterNoneIcon sx={{ fontSize: "29px" }} />
-                        ) : move.action === "GROUPIFY" ? (
-                          <Diversity3Icon sx={{ fontSize: "29px" }} />
-                        ) : move.action === "COGNIFY" ? (
-                          <PsychologyIcon sx={{ fontSize: "29px" }} />
-                        ) : move.action === "TECHNIFY" ? (
-                          <PrecisionManufacturingIcon
-                            sx={{ fontSize: "29px" }}
-                          />
-                        ) : null}
-
-                        <Typography
-                          variant="caption"
-                          sx={{ fontWeight: "bold", mr: "4px" }}
-                        >
-                          {move.action}
-                        </Typography>
-                      </Box>
-                    </Tooltip>
-                    {move.detail
-                      .split(",")
-                      .filter((c: string) => !!c)
-                      .map((item: string, index: number) => (
-                        <Chip
-                          key={index}
-                          label={item.trim()}
-                          style={{ margin: 4 }}
-                        />
-                      ))}
-                  </Box>
-                );
-              })}{" "}
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: "8px",
-                  ml: "auto",
-                }}
-              >
+              {message.role !== "user" && (
                 <LoadingButton
                   loading={message.loadingCld}
                   variant={
@@ -333,58 +339,58 @@ const Message = ({
                 >
                   {selectedSolutionId === message.id ? "Unselect" : "View CLD"}
                 </LoadingButton>
+              )}
 
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() =>
-                    setShowReplies((prev: any) => {
-                      const _prev = new Set(prev);
-                      if (_prev.has(message.id)) {
-                        _prev.delete(message.id);
-                      } else {
-                        _prev.add(message.id);
-                      }
-                      return _prev;
-                    })
-                  }
-                  sx={{ borderRadius: "25px" }}
-                >
-                  {showReplies.has(message.id) ? (
-                    <>
-                      <KeyboardArrowUpIcon fontSize="small" /> Hide
-                    </>
-                  ) : (
-                    <>
-                      <KeyboardArrowDownIcon fontSize="small" /> Reply
-                    </>
-                  )}
-                </Button>
-                {tempText ? (
-                  <Box>
-                    <Typography>{tempText}</Typography>
-                  </Box>
+              <Button
+                variant={showReplies.has(message.id) ? "contained" : "outlined"}
+                size="small"
+                onClick={() =>
+                  setShowReplies((prev: any) => {
+                    const _prev = new Set(prev);
+                    if (_prev.has(message.id)) {
+                      _prev.delete(message.id);
+                    } else {
+                      _prev.add(message.id);
+                    }
+                    return _prev;
+                  })
+                }
+                sx={{ borderRadius: "25px" }}
+              >
+                {showReplies.has(message.id) ? (
+                  <>
+                    <KeyboardArrowUpIcon fontSize="small" /> Hide
+                  </>
                 ) : (
-                  <Tooltip title="Copy CLD">
-                    <IconButton
-                      onClick={() => {
-                        copyThread(message.id);
-                      }}
-                    >
-                      <ContentCopyIcon sx={{ color: "orange" }} />
-                    </IconButton>
-                  </Tooltip>
+                  <>
+                    <KeyboardArrowDownIcon fontSize="small" /> Reply
+                  </>
                 )}
-              </Box>
+              </Button>
+              {tempText ? (
+                <Box>
+                  <Typography>{tempText}</Typography>
+                </Box>
+              ) : (
+                <Tooltip title="Copy CLD">
+                  <IconButton
+                    onClick={() => {
+                      copyThread(message.id);
+                    }}
+                  >
+                    <ContentCopyIcon sx={{ color: "orange" }} />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Box>
-          }
+          </Box>
 
           <MarkdownRender text={message.text} />
         </Box>
 
         {showReplies.has(message.id) && (
           <Box mt="8px">
-            {loadingResponse ? (
+            {!!message?.loadingReply ? (
               <Skeleton
                 variant="rectangular"
                 height={170}
@@ -410,20 +416,22 @@ const Message = ({
 
         <Box sx={{ mt: "14px" }}>
           {showReplies.has(message.id) &&
-            nestedMessages.map((nested) => (
-              <Message
-                key={nested.id}
-                message={nested}
-                showReplies={showReplies}
-                setShowReplies={setShowReplies}
-                user={user}
-                depth={depth + 1}
-                diagramId={diagramId}
-                setSelectedSolutionId={setSelectedSolutionId}
-                userImage={userImage}
-                selectedSolutionId={selectedSolutionId}
-              />
-            ))}
+            nestedMessages
+              .sort((a, b) => b.createdAt - a.createdAt)
+              .map((nested) => (
+                <Message
+                  key={nested.id}
+                  message={nested}
+                  showReplies={showReplies}
+                  setShowReplies={setShowReplies}
+                  user={user}
+                  depth={depth + 1}
+                  diagramId={diagramId}
+                  setSelectedSolutionId={setSelectedSolutionId}
+                  userImage={userImage}
+                  selectedSolutionId={selectedSolutionId}
+                />
+              ))}
         </Box>
       </Box>
     </Box>

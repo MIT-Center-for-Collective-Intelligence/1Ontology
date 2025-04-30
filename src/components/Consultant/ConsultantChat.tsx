@@ -32,7 +32,6 @@ const ConsultantChat = ({
   }, [messages]);
 
   useEffect(() => {
-    console.log("loading new snapshot ===>");
     const diagramsQuery = query(
       collection(db, CONSULTANT_MESSAGES),
       where("diagramId", "==", diagramId),
@@ -73,7 +72,8 @@ const ConsultantChat = ({
         "&::-webkit-scrollbar": {
           display: "none",
         },
-        pt: "50px",
+        pb: "500px",
+        pt: "30px",
       }}
     >
       {renderMessages(messages)}

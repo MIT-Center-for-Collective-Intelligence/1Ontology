@@ -127,7 +127,7 @@ export const askGemini = async (contents: Content[], model: string) => {
       const genAI = new GoogleGenerativeAI(apiKey);
       const genModel = genAI.getGenerativeModel({ model });
 
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 1; i++) {
         try {
           const result = await genModel.generateContent({
             contents,
@@ -150,11 +150,10 @@ export const askGemini = async (contents: Content[], model: string) => {
           }
 
           console.error(
-            `Failed to get valid JSON (attempt ${i + 1} with key ${apiKey.slice(0, 8)}...). Retrying...`,
+            `Failed to get valid JSON (attempt ${i + 1} with key ${apiKey}...). Retrying...`,
           );
         } catch (error) {
           if (error instanceof Error) {
-            // Check if error has a code or status property
             const errorCode =
               (error as any).code ||
               (error as any).status ||
@@ -162,15 +161,15 @@ export const askGemini = async (contents: Content[], model: string) => {
 
             if (errorCode === 429) {
               console.error(
-                `Rate limited (429) with key ${apiKey.slice(0, 8)}... Retrying after delay`,
+                `Rate limited (429) with key ${apiKey}... Retrying after delay`,
               );
               break;
             } else {
-              console.error(`Error with key ${apiKey.slice(0, 8)}...:`, error);
+              console.error(`Error with key ${apiKey}...:`, error);
             }
           } else {
             console.error(
-              `Unknown error structure with key ${apiKey.slice(0, 8)}...:`,
+              `Unknown error structure with key ${apiKey}...:`,
               error,
             );
           }

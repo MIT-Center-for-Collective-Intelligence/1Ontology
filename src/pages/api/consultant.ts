@@ -6,6 +6,8 @@ import { getConsultantPrompt } from "@components/lib/utils/copilotPrompts";
 import { GEMINI_MODEL } from "@components/lib/CONSTANTS";
 import { generateDiagram } from "@components/lib/utils/helpersConsultant";
 import { FieldValue } from "firebase-admin/firestore";
+import { delay } from "@components/lib/utils/utils";
+import { DIAGRAMS } from "@components/lib/firestoreClient/collections";
 
 const deleteAllPreviousData = async (diagramId: string) => {
   const collections = ["nodes", "groups", "links"];
@@ -91,7 +93,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).end();
   }
   try {
-    const { userPrompt, diagramId, messageId } = req.body;
+    const { userPrompt, diagramId, messageId, parentMessageId } = req.body;
     const messagesArray = (await getThreadOfMessages(messageId)).reverse();
 
     const diagramDoc = await dbCausal
@@ -194,7 +196,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           moves: alternative.moves,
           cld: true,
           loadingCld: true,
+          parentMessage: parentMessageId,
         };
+        const parentMessageRef = dbCausal
+          .collection(CONSULTANT_MESSAGES)
+          .doc(parentMessageId);
+        parentMessageRef.update({
+          loadingReply: FieldValue.delete(),
+        });
         newMessages.push(newMessage);
         newMessageRef.set(newMessage);
       }
@@ -264,15 +273,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         ],
       },
     ];
+
+    const diagramRef = dbCausal.collection(DIAGRAMS).doc(diagramId);
+    diagramRef.update({
+      updating: true,
+    });
+
     const response = (await askGemini(messages, GEMINI_MODEL)) as {
       links: any;
       nodes: any;
       groupHierarchy: any;
     };
 
+    diagramRef.update({
+      updating: FieldValue.delete(),
+    });
     if (response.nodes.length > 0) {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await delay(2000);
+    } else {
+      res.status(500).json({ response });
     }
+
+    await deleteAllPreviousData(diagramId);
+
     const groups: any = [];
 
     const createGroups = (tree: any, diagramId: any) => {
@@ -329,7 +352,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const linkRef = dbCausal.collection("links").doc();
       linkRef.set({ ...link, diagrams: [diagramId], deleted: false });
     }
-
+    diagramRef.update({
+      updating: FieldValue.delete(),
+    });
     res.status(500).json({ response });
   } catch (error) {
     console.error("Error in consultant API:", error);

@@ -130,37 +130,40 @@ const CollabTree = ({
 
   return (
     <Box>
-      <Checkbox
-        onClick={(e) => {
-          e.stopPropagation();
-          const allGroupsIds = data.map((c: any) => c.id);
-          setSelectedGroups((prev: any) => {
-            const _prev = { ...prev };
-
-            const elementsSet = new Set(
-              !_prev[diagramId] ? allGroupsIds : _prev[diagramId],
-            );
-            const allElementsSet = new Set(allGroupsIds);
-            console.log({
-              "allElementsSet.size": allElementsSet.size,
-              "elementsSet.size": elementsSet.size,
-              boolean: allElementsSet.size === elementsSet.size,
-              _prev,
-            });
-
-            if (allElementsSet.size === elementsSet.size) {
-              _prev[diagramId] = new Set();
-            } else {
-              _prev[diagramId] = allElementsSet;
-            }
-            return _prev;
-          });
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          mb: "5px",
         }}
-        checked={
-          !selectedGroups[diagramId] ||
-          data.length === selectedGroups[diagramId].size
-        }
-      />
+      >
+        <Checkbox
+          onClick={(e) => {
+            e.stopPropagation();
+            const allGroupsIds = data.map((c: any) => c.id);
+            setSelectedGroups((prev: any) => {
+              const _prev = { ...prev };
+
+              const elementsSet = new Set(
+                !_prev[diagramId] ? allGroupsIds : _prev[diagramId],
+              );
+              const allElementsSet = new Set(allGroupsIds);
+
+              if (allElementsSet.size === elementsSet.size) {
+                _prev[diagramId] = new Set();
+              } else {
+                _prev[diagramId] = allElementsSet;
+              }
+              return _prev;
+            });
+          }}
+          checked={
+            !selectedGroups[diagramId] ||
+            data.length === selectedGroups[diagramId].size
+          }
+        />
+        <Typography>Select All</Typography>
+      </Box>
       <TreeView>{renderTree(data)}</TreeView>
     </Box>
   );

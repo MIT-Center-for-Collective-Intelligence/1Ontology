@@ -8,6 +8,7 @@ import {
   Button,
   IconButton,
   SxProps,
+  TextField,
   Theme,
   Tooltip,
   useTheme,
@@ -254,33 +255,52 @@ const ChatInput = ({
         pb: 0,
       }}
     >
-      <MentionsInput
-        id="comment-mention"
-        className="comment-input"
-        placeholder={placeholder}
-        style={style}
-        value={inputValue}
-        singleLine={false}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={(e) => onKeyDown(e)}
-      >
-        <Mention
-          trigger="@"
-          data={users}
-          displayTransform={(id, display) => {
-            return `@${display}`;
-          }}
-          markup="[@__display__](__id__)"
-          renderSuggestion={(suggestion: any) => (
-            <MentionUser user={suggestion} />
-          )}
-          appendSpaceOnAdd={true}
-          style={{
-            backgroundColor: "#0d8fad",
-            // paddingRight: "5px",
+      {consultant ? (
+        <TextField
+          multiline
+          fullWidth
+          variant="standard"
+          placeholder={placeholder}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={onKeyDown}
+          InputProps={{
+            disableUnderline: true,
+            style: {
+              fontSize: 16,
+              padding: "15px",
+              paddingBottom: "0px",
+              fontFamily: "system-ui",
+              color: theme.palette.mode === "dark" ? "white" : "black",
+              ...SCROLL_BAR_STYLE,
+            },
           }}
         />
-      </MentionsInput>
+      ) : (
+        <MentionsInput
+          id="comment-mention"
+          className="comment-input"
+          placeholder={placeholder}
+          style={style}
+          value={inputValue}
+          singleLine={false}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => onKeyDown(e)}
+        >
+          <Mention
+            trigger="@"
+            data={users}
+            displayTransform={(id, display) => `@${display}`}
+            markup="[@__display__](__id__)"
+            renderSuggestion={(suggestion: any) => (
+              <MentionUser user={suggestion} />
+            )}
+            appendSpaceOnAdd={true}
+            style={{ backgroundColor: "#0d8fad" }}
+          />
+        </MentionsInput>
+      )}
+
       <MessageInputFooter
         imageUrls={imageUrls}
         isUploading={isUploading}

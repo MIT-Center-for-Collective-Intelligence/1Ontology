@@ -79,7 +79,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
         isBlurred ? 0.1 : 1,
       );
       g.setNode(nodeData.id, {
-        label: nodeData.label,
+        label: nodeData.label ?? "",
         style: nodeData.isLeverage
           ? `fill: ${nodeColor}; stroke: ${borderColor}; stroke-width: 7px;`
           : `fill: ${nodeColor};`,
@@ -124,7 +124,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
           curve: d3.curveBasis,
           style: `${_style} fill: none;`,
           arrowheadStyle: `${_arrowheadStyle}`,
-          label,
+          label: label ?? "",
           labelStyle,
         });
       }
