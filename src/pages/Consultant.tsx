@@ -425,7 +425,7 @@ const Consultant = () => {
         setSelectedDiagram({ ...diagrams[diagramIndex] });
       }
     }
-  }, [diagrams, selectedDiagram]);
+  }, [diagrams]);
 
   const handleChangeDiagram = (event: any) => {
     const _diagram = diagrams.find(
@@ -1314,17 +1314,17 @@ const Consultant = () => {
           />
         </Box>
       )}
-      {editor && (
-        <AddNodeTypeModal
-          open={isModalAddTypeOpen}
-          onClose={() => {
-            setIsModalAddTypeOpen(false);
-            setEditNodeType(null);
-          }}
-          onSave={saveNewType}
-          editNodeType={editNodeType}
-        />
-      )}
+
+      <AddNodeTypeModal
+        open={isModalAddTypeOpen}
+        onClose={() => {
+          setIsModalAddTypeOpen(false);
+          setEditNodeType(null);
+        }}
+        onSave={saveNewType}
+        editNodeType={editNodeType}
+      />
+
       {ConfirmDialog}
     </Box>
   );
