@@ -114,16 +114,16 @@ const Message = ({
       };
       await setDoc(messageRef, newMessage);
 
-      const parentMessageRef = doc(
-        collection(db, CONSULTANT_MESSAGES),
-        message.id,
-      );
-      updateDoc(parentMessageRef, {
+      updateDoc(messageRef, {
         loadingReply: true,
+      });
+      setShowReplies((prev: any) => {
+        const _prev = new Set(prev);
+        _prev.add(messageRef.id);
+        return _prev;
       });
       await Post("/consultant", {
         messageId: messageRef.id,
-        parentMessageId: message.id,
         diagramId,
         userPrompt: inputValue,
       });

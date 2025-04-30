@@ -93,7 +93,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).end();
   }
   try {
-    const { diagramId, messageId, parentMessageId } = req.body;
+    const { diagramId, messageId } = req.body;
     const messagesArray = (await getThreadOfMessages(messageId)).reverse();
 
     const diagramDoc = await dbCausal
@@ -110,10 +110,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const nodeData = nodeDoc.data();
       nodeTypes.push(nodeData.type);
     }
-    const promptDoc = await dbCausal
-      .collection("diagramPrompts")
-      .where("consultant", "==", true)
-      .get();
 
     const diagramData: any = diagramDoc.data();
     const caseDescription = diagramData.documentDetailed;
@@ -198,11 +194,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           moves: alternative.moves,
           cld: true,
           loadingCld: true,
-          parentMessage: parentMessageId,
+          parentMessage: messageId,
         };
         const parentMessageRef = dbCausal
           .collection(CONSULTANT_MESSAGES)
-          .doc(parentMessageId);
+          .doc(messageId);
         parentMessageRef.update({
           loadingReply: FieldValue.delete(),
         });
