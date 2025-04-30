@@ -24,6 +24,7 @@ import { Post } from "@components/lib/utils/Post";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import {
   collection,
+  deleteField,
   doc,
   getDoc,
   getFirestore,
@@ -102,9 +103,10 @@ const Message = ({
   }, [db, diagramId, message.id]);
 
   const addReply = async (inputValue: string, imageUrls: string[]) => {
+    const messageRef = doc(collection(db, CONSULTANT_MESSAGES));
     try {
       setLoadingResponse(true);
-      const messageRef = doc(collection(db, CONSULTANT_MESSAGES));
+
       const newMessage = {
         id: messageRef.id,
         parentMessage: message.id,
@@ -113,13 +115,11 @@ const Message = ({
         root: false,
         diagramId,
         uname: user.uname,
+        loadingReply: true,
         role: "user",
       };
       await setDoc(messageRef, newMessage);
 
-      updateDoc(messageRef, {
-        loadingReply: true,
-      });
       setShowReplies((prev: any) => {
         const _prev = new Set(prev);
         _prev.add(messageRef.id);
@@ -134,6 +134,9 @@ const Message = ({
       console.error(error);
     } finally {
       setLoadingResponse(false);
+      updateDoc(messageRef, {
+        loadingReply: deleteField(),
+      });
     }
   };
   const getThreadOfMessages = async (messageId: string) => {
@@ -175,7 +178,7 @@ const Message = ({
       const messagesList = await getThreadOfMessages(messageId);
 
       await navigator.clipboard.writeText(
-        JSON.stringify(messagesList, null, 2),
+        JSON.stringify(messagesList.reverse(), null, 2),
       );
       setTempText("Copied!");
 
@@ -371,9 +374,15 @@ const Message = ({
                     <KeyboardArrowUpIcon fontSize="small" /> Hide
                   </>
                 ) : (
-                  <>
-                    <KeyboardArrowDownIcon fontSize="small" /> Reply
-                  </>
+                  <Box sx={{ display: "flex", gap: "4px" }}>
+                    <KeyboardArrowDownIcon fontSize="small" />{" "}
+                    <Typography sx={{ color: "orange" }}>
+                      {nestedMessages.length > 0 ? nestedMessages.length : ""}
+                    </Typography>
+                    <Typography sx={{ color: "orange" }}>
+                      {nestedMessages.length > 2 ? "Replies" : "Reply"}
+                    </Typography>
+                  </Box>
                 )}
               </Button>
               {tempText ? (
@@ -381,7 +390,7 @@ const Message = ({
                   <Typography>{tempText}</Typography>
                 </Box>
               ) : (
-                <Tooltip title="Copy CLD">
+                <Tooltip title="Copy Thread of Messages">
                   <IconButton
                     onClick={() => {
                       copyThread(message.id);
@@ -418,6 +427,7 @@ const Message = ({
                 editing={""}
                 placeholder="Write a reply..."
                 consultant={true}
+                disabled={loadingResponse}
               />
             )}
           </Box>

@@ -85,13 +85,6 @@ const getThreadOfMessages = async (
 };
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
-
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
   try {
     const { diagramId, messageId } = req.body;
     const messagesArray = (await getThreadOfMessages(messageId)).reverse();
@@ -232,7 +225,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
     }
 
-    res.status(500).json({});
+    res.status(200).json({});
   } catch (error) {
     console.error("Error in consultant API:", error);
     res.status(500).json({ error: "Internal Server Error" });
