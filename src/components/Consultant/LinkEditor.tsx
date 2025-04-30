@@ -150,6 +150,32 @@ const LinkEditor = ({
               ))}
             </ul>
 
+            {selectedLink.fullConversation && (
+              <Paper
+                elevation={3}
+                sx={{
+                  p: 3,
+                  mb: 3,
+                  borderRadius: 2,
+                  backgroundColor: "background.paper",
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: "bold",
+                    mb: 2,
+                    color: "primary.main",
+                  }}
+                >
+                  Thread Conversation:
+                </Typography>
+                <DocumentViewer
+                  documentDetails={selectedLink.fullConversation}
+                  sentences={selectedLink.sentences}
+                />
+              </Paper>
+            )}
             <Paper
               elevation={3}
               sx={{
@@ -174,7 +200,6 @@ const LinkEditor = ({
                 sentences={selectedLink.sentences}
               />
             </Paper>
-
             <Paper
               elevation={3}
               sx={{

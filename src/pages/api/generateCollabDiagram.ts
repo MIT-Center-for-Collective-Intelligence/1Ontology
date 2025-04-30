@@ -22,8 +22,13 @@ const generateTopMessage = async (
     links: any;
   },
   nodeTypes: string[],
+  caseTitle: string,
 ) => {
-  const prompt = getConsultantPrompt(caseDescription, problemStatement);
+  const prompt = getConsultantPrompt(
+    caseDescription,
+    problemStatement,
+    caseTitle,
+  );
   const messages: any = [
     {
       role: "user",
@@ -120,8 +125,14 @@ export default async function handler(
     const llmPrompt = promptData.prompt;
 
     let prompt = `
-  ${llmPrompt}
-  ${documentDetailed}
+${llmPrompt.trim()}
+
+## The Case Title
+${newDiagramTitle}
+
+## The Case Description
+
+${documentDetailed}
   `;
     if (problemStatement) {
       prompt = `
@@ -244,6 +255,7 @@ ${problemStatement}
       newDiagramRef.id,
       responseCLD,
       nodeTypes,
+      newDiagramTitle,
     );
 
     return res.status(200).json({ diagramId: newDiagramRef.id });

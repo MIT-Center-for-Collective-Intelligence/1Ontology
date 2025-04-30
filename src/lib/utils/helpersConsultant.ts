@@ -3,9 +3,12 @@ import { dbCausal } from "../firestoreServer/admin";
 import { GEMINI_MODEL } from "../CONSTANTS";
 
 export const createAColor = () => {
-  const r = Math.floor(Math.random() * 128);
-  const g = Math.floor(Math.random() * 128);
-  const b = Math.floor(Math.random() * 128);
+  const base = 64;
+  const max = 128;
+
+  const r = base + Math.floor(Math.random() * max);
+  const g = base + Math.floor(Math.random() * max);
+  const b = base + Math.floor(Math.random() * max);
 
   const hexR = r.toString(16).padStart(2, "0");
   const hexG = g.toString(16).padStart(2, "0");
@@ -89,6 +92,7 @@ export const generateDiagram = async ({
     node.id = id;
     const _node = {
       ...node,
+      fullConversation,
       createdAt: new Date(),
     };
 
@@ -114,7 +118,12 @@ export const generateDiagram = async ({
       "";
     const linkRef = dbCausal.collection("links").doc();
 
-    linkRef.set({ ...link, diagrams: [messageId], deleted: false });
+    linkRef.set({
+      ...link,
+      fullConversation,
+      diagrams: [messageId],
+      deleted: false,
+    });
   }
 };
 

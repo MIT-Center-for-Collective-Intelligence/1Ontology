@@ -93,7 +93,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).end();
   }
   try {
-    const { userPrompt, diagramId, messageId, parentMessageId } = req.body;
+    const { diagramId, messageId, parentMessageId } = req.body;
     const messagesArray = (await getThreadOfMessages(messageId)).reverse();
 
     const diagramDoc = await dbCausal
@@ -115,14 +115,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       .where("consultant", "==", true)
       .get();
 
-    const llmPrompt =
-      promptDoc.docs.length > 0 ? promptDoc.docs[0].data()?.prompt : "";
-
     const diagramData: any = diagramDoc.data();
     const caseDescription = diagramData.documentDetailed;
     const problemStatement = diagramData.problemStatement;
+    const diagramTitle = diagramData.title;
 
-    const prompt = getConsultantPrompt(caseDescription, problemStatement);
+    const prompt = getConsultantPrompt(
+      caseDescription,
+      problemStatement,
+      diagramTitle,
+    );
     messagesArray.unshift({
       role: "user",
       parts: [
@@ -234,128 +236,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
     }
 
-    const _conversation = messagesArray.slice(1);
-
-    let conversationContent = "";
-    _conversation.map((m) => {
-      conversationContent +
-        `- ${m.role === "user" ? "Consultee" : "Consultant"}:\n${m.parts[0].text}`;
-    });
-
-    const messages: any = [
-      {
-        role: "user",
-        parts: [
-          {
-            text: `   
-        ${llmPrompt}
-        ${caseDescription}
-        
-        ## Problem Description
-        ${problemStatement}
-        
-        ${
-          _conversation.length > 0
-            ? `## Consultants' and Consultees' Conversation
-        ${conversationContent}
-        `
-            : ""
-        }
-        
-        ## You Previously Generated the Following Diagram
-        ${JSON.stringify(previousCLD)}
-        
-        ## To-Do
-        PLease revise the diagram and generate a new complete version of it as a JSON object based on the following message that was just posted in the consultant-consultee thread of conversation:
-        ${userPrompt}
-         `,
-          },
-        ],
-      },
-    ];
-
-    const diagramRef = dbCausal.collection(DIAGRAMS).doc(diagramId);
-    diagramRef.update({
-      updating: true,
-    });
-
-    const response = (await askGemini(messages, GEMINI_MODEL)) as {
-      links: any;
-      nodes: any;
-      groupHierarchy: any;
-    };
-
-    diagramRef.update({
-      updating: FieldValue.delete(),
-    });
-    if (response.nodes.length > 0) {
-      await delay(2000);
-    } else {
-      res.status(500).json({ response });
-    }
-
-    await deleteAllPreviousData(diagramId);
-
-    const groups: any = [];
-
-    const createGroups = (tree: any, diagramId: any) => {
-      for (let group of tree) {
-        const groupRef = dbCausal.collection("groups").doc();
-        group.id = groupRef.id;
-        groups.push({
-          createdAt: new Date(),
-          ...group,
-          diagrams: [diagramId],
-          deleted: false,
-        });
-        groupRef.set(groups[groups.length - 1]);
-        if (group.subgroups) createGroups(group.subgroups, diagramId);
-      }
-    };
-    createGroups(response.groupHierarchy, diagramId);
-
-    for (let node of response["nodes"]) {
-      const nodeRef = dbCausal.collection("nodes").doc();
-      const id = nodeRef.id;
-      const _groups = node.groups.map((c: any) => {
-        return {
-          id: groups.find((g: any) => g.label === c)?.id || "",
-          label: groups.find((g: any) => g.label === c)?.label || "",
-        };
-      });
-      node.groups = _groups;
-      node.originalId = node.id;
-      node.id = id;
-      const _node = {
-        ...node,
-        createdAt: new Date(),
-      };
-      if (!nodeTypes.includes(node.nodeType)) {
-        const newTypeRef = dbCausal.collection("nodeTypes").doc();
-        newTypeRef.set({
-          type: node.nodeType,
-          color: createAColor(),
-        });
-      }
-      nodeRef.set({
-        ..._node,
-        diagrams: [diagramDoc.id],
-        deleted: false,
-      });
-    }
-
-    for (let link of response.links) {
-      link.source =
-        response.nodes.find((c: any) => c.originalId === link.source)?.id || "";
-      link.target =
-        response.nodes.find((c: any) => c.originalId === link.target)?.id || "";
-      const linkRef = dbCausal.collection("links").doc();
-      linkRef.set({ ...link, diagrams: [diagramId], deleted: false });
-    }
-    diagramRef.update({
-      updating: FieldValue.delete(),
-    });
-    res.status(500).json({ response });
+    res.status(500).json({});
   } catch (error) {
     console.error("Error in consultant API:", error);
     res.status(500).json({ error: "Internal Server Error" });

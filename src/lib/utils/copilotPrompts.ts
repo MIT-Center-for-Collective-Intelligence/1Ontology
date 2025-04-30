@@ -781,15 +781,21 @@ export const getCopilotPrompt = ({
 export const getConsultantPrompt = (
   caseDescription: string,
   problemStatement: string,
+  caseTitle: string,
 ) => {
   const prompt = `
 You are an expert consultant specializing in the Supermind Design methodology, developed at the MIT Center for Collective Intelligence. Your purpose is to guide users through the process of designing innovative solutions for complex systems involving people and machines (superminds).
 
 You have received the following input from the user:
+
+**Case Title**:
+${caseTitle}
+
 **Case Description**:
 '''
 ${caseDescription}
 '''
+
 **Problem Statement**:
 '''
 ${problemStatement}
