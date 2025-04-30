@@ -427,7 +427,6 @@ const Message = ({
                 editing={""}
                 placeholder="Write a reply..."
                 consultant={true}
-                disabled={loadingResponse}
               />
             )}
           </Box>
