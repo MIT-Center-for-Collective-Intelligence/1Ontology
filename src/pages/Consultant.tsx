@@ -6,8 +6,10 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import TrendingFlatIcon from "@mui/icons-material/TrendingFlat";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import BedtimeIcon from "@mui/icons-material/Bedtime";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 import {
   Box,
@@ -24,6 +26,7 @@ import {
   Tab,
   useTheme,
   LinearProgress,
+  Collapse,
 } from "@mui/material";
 import AutoFixNormalIcon from "@mui/icons-material/AutoFixNormal";
 
@@ -171,6 +174,7 @@ const Consultant = () => {
   const [reinforcementLoops, setReinforcementLoops] = useState([]);
   const [selectedLoop, setSelectedLoop] = useState<any>(null);
   const [selectedSolutionId, setSelectedSolutionId] = useState(null);
+  const [showLegendDrawer, setShowLegendDrawer] = useState(false);
   const columnResizerRef = useRef<any>();
 
   // const svgRef: any = useRef();
@@ -1161,136 +1165,185 @@ const Consultant = () => {
                 diagramId={selectedSolutionId || selectedDiagram?.id}
               />
             )}
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                zIndex: "1000",
-                p: 2,
-              }}
-            >
+            {!showLegendDrawer && (
+              <Tooltip title={"Expand Legend"}>
+                <IconButton
+                  onClick={() => setShowLegendDrawer(!showLegendDrawer)}
+                  sx={{
+                    position: "absolute",
+                    bottom: "10px",
+                    right: "50%",
+                    zIndex: "1200",
+                    border: "1px solid gray",
+                    borderRadius: "50%",
+                  }}
+                >
+                  <KeyboardArrowUpIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+            <Collapse in={showLegendDrawer} timeout="auto" unmountOnExit>
               <Box
                 sx={{
-                  border: "5px solid orange",
-                  width: "120px",
-                  height: "35px",
-                  mb: 2,
-                  display: "flex",
-                  borderRadius: "10px",
-                  color: "orange",
-                  justifyContent: "center",
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: "1000",
+                  backgroundColor:
+                    theme.palette.mode === "dark" ? "#242323" : "#cdcdcd",
+                  p: 2,
+                  borderTopLeftRadius: "25px",
+                  borderTopRightRadius: "25px",
                 }}
               >
-                <Typography>leverage node</Typography>
-              </Box>
-
-              {Object.keys(nodes).length > 0 && (
+                {" "}
                 <Box
                   sx={{
                     display: "flex",
-                    flexDirection: { xs: "column", sm: "row" },
-                    flexWrap: "wrap",
-                    gap: "10px",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    mb: 1,
+                  }}
+                  onClick={() => setShowLegendDrawer(!showLegendDrawer)}
+                >
+                  <Tooltip title={"Collapse"}>
+                    <IconButton
+                      size="small"
+                      sx={{
+                        backgroundColor:
+                          theme.palette.mode === "dark" ? "#474040" : "#797676",
+                      }}
+                    >
+                      {showLegendDrawer ? (
+                        <KeyboardArrowDownIcon />
+                      ) : (
+                        <KeyboardArrowUpIcon />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <Box
+                  sx={{
+                    border: "5px solid orange",
+                    width: "120px",
+                    height: "35px",
+                    mb: 2,
+                    display: "flex",
+                    borderRadius: "10px",
+                    justifyContent: "center",
                   }}
                 >
+                  <Typography sx={{ color: "orange" }}>
+                    leverage node
+                  </Typography>
+                </Box>
+                {Object.keys(nodes).length > 0 && (
                   <Box
                     sx={{
                       display: "flex",
+                      flexDirection: { xs: "column", sm: "row" },
                       flexWrap: "wrap",
                       gap: "10px",
                     }}
                   >
-                    {Object.values(nodeTypes)
-                      .filter((c: any) => usedTypes.has(c.type.toLowerCase()))
-                      .sort((a: any, b: any) => {
-                        const isOtherA = a.type.toLowerCase() === "other";
-                        const isOtherB = b.type.toLowerCase() === "other";
-                        if (isOtherA && !isOtherB) return 1;
-                        if (!isOtherA && isOtherB) return -1;
-                        return 0;
-                      })
-                      .map((resource: any, index) => (
-                        <ColorBox
-                          id={resource.id}
-                          key={resource.type + index}
-                          text={resource.type}
-                          color={resource.color}
-                        />
-                      ))}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "10px",
+                      }}
+                    >
+                      {Object.values(nodeTypes)
+                        .filter((c: any) => usedTypes.has(c.type.toLowerCase()))
+                        .sort((a: any, b: any) => {
+                          const isOtherA = a.type.toLowerCase() === "other";
+                          const isOtherB = b.type.toLowerCase() === "other";
+                          if (isOtherA && !isOtherB) return 1;
+                          if (!isOtherA && isOtherB) return -1;
+                          return 0;
+                        })
+                        .map((resource: any, index) => (
+                          <ColorBox
+                            id={resource.id}
+                            key={resource.type + index}
+                            text={resource.type}
+                            color={resource.color}
+                          />
+                        ))}
 
-                    {editor && (
-                      <Tooltip title="Add new node type">
-                        <IconButton
+                      {editor && (
+                        <Tooltip title="Add new node type">
+                          <IconButton
+                            sx={{
+                              display: "flex",
+                              borderRadius: "50%",
+                              alignItems: "center",
+                              fontSize: 13,
+                              textAlign: "center",
+                              width: "40px",
+                              height: "40px",
+                              border: (theme) =>
+                                theme.palette.mode === "dark"
+                                  ? "1px solid white"
+                                  : "1px solid black",
+                            }}
+                            onClick={() => {
+                              setIsModalAddTypeOpen(true);
+                            }}
+                          >
+                            <AddIcon
+                              sx={{
+                                color:
+                                  theme.palette.mode === "dark"
+                                    ? "white"
+                                    : "black",
+                              }}
+                            />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "10px",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {Object.entries(LINKS_TYPES).map((resource: any) => (
+                        <Box
+                          key={resource[0]}
                           sx={{
                             display: "flex",
-                            borderRadius: "50%",
                             alignItems: "center",
-                            fontSize: 13,
-                            textAlign: "center",
-                            width: "40px",
-                            height: "40px",
-                            border: (theme) =>
-                              theme.palette.mode === "dark"
-                                ? "1px solid white"
-                                : "1px solid black",
-                          }}
-                          onClick={() => {
-                            setIsModalAddTypeOpen(true);
+                            gap: "5px",
                           }}
                         >
-                          <AddIcon
-                            sx={{
-                              color:
-                                theme.palette.mode === "dark"
-                                  ? "white"
-                                  : "black",
+                          <TrendingFlatIcon
+                            style={{
+                              fontSize: "40px",
+                              color: resource[1].color,
                             }}
                           />
-                        </IconButton>
-                      </Tooltip>
-                    )}
+                          <Typography
+                            sx={{
+                              fontSize: "14px",
+                              color: resource[1].color,
+                            }}
+                          >
+                            {resource[0]}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
                   </Box>
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "10px",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {Object.entries(LINKS_TYPES).map((resource: any) => (
-                      <Box
-                        key={resource[0]}
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "5px",
-                        }}
-                      >
-                        <TrendingFlatIcon
-                          style={{
-                            fontSize: "40px",
-                            color: resource[1].color,
-                          }}
-                        />
-                        <Typography
-                          sx={{
-                            fontSize: "14px",
-                            color: resource[1].color,
-                          }}
-                        >
-                          {resource[0]}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
-              )}
-            </Box>{" "}
+                )}
+              </Box>{" "}
+            </Collapse>
           </Section>{" "}
         </Container>
       ) : (

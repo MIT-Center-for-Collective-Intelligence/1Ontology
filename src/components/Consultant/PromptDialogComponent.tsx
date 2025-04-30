@@ -189,7 +189,7 @@ const PromptDialogComponent = ({
           component="img"
           src="loader.gif"
           alt="Loading..."
-          sx={{ width: 500, height: 500, borderRadius: "25px" }}
+          sx={{ width: 200, height: 200, borderRadius: "25px" }}
         />
       </Container>
     );

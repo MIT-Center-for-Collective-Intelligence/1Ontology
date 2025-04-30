@@ -14,6 +14,7 @@ import {
   Typography,
   Skeleton,
   Chip,
+  useTheme,
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
@@ -75,6 +76,7 @@ const Message = ({
   selectedSolutionId: string;
   userImage: string;
 }) => {
+  const theme = useTheme();
   const db = getFirestore("causal-diagram");
   const [nestedMessages, setNestedMessages] = useState<any[]>([]);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -110,6 +112,7 @@ const Message = ({
         createdAt: new Date(),
         root: false,
         diagramId,
+        uname: user.uname,
         role: "user",
       };
       await setDoc(messageRef, newMessage);
@@ -251,7 +254,13 @@ const Message = ({
           >
             {" "}
             <Avatar
-              src={message.role === "user" ? userImage : "/consultant.png"}
+              src={
+                message.role === "user"
+                  ? userImage
+                  : theme.palette.mode === "dark"
+                    ? "/consultant_dark.png"
+                    : "/consultant_light.png"
+              }
               sx={{
                 width: 32,
                 height: 32,
