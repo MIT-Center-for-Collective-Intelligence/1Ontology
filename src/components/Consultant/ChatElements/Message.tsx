@@ -372,7 +372,7 @@ const Message = ({
               >
                 {showReplies.has(message.id) ? (
                   <>
-                    <KeyboardArrowUpIcon fontSize="small" /> Hide
+                    <KeyboardArrowUpIcon fontSize="small" /> Collapse
                   </>
                 ) : (
                   <Box sx={{ display: "flex", gap: "4px" }}>

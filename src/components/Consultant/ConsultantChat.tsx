@@ -32,6 +32,10 @@ const ConsultantChat = ({
   }, [messages]);
 
   useEffect(() => {
+    if (!diagramId) {
+      return;
+    }
+    setMessages([]);
     const diagramsQuery = query(
       collection(db, CONSULTANT_MESSAGES),
       where("diagramId", "==", diagramId),
@@ -82,4 +86,4 @@ const ConsultantChat = ({
   );
 };
 
-export default React.memo(ConsultantChat);
+export default ConsultantChat;
