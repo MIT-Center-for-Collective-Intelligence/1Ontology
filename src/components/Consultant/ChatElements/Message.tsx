@@ -15,6 +15,7 @@ import {
   Skeleton,
   Chip,
   useTheme,
+  Container,
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
@@ -409,11 +410,22 @@ const Message = ({
         {showReplies.has(message.id) && (
           <Box mt="8px">
             {!!message?.loadingReply ? (
-              <Skeleton
-                variant="rectangular"
-                height={170}
-                sx={{ borderRadius: "19px", mt: "10px" }}
-              />
+              <Container
+                maxWidth="sm"
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  minHeight: "100px",
+                }}
+              >
+                <Box
+                  component="img"
+                  src="loader.gif"
+                  alt="Loading..."
+                  sx={{ width: 200, height: 200, borderRadius: "25px" }}
+                />
+              </Container>
             ) : (
               <ChatInput
                 user={user}

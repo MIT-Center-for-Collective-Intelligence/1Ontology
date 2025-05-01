@@ -12,6 +12,8 @@ import {
 } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import DocumentViewer from "./DocumentViewer";
+import { getConversationThread } from "@components/lib/utils/utils";
+
 
 const LinkEditor = ({
   selectedLink,
@@ -150,7 +152,7 @@ const LinkEditor = ({
               ))}
             </ul>
 
-            {selectedLink.fullConversation && (
+            {selectedLink.conversation && (
               <Paper
                 elevation={3}
                 sx={{
@@ -170,10 +172,25 @@ const LinkEditor = ({
                 >
                   Thread Conversation:
                 </Typography>
-                <DocumentViewer
-                  documentDetails={selectedLink.fullConversation}
-                  sentences={selectedLink.sentences}
-                />
+                {selectedLink.conversation.map((m: any) => (
+                  <Box
+                    key={m.id}
+                    sx={{
+                      border: "1px solid",
+                      p: "19px",
+                      borderRadius: "25px",
+                      mt: "12px",
+                    }}
+                  >
+                    <Typography sx={{ fontWeight: "bold", color: "orange" }}>
+                      {m.role === "model" ? "\n\nConsultant" : "\n\nConsultee"}:
+                    </Typography>
+                    <DocumentViewer
+                      documentDetails={m.parts[0].text}
+                      sentences={selectedLink.sentences}
+                    />
+                  </Box>
+                ))}
               </Paper>
             )}
             <Paper

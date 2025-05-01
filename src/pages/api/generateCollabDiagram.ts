@@ -73,6 +73,7 @@ const generateTopMessage = async (
         previousCLD,
         messageId: newMessageRef.id,
         nodeTypes,
+        messagesArray: [],
       });
       newMessageRef.update({
         loadingCld: FieldValue.delete(),

@@ -6,8 +6,8 @@ import {
   getColor,
   LINKS_TYPES,
 } from "@components/lib/utils/ConsultantUtils";
-import { Theme, useTheme } from "@mui/material";
-import { CloseFullscreen } from "@mui/icons-material";
+import { useTheme } from "@mui/material";
+
 const wrapLabel = (text: string, maxChars = 18): string => {
   const words = text.split(/\s+/);
   const lines: string[] = [];
@@ -24,6 +24,7 @@ const wrapLabel = (text: string, maxChars = 18): string => {
   if (current) lines.push(current.trim());
   return lines.join("\n");
 };
+
 interface GraphNode {
   id: string;
   label: string;
@@ -159,125 +160,6 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
     return g;
   };
 
-  const modifyLink = async (data: { v: string; w: string }) => {
-    const nodeId = data.v;
-    const childId = data.w;
-    const link = links.find(
-      (link) => link.source === nodeId && link.target === childId,
-    );
-
-    setSelectedLink({ ...link, ...data });
-    setTabIndex(3);
-    setOpenSideBar(true);
-    setNewNode(null);
-  };
-  const addPencilButton = (
-    edgeElement: any,
-    edgeData: any,
-    pencilButtonsGroup: any,
-  ) => {
-    let edgeLabel = edgeElement.select("path");
-    let edgePath = edgeLabel.node();
-    let pathLength = edgePath.getTotalLength();
-    let positionRatio = 0.7;
-    let point = edgePath.getPointAtLength(pathLength * positionRatio);
-
-    let circleBg = pencilButtonsGroup
-      .append("circle")
-      .attr("cx", point.x)
-      .attr("cy", point.y)
-      .attr("r", 12)
-      .attr("fill", "rgba(0, 0, 0, 0.1)")
-      .style("opacity", 0)
-      .style("transition", "opacity 0.2s ease-in-out");
-
-    let button = pencilButtonsGroup
-      .append("foreignObject")
-      .attr("width", 20)
-      .attr("height", 20)
-      .attr("x", point.x - 10)
-      .attr("y", point.y - 10)
-      .attr("class", "pencil-button")
-      .style("z-index", "19999")
-      .style("cursor", "pointer");
-
-    let buttonBody = button
-      .append("xhtml:body")
-      .style("margin", "0px")
-      .style("padding", "0px");
-
-    buttonBody
-      .append("xhtml:button")
-      .style("cursor", "pointer")
-      .style("background", "transparent")
-      .style("color", "black")
-      .style("border", "none")
-      .style("font-weight", "bold")
-      .style("width", "100%")
-      .style("height", "100%")
-      .text("✏️")
-      .on("click", function (e: any) {
-        e.stopPropagation();
-        modifyLink(edgeData);
-      })
-      .on("mouseenter", function () {
-        circleBg.style("opacity", 1);
-      })
-      .on("mouseleave", function () {
-        circleBg.style("opacity", 0);
-      });
-
-    pencilButtonsGroup
-      .append("text")
-      .attr("class", "custom-text-color")
-      .attr("x", point.x)
-      .attr("y", point.y + 14)
-      .attr("font-family", "Arial, sans-serif")
-      .attr("font-size", "15px")
-      .style("cursor", "pointer");
-  };
-
-  const modifyNode = async (nodeId: string) => {
-    const children = [];
-    for (let link of links) {
-      if (link.source === nodeId) {
-        children.push(link.target);
-      }
-    }
-    setNewNode({ ...nodes[nodeId], children, previous: true });
-    setTabIndex(3);
-    setOpenSideBar(true);
-    setSelectedLink(null);
-  };
-  const addChild = (child: any) => {
-    setNewNode((prev: any) => {
-      const _prev = { ...prev };
-      if (!_prev.children.includes(child)) {
-        _prev.children.push(child);
-      }
-      return _prev;
-    });
-  };
-
-  const removeChild = (child: any) => {
-    setNewNode((prev: any) => {
-      const _prev = { ...prev };
-      if (_prev.children.includes(child)) {
-        _prev.children.splice(_prev.children.indexOf(child), 1);
-      }
-      return _prev;
-    });
-  };
-  const getSupermindChipLabel = (chipLabel: string) => {
-    if (chipLabel.toLowerCase() === "zoomin") {
-      return "Zoom In";
-    }
-    if (chipLabel.toLowerCase() === "zoomout") {
-      return "Zoom Out";
-    }
-    return chipLabel;
-  };
-
   const renderGraph = (
     svg: d3.Selection<SVGSVGElement | null, unknown, null, undefined>,
     g: dagreD3.graphlib.Graph,
@@ -287,145 +169,18 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
       svg.append<SVGGElement>("g");
 
     render(svgGroup, g);
-    var edges = svg.selectAll("g.edgePath");
-
-    edges.each(function (edgeData) {
-      var edgeElement = d3.select(this);
-      // const nodeData = nodes[edgeData.v];
-      addPencilButton(edgeElement, edgeData, svgGroup);
-    });
-
     const gNodes = svg.selectAll("g.node");
 
     gNodes.on("click", function (d) {
       d.stopPropagation();
-      modifyNode(d.target.__data__);
-    });
-
-    const tooltip = d3
-      .select("body")
-      .append("div")
-      .attr("class", "tooltip")
-      .style("position", "absolute")
-      .style("visibility", "hidden")
-      .style("background-color", "rgba(0,0,0,0.7)")
-      .style("color", "white")
-      .style("padding", "5px")
-      .style("border-radius", "4px")
-      .style("font-size", "12px");
-
-    svgGroup.selectAll<SVGGElement, any>("g.node").each(function (v) {
-      let nodeElement = d3.select(this);
-      let nodeLabel = nodeElement.select<SVGRectElement>("rect");
-      let nodeBBox = nodeLabel.node()?.getBBox();
-
-      if (!nodeBBox) return;
-
-      nodeElement
-        .style("cursor", "pointer")
-        .on("mouseover", function () {
-          nodeLabel.style("fill-opacity", 0.8);
-        })
-        .on("mouseout", function () {
-          nodeLabel.style("fill-opacity", 1);
-        });
-
-      let button = nodeElement
-        .append("foreignObject")
-        .attr("width", 20)
-        .attr("height", 20)
-        .attr("x", nodeBBox.x + nodeBBox.width / 2 - 10)
-        .attr("y", nodeBBox.y - 10)
-        .attr("class", "hide-button")
-        .style("cursor", "pointer");
-
-      let buttonBody = button
-        .append("xhtml:body")
-        .style("margin", "0px")
-        .style("padding", "0px");
-      const chipGroup = nodeElement.append("g");
-      const chipMargin = 1;
-      const graphNodeData = g.node(v);
-      if (graphNodeData.supermindCategory) {
-        const chips = [getSupermindChipLabel(graphNodeData.supermindCategory)];
-        chips.forEach((chipLabel, index) => {
-          const chipWidth = chipLabel.length * 7 + 12; // Approximate width
-          const chipHeight = 18;
-          const chipX =
-            nodeBBox.x + chipMargin + index * (chipWidth + chipMargin);
-          const chipY = nodeBBox.y - chipHeight - chipMargin;
-
-          chipGroup
-            .append("rect")
-            .attr("x", chipX)
-            .attr("y", chipY)
-            .attr("rx", 6)
-            .attr("ry", 6)
-            .attr("width", chipWidth)
-            .attr("height", chipHeight)
-            .attr("fill", "#eeeeee")
-            .attr("stroke", "#999999")
-            .attr("stroke-width", 1);
-
-          chipGroup
-            .append("text")
-            .attr("x", chipX + chipWidth / 2)
-            .attr("y", chipY + chipHeight / 2 + 4)
-            .attr("text-anchor", "middle")
-            .attr("fill", "#333333")
-            .style("font-size", "12px")
-            .text(chipLabel);
-        });
-      }
-
-      if (newNode) {
-        const isChild = newNode.children.includes(v);
-        buttonBody.style("position", "relative");
-
-        buttonBody
-          .append("xhtml:button")
-          .style("position", "absolute")
-          .style("top", "0px")
-          .style("left", "50%")
-          .style("transform", "translateX(-50%)")
-          .style("background", "white")
-          .style("border", "1px solid black")
-          .style("border-radius", "50%")
-          .style("width", "20px")
-          .style("height", "20px")
-          .style("font-size", "16px")
-          .style("line-height", "20px")
-          .style("padding", "0")
-          .style("margin", "0")
-          .style("display", "flex")
-          .style("justify-content", "center")
-          .style("align-items", "center")
-          .style("cursor", "pointer")
-          .text(isChild ? "-" : "+")
-          .on("click", function (e) {
-            e.stopPropagation();
-            if (isChild) {
-              e.stopPropagation();
-              removeChild(v);
-            } else {
-              e.stopPropagation();
-              addChild(v);
-            }
-            tooltip.style("visibility", "hidden");
-          })
-          .on("mouseover", function (event) {
-            d3.select(this).style("background", isChild ? "#FFCC80" : "orange");
-            tooltip
-              .style("visibility", "visible")
-              .text(isChild ? "Remove as child" : "Add as child")
-              .style("left", event.pageX + 10 + "px")
-              .style("top", event.pageY + 10 + "px");
-          })
-          .on("mouseout", function () {
-            d3.select(this).style("background", "white");
-            tooltip.style("visibility", "hidden");
-          });
-      }
+      const nodeId = d.target.__data__;
+      const children = links
+        .filter((link) => link.source === nodeId)
+        .map((link) => link.target);
+      setNewNode({ ...nodes[nodeId], children, previous: true });
+      setTabIndex(3);
+      setOpenSideBar(true);
+      setSelectedLink(null);
     });
   };
 
@@ -439,12 +194,20 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
 
     svg.call(zoom);
 
-    const svgWidth = (window.innerWidth * 70) / 100;
-    const svgHeight = 600;
-    const graphWidth = g.graph().width + 50;
-    const graphHeight = g.graph().height + 50;
+    const svgElement = svg.node();
+    if (!svgElement) return;
 
-    const zoomScale = Math.min(svgWidth / graphWidth, svgHeight / graphHeight);
+    const svgRect = svgElement.getBoundingClientRect();
+    const svgWidth = svgRect.width;
+    const svgHeight = svgRect.height;
+
+    const graphWidth = g.graph().width || 0;
+    const graphHeight = g.graph().height || 0;
+
+    const zoomScale = Math.min(
+      svgWidth / (graphWidth + 40),
+      svgHeight / (graphHeight + 40),
+    );
     const translateX = (svgWidth - graphWidth * zoomScale) / 2;
     const translateY = (svgHeight - graphHeight * zoomScale) / 2;
 
@@ -457,30 +220,13 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
   useEffect(() => {
     if (!svgRef.current) return;
 
-    const svg = d3.select<SVGSVGElement, unknown>(svgRef.current!);
+    const svg: any = d3.select<SVGSVGElement, unknown>(svgRef.current);
 
     svg.selectAll("*").remove();
 
     const g = buildGraph();
-
-    renderGraph(
-      svg as unknown as d3.Selection<
-        SVGSVGElement | null,
-        unknown,
-        null,
-        undefined
-      >,
-      g,
-    );
-    setupZoom(
-      svg as unknown as d3.Selection<
-        SVGSVGElement | null,
-        unknown,
-        null,
-        undefined
-      >,
-      g,
-    );
+    renderGraph(svg, g);
+    setupZoom(svg, g);
 
     return () => {
       svg.selectAll("*").remove();

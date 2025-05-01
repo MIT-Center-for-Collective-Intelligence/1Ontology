@@ -218,6 +218,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           previousCLD,
           messageId: m.id,
           nodeTypes,
+          messagesArray,
         });
         newMessageRef.update({
           loadingCld: FieldValue.delete(),

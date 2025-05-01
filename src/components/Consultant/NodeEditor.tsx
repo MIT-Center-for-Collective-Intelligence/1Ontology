@@ -213,7 +213,7 @@ const NodeEditor = ({
                 ))}
               </ul>
             </Typography>
-            {newNode.fullConversation && (
+            {newNode.conversation.length > 0 && (
               <Paper
                 elevation={3}
                 sx={{
@@ -233,10 +233,26 @@ const NodeEditor = ({
                 >
                   Thread Conversation:
                 </Typography>
-                <DocumentViewer
-                  documentDetails={newNode.fullConversation}
-                  sentences={newNode.sentences}
-                />
+
+                {newNode.conversation.map((m: any) => (
+                  <Box
+                    key={m.id}
+                    sx={{
+                      border: "1px solid",
+                      p: "19px",
+                      borderRadius: "25px",
+                      mt: "12px",
+                    }}
+                  >
+                    <Typography sx={{ fontWeight: "bold", color: "orange" }}>
+                      {m.role === "model" ? "\n\nConsultant" : "\n\nConsultee"}:
+                    </Typography>
+                    <DocumentViewer
+                      documentDetails={m.parts[0].text}
+                      sentences={newNode.sentences}
+                    />
+                  </Box>
+                ))}
               </Paper>
             )}
             <Paper
