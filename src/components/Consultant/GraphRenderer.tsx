@@ -8,13 +8,29 @@ import {
 } from "@components/lib/utils/ConsultantUtils";
 import { Theme, useTheme } from "@mui/material";
 import { CloseFullscreen } from "@mui/icons-material";
+const wrapLabel = (text: string, maxChars = 18): string => {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
 
+  words.forEach((word) => {
+    if ((current + " " + word).trim().length > maxChars) {
+      lines.push(current.trim());
+      current = word;
+    } else {
+      current += " " + word;
+    }
+  });
+  if (current) lines.push(current.trim());
+  return lines.join("\n");
+};
 interface GraphNode {
   id: string;
   label: string;
   groups: { id: string }[];
   nodeType: string;
   isLeverage?: boolean;
+  supermindCategory?: string;
 }
 
 interface GraphLink {
@@ -38,6 +54,7 @@ interface GraphRendererProps {
   setTabIndex: any;
   setOpenSideBar: any;
   diagramId: string;
+  graphOrientation: "LR" | "TB";
 }
 
 const GraphRenderer: React.FC<GraphRendererProps> = ({
@@ -54,13 +71,14 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
   setTabIndex,
   setOpenSideBar,
   diagramId,
+  graphOrientation,
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const theme = useTheme();
 
   const buildGraph = () => {
     const g = new dagreD3.graphlib.Graph({ compound: true })
-      .setGraph({ rankdir: "LR", isMultigraph: true })
+      .setGraph({ rankdir: graphOrientation, isMultigraph: true })
       .setDefaultEdgeLabel(() => ({}));
 
     Object.values(nodes).forEach((nodeData) => {
@@ -79,11 +97,12 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
         isBlurred ? 0.1 : 1,
       );
       g.setNode(nodeData.id, {
-        label: nodeData.label ?? "",
+        label: wrapLabel(nodeData.label) ?? "",
         style: nodeData.isLeverage
           ? `fill: ${nodeColor}; stroke: ${borderColor}; stroke-width: 7px;`
           : `fill: ${nodeColor};`,
         labelStyle: `fill: ${textColor};`,
+        supermindCategory: nodeData.supermindCategory,
       });
     });
 
@@ -314,6 +333,40 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
         .append("xhtml:body")
         .style("margin", "0px")
         .style("padding", "0px");
+      const chipGroup = nodeElement.append("g");
+      const chipMargin = 1;
+      const graphNodeData = g.node(v);
+      if (graphNodeData.supermindCategory) {
+        const chips = [graphNodeData.supermindCategory];
+        chips.forEach((chipLabel, index) => {
+          const chipWidth = chipLabel.length * 7 + 12; // Approximate width
+          const chipHeight = 18;
+          const chipX =
+            nodeBBox.x + chipMargin + index * (chipWidth + chipMargin);
+          const chipY = nodeBBox.y - chipHeight - chipMargin;
+
+          chipGroup
+            .append("rect")
+            .attr("x", chipX)
+            .attr("y", chipY)
+            .attr("rx", 6)
+            .attr("ry", 6)
+            .attr("width", chipWidth)
+            .attr("height", chipHeight)
+            .attr("fill", "#eeeeee")
+            .attr("stroke", "#999999")
+            .attr("stroke-width", 1);
+
+          chipGroup
+            .append("text")
+            .attr("x", chipX + chipWidth / 2)
+            .attr("y", chipY + chipHeight / 2 + 4)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#333333")
+            .style("font-size", "12px")
+            .text(chipLabel);
+        });
+      }
 
       if (newNode) {
         const isChild = newNode.children.includes(v);
@@ -422,7 +475,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
     return () => {
       svg.selectAll("*").remove();
     };
-  }, [nodes, links, newNode, selectedGroups, selectedLoop]);
+  }, [nodes, links, newNode, selectedGroups, selectedLoop, graphOrientation]);
 
   return <svg ref={svgRef} width="100%" height="100%"></svg>;
 };

@@ -174,8 +174,9 @@ const Consultant = () => {
   const [reinforcementLoops, setReinforcementLoops] = useState([]);
   const [selectedLoop, setSelectedLoop] = useState<any>(null);
   const [selectedSolutionId, setSelectedSolutionId] = useState(null);
-  const [showLegendDrawer, setShowLegendDrawer] = useState(false);
+  const [showLegendDrawer, setShowLegendDrawer] = useState(true);
   const columnResizerRef = useRef<any>();
+  const [graphOrientation, setGraphOrientation] = useState<"LR" | "TB">("LR");
 
   // const svgRef: any = useRef();
   const editor = true;
@@ -372,7 +373,6 @@ const Consultant = () => {
           py: 1,
           ml: 0.9,
           mr: 0.5,
-          mb: 0.5,
           textAlign: "center",
           height: "40px",
           position: "relative",
@@ -758,6 +758,14 @@ const Consultant = () => {
       });
     }
   };
+  const handleGOrientationSwitch = () => {
+    setGraphOrientation((prev) => {
+      if (prev === "LR") {
+        return "TB";
+      }
+      return "LR";
+    });
+  };
 
   useEffect(() => {
     setReinforcementLoops(getReinforcementLoops(links));
@@ -988,6 +996,26 @@ const Consultant = () => {
                   {tempText}
                 </Typography>
               )}
+              <Tooltip
+                title={
+                  theme.palette.mode === "dark"
+                    ? "Left to Right"
+                    : "Top to Bottom"
+                }
+              >
+                <IconButton
+                  onClick={handleGOrientationSwitch}
+                  sx={{
+                    width: "35px",
+                    height: "35px",
+                    border: "1px solid gray",
+                    borderRadius: "10px",
+                    fontSize: "15px",
+                  }}
+                >
+                  {graphOrientation}
+                </IconButton>
+              </Tooltip>
               <Tooltip title={"Generate a diagram"} sx={{ mt: "3px" }}>
                 {loadingResponse &&
                 (loadingResponse === "generate" ||
@@ -1163,6 +1191,7 @@ const Consultant = () => {
                 setTabIndex={setTabIndex}
                 setOpenSideBar={setOpenSideBar}
                 diagramId={selectedSolutionId || selectedDiagram?.id}
+                graphOrientation={graphOrientation}
               />
             )}
             {!showLegendDrawer && (
@@ -1200,10 +1229,12 @@ const Consultant = () => {
                 {" "}
                 <Box
                   sx={{
+                    position: "absolute",
                     display: "flex",
                     justifyContent: "center",
                     cursor: "pointer",
-                    mb: 1,
+                    left: "50%",
+                    top: -16,
                   }}
                   onClick={() => setShowLegendDrawer(!showLegendDrawer)}
                 >
@@ -1212,7 +1243,7 @@ const Consultant = () => {
                       size="small"
                       sx={{
                         backgroundColor:
-                          theme.palette.mode === "dark" ? "#474040" : "#797676",
+                          theme.palette.mode === "dark" ? "#242323" : "#797676",
                       }}
                     >
                       {showLegendDrawer ? (
@@ -1225,18 +1256,64 @@ const Consultant = () => {
                 </Box>
                 <Box
                   sx={{
-                    border: "5px solid orange",
-                    width: "120px",
-                    height: "35px",
-                    mb: 2,
                     display: "flex",
-                    borderRadius: "10px",
-                    justifyContent: "center",
+                    alignItems: "center",
+                    textAlign: "center",
                   }}
                 >
-                  <Typography sx={{ color: "orange" }}>
-                    leverage node
-                  </Typography>
+                  {" "}
+                  <Box
+                    sx={{
+                      border: "5px solid orange",
+                      width: "120px",
+                      height: "35px",
+                      mb: 2,
+                      display: "flex",
+                      borderRadius: "10px",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Typography sx={{ color: "orange" }}>
+                      leverage node
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      ml: "10px",
+                      pb: "10px",
+                    }}
+                  >
+                    {Object.entries(LINKS_TYPES).map((resource: any) => (
+                      <Box
+                        key={resource[0]}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          p: 0,
+                        }}
+                      >
+                        <TrendingFlatIcon
+                          style={{
+                            fontSize: "40px",
+                            color: resource[1].color,
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            color: resource[1].color,
+                          }}
+                        >
+                          {resource[0]}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
                 </Box>
                 {Object.keys(nodes).length > 0 && (
                   <Box
@@ -1247,6 +1324,7 @@ const Consultant = () => {
                       gap: "10px",
                     }}
                   >
+                    {" "}
                     <Box
                       sx={{
                         display: "flex",
@@ -1303,42 +1381,6 @@ const Consultant = () => {
                           </IconButton>
                         </Tooltip>
                       )}
-                    </Box>
-
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "10px",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {Object.entries(LINKS_TYPES).map((resource: any) => (
-                        <Box
-                          key={resource[0]}
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "5px",
-                          }}
-                        >
-                          <TrendingFlatIcon
-                            style={{
-                              fontSize: "40px",
-                              color: resource[1].color,
-                            }}
-                          />
-                          <Typography
-                            sx={{
-                              fontSize: "14px",
-                              color: resource[1].color,
-                            }}
-                          >
-                            {resource[0]}
-                          </Typography>
-                        </Box>
-                      ))}
                     </Box>
                   </Box>
                 )}
