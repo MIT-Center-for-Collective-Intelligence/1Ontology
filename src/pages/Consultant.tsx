@@ -997,11 +997,7 @@ const Consultant = () => {
                 </Typography>
               )}
               <Tooltip
-                title={
-                  theme.palette.mode === "dark"
-                    ? "Left to Right"
-                    : "Top to Bottom"
-                }
+                title={graphOrientation ? "Left to Right" : "Top to Bottom"}
               >
                 <IconButton
                   onClick={handleGOrientationSwitch}

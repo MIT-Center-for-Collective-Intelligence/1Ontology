@@ -268,6 +268,16 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
       return _prev;
     });
   };
+  const getSupermindChipLabel = (chipLabel: string) => {
+    if (chipLabel.toLowerCase() === "zoomin") {
+      return "Zoom In";
+    }
+    if (chipLabel.toLowerCase() === "zoomout") {
+      return "Zoom Out";
+    }
+    return chipLabel;
+  };
+
   const renderGraph = (
     svg: d3.Selection<SVGSVGElement | null, unknown, null, undefined>,
     g: dagreD3.graphlib.Graph,
@@ -337,7 +347,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
       const chipMargin = 1;
       const graphNodeData = g.node(v);
       if (graphNodeData.supermindCategory) {
-        const chips = [graphNodeData.supermindCategory];
+        const chips = [getSupermindChipLabel(graphNodeData.supermindCategory)];
         chips.forEach((chipLabel, index) => {
           const chipWidth = chipLabel.length * 7 + 12; // Approximate width
           const chipHeight = 18;
