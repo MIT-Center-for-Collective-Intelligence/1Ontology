@@ -152,6 +152,7 @@ type ILinkNodeProps = {
   selectedProperty: string;
   glowIds: Set<string>;
   skillsFuture: boolean;
+  currentImprovement: any;
 };
 
 const LinkNode = ({
@@ -176,6 +177,7 @@ const LinkNode = ({
   selectedProperty,
   glowIds,
   skillsFuture,
+  currentImprovement,
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -646,7 +648,7 @@ const LinkNode = ({
                 link.change === "removed" ? "line-through" : "none",
             }}
           >
-            {title || regionalTitle}
+            {link.title || title || regionalTitle}
           </Link>
         )}
 
@@ -680,6 +682,7 @@ const LinkNode = ({
           )}
 
           {property === "parts" &&
+            !currentImprovement &&
             !selectedDiffNode &&
             !clonedNodesQueue.hasOwnProperty(link.id) && (
               <Tooltip title={swapIt ? "Specialize" : "Close"}>

@@ -129,8 +129,6 @@ type MainSidebarProps = {
   skillsFutureApp: string;
 };
 
-
-
 const ToolbarSidebar = ({
   toolbarRef,
   user,
@@ -686,6 +684,9 @@ const ToolbarSidebar = ({
     try {
       if (!user?.uname) return;
       const _NODES = [];
+      const addedNonExistentElements: {
+        [property: string]: { id: string; title: string }[];
+      } = {};
 
       for (let node of newNodes) {
         if (!!nodesByTitle[node.title]) {
@@ -712,6 +713,16 @@ const ToolbarSidebar = ({
         );
 
         for (let p in node) {
+          if (
+            !inheritance[p] &&
+            p !== "generalizations" &&
+            p !== "specializations"
+          ) {
+            inheritance[p] = {
+              ref: null,
+              inheritanceType: "inheritUnlessAlreadyOverRidden",
+            };
+          }
           const property:
             | "title"
             | "description"
@@ -761,6 +772,20 @@ const ToolbarSidebar = ({
               for (let nodeT of propertyValue) {
                 if (nodesByTitle[nodeT]?.id) {
                   value.push({ id: nodesByTitle[nodeT].id });
+                } else {
+                  const newId = doc(collection(db, "nodes")).id;
+                  value.push({
+                    id: newId,
+                    title: nodeT,
+                    change: "added",
+                  });
+                  if (!addedNonExistentElements[property]) {
+                    addedNonExistentElements[property] = [];
+                  }
+                  addedNonExistentElements[property].push({
+                    title: nodeT,
+                    id: newId,
+                  });
                 }
               }
               newNode.properties[property] = [
@@ -778,6 +803,12 @@ const ToolbarSidebar = ({
           }
         }
         if (!!node?.description) {
+          if (!inheritance["description"]) {
+            inheritance["description"] = {
+              ref: null,
+              inheritanceType: "inheritUnlessAlreadyOverRidden",
+            };
+          }
           inheritance.description.ref = null;
           newNode.properties.description = node.description;
         }
@@ -785,6 +816,7 @@ const ToolbarSidebar = ({
           node: newNode,
           newNode: true,
           reasoning: node.reasoning,
+          addedNonExistentElements,
           generalizationId: generalization.id,
           first_generalization: first_generalization,
         });

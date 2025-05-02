@@ -169,7 +169,7 @@ const ImprovementsSlider = ({
               }}
             >
               {(proposal?.newNode || proposal?.deleteNode) && (
-                <Box sx={{ mb: "160px" }}>
+                <Box sx={{ mb: "16px" }}>
                   {proposal?.newNode ? (
                     <Typography>
                       This proposal adds a new node titled:
@@ -183,7 +183,6 @@ const ImprovementsSlider = ({
                     sx={{
                       fontWeight: "bold",
                       color: "orange",
-                      my: "13px",
                       fontSize: "17px",
                     }}
                   >
@@ -192,8 +191,30 @@ const ImprovementsSlider = ({
                   <Typography sx={{ mt: "15px" }}>Reasoning:</Typography>
                   <Typography>{proposal.reasoning}</Typography>
                 </Box>
+              )}{" "}
+              {Object.values(proposal.addedNonExistentElements).length > 0 && (
+                <Typography sx={{ color: "orange" }}>
+                  {`The nodes below don't exist in the ontology yet. By
+                  accepting this proposal, new nodes will be created:`}
+                </Typography>
               )}
-
+              {Object.values(proposal.addedNonExistentElements).length > 0 && (
+                <List sx={{ mb: "25px" }}>
+                  {Object.values(proposal.addedNonExistentElements)
+                    .flatMap((c) => c)
+                    .map((node: any) => (
+                      <ListItem key={node.id} sx={{ color: "green" }}>
+                        {" "}
+                        <DragIndicatorIcon
+                          sx={{
+                            color: "green",
+                          }}
+                        />
+                        {node.title}
+                      </ListItem>
+                    ))}
+                </List>
+              )}
               {!proposal?.newNode &&
                 !proposal.deleteNode &&
                 proposal?.changes[0]?.modified_property && (
@@ -223,32 +244,39 @@ const ImprovementsSlider = ({
                       {" "}
                       {proposal.changes[0].reasoning}
                     </Typography>
-                    {proposal.details.addedNonExistentElements.length > 0 && (
+                    {(proposal.details.addedNonExistentElements.length > 0 ||
+                      Object.keys(proposal.details.addedNonExistentElements)
+                        .length > 0) && (
                       <Typography>
                         {`The nodes below don't exist in the ontology yet. By
                         accepting this proposal, new nodes will be created.`}
                       </Typography>
                     )}
-                    {proposal.details.addedNonExistentElements.length > 0 && (
+                    {(proposal.details.addedNonExistentElements.length > 0 ||
+                      Object.keys(proposal.addedNonExistentElements || {})
+                        .length > 0) && (
                       <List>
-                        {proposal.details.addedNonExistentElements.map(
-                          (item: string, index: number) => (
-                            <ListItem key={item}>
-                              <DragIndicatorIcon
-                                sx={{
-                                  color: "green",
-                                }}
-                              />
-                              <Typography
-                                key={index}
-                                variant="body1"
-                                sx={{ color: "green" }}
-                              >
-                                {item}
-                              </Typography>{" "}
-                            </ListItem>
-                          ),
-                        )}
+                        {Array.isArray(
+                          proposal.details.addedNonExistentElements,
+                        ) &&
+                          proposal.details.addedNonExistentElements.map(
+                            (item: string, index: number) => (
+                              <ListItem key={item}>
+                                <DragIndicatorIcon
+                                  sx={{
+                                    color: "green",
+                                  }}
+                                />
+                                <Typography
+                                  key={index}
+                                  variant="body1"
+                                  sx={{ color: "green" }}
+                                >
+                                  {item}
+                                </Typography>{" "}
+                              </ListItem>
+                            ),
+                          )}
                       </List>
                     )}
                     {/*      {(
@@ -279,7 +307,6 @@ const ImprovementsSlider = ({
                   )} */}
                   </Box>
                 )}
-
               <Typography
                 sx={{
                   position: "absolute",
@@ -355,21 +382,6 @@ const ImprovementsSlider = ({
             {" "}
             Implement Improvement
           </LoadingButton>
-          {/* <Button
-            onClick={onHandleAcceptChange}
-            autoFocus
-            variant="contained"
-            sx={{
-              ml: "auto",
-              color: "white",
-              backgroundColor: "#115f07",
-              ":hover": {
-                backgroundColor: "green",
-              },
-            }}
-          >
-            Implement Improvement
-          </Button> */}
         </Box>
       )}
     </Box>

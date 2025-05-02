@@ -1175,6 +1175,9 @@ const CollectionStructure = ({
                                               }
                                               glowIds={glowIds}
                                               skillsFuture={skillsFuture}
+                                              currentImprovement={
+                                                currentImprovement
+                                              }
                                             />
                                           )}
                                         </Draggable>

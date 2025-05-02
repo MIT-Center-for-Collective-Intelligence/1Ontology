@@ -604,6 +604,68 @@ const Improvements = ({
     },
     [user?.uname, nodes],
   );
+  const createNewNodes = async (
+    addedNonExistentElements: {
+      [property: string]: { id: string; title: string }[];
+    },
+    newNode: any,
+  ) => {
+    try {
+      const nodeType = newNode.nodeType;
+      const unclassifiedNodeDocs = await getDocs(
+        query(
+          collection(db, NODES),
+          where("unclassified", "==", true),
+          where("nodeType", "==", nodeType),
+        ),
+      );
+      if (unclassifiedNodeDocs.docs.length > 0 && user?.uname) {
+        const unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
+        const generalization = unclassifiedNodeDoc.data() as INode;
+        for (let property in addedNonExistentElements) {
+          let newNodesIds = [];
+          for (let { title, id } of addedNonExistentElements[property]) {
+            const newRef = doc(collection(db, NODES), id);
+            const inheritance = generateInheritance(
+              generalization.inheritance,
+              unclassifiedNodeDoc.id,
+            );
+            const newNode = createNewNode(
+              generalization,
+              newRef.id,
+              title,
+              inheritance,
+              generalization.id,
+              user?.uname,
+              skillsFuture,
+            );
+            const specializations =
+              nodes[unclassifiedNodeDoc.id].specializations;
+
+            const mainCollectionIdx = specializations.findIndex(
+              (c) => c.collectionName === "main",
+            );
+
+            specializations[mainCollectionIdx].nodes.push({
+              id: newRef.id,
+            });
+            updateDoc(unclassifiedNodeDoc.ref, {
+              specializations,
+            });
+            await setDoc(newRef, {
+              ...newNode,
+              locked: false,
+              createdAt: new Date(),
+            });
+            newNodesIds.push(newRef.id);
+          }
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const onAcceptChange = async (change: any) => {
     try {
       if (!!change?.deleteNode) {
@@ -611,6 +673,9 @@ const Improvements = ({
         return;
       }
       if (!!change?.newNode) {
+        if (Object.keys(change.addedNonExistentElements).length > 0) {
+          await createNewNodes(change.addedNonExistentElements, change.node);
+        }
         await addNewSpecialization("main", change.node, change.reasoning);
         return;
       }

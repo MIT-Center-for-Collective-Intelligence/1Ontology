@@ -906,7 +906,9 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const navigateToNode = useCallback(
     async (nodeId: string) => {
       // adding timeout to test if truncated issue persists
-
+      if (currentImprovement) {
+        return;
+      }
       if (
         selectedProperty &&
         (addedElements.size > 0 || removedElements.size > 0) &&
