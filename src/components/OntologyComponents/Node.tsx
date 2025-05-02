@@ -166,6 +166,7 @@ type INodeProps = {
   setSelectedCollection: any;
   selectedCollection: string;
   skillsFuture: boolean;
+  partsInheritance: { [nodeId: string]: string };
 };
 
 const Node = ({
@@ -204,6 +205,7 @@ const Node = ({
   setSelectedCollection,
   selectedCollection,
   skillsFuture,
+  partsInheritance,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -1265,6 +1267,7 @@ const Node = ({
               setGlowIds={setGlowIds}
               selectedCollection={selectedCollection}
               skillsFuture={skillsFuture}
+              partsInheritance={partsInheritance}
             />
           ))}
         </Stack>

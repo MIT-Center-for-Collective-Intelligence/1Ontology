@@ -153,6 +153,7 @@ type ILinkNodeProps = {
   glowIds: Set<string>;
   skillsFuture: boolean;
   currentImprovement: any;
+  partsInheritance: { [nodeId: string]: string };
 };
 
 const LinkNode = ({
@@ -178,6 +179,7 @@ const LinkNode = ({
   glowIds,
   skillsFuture,
   currentImprovement,
+  partsInheritance,
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -648,7 +650,10 @@ const LinkNode = ({
                 link.change === "removed" ? "line-through" : "none",
             }}
           >
-            {link.title || title || regionalTitle}
+            {link.title || title || regionalTitle}{" "}
+            {partsInheritance && partsInheritance[link.id]
+              ? `(From ${partsInheritance[link.id]})`
+              : ""}
           </Link>
         )}
 

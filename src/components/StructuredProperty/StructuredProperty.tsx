@@ -78,6 +78,7 @@ type IStructuredPropertyProps = {
   setGlowIds: any;
   selectedCollection: any;
   skillsFuture: boolean;
+  partsInheritance?: { [nodeId: string]: string };
 };
 
 const StructuredProperty = ({
@@ -128,6 +129,7 @@ const StructuredProperty = ({
   setGlowIds,
   selectedCollection,
   skillsFuture,
+  partsInheritance,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
   const [openAddCollection, setOpenAddCollection] = useState(false);
@@ -652,6 +654,7 @@ const StructuredProperty = ({
             setAddedElements={setAddedElements}
             addACloneNodeQueue={addACloneNodeQueue}
             skillsFuture={skillsFuture}
+            partsInheritance={partsInheritance ?? {}}
           />
         )}
       </Box>

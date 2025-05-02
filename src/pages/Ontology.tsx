@@ -204,6 +204,9 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const [appName, setAppName] = useState(
     "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
   ); // this state is only been used for the Skills Future App
+  const [partsInheritance, setPartsInheritance] = useState<{
+    [nodeId: string]: string;
+  }>({});
 
   const firstLoad = useRef(true);
 
@@ -890,7 +893,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     }
 
     for (let type in mainSpecializations) {
-      if (nodes[mainSpecializations[type].id].nodeType) {
+      if (nodes[mainSpecializations[type].id]?.nodeType) {
         mainSpecializations[nodes[mainSpecializations[type].id].nodeType] =
           mainSpecializations[type];
       }
@@ -1051,6 +1054,44 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     },
     [eachOntologyPath],
   );
+
+  useEffect(() => {
+    if (!currentVisibleNode) return;
+    const inheritedParts: { [nodeId: string]: string } = {};
+
+    const _currentVisibleNode = { ...currentVisibleNode };
+    const parts = _currentVisibleNode?.properties.parts || [];
+    console.log("parts", parts);
+    const generalizations = (
+      _currentVisibleNode?.generalizations || []
+    ).flatMap((c) => c.nodes);
+    const checkGeneralizations = (nodeId: string) => {
+      for (let generalization of generalizations) {
+        if (!nodes[generalization.id]) {
+          continue;
+        }
+        const generalizationParts = nodes[generalization.id]?.properties.parts;
+        const partIdex = generalizationParts[0].nodes.findIndex(
+          (c) => c.id === nodeId,
+        );
+        if (partIdex !== -1) {
+          return generalization.id;
+        }
+      }
+    };
+
+    if (parts) {
+      for (let collection of parts) {
+        for (let node of collection.nodes) {
+          const generalizationPart = checkGeneralizations(node.id);
+          if (generalizationPart) {
+            inheritedParts[node.id] = nodes[generalizationPart].title;
+          }
+        }
+      }
+    }
+    setPartsInheritance(inheritedParts);
+  }, [currentVisibleNode, nodes]);
 
   if (Object.keys(nodes).length <= 0) {
     return (
@@ -1337,6 +1378,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                   setSelectedCollection={setSelectedCollection}
                   selectedCollection={selectedCollection}
                   skillsFuture={skillsFuture}
+                  partsInheritance={partsInheritance}
                 />
               )}
             </Box>

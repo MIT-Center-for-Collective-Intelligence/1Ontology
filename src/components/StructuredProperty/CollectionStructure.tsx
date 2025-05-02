@@ -108,6 +108,7 @@ const CollectionStructure = ({
   setRemovedElements,
   setAddedElements,
   skillsFuture,
+  partsInheritance,
 }: {
   model?: boolean;
   locked: boolean;
@@ -167,6 +168,7 @@ const CollectionStructure = ({
   setRemovedElements: any;
   setAddedElements: any;
   skillsFuture: boolean;
+  partsInheritance: { [nodeId: string]: string };
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -1177,6 +1179,9 @@ const CollectionStructure = ({
                                               skillsFuture={skillsFuture}
                                               currentImprovement={
                                                 currentImprovement
+                                              }
+                                              partsInheritance={
+                                                partsInheritance
                                               }
                                             />
                                           )}
