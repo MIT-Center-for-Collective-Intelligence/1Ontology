@@ -46,6 +46,17 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                 borderTopRightRadius: "20px",
                 m: 0,
                 p: 2,
+                backgroundColor: (
+                  currentImprovement?.detailsOfChange?.addedCollections || []
+                ).includes(collection.collectionName)
+                  ? "green"
+                  : (
+                        currentImprovement?.detailsOfChange
+                          ?.removedCollections || []
+                      ).includes(collection.collectionName)
+                    ? "red"
+                    : "",
+
                 // gap: "10px",
               }}
             >

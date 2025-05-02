@@ -129,6 +129,8 @@ type MainSidebarProps = {
   skillsFutureApp: string;
 };
 
+
+
 const ToolbarSidebar = ({
   toolbarRef,
   user,
@@ -925,6 +927,7 @@ const ToolbarSidebar = ({
 
       setCopilotMessage(response.message);
       const newImprovements: Improvement[] = [];
+
       for (let improvement of response?.improvements) {
         for (let change of improvement.changes) {
           if (change.modified_property) {
@@ -932,6 +935,28 @@ const ToolbarSidebar = ({
               title: improvement.title,
               change,
               changes: [change],
+            });
+          } else if (change.hasOwnProperty("specializations")) {
+            let reasoning = "";
+
+            for (let _change of change["specializations"]) {
+              reasoning = reasoning + "\n\n" + _change.reasoning;
+            }
+            newImprovements.push({
+              title: improvement.title,
+
+              change: {
+                reasoning,
+                modified_property: "specializations",
+                new_value: change["specializations"],
+              },
+              changes: [
+                {
+                  reasoning,
+                  modified_property: "specializations",
+                  new_value: change["specializations"],
+                },
+              ],
             });
           }
         }

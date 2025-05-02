@@ -171,7 +171,12 @@ const proposerAgent = async (
     if (!guidelines) {
       const guidelinesSnapshot = await db.collection(GUIDELINES).get();
       guidelines = guidelinesSnapshot.docs
-        .map((doc) => doc.data())
+        .map((doc) => {
+          const nodeData = doc.data();
+          delete nodeData.id;
+          delete nodeData.index;
+          return nodeData;
+        })
         .sort((a, b) => a.index - b.index);
     }
 

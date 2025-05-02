@@ -152,7 +152,7 @@ const ImprovementsSlider = ({
                 zIndex: 99999,
               }}
               onClick={() => handlePrevious()}
-              disabled={proposal === null}
+              disabled={proposals.length === 1}
             >
               <ArrowBackIosNewIcon />
             </Button>
@@ -315,7 +315,7 @@ const ImprovementsSlider = ({
                 borderBottomRightRadius: "0px",
               }}
               onClick={() => handleNext()}
-              // disabled={currentImprovement === null}
+              disabled={proposals.length === 1}
             >
               <ArrowForwardIosIcon />
             </Button>

@@ -7,7 +7,7 @@ export const getChangeComparison = ({
   nodeData,
   nodesByTitle,
 }: {
-  change: Partial<IChange>;
+  change: Partial<IChange> | any;
   nodeData: INode;
   nodesByTitle: { [title: string]: { id: string } };
 }) => {
@@ -27,38 +27,42 @@ export const getChangeComparison = ({
 
     const result: ICollection[] = [];
     const final_result: ICollection[] = [];
-
-    if (modifiedProperty === "parts" || modifiedProperty === "isPartOf") {
-    }
     /*  */
     if (
       modifiedProperty === "specializations" &&
       Array.isArray(change.new_value)
     ) {
-      const addedCollections = [];
+      const addedCollections: string[] = [];
       const specializations = nodeData[modifiedProperty as "specializations"];
       const _collections = specializations.flatMap((c) => c.collectionName);
-      const previousState = specializations
-        .flatMap((c) => c.nodes)
-        .map((n) => n.id);
 
       const nodesToRemove = new Set();
       let modified = false;
+
       for (let collection of change.new_value) {
         if (!_collections.includes(collection.collectionName)) {
           addedCollections.push(collection.collectionName);
         }
+        const collectionIdx = specializations.findIndex(
+          (c) => c.collectionName === collection.collectionName,
+        );
+
+        const previousState =
+          collectionIdx === -1
+            ? []
+            : specializations[collectionIdx].nodes.map((n) => n.id);
 
         const nodes = [];
         const final_nodes = [];
-        for (let title of collection.collection_changes.final_array) {
+
+        for (let title of collection.changes.final_array) {
           const nodeId = nodesByTitle[title]?.id;
           if (!nodeId) {
             addedNonExistentElements.push(title);
             continue;
           }
           if (
-            collection.collection_changes.nodes_to_add.includes(title) &&
+            collection.changes.nodes_to_add.includes(title) &&
             !previousState.includes(nodeId)
           ) {
             nodes.push({ id: nodeId, change: "added" });
@@ -68,7 +72,8 @@ export const getChangeComparison = ({
           }
           final_nodes.push({ id: nodeId });
         }
-        for (let title of collection.collection_changes.nodes_to_delete) {
+
+        for (let title of collection.changes.nodes_to_delete) {
           const nodeId = nodesByTitle[title]?.id;
           if (nodeId && previousState.includes(nodeId)) {
             nodes.push({ id: nodeId, change: "removed" });
@@ -81,14 +86,17 @@ export const getChangeComparison = ({
           collectionName: collection.collectionName,
           nodes: nodes,
         });
+
         final_result.push({
           collectionName: collection.collectionName,
           nodes: final_nodes,
         });
       }
+
       if (!modified) {
         return;
       }
+
       return {
         result,
         final_result,
@@ -96,6 +104,7 @@ export const getChangeComparison = ({
         addedCollections,
       };
     }
+
     /*  */
     if (
       change.modified_property !== "specializations" &&
