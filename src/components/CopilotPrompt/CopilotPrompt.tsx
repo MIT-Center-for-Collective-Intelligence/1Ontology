@@ -317,9 +317,9 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
       });
     }
 
-    setEditedParts((prev: any) => {
-      const _prev = [...prev];
-      const prIdx = _prev.findIndex((p) => p.editedId === id);
+    setEditedParts((prev) => {
+      const _prev: any = [...prev];
+      const prIdx = _prev.findIndex((p: any) => p.editedId === id);
       const idx = systemPromptCopy.findIndex((p) => p.id === id);
 
       if (prIdx !== -1 && idx !== -1) {
