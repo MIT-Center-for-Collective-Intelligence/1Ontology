@@ -83,7 +83,7 @@ interface EditableSchemaProps {
   setSelectedProperties: React.Dispatch<React.SetStateAction<Set<string>>>;
   inputProperties: Set<string>;
   setInputProperties: React.Dispatch<React.SetStateAction<Set<string>>>;
-  nodes: any[]; // Assuming nodes is an array of something
+  nodes: any;
   nodeTitle: string;
   numberValue: number;
   handleNumberChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
