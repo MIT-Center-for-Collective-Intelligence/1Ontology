@@ -684,11 +684,11 @@ const ToolbarSidebar = ({
     try {
       if (!user?.uname) return;
       const _NODES = [];
-      const addedNonExistentElements: {
-        [property: string]: { id: string; title: string }[];
-      } = {};
 
       for (let node of newNodes) {
+        const addedNonExistentElements: {
+          [property: string]: { id: string; title: string }[];
+        } = {};
         if (!!nodesByTitle[node.title]) {
           continue;
         }

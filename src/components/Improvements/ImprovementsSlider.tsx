@@ -192,13 +192,15 @@ const ImprovementsSlider = ({
                   <Typography>{proposal.reasoning}</Typography>
                 </Box>
               )}{" "}
-              {Object.values(proposal.addedNonExistentElements).length > 0 && (
+              {Object.values(proposal.addedNonExistentElements || {}).length >
+                0 && (
                 <Typography sx={{ color: "orange" }}>
                   {`The nodes below don't exist in the ontology yet. By
                   accepting this proposal, new nodes will be created:`}
                 </Typography>
               )}
-              {Object.values(proposal.addedNonExistentElements).length > 0 && (
+              {Object.values(proposal.addedNonExistentElements || {}).length >
+                0 && (
                 <List sx={{ mb: "25px" }}>
                   {Object.values(proposal.addedNonExistentElements)
                     .flatMap((c) => c)
