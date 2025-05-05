@@ -33,7 +33,7 @@ const useSelectDropdown = () => {
   const [numberValue, setNumberValue] = useState<number>(12);
   const [nodeTitle, setNodeTitle] = useState("");
   const [generateNewNodes, setGenerateNewNodes] = useState(true);
-  const [proposeDeleteNode, setProposeDeleteNodes] = useState(true);
+  const [proposeDeleteNode, setProposeDeleteNodes] = useState(false);
   const [nodeType, setNodeType] = useState<string>("");
   const [selectedProperties, setSelectedProperties] = useState<Set<string>>(
     new Set(),

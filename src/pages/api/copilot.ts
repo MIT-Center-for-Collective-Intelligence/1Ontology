@@ -157,7 +157,7 @@ const sendLLMRequest = async ({
     });
   }
 };
-let guidelines: any = null;
+
 const proposerAgent = async (
   userMessage: string,
   model: ChatModel | GeminiModels,
@@ -168,17 +168,15 @@ const proposerAgent = async (
   evaluation: string = "",
 ) => {
   try {
-    if (!guidelines) {
-      const guidelinesSnapshot = await db.collection(GUIDELINES).get();
-      guidelines = guidelinesSnapshot.docs
-        .map((doc) => {
-          const nodeData = doc.data();
-          delete nodeData.id;
-          delete nodeData.index;
-          return nodeData;
-        })
-        .sort((a, b) => a.index - b.index);
-    }
+    const guidelinesSnapshot = await db.collection(GUIDELINES).get();
+    const guidelines = guidelinesSnapshot.docs
+      .map((doc) => {
+        const nodeData = doc.data();
+        delete nodeData.id;
+        delete nodeData.index;
+        return nodeData;
+      })
+      .sort((a, b) => a.index - b.index);
 
     let prompt = `
 ${SYSTEM_PROMPT}
@@ -197,6 +195,7 @@ User Message:
 ${userMessage}
 '''
 `;
+
     if (
       evaluation === "reject" &&
       (proposalsJSON?.improvements?.length > 0 ||
@@ -226,7 +225,7 @@ ${userMessage}
       uname,
     });
 
-    return response;
+    return { response, prompt };
   } catch (error: any) {
     console.error(error);
     recordLogs(
@@ -312,7 +311,7 @@ export const generateProposals = async (
   } else {
     // "Related Nodes:"
     if (evaluation) {
-      return await proposerAgent(
+      const proposals = await proposerAgent(
         userMessage,
         model,
         nodesArray,
@@ -321,6 +320,7 @@ export const generateProposals = async (
         proposalsJSON,
         evaluation,
       );
+      return { ...proposals, nodesArray };
     } else {
       return await proposerAgent(
         userMessage,
@@ -332,27 +332,6 @@ export const generateProposals = async (
     }
   }
 };
-// const RESPONSE = {
-//   message:
-//     "After carefully analyzing the ontology, I have identified several improvements to better organize the specializations and parts of the nodes, as well as a few new nodes that can enhance the clarity and structure of the ontology.",
-//   improvements: [
-//     {
-//       title: "NodeA",
-//       nodeType: "activity",
-//       change: {
-//         modified_property: "generalizations",
-//         new_value: {
-//           nodes_to_add: ["Node6"],
-//           nodes_to_delete: ["Gate Arrival"],
-//           final_array: ["Node6"],
-//         },
-//         reasoning:
-//           "The activity 'Define key performance indicators (KPIs)' is an integral part of 'Measure organizational performance' and should be classified under it instead of 'Unclassified'.",
-//       },
-//     },
-//   ],
-//   new_nodes: [],
-// };
 
 const getPrompt = async (
   uname: string,
@@ -422,7 +401,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       proposeDeleteNode,
     );
 
-    const response = await generateProposals(
+    const generatedProposals = await generateProposals(
       userMessage,
       model,
       deepNumber,
@@ -432,30 +411,54 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       new Set(inputProperties),
       skillsFutureApp,
     );
+    const changes = generatedProposals.response;
+    const nodes_array = generatedProposals.nodes_array;
+    const prompt = generatedProposals.prompt;
+
     saveLogs(uname, "info", {
-      response,
+      changes,
+      nodes_array,
+      prompt,
       nodeId,
       model,
       userMessage,
       deepNumber,
+      SYSTEM_PROMPT,
       at: "copilot",
     });
-    const improvements: Improvement[] = [];
-    for (let improvement of response?.improvements || []) {
+    let improvements: Improvement[] = [];
+
+    const filteredImprovements = [];
+
+    for (let improvement of changes?.improvements || []) {
+      if (improvement.title.toLowerCase() === "unclassified") {
+        continue;
+      }
+      const propertyCount: { [prop: string]: number } = {};
+
       for (let change of improvement.changes) {
-        improvements.push({
+        const prop = change.modified_property;
+        propertyCount[prop] = (propertyCount[prop] || 0) + 1;
+      }
+
+      const hasDuplicatePropertyChange = Object.values(propertyCount).some(
+        (count) => count > 1,
+      );
+      if (hasDuplicatePropertyChange) continue;
+
+      for (let change of improvement.changes) {
+        filteredImprovements.push({
           ...improvement,
           change,
-          changes: [],
         });
       }
     }
-    if (!response.new_nodes) {
-      response.new_nodes = [];
+    if (!changes.new_nodes) {
+      changes.new_nodes = [];
     }
-    if (!response.delete_nodes) response.delete_nodes = [];
-
-    return res.status(200).send(response);
+    if (!changes.delete_nodes) changes.delete_nodes = [];
+    changes.improvements = improvements;
+    return res.status(200).send(changes);
   } catch (error: any) {
     console.error("error", error);
     recordLogs(

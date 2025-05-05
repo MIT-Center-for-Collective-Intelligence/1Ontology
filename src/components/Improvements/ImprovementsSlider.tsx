@@ -105,6 +105,9 @@ const ImprovementsSlider = ({
         _prev.implemented = true;
         return _prev;
       });
+      setTimeout(() => {
+        handleNext();
+      }, 2000);
     } catch (error) {
       console.error(error);
     } finally {
@@ -152,7 +155,7 @@ const ImprovementsSlider = ({
                 zIndex: 99999,
               }}
               onClick={() => handlePrevious()}
-              disabled={proposals.length === 1}
+              disabled={proposals.length === 1 || implementingProposal}
             >
               <ArrowBackIosNewIcon />
             </Button>
@@ -196,30 +199,22 @@ const ImprovementsSlider = ({
                 0 && (
                 <Typography sx={{ color: "orange" }}>
                   {`The nodes below don't exist in the ontology yet. By
-                  accepting this proposal, new nodes will be created:`}
+                  accepting this proposal, the new nodes will be created under unclassified:`}
                 </Typography>
               )}
               {Object.values(proposal.addedNonExistentElements || {}).length >
                 0 && (
-                <List sx={{ mb: "25px" }}>
+                <ul style={{ marginBottom: "25px" }}>
                   {Object.values(proposal.addedNonExistentElements)
                     .flatMap((c) => c)
                     .map((node: any) => (
-                      <ListItem key={node.id} sx={{ color: "green" }}>
-                        {" "}
-                        <DragIndicatorIcon
-                          sx={{
-                            color: "green",
-                          }}
-                        />
-                        {node.title}
-                      </ListItem>
+                      <li key={node.id}>{node.title}</li>
                     ))}
-                </List>
+                </ul>
               )}
               {!proposal?.newNode &&
                 !proposal.deleteNode &&
-                proposal?.changes[0]?.modified_property && (
+                proposal?.change?.modified_property && (
                   <Box
                     key={proposal?.change?.modified_property}
                     sx={{ mb: "15px" }}
@@ -238,48 +233,42 @@ const ImprovementsSlider = ({
                           textTransform: "capitalize",
                         }}
                       >
-                        {proposal.changes[0].modified_property}
+                        {proposal.change.modified_property}
                       </strong>{" "}
-                      {proposal.changes[0].reasoning ? "because" : ""}:
+                      {proposal.change.reasoning ? "because" : ""}:
                     </Typography>
                     <Typography sx={{ pb: "24px" }}>
                       {" "}
-                      {proposal.changes[0].reasoning}
+                      {proposal.change.reasoning}
                     </Typography>
-                    {(proposal.details.addedNonExistentElements.length > 0 ||
-                      Object.keys(proposal.details.addedNonExistentElements)
-                        .length > 0) && (
+                    {(proposal.detailsOfChange.addedNonExistentElements.length >
+                      0 ||
+                      Object.keys(
+                        proposal.detailsOfChange.addedNonExistentElements,
+                      ).length > 0) && (
                       <Typography>
                         {`The nodes below don't exist in the ontology yet. By
-                        accepting this proposal, new nodes will be created.`}
+                        accepting this proposal, the new nodes will be created under unclassified:`}
                       </Typography>
                     )}
-                    {(proposal.details.addedNonExistentElements.length > 0 ||
+                    {(proposal.detailsOfChange.addedNonExistentElements.length >
+                      0 ||
                       Object.keys(proposal.addedNonExistentElements || {})
                         .length > 0) && (
-                      <List>
+                      <ul style={{ marginBottom: "35px" }}>
                         {Array.isArray(
-                          proposal.details.addedNonExistentElements,
+                          proposal.detailsOfChange.addedNonExistentElements,
                         ) &&
-                          proposal.details.addedNonExistentElements.map(
+                          proposal.detailsOfChange.addedNonExistentElements.map(
                             (item: string, index: number) => (
-                              <ListItem key={item}>
-                                <DragIndicatorIcon
-                                  sx={{
-                                    color: "green",
-                                  }}
-                                />
-                                <Typography
-                                  key={index}
-                                  variant="body1"
-                                  sx={{ color: "green" }}
-                                >
+                              <li key={item}>
+                                <Typography key={index} variant="body1">
                                   {item}
                                 </Typography>{" "}
-                              </ListItem>
+                              </li>
                             ),
                           )}
-                      </List>
+                      </ul>
                     )}
                     {/*      {(
                     currentImprovement.modifiedProperties[p]
@@ -344,7 +333,7 @@ const ImprovementsSlider = ({
                 borderBottomRightRadius: "0px",
               }}
               onClick={() => handleNext()}
-              disabled={proposals.length === 1}
+              disabled={proposals.length === 1 || implementingProposal}
             >
               <ArrowForwardIosIcon />
             </Button>

@@ -287,7 +287,7 @@ export const removeIsPartOf = async (
     });
   }
 };
-
+/* */
 interface UpdateInheritanceParams {
   nodeId: string;
   updatedProperties: string[];
@@ -686,6 +686,9 @@ export const createNewNode = (
 ): INode => {
   const newNode: any = {
     ...parentNodeData,
+    contributors: [],
+    contributorsByProperty: [],
+    textValue: {},
     createdBy: uname,
     unclassified: false,
     id: newNodeRefId,

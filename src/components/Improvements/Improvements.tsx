@@ -1,7 +1,14 @@
 import React, { useCallback, useState } from "react";
-import { Button, CircularProgress, Box, Typography } from "@mui/material";
+import {
+  Button,
+  CircularProgress,
+  Box,
+  Typography,
+  Container,
+} from "@mui/material";
 import ImprovementsSlider from "./ImprovementsSlider";
 import {
+  arrayUnion,
   collection,
   doc,
   getDoc,
@@ -86,6 +93,7 @@ const Improvements = ({
       newValue: ICollection[],
       addedLinks: string[],
       removedLinks: string[],
+      optionalParts?: string[],
     ) => {
       try {
         if (!user?.uname) return;
@@ -172,6 +180,16 @@ const Improvements = ({
             nodes,
             db,
           );
+        }
+        if (property === "parts" && optionalParts) {
+          for (let { nodes } of newValue) {
+            for (let node of nodes) {
+              delete node.change;
+              if (optionalParts.includes(node.id)) {
+                node.optional = true;
+              }
+            }
+          }
         }
         if (property === "specializations" || property === "generalizations") {
           nodeData[property] = newValue;
@@ -393,7 +411,9 @@ const Improvements = ({
         updateSpecializations(nodeParentData, newNodeRef.id, collectionName);
 
         if (newNode.properties["parts"][0].nodes.length > 0) {
-          for (let { id: partId } of newNode.properties["parts"][0].nodes) {
+          for (let part of newNode.properties["parts"][0].nodes) {
+            const partId = part.id;
+            delete part.change;
             const partRef = doc(collection(db, NODES), partId);
             const partDoc = await getDoc(partRef);
             const partData = partDoc.data() as INode;
@@ -665,9 +685,45 @@ const Improvements = ({
       console.error(error);
     }
   };
+  const moveNodesToUnclassified = async (
+    removedLinks: string[],
+    unclassifiedDoc: any,
+  ) => {
+    try {
+      for (let nodeId of removedLinks) {
+        const nodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
+        const nodeData = nodeDoc.data();
+        const addToUnclassified = [];
+        if (nodeData && nodeData.generalizations[0].nodes.length === 0) {
+          await updateDoc(nodeDoc.ref, {
+            generalizations: [
+              {
+                collectionName: "main",
+                nodes: [{ id: unclassifiedDoc.id }],
+              },
+            ],
+          });
+          addToUnclassified.push({
+            id: nodeDoc.id,
+          });
+        }
+        const newSpecializations = unclassifiedDoc.data().specializations;
+        newSpecializations[0].nodes.push(addToUnclassified);
+        await updateDoc(unclassifiedDoc.ref, {
+          specializations: newSpecializations,
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const onAcceptChange = async (change: any) => {
     try {
+      debugger;
+      if (!user) {
+        return;
+      }
       if (!!change?.deleteNode) {
         await deleteNode(change.nodeId);
         return;
@@ -682,17 +738,21 @@ const Improvements = ({
 
       const reasoning = change.change.reasoning;
       const addedLinks = [];
+      const nodeType = change.nodeType;
+      debugger;
+      let unclassifiedNodeDoc = null;
+      const unclassifiedNodeDocs = await getDocs(
+        query(
+          collection(db, NODES),
+          where("unclassified", "==", true),
+          where("nodeType", "==", nodeType),
+        ),
+      );
+      if (unclassifiedNodeDocs.docs.length > 0) {
+        unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
+      }
       if ((change.detailsOfChange?.addedNonExistentElements || []).length > 0) {
-        const nodeType = change.nodeType;
-        const unclassifiedNodeDocs = await getDocs(
-          query(
-            collection(db, NODES),
-            where("unclassified", "==", true),
-            where("nodeType", "==", nodeType),
-          ),
-        );
-        if (unclassifiedNodeDocs.docs.length > 0 && user?.uname) {
-          const unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
+        if (unclassifiedNodeDoc && user?.uname) {
           const generalization = unclassifiedNodeDoc.data() as INode;
           for (let nodeTitle of change.detailsOfChange
             ?.addedNonExistentElements) {
@@ -723,6 +783,7 @@ const Improvements = ({
             updateDoc(unclassifiedNodeDoc.ref, {
               specializations,
             });
+
             await setDoc(newRef, {
               ...newNode,
               locked: false,
@@ -759,7 +820,30 @@ const Improvements = ({
           change.detailsOfChange.newValue,
           addedLinks,
           removedLinks,
+          change.change.optionalParts || [],
         );
+
+        const nodeDoc = await getDoc(
+          doc(collection(db, NODES), currentVisibleNode?.id),
+        );
+        let newComment =
+          (currentVisibleNode.textValue || {})[change.modifiedProperty] || "";
+        if (!newComment.includes(change.change.reasoning)) {
+          newComment = newComment + "\n" + change.change.reasoning;
+        }
+        await updateDoc(nodeDoc.ref, {
+          [`textValue.${change.modifiedProperty}`]: newComment,
+          contributors: arrayUnion(user?.uname),
+          [`contributorsByProperty.${change.modifiedProperty}`]: arrayUnion(
+            user?.uname,
+          ),
+        });
+        if (
+          change.modifiedProperty === "specializations" &&
+          unclassifiedNodeDoc
+        ) {
+          await moveNodesToUnclassified(removedLinks, unclassifiedNodeDoc);
+        }
       } else if (propertyType === "string") {
         changeType = "change text";
         await updateStringProperty(
@@ -804,12 +888,22 @@ const Improvements = ({
   return (
     <Box textAlign="center" sx={{ width: "450px", mt: "27px" }}>
       {isLoadingCopilot ? (
-        <Box display="flex" flexDirection="column" alignItems="center">
-          <CircularProgress />
-          <Typography variant="body1" marginTop={2}>
-            Loading...
-          </Typography>
-        </Box>
+        <Container
+          maxWidth="sm"
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "100vh",
+          }}
+        >
+          <Box
+            component="img"
+            src="loader.gif"
+            alt="Loading..."
+            sx={{ width: 200, height: 200, borderRadius: "25px" }}
+          />
+        </Container>
       ) : improvements.length > 0 ? (
         <Box
           sx={{

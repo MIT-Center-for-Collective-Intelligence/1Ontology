@@ -130,6 +130,11 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                   >
                     {getTitle(nodes, node.id)}
                   </Typography>
+                  {node.optional && (
+                    <span
+                      style={{ color: "gray", marginLeft: "9px" }}
+                    >{`(optional)`}</span>
+                  )}
                 </ListItem>
               ))}{" "}
               {collection.collectionName === "main" &&
@@ -150,10 +155,19 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                             sx={{ color: "green" }}
                           >
                             {item}
-                          </Typography>{" "}
+                          </Typography>
+                          {(currentImprovement.change?.optionalParts || [])
+                            .length > 0 &&
+                            currentImprovement.change.optionalParts.includes(
+                              item,
+                            ) && (
+                              <span
+                                style={{ color: "gray", marginLeft: "9px" }}
+                              >{`(optional)`}</span>
+                            )}
                         </ListItem>
                       ),
-                    )}
+                    )}{" "}
                   </Box>
                 )}
             </List>

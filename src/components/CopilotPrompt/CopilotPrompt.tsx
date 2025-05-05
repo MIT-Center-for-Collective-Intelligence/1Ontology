@@ -318,29 +318,33 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
     }
 
     setEditedParts((prev) => {
-      const _prev: any = [...prev];
-      const prIdx = _prev.findIndex((p: any) => p.editedId === id);
+      const updated = new Map(prev);
       const idx = systemPromptCopy.findIndex((p) => p.id === id);
 
-      if (prIdx !== -1 && idx !== -1) {
-        if (systemPromptCopy[idx].editablePart !== newValue) {
-          _prev[prIdx].newValue = newValue;
-        } else {
-          _prev.splice(prIdx, 1);
+      if (idx !== -1) {
+        const existing = updated.get(id);
+        const currentValue = systemPromptCopy[idx].editablePart;
+
+        if (existing) {
+          if (currentValue !== newValue) {
+            updated.set(id, { ...existing, newValue });
+          } else {
+            updated.delete(id);
+          }
+        } else if (
+          systemPromptCopy[idx].hasOwnProperty("editablePart") &&
+          currentValue !== newValue
+        ) {
+          updated.set(id, {
+            newValue,
+            previousValue: currentValue || "",
+          });
         }
-      } else if (
-        idx !== -1 &&
-        systemPromptCopy[idx].hasOwnProperty("editablePart") &&
-        systemPromptCopy[idx].editablePart !== newValue
-      ) {
-        _prev.push({
-          editedId: id,
-          newValue,
-          previousValue: systemPromptCopy[idx].editablePart || "",
-        });
       }
-      return _prev;
+
+      return updated;
     });
+
     // setForceUpdate((prev: any) => !prev);
     // onEdit(id, newValue);
   };
@@ -607,7 +611,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
 
             <Stack direction="row" spacing={1} alignItems="center">
               {editedParts.size > 0 && (
-                <>
+                <Box>
                   <Tooltip title="Save Changes">
                     <Button
                       startIcon={<SaveIcon />}
@@ -626,11 +630,12 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                       variant="outlined"
                       color="error"
                       onClick={cancelChanges}
+                      sx={{ mx: "10px" }}
                     >
                       Discard
                     </Button>
                   </Tooltip>
-                </>
+                </Box>
               )}
               {previousVersion && (
                 <>
@@ -783,9 +788,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                           )}
                           <TextField
                             value={p.editablePart}
-                            onChange={(event) =>
-                              handleInput(p.id, event.target.value)
-                            }
+                            onChange={(event) => handleInput(p.id, event)}
                             fullWidth
                             label={p.type || "Editable Section"}
                             multiline

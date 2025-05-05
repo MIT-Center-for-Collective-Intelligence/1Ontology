@@ -588,6 +588,7 @@ const ToolbarSidebar = ({
 
           if (
             (change.type === "added" || change.type === "modified") &&
+            userId !== "gemini" &&
             currentNode
           ) {
             updatedUsersData[userId] = {
@@ -716,7 +717,8 @@ const ToolbarSidebar = ({
           if (
             !inheritance[p] &&
             p !== "generalizations" &&
-            p !== "specializations"
+            p !== "specializations" &&
+            p !== "title"
           ) {
             inheritance[p] = {
               ref: null,
@@ -770,20 +772,26 @@ const ToolbarSidebar = ({
             ) {
               const value = [];
               for (let nodeT of propertyValue) {
+                const optional = nodeT
+                  .trim()
+                  .toLowerCase()
+                  .endsWith("(optional)");
+                const nodeTitle = nodeT.replace(/\(optional\)/i, "").trim();
                 if (nodesByTitle[nodeT]?.id) {
-                  value.push({ id: nodesByTitle[nodeT].id });
+                  value.push({ id: nodesByTitle[nodeT].id, optional });
                 } else {
                   const newId = doc(collection(db, "nodes")).id;
                   value.push({
                     id: newId,
-                    title: nodeT,
+                    title: nodeTitle,
                     change: "added",
+                    optional,
                   });
                   if (!addedNonExistentElements[property]) {
                     addedNonExistentElements[property] = [];
                   }
                   addedNonExistentElements[property].push({
-                    title: nodeT,
+                    title: nodeTitle,
                     id: newId,
                   });
                 }
@@ -870,7 +878,7 @@ const ToolbarSidebar = ({
     if (nodes[nodeId]) {
       setCurrentVisibleNode(nodes[nodeId]);
     }
-    const result = compareImprovement(improvement, nodesByTitle);
+    const result = compareImprovement(improvement, nodesByTitle, nodes);
 
     setCurrentImprovement(result);
     setTimeout(() => {
@@ -961,40 +969,61 @@ const ToolbarSidebar = ({
       const newImprovements: Improvement[] = [];
 
       for (let improvement of response?.improvements) {
-        for (let change of improvement.changes) {
-          if (change.modified_property) {
-            newImprovements.push({
-              title: improvement.title,
-              change,
-              changes: [change],
-            });
-          } else if (change.hasOwnProperty("specializations")) {
-            let reasoning = "";
-
-            for (let _change of change["specializations"]) {
-              reasoning = reasoning + "\n\n" + _change.reasoning;
+        const change = improvement.change;
+        if (change.modified_property) {
+          if (change.modified_property === "parts") {
+            const optionalParts = [];
+            for (
+              let partIdx = 0;
+              partIdx < change.new_value.final_array.length;
+              partIdx++
+            ) {
+              const partTitle = change.new_value.final_array[partIdx];
+              const optional = partTitle
+                .trim()
+                .toLowerCase()
+                .endsWith("(optional)");
+              if (optional) {
+                change.new_value.final_array[partIdx] = partTitle
+                  .replace(/\(optional\)/i, "")
+                  .trim();
+                optionalParts.push(change.new_value.final_array[partIdx]);
+              }
             }
-            newImprovements.push({
-              title: improvement.title,
 
-              change: {
+            change.optionalParts = optionalParts;
+          }
+          newImprovements.push({
+            title: improvement.title,
+            change,
+          });
+        } else if (change.hasOwnProperty("specializations")) {
+          let reasoning = "";
+
+          for (let _change of change["specializations"]) {
+            reasoning = reasoning + "\n\n" + _change.reasoning;
+          }
+          newImprovements.push({
+            title: improvement.title,
+
+            change: {
+              reasoning,
+              modified_property: "specializations",
+              new_value: change["specializations"],
+            },
+            changes: [
+              {
                 reasoning,
                 modified_property: "specializations",
                 new_value: change["specializations"],
               },
-              changes: [
-                {
-                  reasoning,
-                  modified_property: "specializations",
-                  new_value: change["specializations"],
-                },
-              ],
-            });
-          }
+            ],
+          });
         }
       }
+
       const improvements: Improvement[] =
-        filterProposals(newImprovements || [], nodesByTitle) || [];
+        filterProposals(newImprovements || [], nodesByTitle, nodes) || [];
 
       const newNodes: {
         title: string;

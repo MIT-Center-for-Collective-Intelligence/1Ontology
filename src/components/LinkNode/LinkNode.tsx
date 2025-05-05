@@ -651,9 +651,16 @@ const LinkNode = ({
             }}
           >
             {link.title || title || regionalTitle}{" "}
-            {partsInheritance && partsInheritance[link.id]
-              ? `(From ${partsInheritance[link.id]})`
-              : ""}
+            {link.optional && (
+              <span
+                style={{ color: "gray", marginLeft: "2px" }}
+              >{`(optional)`}</span>
+            )}
+            <span style={{ color: "gray", marginLeft: "7px" }}>
+              {partsInheritance && partsInheritance[link.id]
+                ? `(From ${partsInheritance[link.id]})`
+                : ""}
+            </span>
           </Link>
         )}
 

@@ -582,16 +582,17 @@ const StructuredProperty = ({
               </Box>
             )}
         </Box>
-        {currentVisibleNode?.inheritance[property]?.ref && (
-          <Typography sx={{ fontSize: "14px", ml: "9px", color: "gray" }}>
-            {'(Inherited from "'}
-            {getTitle(
-              nodes,
-              currentVisibleNode.inheritance[property].ref || "",
-            )}
-            {'")'}
-          </Typography>
-        )}
+        {currentVisibleNode?.inheritance[property]?.ref &&
+          property !== "parts" && (
+            <Typography sx={{ fontSize: "14px", ml: "9px", color: "gray" }}>
+              {'(Inherited from "'}
+              {getTitle(
+                nodes,
+                currentVisibleNode.inheritance[property].ref || "",
+              )}
+              {'")'}
+            </Typography>
+          )}
         {currentVisibleNode.propertyType[property] !== "array-string" && (
           <CollectionStructure
             locked={locked}

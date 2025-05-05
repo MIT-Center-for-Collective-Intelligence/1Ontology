@@ -201,9 +201,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
 
-  const [appName, setAppName] = useState(
-    "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
-  ); // this state is only been used for the Skills Future App
+  const [appName, setAppName] = useState("Top-Down Gemini 2.5 Pro"); // this state is only been used for the Skills Future App
   const [partsInheritance, setPartsInheritance] = useState<{
     [nodeId: string]: string;
   }>({});
@@ -937,7 +935,14 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
         // }, 1000);
       }
     },
-    [selectedProperty, addedElements, removedElements, nodes, eachOntologyPath],
+    [
+      selectedProperty,
+      addedElements,
+      removedElements,
+      nodes,
+      eachOntologyPath,
+      currentImprovement,
+    ],
   );
 
   // This function is called when a search result node is clicked.
@@ -1061,7 +1066,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
     const _currentVisibleNode = { ...currentVisibleNode };
     const parts = _currentVisibleNode?.properties.parts || [];
-    console.log("parts", parts);
+
     const generalizations = (
       _currentVisibleNode?.generalizations || []
     ).flatMap((c) => c.nodes);
@@ -1104,9 +1109,12 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
           flexDirection: "column",
         }}
       >
-        <CircularProgress />
-        {/* <br /> */}
-        <Typography sx={{ mt: "5px" }}> Loading...</Typography>
+        <Box
+          component="img"
+          src="loader.gif"
+          alt="Loading..."
+          sx={{ width: 200, height: 200, borderRadius: "25px" }}
+        />
       </Box>
     );
   }

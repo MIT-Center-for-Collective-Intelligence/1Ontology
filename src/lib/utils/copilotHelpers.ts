@@ -6,10 +6,12 @@ export const getChangeComparison = ({
   change,
   nodeData,
   nodesByTitle,
+  ontologyNodes,
 }: {
   change: Partial<IChange> | any;
   nodeData: INode;
   nodesByTitle: { [title: string]: { id: string } };
+  ontologyNodes: { [nodeId: string]: any };
 }) => {
   try {
     const modifiedProperty: string = change.modified_property as string;
@@ -61,10 +63,7 @@ export const getChangeComparison = ({
             addedNonExistentElements.push(title);
             continue;
           }
-          if (
-            collection.changes.nodes_to_add.includes(title) &&
-            !previousState.includes(nodeId)
-          ) {
+          if (!previousState.includes(nodeId)) {
             nodes.push({ id: nodeId, change: "added" });
             modified = true;
           } else {
@@ -73,11 +72,13 @@ export const getChangeComparison = ({
           final_nodes.push({ id: nodeId });
         }
 
-        for (let title of collection.changes.nodes_to_delete) {
-          const nodeId = nodesByTitle[title]?.id;
-          if (nodeId && previousState.includes(nodeId)) {
-            nodes.push({ id: nodeId, change: "removed" });
-            nodesToRemove.add(nodeId);
+        const final_array_ids = collection.changes.final_array.map(
+          (c: string) => nodesByTitle[c].id,
+        );
+        for (let linkId of previousState) {
+          if (!final_array_ids.includes(linkId)) {
+            nodes.push({ id: linkId, change: "removed" });
+            nodesToRemove.add(linkId);
             modified = true;
           }
         }
@@ -121,12 +122,23 @@ export const getChangeComparison = ({
       //creating the array of changes
       const nodes = [];
       const final_nodes = [];
-      const nodesToRemove = new Set();
-      const previousState = (
+      const nodesToRemove: Set<string> = new Set();
+
+      let propertyPreviousValue =
         modifiedProperty === "generalizations"
           ? nodeData[modifiedProperty as "generalizations"]
-          : nodeData.properties[modifiedProperty]
-      )
+          : nodeData.properties[modifiedProperty];
+      const inheritanceRef = nodeData.inheritance[modifiedProperty]?.ref ?? "";
+      if (
+        modifiedProperty !== "generalizations" &&
+        !!inheritanceRef &&
+        ontologyNodes[inheritanceRef]
+      ) {
+        propertyPreviousValue =
+          ontologyNodes[inheritanceRef].properties[modifiedProperty];
+      }
+
+      const previousState = propertyPreviousValue
         .flatMap((c: any) => c.nodes)
         .map((n: any) => n.id);
 
@@ -137,25 +149,29 @@ export const getChangeComparison = ({
           addedNonExistentElements.push(title);
           continue;
         }
-        if (
-          newValue.nodes_to_add.includes(title) &&
-          !previousState.includes(nodeId)
-        ) {
+        if (!previousState.includes(nodeId)) {
           modified = true;
-          nodes.push({ id: nodeId, change: "added" });
+          nodes.push({
+            id: nodeId,
+            change: "added",
+            optional: (change.optionalParts || []).includes(title),
+          });
         } else {
-          nodes.push({ id: nodeId });
+          nodes.push({
+            id: nodeId,
+          });
         }
         final_nodes.push({
           id: nodeId,
+          optional: (change.optionalParts || []).includes(title),
         });
       }
-      for (let title of newValue.nodes_to_delete) {
-        const nodeId = nodesByTitle[title]?.id;
-        if (nodeId && previousState.includes(nodeId)) {
+      const final_array_ids = final_nodes.map((c: { id: string }) => c.id);
+      for (let linkId of previousState) {
+        if (!final_array_ids.includes(linkId)) {
           modified = true;
-          nodes.push({ id: nodeId, change: "removed" });
-          nodesToRemove.add(nodeId);
+          nodes.push({ id: linkId, change: "removed" });
+          nodesToRemove.add(linkId);
         }
       }
       result.push({
@@ -166,7 +182,25 @@ export const getChangeComparison = ({
         collectionName: "main",
         nodes: final_nodes,
       });
-      if (!modified) return null;
+      let ignoreChange = false;
+      if (modifiedProperty === "specializations") {
+        for (let removedSpecialization of nodesToRemove) {
+          const specializationData = ontologyNodes[removedSpecialization];
+          if (
+            specializationData.generalizations[0].nodes.length === 1 &&
+            !!ontologyNodes[specializationData.generalizations[0].nodes[0].id]
+              ?.unclassified
+          ) {
+            ignoreChange = true;
+          }
+        }
+      }
+      if (
+        ignoreChange ||
+        !modified ||
+        (final_nodes.length === 0 && modifiedProperty === "generalizations")
+      )
+        return null;
       return {
         result,
         final_result,
@@ -237,6 +271,7 @@ export const getChangeComparison = ({
 export const compareImprovement = (
   improvement: any,
   nodesByTitle: { [nodeTitle: string]: INode },
+  ontologyNodes?: { [nodeId: string]: any },
 ) => {
   try {
     const _improvement = JSON.parse(JSON.stringify(improvement));
@@ -249,6 +284,7 @@ export const compareImprovement = (
         change,
         nodeData,
         nodesByTitle,
+        ontologyNodes: ontologyNodes || {},
       });
       let propertyValue: any = null;
       if (
@@ -302,6 +338,7 @@ export const compareImprovement = (
 export const filterProposals = (
   improvements: Improvement[],
   nodesByTitle: { [title: string]: INode },
+  ontologyNodes: { [nodeId: string]: any },
 ) => {
   try {
     const _improvements = [];
@@ -315,9 +352,10 @@ export const filterProposals = (
           change,
           nodeData,
           nodesByTitle,
+          ontologyNodes,
         });
         if (!!response) {
-          impv.details = response;
+          impv.detailsOfChange = response;
           _improvements.push(impv);
         }
       }

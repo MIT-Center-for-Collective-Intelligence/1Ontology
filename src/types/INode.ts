@@ -41,6 +41,7 @@ export type ILinkNode = {
   changeType?: string;
   randomId?: string;
   inheritedFrom?: string;
+  optional?: boolean;
 };
 
 export type ICollection = { collectionName: string; nodes: ILinkNode[] };
