@@ -282,16 +282,10 @@ export const generateProposals = async (
   /*   if (currentNode.nodeType !== "activity") {
     throw new Error("Node type not supported yet!");
   } */
-  const currentNodeD = getStructureForJSON(currentNode, nodes);
-  nodesArray.push(currentNodeD);
-  const _nodesArray = getNodesInThreeLevels(
-    currentNode,
-    nodes,
-    new Set(),
-    deepNumber === 0 ? 7 : deepNumber,
-    inputProperties,
-  );
-  nodesArray.push(..._nodesArray);
+
+  for (let nodeId in nodes) {
+    nodesArray.push(getStructureForJSON(nodes[nodeId], nodes));
+  }
   if (
     nodesArray &&
     inputProperties.size !==
