@@ -451,7 +451,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       changes.new_nodes = [];
     }
     if (!changes.delete_nodes) changes.delete_nodes = [];
-    changes.improvements = improvements;
+    changes.improvements = filteredImprovements;
     return res.status(200).send(changes);
   } catch (error: any) {
     console.error("error", error);
