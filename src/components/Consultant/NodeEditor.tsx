@@ -231,7 +231,7 @@ const NodeEditor = ({
                     color: "primary.main",
                   }}
                 >
-                  Thread Conversation:
+                  Conversation Thread:
                 </Typography>
 
                 {newNode.conversation.map((m: any) => (
@@ -253,6 +253,7 @@ const NodeEditor = ({
                     />
                   </Box>
                 ))}
+
               </Paper>
             )}
             <Paper

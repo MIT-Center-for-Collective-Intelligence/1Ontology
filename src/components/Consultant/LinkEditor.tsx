@@ -169,7 +169,7 @@ const LinkEditor = ({
                     color: "primary.main",
                   }}
                 >
-                  Thread Conversation:
+                  Conversation Thread:
                 </Typography>
                 {selectedLink.conversation.map((m: any) => (
                   <Box

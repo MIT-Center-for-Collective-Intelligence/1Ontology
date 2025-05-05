@@ -22,7 +22,7 @@ import {
 } from "@google/generative-ai";
 import OpenAI from "openai";
 
-const apiKey = process.env.GEMINI_API_KEY;
+
 
 /**
  * Uploads the given file to Gemini.
@@ -99,7 +99,7 @@ export const askGemini = async (contents: Content[], model: string) => {
       process.env.GEMINI_API_KEY_24,
       process.env.GEMINI_API_KEY_25,
       process.env.GEMINI_API_KEY_26,
-      process.env.GEMINI_API_KEY_27,
+      process.env.GENI_API_KEY_27,
       process.env.GEMINI_API_KEY_28,
       process.env.GEMINI_API_KEY_29,
       process.env.GEMINI_API_KEY_30,
