@@ -602,6 +602,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     path: string[],
   ): any => {
     const newNodes = [];
+
     for (let node of mainCategories) {
       if (!node) {
         continue;

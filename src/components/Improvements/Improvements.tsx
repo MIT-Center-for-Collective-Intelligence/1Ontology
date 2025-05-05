@@ -641,26 +641,25 @@ const Improvements = ({
       );
       if (unclassifiedNodeDocs.docs.length > 0 && user?.uname) {
         const unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
-        const generalization = unclassifiedNodeDoc.data() as INode;
+        const unclassifiedNodeData = unclassifiedNodeDoc.data() as INode;
         for (let property in addedNonExistentElements) {
           let newNodesIds = [];
           for (let { title, id } of addedNonExistentElements[property]) {
             const newRef = doc(collection(db, NODES), id);
             const inheritance = generateInheritance(
-              generalization.inheritance,
+              unclassifiedNodeData.inheritance,
               unclassifiedNodeDoc.id,
             );
             const newNode = createNewNode(
-              generalization,
+              unclassifiedNodeData,
               newRef.id,
               title,
               inheritance,
-              generalization.id,
+              unclassifiedNodeData.id,
               user?.uname,
               skillsFuture,
             );
-            const specializations =
-              nodes[unclassifiedNodeDoc.id].specializations;
+            const specializations = unclassifiedNodeData.specializations;
 
             const mainCollectionIdx = specializations.findIndex(
               (c) => c.collectionName === "main",
@@ -720,7 +719,6 @@ const Improvements = ({
 
   const onAcceptChange = async (change: any) => {
     try {
-      debugger;
       if (!user) {
         return;
       }
@@ -739,8 +737,8 @@ const Improvements = ({
       const reasoning = change.change.reasoning;
       const addedLinks = [];
       const nodeType = change.nodeType;
-      debugger;
-      let unclassifiedNodeDoc = null;
+
+      let unclassifiedDoc = null;
       const unclassifiedNodeDocs = await getDocs(
         query(
           collection(db, NODES),
@@ -749,29 +747,28 @@ const Improvements = ({
         ),
       );
       if (unclassifiedNodeDocs.docs.length > 0) {
-        unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
+        unclassifiedDoc = unclassifiedNodeDocs.docs[0];
       }
       if ((change.detailsOfChange?.addedNonExistentElements || []).length > 0) {
-        if (unclassifiedNodeDoc && user?.uname) {
-          const generalization = unclassifiedNodeDoc.data() as INode;
+        if (unclassifiedDoc && user?.uname) {
+          const unclassifiedData = unclassifiedDoc.data() as INode;
           for (let nodeTitle of change.detailsOfChange
             ?.addedNonExistentElements) {
             const newRef = doc(collection(db, NODES));
             const inheritance = generateInheritance(
-              generalization.inheritance,
-              unclassifiedNodeDoc.id,
+              unclassifiedData.inheritance,
+              unclassifiedDoc.id,
             );
             const newNode = createNewNode(
-              generalization,
+              unclassifiedData,
               newRef.id,
               nodeTitle,
               inheritance,
-              generalization.id,
+              unclassifiedData.id,
               user?.uname,
               skillsFuture,
             );
-            const specializations =
-              nodes[unclassifiedNodeDoc.id].specializations;
+            const specializations = unclassifiedData.specializations;
 
             const mainCollectionIdx = specializations.findIndex(
               (c) => c.collectionName === "main",
@@ -780,7 +777,7 @@ const Improvements = ({
             specializations[mainCollectionIdx].nodes.push({
               id: newRef.id,
             });
-            updateDoc(unclassifiedNodeDoc.ref, {
+            updateDoc(unclassifiedDoc.ref, {
               specializations,
             });
 
@@ -838,11 +835,8 @@ const Improvements = ({
             user?.uname,
           ),
         });
-        if (
-          change.modifiedProperty === "specializations" &&
-          unclassifiedNodeDoc
-        ) {
-          await moveNodesToUnclassified(removedLinks, unclassifiedNodeDoc);
+        if (change.modifiedProperty === "specializations" && unclassifiedDoc) {
+          await moveNodesToUnclassified(removedLinks, unclassifiedDoc);
         }
       } else if (propertyType === "string") {
         changeType = "change text";
