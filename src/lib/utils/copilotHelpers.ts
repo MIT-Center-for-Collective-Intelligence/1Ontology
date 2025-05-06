@@ -168,7 +168,7 @@ export const getChangeComparison = ({
       }
       const final_array_ids = final_nodes.map((c: { id: string }) => c.id);
       for (let linkId of previousState) {
-        if (!final_array_ids.includes(linkId)) {
+        if (!final_array_ids.includes(linkId) && !!ontologyNodes[linkId]) {
           modified = true;
           nodes.push({ id: linkId, change: "removed" });
           nodesToRemove.add(linkId);
