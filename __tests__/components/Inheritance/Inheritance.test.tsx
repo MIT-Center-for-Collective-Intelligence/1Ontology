@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import Inheritance from ' @components/components/Inheritance/Inheritance';
 import '@testing-library/jest-dom';
 
-const mockUpdateDoc = jest.fn(() => Promise.resolve());
+const mockUpdateDoc = jest.fn((docRef: any, data: any) => Promise.resolve());
 const mockBatch = {
   _mutations: [],
   _committed: false,
@@ -14,7 +14,7 @@ const mockBatch = {
 jest.mock('firebase/firestore', () => ({
   doc: jest.fn(() => 'mocked-doc-ref'),
   collection: jest.fn(() => 'mocked-collection'),
-  updateDoc: (...args: any) => mockUpdateDoc(...args),
+  updateDoc: (docRef: any, data: any) => mockUpdateDoc(docRef, data),
   getFirestore: jest.fn(() => ({ collection: jest.fn() })),
   writeBatch: jest.fn(() => mockBatch),
 }));
@@ -68,91 +68,159 @@ jest.mock(' @components/components/context/AuthContext', () => ({
 describe('Inheritance Component', () => {
   const mockSelectedNode = {
     id: 'node-1',
+    title: 'Test Node',
+    deleted: false,
     inheritance: {
       'test-property': { 
-        inheritanceType: 'alwaysInherit',
+        inheritanceType: 'alwaysInherit' as const,
         ref: 'parent-node'
       },
       'another-property': {
-        inheritanceType: 'neverInherit',
+        inheritanceType: 'neverInherit' as const,
         ref: null
       }
     },
     specializations: [
       {
+        collectionName: 'main',
         nodes: [
           { id: 'child-node-1' },
           { id: 'child-node-2' }
         ]
       }
     ],
+    generalizations: [
+      {
+        collectionName: 'main',
+        nodes: []
+      }
+    ],
     properties: {
       'test-property': 'test value',
-      'another-property': 'another value'
-    }
+      'another-property': 'another value',
+      parts: [],
+      isPartOf: []
+    },
+    root: 'root-node',
+    propertyType: {},
+    nodeType: 'activity' as const,
+    textValue: {},
+    createdBy: 'test-user'
   };
 
   const mockNodes = {
     'node-1': mockSelectedNode,
     'child-node-1': {
       id: 'child-node-1',
+      title: 'Child Node 1',
+      deleted: false,
       inheritance: {
         'test-property': { 
-          inheritanceType: 'alwaysInherit',
+          inheritanceType: 'alwaysInherit' as const,
           ref: 'node-1'
         },
         'another-property': {
-          inheritanceType: 'neverInherit',
+          inheritanceType: 'neverInherit' as const,
           ref: null
         }
       },
       specializations: [
         {
+          collectionName: 'main',
           nodes: [
             { id: 'grandchild-node-1' }
           ]
         }
       ],
+      generalizations: [
+        {
+          collectionName: 'main',
+          nodes: [
+            { id: 'node-1' }
+          ]
+        }
+      ],
       properties: {
         'test-property': 'inherited value',
-        'another-property': 'child value'
-      }
+        'another-property': 'child value',
+        parts: [],
+        isPartOf: []
+      },
+      root: 'root-node',
+      propertyType: {},
+      nodeType: 'activity' as const,
+      textValue: {},
+      createdBy: 'test-user'
     },
     'child-node-2': {
       id: 'child-node-2',
+      title: 'Child Node 2',
+      deleted: false,
       inheritance: {
         'test-property': { 
-          inheritanceType: 'alwaysInherit',
+          inheritanceType: 'alwaysInherit' as const,
           ref: 'node-1'
         },
         'another-property': {
-          inheritanceType: 'inheritUnlessAlreadyOverRidden',
+          inheritanceType: 'inheritUnlessAlreadyOverRidden' as const,
           ref: 'node-1'
         }
       },
       specializations: [],
+      generalizations: [
+        {
+          collectionName: 'main',
+          nodes: [
+            { id: 'node-1' }
+          ]
+        }
+      ],
       properties: {
         'test-property': 'inherited value 2',
-        'another-property': 'child value 2'
-      }
+        'another-property': 'child value 2',
+        parts: [],
+        isPartOf: []
+      },
+      root: 'root-node',
+      propertyType: {},
+      nodeType: 'activity' as const,
+      textValue: {},
+      createdBy: 'test-user'
     },
     'grandchild-node-1': {
       id: 'grandchild-node-1',
+      title: 'Grandchild Node 1',
+      deleted: false,
       inheritance: {
         'test-property': { 
-          inheritanceType: 'alwaysInherit',
+          inheritanceType: 'alwaysInherit' as const,
           ref: 'child-node-1'
         },
         'another-property': {
-          inheritanceType: 'neverInherit',
+          inheritanceType: 'neverInherit' as const,
           ref: null
         }
       },
       specializations: [],
+      generalizations: [
+        {
+          collectionName: 'main',
+          nodes: [
+            { id: 'child-node-1' }
+          ]
+        }
+      ],
       properties: {
         'test-property': 'grandchild value',
-        'another-property': 'grandchild another value'
-      }
+        'another-property': 'grandchild another value',
+        parts: [],
+        isPartOf: []
+      },
+      root: 'root-node',
+      propertyType: {},
+      nodeType: 'activity' as const,
+      textValue: {},
+      createdBy: 'test-user'
     }
   };
 
@@ -211,14 +279,20 @@ describe('Inheritance Component', () => {
     
     const radioGroups = screen.getAllByTestId('mock-radio-group');
     
-    const testPropertyGroup = radioGroups.find(group => 
-      group.parentElement.parentElement.parentElement.textContent.includes('Test Property')
-    );
+    const testPropertyGroup = radioGroups.find(group => {
+      const parent = group.parentElement;
+      const grandparent = parent?.parentElement;
+      const greatGrandparent = grandparent?.parentElement;
+      return greatGrandparent?.textContent?.includes('Test Property');
+    });
     expect(testPropertyGroup).toHaveAttribute('data-value', 'alwaysInherit');
     
-    const anotherPropertyGroup = radioGroups.find(group => 
-      group.parentElement.parentElement.parentElement.textContent.includes('Another Property')
-    );
+    const anotherPropertyGroup = radioGroups.find(group => {
+      const parent = group.parentElement;
+      const grandparent = parent?.parentElement;
+      const greatGrandparent = grandparent?.parentElement;
+      return greatGrandparent?.textContent?.includes('Another Property');
+    });
     expect(anotherPropertyGroup).toHaveAttribute('data-value', 'neverInherit');
   });
   
@@ -234,11 +308,11 @@ describe('Inheritance Component', () => {
       ...mockSelectedNode,
       inheritance: {
         'test-property': { 
-          inheritanceType: 'inheritUnlessAlreadyOverRidden',
+          inheritanceType: 'inheritUnlessAlreadyOverRidden' as const,
           ref: 'parent-node'
         },
         'another-property': {
-          inheritanceType: 'alwaysInherit',
+          inheritanceType: 'alwaysInherit' as const,
           ref: 'parent-node'
         }
       }
@@ -257,14 +331,20 @@ describe('Inheritance Component', () => {
     expect(values).toContain('inheritUnlessAlreadyOverRidden');
     expect(values).toContain('alwaysInherit');
     
-    const testPropertyGroup = radioGroups.find(group => 
-      group.parentElement.parentElement.parentElement.textContent.includes('Test Property')
-    );
+    const testPropertyGroup = radioGroups.find(group => {
+      const parent = group.parentElement;
+      const grandparent = parent?.parentElement;
+      const greatGrandparent = grandparent?.parentElement;
+      return greatGrandparent?.textContent?.includes('Test Property');
+    });
     expect(testPropertyGroup).toHaveAttribute('data-value', 'inheritUnlessAlreadyOverRidden');
     
-    const anotherPropertyGroup = radioGroups.find(group => 
-      group.parentElement.parentElement.parentElement.textContent.includes('Another Property')
-    );
+    const anotherPropertyGroup = radioGroups.find(group => {
+      const parent = group.parentElement;
+      const grandparent = parent?.parentElement;
+      const greatGrandparent = grandparent?.parentElement;
+      return greatGrandparent?.textContent?.includes('Another Property');
+    });
     expect(anotherPropertyGroup).toHaveAttribute('data-value', 'alwaysInherit');
   });
 });

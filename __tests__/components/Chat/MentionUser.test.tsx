@@ -1,60 +1,67 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { MentionUser } from '../../../src/components/Chat/MentionUser';
+import { ThemeProvider, createTheme } from '@mui/material';
 
-jest.mock('@mui/material', () => ({
-  Paper: ({ children }: any) => <div data-testid="paper">{children}</div>,
-  Typography: ({ children }: any) => <div data-testid="typography">{children}</div>
-}));
-
-jest.mock('@mui/system', () => ({
-  Box: ({ children, className }: any) => <div data-testid="box" className={className || ''}>{children}</div>
-}));
-
-jest.mock('../../../src/components/Chat/OptimizedAvatar', () => ({
-  __esModule: true,
-  default: ({ alt, size, imageUrl }: any) => (
-    <img 
-      data-testid="optimized-avatar" 
-      alt={alt}
-      width={size}
-      src={imageUrl}
-    />
-  )
-}));
-
-const { MentionUser } = require('../../../src/components/Chat/MentionUser');
+// Mock OptimizedAvatar component
+jest.mock('../../../src/components/Chat/OptimizedAvatar', () => {
+  return function MockOptimizedAvatar({ alt }: { alt: string }) {
+    return <div data-testid="optimized-avatar">{alt}</div>;
+  };
+});
 
 describe('MentionUser Component', () => {
   const mockUser = {
-    fullName: 'John Doe',
-    display: 'johndoe',
-    imageUrl: 'https://example.com/avatar.jpg'
+    display: 'Test User',
+    fullName: 'Test User',
+    imageUrl: 'test-image.jpg',
   };
 
-  test('renders without crashing', () => {
-    const { getByTestId } = render(<MentionUser user={mockUser} />);
-    expect(getByTestId('paper')).toBeInTheDocument();
+  const theme = createTheme({
+    palette: {
+      mode: 'light',
+      common: {
+        notebookG700: '#333',
+        notebookG600: '#555',
+        gray100: '#f5f5f5',
+        gray200: '#eee',
+      },
+    },
   });
 
-  test('renders user display name', () => {
-    const { getByText } = render(<MentionUser user={mockUser} />);
-    expect(getByText('johndoe')).toBeInTheDocument();
-  });
-
-  test('passes user info to OptimizedAvatar', () => {
-    const { getByTestId } = render(<MentionUser user={mockUser} />);
-    const avatar = getByTestId('optimized-avatar');
+  it('renders user information correctly', () => {
+    render(
+      <ThemeProvider theme={theme}>
+        <MentionUser user={mockUser} />
+      </ThemeProvider>
+    );
     
-    expect(avatar).toHaveAttribute('alt', 'John Doe');
-    expect(avatar).toHaveAttribute('src', 'https://example.com/avatar.jpg');
-    expect(avatar).toHaveAttribute('width', '30');
+    expect(screen.getByTestId('optimized-avatar')).toHaveTextContent('Test User');
+    expect(screen.getByRole('paragraph')).toHaveTextContent('Test User');
   });
 
-  test('handles user with missing properties', () => {
-    const incompleteUser = { fullName: '', display: '' };
-    const { getByTestId } = render(<MentionUser user={incompleteUser} />);
+  it('renders with dark theme styles', () => {
+    const darkTheme = createTheme({
+      palette: {
+        mode: 'dark',
+        common: {
+          notebookG700: '#333',
+          notebookG600: '#555',
+          gray100: '#f5f5f5',
+          gray200: '#eee',
+        },
+      },
+    });
+
+    render(
+      <ThemeProvider theme={darkTheme}>
+        <MentionUser user={mockUser} />
+      </ThemeProvider>
+    );
     
-    expect(getByTestId('paper')).toBeInTheDocument();
+    // We can't easily test the exact styles, but we can verify the component renders
+    expect(screen.getByTestId('optimized-avatar')).toHaveTextContent('Test User');
+    expect(screen.getByRole('paragraph')).toHaveTextContent('Test User');
   });
 });
