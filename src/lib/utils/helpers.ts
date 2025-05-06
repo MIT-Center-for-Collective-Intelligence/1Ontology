@@ -683,6 +683,7 @@ export const createNewNode = (
   generalizationId: string,
   uname: string,
   skillsFuture: boolean,
+  skillsFutureApp?: string,
 ): INode => {
   const newNode: any = {
     ...parentNodeData,
@@ -721,6 +722,7 @@ export const createNewNode = (
     propertyType: { ...parentNodeData.propertyType },
     nodeType: parentNodeData.nodeType,
     skillsFuture: !!skillsFuture,
+    ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
   };
   if (newNode?.textValue?.specializations) {
     delete newNode.textValue.specializations;

@@ -99,7 +99,7 @@ export const askGemini = async (contents: Content[], model: string) => {
       process.env.GEMINI_API_KEY_24,
       process.env.GEMINI_API_KEY_25,
       process.env.GEMINI_API_KEY_26,
-      process.env.GENI_API_KEY_27,
+      process.env.GEMINI_API_KEY_27,
       process.env.GEMINI_API_KEY_28,
       process.env.GEMINI_API_KEY_29,
       process.env.GEMINI_API_KEY_30,
@@ -115,7 +115,32 @@ export const askGemini = async (contents: Content[], model: string) => {
       process.env.GEMINI_API_KEY_40,
       process.env.GEMINI_API_KEY_41,
       process.env.GEMINI_API_KEY_42,
+      process.env.GEMINI_API_KEY_43,
+      process.env.GEMINI_API_KEY_44,
+      process.env.GEMINI_API_KEY_45,
+      process.env.GEMINI_API_KEY_46,
+      process.env.GEMINI_API_KEY_47,
+      process.env.GEMINI_API_KEY_48,
+      process.env.GEMINI_API_KEY_49,
+      process.env.GEMINI_API_KEY_50,
+      process.env.GEMINI_API_KEY_51,
+      process.env.GEMINI_API_KEY_52,
+      process.env.GEMINI_API_KEY_53,
+      process.env.GEMINI_API_KEY_54,
+      process.env.GEMINI_API_KEY_55,
+      process.env.GEMINI_API_KEY_56,
+      process.env.GEMINI_API_KEY_57,
+      process.env.GEMINI_API_KEY_58,
+      process.env.GEMINI_API_KEY_59,
+      process.env.GEMINI_API_KEY_60,
+      process.env.GEMINI_API_KEY_61,
+      process.env.GEMINI_API_KEY_62,
+      process.env.GEMINI_API_KEY_63,
+      process.env.GEMINI_API_KEY_64
     ] as string[];
+
+
+    const shuffledKeys = [...apiKeys].sort(() => Math.random() - 0.5);
 
     let response = "";
     let isJSONObject = {
@@ -123,65 +148,50 @@ export const askGemini = async (contents: Content[], model: string) => {
       isJSON: false,
     };
 
-    for (const apiKey of apiKeys) {
+    for (const apiKey of shuffledKeys) {
       const genAI = new GoogleGenerativeAI(apiKey);
       const genModel = genAI.getGenerativeModel({ model });
 
-      for (let i = 0; i < 1; i++) {
-        try {
-          const result = await genModel.generateContent({
-            contents,
-            generationConfig,
-            safetySettings,
-          });
-          response = result.response.text();
+      try {
+        const result = await genModel.generateContent({
+          contents,
+          generationConfig,
+          safetySettings,
+        });
+        response = result.response.text();
 
-          const newResponseRef = dbCausal.collection("responsesAI").doc();
+        await dbCausal.collection("responsesAI").doc().set({
+          contents,
+          response,
+          createdAt: new Date(),
+        });
 
-          newResponseRef.set({
-            contents,
-            response,
-            createdAt: new Date(),
-          });
-          isJSONObject = isValidJSON(response);
+        isJSONObject = isValidJSON(response);
 
-          if (isJSONObject.isJSON) {
-            return isJSONObject.jsonObject;
-          }
-
-          console.error(
-            `Failed to get valid JSON (attempt ${i + 1} with key ${apiKey}...). Retrying...`,
-          );
-        } catch (error) {
-          if (error instanceof Error) {
-            const errorCode =
-              (error as any).code ||
-              (error as any).status ||
-              (error as any).response?.status;
-
-            if (errorCode === 429) {
-              console.error(
-                `Rate limited (429) with key ${apiKey}... Retrying after delay`,
-              );
-              break;
-            } else {
-              console.error(`Error with key ${apiKey}...:`, error);
-            }
-          } else {
-            console.error(
-              `Unknown error structure with key ${apiKey}...:`,
-              error,
-            );
-          }
-          await delay(5000);
+        if (isJSONObject.isJSON) {
+          return isJSONObject.jsonObject;
         }
+
+        console.error(`Invalid JSON from key ${apiKey}. Trying next...`);
+      } catch (error) {
+        const errorCode =
+          (error as any)?.code ||
+          (error as any)?.status ||
+          (error as any)?.response?.status;
+
+        if (errorCode === 429) {
+          console.warn(`Rate limit (429) on key ${apiKey}. Skipping...`);
+        } else {
+          console.error(`Error with key ${apiKey}:`, error);
+        }
+
+        await delay(5000);
       }
     }
 
-    throw new Error(
-      "All API keys exhausted - failed to get a complete JSON object",
-    );
+    throw new Error("All API keys exhausted - failed to get a complete JSON object");
   } catch (error: any) {
-    console.log(error);
+    console.error("Fatal error in askGemini:", error);
   }
+
 };

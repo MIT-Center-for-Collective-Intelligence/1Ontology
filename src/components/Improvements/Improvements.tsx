@@ -717,7 +717,7 @@ const Improvements = ({
     }
   };
 
-  const onAcceptChange = async (change: any) => {
+  const onAcceptChange = async (change: any, currentNode: any) => {
     try {
       if (!user) {
         return;
@@ -767,6 +767,7 @@ const Improvements = ({
               unclassifiedData.id,
               user?.uname,
               skillsFuture,
+              skillsFutureApp,
             );
             const specializations = unclassifiedData.specializations;
 
@@ -796,11 +797,12 @@ const Improvements = ({
       const propertyType = nodeData.propertyType[change.modifiedProperty];
       if (
         change.modifiedProperty === "specializations" ||
+        change.modifiedProperty === "generalizations" ||
         (propertyType !== "string" && propertyType !== "string-array")
       ) {
         changeType = "modify elements";
 
-        const removedLinks = [];
+        const removedLinks: string[] = [];
         for (let collection of change.detailsOfChange.comparison) {
           for (let node of collection.nodes) {
             if (node.change === "added") {
@@ -811,20 +813,67 @@ const Improvements = ({
             }
           }
         }
+        let newValue = null;
+        if (change.modifiedProperty === "specializations") {
+          newValue = nodeData["specializations"];
+        } else if (change.modifiedProperty === "generalizations") {
+          newValue = nodeData["generalizations"];
+        } else {
+          const inheritanceRef = nodeData.inheritance
+            ? nodeData.inheritance[change.modifiedProperty].ref
+            : null;
 
+          if (inheritanceRef) {
+            newValue =
+              nodes[inheritanceRef].properties[change.modifiedProperty];
+          } else {
+            newValue = nodeData.properties[change.modifiedProperty];
+          }
+        }
+
+        for (let newCollectionName of change.detailsOfChange
+          ?.addedCollections || []) {
+          const previousIndex = newValue.findIndex(
+            (c: any) => c.collectionName === newCollectionName,
+          );
+          if (previousIndex === -1) {
+            newValue.push({
+              collectionName: newCollectionName,
+              nodes: [],
+            });
+          }
+        }
+        for (let collection of newValue) {
+          collection.nodes = collection.nodes.filter(
+            (c: { id: string }) => !removedLinks.includes(c.id),
+          );
+        }
+        if (newValue.length <= 0) {
+          newValue.push({
+            collectionName: "main",
+            nodes: [],
+          });
+        }
+        for (let link of addedLinks) {
+          newValue[0].nodes.push({
+            id: link,
+          });
+        }
         await handleSaveLinkChanges(
           change.modifiedProperty,
-          change.detailsOfChange.newValue,
+          newValue,
           addedLinks,
           removedLinks,
           change.change.optionalParts || [],
         );
+        const currentNodeId = currentNode.id;
 
-        const nodeDoc = await getDoc(
-          doc(collection(db, NODES), currentVisibleNode?.id),
-        );
+        const nodeDoc = currentNodeId
+          ? await getDoc(doc(collection(db, NODES), currentNodeId))
+          : null;
+        if (!nodeDoc) return;
         let newComment =
-          (currentVisibleNode.textValue || {})[change.modifiedProperty] || "";
+          (currentNode.textValue || {})[change.modifiedProperty] || "";
         if (!newComment.includes(change.change.reasoning)) {
           newComment = newComment + "\n" + change.change.reasoning;
         }
@@ -858,14 +907,14 @@ const Improvements = ({
 
       if (user?.uname && changeType) {
         const changeLog: any = {
-          nodeId: currentVisibleNode?.id,
+          nodeId: currentNode?.id,
           modifiedBy: user?.uname,
           modifiedProperty: change.modifiedProperty,
           previousValue: change.detailsOfChange.previousValue,
           newValue: change.detailsOfChange.newValue,
           modifiedAt: new Date(),
           changeType,
-          fullNode: currentVisibleNode,
+          fullNode: currentNode,
           reasoning: reasoning || "",
         };
         if (detailsChange) {
@@ -927,6 +976,7 @@ const Improvements = ({
             compareThisImprovement={compareThisImprovement}
             currentIndex={currentIndex}
             setCurrentIndex={setCurrentIndex}
+            currentVisibleNode={currentVisibleNode}
           />
           <Button
             variant="contained"

@@ -16,6 +16,7 @@ type IProposalSliderProps = {
   compareThisImprovement: any;
   currentIndex: number;
   setCurrentIndex: any;
+  currentVisibleNode: any;
 };
 const ImprovementsSlider = ({
   proposals,
@@ -28,6 +29,7 @@ const ImprovementsSlider = ({
   compareThisImprovement,
   currentIndex,
   setCurrentIndex,
+  currentVisibleNode,
 }: IProposalSliderProps) => {
   const [implementingProposal, setImplementingProposal] =
     useState<boolean>(false);
@@ -91,7 +93,10 @@ const ImprovementsSlider = ({
   const onHandleAcceptChange = async () => {
     try {
       setImplementingProposal(true);
-      const diffChange = await handleAcceptChange(currentImprovement);
+      const diffChange = await handleAcceptChange(
+        currentImprovement,
+        currentVisibleNode,
+      );
 
       setImprovements((prev: any) => {
         prev[currentIndex].implemented = true;
