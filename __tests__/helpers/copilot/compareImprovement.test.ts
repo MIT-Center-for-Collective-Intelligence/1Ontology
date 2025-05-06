@@ -662,7 +662,7 @@ describe("compare improvement change to the original node", () => {
           "Improved organization and removed redundant/unclear specializations.",
       },
     };
-    const response = compareImprovement(improvement, nodeTitles);
+    const response = compareImprovement(improvement, nodeTitles, {});
     expect(response.nodeId).toBe("prg28paWo3J5oJZKpwqW");
     expect(response.detailsOfChange).toEqual({
       comparison: [

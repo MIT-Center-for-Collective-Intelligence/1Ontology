@@ -76,7 +76,7 @@ export const getChangeComparison = ({
           (c: string) => nodesByTitle[c].id,
         );
         for (let linkId of previousState) {
-          if (!final_array_ids.includes(linkId)) {
+          if (!final_array_ids.includes(linkId) && !!ontologyNodes[linkId]) {
             nodes.push({ id: linkId, change: "removed" });
             nodesToRemove.add(linkId);
             modified = true;
@@ -271,7 +271,7 @@ export const getChangeComparison = ({
 export const compareImprovement = (
   improvement: any,
   nodesByTitle: { [nodeTitle: string]: INode },
-  ontologyNodes?: { [nodeId: string]: any },
+  ontologyNodes: { [nodeId: string]: any },
 ) => {
   try {
     const _improvement = JSON.parse(JSON.stringify(improvement));
