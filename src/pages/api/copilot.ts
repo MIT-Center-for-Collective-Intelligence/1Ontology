@@ -420,7 +420,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       SYSTEM_PROMPT,
       at: "copilot",
     });
-    let improvements: Improvement[] = [];
 
     const filteredImprovements = [];
 
@@ -447,10 +446,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
         });
       }
     }
-    if (!changes.new_nodes) {
+    if (!changes?.new_nodes) {
       changes.new_nodes = [];
     }
-    if (!changes.delete_nodes) changes.delete_nodes = [];
+    if (!changes?.delete_nodes) changes.delete_nodes = [];
     changes.improvements = filteredImprovements;
     return res.status(200).send(changes);
   } catch (error: any) {
