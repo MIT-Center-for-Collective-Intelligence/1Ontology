@@ -93,7 +93,7 @@ const Improvements = ({
       newValue: ICollection[],
       addedLinks: string[],
       removedLinks: string[],
-      optionalParts?: string[],
+      optionalParts: string[],
     ) => {
       try {
         if (!user?.uname) return;
@@ -738,6 +738,8 @@ const Improvements = ({
       const addedLinks = [];
       const nodeType = change.nodeType;
 
+      const optionalPartsTitles = change.change?.optionalParts || [];
+      const optionalPartsIds = [];
       let unclassifiedDoc = null;
       const unclassifiedNodeDocs = await getDocs(
         query(
@@ -788,6 +790,9 @@ const Improvements = ({
               createdAt: new Date(),
             });
             addedLinks.push(newRef.id);
+            if (optionalPartsTitles.includes(nodeTitle)) {
+              optionalPartsIds.push(newRef.id);
+            }
           }
         }
       }
@@ -807,6 +812,9 @@ const Improvements = ({
           for (let node of collection.nodes) {
             if (node.change === "added") {
               addedLinks.push(node.id);
+              if (optionalPartsTitles.includes(nodes[node.id]?.title || "")) {
+                optionalPartsIds.push(node.id);
+              }
             }
             if (node.change === "removed") {
               removedLinks.push(node.id);
@@ -864,7 +872,7 @@ const Improvements = ({
           newValue,
           addedLinks,
           removedLinks,
-          change.change.optionalParts || [],
+          optionalPartsIds,
         );
         const currentNodeId = currentNode.id;
 
