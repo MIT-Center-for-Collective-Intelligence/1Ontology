@@ -352,7 +352,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
       resizer.resizeSection(2, { toSize: 0 });
       controller.applyResizer(resizer);
     }
-  }, [user, nodes]);
+  }, []); // Removed dependencies to fix column auto-resizing when node content changes (when editing nodes through yjsEditor)
 
   useEffect(() => {
     const checkIfDifferentDay = () => {

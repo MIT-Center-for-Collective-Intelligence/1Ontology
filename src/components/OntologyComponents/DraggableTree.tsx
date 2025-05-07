@@ -384,7 +384,7 @@ function DraggableTree({
           })}
         </Box>
         <FolderArrow node={node} />
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "calc(100% - 20px)" }}>
           <span
             className={clsx(styles.text, {
               [styles.categoryText]: node.data.category,
@@ -541,7 +541,7 @@ function FolderArrow({ node }: { node: NodeApi<TreeData> }) {
   const hasChildren = node.isInternal && (node.children || []).length > 0;
 
   return (
-    <span className={styles.arrow}>
+    <span className={styles.arrow} style={{ minWidth: "20px" }}>
       {node.isInternal && hasChildren ? (
         node.isOpen ? (
           <KeyboardArrowDownIcon sx={{ pr: "5px" }} />
