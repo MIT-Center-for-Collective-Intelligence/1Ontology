@@ -839,18 +839,6 @@ const Improvements = ({
           }
         }
 
-        for (let newCollectionName of change.detailsOfChange
-          ?.addedCollections || []) {
-          const previousIndex = newValue.findIndex(
-            (c: any) => c.collectionName === newCollectionName,
-          );
-          if (previousIndex === -1) {
-            newValue.push({
-              collectionName: newCollectionName,
-              nodes: [],
-            });
-          }
-        }
         for (let collection of newValue) {
           collection.nodes = collection.nodes.filter(
             (c: { id: string }) => !removedLinks.includes(c.id),
@@ -866,6 +854,13 @@ const Improvements = ({
           newValue[0].nodes.push({
             id: link,
           });
+        }
+        if (
+          (change.modifiedProperty === "specializations" ||
+            change.modifiedProperty === "generalizations") &&
+          !!change.detailsOfChange?.newValue
+        ) {
+          newValue = change.detailsOfChange.newValue;
         }
         await handleSaveLinkChanges(
           change.modifiedProperty,
