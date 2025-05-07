@@ -426,7 +426,7 @@ const LinkNode = ({
               link.id,
             );
           }
-          if (shouldBeRemovedFromParent) {
+          if (shouldBeRemovedFromParent && nodes[link.id]) {
             const nodeType = nodes[link.id].nodeType;
             const unclassifiedNodeDocs = await getDocs(
               query(
