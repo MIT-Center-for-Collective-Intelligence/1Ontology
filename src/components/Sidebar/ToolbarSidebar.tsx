@@ -586,11 +586,7 @@ const ToolbarSidebar = ({
           const data = doc.data();
           const currentNode = data.currentNode;
 
-          if (
-            (change.type === "added" || change.type === "modified") &&
-            userId !== "gemini" &&
-            currentNode
-          ) {
+          if (change.type === "added" || change.type === "modified") {
             updatedUsersData[userId] = {
               node: {
                 title: nodes[currentNode]?.title || "",

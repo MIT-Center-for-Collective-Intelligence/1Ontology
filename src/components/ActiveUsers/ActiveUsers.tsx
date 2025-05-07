@@ -67,6 +67,7 @@ const ActiveUsers = ({
             new Date(a.lasChangeMadeAt.toDate()).getTime()
           );
         })
+        .filter((c: any) => c.uname !== "gemini")
         .map((u: any) => (
           <Tooltip
             key={`${u.fName} ${u.lName}`}
