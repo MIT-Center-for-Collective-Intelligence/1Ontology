@@ -70,7 +70,7 @@ const ActiveUsers = ({
         .filter((c: any) => c.uname !== "gemini")
         .map((u: any) => (
           <Tooltip
-            key={`${u.fName} ${u.lName}`}
+            key={`${u.uname}`}
             placement="left"
             title={
               <Box
