@@ -221,7 +221,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
   const [appName, setAppName] = useState("Top-Down Gemini 2.5 Pro"); // this state is only been used for the Skills Future App
   const [partsInheritance, setPartsInheritance] = useState<{
-    [nodeId: string]: string;
+    [nodeId: string]: { title: string; fullPart: boolean };
   }>({});
 
   const firstLoad = useRef(true);
@@ -1090,7 +1090,9 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
   useEffect(() => {
     if (!currentVisibleNode) return;
-    const inheritedParts: { [nodeId: string]: string } = {};
+    const inheritedParts: {
+      [nodeId: string]: { title: string; fullPart: boolean };
+    } = {};
 
     const _currentVisibleNode = { ...currentVisibleNode };
     const parts = _currentVisibleNode?.properties.parts || [];
@@ -1098,30 +1100,44 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     const generalizations = (
       _currentVisibleNode?.generalizations || []
     ).flatMap((c) => c.nodes);
-    const checkGeneralizations = (nodeTitle: string) => {
+    const checkGeneralizations = (
+      nodeTitle: string,
+      nodeId: string,
+    ): { id: string; fullPart: boolean } | null => {
       for (let generalization of generalizations) {
         if (!nodes[generalization.id]) {
           continue;
         }
         const generalizationParts = nodes[generalization.id]?.properties.parts;
+        const _partIdex = generalizationParts[0].nodes.findIndex(
+          (c) => c.id === nodeId,
+        );
+        if (_partIdex !== -1) {
+          return { id: generalization.id, fullPart: true };
+        }
         const partIdex = generalizationParts[0].nodes.findIndex((c) =>
           compareTitles(nodeTitle, nodes[c.id].title),
         );
         if (partIdex !== -1) {
-          return generalization.id;
+          return { id: generalization.id, fullPart: false };
         }
       }
+      return null;
     };
 
     if (parts) {
       for (let collection of parts) {
         for (let node of collection.nodes) {
           if (nodes[node.id]) {
-            const generalizationPart = checkGeneralizations(
+            const { id, fullPart } = checkGeneralizations(
               nodes[node.id]?.title,
-            );
-            if (generalizationPart) {
-              inheritedParts[node.id] = nodes[generalizationPart].title;
+              node.id,
+            ) || { id: "", fullPart: false };
+            if (id) {
+              inheritedParts[node.id] = {
+                title: nodes[id].title,
+                fullPart,
+              };
             }
           }
         }
