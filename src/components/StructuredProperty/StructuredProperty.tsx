@@ -78,7 +78,7 @@ type IStructuredPropertyProps = {
   setGlowIds: any;
   selectedCollection: any;
   skillsFuture: boolean;
-  partsInheritance?: { [nodeId: string]: string };
+  partsInheritance?: { [nodeId: string]: { title: string; fullPart: boolean } };
 };
 
 const StructuredProperty = ({
