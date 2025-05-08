@@ -116,6 +116,24 @@ import { TreeApi } from "react-arborist";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
 import ROUTES from "@components/lib/utils/routes";
 import { getAuth } from "firebase/auth";
+const stem = require("wink-porter2-stemmer");
+const tokenizer = require("wink-tokenizer");
+
+const myTokenizer = tokenizer();
+
+export const tokenize = (str: string) => {
+  let tokens = [];
+  if (str) {
+    let tokenized = myTokenizer.tokenize(str);
+    for (let w of tokenized) {
+      if (w.tag === "word" && w.value.length > 1) {
+        tokens.push(stem(w.value));
+      }
+    }
+    // tokens = stopword.removeStopwords(tokens);
+  }
+  return tokens;
+};
 
 const AddContext = (nodes: any, nodesObject: any): INode[] => {
   for (let node of nodes) {
@@ -1060,6 +1078,12 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     },
     [eachOntologyPath],
   );
+  const compareTitles = (title1: string, title2: string): boolean => {
+    const tokens1 = tokenize(title1);
+    const tokens2 = tokenize(title2);
+
+    return tokens1.every((token) => tokens2.includes(token));
+  };
 
   useEffect(() => {
     if (!currentVisibleNode) return;
@@ -1071,14 +1095,14 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     const generalizations = (
       _currentVisibleNode?.generalizations || []
     ).flatMap((c) => c.nodes);
-    const checkGeneralizations = (nodeId: string) => {
+    const checkGeneralizations = (nodeTitle: string) => {
       for (let generalization of generalizations) {
         if (!nodes[generalization.id]) {
           continue;
         }
         const generalizationParts = nodes[generalization.id]?.properties.parts;
-        const partIdex = generalizationParts[0].nodes.findIndex(
-          (c) => c.id === nodeId,
+        const partIdex = generalizationParts[0].nodes.findIndex((c) =>
+          compareTitles(nodeTitle, nodes[c.id].title),
         );
         if (partIdex !== -1) {
           return generalization.id;
@@ -1089,7 +1113,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     if (parts) {
       for (let collection of parts) {
         for (let node of collection.nodes) {
-          const generalizationPart = checkGeneralizations(node.id);
+          const generalizationPart = checkGeneralizations(nodes[node.id].title);
           if (generalizationPart) {
             inheritedParts[node.id] = nodes[generalizationPart].title;
           }
@@ -1122,11 +1146,11 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
   return (
     <>
-      <Head>
+      {/*     <Head>
         <title>
           {currentVisibleNode ? currentVisibleNode.title : "1ontology"}
         </title>
-      </Head>
+      </Head> */}
       <Box>
         <Container
           style={{

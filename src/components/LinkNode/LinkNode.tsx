@@ -658,7 +658,7 @@ const LinkNode = ({
             )}
             <span style={{ color: "gray", marginLeft: "7px" }}>
               {partsInheritance && partsInheritance[link.id]
-                ? `(From ${partsInheritance[link.id]})`
+                ? `(From ${partsInheritance[link.id]}), Part Specialization`
                 : ""}
             </span>
           </Link>
