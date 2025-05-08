@@ -1116,9 +1116,13 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     if (parts) {
       for (let collection of parts) {
         for (let node of collection.nodes) {
-          const generalizationPart = checkGeneralizations(nodes[node.id].title);
-          if (generalizationPart) {
-            inheritedParts[node.id] = nodes[generalizationPart].title;
+          if (nodes[node.id]) {
+            const generalizationPart = checkGeneralizations(
+              nodes[node.id]?.title,
+            );
+            if (generalizationPart) {
+              inheritedParts[node.id] = nodes[generalizationPart].title;
+            }
           }
         }
       }
