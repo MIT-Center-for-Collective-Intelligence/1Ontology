@@ -63,6 +63,7 @@ type ImprovementsProps = {
   displayDiff: any;
   skillsFutureApp: string;
   skillsFuture: boolean;
+  nodesByTitle: any;
 };
 const Improvements = ({
   currentImprovement,
@@ -83,6 +84,7 @@ const Improvements = ({
   displayDiff,
   skillsFutureApp,
   skillsFuture,
+  nodesByTitle,
 }: ImprovementsProps) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -94,6 +96,7 @@ const Improvements = ({
       addedLinks: string[],
       removedLinks: string[],
       optionalParts: string[],
+      elementsOrder: string[],
     ) => {
       try {
         if (!user?.uname) return;
@@ -194,6 +197,15 @@ const Improvements = ({
         if (property === "specializations" || property === "generalizations") {
           nodeData[property] = newValue;
         } else {
+          newValue[0].nodes.sort((a, b) => {
+            const indexA = elementsOrder.indexOf(a.id);
+            const indexB = elementsOrder.indexOf(b.id);
+
+            return (
+              (indexA === -1 ? Infinity : indexA) -
+              (indexB === -1 ? Infinity : indexB)
+            );
+          });
           nodeData.properties[property] = newValue;
         }
         // Update the node document in the database
@@ -717,7 +729,11 @@ const Improvements = ({
     }
   };
 
-  const onAcceptChange = async (change: any, currentNode: any) => {
+  const onAcceptChange = async (
+    change: any,
+    currentNode: any,
+    nodesByTitle: any,
+  ) => {
     try {
       if (!user) {
         return;
@@ -862,12 +878,16 @@ const Improvements = ({
         ) {
           newValue = change.detailsOfChange.newValue;
         }
+        const elementsOrder = change.change.new_value.final_array.map(
+          (ct: string) => nodesByTitle[ct.toLowerCase()].id,
+        );
         await handleSaveLinkChanges(
           change.modifiedProperty,
           newValue,
           addedLinks,
           removedLinks,
           optionalPartsIds,
+          elementsOrder,
         );
         const currentNodeId = currentNode.id;
 
@@ -980,6 +1000,7 @@ const Improvements = ({
             currentIndex={currentIndex}
             setCurrentIndex={setCurrentIndex}
             currentVisibleNode={currentVisibleNode}
+            nodesByTitle={nodesByTitle}
           />
           <Button
             variant="contained"

@@ -1154,6 +1154,7 @@ const ToolbarSidebar = ({
             displayDiff={displayDiff}
             skillsFutureApp={skillsFutureApp}
             skillsFuture={skillsFuture}
+            nodesByTitle={nodesByTitle}
           />
         );
       case "history":
