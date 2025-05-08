@@ -1082,7 +1082,10 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     const tokens1 = tokenize(title1);
     const tokens2 = tokenize(title2);
 
-    return tokens1.every((token) => tokens2.includes(token));
+    return (
+      tokens1.every((token) => tokens2.includes(token)) ||
+      tokens2.every((token) => tokens1.includes(token))
+    );
   };
 
   useEffect(() => {
