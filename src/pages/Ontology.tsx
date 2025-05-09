@@ -1116,7 +1116,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
           return { id: generalization.id, fullPart: true };
         }
         const partIdex = generalizationParts[0].nodes.findIndex((c) =>
-          compareTitles(nodeTitle, nodes[c.id].title),
+          compareTitles(nodeTitle, nodes[c.id]?.title || ""),
         );
         if (partIdex !== -1) {
           return { id: generalization.id, fullPart: false };
