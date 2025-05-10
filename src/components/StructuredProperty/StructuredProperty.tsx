@@ -709,11 +709,13 @@ const StructuredProperty = ({
             skillsFuture={skillsFuture}
           />
         )}
-      <CommentsSection
-        handleCloseAddLinksModel={handleCloseAddLinksModel}
-        property={property}
-        onGetPropertyValue={onGetPropertyValue}
-      />
+      {selectedProperty !== property && (
+        <CommentsSection
+          handleCloseAddLinksModel={handleCloseAddLinksModel}
+          property={property}
+          onGetPropertyValue={onGetPropertyValue}
+        />
+      )}
       {(property === "generalizations" ||
         property === "specializations" ||
         property === "isPartOf" ||
