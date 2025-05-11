@@ -965,7 +965,9 @@ const Node = ({
     },
     [currentVisibleNode, nodes],
   );
-  const checkDuplicateTitle = (newTitle: string) => {
+
+  // Memoized this to prevent useEffect re-runs in YjsEditorWrapper
+  const checkDuplicateTitle = useCallback((newTitle: string) => {
     try {
       const fuseSearch = searchWithFuse(newTitle.trim());
       return (
@@ -979,7 +981,8 @@ const Node = ({
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [searchWithFuse, currentVisibleNode?.id]);
+  
   const getPath = useCallback(
     (nodeId: string, selectedProperty: string): Set<string> => {
       if (selectedProperty === "generalizations") {
