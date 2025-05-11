@@ -9,10 +9,10 @@ import {
   writeBatch,
   WriteBatch,
 } from "firebase/firestore";
-import { NODES } from " @components/lib/firestoreClient/collections";
-import { recordLogs } from " @components/lib/utils/helpers";
-import { getTitle } from " @components/lib/utils/string.utils";
-import { INode, ICollection, ILinkNode } from " @components/types/INode";
+import { NODES } from "@components/lib/firestoreClient/collections";
+import { recordLogs } from "@components/lib/utils/helpers";
+import { getTitle } from "@components/lib/utils/string.utils";
+import { INode, ICollection, ILinkNode } from "@components/types/INode";
 
 const SelectInheritance = ({
   currentVisibleNode,

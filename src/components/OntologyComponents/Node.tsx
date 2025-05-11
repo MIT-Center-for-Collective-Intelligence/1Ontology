@@ -89,22 +89,22 @@ import {
 } from "firebase/firestore";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Text from "./Text";
-import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
+import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import {
   ICollection,
   ILinkNode,
   INode,
   INodeTypes,
   MainSpecializations,
-} from " @components/types/INode";
-import { NODES } from " @components/lib/firestoreClient/collections";
+} from "@components/types/INode";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import NodeBody from "../NodBody/NodeBody";
 
 import {
   generateUniqueTitle,
   getPropertyValue,
   getTitle,
-} from " @components/lib/utils/string.utils";
+} from "@components/lib/utils/string.utils";
 import {
   checkIfCanDeleteANode,
   createNewNode,
@@ -121,14 +121,14 @@ import {
   updateLinksForInheritanceSpecializations,
   updateLinks,
   clearNotifications,
-} from " @components/lib/utils/helpers";
+} from "@components/lib/utils/helpers";
 
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
-import { NodeChange } from " @components/types/INode";
-import { User } from " @components/types/IAuth";
+import { NodeChange } from "@components/types/INode";
+import { User } from "@components/types/IAuth";
 import { getStorage } from "firebase/storage";
 import NodeActivityFlow from "../NodBody/NodeActivityFlow";
-import { development } from " @components/lib/CONSTANTS";
+import { development } from "@components/lib/CONSTANTS";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -166,6 +166,7 @@ type INodeProps = {
   setSelectedCollection: any;
   selectedCollection: string;
   skillsFuture: boolean;
+  partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
 };
 
 const Node = ({
@@ -204,6 +205,7 @@ const Node = ({
   setSelectedCollection,
   selectedCollection,
   skillsFuture,
+  partsInheritance,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -1077,8 +1079,12 @@ const Node = ({
 
         {/* description of the node */}
         {(!skillsFuture ||
-          currentVisibleNode.appName === "O*Net Verbs o3 Deep Research" ||
-          currentVisibleNode.appName === "Top-Down Gemini 2.5 Pro") && (
+          [
+            "O*Net Verbs o3 Deep Research",
+            "Top-Down Gemini 2.5 Pro",
+            "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
+            "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
+          ].includes(currentVisibleNode?.appName || "")) && (
           <Text
             nodes={nodes}
             text={onGetPropertyValue("description") as string}
@@ -1264,6 +1270,7 @@ const Node = ({
               setGlowIds={setGlowIds}
               selectedCollection={selectedCollection}
               skillsFuture={skillsFuture}
+              partsInheritance={partsInheritance}
             />
           ))}
         </Stack>

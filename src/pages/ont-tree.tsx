@@ -1,4 +1,4 @@
-// import { NODES_ONET } from " @components/lib/firestoreClient/collections";
+// import { NODES_ONET } from "@components/lib/firestoreClient/collections";
 import { collection, getDocs, getFirestore, query } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { TreeItem } from "@mui/lab";
@@ -13,10 +13,10 @@ import {
   Typography,
 } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import { INode, TreeData } from " @components/types/INode";
-import DraggableTree from " @components/components/OntologyComponents/DraggableTree";
+import { INode, TreeData } from "@components/types/INode";
+import DraggableTree from "@components/components/OntologyComponents/DraggableTree";
 import { TreeApi } from "react-arborist";
-import DomainLookupSidebar from " @components/components/DomainLookup/DomainLookupSidebar";
+import DomainLookupSidebar from "@components/components/DomainLookup/DomainLookupSidebar";
 const NODES_ONET = "oNetNodesDecomposed";
 type TreeNode = {
   title: string;

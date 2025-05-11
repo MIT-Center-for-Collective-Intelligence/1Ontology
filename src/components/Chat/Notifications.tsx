@@ -4,15 +4,15 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useEffect, useState } from "react";
 import OptimizedAvatar from "./OptimizedAvatar";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
-import { INotification } from " @components/types/IChat";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
+import { INotification } from "@components/types/IChat";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 import MarkdownRender from "../Markdown/MarkdownRender";
-import { chatChange } from " @components/client/firestore/messages.firestore";
-import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
-import { synchronizeStuff } from " @components/lib/utils/helpers";
+import { chatChange } from "@components/client/firestore/messages.firestore";
+import { getNotificationsSnapshot } from "@components/client/firestore/notifications.firestore";
+import { synchronizeStuff } from "@components/lib/utils/helpers";
 import { getFirestore } from "firebase/firestore";
-import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
+import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 
 dayjs.extend(relativeTime);
 

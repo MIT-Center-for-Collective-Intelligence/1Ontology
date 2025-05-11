@@ -8,6 +8,7 @@ import {
   Button,
   IconButton,
   SxProps,
+  TextField,
   Theme,
   Tooltip,
   useTheme,
@@ -16,13 +17,13 @@ import { getStorage } from "firebase/storage";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Mention, MentionsInput, MentionsInputStyle } from "react-mentions";
 import { MentionUser } from "./MentionUser";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
-import { IChatMessage } from " @components/types/IChat";
-import { useUploadImage } from " @components/hooks/useUploadImage";
-import { isValidHttpUrl } from " @components/lib/utils/utils";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
+import { IChatMessage } from "@components/types/IChat";
+import { useUploadImage } from "@components/hooks/useUploadImage";
+import { isValidHttpUrl } from "@components/lib/utils/utils";
 import defaultStyle from "./defaultStyle";
-import { getTaggedUsers } from " @components/lib/utils/string.utils";
-import { development, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
+import { getTaggedUsers } from "@components/lib/utils/string.utils";
+import { development, SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 import MessageInputFooter from "./MessageInputFooter";
 
 type ChatInputProps = {
@@ -40,6 +41,7 @@ type ChatInputProps = {
   setOpenSelectModel?: React.Dispatch<React.SetStateAction<boolean>>;
   chatType: string;
   placeholder: string;
+  consultant?: boolean;
 };
 
 const ChatInput = ({
@@ -56,6 +58,7 @@ const ChatInput = ({
   setOpenSelectModel,
   chatType,
   placeholder,
+  consultant,
   sx,
 }: ChatInputProps) => {
   const theme = useTheme();
@@ -124,6 +127,7 @@ const ChatInput = ({
   };
 
   useEffect(() => {
+    if (!!consultant) return;
     const savedInputValue = localStorage.getItem(
       `chatInputValue-${type}-${chatType}`,
     );
@@ -139,7 +143,7 @@ const ChatInput = ({
   }, [chatType, type, isEditing]);
 
   useEffect(() => {
-    if (!isEditing) {
+    if (!isEditing && !consultant) {
       localStorage.setItem(`chatInputValue-${type}-${chatType}`, inputValue);
     }
   }, [inputValue, chatType, type, isEditing]);
@@ -238,7 +242,6 @@ const ChatInput = ({
   return (
     <Box
       sx={{
-        mt: "10px",
         border: (theme) =>
           `solid 1px ${
             theme.palette.mode === "light"
@@ -247,40 +250,57 @@ const ChatInput = ({
           }`,
         borderRadius: "10px",
         backgroundColor: (theme) =>
-          theme.palette.mode === "dark"
-            ? DESIGN_SYSTEM_COLORS.notebookG700
-            : DESIGN_SYSTEM_COLORS.gray100,
+          theme.palette.mode === "dark" ? "#363636" : "#d4d6d7",
         ...SCROLL_BAR_STYLE,
         pb: 0,
       }}
     >
-      <MentionsInput
-        id="comment-mention"
-        className="comment-input"
-        placeholder={placeholder}
-        style={style}
-        value={inputValue}
-        singleLine={false}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={(e) => onKeyDown(e)}
-      >
-        <Mention
-          trigger="@"
-          data={users}
-          displayTransform={(id, display) => {
-            return `@${display}`;
-          }}
-          markup="[@__display__](__id__)"
-          renderSuggestion={(suggestion: any) => (
-            <MentionUser user={suggestion} />
-          )}
-          appendSpaceOnAdd={true}
-          style={{
-            backgroundColor: "#0d8fad",
-            // paddingRight: "5px",
+      {consultant ? (
+        <TextField
+          multiline
+          fullWidth
+          variant="standard"
+          placeholder={placeholder}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={onKeyDown}
+          InputProps={{
+            disableUnderline: true,
+            style: {
+              fontSize: 16,
+              padding: "15px",
+              paddingBottom: "0px",
+              fontFamily: "system-ui",
+              color: theme.palette.mode === "dark" ? "white" : "black",
+              ...SCROLL_BAR_STYLE,
+            },
           }}
         />
-      </MentionsInput>
+      ) : (
+        <MentionsInput
+          id="comment-mention"
+          className="comment-input"
+          placeholder={placeholder}
+          style={style}
+          value={inputValue}
+          singleLine={false}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => onKeyDown(e)}
+        >
+          <Mention
+            trigger="@"
+            data={users}
+            displayTransform={(id, display) => `@${display}`}
+            markup="[@__display__](__id__)"
+            renderSuggestion={(suggestion: any) => (
+              <MentionUser user={suggestion} />
+            )}
+            appendSpaceOnAdd={true}
+            style={{ backgroundColor: "#0d8fad" }}
+          />
+        </MentionsInput>
+      )}
+
       <MessageInputFooter
         imageUrls={imageUrls}
         isUploading={isUploading}
@@ -292,6 +312,7 @@ const ChatInput = ({
         handleSendMessage={handleSendMessage}
         inputValue={inputValue}
         setImageUrls={setImageUrls}
+        chatType={chatType}
       />
       <input
         type="file"

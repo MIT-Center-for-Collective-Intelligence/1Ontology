@@ -69,9 +69,9 @@ import React, {
 import mitLogo from "../../../public/CCI-logo.gif";
 import mitLogoDark from "../../../public/MIT-Logo-Dark.png";
 import { capitalizeString, timeAgo } from "../../lib/utils/string.utils";
-import useThemeChange from " @components/lib/hooks/useThemeChange";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
-import ROUTES from " @components/lib/utils/routes";
+import useThemeChange from "@components/lib/hooks/useThemeChange";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
+import ROUTES from "@components/lib/utils/routes";
 import { useAuth } from "../context/AuthContext";
 import {
   collection,
@@ -84,17 +84,17 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { NODES, USERS } from " @components/lib/firestoreClient/collections";
+import { NODES, USERS } from "@components/lib/firestoreClient/collections";
 import {
   getDownloadURL,
   getStorage,
   ref as refStorage,
   uploadBytesResumable,
 } from "firebase/storage";
-import { isValidHttpUrl } from " @components/lib/utils/utils";
-import { NO_IMAGE_USER } from " @components/lib/CONSTANTS";
-import { INode } from " @components/types/INode";
-import { INotification } from " @components/types/IChat";
+import { isValidHttpUrl } from "@components/lib/utils/utils";
+import { NO_IMAGE_USER } from "@components/lib/CONSTANTS";
+import { INode } from "@components/types/INode";
+import { INotification } from "@components/types/IChat";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 export const HEADER_HEIGHT = 80;
 export const HEADER_HEIGHT_MOBILE = 72;

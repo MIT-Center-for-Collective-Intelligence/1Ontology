@@ -2,8 +2,8 @@ import { useEffect, useRef } from "react";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
 import { Box } from "@mui/material";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import { DISPLAY } from " @components/lib/CONSTANTS";
+import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
+import { DISPLAY } from "@components/lib/CONSTANTS";
 
 const QuillEditor = ({
   property,

@@ -57,8 +57,8 @@ import { FormikProps } from "formik";
 import React, { lazy, Suspense, useEffect, useState } from "react";
 
 import { useAuth } from "../context/AuthContext";
-import { SignUpFormValues } from " @components/types/IAuth";
-import { ToUpperCaseEveryWord } from " @components/lib/utils/utils";
+import { SignUpFormValues } from "@components/types/IAuth";
+import { ToUpperCaseEveryWord } from "@components/lib/utils/utils";
 
 // import { ToUpperCaseEveryWord } from "../lib/utils/utils";
 

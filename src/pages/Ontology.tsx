@@ -81,9 +81,9 @@ import {
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // import markdownContent from "../components/OntologyComponents/Markdown-Here-Cheatsheet.md";
-import SneakMessage from " @components/components/OntologyComponents/SneakMessage";
-import Node from " @components/components/OntologyComponents/Node";
-import TreeViewSimplified from " @components/components/OntologyComponents/TreeViewSimplified";
+import SneakMessage from "@components/components/OntologyComponents/SneakMessage";
+import Node from "@components/components/OntologyComponents/Node";
+import TreeViewSimplified from "@components/components/OntologyComponents/TreeViewSimplified";
 import {
   ILinkNode,
   ILockedNode,
@@ -93,29 +93,47 @@ import {
   MainSpecializations,
   TreeData,
   TreeVisual,
-} from " @components/types/INode";
-import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
+} from "@components/types/INode";
+import { TabPanel, a11yProps } from "@components/lib/utils/TabPanel";
 
-import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
-import withAuthUser from " @components/components/hoc/withAuthUser";
-import { useAuth } from " @components/components/context/AuthContext";
+import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
+import withAuthUser from "@components/components/hoc/withAuthUser";
+import { useAuth } from "@components/components/context/AuthContext";
 import { useRouter } from "next/router";
-import GraphView from " @components/components/OntologyComponents/GraphView";
-import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
-import { NODES, USERS } from " @components/lib/firestoreClient/collections";
+import GraphView from "@components/components/OntologyComponents/GraphView";
+import { DISPLAY, SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
+import { NODES, USERS } from "@components/lib/firestoreClient/collections";
 
-import { recordLogs } from " @components/lib/utils/helpers";
-import { useHover } from " @components/lib/hooks/useHover";
-import { MemoizedToolbarSidebar } from " @components/components/Sidebar/ToolbarSidebar";
-import { NodeChange } from " @components/types/INode";
-import GuidLines from " @components/components/Guidelines/GuideLines";
-import SearchSideBar from " @components/components/SearchSideBar/SearchSideBar";
+import { recordLogs } from "@components/lib/utils/helpers";
+import { useHover } from "@components/lib/hooks/useHover";
+import { MemoizedToolbarSidebar } from "@components/components/Sidebar/ToolbarSidebar";
+import { NodeChange } from "@components/types/INode";
+import GuidLines from "@components/components/Guidelines/GuideLines";
+import SearchSideBar from "@components/components/SearchSideBar/SearchSideBar";
 import Head from "next/head";
-import DraggableTree from " @components/components/OntologyComponents/DraggableTree";
+import DraggableTree from "@components/components/OntologyComponents/DraggableTree";
 import { TreeApi } from "react-arborist";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import ROUTES from " @components/lib/utils/routes";
+import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
+import ROUTES from "@components/lib/utils/routes";
 import { getAuth } from "firebase/auth";
+const stem = require("wink-porter2-stemmer");
+const tokenizer = require("wink-tokenizer");
+
+const myTokenizer = tokenizer();
+
+export const tokenize = (str: string) => {
+  let tokens = [];
+  if (str) {
+    let tokenized = myTokenizer.tokenize(str);
+    for (let w of tokenized) {
+      if (w.tag === "word" && w.value.length > 1) {
+        tokens.push(stem(w.value));
+      }
+    }
+    // tokens = stopword.removeStopwords(tokens);
+  }
+  return tokens;
+};
 
 const AddContext = (nodes: any, nodesObject: any): INode[] => {
   for (let node of nodes) {
@@ -201,7 +219,10 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
 
-  const [appName, setAppName] = useState("O*Net Verbs o3 Deep Research"); // this state is only been used for the Skills Future App
+  const [appName, setAppName] = useState("Top-Down Gemini 2.5 Pro"); // this state is only been used for the Skills Future App
+  const [partsInheritance, setPartsInheritance] = useState<{
+    [nodeId: string]: { title: string; fullPart: boolean };
+  }>({});
 
   const firstLoad = useRef(true);
 
@@ -349,7 +370,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
       resizer.resizeSection(2, { toSize: 0 });
       controller.applyResizer(resizer);
     }
-  }, [user]); // Removed nodes dependency to fix column auto-resizing when node content changes (when editing nodes through yjsEditor)
+  }, []); // Removed dependencies to fix column auto-resizing when node content changes (when editing nodes through yjsEditor)
 
   useEffect(() => {
     const checkIfDifferentDay = () => {
@@ -599,6 +620,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     path: string[],
   ): any => {
     const newNodes = [];
+
     for (let node of mainCategories) {
       if (!node) {
         continue;
@@ -888,7 +910,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     }
 
     for (let type in mainSpecializations) {
-      if (nodes[mainSpecializations[type].id].nodeType) {
+      if (nodes[mainSpecializations[type].id]?.nodeType) {
         mainSpecializations[nodes[mainSpecializations[type].id].nodeType] =
           mainSpecializations[type];
       }
@@ -904,7 +926,9 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const navigateToNode = useCallback(
     async (nodeId: string) => {
       // adding timeout to test if truncated issue persists
-
+      if (currentImprovement) {
+        return;
+      }
       if (
         selectedProperty &&
         (addedElements.size > 0 || removedElements.size > 0) &&
@@ -930,7 +954,14 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
         // }, 1000);
       }
     },
-    [selectedProperty, addedElements, removedElements, nodes, eachOntologyPath],
+    [
+      selectedProperty,
+      addedElements,
+      removedElements,
+      nodes,
+      eachOntologyPath,
+      currentImprovement,
+    ],
   );
 
   // This function is called when a search result node is clicked.
@@ -1047,6 +1078,73 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     },
     [eachOntologyPath],
   );
+  const compareTitles = (title1: string, title2: string): boolean => {
+    const tokens1 = tokenize(title1);
+    const tokens2 = tokenize(title2);
+
+    return (
+      tokens1.every((token) => tokens2.includes(token)) ||
+      tokens2.every((token) => tokens1.includes(token))
+    );
+  };
+
+  useEffect(() => {
+    if (!currentVisibleNode) return;
+    const inheritedParts: {
+      [nodeId: string]: { title: string; fullPart: boolean };
+    } = {};
+
+    const _currentVisibleNode = { ...currentVisibleNode };
+    const parts = _currentVisibleNode?.properties.parts || [];
+
+    const generalizations = (
+      _currentVisibleNode?.generalizations || []
+    ).flatMap((c) => c.nodes);
+    const checkGeneralizations = (
+      nodeTitle: string,
+      nodeId: string,
+    ): { id: string; fullPart: boolean } | null => {
+      for (let generalization of generalizations) {
+        if (!nodes[generalization.id]) {
+          continue;
+        }
+        const generalizationParts = nodes[generalization.id]?.properties.parts;
+        const _partIdex = generalizationParts[0].nodes.findIndex(
+          (c) => c.id === nodeId,
+        );
+        if (_partIdex !== -1) {
+          return { id: generalization.id, fullPart: true };
+        }
+        const partIdex = generalizationParts[0].nodes.findIndex((c) =>
+          compareTitles(nodeTitle, nodes[c.id]?.title || ""),
+        );
+        if (partIdex !== -1) {
+          return { id: generalization.id, fullPart: false };
+        }
+      }
+      return null;
+    };
+
+    if (parts) {
+      for (let collection of parts) {
+        for (let node of collection.nodes) {
+          if (nodes[node.id]) {
+            const { id, fullPart } = checkGeneralizations(
+              nodes[node.id]?.title,
+              node.id,
+            ) || { id: "", fullPart: false };
+            if (id) {
+              inheritedParts[node.id] = {
+                title: nodes[id].title,
+                fullPart,
+              };
+            }
+          }
+        }
+      }
+    }
+    setPartsInheritance(inheritedParts);
+  }, [currentVisibleNode, nodes]);
 
   if (Object.keys(nodes).length <= 0) {
     return (
@@ -1059,20 +1157,23 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
           flexDirection: "column",
         }}
       >
-        <CircularProgress />
-        {/* <br /> */}
-        <Typography sx={{ mt: "5px" }}> Loading...</Typography>
+        <Box
+          component="img"
+          src="loader.gif"
+          alt="Loading..."
+          sx={{ width: 200, height: 200, borderRadius: "25px" }}
+        />
       </Box>
     );
   }
 
   return (
     <>
-      <Head>
+      {/*     <Head>
         <title>
           {currentVisibleNode ? currentVisibleNode.title : "1ontology"}
         </title>
-      </Head>
+      </Head> */}
       <Box>
         <Container
           style={{
@@ -1219,6 +1320,8 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                         sx={{ borderRadius: "20px" }}
                       >
                         {[
+                          "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
+                          "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
                           "Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
                           "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
                           "Holistic Embedding (Sector, Title, JobRole, CWF, Parts) - Gemini 2.5 Pro",
@@ -1331,6 +1434,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                   setSelectedCollection={setSelectedCollection}
                   selectedCollection={selectedCollection}
                   skillsFuture={skillsFuture}
+                  partsInheritance={partsInheritance}
                 />
               )}
             </Box>
@@ -1366,6 +1470,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
             displayGuidelines={displayGuidelines}
             signOut={signOut}
             skillsFuture={skillsFuture}
+            skillsFutureApp={appName ?? null}
           />
         </Container>
         {ConfirmDialog}

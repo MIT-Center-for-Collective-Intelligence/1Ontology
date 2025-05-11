@@ -13,12 +13,12 @@ import {
   getPropertyValue,
   getTitle,
   getTooltipHelper,
-} from " @components/lib/utils/string.utils";
-import { ICollection, ILinkNode, INode } from " @components/types/INode";
-import { DISPLAY } from " @components/lib/CONSTANTS";
+} from "@components/lib/utils/string.utils";
+import { ICollection, ILinkNode, INode } from "@components/types/INode";
+import { DISPLAY } from "@components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
 import { collection, doc, getFirestore } from "firebase/firestore";
-import { recordLogs } from " @components/lib/utils/helpers";
+import { recordLogs } from "@components/lib/utils/helpers";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import VisualizeTheProperty from "./VisualizeTheProperty";
@@ -26,7 +26,8 @@ import CollectionStructure from "./CollectionStructure";
 import SelectModelModal from "../Models/SelectModel";
 import { LoadingButton } from "@mui/lab";
 import PropertyContributors from "./PropertyContributors";
-import { NODES } from " @components/lib/firestoreClient/collections";
+import { NODES } from "@components/lib/firestoreClient/collections";
+import CommentsSection from "./CommentsSection";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
@@ -78,6 +79,7 @@ type IStructuredPropertyProps = {
   setGlowIds: any;
   selectedCollection: any;
   skillsFuture: boolean;
+  partsInheritance?: { [nodeId: string]: { title: string; fullPart: boolean } };
 };
 
 const StructuredProperty = ({
@@ -128,6 +130,7 @@ const StructuredProperty = ({
   setGlowIds,
   selectedCollection,
   skillsFuture,
+  partsInheritance,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
   const [openAddCollection, setOpenAddCollection] = useState(false);
@@ -580,16 +583,17 @@ const StructuredProperty = ({
               </Box>
             )}
         </Box>
-        {currentVisibleNode?.inheritance[property]?.ref && (
-          <Typography sx={{ fontSize: "14px", ml: "9px", color: "gray" }}>
-            {'(Inherited from "'}
-            {getTitle(
-              nodes,
-              currentVisibleNode.inheritance[property].ref || "",
-            )}
-            {'")'}
-          </Typography>
-        )}
+        {currentVisibleNode?.inheritance[property]?.ref &&
+          property !== "parts" && (
+            <Typography sx={{ fontSize: "14px", ml: "9px", color: "gray" }}>
+              {'(Inherited from "'}
+              {getTitle(
+                nodes,
+                currentVisibleNode.inheritance[property].ref || "",
+              )}
+              {'")'}
+            </Typography>
+          )}
         {currentVisibleNode.propertyType[property] !== "array-string" && (
           <CollectionStructure
             locked={locked}
@@ -652,6 +656,7 @@ const StructuredProperty = ({
             setAddedElements={setAddedElements}
             addACloneNodeQueue={addACloneNodeQueue}
             skillsFuture={skillsFuture}
+            partsInheritance={partsInheritance ?? {}}
           />
         )}
       </Box>
@@ -704,32 +709,13 @@ const StructuredProperty = ({
             skillsFuture={skillsFuture}
           />
         )}
-      {handleCloseAddLinksModel &&
-        onGetPropertyValue(property, true).trim() && (
-          <Box sx={{ p: "16px", mt: "auto" }}>
-            <Typography
-              sx={{ mb: "4px", fontWeight: "bold", fontSize: "17px" }}
-            >
-              Comments:
-            </Typography>
-
-            <MarkdownRender text={onGetPropertyValue(property, true)} />
-
-            {/* <Text
-              text={onGetPropertyValue(property, true)}
-              currentVisibleNode={currentVisibleNode}
-              property={property}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              nodes={nodes}
-              locked={locked}
-              selectedDiffNode={selectedDiffNode}
-              getTitleNode={() => {}}
-              confirmIt={confirmIt}
-              structured={true}
-              currentImprovement={currentImprovement}
-            /> */}
-          </Box>
-        )}
+      {selectedProperty !== property && (
+        <CommentsSection
+          handleCloseAddLinksModel={handleCloseAddLinksModel}
+          property={property}
+          onGetPropertyValue={onGetPropertyValue}
+        />
+      )}
       {(property === "generalizations" ||
         property === "specializations" ||
         property === "isPartOf" ||

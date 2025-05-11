@@ -28,8 +28,8 @@ import { darcula } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
 import remarkMath from "remark-math";
-import { containsHTMLTags } from " @components/lib/utils/utils";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import { containsHTMLTags } from "@components/lib/utils/utils";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 
 type Props = {
   text: string;

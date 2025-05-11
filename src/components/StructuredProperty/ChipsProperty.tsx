@@ -1,20 +1,20 @@
-import { INode } from " @components/types/INode";
+import { INode } from "@components/types/INode";
 import React, { useEffect, useMemo, useState } from "react";
 import ChipInput from "../ChipInput/ChipInput";
 import {
   capitalizeFirstLetter,
   getPropertyValue,
   getTooltipHelper,
-} from " @components/lib/utils/string.utils";
+} from "@components/lib/utils/string.utils";
 import { Box, Paper, Tooltip, Typography } from "@mui/material";
-import { DISPLAY } from " @components/lib/CONSTANTS";
+import { DISPLAY } from "@components/lib/CONSTANTS";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import {
   saveNewChangeLog,
   updateInheritance,
-} from " @components/lib/utils/helpers";
+} from "@components/lib/utils/helpers";
 import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
-import { NODES } from " @components/lib/firestoreClient/collections";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import PropertyContributors from "./PropertyContributors";
 
 const ChipsProperty = ({

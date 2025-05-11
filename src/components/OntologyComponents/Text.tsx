@@ -25,23 +25,23 @@ import {
 } from "firebase/firestore";
 import * as Y from "yjs";
 import { useTheme } from "@emotion/react";
-import { INode } from " @components/types/INode";
-import { NODES } from " @components/lib/firestoreClient/collections";
+import { INode } from "@components/types/INode";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import {
   randomProminentColor,
   saveNewChangeLog,
   updateInheritance,
   updatePartsAndPartsOf,
   updatePropertyOf,
-} from " @components/lib/utils/helpers";
+} from "@components/lib/utils/helpers";
 import { diffWords, diffLines } from "diff"; // Using diffLines for line-by-line diff
 import {
   capitalizeFirstLetter,
   getTooltipHelper as getTooltipHelper,
   lowercaseFirstLetter,
-} from " @components/lib/utils/string.utils";
+} from "@components/lib/utils/string.utils";
 import ManageNodeButtons from "./ManageNodeButtons";
-import { DISPLAY, WS_URL } from " @components/lib/CONSTANTS";
+import { DISPLAY, WS_URL } from "@components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
 import YjsEditor from "../YJSEditor/YjsEditor";
 import SimpleEditor from "../YJSEditor/SimpleEditor";
@@ -289,6 +289,32 @@ const Text = ({
     }
   };
 
+  const backgroundColor = useMemo(() => {
+    if (
+      (selectedDiffNode?.changeType === "delete node" ||
+        !!currentImprovement?.deleteNode) &&
+      property === "title"
+    ) {
+      return "red";
+    }
+
+    if (
+      (selectedDiffNode?.changeType === "add node" ||
+        !!currentImprovement?.newNode) &&
+      property === "title"
+    ) {
+      return theme.palette.mode === "dark" ? "green" : "#4ccf37";
+    }
+
+    return theme.palette.mode === "dark" ? "#242425" : "#d0d5dd";
+  }, [
+    selectedDiffNode?.changeType,
+    currentImprovement?.deleteNode,
+    currentImprovement?.newNode,
+    property,
+    theme.palette.mode,
+  ]);
+
   return (
     <Paper
       id={`property-${property}`}
@@ -307,20 +333,7 @@ const Text = ({
             display: "flex",
             alignItems: "center",
             textAlign: "center",
-            background: (theme: any) =>
-              (selectedDiffNode?.changeType === "delete node" ||
-                !!currentImprovement?.deleteNode) &&
-              property === "title"
-                ? "red"
-                : (selectedDiffNode?.changeType === "add node" ||
-                      !!currentImprovement?.newNode) &&
-                    property === "title"
-                  ? theme.palette.mode === "dark"
-                    ? "green"
-                    : "#4ccf37"
-                  : theme.palette.mode === "dark"
-                    ? "#242425"
-                    : "#d0d5dd",
+            background: backgroundColor,
             p: 3,
             pb: 1.5,
             borderTopRightRadius: property !== "title" ? "18px" : "",

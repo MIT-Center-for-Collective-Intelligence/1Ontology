@@ -1,5 +1,5 @@
-import { compareImprovement } from " @components/lib/utils/copilotHelpers";
-import { INode } from " @components/types/INode";
+import { compareImprovement } from "@components/lib/utils/copilotHelpers";
+import { INode } from "@components/types/INode";
 import { convertLength } from "@mui/material/styles/cssUtils";
 const nodeTitles: { [id: string]: INode } = {
   "New unclassifiedd": {
@@ -662,7 +662,7 @@ describe("compare improvement change to the original node", () => {
           "Improved organization and removed redundant/unclear specializations.",
       },
     };
-    const response = compareImprovement(improvement, nodeTitles);
+    const response = compareImprovement(improvement, nodeTitles, {});
     expect(response.nodeId).toBe("prg28paWo3J5oJZKpwqW");
     expect(response.detailsOfChange).toEqual({
       comparison: [

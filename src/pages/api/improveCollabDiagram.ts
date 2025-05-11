@@ -1,15 +1,8 @@
-import { db } from " @components/lib/firestoreServer/admin-exp";
+import { db } from "@components/lib/firestoreServer/admin-exp";
 import { NextApiRequest, NextApiResponse } from "next";
 import { openai } from "./helpers";
 import { ChatCompletionMessageParam } from "openai/resources";
-
-const delay = (timeout: number) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve(true);
-    }, timeout);
-  });
-};
+import { delay } from "@components/lib/utils/utils";
 
 interface DiagramNode {
   id: string;
@@ -157,7 +150,7 @@ export default async function handler(
     });
 
     const response = extractJSON(completion.choices[0]?.message?.content || "")
-      .jsonObject as DiagramResponse
+      .jsonObject as DiagramResponse;
 
     if (!response?.groupHierarchy || !response?.nodes || !response?.links) {
       throw new Error("Incomplete JSON");

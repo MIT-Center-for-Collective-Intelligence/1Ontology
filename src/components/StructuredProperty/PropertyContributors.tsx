@@ -2,8 +2,8 @@ import React from "react";
 import { Box, AvatarGroup, Tooltip } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
-import { useUsers } from " @components/hooks/useUsers";
-import { INode } from " @components/types/INode";
+import { useUsers } from "@components/hooks/useUsers";
+import { INode } from "@components/types/INode";
 
 interface PropertyContributorsProps {
   currentVisibleNode: INode;

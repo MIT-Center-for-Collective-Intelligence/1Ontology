@@ -1,21 +1,32 @@
 import React, { useCallback, useState } from "react";
-import { Button, CircularProgress, Box, Typography } from "@mui/material";
+import {
+  Button,
+  CircularProgress,
+  Box,
+  Typography,
+  Container,
+} from "@mui/material";
 import ImprovementsSlider from "./ImprovementsSlider";
 import {
+  arrayUnion,
   collection,
   doc,
   getDoc,
+  getDocs,
   getFirestore,
+  query,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { NODES } from " @components/lib/firestoreClient/collections";
-import { ICollection, INode } from " @components/types/INode";
+import { NODES } from "@components/lib/firestoreClient/collections";
+import { ICollection, INode } from "@components/types/INode";
 
 import {
   checkIfCanDeleteANode,
   clearNotifications,
+  createNewNode,
   generateInheritance,
   recordLogs,
   removeIsPartOf,
@@ -28,10 +39,11 @@ import {
   updatePartsAndPartsOf,
   updatePropertyOf,
   updateSpecializations,
-} from " @components/lib/utils/helpers";
+} from "@components/lib/utils/helpers";
 import { useAuth } from "../context/AuthContext";
-import { generateUniqueTitle } from " @components/lib/utils/string.utils";
-import { development } from " @components/lib/CONSTANTS";
+import { generateUniqueTitle } from "@components/lib/utils/string.utils";
+import { development } from "@components/lib/CONSTANTS";
+import { newId } from "@components/lib/utils/newFirestoreId";
 type ImprovementsProps = {
   currentImprovement: any;
   setCurrentImprovement: any;
@@ -49,6 +61,9 @@ type ImprovementsProps = {
   currentIndex: number;
   setCurrentIndex: any;
   displayDiff: any;
+  skillsFutureApp: string;
+  skillsFuture: boolean;
+  nodesByTitle: any;
 };
 const Improvements = ({
   currentImprovement,
@@ -67,6 +82,9 @@ const Improvements = ({
   currentIndex,
   setCurrentIndex,
   displayDiff,
+  skillsFutureApp,
+  skillsFuture,
+  nodesByTitle,
 }: ImprovementsProps) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -77,6 +95,8 @@ const Improvements = ({
       newValue: ICollection[],
       addedLinks: string[],
       removedLinks: string[],
+      optionalParts: string[],
+      elementsOrder: string[],
     ) => {
       try {
         if (!user?.uname) return;
@@ -164,9 +184,28 @@ const Improvements = ({
             db,
           );
         }
+        if (property === "parts" && optionalParts) {
+          for (let { nodes } of newValue) {
+            for (let node of nodes) {
+              delete node.change;
+              if (optionalParts.includes(node.id)) {
+                node.optional = true;
+              }
+            }
+          }
+        }
         if (property === "specializations" || property === "generalizations") {
           nodeData[property] = newValue;
         } else {
+          newValue[0].nodes.sort((a, b) => {
+            const indexA = elementsOrder.indexOf(a.id);
+            const indexB = elementsOrder.indexOf(b.id);
+
+            return (
+              (indexA === -1 ? Infinity : indexA) -
+              (indexB === -1 ? Infinity : indexB)
+            );
+          });
           nodeData.properties[property] = newValue;
         }
         // Update the node document in the database
@@ -384,7 +423,9 @@ const Improvements = ({
         updateSpecializations(nodeParentData, newNodeRef.id, collectionName);
 
         if (newNode.properties["parts"][0].nodes.length > 0) {
-          for (let { id: partId } of newNode.properties["parts"][0].nodes) {
+          for (let part of newNode.properties["parts"][0].nodes) {
+            const partId = part.id;
+            delete part.change;
             const partRef = doc(collection(db, NODES), partId);
             const partDoc = await getDoc(partRef);
             const partData = partDoc.data() as INode;
@@ -427,6 +468,9 @@ const Improvements = ({
               });
             }
           }
+        }
+        if (skillsFutureApp) {
+          newNode.appName = skillsFutureApp;
         }
         // Add the new node to the database
         await addNewNode({ id: newNodeRef.id, newNode, reasoning });
@@ -592,55 +636,288 @@ const Improvements = ({
     },
     [user?.uname, nodes],
   );
-  const onAcceptChange = async (change: any) => {
+  const createNewNodes = async (
+    addedNonExistentElements: {
+      [property: string]: { id: string; title: string }[];
+    },
+    newNode: any,
+  ) => {
     try {
+      const nodeType = newNode.nodeType;
+      const unclassifiedNodeDocs = await getDocs(
+        query(
+          collection(db, NODES),
+          where("unclassified", "==", true),
+          where("nodeType", "==", nodeType),
+        ),
+      );
+      if (unclassifiedNodeDocs.docs.length > 0 && user?.uname) {
+        const unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
+        const unclassifiedNodeData = unclassifiedNodeDoc.data() as INode;
+        for (let property in addedNonExistentElements) {
+          let newNodesIds = [];
+          for (let { title, id } of addedNonExistentElements[property]) {
+            const newRef = doc(collection(db, NODES), id);
+            const inheritance = generateInheritance(
+              unclassifiedNodeData.inheritance,
+              unclassifiedNodeDoc.id,
+            );
+            const newNode = createNewNode(
+              unclassifiedNodeData,
+              newRef.id,
+              title,
+              inheritance,
+              unclassifiedNodeData.id,
+              user?.uname,
+              skillsFuture,
+            );
+            const specializations = unclassifiedNodeData.specializations;
+
+            const mainCollectionIdx = specializations.findIndex(
+              (c) => c.collectionName === "main",
+            );
+
+            specializations[mainCollectionIdx].nodes.push({
+              id: newRef.id,
+            });
+            updateDoc(unclassifiedNodeDoc.ref, {
+              specializations,
+            });
+            await setDoc(newRef, {
+              ...newNode,
+              locked: false,
+              createdAt: new Date(),
+            });
+            newNodesIds.push(newRef.id);
+          }
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const moveNodesToUnclassified = async (
+    removedLinks: string[],
+    unclassifiedDoc: any,
+  ) => {
+    try {
+      for (let nodeId of removedLinks) {
+        const nodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
+        const nodeData = nodeDoc.data();
+        const addToUnclassified = [];
+        if (nodeData && nodeData.generalizations[0].nodes.length === 0) {
+          await updateDoc(nodeDoc.ref, {
+            generalizations: [
+              {
+                collectionName: "main",
+                nodes: [{ id: unclassifiedDoc.id }],
+              },
+            ],
+          });
+          addToUnclassified.push({
+            id: nodeDoc.id,
+          });
+        }
+        const newSpecializations = unclassifiedDoc.data().specializations;
+        newSpecializations[0].nodes.push(addToUnclassified);
+        await updateDoc(unclassifiedDoc.ref, {
+          specializations: newSpecializations,
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const onAcceptChange = async (
+    change: any,
+    currentNode: any,
+    nodesByTitle: any,
+  ) => {
+    try {
+      if (!user) {
+        return;
+      }
       if (!!change?.deleteNode) {
         await deleteNode(change.nodeId);
         return;
       }
       if (!!change?.newNode) {
+        if (Object.keys(change.addedNonExistentElements).length > 0) {
+          await createNewNodes(change.addedNonExistentElements, change.node);
+        }
         await addNewSpecialization("main", change.node, change.reasoning);
         return;
       }
 
       const reasoning = change.change.reasoning;
+      const addedLinks = [];
+      const nodeType = change.nodeType;
 
+      const optionalPartsTitles = change.change?.optionalParts || [];
+      const optionalPartsIds = [];
+      let unclassifiedDoc = null;
+      const unclassifiedNodeDocs = await getDocs(
+        query(
+          collection(db, NODES),
+          where("unclassified", "==", true),
+          where("nodeType", "==", nodeType),
+        ),
+      );
+      if (unclassifiedNodeDocs.docs.length > 0) {
+        unclassifiedDoc = unclassifiedNodeDocs.docs[0];
+      }
+      if ((change.detailsOfChange?.addedNonExistentElements || []).length > 0) {
+        if (unclassifiedDoc && user?.uname) {
+          const unclassifiedData = unclassifiedDoc.data() as INode;
+          for (let nodeTitle of change.detailsOfChange
+            ?.addedNonExistentElements) {
+            const newRef = doc(collection(db, NODES));
+            const inheritance = generateInheritance(
+              unclassifiedData.inheritance,
+              unclassifiedDoc.id,
+            );
+            const newNode = createNewNode(
+              unclassifiedData,
+              newRef.id,
+              nodeTitle,
+              inheritance,
+              unclassifiedData.id,
+              user?.uname,
+              skillsFuture,
+              skillsFutureApp,
+            );
+            const specializations = unclassifiedData.specializations;
+
+            const mainCollectionIdx = specializations.findIndex(
+              (c) => c.collectionName === "main",
+            );
+
+            specializations[mainCollectionIdx].nodes.push({
+              id: newRef.id,
+            });
+            updateDoc(unclassifiedDoc.ref, {
+              specializations,
+            });
+
+            await setDoc(newRef, {
+              ...newNode,
+              locked: false,
+              createdAt: new Date(),
+            });
+            addedLinks.push(newRef.id);
+            if (optionalPartsTitles.includes(nodeTitle)) {
+              optionalPartsIds.push(newRef.id);
+            }
+          }
+        }
+      }
       let changeType: any = null;
       let detailsChange = null;
+      const nodeData = nodes[change.nodeId];
+      const propertyType = nodeData.propertyType[change.modifiedProperty];
       if (
         change.modifiedProperty === "specializations" ||
-        (change.modiPropertyType !== "string" &&
-          change.modiPropertyType !== "string-array")
+        change.modifiedProperty === "generalizations" ||
+        (propertyType !== "string" && propertyType !== "string-array")
       ) {
         changeType = "modify elements";
 
-        const addedLinks = [];
-        const removedLinks = [];
+        const removedLinks: string[] = [];
         for (let collection of change.detailsOfChange.comparison) {
           for (let node of collection.nodes) {
             if (node.change === "added") {
               addedLinks.push(node.id);
+              if (optionalPartsTitles.includes(nodes[node.id]?.title || "")) {
+                optionalPartsIds.push(node.id);
+              }
             }
             if (node.change === "removed") {
               removedLinks.push(node.id);
             }
           }
         }
+        let newValue = null;
+        if (change.modifiedProperty === "specializations") {
+          newValue = nodeData["specializations"];
+        } else if (change.modifiedProperty === "generalizations") {
+          newValue = nodeData["generalizations"];
+        } else {
+          const inheritanceRef = nodeData.inheritance
+            ? nodeData.inheritance[change.modifiedProperty].ref
+            : null;
 
+          if (inheritanceRef) {
+            newValue =
+              nodes[inheritanceRef].properties[change.modifiedProperty];
+          } else {
+            newValue = nodeData.properties[change.modifiedProperty];
+          }
+        }
+
+        for (let collection of newValue) {
+          collection.nodes = collection.nodes.filter(
+            (c: { id: string }) => !removedLinks.includes(c.id),
+          );
+        }
+        if (newValue.length <= 0) {
+          newValue.push({
+            collectionName: "main",
+            nodes: [],
+          });
+        }
+        for (let link of addedLinks) {
+          newValue[0].nodes.push({
+            id: link,
+          });
+        }
+        if (
+          (change.modifiedProperty === "specializations" ||
+            change.modifiedProperty === "generalizations") &&
+          !!change.detailsOfChange?.newValue
+        ) {
+          newValue = change.detailsOfChange.newValue;
+        }
+        const elementsOrder = change.change.new_value.final_array.map(
+          (ct: string) => nodesByTitle[ct.toLowerCase()].id,
+        );
         await handleSaveLinkChanges(
           change.modifiedProperty,
-          change.detailsOfChange.newValue,
+          newValue,
           addedLinks,
           removedLinks,
+          optionalPartsIds,
+          elementsOrder,
         );
-      } else if (change.modiPropertyType === "string") {
+        const currentNodeId = currentNode.id;
+
+        const nodeDoc = currentNodeId
+          ? await getDoc(doc(collection(db, NODES), currentNodeId))
+          : null;
+        if (!nodeDoc) return;
+        let newComment =
+          (currentNode.textValue || {})[change.modifiedProperty] || "";
+        if (!newComment.includes(change.change.reasoning)) {
+          newComment = newComment + "\n" + change.change.reasoning;
+        }
+        await updateDoc(nodeDoc.ref, {
+          [`textValue.${change.modifiedProperty}`]: newComment,
+          contributors: arrayUnion(user?.uname),
+          [`contributorsByProperty.${change.modifiedProperty}`]: arrayUnion(
+            user?.uname,
+          ),
+        });
+        if (change.modifiedProperty === "specializations" && unclassifiedDoc) {
+          await moveNodesToUnclassified(removedLinks, unclassifiedDoc);
+        }
+      } else if (propertyType === "string") {
         changeType = "change text";
         await updateStringProperty(
           change.nodeId,
           change.modifiedProperty,
           change.detailsOfChange.newValue,
         );
-      } else if (change.modiPropertyType === "string-array") {
+      } else if (propertyType === "string-array") {
         const { changeMessage, changeDetails } = (await updateStringArray({
           newValue: change.detailsOfChange.final_array,
           added: change.detailsOfChange.addedElements,
@@ -650,16 +927,17 @@ const Improvements = ({
         changeType = changeMessage;
         detailsChange = changeDetails;
       }
+
       if (user?.uname && changeType) {
         const changeLog: any = {
-          nodeId: currentVisibleNode?.id,
+          nodeId: currentNode?.id,
           modifiedBy: user?.uname,
           modifiedProperty: change.modifiedProperty,
           previousValue: change.detailsOfChange.previousValue,
           newValue: change.detailsOfChange.newValue,
           modifiedAt: new Date(),
           changeType,
-          fullNode: currentVisibleNode,
+          fullNode: currentNode,
           reasoning: reasoning || "",
         };
         if (detailsChange) {
@@ -676,12 +954,22 @@ const Improvements = ({
   return (
     <Box textAlign="center" sx={{ width: "450px", mt: "27px" }}>
       {isLoadingCopilot ? (
-        <Box display="flex" flexDirection="column" alignItems="center">
-          <CircularProgress />
-          <Typography variant="body1" marginTop={2}>
-            Loading...
-          </Typography>
-        </Box>
+        <Container
+          maxWidth="sm"
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "100vh",
+          }}
+        >
+          <Box
+            component="img"
+            src="loader.gif"
+            alt="Loading..."
+            sx={{ width: 200, height: 200, borderRadius: "25px" }}
+          />
+        </Container>
       ) : improvements.length > 0 ? (
         <Box
           sx={{
@@ -711,6 +999,8 @@ const Improvements = ({
             compareThisImprovement={compareThisImprovement}
             currentIndex={currentIndex}
             setCurrentIndex={setCurrentIndex}
+            currentVisibleNode={currentVisibleNode}
+            nodesByTitle={nodesByTitle}
           />
           <Button
             variant="contained"

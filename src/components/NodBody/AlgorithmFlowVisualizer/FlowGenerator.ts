@@ -1,5 +1,5 @@
 import { Node as ReactFlowNode, Edge, MarkerType } from "@xyflow/react";
-import { IActivity, IAlgorithm } from " @components/types/INode";
+import { IActivity, IAlgorithm } from "@components/types/INode";
 import { NodeData } from "./NodeComponent";
 
 /**

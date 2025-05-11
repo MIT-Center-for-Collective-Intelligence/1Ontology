@@ -36,18 +36,18 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
-import useThemeChange from " @components/lib/hooks/useThemeChange";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import useThemeChange from "@components/lib/hooks/useThemeChange";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import ClearIcon from "@mui/icons-material/Clear";
-import { Notifications } from " @components/components/Chat/Notifications";
-import { chatChange } from " @components/client/firestore/messages.firestore";
-import { INotification } from " @components/types/IChat";
+import { Notifications } from "@components/components/Chat/Notifications";
+import { chatChange } from "@components/client/firestore/messages.firestore";
+import { INotification } from "@components/types/IChat";
 import {
   createNewNode,
   generateInheritance,
   synchronizeStuff,
-} from " @components/lib/utils/helpers";
-import { getNotificationsSnapshot } from " @components/client/firestore/notifications.firestore";
+} from "@components/lib/utils/helpers";
+import { getNotificationsSnapshot } from "@components/client/firestore/notifications.firestore";
 import {
   collection,
   doc,
@@ -64,37 +64,37 @@ import ChatSideBar from "../ChatSideBar/ChatSideBar";
 import Inheritance from "../Inheritance/Inheritance";
 import { SidebarButton } from "../SideBarButton/SidebarButton";
 import { Box, SxProps, Theme } from "@mui/material";
-import { capitalizeString } from " @components/lib/utils/string.utils";
+import { capitalizeString } from "@components/lib/utils/string.utils";
 import { getAuth } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
-import { isValidHttpUrl } from " @components/lib/utils/utils";
+import { isValidHttpUrl } from "@components/lib/utils/utils";
 import {
   getStorage,
   uploadBytesResumable,
   getDownloadURL,
   ref as refStorage,
 } from "firebase/storage";
-import { NODES, USERS } from " @components/lib/firestoreClient/collections";
+import { NODES, USERS } from "@components/lib/firestoreClient/collections";
 import { useRouter } from "next/router";
-import ROUTES from " @components/lib/utils/routes";
+import ROUTES from "@components/lib/utils/routes";
 
 import NodeActivity from "../ActiveUsers/NodeActivity";
-import { User } from " @components/types/IAuth";
-import { INode, NodeChange } from " @components/types/INode";
+import { User } from "@components/types/IAuth";
+import { INode, NodeChange } from "@components/types/INode";
 import Improvements from "../Improvements/Improvements";
-import { CHAT_DISCUSSION_TABS, development } from " @components/lib/CONSTANTS";
+import { CHAT_DISCUSSION_TABS, development } from "@components/lib/CONSTANTS";
 
 import {
   compareImprovement,
   filterProposals,
-} from " @components/lib/utils/copilotHelpers";
-import useSelectDropdown from " @components/lib/hooks/useSelectDropdown";
+} from "@components/lib/utils/copilotHelpers";
+import useSelectDropdown from "@components/lib/hooks/useSelectDropdown";
 import {
   copilotDeleteNode,
   copilotNewNode,
   Improvement,
   sendLLMRequest,
-} from " @components/lib/utils/copilotPrompts";
+} from "@components/lib/utils/copilotPrompts";
 import OntologyHistory from "../ActiveUsers/OntologyHistory";
 
 type MainSidebarProps = {
@@ -126,6 +126,7 @@ type MainSidebarProps = {
   setSelectedChatTab: any;
   signOut: any;
   skillsFuture: boolean;
+  skillsFutureApp: string;
 };
 
 const ToolbarSidebar = ({
@@ -157,6 +158,7 @@ const ToolbarSidebar = ({
   setSelectedChatTab,
   signOut,
   skillsFuture,
+  skillsFutureApp,
 }: MainSidebarProps) => {
   const theme = useTheme();
   const db = getFirestore();
@@ -584,10 +586,7 @@ const ToolbarSidebar = ({
           const data = doc.data();
           const currentNode = data.currentNode;
 
-          if (
-            (change.type === "added" || change.type === "modified") &&
-            currentNode
-          ) {
+          if (change.type === "added" || change.type === "modified") {
             updatedUsersData[userId] = {
               node: {
                 title: nodes[currentNode]?.title || "",
@@ -684,6 +683,9 @@ const ToolbarSidebar = ({
       const _NODES = [];
 
       for (let node of newNodes) {
+        const addedNonExistentElements: {
+          [property: string]: { id: string; title: string }[];
+        } = {};
         if (!!nodesByTitle[node.title]) {
           continue;
         }
@@ -708,6 +710,17 @@ const ToolbarSidebar = ({
         );
 
         for (let p in node) {
+          if (
+            !inheritance[p] &&
+            p !== "generalizations" &&
+            p !== "specializations" &&
+            p !== "title"
+          ) {
+            inheritance[p] = {
+              ref: null,
+              inheritanceType: "inheritUnlessAlreadyOverRidden",
+            };
+          }
           const property:
             | "title"
             | "description"
@@ -755,8 +768,28 @@ const ToolbarSidebar = ({
             ) {
               const value = [];
               for (let nodeT of propertyValue) {
+                const optional = nodeT
+                  .trim()
+                  .toLowerCase()
+                  .endsWith("(optional)");
+                const nodeTitle = nodeT.replace(/\(optional\)/i, "").trim();
                 if (nodesByTitle[nodeT]?.id) {
-                  value.push({ id: nodesByTitle[nodeT].id });
+                  value.push({ id: nodesByTitle[nodeT].id, optional });
+                } else {
+                  const newId = doc(collection(db, "nodes")).id;
+                  value.push({
+                    id: newId,
+                    title: nodeTitle,
+                    change: "added",
+                    optional,
+                  });
+                  if (!addedNonExistentElements[property]) {
+                    addedNonExistentElements[property] = [];
+                  }
+                  addedNonExistentElements[property].push({
+                    title: nodeTitle,
+                    id: newId,
+                  });
                 }
               }
               newNode.properties[property] = [
@@ -774,6 +807,12 @@ const ToolbarSidebar = ({
           }
         }
         if (!!node?.description) {
+          if (!inheritance["description"]) {
+            inheritance["description"] = {
+              ref: null,
+              inheritanceType: "inheritUnlessAlreadyOverRidden",
+            };
+          }
           inheritance.description.ref = null;
           newNode.properties.description = node.description;
         }
@@ -781,6 +820,7 @@ const ToolbarSidebar = ({
           node: newNode,
           newNode: true,
           reasoning: node.reasoning,
+          addedNonExistentElements,
           generalizationId: generalization.id,
           first_generalization: first_generalization,
         });
@@ -834,7 +874,7 @@ const ToolbarSidebar = ({
     if (nodes[nodeId]) {
       setCurrentVisibleNode(nodes[nodeId]);
     }
-    const result = compareImprovement(improvement, nodesByTitle);
+    const result = compareImprovement(improvement, nodesByTitle, nodes);
 
     setCurrentImprovement(result);
     setTimeout(() => {
@@ -850,6 +890,8 @@ const ToolbarSidebar = ({
   };
 
   const handleImproveClick = async () => {
+    if (!currentVisibleNode) return;
+
     const options = (await selectIt(
       currentVisibleNode.title,
       currentVisibleNode.nodeType,
@@ -879,7 +921,7 @@ const ToolbarSidebar = ({
     setIsLoadingCopilot(true);
     setCurrentIndex(0);
     try {
-      const response = (await sendLLMRequest(
+      const response: any = (await sendLLMRequest(
         userMessage,
         model,
         deepNumber,
@@ -888,6 +930,7 @@ const ToolbarSidebar = ({
         selectedProperties,
         proposeDeleteNode,
         inputProperties,
+        currentVisibleNode?.appName ?? "",
       )) as {
         improvements: Improvement[];
         new_nodes: copilotNewNode[];
@@ -919,8 +962,64 @@ const ToolbarSidebar = ({
       }
 
       setCopilotMessage(response.message);
+      const newImprovements: Improvement[] = [];
+
+      for (let improvement of response?.improvements) {
+        const change = improvement.change;
+        if (change.modified_property) {
+          if (change.modified_property === "parts") {
+            const optionalParts = [];
+            for (
+              let partIdx = 0;
+              partIdx < change.new_value.final_array.length;
+              partIdx++
+            ) {
+              const partTitle = change.new_value.final_array[partIdx];
+              const optional = partTitle
+                .trim()
+                .toLowerCase()
+                .endsWith("(optional)");
+              if (optional) {
+                change.new_value.final_array[partIdx] = partTitle
+                  .replace(/\(optional\)/i, "")
+                  .trim();
+                optionalParts.push(change.new_value.final_array[partIdx]);
+              }
+            }
+
+            change.optionalParts = optionalParts;
+          }
+          newImprovements.push({
+            title: improvement.title,
+            change,
+          });
+        } else if (change.hasOwnProperty("specializations")) {
+          let reasoning = "";
+
+          for (let _change of change["specializations"]) {
+            reasoning = reasoning + "\n\n" + _change.reasoning;
+          }
+          newImprovements.push({
+            title: improvement.title,
+
+            change: {
+              reasoning,
+              modified_property: "specializations",
+              new_value: change["specializations"],
+            },
+            changes: [
+              {
+                reasoning,
+                modified_property: "specializations",
+                new_value: change["specializations"],
+              },
+            ],
+          });
+        }
+      }
+
       const improvements: Improvement[] =
-        filterProposals(response?.improvements || [], nodesByTitle) || [];
+        filterProposals(newImprovements || [], nodesByTitle, nodes) || [];
 
       const newNodes: {
         title: string;
@@ -1053,6 +1152,9 @@ const ToolbarSidebar = ({
             currentIndex={currentIndex}
             setCurrentIndex={setCurrentIndex}
             displayDiff={displayDiff}
+            skillsFutureApp={skillsFutureApp}
+            skillsFuture={skillsFuture}
+            nodesByTitle={nodesByTitle}
           />
         );
       case "history":
@@ -1277,6 +1379,10 @@ const ToolbarSidebar = ({
               <Tooltip title={`Close ${getHeaderTitle || "Sidebar"}`}>
                 <IconButton
                   onClick={() => {
+                    setActiveSidebar(null);
+                    setOpenLogsFor(null);
+                    setCurrentImprovement(null);
+                    setSelectedDiffNode(null);
                     if (previousNodeId) {
                       // Checks if the node is deleted (null or undefined)
                       if (nodes[currentVisibleNode?.id] == null) {
@@ -1286,10 +1392,6 @@ const ToolbarSidebar = ({
                       }
                       setPreviousNodeId("");
                     }
-                    setActiveSidebar(null);
-                    setOpenLogsFor(null);
-                    setCurrentImprovement(null);
-                    setSelectedDiffNode(null);
                   }}
                   sx={{
                     ml: "auto",

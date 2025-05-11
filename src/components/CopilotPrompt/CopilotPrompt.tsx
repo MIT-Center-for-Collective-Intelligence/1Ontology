@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
   TextField,
@@ -17,18 +17,35 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  keyframes,
   Checkbox,
+  Stack,
+  Chip,
+  useTheme,
+  alpha,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import HistoryIcon from "@mui/icons-material/History";
+import SaveIcon from "@mui/icons-material/Save";
+import CancelIcon from "@mui/icons-material/Cancel";
+import CloseIcon from "@mui/icons-material/Close";
+import SettingsBackupRestoreIcon from "@mui/icons-material/SettingsBackupRestore";
+import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
+import DifferenceIcon from "@mui/icons-material/Difference";
+import NotesIcon from "@mui/icons-material/Notes";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+import InputIcon from "@mui/icons-material/Input";
+import ChecklistIcon from "@mui/icons-material/Checklist";
+import RuleIcon from "@mui/icons-material/Rule";
+import ArticleIcon from "@mui/icons-material/Article";
+
 import { useAuth } from "../context/AuthContext";
 import {
   COPILOT_PROMPTS,
   PROMPT_LOGS,
-} from " @components/lib/firestoreClient/collections";
-import { db } from " @components/lib/firestoreServer/admin";
-import { PromptChange } from " @components/types/INode";
+} from "@components/lib/firestoreClient/collections";
+import { PromptChange } from "@components/types/INode";
 import {
   query,
   collection,
@@ -43,54 +60,35 @@ import {
   orderBy,
 } from "firebase/firestore";
 
-import InboxIcon from "@mui/icons-material/MoveToInbox";
-import MailIcon from "@mui/icons-material/Mail";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import moment from "moment";
-import MarkdownRender from "../Markdown/MarkdownRender";
-import { TreeItem, TreeView } from "@mui/lab";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import { DISPLAY, PROPERTIES_TO_IMPROVE } from " @components/lib/CONSTANTS";
+import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
+import { DISPLAY, PROPERTIES_TO_IMPROVE } from "@components/lib/CONSTANTS";
 import {
-  getCopilotPrompt,
-  getDeleteNodesPrompt,
+  getResponseStructure,
   getImprovementsStructurePrompt,
   getNewNodesPrompt,
+  getDeleteNodesPrompt,
   getNotesPrompt,
-  getResponseStructure,
-} from " @components/lib/utils/copilotPrompts";
-
-import { getNodesInThreeLevels } from " @components/lib/utils/helpersCopilot";
+} from "@components/lib/utils/copilotPrompts";
 import GuidLines from "../Guidelines/GuideLines";
 
-const glowGreen = keyframes`
-  0% {
-    box-shadow: 0 0 5px #26C281, 0 0 10px #26C281, 0 0 20px #26C281, 0 0 30px #26C281;
-  }
-  50% {
-    box-shadow: 0 0 10px #26C281, 0 0 20px #26C281, 0 0 30px #26C281, 0 0 40px #26C281;
-  }
-  100% {
-    box-shadow: 0 0 5px #26C281, 0 0 10px #26C281, 0 0 20px #26C281, 0 0 30px #26C281;
-  }
-`;
-
 interface EditableSchemaProps {
-  setGenerateNewNodes: any;
+  setGenerateNewNodes: React.Dispatch<React.SetStateAction<boolean>>;
   generateNewNodes: boolean;
   proposeDeleteNode: boolean;
-  setProposeDeleteNodes: any;
+  setProposeDeleteNodes: React.Dispatch<React.SetStateAction<boolean>>;
   nodeType: string;
   selectedProperties: Set<string>;
-  setSelectedProperties: any;
-  inputProperties: any;
-  setInputProperties: any;
+  setSelectedProperties: React.Dispatch<React.SetStateAction<Set<string>>>;
+  inputProperties: Set<string>;
+  setInputProperties: React.Dispatch<React.SetStateAction<Set<string>>>;
   nodes: any;
   nodeTitle: string;
   numberValue: number;
-  handleNumberChange: any;
+  handleNumberChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   inputValue: string;
-  handleInputChange: any;
+  handleInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const CopilotPrompt: React.FC<EditableSchemaProps> = ({
@@ -110,81 +108,69 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
   inputValue,
   handleInputChange,
 }) => {
+  const theme = useTheme();
   const db = getFirestore();
   const [{ user }] = useAuth();
-  const [systemPrompt, setSystemPrompt] = useState<
-    {
-      id: string;
-      type?: string;
-      value?: string;
-      editablePart?: string;
-      endClose?: string;
-    }[]
-  >([]);
-  const [systemPromptCopy, setSystemPromptCopy] = useState<
-    {
-      id: string;
-      type?: string;
-      value?: string;
-      editablePart?: string;
-      endClose?: string;
-    }[]
-  >([]);
 
-  const [forceUpdate, setForceUpdate] = useState<any>(false);
+  type SystemPromptPart = {
+    id: string;
+    type?: string;
+    value?: string;
+    editablePart?: string;
+    endClose?: string;
+  };
+
+  const [systemPrompt, setSystemPrompt] = useState<SystemPromptPart[]>([]);
+  const [systemPromptCopy, setSystemPromptCopy] = useState<SystemPromptPart[]>(
+    [],
+  );
   const [editedParts, setEditedParts] = useState<
-    {
-      editedId: string;
-      newValue: string;
-      previousValue: string;
-    }[]
-  >([]);
-
+    Map<string, { newValue: string; previousValue: string }>
+  >(new Map());
   const [diffChanges, setDiffChanges] = useState<{
-    [id: string]: {
-      previousValue: string;
-      newValue: string;
-    };
+    [id: string]: { previousValue: string; newValue: string };
   } | null>(null);
   const [previousVersion, setPreviousVersion] = useState<
-    | {
-        id: string;
-        value?: string;
-        editablePart?: string;
-        endClose?: string;
-      }[]
-    | null
+    SystemPromptPart[] | null
   >(null);
   const [previousVersionId, setPreviousVersionId] = useState<string | null>(
     null,
   );
-
   const [promptHistory, setPromptHistory] = useState<
     (PromptChange & { id: string })[]
   >([]);
   const [showPromptHistory, setShowPromptHistory] = useState(false);
-  const [glowIds, setGlowIds] = useState<Set<string>>(new Set());
-  const [expanded, setExpanded] = useState(false);
+  const [expandedSystemPrompt, setExpandedSystemPrompt] = useState(false);
 
-  const editPrompt = user?.uname === "ouhrac" || user?.uname === "1man";
+  const improvementsStructurePrompt = useMemo(() => {
+    return getImprovementsStructurePrompt(selectedProperties);
+  }, [selectedProperties]);
 
+  const editPrompt = user?.uname === "ouhrac" || user?.uname === "1man"; // Consider a more robust role/permission system
+
+  // Fetch System Prompt
   useEffect(() => {
     if (!user?.uname) return;
 
     const promptsQuery = query(
       collection(db, COPILOT_PROMPTS),
-      where("editor", "==", user.uname),
+      where("editor", "==", user.uname), // Should this be tied to the user or global?
       limit(1),
     );
-    const unsubscribePrompt = onSnapshot(promptsQuery, (snapshot) => {
-      const docChanges = snapshot.docChanges();
-      if (docChanges.length > 0) {
-        const docChange = docChanges[0].doc.data();
-        setSystemPrompt([...docChange.systemPrompt]);
-        setSystemPromptCopy(JSON.parse(JSON.stringify(docChange.systemPrompt)));
-      }
-      // setLoading(false);
-    });
+    const unsubscribePrompt = onSnapshot(
+      promptsQuery,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const docData = snapshot.docs[0].data();
+          const promptData = docData.systemPrompt || [];
+          setSystemPrompt([...promptData]);
+          setSystemPromptCopy(JSON.parse(JSON.stringify(promptData)));
+        }
+      },
+      (error) => {
+        console.error("Error fetching system prompt:", error);
+      },
+    );
 
     return () => unsubscribePrompt();
   }, [db, user?.uname]);
@@ -195,102 +181,122 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
     const promptHistoryQuery = query(
       collection(db, PROMPT_LOGS),
       orderBy("modifiedAt", "desc"),
-      limit(100),
+      limit(50),
     );
 
-    const unsubscribeNodes = onSnapshot(promptHistoryQuery, (snapshot) => {
-      const docChanges = snapshot.docChanges();
-      setPromptHistory((prev: (PromptChange & { id: string })[]) => {
-        const _prev = [...prev];
-        for (let change of docChanges) {
-          const index = _prev.findIndex((c) => c.id === change.doc.id);
-          if (index === -1 && change.type === "added") {
-            const changeData = change.doc.data() as PromptChange;
-            const id = change.doc.id;
-            _prev.push({ ...changeData, id });
-          } else if (index !== -1 && change.type === "removed") {
-            _prev.splice(index, 1);
+    const unsubscribeHistory = onSnapshot(
+      promptHistoryQuery,
+      (snapshot) => {
+        const historyUpdates: (PromptChange & { id: string })[] = [];
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === "added") {
+            historyUpdates.push({
+              ...(change.doc.data() as PromptChange),
+              id: change.doc.id,
+            });
           }
-        }
-        return _prev;
-      });
-      // setLoading(false);
-    });
+        });
 
-    return () => unsubscribeNodes();
+        setPromptHistory((prev) =>
+          [...historyUpdates, ...prev]
+            .sort((a, b) => b.modifiedAt.toMillis() - a.modifiedAt.toMillis()) // Ensure sort order
+            .filter(
+              (log, index, self) =>
+                index === self.findIndex((l) => l.id === log.id),
+            )
+            .slice(0, 50),
+        );
+      },
+      (error) => {
+        console.error("Error fetching prompt history:", error);
+      },
+    );
+
+    return () => unsubscribeHistory();
   }, [db, user?.uname]);
 
-  const saveLogPrompt = (logs: { [id: string]: any }) => {
+  const saveLogPrompt = async (logs: { [id: string]: any }) => {
     try {
       const promptLogRef = doc(collection(db, PROMPT_LOGS));
-      setDoc(promptLogRef, {
-        ...logs,
-      });
+      setDoc(promptLogRef, logs);
     } catch (error) {
-      console.error(error);
+      console.error("Error saving prompt log:", error);
+      // Add user feedback (e.g., Snackbar)
     }
   };
 
-  const handleSave = async (e: any) => {
-    try {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!user?.uname) return;
-      const changeDetails: { [key: string]: any } = {};
-      const _systemPrompt = previousVersion || systemPrompt;
-      for (let edit of editedParts) {
-        const index = _systemPrompt.findIndex((p) => p.id === edit.editedId);
-        _systemPrompt[index].editablePart = edit.newValue;
-        changeDetails[edit.editedId] = {
-          ...edit,
-        };
+  const handleSave = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (!user?.uname || editedParts.size === 0) return;
+
+    const updatedSystemPrompt = previousVersion
+      ? [...previousVersion]
+      : [...systemPrompt];
+    const changeDetails: { [key: string]: any } = {};
+
+    editedParts.forEach((edit, editedId) => {
+      const index = updatedSystemPrompt.findIndex((p) => p.id === editedId);
+      if (index !== -1) {
+        updatedSystemPrompt[index].editablePart = edit.newValue;
+        changeDetails[editedId] = { editedId, ...edit };
       }
-      setEditedParts([]);
-      // JSON.parse(schema.replace(/`/g, ""));
-      // setError(null);
-      const promptRef = doc(collection(db, COPILOT_PROMPTS), user?.uname);
+    });
+
+    try {
+      const promptRef = doc(db, COPILOT_PROMPTS, user.uname);
       const promptDoc = await getDoc(promptRef);
-      const promptData = promptDoc.data();
+
+      const updateData = {
+        systemPrompt: updatedSystemPrompt,
+        updatedAt: new Date(),
+      };
 
       if (promptDoc.exists()) {
-        updateDoc(promptRef, {
-          systemPrompt: _systemPrompt,
-          updatedAt: new Date(),
-        });
+        await updateDoc(promptRef, updateData);
       } else {
-        setDoc(promptRef, {
-          systemPrompt,
+        await setDoc(promptRef, {
+          ...updateData,
           editor: user.uname,
           createdAt: new Date(),
         });
       }
 
-      if (!promptData) return;
+      const previousPromptData = promptDoc.exists()
+        ? promptDoc.data()?.systemPrompt
+        : [];
       saveLogPrompt({
-        previousValue: {
-          systemPrompt: promptData.systemPrompt,
-        },
-        newValue: {
-          systemPrompt: _systemPrompt,
-        },
+        previousValue: { systemPrompt: previousPromptData },
+        newValue: { systemPrompt: updatedSystemPrompt },
         changeDetails,
         modifiedAt: new Date(),
         modifiedBy: user?.uname,
         modifiedByDetails: {
-          fName: user.fName,
-          lName: user.lName,
-          imageUrl: user.imageUrl,
+          fName: user.fName || "",
+          lName: user.lName || "",
+          imageUrl: user.imageUrl || "",
         },
       });
+
+      setEditedParts(new Map());
       setPreviousVersion(null);
-    } catch (e) {
-      console.error(e);
+      setPreviousVersionId(null);
+      setDiffChanges(null);
+    } catch (error) {
+      console.error("Error saving system prompt:", error);
     }
   };
-  const toggleDrawer = (newOpen: boolean) => () => {
-    setShowPromptHistory(newOpen);
-  };
 
+  const toggleDrawer =
+    (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
+      if (
+        event.type === "keydown" &&
+        ((event as React.KeyboardEvent).key === "Tab" ||
+          (event as React.KeyboardEvent).key === "Shift")
+      ) {
+        return;
+      }
+      setShowPromptHistory(open);
+    };
   const handleInput = (id: string, event: any) => {
     const newValue = event.target.value;
     if (previousVersion) {
@@ -312,870 +318,953 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
     }
 
     setEditedParts((prev) => {
-      const _prev = [...prev];
-      const prIdx = _prev.findIndex((p) => p.editedId === id);
+      const updated = new Map(prev);
       const idx = systemPromptCopy.findIndex((p) => p.id === id);
 
-      if (prIdx !== -1 && idx !== -1) {
-        if (systemPromptCopy[idx].editablePart !== newValue) {
-          _prev[prIdx].newValue = newValue;
-        } else {
-          _prev.splice(prIdx, 1);
+      if (idx !== -1) {
+        const existing = updated.get(id);
+        const currentValue = systemPromptCopy[idx].editablePart;
+
+        if (existing) {
+          if (currentValue !== newValue) {
+            updated.set(id, { ...existing, newValue });
+          } else {
+            updated.delete(id);
+          }
+        } else if (
+          systemPromptCopy[idx].hasOwnProperty("editablePart") &&
+          currentValue !== newValue
+        ) {
+          updated.set(id, {
+            newValue,
+            previousValue: currentValue || "",
+          });
         }
-      } else if (
-        idx !== -1 &&
-        systemPromptCopy[idx].hasOwnProperty("editablePart") &&
-        systemPromptCopy[idx].editablePart !== newValue
-      ) {
-        _prev.push({
-          editedId: id,
-          newValue,
-          previousValue: systemPromptCopy[idx].editablePart || "",
-        });
       }
-      return _prev;
+
+      return updated;
     });
+
     // setForceUpdate((prev: any) => !prev);
     // onEdit(id, newValue);
   };
 
-  const cancelChanges = (e: any) => {
-    e.preventDefault();
+  const cancelChanges = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    setForceUpdate((prev: any) => !prev);
-    setEditedParts([]);
-    setSystemPrompt(JSON.parse(JSON.stringify(systemPromptCopy)));
-    setPreviousVersion(null);
+    setEditedParts(new Map());
+    setSystemPrompt(JSON.parse(JSON.stringify(systemPromptCopy))); // Deep copy reset
+    setPreviousVersion(null); // Exit version view if cancelling
+    setPreviousVersionId(null);
+    setDiffChanges(null);
   };
-  const compareToLatest = (e: any) => {
-    e.preventDefault();
+
+  const compareToLatest = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     if (diffChanges) {
-      setDiffChanges(null);
+      setDiffChanges(null); // Toggle off compare view
       return;
     }
     if (!previousVersion) return;
-    const _diffChanges: any = {};
-    for (let p of systemPrompt) {
-      if (!p.hasOwnProperty("editablePart")) {
-        continue;
+
+    const changes: {
+      [id: string]: { previousValue: string; newValue: string };
+    } = {};
+    systemPrompt.forEach((latestPart) => {
+      if (latestPart.hasOwnProperty("editablePart")) {
+        const previousPart = previousVersion.find(
+          (_p) => _p.id === latestPart.id,
+        );
+        if (
+          previousPart &&
+          previousPart.editablePart !== latestPart.editablePart
+        ) {
+          changes[latestPart.id] = {
+            previousValue: latestPart.editablePart || "",
+            newValue: previousPart.editablePart || "",
+          };
+        }
       }
-      const previousIdx = previousVersion?.findIndex((_p) => _p.id === p.id);
-      if (
-        previousIdx !== -1 &&
-        previousVersion[previousIdx].editablePart !== p.editablePart
-      ) {
-        _diffChanges[p.id] = {
-          previousValue: p.editablePart,
-          newValue: previousVersion[previousIdx].editablePart,
-        };
-      }
+    });
+
+    setDiffChanges(changes);
+    setExpandedSystemPrompt(true);
+
+    const firstDiffId = Object.keys(changes)[0];
+    if (firstDiffId) {
+      setTimeout(() => {
+        const element = document.getElementById(`prompt-part-${firstDiffId}`);
+        element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
     }
-
-    setDiffChanges(_diffChanges);
-
-    let id = Object.keys(_diffChanges)[0];
-    if (!id) {
-      id = "no-diff";
-    }
-
-    setTimeout(() => {
-      const element = document.getElementById(`${id}`);
-      if (element) {
-        element.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
-    }, 500);
-
-    setGlowIds(new Set(Object.keys(_diffChanges)));
-    setTimeout(() => {
-      setGlowIds(new Set());
-    }, 1000);
-    setExpanded(true);
   };
-  const rollBack = async (e: any) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!user?.uname) return;
-    const promptRef = doc(collection(db, COPILOT_PROMPTS), user?.uname);
-    const promptDoc = await getDoc(promptRef);
-    const promptData = promptDoc.data();
 
-    if (promptDoc.exists()) {
-      updateDoc(promptRef, {
+  const rollBack = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (!user?.uname || !previousVersion || !previousVersionId) return;
+
+    try {
+      const promptRef = doc(db, COPILOT_PROMPTS, user.uname);
+      const promptDoc = await getDoc(promptRef);
+      const currentPromptData = promptDoc.exists()
+        ? promptDoc.data()?.systemPrompt
+        : [];
+
+      await updateDoc(promptRef, {
         systemPrompt: previousVersion,
         updatedAt: new Date(),
       });
-    } else {
-      setDoc(promptRef, {
-        systemPrompt,
-        editor: user.uname,
-        createdAt: new Date(),
+
+      saveLogPrompt({
+        previousValue: { systemPrompt: currentPromptData },
+        newValue: { systemPrompt: previousVersion },
+        changeDetails: {},
+        modifiedAt: new Date(),
+        modifiedBy: user?.uname,
+        modifiedByDetails: {
+          fName: user.fName || "",
+          lName: user.lName || "",
+          imageUrl: user.imageUrl || "",
+        },
+        rollBack: true,
+        rollBackId: previousVersionId,
       });
+
+      setDiffChanges(null);
+      setPreviousVersion(null);
+      setPreviousVersionId(null);
+      setEditedParts(new Map());
+    } catch (error) {
+      console.error("Error rolling back system prompt:", error);
     }
+  };
+
+  const handleSelectHistoryVersion = (log: PromptChange & { id: string }) => {
+    setShowPromptHistory(false);
+    setPreviousVersion(log.newValue.systemPrompt);
+    setPreviousVersionId(log.id);
     setDiffChanges(null);
-    setPreviousVersion(null);
-    if (!promptData) return;
-    saveLogPrompt({
-      previousValue: {
-        systemPrompt: promptData.systemPrompt,
-      },
-      newValue: {
-        systemPrompt: previousVersion,
-      },
-      changeDetails: {},
-      modifiedAt: new Date(),
-      modifiedBy: user?.uname,
-      modifiedByDetails: {
-        fName: user.fName,
-        lName: user.lName,
-        imageUrl: user.imageUrl,
-      },
-      rollBack: true,
-      rollBackId: previousVersionId || "",
-    });
-    setEditedParts([]);
+    setEditedParts(new Map());
+    setExpandedSystemPrompt(true);
   };
 
   const promptHistoryList = (
-    <Box
-      sx={{
-        width: 400,
-      }}
-    >
-      <List
-        sx={{
-          gap: "14px",
-        }}
-      >
-        {promptHistory
-          .sort((a: any, b: any) => {
-            return (
-              new Date(b.modifiedAt.toDate()).getTime() -
-              new Date(a.modifiedAt.toDate()).getTime()
-            );
-          })
-          .map((log) => (
-            <ListItem
-              key={log.id}
-              disablePadding
-              sx={{
-                px: "7px",
-                py: "5px",
-                backgroundColor: log.id === previousVersionId ? "#2c5e2c" : "",
-              }}
+    <Box sx={{ width: { xs: "80vw", sm: 400 }, p: 1 }}>
+      <Typography variant="h6" sx={{ p: 2 }}>
+        Prompt History
+      </Typography>
+      <Divider />
+      <List dense>
+        {promptHistory.map((log) => (
+          <ListItem
+            key={log.id}
+            disablePadding
+            sx={{
+              mb: 1,
+              borderRadius: theme.shape.borderRadius,
+              bgcolor:
+                log.id === previousVersionId
+                  ? alpha(theme.palette.primary.light, 0.2)
+                  : "transparent",
+              "&:hover": {
+                bgcolor: alpha(theme.palette.action.hover, 0.1),
+              },
+            }}
+            secondaryAction={
+              log.id !== previousVersionId && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => handleSelectHistoryVersion(log)}
+                >
+                  View
+                </Button>
+              )
+            }
+          >
+            <ListItemButton
+              onClick={() =>
+                log.id !== previousVersionId && handleSelectHistoryVersion(log)
+              }
             >
-              <ListItemIcon>
+              <ListItemIcon sx={{ minWidth: 40 }}>
                 <OptimizedAvatar
-                  imageUrl={log.modifiedByDetails.imageUrl}
-                  alt={log.modifiedByDetails.fName}
-                  size={40}
+                  imageUrl={log.modifiedByDetails?.imageUrl}
+                  alt={log.modifiedByDetails?.fName || "U"}
+                  size={32}
                 />
               </ListItemIcon>
-
               <ListItemText
-                primary={
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontSize: "13px",
-                        color: log.id === previousVersionId ? "white" : "",
-                      }}
-                    >
-                      {moment(log.modifiedAt.toDate()).format("M/D/YY, h:mm A")}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: "13px",
-                        color: log.id === previousVersionId ? "white" : "",
-                      }}
-                    >
-                      {log.modifiedByDetails.fName}{" "}
-                      {log.modifiedByDetails.lName}
-                    </Typography>
-                  </Box>
-                }
+                primary={`${log.modifiedByDetails?.fName || "Unknown"} ${log.modifiedByDetails?.lName || ""}`}
+                secondary={moment(log.modifiedAt.toDate()).format(
+                  "MMM D, YYYY, h:mm A",
+                )}
+                primaryTypographyProps={{
+                  fontSize: "0.875rem",
+                  fontWeight: "medium",
+                }}
+                secondaryTypographyProps={{ fontSize: "0.75rem" }}
               />
-              {log.id !== previousVersionId && (
-                <Button
-                  variant="outlined"
-                  sx={{ borderRadius: "25px" }}
-                  onClick={() => {
-                    setShowPromptHistory(false);
-                    // setDiffChanges(log.changeDetails);
-                    setPreviousVersion(log.previousValue.systemPrompt);
-                    setPreviousVersionId(log.id);
-                    setDiffChanges(null);
-                  }}
-                >
-                  {" "}
-                  view
-                </Button>
-              )}
-            </ListItem>
-          ))}
+            </ListItemButton>
+          </ListItem>
+        ))}
+        {promptHistory.length === 0 && (
+          <ListItem>
+            <ListItemText
+              primary="No history available."
+              sx={{ textAlign: "center", color: "text.secondary" }}
+            />
+          </ListItem>
+        )}
       </List>
-      <Divider />
     </Box>
   );
 
+  const displayPrompt = previousVersion || systemPrompt;
+
   return (
-    <Box sx={{ mb: 10 }}>
+    <Box sx={{ mb: 4 }}>
       <Drawer
+        anchor="right"
         open={showPromptHistory}
-        sx={{
-          zIndex: 5000,
-        }}
         onClose={toggleDrawer(false)}
+        PaperProps={{ sx: { bgcolor: "background.paper" } }}
       >
         {promptHistoryList}
       </Drawer>
+
       {!generateNewNodes &&
-        selectedProperties.size <= 0 &&
+        selectedProperties.size === 0 &&
         !proposeDeleteNode &&
         editPrompt && (
-          <Typography sx={{ color: "red", mb: "15px" }}>
-            {`Select at least one option: 'Propose New Nodes,' 'Propose Improvement' or "Propose Node Deletion"!`}
+          <Typography
+            sx={{
+              color: theme.palette.warning.main,
+              mb: 2,
+              textAlign: "center",
+              fontStyle: "italic",
+            }}
+          >
+            {`Select at least one generation option: 'Propose New Nodes,' 'Propose Improvements,' or 'Propose Node Deletion'.`}
           </Typography>
         )}
 
-      {diffChanges !== null && Object.keys(diffChanges).length <= 0 && (
-        <Typography
-          id="no-diff"
-          sx={{
-            color: "#7cacf8",
-            fontSize: "19px",
-            mb: "17px",
-          }}
-        >
-          This version is the same as the latest version!
-        </Typography>
-      )}
-      <Paper elevation={5}>
+      {diffChanges !== null &&
+        Object.keys(diffChanges).length === 0 &&
+        previousVersionId && (
+          <Typography
+            id="no-diff"
+            sx={{
+              color: theme.palette.info.main,
+              fontSize: "1rem",
+              mb: 2,
+              textAlign: "center",
+            }}
+          >
+            This historical version is identical to the current version.
+          </Typography>
+        )}
+
+      <Paper elevation={3} sx={{ overflow: "hidden", mb: 3 }}>
         <Accordion
-          expanded={expanded}
-          sx={{ p: 0, m: 0, position: "sticky", top: 0 }}
-          TransitionProps={{ timeout: 150 }}
+          expanded={expandedSystemPrompt}
+          onChange={() => setExpandedSystemPrompt((prev) => !prev)}
+          sx={{
+            "&:before": { display: "none" },
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: "25px",
+          }}
         >
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             sx={{
               position: "sticky",
               top: 0,
-              backgroundColor: (theme) =>
-                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-              m: 0,
-              zIndex: 5,
+              bgcolor: "background.paper",
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              zIndex: 10,
               flexDirection: "row-reverse",
-              // height: "50px",
-              // msFlexDirection: "c",
-            }}
-            onClick={() => {
-              setExpanded((prev) => !prev);
+              alignItems: "center",
+              py: 0.5,
+              px: 2,
+              minHeight: "56px",
+              "& .MuiAccordionSummary-content": {
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                width: "100%",
+                mr: 1,
+              },
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                gap: "13px",
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: "24px",
-                  fontWeight: "bold",
-                  pl: "13px",
-                }}
-              >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <ArticleIcon color="primary" />
+              <Typography variant="h6" component="div">
                 System Prompt
               </Typography>
+              {previousVersionId && (
+                <Chip label="Viewing History" color="info" size="small" />
+              )}
+              {editedParts.size > 0 && (
+                <Chip label="Unsaved Changes" color="warning" size="small" />
+              )}
+            </Stack>
 
-              <Box
-                sx={{
-                  ml: "auto",
-                  gap: "15px",
-                }}
-              >
-                {editedParts.length > 0 && (
-                  <Button
-                    variant="outlined"
-                    sx={{
-                      borderRadius: "25px",
-                      fontSize: "13px",
-                      height: "30px",
-                      ml: "5px",
-                    }}
-                    onClick={handleSave}
-                  >
-                    Save
-                  </Button>
-                )}
-                {editedParts.length > 0 && (
-                  <Button
-                    variant="outlined"
-                    sx={{
-                      borderRadius: "25px",
-                      color: "white",
-                      backgroundColor: "red",
-                      fontSize: "13px",
-                      height: "30px",
-                      ml: "5px",
-                    }}
-                    onClick={cancelChanges}
-                  >
-                    Discard
-                  </Button>
-                )}
-                {previousVersion && (
-                  <Button
-                    sx={{
-                      borderRadius: "25px",
-                      ml: "5px",
-                      fontSize: "13px",
-                      height: "30px",
-                    }}
-                    variant="outlined"
-                    onClick={(e: any) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setDiffChanges(null);
-                      setPreviousVersion(null);
-                      setPreviousVersionId(null);
-                    }}
-                  >
-                    Close View
-                  </Button>
-                )}
-                {previousVersion && (
-                  <Button
-                    sx={{
-                      borderRadius: "25px",
-                      fontSize: "13px",
-                      height: "30px",
-                      ml: "5px",
-                    }}
-                    variant="outlined"
-                    onClick={rollBack}
-                  >
-                    Roll back this version
-                  </Button>
-                )}
-                {previousVersion && (
-                  <Button
-                    sx={{
-                      borderRadius: "25px",
-                      backgroundColor: diffChanges ? "#7cacf8" : "",
-                      fontSize: "13px",
-                      color: diffChanges ? "black" : "",
-                      height: "30px",
-                      mr: "10px",
-                      ml: "5px",
-                      ":hover": {
-                        backgroundColor: "#7cacf8",
-                      },
-                    }}
-                    variant="outlined"
-                    onClick={compareToLatest}
-                  >
-                    {diffChanges ? "Exit Compare View" : "Compare to latest"}
-                  </Button>
-                )}
-                {promptHistory.length > 0 && (
-                  <Tooltip title="Previous prompt versions">
-                    <IconButton
-                      onClick={(e: any) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setShowPromptHistory(true);
-                      }}
-                      sx={{ m: 0, ml: "15px" }}
+            <Stack direction="row" spacing={1} alignItems="center">
+              {editedParts.size > 0 && (
+                <Box>
+                  <Tooltip title="Save Changes">
+                    <Button
+                      startIcon={<SaveIcon />}
+                      size="small"
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSave}
                     >
-                      <HistoryIcon />
-                    </IconButton>
+                      Save
+                    </Button>
                   </Tooltip>
-                )}
-              </Box>
-            </Box>{" "}
+                  <Tooltip title="Discard Changes">
+                    <Button
+                      startIcon={<CancelIcon />}
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      onClick={cancelChanges}
+                      sx={{ mx: "10px" }}
+                    >
+                      Discard
+                    </Button>
+                  </Tooltip>
+                </Box>
+              )}
+              {previousVersion && (
+                <>
+                  <Tooltip title="Close History View">
+                    <Button
+                      startIcon={<CloseIcon />}
+                      size="small"
+                      variant="outlined"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPreviousVersion(null);
+                        setPreviousVersionId(null);
+                        setDiffChanges(null);
+                      }}
+                    >
+                      Close View
+                    </Button>
+                  </Tooltip>
+                  <Tooltip title="Rollback to This Version">
+                    <Button
+                      startIcon={<SettingsBackupRestoreIcon />}
+                      size="small"
+                      variant="outlined"
+                      color="warning"
+                      onClick={rollBack}
+                    >
+                      Rollback
+                    </Button>
+                  </Tooltip>
+                  <Tooltip
+                    title={
+                      diffChanges ? "Exit Compare View" : "Compare to Latest"
+                    }
+                  >
+                    <Button
+                      startIcon={<CompareArrowsIcon />}
+                      size="small"
+                      variant={diffChanges ? "contained" : "outlined"}
+                      color="secondary"
+                      onClick={compareToLatest}
+                    >
+                      {diffChanges ? "Exit Compare" : "Compare"}
+                    </Button>
+                  </Tooltip>
+                </>
+              )}
+              {promptHistory.length > 0 && (
+                <Tooltip title="View Prompt History">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPromptHistory(true);
+                    }}
+                  >
+                    <HistoryIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Stack>
           </AccordionSummary>
           <AccordionDetails
             sx={{
-              backgroundColor: (theme) =>
-                theme.palette.mode === "dark" ? "#37373a" : "#e1e1e1",
-              marginBottom: "150px",
+              bgcolor: alpha(theme.palette.background.default, 0.5),
+              p: { xs: 1, sm: 2 },
             }}
           >
-            <Box
-              sx={{
-                width: "100%",
-                maxWidth: "100%",
-                margin: "0 auto",
-                padding: 2,
-                boxSizing: "border-box",
-              }}
-            >
-              <Accordion>
-                <AccordionSummary>
-                  <Typography sx={{ fontSize: "23px" }}>Definitions</Typography>
-                  <ExpandMoreIcon sx={{ ml: "12px" }} />
-                </AccordionSummary>
-                <AccordionDetails>
-                  {(previousVersion || systemPrompt).map((p: any) => (
-                    <Box
-                      key={p.id}
-                      id={p.id}
-                      sx={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        mt: 1,
-                        flexDirection: { xs: "column", sm: "row" },
-                        mb: "25px",
-                      }}
+            <Accordion defaultExpanded>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <NotesIcon sx={{ mr: 1, color: "text.secondary" }} />
+                <Typography variant="subtitle1" fontWeight="medium">
+                  Definitions & Instructions
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {displayPrompt.map((p) => (
+                  <Box
+                    key={p.id}
+                    id={`prompt-part-${p.id}`}
+                    sx={{
+                      mb: 3,
+                      p: 1.5,
+                      borderRadius: 1,
+                      bgcolor:
+                        diffChanges && diffChanges[p.id]
+                          ? alpha(theme.palette.info.light, 0.15)
+                          : "transparent",
+                    }}
+                  >
+                    <Typography component="div" sx={{ lineHeight: 1.6 }}>
+                      {p.value || ""}
+                      {p.hasOwnProperty("editablePart") && (
+                        <Box sx={{ mt: 1, position: "relative" }}>
+                          {diffChanges && diffChanges[p.id] && (
+                            <Box
+                              sx={{
+                                mb: 1,
+                                p: 1,
+                                bgcolor: alpha(theme.palette.error.light, 0.2),
+                                borderRadius: 1,
+                                borderLeft: `3px solid ${theme.palette.error.main}`,
+                              }}
+                            >
+                              <Typography
+                                variant="caption"
+                                display="block"
+                                color="text.secondary"
+                              >
+                                Latest Value:
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  textDecoration: "line-through",
+                                  opacity: 0.8,
+                                }}
+                              >
+                                {diffChanges[p.id].previousValue}
+                              </Typography>
+                            </Box>
+                          )}
+                          {diffChanges && diffChanges[p.id] && (
+                            <Box
+                              sx={{
+                                mb: 1,
+                                p: 1,
+                                bgcolor: alpha(
+                                  theme.palette.success.light,
+                                  0.2,
+                                ),
+                                borderRadius: 1,
+                                borderLeft: `3px solid ${theme.palette.success.main}`,
+                              }}
+                            >
+                              <Typography
+                                variant="caption"
+                                display="block"
+                                color="text.secondary"
+                              >
+                                Selected History Value:
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  color: "success.dark",
+                                  fontWeight: "medium",
+                                }}
+                              >
+                                {diffChanges[p.id].newValue}
+                              </Typography>
+                            </Box>
+                          )}
+                          <TextField
+                            value={p.editablePart}
+                            onChange={(event) => handleInput(p.id, event)}
+                            fullWidth
+                            label={p.type || "Editable Section"}
+                            multiline
+                            variant="outlined"
+                            size="small"
+                            disabled={!!previousVersionId && !diffChanges}
+                            InputLabelProps={{ shrink: true }}
+                            sx={{
+                              bgcolor: "background.paper",
+                              "& .MuiOutlinedInput-root": {
+                                "&.Mui-disabled": {
+                                  bgcolor: alpha(
+                                    theme.palette.action.disabledBackground,
+                                    0.5,
+                                  ),
+                                },
+                              },
+                            }}
+                          />
+                        </Box>
+                      )}
+                      {p.endClose || ""}
+                    </Typography>
+                  </Box>
+                ))}
+              </AccordionDetails>
+            </Accordion>
+
+            <Accordion defaultExpanded>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <InputIcon sx={{ mr: 1, color: "text.secondary" }} />
+                <Typography variant="subtitle1" fontWeight="medium">
+                  Input Configuration
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Stack spacing={2}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      gutterBottom
+                      color="text.secondary"
                     >
-                      {" "}
-                      <Typography
-                        sx={{
-                          flexShrink: 0,
-                          fontSize: { xs: "16px", sm: "20px" },
-                          lineHeight: "1.5",
-                          textAlign: { xs: "center", sm: "left" },
-                          width: "100%",
-                          animation: glowIds.has(p.id)
-                            ? `${glowGreen} 1.5s ease-in-out infinite`
-                            : "",
+                      Select Properties to Include in Context:
+                    </Typography>
+                    <Stack
+                      direction="row"
+                      flexWrap="wrap"
+                      spacing={1}
+                      sx={{ pl: 1 }}
+                    >
+                      {[
+                        ...PROPERTIES_TO_IMPROVE.allTypes,
+                        ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+                      ]
+                        .filter((prop) => prop !== "nodeId")
+                        .map((property: string) => (
+                          <Chip
+                            key={property}
+                            label={capitalizeFirstLetter(
+                              DISPLAY[property] || property,
+                            )}
+                            onClick={() => {
+                              setInputProperties((prev: Set<string>) => {
+                                const _prev = new Set(prev);
+                                if (_prev.has(property)) _prev.delete(property);
+                                else _prev.add(property);
+                                return _prev;
+                              });
+                            }}
+                            variant={
+                              inputProperties.has(property)
+                                ? "filled"
+                                : "outlined"
+                            }
+                            color={
+                              inputProperties.has(property)
+                                ? "primary"
+                                : "default"
+                            }
+                            size="small"
+                            disabled={property === "title"}
+                            clickable
+                            sx={{ mb: 1 }}
+                          />
+                        ))}
+                    </Stack>
+                  </Box>
+
+                  <TextField
+                    margin="dense"
+                    id="number-input"
+                    type="number"
+                    label={
+                      <Box component="span">
+                        Exploration Depth from node{" "}
+                        <Typography component="strong" color="primary">
+                          {nodeTitle}
+                        </Typography>
+                      </Box>
+                    }
+                    value={numberValue || ""}
+                    onChange={handleNumberChange}
+                    inputProps={{ min: 0, step: 1 }}
+                    fullWidth
+                    size="small"
+                  />
+                  <Accordion
+                    sx={{
+                      bgcolor: alpha(theme.palette.background.default, 0.7),
+                    }}
+                  >
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography>
+                        <Chip
+                          label={nodes.length}
+                          size="small"
+                          color="secondary"
+                          sx={{ mr: 1 }}
+                        />
+                        Nodes in Context
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails
+                      sx={{ maxHeight: 300, overflowY: "auto" }}
+                    >
+                      <pre
+                        style={{
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-all",
+                          fontSize: "0.75rem",
+                          background: alpha(theme.palette.text.primary, 0.05),
+                          padding: theme.spacing(1),
+                          borderRadius: theme.shape.borderRadius,
                         }}
                       >
-                        {" "}
-                        {/*    <Box sx={{ mt: "14px" }}>
-                      <MarkdownRender text={p.value || ""} />
-                    </Box> */}
-                        {diffChanges && diffChanges[p.id] && (
-                          <Typography
-                            sx={{
-                              color: "red",
-                              display: "inline",
-                              px: "4px",
-                              textDecoration: "line-through",
-                              fontSize: { xs: "16px", sm: "20px" },
-                            }}
-                          >
-                            {diffChanges[p.id].previousValue}
-                          </Typography>
-                        )}
-                        {diffChanges && diffChanges[p.id] && (
-                          <Typography
-                            sx={{
-                              color: "green",
-                              display: "inline",
-                              fontSize: { xs: "16px", sm: "20px" },
-                            }}
-                          >
-                            {diffChanges[p.id].newValue}
-                          </Typography>
-                        )}
-                        {p.hasOwnProperty("editablePart") &&
-                          (!diffChanges || !diffChanges[p.id]) && (
-                            <TextField
-                              value={p.editablePart}
-                              onChange={(event) => handleInput(p.id, event)}
-                              fullWidth
-                              // rows={14}
-                              label={p.type}
-                              multiline
-                            />
-                            // <Typography
-                            //   key={forceUpdate}
-                            //   component="span"
-                            //   contentEditable={!previousVersionId}
-                            //   suppressContentEditableWarning
-                            //   sx={{
-                            //     display: "inline",
-                            //     borderBottom: !previousVersionId
-                            //       ? "1.5px dashed #ff6d00"
-                            //       : "",
-                            //     paddingBottom: "2px",
-                            //     cursor: "text",
-                            //     px: "4px",
-                            //     color: "inherit",
-                            //     fontSize: { xs: "16px", sm: "20px" },
-                            //   }}
-                            //   onInput={(event) => handleInput(p.id, event)}
-                            // >
-                            //   {p.editablePart}
-                            // </Typography>
-                          )}
-                        {p.endClose}
-                      </Typography>
-                    </Box>
-                  ))}
-                </AccordionDetails>
-              </Accordion>
-              <Accordion defaultExpanded={true}>
-                <AccordionSummary>
-                  <Typography sx={{ fontSize: "23px" }}>
-                    Input Components
-                  </Typography>
-                  <ExpandMoreIcon sx={{ ml: "12px" }} />
-                </AccordionSummary>
-                <AccordionDetails sx={{ ml: "20px" }}>
-                  {[
-                    ...PROPERTIES_TO_IMPROVE.allTypes,
-                    ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
-                  ].map((property: string) => (
-                    <Box key={property} sx={{ display: "flex", mb: "12px" }}>
+                        {JSON.stringify(nodes, null, 2)}
+                      </pre>
+                    </AccordionDetails>
+                  </Accordion>
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <ChecklistIcon sx={{ mr: 1, color: "text.secondary" }} />
+                <Typography variant="subtitle1" fontWeight="medium">
+                  Response Configuration
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Stack spacing={1.5}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      p: 1,
+                      borderRadius: 1,
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: alpha(theme.palette.action.hover, 0.05),
+                      },
+                    }}
+                    onClick={() => setGenerateNewNodes((prev) => !prev)}
+                  >
+                    <Checkbox
+                      checked={generateNewNodes}
+                      size="small"
+                      sx={{ p: 0, mr: 1.5 }}
+                      readOnly
+                    />
+                    <AddCircleOutlineIcon
+                      sx={{
+                        mr: 1,
+                        color: generateNewNodes
+                          ? "primary.main"
+                          : "text.secondary",
+                      }}
+                    />
+                    <Typography>Propose New Nodes</Typography>
+                  </Box>
+
+                  <Accordion
+                    sx={{
+                      bgcolor: alpha(theme.palette.background.default, 0.7),
+                      "&:before": { display: "none" },
+                    }}
+                  >
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Checkbox
-                        checked={inputProperties.has(property)}
-                        sx={{ p: 0 }}
-                        onClick={() => {
-                          setInputProperties((prev: Set<string>) => {
-                            const _prev = new Set(prev);
-                            if (_prev.has(property)) {
-                              _prev.delete(property);
-                            } else {
-                              _prev.add(property);
-                            }
-                            return _prev;
+                        checked={selectedProperties.size > 0}
+                        indeterminate={
+                          selectedProperties.size > 0 &&
+                          selectedProperties.size <
+                            [
+                              ...PROPERTIES_TO_IMPROVE.allTypes,
+                              ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+                            ].length
+                        }
+                        size="small"
+                        sx={{ p: 0, mr: 1.5 }}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedProperties((prev: Set<string>) => {
+                            if (prev.size > 0) return new Set();
+                            return new Set([
+                              ...PROPERTIES_TO_IMPROVE.allTypes,
+                              ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+                            ]);
                           });
                         }}
-                        disabled={property === "title"}
                       />
-                      <Typography sx={{ ml: "5px" }}>
-                        {capitalizeFirstLetter(
-                          DISPLAY[property] ? DISPLAY[property] : property,
-                        )}
-                      </Typography>
-                    </Box>
-                  ))}
-                </AccordionDetails>
-                <TextField
-                  margin="dense"
-                  id="number-input"
-                  type="number"
-                  label={
-                    <Box>
-                      How far away from this node{" "}
-                      <strong style={{ color: "orange" }}>{nodeTitle} </strong>
-                      should I explore to propose improvements?
-                    </Box>
-                  }
-                  value={numberValue || ""}
-                  onChange={handleNumberChange}
-                  inputProps={{ min: 0 }}
-                  fullWidth
-                  sx={{
-                    mt: 3,
-                    ml: "18px",
-                    mr: "18px",
-                    width: "auto",
-                    display: "block",
-                    textAlign: "center",
-                    "& .MuiInputLabel-root": {
-                      color: "gray",
-                    },
-                  }}
-                />
-                <Accordion
-                  sx={{
-                    backgroundColor: (theme) =>
-                      theme.palette.mode === "dark" ? "#1e1919" : "#d0d5dd",
-                    mx: "19px",
-                  }}
-                  TransitionProps={{ timeout: 150 }}
-                >
-                  <AccordionSummary>
-                    <Typography sx={{ fontSize: "17px" }}>
-                      <strong style={{ color: "orange", fontSize: "19px" }}>
-                        {nodes.length}
-                      </strong>{" "}
-                      Nodes:{" "}
-                    </Typography>
-                    <ExpandMoreIcon sx={{ ml: "12px", mt: "3px" }} />
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
-                      {JSON.stringify(nodes, null, 2)}
-                    </Typography>
-                  </AccordionDetails>
-                </Accordion>
-              </Accordion>
-
-              <Accordion TransitionProps={{ timeout: 150 }}>
-                <AccordionSummary>
-                  <Typography sx={{ fontSize: "23px" }}>
-                    Response Structure
-                  </Typography>
-                  <ExpandMoreIcon sx={{ ml: "12px", mt: "7px" }} />
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        ml: "7px",
-                        mb: "10px",
-                        p: 1,
-                        cursor: "pointer",
-                        ":hover": {
-                          backgroundColor: "#766a57",
-                          borderRadius: "25px",
-                        },
-                      }}
-                      onClick={() => {
-                        setGenerateNewNodes((prev: boolean) => !prev);
-                      }}
-                    >
-                      <Checkbox
-                        checked={generateNewNodes}
-                        sx={{ p: 0, zIndex: 0 }}
+                      <AutoFixHighIcon
+                        sx={{
+                          mr: 1,
+                          color:
+                            selectedProperties.size > 0
+                              ? "primary.main"
+                              : "text.secondary",
+                        }}
                       />
-                      <Typography sx={{ ml: "15px" }}>
-                        {" "}
-                        Propose New Nodes
+                      <Typography>
+                        Propose Improvements to Existing Nodes
                       </Typography>
-                    </Box>
-                    <Accordion
-                      sx={{
-                        backgroundColor: (theme) =>
-                          theme.palette.mode === "dark" ? "#1e1919" : "#d0d5dd",
-                      }}
-                    >
-                      <AccordionSummary>
-                        <Checkbox
-                          checked={selectedProperties.size > 0}
-                          sx={{ p: 0 }}
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            setSelectedProperties((prev: Set<string>) => {
-                              if (prev.size > 0) {
-                                return new Set();
-                              }
-                              return new Set([
-                                ...PROPERTIES_TO_IMPROVE.allTypes,
-                                ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
-                              ]);
-                            });
-                          }}
-                        />
-                        <Typography sx={{ ml: "5px" }}>
-                          Propose Improvements to Existing Nodes
-                        </Typography>
-                        <ExpandMoreIcon sx={{ ml: "12px" }} />
-                      </AccordionSummary>
-                      <AccordionDetails sx={{ ml: "20px" }}>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Stack
+                        direction="row"
+                        flexWrap="wrap"
+                        spacing={1}
+                        sx={{ pl: 1 }}
+                      >
                         {[
                           ...PROPERTIES_TO_IMPROVE.allTypes,
                           ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
                         ].map((property: string) => (
-                          <Box
+                          <Chip
                             key={property}
-                            sx={{ display: "flex", mb: "12px" }}
-                          >
-                            <Checkbox
-                              checked={selectedProperties.has(property)}
-                              sx={{ p: 0 }}
-                              onClick={() => {
-                                setSelectedProperties((prev: Set<string>) => {
-                                  const _prev = new Set(prev);
-                                  if (_prev.has(property)) {
-                                    _prev.delete(property);
-                                  } else {
-                                    _prev.add(property);
-                                  }
-                                  return _prev;
-                                });
-                              }}
-                            />
-                            <Typography sx={{ ml: "5px" }}>
-                              {capitalizeFirstLetter(
-                                DISPLAY[property]
-                                  ? DISPLAY[property]
-                                  : property,
-                              )}
-                            </Typography>
-                          </Box>
+                            label={capitalizeFirstLetter(
+                              DISPLAY[property] || property,
+                            )}
+                            onClick={() => {
+                              setSelectedProperties((prev: Set<string>) => {
+                                const _prev = new Set(prev);
+                                if (_prev.has(property)) _prev.delete(property);
+                                else _prev.add(property);
+                                return _prev;
+                              });
+                            }}
+                            variant={
+                              selectedProperties.has(property)
+                                ? "filled"
+                                : "outlined"
+                            }
+                            color={
+                              selectedProperties.has(property)
+                                ? "primary"
+                                : "default"
+                            }
+                            size="small"
+                            clickable
+                            sx={{ mb: 1 }}
+                          />
                         ))}
-                      </AccordionDetails>
-                    </Accordion>
+                      </Stack>
+                    </AccordionDetails>
+                  </Accordion>
 
-                    <Box
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      p: 1,
+                      borderRadius: 1,
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: alpha(theme.palette.action.hover, 0.05),
+                      },
+                    }}
+                    onClick={() => setProposeDeleteNodes((prev) => !prev)}
+                  >
+                    <Checkbox
+                      checked={proposeDeleteNode}
+                      size="small"
+                      sx={{ p: 0, mr: 1.5 }}
+                      readOnly
+                    />
+                    <PlaylistRemoveIcon
                       sx={{
-                        display: "flex",
-                        ml: "7px",
-                        mb: "10px",
-                        mt: "5px",
-                        p: 1,
-                        cursor: "pointer",
-                        ":hover": {
-                          backgroundColor: "#766a57",
-                          borderRadius: "25px",
-                        },
+                        mr: 1,
+                        color: proposeDeleteNode
+                          ? "primary.main"
+                          : "text.secondary",
                       }}
-                      onClick={() => {
-                        setProposeDeleteNodes((prev: boolean) => !prev);
-                      }}
-                    >
-                      <Checkbox
-                        checked={proposeDeleteNode}
-                        sx={{ p: 0, zIndex: 0 }}
-                      />
-                      <Typography sx={{ ml: "15px" }}>
-                        Propose Node Deletion
-                      </Typography>
-                    </Box>
+                    />
+                    <Typography>Propose Node Deletion</Typography>
                   </Box>
-                  <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 1 }}
+                  >
+                    Response JSON Structure Preview:
+                  </Typography>
+                  <pre
+                    style={{
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-all",
+                      fontSize: "0.75rem",
+                      background: alpha(theme.palette.text.primary, 0.05),
+                      padding: theme.spacing(1),
+                      borderRadius: theme.shape.borderRadius,
+                    }}
+                  >
                     {getResponseStructure(
                       selectedProperties.size > 0,
                       proposeDeleteNode,
                     )}
-                  </Typography>
+                  </pre>
                   {selectedProperties.size > 0 && (
                     <Accordion
                       sx={{
-                        backgroundColor: (theme) =>
-                          theme.palette.mode === "dark" ? "#1e1919" : "#d0d5dd",
+                        bgcolor: alpha(theme.palette.background.default, 0.7),
                       }}
                     >
-                      <AccordionSummary>
-                        <Typography sx={{ fontSize: "17px" }}>
-                          Improvements
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="caption">
+                          Improvement Details
                         </Typography>
-                        <ExpandMoreIcon sx={{ ml: "12px" }} />
                       </AccordionSummary>
-
                       <AccordionDetails>
-                        {" "}
-                        <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
-                          {getImprovementsStructurePrompt(
-                            selectedProperties.size > 0,
-                            selectedProperties,
-                          )}
-                        </Typography>
+                        <pre
+                          style={{
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-all",
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          {improvementsStructurePrompt}
+                        </pre>
                       </AccordionDetails>
                     </Accordion>
                   )}
                   {generateNewNodes && (
                     <Accordion
                       sx={{
-                        backgroundColor: (theme) =>
-                          theme.palette.mode === "dark" ? "#1e1919" : "#d0d5dd",
+                        bgcolor: alpha(theme.palette.background.default, 0.7),
                       }}
                     >
-                      <AccordionSummary>
-                        <Typography sx={{ fontSize: "15px" }}>
-                          New Nodes
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="caption">
+                          New Node Details
                         </Typography>
-                        <ExpandMoreIcon sx={{ ml: "12px" }} />
                       </AccordionSummary>
-
                       <AccordionDetails>
-                        {" "}
-                        <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
+                        <pre
+                          style={{
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-all",
+                            fontSize: "0.75rem",
+                          }}
+                        >
                           {getNewNodesPrompt(generateNewNodes)}
-                        </Typography>
+                        </pre>
                       </AccordionDetails>
                     </Accordion>
                   )}
                   {proposeDeleteNode && (
                     <Accordion
                       sx={{
-                        backgroundColor: (theme) =>
-                          theme.palette.mode === "dark" ? "#1e1919" : "#d0d5dd",
+                        bgcolor: alpha(theme.palette.background.default, 0.7),
                       }}
                     >
-                      <AccordionSummary>
-                        <Typography sx={{ fontSize: "15px" }}>
-                          Delete nodes
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="caption">
+                          Node Deletion Details
                         </Typography>
-                        <ExpandMoreIcon sx={{ ml: "12px" }} />
                       </AccordionSummary>
-
                       <AccordionDetails>
-                        {" "}
-                        <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
+                        <pre
+                          style={{
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-all",
+                            fontSize: "0.75rem",
+                          }}
+                        >
                           {getDeleteNodesPrompt(proposeDeleteNode)}
-                        </Typography>
+                        </pre>
                       </AccordionDetails>
                     </Accordion>
                   )}
-
                   <Accordion
                     sx={{
-                      backgroundColor: (theme) =>
-                        theme.palette.mode === "dark" ? "#1e1919" : "#d0d5dd",
+                      bgcolor: alpha(theme.palette.background.default, 0.7),
                     }}
                   >
-                    <AccordionSummary>
-                      <Typography sx={{ fontSize: "15px" }}>
-                        IMPORTANT NOTES
-                      </Typography>
-                      <ExpandMoreIcon sx={{ ml: "12px" }} />
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography variant="caption">Important Notes</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                      <Typography sx={{ whiteSpace: "pre-wrap", mt: "14px" }}>
+                      <pre
+                        style={{
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-all",
+                          fontSize: "0.75rem",
+                        }}
+                      >
                         {getNotesPrompt()}
-                      </Typography>
+                      </pre>
                     </AccordionDetails>
                   </Accordion>
-                </AccordionDetails>
-              </Accordion>
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
 
-              <Accordion sx={{ mb: "40px" }}>
-                <AccordionSummary>
-                  <Typography sx={{ fontSize: "23px" }}>Guidelines</Typography>
-                  <ExpandMoreIcon sx={{ ml: "12px", mt: "7px" }} />
-                </AccordionSummary>
-
-                <AccordionDetails>
-                  {" "}``
-                  <GuidLines />
-                </AccordionDetails>
-              </Accordion>
-            </Box>
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <RuleIcon sx={{ mr: 1, color: "text.secondary" }} />
+                <Typography variant="subtitle1" fontWeight="medium">
+                  Guidelines
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <GuidLines />
+              </AccordionDetails>
+            </Accordion>
           </AccordionDetails>
         </Accordion>
+      </Paper>
+
+      <Paper elevation={3} sx={{ overflow: "hidden" }}>
         <Accordion
-          defaultExpanded={true}
+          defaultExpanded
           sx={{
-            overflowAnchor: "none",
+            "&:before": { display: "none" },
+            border: `1px solid ${theme.palette.divider}`,
           }}
         >
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             sx={{
+              bgcolor: "background.paper",
+              borderBottom: `1px solid ${theme.palette.divider}`,
               flexDirection: "row-reverse",
-              backgroundColor: (theme) =>
-                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-              fontWeight: "bold",
+              py: 0.5,
+              px: 2,
+              minHeight: "56px",
+              "& .MuiAccordionSummary-content": { mr: 1, alignItems: "center" },
             }}
           >
-            <Typography
-              sx={{ pl: "13px", fontSize: "19px", fontWeight: "bold" }}
-            >
-              User Prompt
-            </Typography>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <InputIcon color="primary" />
+              <Typography variant="h6" component="div">
+                User Instructions
+              </Typography>
+            </Stack>
           </AccordionSummary>
-          <AccordionDetails>
+          <AccordionDetails
+            sx={{ p: 2, bgcolor: alpha(theme.palette.background.default, 0.5) }}
+          >
             <TextField
               autoFocus
               margin="dense"
               id="prompt-input"
-              label="Please write your instructions to AI Assistant here:"
+              label="Enter your instructions for the AI Assistant"
               type="text"
               value={inputValue}
               onChange={handleInputChange}
               fullWidth
               multiline
-              sx={{
-                mx: "auto",
-                display: "block",
-                textAlign: "center",
-                "& .MuiInputLabel-root": {
-                  color: "gray",
-                },
-              }}
+              minRows={3}
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={{ bgcolor: "background.paper" }}
             />
           </AccordionDetails>
         </Accordion>

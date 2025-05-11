@@ -1,5 +1,5 @@
 // Importing necessary modules and functions
-import { User, UserTheme } from " @components/types/IAuth";
+import { User, UserTheme } from "@components/types/IAuth";
 import {
   createUserWithEmailAndPassword,
   getAuth,

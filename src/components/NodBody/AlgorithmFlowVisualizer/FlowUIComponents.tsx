@@ -18,7 +18,7 @@ import {
   Loop as LoopIcon,
   Task as TaskIcon,
 } from "@mui/icons-material";
-import { IAlgorithm } from " @components/types/INode";
+import { IAlgorithm } from "@components/types/INode";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";

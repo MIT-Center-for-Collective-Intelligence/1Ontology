@@ -1,4 +1,4 @@
-import { INodeTypes } from " @components/types/INode";
+import { INodeTypes } from "@components/types/INode";
 import { DESIGN_SYSTEM_COLORS } from "./theme/colors";
 
 // TO-DO: Consider storing this data in the database to identify node types in the project
@@ -159,3 +159,6 @@ export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
     "reward",
   ],
 };
+
+export const MODEL = "o3";
+export const GEMINI_MODEL = "gemini-2.5-pro-exp-03-25";

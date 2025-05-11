@@ -9,10 +9,10 @@ import {
   Typography,
   Paper,
 } from "@mui/material";
-import { INode, InheritanceType } from " @components/types/INode";
-import { DISPLAY, SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import { NODES } from " @components/lib/firestoreClient/collections";
+import { INode, InheritanceType } from "@components/types/INode";
+import { DISPLAY, SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
+import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import {
   collection,
   doc,

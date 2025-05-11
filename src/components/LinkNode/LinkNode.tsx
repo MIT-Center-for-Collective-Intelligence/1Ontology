@@ -65,8 +65,8 @@ In this example, `ChildNode` is used to display a child node with the given prop
 - Error handling is implemented in the `deleteSubOntologyEditable` function, but it is important to ensure that proper error handling is in place throughout the application.
 - The component does not directly mutate the state but uses provided functions to handle state changes, ensuring a unidirectional data flow.
  */
-import { NODES } from " @components/lib/firestoreClient/collections";
-import useConfirmDialog from " @components/lib/hooks/useConfirmDialog";
+import { NODES } from "@components/lib/firestoreClient/collections";
+import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import AddIcon from "@mui/icons-material/Add";
 import {
@@ -77,13 +77,13 @@ import {
   updatePartsAndPartsOf,
   updatePropertyOf,
   updateInheritanceWhenUnlinkAGeneralization,
-} from " @components/lib/utils/helpers";
+} from "@components/lib/utils/helpers";
 import {
   INode,
   INodePath,
   ILinkNode,
   ICollection,
-} from " @components/types/INode";
+} from "@components/types/INode";
 import {
   Box,
   Button,
@@ -110,10 +110,10 @@ import {
 
 import CloseIcon from "@mui/icons-material/Close";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getTitleDeleted } from " @components/lib/utils/string.utils";
+import { getTitleDeleted } from "@components/lib/utils/string.utils";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
-import { UNCLASSIFIED } from " @components/lib/CONSTANTS";
+import { UNCLASSIFIED } from "@components/lib/CONSTANTS";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import LinkEditor from "./LinkEditor";
 
@@ -152,6 +152,8 @@ type ILinkNodeProps = {
   selectedProperty: string;
   glowIds: Set<string>;
   skillsFuture: boolean;
+  currentImprovement: any;
+  partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
 };
 
 const LinkNode = ({
@@ -176,6 +178,8 @@ const LinkNode = ({
   selectedProperty,
   glowIds,
   skillsFuture,
+  currentImprovement,
+  partsInheritance,
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -422,7 +426,7 @@ const LinkNode = ({
               link.id,
             );
           }
-          if (shouldBeRemovedFromParent) {
+          if (shouldBeRemovedFromParent && nodes[link.id]) {
             const nodeType = nodes[link.id].nodeType;
             const unclassifiedNodeDocs = await getDocs(
               query(
@@ -646,7 +650,17 @@ const LinkNode = ({
                 link.change === "removed" ? "line-through" : "none",
             }}
           >
-            {title || regionalTitle}
+            {link.title || title || regionalTitle}{" "}
+            {link.optional && (
+              <span
+                style={{ color: "gray", marginLeft: "2px" }}
+              >{`(optional)`}</span>
+            )}
+            <span style={{ color: "gray", marginLeft: "7px" }}>
+              {partsInheritance && partsInheritance[link.id]
+                ? `(From ${partsInheritance[link.id].title}${!partsInheritance[link.id]?.fullPart ? ", Part Specialization" : ""})`
+                : ""}
+            </span>
           </Link>
         )}
 
@@ -680,6 +694,7 @@ const LinkNode = ({
           )}
 
           {property === "parts" &&
+            !currentImprovement &&
             !selectedDiffNode &&
             !clonedNodesQueue.hasOwnProperty(link.id) && (
               <Tooltip title={swapIt ? "Specialize" : "Close"}>

@@ -10,3 +10,8 @@ export const PROMPT_LOGS = "promptLogs";
 export const COPILOT_PROMPTS = "copilotPrompts";
 export const NODES_ONET = "oNetNodes";
 export const ALGORITHMS = "algorithms";
+
+/* consultant */
+export const GROUPS = "groups";
+export const LINKS = "links";
+export const DIAGRAMS = "diagrams";

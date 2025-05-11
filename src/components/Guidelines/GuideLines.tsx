@@ -20,7 +20,7 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
-import { GUIDELINES } from " @components/lib/firestoreClient/collections";
+import { GUIDELINES } from "@components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
 import GuideLineText from "./GuideLineText";
 

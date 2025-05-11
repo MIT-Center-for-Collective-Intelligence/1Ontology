@@ -17,11 +17,11 @@ import {
   SCROLL_BAR_STYLE,
   DISPLAY,
   UNCLASSIFIED,
-} from " @components/lib/CONSTANTS";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
+} from "@components/lib/CONSTANTS";
+import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
 import CloseIcon from "@mui/icons-material/Close";
-import { ICollection, ILinkNode, INodeTypes } from " @components/types/INode";
-import { NODES } from " @components/lib/firestoreClient/collections";
+import { ICollection, ILinkNode, INodeTypes } from "@components/types/INode";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import {
   getDocs,
   query,

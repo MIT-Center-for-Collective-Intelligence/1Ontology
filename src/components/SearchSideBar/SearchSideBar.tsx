@@ -1,4 +1,4 @@
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import {
   Box,
   GlobalStyles,
@@ -13,7 +13,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
+import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 
 const SearchSideBar = ({
   openSearchedNode,

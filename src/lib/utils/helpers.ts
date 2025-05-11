@@ -1,4 +1,4 @@
-import { ICollection, IInheritance, INode } from " @components/types/INode";
+import { ICollection, IInheritance, INode } from "@components/types/INode";
 import {
   getDoc,
   doc,
@@ -18,10 +18,10 @@ import {
   query,
 } from "firebase/firestore";
 import { LOGS, NODES, NODES_LOGS, USERS } from "../firestoreClient/collections";
-import { NodeChange } from " @components/types/INode";
+import { NodeChange } from "@components/types/INode";
 import moment from "moment";
 import { capitalizeFirstLetter } from "./string.utils";
-import { User } from " @components/types/IAuth";
+import { User } from "@components/types/IAuth";
 import {
   getBrowser,
   getOperatingSystem,
@@ -287,7 +287,7 @@ export const removeIsPartOf = async (
     });
   }
 };
-
+/* */
 interface UpdateInheritanceParams {
   nodeId: string;
   updatedProperties: string[];
@@ -683,9 +683,13 @@ export const createNewNode = (
   generalizationId: string,
   uname: string,
   skillsFuture: boolean,
+  skillsFutureApp?: string,
 ): INode => {
   const newNode: any = {
     ...parentNodeData,
+    contributors: [],
+    contributorsByProperty: [],
+    textValue: {},
     createdBy: uname,
     unclassified: false,
     id: newNodeRefId,
@@ -718,6 +722,7 @@ export const createNewNode = (
     propertyType: { ...parentNodeData.propertyType },
     nodeType: parentNodeData.nodeType,
     skillsFuture: !!skillsFuture,
+    ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
   };
   if (newNode?.textValue?.specializations) {
     delete newNode.textValue.specializations;

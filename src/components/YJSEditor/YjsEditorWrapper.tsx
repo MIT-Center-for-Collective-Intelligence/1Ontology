@@ -6,9 +6,9 @@ import Quill from "quill";
 import QuillCursors from "quill-cursors";
 import { Box, Typography } from "@mui/material";
 import "quill/dist/quill.snow.css";
-import { recordLogs } from " @components/lib/utils/helpers";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
-import { DISPLAY, WS_URL } from " @components/lib/CONSTANTS";
+import { recordLogs } from "@components/lib/utils/helpers";
+import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
+import { DISPLAY, WS_URL } from "@components/lib/CONSTANTS";
 
 Quill.register("modules/cursors", QuillCursors);
 

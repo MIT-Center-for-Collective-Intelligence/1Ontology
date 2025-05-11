@@ -1,13 +1,13 @@
-import { DISPLAY } from " @components/lib/CONSTANTS";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import { DISPLAY } from "@components/lib/CONSTANTS";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import {
   capitalizeFirstLetter,
   getTitle,
-} from " @components/lib/utils/string.utils";
+} from "@components/lib/utils/string.utils";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import { ICollection, ILinkNode, INode } from " @components/types/INode";
+import { ICollection, ILinkNode, INode } from "@components/types/INode";
 import DoneIcon from "@mui/icons-material/Done";
 import {
   Box,
@@ -32,7 +32,7 @@ import {
   recordLogs,
   saveNewChangeLog,
   updateInheritance,
-} from " @components/lib/utils/helpers";
+} from "@components/lib/utils/helpers";
 import {
   collection,
   doc,
@@ -40,7 +40,7 @@ import {
   getFirestore,
   updateDoc,
 } from "firebase/firestore";
-import { NODES } from " @components/lib/firestoreClient/collections";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import {
   DragDropContext,
   Draggable,
@@ -108,6 +108,7 @@ const CollectionStructure = ({
   setRemovedElements,
   setAddedElements,
   skillsFuture,
+  partsInheritance,
 }: {
   model?: boolean;
   locked: boolean;
@@ -167,6 +168,7 @@ const CollectionStructure = ({
   setRemovedElements: any;
   setAddedElements: any;
   skillsFuture: boolean;
+  partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -1175,6 +1177,12 @@ const CollectionStructure = ({
                                               }
                                               glowIds={glowIds}
                                               skillsFuture={skillsFuture}
+                                              currentImprovement={
+                                                currentImprovement
+                                              }
+                                              partsInheritance={
+                                                partsInheritance
+                                              }
                                             />
                                           )}
                                         </Draggable>

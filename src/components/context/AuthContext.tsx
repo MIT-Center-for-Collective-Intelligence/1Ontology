@@ -54,14 +54,14 @@ import {
   useReducer,
 } from "react";
 
-import { retrieveAuthenticatedUser } from " @components/lib/firestoreClient/auth";
-import authReducer, { INITIAL_STATE } from " @components/lib/reducers/auth";
+import { retrieveAuthenticatedUser } from "@components/lib/firestoreClient/auth";
+import authReducer, { INITIAL_STATE } from "@components/lib/reducers/auth";
 import {
   AuthActions,
   AuthState,
   ErrorOptions,
   UserRole,
-} from " @components/types/IAuth";
+} from "@components/types/IAuth";
 import { getFirestore } from "firebase/firestore";
 
 const AuthStateContext = createContext<AuthState | undefined>(undefined);

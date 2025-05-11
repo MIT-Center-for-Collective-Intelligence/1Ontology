@@ -1,7 +1,7 @@
 import { doc, getDoc, getFirestore, updateDoc } from "firebase/firestore";
 import React, { FC, ReactNode, useCallback, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
-import { development } from " @components/lib/CONSTANTS";
+import { development } from "@components/lib/CONSTANTS";
 
 type Props = {
   children: ReactNode;

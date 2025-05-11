@@ -1,6 +1,6 @@
-import { MESSAGES, USERS } from " @components/lib/firestoreClient/collections";
+import { MESSAGES, USERS } from "@components/lib/firestoreClient/collections";
 import CloseIcon from "@mui/icons-material/Close";
-import { TabPanel, a11yProps } from " @components/lib/utils/TabPanel";
+import { TabPanel, a11yProps } from "@components/lib/utils/TabPanel";
 
 import {
   Box,
@@ -28,11 +28,11 @@ import React, {
   useState,
 } from "react";
 import Chat from "../Chat/Chat";
-import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
+import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import TreeViewSimplified from "../OntologyComponents/TreeViewSimplified";
 import { SearchBox } from "../SearchBox/SearchBox";
-import { INode } from " @components/types/INode";
+import { INode } from "@components/types/INode";
 
 const ChatSideBar = ({
   currentVisibleNode,

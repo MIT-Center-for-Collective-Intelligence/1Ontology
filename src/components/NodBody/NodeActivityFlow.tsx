@@ -12,7 +12,7 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
-import { INode, IAlgorithm } from " @components/types/INode";
+import { INode, IAlgorithm } from "@components/types/INode";
 import AlgorithmFlowVisualizer from "./AlgorithmFlowVisualizer";
 import {
   collection,
@@ -22,9 +22,9 @@ import {
   where,
 } from "firebase/firestore";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
-import { Post } from " @components/lib/utils/Post";
-import { ALGORITHMS } from " @components/lib/firestoreClient/collections";
-import { development } from " @components/lib/CONSTANTS";
+import { Post } from "@components/lib/utils/Post";
+import { ALGORITHMS } from "@components/lib/firestoreClient/collections";
+import { development } from "@components/lib/CONSTANTS";
 
 const sampleAlgorithmsData = {
   algorithms: [

@@ -1,8 +1,9 @@
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { LoadingButton } from "@mui/lab";
-import { Box, Button, Paper, Typography } from "@mui/material";
+import { Box, Button, List, ListItem, Paper, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 
 type IProposalSliderProps = {
   proposals: any;
@@ -15,6 +16,8 @@ type IProposalSliderProps = {
   compareThisImprovement: any;
   currentIndex: number;
   setCurrentIndex: any;
+  currentVisibleNode: any;
+  nodesByTitle: any;
 };
 const ImprovementsSlider = ({
   proposals,
@@ -27,6 +30,8 @@ const ImprovementsSlider = ({
   compareThisImprovement,
   currentIndex,
   setCurrentIndex,
+  currentVisibleNode,
+  nodesByTitle,
 }: IProposalSliderProps) => {
   const [implementingProposal, setImplementingProposal] =
     useState<boolean>(false);
@@ -90,7 +95,11 @@ const ImprovementsSlider = ({
   const onHandleAcceptChange = async () => {
     try {
       setImplementingProposal(true);
-      const diffChange = await handleAcceptChange(currentImprovement);
+      const diffChange = await handleAcceptChange(
+        currentImprovement,
+        currentVisibleNode,
+        nodesByTitle,
+      );
 
       setImprovements((prev: any) => {
         prev[currentIndex].implemented = true;
@@ -104,6 +113,9 @@ const ImprovementsSlider = ({
         _prev.implemented = true;
         return _prev;
       });
+      setTimeout(() => {
+        handleNext();
+      }, 2000);
     } catch (error) {
       console.error(error);
     } finally {
@@ -151,7 +163,7 @@ const ImprovementsSlider = ({
                 zIndex: 99999,
               }}
               onClick={() => handlePrevious()}
-              disabled={proposal === null}
+              disabled={proposals.length === 1 || implementingProposal}
             >
               <ArrowBackIosNewIcon />
             </Button>
@@ -168,7 +180,7 @@ const ImprovementsSlider = ({
               }}
             >
               {(proposal?.newNode || proposal?.deleteNode) && (
-                <Box sx={{ mb: "160px" }}>
+                <Box sx={{ mb: "16px" }}>
                   {proposal?.newNode ? (
                     <Typography>
                       This proposal adds a new node titled:
@@ -182,7 +194,6 @@ const ImprovementsSlider = ({
                     sx={{
                       fontWeight: "bold",
                       color: "orange",
-                      my: "13px",
                       fontSize: "17px",
                     }}
                   >
@@ -191,8 +202,24 @@ const ImprovementsSlider = ({
                   <Typography sx={{ mt: "15px" }}>Reasoning:</Typography>
                   <Typography>{proposal.reasoning}</Typography>
                 </Box>
+              )}{" "}
+              {Object.values(proposal.addedNonExistentElements || {}).length >
+                0 && (
+                <Typography sx={{ color: "orange" }}>
+                  {`The nodes below don't exist in the ontology yet. By
+                  accepting this proposal, the new nodes will be created under unclassified:`}
+                </Typography>
               )}
-
+              {Object.values(proposal.addedNonExistentElements || {}).length >
+                0 && (
+                <ul style={{ marginBottom: "25px" }}>
+                  {Object.values(proposal.addedNonExistentElements)
+                    .flatMap((c) => c)
+                    .map((node: any) => (
+                      <li key={node.id}>{node.title}</li>
+                    ))}
+                </ul>
+              )}
               {!proposal?.newNode &&
                 !proposal.deleteNode &&
                 proposal?.change?.modified_property && (
@@ -222,6 +249,35 @@ const ImprovementsSlider = ({
                       {" "}
                       {proposal.change.reasoning}
                     </Typography>
+                    {(proposal.detailsOfChange.addedNonExistentElements.length >
+                      0 ||
+                      Object.keys(
+                        proposal.detailsOfChange.addedNonExistentElements,
+                      ).length > 0) && (
+                      <Typography>
+                        {`The nodes below don't exist in the ontology yet. By
+                        accepting this proposal, the new nodes will be created under unclassified:`}
+                      </Typography>
+                    )}
+                    {(proposal.detailsOfChange.addedNonExistentElements.length >
+                      0 ||
+                      Object.keys(proposal.addedNonExistentElements || {})
+                        .length > 0) && (
+                      <ul style={{ marginBottom: "35px" }}>
+                        {Array.isArray(
+                          proposal.detailsOfChange.addedNonExistentElements,
+                        ) &&
+                          proposal.detailsOfChange.addedNonExistentElements.map(
+                            (item: string, index: number) => (
+                              <li key={item}>
+                                <Typography key={index} variant="body1">
+                                  {item}
+                                </Typography>{" "}
+                              </li>
+                            ),
+                          )}
+                      </ul>
+                    )}
                     {/*      {(
                     currentImprovement.modifiedProperties[p]
                       ?.addedNonExistentElements || []
@@ -250,7 +306,6 @@ const ImprovementsSlider = ({
                   )} */}
                   </Box>
                 )}
-
               <Typography
                 sx={{
                   position: "absolute",
@@ -263,7 +318,7 @@ const ImprovementsSlider = ({
                 }}
               >
                 {index + 1}/{proposals.length}
-                {currentImprovement.implemented && (
+                {!!currentImprovement?.implemented && (
                   <Typography
                     sx={{
                       fontWeight: "bold",
@@ -286,7 +341,7 @@ const ImprovementsSlider = ({
                 borderBottomRightRadius: "0px",
               }}
               onClick={() => handleNext()}
-              // disabled={currentImprovement === null}
+              disabled={proposals.length === 1 || implementingProposal}
             >
               <ArrowForwardIosIcon />
             </Button>
@@ -326,21 +381,6 @@ const ImprovementsSlider = ({
             {" "}
             Implement Improvement
           </LoadingButton>
-          {/* <Button
-            onClick={onHandleAcceptChange}
-            autoFocus
-            variant="contained"
-            sx={{
-              ml: "auto",
-              color: "white",
-              backgroundColor: "#115f07",
-              ":hover": {
-                backgroundColor: "green",
-              },
-            }}
-          >
-            Implement Improvement
-          </Button> */}
         </Box>
       )}
     </Box>

@@ -14,7 +14,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Box, Paper, CircularProgress, useTheme } from "@mui/material";
-import { IAlgorithm } from " @components/types/INode";
+import { IAlgorithm } from "@components/types/INode";
 
 // Import custom components
 import {

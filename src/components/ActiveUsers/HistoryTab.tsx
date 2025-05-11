@@ -9,8 +9,8 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { NodeChange } from " @components/types/INode";
-import { NODES_LOGS } from " @components/lib/firestoreClient/collections";
+import { NodeChange } from "@components/types/INode";
+import { NODES_LOGS } from "@components/lib/firestoreClient/collections";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 import ActivityDetails from "./ActivityDetails";
 

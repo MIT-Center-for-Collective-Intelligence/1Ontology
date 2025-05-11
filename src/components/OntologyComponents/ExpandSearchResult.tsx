@@ -11,7 +11,7 @@ import AddIcon from "@mui/icons-material/Add";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LockIcon from "@mui/icons-material/Lock";
-import { INode } from " @components/types/INode";
+import { INode } from "@components/types/INode";
 import InsertLinkIcon from "@mui/icons-material/InsertLink";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 

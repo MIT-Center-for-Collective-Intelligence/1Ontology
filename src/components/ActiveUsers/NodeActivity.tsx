@@ -18,10 +18,10 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { INode, NodeChange } from " @components/types/INode";
-import { NODES_LOGS } from " @components/lib/firestoreClient/collections";
+import { INode, NodeChange } from "@components/types/INode";
+import { NODES_LOGS } from "@components/lib/firestoreClient/collections";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
-import { SCROLL_BAR_STYLE } from " @components/lib/CONSTANTS";
+import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import ActivityDetails from "./ActivityDetails";
 
@@ -97,7 +97,7 @@ const NodeActivity = ({
       </Box>
     );
   }
-  console.log("logs ==>", logs);
+
   return (
     <Box sx={{ height: "90vh", overflow: "auto", ...SCROLL_BAR_STYLE }}>
       {Object.keys(logs).length <= 0 && (

@@ -39,8 +39,12 @@ if (!admin.apps.filter((a: any) => a.name === "[DEFAULT]").length) {
 
   app = initializeApp(initializationConfigs);
   getFirestore().settings({ ignoreUndefinedProperties: true });
+} else {
+  app = admin.app();
 }
+
+const dbCausal = getFirestore(app as any, "causal-diagram");
 export const MAX_TRANSACTION_WRITES = 499;
 const db = getFirestore();
 
-export { admin, db, app };
+export { admin, db, app, dbCausal };

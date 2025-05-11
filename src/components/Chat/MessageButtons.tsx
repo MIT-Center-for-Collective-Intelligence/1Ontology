@@ -1,5 +1,5 @@
-import { DESIGN_SYSTEM_COLORS } from " @components/lib/theme/colors";
-import { IChatMessage } from " @components/types/IChat";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
+import { IChatMessage } from "@components/types/IChat";
 import AddReactionIcon from "@mui/icons-material/AddReaction";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -32,7 +32,7 @@ export const MessageButtons = ({
   makeMessageUnread,
   boxRef,
 }: CommentButtonProps) => {
-  const isSender = user.uname === message.sender;
+  const isSender = user?.uname === message.sender;
 
   return (
     <Box

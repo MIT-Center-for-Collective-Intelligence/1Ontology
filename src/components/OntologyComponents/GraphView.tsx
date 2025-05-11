@@ -70,7 +70,7 @@ The `DAGGraph` component is a powerful tool for visualizing hierarchical data st
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import dagreD3 from "dagre-d3";
-import { TreeVisual } from " @components/types/INode";
+import { TreeVisual } from "@components/types/INode";
 
 type IDagGraphProps = {
   treeVisualization: TreeVisual;

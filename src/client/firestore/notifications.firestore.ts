@@ -1,4 +1,4 @@
-import { IChatMessage } from " @components/types/IChat";
+import { IChatMessage } from "@components/types/IChat";
 import {
   collection,
   Firestore,

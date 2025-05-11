@@ -12,10 +12,10 @@ import {
 import React, { useCallback, useMemo, useState } from "react";
 import { DESIGN_SYSTEM_COLORS } from "../theme/colors";
 import { MODELS_OPTIONS } from "../utils/copilotPrompts";
-import CopilotPrompt from " @components/components/CopilotPrompt/CopilotPrompt";
-import { useAuth } from " @components/components/context/AuthContext";
+import CopilotPrompt from "@components/components/CopilotPrompt/CopilotPrompt";
+import { useAuth } from "@components/components/context/AuthContext";
 import { PROPERTIES_TO_IMPROVE } from "../CONSTANTS";
-import { INode } from " @components/types/INode";
+import { INode } from "@components/types/INode";
 import { getNodesInThreeLevels } from "../utils/helpersCopilot";
 
 const useSelectDropdown = () => {
@@ -25,12 +25,15 @@ const useSelectDropdown = () => {
   const [selectedOption, setSelectedOption] = useState<{
     id: string;
     title: string;
-  }>({ id: "o3", title: "O1" });
+  }>({
+    id: "gemini-2.5-pro-exp-03-25",
+    title: "Gemini-2.5 PRO EXP 03-25",
+  });
   const [inputValue, setInputValue] = useState<string>("");
   const [numberValue, setNumberValue] = useState<number>(12);
   const [nodeTitle, setNodeTitle] = useState("");
   const [generateNewNodes, setGenerateNewNodes] = useState(true);
-  const [proposeDeleteNode, setProposeDeleteNodes] = useState(true);
+  const [proposeDeleteNode, setProposeDeleteNodes] = useState(false);
   const [nodeType, setNodeType] = useState<string>("");
   const [selectedProperties, setSelectedProperties] = useState<Set<string>>(
     new Set(),
@@ -60,14 +63,20 @@ const useSelectDropdown = () => {
       setNodes(nodes);
       setSelectedProperties(
         new Set([
-          ...PROPERTIES_TO_IMPROVE.allTypes,
-          ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+          "title",
+          "description",
+          "specializations",
+          "generalizations",
+          "parts",
         ]),
       );
       setInputProperties(
         new Set([
-          ...PROPERTIES_TO_IMPROVE.allTypes,
-          ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+          "title",
+          "description",
+          "specializations",
+          "generalizations",
+          "parts",
         ]),
       );
       const savedInputValue = localStorage.getItem(`user-copilot-message`);

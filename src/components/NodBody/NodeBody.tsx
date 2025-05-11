@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
 import { Box, Button, Typography, useTheme } from "@mui/material";
-import { ICollection, INode } from " @components/types/INode";
+import { ICollection, INode } from "@components/types/INode";
 import Text from "../OntologyComponents/Text";
 import {
   collection,
@@ -9,10 +9,10 @@ import {
   updateDoc,
   writeBatch,
 } from "firebase/firestore";
-import { NODES } from " @components/lib/firestoreClient/collections";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
-import { DISPLAY, PROPERTIES_ORDER } from " @components/lib/CONSTANTS";
-import { recordLogs } from " @components/lib/utils/helpers";
+import { DISPLAY, PROPERTIES_ORDER } from "@components/lib/CONSTANTS";
+import { recordLogs } from "@components/lib/utils/helpers";
 import AddPropertyForm from "../AddPropertyForm/AddPropertyForm";
 import { useAuth } from "../context/AuthContext";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";

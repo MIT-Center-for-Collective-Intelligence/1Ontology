@@ -6,10 +6,10 @@ import {
   CircularProgress,
   Box,
 } from "@mui/material";
-import { Post } from " @components/lib/utils/Post";
-import { TreeData } from " @components/types/INode";
+import { Post } from "@components/lib/utils/Post";
+import { TreeData } from "@components/types/INode";
 import { TreeApi } from "react-arborist";
-import { capitalizeFirstLetter } from " @components/lib/utils/string.utils";
+import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
 
 const WordNet: React.FC = () => {
   const [query, setQuery] = useState<string>("");
