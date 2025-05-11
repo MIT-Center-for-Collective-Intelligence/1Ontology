@@ -63,6 +63,7 @@ function DraggableTree({
   const [treeData, setTreeData] = useState<TreeData[]>([]);
   const [editEnabled, setEditEnabled] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
+  const treeRef = useRef<TreeApi<TreeData>>(null);
 
   const isNodeVisible = (nodeId: string): boolean => {
     const element = document.getElementById(nodeId);
@@ -358,6 +359,13 @@ function DraggableTree({
       console.error(error);
     }
   };
+  const handleExpandAll = () => {
+    treeRef.current?.openAll();
+  };
+
+  const handleCollapseAll = () => {
+    treeRef.current?.closeAll();
+  };
 
   function Node({ node, style, dragHandle }: NodeRendererProps<TreeData>) {
     const indentSize = Number.parseFloat(`${style.paddingLeft || 0}`);
@@ -384,7 +392,14 @@ function DraggableTree({
           })}
         </Box>
         <FolderArrow node={node} />
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "calc(100% - 20px)" }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            width: "calc(100% - 20px)",
+          }}
+        >
           <span
             className={clsx(styles.text, {
               [styles.categoryText]: node.data.category,
@@ -424,17 +439,26 @@ function DraggableTree({
 
   return (
     <Box className={styles.container}>
+      <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
+        <Button variant="outlined" size="small" onClick={handleExpandAll}>
+          Expand All
+        </Button>
+        <Button variant="outlined" size="small" onClick={handleCollapseAll}>
+          Collapse All
+        </Button>
+      </Box>
       <Box className={styles.split}>
         <Box className={styles.treeContainer}>
           <FillFlexParent>
             {(dimens) => (
               <Tree
                 {...dimens}
+                ref={treeRef}
                 data={treeData}
                 onMove={handleMove}
                 selectionFollowsFocus={followsFocus}
                 disableMultiSelection={disableMulti}
-                ref={(t) => setTree(t)}
+                // ref={(t) => setTree(t)}   ref={treeRef}
                 openByDefault={false}
                 searchTerm={searchTerm}
                 className={styles.tree}

@@ -166,7 +166,7 @@ type INodeProps = {
   setSelectedCollection: any;
   selectedCollection: string;
   skillsFuture: boolean;
-  partsInheritance: { [nodeId: string]: string };
+  partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
 };
 
 const Node = ({

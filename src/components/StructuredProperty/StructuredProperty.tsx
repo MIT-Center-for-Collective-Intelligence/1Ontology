@@ -27,6 +27,7 @@ import SelectModelModal from "../Models/SelectModel";
 import { LoadingButton } from "@mui/lab";
 import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
+import CommentsSection from "./CommentsSection";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
@@ -78,7 +79,7 @@ type IStructuredPropertyProps = {
   setGlowIds: any;
   selectedCollection: any;
   skillsFuture: boolean;
-  partsInheritance?: { [nodeId: string]: string };
+  partsInheritance?: { [nodeId: string]: { title: string; fullPart: boolean } };
 };
 
 const StructuredProperty = ({
@@ -708,32 +709,13 @@ const StructuredProperty = ({
             skillsFuture={skillsFuture}
           />
         )}
-      {handleCloseAddLinksModel &&
-        onGetPropertyValue(property, true).trim() && (
-          <Box sx={{ p: "16px", mt: "auto" }}>
-            <Typography
-              sx={{ mb: "4px", fontWeight: "bold", fontSize: "17px" }}
-            >
-              Comments:
-            </Typography>
-
-            <MarkdownRender text={onGetPropertyValue(property, true)} />
-
-            {/* <Text
-              text={onGetPropertyValue(property, true)}
-              currentVisibleNode={currentVisibleNode}
-              property={property}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              nodes={nodes}
-              locked={locked}
-              selectedDiffNode={selectedDiffNode}
-              getTitleNode={() => {}}
-              confirmIt={confirmIt}
-              structured={true}
-              currentImprovement={currentImprovement}
-            /> */}
-          </Box>
-        )}
+      {selectedProperty !== property && (
+        <CommentsSection
+          handleCloseAddLinksModel={handleCloseAddLinksModel}
+          property={property}
+          onGetPropertyValue={onGetPropertyValue}
+        />
+      )}
       {(property === "generalizations" ||
         property === "specializations" ||
         property === "isPartOf" ||

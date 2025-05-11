@@ -1154,6 +1154,7 @@ const ToolbarSidebar = ({
             displayDiff={displayDiff}
             skillsFutureApp={skillsFutureApp}
             skillsFuture={skillsFuture}
+            nodesByTitle={nodesByTitle}
           />
         );
       case "history":
@@ -1378,6 +1379,10 @@ const ToolbarSidebar = ({
               <Tooltip title={`Close ${getHeaderTitle || "Sidebar"}`}>
                 <IconButton
                   onClick={() => {
+                    setActiveSidebar(null);
+                    setOpenLogsFor(null);
+                    setCurrentImprovement(null);
+                    setSelectedDiffNode(null);
                     if (previousNodeId) {
                       // Checks if the node is deleted (null or undefined)
                       if (nodes[currentVisibleNode?.id] == null) {
@@ -1387,10 +1392,6 @@ const ToolbarSidebar = ({
                       }
                       setPreviousNodeId("");
                     }
-                    setActiveSidebar(null);
-                    setOpenLogsFor(null);
-                    setCurrentImprovement(null);
-                    setSelectedDiffNode(null);
                   }}
                   sx={{
                     ml: "auto",

@@ -289,6 +289,32 @@ const Text = ({
     }
   };
 
+  const backgroundColor = useMemo(() => {
+    if (
+      (selectedDiffNode?.changeType === "delete node" ||
+        !!currentImprovement?.deleteNode) &&
+      property === "title"
+    ) {
+      return "red";
+    }
+
+    if (
+      (selectedDiffNode?.changeType === "add node" ||
+        !!currentImprovement?.newNode) &&
+      property === "title"
+    ) {
+      return theme.palette.mode === "dark" ? "green" : "#4ccf37";
+    }
+
+    return theme.palette.mode === "dark" ? "#242425" : "#d0d5dd";
+  }, [
+    selectedDiffNode?.changeType,
+    currentImprovement?.deleteNode,
+    currentImprovement?.newNode,
+    property,
+    theme.palette.mode,
+  ]);
+
   return (
     <Paper
       id={`property-${property}`}
@@ -307,20 +333,7 @@ const Text = ({
             display: "flex",
             alignItems: "center",
             textAlign: "center",
-            background: (theme: any) =>
-              (selectedDiffNode?.changeType === "delete node" ||
-                !!currentImprovement?.deleteNode) &&
-              property === "title"
-                ? "red"
-                : (selectedDiffNode?.changeType === "add node" ||
-                      !!currentImprovement?.newNode) &&
-                    property === "title"
-                  ? theme.palette.mode === "dark"
-                    ? "green"
-                    : "#4ccf37"
-                  : theme.palette.mode === "dark"
-                    ? "#242425"
-                    : "#d0d5dd",
+            background: backgroundColor,
             p: 3,
             pb: 1.5,
             borderTopRightRadius: property !== "title" ? "18px" : "",
