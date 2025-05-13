@@ -19,6 +19,12 @@ import { NODES } from "@components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
 import { FillFlexParent } from "./fill-flex-parent";
 
+interface INodePath {
+  id: string;
+  title: string;
+  category?: boolean;
+}
+
 const INDENT_STEP = 15;
 
 function DraggableTree({
@@ -63,7 +69,52 @@ function DraggableTree({
   const [treeData, setTreeData] = useState<TreeData[]>([]);
   const [editEnabled, setEditEnabled] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
-  const treeRef = useRef<TreeApi<TreeData>>(null);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [treeCheckAttempts, setTreeCheckAttempts] = useState(0);
+  const MAX_TREE_CHECK_ATTEMPTS = 20;
+  const treeRef = useRef<TreeApi<TreeData> | null>(null) as React.MutableRefObject<TreeApi<TreeData> | null>;
+
+  useEffect(() => {
+    if (!tree && currentVisibleNode?.id) {
+      setPendingNavigation(currentVisibleNode.id);
+      setTreeCheckAttempts(0);
+      return;
+    }
+
+    if (tree && currentVisibleNode?.id) {
+      const timeout = setTimeout(() => {
+        if (!eachOntologyPath[currentVisibleNode.id]) {
+          return;
+        }
+        expandNodeById(currentVisibleNode.id);
+        setFirstLoad(false);
+        setPendingNavigation(null);
+      }, 500);
+
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+  }, [tree, currentVisibleNode?.id, eachOntologyPath]);
+
+  useEffect(() => {
+    if (pendingNavigation && treeCheckAttempts < MAX_TREE_CHECK_ATTEMPTS) {
+      const timeout = setTimeout(() => {
+        if (tree) {
+          if (eachOntologyPath[pendingNavigation]) {
+            expandNodeById(pendingNavigation);
+            setPendingNavigation(null);
+          }
+        } else {
+          setTreeCheckAttempts(prev => prev + 1);
+        }
+      }, 500);
+
+      return () => clearTimeout(timeout);
+    } else if (pendingNavigation && treeCheckAttempts >= MAX_TREE_CHECK_ATTEMPTS) {
+      setPendingNavigation(null);
+    }
+  }, [tree, pendingNavigation, treeCheckAttempts, eachOntologyPath]);
 
   const isNodeVisible = (nodeId: string): boolean => {
     const element = document.getElementById(nodeId);
@@ -75,34 +126,432 @@ function DraggableTree({
 
     return rect.top >= 0 && rect.bottom <= viewportHeight;
   };
-  const expandNodeById = async (nodeId: string) => {
-    if (!tree || !nodeId) return;
 
-    //  Expand all parent nodes
-    let currentNode = tree.get(nodeId);
-    if (currentNode) {
-      let parentNode = currentNode.parent;
-      while (parentNode) {
-        parentNode.open();
-        parentNode = parentNode.parent;
+  // Finds a node by ID using direct match, ID inclusion, or name matching
+  const findNodeById = (nodeId: string): NodeApi<TreeData> | undefined => {
+    if (!tree) return undefined;
+
+    const visibleNodes = Object.values(tree.visibleNodes || {});
+
+    let node = visibleNodes.find(n => n.data.nodeId === nodeId);
+    if (node) return node;
+
+    node = visibleNodes.find(n => n.id.includes(nodeId));
+    if (node) return node;
+
+    if (nodes && nodes[nodeId]) {
+      const nodeName = nodes[nodeId].title;
+      node = visibleNodes.find(n => n.data.name === nodeName);
+      if (node) return node;
+    }
+
+    return undefined;
+  };
+
+  // Smooth scrolls an element into view with animation
+  const smoothScrollToElement = (elementId: string) => {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    const treeContainer = document.querySelector('.tree-container');
+    if (!treeContainer) return;
+
+    const containerRect = treeContainer.getBoundingClientRect();
+    const elementRect = element.getBoundingClientRect();
+
+    const targetScrollTop = treeContainer.scrollTop +
+      (elementRect.top - containerRect.top) -
+      (containerRect.height / 2) +
+      (elementRect.height / 2);
+
+    const startScrollTop = treeContainer.scrollTop;
+    const distance = targetScrollTop - startScrollTop;
+
+    const duration = 500;
+    const startTime = performance.now();
+
+    const easeInOutCubic = (t: number): number => {
+      return t < 0.5
+        ? 4 * t * t * t
+        : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    };
+
+    const animateScroll = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easedProgress = easeInOutCubic(progress);
+
+      treeContainer.scrollTop = startScrollTop + distance * easedProgress;
+
+      if (progress < 1) {
+        requestAnimationFrame(animateScroll);
+      }
+    };
+
+    requestAnimationFrame(animateScroll);
+  };
+
+  // Navigates to a node by expanding its path and handling generalizations
+  const navigateToFoundNode = async (targetNode: NodeApi<TreeData>): Promise<boolean> => {
+    let parent = targetNode.parent;
+    const parentsToOpen: NodeApi<TreeData>[] = [];
+
+    while (parent) {
+      parentsToOpen.push(parent);
+      parent = parent.parent;
+    }
+
+    for (let i = parentsToOpen.length - 1; i >= 0; i--) {
+      parentsToOpen[i].open();
+      await new Promise(resolve => setTimeout(resolve, 30));
+    }
+
+    if (targetNode.isInternal) {
+      targetNode.open();
+    }
+
+    if (nodes && targetNode.data.nodeId && nodes[targetNode.data.nodeId]) {
+      const nodeData = nodes[targetNode.data.nodeId];
+
+      if (nodeData.generalizations && nodeData.generalizations.length > 0) {
+        const generalizationIds: string[] = [];
+        nodeData.generalizations.forEach((collection: ICollection) => {
+          collection.nodes.forEach((genNode: { id: string }) => {
+            generalizationIds.push(genNode.id);
+          });
+        });
+
+        for (const genId of generalizationIds) {
+          await expandGeneralizationPath(genId, targetNode.data.nodeId);
+        }
       }
     }
 
-    if (!isNodeVisible(nodeId)) {
-      await tree.scrollTo(nodeId);
-    }
+    tree!.scrollTo(targetNode.id);
+    await new Promise(resolve => setTimeout(resolve, 50));
+    smoothScrollToElement(targetNode.id);
 
     setTimeout(() => {
-      const targetNode = tree.get(nodeId);
-      if (targetNode) {
-        targetNode.select();
-        /*const element = document.getElementById(nodeId);
-        element?.scrollIntoView({ behavior: "smooth", block: "center" }); */
+      targetNode.select();
+    }, 250);
+
+    return true;
+  };
+
+  // Expands path to a generalization node, traversing ontology path if needed
+  const expandGeneralizationPath = async (generalizationId: string, childNodeId: string): Promise<boolean> => {
+    if (!tree) return false;
+
+    const genNode = findNodeById(generalizationId);
+
+    if (genNode) {
+      let parent = genNode.parent;
+      const parentsToOpen: NodeApi<TreeData>[] = [];
+
+      while (parent) {
+        parentsToOpen.push(parent);
+        parent = parent.parent;
       }
-    }, 500);
+
+      for (let i = parentsToOpen.length - 1; i >= 0; i--) {
+        parentsToOpen[i].open();
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      genNode.open();
+      return true;
+    } else if (eachOntologyPath && eachOntologyPath[generalizationId]) {
+      const path = eachOntologyPath[generalizationId];
+      const rootSegment = path[0];
+      const rootId = rootSegment.id.split("-")[0];
+
+      const visibleNodes = Object.values(tree.visibleNodes || {});
+      const rootNodes = visibleNodes.filter(n => !n.parent || n.parent.id === "root");
+
+      let rootNode = rootNodes.find(n => n.id.includes(rootId) || n.data.nodeId === rootId);
+
+      if (!rootNode) {
+        for (const node of rootNodes) {
+          node.open();
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        const updatedNodes = Object.values(tree.visibleNodes || {});
+        rootNode = updatedNodes.find(n => n.id.includes(rootId) || n.data.nodeId === rootId);
+
+        if (!rootNode) {
+          return false;
+        }
+      }
+
+      rootNode.open();
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      let currentNode: NodeApi<TreeData> = rootNode;
+
+      for (let i = 1; i < path.length; i++) {
+        if (path[i].category) continue;
+
+        const segment = path[i];
+        const childNodes = currentNode.children || [];
+        let childNode = childNodes.find(n =>
+          n.data.nodeId === segment.id ||
+          n.id.includes(segment.id) ||
+          n.data.name === segment.title
+        );
+
+        if (!childNode) {
+          currentNode.open();
+          await new Promise(resolve => setTimeout(resolve, 150));
+
+          const updatedNodes = Object.values(tree.visibleNodes || {});
+          childNode = updatedNodes.find(n =>
+            n.data.nodeId === segment.id ||
+            n.id.includes(segment.id) ||
+            n.data.name === segment.title
+          );
+
+          if (!childNode) continue;
+        }
+
+        currentNode = childNode;
+        currentNode.open();
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+
+      return true;
+    }
+
+    return false;
+  };
+
+  // Smart node search with iterative expansion and early exit
+  const iterativeSearchAndExpand = async (targetNodeId: string): Promise<boolean> => {
+    if (!tree) return false;
+
+    let visibleNodes = Object.values(tree.visibleNodes || {});
+    let targetNode = findNodeById(targetNodeId);
+
+    if (targetNode) {
+      return await navigateToFoundNode(targetNode);
+    }
+
+    const nodesToExpand: NodeApi<TreeData>[] = visibleNodes.filter(n => n.isInternal && !n.isOpen);
+    const targetName = nodes && nodes[targetNodeId] ? nodes[targetNodeId].title : null;
+
+    const MAX_ITERATIONS = 3;
+    let iterations = 0;
+
+    while (nodesToExpand.length > 0 && iterations < MAX_ITERATIONS) {
+      iterations++;
+
+      const batch = nodesToExpand.splice(0, 5);
+
+      for (const node of batch) {
+        if (targetName && node.data.name.includes(targetName.split(' ')[0])) {
+          node.open();
+        } else {
+          node.open();
+        }
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      targetNode = findNodeById(targetNodeId);
+
+      if (targetNode) {
+        return await navigateToFoundNode(targetNode);
+      }
+
+      visibleNodes = Object.values(tree.visibleNodes || {});
+      const newNodesToExpand = visibleNodes.filter(n => n.isInternal && !n.isOpen);
+
+      for (const node of newNodesToExpand) {
+        if (!nodesToExpand.includes(node)) {
+          nodesToExpand.push(node);
+        }
+      }
+    }
+
+    tree.openAll();
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    targetNode = findNodeById(targetNodeId);
+
+    if (targetNode) {
+      tree.closeAll();
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return await navigateToFoundNode(targetNode);
+    }
+
+    return false;
+  };
+
+  // Navigates tree following a path to reach target node
+  const navigateByPath = async (path: INodePath[], targetNodeId: string): Promise<boolean> => {
+    if (!tree) return false;
+
+    const rootSegment = path[0];
+    const rootId = rootSegment.id.split("-")[0];
+
+    const visibleNodes = Object.values(tree.visibleNodes || {});
+    const rootNodes = visibleNodes.filter(n => !n.parent || n.parent.id === "root");
+
+    let rootNode = rootNodes.find(n => n.id.includes(rootId) || n.data.nodeId === rootId);
+
+    if (!rootNode) {
+      for (const node of rootNodes) {
+        node.open();
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      const updatedNodes = Object.values(tree.visibleNodes || {});
+      rootNode = updatedNodes.find(n => n.id.includes(rootId) || n.data.nodeId === rootId);
+
+      if (!rootNode) {
+        return false;
+      }
+    }
+
+    rootNode.open();
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    let currentNode: NodeApi<TreeData> = rootNode;
+
+    for (let i = 1; i < path.length; i++) {
+      if (path[i].category) continue;
+
+      const segment = path[i];
+      const childNodes = currentNode.children || [];
+      let childNode = childNodes.find(n =>
+        n.data.nodeId === segment.id ||
+        n.id.includes(segment.id) ||
+        n.data.name === segment.title
+      );
+
+      if (!childNode) {
+        currentNode.open();
+        await new Promise(resolve => setTimeout(resolve, 150));
+
+        const updatedNodes = Object.values(tree.visibleNodes || {});
+        childNode = updatedNodes.find(n =>
+          n.data.nodeId === segment.id ||
+          n.id.includes(segment.id) ||
+          n.data.name === segment.title
+        );
+
+        if (!childNode) continue;
+      }
+
+      currentNode = childNode;
+      currentNode.open();
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+
+    const targetNode = currentNode.data.nodeId === targetNodeId ?
+      currentNode :
+      findNodeById(targetNodeId);
+
+    if (targetNode) {
+      if (nodes && nodes[targetNodeId]) {
+        const nodeData = nodes[targetNodeId];
+
+        if (nodeData.generalizations && nodeData.generalizations.length > 0) {
+          const generalizationIds: string[] = [];
+          nodeData.generalizations.forEach((collection: ICollection) => {
+            collection.nodes.forEach((genNode: { id: string }) => {
+              generalizationIds.push(genNode.id);
+            });
+          });
+
+          for (const genId of generalizationIds) {
+            if (path.some(p => p.id === genId)) continue;
+            await expandGeneralizationPath(genId, targetNodeId);
+          }
+        }
+      }
+
+      if (targetNode.isInternal) {
+        targetNode.open();
+      }
+
+      tree.scrollTo(targetNode.id);
+      await new Promise(resolve => setTimeout(resolve, 50));
+      smoothScrollToElement(targetNode.id);
+
+      setTimeout(() => {
+        if (targetNode) {
+          targetNode.select();
+          const element = document.getElementById(targetNode.id);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }
+      }, 200);
+
+      return true;
+    }
+
+    return false;
+  };
+
+  // Expands node by ID using path navigation or iterative search
+  const expandNodeById = async (nodeId: string): Promise<boolean> => {
+    if (!tree || !nodeId) {
+      if (tree && nodeId) {
+        setPendingNavigation(nodeId);
+      }
+      return false;
+    }
+
+    try {
+      if (eachOntologyPath && eachOntologyPath[nodeId]) {
+        const path = eachOntologyPath[nodeId];
+        return await navigateByPath(path, nodeId);
+      } else {
+        const visibleNodes = Object.values(tree.visibleNodes || {});
+        let targetNode = visibleNodes.find(n => n.data.nodeId === nodeId);
+
+        if (targetNode) {
+          return await navigateToFoundNode(targetNode);
+        } else if (nodes && nodes[nodeId]) {
+          const nodeName = nodes[nodeId].title;
+          targetNode = visibleNodes.find(n => n.data.name === nodeName);
+
+          if (targetNode) {
+            return await navigateToFoundNode(targetNode);
+          }
+        }
+
+        const rootNodes = Object.values(tree.visibleNodes).filter(n => !n.parent || n.parent.id === "root");
+
+        for (const rootNode of rootNodes) {
+          rootNode.open();
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        targetNode = findNodeById(nodeId);
+
+        if (targetNode) {
+          return await navigateToFoundNode(targetNode);
+        }
+
+        return await iterativeSearchAndExpand(nodeId);
+      }
+    } catch (error) {
+      return false;
+    }
   };
 
   useEffect(() => {
+    if (!tree && currentVisibleNode?.id) {
+      setPendingNavigation(currentVisibleNode.id);
+      return;
+    }
+
     if (tree && currentVisibleNode?.id) {
       // Wait for the tree to initialize its nodes before scrolling
       const timeout = setTimeout(() => {
@@ -111,20 +560,29 @@ function DraggableTree({
         if (!eachOntologyPath[currentVisibleNode.id]) {
           return;
         }
-        const rootId =
-          eachOntologyPath[currentVisibleNode.id][0].id.split("-")[0];
-
-        const path = eachOntologyPath[currentVisibleNode.id]
-          .filter((p: any) => !p.category)
-          .map((c: { id: string }) => c.id)
-          .join("-");
-        expandNodeById(skillsFuture ? `${path}` : `${rootId}-${path}`);
+        expandNodeById(currentVisibleNode.id);
         setFirstLoad(false);
+        setPendingNavigation(null);
       }, 500);
+
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+  }, [tree, currentVisibleNode?.id, eachOntologyPath]);
+
+  useEffect(() => {
+    if (tree && pendingNavigation) {
+      const timeout = setTimeout(() => {
+        if (eachOntologyPath[pendingNavigation]) {
+          expandNodeById(pendingNavigation);
+          setPendingNavigation(null);
+        }
+      }, 800);
 
       return () => clearTimeout(timeout);
     }
-  }, [tree, currentVisibleNode?.id]);
+  }, [tree, pendingNavigation, eachOntologyPath]);
 
   useEffect(() => {
     if (tree && treeData.length > 0 && firstLoad) {
@@ -134,9 +592,15 @@ function DraggableTree({
         rootNode.open();
       }
 
+      if (currentVisibleNode?.id) {
+        setTimeout(() => {
+          expandNodeById(currentVisibleNode.id);
+        }, 1000);
+      }
+
       setFirstLoad(false);
     }
-  }, [tree, treeData, firstLoad]);
+  }, [tree, treeData, firstLoad, currentVisibleNode?.id]);
 
   useEffect(() => {
     setCount(tree?.visibleNodes.length ?? 0);
@@ -382,7 +846,7 @@ function DraggableTree({
           backgroundColor:
             node.data.nodeId === currentVisibleNode?.id && !node.data.category
               ? (theme) =>
-                  theme.palette.mode === "dark" ? "#26631c" : "#4ccf37"
+                theme.palette.mode === "dark" ? "#26631c" : "#4ccf37"
               : "",
         }}
       >
@@ -453,7 +917,12 @@ function DraggableTree({
             {(dimens) => (
               <Tree
                 {...dimens}
-                ref={treeRef}
+                ref={(t) => {
+                  treeRef.current = t || null;
+                  if (t && setTree) {
+                    setTree(t);
+                  }
+                }}
                 data={treeData}
                 onMove={handleMove}
                 selectionFollowsFocus={followsFocus}
@@ -576,6 +1045,7 @@ function FolderArrow({ node }: { node: NodeApi<TreeData> }) {
     </span>
   );
 }
+
 function findNode(data: TreeData[], id: string): TreeData | null {
   for (const node of data) {
     if (node.id === id) return node;

@@ -973,17 +973,19 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
         navigateToNode(node.id);
 
-        setTimeout(() => {
-          const elements = document.getElementsByClassName("node-" + node?.id);
-          const firstElement = elements.length > 0 ? elements[0] : null;
+        /* Commented out the scrollIntoView logic for now - it is handled in the DraggableTree component */
 
-          if (firstElement) {
-            firstElement.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            });
-          }
-        }, 500);
+        // setTimeout(() => {
+        //   const elements = document.getElementsByClassName("node-" + node?.id);
+        //   const firstElement = elements.length > 0 ? elements[0] : null;
+
+        //   if (firstElement) {
+        //     firstElement.scrollIntoView({
+        //       behavior: "smooth",
+        //       block: "center",
+        //     });
+        //   }
+        // }, 500);
         // initializeExpanded(eachOntologyPath[node.id]);
         // Record the click action in logs
         if (searched) {
@@ -1065,16 +1067,19 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
         .filter((p: any) => !p.category)
         .map((c: { id: string }) => c.id)
         .join("-");
-      const scrollId = `${first}-${path}`;
-      await tree?.scrollTo(scrollId);
-      setTimeout(() => {
-        const targetNode = tree?.get(scrollId);
-        if (targetNode) {
-          targetNode.select();
-          const element = document.getElementById(scrollId);
-          element?.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 500);
+
+      /* Commented out the scrollIntoView logic for now - it is handled in the DraggableTree component */
+
+      // const scrollId = `${first}-${path}`;
+      // await tree?.scrollTo(scrollId);
+      // setTimeout(() => {
+      //   const targetNode = tree?.get(scrollId);
+      //   if (targetNode) {
+      //     targetNode.select();
+      //     const element = document.getElementById(scrollId);
+      //     element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      //   }
+      // }, 500);
     },
     [eachOntologyPath],
   );
