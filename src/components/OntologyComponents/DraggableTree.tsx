@@ -143,6 +143,47 @@ function DraggableTree({
       const nodeName = nodes[nodeId].title;
       node = visibleNodes.find(n => n.data.name === nodeName);
       if (node) return node;
+
+      const partialMatches = visibleNodes.filter(n =>
+        n.data.name.includes(nodeName) || nodeName.includes(n.data.name)
+      );
+      if (partialMatches.length > 0) return partialMatches[0];
+    }
+
+    if (nodes && nodes[nodeId]) {
+      const nodeData = nodes[nodeId];
+
+      const sameTypeNodes = visibleNodes.filter(n =>
+        n.data.nodeType === nodeData.nodeType
+      );
+
+      if (sameTypeNodes.length > 0) {
+        const bestMatch = findBestTitleMatch(nodeData.title, sameTypeNodes);
+        if (bestMatch) return bestMatch;
+      }
+    }
+
+    return undefined;
+  };
+
+  // acts as a fallback for findNodeById
+  const findBestTitleMatch = (title: string, nodes: NodeApi<TreeData>[]): NodeApi<TreeData> | undefined => {
+    if (!title || nodes.length === 0) return undefined;
+
+    const cleanTitle = title.toLowerCase().trim();
+
+    const exactMatch = nodes.find(n => n.data.name.toLowerCase().trim() === cleanTitle);
+
+    if (exactMatch) return exactMatch;
+
+    const includesMatches = nodes.filter(n =>
+      n.data.name.toLowerCase().includes(cleanTitle) ||
+      cleanTitle.includes(n.data.name.toLowerCase())
+    );
+
+    if (includesMatches.length > 0) {
+      includesMatches.sort((a, b) => a.data.name.length - b.data.name.length);
+      return includesMatches[0];
     }
 
     return undefined;
@@ -153,7 +194,7 @@ function DraggableTree({
     const element = document.getElementById(elementId);
     if (!element) return;
 
-    const treeContainer = document.querySelector('.tree-container');
+    const treeContainer = document.getElementById('tree-scroll-container');
     if (!treeContainer) return;
 
     const containerRect = treeContainer.getBoundingClientRect();
@@ -167,7 +208,9 @@ function DraggableTree({
     const startScrollTop = treeContainer.scrollTop;
     const distance = targetScrollTop - startScrollTop;
 
-    const duration = 500;
+    if (Math.abs(distance) < 10) return;
+
+    const duration = 800;
     const startTime = performance.now();
 
     const easeInOutCubic = (t: number): number => {
@@ -203,8 +246,9 @@ function DraggableTree({
 
     for (let i = parentsToOpen.length - 1; i >= 0; i--) {
       parentsToOpen[i].open();
-      await new Promise(resolve => setTimeout(resolve, 30));
     }
+
+    await new Promise(resolve => setTimeout(resolve, 30));
 
     if (targetNode.isInternal) {
       targetNode.open();
@@ -222,18 +266,27 @@ function DraggableTree({
         });
 
         for (const genId of generalizationIds) {
-          await expandGeneralizationPath(genId, targetNode.data.nodeId);
+          await expandGeneralizationPath(genId, targetNode.data.nodeId!);
         }
       }
     }
 
+    // Scroll to node
     tree!.scrollTo(targetNode.id);
     await new Promise(resolve => setTimeout(resolve, 50));
     smoothScrollToElement(targetNode.id);
 
+    // Select the node
     setTimeout(() => {
       targetNode.select();
-    }, 250);
+    }, 150);
+
+    // After navigation is complete, collapse unrelated nodes
+    setTimeout(() => {
+      if (targetNode.data.nodeId) {
+        collapseUnrelatedNodes(targetNode.data.nodeId);
+      }
+    }, 500);
 
     return true;
   };
@@ -255,72 +308,48 @@ function DraggableTree({
 
       for (let i = parentsToOpen.length - 1; i >= 0; i--) {
         parentsToOpen[i].open();
-        await new Promise(resolve => setTimeout(resolve, 50));
       }
 
       genNode.open();
+
+      await new Promise(resolve => setTimeout(resolve, 20));
+
+      const childNodes = genNode.children || [];
+      const collectionNodes = childNodes.filter(n => n.data.category === true);
+
+      collectionNodes.forEach(node => node.open());
+
       return true;
     } else if (eachOntologyPath && eachOntologyPath[generalizationId]) {
       const path = eachOntologyPath[generalizationId];
+
       const rootSegment = path[0];
       const rootId = rootSegment.id.split("-")[0];
 
       const visibleNodes = Object.values(tree.visibleNodes || {});
       const rootNodes = visibleNodes.filter(n => !n.parent || n.parent.id === "root");
 
-      let rootNode = rootNodes.find(n => n.id.includes(rootId) || n.data.nodeId === rootId);
+      const rootNode = rootNodes.find(n =>
+        n.id.includes(rootId) || n.data.nodeId === rootId
+      );
 
-      if (!rootNode) {
-        for (const node of rootNodes) {
-          node.open();
-        }
+      if (rootNode) {
+        rootNode.open();
 
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 30));
 
-        const updatedNodes = Object.values(tree.visibleNodes || {});
-        rootNode = updatedNodes.find(n => n.id.includes(rootId) || n.data.nodeId === rootId);
+        const updatedGenNode = findNodeById(generalizationId);
+        if (updatedGenNode) {
+          updatedGenNode.open();
 
-        if (!rootNode) {
-          return false;
+          const childNodes = updatedGenNode.children || [];
+          const collectionNodes = childNodes.filter(n => n.data.category === true);
+
+          collectionNodes.forEach(node => node.open());
+
+          return true;
         }
       }
-
-      rootNode.open();
-      await new Promise(resolve => setTimeout(resolve, 150));
-
-      let currentNode: NodeApi<TreeData> = rootNode;
-
-      for (let i = 1; i < path.length; i++) {
-        if (path[i].category) continue;
-
-        const segment = path[i];
-        const childNodes = currentNode.children || [];
-        let childNode = childNodes.find(n =>
-          n.data.nodeId === segment.id ||
-          n.id.includes(segment.id) ||
-          n.data.name === segment.title
-        );
-
-        if (!childNode) {
-          currentNode.open();
-          await new Promise(resolve => setTimeout(resolve, 150));
-
-          const updatedNodes = Object.values(tree.visibleNodes || {});
-          childNode = updatedNodes.find(n =>
-            n.data.nodeId === segment.id ||
-            n.id.includes(segment.id) ||
-            n.data.name === segment.title
-          );
-
-          if (!childNode) continue;
-        }
-
-        currentNode = childNode;
-        currentNode.open();
-        await new Promise(resolve => setTimeout(resolve, 150));
-      }
-
-      return true;
     }
 
     return false;
@@ -392,6 +421,11 @@ function DraggableTree({
   const navigateByPath = async (path: INodePath[], targetNodeId: string): Promise<boolean> => {
     if (!tree) return false;
 
+    const directNode = findNodeById(targetNodeId);
+    if (directNode) {
+      return await navigateToFoundNode(directNode);
+    }
+
     const rootSegment = path[0];
     const rootId = rootSegment.id.split("-")[0];
 
@@ -406,6 +440,11 @@ function DraggableTree({
       }
 
       await new Promise(resolve => setTimeout(resolve, 200));
+
+      const updatedNode = findNodeById(targetNodeId);
+      if (updatedNode) {
+        return await navigateToFoundNode(updatedNode);
+      }
 
       const updatedNodes = Object.values(tree.visibleNodes || {});
       rootNode = updatedNodes.find(n => n.id.includes(rootId) || n.data.nodeId === rootId);
@@ -425,36 +464,56 @@ function DraggableTree({
 
       const segment = path[i];
       const childNodes = currentNode.children || [];
+
       let childNode = childNodes.find(n =>
         n.data.nodeId === segment.id ||
         n.id.includes(segment.id) ||
-        n.data.name === segment.title
+        n.data.name === segment.title ||
+        (n.data.name.toLowerCase().includes(segment.title.toLowerCase())) ||
+        (segment.title.toLowerCase().includes(n.data.name.toLowerCase()))
       );
 
       if (!childNode) {
-        currentNode.open();
+        const collectionNodes = childNodes.filter(n => n.data.category === true);
+        for (const collNode of collectionNodes) {
+          collNode.open();
+        }
+
         await new Promise(resolve => setTimeout(resolve, 150));
 
-        const updatedNodes = Object.values(tree.visibleNodes || {});
-        childNode = updatedNodes.find(n =>
+        const allVisibleNodes = Object.values(tree.visibleNodes || {});
+        childNode = allVisibleNodes.find(n =>
           n.data.nodeId === segment.id ||
           n.id.includes(segment.id) ||
           n.data.name === segment.title
         );
 
-        if (!childNode) continue;
+        if (!childNode) {
+          if (i === path.length - 1) {
+            const targetNode = findNodeById(targetNodeId);
+            if (targetNode) {
+              return await navigateToFoundNode(targetNode);
+            }
+          }
+
+          currentNode.open();
+          continue;
+        }
       }
 
       currentNode = childNode;
       currentNode.open();
       await new Promise(resolve => setTimeout(resolve, 150));
+
+      const targetNode = findNodeById(targetNodeId);
+      if (targetNode) {
+        return await navigateToFoundNode(targetNode);
+      }
     }
 
-    const targetNode = currentNode.data.nodeId === targetNodeId ?
-      currentNode :
-      findNodeById(targetNodeId);
+    const finalNode = findNodeById(targetNodeId);
 
-    if (targetNode) {
+    if (finalNode) {
       if (nodes && nodes[targetNodeId]) {
         const nodeData = nodes[targetNodeId];
 
@@ -473,29 +532,236 @@ function DraggableTree({
         }
       }
 
-      if (targetNode.isInternal) {
-        targetNode.open();
+      if (finalNode.isInternal) {
+        finalNode.open();
       }
 
-      tree.scrollTo(targetNode.id);
+      tree.scrollTo(finalNode.id);
       await new Promise(resolve => setTimeout(resolve, 50));
-      smoothScrollToElement(targetNode.id);
+      smoothScrollToElement(finalNode.id);
 
       setTimeout(() => {
-        if (targetNode) {
-          targetNode.select();
-          const element = document.getElementById(targetNode.id);
-          if (element) {
-            element.scrollIntoView({ behavior: "smooth", block: "center" });
-          }
+        if (finalNode) {
+          finalNode.select();
         }
-      }, 200);
+      }, 150);
+
+      // After successful navigation, collapse unrelated nodes
+      setTimeout(() => {
+        collapseUnrelatedNodes(targetNodeId);
+      }, 500);
 
       return true;
     }
 
+    return await expandCollectionsForNode(targetNodeId);
+  };
+
+  const expandCollectionsForNode = async (nodeId: string): Promise<boolean> => {
+    if (!tree || !nodes[nodeId]) return false;
+
+    const nodeData = nodes[nodeId];
+
+    const nodeType = nodeData.nodeType;
+
+    const visibleNodes = Object.values(tree.visibleNodes || {});
+
+    const sameTypeNodes = visibleNodes.filter(n =>
+      n.data.nodeType === nodeType
+    );
+
+    for (const typeNode of sameTypeNodes) {
+      typeNode.open();
+
+      const childNodes = typeNode.children || [];
+      const collectionNodes = childNodes.filter(n => n.data.category === true);
+
+      for (const collNode of collectionNodes) {
+        collNode.open();
+      }
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    const targetNode = findNodeById(nodeId);
+    if (targetNode) {
+      return await navigateToFoundNode(targetNode);
+    }
+
+    if (nodeData.generalizations && nodeData.generalizations.length > 0) {
+      const generalizationIds: string[] = [];
+      nodeData.generalizations.forEach((collection: ICollection) => {
+        collection.nodes.forEach((genNode: { id: string }) => {
+          generalizationIds.push(genNode.id);
+        });
+      });
+
+      for (const genId of generalizationIds) {
+        await expandGeneralizationPath(genId, nodeId);
+
+        const targetAfterGen = findNodeById(nodeId);
+        if (targetAfterGen) {
+          return await navigateToFoundNode(targetAfterGen);
+        }
+      }
+    }
+
+    return await iterativeSearchForNode(nodeId);
+  };
+
+  const iterativeSearchForNode = async (nodeId: string): Promise<boolean> => {
+    if (!tree) return false;
+
+    let targetNode = findNodeById(nodeId);
+    if (targetNode) return await navigateToFoundNode(targetNode);
+
+    let nodesToExpand = Object.values(tree.visibleNodes || {})
+      .filter(n => n.isInternal && !n.isOpen);
+
+    const targetName = nodes && nodes[nodeId]?.title;
+
+    if (targetName) {
+      nodesToExpand.sort((a, b) => {
+        const aNameMatch = a.data.name.includes(targetName.split(' ')[0]);
+        const bNameMatch = b.data.name.includes(targetName.split(' ')[0]);
+
+        if (aNameMatch && !bNameMatch) return -1;
+        if (!aNameMatch && bNameMatch) return 1;
+
+        const aIsCollection = !!a.data.category;
+        const bIsCollection = !!b.data.category;
+
+        if (aIsCollection && !bIsCollection) return -1;
+        if (!aIsCollection && bIsCollection) return 1;
+
+        return 0;
+      });
+    }
+
+    const batchSize = 10;
+
+    for (let i = 0; i < nodesToExpand.length; i += batchSize) {
+      const batch = nodesToExpand.slice(i, i + batchSize);
+
+      batch.forEach(node => node.open());
+
+      await new Promise(resolve => setTimeout(resolve, 20));
+
+      targetNode = findNodeById(nodeId);
+      if (targetNode) {
+        return await navigateToFoundNode(targetNode);
+      }
+
+      if (i >= 30) {
+        const collectionNodes = Object.values(tree.visibleNodes || {})
+          .filter(n => n.data.category === true && !n.isOpen);
+
+        collectionNodes.forEach(node => node.open());
+
+        await new Promise(resolve => setTimeout(resolve, 50));
+        targetNode = findNodeById(nodeId);
+        if (targetNode) {
+          return await navigateToFoundNode(targetNode);
+        }
+      }
+    }
+
+    tree.openAll();
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    targetNode = findNodeById(nodeId);
+
+    if (targetNode) {
+      tree.closeAll();
+
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      return await navigateToFoundNode(targetNode);
+    }
+
     return false;
   };
+
+  const collapseUnrelatedNodes = async (targetNodeId: string): Promise<void> => {
+    if (!tree || !nodes[targetNodeId]) return;
+    const nodeData = nodes[targetNodeId];
+
+    const nodesToKeepExpanded = new Set<string>();
+    nodesToKeepExpanded.add(targetNodeId);
+
+    const targetNode = findNodeById(targetNodeId);
+    if (targetNode) {
+      let parent = targetNode.parent;
+      while (parent) {
+        nodesToKeepExpanded.add(parent.id);
+        if (parent.data.nodeId) {
+          nodesToKeepExpanded.add(parent.data.nodeId);
+        }
+        parent = parent.parent;
+      }
+    }
+
+    if (nodeData.generalizations && nodeData.generalizations.length > 0) {
+      nodeData.generalizations.forEach((collection: ICollection) => {
+        collection.nodes.forEach((genNode: { id: string }) => {
+          nodesToKeepExpanded.add(genNode.id);
+
+          if (eachOntologyPath && eachOntologyPath[genNode.id]) {
+            eachOntologyPath[genNode.id].forEach((pathItem: any) => {
+              nodesToKeepExpanded.add(pathItem.id);
+            });
+          }
+        });
+      });
+    }
+
+    // Add direct children/specializations
+    if (nodeData.specializations && nodeData.specializations.length > 0) {
+      nodeData.specializations.forEach((collection: ICollection) => {
+        nodesToKeepExpanded.add(`${targetNodeId}-${collection.collectionName.trim()}`);
+
+        // Stop expanding collections below level 1
+        collection.nodes.forEach((specNode: { id: string }) => {
+          nodesToKeepExpanded.add(specNode.id);
+        });
+      });
+    }
+
+    // Collapse nodes
+    const allExpandedNodes = Object.values(tree.visibleNodes || {})
+      .filter(node => node.isInternal && node.isOpen);
+
+    const sortedByDepth = [...allExpandedNodes].sort((a, b) => {
+      const aDepth = getNodeDepth(a);
+      const bDepth = getNodeDepth(b);
+      return bDepth - aDepth;
+    });
+
+    // Close nodes that aren't in keep list
+    for (const node of sortedByDepth) {
+      const shouldKeep = nodesToKeepExpanded.has(node.id) ||
+        (node.data.nodeId && nodesToKeepExpanded.has(node.data.nodeId));
+
+      if (!shouldKeep) {
+        node.close();
+      }
+    }
+  };
+
+  // Helper to get node depth
+  const getNodeDepth = (node: NodeApi<TreeData>): number => {
+    let depth = 0;
+    let parent = node.parent;
+
+    while (parent) {
+      depth++;
+      parent = parent.parent;
+    }
+
+    return depth;
+  };
+
 
   // Expands node by ID using path navigation or iterative search
   const expandNodeById = async (nodeId: string): Promise<boolean> => {
@@ -507,41 +773,56 @@ function DraggableTree({
     }
 
     try {
+      const targetNode = findNodeById(nodeId);
+      if (targetNode) {
+        return await navigateToFoundNode(targetNode);
+      }
+
       if (eachOntologyPath && eachOntologyPath[nodeId]) {
         const path = eachOntologyPath[nodeId];
         return await navigateByPath(path, nodeId);
-      } else {
-        const visibleNodes = Object.values(tree.visibleNodes || {});
-        let targetNode = visibleNodes.find(n => n.data.nodeId === nodeId);
+      }
 
-        if (targetNode) {
-          return await navigateToFoundNode(targetNode);
-        } else if (nodes && nodes[nodeId]) {
-          const nodeName = nodes[nodeId].title;
-          targetNode = visibleNodes.find(n => n.data.name === nodeName);
+      const rootNodes = Object.values(tree.visibleNodes).filter(n => !n.parent || n.parent.id === "root");
+      for (const rootNode of rootNodes) {
+        rootNode.open();
+      }
 
-          if (targetNode) {
-            return await navigateToFoundNode(targetNode);
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      const nodeAfterRootExpand = findNodeById(nodeId);
+      if (nodeAfterRootExpand) {
+        return await navigateToFoundNode(nodeAfterRootExpand);
+      }
+
+      const nodeData = nodes[nodeId];
+      if (nodeData) {
+        const sameTypeRoots = rootNodes.filter(n =>
+          n.data.nodeType === nodeData.nodeType
+        );
+
+        for (const typeRoot of sameTypeRoots) {
+          typeRoot.open();
+
+          const childNodes = typeRoot.children || [];
+          const collectionNodes = childNodes.filter(n => n.data.category === true);
+
+          for (const collNode of collectionNodes) {
+            collNode.open();
           }
-        }
-
-        const rootNodes = Object.values(tree.visibleNodes).filter(n => !n.parent || n.parent.id === "root");
-
-        for (const rootNode of rootNodes) {
-          rootNode.open();
         }
 
         await new Promise(resolve => setTimeout(resolve, 200));
 
-        targetNode = findNodeById(nodeId);
-
-        if (targetNode) {
-          return await navigateToFoundNode(targetNode);
+        const nodeAfterTypeExpand = findNodeById(nodeId);
+        if (nodeAfterTypeExpand) {
+          return await navigateToFoundNode(nodeAfterTypeExpand);
         }
-
-        return await iterativeSearchAndExpand(nodeId);
       }
+
+      return await iterativeSearchAndExpand(nodeId);
     } catch (error) {
+      console.error("Error in expandNodeById:", error);
       return false;
     }
   };
@@ -915,46 +1196,48 @@ function DraggableTree({
         <Box className={styles.treeContainer}>
           <FillFlexParent>
             {(dimens) => (
-              <Tree
-                {...dimens}
-                ref={(t) => {
-                  treeRef.current = t || null;
-                  if (t && setTree) {
-                    setTree(t);
-                  }
-                }}
-                data={treeData}
-                onMove={handleMove}
-                selectionFollowsFocus={followsFocus}
-                disableMultiSelection={disableMulti}
-                // ref={(t) => setTree(t)}   ref={treeRef}
-                openByDefault={false}
-                searchTerm={searchTerm}
-                className={styles.tree}
-                rowClassName={styles.row}
-                paddingTop={15}
-                indent={INDENT_STEP}
-                overscanCount={50}
-                // onSelect={(selected) => setSelectedCount(selected.length)}
-                onActivate={(node) => {
-                  if (!!node.data.category) {
-                    return;
-                  }
-                  onOpenNodesTree(node.data.nodeId);
-                }}
-                onFocus={(node) => setFocused(node.data)}
-                onToggle={() => {
-                  setTimeout(() => {
-                    setCount(tree?.visibleNodes.length ?? 0);
-                  });
-                }}
-                disableDrag={!editEnabled}
-                disableDrop={!editEnabled}
+              <div id="tree-scroll-container" style={{ height: '100%', width: '100%' }}>
+                <Tree
+                  {...dimens}
+                  ref={(t) => {
+                    treeRef.current = t || null;
+                    if (t && setTree) {
+                      setTree(t);
+                    }
+                  }}
+                  data={treeData}
+                  onMove={handleMove}
+                  selectionFollowsFocus={followsFocus}
+                  disableMultiSelection={disableMulti}
+                  // ref={(t) => setTree(t)}   ref={treeRef}
+                  openByDefault={false}
+                  searchTerm={searchTerm}
+                  className={styles.tree}
+                  rowClassName={styles.row}
+                  paddingTop={15}
+                  indent={INDENT_STEP}
+                  overscanCount={50}
+                  // onSelect={(selected) => setSelectedCount(selected.length)}
+                  onActivate={(node) => {
+                    if (!!node.data.category) {
+                      return;
+                    }
+                    onOpenNodesTree(node.data.nodeId);
+                  }}
+                  onFocus={(node) => setFocused(node.data)}
+                  onToggle={() => {
+                    setTimeout(() => {
+                      setCount(tree?.visibleNodes.length ?? 0);
+                    });
+                  }}
+                  disableDrag={!editEnabled}
+                  disableDrop={!editEnabled}
                 // onScroll={}
                 // onMove={handleMove}
-              >
-                {Node}
-              </Tree>
+                >
+                  {Node}
+                </Tree>
+              </div>
             )}
           </FillFlexParent>
         </Box>
