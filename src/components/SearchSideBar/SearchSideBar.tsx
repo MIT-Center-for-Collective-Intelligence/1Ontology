@@ -30,22 +30,45 @@ const SearchSideBar = ({
   const [isListOpen, setIsListOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const [searchRefreshKey, setSearchRefreshKey] = useState(0);
   const theme = useTheme();
+
+  const getSearchResults = (query: string) => {
+    return searchWithFuse(query).slice(0, 30);
+  };
 
   const searchResults = useMemo(() => {
     /*  recordLogs({
       action: "Searched",
       query: searchValue,
     }); */
-    return searchWithFuse(searchValue).slice(0, 30);
-  }, [searchValue]);
+    if (!searchValue.trim()) {
+      return [];
+    }
+    return getSearchResults(searchValue);
+  }, [searchValue, searchRefreshKey]);
 
   const handleFocus = () => {
     setIsFocused(true);
-    updateLastSearches();
-    if (searchValue.trim() !== "" || !!lastSearches.length) {
+
+    if (searchValue.trim() !== "") {
+      // Force a fresh search to verify if the node still exists
+      const freshResults = getSearchResults(searchValue.trim());
+
+      if (freshResults.length === 0) {
+        setSearchValue("");
+        setIsListOpen(!!lastSearches.length);
+      } else {
+        // Force a re-render to update the search results
+        setSearchRefreshKey(prevKey => prevKey + 1);
+        setIsListOpen(true);
+      }
+    } else if (lastSearches.length > 0) {
+      // Display last searches if no current search value
       setIsListOpen(true);
     }
+
+    updateLastSearches();
   };
 
   const clearSearch = () => {
@@ -61,7 +84,7 @@ const SearchSideBar = ({
       setIsListOpen(true);
       setIsFocused(true);
     } else {
-      setIsListOpen(false);
+      setIsListOpen(!!lastSearches.length);
       setIsFocused(false);
     }
   };
@@ -138,12 +161,10 @@ const SearchSideBar = ({
       <GlobalStyles
         styles={{
           "& input:-webkit-autofill": {
-            boxShadow: `0px 0px 0px 100px ${
-              theme.palette.mode === "dark" ? "black" : "white"
-            } inset !important`,
-            WebkitTextFillColor: `${
-              theme.palette.mode === "dark" ? "#fff" : "#000"
-            } !important`,
+            boxShadow: `0px 0px 0px 100px ${theme.palette.mode === "dark" ? "black" : "white"
+              } inset !important`,
+            WebkitTextFillColor: `${theme.palette.mode === "dark" ? "#fff" : "#000"
+              } !important`,
             caretColor: "#fff !important",
             borderRadius: "0 !important",
           },
@@ -200,8 +221,8 @@ const SearchSideBar = ({
           {searchResults.length > 0
             ? searchResults.map(renderListItem)
             : searchValue === "" &&
-              lastSearches.length > 0 &&
-              lastSearches.map(renderListItem)}
+            lastSearches.length > 0 &&
+            lastSearches.map(renderListItem)}
         </List>
       )}
     </Box>
