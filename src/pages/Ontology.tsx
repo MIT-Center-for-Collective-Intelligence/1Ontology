@@ -217,14 +217,13 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
   const [treeViewData, setTreeViewData] = useState([]);
 
-  const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
-
   const [appName, setAppName] = useState(
     "Full WordNet O*Net Verb Hierarchy - Tom's Version",
   ); // this state is only been used for the Skills Future App
   const [partsInheritance, setPartsInheritance] = useState<{
     [nodeId: string]: { title: string; fullPart: boolean };
   }>({});
+  const treeRef = useRef<TreeApi<TreeData>>(null);
 
   const firstLoad = useRef(true);
 
@@ -975,19 +974,17 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
         navigateToNode(node.id);
 
-        /* Commented out the scrollIntoView logic for now - it is handled in the DraggableTree component */
+        setTimeout(() => {
+          const elements = document.getElementsByClassName("node-" + node?.id);
+          const firstElement = elements.length > 0 ? elements[0] : null;
 
-        // setTimeout(() => {
-        //   const elements = document.getElementsByClassName("node-" + node?.id);
-        //   const firstElement = elements.length > 0 ? elements[0] : null;
-
-        //   if (firstElement) {
-        //     firstElement.scrollIntoView({
-        //       behavior: "smooth",
-        //       block: "center",
-        //     });
-        //   }
-        // }, 500);
+          if (firstElement) {
+            firstElement.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }
+        }, 500);
         // initializeExpanded(eachOntologyPath[node.id]);
         // Record the click action in logs
         if (searched) {
@@ -1069,19 +1066,17 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
         .filter((p: any) => !p.category)
         .map((c: { id: string }) => c.id)
         .join("-");
-
-      /* Commented out the scrollIntoView logic for now - it is handled in the DraggableTree component */
-
-      // const scrollId = `${first}-${path}`;
-      // await tree?.scrollTo(scrollId);
-      // setTimeout(() => {
-      //   const targetNode = tree?.get(scrollId);
-      //   if (targetNode) {
-      //     targetNode.select();
-      //     const element = document.getElementById(scrollId);
-      //     element?.scrollIntoView({ behavior: "smooth", block: "center" });
-      //   }
-      // }, 500);
+      const scrollId = `${first}-${path}`;
+      const tree = treeRef.current;
+      await tree?.scrollTo(scrollId);
+      setTimeout(() => {
+        const targetNode = tree?.get(scrollId);
+        if (targetNode) {
+          targetNode.select();
+          const element = document.getElementById(scrollId);
+          element?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 500);
     },
     [eachOntologyPath],
   );
@@ -1270,12 +1265,10 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                     <DraggableTree
                       treeViewData={treeViewData}
                       setSnackbarMessage={setSnackbarMessage}
-                      expandedNodes={expandedNodes}
+                      treeRef={treeRef}
                       currentVisibleNode={currentVisibleNode}
                       nodes={nodes}
                       onOpenNodesTree={onOpenNodesTree}
-                      tree={tree}
-                      setTree={setTree}
                       eachOntologyPath={eachOntologyPath}
                       skillsFuture={skillsFuture}
                     />
