@@ -219,7 +219,9 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
 
-  const [appName, setAppName] = useState("Top-Down Gemini 2.5 Pro"); // this state is only been used for the Skills Future App
+  const [appName, setAppName] = useState(
+    "Full WordNet O*Net Verb Hierarchy - Tom's Version",
+  ); // this state is only been used for the Skills Future App
   const [partsInheritance, setPartsInheritance] = useState<{
     [nodeId: string]: { title: string; fullPart: boolean };
   }>({});
@@ -1121,7 +1123,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
           return { id: generalization.id, fullPart: true };
         }
         const partIdex = generalizationParts[0].nodes.findIndex((c) =>
-          compareTitles(nodeTitle, nodes[c.id].title),
+          compareTitles(nodeTitle, nodes[c.id]?.title || ""),
         );
         if (partIdex !== -1) {
           return { id: generalization.id, fullPart: false };
@@ -1325,13 +1327,14 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                         sx={{ borderRadius: "20px" }}
                       >
                         {[
-                          "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
+                          // "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
+                          "Full WordNet O*Net Verb Hierarchy - Tom's Version",
                           "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
-                          "Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
+                          /*"Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
                           "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
                           "Holistic Embedding (Sector, Title, JobRole, CWF, Parts) - Gemini 2.5 Pro",
                           "O*Net Verbs o3 Deep Research",
-                          "O*Net Verbs - o1 Pro",
+                          "O*Net Verbs - o1 Pro", */
                           "Top-Down Gemini 2.5 Pro",
                         ].map((item) => (
                           <MenuItem key={item} value={item}>

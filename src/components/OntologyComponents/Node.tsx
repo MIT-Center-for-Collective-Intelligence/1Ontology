@@ -965,7 +965,9 @@ const Node = ({
     },
     [currentVisibleNode, nodes],
   );
-  const checkDuplicateTitle = (newTitle: string) => {
+
+  // Memoized this to prevent useEffect re-runs in YjsEditorWrapper
+  const checkDuplicateTitle = useCallback((newTitle: string) => {
     try {
       const fuseSearch = searchWithFuse(newTitle.trim());
       return (
@@ -979,7 +981,8 @@ const Node = ({
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [searchWithFuse, currentVisibleNode?.id]);
+  
   const getPath = useCallback(
     (nodeId: string, selectedProperty: string): Set<string> => {
       if (selectedProperty === "generalizations") {
@@ -1077,6 +1080,7 @@ const Node = ({
         {/* description of the node */}
         {(!skillsFuture ||
           [
+            "Full WordNet O*Net Verb Hierarchy - Tom's Version",
             "O*Net Verbs o3 Deep Research",
             "Top-Down Gemini 2.5 Pro",
             "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
