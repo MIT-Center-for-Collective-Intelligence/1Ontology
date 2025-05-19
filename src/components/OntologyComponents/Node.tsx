@@ -1080,6 +1080,7 @@ const Node = ({
         {/* description of the node */}
         {(!skillsFuture ||
           [
+            "Full WordNet O*Net Verb Hierarchy - Tom's Version",
             "O*Net Verbs o3 Deep Research",
             "Top-Down Gemini 2.5 Pro",
             "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
