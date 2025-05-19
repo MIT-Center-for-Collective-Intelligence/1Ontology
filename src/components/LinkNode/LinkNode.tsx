@@ -416,9 +416,11 @@ const LinkNode = ({
           //to be able to remove it
           const shouldBeRemovedFromParent = !nodeData[
             property as "specializations" | "generalizations"
-          ].some((c: { nodes: ILinkNode[] }) =>
-            c.nodes.includes({ id: link.id }),
-          );
+          ].some((c: { nodes: ILinkNode[] }) => {
+            const cIndex = c.nodes.findIndex((p) => p.id === link.id);
+            return cIndex !== -1;
+          });
+          await updateDoc(nodeDoc.ref, nodeData);
           if (shouldBeRemovedFromParent) {
             await removeNodeLink(
               property as "specializations" | "generalizations",
@@ -426,7 +428,11 @@ const LinkNode = ({
               link.id,
             );
           }
-          if (shouldBeRemovedFromParent && nodes[link.id]) {
+          if (
+            shouldBeRemovedFromParent &&
+            nodes[link.id] &&
+            !nodes[link.id].nodeType
+          ) {
             const nodeType = nodes[link.id].nodeType;
             const unclassifiedNodeDocs = await getDocs(
               query(
@@ -514,7 +520,7 @@ const LinkNode = ({
               }
             }
           }
-          await updateDoc(nodeDoc.ref, nodeData);
+
           saveNewChangeLog(db, {
             nodeId: currentVisibleNode?.id,
             modifiedBy: user?.uname,

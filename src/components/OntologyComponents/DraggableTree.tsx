@@ -49,7 +49,7 @@ function DraggableTree({
   const [count, setCount] = useState(0);
   const [followsFocus, setFollowsFocus] = useState(false);
   const [disableMulti, setDisableMulti] = useState(true);
-  const [treeData, setTreeData] = useState<TreeData[]>([]);
+  const [treeData, setTreeData] = useState<TreeData[]>([...treeViewData]);
   const [editEnabled, setEditEnabled] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
 
@@ -114,7 +114,7 @@ function DraggableTree({
 
       return () => clearTimeout(timeout);
     }
-  }, [treeRef, currentVisibleNode?.id]);
+  }, [treeRef, currentVisibleNode?.id, treeData]);
 
   useEffect(() => {
     const tree = treeRef.current;
@@ -132,7 +132,14 @@ function DraggableTree({
   useEffect(() => {
     const tree = treeRef.current;
     setCount(tree?.visibleNodes.length ?? 0);
-    setTreeData(treeViewData);
+
+    const handler = setTimeout(() => {
+      setTreeData(treeViewData);
+    }, 1000);
+
+    return () => {
+      clearTimeout(handler);
+    };
   }, [treeRef, searchTerm, treeViewData]);
 
   const handleMove = async (args: {
