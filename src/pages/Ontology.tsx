@@ -1323,6 +1323,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                       >
                         {[
                           // "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
+                          "Full WordNet O*Net Verb Hierarchy - Tom's Version",
                           "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
                           /*"Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
                           "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
