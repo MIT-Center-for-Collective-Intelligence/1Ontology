@@ -217,14 +217,13 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
   const [treeViewData, setTreeViewData] = useState([]);
 
-  const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
-
   const [appName, setAppName] = useState(
     "Full WordNet O*Net Verb Hierarchy - Tom's Version",
   ); // this state is only been used for the Skills Future App
   const [partsInheritance, setPartsInheritance] = useState<{
     [nodeId: string]: { title: string; fullPart: boolean };
   }>({});
+  const treeRef = useRef<TreeApi<TreeData>>(null);
 
   const firstLoad = useRef(true);
 
@@ -1068,6 +1067,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
         .map((c: { id: string }) => c.id)
         .join("-");
       const scrollId = `${first}-${path}`;
+      const tree = treeRef.current;
       await tree?.scrollTo(scrollId);
       setTimeout(() => {
         const targetNode = tree?.get(scrollId);
@@ -1265,12 +1265,10 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                     <DraggableTree
                       treeViewData={treeViewData}
                       setSnackbarMessage={setSnackbarMessage}
-                      expandedNodes={expandedNodes}
+                      treeRef={treeRef}
                       currentVisibleNode={currentVisibleNode}
                       nodes={nodes}
                       onOpenNodesTree={onOpenNodesTree}
-                      tree={tree}
-                      setTree={setTree}
                       eachOntologyPath={eachOntologyPath}
                       skillsFuture={skillsFuture}
                     />

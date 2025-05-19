@@ -25,36 +25,25 @@ function DraggableTree({
   treeViewData,
   setSnackbarMessage,
   nodes,
-  expandedNodes,
   currentVisibleNode,
   onOpenNodesTree,
-  tree,
-  setTree,
+  treeRef,
   treeType,
   eachOntologyPath,
-  alternatives,
-  domainsEmojis,
-  expandDefault,
   skillsFuture = false,
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
   nodes: any;
-  expandedNodes: any;
   currentVisibleNode: any;
   onOpenNodesTree: any;
-  tree: TreeApi<TreeData> | null | undefined;
-  setTree: any;
+  treeRef: any;
   treeType?: string;
   eachOntologyPath?: any;
-  alternatives?: { [key: string]: string[] };
-  domainsEmojis?: Record<string, string>;
-  expandDefault?: string;
   skillsFuture?: boolean;
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
-  const [active, setActive] = useState<TreeData | null>(null);
   const [focused, setFocused] = useState<TreeData | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [count, setCount] = useState(0);
@@ -63,7 +52,6 @@ function DraggableTree({
   const [treeData, setTreeData] = useState<TreeData[]>([]);
   const [editEnabled, setEditEnabled] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
-  const treeRef = useRef<TreeApi<TreeData>>(null);
 
   const isNodeVisible = (nodeId: string): boolean => {
     const element = document.getElementById(nodeId);
@@ -76,6 +64,7 @@ function DraggableTree({
     return rect.top >= 0 && rect.bottom <= viewportHeight;
   };
   const expandNodeById = async (nodeId: string) => {
+    const tree = treeRef.current;
     if (!tree || !nodeId) return;
 
     //  Expand all parent nodes
@@ -103,6 +92,7 @@ function DraggableTree({
   };
 
   useEffect(() => {
+    const tree = treeRef.current;
     if (tree && currentVisibleNode?.id) {
       // Wait for the tree to initialize its nodes before scrolling
       const timeout = setTimeout(() => {
@@ -124,9 +114,10 @@ function DraggableTree({
 
       return () => clearTimeout(timeout);
     }
-  }, [tree, currentVisibleNode?.id]);
+  }, [treeRef, currentVisibleNode?.id]);
 
   useEffect(() => {
+    const tree = treeRef.current;
     if (tree && treeData.length > 0 && firstLoad) {
       const rootNode = tree.get("root");
 
@@ -136,12 +127,13 @@ function DraggableTree({
 
       setFirstLoad(false);
     }
-  }, [tree, treeData, firstLoad]);
+  }, [treeRef, treeData, firstLoad]);
 
   useEffect(() => {
+    const tree = treeRef.current;
     setCount(tree?.visibleNodes.length ?? 0);
     setTreeData(treeViewData);
-  }, [tree, searchTerm, treeViewData]);
+  }, [treeRef, searchTerm, treeViewData]);
 
   const handleMove = async (args: {
     dragIds: string[];
@@ -476,7 +468,7 @@ function DraggableTree({
                 onFocus={(node) => setFocused(node.data)}
                 onToggle={() => {
                   setTimeout(() => {
-                    setCount(tree?.visibleNodes.length ?? 0);
+                    setCount(treeRef.current?.visibleNodes.length ?? 0);
                   });
                 }}
                 disableDrag={!editEnabled}

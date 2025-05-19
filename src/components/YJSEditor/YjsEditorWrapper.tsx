@@ -42,7 +42,7 @@ const YjsEditorWrapper = ({
   checkDuplicateTitle,
   autoFocus,
   cursorPosition,
-  onEditorReady
+  onEditorReady,
 }: {
   fullname: string;
   property: string;
@@ -91,12 +91,12 @@ const YjsEditorWrapper = ({
       editorRef.current.setSelection(cursorPosition);
     }
   };
-  
+
   // Reset error when nodeId changes (switching nodes)
   useEffect(() => {
     setErrorDuplicate(false);
   }, [nodeId]);
-  
+
   useEffect(() => {
     if (!property || !fullname || !nodeId) return;
     // Create Yjs document and WebSocket provider
@@ -111,20 +111,17 @@ const YjsEditorWrapper = ({
         params: {
           type: structured ? "structured" : "non-structured",
         },
-      }
+      },
     );
     provider.on("sync", (isSynced: boolean) => {
       if (isSynced) {
         setSynced(true);
-        
+
         // Initial check for duplicates when document first loads
         if (property === "title") {
           const initialText = ydoc.getText("quill").toString();
           const isDuplicate = checkDuplicateTitle(initialText);
 
-          console.log("checking for duplicates", initialText);
-          console.log("isDuplicate", isDuplicate);
-          
           setErrorDuplicate(isDuplicate);
         }
       }
@@ -148,15 +145,15 @@ const YjsEditorWrapper = ({
                 (node: any, delta: any) => {
                   const text = node.innerText;
                   return {
-                    ops: [{ insert: text }]
+                    ops: [{ insert: text }],
                   };
                 },
               ],
             ],
-          }
+          },
         },
         placeholder: `${capitalizeFirstLetter(
-          DISPLAY[property] ? DISPLAY[property] : property
+          DISPLAY[property] ? DISPLAY[property] : property,
         )}...`,
         theme: "snow",
         formats: [],
@@ -169,11 +166,7 @@ const YjsEditorWrapper = ({
         onEditorReady(editor);
       }
 
-      const binding = new QuillBinding(
-        yText,
-        editor,
-        provider.awareness
-      );
+      const binding = new QuillBinding(yText, editor, provider.awareness);
 
       provider.awareness.setLocalStateField("user", {
         name: fullname,
@@ -213,7 +206,7 @@ const YjsEditorWrapper = ({
       const handleSelectionChange = (
         range: Range | null,
         oldRange: Range | null,
-        source: string
+        source: string,
       ) => {
         // On blur
         if (range === null && oldRange !== null) {
@@ -237,7 +230,7 @@ const YjsEditorWrapper = ({
     }
     // Not adding checkDuplicateTitle to dependencies to prevent focus loss during typing
   }, [fullname, property, nodeId, structured]);
-  
+
   useEffect(() => {
     if (synced && autoFocus && editorRef.current) {
       setTimeout(() => {
