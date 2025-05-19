@@ -63,14 +63,12 @@ function DraggableTree({
 
     return rect.top >= 0 && rect.bottom <= viewportHeight;
   };
-  console.log(treeRef, "tree UUU");
   const expandNodeById = async (nodeId: string) => {
     const tree = treeRef.current;
     if (!tree || !nodeId) return;
 
     //  Expand all parent nodes
     let currentNode = tree.get(nodeId);
-    console.log("currentNode ==>", currentNode);
     if (currentNode) {
       let parentNode = currentNode.parent;
       while (parentNode) {
@@ -110,7 +108,6 @@ function DraggableTree({
           .filter((p: any) => !p.category)
           .map((c: { id: string }) => c.id)
           .join("-");
-        console.log("useEffect ==>", currentVisibleNode.id);
         expandNodeById(skillsFuture ? `${path}` : `${rootId}-${path}`);
         setFirstLoad(false);
       }, 500);
