@@ -220,7 +220,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const [tree, setTree] = useState<TreeApi<TreeData> | null | undefined>(null);
 
   const [appName, setAppName] = useState(
-    "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
+    "Full WordNet O*Net Verb Hierarchy - Tom's Version",
   ); // this state is only been used for the Skills Future App
   const [partsInheritance, setPartsInheritance] = useState<{
     [nodeId: string]: { title: string; fullPart: boolean };
