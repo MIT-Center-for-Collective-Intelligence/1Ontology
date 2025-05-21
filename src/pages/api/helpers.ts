@@ -22,8 +22,6 @@ import {
 } from "@google/generative-ai";
 import OpenAI from "openai";
 
-
-
 /**
  * Uploads the given file to Gemini.
  *
@@ -73,6 +71,7 @@ export const askGemini = async (contents: Content[], model: string) => {
   try {
     await delay(5 * 1000);
     const apiKeys = [
+      process.env.MIT_CCI_GEMINI_API_KEY,
       process.env.GEMINI_API_KEY_1,
       process.env.GEMINI_API_KEY_2,
       process.env.GEMINI_API_KEY_3,
@@ -136,9 +135,8 @@ export const askGemini = async (contents: Content[], model: string) => {
       process.env.GEMINI_API_KEY_61,
       process.env.GEMINI_API_KEY_62,
       process.env.GEMINI_API_KEY_63,
-      process.env.GEMINI_API_KEY_64
+      process.env.GEMINI_API_KEY_64,
     ] as string[];
-
 
     const shuffledKeys = [...apiKeys].sort(() => Math.random() - 0.5);
 
@@ -189,9 +187,10 @@ export const askGemini = async (contents: Content[], model: string) => {
       }
     }
 
-    throw new Error("All API keys exhausted - failed to get a complete JSON object");
+    throw new Error(
+      "All API keys exhausted - failed to get a complete JSON object",
+    );
   } catch (error: any) {
     console.error("Fatal error in askGemini:", error);
   }
-
 };
