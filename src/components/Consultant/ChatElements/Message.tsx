@@ -67,6 +67,7 @@ const Message = ({
   setSelectedSolutionId,
   selectedSolutionId,
   userImage,
+  ignoreCLD,
 }: {
   message: any;
   showReplies: any;
@@ -77,6 +78,7 @@ const Message = ({
   setSelectedSolutionId: any;
   selectedSolutionId: string;
   userImage: string;
+  ignoreCLD?: boolean;
 }) => {
   const theme = useTheme();
   const db = getFirestore("causal-diagram");
@@ -336,7 +338,7 @@ const Message = ({
                 ml: "auto",
               }}
             >
-              {message.role !== "user" && (
+              {message.role !== "user" && !ignoreCLD && (
                 <LoadingButton
                   loading={message.loadingCld}
                   variant={

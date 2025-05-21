@@ -16,10 +16,12 @@ const ConsultantChat = ({
   diagramId,
   setSelectedSolutionId,
   selectedSolutionId,
+  ignoreCLD,
 }: {
   diagramId: string;
   setSelectedSolutionId: any;
   selectedSolutionId: string;
+  ignoreCLD?: boolean;
 }) => {
   const db = getFirestore("causal-diagram");
   const [messages, setMessages] = useState<any[]>([]);
@@ -64,6 +66,7 @@ const ConsultantChat = ({
         setSelectedSolutionId={setSelectedSolutionId}
         userImage={user?.imageUrl ?? ""}
         selectedSolutionId={selectedSolutionId}
+        ignoreCLD={!!ignoreCLD}
       />
     ));
 
