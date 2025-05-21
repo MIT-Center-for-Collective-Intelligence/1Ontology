@@ -283,6 +283,7 @@ const Consultant = () => {
       collection(db, DIAGRAMS),
       where("deleted", "==", false),
       where("consultant", "==", true),
+      where("ignoreCLD", "==", true),
     );
 
     const unsubscribeDiagrams = onSnapshot(diagramsQuery, (snapshot) => {
@@ -793,6 +794,7 @@ const Consultant = () => {
               sx={{
                 display: "flex",
                 position: "sticky",
+                alignItems: "center", //
                 top: 0,
                 zIndex: 10,
                 p: 1,
@@ -815,49 +817,137 @@ const Consultant = () => {
                   width={"auto"}
                   height={"40px"}
                 />
-              </Box>
-              <Tabs
-                value={tabIndex}
-                onChange={(e, newValue) => setTabIndex(newValue)}
-                variant="scrollable"
-                scrollButtons="auto"
-                allowScrollButtonsMobile
+              </Box>{" "}
+              <Typography
                 sx={{
-                  borderBottom: "none",
+                  alignItems: "center",
+                  textAlign: "center",
+                  fontSize: "24px",
                 }}
               >
-                {" "}
-                <Tab
-                  label="Consultant Chat"
-                  {...a11yProps(0)}
-                  sx={{
-                    ...TAB_STYLE,
-                  }}
-                />
-                {/*<Tab
-                  label="Groups"
-                  {...a11yProps(1)}
-                  sx={{
-                    ...TAB_STYLE,
-                  }}
-                />
-                <Tab
-                  label="Feedback Loops"
-                  {...a11yProps(2)}
-                  sx={{
-                    ...TAB_STYLE,
-                  }}
-                />
-                {(newNode || selectedLink) && (
-                  <Tab
-                    label={`${newNode?.new ? "Add" : "Edit"} ${newNode ? "Node" : "Link"}`}
-                    {...a11yProps(3)}
+                Consultant Chat
+              </Typography>
+              <Box sx={{ ml: "auto" }}>
+                <Tooltip title={"Generate a diagram"} sx={{ mt: "3px" }}>
+                  {loadingResponse &&
+                  (loadingResponse === "generate" ||
+                    loadingResponse === "improve") ? (
+                    <Box
+                      sx={{
+                        width: "35px",
+                        height: "35px",
+                        border: "1px solid gray",
+                        borderRadius: "10px",
+                        alignItems: "center",
+                        display: "flex",
+                        mr: "20px",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <CircularProgress size={24} />
+                    </Box>
+                  ) : (
+                    <IconButton
+                      onClick={() => {
+                        setGenerateNewDiagramState(true);
+                      }}
+                      sx={{
+                        width: "35px",
+                        height: "35px",
+                        border: "1px solid gray",
+                        borderRadius: "10px",
+                        mr: "20px",
+                      }}
+                      disabled={!!loadingResponse}
+                    >
+                      <AutoFixNormalIcon />
+                    </IconButton>
+                  )}
+                </Tooltip>
+                <Tooltip title={"Delete the Case"}>
+                  <IconButton
                     sx={{
-                      ...TAB_STYLE,
+                      width: "35px",
+                      height: "35px",
+                      border: "1px solid gray",
+                      borderRadius: "10px",
+                      mr: "10px",
                     }}
-                  />
-                )} */}
-              </Tabs>
+                    onClick={deleteDiagram}
+                    disabled={!!loadingResponse}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>
+
+                {diagrams.length > 0 && (
+                  <FormControl disabled={!!loadingResponse}>
+                    <InputLabel>Project</InputLabel>
+                    <Select
+                      label="diagram"
+                      value={selectedDiagram?.title || ""}
+                      onChange={handleChangeDiagram}
+                      sx={{
+                        width: "200px",
+                        border: "1px",
+                        borderColor: "white",
+                        borderRadius: "25px",
+                        p: 0,
+                        mr: "20px",
+                        "& .MuiSelect-select": {
+                          padding: 0,
+                          p: "10px",
+                        },
+                      }}
+                    >
+                      {[...diagrams].map((diagram) => (
+                        <MenuItem
+                          key={diagram.id}
+                          value={diagram.title}
+                          sx={{ display: "center" }}
+                        >
+                          {diagram.title}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+                <FormControlLabel
+                  label={false}
+                  control={
+                    <Tooltip
+                      title={
+                        theme.palette.mode === "dark"
+                          ? "Turn on the light"
+                          : "Turn off the light"
+                      }
+                    >
+                      <Box
+                        onClick={handleThemeSwitch}
+                        sx={{
+                          border: "1px solid gray",
+                          borderRadius: "10px",
+                          pt: 1,
+                          px: 1,
+                          pb: 0,
+                          ":hover": {
+                            backgroundColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                ? "gray"
+                                : "#e0e0e0",
+                          },
+                        }}
+                      >
+                        {theme.palette.mode === "dark" ? (
+                          <WbSunnyIcon sx={{ color: "white" }} />
+                        ) : (
+                          <BedtimeIcon sx={{ color: "gray" }} />
+                        )}
+                      </Box>
+                    </Tooltip>
+                  }
+                />
+              </Box>
             </Box>
 
             <TabPanel value={tabIndex} index={0} sx={{ pl: "15px" }}>
@@ -868,72 +958,6 @@ const Consultant = () => {
                 ignoreCLD={true}
               />
             </TabPanel>
-            <TabPanel value={tabIndex} index={1}>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "20px",
-                  mb: "15px",
-                  p: "10px",
-                }}
-              >
-                Choose groups to show their causal relations:
-              </Typography>
-              <CollabTree
-                data={groups}
-                setData={setGroups}
-                setSelectedGroups={setSelectedGroups}
-                selectedGroups={selectedGroups}
-                diagramId={selectedSolutionId || selectedDiagram?.id}
-              />
-            </TabPanel>
-            <TabPanel value={tabIndex} index={2}>
-              {Object.keys(reinforcementLoops).length > 0 ? (
-                <ReinforcementLoopsDisplay
-                  reinforcementLoops={reinforcementLoops}
-                  nodes={nodes}
-                  selectedLoop={selectedLoop}
-                  setSelectedLoop={setSelectedLoop}
-                />
-              ) : (
-                <Box>No reinforcement loops detected!</Box>
-              )}
-            </TabPanel>
-            {(newNode || selectedLink) && (
-              <TabPanel
-                value={tabIndex}
-                index={3}
-                sx={{ pt: "30px", px: "10px" }}
-              >
-                {" "}
-                {newNode ? (
-                  <NodeEditor
-                    newNode={newNode}
-                    setNewNode={setNewNode}
-                    nodeTypes={nodeTypes}
-                    nodes={nodes}
-                    groups={groups}
-                    handleSave={handleSave}
-                    handleClose={handleClose}
-                    deleteNode={deleteNode}
-                    selectedDiagram={selectedDiagram}
-                  />
-                ) : (
-                  <LinkEditor
-                    selectedLink={selectedLink}
-                    nodes={nodes}
-                    selectedDiagram={selectedDiagram}
-                    setSelectedLink={setSelectedLink}
-                    handleSaveLink={handleSaveLink}
-                    deleteLink={deleteLink}
-                    onCancel={() => {
-                      setSelectedLink(null);
-                      setTabIndex(0);
-                    }}
-                  />
-                )}
-              </TabPanel>
-            )}
           </Section>
         </Container>
       ) : (
@@ -954,6 +978,7 @@ const Consultant = () => {
             generateNewDiagramState={generateNewDiagramState}
             setGenerateNewDiagramState={setGenerateNewDiagramState}
             handleThemeSwitch={handleThemeSwitch}
+            ignoreCLD={true}
           />
         </Box>
       )}

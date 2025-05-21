@@ -20,9 +20,10 @@ const generateTopMessage = async (
     groupHierarchy: any;
     nodes: any;
     links: any;
-  },
+  } | null,
   nodeTypes: string[],
   caseTitle: string,
+  consultantOnly: boolean,
 ) => {
   const prompt = getConsultantPrompt(
     caseDescription,
@@ -56,28 +57,32 @@ const generateTopMessage = async (
         root: true,
         diagramId,
         cld: true,
-        loadingCld: true,
+        loadingCld: !consultantOnly,
       };
       messages.push(newMessage);
       newMessageRef.set(newMessage);
     }
-    for (let m of messages) {
-      let fullConversation = "";
-      const newMessageRef = dbCausal.collection(CONSULTANT_MESSAGES).doc(m.id);
-      fullConversation += `AI Consultant:\n\n ${m.text}`;
+    if (!consultantOnly && previousCLD) {
+      for (let m of messages) {
+        let fullConversation = "";
+        const newMessageRef = dbCausal
+          .collection(CONSULTANT_MESSAGES)
+          .doc(m.id);
+        fullConversation += `AI Consultant:\n\n ${m.text}`;
 
-      await generateDiagram({
-        caseDescription,
-        problemStatement,
-        fullConversation,
-        previousCLD,
-        messageId: newMessageRef.id,
-        nodeTypes,
-        messagesArray: [],
-      });
-      newMessageRef.update({
-        loadingCld: FieldValue.delete(),
-      });
+        await generateDiagram({
+          caseDescription,
+          problemStatement,
+          fullConversation,
+          previousCLD,
+          messageId: newMessageRef.id,
+          nodeTypes,
+          messagesArray: [],
+        });
+        newMessageRef.update({
+          loadingCld: FieldValue.delete(),
+        });
+      }
     }
   }
 
@@ -109,23 +114,27 @@ export default async function handler(
       problemStatement,
       ideaEvaluator,
       consultant,
+      consultantOnly,
     } = req.body;
+    const newDiagramRef = dbCausal.collection("diagrams").doc();
+    let responseCLD = null;
+    let nodeTypes = [];
+    if (!consultantOnly) {
+      const promptDocs = ideaEvaluator
+        ? await dbCausal
+            .collection("diagramPrompts")
+            .where("ideaEvaluator", "==", true)
+            .where("type", "==", "generate")
+            .get()
+        : await dbCausal
+            .collection("diagramPrompts")
+            .where("type", "==", "generate")
+            .get();
 
-    const promptDocs = ideaEvaluator
-      ? await dbCausal
-          .collection("diagramPrompts")
-          .where("ideaEvaluator", "==", true)
-          .where("type", "==", "generate")
-          .get()
-      : await dbCausal
-          .collection("diagramPrompts")
-          .where("type", "==", "generate")
-          .get();
+      const promptData = promptDocs.docs[0].data();
+      const llmPrompt = promptData.prompt;
 
-    const promptData = promptDocs.docs[0].data();
-    const llmPrompt = promptData.prompt;
-
-    let prompt = `
+      let prompt = `
 ${llmPrompt.trim()}
 
 ## The Case Title
@@ -134,121 +143,124 @@ ${newDiagramTitle}
 ## The Case Description
 
 ${documentDetailed}
-  `;
-    if (problemStatement) {
-      prompt = `
+`;
+      if (problemStatement) {
+        prompt = `
 ${llmPrompt}
 ${documentDetailed}
 
 ## Problem description
 ${problemStatement}
 `;
-    }
-
-    const messages: any = [
-      {
-        role: "user",
-        parts: [
-          {
-            text: prompt,
-          },
-        ],
-      },
-    ];
-
-    const nodeTypesDocs = await dbCausal.collection("nodeTypes").get();
-    const nodeTypes = [];
-    for (let nodeDoc of nodeTypesDocs.docs) {
-      const nodeData = nodeDoc.data();
-      nodeTypes.push(nodeData.type);
-    }
-
-    const responseCLD = (await askGemini(messages, GEMINI_MODEL)) as {
-      groupHierarchy: any;
-      nodes: any;
-      links: any;
-    };
-
-    if (
-      !responseCLD?.groupHierarchy ||
-      !responseCLD?.nodes ||
-      !responseCLD?.links
-    ) {
-      throw Error("Incomplete JSON");
-    }
-    const newDiagramRef = dbCausal.collection("diagrams").doc();
-    const groups: any = [];
-    const createGroups = (tree: any, diagramId: any) => {
-      for (let group of tree) {
-        const groupRef = dbCausal.collection("groups").doc();
-        const id = groupRef.id;
-        group.id = id;
-        const _group = {
-          id,
-          createdAt: new Date(),
-          ...group,
-          diagrams: [diagramId],
-          deleted: false,
-        };
-        groups.push(_group);
-
-        groupRef.set(_group);
-        if (group.subgroups) {
-          createGroups(group.subgroups, diagramId);
-        }
       }
-    };
-    createGroups(responseCLD.groupHierarchy, newDiagramRef.id);
-    for (let node of responseCLD["nodes"]) {
-      const nodeRef = dbCausal.collection("nodes").doc();
-      const id = nodeRef.id;
-      const _groups = node.groups
-        .map((c: any) => {
-          return {
-            id: groups.find((g: any) => g.label === c)?.id || "",
-            label: groups.find((g: any) => g.label === c)?.label || "",
-          };
-        })
-        .filter((g: { id: string; label: string }) => !!g.id);
 
-      node.groups = _groups;
-      node.originalId = node.id;
-      node.id = id;
-      const _node = {
-        ...node,
-        createdAt: new Date(),
+      const messages: any = [
+        {
+          role: "user",
+          parts: [
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ];
+
+      const nodeTypesDocs = await dbCausal.collection("nodeTypes").get();
+
+      for (let nodeDoc of nodeTypesDocs.docs) {
+        const nodeData = nodeDoc.data();
+        nodeTypes.push(nodeData.type);
+      }
+
+      let responseCLD = (await askGemini(messages, GEMINI_MODEL)) as {
+        groupHierarchy: any;
+        nodes: any;
+        links: any;
       };
 
-      if (!nodeTypes.includes(node.nodeType)) {
-        const newTypeRef = dbCausal.collection("nodeTypes").doc();
-        newTypeRef.set({
-          type: node.nodeType,
-          color: createAColor(),
+      if (
+        !responseCLD?.groupHierarchy ||
+        !responseCLD?.nodes ||
+        !responseCLD?.links
+      ) {
+        throw Error("Incomplete JSON");
+      }
+
+      const groups: any = [];
+      const createGroups = (tree: any, diagramId: any) => {
+        for (let group of tree) {
+          const groupRef = dbCausal.collection("groups").doc();
+          const id = groupRef.id;
+          group.id = id;
+          const _group = {
+            id,
+            createdAt: new Date(),
+            ...group,
+            diagrams: [diagramId],
+            deleted: false,
+          };
+          groups.push(_group);
+
+          groupRef.set(_group);
+          if (group.subgroups) {
+            createGroups(group.subgroups, diagramId);
+          }
+        }
+      };
+      createGroups(responseCLD.groupHierarchy, newDiagramRef.id);
+      for (let node of responseCLD["nodes"]) {
+        const nodeRef = dbCausal.collection("nodes").doc();
+        const id = nodeRef.id;
+        const _groups = node.groups
+          .map((c: any) => {
+            return {
+              id: groups.find((g: any) => g.label === c)?.id || "",
+              label: groups.find((g: any) => g.label === c)?.label || "",
+            };
+          })
+          .filter((g: { id: string; label: string }) => !!g.id);
+
+        node.groups = _groups;
+        node.originalId = node.id;
+        node.id = id;
+        const _node = {
+          ...node,
+          createdAt: new Date(),
+        };
+
+        if (!nodeTypes.includes(node.nodeType)) {
+          const newTypeRef = dbCausal.collection("nodeTypes").doc();
+          newTypeRef.set({
+            type: node.nodeType,
+            color: createAColor(),
+          });
+        }
+        nodeRef.set({
+          ..._node,
+          diagrams: [newDiagramRef.id],
+          deleted: false,
         });
       }
-      nodeRef.set({
-        ..._node,
-        diagrams: [newDiagramRef.id],
-        deleted: false,
-      });
-    }
-    for (let link of responseCLD["links"]) {
-      link.source =
-        responseCLD["nodes"].find((c: any) => c.originalId === link.source)
-          ?.id || "";
-      link.target =
-        responseCLD["nodes"].find((c: any) => c.originalId === link.target)
-          ?.id || "";
-      const linkRef = dbCausal.collection("links").doc();
+      for (let link of responseCLD["links"]) {
+        link.source =
+          responseCLD["nodes"].find((c: any) => c.originalId === link.source)
+            ?.id || "";
+        link.target =
+          responseCLD["nodes"].find((c: any) => c.originalId === link.target)
+            ?.id || "";
+        const linkRef = dbCausal.collection("links").doc();
 
-      linkRef.set({ ...link, diagrams: [newDiagramRef.id], deleted: false });
+        linkRef.set({ ...link, diagrams: [newDiagramRef.id], deleted: false });
+      }
     }
+
     await newDiagramRef.set({
       title: newDiagramTitle,
       id: newDiagramRef.id,
       deleted: false,
       documentDetailed,
       ...(consultant ? { problemStatement, consultant: true } : {}),
+      ...(!!consultantOnly ? { ignoreCLD: true } : {}),
     });
     await generateTopMessage(
       documentDetailed,
@@ -257,6 +269,7 @@ ${problemStatement}
       responseCLD,
       nodeTypes,
       newDiagramTitle,
+      !!consultantOnly,
     );
 
     return res.status(200).json({ diagramId: newDiagramRef.id });

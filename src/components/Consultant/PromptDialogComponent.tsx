@@ -51,6 +51,7 @@ const PromptDialogComponent = ({
   generateNewDiagramState,
   setGenerateNewDiagramState,
   handleThemeSwitch,
+  ignoreCLD,
 }: {
   onClose: any;
   confirmation: any;
@@ -58,6 +59,7 @@ const PromptDialogComponent = ({
   generateNewDiagramState: any;
   setGenerateNewDiagramState: any;
   handleThemeSwitch: any;
+  ignoreCLD?: boolean;
 }) => {
   const db = getFirestore("causal-diagram");
   const admin = true; /* useRecoilValue(isAdminState) */
@@ -224,9 +226,36 @@ const PromptDialogComponent = ({
             mx: "auto", // center the text
           }}
         >
-          Consulting using causal loop diagrams
+          {!!ignoreCLD
+            ? "Consulting App"
+            : "Consulting using causal loop diagrams"}
         </Typography>
-
+        {generateNewDiagramState && (
+          <Button
+            onClick={() => setGenerateNewDiagramState(false)}
+            variant="contained"
+            sx={{
+              ml: "auto",
+              borderRadius: "26px",
+              backgroundColor: "red",
+              color: "white",
+              px: 4,
+              mb: "5px",
+              fontSize: "16px",
+              fontWeight: "bold",
+              mr: "15px",
+              "&:hover": {
+                backgroundColor: "darkorange",
+              },
+              "&:disabled": {
+                backgroundColor: "action.disabledBackground",
+              },
+            }}
+            // disabled={!inputValue.trim() || !consultingTopic.trim()}
+          >
+            Cancel
+          </Button>
+        )}
         <Tooltip
           title={
             theme.palette.mode === "dark"
@@ -307,6 +336,7 @@ const PromptDialogComponent = ({
               "&:disabled": {
                 backgroundColor: "action.disabledBackground",
               },
+              textTransform: "capitalize",
             }}
             disabled={
               !caseDescription.trim() ||
@@ -316,37 +346,11 @@ const PromptDialogComponent = ({
           >
             {confirmation}
           </Button>
-
-          {generateNewDiagramState && (
-            <Button
-              onClick={() => setGenerateNewDiagramState(false)}
-              variant="contained"
-              sx={{
-                ml: "auto",
-                borderRadius: "26px",
-                backgroundColor: "red",
-                color: "white",
-                px: 4,
-                mb: "5px",
-                fontSize: "16px",
-                fontWeight: "bold",
-                "&:hover": {
-                  backgroundColor: "darkorange",
-                },
-                "&:disabled": {
-                  backgroundColor: "action.disabledBackground",
-                },
-              }}
-              // disabled={!inputValue.trim() || !consultingTopic.trim()}
-            >
-              Cancel
-            </Button>
-          )}
         </Box>
         <Grid container spacing={2} sx={{ flexGrow: 1, overflow: "hidden" }}>
           <Grid
             item
-            xs={admin ? 6 : 12}
+            xs={admin && !ignoreCLD ? 6 : 12}
             sx={{ display: "flex", flexDirection: "column", gap: 2 }}
           >
             <TextField
@@ -412,7 +416,7 @@ const PromptDialogComponent = ({
             />
           </Grid>
 
-          {admin && (
+          {admin && !ignoreCLD && (
             <Grid
               item
               xs={6}

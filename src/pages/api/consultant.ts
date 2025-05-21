@@ -86,7 +86,7 @@ const getThreadOfMessages = async (
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { diagramId, messageId } = req.body;
+    const { diagramId, messageId, consultantOnly } = req.body;
     const messagesArray = (await getThreadOfMessages(messageId)).reverse();
 
     const diagramDoc = await dbCausal
@@ -206,23 +206,25 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           fullConversation += `Consultee:\n\n ${m.parts[0].text}`;
         }
       });
-      for (let m of newMessages) {
-        fullConversation += `AI Consultant:\n\n ${m.text}`;
-        const newMessageRef = dbCausal
-          .collection(CONSULTANT_MESSAGES)
-          .doc(m.id);
-        await generateDiagram({
-          caseDescription,
-          problemStatement,
-          fullConversation,
-          previousCLD,
-          messageId: m.id,
-          nodeTypes,
-          messagesArray,
-        });
-        newMessageRef.update({
-          loadingCld: FieldValue.delete(),
-        });
+      if (!consultantOnly) {
+        for (let m of newMessages) {
+          fullConversation += `AI Consultant:\n\n ${m.text}`;
+          const newMessageRef = dbCausal
+            .collection(CONSULTANT_MESSAGES)
+            .doc(m.id);
+          await generateDiagram({
+            caseDescription,
+            problemStatement,
+            fullConversation,
+            previousCLD,
+            messageId: m.id,
+            nodeTypes,
+            messagesArray,
+          });
+          newMessageRef.update({
+            loadingCld: FieldValue.delete(),
+          });
+        }
       }
     }
 
