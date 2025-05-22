@@ -27,6 +27,7 @@ import SelectModelModal from "../Models/SelectModel";
 import { LoadingButton } from "@mui/lab";
 import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
+import InheritanceTree from "./InheritanceTree";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
@@ -659,6 +660,19 @@ const StructuredProperty = ({
           />
         )}
       </Box>
+      {/* Display isPartOf properties in a tree structure */}
+      {property === "isPartOf" && (
+        <Box>
+          {!selectedProperty && !selectedDiffNode && (
+            <InheritanceTree
+              nodes={nodes}
+              currentNodeId={currentVisibleNode.id}
+              navigateToNode={navigateToNode}
+              propertyType="isPartOf"
+            />
+          )}
+        </Box>
+      )}
       {handleCloseAddLinksModel &&
         selectedProperty === property &&
         !selectedCollection && (

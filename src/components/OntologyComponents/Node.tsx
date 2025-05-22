@@ -129,6 +129,7 @@ import { User } from "@components/types/IAuth";
 import { getStorage } from "firebase/storage";
 import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 import { development } from "@components/lib/CONSTANTS";
+import { updateInheritanceTreeAfterCloningANode, updateInheritanceTreeAfterDeletingANode } from "@components/lib/utils/inheritanceTreeBuilder";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -535,6 +536,14 @@ const Node = ({
           updatedAt: new Date(),
         });
 
+        // Update the inheritance tree
+        await updateInheritanceTreeAfterCloningANode(
+          newNodeRef.id,
+          nodeId,
+          nodes,
+          db
+        );
+
         // Return the newly created node
         return newNode;
       } catch (error: any) {
@@ -685,7 +694,7 @@ const Node = ({
         }
 
         for (let linkId of removedElements) {
-          await unlinkPropertyOf(db, selectedProperty, nodeId, linkId);
+          await unlinkPropertyOf(db, selectedProperty, nodeId, linkId, nodes);
         }
 
         // Update links for specializations/generalizations
@@ -873,6 +882,8 @@ const Node = ({
         const nodeRef = doc(collection(db, NODES), currentNode.id);
         // call removeIsPartOf function to remove the node link from all the nodes where it's linked
         await removeIsPartOf(db, currentNode as INode, user?.uname);
+        // Update the inheritance tree
+        await updateInheritanceTreeAfterDeletingANode(currentNode, nodes, db);
         // Update the user document by removing the deleted node's ID
         await updateDoc(nodeRef, { deleted: true, deletedAt: new Date() });
 
@@ -1082,20 +1093,20 @@ const Node = ({
             "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
             "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
           ].includes(currentVisibleNode?.appName || "")) && (
-          <Text
-            nodes={nodes}
-            text={onGetPropertyValue("description") as string}
-            currentVisibleNode={currentVisibleNode}
-            property={"description"}
-            setCurrentVisibleNode={setCurrentVisibleNode}
-            locked={locked}
-            selectedDiffNode={selectedDiffNode}
-            getTitleNode={getTitleNode}
-            confirmIt={confirmIt}
-            currentImprovement={currentImprovement}
-            skillsFuture={skillsFuture}
-          />
-        )}
+            <Text
+              nodes={nodes}
+              text={onGetPropertyValue("description") as string}
+              currentVisibleNode={currentVisibleNode}
+              property={"description"}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              locked={locked}
+              selectedDiffNode={selectedDiffNode}
+              getTitleNode={getTitleNode}
+              confirmIt={confirmIt}
+              currentImprovement={currentImprovement}
+              skillsFuture={skillsFuture}
+            />
+          )}
         {/* actors of the node if it's exist */}
         {currentVisibleNode?.properties.hasOwnProperty("actor") && (
           <StructuredProperty

@@ -13,6 +13,7 @@ import { NODES } from "@components/lib/firestoreClient/collections";
 import { recordLogs } from "@components/lib/utils/helpers";
 import { getTitle } from "@components/lib/utils/string.utils";
 import { INode, ICollection, ILinkNode } from "@components/types/INode";
+import { updateInheritanceTreeAfterChangingInheritance } from "@components/lib/utils/inheritanceTreeBuilder";
 
 const SelectInheritance = ({
   currentVisibleNode,
@@ -134,6 +135,16 @@ const SelectInheritance = ({
               currentVisibleNode?.id,
             );
             await batch.commit();
+
+            // Handle isPartOfTree updates for parts inheritance changes
+            await updateInheritanceTreeAfterChangingInheritance(
+              currentVisibleNode.id,
+              property,
+              newGeneralizationId,
+              inheritanceRef,
+              nodes,
+              db
+            );
           })
           .catch((error) => {
             console.error("Failed to update inheritance:", error);

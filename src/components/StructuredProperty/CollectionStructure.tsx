@@ -844,7 +844,8 @@ const CollectionStructure = ({
         <Droppable droppableId="categories" type="CATEGORY">
           {(provided) => (
             <Box ref={provided.innerRef} {...provided.droppableProps}>
-              {(propertyValue || []).map(
+              {/* isPartOf property will be displayed in a Tree structure */}
+              {property !== "isPartOf" && Array.isArray(propertyValue) && propertyValue.map(
                 (collection: ICollection, collectionIndex: number) => {
                   return (
                     <Draggable

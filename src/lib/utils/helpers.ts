@@ -28,6 +28,7 @@ import {
 } from "../firestoreClient/errors.firestore";
 import { getAuth } from "firebase/auth";
 import { DISPLAY } from "../CONSTANTS";
+import { updateInheritanceTree } from "./inheritanceTreeBuilder";
 
 export const getDoerCreate = (uname: string) => {
   const now = new Date();
@@ -83,6 +84,7 @@ export const unlinkPropertyOf = async (
     | string,
   removeNodeId: string,
   removeFromId: string,
+  nodes?: any,
 ) => {
   if (!removeFromId) return;
 
@@ -150,6 +152,10 @@ export const unlinkPropertyOf = async (
           });
         }
       }
+    }
+
+    if (property === "parts" || property === "isPartOf" || removeFrom === "parts" || removeFrom === "isPartOf") {
+      await updateInheritanceTree(db, [removeNodeId, removeFromId], 'isPartOf', nodes);
     }
   }
 };
@@ -274,6 +280,19 @@ export const removeIsPartOf = async (
       }
     }
     batch.commit();
+    
+    // Function to update inheritanceTree - commented out for now
+    // const containerIds: string[] = [];
+    // if (Array.isArray(nodeData?.properties?.isPartOf)) {
+    //   nodeData.properties.isPartOf.forEach(collection => {
+    //     collection.nodes.forEach(node => {
+    //       containerIds.push(node.id);
+    //     });
+    //   });
+    // }
+    
+    // await updateInheritanceTree(db, [nodeData.id, ...containerIds], 'isPartOf', nodes);
+    
   } catch (error: any) {
     console.error(error);
     recordLogs({
@@ -766,54 +785,84 @@ export const updatePartsAndPartsOf = async (
   db: Firestore,
   nodes: { [nodeId: string]: INode },
 ) => {
-  links.forEach(async (child) => {
-    let childData: any = nodes[child.id] as INode;
-    if (!childData) {
-      const childDoc = await getDoc(doc(collection(db, NODES), child.id));
-      childData = childDoc.data();
-    }
-
-    if (childData && Array.isArray(childData.properties[property])) {
-      const propertyData = childData.properties[property] as ICollection[];
-      const existingIds = propertyData.flatMap((collection) =>
-        collection.nodes.map((spec) => spec.id),
-      );
-      if (!existingIds.includes(newLink.id)) {
-        const propertyData = childData.properties[property];
-        if (Array.isArray(propertyData)) {
-          let mainCollection = propertyData.find(
-            (collection) => collection.collectionName === "main",
-          ) as ICollection;
-          if (!mainCollection) {
-            mainCollection = { collectionName: "main", nodes: [] };
-            propertyData.unshift(mainCollection);
-          }
+  try {
+    console.log(`Starting updatePartsAndPartsOf - ${property} with ${links.length} links and newLink ${newLink.id}`);
+    await Promise.all(links.map(async (child) => {
+      let childData: any = nodes[child.id] as INode;
+      if (!childData) {
+        const childDoc = await getDoc(doc(collection(db, NODES), child.id));
+        childData = childDoc.data();
+        if (childData) {
+          nodes[child.id] = childData;
+        }
+      }
+      
+      if (childData && Array.isArray(childData.properties[property])) {
+        const propertyData = childData.properties[property] as ICollection[];
+        const existingIds = propertyData.flatMap((collection) =>
+          collection.nodes.map((spec) => spec.id),
+        );
+        if (!existingIds.includes(newLink.id)) {
+          const propertyData = childData.properties[property];
+          if (Array.isArray(propertyData)) {
+            let mainCollection = propertyData.find(
+              (collection) => collection.collectionName === "main",
+            ) as ICollection;
+            if (!mainCollection) {
+              mainCollection = { collectionName: "main", nodes: [] };
+              propertyData.unshift(mainCollection);
+            }
 
           // Add the new link to the property data
-          const linkIdx = mainCollection.nodes.findIndex(
-            (l) => l.id === newLink.id,
-          );
-          if (linkIdx === -1) {
-            mainCollection.nodes.push(newLink);
-          }
+            const linkIdx = mainCollection.nodes.findIndex(
+              (l) => l.id === newLink.id,
+            );
+            if (linkIdx === -1) {
+              mainCollection.nodes.push(newLink);
+            }
 
-          const childRef = doc(collection(db, NODES), child.id);
-          updateDoc(childRef, {
-            [`properties.${property}`]: propertyData,
-          });
+            const childRef = doc(collection(db, NODES), child.id);
+            await updateDoc(childRef, {
+              [`properties.${property}`]: propertyData,
+            });
 
           // Update inheritance if the property is "parts"
-          if (property === "parts") {
-            updateInheritance({
-              nodeId: child.id,
-              updatedProperties: [property],
-              db,
-            });
+            if (property === "parts") {
+              await updateInheritance({
+                nodeId: child.id,
+                updatedProperties: [property],
+                db,
+              });
+            }
+            nodes[child.id] = {
+              ...childData,
+              properties: {
+                ...childData.properties,
+                [property]: propertyData
+              }
+            };
           }
         }
       }
-    }
-  });
+    }));
+    
+    // Call the main function to update inheritance tree of property "isPartOf"
+    await updateInheritanceTree(db, [newLink.id, ...links.map(link => link.id)], "isPartOf", nodes);
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error in updatePartsAndPartsOf:", error);
+    recordLogs({
+      type: "error",
+      error: JSON.stringify({
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      }),
+      at: "updatePartsAndPartsOf",
+    });
+    return { success: false, error: error.message };
+  }
 };
 export const updatePropertyOf = async (
   links: { id: string }[],
@@ -1028,6 +1077,30 @@ export const updateLinksForInheritance = async (
       });
     }
     await batch.commit();
+
+    let partsPropertyAffected = false;
+
+    for (const link of addedLinks) {
+      const generalizationData = nodes[link.id];
+      if (generalizationData && Object.keys(generalizationData.properties).includes('parts')) {
+        partsPropertyAffected = true;
+        break;
+      }
+    }
+
+    if (partsPropertyAffected) {
+      const affectedNodeIds = [specializationId];
+
+      if (specializationData.properties?.parts) {
+        specializationData.properties.parts.forEach(collection => {
+          collection.nodes.forEach(partNode => {
+            affectedNodeIds.push(partNode.id);
+          });
+        });
+      }
+
+      await updateInheritanceTree(db, affectedNodeIds, 'isPartOf', nodes);
+    }
   } catch (error: any) {
     console.error(error);
     recordLogs({
@@ -1107,6 +1180,23 @@ export const updateLinksForInheritanceSpecializations = async (
       });
     }
     await batch.commit();
+
+    const hasPartsProperty = generalizationData.properties?.parts;
+
+    if (hasPartsProperty) {
+      const affectedNodeIds = [generalizationId];
+      addedLinks.forEach(link => {
+        affectedNodeIds.push(link.id);
+      });
+
+      generalizationData.properties.parts.forEach(collection => {
+        collection.nodes.forEach(partNode => {
+          affectedNodeIds.push(partNode.id);
+        });
+      });
+
+      await updateInheritanceTree(db, affectedNodeIds, 'isPartOf', nodes);
+    }
   } catch (error: any) {
     console.error(error);
     recordLogs({
@@ -1156,7 +1246,7 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
             (specializationData.inheritance[property].ref ===
               unlinkedGeneralizationId ||
               nodes[unlinkedGeneralizationId].inheritance[property]?.ref ===
-                specializationData.inheritance[property].ref)
+              specializationData.inheritance[property].ref)
           ) {
             if (!nextGeneralizationData.properties.hasOwnProperty(property)) {
               let canDelete = true;
@@ -1225,6 +1315,22 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
         });
       }
       await batch.commit();
+    }
+    const unlinkedGeneralization = nodes[unlinkedGeneralizationId];
+    const hasPartsProperty = unlinkedGeneralization?.properties?.parts;
+
+    if (hasPartsProperty) {
+      const affectedNodeIds = [specializationData.id];
+
+      if (specializationData.properties?.parts) {
+        specializationData.properties.parts.forEach(collection => {
+          collection.nodes.forEach(partNode => {
+            affectedNodeIds.push(partNode.id);
+          });
+        });
+      }
+
+      await updateInheritanceTree(db, affectedNodeIds, 'isPartOf', nodes);
     }
   } catch (error: any) {
     recordLogs({

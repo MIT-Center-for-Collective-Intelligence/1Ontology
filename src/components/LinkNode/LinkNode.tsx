@@ -253,7 +253,7 @@ const LinkNode = ({
           // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
           // const childData = childDoc.data() as INode;
           if (shouldBeRemovedFromParent) {
-            unlinkPropertyOf(db, property, currentVisibleNode?.id, link.id);
+            unlinkPropertyOf(db, property, currentVisibleNode?.id, link.id, nodes);
           }
 
           await updateDoc(nodeDoc.ref, {

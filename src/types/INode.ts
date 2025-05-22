@@ -63,6 +63,7 @@ export type INode = {
     [propertyName: string]: any;
     parts: ICollection[];
     isPartOf: ICollection[];
+    isPartOfTree: { [parentId: string]: string[] };
   };
   inheritance: IInheritance;
   specializations: ICollection[];
