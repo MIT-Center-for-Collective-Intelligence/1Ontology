@@ -37,7 +37,6 @@ const sanitizeCollectionName = (title: string) => {
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { query, skillsFuture, appName } = req.body;
-
   console.log("query", query, skillsFuture, appName);
   let collectionName = "";
   if (appName) {
@@ -72,4 +71,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   return res.status(200).json({ results: resultsAlt });
 }
 
-export default fbAuth(handler);
+export default fbAuth(handler, true);

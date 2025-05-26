@@ -3,6 +3,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 
 import { admin, db } from "../lib/firestoreServer/admin";
+import Cors from "cors";
 
 export interface IRequestLog {
   uname: string;
@@ -58,10 +59,30 @@ const retrieveAuthenticatedUser = async ({
 export type CustomNextApiRequest = NextApiRequest & {
   user: any;
 };
+const cors = Cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 200,
+});
 
-const fbAuth = (handler: NextApiHandler) => {
+const runMiddleware = (req: any, res: any, fn: any) => {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result: any) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+};
+
+const fbAuth = (handler: NextApiHandler, addCors: boolean = false) => {
   return async (req: CustomNextApiRequest, res: NextApiResponse) => {
     try {
+      if (addCors) {
+        await runMiddleware(req, res, cors);
+      }
       let token = (req.headers.authorization ||
         req.headers.Authorization ||
         "") as string;
