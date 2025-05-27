@@ -703,7 +703,7 @@ const LinkNode = ({
             !currentImprovement &&
             !selectedDiffNode &&
             !clonedNodesQueue.hasOwnProperty(link.id) && (
-              <Tooltip title={swapIt ? "Specialize" : "Close"}>
+              <Tooltip title={swapIt ? "Close" : "Specialize"}>
                 <IconButton
                   sx={{
                     p: 0.2,
