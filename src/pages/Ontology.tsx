@@ -1334,8 +1334,6 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                   searchWithFuse={searchWithFuse}
                   lastSearches={lastSearches}
                   updateLastSearches={updateLastSearches}
-                  skillsFuture={skillsFuture}
-                  skillsFutureApp={appName}
                 />
               </Box>
             </Section>

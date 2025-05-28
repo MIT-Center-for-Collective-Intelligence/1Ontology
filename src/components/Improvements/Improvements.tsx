@@ -121,8 +121,9 @@ const Improvements = ({
 
         // Update links for specializations/generalizations
         if (property === "specializations" || property === "generalizations") {
+          const _newLinks = newLinks.map((c) => c.id);
           updateLinks(
-            newLinks,
+            _newLinks,
             { id: currentVisibleNode?.id },
             property === "specializations"
               ? "generalizations"
@@ -227,7 +228,6 @@ const Improvements = ({
             _addedLinks,
             _removedLinks,
             currentVisibleNode,
-            newLinks,
             nodes,
           );
         }
@@ -238,7 +238,6 @@ const Improvements = ({
             _addedLinks,
             _removedLinks,
             currentVisibleNode,
-            newLinks,
             nodes,
           );
         }
