@@ -6,7 +6,17 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import styles from "./drag.tree.module.css";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { Box, Button, Switch, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Switch,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import EditOffIcon from "@mui/icons-material/EditOff";
 
 import {
   saveNewChangeLog,
@@ -437,37 +447,84 @@ function DraggableTree({
 
   return (
     <Box className={styles.container}>
-      <Box sx={{ display: "flex", gap: 1, mb: 1, ml: "13px" }}>
-        <Button variant="outlined" size="small" onClick={handleExpandAll}>
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          display: "flex",
+          alignItems: "center",
+          flexWrap: "wrap",
+          zIndex: 20,
+          backgroundColor: (theme) =>
+            theme.palette.mode === "dark" ? "#303134" : "#ffffff",
+          pl: "10px",
+          py: "4px",
+          gap: 1,
+        }}
+      >
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={handleExpandAll}
+          sx={{
+            borderRadius: "20px",
+            textTransform: "none",
+          }}
+        >
           Expand All
         </Button>
-        <Button variant="outlined" size="small" onClick={handleCollapseAll}>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={handleCollapseAll}
+          sx={{ borderRadius: "20px", textTransform: "none" }}
+        >
           Collapse All
         </Button>
-        {treeType !== "oNet" &&
-          (user?.uname === "ouhrac" ||
-            user?.uname === "1man" ||
-            user?.uname === "malonetw") && (
-            <Box
-              sx={{
-                alignItems: "center",
-                textAlign: "center",
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "dark" ? "#303134" : "#efefef",
-                borderRadius: "25px",
-                border: "1px solid orange",
-                width: "180px",
-              }}
-            >
-              <Switch
-                checked={editEnabled}
-                onChange={() => {
-                  setEditEnabled((prev) => !prev);
-                }}
-              />
-              Edit {editEnabled ? "On" : "Off"}
-            </Box>
-          )}
+
+        {treeType !== "oNet" && user?.claims.editAccess && (
+          <ToggleButton
+            value="edit"
+            selected={editEnabled}
+            onChange={() => setEditEnabled((prev: boolean) => !prev)}
+            aria-label="Toggle edit mode"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              borderRadius: "25px",
+              px: 2.5,
+              py: 0.2,
+              fontWeight: 500,
+              fontSize: "0.95rem",
+              textTransform: "none",
+              border: "1.5px solid orange",
+              transition: "all 0.2s ease-in-out",
+              bgcolor: (theme) =>
+                theme.palette.mode === "dark" ? "#2b2b2b" : "#f5f5f5",
+              color: (theme) =>
+                theme.palette.mode === "dark" ? "#f5f5f5" : "#222",
+              "&:hover": {
+                bgcolor: (theme) =>
+                  theme.palette.mode === "dark" ? "#3a3a3a" : "#f0e6e6",
+              },
+              "&.Mui-selected": {
+                bgcolor: "orange",
+                color: "#fff",
+                "&:hover": {
+                  bgcolor: "#d17b00",
+                },
+              },
+            }}
+          >
+            {editEnabled ? (
+              <EditIcon fontSize="small" />
+            ) : (
+              <EditOffIcon fontSize="small" />
+            )}
+            Edit Outline: {editEnabled ? "On" : "Off"}
+          </ToggleButton>
+        )}
       </Box>
       <Box className={styles.split}>
         <Box className={styles.treeContainer}>

@@ -712,8 +712,8 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
                       "&:hover": {
                         bgcolor: "orange.dark",
                       },
+                      display: !enableEdit ? "none" : "block",
                     }}
-                    disabled={!enableEdit}
                   >
                     Upload Images
                   </Button>

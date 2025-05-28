@@ -859,7 +859,9 @@ const CollectionStructure = ({
                       key={collection.collectionName + collectionIndex}
                       draggableId={`${collectionIndex}`}
                       index={collectionIndex}
-                      isDragDisabled={property !== "specializations"}
+                      isDragDisabled={
+                        property !== "specializations" || !enableEdit
+                      }
                     >
                       {(provided) => (
                         <Paper
@@ -1145,6 +1147,7 @@ const CollectionStructure = ({
                                           key={link.randomId || link.id}
                                           draggableId={link.id}
                                           index={index}
+                                          isDragDisabled={!enableEdit}
                                         >
                                           {(provided) => (
                                             <LinkNode
@@ -1303,15 +1306,16 @@ const CollectionStructure = ({
                                         : "",
                                   },
                                   // ml: "auto",
+                                  display: !enableEdit ? "none" : "flex",
                                 }}
                                 fullWidth
                                 variant="outlined"
-                                disabled={!enableEdit}
                               >
-                                <AddIcon />{" "}
+                                <AddIcon />
+
                                 {`Add ${capitalizeFirstLetter(
                                   DISPLAY[property] || property,
-                                )}`}{" "}
+                                )}`}
                               </Button>
                             )}
                         </Paper>

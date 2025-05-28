@@ -160,7 +160,10 @@ const SelectInheritance = ({
         onChange={(e: any) => changeInheritance(e, property)}
         select
         label="Change Inheritance"
-        sx={{ minWidth: "200px" }}
+        sx={{
+          minWidth: "200px",
+          display: !enableEdit ? "none" : "block",
+        }}
         InputProps={{
           sx: {
             height: "40px",
@@ -171,7 +174,6 @@ const SelectInheritance = ({
         InputLabelProps={{
           style: { color: "grey" },
         }}
-        disabled={!enableEdit}
       >
         <MenuItem
           value=""

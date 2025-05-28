@@ -4,9 +4,12 @@ import {
   Link,
   Switch,
   Theme,
+  ToggleButton,
   Tooltip,
   Typography,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import EditOffIcon from "@mui/icons-material/EditOff";
 import React from "react";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -30,6 +33,7 @@ const ManageNodeButtons = ({
   unclassified,
   enableEdit,
   setEnableEdit,
+  user,
 }: {
   locked: boolean;
   lockedInductor: boolean;
@@ -44,6 +48,7 @@ const ManageNodeButtons = ({
   unclassified: boolean;
   enableEdit: any;
   setEnableEdit: any;
+  user: any;
 }) => {
   const displayNodeChat = () => displaySidebar("chat");
   const displayNodeHistory = () => displaySidebar("nodeHistory");
@@ -102,28 +107,49 @@ const ManageNodeButtons = ({
             </Box>
           )}
         </Box> */}{" "}
-        <Box
-          sx={{
-            bottom: 0,
-            left: "35%",
-            alignItems: "center",
-            textAlign: "center",
-            backgroundColor: (theme) =>
-              theme.palette.mode === "dark" ? "#303134" : "#efefef",
-            borderRadius: "25px",
-            border: "1px solid orange",
-            px: "10px",
-            width: "180px",
-          }}
-        >
-          <Switch
-            checked={enableEdit}
-            onChange={() => {
-              setEnableEdit((prev: boolean) => !prev);
+        {user?.claims.editAccess && (
+          <ToggleButton
+            value="edit"
+            selected={enableEdit}
+            onChange={() => setEnableEdit((prev: boolean) => !prev)}
+            aria-label="Toggle edit mode"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              borderRadius: "25px",
+              px: 2.5,
+              py: 0.2,
+              fontWeight: 500,
+              fontSize: "0.95rem",
+              textTransform: "none",
+              border: "1.5px solid orange",
+              transition: "all 0.2s ease-in-out",
+              bgcolor: (theme) =>
+                theme.palette.mode === "dark" ? "#2b2b2b" : "#f5f5f5",
+              color: (theme) =>
+                theme.palette.mode === "dark" ? "#f5f5f5" : "#222",
+              "&:hover": {
+                bgcolor: (theme) =>
+                  theme.palette.mode === "dark" ? "#3a3a3a" : "#f0e6e6",
+              },
+              "&.Mui-selected": {
+                bgcolor: "orange",
+                color: "#fff",
+                "&:hover": {
+                  bgcolor: "#d17b00",
+                },
+              },
             }}
-          />
-          Edit {enableEdit ? "On" : "Off"}
-        </Box>
+          >
+            {enableEdit ? (
+              <EditIcon fontSize="small" />
+            ) : (
+              <EditOffIcon fontSize="small" />
+            )}
+            Edit {enableEdit ? "On" : "Off"}
+          </ToggleButton>
+        )}
         {(locked || manageLock) && (
           <Tooltip
             title={

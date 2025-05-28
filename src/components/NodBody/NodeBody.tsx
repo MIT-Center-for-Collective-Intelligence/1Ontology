@@ -508,8 +508,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
             borderRadius: "18px",
             backgroundColor: BUTTON_COLOR,
             mt: "15px",
+            display: !enableEdit ? "none" : "block",
           }}
-          disabled={!enableEdit}
         >
           Add New Property
         </Button>

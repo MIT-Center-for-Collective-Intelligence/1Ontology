@@ -410,6 +410,7 @@ const Text = ({
                   unclassified={!!currentVisibleNode.unclassified}
                   setEnableEdit={setEnableEdit}
                   enableEdit={enableEdit}
+                  user={user}
                 />
               )}{" "}
             {!locked && property !== "title" && property !== "ONetID" && (
@@ -438,8 +439,8 @@ const Text = ({
                             ? "rgba(255, 255, 255, 0.08)"
                             : "rgba(0, 0, 0, 0.04)",
                       },
+                      display: !enableEdit ? "none" : "block",
                     }}
-                    disabled={!enableEdit}
                   >
                     {isPreviewMode ? (
                       <EditIcon fontSize="small" />

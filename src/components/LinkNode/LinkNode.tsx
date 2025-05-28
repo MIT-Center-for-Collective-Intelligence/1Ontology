@@ -751,9 +751,9 @@ const LinkNode = ({
                         borderRadius: "18px",
                         fontSize: "12px",
                         p: 0.2,
+                        display: !enableEdit ? "none" : "block",
                       }}
                       onClick={handleUnlinkNode}
-                      disabled={!enableEdit}
                     >
                       <LinkOffIcon
                         sx={{ color: enableEdit ? "orange" : "gray" }}

@@ -590,9 +590,12 @@ const StructuredProperty = ({
                     onClick={() => {
                       setOpenAddCollection(true);
                     }}
-                    sx={{ borderRadius: "18px", backgroundColor: BUTTON_COLOR }}
+                    sx={{
+                      borderRadius: "18px",
+                      backgroundColor: BUTTON_COLOR,
+                      display: !enableEdit ? "none" : "block",
+                    }}
                     variant="outlined"
-                    disabled={!enableEdit}
                   >
                     Add Collection
                   </Button>
@@ -607,8 +610,8 @@ const StructuredProperty = ({
                         backgroundColor:
                           theme.palette.mode === "light" ? "#f0f0f0" : "",
                       },
+                      display: !enableEdit ? "none" : "block",
                     }}
-                    disabled={!enableEdit}
                     variant="outlined"
                   >
                     {`Edit ${capitalizeFirstLetter(

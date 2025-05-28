@@ -14,7 +14,7 @@ const CommentsSection = ({
   if (!handleCloseAddLinksModel || !commentText) return null;
 
   return (
-    <Box sx={{ p: 2, mt: "10px", position: "relative" }}>
+    <Box sx={{ p: 2, mt: "10px", position: "relative", mb: "15px" }}>
       <Box sx={{ position: "absolute", top: -16, left: 24, zIndex: 1 }}>
         <Button
           variant="contained"
@@ -46,7 +46,6 @@ const CommentsSection = ({
             border: "2px solid #e0e0e0",
             borderRadius: "12px",
             p: 3,
-            pt: 5,
             backgroundColor: (theme) =>
               theme.palette.mode === "light" ? "#fafafa" : "",
           }}
