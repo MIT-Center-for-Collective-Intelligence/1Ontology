@@ -291,7 +291,7 @@ const NodeLabel = ({
           textOverflow: "ellipsis",
         }}
       >
-        {treeVisualization[nodeId].id}
+        {treeVisualization[nodeId].title}
       </Typography>
 
       {/* Action Buttons */}
