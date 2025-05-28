@@ -43,6 +43,7 @@ const YjsEditorWrapper = ({
   autoFocus,
   cursorPosition,
   onEditorReady,
+  setEditorContent,
 }: {
   fullname: string;
   property: string;
@@ -54,6 +55,7 @@ const YjsEditorWrapper = ({
   autoFocus: boolean;
   cursorPosition: number | null;
   onEditorReady?: (editor: Quill) => void;
+  setEditorContent: any;
 }) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
@@ -190,6 +192,7 @@ const YjsEditorWrapper = ({
           if (property === "title") {
             setErrorDuplicate(checkDuplicateTitle(newText));
           }
+          setEditorContent(newText);
         }
       });
 

@@ -39,7 +39,7 @@ const SelectModelModal = ({
   setSearchValue,
   searchValue,
   searchResultsForSelection,
-
+  handleSaveLinkChanges,
   checkedItems,
   setCheckedItems,
   checkedItemsCopy,
@@ -61,6 +61,8 @@ const SelectModelModal = ({
   addACloneNodeQueue,
   newOnes,
   setNewOnes,
+  setLoadingIds,
+  loadingIds,
   setEditableProperty,
   removedElements,
   addedElements,
@@ -70,6 +72,7 @@ const SelectModelModal = ({
   scrollToElement,
   selectedCollection,
   skillsFuture,
+  saveNewSpecialization,
 }: {
   onSave: any;
   handleCloseAddLinksModel: any;
@@ -104,6 +107,8 @@ const SelectModelModal = ({
   clonedNodesQueue: { [nodeId: string]: { title: string; id: string } };
   newOnes: any;
   setNewOnes: any;
+  loadingIds: any;
+  setLoadingIds: any;
   editableProperty: ICollection[] | undefined;
   setEditableProperty: any;
   removedElements: Set<string>;
@@ -114,6 +119,7 @@ const SelectModelModal = ({
   scrollToElement: (nodeId: string) => void;
   selectedCollection: string;
   skillsFuture: boolean;
+  saveNewSpecialization: any;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
 
@@ -188,7 +194,24 @@ const SelectModelModal = ({
     return generalizations.length === 0;
   };
 
-  const markItemAsChecked = (checkedId: string, radioSelection = false) => {
+  const markItemAsChecked = async (
+    checkedId: string,
+    radioSelection = false,
+  ) => {
+    const removedElements: string[] = [];
+    const addedElements: string[] = [];
+    if (checkedItems.has(checkedId)) {
+      removedElements.push(checkedId);
+    } else {
+      addedElements.push(checkedId);
+    }
+
+    setLoadingIds((prev: Set<string>) => {
+      const _prev = new Set(prev);
+      _prev.add(checkedId);
+      return _prev;
+    });
+
     setEditableProperty((prev: ICollection[]) => {
       const _prev = [...prev];
       if (checkedItems.has(checkedId)) {
@@ -262,6 +285,18 @@ const SelectModelModal = ({
         _oldChecked.add(checkedId);
       }
       return _oldChecked;
+    });
+    await handleSaveLinkChanges(
+      removedElements,
+      addedElements,
+      selectedProperty,
+      currentVisibleNode?.id,
+      selectedCollection,
+    );
+    setLoadingIds((prev: Set<string>) => {
+      const _prev = new Set(prev);
+      _prev.delete(checkedId);
+      return _prev;
     });
   };
 
@@ -437,6 +472,7 @@ const SelectModelModal = ({
         selectedProperty={selectedProperty}
         getNumOfGeneralizations={getNumOfGeneralizations}
         currentVisibleNode={currentVisibleNode}
+        loadingIds={loadingIds}
       />
     );
   return (
@@ -633,7 +669,7 @@ const SelectModelModal = ({
           </Box>
         )}
         {/* Save/Cancel Buttons */}
-        <Box
+        {/*<Box
           sx={{
             display: "flex",
             pt: 0,
@@ -662,7 +698,7 @@ const SelectModelModal = ({
           >
             Save
           </LoadingButton>
-        </Box>
+        </Box> */}
       </Box>{" "}
     </Paper>
   );

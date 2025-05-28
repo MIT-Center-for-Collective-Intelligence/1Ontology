@@ -18,10 +18,12 @@ const SelectInheritance = ({
   currentVisibleNode,
   property,
   nodes,
+  enableEdit,
 }: {
   currentVisibleNode: INode;
   property: string;
   nodes: { [nodeId: string]: INode };
+  enableEdit: boolean;
 }) => {
   const db = getFirestore();
   const [generalizations, setGeneralizations] = useState<
@@ -169,6 +171,7 @@ const SelectInheritance = ({
         InputLabelProps={{
           style: { color: "grey" },
         }}
+        disabled={!enableEdit}
       >
         <MenuItem
           value=""

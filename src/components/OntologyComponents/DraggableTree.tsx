@@ -31,6 +31,7 @@ function DraggableTree({
   treeType,
   eachOntologyPath,
   skillsFuture = false,
+  scrollTrigger,
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -41,6 +42,7 @@ function DraggableTree({
   treeType?: string;
   eachOntologyPath?: any;
   skillsFuture?: boolean;
+  scrollTrigger: boolean;
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -114,7 +116,7 @@ function DraggableTree({
 
       return () => clearTimeout(timeout);
     }
-  }, [treeRef, currentVisibleNode?.id, treeData]);
+  }, [treeRef, currentVisibleNode?.id]);
 
   useEffect(() => {
     const tree = treeRef.current;
@@ -348,9 +350,6 @@ function DraggableTree({
             return { id };
           }),
           specializationData,
-          newLinks.map((id) => {
-            return { id };
-          }),
           nodes,
         );
       }
@@ -438,13 +437,37 @@ function DraggableTree({
 
   return (
     <Box className={styles.container}>
-      <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
+      <Box sx={{ display: "flex", gap: 1, mb: 1, ml: "13px" }}>
         <Button variant="outlined" size="small" onClick={handleExpandAll}>
           Expand All
         </Button>
         <Button variant="outlined" size="small" onClick={handleCollapseAll}>
           Collapse All
         </Button>
+        {treeType !== "oNet" &&
+          (user?.uname === "ouhrac" ||
+            user?.uname === "1man" ||
+            user?.uname === "malonetw") && (
+            <Box
+              sx={{
+                alignItems: "center",
+                textAlign: "center",
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark" ? "#303134" : "#efefef",
+                borderRadius: "25px",
+                border: "1px solid orange",
+                width: "180px",
+              }}
+            >
+              <Switch
+                checked={editEnabled}
+                onChange={() => {
+                  setEditEnabled((prev) => !prev);
+                }}
+              />
+              Edit {editEnabled ? "On" : "Off"}
+            </Box>
+          )}
       </Box>
       <Box className={styles.split}>
         <Box className={styles.treeContainer}>
@@ -489,34 +512,6 @@ function DraggableTree({
           </FillFlexParent>
         </Box>
       </Box>
-      {treeType !== "oNet" &&
-        (user?.uname === "ouhrac" ||
-          user?.uname === "1man" ||
-          user?.uname === "malonetw") && (
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: 0,
-              left: "35%",
-              alignItems: "center",
-              textAlign: "center",
-              backgroundColor: (theme) =>
-                theme.palette.mode === "dark" ? "#303134" : "#efefef",
-              borderRadius: "25px",
-              border: "1px solid orange",
-              px: "10px",
-              width: "180px",
-            }}
-          >
-            <Switch
-              checked={editEnabled}
-              onChange={() => {
-                setEditEnabled((prev) => !prev);
-              }}
-            />
-            Edit {editEnabled ? "On" : "Off"}
-          </Box>
-        )}
     </Box>
   );
 }

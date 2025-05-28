@@ -129,6 +129,7 @@ import { User } from "@components/types/IAuth";
 import { getStorage } from "firebase/storage";
 import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 import { development } from "@components/lib/CONSTANTS";
+import { Post } from "@components/lib/utils/Post";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -156,6 +157,8 @@ type INodeProps = {
   setClonedNodesQueue: any;
   newOnes: any;
   setNewOnes: any;
+  loadingIds: any;
+  setLoadingIds: any;
   selectedProperty: any;
   setSelectedProperty: any;
   removedElements: any;
@@ -167,6 +170,8 @@ type INodeProps = {
   selectedCollection: string;
   skillsFuture: boolean;
   partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
+  enableEdit: any;
+  setEnableEdit: any;
 };
 
 const Node = ({
@@ -195,6 +200,8 @@ const Node = ({
   setClonedNodesQueue,
   newOnes,
   setNewOnes,
+  loadingIds,
+  setLoadingIds,
   selectedProperty,
   setSelectedProperty,
   removedElements,
@@ -206,6 +213,8 @@ const Node = ({
   selectedCollection,
   skillsFuture,
   partsInheritance,
+  enableEdit,
+  setEnableEdit,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -513,6 +522,11 @@ const Node = ({
           locked: false,
           createdAt: new Date(),
         });
+        await Post("/triggerChroma", {
+          nodeId: newNodeRef.id,
+          updateAll: true,
+        });
+
         saveNewChangeLog(db, {
           nodeId: newNodeRef.id,
           modifiedBy: user?.uname,
@@ -627,14 +641,15 @@ const Node = ({
 
   const handleSaveLinkChanges = useCallback(
     async (
-      removedElements: Set<string>,
-      addedElements: Set<string>,
+      removedElements: string[],
+      addedElements: string[],
       selectedProperty: string,
       nodeId: string,
+      selectedCollection: string | null = null,
     ) => {
       try {
         if (
-          (removedElements.size === 0 && addedElements.size === 0) ||
+          (removedElements.length === 0 && addedElements.length === 0) ||
           !selectedProperty
         ) {
           return;
@@ -673,9 +688,36 @@ const Node = ({
             );
           }
         }
-        const newLinks = editableProperty.flatMap((n) => n.nodes);
+        const newValue = JSON.parse(JSON.stringify(previousValue));
+        for (let collection of newValue) {
+          collection.nodes = collection.nodes.filter(
+            (c: { id: string }) => !removedElements.includes(c.id),
+          );
+        }
+        let collectionIdx = 0;
+        if (selectedCollection) {
+          collectionIdx = newValue.findIndex(
+            (c: { collectionName: string }) =>
+              c.collectionName === selectedCollection,
+          );
+          if (collectionIdx === -1) {
+            collectionIdx = 0;
+          }
+        }
+        newValue[collectionIdx].nodes.push(
+          ...addedElements.map((id) => {
+            return { id };
+          }),
+        );
+        const nodesLength = previousValue
+          ?.flatMap((c) => c.nodes)
+          .filter((c) => !removedElements.includes(c.id)).length;
         // Prevent removing all generalizations
-        if (selectedProperty === "generalizations" && newLinks.length === 0) {
+        if (
+          selectedProperty === "generalizations" &&
+          nodesLength === 0 &&
+          addedElements.length === 0
+        ) {
           await confirmIt(
             "You cannot remove all the generalizations for this node. Make sure it links to at least one generalization.",
             "Ok",
@@ -693,8 +735,8 @@ const Node = ({
           selectedProperty === "specializations" ||
           selectedProperty === "generalizations"
         ) {
-          updateLinks(
-            newLinks,
+          await updateLinks(
+            new Array(...addedElements),
             { id: nodeId },
             selectedProperty === "specializations"
               ? "generalizations"
@@ -702,15 +744,20 @@ const Node = ({
             nodes,
             db,
           );
-          nodeData[selectedProperty] = editableProperty;
+          nodeData[selectedProperty] = newValue;
         } else {
-          nodeData.properties[selectedProperty] = editableProperty;
+          nodeData.properties[selectedProperty] = newValue;
         }
 
         // Update parts/isPartOf links
         if (selectedProperty === "parts" || selectedProperty === "isPartOf") {
+          const addedLinks = new Array(...addedElements).map((lId) => {
+            return {
+              id: lId,
+            };
+          });
           updatePartsAndPartsOf(
-            newLinks,
+            addedLinks,
             { id: nodeId },
             selectedProperty === "parts" ? "isPartOf" : "parts",
             db,
@@ -756,8 +803,13 @@ const Node = ({
             "isPartOf",
           ]).has(selectedProperty)
         ) {
-          updatePropertyOf(
-            newLinks,
+          const addedLinks = addedElements.map((lId) => {
+            return {
+              id: lId,
+            };
+          });
+          await updatePropertyOf(
+            addedLinks,
             { id: nodeId },
             selectedProperty,
             nodes,
@@ -775,7 +827,6 @@ const Node = ({
             addedLinks,
             removedLinks,
             nodeData,
-            newLinks,
             nodes,
           );
         }
@@ -786,7 +837,6 @@ const Node = ({
             addedLinks,
             removedLinks,
             nodeData,
-            newLinks,
             nodes,
           );
         }
@@ -808,7 +858,7 @@ const Node = ({
           modifiedBy: user?.uname,
           modifiedProperty: selectedProperty,
           previousValue,
-          newValue: editableProperty,
+          newValue: newValue,
           modifiedAt: new Date(),
           changeType: "modify elements",
           fullNode: nodeData,
@@ -967,22 +1017,25 @@ const Node = ({
   );
 
   // Memoized this to prevent useEffect re-runs in YjsEditorWrapper
-  const checkDuplicateTitle = useCallback((newTitle: string) => {
-    try {
-      const fuseSearch = searchWithFuse(newTitle.trim());
-      return (
-        fuseSearch.length > 0 &&
-        fuseSearch.some(
-          (s) =>
-            s.title.toLowerCase().trim() === newTitle.toLowerCase().trim() &&
-            currentVisibleNode?.id !== s.id,
-        )
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  }, [searchWithFuse, currentVisibleNode?.id]);
-  
+  const checkDuplicateTitle = useCallback(
+    (newTitle: string) => {
+      try {
+        const fuseSearch = searchWithFuse(newTitle.trim());
+        return (
+          fuseSearch.length > 0 &&
+          fuseSearch.some(
+            (s) =>
+              s.title.toLowerCase().trim() === newTitle.toLowerCase().trim() &&
+              currentVisibleNode?.id !== s.id,
+          )
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [searchWithFuse, currentVisibleNode?.id],
+  );
+
   const getPath = useCallback(
     (nodeId: string, selectedProperty: string): Set<string> => {
       if (selectedProperty === "generalizations") {
@@ -1045,6 +1098,8 @@ const Node = ({
           currentImprovement={currentImprovement}
           checkDuplicateTitle={checkDuplicateTitle}
           skillsFuture={skillsFuture}
+          enableEdit={enableEdit}
+          setEnableEdit={setEnableEdit}
         />
 
         {/* {currentVisibleNode.nodeType === "context" && (
@@ -1098,6 +1153,7 @@ const Node = ({
             confirmIt={confirmIt}
             currentImprovement={currentImprovement}
             skillsFuture={skillsFuture}
+            enableEdit={enableEdit}
           />
         )}
         {/* actors of the node if it's exist */}
@@ -1140,6 +1196,8 @@ const Node = ({
             clonedNodesQueue={clonedNodesQueue}
             newOnes={newOnes}
             setNewOnes={setNewOnes}
+            loadingIds={loadingIds}
+            setLoadingIds={setLoadingIds}
             editableProperty={editableProperty}
             setEditableProperty={setEditableProperty}
             removedElements={removedElements}
@@ -1150,6 +1208,7 @@ const Node = ({
             setGlowIds={setGlowIds}
             selectedCollection={selectedCollection}
             skillsFuture={skillsFuture}
+            enableEdit={enableEdit}
           />
         )}
         {/* specializations and generalizations*/}
@@ -1199,6 +1258,8 @@ const Node = ({
               clonedNodesQueue={clonedNodesQueue}
               newOnes={newOnes}
               setNewOnes={setNewOnes}
+              loadingIds={loadingIds}
+              setLoadingIds={setLoadingIds}
               editableProperty={editableProperty}
               setEditableProperty={setEditableProperty}
               removedElements={removedElements}
@@ -1209,6 +1270,7 @@ const Node = ({
               setGlowIds={setGlowIds}
               selectedCollection={selectedCollection}
               skillsFuture={skillsFuture}
+              enableEdit={enableEdit}
             />
           ))}
         </Stack>
@@ -1261,6 +1323,8 @@ const Node = ({
               clonedNodesQueue={clonedNodesQueue}
               newOnes={newOnes}
               setNewOnes={setNewOnes}
+              loadingIds={loadingIds}
+              setLoadingIds={setLoadingIds}
               editableProperty={editableProperty}
               setEditableProperty={setEditableProperty}
               removedElements={removedElements}
@@ -1272,6 +1336,7 @@ const Node = ({
               selectedCollection={selectedCollection}
               skillsFuture={skillsFuture}
               partsInheritance={partsInheritance}
+              enableEdit={enableEdit}
             />
           ))}
         </Stack>
@@ -1324,6 +1389,8 @@ const Node = ({
           clonedNodesQueue={clonedNodesQueue}
           newOnes={newOnes}
           setNewOnes={setNewOnes}
+          loadingIds={loadingIds}
+          setLoadingIds={setLoadingIds}
           editableProperty={editableProperty}
           setEditableProperty={setEditableProperty}
           removedElements={removedElements}
@@ -1336,6 +1403,7 @@ const Node = ({
           storage={storage}
           saveNewChangeLog={saveNewChangeLog}
           skillsFuture={skillsFuture}
+          enableEdit={enableEdit}
         />
       </Box>{" "}
       {ConfirmDialog}

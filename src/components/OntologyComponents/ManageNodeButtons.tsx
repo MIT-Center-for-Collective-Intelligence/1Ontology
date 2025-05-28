@@ -2,6 +2,7 @@ import {
   Box,
   IconButton,
   Link,
+  Switch,
   Theme,
   Tooltip,
   Typography,
@@ -27,6 +28,8 @@ const ManageNodeButtons = ({
   displaySidebar,
   activeSidebar,
   unclassified,
+  enableEdit,
+  setEnableEdit,
 }: {
   locked: boolean;
   lockedInductor: boolean;
@@ -39,6 +42,8 @@ const ManageNodeButtons = ({
   displaySidebar: Function;
   activeSidebar: string;
   unclassified: boolean;
+  enableEdit: any;
+  setEnableEdit: any;
 }) => {
   const displayNodeChat = () => displaySidebar("chat");
   const displayNodeHistory = () => displaySidebar("nodeHistory");
@@ -96,7 +101,29 @@ const ManageNodeButtons = ({
               </Link>
             </Box>
           )}
-        </Box> */}
+        </Box> */}{" "}
+        <Box
+          sx={{
+            bottom: 0,
+            left: "35%",
+            alignItems: "center",
+            textAlign: "center",
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark" ? "#303134" : "#efefef",
+            borderRadius: "25px",
+            border: "1px solid orange",
+            px: "10px",
+            width: "180px",
+          }}
+        >
+          <Switch
+            checked={enableEdit}
+            onChange={() => {
+              setEnableEdit((prev: boolean) => !prev);
+            }}
+          />
+          Edit {enableEdit ? "On" : "Off"}
+        </Box>
         {(locked || manageLock) && (
           <Tooltip
             title={
@@ -167,7 +194,6 @@ const ManageNodeButtons = ({
             />
           </IconButton>
         </Tooltip>
-
         {!locked && !unclassified && (
           <Tooltip title="Delete Node">
             <IconButton onClick={() => deleteNode()}>

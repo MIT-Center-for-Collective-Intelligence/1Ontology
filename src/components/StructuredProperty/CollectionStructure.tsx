@@ -103,12 +103,16 @@ const CollectionStructure = ({
   setClonedNodesQueue,
   newOnes,
   setNewOnes,
+  loadingIds,
+  setLoadingIds,
+  saveNewSpecialization,
   editableProperty,
   onGetPropertyValue,
   setRemovedElements,
   setAddedElements,
   skillsFuture,
   partsInheritance,
+  enableEdit,
 }: {
   model?: boolean;
   locked: boolean;
@@ -163,12 +167,16 @@ const CollectionStructure = ({
   setClonedNodesQueue: any;
   newOnes: any;
   setNewOnes: any;
+  loadingIds: any;
+  setLoadingIds: any;
+  saveNewSpecialization: any;
   editableProperty: any;
   onGetPropertyValue: any;
   setRemovedElements: any;
   setAddedElements: any;
   skillsFuture: boolean;
   partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
+  enableEdit: boolean;
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -989,15 +997,20 @@ const CollectionStructure = ({
                                           gap: "14px",
                                         }}
                                       >
-                                        <Button
-                                          variant="contained"
-                                          onClick={handleCloseAddLinksModel}
-                                          color="error"
-                                          sx={{ borderRadius: "25px" }}
-                                        >
-                                          Cancel
-                                        </Button>
-                                        <LoadingButton
+                                        <Tooltip title={"Close Editing"}>
+                                          <IconButton
+                                            onClick={handleCloseAddLinksModel}
+                                            sx={{
+                                              borderRadius: "25px",
+                                              backgroundColor: "red",
+                                            }}
+                                          >
+                                            <CloseIcon
+                                              sx={{ color: "white" }}
+                                            />
+                                          </IconButton>
+                                        </Tooltip>
+                                        {/*<LoadingButton
                                           size="small"
                                           onClick={onSave}
                                           loading={isSaving}
@@ -1013,7 +1026,7 @@ const CollectionStructure = ({
                                           }
                                         >
                                           Save
-                                        </LoadingButton>
+                                        </LoadingButton> */}
                                       </Box>
                                     )}
                                 </Box>
@@ -1183,6 +1196,11 @@ const CollectionStructure = ({
                                               partsInheritance={
                                                 partsInheritance
                                               }
+                                              loadingIds={loadingIds}
+                                              saveNewSpecialization={
+                                                saveNewSpecialization
+                                              }
+                                              enableEdit={enableEdit}
                                             />
                                           )}
                                         </Draggable>
@@ -1243,6 +1261,8 @@ const CollectionStructure = ({
                                 setClonedNodesQueue={setClonedNodesQueue}
                                 newOnes={newOnes}
                                 setNewOnes={setNewOnes}
+                                loadingIds={loadingIds}
+                                setLoadingIds={setLoadingIds}
                                 editableProperty={editableProperty}
                                 onGetPropertyValue={onGetPropertyValue}
                                 setRemovedElements={setRemovedElements}
@@ -1261,6 +1281,7 @@ const CollectionStructure = ({
                                 currentImprovement={currentImprovement}
                                 selectedCollection={selectedCollection}
                                 skillsFuture={skillsFuture}
+                                saveNewSpecialization={saveNewSpecialization}
                               />
                             )}
                           {property === "specializations" &&
@@ -1285,6 +1306,7 @@ const CollectionStructure = ({
                                 }}
                                 fullWidth
                                 variant="outlined"
+                                disabled={!enableEdit}
                               >
                                 <AddIcon />{" "}
                                 {`Add ${capitalizeFirstLetter(
