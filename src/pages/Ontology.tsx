@@ -572,7 +572,6 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     let nodesQuery = null;
 
     if (skillsFuture && appName) {
-      // setNodes({});
       nodesQuery = query(
         collection(db, NODES),
         where("deleted", "==", false),
@@ -1306,7 +1305,10 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                       <Select
                         labelId="property-type-label"
                         value={appName}
-                        onChange={(event) => setAppName(event.target.value)}
+                        onChange={(event) => {
+                          setNodes({});
+                          setAppName(event.target.value);
+                        }}
                         label="Property Type"
                         sx={{ borderRadius: "20px" }}
                       >
