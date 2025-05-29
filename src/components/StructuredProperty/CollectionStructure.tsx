@@ -955,7 +955,9 @@ const CollectionStructure = ({
                                     !model && (
                                       <Box
                                         sx={{
-                                          display: "flex",
+                                          display: !enableEdit
+                                            ? "none"
+                                            : "flex",
                                           ml: "auto",
                                           gap: "5px",
                                         }}
