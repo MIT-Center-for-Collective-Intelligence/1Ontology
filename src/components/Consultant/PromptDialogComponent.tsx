@@ -45,7 +45,7 @@ const LoadingConsultant = () => {
 };
 
 const PromptDialogComponent = ({
-  onClose,
+  generateNewDiagram,
   confirmation,
   loadingResponse,
   generateNewDiagramState,
@@ -53,7 +53,7 @@ const PromptDialogComponent = ({
   handleThemeSwitch,
   ignoreCLD,
 }: {
-  onClose: any;
+  generateNewDiagram: any;
   confirmation: any;
   loadingResponse: any;
   generateNewDiagramState: any;
@@ -72,6 +72,19 @@ const PromptDialogComponent = ({
 
   useEffect(() => {
     getPrompt();
+
+    const savedInputValue = localStorage.getItem(
+      `caseDescription-${!!ignoreCLD}`,
+    );
+    const savedProblemStatement = localStorage.getItem(
+      `problemStatement-${!!ignoreCLD}`,
+    );
+    const savedConsultingTopic = localStorage.getItem(
+      `consultingTopic-${!!ignoreCLD}`,
+    );
+    setCaseDescription(savedInputValue || "");
+    setProblemStatement(savedProblemStatement || "");
+    setConsultingTopic(savedConsultingTopic || "");
   }, [confirmation]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -120,20 +133,30 @@ const PromptDialogComponent = ({
 
   const handleClose = async () => {
     // Save immediately when closing
+
     await savePrompt();
-    await onClose({
+    await generateNewDiagram({
       documentDetailed: caseDescription,
       consultingTopic,
       problemStatement,
     });
+    localStorage.setItem(`caseDescription-${!!ignoreCLD}`, "");
+    localStorage.setItem(`problemStatement-${!!ignoreCLD}`, "");
+    localStorage.setItem(`consultingTopic-${!!ignoreCLD}`, "");
   };
 
   const handleUserInputChange = (event: any) => {
-    setCaseDescription(event.target.value);
+    setCaseDescription("");
+    localStorage.setItem(`caseDescription-${!!ignoreCLD}`, event.target.value);
   };
 
   const handleProblemStatementChange = (event: any) => {
     setProblemStatement(event.target.value);
+    localStorage.setItem(`problemStatement-${!!ignoreCLD}`, event.target.value);
+  };
+  const handleConsultingTopic = (e: any) => {
+    setConsultingTopic(e.target.value);
+    localStorage.setItem(`consultingTopic-${!!ignoreCLD}`, e.target.value);
   };
 
   const handleLlmPromptChange = (event: any) => {
@@ -303,7 +326,7 @@ const PromptDialogComponent = ({
             margin="dense"
             type="text"
             value={consultingTopic}
-            onChange={(e) => setConsultingTopic(e.target.value)}
+            onChange={handleConsultingTopic}
             fullWidth
             variant="outlined"
             InputLabelProps={{
@@ -320,7 +343,7 @@ const PromptDialogComponent = ({
           />
 
           <Button
-            onClick={() => handleClose()}
+            onClick={handleClose}
             variant="contained"
             sx={{
               borderRadius: "26px",

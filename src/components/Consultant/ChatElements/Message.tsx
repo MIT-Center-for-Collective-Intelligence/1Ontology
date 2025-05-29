@@ -132,6 +132,7 @@ const Message = ({
         messageId: messageRef.id,
         diagramId,
         userPrompt: inputValue,
+        consultantOnly: !!ignoreCLD,
       });
     } catch (error) {
       console.error(error);

@@ -320,10 +320,10 @@ const LinkNode = ({
               db,
             });
           }
-          /*       await Post("/triggerChroma", {
+          await Post("/triggerChroma", {
             nodeId: currentNodeId,
             updateAll: false,
-          }); */
+          });
           saveNewChangeLog(db, {
             nodeId: currentVisibleNode?.id,
             modifiedBy: user?.uname,
@@ -572,10 +572,10 @@ const LinkNode = ({
             );
           }
         }
-        /* await Post("/triggerChroma", {
+        await Post("/triggerChroma", {
           nodeId: currentNodeId,
           updateAll: false,
-        }); */
+        });
       }
     } catch (error: any) {
       console.error(error);

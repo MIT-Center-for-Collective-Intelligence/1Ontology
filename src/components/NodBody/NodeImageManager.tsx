@@ -712,7 +712,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
                       "&:hover": {
                         bgcolor: "orange.dark",
                       },
-                      display: !enableEdit ? "none" : "block",
+                      display: !enableEdit ? "none" : "flex",
                     }}
                   >
                     Upload Images

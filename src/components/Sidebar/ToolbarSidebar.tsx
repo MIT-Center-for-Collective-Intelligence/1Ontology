@@ -1070,6 +1070,8 @@ const ToolbarSidebar = ({
             searchWithFuse={searchWithFuse}
             lastSearches={lastSearches}
             updateLastSearches={updateLastSearches}
+            skillsFuture={skillsFuture}
+            skillsFutureApp={skillsFutureApp}
           />
         );
       case "userActivity":
