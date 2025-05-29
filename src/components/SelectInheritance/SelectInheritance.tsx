@@ -162,7 +162,7 @@ const SelectInheritance = ({
         label="Change Inheritance"
         sx={{
           minWidth: "200px",
-          display: !enableEdit ? "none" : "block",
+          display: !enableEdit ? "none" : "flex",
         }}
         InputProps={{
           sx: {

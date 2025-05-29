@@ -946,7 +946,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
       if (currentImprovement) {
         return;
       }
-      if (
+      /* if (
         selectedProperty &&
         (addedElements.size > 0 || removedElements.size > 0) &&
         (await confirmIt(
@@ -960,9 +960,9 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
         ))
       ) {
         return;
-      }
+      } */
+      handleCloseAddLinksModel();
       if (nodes[nodeId]) {
-        handleCloseAddLinksModel();
         setCurrentVisibleNode(nodes[nodeId]);
         initializeExpanded(eachOntologyPath[nodeId]);
         setSelectedDiffNode(null);

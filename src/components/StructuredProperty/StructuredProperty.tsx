@@ -377,6 +377,16 @@ const StructuredProperty = ({
         selectedProperty,
         currentVisibleNode?.id,
       );
+      setClonedNodesQueue((prev: any) => {
+        const _prev = { ...prev };
+        delete _prev[nId];
+        return _prev;
+      });
+      setLoadingIds((prev: Set<string>) => {
+        const _prev = new Set(prev);
+        _prev.delete(nId);
+        return _prev;
+      });
     } catch (error) {
       console.error(error);
     }

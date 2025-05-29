@@ -151,6 +151,7 @@ type ILinkNodeProps = {
   selectedDiffNode: any;
   replaceWith: any;
   saveNewAndSwapIt: any;
+  setClonedNodesQueue: any;
   clonedNodesQueue?: any;
   unlinkElement?: any;
   selectedProperty: string;
@@ -180,6 +181,7 @@ const LinkNode = ({
   selectedDiffNode,
   replaceWith,
   saveNewAndSwapIt,
+  setClonedNodesQueue,
   clonedNodesQueue = {},
   unlinkElement,
   selectedProperty,
@@ -318,10 +320,10 @@ const LinkNode = ({
               db,
             });
           }
-          await Post("/triggerChroma", {
+          /*       await Post("/triggerChroma", {
             nodeId: currentNodeId,
             updateAll: false,
-          });
+          }); */
           saveNewChangeLog(db, {
             nodeId: currentVisibleNode?.id,
             modifiedBy: user?.uname,
@@ -570,10 +572,10 @@ const LinkNode = ({
             );
           }
         }
-        await Post("/triggerChroma", {
+        /* await Post("/triggerChroma", {
           nodeId: currentNodeId,
           updateAll: false,
-        });
+        }); */
       }
     } catch (error: any) {
       console.error(error);
@@ -671,7 +673,7 @@ const LinkNode = ({
             reviewId={link.id}
             title={clonedNodesQueue[link.id]?.title || ""}
             checkDuplicateTitle={() => {}}
-            setClonedNodesQueue={() => {}}
+            setClonedNodesQueue={setClonedNodesQueue}
           />
         ) : (
           <Link
@@ -744,7 +746,13 @@ const LinkNode = ({
                       </IconButton>
                     </Tooltip>
                   )}
-                  <Tooltip title="Unlink">
+                  <Tooltip
+                    title={
+                      clonedNodesQueue.hasOwnProperty(link.id)
+                        ? "Cancel"
+                        : "Unlink"
+                    }
+                  >
                     <IconButton
                       sx={{
                         ml: "18px",
@@ -755,9 +763,13 @@ const LinkNode = ({
                       }}
                       onClick={handleUnlinkNode}
                     >
-                      <LinkOffIcon
-                        sx={{ color: enableEdit ? "orange" : "gray" }}
-                      />
+                      {clonedNodesQueue.hasOwnProperty(link.id) ? (
+                        <CloseIcon sx={{ color: "red" }} />
+                      ) : (
+                        <LinkOffIcon
+                          sx={{ color: enableEdit ? "orange" : "gray" }}
+                        />
+                      )}
                     </IconButton>
                   </Tooltip>
                 </Box>

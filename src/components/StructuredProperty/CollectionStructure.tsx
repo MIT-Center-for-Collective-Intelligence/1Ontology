@@ -1204,6 +1204,9 @@ const CollectionStructure = ({
                                                 saveNewSpecialization
                                               }
                                               enableEdit={enableEdit}
+                                              setClonedNodesQueue={
+                                                setClonedNodesQueue
+                                              }
                                             />
                                           )}
                                         </Draggable>

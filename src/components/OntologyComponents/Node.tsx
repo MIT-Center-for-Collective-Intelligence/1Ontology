@@ -522,10 +522,10 @@ const Node = ({
           locked: false,
           createdAt: new Date(),
         });
-        await Post("/triggerChroma", {
+        /*       await Post("/triggerChroma", {
           nodeId: newNodeRef.id,
           updateAll: true,
-        });
+        }); */
 
         saveNewChangeLog(db, {
           nodeId: newNodeRef.id,
