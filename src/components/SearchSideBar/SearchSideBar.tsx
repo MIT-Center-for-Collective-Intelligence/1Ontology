@@ -134,7 +134,7 @@ const SearchSideBar = ({
     const response: any = await Post("/searchChroma", {
       query: searchValue,
       skillsFuture,
-      appName: skillsFutureApp,
+      appName: skillsFuture ? skillsFutureApp : null,
     });
     1;
 
