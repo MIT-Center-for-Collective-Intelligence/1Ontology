@@ -6,6 +6,7 @@ import { delay } from "@components/lib/utils/utils";
 import { ChromaClient, OpenAIEmbeddingFunction } from "chromadb";
 import fbAuth from "@components/middlewares/fbAuth";
 import { development } from "@components/lib/CONSTANTS";
+import Cors from "cors";
 
 const EMBEDDING_MODEL = "gemini-embedding-exp-03-07";
 
@@ -90,9 +91,25 @@ const embeddingFunction = new OpenAIEmbeddingFunction({
   openai_api_key: process.env.MIT_CCI_OPENAI_API_KEY,
   openai_model: "text-embedding-3-large",
 });
-
+const cors = Cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 200,
+});
+const runMiddleware = (req: any, res: any, fn: any) => {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result: any) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+};
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { nodeId, updatedShortIds, deleteNode } = req.body;
+  await runMiddleware(req, res, cors);
   if (development) {
     res.status(200).json({});
   }
@@ -175,37 +192,28 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const idsChunks = createChunks(updateDocumentsIds);
 
   for (let i = 0; i < idsChunks.length; i++) {
-    let tryAgain = true;
+    try {
+      const chunkIdsLong = idsChunks[i];
+      const chunkDocs = docsChunks[i];
+      const fullDocuments = chunkDocs.map((doc) => doc.content);
 
-    while (tryAgain) {
-      try {
-        const chunkIdsLong = idsChunks[i];
-        const chunkDocs = docsChunks[i];
-        const fullDocuments = chunkDocs.map((doc) => doc.content);
+      const titles = chunkDocs.map((d) => {
+        return {
+          title: d.title,
+          id: d.id,
+        };
+      });
 
-        const titles = chunkDocs.map((d) => {
-          return {
-            title: d.title,
-            id: d.id,
-          };
-        });
-
-        await collection.upsert({
-          documents: fullDocuments,
-          ids: chunkIdsLong,
-          metadatas: titles,
-        });
-        await delay(40 * 1000);
-
-        tryAgain = false;
-      } catch (error) {
-        console.error("Embedding failed, retrying:", error);
-
-        await delay(15 * 1000);
-      }
+      await collection.upsert({
+        documents: fullDocuments,
+        ids: chunkIdsLong,
+        metadatas: titles,
+      });
+    } catch (error) {
+      console.log("Error embedding batch:", error);
     }
   }
   return res.status(200).json({});
 }
 
-export default fbAuth(handler, true);
+export default handler;
