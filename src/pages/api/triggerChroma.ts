@@ -88,7 +88,7 @@ const sanitizeCollectionName = (title: string) => {
   );
 };
 const embeddingFunction = new OpenAIEmbeddingFunction({
-  openai_api_key: process.env.MIT_CCI_OPENAI_API_KEY,
+  openai_api_key: process.env.MIT_CCI_API_KEY,
   openai_model: "text-embedding-3-large",
 });
 const cors = Cors({
