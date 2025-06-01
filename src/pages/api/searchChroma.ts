@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ChromaClient, OpenAIEmbeddingFunction } from "chromadb";
 import fbAuth from "@components/middlewares/fbAuth";
 import OpenAI from "openai";
+import Cors from "cors";
 
 const url = `${process.env.CHROMA_PROTOCOL}://${process.env.CHROMA_HOST}:${process.env.CHROMA_PORT}`;
 
@@ -21,10 +22,29 @@ const embeddingFunction = new OpenAIEmbeddingFunction({
   openai_api_key: process.env.MIT_CCI_API_KEY,
   openai_model: "text-embedding-3-large",
 });
+const cors = Cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 200,
+});
+
+const runMiddleware = (req: any, res: any, fn: any) => {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result: any) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+};
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { query, skillsFuture, appName } = req.body;
+
+    await runMiddleware(req, res, cors);
 
     let collectionName = "";
     if (appName) {
@@ -62,4 +82,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default fbAuth(handler, true);
+export default handler;

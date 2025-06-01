@@ -80,7 +80,7 @@ type ITextProps = {
   sx?: any;
   skillsFuture: boolean;
   setEnableEdit?: any;
-  enableEdit?: any;
+  enableEdit: any;
 };
 
 const Text = ({
@@ -120,7 +120,7 @@ const Text = ({
   const [autoFocus, setAutoFocus] = useState(false);
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
   const [switchToWebsocket, setSwitchToWebSocket] = useState(true);
-  const [isPreviewMode, setIsPreviewMode] = useState(!structured);
+  // const [isPreviewMode, setIsPreviewMode] = useState(false);
   const currentImprovementChange = useMemo(() => {
     if (currentImprovement?.newNode || !currentImprovement) return null;
 
@@ -413,7 +413,7 @@ const Text = ({
                   user={user}
                 />
               )}{" "}
-            {!locked && property !== "title" && property !== "ONetID" && (
+            {/*{!locked && property !== "title" && property !== "ONetID" && (
               <Box
                 sx={{
                   display: "flex",
@@ -450,7 +450,7 @@ const Text = ({
                   </IconButton>
                 </Tooltip>
               </Box>
-            )}
+            )} */}
             {property !== "title" &&
               property !== "ONetID" &&
               !currentImprovement &&
@@ -511,7 +511,7 @@ const Text = ({
                   onSave: onSaveTextChange,
                 }}
                 mode={{
-                  isPreview: isPreviewMode,
+                  isPreview: !enableEdit,
                   useWebsocket: switchToWebsocket,
                   reference: reference,
                 }}
