@@ -665,6 +665,7 @@ const SelectModelModal = ({
               sx={{ borderRadius: "none", backgroundColor: "" }}
               getTitleNode={() => {}}
               skillsFuture={skillsFuture}
+              enableEdit={true}
             />
           </Box>
         )}
