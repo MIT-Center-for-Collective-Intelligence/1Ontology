@@ -17,7 +17,7 @@ import {
 import { ICollection, ILinkNode, INode } from "@components/types/INode";
 import { DISPLAY } from "@components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
-import { collection, doc, getFirestore } from "firebase/firestore";
+import { collection, doc, getFirestore, getDoc } from "firebase/firestore";
 import { recordLogs } from "@components/lib/utils/helpers";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import MarkdownRender from "../Markdown/MarkdownRender";
@@ -79,7 +79,8 @@ type IStructuredPropertyProps = {
   setGlowIds: any;
   selectedCollection: any;
   skillsFuture: boolean;
-  partsInheritance?: { [nodeId: string]: { title: string; fullPart: boolean } };
+  // partsInheritance?: { [nodeId: string]: { title: string; fullPart: boolean } };
+  setNodes?: any;
 };
 
 const StructuredProperty = ({
@@ -130,7 +131,8 @@ const StructuredProperty = ({
   setGlowIds,
   selectedCollection,
   skillsFuture,
-  partsInheritance,
+  // partsInheritance,
+  setNodes,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
   const [openAddCollection, setOpenAddCollection] = useState(false);
@@ -553,22 +555,22 @@ const StructuredProperty = ({
                   </Button>
                 )}
                 {property !== "specializations" && (
-                  <Button
-                    onClick={() => editStructuredProperty(property)}
-                    sx={{
-                      borderRadius: "18px",
-                      backgroundColor: BUTTON_COLOR,
-                      ":hover": {
+                <Button
+                  onClick={() => editStructuredProperty(property)} 
+                  sx={{
+                    borderRadius: "18px",
+                    backgroundColor: BUTTON_COLOR,
+                    ":hover": {
                         backgroundColor:
                           theme.palette.mode === "light" ? "#f0f0f0" : "",
-                      },
-                    }}
-                    variant="outlined"
-                  >
+                    },
+                  }}
+                  variant="outlined"
+                >
                     {`Edit ${capitalizeFirstLetter(
                       DISPLAY[property] || property,
                     )}`}{" "}
-                  </Button>
+                </Button>
                 )}
                 {property !== "generalizations" &&
                   property !== "specializations" &&
@@ -656,7 +658,8 @@ const StructuredProperty = ({
             setAddedElements={setAddedElements}
             addACloneNodeQueue={addACloneNodeQueue}
             skillsFuture={skillsFuture}
-            partsInheritance={partsInheritance ?? {}}
+            // partsInheritance={partsInheritance ?? {}}
+            setNodes={setNodes}
           />
         )}
       </Box>

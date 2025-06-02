@@ -13,6 +13,8 @@ import { NODES } from "@components/lib/firestoreClient/collections";
 import { recordLogs } from "@components/lib/utils/helpers";
 import { getTitle } from "@components/lib/utils/string.utils";
 import { INode, ICollection, ILinkNode } from "@components/types/INode";
+import { changePartsInheritanceReference } from "@components/lib/api/partsAPI";
+import { useAuth } from "../context/AuthContext";
 
 const SelectInheritance = ({
   currentVisibleNode,
@@ -24,6 +26,7 @@ const SelectInheritance = ({
   nodes: { [nodeId: string]: INode };
 }) => {
   const db = getFirestore();
+  const [{ user }] = useAuth();
   const [generalizations, setGeneralizations] = useState<
     { id: string; title: string }[]
   >([]);
@@ -106,7 +109,7 @@ const SelectInheritance = ({
 
     return newBatch;
   };
-  const changeInheritance = (
+  const changeInheritance = async (
     event: React.ChangeEvent<HTMLInputElement>,
     property: string,
   ) => {
@@ -119,25 +122,33 @@ const SelectInheritance = ({
         if (newGeneralization.inheritance[property].ref) {
           newGeneralizationId = newGeneralization.inheritance[property].ref;
         }
-
-        updateDoc(nodeRef, {
-          [`inheritance.${property}.ref`]: newGeneralizationId,
-        })
-          .then(async () => {
-            let batch = writeBatch(db);
-            batch = await updateSpecializationsInheritance(
-              nodes[currentVisibleNode?.id].specializations,
-              batch,
-              property,
-              newGeneralizationId,
-              currentVisibleNode?.id,
-              currentVisibleNode?.id,
-            );
-            await batch.commit();
+        if (property === "parts") {
+          await changePartsInheritanceReference(
+            currentVisibleNode?.id,
+            newGeneralizationId,
+            nodes,
+            user
+          );
+        } else {
+          updateDoc(nodeRef, {
+            [`inheritance.${property}.ref`]: newGeneralizationId,
           })
-          .catch((error) => {
-            console.error("Failed to update inheritance:", error);
-          });
+            .then(async () => {
+              let batch = writeBatch(db);
+              batch = await updateSpecializationsInheritance(
+                nodes[currentVisibleNode?.id].specializations,
+                batch,
+                property,
+                newGeneralizationId,
+                currentVisibleNode?.id,
+                currentVisibleNode?.id,
+              );
+              await batch.commit();
+            })
+            .catch((error) => {
+              console.error("Failed to update inheritance:", error);
+            });
+        }
       }
     } catch (error: any) {
       recordLogs({

@@ -18,6 +18,7 @@ import { ICollection, TreeData } from "@components/types/INode";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
 import { FillFlexParent } from "./fill-flex-parent";
+import { updateGeneralizationsAndPartsInheritance } from "@components/lib/api/partsAPI";
 
 const INDENT_STEP = 15;
 
@@ -352,6 +353,15 @@ function DraggableTree({
             return { id };
           }),
           nodes,
+        );
+        
+        // Handle parts inheritance for drag and drop generalization changes
+        await updateGeneralizationsAndPartsInheritance(
+          specializationId,
+          addedLinks.map((id) => ({ id })),
+          removedLinks.map((id) => ({ id })),
+          nodes,
+          user
         );
       }
     } catch (error) {

@@ -129,6 +129,7 @@ import { User } from "@components/types/IAuth";
 import { getStorage } from "firebase/storage";
 import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 import { development } from "@components/lib/CONSTANTS";
+import { updateGeneralizationsAndPartsInheritance, handleNewPartsAddition } from "@components/lib/api/partsAPI";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -166,7 +167,7 @@ type INodeProps = {
   setSelectedCollection: any;
   selectedCollection: string;
   skillsFuture: boolean;
-  partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
+  // partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
 };
 
 const Node = ({
@@ -205,7 +206,7 @@ const Node = ({
   setSelectedCollection,
   selectedCollection,
   skillsFuture,
-  partsInheritance,
+  // partsInheritance,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -765,6 +766,21 @@ const Node = ({
           );
         }
 
+        // Handle parts addition with proper inheritance separation ONLY if there's inheritance
+        if (selectedProperty === "parts" && nodeData.inheritance?.parts?.ref) {
+          const success = await handleNewPartsAddition(
+            nodeId,
+            editableProperty,
+            nodes,
+            user
+          );
+          if (!success) {
+            console.error("Failed to handle new parts addition correctly");
+          }
+          // Don't update the database here as it's handled in handleNewPartsAddition
+          return;
+        }
+
         // Update the node document in the database
         await updateDoc(nodeDoc.ref, nodeData);
         //the user modified generalizations
@@ -778,6 +794,15 @@ const Node = ({
             newLinks,
             nodes,
           );
+          
+          // Handle parts inheritance for generalization changes
+          await updateGeneralizationsAndPartsInheritance(
+            nodeId,
+            addedLinks,
+            removedLinks,
+            nodes,
+            user
+          );
         }
         if (selectedProperty === "specializations") {
           await updateLinksForInheritanceSpecializations(
@@ -788,6 +813,15 @@ const Node = ({
             nodeData,
             newLinks,
             nodes,
+          );
+          
+          // Handle parts inheritance for specialization changes
+          await updateGeneralizationsAndPartsInheritance(
+            nodeId,
+            [],
+            [],
+            nodes,
+            user
           );
         }
         // Update inheritance for non-specialization/generalization properties
@@ -1150,6 +1184,7 @@ const Node = ({
             setGlowIds={setGlowIds}
             selectedCollection={selectedCollection}
             skillsFuture={skillsFuture}
+            setNodes={setNodes}
           />
         )}
         {/* specializations and generalizations*/}
@@ -1209,6 +1244,7 @@ const Node = ({
               setGlowIds={setGlowIds}
               selectedCollection={selectedCollection}
               skillsFuture={skillsFuture}
+              setNodes={setNodes}
             />
           ))}
         </Stack>
@@ -1271,7 +1307,8 @@ const Node = ({
               setGlowIds={setGlowIds}
               selectedCollection={selectedCollection}
               skillsFuture={skillsFuture}
-              partsInheritance={partsInheritance}
+              // partsInheritance={partsInheritance}
+              setNodes={setNodes}
             />
           ))}
         </Stack>

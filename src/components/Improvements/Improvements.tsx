@@ -44,6 +44,8 @@ import { useAuth } from "../context/AuthContext";
 import { generateUniqueTitle } from "@components/lib/utils/string.utils";
 import { development } from "@components/lib/CONSTANTS";
 import { newId } from "@components/lib/utils/newFirestoreId";
+import { updateGeneralizationsAndPartsInheritance, handleNewPartsAddition } from "@components/lib/api/partsAPI";
+
 type ImprovementsProps = {
   currentImprovement: any;
   setCurrentImprovement: any;
@@ -194,6 +196,22 @@ const Improvements = ({
             }
           }
         }
+        
+        // Handle parts addition with proper inheritance separation ONLY if there's inheritance
+        if (property === "parts" && nodeData.inheritance?.parts?.ref) {
+          const success = await handleNewPartsAddition(
+            currentVisibleNode?.id,
+            newValue,
+            nodes,
+            user
+          );
+          if (!success) {
+            console.error("Failed to handle new parts addition correctly");
+          }
+          // Don't update the database here as it's handled in handleNewPartsAddition
+          return;
+        }
+        
         if (property === "specializations" || property === "generalizations") {
           nodeData[property] = newValue;
         } else {
@@ -230,6 +248,15 @@ const Improvements = ({
             newLinks,
             nodes,
           );
+          
+          // Handle parts inheritance for generalization changes
+          await updateGeneralizationsAndPartsInheritance(
+            currentVisibleNode?.id,
+            _addedLinks,
+            _removedLinks,
+            nodes,
+            user
+          );
         }
         if (property === "specializations") {
           await updateLinksForInheritanceSpecializations(
@@ -240,6 +267,15 @@ const Improvements = ({
             currentVisibleNode,
             newLinks,
             nodes,
+          );
+          
+          // Handle parts inheritance for specialization changes
+          await updateGeneralizationsAndPartsInheritance(
+            currentVisibleNode?.id,
+            [],
+            [],
+            nodes,
+            user
           );
         }
         // Update inheritance for non-specialization/generalization properties

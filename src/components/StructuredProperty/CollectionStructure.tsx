@@ -49,6 +49,7 @@ import {
 } from "@hello-pangea/dnd";
 import { LoadingButton } from "@mui/lab";
 import SelectModelModal from "../Models/SelectModel";
+import { updatePartsAndInheritance } from "@components/lib/api/partsAPI";
 
 const CollectionStructure = ({
   model,
@@ -108,7 +109,8 @@ const CollectionStructure = ({
   setRemovedElements,
   setAddedElements,
   skillsFuture,
-  partsInheritance,
+  // partsInheritance,
+  setNodes,
 }: {
   model?: boolean;
   locked: boolean;
@@ -168,7 +170,8 @@ const CollectionStructure = ({
   setRemovedElements: any;
   setAddedElements: any;
   skillsFuture: boolean;
-  partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
+  // partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
+  setNodes?: any;
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -179,8 +182,30 @@ const CollectionStructure = ({
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
 
+  // Helper function to update local node state
+  const updateLocalNode = (nodeId: string, updatedNodeData: Partial<INode>) => {
+    if (setNodes) {
+      setNodes((prev: { [x: string]: any; }) => ({
+        ...prev,
+        [nodeId]: { ...prev[nodeId], ...updatedNodeData }
+      }));
+    }
+  };
+
+  // Helper function to refetch and update node data after inheritance operations
+  const refetchAndUpdateNode = async (nodeId: string) => {
+    try {
+      const nodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
+      if (nodeDoc.exists()) {
+        updateLocalNode(nodeId, nodeDoc.data() as Partial<INode>);
+      }
+    } catch (error) {
+      console.error("Error refetching node:", error);
+    }
+  };
+
   const handleCollectionSorting = useCallback(
-    (e: any) => {
+    async (e: any) => {
       try {
         const sourceIndex = e.source.index;
         const destinationIndex = e.destination.index;
@@ -244,11 +269,18 @@ const CollectionStructure = ({
               [`inheritance.${property}.ref`]: null,
             });
 
-            updateInheritance({
-              nodeId: currentVisibleNode?.id,
-              updatedProperties: [property],
-              db,
-            });
+            if (property === "parts") {
+              // Handle parts inheritance separately
+              await updatePartsAndInheritance(currentVisibleNode?.id, nodes, user);
+              // Refetch the updated node to update local state
+              await refetchAndUpdateNode(currentVisibleNode?.id);
+            } else {
+              updateInheritance({
+                nodeId: currentVisibleNode?.id,
+                updatedProperties: [property],
+                db,
+              });
+            }
           }
         }
       } catch (error: any) {
@@ -351,11 +383,18 @@ const CollectionStructure = ({
               [`properties.${property}`]: propertyValue,
               [`inheritance.${property}.ref`]: null,
             });
-            updateInheritance({
-              nodeId: currentVisibleNode?.id,
-              updatedProperties: [property],
-              db,
-            });
+            if (property === "parts") {
+              // Handle parts inheritance separately
+              await updatePartsAndInheritance(currentVisibleNode?.id, nodes, user);
+              // Refetch the updated node to update local state
+              await refetchAndUpdateNode(currentVisibleNode?.id);
+            } else {
+              updateInheritance({
+                nodeId: currentVisibleNode?.id,
+                updatedProperties: [property],
+                db,
+              });
+            }
           }
 
           saveNewChangeLog(db, {
@@ -465,11 +504,17 @@ const CollectionStructure = ({
 
         // Update inheritance if necessary
         if (!isSpecialization) {
-          updateInheritance({
-            nodeId: nodeDoc.id,
-            updatedProperties: [property],
-            db,
-          });
+          if (property === "parts") {
+            await updatePartsAndInheritance(nodeDoc.id, nodes, user);
+            // Refetch the updated node to update local state
+            await refetchAndUpdateNode(currentVisibleNode?.id);
+          } else {
+            updateInheritance({
+              nodeId: nodeDoc.id,
+              updatedProperties: [property],
+              db,
+            });
+          }
         }
 
         // Update the node document with the new collection
@@ -559,12 +604,10 @@ const CollectionStructure = ({
             updateDoc(nodeRef, {
               "properties.parts": propertyValue,
             });
-            if (currentVisibleNode.inheritance.parts.ref) {
-              updateInheritance({
-                nodeId: currentVisibleNode?.id,
-                updatedProperties: ["parts"],
-                db,
-              });
+            if (nodes[currentVisibleNode?.id]?.inheritance?.parts?.ref) {
+              await updatePartsAndInheritance(currentVisibleNode?.id, nodes, user);
+              // Refetch the updated node to update local state
+              await refetchAndUpdateNode(currentVisibleNode?.id);
             }
           }
         }
@@ -630,11 +673,17 @@ const CollectionStructure = ({
 
         // Update inheritance if necessary
         if (!isSpecialization) {
-          updateInheritance({
-            nodeId: nodeDoc.id,
-            updatedProperties: [property],
-            db,
-          });
+          if (property === "parts") {
+            await updatePartsAndInheritance(nodeDoc.id, nodes, user);
+            // Refetch the updated node to update local state
+            await refetchAndUpdateNode(currentVisibleNode?.id);
+          } else {
+            updateInheritance({
+              nodeId: nodeDoc.id,
+              updatedProperties: [property],
+              db,
+            });
+          }
         }
 
         // Update the node document with the edited collection
@@ -769,6 +818,11 @@ const CollectionStructure = ({
             // Update the node document
             await updateDoc(nodeDoc.ref, updateData);
 
+            // Update parts inheritance if necessary
+            if (!isSpecialization && property === "parts") {
+              await updatePartsAndInheritance(nodeDoc.id, nodes, user);
+            }
+
             recordLogs({
               action: "Deleted a collection",
               category: collectionIdx,
@@ -844,7 +898,7 @@ const CollectionStructure = ({
         <Droppable droppableId="categories" type="CATEGORY">
           {(provided) => (
             <Box ref={provided.innerRef} {...provided.droppableProps}>
-              {(propertyValue || []).map(
+              {property !== "isPartOf" && Array.isArray(propertyValue) && propertyValue.map(
                 (collection: ICollection, collectionIndex: number) => {
                   return (
                     <Draggable
@@ -1125,69 +1179,83 @@ const CollectionStructure = ({
                                   }}
                                 >
                                   {propertyValue[collectionIndex].nodes.length >
-                                  0 ? (
-                                    propertyValue[collectionIndex].nodes.map(
-                                      (link: ILinkNode, index: number) => (
-                                        <Draggable
-                                          key={link.randomId || link.id}
-                                          draggableId={link.id}
-                                          index={index}
-                                        >
-                                          {(provided) => (
-                                            <LinkNode
-                                              provided={provided}
-                                              navigateToNode={navigateToNode}
-                                              setSnackbarMessage={
-                                                setSnackbarMessage
-                                              }
-                                              currentVisibleNode={
-                                                currentVisibleNode
-                                              }
-                                              setCurrentVisibleNode={
-                                                setCurrentVisibleNode
-                                              }
-                                              sx={{ pl: 1 }}
-                                              link={link}
-                                              property={property}
-                                              title={getTitle(nodes, link.id)}
-                                              nodes={nodes}
-                                              linkIndex={index}
+                                    0 && (property !== "parts" || 
+                                      !nodes[currentVisibleNode.id]?.inheritanceParts ||
+                                      propertyValue[collectionIndex].nodes.some((link: ILinkNode) => 
+                                        !nodes[currentVisibleNode.id].inheritanceParts!.hasOwnProperty(link.id)
+                                      )
+                                    ) ? (
+                                    propertyValue[collectionIndex].nodes
+                                      .filter((link: ILinkNode) => {
+                                        // For parts property, filter out nodes that are in inheritanceParts
+                                        if (property === "parts" && nodes[currentVisibleNode.id]?.inheritanceParts) {
+                                          return !nodes[currentVisibleNode.id].inheritanceParts.hasOwnProperty(link.id);
+                                        }
+                                        return true;
+                                      })
+                                      .map(
+                                        (link: ILinkNode, index: number) => (
+                                          <Draggable
+                                            key={link.randomId || link.id}
+                                            draggableId={link.id}
+                                            index={index}
+                                          >
+                                            {(provided) => (
+                                              <LinkNode
+                                                provided={provided}
+                                                navigateToNode={navigateToNode}
+                                                setSnackbarMessage={
+                                                  setSnackbarMessage
+                                                }
+                                                currentVisibleNode={
+                                                  currentVisibleNode
+                                                }
+                                                setCurrentVisibleNode={
+                                                  setCurrentVisibleNode
+                                                }
+                                                sx={{ pl: 1 }}
+                                                link={link}
+                                                property={property}
+                                                title={getTitle(nodes, link.id)}
+                                                nodes={nodes}
+                                                linkIndex={index}
                                               /* unlinkVisible={unlinkVisible(
                                                 link.id,
                                               )} */
-                                              linkLocked={false}
-                                              locked={
-                                                locked || !!currentImprovement
-                                              }
-                                              user={user}
-                                              collectionIndex={collectionIndex}
-                                              selectedDiffNode={
-                                                selectedDiffNode
-                                              }
-                                              replaceWith={replaceWith}
-                                              saveNewAndSwapIt={
-                                                saveNewAndSwapIt
-                                              }
-                                              clonedNodesQueue={
-                                                clonedNodesQueue
-                                              }
-                                              unlinkElement={unlinkElement}
-                                              selectedProperty={
-                                                selectedProperty
-                                              }
-                                              glowIds={glowIds}
-                                              skillsFuture={skillsFuture}
-                                              currentImprovement={
-                                                currentImprovement
-                                              }
-                                              partsInheritance={
-                                                partsInheritance
-                                              }
-                                            />
-                                          )}
-                                        </Draggable>
-                                      ),
-                                    )
+                                                linkLocked={false}
+                                                locked={
+                                                  locked || !!currentImprovement
+                                                }
+                                                user={user}
+                                                collectionIndex={collectionIndex}
+                                                selectedDiffNode={
+                                                  selectedDiffNode
+                                                }
+                                                replaceWith={replaceWith}
+                                                saveNewAndSwapIt={
+                                                  saveNewAndSwapIt
+                                                }
+                                                clonedNodesQueue={
+                                                  clonedNodesQueue
+                                                }
+                                                unlinkElement={unlinkElement}
+                                                selectedProperty={
+                                                  selectedProperty
+                                                }
+                                                glowIds={glowIds}
+                                                skillsFuture={skillsFuture}
+                                                currentImprovement={
+                                                  currentImprovement
+                                                }
+                                                // partsInheritance={
+                                                //   partsInheritance
+                                                // }
+                                                setNodes={setNodes}
+                                              />
+                                            )}
+                                          </Draggable>
+                                        ),
+                                      )
                                   ) : (
                                     <Typography
                                       variant="body2"
@@ -1202,6 +1270,46 @@ const CollectionStructure = ({
                                         : "No items"}
                                     </Typography>
                                   )}
+                                  {/* Display inherited parts from inheritanceParts if this is a parts property */}
+                                  {property === "parts" && nodes[currentVisibleNode.id]?.inheritanceParts && Object.entries(nodes[currentVisibleNode.id].inheritanceParts).map(([nodeId, inheritanceInfo]) => {
+                                    if (!inheritanceInfo) return null;
+                                    
+                                    const info = inheritanceInfo as { inheritedFromTitle: string; inheritedFromId: string };
+                                    
+                                    return (
+                                      <LinkNode
+                                        key={`inherited-${nodeId}`}
+                                        provided={{}}
+                                        navigateToNode={navigateToNode}
+                                        setSnackbarMessage={setSnackbarMessage}
+                                        currentVisibleNode={currentVisibleNode}
+                                        setCurrentVisibleNode={setCurrentVisibleNode}
+                                        sx={{ pl: 1 }}
+                                        link={{ 
+                                          id: nodeId, 
+                                          inheritedFrom: info.inheritedFromTitle
+                                        }}
+                                        property={property}
+                                        title={getTitle(nodes, nodeId)}
+                                        nodes={nodes}
+                                        linkIndex={-1} // -1 indicates inherited part
+                                        linkLocked={false}
+                                        locked={locked || !!currentImprovement}
+                                        user={user}
+                                        collectionIndex={collectionIndex}
+                                        selectedDiffNode={selectedDiffNode}
+                                        replaceWith={replaceWith}
+                                        saveNewAndSwapIt={saveNewAndSwapIt}
+                                        clonedNodesQueue={clonedNodesQueue}
+                                        unlinkElement={unlinkElement}
+                                        selectedProperty={selectedProperty}
+                                        glowIds={glowIds}
+                                        skillsFuture={skillsFuture}
+                                        currentImprovement={currentImprovement}
+                                        setNodes={setNodes}
+                                      />
+                                    );
+                                  })}
                                   {provided.placeholder}
                                 </Box>
                               )}

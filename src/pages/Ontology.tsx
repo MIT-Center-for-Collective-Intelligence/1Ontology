@@ -220,9 +220,9 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const [appName, setAppName] = useState(
     "Full WordNet O*Net Verb Hierarchy - Tom's Version",
   ); // this state is only been used for the Skills Future App
-  const [partsInheritance, setPartsInheritance] = useState<{
-    [nodeId: string]: { title: string; fullPart: boolean };
-  }>({});
+  // const [partsInheritance, setPartsInheritance] = useState<{
+  //   [nodeId: string]: { title: string; fullPart: boolean };
+  // }>({});
   const treeRef = useRef<TreeApi<TreeData>>(null);
 
   const firstLoad = useRef(true);
@@ -1090,63 +1090,63 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     );
   };
 
-  useEffect(() => {
-    if (!currentVisibleNode) return;
-    const inheritedParts: {
-      [nodeId: string]: { title: string; fullPart: boolean };
-    } = {};
+  // useEffect(() => {
+  //   if (!currentVisibleNode) return;
+  //   const inheritedParts: {
+  //     [nodeId: string]: { title: string; fullPart: boolean };
+  //   } = {};
 
-    const _currentVisibleNode = { ...currentVisibleNode };
-    const parts = _currentVisibleNode?.properties.parts || [];
+  //   const _currentVisibleNode = { ...currentVisibleNode };
+  //   const parts = _currentVisibleNode?.properties.parts || [];
 
-    const generalizations = (
-      _currentVisibleNode?.generalizations || []
-    ).flatMap((c) => c.nodes);
-    const checkGeneralizations = (
-      nodeTitle: string,
-      nodeId: string,
-    ): { id: string; fullPart: boolean } | null => {
-      for (let generalization of generalizations) {
-        if (!nodes[generalization.id]) {
-          continue;
-        }
-        const generalizationParts = nodes[generalization.id]?.properties.parts;
-        const _partIdex = generalizationParts[0].nodes.findIndex(
-          (c) => c.id === nodeId,
-        );
-        if (_partIdex !== -1) {
-          return { id: generalization.id, fullPart: true };
-        }
-        const partIdex = generalizationParts[0].nodes.findIndex((c) =>
-          compareTitles(nodeTitle, nodes[c.id]?.title || ""),
-        );
-        if (partIdex !== -1) {
-          return { id: generalization.id, fullPart: false };
-        }
-      }
-      return null;
-    };
+  //   const generalizations = (
+  //     _currentVisibleNode?.generalizations || []
+  //   ).flatMap((c) => c.nodes);
+  //   const checkGeneralizations = (
+  //     nodeTitle: string,
+  //     nodeId: string,
+  //   ): { id: string; fullPart: boolean } | null => {
+  //     for (let generalization of generalizations) {
+  //       if (!nodes[generalization.id]) {
+  //         continue;
+  //       }
+  //       const generalizationParts = nodes[generalization.id]?.properties.parts;
+  //       const _partIdex = generalizationParts[0].nodes.findIndex(
+  //         (c) => c.id === nodeId,
+  //       );
+  //       if (_partIdex !== -1) {
+  //         return { id: generalization.id, fullPart: true };
+  //       }
+  //       const partIdex = generalizationParts[0].nodes.findIndex((c) =>
+  //         compareTitles(nodeTitle, nodes[c.id]?.title || ""),
+  //       );
+  //       if (partIdex !== -1) {
+  //         return { id: generalization.id, fullPart: false };
+  //       }
+  //     }
+  //     return null;
+  //   };
 
-    if (parts) {
-      for (let collection of parts) {
-        for (let node of collection.nodes) {
-          if (nodes[node.id]) {
-            const { id, fullPart } = checkGeneralizations(
-              nodes[node.id]?.title,
-              node.id,
-            ) || { id: "", fullPart: false };
-            if (id) {
-              inheritedParts[node.id] = {
-                title: nodes[id].title,
-                fullPart,
-              };
-            }
-          }
-        }
-      }
-    }
-    setPartsInheritance(inheritedParts);
-  }, [currentVisibleNode, nodes]);
+  //   if (parts) {
+  //     for (let collection of parts) {
+  //       for (let node of collection.nodes) {
+  //         if (nodes[node.id]) {
+  //           const { id, fullPart } = checkGeneralizations(
+  //             nodes[node.id]?.title,
+  //             node.id,
+  //           ) || { id: "", fullPart: false };
+  //           if (id) {
+  //             inheritedParts[node.id] = {
+  //               title: nodes[id].title,
+  //               fullPart,
+  //             };
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  //   setPartsInheritance(inheritedParts);
+  // }, [currentVisibleNode, nodes]);
 
   if (Object.keys(nodes).length <= 0) {
     return (
@@ -1435,7 +1435,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                   setSelectedCollection={setSelectedCollection}
                   selectedCollection={selectedCollection}
                   skillsFuture={skillsFuture}
-                  partsInheritance={partsInheritance}
+                  // partsInheritance={partsInheritance}
                 />
               )}
             </Box>

@@ -28,6 +28,13 @@ import {
 } from "../firestoreClient/errors.firestore";
 import { getAuth } from "firebase/auth";
 import { DISPLAY } from "../CONSTANTS";
+import { 
+  handleGeneralizationChange, 
+  handlePartsChange,
+  handlePartsInheritanceChange,
+  updatePartsInheritance 
+} from "./partsInheritance";
+import { updatePartsAndInheritance, handlePartsAddedWithInheritance } from "../api/partsAPI";
 
 export const getDoerCreate = (uname: string) => {
   const now = new Date();
@@ -766,6 +773,9 @@ export const updatePartsAndPartsOf = async (
   db: Firestore,
   nodes: { [nodeId: string]: INode },
 ) => {
+  const nodesToUpdatePartsInheritance: string[] = [];
+  const nodesToHandleInheritanceRef: string[] = [];
+  
   links.forEach(async (child) => {
     let childData: any = nodes[child.id] as INode;
     if (!childData) {
@@ -809,12 +819,37 @@ export const updatePartsAndPartsOf = async (
               updatedProperties: [property],
               db,
             });
+            // Track nodes that need parts inheritance updates
+            nodesToUpdatePartsInheritance.push(child.id);
+            
+            // Check if the node has parts inheritance ref and handle it
+            if (childData.inheritance?.parts?.ref) {
+              nodesToHandleInheritanceRef.push(child.id);
+            }
           }
         }
       }
     }
   });
+
+  // Handle nodes that have inheritance ref when parts are added
+  if (property === "parts" && nodesToHandleInheritanceRef.length > 0) {
+    for (const nodeId of nodesToHandleInheritanceRef) {
+      await handlePartsAddedWithInheritance(nodeId, nodes, null);
+    }
+  }
+
+  // Update parts inheritance for affected nodes
+  if (property === "parts" && nodesToUpdatePartsInheritance.length > 0) {
+    for (const nodeId of nodesToUpdatePartsInheritance) {
+      await handlePartsChange(nodeId, nodes, db);
+      
+      // Call the API to ensure consistency
+      await updatePartsAndInheritance(nodeId, nodes, null);
+    }
+  }
 };
+
 export const updatePropertyOf = async (
   links: { id: string }[],
   newLink: { id: string },
@@ -947,6 +982,9 @@ export const updateLinksForInheritance = async (
     } = getNewAddedProperties(addedLinks, specializationData, nodes);
 
     for (let property in specializationData.inheritance) {
+      // Skip parts as it now has its own inheritance system
+      if (property === "parts") continue;
+      
       const propertyRef = specializationData.inheritance[property]?.ref;
       if (!!propertyRef) {
         let canDelete = true;
@@ -1028,6 +1066,15 @@ export const updateLinksForInheritance = async (
       });
     }
     await batch.commit();
+
+    // Handle parts inheritance separately
+    await handleGeneralizationChange(
+      specializationId,
+      addedLinks,
+      removedLinks,
+      nodes,
+      db
+    );
   } catch (error: any) {
     console.error(error);
     recordLogs({
@@ -1225,6 +1272,42 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
         });
       }
       await batch.commit();
+
+      // Handle parts inheritance specifically when parts reference is affected
+      if (specializationData.inheritance?.parts?.ref === unlinkedGeneralizationId ||
+          nodes[unlinkedGeneralizationId]?.inheritance?.parts?.ref === specializationData.inheritance?.parts?.ref) {
+        
+        let newPartsRef = null;
+        if (nextGeneralizationData.properties.hasOwnProperty('parts') || 
+            nextGeneralizationData.inheritance?.parts?.ref) {
+          newPartsRef = nextGeneralization.id;
+          // Follow inheritance chain if it has a ref
+          if (nextGeneralizationData.inheritance?.parts?.ref) {
+            newPartsRef = nextGeneralizationData.inheritance.parts.ref;
+          }
+        } else {
+          // Look for another generalization with parts or parts inheritance
+          for (let generalization of remainingGeneralizations) {
+            const generalizationData = nodes[generalization.id];
+            if (generalizationData.properties.hasOwnProperty('parts') || 
+                generalizationData.inheritance?.parts?.ref) {
+              newPartsRef = generalization.id;
+              // Follow inheritance chain if it has a ref
+              if (generalizationData.inheritance?.parts?.ref) {
+                newPartsRef = generalizationData.inheritance.parts.ref;
+              }
+              break;
+            }
+          }
+        }
+        
+        await handlePartsInheritanceChange(
+          specializationData.id,
+          newPartsRef,
+          nodes,
+          db
+        );
+      }
     }
   } catch (error: any) {
     recordLogs({
@@ -1396,3 +1479,33 @@ export const extractJSON = (text: string) => {
     return { jsonObject: {}, isJSON: false };
   }
 };
+
+// export const refreshPartsAndInheritance = async (
+//   node: INode,
+//   nodes: { [nodeId: string]: INode },
+//   db: any,
+//   user: any
+// ): Promise<INode> => {
+//   try {
+//     // Use the new parts inheritance system
+//     await updatePartsInheritance(node.id, nodes, db, user);
+    
+//     // Get the updated node data
+//     const nodeDoc = await getDoc(doc(collection(db, NODES), node.id));
+//     if (!nodeDoc.exists()) return node;
+    
+//     return nodeDoc.data() as INode;
+//   } catch (error: any) {
+//     console.error(error);
+//     recordLogs({
+//       type: "error",
+//       error: JSON.stringify({
+//         name: error.name,
+//         message: error.message,
+//         stack: error.stack,
+//       }),
+//       at: "refreshPartsAndInheritance",
+//     });
+//     return node;
+//   }
+// }; 

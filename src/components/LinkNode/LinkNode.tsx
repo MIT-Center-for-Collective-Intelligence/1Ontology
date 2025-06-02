@@ -116,6 +116,7 @@ import LinkOffIcon from "@mui/icons-material/LinkOff";
 import { UNCLASSIFIED } from "@components/lib/CONSTANTS";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import LinkEditor from "./LinkEditor";
+import { updateGeneralizationsAndPartsInheritance, handlePartUnlinking } from "@components/lib/api/partsAPI";
 
 const glowGreen = keyframes`
   0% {
@@ -153,7 +154,8 @@ type ILinkNodeProps = {
   glowIds: Set<string>;
   skillsFuture: boolean;
   currentImprovement: any;
-  partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
+  // partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
+  setNodes?: any;
 };
 
 const LinkNode = ({
@@ -179,7 +181,8 @@ const LinkNode = ({
   glowIds,
   skillsFuture,
   currentImprovement,
-  partsInheritance,
+  // partsInheritance,
+  setNodes,
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -216,6 +219,39 @@ const LinkNode = ({
           "Keep",
         )
       ) {
+        // Handle parts unlinking inheritance logic
+        if (property === "parts") {
+          const updateLocalNode = (nodeId: string, updatedNodeData: Partial<INode>) => {
+            if (setNodes) {
+              setNodes((prev: { [x: string]: any; }) => ({
+                ...prev,
+                [nodeId]: { ...prev[nodeId], ...updatedNodeData }
+              }));
+            }
+          };
+          
+          const success = await handlePartUnlinking(
+            currentVisibleNode?.id,
+            link.id,
+            nodes,
+            user,
+            updateLocalNode
+          );
+          
+          if (success) {
+            recordLogs({
+              action: "unlinked a node",
+              property,
+              unlinked: link.id,
+              node: currentVisibleNode?.id,
+            });
+          } else {
+            console.error("Failed to unlink part");
+          }
+          return;
+        }
+
+        // Handle other properties with original logic
         const nodeDoc = await getDoc(
           doc(collection(db, NODES), currentVisibleNode?.id),
         );
@@ -540,6 +576,15 @@ const LinkNode = ({
               nodeData,
               nodes,
             );
+            
+            // Handle parts inheritance for generalization unlinking
+            await updateGeneralizationsAndPartsInheritance(
+              currentVisibleNode?.id,
+              [],
+              [{ id: link.id }],
+              nodes,
+              user
+            );
           }
           if (property === "specializations") {
             updateInheritanceWhenUnlinkAGeneralization(
@@ -547,6 +592,15 @@ const LinkNode = ({
               nodeDoc.id,
               nodes[link.id],
               nodes,
+            );
+            
+            // Handle parts inheritance for specialization unlinking
+            await updateGeneralizationsAndPartsInheritance(
+              link.id,
+              [],
+              [{ id: currentVisibleNode?.id }],
+              nodes,
+              user
             );
           }
         }
@@ -570,6 +624,13 @@ const LinkNode = ({
       unlinkElement(link.id, collectionIndex);
       return;
     }
+    
+    // Handle inherited parts (linkIndex === -1) with special unlinking logic
+    if (property === "parts" && linkIndex === -1) {
+      unlinkNodeRelation();
+      return;
+    }
+    
     if (property === "specializations" || property === "generalizations") {
       unlinkSpecializationOrGeneralization();
     } else {
@@ -663,8 +724,8 @@ const LinkNode = ({
               >{`(optional)`}</span>
             )}
             <span style={{ color: "gray", marginLeft: "7px" }}>
-              {partsInheritance && partsInheritance[link.id]
-                ? `(From ${partsInheritance[link.id].title}${!partsInheritance[link.id]?.fullPart ? ", Part Specialization" : ""})`
+              {link.inheritedFrom
+                ? `(From ${link.inheritedFrom})`
                 : ""}
             </span>
           </Link>
