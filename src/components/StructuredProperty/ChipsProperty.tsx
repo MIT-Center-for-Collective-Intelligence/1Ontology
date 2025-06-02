@@ -26,6 +26,7 @@ const ChipsProperty = ({
   currentImprovement,
   user,
   skillsFuture,
+  enableEdit,
 }: {
   currentVisibleNode: INode;
   property: string;
@@ -35,6 +36,7 @@ const ChipsProperty = ({
   currentImprovement: any;
   user: any;
   skillsFuture: boolean;
+  enableEdit: boolean;
 }) => {
   const db = getFirestore();
   const [value, setValue] = useState<string[]>([]);
@@ -211,6 +213,7 @@ const ChipsProperty = ({
               currentVisibleNode={currentVisibleNode}
               property={property}
               nodes={nodes}
+              enableEdit={enableEdit}
             />
           )}
         </Box>

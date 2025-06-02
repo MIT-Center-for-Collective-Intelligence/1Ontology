@@ -6,8 +6,9 @@ import {
   Tooltip,
   Paper,
   useTheme,
+  IconButton,
 } from "@mui/material";
-
+import CloseIcon from "@mui/icons-material/Close";
 import {
   capitalizeFirstLetter,
   getPropertyValue,
@@ -69,6 +70,8 @@ type IStructuredPropertyProps = {
   clonedNodesQueue?: any;
   newOnes?: any;
   setNewOnes?: any;
+  loadingIds: any;
+  setLoadingIds: any;
   editableProperty?: ICollection[];
   setEditableProperty?: any;
   removedElements: any;
@@ -80,6 +83,7 @@ type IStructuredPropertyProps = {
   selectedCollection: any;
   skillsFuture: boolean;
   // partsInheritance?: { [nodeId: string]: { title: string; fullPart: boolean } };
+  enableEdit: boolean;
   setNodes?: any;
 };
 
@@ -121,6 +125,8 @@ const StructuredProperty = ({
   clonedNodesQueue,
   newOnes,
   setNewOnes,
+  loadingIds,
+  setLoadingIds,
   editableProperty,
   setEditableProperty,
   removedElements,
@@ -132,6 +138,7 @@ const StructuredProperty = ({
   selectedCollection,
   skillsFuture,
   // partsInheritance,
+  enableEdit,
   setNodes,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
@@ -339,6 +346,52 @@ const StructuredProperty = ({
       prev.delete(id);
       return prev;
     });
+    setCheckedItems((checkedItems: any) => {
+      let _oldChecked = new Set(checkedItems);
+      if (_oldChecked.has(id)) {
+        _oldChecked.delete(id);
+      } else {
+        _oldChecked.add(id);
+      }
+      if (selectedProperty === "generalizations" && _oldChecked.size === 0) {
+        return checkedItems;
+      }
+      return _oldChecked;
+    });
+  };
+
+  const saveNewSpecialization = async (nId: string) => {
+    try {
+      setLoadingIds((prev: Set<string>) => {
+        const _prev = new Set(prev);
+        _prev.add(nId);
+        return _prev;
+      });
+      await handleCloning(
+        { id: clonedNodesQueue[nId].id },
+        clonedNodesQueue[nId].title,
+        nId,
+      );
+      const addedElements: string[] = [nId];
+      await handleSaveLinkChanges(
+        [],
+        addedElements,
+        selectedProperty,
+        currentVisibleNode?.id,
+      );
+      setClonedNodesQueue((prev: any) => {
+        const _prev = { ...prev };
+        delete _prev[nId];
+        return _prev;
+      });
+      setLoadingIds((prev: Set<string>) => {
+        const _prev = new Set(prev);
+        _prev.delete(nId);
+        return _prev;
+      });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const logChange = (
@@ -495,6 +548,7 @@ const StructuredProperty = ({
               )}
             </Typography>
           </Tooltip>
+
           {selectedProperty === property && !selectedCollection && (
             <Box
               sx={{
@@ -504,15 +558,15 @@ const StructuredProperty = ({
                 gap: "14px",
               }}
             >
-              <Button
-                variant="contained"
-                onClick={handleCloseAddLinksModel}
-                color="error"
-                sx={{ borderRadius: "25px" }}
-              >
-                Cancel
-              </Button>
-              <LoadingButton
+              <Tooltip title={"Close Editing"}>
+                <IconButton
+                  onClick={handleCloseAddLinksModel}
+                  sx={{ borderRadius: "25px", backgroundColor: "red" }}
+                >
+                  <CloseIcon sx={{ color: "white" }} />
+                </IconButton>
+              </Tooltip>
+              {/*  <LoadingButton
                 size="small"
                 onClick={onSave}
                 loading={isSaving}
@@ -524,7 +578,7 @@ const StructuredProperty = ({
                 }
               >
                 Save
-              </LoadingButton>
+              </LoadingButton> */}
             </Box>
           )}
           {(!currentVisibleNode.unclassified ||
@@ -548,7 +602,11 @@ const StructuredProperty = ({
                     onClick={() => {
                       setOpenAddCollection(true);
                     }}
-                    sx={{ borderRadius: "18px", backgroundColor: BUTTON_COLOR }}
+                    sx={{
+                      borderRadius: "18px",
+                      backgroundColor: BUTTON_COLOR,
+                      display: !enableEdit ? "none" : "block",
+                    }}
                     variant="outlined"
                   >
                     Add Collection
@@ -564,6 +622,7 @@ const StructuredProperty = ({
                         backgroundColor:
                           theme.palette.mode === "light" ? "#f0f0f0" : "",
                     },
+                      display: !enableEdit ? "none" : "block",
                   }}
                   variant="outlined"
                 >
@@ -580,6 +639,7 @@ const StructuredProperty = ({
                       currentVisibleNode={currentVisibleNode}
                       property={property}
                       nodes={nodes}
+                      enableEdit={enableEdit}
                     />
                   )}
               </Box>
@@ -652,6 +712,9 @@ const StructuredProperty = ({
             setClonedNodesQueue={setClonedNodesQueue}
             newOnes={newOnes}
             setNewOnes={setNewOnes}
+            loadingIds={loadingIds}
+            saveNewSpecialization={saveNewSpecialization}
+            setLoadingIds={setLoadingIds}
             editableProperty={editableProperty}
             onGetPropertyValue={onGetPropertyValue}
             setRemovedElements={setRemovedElements}
@@ -659,6 +722,7 @@ const StructuredProperty = ({
             addACloneNodeQueue={addACloneNodeQueue}
             skillsFuture={skillsFuture}
             // partsInheritance={partsInheritance ?? {}}
+            enableEdit={enableEdit}
             setNodes={setNodes}
           />
         )}
@@ -694,6 +758,9 @@ const StructuredProperty = ({
             clonedNodesQueue={clonedNodesQueue}
             newOnes={newOnes}
             setNewOnes={setNewOnes}
+            loadingIds={loadingIds}
+            saveNewSpecialization={saveNewSpecialization}
+            setLoadingIds={setLoadingIds}
             editableProperty={editableProperty}
             setEditableProperty={setEditableProperty}
             locked={locked}

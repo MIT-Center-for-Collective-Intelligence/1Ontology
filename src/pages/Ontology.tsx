@@ -63,6 +63,7 @@ import {
   Switch,
   Tab,
   Tabs,
+  TextField,
   Typography,
   useMediaQuery,
   useTheme,
@@ -154,7 +155,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const db = getFirestore();
   const [{ emailVerified, user }] = useAuth();
   const router = useRouter();
-  const isMobile = useMediaQuery("(max-width:599px)") && true;
+  const isMobile = useMediaQuery("(max-width:599px)");
   const [nodes, setNodes] = useState<{ [id: string]: INode }>({});
   const [currentVisibleNode, setCurrentVisibleNode] = useState<INode | null>(
     null,
@@ -208,6 +209,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     [nodeId: string]: { title: string; id: string };
   }>({});
   const [newOnes, setNewOnes] = useState(new Set());
+  const [loadingIds, setLoadingIds] = useState(new Set());
   const [selectedProperty, setSelectedProperty] = useState("");
   const [selectedCollection, setSelectedCollection] = useState("");
 
@@ -216,13 +218,16 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   );
   const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
   const [treeViewData, setTreeViewData] = useState([]);
-
+  const [loadingNodes, setLoadingNodes] = useState(false);
   const [appName, setAppName] = useState(
     "Full WordNet O*Net Verb Hierarchy - Tom's Version",
   ); // this state is only been used for the Skills Future App
   // const [partsInheritance, setPartsInheritance] = useState<{
   //   [nodeId: string]: { title: string; fullPart: boolean };
   // }>({});
+  const [scrollTrigger, setScrollTrigger] = useState(false);
+  const [enableEdit, setEnableEdit] = useState(false);
+
   const treeRef = useRef<TreeApi<TreeData>>(null);
 
   const firstLoad = useRef(true);
@@ -242,6 +247,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     setNewOnes(new Set());
     setCheckedItems(new Set());
     setClonedNodesQueue({});
+    setLoadingIds(new Set());
   };
 
   useEffect(() => {
@@ -563,49 +569,58 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
   useEffect(() => {
     // Create a query for the NODES collection where "deleted" is false
-    let nodesQuery = query(
-      collection(db, NODES),
-      where("deleted", "==", false),
-      where("skillsFuture", "==", false),
-    );
+    let nodesQuery = null;
 
     if (skillsFuture && appName) {
-      setNodes({});
       nodesQuery = query(
         collection(db, NODES),
         where("deleted", "==", false),
         where("appName", "==", appName),
-        where("skillsFuture", "==", true),
+      );
+    } else {
+      nodesQuery = query(
+        collection(db, NODES),
+        where("deleted", "==", false),
+        where("skillsFuture", "==", false),
       );
     }
+    setLoadingNodes(true);
     // Set up a snapshot listener to track changes in the nodes collection
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
       // Get the changes (added, modified, removed) in the snapshot
       const docChanges = snapshot.docChanges();
 
       // Update the state based on the changes in the nodes collection
-      setNodes((nodes: { [id: string]: INode }) => {
-        const _nodes = { ...nodes }; // Clone the existing nodes object
+      setNodes((prev: any) => {
+        const _prev = { ...prev };
+        let changed = false;
 
-        // Loop through each change in the snapshot
         for (let change of docChanges) {
-          const changeData: any = change.doc.data();
           const nodeId = change.doc.id;
+          const data = { id: nodeId, ...change.doc.data() };
 
-          if (change.type === "removed" && _nodes[nodeId]) {
-            // If the document is removed, delete it from the state
-            delete _nodes[nodeId];
+          if (change.type === "removed") {
+            if (nodeId in _prev) {
+              delete _prev[nodeId];
+              changed = true;
+            }
           } else {
-            // If the document is added or modified, add/update its data in the state
-            _nodes[nodeId] = { id: nodeId, ...changeData };
+            const prevNode = _prev[nodeId];
+            const isDifferent =
+              JSON.stringify(prevNode) !== JSON.stringify(data);
+            if (isDifferent) {
+              _prev[nodeId] = data;
+              changed = true;
+            }
           }
         }
 
-        // Return the updated state
-        return _nodes;
+        return _prev;
       });
     });
-
+    setTimeout(() => {
+      setLoadingNodes(false);
+    }, 4000);
     // Unsubscribe from the snapshot listener when the component is unmounted
     return () => unsubscribeNodes();
   }, [db, appName]);
@@ -615,6 +630,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
       setCurrentVisibleNode(nodes[currentVisibleNode?.id]);
     }
   }, [nodes]);
+
   const getTreeView = (
     mainCategories: INode[],
     visited: Map<string, any> = new Map(),
@@ -930,7 +946,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
       if (currentImprovement) {
         return;
       }
-      if (
+      /* if (
         selectedProperty &&
         (addedElements.size > 0 || removedElements.size > 0) &&
         (await confirmIt(
@@ -944,15 +960,13 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
         ))
       ) {
         return;
-      }
+      } */
+      handleCloseAddLinksModel();
       if (nodes[nodeId]) {
-        handleCloseAddLinksModel();
         setCurrentVisibleNode(nodes[nodeId]);
         initializeExpanded(eachOntologyPath[nodeId]);
         setSelectedDiffNode(null);
-        // setTimeout(() => {
-        expandNodeById(nodeId);
-        // }, 1000);
+        setScrollTrigger((prev) => !prev);
       }
     },
     [
@@ -1055,31 +1069,6 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     [activeSidebar],
   );
 
-  const expandNodeById = useCallback(
-    async (nodeId: string) => {
-      if (!eachOntologyPath[nodeId]) {
-        return;
-      }
-
-      const first = eachOntologyPath[nodeId][0].id.split("-")[0];
-      const path = eachOntologyPath[nodeId]
-        .filter((p: any) => !p.category)
-        .map((c: { id: string }) => c.id)
-        .join("-");
-      const scrollId = `${first}-${path}`;
-      const tree = treeRef.current;
-      await tree?.scrollTo(scrollId);
-      setTimeout(() => {
-        const targetNode = tree?.get(scrollId);
-        if (targetNode) {
-          targetNode.select();
-          const element = document.getElementById(scrollId);
-          element?.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 500);
-    },
-    [eachOntologyPath],
-  );
   const compareTitles = (title1: string, title2: string): boolean => {
     const tokens1 = tokenize(title1);
     const tokens2 = tokenize(title2);
@@ -1148,7 +1137,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   //   setPartsInheritance(inheritedParts);
   // }, [currentVisibleNode, nodes]);
 
-  if (Object.keys(nodes).length <= 0) {
+  if (loadingNodes) {
     return (
       <Box
         sx={{
@@ -1271,6 +1260,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                       onOpenNodesTree={onOpenNodesTree}
                       eachOntologyPath={eachOntologyPath}
                       skillsFuture={skillsFuture}
+                      scrollTrigger={scrollTrigger}
                     />
 
                     {/*  <TreeViewSimplified
@@ -1315,7 +1305,10 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                       <Select
                         labelId="property-type-label"
                         value={appName}
-                        onChange={(event) => setAppName(event.target.value)}
+                        onChange={(event) => {
+                          setNodes({});
+                          setAppName(event.target.value);
+                        }}
                         label="Property Type"
                         sx={{ borderRadius: "20px" }}
                       >
@@ -1343,6 +1336,8 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                   searchWithFuse={searchWithFuse}
                   lastSearches={lastSearches}
                   updateLastSearches={updateLastSearches}
+                  skillsFuture={skillsFuture}
+                  skillsFutureApp={appName}
                 />
               </Box>
             </Section>
@@ -1425,6 +1420,8 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                   setClonedNodesQueue={setClonedNodesQueue}
                   newOnes={newOnes}
                   setNewOnes={setNewOnes}
+                  loadingIds={loadingIds}
+                  setLoadingIds={setLoadingIds}
                   selectedProperty={selectedProperty}
                   setSelectedProperty={setSelectedProperty}
                   removedElements={removedElements}
@@ -1436,6 +1433,8 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                   selectedCollection={selectedCollection}
                   skillsFuture={skillsFuture}
                   // partsInheritance={partsInheritance}
+                  enableEdit={enableEdit}
+                  setEnableEdit={setEnableEdit}
                 />
               )}
             </Box>

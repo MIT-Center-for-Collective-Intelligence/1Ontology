@@ -5,47 +5,85 @@ import {
   IconButton,
   List,
   ListItem,
+  Skeleton,
   TextField,
+  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { development, SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
+import { Post } from "@components/lib/utils/Post";
 
 const SearchSideBar = ({
   openSearchedNode,
   searchWithFuse,
   lastSearches,
   updateLastSearches,
+  skillsFuture,
+  skillsFutureApp,
 }: {
   openSearchedNode: any;
   searchWithFuse: any;
   lastSearches: any[];
   updateLastSearches: Function;
+  skillsFuture: boolean;
+  skillsFutureApp: string;
 }) => {
   const [searchValue, setSearchValue] = useState("");
   const [isListOpen, setIsListOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [loadingSearchResult, setLoadingSearchResult] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const [searchRefreshKey, setSearchRefreshKey] = useState(0);
   const theme = useTheme();
 
-  const searchResults = useMemo(() => {
-    /*  recordLogs({
-      action: "Searched",
-      query: searchValue,
-    }); */
-    return searchWithFuse(searchValue).slice(0, 30);
-  }, [searchValue]);
+  const getSearchResults = (query: string) => {
+    return searchWithFuse(query).slice(0, 30);
+  };
+
+  // const searchResults = useMemo(() => {
+  //   /*  recordLogs({
+  //     action: "Searched",
+  //     query: searchValue,
+  //   }); */
+  //   if (!searchValue.trim()) {
+  //     return [];
+  //   }
+  //   return getSearchResults(searchValue);
+  // }, [searchValue, searchRefreshKey]);
 
   const handleFocus = () => {
     setIsFocused(true);
-    updateLastSearches();
-    if (searchValue.trim() !== "" || !!lastSearches.length) {
+
+    if (searchValue.trim() !== "") {
+      // Force a fresh search to verify if the node still exists
+      const freshResults = getSearchResults(searchValue.trim());
+
+      if (freshResults.length === 0) {
+        setSearchValue("");
+        setIsListOpen(!!lastSearches.length);
+      } else {
+        // Force a re-render to update the search results
+        setSearchRefreshKey((prevKey) => prevKey + 1);
+        setIsListOpen(true);
+      }
+    } else if (lastSearches.length > 0) {
+      // Display last searches if no current search value
       setIsListOpen(true);
     }
+
+    updateLastSearches();
   };
 
   const clearSearch = () => {
@@ -61,7 +99,7 @@ const SearchSideBar = ({
       setIsListOpen(true);
       setIsFocused(true);
     } else {
-      setIsListOpen(false);
+      setIsListOpen(!!lastSearches.length);
       setIsFocused(false);
     }
   };
@@ -91,6 +129,26 @@ const SearchSideBar = ({
     };
   }, []);
 
+  const searchQuery = useCallback(async () => {
+    setLoadingSearchResult(true);
+    const response: any = await Post("/searchChroma", {
+      query: searchValue,
+      skillsFuture,
+      appName: skillsFuture ? skillsFutureApp : null,
+    });
+    1;
+
+    const searchDevelopment = searchWithFuse(searchValue).slice(0, 30);
+    const results: any = [...(response.results || [])];
+    setSearchResults(development ? searchDevelopment : results);
+    setLoadingSearchResult(false);
+  }, [searchValue, skillsFuture, skillsFutureApp]);
+
+  const onKeyDown = (event: any) => {
+    if (event.key === "Enter") {
+      searchQuery();
+    }
+  };
   const renderListItem = (node: any) => (
     <ListItem
       key={node.id}
@@ -154,6 +212,7 @@ const SearchSideBar = ({
         value={searchValue}
         onChange={handleInputChange}
         onFocus={handleFocus}
+        onKeyDown={onKeyDown}
         fullWidth
         InputProps={{
           sx: {
@@ -174,14 +233,26 @@ const SearchSideBar = ({
             </IconButton>
           ),
           endAdornment: searchValue && (
-            <IconButton
-              sx={{ mr: "5px" }}
-              onClick={clearSearch}
-              color="primary"
-              edge="end"
-            >
-              <CloseIcon />
-            </IconButton>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Tooltip title={"Search in the Ontology"}>
+                <IconButton
+                  sx={{ mr: "5px" }}
+                  onClick={searchQuery}
+                  color="primary"
+                  edge="end"
+                >
+                  <SearchIcon />
+                </IconButton>
+              </Tooltip>{" "}
+              <IconButton
+                sx={{ mr: "5px" }}
+                onClick={clearSearch}
+                color="primary"
+                edge="end"
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
           ),
         }}
         sx={{
@@ -195,7 +266,17 @@ const SearchSideBar = ({
           zIndex: 1000,
         }}
       />
-      {isListOpen && (
+      {loadingSearchResult && (
+        <List sx={{ zIndex: 10 }}>
+          {[...Array(15)].map((_, index) => (
+            <Box key={index} sx={{ px: 4 }}>
+              <Skeleton variant="text" height={50} width="100%" />
+            </Box>
+          ))}
+        </List>
+      )}
+
+      {isListOpen && !loadingSearchResult && (
         <List sx={{ zIndex: isListOpen ? 10 : 0 }}>
           {searchResults.length > 0
             ? searchResults.map(renderListItem)

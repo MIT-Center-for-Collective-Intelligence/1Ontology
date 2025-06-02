@@ -15,8 +15,9 @@ const YjsEditor = ({
   checkDuplicateTitle,
   autoFocus,
   cursorPosition,
-  onEditorReady
-  }: {
+  onEditorReady,
+  setEditorContent,
+}: {
   fullname: string;
   property: string;
   nodeId: string;
@@ -27,6 +28,7 @@ const YjsEditor = ({
   autoFocus: boolean;
   cursorPosition: number | null;
   onEditorReady?: (editor: any) => void;
+  setEditorContent: any;
 }) => {
   return (
     <YjsEditorWrapper
@@ -40,6 +42,7 @@ const YjsEditor = ({
       autoFocus={autoFocus}
       cursorPosition={cursorPosition}
       onEditorReady={onEditorReady}
+      setEditorContent={setEditorContent}
     />
   );
 };

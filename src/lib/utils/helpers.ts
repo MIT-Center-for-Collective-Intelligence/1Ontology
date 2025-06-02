@@ -857,7 +857,7 @@ export const updatePropertyOf = async (
   nodes: { [nodeId: string]: INode },
   db: Firestore,
 ) => {
-  links.filter((child) => {
+  for (let child of links) {
     const childData = nodes[child.id];
     if (!childData.propertyOf) {
       childData.propertyOf = {};
@@ -893,7 +893,7 @@ export const updatePropertyOf = async (
         });
       }
     }
-  });
+  }
 };
 
 export const getNewAddedProperties = (
@@ -964,7 +964,6 @@ export const updateLinksForInheritance = async (
   addedLinks: { id: string }[],
   removedLinks: { id: string }[],
   specializationData: INode,
-  newLinks: { id: string }[],
   nodes: { [nodeId: string]: INode } | any,
 ) => {
   try {
@@ -991,7 +990,7 @@ export const updateLinksForInheritance = async (
         let ignore = false;
         let inheritFromId = null;
         let hasProperty = [];
-        for (let link of newLinks) {
+        for (let link of addedLinks) {
           const generalizationData = nodes[link.id];
           if (
             propertyRef === link.id ||
@@ -1095,7 +1094,6 @@ export const updateLinksForInheritanceSpecializations = async (
   addedLinks: { id: string }[],
   removedLinks: { id: string }[],
   generalizationData: INode,
-  oldLinks: { id: string }[],
   nodes: { [nodeId: string]: INode },
 ) => {
   try {
@@ -1323,26 +1321,14 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
 };
 /*  updateLinks takes links and push the new link to its specializations or generalizations */
 export const updateLinks = async (
-  links: { id: string }[],
+  links: string[],
   newLink: { id: string },
   linkType: "specializations" | "generalizations",
   nodes: { [nodeId: string]: INode },
   db: any,
 ) => {
-  const filteredChildren = links.filter((child) => {
-    const childData = nodes[child.id];
-    const allLinks = [
-      ...(childData?.specializations || []),
-      ...(childData?.generalizations || []),
-    ];
-
-    return !allLinks.some((collection) => {
-      return collection.nodes.some((node) => node.id === newLink.id);
-    });
-  });
-
-  for (let child of filteredChildren) {
-    const childData = nodes[child.id];
+  for (let childId of links) {
+    const childData = nodes[childId];
     if (!childData) continue;
     const childLinks = childData[linkType];
 
@@ -1352,7 +1338,7 @@ export const updateLinks = async (
 
     if (mainCollection) {
       mainCollection.nodes.push(newLink);
-      const childRef = doc(collection(db, NODES), child.id);
+      const childRef = doc(collection(db, NODES), childId);
       updateDoc(childRef, {
         [linkType]: childLinks,
       });
@@ -1362,7 +1348,7 @@ export const updateLinks = async (
         nodes: [newLink],
       };
       childLinks.push(newCollection);
-      const childRef = doc(collection(db, NODES), child.id);
+      const childRef = doc(collection(db, NODES), childId);
       await updateDoc(childRef, {
         [linkType]: childLinks,
       });

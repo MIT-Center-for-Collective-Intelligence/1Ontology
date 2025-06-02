@@ -56,6 +56,8 @@ interface NodeBodyProps {
   clonedNodesQueue?: any;
   newOnes?: any;
   setNewOnes?: any;
+  loadingIds: any;
+  setLoadingIds: any;
   editableProperty?: ICollection[];
   setEditableProperty?: any;
   removedElements: any;
@@ -68,6 +70,7 @@ interface NodeBodyProps {
   storage: any;
   saveNewChangeLog: any;
   skillsFuture: boolean;
+  enableEdit: boolean;
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -108,6 +111,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   clonedNodesQueue,
   newOnes,
   setNewOnes,
+  loadingIds,
+  setLoadingIds,
   editableProperty,
   setEditableProperty,
   removedElements,
@@ -120,6 +125,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   storage,
   saveNewChangeLog,
   skillsFuture,
+  enableEdit,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -361,6 +367,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     selectedDiffNode={selectedDiffNode}
                     nodes={nodes}
                     getTitleNode={getTitleNode}
+                    enableEdit={enableEdit}
                   />
                 </Box>
               )}
@@ -375,6 +382,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     selectedDiffNode={selectedDiffNode}
                     user={user}
                     skillsFuture={skillsFuture}
+                    enableEdit={enableEdit}
                   />
                 ) : currentNode.propertyType[property] !== "string" ? (
                   <StructuredProperty
@@ -416,6 +424,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     clonedNodesQueue={clonedNodesQueue}
                     newOnes={newOnes}
                     setNewOnes={setNewOnes}
+                    loadingIds={loadingIds}
+                    setLoadingIds={setLoadingIds}
                     editableProperty={editableProperty}
                     setEditableProperty={setEditableProperty}
                     removedElements={removedElements}
@@ -426,6 +436,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     setGlowIds={setGlowIds}
                     selectedCollection={selectedCollection}
                     skillsFuture={skillsFuture}
+                    enableEdit={enableEdit}
                   />
                 ) : (
                   property !== "description" &&
@@ -442,6 +453,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       confirmIt={confirmIt}
                       currentImprovement={currentImprovement}
                       skillsFuture={skillsFuture}
+                      enableEdit={enableEdit}
                     />
                   )
                 )}
@@ -465,6 +477,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 selectedDiffNode={selectedDiffNode}
                 nodes={nodes}
                 getTitleNode={getTitleNode}
+                enableEdit={enableEdit}
               />
             </Box>
           )}
@@ -495,6 +508,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
             borderRadius: "18px",
             backgroundColor: BUTTON_COLOR,
             mt: "15px",
+            display: !enableEdit ? "none" : "block",
           }}
         >
           Add New Property

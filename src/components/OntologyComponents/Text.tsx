@@ -10,6 +10,7 @@ import {
   IconButton,
   Paper,
   Switch,
+  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -60,7 +61,7 @@ type ITextProps = {
   property: string;
   text: string; // Real-time text from WebSocket
   confirmIt: any;
-  nodes: { [id: string]: INode };
+  nodes: any;
   setSelectTitle?: any;
   selectTitle?: any;
   locked: boolean;
@@ -78,6 +79,8 @@ type ITextProps = {
   checkDuplicateTitle?: any;
   sx?: any;
   skillsFuture: boolean;
+  setEnableEdit?: any;
+  enableEdit: any;
 };
 
 const Text = ({
@@ -103,6 +106,8 @@ const Text = ({
   checkDuplicateTitle,
   sx,
   skillsFuture,
+  setEnableEdit,
+  enableEdit,
 }: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -115,9 +120,7 @@ const Text = ({
   const [autoFocus, setAutoFocus] = useState(false);
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
   const [switchToWebsocket, setSwitchToWebSocket] = useState(true);
-
-  const [isPreviewMode, setIsPreviewMode] = useState(!structured);
-
+  // const [isPreviewMode, setIsPreviewMode] = useState(false);
   const currentImprovementChange = useMemo(() => {
     if (currentImprovement?.newNode || !currentImprovement) return null;
 
@@ -405,9 +408,12 @@ const Text = ({
                   displaySidebar={displaySidebar}
                   activeSidebar={activeSidebar}
                   unclassified={!!currentVisibleNode.unclassified}
+                  setEnableEdit={setEnableEdit}
+                  enableEdit={enableEdit}
+                  user={user}
                 />
               )}{" "}
-            {!locked && property !== "title" && property !== "ONetID" && (
+            {/*{!locked && property !== "title" && property !== "ONetID" && (
               <Box
                 sx={{
                   display: "flex",
@@ -433,6 +439,7 @@ const Text = ({
                             ? "rgba(255, 255, 255, 0.08)"
                             : "rgba(0, 0, 0, 0.04)",
                       },
+                      display: !enableEdit ? "none" : "block",
                     }}
                   >
                     {isPreviewMode ? (
@@ -443,7 +450,7 @@ const Text = ({
                   </IconButton>
                 </Tooltip>
               </Box>
-            )}
+            )} */}
             {property !== "title" &&
               property !== "ONetID" &&
               !currentImprovement &&
@@ -452,6 +459,7 @@ const Text = ({
                   currentVisibleNode={currentVisibleNode}
                   property={property}
                   nodes={nodes}
+                  enableEdit={enableEdit}
                 />
               )}
           </Box>
@@ -465,7 +473,8 @@ const Text = ({
       locked ||
       (selectedDiffNode &&
         (selectedDiffNode.modifiedProperty !== property || structured)) ||
-      (currentVisibleNode.unclassified && property === "title") ? (
+      ((currentVisibleNode.unclassified || !enableEdit) &&
+        property === "title") ? (
         <Typography
           sx={{ fontSize: property === "title" ? "34px" : "19px", p: "19px" }}
         >
@@ -502,7 +511,7 @@ const Text = ({
                   onSave: onSaveTextChange,
                 }}
                 mode={{
-                  isPreview: isPreviewMode,
+                  isPreview: !enableEdit,
                   useWebsocket: switchToWebsocket,
                   reference: reference,
                 }}
@@ -518,6 +527,7 @@ const Text = ({
                   nodeId: currentVisibleNode?.id,
                   randomProminentColor: randomProminentColor(),
                 }}
+                setEditorContent={setEditorContent}
               />
             </>
           )}

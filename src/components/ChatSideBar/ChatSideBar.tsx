@@ -351,6 +351,7 @@ const ChatSideBar = ({
                 onOpenNodesTree={onOpenNodesTree}
                 sendNode={sendNode}
                 currentVisibleNode={currentVisibleNode}
+                loadingIds={new Set()}
               />
             )}
           </Paper>

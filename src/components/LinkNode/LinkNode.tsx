@@ -69,6 +69,7 @@ import { NODES } from "@components/lib/firestoreClient/collections";
 import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import AddIcon from "@mui/icons-material/Add";
+import CheckIcon from "@mui/icons-material/Check";
 import {
   recordLogs,
   saveNewChangeLog,
@@ -87,6 +88,7 @@ import {
 import {
   Box,
   Button,
+  CircularProgress,
   IconButton,
   keyframes,
   Link,
@@ -116,6 +118,8 @@ import LinkOffIcon from "@mui/icons-material/LinkOff";
 import { UNCLASSIFIED } from "@components/lib/CONSTANTS";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import LinkEditor from "./LinkEditor";
+import { Post } from "@components/lib/utils/Post";
+import { LoadingButton } from "@mui/lab";
 import { updateGeneralizationsAndPartsInheritance, handlePartUnlinking } from "@components/lib/api/partsAPI";
 
 const glowGreen = keyframes`
@@ -148,6 +152,7 @@ type ILinkNodeProps = {
   selectedDiffNode: any;
   replaceWith: any;
   saveNewAndSwapIt: any;
+  setClonedNodesQueue: any;
   clonedNodesQueue?: any;
   unlinkElement?: any;
   selectedProperty: string;
@@ -155,6 +160,9 @@ type ILinkNodeProps = {
   skillsFuture: boolean;
   currentImprovement: any;
   // partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
+  loadingIds: any;
+  saveNewSpecialization: any;
+  enableEdit: boolean;
   setNodes?: any;
 };
 
@@ -175,6 +183,7 @@ const LinkNode = ({
   selectedDiffNode,
   replaceWith,
   saveNewAndSwapIt,
+  setClonedNodesQueue,
   clonedNodesQueue = {},
   unlinkElement,
   selectedProperty,
@@ -182,6 +191,9 @@ const LinkNode = ({
   skillsFuture,
   currentImprovement,
   // partsInheritance,
+  loadingIds,
+  saveNewSpecialization,
+  enableEdit,
   setNodes,
 }: ILinkNodeProps) => {
   const db = getFirestore();
@@ -195,7 +207,7 @@ const LinkNode = ({
   const [regionalTitle, setRegionalTitle] = useState(title);
 
   // useEffect to handle async call to getTitle
-  useEffect(() => {
+  /*   useEffect(() => {
     const fetchTitle = async () => {
       const title = await getTitleDeleted(nodes, link.id, true, db);
       setRegionalTitle(title);
@@ -203,21 +215,26 @@ const LinkNode = ({
     if (!title) {
       fetchTitle();
     }
-  }, [link.id, nodes, title]);
+  }, [link.id, nodes, title]); */
 
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const handleNavigateToNode = useCallback(() => {
     navigateToNode(link.id);
   }, [navigateToNode, link.id]);
 
-  const unlinkNodeRelation = async () => {
+  const unlinkNodeRelation = async (
+    currentNodeId: string,
+    linkId: string,
+    fromModel: boolean = false,
+  ) => {
     try {
       if (
-        await confirmIt(
+        fromModel ||
+        (await confirmIt(
           `Are you sure you want remove this item the list?`,
           `Remove`,
           "Keep",
-        )
+        ))
       ) {
         // Handle parts unlinking inheritance logic
         if (property === "parts") {
@@ -284,12 +301,12 @@ const LinkNode = ({
             Object.values(nodeData.properties[property]) as { id: string }[]
           )
             .flat()
-            .some((c: { id: string }) => c.id === link.id);
+            .some((c: { id: string }) => c.id === linkId);
 
           // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
           // const childData = childDoc.data() as INode;
           if (shouldBeRemovedFromParent) {
-            unlinkPropertyOf(db, property, currentVisibleNode?.id, link.id);
+            unlinkPropertyOf(db, property, currentVisibleNode?.id, linkId);
           }
 
           await updateDoc(nodeDoc.ref, {
@@ -335,12 +352,16 @@ const LinkNode = ({
             }
             await updateDoc(nodeDoc.ref, updateObject);
 
-            updateInheritance({
+            await updateInheritance({
               nodeId: nodeDoc.id,
               updatedProperties: [property],
               db,
             });
           }
+          await Post("/triggerChroma", {
+            nodeId: currentNodeId,
+            updateAll: false,
+          });
           saveNewChangeLog(db, {
             nodeId: currentVisibleNode?.id,
             modifiedBy: user?.uname,
@@ -355,7 +376,7 @@ const LinkNode = ({
           recordLogs({
             action: "unlinked a node",
             property,
-            unlinked: link.id,
+            unlinked: linkId,
             node: nodeDoc.id,
           });
         }
@@ -395,15 +416,18 @@ const LinkNode = ({
     }
   };
 
-  const unlinkSpecializationOrGeneralization = async () => {
+  const unlinkSpecializationOrGeneralization = async (
+    currentNodeId: string,
+    linkId: string,
+    fromModel: boolean = false,
+  ) => {
     try {
       const nodeD =
-        property === "generalizations"
-          ? nodes[currentVisibleNode.id]
-          : nodes[link.id];
+        property === "generalizations" ? nodes[currentNodeId] : nodes[linkId];
       const linksLength = nodeD.generalizations.flatMap((c) => c.nodes).length;
       if (
-        await confirmIt(
+        fromModel ||
+        (await confirmIt(
           <Box>
             <Box
               sx={{
@@ -422,7 +446,7 @@ const LinkNode = ({
               <Typography sx={{ mt: "15px" }}>
                 {`There's no other generalization linked to this node. Are you
                 sure you want to unlink it and move it as a specialization under
-              ${UNCLASSIFIED[nodes[link.id].nodeType]}`}
+              ${UNCLASSIFIED[nodes[linkId].nodeType]}`}
                 ?
               </Typography>
             ) : (
@@ -431,7 +455,7 @@ const LinkNode = ({
           </Box>,
           "Unlink",
           "Keep",
-        )
+        ))
       ) {
         const nodeDoc = await getDoc(
           doc(collection(db, NODES), currentVisibleNode?.id),
@@ -453,7 +477,7 @@ const LinkNode = ({
           const shouldBeRemovedFromParent = !nodeData[
             property as "specializations" | "generalizations"
           ].some((c: { nodes: ILinkNode[] }) => {
-            const cIndex = c.nodes.findIndex((p) => p.id === link.id);
+            const cIndex = c.nodes.findIndex((p) => p.id === linkId);
             return cIndex !== -1;
           });
           await updateDoc(nodeDoc.ref, nodeData);
@@ -461,15 +485,15 @@ const LinkNode = ({
             await removeNodeLink(
               property as "specializations" | "generalizations",
               currentVisibleNode?.id,
-              link.id,
+              linkId,
             );
           }
           if (
             shouldBeRemovedFromParent &&
-            nodes[link.id] &&
-            !nodes[link.id].nodeType
+            nodes[linkId] &&
+            !nodes[linkId].nodeType
           ) {
-            const nodeType = nodes[link.id].nodeType;
+            const nodeType = nodes[linkId].nodeType;
             const unclassifiedNodeDocs = await getDocs(
               query(
                 collection(db, NODES),
@@ -481,8 +505,8 @@ const LinkNode = ({
             if (unclassifiedNodeDocs.docs.length > 0 && previousValue) {
               const unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
               if (property === "specializations") {
-                const nodeRef = doc(collection(db, NODES), link.id);
-                const generalizations = nodes[link.id].generalizations;
+                const nodeRef = doc(collection(db, NODES), linkId);
+                const generalizations = nodes[linkId].generalizations;
                 const generalizationsLength = generalizations.flatMap(
                   (c) => c.nodes,
                 ).length;
@@ -520,7 +544,7 @@ const LinkNode = ({
                   );
                   if (mainCollectionIdx !== -1) {
                     specializations[mainCollectionIdx].nodes.push({
-                      id: link.id,
+                      id: linkId,
                     });
                     updateDoc(unclassifiedNodeDoc.ref, {
                       specializations,
@@ -572,7 +596,7 @@ const LinkNode = ({
           if (property === "generalizations") {
             updateInheritanceWhenUnlinkAGeneralization(
               db,
-              link.id,
+              linkId,
               nodeData,
               nodes,
             );
@@ -590,7 +614,7 @@ const LinkNode = ({
             updateInheritanceWhenUnlinkAGeneralization(
               db,
               nodeDoc.id,
-              nodes[link.id],
+              nodes[linkId],
               nodes,
             );
             
@@ -604,6 +628,10 @@ const LinkNode = ({
             );
           }
         }
+        await Post("/triggerChroma", {
+          nodeId: currentNodeId,
+          updateAll: false,
+        });
       }
     } catch (error: any) {
       console.error(error);
@@ -622,8 +650,8 @@ const LinkNode = ({
   const handleUnlinkNode = () => {
     if (selectedProperty === property) {
       unlinkElement(link.id, collectionIndex);
-      return;
     }
+    const fromModel = selectedProperty === property;
     
     // Handle inherited parts (linkIndex === -1) with special unlinking logic
     if (property === "parts" && linkIndex === -1) {
@@ -632,9 +660,13 @@ const LinkNode = ({
     }
     
     if (property === "specializations" || property === "generalizations") {
-      unlinkSpecializationOrGeneralization();
+      unlinkSpecializationOrGeneralization(
+        currentVisibleNode.id,
+        link.id,
+        fromModel,
+      );
     } else {
-      unlinkNodeRelation();
+      unlinkNodeRelation(currentVisibleNode.id, link.id, fromModel);
     }
   };
   const getLinkColor = (changeType: "added" | "removed") => {
@@ -704,7 +736,7 @@ const LinkNode = ({
             reviewId={link.id}
             title={clonedNodesQueue[link.id]?.title || ""}
             checkDuplicateTitle={() => {}}
-            setClonedNodesQueue={() => {}}
+            setClonedNodesQueue={setClonedNodesQueue}
           />
         ) : (
           <Link
@@ -745,26 +777,76 @@ const LinkNode = ({
             property !== "isPartOf") ||
             (clonedNodesQueue.hasOwnProperty(link.id) &&
               property !== "generalizations")) && (
-            <Tooltip title="Unlink">
-              <IconButton
-                sx={{
-                  ml: "18px",
-                  borderRadius: "18px",
-                  fontSize: "12px",
-                  p: 0.2,
-                }}
-                onClick={handleUnlinkNode}
-              >
-                <LinkOffIcon sx={{ color: "orange" }} />
-              </IconButton>
-            </Tooltip>
+            <>
+              {loadingIds.has(link.id) ? (
+                <LoadingButton
+                  loading
+                  loadingIndicator={<CircularProgress size={20} />}
+                  sx={{
+                    borderRadius: "16px",
+                    padding: "3px",
+                    fontSize: "0.8rem",
+                    minWidth: "40px",
+                  }}
+                  disabled
+                />
+              ) : (
+                <Box sx={{ display: "flex" }}>
+                  {clonedNodesQueue.hasOwnProperty(link.id) && (
+                    <Tooltip title="Save">
+                      <IconButton
+                        sx={{
+                          ml: "18px",
+                          borderRadius: "18px",
+                          fontSize: "12px",
+                          p: 0.2,
+                        }}
+                        onClick={() => {
+                          saveNewSpecialization(link.id);
+                        }}
+                      >
+                        <CheckIcon sx={{ color: "green" }} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  <Tooltip
+                    title={
+                      clonedNodesQueue.hasOwnProperty(link.id)
+                        ? "Cancel"
+                        : "Unlink"
+                    }
+                  >
+                    <IconButton
+                      sx={{
+                        ml: "18px",
+                        borderRadius: "18px",
+                        fontSize: "12px",
+                        p: 0.2,
+                        display: !enableEdit ? "none" : "block",
+                      }}
+                      onClick={handleUnlinkNode}
+                    >
+                      {clonedNodesQueue.hasOwnProperty(link.id) ? (
+                        <CloseIcon sx={{ color: "red" }} />
+                      ) : (
+                        <LinkOffIcon
+                          sx={{ color: enableEdit ? "orange" : "gray" }}
+                        />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )}
+            </>
           )}
 
           {property === "parts" &&
             !currentImprovement &&
             !selectedDiffNode &&
-            !clonedNodesQueue.hasOwnProperty(link.id) && (
-              <Tooltip title={swapIt ? "Specialize" : "Close"}>
+            !clonedNodesQueue.hasOwnProperty(link.id) &&
+            !loadingIds.has(link.id) &&
+            enableEdit && (
+              <Tooltip title={swapIt ? "Close" : "Specialize"}>
                 <IconButton
                   sx={{
                     p: 0.2,

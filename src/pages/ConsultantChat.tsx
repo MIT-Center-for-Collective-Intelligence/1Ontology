@@ -972,7 +972,7 @@ const Consultant = () => {
           }}
         >
           <PromptDialogComponent
-            onClose={generateNewDiagram}
+            generateNewDiagram={generateNewDiagram}
             confirmation="generate"
             loadingResponse={loadingResponse}
             generateNewDiagramState={generateNewDiagramState}

@@ -103,6 +103,7 @@ export type INode = {
   oNet?: boolean;
   actionAlternatives?: string[];
   appName?: string;
+  skillsFuture?: boolean;
 };
 
 export type TreeVisual = {

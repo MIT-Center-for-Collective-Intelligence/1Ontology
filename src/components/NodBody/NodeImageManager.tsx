@@ -79,6 +79,7 @@ type NodeImageManagerProps = {
   selectedDiffNode: NodeChange | null;
   nodes: { [id: string]: INode };
   getTitleNode: any;
+  enableEdit: any;
 };
 
 export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
@@ -93,6 +94,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
   selectedDiffNode,
   nodes,
   getTitleNode,
+  enableEdit,
 }) => {
   const [nodeImages, setNodeImages] = useState<NodeImage[]>([]);
   const [selectedImages, setSelectedImages] = useState<PreviewImage[]>([]);
@@ -507,7 +509,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
                           }),
                         }}
                       />
-                      {!selectedDiffNode && (
+                      {!selectedDiffNode && enableEdit && (
                         <Tooltip title="Delete Image" placement="top">
                           <IconButton
                             className="delete-icon"
@@ -710,6 +712,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
                       "&:hover": {
                         bgcolor: "orange.dark",
                       },
+                      display: !enableEdit ? "none" : "flex",
                     }}
                   >
                     Upload Images

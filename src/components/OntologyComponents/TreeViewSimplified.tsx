@@ -7,6 +7,7 @@ import {
   Tooltip,
   IconButton,
   TextField,
+  CircularProgress,
 } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -41,6 +42,7 @@ type ITreeViewSimplifiedProps = {
   disabledAddButton?: boolean;
   selectedProperty?: string;
   getNumOfGeneralizations?: any;
+  loadingIds: Set<string>;
 };
 
 const TreeViewSimplified = ({
@@ -66,6 +68,7 @@ const TreeViewSimplified = ({
   disabledAddButton,
   selectedProperty,
   getNumOfGeneralizations,
+  loadingIds,
 }: ITreeViewSimplifiedProps) => {
   const [expanded, setExpanded] = useState<string[]>([]);
   const [addingNew, setAddingNew] = useState(false);
@@ -121,6 +124,7 @@ const TreeViewSimplified = ({
               addACloneNodeQueue={addACloneNodeQueue}
               cloning={cloning}
               addingNew={addingNew}
+              loadingIds={loadingIds}
             />
           }
           sx={{
@@ -175,6 +179,7 @@ const TreeViewSimplified = ({
                 disabledAddButton={disabledAddButton}
                 selectedProperty={selectedProperty}
                 getNumOfGeneralizations={getNumOfGeneralizations}
+                loadingIds={loadingIds}
               />
             )}
         </TreeItem>
@@ -202,6 +207,7 @@ const NodeLabel = ({
   addACloneNodeQueue,
   cloning,
   addingNew,
+  loadingIds,
 }: {
   currentVisibleNode: any;
   nodeId: any;
@@ -221,6 +227,7 @@ const NodeLabel = ({
   addACloneNodeQueue: any;
   cloning: any;
   addingNew: any;
+  loadingIds: Set<string>;
 }) => {
   return (
     <Box
@@ -295,69 +302,80 @@ const NodeLabel = ({
         !preventLoops?.has(treeVisualization[nodeId]?.id) && (
           <>
             {manageLock || !treeVisualization[nodeId].locked ? (
-              <IconButton
-                onClick={(e) => {
-                  if (
-                    currentVisibleNode?.id === nodeId &&
-                    (selectedProperty === "specializations" ||
-                      selectedProperty === "generalizations")
-                  ) {
-                    return;
-                  }
-                  e.stopPropagation();
-                  markItemAsChecked(treeVisualization[nodeId]?.id);
-                }}
-                sx={{
-                  borderRadius: "16px",
-                  textTransform: "none",
-                  // marginLeft: "12px",
-                  padding: "3px",
-                  fontSize: "0.8rem",
-                  backgroundColor:
-                    currentVisibleNode?.id === nodeId &&
-                    !checkedItems.has(treeVisualization[nodeId]?.id)
-                      ? "#E8F5E9"
-                      : "",
-                  display:
-                    (currentVisibleNode?.id === nodeId &&
-                      (selectedProperty === "specializations" ||
-                        selectedProperty === "generalizations")) ||
-                    ((disabledAddButton ||
-                      (selectedProperty === "specializations" &&
-                        getNumOfGeneralizations(nodeId))) &&
-                      checkedItems.has(treeVisualization[nodeId]?.id))
-                      ? "none"
-                      : "",
-                }}
-                disabled={
-                  (currentVisibleNode?.id === nodeId &&
-                    (selectedProperty === "specializations" ||
-                      selectedProperty === "generalizations")) ||
-                  ((disabledAddButton ||
-                    (selectedProperty === "specializations" &&
-                      getNumOfGeneralizations(nodeId))) &&
-                    checkedItems.has(treeVisualization[nodeId]?.id))
-                }
-              >
-                <Tooltip
-                  title={
-                    checkedItems.has(treeVisualization[nodeId]?.id)
-                      ? "Unlink"
-                      : "Link"
-                  }
-                  placement="left"
-                >
-                  {checkedItems.has(treeVisualization[nodeId]?.id) ? (
-                    <LinkOffIcon
-                      sx={{
-                        color: "orange",
-                      }}
-                    />
-                  ) : (
-                    <InsertLinkIcon />
-                  )}
-                </Tooltip>
-              </IconButton>
+              <>
+                {loadingIds.has(treeVisualization[nodeId]?.id) ? (
+                  <LoadingButton
+                    loading
+                    loadingIndicator={<CircularProgress size={20} />}
+                    sx={{
+                      borderRadius: "16px",
+                      padding: "3px",
+                      fontSize: "0.8rem",
+                      minWidth: "40px",
+                    }}
+                    disabled
+                  />
+                ) : (
+                  <IconButton
+                    onClick={(e) => {
+                      if (
+                        currentVisibleNode?.id === nodeId &&
+                        (selectedProperty === "specializations" ||
+                          selectedProperty === "generalizations")
+                      ) {
+                        return;
+                      }
+                      e.stopPropagation();
+                      markItemAsChecked(treeVisualization[nodeId]?.id);
+                    }}
+                    sx={{
+                      borderRadius: "16px",
+                      textTransform: "none",
+                      padding: "3px",
+                      fontSize: "0.8rem",
+                      backgroundColor:
+                        currentVisibleNode?.id === nodeId &&
+                        !checkedItems.has(treeVisualization[nodeId]?.id)
+                          ? "#E8F5E9"
+                          : "",
+                      display:
+                        (currentVisibleNode?.id === nodeId &&
+                          (selectedProperty === "specializations" ||
+                            selectedProperty === "generalizations")) ||
+                        ((disabledAddButton ||
+                          (selectedProperty === "specializations" &&
+                            getNumOfGeneralizations(nodeId))) &&
+                          checkedItems.has(treeVisualization[nodeId]?.id))
+                          ? "none"
+                          : "",
+                    }}
+                    disabled={
+                      (currentVisibleNode?.id === nodeId &&
+                        (selectedProperty === "specializations" ||
+                          selectedProperty === "generalizations")) ||
+                      ((disabledAddButton ||
+                        (selectedProperty === "specializations" &&
+                          getNumOfGeneralizations(nodeId))) &&
+                        checkedItems.has(treeVisualization[nodeId]?.id))
+                    }
+                  >
+                    <Tooltip
+                      title={
+                        checkedItems.has(treeVisualization[nodeId]?.id)
+                          ? "Unlink"
+                          : "Link"
+                      }
+                      placement="left"
+                    >
+                      {checkedItems.has(treeVisualization[nodeId]?.id) ? (
+                        <LinkOffIcon sx={{ color: "orange" }} />
+                      ) : (
+                        <InsertLinkIcon />
+                      )}
+                    </Tooltip>
+                  </IconButton>
+                )}
+              </>
             ) : (
               <LockIcon sx={{ color: "#FF6F00", marginLeft: "12px" }} />
             )}

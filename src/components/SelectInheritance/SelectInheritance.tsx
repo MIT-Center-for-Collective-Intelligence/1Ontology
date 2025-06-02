@@ -20,10 +20,12 @@ const SelectInheritance = ({
   currentVisibleNode,
   property,
   nodes,
+  enableEdit,
 }: {
   currentVisibleNode: INode;
   property: string;
   nodes: { [nodeId: string]: INode };
+  enableEdit: boolean;
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -169,7 +171,10 @@ const SelectInheritance = ({
         onChange={(e: any) => changeInheritance(e, property)}
         select
         label="Change Inheritance"
-        sx={{ minWidth: "200px" }}
+        sx={{
+          minWidth: "200px",
+          display: !enableEdit ? "none" : "flex",
+        }}
         InputProps={{
           sx: {
             height: "40px",
