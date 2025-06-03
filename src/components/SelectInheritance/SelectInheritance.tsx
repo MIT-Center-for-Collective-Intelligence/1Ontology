@@ -34,7 +34,7 @@ const SelectInheritance = ({
     currentVisibleNode.inheritance?.[property]?.ref || "inheritance-overridden";
 
   useEffect(() => {
-    let _generalizations = [
+    let _generalizations: any = [
       ...currentVisibleNode.generalizations.flatMap(
         (gen: ICollection) => gen.nodes,
       ),
@@ -43,22 +43,36 @@ const SelectInheritance = ({
       title: getTitle(nodes, node.id),
     }));
 
-    _generalizations = _generalizations.filter((g) => {
+    _generalizations = _generalizations.filter((g: any) => {
       return (
         !nodes[g.id]?.inheritance[property]?.ref ||
         nodes[g.id]?.inheritance[property]?.ref !== inheritanceRef
       );
     });
-    const index = _generalizations.findIndex((g) => g.id === inheritanceRef);
+    const index = _generalizations.findIndex(
+      (g: any) => g.id === inheritanceRef,
+    );
     if (index === -1) {
+      const title =
+        inheritanceRef === "inheritance-overridden"
+          ? "Inheritance Overridden"
+          : getTitle(nodes, inheritanceRef);
       _generalizations.push({
         id: inheritanceRef,
         title:
           inheritanceRef === "inheritance-overridden"
             ? "Inheritance Overridden"
             : getTitle(nodes, inheritanceRef),
+        fullTitle: title,
       });
     }
+
+    _generalizations.forEach((c: any) => {
+      const title = c?.title;
+      const truncatedTitle =
+        title.length > 25 ? title.slice(0, 22) + "..." : title;
+      c.title = truncatedTitle;
+    });
     setGeneralizations(_generalizations);
   }, [currentVisibleNode.generalizations, inheritanceRef, nodes]);
 

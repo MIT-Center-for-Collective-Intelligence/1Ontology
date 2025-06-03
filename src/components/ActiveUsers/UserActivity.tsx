@@ -51,7 +51,7 @@ const UserActivity = ({
       collection(db, NODES_LOGS),
       where("modifiedBy", "==", openLogsFor.uname),
       orderBy("modifiedAt", "desc"),
-      limit(100)
+      limit(100),
     );
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
       const docChanges = snapshot.docChanges();
@@ -80,7 +80,10 @@ const UserActivity = ({
   const indexOfFirstLog = indexOfLastLog - ITEMS_PER_PAGE;
   const currentLogs = logs.slice(indexOfFirstLog, indexOfLastLog);
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number,
+  ) => {
     setCurrentPage(value);
   };
 
@@ -148,14 +151,14 @@ const UserActivity = ({
               key={log.id}
               activity={log}
               displayDiff={displayDiff}
-              isSelected={selectedDiffNode?.id === log.id}
+              selectedDiffNode={selectedDiffNode}
             />
           ))}
 
           <Box
             sx={{
-              display: 'flex',
-              justifyContent: 'center',
+              display: "flex",
+              justifyContent: "center",
               mt: 8,
               mb: 2,
             }}

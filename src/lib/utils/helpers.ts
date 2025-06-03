@@ -1,4 +1,9 @@
-import { ICollection, IInheritance, INode } from "@components/types/INode";
+import {
+  ICollection,
+  IInheritance,
+  ILinkNode,
+  INode,
+} from "@components/types/INode";
 import {
   getDoc,
   doc,
@@ -566,9 +571,19 @@ export const getChangeDescription = (
     case "sort elements":
       return `Sorted elements under "${displayText}" in:`;
     case "remove element":
-      return `Removed an element under "${displayText}" in:`;
+      return `Removed a ${
+        modifiedProperty === "specializations"
+          ? "Specialization"
+          : modifiedProperty === "generalizations"
+            ? "Generalization"
+            : capitalizeFirstLetter(modifiedProperty || "")
+      } in:`;
+    case "add elements":
+      return `Added "${displayText}" Under:`;
+    case "remove elements":
+      return `Removed "${displayText}" Under:`;
     case "modify elements":
-      return `Added new elements "${displayText}" Under:`;
+      return `Modify "${displayText}" Under:`;
     case "add property":
       return `Added "${changeDetails?.addedProperty}" in:`;
     case "remove property":
@@ -1382,3 +1397,85 @@ export const extractJSON = (text: string) => {
     return { jsonObject: {}, isJSON: false };
   }
 };
+
+export function diffCollections(
+  oldValue: ICollection[],
+  newValue: ICollection[],
+): ICollection[] {
+  const result: ICollection[] = [];
+
+  const newMap = new Map(newValue.map((c) => [c.collectionName, c]));
+  const oldMap = new Map(oldValue.map((c) => [c.collectionName, c]));
+
+  const allCollectionNames = new Set([...oldMap.keys(), ...newMap.keys()]);
+
+  for (const collectionName of allCollectionNames) {
+    const oldCollection = oldMap.get(collectionName);
+    const newCollection = newMap.get(collectionName);
+
+    const oldNodes = oldCollection?.nodes || [];
+    const newNodes = newCollection?.nodes || [];
+
+    const oldNodeMap: any = new Map(oldNodes.map((n) => [n.id, n]));
+    const newNodeMap: any = new Map(newNodes.map((n) => [n.id, n]));
+
+    const changes: any[] = [];
+
+    const oldIds = oldNodes.map((n) => n.id);
+    const newIds = newNodes.map((n) => n.id);
+
+    const allIds = new Set([...oldIds, ...newIds]);
+
+    for (const id of allIds) {
+      const inOld = oldNodeMap.has(id);
+      const inNew = newNodeMap.has(id);
+
+      const oldIndex = oldIds.indexOf(id);
+      const newIndex = newIds.indexOf(id);
+
+      if (!inOld && inNew) {
+        changes.push({ ...newNodeMap.get(id)!, change: "added" });
+      } else if (inOld && !inNew) {
+        changes.push({ ...oldNodeMap.get(id)!, change: "removed" });
+      } else if (inOld && inNew) {
+        if (oldIndex !== newIndex) {
+          changes.push({
+            ...oldNodeMap.get(id)!,
+            change: "removed",
+            changeType: "sort",
+          });
+          changes.push({
+            ...newNodeMap.get(id)!,
+            change: "added",
+            changeType: "sort",
+          });
+        }
+      }
+    }
+
+    const cleanedChanges: any[] = [];
+    for (let i = 0; i < changes.length; i++) {
+      const curr = changes[i];
+      const next = changes[i + 1];
+
+      if (
+        curr?.changeType === "sort" &&
+        next?.changeType === "sort" &&
+        curr.id === next.id &&
+        ((curr.change === "removed" && next.change === "added") ||
+          (curr.change === "added" && next.change === "removed"))
+      ) {
+        i++;
+        continue;
+      }
+
+      cleanedChanges.push(curr);
+    }
+
+    if (cleanedChanges.length > 0) {
+      result.push({ collectionName, nodes: cleanedChanges });
+    }
+  }
+
+  return result;
+}

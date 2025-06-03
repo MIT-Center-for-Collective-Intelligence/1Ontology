@@ -1471,6 +1471,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
             signOut={signOut}
             skillsFuture={skillsFuture}
             skillsFutureApp={appName ?? null}
+            setSkillsFutureApp={setAppName}
           />
         </Container>
         {ConfirmDialog}

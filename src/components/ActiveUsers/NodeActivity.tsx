@@ -145,7 +145,7 @@ const NodeActivity = ({
               activity={log}
               displayDiff={displayDiff}
               modifiedByDetails={activeUsers[log.modifiedBy]}
-              isSelected={selectedDiffNode?.id === log.id}
+              selectedDiffNode={selectedDiffNode}
             />
           ))}
 

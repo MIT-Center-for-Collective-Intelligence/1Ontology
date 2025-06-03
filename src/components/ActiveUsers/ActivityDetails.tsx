@@ -3,18 +3,21 @@ import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import { getChangeDescription } from "@components/lib/utils/helpers";
 import { NodeChange } from "@components/types/INode";
 import dayjs from "dayjs";
+import { useEffect, useState } from "react";
 
 const ActivityDetails = ({
   activity,
   displayDiff,
   modifiedByDetails,
-  isSelected = false,
+  selectedDiffNode,
 }: {
   activity: NodeChange;
   displayDiff: Function;
   modifiedByDetails?: any;
-  isSelected?: boolean;
+  selectedDiffNode: any;
 }) => {
+  const [isSelected, setIsSelected] = useState(false);
+
   return (
     <Box
       sx={{
@@ -38,10 +41,10 @@ const ActivityDetails = ({
           },
           backgroundColor: (theme) =>
             theme.palette.mode === "dark"
-              ? isSelected
+              ? isSelected || selectedDiffNode?.id === activity.id
                 ? "rgba(173, 216, 230, 0.5)"
                 : "#303134"
-              : isSelected
+              : isSelected || selectedDiffNode?.id === activity.id
                 ? "rgba(173, 216, 230, 0.5)"
                 : "#e9ebf5",
         }}
@@ -132,8 +135,23 @@ const ActivityDetails = ({
           </Typography>
         )}
         <Button
-          onClick={() => displayDiff(activity)}
-          variant="outlined"
+          onClick={() => {
+            if (isSelected || selectedDiffNode?.id === activity.id) {
+              displayDiff(null);
+            } else {
+              displayDiff(null);
+              displayDiff(activity);
+              setIsSelected(true);
+              setTimeout(() => {
+                setIsSelected(false);
+              }, 500);
+            }
+          }}
+          variant={
+            isSelected || selectedDiffNode?.id === activity.id
+              ? "contained"
+              : "outlined"
+          }
           sx={{
             borderRadius: "20px",
             position: "absolute",
@@ -144,7 +162,9 @@ const ActivityDetails = ({
             ml: "14px",
           }}
         >
-          View
+          {isSelected || selectedDiffNode?.id === activity.id
+            ? "Unselect"
+            : "View"}
         </Button>
 
         <Box

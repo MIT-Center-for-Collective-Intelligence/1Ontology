@@ -10,6 +10,7 @@ const NodeActivity = ({
   activeUsers,
   selectedUser,
   skillsFuture,
+  skillsFutureApp,
 }: {
   selectedDiffNode: any;
   currentVisibleNode: any;
@@ -17,6 +18,7 @@ const NodeActivity = ({
   activeUsers: any;
   selectedUser: string;
   skillsFuture: boolean;
+  skillsFutureApp: string;
 }) => {
   const [tabIndex, setTabIndex] = useState<number>(0);
 
@@ -52,24 +54,24 @@ const NodeActivity = ({
 
       {tabIndex === 0 && (
         <HistoryTab
-          currentVisibleNode={currentVisibleNode}
           selectedDiffNode={selectedDiffNode}
           displayDiff={displayDiff}
           selectedUser={selectedUser}
           activeUsers={activeUsers}
           changeType={null}
           skillsFuture={skillsFuture}
+          skillsFutureApp={skillsFutureApp}
         />
       )}
       {tabIndex === 1 && (
         <HistoryTab
-          currentVisibleNode={currentVisibleNode}
           selectedDiffNode={selectedDiffNode}
           displayDiff={displayDiff}
           selectedUser={selectedUser}
           activeUsers={activeUsers}
           changeType={"add-node"}
           skillsFuture={skillsFuture}
+          skillsFutureApp={skillsFutureApp}
         />
       )}
     </Box>

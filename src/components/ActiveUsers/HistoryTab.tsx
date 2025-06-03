@@ -15,28 +15,27 @@ import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 import ActivityDetails from "./ActivityDetails";
 
 const NodeActivity = ({
-  currentVisibleNode,
   selectedDiffNode,
   displayDiff,
   activeUsers,
   changeType,
   selectedUser,
   skillsFuture,
+  skillsFutureApp,
 }: {
   selectedDiffNode: any;
-  currentVisibleNode: any;
   displayDiff: any;
   activeUsers: any;
   changeType: "add-node" | null;
   selectedUser: string;
   skillsFuture: boolean;
+  skillsFutureApp: string;
 }) => {
   const db = getFirestore();
   const [logs, setLogs] = useState<(NodeChange & { id: string })[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    if (!currentVisibleNode?.id) return;
     setLogs([]);
 
     let nodesQuery = null;
@@ -84,11 +83,15 @@ const NodeActivity = ({
         for (let change of docChanges) {
           const changeData = change.doc.data();
           if (
-            (skillsFuture && changeData.skillsFuture) ||
+            (skillsFuture &&
+              changeData.skillsFuture &&
+              changeData.appName === skillsFutureApp) ||
             (!skillsFuture && !changeData.skillsFuture)
           ) {
             const id = change.doc.id;
+            /*        if (id === "YLDwaHRDmfaLLsqUSdsO") { */
             updatedLogs.push({ ...changeData, id });
+            /*             } */
           }
         }
         return updatedLogs; // Return the new array to trigger a re-render
@@ -97,7 +100,7 @@ const NodeActivity = ({
     });
 
     return () => unsubscribeNodes();
-  }, [db, currentVisibleNode?.id, changeType, selectedUser]);
+  }, [db, changeType, selectedUser]);
 
   if (loading) {
     return (
@@ -177,7 +180,7 @@ const NodeActivity = ({
               activity={log}
               displayDiff={displayDiff}
               modifiedByDetails={activeUsers[log.modifiedBy]}
-              isSelected={selectedDiffNode?.id === log.id}
+              selectedDiffNode={selectedDiffNode}
             />
           ))}
       </>

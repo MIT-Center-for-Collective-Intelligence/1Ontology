@@ -133,6 +133,7 @@ export type MainSpecializations = {
 };
 
 export type NodeChange = {
+  id?: string;
   nodeId: string;
   modifiedBy: string;
   modifiedProperty: string | null;
@@ -144,6 +145,8 @@ export type NodeChange = {
     | "sort elements"
     | "remove element"
     | "add element"
+    | "add elements"
+    | "remove elements"
     | "modify elements"
     | "add property"
     | "remove property"
@@ -158,6 +161,8 @@ export type NodeChange = {
   changeDetails?: { [key: string]: any };
   reasoning?: string;
   skillsFuture?: boolean;
+  appName?: string;
+  detailsOfChange?: any;
 };
 
 export type PromptChange = {

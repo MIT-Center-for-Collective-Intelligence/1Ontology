@@ -1209,7 +1209,11 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <RuleIcon sx={{ mr: 1, color: "text.secondary" }} />
-                <Typography variant="subtitle1" fontWeight="medium">
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="medium"
+                  sx={{ fontWeight: "bold" }}
+                >
                   Guidelines
                 </Typography>
               </AccordionSummary>

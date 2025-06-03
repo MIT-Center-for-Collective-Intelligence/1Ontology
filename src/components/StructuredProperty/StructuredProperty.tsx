@@ -472,15 +472,19 @@ const StructuredProperty = ({
   };
 
   if (
-    currentImprovement &&
-    !currentImprovement.implemented &&
-    !currentImprovement?.newNode &&
-    currentImprovement.modifiedProperty === property
+    (currentImprovement &&
+      !currentImprovement.implemented &&
+      !currentImprovement?.newNode &&
+      currentImprovement.modifiedProperty === property) ||
+    (selectedDiffNode?.modifiedProperty === property &&
+      selectedDiffNode.changeType !== "add collection" &&
+      selectedDiffNode.changeType !== "delete collection" &&
+      selectedDiffNode.changeType !== "edit collection")
   ) {
     return (
       <Box id={`property-${property}`}>
         <VisualizeTheProperty
-          currentImprovement={currentImprovement}
+          currentImprovement={selectedDiffNode || currentImprovement}
           property={property}
           getTitle={getTitle}
           nodes={nodes}

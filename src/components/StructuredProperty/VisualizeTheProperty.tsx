@@ -5,8 +5,8 @@ import {
 } from "@components/lib/utils/string.utils";
 import { Paper, Typography, Box, Tooltip, List, ListItem } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { useState } from "react";
 import { ICollection } from "@components/types/INode";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 
 type CollectionListProps = {
   currentImprovement: any;
@@ -21,9 +21,6 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
   getTitle,
   nodes,
 }) => {
-  const [addedLinks, setAddLinks] = useState(new Set());
-  const [removedLinks, setRemovedLinks] = useState(new Set());
-
   const renderValue = (value: ICollection[]) => {
     return (
       <Box sx={{ display: "flex", flexDirection: "column" }}>
@@ -106,24 +103,35 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                   <DragIndicatorIcon
                     sx={{
                       color:
-                        addedLinks.has(node.id) || node.change === "added"
+                        node.change === "added"
                           ? "green"
-                          : removedLinks.has(node.id) ||
-                              node.change === "removed"
+                          : node.change === "removed"
                             ? "red"
                             : "",
                     }}
                   />
+                  {node.changeType === "sort" && (
+                    <SwapHorizIcon
+                      sx={{
+                        color:
+                          node.change === "added"
+                            ? "green"
+                            : node.change === "removed"
+                              ? "red"
+                              : "",
+                        pl: "5px",
+                      }}
+                    />
+                  )}
                   <Typography
                     variant="body1"
                     sx={{
                       textDecoration:
                         node.change === "removed" ? "line-through" : "",
                       color:
-                        addedLinks.has(node.id) || node.change === "added"
+                        node.change === "added"
                           ? "green"
-                          : removedLinks.has(node.id) ||
-                              node.change === "removed"
+                          : node.change === "removed"
                             ? "red"
                             : "",
                     }}

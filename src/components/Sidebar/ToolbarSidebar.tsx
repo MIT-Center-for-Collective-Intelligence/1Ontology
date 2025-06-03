@@ -44,6 +44,7 @@ import { chatChange } from "@components/client/firestore/messages.firestore";
 import { INotification } from "@components/types/IChat";
 import {
   createNewNode,
+  diffCollections,
   generateInheritance,
   synchronizeStuff,
 } from "@components/lib/utils/helpers";
@@ -127,6 +128,7 @@ type MainSidebarProps = {
   signOut: any;
   skillsFuture: boolean;
   skillsFutureApp: string;
+  setSkillsFutureApp: any;
 };
 
 const ToolbarSidebar = ({
@@ -159,6 +161,7 @@ const ToolbarSidebar = ({
   signOut,
   skillsFuture,
   skillsFutureApp,
+  setSkillsFutureApp,
 }: MainSidebarProps) => {
   const theme = useTheme();
   const db = getFirestore();
@@ -631,12 +634,33 @@ const ToolbarSidebar = ({
   );
 
   const displayDiff = (data: NodeChange) => {
+    if (data === null) {
+      setCurrentImprovement(null);
+      setSelectedDiffNode(null);
+      if (nodes[currentVisibleNode?.id] == null) {
+        navigateToNode(previousNodeId);
+      } else {
+        navigateToNode(currentVisibleNode?.id);
+      }
+      setPreviousNodeId("");
+      return;
+    }
+
     if (currentVisibleNode?.id !== data.nodeId) {
       setCurrentVisibleNode(
         nodes[data.nodeId] ? nodes[data.nodeId] : data.fullNode,
       );
     }
-
+    const modified_property_type = data.modifiedProperty
+      ? data.fullNode?.propertyType[data.modifiedProperty]
+      : "";
+    if (
+      modified_property_type !== "string" &&
+      modified_property_type !== "string-array"
+    ) {
+      const diff = diffCollections(data.previousValue, data.newValue);
+      data.detailsOfChange = { comparison: diff };
+    }
     setTimeout(() => {
       setSelectedDiffNode(data);
     }, 500);
@@ -1168,6 +1192,7 @@ const ToolbarSidebar = ({
             activeUsers={activeUsers}
             selectedUser={selectedUser}
             skillsFuture={skillsFuture}
+            skillsFutureApp={skillsFutureApp}
           />
         );
       default:

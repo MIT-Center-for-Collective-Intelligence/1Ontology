@@ -51,7 +51,7 @@ const ActiveUsers = ({
           new Date(a.lasChangeMadeAt.toDate()).getTime()
         );
       })
-      .filter((c: any) => c.uname !== "gemini");
+      .filter((c: any) => c.uname !== "gemini" && c.uname !== "gpt4o");
   }, [activeUsers]);
 
   return (
