@@ -1398,10 +1398,10 @@ export const extractJSON = (text: string) => {
   }
 };
 
-export function diffCollections(
+export const diffCollections = (
   oldValue: ICollection[],
   newValue: ICollection[],
-): ICollection[] {
+): ICollection[] => {
   const result: ICollection[] = [];
 
   const newMap = new Map(newValue.map((c) => [c.collectionName, c]));
@@ -1413,69 +1413,30 @@ export function diffCollections(
     const oldCollection = oldMap.get(collectionName);
     const newCollection = newMap.get(collectionName);
 
-    const oldNodes = oldCollection?.nodes || [];
-    const newNodes = newCollection?.nodes || [];
+    const oldNodes = new Map(
+      (oldCollection?.nodes || []).map((n) => [n.id, n]),
+    );
+    const newNodes = new Map(
+      (newCollection?.nodes || []).map((n) => [n.id, n]),
+    );
 
-    const oldNodeMap: any = new Map(oldNodes.map((n) => [n.id, n]));
-    const newNodeMap: any = new Map(newNodes.map((n) => [n.id, n]));
+    const nodeIds = new Set([...oldNodes.keys(), ...newNodes.keys()]);
 
-    const changes: any[] = [];
+    const mergedNodes: ILinkNode[] = [];
 
-    const oldIds = oldNodes.map((n) => n.id);
-    const newIds = newNodes.map((n) => n.id);
-
-    const allIds = new Set([...oldIds, ...newIds]);
-
-    for (const id of allIds) {
-      const inOld = oldNodeMap.has(id);
-      const inNew = newNodeMap.has(id);
-
-      const oldIndex = oldIds.indexOf(id);
-      const newIndex = newIds.indexOf(id);
-
-      if (!inOld && inNew) {
-        changes.push({ ...newNodeMap.get(id)!, change: "added" });
-      } else if (inOld && !inNew) {
-        changes.push({ ...oldNodeMap.get(id)!, change: "removed" });
-      } else if (inOld && inNew) {
-        if (oldIndex !== newIndex) {
-          changes.push({
-            ...oldNodeMap.get(id)!,
-            change: "removed",
-            changeType: "sort",
-          });
-          changes.push({
-            ...newNodeMap.get(id)!,
-            change: "added",
-            changeType: "sort",
-          });
-        }
+    for (const id of nodeIds) {
+      if (!oldNodes.has(id) && newNodes.has(id)) {
+        const newNode = newNodes.get(id)!;
+        mergedNodes.push({ ...newNode, change: "added" });
+      } else if (oldNodes.has(id) && !newNodes.has(id)) {
+        const oldNode = oldNodes.get(id)!;
+        mergedNodes.push({ ...oldNode, change: "removed" });
       }
     }
 
-    const cleanedChanges: any[] = [];
-    for (let i = 0; i < changes.length; i++) {
-      const curr = changes[i];
-      const next = changes[i + 1];
-
-      if (
-        curr?.changeType === "sort" &&
-        next?.changeType === "sort" &&
-        curr.id === next.id &&
-        ((curr.change === "removed" && next.change === "added") ||
-          (curr.change === "added" && next.change === "removed"))
-      ) {
-        i++;
-        continue;
-      }
-
-      cleanedChanges.push(curr);
-    }
-
-    if (cleanedChanges.length > 0) {
-      result.push({ collectionName, nodes: cleanedChanges });
+    if (mergedNodes.length > 0) {
+      result.push({ collectionName, nodes: mergedNodes });
     }
   }
-
   return result;
-}
+};

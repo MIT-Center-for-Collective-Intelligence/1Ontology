@@ -644,20 +644,21 @@ const StructuredProperty = ({
                       enableEdit={enableEdit}
                     />
                   )}
+                {currentVisibleNode.inheritance[property]?.ref &&
+                  !enableEdit && (
+                    <Typography
+                      sx={{ fontSize: "14px", ml: "9px", color: "gray" }}
+                    >
+                      {'(Inherited from "'}
+                      {nodes[currentVisibleNode.inheritance[property].ref]
+                        .title || ""}
+                      {'")'}
+                    </Typography>
+                  )}
               </Box>
             )}
         </Box>
-        {currentVisibleNode?.inheritance[property]?.ref &&
-          property !== "parts" && (
-            <Typography sx={{ fontSize: "14px", ml: "9px", color: "gray" }}>
-              {'(Inherited from "'}
-              {getTitle(
-                nodes,
-                currentVisibleNode.inheritance[property].ref || "",
-              )}
-              {'")'}
-            </Typography>
-          )}
+
         {currentVisibleNode.propertyType[property] !== "array-string" && (
           <CollectionStructure
             locked={locked}

@@ -654,7 +654,12 @@ const ToolbarSidebar = ({
     const modified_property_type = data.modifiedProperty
       ? data.fullNode?.propertyType[data.modifiedProperty]
       : "";
+
     if (
+      (modified_property_type ||
+        data.modifiedProperty === "parts" ||
+        data.modifiedProperty === "specializations" ||
+        data.modifiedProperty === "generalizations") &&
       modified_property_type !== "string" &&
       modified_property_type !== "string-array"
     ) {

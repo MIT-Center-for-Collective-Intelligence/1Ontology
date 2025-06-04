@@ -226,7 +226,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
             </Typography>
           </Tooltip>
         </Box>
-        {renderValue(currentImprovement.detailsOfChange.comparison)}
+        {renderValue(currentImprovement.detailsOfChange?.comparison || [])}
       </Box>
     </Paper>
   );
