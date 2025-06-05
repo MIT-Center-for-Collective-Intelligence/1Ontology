@@ -227,6 +227,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   }>({});
   const [scrollTrigger, setScrollTrigger] = useState(false);
   const [enableEdit, setEnableEdit] = useState(false);
+  const [specializationNumsUnder, setSpecializationNumsUnder] = useState({});
 
   const treeRef = useRef<TreeApi<TreeData>>(null);
 
@@ -665,12 +666,13 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
             continue;
           }
           visited.set(id, true);
+          const _children = getTreeView(children, visited, [...path, node.id]);
           const record = {
             id: id,
             nodeId: node.id,
             nodeType: node.nodeType,
             name: collection.collectionName,
-            children: getTreeView(children, visited, [...path, node.id]),
+            children: _children,
 
             category: true,
           };
@@ -716,7 +718,8 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
   useEffect(() => {
     // Filter nodes to get only those with a defined category
-    const mainCategories = Object.values(nodes).filter(
+    const spreadNodes = Object.values(nodes);
+    const mainCategories = spreadNodes.filter(
       (node: INode) =>
         node.category || (typeof node.root === "boolean" && !!node.root),
     );
@@ -735,12 +738,34 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     });
     // Generate a tree structure of specializations from the sorted main nodes
     let treeOfSpecializations = getSpecializationsTree(mainCategories, []);
+    const specNums: any = {};
+    if (
+      appName === "Full WordNet O*Net Verb Hierarchy - Tom's Version" ||
+      appName === "Ontology - Demo Version" ||
+      appName === "Ontology - Development Version"
+    ) {
+      for (let rootNode of mainCategories) {
+        const filterMNodes = spreadNodes.filter(
+          (c) => c.rootId === rootNode.id,
+        );
+        specNums[rootNode.id] = filterMNodes.length;
+        const start =
+          appName === "Full WordNet O*Net Verb Hierarchy - Tom's Version"
+            ? "[original task]"
+            : "[o*net]";
+        specNums[`${rootNode.id}-extra`] = filterMNodes.filter((n) =>
+          n.title.toLowerCase().startsWith(start),
+        ).length;
+      }
+      setSpecializationNumsUnder(specNums);
+    }
 
     const _result = getTreeView(mainCategories, new Map(), []);
     setTreeViewData(_result);
     // Set the generated tree structure for visualization
     setTreeVisualization(treeOfSpecializations);
   }, [nodes]);
+  console.log("specializationNumsUnder ==>", specializationNumsUnder);
 
   useEffect(() => {
     // if (currentVisibleNode) return;
@@ -1261,6 +1286,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                       eachOntologyPath={eachOntologyPath}
                       skillsFuture={skillsFuture}
                       scrollTrigger={scrollTrigger}
+                      specializationNumsUnder={specializationNumsUnder}
                     />
 
                     {/*  <TreeViewSimplified
@@ -1316,6 +1342,8 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                           // "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
                           "Full WordNet O*Net Verb Hierarchy - Tom's Version",
                           "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
+                          "Ontology - Demo Version",
+                          "Ontology - Development Version",
                           /*"Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
                           "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
                           "Holistic Embedding (Sector, Title, JobRole, CWF, Parts) - Gemini 2.5 Pro",

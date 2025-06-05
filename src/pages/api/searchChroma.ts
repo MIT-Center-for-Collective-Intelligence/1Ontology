@@ -66,16 +66,26 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     });
 
     const metaDatas: any = results.metadatas[0];
-    const resultsAlt = [];
+    const exactMatches = [];
+    const otherMatches = [];
+
     const uniqueResults = new Set();
     for (let result of metaDatas) {
       const replacedId = result.id.replace("-properties", "");
       if (!uniqueResults.has(replacedId)) {
         uniqueResults.add(result.id);
-        resultsAlt.push(result);
+
+        if (
+          result.name &&
+          result.name.trim().toLowerCase() === query.trim().toLowerCase()
+        ) {
+          exactMatches.push(result);
+        } else {
+          otherMatches.push(result);
+        }
       }
     }
-
+    const resultsAlt = [...exactMatches, ...otherMatches];
     return res.status(200).json({ results: resultsAlt });
   } catch (error) {
     console.error(error);

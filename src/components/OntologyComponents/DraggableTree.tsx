@@ -42,6 +42,7 @@ function DraggableTree({
   eachOntologyPath,
   skillsFuture = false,
   scrollTrigger,
+  specializationNumsUnder,
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -53,6 +54,7 @@ function DraggableTree({
   eachOntologyPath?: any;
   skillsFuture?: boolean;
   scrollTrigger: boolean;
+  specializationNumsUnder: { [key: string]: number };
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -64,6 +66,8 @@ function DraggableTree({
   const [treeData, setTreeData] = useState<TreeData[]>([...treeViewData]);
   const [editEnabled, setEditEnabled] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+  const collapsingLoader = useRef<boolean>(false);
 
   const isNodeVisible = (nodeId: string): boolean => {
     const element = document.getElementById(nodeId);
@@ -375,6 +379,18 @@ function DraggableTree({
     treeRef.current?.closeAll();
   };
 
+  const expandOrCollapseAll = () => {
+    collapsingLoader.current = true;
+    if (expanded) {
+      handleCollapseAll();
+    } else {
+      handleExpandAll();
+    }
+    setExpanded((prev) => !prev);
+    collapsingLoader.current = false;
+  };
+  console.log("collapsingLoader.current", collapsingLoader.current);
+
   function Node({ node, style, dragHandle }: NodeRendererProps<TreeData>) {
     const indentSize = Number.parseFloat(`${style.paddingLeft || 0}`);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -426,7 +442,25 @@ function DraggableTree({
                         : "",
                 }}
               >
-                {node.data.name}{" "}
+                {node.data.name}
+                <span
+                  style={{
+                    color: "orange",
+                    marginLeft: "5px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {specializationNumsUnder[node.data.id]}
+                </span>
+                <span
+                  style={{
+                    color: "orange",
+                    marginLeft: "5px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {specializationNumsUnder[`${node.data.id}-extra`]}
+                </span>
                 {(node.data.actionAlternatives || []).length > 0 && (
                   <span style={{ color: "orange", marginRight: "8px" }}>
                     Alternatives:
@@ -463,24 +497,28 @@ function DraggableTree({
         }}
       >
         <Button
-          variant="outlined"
+          variant={expanded ? "contained" : "outlined"}
           size="small"
-          onClick={handleExpandAll}
+          onClick={expandOrCollapseAll}
           sx={{
             borderRadius: "20px",
             textTransform: "none",
           }}
         >
-          Expand All
+          {collapsingLoader.current
+            ? "Collapsing..."
+            : expanded
+              ? "Collapse All"
+              : "Expand All"}
         </Button>
-        <Button
+        {/* <Button
           variant="outlined"
           size="small"
           onClick={handleCollapseAll}
           sx={{ borderRadius: "20px", textTransform: "none" }}
         >
           Collapse All
-        </Button>
+        </Button> */}
 
         {treeType !== "oNet" && user?.claims.editAccess && (
           <ToggleButton

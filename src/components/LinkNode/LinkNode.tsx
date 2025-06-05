@@ -686,7 +686,7 @@ const LinkNode = ({
                 link.change === "removed" ? "line-through" : "none",
             }}
           >
-            {link.title || title || regionalTitle}{" "}
+            {/* link.title || */ title || regionalTitle}{" "}
             {link.optional && (
               <span
                 style={{ color: "gray", marginLeft: "2px" }}

@@ -147,7 +147,7 @@ const ManageNodeButtons = ({
             ) : (
               <EditOffIcon fontSize="small" />
             )}
-            Edit {enableEdit ? "On" : "Off"}
+            Edit Node {enableEdit ? "On" : "Off"}
           </ToggleButton>
         )}
         {(locked || manageLock) && (

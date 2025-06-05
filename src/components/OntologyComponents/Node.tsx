@@ -1133,29 +1133,22 @@ const Node = ({
         {/* title of the node */}
 
         {/* description of the node */}
-        {(!skillsFuture ||
-          [
-            "Full WordNet O*Net Verb Hierarchy - Tom's Version",
-            "O*Net Verbs o3 Deep Research",
-            "Top-Down Gemini 2.5 Pro",
-            "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
-            "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
-          ].includes(currentVisibleNode?.appName || "")) && (
-          <Text
-            nodes={nodes}
-            text={onGetPropertyValue("description") as string}
-            currentVisibleNode={currentVisibleNode}
-            property={"description"}
-            setCurrentVisibleNode={setCurrentVisibleNode}
-            locked={locked}
-            selectedDiffNode={selectedDiffNode}
-            getTitleNode={getTitleNode}
-            confirmIt={confirmIt}
-            currentImprovement={currentImprovement}
-            skillsFuture={skillsFuture}
-            enableEdit={enableEdit}
-          />
-        )}
+
+        <Text
+          nodes={nodes}
+          text={onGetPropertyValue("description") as string}
+          currentVisibleNode={currentVisibleNode}
+          property={"description"}
+          setCurrentVisibleNode={setCurrentVisibleNode}
+          locked={locked}
+          selectedDiffNode={selectedDiffNode}
+          getTitleNode={getTitleNode}
+          confirmIt={confirmIt}
+          currentImprovement={currentImprovement}
+          skillsFuture={skillsFuture}
+          enableEdit={enableEdit}
+        />
+
         {/* actors of the node if it's exist */}
         {currentVisibleNode?.properties.hasOwnProperty("actor") && (
           <StructuredProperty

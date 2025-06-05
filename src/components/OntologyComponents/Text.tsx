@@ -476,7 +476,7 @@ const Text = ({
       ((currentVisibleNode.unclassified || !enableEdit) &&
         property === "title") ? (
         <Typography
-          sx={{ fontSize: property === "title" ? "34px" : "19px", p: "19px" }}
+          sx={{ fontSize: property === "title" ? "25px" : "19px", p: "19px" }}
         >
           {text}
         </Typography>

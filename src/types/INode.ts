@@ -98,6 +98,7 @@ export type INode = {
   actionAlternatives?: string[];
   appName?: string;
   skillsFuture?: boolean;
+  rootId?: string;
 };
 
 export type TreeVisual = {

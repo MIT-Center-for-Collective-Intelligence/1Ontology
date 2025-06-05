@@ -651,7 +651,7 @@ const StructuredProperty = ({
                     >
                       {'(Inherited from "'}
                       {nodes[currentVisibleNode.inheritance[property].ref]
-                        .title || ""}
+                        ?.title || ""}
                       {'")'}
                     </Typography>
                   )}
