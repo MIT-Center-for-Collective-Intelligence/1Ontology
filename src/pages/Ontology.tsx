@@ -220,7 +220,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const [treeViewData, setTreeViewData] = useState([]);
   const [loadingNodes, setLoadingNodes] = useState(false);
   const [appName, setAppName] = useState(
-    "Full WordNet O*Net Verb Hierarchy - Tom's Version",
+    "Ontology - Demo Version",
   ); // this state is only been used for the Skills Future App
   const [partsInheritance, setPartsInheritance] = useState<{
     [nodeId: string]: { title: string; fullPart: string };
@@ -1167,6 +1167,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     }
     setPartsInheritance(inheritedParts);
   }, [currentVisibleNode, nodes]);
+  console.log("selectedDiffNode ==>", selectedDiffNode);
 
   if (loadingNodes) {
     return (

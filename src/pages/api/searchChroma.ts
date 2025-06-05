@@ -76,8 +76,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         uniqueResults.add(result.id);
 
         if (
-          result.name &&
-          result.name.trim().toLowerCase() === query.trim().toLowerCase()
+          result.title &&
+          result.title.trim().toLowerCase() === query.trim().toLowerCase()
         ) {
           exactMatches.push(result);
         } else {
