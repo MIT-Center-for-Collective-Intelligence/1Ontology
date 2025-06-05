@@ -175,7 +175,7 @@ const CollectionStructure = ({
   setRemovedElements: any;
   setAddedElements: any;
   skillsFuture: boolean;
-  partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
+  partsInheritance: { [nodeId: string]: { title: string; fullPart: string } };
   enableEdit: boolean;
 }) => {
   const db = getFirestore();

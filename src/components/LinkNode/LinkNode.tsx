@@ -158,7 +158,7 @@ type ILinkNodeProps = {
   glowIds: Set<string>;
   skillsFuture: boolean;
   currentImprovement: any;
-  partsInheritance: { [nodeId: string]: { title: string; fullPart: boolean } };
+  partsInheritance: { [nodeId: string]: { title: string; fullPart: string } };
   loadingIds: any;
   saveNewSpecialization: any;
   enableEdit: boolean;
@@ -685,7 +685,9 @@ const LinkNode = ({
                   {partsInheritance[link.id] ? `Inherited from` : ""}
                   {partsInheritance[link.id] && (
                     <strong style={{ fontSize: "12px" }}>
-                      "{partsInheritance[link.id].title}",
+                      {'"'}
+                      {partsInheritance[link.id].title}
+                      {'"'},
                     </strong>
                   )}
                   {!!partsInheritance[link.id]?.fullPart ? ` Part` : ""}

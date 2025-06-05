@@ -82,7 +82,7 @@ type IStructuredPropertyProps = {
   setGlowIds: any;
   selectedCollection: any;
   skillsFuture: boolean;
-  partsInheritance?: { [nodeId: string]: { title: string; fullPart: boolean } };
+  partsInheritance?: { [nodeId: string]: { title: string; fullPart: string } };
   enableEdit: boolean;
 };
 

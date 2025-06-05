@@ -223,7 +223,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     "Full WordNet O*Net Verb Hierarchy - Tom's Version",
   ); // this state is only been used for the Skills Future App
   const [partsInheritance, setPartsInheritance] = useState<{
-    [nodeId: string]: { title: string; fullPart: boolean | string };
+    [nodeId: string]: { title: string; fullPart: string };
   }>({});
   const [scrollTrigger, setScrollTrigger] = useState(false);
   const [enableEdit, setEnableEdit] = useState(false);
@@ -1107,7 +1107,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   useEffect(() => {
     if (!currentVisibleNode) return;
     const inheritedParts: {
-      [nodeId: string]: { title: string; fullPart: boolean | string };
+      [nodeId: string]: { title: string; fullPart: string };
     } = {};
 
     const _currentVisibleNode = { ...currentVisibleNode };
@@ -1154,12 +1154,11 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
             const { id, fullPart } = checkGeneralizations(
               nodes[node.id]?.title,
               node.id,
-            ) || { id: "", fullPart: false };
+            ) || { id: "", fullPart: "" };
             if (id) {
               inheritedParts[node.id] = {
                 title: nodes[id].title,
-                fullPart:
-                  typeof fullPart === "string" ? nodes[fullPart].title : false,
+                fullPart: nodes[fullPart].title ?? "",
               };
             }
           }
