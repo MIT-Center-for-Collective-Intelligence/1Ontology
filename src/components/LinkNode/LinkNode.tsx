@@ -676,28 +676,71 @@ const LinkNode = ({
             setClonedNodesQueue={setClonedNodesQueue}
           />
         ) : (
-          <Link
-            underline="hover"
-            onClick={handleNavigateToNode}
-            sx={{
-              cursor: "pointer",
-              color: getLinkColor(link.change),
-              textDecoration:
-                link.change === "removed" ? "line-through" : "none",
+          <Tooltip
+            title={
+              partsInheritance[link.id] ? (
+                <span
+                  style={{ display: "flex", gap: "4px", whiteSpace: "nowrap" }}
+                >
+                  {partsInheritance[link.id] ? `Inherited from` : ""}
+                  {partsInheritance[link.id] && (
+                    <strong style={{ fontSize: "12px" }}>
+                      "{partsInheritance[link.id].title}",
+                    </strong>
+                  )}
+                  {!!partsInheritance[link.id]?.fullPart ? ` Part` : ""}
+                  {!!partsInheritance[link.id]?.fullPart && (
+                    <strong style={{ fontSize: "12px", color: "orange" }}>
+                      {partsInheritance[link.id].fullPart}
+                    </strong>
+                  )}
+                </span>
+              ) : (
+                ""
+              )
+            }
+            PopperProps={{
+              modifiers: [
+                {
+                  name: "offset",
+                  options: {
+                    offset: [0, 8],
+                  },
+                },
+              ],
+              sx: {
+                maxWidth: "none",
+              },
             }}
+            componentsProps={{
+              tooltip: {
+                sx: {
+                  maxWidth: "none",
+                  whiteSpace: "nowrap",
+                  padding: 1,
+                },
+              },
+            }}
+            placement="top"
           >
-            {/* link.title || */ title || regionalTitle}{" "}
-            {link.optional && (
-              <span
-                style={{ color: "gray", marginLeft: "2px" }}
-              >{`(optional)`}</span>
-            )}
-            <span style={{ color: "gray", marginLeft: "7px" }}>
-              {partsInheritance && partsInheritance[link.id]
-                ? `(From ${partsInheritance[link.id].title}${!partsInheritance[link.id]?.fullPart ? ", Part Specialization" : ""})`
-                : ""}
-            </span>
-          </Link>
+            <Link
+              underline="hover"
+              onClick={handleNavigateToNode}
+              sx={{
+                cursor: "pointer",
+                color: getLinkColor(link.change),
+                textDecoration:
+                  link.change === "removed" ? "line-through" : "none",
+              }}
+            >
+              {/* link.title || */ title || regionalTitle}{" "}
+              {link.optional && (
+                <span
+                  style={{ color: "gray", marginLeft: "2px" }}
+                >{`(optional)`}</span>
+              )}
+            </Link>
+          </Tooltip>
         )}
 
         <Box sx={{ display: "flex", alignItems: "center", ml: "auto" }}>

@@ -223,7 +223,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     "Full WordNet O*Net Verb Hierarchy - Tom's Version",
   ); // this state is only been used for the Skills Future App
   const [partsInheritance, setPartsInheritance] = useState<{
-    [nodeId: string]: { title: string; fullPart: boolean };
+    [nodeId: string]: { title: string; fullPart: boolean | string };
   }>({});
   const [scrollTrigger, setScrollTrigger] = useState(false);
   const [enableEdit, setEnableEdit] = useState(false);
@@ -740,9 +740,10 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     let treeOfSpecializations = getSpecializationsTree(mainCategories, []);
     const specNums: any = {};
     if (
-      appName === "Full WordNet O*Net Verb Hierarchy - Tom's Version" ||
-      appName === "Ontology - Demo Version" ||
-      appName === "Ontology - Development Version"
+      skillsFuture &&
+      (appName === "Full WordNet O*Net Verb Hierarchy - Tom's Version" ||
+        appName === "Ontology - Demo Version" ||
+        appName === "Ontology - Development Version")
     ) {
       for (let rootNode of mainCategories) {
         const filterMNodes = spreadNodes.filter(
@@ -765,7 +766,6 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     // Set the generated tree structure for visualization
     setTreeVisualization(treeOfSpecializations);
   }, [nodes]);
-  console.log("specializationNumsUnder ==>", specializationNumsUnder);
 
   useEffect(() => {
     // if (currentVisibleNode) return;
@@ -1107,7 +1107,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   useEffect(() => {
     if (!currentVisibleNode) return;
     const inheritedParts: {
-      [nodeId: string]: { title: string; fullPart: boolean };
+      [nodeId: string]: { title: string; fullPart: boolean | string };
     } = {};
 
     const _currentVisibleNode = { ...currentVisibleNode };
@@ -1119,7 +1119,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     const checkGeneralizations = (
       nodeTitle: string,
       nodeId: string,
-    ): { id: string; fullPart: boolean } | null => {
+    ): { id: string; fullPart: string } | null => {
       for (let generalization of generalizations) {
         if (!nodes[generalization.id]) {
           continue;
@@ -1129,13 +1129,19 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
           (c) => c.id === nodeId,
         );
         if (_partIdex !== -1) {
-          return { id: generalization.id, fullPart: true };
+          return {
+            id: generalization.id,
+            fullPart: generalizationParts[0].nodes[_partIdex].id,
+          };
         }
         const partIdex = generalizationParts[0].nodes.findIndex((c) =>
           compareTitles(nodeTitle, nodes[c.id]?.title || ""),
         );
         if (partIdex !== -1) {
-          return { id: generalization.id, fullPart: false };
+          return {
+            id: generalization.id,
+            fullPart: generalizationParts[0].nodes[partIdex].id,
+          };
         }
       }
       return null;
@@ -1152,7 +1158,8 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
             if (id) {
               inheritedParts[node.id] = {
                 title: nodes[id].title,
-                fullPart,
+                fullPart:
+                  typeof fullPart === "string" ? nodes[fullPart].title : false,
               };
             }
           }

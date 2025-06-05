@@ -389,7 +389,6 @@ function DraggableTree({
     setExpanded((prev) => !prev);
     collapsingLoader.current = false;
   };
-  console.log("collapsingLoader.current", collapsingLoader.current);
 
   function Node({ node, style, dragHandle }: NodeRendererProps<TreeData>) {
     const indentSize = Number.parseFloat(`${style.paddingLeft || 0}`);
@@ -443,24 +442,38 @@ function DraggableTree({
                 }}
               >
                 {node.data.name}
-                <span
-                  style={{
-                    color: "orange",
-                    marginLeft: "5px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {specializationNumsUnder[node.data.id]}
-                </span>
-                <span
-                  style={{
-                    color: "orange",
-                    marginLeft: "5px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {specializationNumsUnder[`${node.data.id}-extra`]}
-                </span>
+                {specializationNumsUnder[node.data.id] > 0 && (
+                  <Tooltip
+                    title={`Total number of ${node.data.name.toLowerCase() === "act" ? "activities" : "entities"} under this sub-ontology`}
+                  >
+                    <span
+                      style={{
+                        color: "orange",
+                        marginLeft: "5px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {specializationNumsUnder[node.data.id]}
+                    </span>
+                  </Tooltip>
+                )}
+                {specializationNumsUnder[`${node.data.id}-extra`] > 0 && (
+                  <Tooltip
+                    title={
+                      "Total number of O*Net tasks under this sub-ontology"
+                    }
+                  >
+                    <span
+                      style={{
+                        color: "orange",
+                        marginLeft: "5px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {specializationNumsUnder[`${node.data.id}-extra`]}
+                    </span>
+                  </Tooltip>
+                )}
                 {(node.data.actionAlternatives || []).length > 0 && (
                   <span style={{ color: "orange", marginRight: "8px" }}>
                     Alternatives:
