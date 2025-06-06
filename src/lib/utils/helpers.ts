@@ -520,7 +520,6 @@ export const saveNewChangeLog = (db: any, data: NodeChange) => {
   setDoc(changeUseRef, data);
   const userRef = doc(collection(db, USERS), data.modifiedBy);
   updateDoc(userRef, {
-    reputations: increment(1),
     lasChangeMadeAt: new Date(),
   });
   if (data.modifiedBy) {
@@ -1431,6 +1430,8 @@ export const diffCollections = (
       } else if (oldNodes.has(id) && !newNodes.has(id)) {
         const oldNode = oldNodes.get(id)!;
         mergedNodes.push({ ...oldNode, change: "removed" });
+      } else {
+        mergedNodes.push({ id });
       }
     }
 

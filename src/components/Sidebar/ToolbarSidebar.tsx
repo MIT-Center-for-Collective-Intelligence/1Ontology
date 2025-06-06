@@ -98,6 +98,8 @@ import {
 } from "@components/lib/utils/copilotPrompts";
 import OntologyHistory from "../ActiveUsers/OntologyHistory";
 
+type CustomSmallBadgeProps = { value: number };
+
 type MainSidebarProps = {
   toolbarRef: any;
   user: User | null;
@@ -657,6 +659,7 @@ const ToolbarSidebar = ({
 
     if (
       (modified_property_type ||
+        data.modifiedProperty === "isPartOf" ||
         data.modifiedProperty === "parts" ||
         data.modifiedProperty === "specializations" ||
         data.modifiedProperty === "generalizations") &&
@@ -1240,7 +1243,6 @@ const ToolbarSidebar = ({
     );
   };
 
-  type CustomSmallBadgeProps = { value: number };
 
   const CustomSmallBadge = ({ value }: CustomSmallBadgeProps) => {
     if (!value) return null;

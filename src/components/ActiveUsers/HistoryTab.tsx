@@ -45,6 +45,7 @@ const NodeActivity = ({
         nodesQuery = query(
           collection(db, NODES_LOGS),
           where("changeType", "==", "add node"),
+          where("skillsFuture", "==", !!skillsFuture),
           orderBy("modifiedAt", "desc"),
           limit(100),
         );
@@ -53,6 +54,7 @@ const NodeActivity = ({
           collection(db, NODES_LOGS),
           where("changeType", "==", "add node"),
           where("modifiedBy", "==", selectedUser),
+          where("skillsFuture", "==", !!skillsFuture),
           orderBy("modifiedAt", "desc"),
           limit(100),
         );
@@ -62,6 +64,7 @@ const NodeActivity = ({
         nodesQuery = query(
           collection(db, NODES_LOGS),
           where("changeType", "!=", "add node"),
+          where("skillsFuture", "==", !!skillsFuture),
           orderBy("modifiedAt", "desc"),
           limit(100),
         );
@@ -69,6 +72,7 @@ const NodeActivity = ({
         nodesQuery = query(
           collection(db, NODES_LOGS),
           where("changeType", "!=", "add node"),
+          where("skillsFuture", "==", !!skillsFuture),
           where("modifiedBy", "==", selectedUser),
           orderBy("modifiedAt", "desc"),
           limit(100),
@@ -83,10 +87,11 @@ const NodeActivity = ({
         for (let change of docChanges) {
           const changeData = change.doc.data();
           if (
-            (skillsFuture &&
+            ((skillsFuture &&
               changeData.skillsFuture &&
               changeData.appName === skillsFutureApp) ||
-            (!skillsFuture && !changeData.skillsFuture)
+              (!skillsFuture && !changeData.skillsFuture)) &&
+            !changeData.deleted
           ) {
             const id = change.doc.id;
             /*        if (id === "YLDwaHRDmfaLLsqUSdsO") { */
