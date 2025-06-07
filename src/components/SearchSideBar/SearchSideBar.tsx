@@ -1,5 +1,6 @@
 import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import {
+  Alert,
   Box,
   GlobalStyles,
   IconButton,
@@ -46,6 +47,8 @@ const SearchSideBar = ({
   const [loadingSearchResult, setLoadingSearchResult] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [searchRefreshKey, setSearchRefreshKey] = useState(0);
+  const [errorSearch, setErrorSearch] = useState(false);
+
   const theme = useTheme();
 
   const getSearchResults = (query: string) => {
@@ -130,18 +133,24 @@ const SearchSideBar = ({
   }, []);
 
   const searchQuery = useCallback(async () => {
-    setLoadingSearchResult(true);
-    const response: any = await Post("/searchChroma", {
-      query: searchValue,
-      skillsFuture,
-      appName: skillsFuture ? skillsFutureApp : null,
-    });
-    1;
+    try {
+      setErrorSearch(false);
+      setLoadingSearchResult(true);
+      const response: any = await Post("/searchChroma", {
+        query: searchValue,
+        skillsFuture,
+        appName: skillsFuture ? skillsFutureApp : null,
+      });
+      1;
 
-    const searchDevelopment = searchWithFuse(searchValue).slice(0, 30);
-    const results: any = [...(response.results || [])];
-    setSearchResults(development ? searchDevelopment : results);
-    setLoadingSearchResult(false);
+      const searchDevelopment = searchWithFuse(searchValue).slice(0, 30);
+      const results: any = [...(response.results || [])];
+      setSearchResults(development ? searchDevelopment : results);
+    } catch (error) {
+      setErrorSearch(true);
+    } finally {
+      setLoadingSearchResult(false);
+    }
   }, [searchValue, skillsFuture, skillsFutureApp]);
 
   const onKeyDown = (event: any) => {
@@ -176,7 +185,6 @@ const SearchSideBar = ({
       </Typography>
     </ListItem>
   );
-
   return (
     <Box
       ref={sidebarRef}
@@ -276,7 +284,7 @@ const SearchSideBar = ({
         </List>
       )}
 
-      {isListOpen && !loadingSearchResult && (
+      {isListOpen && !loadingSearchResult && !errorSearch && (
         <List sx={{ zIndex: isListOpen ? 10 : 0 }}>
           {searchResults.length > 0
             ? searchResults.map(renderListItem)
@@ -284,6 +292,11 @@ const SearchSideBar = ({
               lastSearches.length > 0 &&
               lastSearches.map(renderListItem)}
         </List>
+      )}
+      {errorSearch && isListOpen && (
+        <Alert severity="error">
+          There was an error searching through the ontology.
+        </Alert>
       )}
     </Box>
   );

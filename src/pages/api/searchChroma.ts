@@ -44,7 +44,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { query, skillsFuture, appName } = req.body;
 
-    await runMiddleware(req, res, cors);
+/*     await runMiddleware(req, res, cors); */
 
     let collectionName = "";
     if (appName) {
@@ -89,6 +89,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).json({ results: resultsAlt });
   } catch (error) {
     console.error(error);
+    return res.status(500).json({});
   }
 }
 
