@@ -143,8 +143,22 @@ const SearchSideBar = ({
       });
       1;
 
-      const searchDevelopment = searchWithFuse(searchValue).slice(0, 30);
+      const searchDevelopment = searchWithFuse(searchValue).slice(
+        0,
+        development ? 30 : 2,
+      );
       const results: any = [...(response.results || [])];
+      if (!development) {
+        searchDevelopment.reverse();
+      }
+      for (let index = 0; index < 2; index++) {
+        const existAlready = results.findIndex((c: { id: string }) => {
+          return c.id === searchDevelopment[index].id;
+        });
+        if (existAlready === -1) {
+          results.unshift(searchDevelopment[index]);
+        }
+      }
       setSearchResults(development ? searchDevelopment : results);
     } catch (error) {
       setErrorSearch(true);
