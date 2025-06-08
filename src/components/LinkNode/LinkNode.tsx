@@ -725,23 +725,44 @@ const LinkNode = ({
             }}
             placement="top"
           >
-            <Link
-              underline="hover"
-              onClick={handleNavigateToNode}
-              sx={{
-                cursor: "pointer",
-                color: getLinkColor(link.change),
-                textDecoration:
-                  link.change === "removed" ? "line-through" : "none",
-              }}
-            >
-              {/* link.title || */ title || regionalTitle}{" "}
-              {link.optional && (
-                <span
-                  style={{ color: "gray", marginLeft: "2px" }}
-                >{`(optional)`}</span>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Link
+                underline="hover"
+                onClick={handleNavigateToNode}
+                sx={{
+                  cursor: "pointer",
+                  color: getLinkColor(link.change),
+                  textDecoration:
+                    link.change === "removed" ? "line-through" : "none",
+                }}
+              >
+                {/* link.title || */ title || regionalTitle}{" "}
+                {link.optional && (
+                  <span
+                    style={{ color: "gray", marginLeft: "2px" }}
+                  >{`(optional)`}</span>
+                )}
+              </Link>
+
+              {partsInheritance[link.id] && (
+                <Box
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    borderRadius: "50%",
+                    background: `linear-gradient(to bottom, #a8e6a1, ${
+                      partsInheritance[link.id]
+                        ? partsInheritance[link.id].fullPart
+                          ? "green"
+                          : "red"
+                        : "#a8e6a1"
+                    })`,
+                    marginLeft: "8px",
+                    boxShadow: "0 0 3px rgba(0, 0, 0, 0.3) inset",
+                  }}
+                ></Box>
               )}
-            </Link>
+            </Box>
           </Tooltip>
         )}
 
