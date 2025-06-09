@@ -750,13 +750,13 @@ const LinkNode = ({
                     width: "14px",
                     height: "14px",
                     borderRadius: "50%",
-                    background: `linear-gradient(to bottom, #a8e6a1, ${
+                    background: `${
                       partsInheritance[link.id]
                         ? partsInheritance[link.id].fullPart
-                          ? "green"
-                          : "red"
-                        : "#a8e6a1"
-                    })`,
+                          ? "orange"
+                          : "green"
+                        : ""
+                    }`,
                     marginLeft: "8px",
                     boxShadow: "0 0 3px rgba(0, 0, 0, 0.3) inset",
                   }}
