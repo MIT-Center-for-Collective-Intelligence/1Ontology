@@ -2,7 +2,7 @@ import { INode } from "@components/types/INode";
 import { getFirestore, getDoc, updateDoc, doc, collection } from "firebase/firestore";
 import { NODES } from "../firestoreClient/collections";
 import { saveNewChangeLog } from "./helpers";
-import { refreshInheritanceTree } from "./inheritanceTreeBuilder";
+// import { refreshInheritanceTree } from "./inheritanceTreeBuilder";
 import { getTitle } from "./string.utils";
 
 /**
@@ -119,20 +119,20 @@ export const propagatePartsChangeToSpecializations = async (
         updatedNodes[spec.id] = { ...specNodeData, inheritanceParts: newInheritanceParts };
         
         // Refresh inheritance tree for each affected part
-        const affectedPartIds = Object.keys(newInheritanceParts);
-        for (const partId of affectedPartIds) {
-          console.log(`Refreshing inheritance tree for part ${partId} due to specialization ${spec.id} inheritance update`);
+        // const affectedPartIds = Object.keys(newInheritanceParts);
+        // for (const partId of affectedPartIds) {
+        //   console.log(`Refreshing inheritance tree for part ${partId} due to specialization ${spec.id} inheritance update`);
           
           // Fetch the part node's data
-          const partNodeDoc = await getDoc(doc(collection(db, NODES), partId));
-          if (partNodeDoc.exists()) {
-            const partNodeData = partNodeDoc.data() as INode;
-            await refreshInheritanceTree(db, partId, "isPartOf", { 
-              ...nodes,
-              [partId]: partNodeData 
-            });
-          }
-        }
+          // const partNodeDoc = await getDoc(doc(collection(db, NODES), partId));
+          // if (partNodeDoc.exists()) {
+          //   const partNodeData = partNodeDoc.data() as INode;
+          //   await refreshInheritanceTree(db, partId, "isPartOf", { 
+          //     ...nodes,
+          //     [partId]: partNodeData 
+          //   });
+          // }
+        // }
         
         if (user) {
           await saveNewChangeLog(db, {
@@ -224,18 +224,18 @@ export const saveAsInheritancePart = async (
     // Update local nodes data
     const updatedNodeData = { ...nodeData, inheritanceParts: newInheritanceParts };
     
-    // Refresh inheritance tree for the affected part
-    console.log(`Refreshing inheritance tree for part ${partId} due to ${action} inheritance part in node ${nodeId}`);
+    // // Refresh inheritance tree for the affected part
+    // console.log(`Refreshing inheritance tree for part ${partId} due to ${action} inheritance part in node ${nodeId}`);
     
-    // Fetch the part node's data
-    const partNodeDoc = await getDoc(doc(collection(db, NODES), partId));
-    if (partNodeDoc.exists()) {
-      const partNodeData = partNodeDoc.data() as INode;
-      await refreshInheritanceTree(db, partId, "isPartOf", { 
-        [nodeId]: updatedNodeData,
-        [partId]: partNodeData 
-      });
-    }
+    // // Fetch the part node's data
+    // const partNodeDoc = await getDoc(doc(collection(db, NODES), partId));
+    // if (partNodeDoc.exists()) {
+    //   const partNodeData = partNodeDoc.data() as INode;
+    //   await refreshInheritanceTree(db, partId, "isPartOf", { 
+    //     [nodeId]: updatedNodeData,
+    //     [partId]: partNodeData 
+    //   });
+    // }
     
     if (user) {
       await saveNewChangeLog(db, {
