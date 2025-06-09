@@ -405,6 +405,12 @@ const recursivelyUpdateSpecializations = async ({
         return false;
       }
 
+      // Handling for parts property with broken inheritance
+      if (p === "parts" && inheritance.parts?.ref === null) {
+        // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
+        return false;
+      }
+
       const canInherit =
         (inheritanceType[p].inheritanceType ===
           "inheritUnlessAlreadyOverRidden" &&
@@ -416,6 +422,12 @@ const recursivelyUpdateSpecializations = async ({
 
     deletedProperties = deletedProperties.filter((p, index) => {
       if (inheritanceType[p].inheritanceType === "neverInherit") {
+        return false;
+      }
+
+      // Handling for parts property with broken inheritance
+      if (p === "parts" && inheritance.parts?.ref === null) {
+        // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
         return false;
       }
 
@@ -962,6 +974,12 @@ export const updateLinksForInheritance = async (
     for (let property in specializationData.inheritance) {
       const propertyRef = specializationData.inheritance[property]?.ref;
       if (!!propertyRef) {
+        // Handling for parts property with broken inheritance
+        if (property === "parts" && specializationData.inheritance.parts?.ref === null) {
+          // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
+          continue;
+        }
+        
         let canDelete = true;
         let ignore = false;
         let inheritFromId = null;
@@ -1170,6 +1188,12 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
               nodes[unlinkedGeneralizationId].inheritance[property]?.ref ===
                 specializationData.inheritance[property].ref)
           ) {
+            // Handling for parts property with broken inheritance
+            if (property === "parts" && specializationData.inheritance.parts?.ref === null) {
+              // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
+              continue;
+            }
+            
             if (!nextGeneralizationData.properties.hasOwnProperty(property)) {
               let canDelete = true;
               let inheritFrom = null;

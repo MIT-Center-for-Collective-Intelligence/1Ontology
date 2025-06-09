@@ -875,7 +875,7 @@ const CollectionStructure = ({
                             border:
                               selectedCollection ===
                                 collection.collectionName &&
-                              selectedProperty === property
+                                selectedProperty === property
                                 ? "2px solid green"
                                 : "",
                           }}
@@ -884,7 +884,7 @@ const CollectionStructure = ({
                           {property === "specializations" && (
                             <Box>
                               {editCollection === null ||
-                              editCollection !== collection.collectionName ? (
+                                editCollection !== collection.collectionName ? (
                                 <Box
                                   sx={{
                                     display: "flex",
@@ -904,10 +904,10 @@ const CollectionStructure = ({
                                   }}
                                 >
                                   {selectedDiffNode &&
-                                  selectedDiffNode.changeType ===
+                                    selectedDiffNode.changeType ===
                                     "edit collection" &&
-                                  selectedDiffNode.changeDetails
-                                    .modifiedCollection ===
+                                    selectedDiffNode.changeDetails
+                                      .modifiedCollection ===
                                     collection.collectionName ? (
                                     <Box sx={{ display: "flex" }}>
                                       <Typography
@@ -992,7 +992,7 @@ const CollectionStructure = ({
                                   {selectedProperty === property &&
                                     !!selectedCollection &&
                                     selectedCollection ===
-                                      collection.collectionName && (
+                                    collection.collectionName && (
                                       <Box
                                         sx={{
                                           display: "flex",
@@ -1067,7 +1067,7 @@ const CollectionStructure = ({
                                         if (
                                           newEditCollection.trim() &&
                                           collection.collectionName !==
-                                            newEditCollection
+                                          newEditCollection
                                         ) {
                                           saveEditCollection(newEditCollection);
                                         }
@@ -1087,7 +1087,7 @@ const CollectionStructure = ({
                                       disabled={
                                         !newEditCollection ||
                                         collection.collectionName ===
-                                          newEditCollection
+                                        newEditCollection
                                       }
                                       sx={{ ml: "5px" }}
                                     >
@@ -1095,7 +1095,7 @@ const CollectionStructure = ({
                                         sx={{
                                           color:
                                             !newEditCollection ||
-                                            collection.collectionName ===
+                                              collection.collectionName ===
                                               newEditCollection
                                               ? "gray"
                                               : "green",
@@ -1133,86 +1133,95 @@ const CollectionStructure = ({
                                   sx={{
                                     backgroundColor: snapshot.isDraggingOver
                                       ? (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? DESIGN_SYSTEM_COLORS.gray250
-                                            : DESIGN_SYSTEM_COLORS.notebookG400
+                                        theme.palette.mode === "light"
+                                          ? DESIGN_SYSTEM_COLORS.gray250
+                                          : DESIGN_SYSTEM_COLORS.notebookG400
                                       : "",
                                     borderRadius: "18px",
                                     userSelect: "none",
                                   }}
                                 >
                                   {propertyValue[collectionIndex].nodes.length >
-                                  0 ? (
+                                    0 ? (
                                     propertyValue[collectionIndex].nodes.map(
-                                      (link: ILinkNode, index: number) => (
-                                        <Draggable
-                                          key={link.randomId || link.id}
-                                          draggableId={link.id}
-                                          index={index}
-                                          isDragDisabled={!enableEdit}
-                                        >
-                                          {(provided) => (
-                                            <LinkNode
-                                              provided={provided}
-                                              navigateToNode={navigateToNode}
-                                              setSnackbarMessage={
-                                                setSnackbarMessage
-                                              }
-                                              currentVisibleNode={
-                                                currentVisibleNode
-                                              }
-                                              setCurrentVisibleNode={
-                                                setCurrentVisibleNode
-                                              }
-                                              sx={{ pl: 1 }}
-                                              link={link}
-                                              property={property}
-                                              title={getTitle(nodes, link.id)}
-                                              nodes={nodes}
-                                              linkIndex={index}
-                                              /* unlinkVisible={unlinkVisible(
-                                                link.id,
-                                              )} */
-                                              linkLocked={false}
-                                              locked={
-                                                locked || !!currentImprovement
-                                              }
-                                              user={user}
-                                              collectionIndex={collectionIndex}
-                                              selectedDiffNode={
-                                                selectedDiffNode
-                                              }
-                                              replaceWith={replaceWith}
-                                              saveNewAndSwapIt={
-                                                saveNewAndSwapIt
-                                              }
-                                              clonedNodesQueue={
-                                                clonedNodesQueue
-                                              }
-                                              unlinkElement={unlinkElement}
-                                              selectedProperty={
-                                                selectedProperty
-                                              }
-                                              glowIds={glowIds}
-                                              skillsFuture={skillsFuture}
-                                              currentImprovement={
-                                                currentImprovement
-                                              }
-                                              partsInheritance={
-                                                partsInheritance
-                                              }
-                                              loadingIds={loadingIds}
-                                              saveNewSpecialization={
-                                                saveNewSpecialization
-                                              }
-                                              enableEdit={enableEdit}
-                                              setClonedNodesQueue={
-                                                setClonedNodesQueue
-                                              }
-                                            />
-                                          )}
-                                        </Draggable>
-                                      ),
+                                      (link: ILinkNode, index: number) => {
+                                        // Add inheritance data if this is a parts property with intact inheritance
+                                        const inheritanceRef = property === "parts" && currentVisibleNode.inheritance?.parts?.ref;
+                                        const enhancedLink = inheritanceRef ? {
+                                          ...link,
+                                          inheritedFrom: nodes[inheritanceRef]?.title
+                                        } : link;
+
+                                        return (
+                                          <Draggable
+                                            key={link.randomId || link.id}
+                                            draggableId={link.id}
+                                            index={index}
+                                            isDragDisabled={!enableEdit}
+                                          >
+                                            {(provided) => (
+                                              <LinkNode
+                                                provided={provided}
+                                                navigateToNode={navigateToNode}
+                                                setSnackbarMessage={
+                                                  setSnackbarMessage
+                                                }
+                                                currentVisibleNode={
+                                                  currentVisibleNode
+                                                }
+                                                setCurrentVisibleNode={
+                                                  setCurrentVisibleNode
+                                                }
+                                                sx={{ pl: 1 }}
+                                                link={enhancedLink}
+                                                property={property}
+                                                title={getTitle(nodes, link.id)}
+                                                nodes={nodes}
+                                                linkIndex={index}
+                                                /* unlinkVisible={unlinkVisible(
+                                                  link.id,
+                                                )} */
+                                                linkLocked={false}
+                                                locked={
+                                                  locked || !!currentImprovement
+                                                }
+                                                user={user}
+                                                collectionIndex={collectionIndex}
+                                                selectedDiffNode={
+                                                  selectedDiffNode
+                                                }
+                                                replaceWith={replaceWith}
+                                                saveNewAndSwapIt={
+                                                  saveNewAndSwapIt
+                                                }
+                                                clonedNodesQueue={
+                                                  clonedNodesQueue
+                                                }
+                                                unlinkElement={unlinkElement}
+                                                selectedProperty={
+                                                  selectedProperty
+                                                }
+                                                glowIds={glowIds}
+                                                skillsFuture={skillsFuture}
+                                                currentImprovement={
+                                                  currentImprovement
+                                                }
+                                                partsInheritance={
+                                                  partsInheritance
+                                                }
+                                                loadingIds={loadingIds}
+                                                saveNewSpecialization={
+                                                  saveNewSpecialization
+                                                }
+                                                enableEdit={enableEdit}
+                                                setClonedNodesQueue={
+                                                  setClonedNodesQueue
+                                                }
+                                              />
+                                            )}
+                                          </Draggable>
+                                        );
+                                      }
                                     )
                                   ) : (
                                     <Typography
@@ -1228,6 +1237,102 @@ const CollectionStructure = ({
                                         : "No items"}
                                     </Typography>
                                   )}
+
+                                  {/* Display inheritanceParts from the referenced generalization when inheritance.parts.ref exists */}
+                                  {property === "parts" &&
+                                    currentVisibleNode.inheritance?.parts?.ref &&
+                                    nodes[currentVisibleNode.inheritance.parts.ref]?.inheritanceParts &&
+                                    Object.entries(nodes[currentVisibleNode.inheritance.parts.ref].inheritanceParts).map(([nodeId, inheritanceInfo]) => {
+                                      if (!inheritanceInfo) return null;
+
+                                      const info = inheritanceInfo as { inheritedFromTitle: string; inheritedFromId: string };
+
+                                      return (
+                                        <LinkNode
+                                          key={`inherited-from-ref-${nodeId}`}
+                                          provided={{}}
+                                          navigateToNode={navigateToNode}
+                                          setSnackbarMessage={setSnackbarMessage}
+                                          currentVisibleNode={currentVisibleNode}
+                                          setCurrentVisibleNode={setCurrentVisibleNode}
+                                          sx={{ pl: 1 }}
+                                          link={{
+                                            id: nodeId,
+                                            inheritedFrom: info.inheritedFromTitle
+                                          }}
+                                          property={property}
+                                          title={getTitle(nodes, nodeId)}
+                                          nodes={nodes}
+                                          linkIndex={-1} // -1 indicates inherited part
+                                          linkLocked={false}
+                                          locked={locked || !!currentImprovement}
+                                          user={user}
+                                          collectionIndex={collectionIndex}
+                                          selectedDiffNode={selectedDiffNode}
+                                          replaceWith={replaceWith}
+                                          saveNewAndSwapIt={saveNewAndSwapIt}
+                                          clonedNodesQueue={clonedNodesQueue}
+                                          unlinkElement={unlinkElement}
+                                          selectedProperty={selectedProperty}
+                                          glowIds={glowIds}
+                                          skillsFuture={skillsFuture}
+                                          currentImprovement={currentImprovement}
+                                          loadingIds={loadingIds}
+                                          saveNewSpecialization={saveNewSpecialization}
+                                          enableEdit={enableEdit}
+                                          setClonedNodesQueue={setClonedNodesQueue}
+                                          partsInheritance={partsInheritance}
+                                        />
+                                      );
+                                    })}
+
+                                  {/* Display inherited parts from inheritanceParts only if inheritance.parts.ref is null */}
+                                  {property === "parts" &&
+                                    !currentVisibleNode.inheritance?.parts?.ref &&
+                                    nodes[currentVisibleNode.id]?.inheritanceParts &&
+                                    Object.entries(nodes[currentVisibleNode.id].inheritanceParts).map(([nodeId, inheritanceInfo]) => {
+                                      if (!inheritanceInfo) return null;
+
+                                      const info = inheritanceInfo as { inheritedFromTitle: string; inheritedFromId: string };
+
+                                      return (
+                                        <LinkNode
+                                          key={`inherited-${nodeId}`}
+                                          provided={{}}
+                                          navigateToNode={navigateToNode}
+                                          setSnackbarMessage={setSnackbarMessage}
+                                          currentVisibleNode={currentVisibleNode}
+                                          setCurrentVisibleNode={setCurrentVisibleNode}
+                                          sx={{ pl: 1 }}
+                                          link={{
+                                            id: nodeId,
+                                            inheritedFrom: info.inheritedFromTitle
+                                          }}
+                                          property={property}
+                                          title={getTitle(nodes, nodeId)}
+                                          nodes={nodes}
+                                          linkIndex={-1} // -1 indicates inherited part
+                                          linkLocked={false}
+                                          locked={locked || !!currentImprovement}
+                                          user={user}
+                                          collectionIndex={collectionIndex}
+                                          selectedDiffNode={selectedDiffNode}
+                                          replaceWith={replaceWith}
+                                          saveNewAndSwapIt={saveNewAndSwapIt}
+                                          clonedNodesQueue={clonedNodesQueue}
+                                          unlinkElement={unlinkElement}
+                                          selectedProperty={selectedProperty}
+                                          glowIds={glowIds}
+                                          skillsFuture={skillsFuture}
+                                          currentImprovement={currentImprovement}
+                                          loadingIds={loadingIds}
+                                          saveNewSpecialization={saveNewSpecialization}
+                                          enableEdit={enableEdit}
+                                          setClonedNodesQueue={setClonedNodesQueue}
+                                          partsInheritance={partsInheritance}
+                                        />
+                                      );
+                                    })}
                                   {provided.placeholder}
                                 </Box>
                               )}
@@ -1238,7 +1343,7 @@ const CollectionStructure = ({
                             selectedProperty === property &&
                             !!selectedProperty &&
                             selectedCollection ===
-                              collection.collectionName && (
+                            collection.collectionName && (
                               <SelectModelModal
                                 onSave={onSave}
                                 currentVisibleNode={currentVisibleNode}

@@ -15,6 +15,10 @@ import {
   getTitle,
   getTooltipHelper,
 } from "@components/lib/utils/string.utils";
+import {
+  getGeneralizationParts,
+  getAllGeneralizations,
+} from "@components/lib/utils/partsHelper";
 import { ICollection, ILinkNode, INode } from "@components/types/INode";
 import { DISPLAY } from "@components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
@@ -29,6 +33,7 @@ import { LoadingButton } from "@mui/lab";
 import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import CommentsSection from "./CommentsSection";
+import InheritedPartsViewer from "./InheritedPartsViewer";
 
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
@@ -289,7 +294,7 @@ const StructuredProperty = ({
       return (
         (property === "generalizations" &&
           (editableProperty || propertyValue).flatMap((n) => n.nodes).length !==
-            1) ||
+          1) ||
         (property === "specializations" && numberOfGeneralizations > 1) ||
         (property !== "generalizations" && property !== "specializations")
       );
@@ -471,6 +476,37 @@ const StructuredProperty = ({
     }, 2000);
   };
 
+  const getInheritedPartsSet = (): Set<string> => {
+    const inheritedParts = new Set<string>();
+    
+    // Case 1: Broken inheritance - add parts from inheritanceParts
+    if (currentVisibleNode.inheritanceParts) {
+      Object.keys(currentVisibleNode.inheritanceParts).forEach((partId: string) => {
+        inheritedParts.add(partId);
+      });
+    }
+    
+    // Case 2: Intact inheritance - add all parts from referenced generalization
+    if (currentVisibleNode.inheritance?.parts?.ref) {
+      const referencedGeneralizationId = currentVisibleNode.inheritance.parts.ref;
+      const allPartsFromRef = getGeneralizationParts(referencedGeneralizationId, nodes);
+      allPartsFromRef.forEach(part => {
+        inheritedParts.add(part.id);
+      });
+    }
+    
+    // Add direct parts from the node itself
+    if (currentVisibleNode.properties?.parts) {
+      currentVisibleNode.properties.parts.forEach((collection: any) => {
+        collection.nodes.forEach((part: any) => {
+          inheritedParts.add(part.id);
+        });
+      });
+    }
+    
+    return inheritedParts;
+  };
+
   if (
     (currentImprovement &&
       !currentImprovement.implemented &&
@@ -531,8 +567,8 @@ const StructuredProperty = ({
 
             backgroundColor:
               selectedDiffNode &&
-              selectedDiffNode.changeType === "add property" &&
-              selectedDiffNode.changeDetails.addedProperty === property
+                selectedDiffNode.changeType === "add property" &&
+                selectedDiffNode.changeDetails.addedProperty === property
                 ? "green"
                 : "",
           }}
@@ -636,6 +672,7 @@ const StructuredProperty = ({
                 {property !== "generalizations" &&
                   property !== "specializations" &&
                   property !== "isPartOf" &&
+                  property !== "parts" &&
                   !currentVisibleNode.unclassified && (
                     <SelectInheritance
                       currentVisibleNode={currentVisibleNode}
@@ -728,6 +765,19 @@ const StructuredProperty = ({
             enableEdit={enableEdit}
           />
         )}
+        {property === "parts" && selectedProperty !== property && !selectedDiffNode && !currentImprovement && (
+          <InheritedPartsViewer
+            selectedProperty={property}
+            getAllGeneralizations={() => getAllGeneralizations(currentVisibleNode, nodes)}
+            getGeneralizationParts={(generalizationId: string) => getGeneralizationParts(generalizationId, nodes)}
+            getTitle={getTitle}
+            nodes={nodes}
+            checkedItems={getInheritedPartsSet()}
+            markItemAsChecked={() => {}}
+            isSaving={false}
+            readOnly={true}
+          />
+        )}
       </Box>
       {handleCloseAddLinksModel &&
         selectedProperty === property &&
@@ -792,12 +842,12 @@ const StructuredProperty = ({
         property === "specializations" ||
         property === "isPartOf" ||
         property === "parts") && (
-        <PropertyContributors
-          currentVisibleNode={currentVisibleNode}
-          property={property}
-          sx={{ p: 2, ml: "auto", mt: "auto" }}
-        />
-      )}
+          <PropertyContributors
+            currentVisibleNode={currentVisibleNode}
+            property={property}
+            sx={{ p: 2, ml: "auto", mt: "auto" }}
+          />
+        )}
     </Paper>
   );
 };

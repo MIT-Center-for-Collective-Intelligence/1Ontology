@@ -65,6 +65,12 @@ export type INode = {
     isPartOf: ICollection[];
   };
   inheritance: IInheritance;
+  inheritanceParts: { 
+    [nodeId: string]: {
+      inheritedFromTitle: string;
+      inheritedFromId: string;
+    } | null;
+  };
   specializations: ICollection[];
   generalizations: ICollection[];
   root: string;

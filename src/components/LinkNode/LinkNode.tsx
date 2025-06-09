@@ -79,6 +79,7 @@ import {
   updatePropertyOf,
   updateInheritanceWhenUnlinkAGeneralization,
 } from "@components/lib/utils/helpers";
+import { breakInheritanceAndCopyParts } from "@components/lib/utils/partsHelper";
 import {
   INode,
   INodePath,
@@ -237,8 +238,16 @@ const LinkNode = ({
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as any;
 
-          const nodeId = nodeData.inheritance[property]?.ref || null;
-          if (nodeId) {
+          // Handle for parts - break inheritance
+          if (property === "parts" && nodeData.inheritance[property]?.ref) {
+            await breakInheritanceAndCopyParts(currentNodeId, linkId, nodes, user);
+            const updatedNodeDoc = await getDoc(doc(collection(db, NODES), currentNodeId));
+            if (updatedNodeDoc.exists()) {
+              Object.assign(nodeData, updatedNodeDoc.data());
+            }
+          } else if (nodeData.inheritance[property]?.ref) {
+            // Existing logic for non-parts properties
+            const nodeId = nodeData.inheritance[property].ref;
             const inheritedNode = nodes[nodeId as string];
             nodeData.properties[property] = JSON.parse(
               JSON.stringify(inheritedNode.properties[property]),
@@ -247,23 +256,52 @@ const LinkNode = ({
           const previousValue = JSON.parse(
             JSON.stringify(nodeData.properties[property]),
           );
-          if (
+
+          let removedFromInheritanceParts = false;
+
+          if (property === "parts") {
+            if (nodeData.inheritanceParts && nodeData.inheritanceParts[linkId]) {
+              // Remove from inheritanceParts (broken inheritance scenario)
+              delete nodeData.inheritanceParts[linkId];
+              removedFromInheritanceParts = true;
+            } else if (
+              linkIndex !== -1 &&
+              Array.isArray(nodeData.properties[property]) &&
+              nodeData.propertyType[property] !== "string" &&
+              nodeData.propertyType[property] !== "string-array"
+            ) {
+              // Remove from direct parts (intact inheritance scenario)
+              nodeData.properties[property][collectionIndex].nodes.splice(
+                linkIndex,
+                1,
+              );
+            }
+          } else if (
             linkIndex !== -1 &&
             Array.isArray(nodeData.properties[property]) &&
             nodeData.propertyType[property] !== "string" &&
             nodeData.propertyType[property] !== "string-array"
           ) {
+            // Remove from other properties (generalizations, specializations, etc.)
             nodeData.properties[property][collectionIndex].nodes.splice(
               linkIndex,
               1,
             );
           }
 
-          const shouldBeRemovedFromParent = !(
-            Object.values(nodeData.properties[property]) as { id: string }[]
-          )
-            .flat()
-            .some((c: { id: string }) => c.id === linkId);
+          let shouldBeRemovedFromParent = false;
+
+          if (property === "parts" && removedFromInheritanceParts) {
+            // For inheritanceParts removal, always remove from parent since it's not in direct properties
+            shouldBeRemovedFromParent = true;
+          } else {
+            // Existing logic for other properties
+            shouldBeRemovedFromParent = !(
+              Object.values(nodeData.properties[property]) as { id: string }[]
+            )
+              .flat()
+              .some((c: { id: string }) => c.id === linkId);
+          }
 
           // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
           // const childData = childDoc.data() as INode;
@@ -271,9 +309,19 @@ const LinkNode = ({
             unlinkPropertyOf(db, property, currentVisibleNode?.id, linkId);
           }
 
-          await updateDoc(nodeDoc.ref, {
-            [`properties.${property}`]: nodeData.properties[property],
-          });
+          let propertyUpdateObject: any = {};
+
+          // Update based on where the item was removed from
+          if (property === "parts" && removedFromInheritanceParts) {
+            // Update inheritanceParts for broken inheritance
+            propertyUpdateObject.inheritanceParts = nodeData.inheritanceParts;
+          } else {
+            // Update direct properties for intact inheritance or other properties
+            propertyUpdateObject[`properties.${property}`] = nodeData.properties[property];
+          }
+
+          await updateDoc(nodeDoc.ref, propertyUpdateObject);
+          
           if (property !== "isPartOf" || nodeData.inheritance[property]) {
             const reference = nodeData.inheritance[property].ref;
             let updateObject: any = {
@@ -652,7 +700,7 @@ const LinkNode = ({
             backgroundColor: clonedNodesQueue.hasOwnProperty(link.id)
               ? ""
               : (theme) =>
-                  theme.palette.mode === "dark" ? "#5f5e5d" : "#d9dfe6",
+                theme.palette.mode === "dark" ? "#5f5e5d" : "#d9dfe6",
           },
         }}
       >
@@ -756,7 +804,7 @@ const LinkNode = ({
                           ? "green"
                           : "red"
                         : "#a8e6a1"
-                    })`,
+                      })`,
                     marginLeft: "8px",
                     boxShadow: "0 0 3px rgba(0, 0, 0, 0.3) inset",
                   }}
@@ -780,68 +828,68 @@ const LinkNode = ({
             property !== "isPartOf") ||
             (clonedNodesQueue.hasOwnProperty(link.id) &&
               property !== "generalizations")) && (
-            <>
-              {loadingIds.has(link.id) ? (
-                <LoadingButton
-                  loading
-                  loadingIndicator={<CircularProgress size={20} />}
-                  sx={{
-                    borderRadius: "16px",
-                    padding: "3px",
-                    fontSize: "0.8rem",
-                    minWidth: "40px",
-                  }}
-                  disabled
-                />
-              ) : (
-                <Box sx={{ display: "flex" }}>
-                  {clonedNodesQueue.hasOwnProperty(link.id) && (
-                    <Tooltip title="Save">
+              <>
+                {loadingIds.has(link.id) ? (
+                  <LoadingButton
+                    loading
+                    loadingIndicator={<CircularProgress size={20} />}
+                    sx={{
+                      borderRadius: "16px",
+                      padding: "3px",
+                      fontSize: "0.8rem",
+                      minWidth: "40px",
+                    }}
+                    disabled
+                  />
+                ) : (
+                  <Box sx={{ display: "flex" }}>
+                    {clonedNodesQueue.hasOwnProperty(link.id) && (
+                      <Tooltip title="Save">
+                        <IconButton
+                          sx={{
+                            ml: "18px",
+                            borderRadius: "18px",
+                            fontSize: "12px",
+                            p: 0.2,
+                          }}
+                          onClick={() => {
+                            saveNewSpecialization(link.id);
+                          }}
+                        >
+                          <CheckIcon sx={{ color: "green" }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    <Tooltip
+                      title={
+                        clonedNodesQueue.hasOwnProperty(link.id)
+                          ? "Cancel"
+                          : "Unlink"
+                      }
+                    >
                       <IconButton
                         sx={{
                           ml: "18px",
                           borderRadius: "18px",
                           fontSize: "12px",
                           p: 0.2,
+                          display: !enableEdit ? "none" : "block",
                         }}
-                        onClick={() => {
-                          saveNewSpecialization(link.id);
-                        }}
+                        onClick={handleUnlinkNode}
                       >
-                        <CheckIcon sx={{ color: "green" }} />
+                        {clonedNodesQueue.hasOwnProperty(link.id) ? (
+                          <CloseIcon sx={{ color: "red" }} />
+                        ) : (
+                          <LinkOffIcon
+                            sx={{ color: enableEdit ? "orange" : "gray" }}
+                          />
+                        )}
                       </IconButton>
                     </Tooltip>
-                  )}
-                  <Tooltip
-                    title={
-                      clonedNodesQueue.hasOwnProperty(link.id)
-                        ? "Cancel"
-                        : "Unlink"
-                    }
-                  >
-                    <IconButton
-                      sx={{
-                        ml: "18px",
-                        borderRadius: "18px",
-                        fontSize: "12px",
-                        p: 0.2,
-                        display: !enableEdit ? "none" : "block",
-                      }}
-                      onClick={handleUnlinkNode}
-                    >
-                      {clonedNodesQueue.hasOwnProperty(link.id) ? (
-                        <CloseIcon sx={{ color: "red" }} />
-                      ) : (
-                        <LinkOffIcon
-                          sx={{ color: enableEdit ? "orange" : "gray" }}
-                        />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              )}
-            </>
-          )}
+                  </Box>
+                )}
+              </>
+            )}
 
           {property === "parts" &&
             !currentImprovement &&

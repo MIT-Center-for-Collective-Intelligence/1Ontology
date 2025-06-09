@@ -774,6 +774,37 @@ const Node = ({
         ) {
           if (nodeData.inheritance[selectedProperty]) {
             const reference = nodeData.inheritance[selectedProperty].ref;
+            
+            // Handling for parts property - move inherited parts to inheritanceParts
+            if (selectedProperty === "parts" && reference && nodes[reference]) {
+              const referencedNode = nodes[reference];
+              
+              if (!nodeData.inheritanceParts) {
+                nodeData.inheritanceParts = {};
+              }
+              
+              // Get inherited parts from the referenced generalization
+              const inheritedParts = referencedNode.properties.parts || [];
+              const inheritedPartsFromInheritance = referencedNode.inheritanceParts || {};
+              
+              // Add direct parts from generalization to inheritanceParts
+              inheritedParts.forEach((collection: any) => {
+                collection.nodes.forEach((partNode: any) => {
+                  nodeData.inheritanceParts[partNode.id] = {
+                    inheritedFromTitle: referencedNode.title,
+                    inheritedFromId: reference
+                  };
+                });
+              });
+              
+              // Add inherited parts from generalization's inheritanceParts
+              Object.entries(inheritedPartsFromInheritance).forEach(([partId, partInfo]) => {
+                if (partInfo) {
+                  nodeData.inheritanceParts[partId] = partInfo;
+                }
+              });
+            }
+            
             if (
               reference &&
               nodes[reference].textValue &&
