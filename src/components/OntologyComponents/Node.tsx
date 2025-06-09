@@ -169,7 +169,9 @@ type INodeProps = {
   setSelectedCollection: any;
   selectedCollection: string;
   skillsFuture: boolean;
-  partsInheritance: { [nodeId: string]: { title: string; fullPart: string } };
+  partsInheritance: {
+    [nodeId: string]: { inheritedFrom: string; partInheritance: string };
+  };
   enableEdit: any;
   setEnableEdit: any;
 };
