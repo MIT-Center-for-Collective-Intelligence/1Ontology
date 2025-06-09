@@ -11,6 +11,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import EditIcon from "@mui/icons-material/Edit";
+import DownloadIcon from "@mui/icons-material/Download";
 import {
   Avatar,
   Button,
@@ -97,6 +98,7 @@ import {
   sendLLMRequest,
 } from "@components/lib/utils/copilotPrompts";
 import OntologyHistory from "../ActiveUsers/OntologyHistory";
+import { handleDownload } from "@components/lib/utils/random";
 
 type CustomSmallBadgeProps = { value: number };
 
@@ -1243,7 +1245,6 @@ const ToolbarSidebar = ({
     );
   };
 
-
   const CustomSmallBadge = ({ value }: CustomSmallBadgeProps) => {
     if (!value) return null;
     return (
@@ -1577,6 +1578,15 @@ const ToolbarSidebar = ({
               text={"Guidelines"}
               toolbarIsOpen={hovered}
               variant={displayGuidelines ? "fill" : undefined}
+            />
+            <SidebarButton
+              id="toolbar-theme-button"
+              icon={<DownloadIcon />}
+              onClick={() => {
+                handleDownload({ nodes });
+              }}
+              text={"Download JSON"}
+              toolbarIsOpen={hovered}
             />
 
             <SidebarButton
