@@ -1203,11 +1203,11 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
   return (
     <>
-      {/*     <Head>
+      <Head>
         <title>
           {currentVisibleNode ? currentVisibleNode.title : "1ontology"}
         </title>
-      </Head> */}
+      </Head>
       <Box>
         <Container
           style={{
