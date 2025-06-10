@@ -688,7 +688,9 @@ const LinkNode = ({
                     <>
                       Inherited from{" "}
                       <strong style={{ fontSize: "12px" }}>
-                        "{partsInheritance[link.id].inheritedFrom}",
+                        {'"'}
+                        {partsInheritance[link.id].inheritedFrom}
+                        {'"'},
                       </strong>
                     </>
                   )}
