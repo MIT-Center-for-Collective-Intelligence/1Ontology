@@ -886,13 +886,21 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     }
 
     openedANode(currentVisibleNode?.id);
-    if (expandedNodes.size === 0) {
+    
+    // Check if this is a root node - if so, skip initializeExpanded to prevent scrolling
+    const isRootNode = eachOntologyPath[currentVisibleNode?.id] && 
+                       eachOntologyPath[currentVisibleNode?.id].length === 1;
+
+    if (expandedNodes.size === 0 && !isRootNode) {
       initializeExpanded(eachOntologyPath[currentVisibleNode?.id]);
     }
     // setOntologyPath(eachOntologyPath[currentVisibleNode?.id]);
-    updateTheUrl([
-      { id: currentVisibleNode?.id, title: currentVisibleNode.title },
-    ]);
+    
+    if (!isRootNode) {
+      updateTheUrl([
+        { id: currentVisibleNode?.id, title: currentVisibleNode.title },
+      ]);
+    }
   }, [currentVisibleNode?.id, eachOntologyPath]);
 
   // Callback function to add a new node to the database
