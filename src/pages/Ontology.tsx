@@ -717,10 +717,24 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   useEffect(() => {
     // Filter nodes to get only those with a defined category
     const spreadNodes = Object.values(nodes);
-    const mainCategories = spreadNodes.filter(
+    let mainCategories = spreadNodes.filter(
       (node: INode) =>
         node.category || (typeof node.root === "boolean" && !!node.root),
     );
+    if (skillsFuture) {
+      mainCategories = mainCategories.sort((a: any, b: any) => {
+        const aHasAct = a.title.toLowerCase().includes("act");
+        const bHasAct = b.title.toLowerCase().includes("act");
+        console.log({
+          aHasAct,
+          bHasAct,
+          "a.title": a.title,
+          "b.title": b.title,
+        });
+        return Number(bHasAct) - Number(aHasAct);
+      });
+      console.log("mainNodes ==>", mainCategories);
+    }
     // Sort main nodes based on a predefined order
     mainCategories.sort((nodeA: any, nodeB: any) => {
       const order = [
