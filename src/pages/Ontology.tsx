@@ -1319,6 +1319,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                       skillsFuture={skillsFuture}
                       scrollTrigger={scrollTrigger}
                       specializationNumsUnder={specializationNumsUnder}
+                      skillsFutureApp={appName}
                     />
 
                     {/*  <TreeViewSimplified
