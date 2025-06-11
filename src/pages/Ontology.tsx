@@ -725,15 +725,8 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
       mainCategories = mainCategories.sort((a: any, b: any) => {
         const aHasAct = a.title.toLowerCase().includes("act");
         const bHasAct = b.title.toLowerCase().includes("act");
-        console.log({
-          aHasAct,
-          bHasAct,
-          "a.title": a.title,
-          "b.title": b.title,
-        });
         return Number(bHasAct) - Number(aHasAct);
       });
-      console.log("mainNodes ==>", mainCategories);
     }
     // Sort main nodes based on a predefined order
     mainCategories.sort((nodeA: any, nodeB: any) => {
@@ -1192,9 +1185,8 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     }
     setPartsInheritance(inheritedParts);
   }, [currentVisibleNode, nodes]);
-  console.log("selectedDiffNode ==>", selectedDiffNode);
 
-  if (loadingNodes) {
+  if (Object.keys(nodes).length <= 0) {
     return (
       <Box
         sx={{
