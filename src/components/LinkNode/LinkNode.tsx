@@ -159,7 +159,9 @@ type ILinkNodeProps = {
   glowIds: Set<string>;
   skillsFuture: boolean;
   currentImprovement: any;
-  partsInheritance: { [nodeId: string]: { title: string; fullPart: string } };
+  partsInheritance: {
+    [nodeId: string]: { inheritedFrom: string; partInheritance: string };
+  };
   loadingIds: any;
   saveNewSpecialization: any;
   enableEdit: boolean;
@@ -730,19 +732,23 @@ const LinkNode = ({
                 <span
                   style={{ display: "flex", gap: "4px", whiteSpace: "nowrap" }}
                 >
-                  {partsInheritance[link.id] ? `Inherited from` : ""}
-                  {partsInheritance[link.id] && (
-                    <strong style={{ fontSize: "12px" }}>
-                      {'"'}
-                      {partsInheritance[link.id].title}
-                      {'"'},
-                    </strong>
+                  {partsInheritance[link.id]?.inheritedFrom && (
+                    <>
+                      Inherited from{" "}
+                      <strong style={{ fontSize: "12px" }}>
+                        {'"'}
+                        {partsInheritance[link.id].inheritedFrom}
+                        {'"'},
+                      </strong>
+                    </>
                   )}
-                  {!!partsInheritance[link.id]?.fullPart ? ` Part` : ""}
-                  {!!partsInheritance[link.id]?.fullPart && (
-                    <strong style={{ fontSize: "12px", color: "orange" }}>
-                      {partsInheritance[link.id].fullPart}
-                    </strong>
+                  {partsInheritance[link.id]?.partInheritance && (
+                    <>
+                      Part{" "}
+                      <strong style={{ fontSize: "12px", color: "orange" }}>
+                        {partsInheritance[link.id].partInheritance}
+                      </strong>
+                    </>
                   )}
                 </span>
               ) : (
@@ -798,13 +804,13 @@ const LinkNode = ({
                     width: "14px",
                     height: "14px",
                     borderRadius: "50%",
-                    background: `linear-gradient(to bottom, #a8e6a1, ${
+                    background: `${
                       partsInheritance[link.id]
-                        ? partsInheritance[link.id].fullPart
-                          ? "green"
-                          : "red"
-                        : "#a8e6a1"
-                      })`,
+                        ? partsInheritance[link.id].partInheritance
+                          ? "orange"
+                          : "green"
+                        : ""
+                    }`,
                     marginLeft: "8px",
                     boxShadow: "0 0 3px rgba(0, 0, 0, 0.3) inset",
                   }}

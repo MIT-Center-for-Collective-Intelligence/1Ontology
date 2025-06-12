@@ -750,6 +750,7 @@ export const createNewNode = (
     skillsFuture: !!skillsFuture,
     ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
   };
+  delete newNode.root;
   if (newNode?.textValue?.specializations) {
     delete newNode.textValue.specializations;
   }

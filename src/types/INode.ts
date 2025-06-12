@@ -163,7 +163,8 @@ export type NodeChange = {
     | "delete collection"
     | "edit collection"
     | "add images"
-    | "remove images";
+    | "remove images"
+    | "sort collections";
   fullNode: INode | null;
   changeDetails?: { [key: string]: any };
   reasoning?: string;
