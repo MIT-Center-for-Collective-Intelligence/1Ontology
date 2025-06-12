@@ -291,8 +291,8 @@ const SearchSideBar = ({
       {loadingSearchResult && (
         <List sx={{ zIndex: 10 }}>
           {[...Array(15)].map((_, index) => (
-            <Box key={index} sx={{ px: 4 }}>
-              <Skeleton variant="text" height={50} width="100%" />
+            <Box key={index} sx={{ px: 4, mt: "0px" }}>
+              <Skeleton variant="text" height={55} width="100%" sx={{ p: 0 }} />
             </Box>
           ))}
         </List>

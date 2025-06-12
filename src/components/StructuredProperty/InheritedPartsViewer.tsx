@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Tabs, Tab, Checkbox } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Tabs,
+  Tab,
+  Checkbox,
+  IconButton,
+} from "@mui/material";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -31,6 +39,8 @@ interface InheritedPartsViewerProps {
   ) => void;
   isSaving: boolean;
   readOnly?: boolean;
+  setDisplayDetails: any;
+  inheritanceDetails: any;
 }
 
 const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
@@ -43,9 +53,11 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   markItemAsChecked,
   isSaving,
   readOnly = false,
+  setDisplayDetails,
+  inheritanceDetails,
 }) => {
   const [selectedTab, setSelectedTab] = useState(0);
-
+  console.log("inheritanceDetails--InheritedPartsViewer", inheritanceDetails);
   if (selectedProperty !== "parts") return null;
 
   const generalizations = getAllGeneralizations();
@@ -110,7 +122,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1.5,
+                gap: 1,
               }}
             >
               {readOnly ? (
@@ -170,10 +182,17 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                       fontSize: "0.9rem",
                     }}
                   >
-                    {/*           <span style={{ fontStyle: "italic" }}>
-                      {partGeneralization}
-                    </span>{" "} →  */}
-                    {part.title}
+                    {part.title}{" "}
+                    {((inheritanceDetails || {})[part.id] || []).length > 0
+                      ? "→"
+                      : ""}
+                    {((inheritanceDetails || {})[part.id] || []).length > 0 ? (
+                      <span style={{ fontStyle: "italic" }}>
+                        {(inheritanceDetails || {})[part.id][0]}
+                      </span>
+                    ) : (
+                      ""
+                    )}{" "}
                   </Typography>
                 )}
                 {!partGeneralization && (
@@ -220,18 +239,30 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           theme.palette.mode === "light" ? "#fafbfc" : "#1e1e1f",
       }}
     >
-      <Typography
-        variant="subtitle2"
-        sx={{
-          mb: 2,
-          fontWeight: 600,
-          fontSize: "0.85rem",
-          color: (theme) =>
-            theme.palette.mode === "light" ? "#2c3e50" : "#e0e0e0",
-        }}
-      >
-        {"Parts Details Generalizations:"}
-      </Typography>
+      <Box>
+        <Typography
+          variant="subtitle2"
+          sx={{
+            mb: 2,
+            fontWeight: 600,
+            display: "flex",
+            fontSize: "0.85rem",
+            color: (theme) =>
+              theme.palette.mode === "light" ? "#2c3e50" : "#e0e0e0",
+            gap: "5px",
+          }}
+        >
+          <IconButton
+            sx={{ border: "1px solid gray", p: 0, backgroundColor: "orange" }}
+            onClick={() => {
+              setDisplayDetails(false);
+            }}
+          >
+            <KeyboardArrowUpIcon />
+          </IconButton>{" "}
+          <Typography>{"Generalizations' Parts:"}</Typography>
+        </Typography>
+      </Box>
 
       <Tabs
         value={selectedTab}

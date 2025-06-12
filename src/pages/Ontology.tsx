@@ -219,9 +219,12 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
   const [treeViewData, setTreeViewData] = useState([]);
   const [loadingNodes, setLoadingNodes] = useState(false);
-  const [appName, setAppName] = useState("Ontology - Demo Version"); // this state is only been used for the Skills Future App
+  const [appName, setAppName] = useState("Ontology - Development Version"); // this state is only been used for the Skills Future App
   const [partsInheritance, setPartsInheritance] = useState<{
     [nodeId: string]: { inheritedFrom: string; partInheritance: string };
+  }>({});
+  const [inheritanceDetails, setInheritanceDetails] = useState<{
+    [nodeId: string]: any;
   }>({});
   const [scrollTrigger, setScrollTrigger] = useState(false);
   const [enableEdit, setEnableEdit] = useState(false);
@@ -879,16 +882,17 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     }
 
     openedANode(currentVisibleNode?.id);
-    
+
     // Check if this is a root node - if so, skip initializeExpanded to prevent scrolling
-    const isRootNode = eachOntologyPath[currentVisibleNode?.id] && 
-                       eachOntologyPath[currentVisibleNode?.id].length === 1;
+    const isRootNode =
+      eachOntologyPath[currentVisibleNode?.id] &&
+      eachOntologyPath[currentVisibleNode?.id].length === 1;
 
     if (expandedNodes.size === 0 && !isRootNode) {
       initializeExpanded(eachOntologyPath[currentVisibleNode?.id]);
     }
     // setOntologyPath(eachOntologyPath[currentVisibleNode?.id]);
-    
+
     if (!isRootNode) {
       updateTheUrl([
         { id: currentVisibleNode?.id, title: currentVisibleNode.title },
@@ -1122,6 +1126,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     const inheritedParts: {
       [nodeId: string]: { inheritedFrom: string; partInheritance: string };
     } = {};
+    const _inheritanceDetails: any = {};
 
     const _currentVisibleNode = { ...currentVisibleNode };
     const parts = _currentVisibleNode?.properties.parts || [];
@@ -1186,11 +1191,19 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                   ? (nodes[partInheritance].title ?? "")
                   : "",
               };
+
+              if (_inheritanceDetails[partInheritance]) {
+                _inheritanceDetails[partInheritance].push(nodes[node.id].title);
+              } else {
+                _inheritanceDetails[partInheritance] = [nodes[node.id].title];
+              }
             }
           }
         }
       }
     }
+    console.log(_inheritanceDetails, "_inheritanceDetails");
+    setInheritanceDetails(_inheritanceDetails);
     setPartsInheritance(inheritedParts);
   }, [currentVisibleNode, nodes]);
 
@@ -1496,6 +1509,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                   partsInheritance={partsInheritance}
                   enableEdit={enableEdit}
                   setEnableEdit={setEnableEdit}
+                  inheritanceDetails={inheritanceDetails}
                 />
               )}
             </Box>

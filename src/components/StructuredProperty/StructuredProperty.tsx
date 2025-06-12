@@ -57,7 +57,6 @@ type IStructuredPropertyProps = {
   setSearchValue?: any;
   searchValue?: any;
   searchResultsForSelection?: any;
-
   checkedItems?: any;
   setCheckedItems?: any;
   setCheckedItemsCopy?: any;
@@ -93,6 +92,7 @@ type IStructuredPropertyProps = {
     [nodeId: string]: { inheritedFrom: string; partInheritance: string };
   };
   enableEdit: boolean;
+  inheritanceDetails?: any;
 };
 
 const StructuredProperty = ({
@@ -147,6 +147,7 @@ const StructuredProperty = ({
   skillsFuture,
   partsInheritance,
   enableEdit,
+  inheritanceDetails,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
   const [openAddCollection, setOpenAddCollection] = useState(false);
@@ -154,8 +155,10 @@ const StructuredProperty = ({
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   const [modifiedOrder, setModifiedOrder] = useState(false);
   const [displayDetails, setDisplayDetails] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   const db = getFirestore();
+  console.log("inheritanceDetails--StructuredProperty", inheritanceDetails);
 
   const propertyValue: ICollection[] = useMemo(() => {
     try {
@@ -585,19 +588,31 @@ const StructuredProperty = ({
                 : "",
           }}
         >
-          <Tooltip title={getTooltipHelper(property)}>
-            <Typography
-              sx={{
-                fontSize: "20px",
-                fontWeight: 500,
-                fontFamily: "Roboto, sans-serif",
-              }}
-            >
-              {capitalizeFirstLetter(
-                DISPLAY[property] ? DISPLAY[property] : property,
-              )}
-            </Typography>
-          </Tooltip>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Tooltip title={getTooltipHelper(property)}>
+              <Typography
+                sx={{
+                  fontSize: "20px",
+                  fontWeight: 500,
+                  fontFamily: "Roboto, sans-serif",
+                }}
+              >
+                {capitalizeFirstLetter(
+                  DISPLAY[property] ? DISPLAY[property] : property,
+                )}
+              </Typography>
+            </Tooltip>{" "}
+            {(property === "generalizations" ||
+              property === "specializations" ||
+              property === "isPartOf" ||
+              property === "parts") && (
+              <PropertyContributors
+                currentVisibleNode={currentVisibleNode}
+                property={property}
+                sx={{ pl: "5px" }}
+              />
+            )}
+          </Box>
 
           {selectedProperty === property && !selectedCollection && (
             <Box
@@ -777,19 +792,15 @@ const StructuredProperty = ({
             enableEdit={enableEdit}
           />
         )}
-        {property === "parts" && (
+        {property === "parts" && !displayDetails && (
           <Button
             variant="outlined"
-            sx={{ borderRadius: "25px", m: 1, p: 1, px: 2 }}
+            sx={{ borderRadius: "25px", p: 0.5, px: 2, ml: "10px", mb: "3px" }}
             onClick={() => {
               setDisplayDetails((prev) => !prev);
             }}
           >
-            {displayDetails ? (
-              <KeyboardArrowUpIcon />
-            ) : (
-              <KeyboardArrowDownIcon />
-            )}{" "}
+            <KeyboardArrowDownIcon />
             Details
           </Button>
         )}
@@ -812,6 +823,8 @@ const StructuredProperty = ({
               markItemAsChecked={() => {}}
               isSaving={false}
               readOnly={true}
+              setDisplayDetails={setDisplayDetails}
+              inheritanceDetails={inheritanceDetails}
             />
           )}
       </Box>
@@ -867,23 +880,15 @@ const StructuredProperty = ({
             skillsFuture={skillsFuture}
           />
         )}
-      {selectedProperty !== property && (
+      {/* {selectedProperty !== property && (
         <CommentsSection
           handleCloseAddLinksModel={handleCloseAddLinksModel}
           property={property}
           onGetPropertyValue={onGetPropertyValue}
+          showComments={showComments}
+          setShowComments={setShowComments}
         />
-      )}
-      {(property === "generalizations" ||
-        property === "specializations" ||
-        property === "isPartOf" ||
-        property === "parts") && (
-        <PropertyContributors
-          currentVisibleNode={currentVisibleNode}
-          property={property}
-          sx={{ p: 2, ml: "auto", mt: "auto" }}
-        />
-      )}
+      )} */}
     </Paper>
   );
 };

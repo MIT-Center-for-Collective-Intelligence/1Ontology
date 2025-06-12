@@ -174,6 +174,7 @@ type INodeProps = {
   };
   enableEdit: any;
   setEnableEdit: any;
+  inheritanceDetails: any;
 };
 
 const Node = ({
@@ -217,6 +218,7 @@ const Node = ({
   partsInheritance,
   enableEdit,
   setEnableEdit,
+  inheritanceDetails,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -776,37 +778,40 @@ const Node = ({
         ) {
           if (nodeData.inheritance[selectedProperty]) {
             const reference = nodeData.inheritance[selectedProperty].ref;
-            
+
             // Handling for parts property - move inherited parts to inheritanceParts
             if (selectedProperty === "parts" && reference && nodes[reference]) {
               const referencedNode = nodes[reference];
-              
+
               if (!nodeData.inheritanceParts) {
                 nodeData.inheritanceParts = {};
               }
-              
+
               // Get inherited parts from the referenced generalization
               const inheritedParts = referencedNode.properties.parts || [];
-              const inheritedPartsFromInheritance = referencedNode.inheritanceParts || {};
-              
+              const inheritedPartsFromInheritance =
+                referencedNode.inheritanceParts || {};
+
               // Add direct parts from generalization to inheritanceParts
               inheritedParts.forEach((collection: any) => {
                 collection.nodes.forEach((partNode: any) => {
                   nodeData.inheritanceParts[partNode.id] = {
                     inheritedFromTitle: referencedNode.title,
-                    inheritedFromId: reference
+                    inheritedFromId: reference,
                   };
                 });
               });
-              
+
               // Add inherited parts from generalization's inheritanceParts
-              Object.entries(inheritedPartsFromInheritance).forEach(([partId, partInfo]) => {
-                if (partInfo) {
-                  nodeData.inheritanceParts[partId] = partInfo;
-                }
-              });
+              Object.entries(inheritedPartsFromInheritance).forEach(
+                ([partId, partInfo]) => {
+                  if (partInfo) {
+                    nodeData.inheritanceParts[partId] = partInfo;
+                  }
+                },
+              );
             }
-            
+
             if (
               reference &&
               nodes[reference].textValue &&
@@ -1053,15 +1058,17 @@ const Node = ({
   const checkDuplicateTitle = useCallback(
     (newTitle: string) => {
       try {
-        const fuseSearch = searchWithFuse(newTitle.trim());
-        return (
+        const fuseSearch = searchWithFuse(newTitle.trim()).slice(0, 10);
+
+        const checkFlag =
           fuseSearch.length > 0 &&
           fuseSearch.some(
             (s) =>
-              s.title.toLowerCase().trim() === newTitle.toLowerCase().trim() &&
+              s.title.trim() === newTitle.trim() &&
               currentVisibleNode?.id !== s.id,
-          )
-        );
+          );
+
+        return checkFlag;
       } catch (error) {
         console.error(error);
       }
@@ -1363,6 +1370,7 @@ const Node = ({
               skillsFuture={skillsFuture}
               partsInheritance={partsInheritance}
               enableEdit={enableEdit}
+              inheritanceDetails={inheritanceDetails}
             />
           ))}
         </Stack>
