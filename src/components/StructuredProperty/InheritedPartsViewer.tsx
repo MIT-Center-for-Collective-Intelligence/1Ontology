@@ -1,11 +1,5 @@
-import React, { useState } from "react";
-import {
-  Box,
-  Typography,
-  Tabs,
-  Tab,
-  Checkbox,
-} from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Box, Typography, Tabs, Tab, Checkbox } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -30,7 +24,10 @@ interface InheritedPartsViewerProps {
   markItemAsChecked: (
     checkedId: string,
     radioSelection?: boolean,
-    fromGeneralizationDropdown?: { generalizationId: string; generalizationTitle: string }
+    fromGeneralizationDropdown?: {
+      generalizationId: string;
+      generalizationTitle: string;
+    },
   ) => void;
   isSaving: boolean;
   readOnly?: boolean;
@@ -45,43 +42,47 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   checkedItems,
   markItemAsChecked,
   isSaving,
-  readOnly = false
+  readOnly = false,
 }) => {
   const [selectedTab, setSelectedTab] = useState(0);
-  
+
   if (selectedProperty !== "parts") return null;
 
   const generalizations = getAllGeneralizations();
-  
+
   if (generalizations.length === 0) {
     return null;
   }
 
   // Reset to first tab if current selection is invalid
-  React.useEffect(() => {
+  /*   useEffect(() => {
     if (selectedTab >= generalizations.length) {
       setSelectedTab(0);
     }
-  }, [generalizations.length, selectedTab]);
+  }, [generalizations.length, selectedTab]); */
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number): void => {
+  const handleTabChange = (
+    event: React.SyntheticEvent,
+    newValue: number,
+  ): void => {
     setSelectedTab(newValue);
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
     const parts = getGeneralizationParts(generalizationId);
     const displayedParts = parts.slice(0, 10);
-    
+
     if (displayedParts.length === 0) {
       return (
-        <Typography 
-          variant="body2" 
-          sx={{ 
-            color: (theme) => theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d", 
+        <Typography
+          variant="body2"
+          sx={{
+            color: (theme) =>
+              theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
             fontStyle: "italic",
             textAlign: "center",
             py: 2,
-            fontSize: "0.75rem"
+            fontSize: "0.75rem",
           }}
         >
           No parts available
@@ -102,14 +103,14 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1, py: 1 }}>
         {displayedParts.map((part) => {
           const partGeneralization = getPartGeneralization(part.id);
-          
+
           return (
             <Box
               key={part.id}
-              sx={{ 
+              sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1.5
+                gap: 1.5,
               }}
             >
               {readOnly ? (
@@ -117,60 +118,72 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   <CheckIcon
                     sx={{
                       color: "#4caf50",
-                      fontSize: "20px"
+                      fontSize: "20px",
                     }}
                   />
                 ) : (
                   <CloseIcon
                     sx={{
                       color: "#f44336",
-                      fontSize: "20px"
+                      fontSize: "20px",
                     }}
                   />
                 )
               ) : (
                 <Checkbox
                   checked={checkedItems.has(part.id)}
-                  onChange={() => markItemAsChecked(
-                    part.id, 
-                    false, 
-                    { 
-                      generalizationId: generalizationId, 
-                      generalizationTitle: getTitle(nodes, generalizationId)
-                    }
-                  )}
+                  onChange={() =>
+                    markItemAsChecked(part.id, false, {
+                      generalizationId: generalizationId,
+                      generalizationTitle: getTitle(nodes, generalizationId),
+                    })
+                  }
                   disabled={isSaving}
                   size="small"
                   sx={{
-                    color: (theme) => theme.palette.mode === "light" ? "#bdc3c7" : "#7f8c8d",
+                    color: (theme) =>
+                      theme.palette.mode === "light" ? "#bdc3c7" : "#7f8c8d",
                     "&.Mui-checked": {
-                      color: (theme) => theme.palette.mode === "light" ? "#3498db" : "#4a90e2"
+                      color: (theme) =>
+                        theme.palette.mode === "light" ? "#3498db" : "#4a90e2",
                     },
                     "& .MuiSvgIcon-root": {
-                      fontSize: "16px"
-                    }
+                      fontSize: "16px",
+                    },
                   }}
                 />
               )}
-              <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 0.5 }}>
+              <Box
+                sx={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 0.5,
+                }}
+              >
                 {partGeneralization && (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: (theme) => theme.palette.mode === "light" ? "#666" : "#999",
-                      fontSize: "0.9rem"
+                      color: (theme) =>
+                        theme.palette.mode === "light" ? "#666" : "#999",
+                      fontSize: "0.9rem",
                     }}
                   >
-                    <span style={{ fontStyle: "italic" }}>{partGeneralization}</span> → {part.title}
+                    {/*           <span style={{ fontStyle: "italic" }}>
+                      {partGeneralization}
+                    </span>{" "} →  */}
+                    {part.title}
                   </Typography>
                 )}
                 {!partGeneralization && (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: (theme) => theme.palette.mode === "light" ? "#2c3e50" : "#e0e0e0",
+                      color: (theme) =>
+                        theme.palette.mode === "light" ? "#2c3e50" : "#e0e0e0",
                       fontWeight: 400,
-                      fontSize: "1rem"
+                      fontSize: "1rem",
                     }}
                   >
                     {part.title}
@@ -199,26 +212,27 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   };
 
   return (
-    <Box sx={{ 
-      px: "15px", 
-      py: "10px", 
-      pb: "20px",
-      mb: "20px",
-      backgroundColor: (theme) => theme.palette.mode === "light" ? "#fafbfc" : "#1e1e1f",
-      borderBottom: (theme) => `1px solid ${theme.palette.mode === "light" ? "#e1e5e9" : "#404040"}`
-    }}>
-      <Typography 
-        variant="subtitle2" 
-        sx={{ 
-          mb: 2, 
+    <Box
+      sx={{
+        px: "15px",
+        py: "10px",
+        backgroundColor: (theme) =>
+          theme.palette.mode === "light" ? "#fafbfc" : "#1e1e1f",
+      }}
+    >
+      <Typography
+        variant="subtitle2"
+        sx={{
+          mb: 2,
           fontWeight: 600,
           fontSize: "0.85rem",
-          color: (theme) => theme.palette.mode === "light" ? "#2c3e50" : "#e0e0e0"
+          color: (theme) =>
+            theme.palette.mode === "light" ? "#2c3e50" : "#e0e0e0",
         }}
       >
-        {readOnly ? "Parts Inherited from Generalizations:" : "Inherit Parts from Generalizations:"}
+        {"Parts Details Generalizations:"}
       </Typography>
-      
+
       <Tabs
         value={selectedTab}
         onChange={handleTabChange}
@@ -227,22 +241,32 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
         sx={{
           mb: 2,
           "& .MuiTabs-scrollButtons": {
-            "&.Mui-disabled": { opacity: 0.3 }
+            "&.Mui-disabled": { opacity: 0.3 },
           },
           "& .MuiTabs-indicator": {
-            backgroundColor: readOnly ? "#ff9500" : "#ff9500"
-          }
+            backgroundColor: readOnly ? "#ff9500" : "#ff9500",
+          },
         }}
       >
         {generalizations.map((generalization, index) => {
           const parts = getGeneralizationParts(generalization.id);
-          const selectedPartsFromThisGen = parts.filter((part) => checkedItems.has(part.id));
-          
+          const selectedPartsFromThisGen = parts.filter((part) =>
+            checkedItems.has(part.id),
+          );
+
           return (
             <Tab
               key={generalization.id}
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0, maxWidth: "160px" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    minWidth: 0,
+                    maxWidth: "160px",
+                  }}
+                >
                   <Typography
                     variant="body2"
                     sx={{
@@ -252,7 +276,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
-                      flex: 1
+                      flex: 1,
                     }}
                   >
                     {generalization.title}
@@ -263,7 +287,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                       sx={{
                         color: "#ff9500",
                         fontWeight: 600,
-                        fontSize: "0.75rem"
+                        fontSize: "0.75rem",
                       }}
                     >
                       ({selectedPartsFromThisGen.length})
@@ -278,8 +302,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                 py: 1,
                 textTransform: "none",
                 "&.Mui-selected": {
-                  color: "#ff9500"
-                }
+                  color: "#ff9500",
+                },
               }}
             />
           );

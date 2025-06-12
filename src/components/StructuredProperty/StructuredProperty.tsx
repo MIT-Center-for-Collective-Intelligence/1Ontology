@@ -9,6 +9,8 @@ import {
   IconButton,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import {
   capitalizeFirstLetter,
   getPropertyValue,
@@ -151,6 +153,8 @@ const StructuredProperty = ({
   const [isSaving, setIsSaving] = useState(false);
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   const [modifiedOrder, setModifiedOrder] = useState(false);
+  const [displayDetails, setDisplayDetails] = useState(false);
+
   const db = getFirestore();
 
   const propertyValue: ICollection[] = useMemo(() => {
@@ -296,7 +300,7 @@ const StructuredProperty = ({
       return (
         (property === "generalizations" &&
           (editableProperty || propertyValue).flatMap((n) => n.nodes).length !==
-          1) ||
+            1) ||
         (property === "specializations" && numberOfGeneralizations > 1) ||
         (property !== "generalizations" && property !== "specializations")
       );
@@ -480,23 +484,29 @@ const StructuredProperty = ({
 
   const getInheritedPartsSet = (): Set<string> => {
     const inheritedParts = new Set<string>();
-    
+
     // Case 1: Broken inheritance - add parts from inheritanceParts
     if (currentVisibleNode.inheritanceParts) {
-      Object.keys(currentVisibleNode.inheritanceParts).forEach((partId: string) => {
-        inheritedParts.add(partId);
-      });
+      Object.keys(currentVisibleNode.inheritanceParts).forEach(
+        (partId: string) => {
+          inheritedParts.add(partId);
+        },
+      );
     }
-    
+
     // Case 2: Intact inheritance - add all parts from referenced generalization
     if (currentVisibleNode.inheritance?.parts?.ref) {
-      const referencedGeneralizationId = currentVisibleNode.inheritance.parts.ref;
-      const allPartsFromRef = getGeneralizationParts(referencedGeneralizationId, nodes);
-      allPartsFromRef.forEach(part => {
+      const referencedGeneralizationId =
+        currentVisibleNode.inheritance.parts.ref;
+      const allPartsFromRef = getGeneralizationParts(
+        referencedGeneralizationId,
+        nodes,
+      );
+      allPartsFromRef.forEach((part) => {
         inheritedParts.add(part.id);
       });
     }
-    
+
     // Add direct parts from the node itself
     if (currentVisibleNode.properties?.parts) {
       currentVisibleNode.properties.parts.forEach((collection: any) => {
@@ -505,7 +515,7 @@ const StructuredProperty = ({
         });
       });
     }
-    
+
     return inheritedParts;
   };
 
@@ -569,8 +579,8 @@ const StructuredProperty = ({
 
             backgroundColor:
               selectedDiffNode &&
-                selectedDiffNode.changeType === "add property" &&
-                selectedDiffNode.changeDetails.addedProperty === property
+              selectedDiffNode.changeType === "add property" &&
+              selectedDiffNode.changeDetails.addedProperty === property
                 ? "green"
                 : "",
           }}
@@ -767,19 +777,43 @@ const StructuredProperty = ({
             enableEdit={enableEdit}
           />
         )}
-        {property === "parts" && selectedProperty !== property && !selectedDiffNode && !currentImprovement && (
-          <InheritedPartsViewer
-            selectedProperty={property}
-            getAllGeneralizations={() => getAllGeneralizations(currentVisibleNode, nodes)}
-            getGeneralizationParts={(generalizationId: string) => getGeneralizationParts(generalizationId, nodes)}
-            getTitle={getTitle}
-            nodes={nodes}
-            checkedItems={getInheritedPartsSet()}
-            markItemAsChecked={() => {}}
-            isSaving={false}
-            readOnly={true}
-          />
+        {property === "parts" && (
+          <Button
+            variant="outlined"
+            sx={{ borderRadius: "25px", m: 1, p: 1, px: 2 }}
+            onClick={() => {
+              setDisplayDetails((prev) => !prev);
+            }}
+          >
+            {displayDetails ? (
+              <KeyboardArrowUpIcon />
+            ) : (
+              <KeyboardArrowDownIcon />
+            )}{" "}
+            Details
+          </Button>
         )}
+        {displayDetails &&
+          property === "parts" &&
+          selectedProperty !== property &&
+          !selectedDiffNode &&
+          !currentImprovement && (
+            <InheritedPartsViewer
+              selectedProperty={property}
+              getAllGeneralizations={() =>
+                getAllGeneralizations(currentVisibleNode, nodes)
+              }
+              getGeneralizationParts={(generalizationId: string) =>
+                getGeneralizationParts(generalizationId, nodes)
+              }
+              getTitle={getTitle}
+              nodes={nodes}
+              checkedItems={getInheritedPartsSet()}
+              markItemAsChecked={() => {}}
+              isSaving={false}
+              readOnly={true}
+            />
+          )}
       </Box>
       {handleCloseAddLinksModel &&
         selectedProperty === property &&
@@ -844,12 +878,12 @@ const StructuredProperty = ({
         property === "specializations" ||
         property === "isPartOf" ||
         property === "parts") && (
-          <PropertyContributors
-            currentVisibleNode={currentVisibleNode}
-            property={property}
-            sx={{ p: 2, ml: "auto", mt: "auto" }}
-          />
-        )}
+        <PropertyContributors
+          currentVisibleNode={currentVisibleNode}
+          property={property}
+          sx={{ p: 2, ml: "auto", mt: "auto" }}
+        />
+      )}
     </Paper>
   );
 };
