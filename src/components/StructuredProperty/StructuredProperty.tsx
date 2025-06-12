@@ -878,6 +878,8 @@ const StructuredProperty = ({
             scrollToElement={scrollToElement}
             selectedCollection={selectedCollection}
             skillsFuture={skillsFuture}
+            setDisplayDetails={setDisplayDetails}
+            inheritanceDetails={inheritanceDetails}
           />
         )}
       {/* {selectedProperty !== property && (

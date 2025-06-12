@@ -34,11 +34,11 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { LoadingButton } from "@mui/lab";
-import { 
-  saveAsInheritancePart, 
-  getGeneralizationParts, 
-  getAllGeneralizations, 
-  breakInheritanceAndCopyParts
+import {
+  saveAsInheritancePart,
+  getGeneralizationParts,
+  getAllGeneralizations,
+  breakInheritanceAndCopyParts,
 } from "@components/lib/utils/partsHelper";
 import { getTitle } from "@components/lib/utils/string.utils";
 
@@ -84,6 +84,8 @@ const SelectModelModal = ({
   selectedCollection,
   skillsFuture,
   saveNewSpecialization,
+  setDisplayDetails,
+  inheritanceDetails,
 }: {
   onSave: any;
   handleCloseAddLinksModel: any;
@@ -131,6 +133,8 @@ const SelectModelModal = ({
   selectedCollection: string;
   skillsFuture: boolean;
   saveNewSpecialization: any;
+  setDisplayDetails?: any;
+  inheritanceDetails?: any;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
   const [isUpdatingInheritance, setIsUpdatingInheritance] = useState(false);
@@ -139,25 +143,33 @@ const SelectModelModal = ({
 
   // Initialize checkedItems with parts that are already inherited
   useEffect(() => {
-    if (selectedProperty === "parts" && currentVisibleNode && !isUpdatingInheritance) {
+    if (
+      selectedProperty === "parts" &&
+      currentVisibleNode &&
+      !isUpdatingInheritance
+    ) {
       const partsToCheck = new Set<string>();
-      
+
       // Case 1: Broken inheritance - add parts from inheritanceParts
       if (currentVisibleNode.inheritanceParts) {
-        Object.keys(currentVisibleNode.inheritanceParts).forEach(partId => {
+        Object.keys(currentVisibleNode.inheritanceParts).forEach((partId) => {
           partsToCheck.add(partId);
         });
       }
-      
+
       // Case 2: Intact inheritance - add all parts from referenced generalization
       if (currentVisibleNode.inheritance?.parts?.ref) {
-        const referencedGeneralizationId = currentVisibleNode.inheritance.parts.ref;
-        const allPartsFromRef = getGeneralizationParts(referencedGeneralizationId, nodes);
-        allPartsFromRef.forEach(part => {
+        const referencedGeneralizationId =
+          currentVisibleNode.inheritance.parts.ref;
+        const allPartsFromRef = getGeneralizationParts(
+          referencedGeneralizationId,
+          nodes,
+        );
+        allPartsFromRef.forEach((part) => {
           partsToCheck.add(part.id);
         });
       }
-      
+
       // Add direct parts from the node itself
       if (currentVisibleNode.properties?.parts) {
         currentVisibleNode.properties.parts.forEach((collection: any) => {
@@ -166,15 +178,15 @@ const SelectModelModal = ({
           });
         });
       }
-      
+
       // Always update checkedItems to reflect current state
       setCheckedItems((prevCheckedItems: Set<string>) => {
         const newCheckedItems = new Set<string>();
-        partsToCheck.forEach(partId => {
+        partsToCheck.forEach((partId) => {
           newCheckedItems.add(partId);
         });
-        
-        prevCheckedItems.forEach(itemId => {
+
+        prevCheckedItems.forEach((itemId) => {
           if (!partsToCheck.has(itemId)) {
             // Check if this item is still valid (exists in nodes)
             if (nodes[itemId]) {
@@ -182,22 +194,20 @@ const SelectModelModal = ({
             }
           }
         });
-        
+
         return newCheckedItems;
       });
     }
   }, [
-    selectedProperty, 
-    currentVisibleNode?.id, 
-    currentVisibleNode?.inheritanceParts, 
-    currentVisibleNode?.inheritance?.parts?.ref, 
+    selectedProperty,
+    currentVisibleNode?.id,
+    currentVisibleNode?.inheritanceParts,
+    currentVisibleNode?.inheritance?.parts?.ref,
     currentVisibleNode?.properties?.parts,
     setCheckedItems,
     nodes,
-    isUpdatingInheritance
+    isUpdatingInheritance,
   ]);
-
-
 
   const getSelectingModelTitle = (
     property: string,
@@ -272,7 +282,10 @@ const SelectModelModal = ({
   const markItemAsChecked = async (
     checkedId: string,
     radioSelection = false,
-    fromGeneralizationDropdown?: { generalizationId: string; generalizationTitle: string }
+    fromGeneralizationDropdown?: {
+      generalizationId: string;
+      generalizationTitle: string;
+    },
   ) => {
     const removedElements: string[] = [];
     const addedElements: string[] = [];
@@ -295,73 +308,89 @@ const SelectModelModal = ({
       // This is a part selected from generalization dropdown - save to inheritanceParts
       setIsUpdatingInheritance(true);
       try {
-        const action = isRemoving ? 'remove' : 'add';
-        const hasIntactInheritance = currentVisibleNode?.inheritance?.parts?.ref;
+        const action = isRemoving ? "remove" : "add";
+        const hasIntactInheritance =
+          currentVisibleNode?.inheritance?.parts?.ref;
 
         // Check if this part is inherited or direct from the generalization
-        const generalizationNode = nodes[fromGeneralizationDropdown.generalizationId];
-        const partInGeneralization = getGeneralizationParts(fromGeneralizationDropdown.generalizationId, nodes)
-          .find(p => p.id === checkedId);
+        const generalizationNode =
+          nodes[fromGeneralizationDropdown.generalizationId];
+        const partInGeneralization = getGeneralizationParts(
+          fromGeneralizationDropdown.generalizationId,
+          nodes,
+        ).find((p) => p.id === checkedId);
 
         let inheritedFromId = fromGeneralizationDropdown.generalizationId;
         let inheritedFromTitle = fromGeneralizationDropdown.generalizationTitle;
 
         // If the part is inherited in the generalization, preserve the original inheritance chain
-        if (partInGeneralization?.isInherited && generalizationNode?.inheritanceParts?.[checkedId]) {
-          const originalInheritance = generalizationNode.inheritanceParts[checkedId];
+        if (
+          partInGeneralization?.isInherited &&
+          generalizationNode?.inheritanceParts?.[checkedId]
+        ) {
+          const originalInheritance =
+            generalizationNode.inheritanceParts[checkedId];
           inheritedFromId = originalInheritance.inheritedFromId;
           inheritedFromTitle = originalInheritance.inheritedFromTitle;
         }
 
         if (hasIntactInheritance) {
-          if (action === 'remove') {
+          if (action === "remove") {
             // Break inheritance and copy all parts except the one being removed
             await breakInheritanceAndCopyParts(
               currentVisibleNode?.id,
               checkedId,
               nodes,
-              user
+              user,
             );
           } else {
             const inheritanceRef = currentVisibleNode.inheritance.parts.ref;
             const referencedNode = nodes[inheritanceRef];
-            
+
             if (referencedNode) {
-              const allPartsFromRef = getGeneralizationParts(inheritanceRef, nodes);
-              
-              const nodeDoc = await getDoc(doc(collection(getFirestore(), NODES), currentVisibleNode?.id));
+              const allPartsFromRef = getGeneralizationParts(
+                inheritanceRef,
+                nodes,
+              );
+
+              const nodeDoc = await getDoc(
+                doc(collection(getFirestore(), NODES), currentVisibleNode?.id),
+              );
               if (nodeDoc.exists()) {
-                const currentInheritanceParts = currentVisibleNode?.inheritanceParts || {};
+                const currentInheritanceParts =
+                  currentVisibleNode?.inheritanceParts || {};
                 const newInheritanceParts = { ...currentInheritanceParts };
-                
+
                 // Copy all parts from referenced generalization
-                allPartsFromRef.forEach(part => {
+                allPartsFromRef.forEach((part) => {
                   if (!newInheritanceParts[part.id]) {
                     newInheritanceParts[part.id] = {
-                      inheritedFromTitle: part.isInherited 
-                        ? referencedNode.inheritanceParts[part.id].inheritedFromTitle
+                      inheritedFromTitle: part.isInherited
+                        ? referencedNode.inheritanceParts[part.id]
+                            .inheritedFromTitle
                         : referencedNode.title,
-                      inheritedFromId: part.isInherited 
-                        ? referencedNode.inheritanceParts[part.id].inheritedFromId
-                        : inheritanceRef
+                      inheritedFromId: part.isInherited
+                        ? referencedNode.inheritanceParts[part.id]
+                            .inheritedFromId
+                        : inheritanceRef,
                     };
                   }
                 });
-                
+
                 await updateDoc(nodeDoc.ref, {
                   inheritanceParts: newInheritanceParts,
-                  'inheritance.parts.ref': null
+                  "inheritance.parts.ref": null,
                 });
               }
             }
-            
+
             await saveAsInheritancePart(
               currentVisibleNode?.id,
               checkedId,
               inheritedFromId,
               inheritedFromTitle,
               user,
-              'add'
+              "add",
             );
           }
         } else {
@@ -372,7 +401,7 @@ const SelectModelModal = ({
             inheritedFromId,
             inheritedFromTitle,
             user,
-            action
+            action,
           );
         }
 
@@ -387,7 +416,10 @@ const SelectModelModal = ({
             }
             _oldChecked.add(checkedId);
           }
-          if (selectedProperty === "generalizations" && _oldChecked.size === 0) {
+          if (
+            selectedProperty === "generalizations" &&
+            _oldChecked.size === 0
+          ) {
             return checkedItems;
           }
           return _oldChecked;
@@ -403,8 +435,7 @@ const SelectModelModal = ({
           }
           return _oldChecked;
         });
-
-              } catch (error) {
+      } catch (error) {
         console.error("Error saving inheritance part:", error);
       } finally {
         setIsUpdatingInheritance(false);
@@ -415,7 +446,9 @@ const SelectModelModal = ({
         const _prev = [...prev];
         if (checkedItems.has(checkedId)) {
           for (let collection of _prev) {
-            collection.nodes = collection.nodes.filter((n) => n.id !== checkedId);
+            collection.nodes = collection.nodes.filter(
+              (n) => n.id !== checkedId,
+            );
           }
         } else {
           if (selectedCollection) {
@@ -460,7 +493,7 @@ const SelectModelModal = ({
         return _prev;
       });
     }
-    
+
     scrollToElement(checkedId);
 
     // Update checkedItems and newOnes for non-inheritance parts (inheritance parts are handled above)
@@ -490,13 +523,13 @@ const SelectModelModal = ({
         }
         return _oldChecked;
       });
-        await handleSaveLinkChanges(
-          removedElements,
-          addedElements,
-          selectedProperty,
-          currentVisibleNode?.id,
-          selectedCollection,
-        );
+      await handleSaveLinkChanges(
+        removedElements,
+        addedElements,
+        selectedProperty,
+        currentVisibleNode?.id,
+        selectedCollection,
+      );
     }
     setLoadingIds((prev: Set<string>) => {
       const _prev = new Set(prev);
@@ -715,14 +748,20 @@ const SelectModelModal = ({
         >
           <InheritedPartsViewer
             selectedProperty={selectedProperty}
-            getAllGeneralizations={() => getAllGeneralizations(currentVisibleNode, nodes)}
-            getGeneralizationParts={(generalizationId: string) => getGeneralizationParts(generalizationId, nodes)}
+            getAllGeneralizations={() =>
+              getAllGeneralizations(currentVisibleNode, nodes)
+            }
+            getGeneralizationParts={(generalizationId: string) =>
+              getGeneralizationParts(generalizationId, nodes)
+            }
             getTitle={getTitle}
             nodes={nodes}
             checkedItems={checkedItems}
             markItemAsChecked={markItemAsChecked}
             isSaving={isSaving}
             readOnly={false}
+            setDisplayDetails={setDisplayDetails}
+            inheritanceDetails={inheritanceDetails}
           />
           <Box
             sx={{
@@ -790,7 +829,7 @@ const SelectModelModal = ({
                   isSaving ||
                   searchValue.length < 3 ||
                   searchResultsForSelection[0]?.title.trim() ===
-                  searchValue.trim() ||
+                    searchValue.trim() ||
                   disabledButton
                 }
               >
