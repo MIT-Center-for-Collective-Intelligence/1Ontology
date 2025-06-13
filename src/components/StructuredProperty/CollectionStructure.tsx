@@ -50,6 +50,13 @@ import {
 import { LoadingButton } from "@mui/lab";
 import SelectModelModal from "../Models/SelectModel";
 
+interface LoadMoreNode extends ILinkNode {
+  id: string;
+  isLoadMore: boolean;
+  displayText: string;
+  parentCollection: string;
+}
+
 const CollectionStructure = ({
   model,
   locked,
@@ -113,6 +120,8 @@ const CollectionStructure = ({
   skillsFuture,
   partsInheritance,
   enableEdit,
+  handleLoadMore,
+  loadingStates = new Set(),
 }: {
   model?: boolean;
   locked: boolean;
@@ -179,6 +188,8 @@ const CollectionStructure = ({
     [nodeId: string]: { inheritedFrom: string; partInheritance: string };
   };
   enableEdit: boolean;
+  handleLoadMore?: (loadMoreNodeId: string, collectionName: string) => void;
+  loadingStates?: Set<string>;
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -188,6 +199,97 @@ const CollectionStructure = ({
 
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
+
+  const isLoadMoreNode = (node: ILinkNode): node is LoadMoreNode => {
+    return 'isLoadMore' in node && (node as LoadMoreNode).isLoadMore === true;
+  };
+
+  const LoadMoreButton = ({
+    loadMoreNode,
+    isLoading,
+    onLoadMore
+  }: {
+    loadMoreNode: LoadMoreNode;
+    isLoading: boolean;
+    onLoadMore: () => void;
+  }) => {
+    return (
+      <Tooltip
+        title={loadMoreNode.displayText}
+        arrow
+        placement="top"
+        PopperProps={{
+          sx: {
+            '& .MuiTooltip-tooltip': {
+              backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#424242' : '#616161',
+              color: '#fff',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              borderRadius: '8px',
+              padding: '8px 12px',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
+            },
+            '& .MuiTooltip-arrow': {
+              color: (theme) => theme.palette.mode === 'dark' ? '#424242' : '#616161',
+            },
+          },
+        }}
+      >
+        <Box
+          onClick={() => !isLoading && onLoadMore()}
+          sx={{
+            cursor: isLoading ? "default" : "pointer",
+            transition: 'all 0.2s ease-in-out',
+            padding: '8px 16px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            borderRadius: '18px',
+            '&:hover': {
+              backgroundColor: isLoading ? 'transparent' : 'rgba(255, 165, 0, 0.12)',
+            },
+            '&:active': {
+              backgroundColor: isLoading ? 'transparent' : 'rgba(255, 165, 0, 0.15)',
+            },
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              color: isLoading ? 'rgba(255, 165, 0, 0.5)' : 'rgba(255, 165, 0, 0.8)',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                color: isLoading ? 'rgba(255, 165, 0, 0.5)' : '#ff8c00',
+                transform: isLoading ? 'none' : 'scale(1.02)',
+              },
+            }}
+          >
+            {isLoading ? (
+              <Box
+                sx={{
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid rgba(255, 165, 0, 0.3)',
+                  borderTop: '2px solid rgba(255, 165, 0, 0.8)',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  marginRight: '8px',
+                  '@keyframes spin': {
+                    '0%': { transform: 'rotate(0deg)' },
+                    '100%': { transform: 'rotate(360deg)' },
+                  },
+                }}
+              />
+            ) : (
+              <>•••</>
+            )}
+          </Box>
+        </Box>
+      </Tooltip>
+    );
+  };
 
   const handleCollectionSorting = useCallback(
     (e: any) => {
@@ -1147,6 +1249,18 @@ const CollectionStructure = ({
                                     0 ? (
                                     propertyValue[collectionIndex].nodes.map(
                                       (link: ILinkNode, index: number) => {
+                                        if (isLoadMoreNode(link)) {
+                                          const isLoading = loadingStates?.has(link.id);
+                                          return (
+                                            <LoadMoreButton
+                                              key={link.id}
+                                              loadMoreNode={link}
+                                              isLoading={isLoading}
+                                              onLoadMore={() => handleLoadMore?.(link.id, link.parentCollection)}
+                                            />
+                                          );
+                                        }
+
                                         // Add inheritance data if this is a parts property with intact inheritance
                                         const inheritanceRef = property === "parts" && currentVisibleNode.inheritance?.parts?.ref;
                                         const enhancedLink = inheritanceRef ? {
