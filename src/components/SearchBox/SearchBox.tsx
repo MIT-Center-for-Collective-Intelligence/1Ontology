@@ -13,7 +13,7 @@ type IProps = {
   setSearch: any;
   search: string;
   label: string;
-  glowSearchBox: boolean;
+  glowSearchBox?: boolean;
   sx?: any;
 };
 
