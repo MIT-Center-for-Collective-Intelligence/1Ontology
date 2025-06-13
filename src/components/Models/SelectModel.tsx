@@ -138,6 +138,7 @@ const SelectModelModal = ({
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
   const [isUpdatingInheritance, setIsUpdatingInheritance] = useState(false);
+  const [glowSearchBox, setGlowSearchBox] = useState(false);
 
   const db = getFirestore();
 
@@ -666,6 +667,19 @@ const SelectModelModal = ({
     }
   };
 
+  const triggerSearch = (triggeredValue: { id: string; title: string }) => {
+    setSearchValue(triggeredValue.title);
+    setExpandedNodes((prev: Set<string>) => {
+      const _prev = new Set(prev);
+      _prev.add(triggeredValue.id);
+      return _prev;
+    });
+    setGlowSearchBox(true);
+    setTimeout(() => {
+      setGlowSearchBox(false);
+    }, 1000);
+  };
+
   const renderSearchOrTree = () =>
     searchValue ? (
       <ExpandSearchResult
@@ -762,6 +776,7 @@ const SelectModelModal = ({
             readOnly={false}
             setDisplayDetails={setDisplayDetails}
             inheritanceDetails={inheritanceDetails}
+            triggerSearch={triggerSearch}
           />
           <Box
             sx={{
@@ -773,6 +788,7 @@ const SelectModelModal = ({
             <SearchBox
               setSearch={setSearchValue}
               search={searchValue}
+              glowSearchBox={glowSearchBox}
               label="Search ..."
             />
             <Tooltip

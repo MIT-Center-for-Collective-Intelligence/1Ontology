@@ -158,7 +158,6 @@ const StructuredProperty = ({
   const [showComments, setShowComments] = useState(false);
 
   const db = getFirestore();
-  console.log("inheritanceDetails--StructuredProperty", inheritanceDetails);
 
   const propertyValue: ICollection[] = useMemo(() => {
     try {

@@ -219,7 +219,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
   const [treeViewData, setTreeViewData] = useState([]);
   const [loadingNodes, setLoadingNodes] = useState(false);
-  const [appName, setAppName] = useState("Ontology - Development Version"); // this state is only been used for the Skills Future App
+  const [appName, setAppName] = useState("Ontology - Demo Version"); // this state is only been used for the Skills Future App
   const [partsInheritance, setPartsInheritance] = useState<{
     [nodeId: string]: { inheritedFrom: string; partInheritance: string };
   }>({});
@@ -1202,7 +1202,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
         }
       }
     }
-    console.log(_inheritanceDetails, "_inheritanceDetails");
+
     setInheritanceDetails(_inheritanceDetails);
     setPartsInheritance(inheritedParts);
   }, [currentVisibleNode, nodes]);

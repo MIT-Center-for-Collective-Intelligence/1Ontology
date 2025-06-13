@@ -8,8 +8,10 @@ import {
   IconButton,
 } from "@mui/material";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import SearchIcon from "@mui/icons-material/Search";
 
 interface GeneralizationNode {
   id: string;
@@ -41,6 +43,7 @@ interface InheritedPartsViewerProps {
   readOnly?: boolean;
   setDisplayDetails: any;
   inheritanceDetails: any;
+  triggerSearch?: any;
 }
 
 const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
@@ -55,9 +58,10 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   readOnly = false,
   setDisplayDetails,
   inheritanceDetails,
+  triggerSearch,
 }) => {
   const [selectedTab, setSelectedTab] = useState(0);
-  console.log("inheritanceDetails--InheritedPartsViewer", inheritanceDetails);
+
   if (selectedProperty !== "parts") return null;
 
   const generalizations = getAllGeneralizations();
@@ -126,7 +130,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               }}
             >
               {readOnly ? (
-                checkedItems.has(part.id) ? (
+                checkedItems.has(part.id) ||
+                (inheritanceDetails[part.id] || []).length > 0 ? (
                   <CheckIcon
                     sx={{
                       color: "#4caf50",
@@ -142,34 +147,19 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   />
                 )
               ) : (
-                <Checkbox
-                  checked={checkedItems.has(part.id)}
-                  onChange={() =>
-                    markItemAsChecked(part.id, false, {
-                      generalizationId: generalizationId,
-                      generalizationTitle: getTitle(nodes, generalizationId),
-                    })
-                  }
-                  disabled={isSaving}
-                  size="small"
-                  sx={{
-                    color: (theme) =>
-                      theme.palette.mode === "light" ? "#bdc3c7" : "#7f8c8d",
-                    "&.Mui-checked": {
-                      color: (theme) =>
-                        theme.palette.mode === "light" ? "#3498db" : "#4a90e2",
-                    },
-                    "& .MuiSvgIcon-root": {
-                      fontSize: "16px",
-                    },
+                <IconButton
+                  sx={{ p: 0.4 }}
+                  onClick={() => {
+                    triggerSearch(part);
                   }}
-                />
+                >
+                  <SearchIcon sx={{ fontSize: "19px", color: "orange" }} />
+                </IconButton>
               )}
               <Box
                 sx={{
                   flex: 1,
                   display: "flex",
-                  flexDirection: "column",
                   gap: 0.5,
                 }}
               >
@@ -182,18 +172,27 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                       fontSize: "0.9rem",
                     }}
                   >
-                    {part.title}{" "}
-                    {((inheritanceDetails || {})[part.id] || []).length > 0
-                      ? "→"
-                      : ""}
-                    {((inheritanceDetails || {})[part.id] || []).length > 0 ? (
-                      <span style={{ fontStyle: "italic" }}>
-                        {(inheritanceDetails || {})[part.id][0]}
-                      </span>
-                    ) : (
-                      ""
-                    )}{" "}
+                    {part.title}
                   </Typography>
+                )}
+                {((inheritanceDetails || {})[part.id] || []).length > 0 ? (
+                  <ArrowRightAltIcon sx={{ color: "orange" }} />
+                ) : (
+                  ""
+                )}
+                {((inheritanceDetails || {})[part.id] || []).length > 0 ? (
+                  <Typography
+                    sx={{
+                      fontStyle: "italic",
+                      color: (theme) =>
+                        theme.palette.mode === "light" ? "#666" : "#999",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {(inheritanceDetails || {})[part.id][0]}
+                  </Typography>
+                ) : (
+                  ""
                 )}
                 {!partGeneralization && (
                   <Typography
@@ -252,14 +251,16 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             gap: "5px",
           }}
         >
-          <IconButton
-            sx={{ border: "1px solid gray", p: 0, backgroundColor: "orange" }}
-            onClick={() => {
-              setDisplayDetails(false);
-            }}
-          >
-            <KeyboardArrowUpIcon />
-          </IconButton>{" "}
+          {!triggerSearch && (
+            <IconButton
+              sx={{ border: "1px solid gray", p: 0, backgroundColor: "orange" }}
+              onClick={() => {
+                setDisplayDetails(false);
+              }}
+            >
+              <KeyboardArrowUpIcon />
+            </IconButton>
+          )}{" "}
           <Typography>{"Generalizations' Parts:"}</Typography>
         </Typography>
       </Box>

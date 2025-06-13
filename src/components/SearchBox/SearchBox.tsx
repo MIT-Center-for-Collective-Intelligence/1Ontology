@@ -13,9 +13,17 @@ type IProps = {
   setSearch: any;
   search: string;
   label: string;
+  glowSearchBox: boolean;
   sx?: any;
 };
-export const SearchBox = ({ setSearch, search, label, sx }: IProps) => {
+
+export const SearchBox = ({
+  setSearch,
+  search,
+  label,
+  glowSearchBox,
+  sx,
+}: IProps) => {
   const [inputValue, setInputValue] = useState("");
 
   return (
@@ -37,6 +45,7 @@ export const SearchBox = ({ setSearch, search, label, sx }: IProps) => {
             border: "none",
             color: (theme) =>
               theme.palette.mode === "dark" ? "white" : "black",
+            boxShadow: glowSearchBox ? "0 0 8px 2px rgba(0, 255, 0, 0.6)" : "",
             "& input": {
               margin: "11px",
               border: "none",
@@ -47,12 +56,8 @@ export const SearchBox = ({ setSearch, search, label, sx }: IProps) => {
               },
             },
           }}
-          value={window.innerWidth > 800 ? search : inputValue}
-          onChange={(e) =>
-            window.innerWidth > 800
-              ? setSearch(e.target.value)
-              : setInputValue(e.target.value)
-          }
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           startAdornment={
             <InputAdornment position="start">
               <SearchIcon
@@ -67,7 +72,6 @@ export const SearchBox = ({ setSearch, search, label, sx }: IProps) => {
             search && (
               <InputAdornment position="end">
                 <IconButton
-                  sx={{}}
                   onClick={() => {
                     setSearch("");
                   }}
@@ -93,6 +97,7 @@ export const SearchBox = ({ setSearch, search, label, sx }: IProps) => {
             border: "none",
             color: (theme) =>
               theme.palette.mode === "dark" ? "white" : "black",
+            boxShadow: glowSearchBox ? "0 0 8px 2px rgba(0, 255, 0, 0.6)" : "",
             "& input": {
               margin: "11px",
               border: "none",
@@ -103,12 +108,8 @@ export const SearchBox = ({ setSearch, search, label, sx }: IProps) => {
               },
             },
           }}
-          value={window.innerWidth > 800 ? search : inputValue}
-          onChange={(e) =>
-            window.innerWidth > 800
-              ? setSearch(e.target.value)
-              : setInputValue(e.target.value)
-          }
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
           endAdornment={
             <InputAdornment position="end">
               <IconButton
