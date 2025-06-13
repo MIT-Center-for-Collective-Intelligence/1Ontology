@@ -1189,22 +1189,25 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
             if (id) {
               inheritedParts[node.id] = {
                 inheritedFrom: id ? (nodes[id].title ?? "") : "",
-                partInheritance: partInheritance
-                  ? (nodes[partInheritance].title ?? "")
-                  : "",
+                partInheritance:
+                  partInheritance && partInheritance !== id
+                    ? (nodes[partInheritance].title ?? "")
+                    : "",
               };
-
-              if (_inheritanceDetails[partInheritance]) {
-                _inheritanceDetails[partInheritance].push(nodes[node.id].title);
-              } else {
-                _inheritanceDetails[partInheritance] = [nodes[node.id].title];
+              if (partInheritance && partInheritance !== id) {
+                if (_inheritanceDetails[partInheritance]) {
+                  _inheritanceDetails[partInheritance].push(
+                    nodes[node.id].title,
+                  );
+                } else {
+                  _inheritanceDetails[partInheritance] = [nodes[node.id].title];
+                }
               }
             }
           }
         }
       }
     }
-
     setInheritanceDetails(_inheritanceDetails);
     setPartsInheritance(inheritedParts);
   }, [currentVisibleNode, nodes]);

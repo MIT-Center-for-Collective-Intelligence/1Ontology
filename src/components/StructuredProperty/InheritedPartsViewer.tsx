@@ -6,6 +6,7 @@ import {
   Tab,
   Checkbox,
   IconButton,
+  Tooltip,
 } from "@mui/material";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
@@ -147,14 +148,16 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   />
                 )
               ) : (
-                <IconButton
-                  sx={{ p: 0.4 }}
-                  onClick={() => {
-                    triggerSearch(part);
-                  }}
-                >
-                  <SearchIcon sx={{ fontSize: "19px", color: "orange" }} />
-                </IconButton>
+                <Tooltip title={"Search it below"} placement="left">
+                  <IconButton
+                    sx={{ p: 0.4 }}
+                    onClick={() => {
+                      triggerSearch(part);
+                    }}
+                  >
+                    <SearchIcon sx={{ fontSize: "19px", color: "orange" }} />
+                  </IconButton>
+                </Tooltip>
               )}
               <Box
                 sx={{

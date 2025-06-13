@@ -1,16 +1,15 @@
 import {
-  Button,
   FormControl,
   IconButton,
   InputAdornment,
   OutlinedInput,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 
 type IProps = {
-  setSearch: any;
+  setSearch: (value: string) => void;
   search: string;
   label: string;
   glowSearchBox?: boolean;
@@ -26,6 +25,29 @@ export const SearchBox = ({
 }: IProps) => {
   const [inputValue, setInputValue] = useState("");
 
+  const inputStyles = {
+    borderRadius: "30px",
+    backgroundColor: (theme: any) =>
+      theme.palette.mode === "dark" ? "#080808" : "white",
+    margin: "12px",
+    border: "none",
+    color: (theme: any) => (theme.palette.mode === "dark" ? "white" : "black"),
+    boxShadow: glowSearchBox ? "0 0 8px 2px rgba(0, 255, 0, 0.6)" : "",
+    "& input": {
+      margin: "11px",
+      border: "none",
+      p: "0 0 0 5px",
+      color: glowSearchBox
+        ? "green"
+        : (theme: any) => (theme.palette.mode === "dark" ? "white" : "black"),
+      caretColor: glowSearchBox ? "green" : undefined,
+      "&::placeholder": {
+        color: (theme: any) =>
+          theme.palette.mode === "dark" ? "white!important" : "gray",
+      },
+    },
+  };
+
   return (
     <FormControl
       sx={{
@@ -34,28 +56,10 @@ export const SearchBox = ({
       }}
       fullWidth
     >
-      {window.innerWidth > 800 && (
+      {window.innerWidth > 800 ? (
         <OutlinedInput
           placeholder={label}
-          sx={{
-            borderRadius: "30px",
-            backgroundColor: (theme) =>
-              theme.palette.mode === "dark" ? "#080808" : "white",
-            margin: "12px",
-            border: "none",
-            color: (theme) =>
-              theme.palette.mode === "dark" ? "white" : "black",
-            boxShadow: glowSearchBox ? "0 0 8px 2px rgba(0, 255, 0, 0.6)" : "",
-            "& input": {
-              margin: "11px",
-              border: "none",
-              p: 0,
-              "&::placeholder": {
-                color: (theme) =>
-                  theme.palette.mode === "dark" ? "white!important" : "gray",
-              },
-            },
-          }}
+          sx={inputStyles}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           startAdornment={
@@ -84,30 +88,10 @@ export const SearchBox = ({
             )
           }
         />
-      )}
-
-      {window.innerWidth <= 800 && (
+      ) : (
         <OutlinedInput
           placeholder={label}
-          sx={{
-            borderRadius: "30px",
-            backgroundColor: (theme) =>
-              theme.palette.mode === "dark" ? "#080808" : "white",
-            margin: "12px",
-            border: "none",
-            color: (theme) =>
-              theme.palette.mode === "dark" ? "white" : "black",
-            boxShadow: glowSearchBox ? "0 0 8px 2px rgba(0, 255, 0, 0.6)" : "",
-            "& input": {
-              margin: "11px",
-              border: "none",
-              p: "0 0 0 5px",
-              "&::placeholder": {
-                color: (theme) =>
-                  theme.palette.mode === "dark" ? "white!important" : "gray",
-              },
-            },
-          }}
+          sx={inputStyles}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           endAdornment={
