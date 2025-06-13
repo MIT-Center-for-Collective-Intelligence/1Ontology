@@ -676,6 +676,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
             children: _children,
 
             category: true,
+            unclassified: node.unclassified,
           };
           collections.push(record);
           visited.set(id, record);
@@ -710,6 +711,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
           ...getTreeView(mainChildren, visited, [...path, node.id]),
         ],
         category: !!node.category,
+        unclassified: node.unclassified,
       };
       visited.set(id, record);
       newNodes.push(record);

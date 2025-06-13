@@ -37,6 +37,22 @@ import { NODES } from "@components/lib/firestoreClient/collections";
 import CommentsSection from "./CommentsSection";
 import InheritedPartsViewer from "./InheritedPartsViewer";
 
+const INITIAL_LOAD_COUNT = 20;
+const LOAD_MORE_COUNT = 20;
+
+interface PaginatedCollection extends ICollection {
+  allNodes?: ILinkNode[];
+  isLoadMore?: boolean;
+  loadedCount?: number;
+}
+
+interface LoadMoreNode extends ILinkNode {
+  id: string;
+  isLoadMore: boolean;
+  displayText: string;
+  parentCollection: string;
+}
+
 type IStructuredPropertyProps = {
   currentVisibleNode: INode;
   editStructuredProperty: any;
@@ -157,9 +173,66 @@ const StructuredProperty = ({
   const [displayDetails, setDisplayDetails] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
+  const [paginationState, setPaginationState] = useState<Map<string, number>>(new Map());
+  const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set());
   const db = getFirestore();
 
-  const propertyValue: ICollection[] = useMemo(() => {
+  const processCollectionData = useCallback((collections: ICollection[]): PaginatedCollection[] => {
+    if (property !== "specializations") return collections;
+    
+    return collections.map(collection => {
+      if (!currentVisibleNode.unclassified || !collection.nodes || collection.nodes.length <= INITIAL_LOAD_COUNT) {
+        return { ...collection, allNodes: collection.nodes ? [...collection.nodes] : [] };
+      }
+
+      const loadedCount = paginationState.get(collection.collectionName) || INITIAL_LOAD_COUNT;
+      const allNodes = [...collection.nodes];
+      const visibleNodes = allNodes.slice(0, loadedCount);
+      const remainingCount = allNodes.length - loadedCount;
+
+      const processedCollection: PaginatedCollection = {
+        ...collection,
+        nodes: [...visibleNodes],
+        allNodes,
+        loadedCount
+      };
+
+      if (remainingCount > 0) {
+        const loadMoreNode: LoadMoreNode = {
+          id: `${collection.collectionName}-load-more`,
+          isLoadMore: true,
+          displayText: `Show ${Math.min(remainingCount, LOAD_MORE_COUNT)} more specializations`,
+          parentCollection: collection.collectionName
+        };
+        processedCollection.nodes.push(loadMoreNode);
+      }
+
+      return processedCollection;
+    });
+  }, [property, currentVisibleNode.unclassified, paginationState]);
+
+  const handleLoadMore = useCallback((loadMoreNodeId: string, collectionName: string) => {
+    setLoadingStates(prev => new Set(prev).add(loadMoreNodeId));
+
+    setTimeout(() => {
+      const currentLoaded = paginationState.get(collectionName) || INITIAL_LOAD_COUNT;
+      const newLoadedCount = currentLoaded + LOAD_MORE_COUNT;
+      
+      setPaginationState(prev => {
+        const newState = new Map(prev);
+        newState.set(collectionName, newLoadedCount);
+        return newState;
+      });
+
+      setLoadingStates(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(loadMoreNodeId);
+        return newSet;
+      });
+    }, 300);
+  }, [paginationState]);
+
+  const propertyValue: PaginatedCollection[] = useMemo(() => {
     try {
       let result = null;
       if (property === "specializations" || property === "generalizations") {
@@ -168,13 +241,13 @@ const StructuredProperty = ({
       } else {
         result =
           getPropertyValue(
-            nodes,
-            currentVisibleNode.inheritance[property]?.ref,
-            property,
-          ) || currentVisibleNode?.properties[property];
+          nodes,
+          currentVisibleNode.inheritance[property]?.ref,
+          property,
+        ) || currentVisibleNode?.properties[property];
       }
       if (!selectedDiffNode) {
-        return result;
+        return processCollectionData(result || []);
       }
       if (
         selectedDiffNode &&
@@ -224,13 +297,13 @@ const StructuredProperty = ({
           destination.index,
           0,
           {
-            id: draggableNodeId,
-            change: "added",
-            changeType: "sort",
-            randomId: doc(collection(db, NODES)).id,
-          },
-        );
-        return previousValue;
+          id: draggableNodeId,
+          change: "added",
+          changeType: "sort",
+          randomId: doc(collection(db, NODES)).id,
+        },
+      );
+      return processCollectionData(previousValue);
       }
 
       for (let improvementChange of listOfChanges || []) {
@@ -271,13 +344,14 @@ const StructuredProperty = ({
         }
       }
       if (listOfChanges.length > 0) {
-        return [...finalResult];
+        return processCollectionData([...finalResult]);
       }
-      return result;
+      return processCollectionData(result || []);
     } catch (error) {
       console.error(error);
+      return [];
     }
-  }, [currentVisibleNode, nodes, property, selectedDiffNode]) as ICollection[];
+  }, [currentVisibleNode, nodes, property, selectedDiffNode, processCollectionData, db]);
 
   const unlinkVisible = useCallback(
     (nodeId: string) => {
@@ -334,6 +408,7 @@ const StructuredProperty = ({
       ) {
         return "red";
       }
+      return "";
     },
     [selectedDiffNode, property],
   );
@@ -729,7 +804,7 @@ const StructuredProperty = ({
             currentImprovement={currentImprovement}
             property={property}
             propertyValue={
-              selectedProperty === property ? editableProperty : propertyValue
+              selectedProperty === property ? (editableProperty ?? []) : (propertyValue ?? [])
             }
             setEditableProperty={setEditableProperty}
             getCategoryStyle={getCategoryStyle}
@@ -789,6 +864,8 @@ const StructuredProperty = ({
             skillsFuture={skillsFuture}
             partsInheritance={partsInheritance ?? {}}
             enableEdit={enableEdit}
+            handleLoadMore={handleLoadMore}
+            loadingStates={loadingStates}
           />
         )}
         {property === "parts" && !displayDetails && (

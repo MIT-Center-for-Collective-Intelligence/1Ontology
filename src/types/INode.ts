@@ -215,6 +215,7 @@ export type TreeData = {
   actionAlternatives?: string[];
   task?: boolean;
   comments?: boolean;
+  unclassified?: boolean;
 };
 
 /**
