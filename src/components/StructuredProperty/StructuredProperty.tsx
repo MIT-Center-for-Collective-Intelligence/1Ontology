@@ -871,7 +871,7 @@ const StructuredProperty = ({
         {property === "parts" && !displayDetails && (
           <Button
             variant="outlined"
-            sx={{ borderRadius: "25px", p: 0.5, px: 2, ml: "10px", mb: "3px" }}
+            sx={{ borderRadius: "25px", p: 0.5, px: 2, ml: "10px", mb: "9px" }}
             onClick={() => {
               setDisplayDetails((prev) => !prev);
             }}

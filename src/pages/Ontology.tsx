@@ -1189,12 +1189,11 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
             if (id) {
               inheritedParts[node.id] = {
                 inheritedFrom: id ? (nodes[id].title ?? "") : "",
-                partInheritance:
-                  partInheritance && partInheritance !== id
-                    ? (nodes[partInheritance].title ?? "")
-                    : "",
+                partInheritance: partInheritance
+                  ? (nodes[partInheritance].title ?? "")
+                  : "",
               };
-              if (partInheritance && partInheritance !== id) {
+              if (partInheritance) {
                 if (_inheritanceDetails[partInheritance]) {
                   _inheritanceDetails[partInheritance].push(
                     nodes[node.id].title,

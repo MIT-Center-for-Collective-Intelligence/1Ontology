@@ -120,6 +120,9 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1, py: 1 }}>
         {displayedParts.map((part) => {
           const partGeneralization = getPartGeneralization(part.id);
+          const hasInheritance = (inheritanceDetails[part.id] || []).length > 0;
+          const isChecked = checkedItems.has(part.id);
+          const showCheck = readOnly && (isChecked || hasInheritance);
 
           return (
             <Box
@@ -131,42 +134,32 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               }}
             >
               {readOnly ? (
-                checkedItems.has(part.id) ||
-                (inheritanceDetails[part.id] || []).length > 0 ? (
-                  <CheckIcon
-                    sx={{
-                      color: "#4caf50",
-                      fontSize: "20px",
-                    }}
-                  />
+                showCheck ? (
+                  <CheckIcon sx={{ color: "#4caf50", fontSize: 20 }} />
                 ) : (
-                  <CloseIcon
-                    sx={{
-                      color: "#f44336",
-                      fontSize: "20px",
-                    }}
-                  />
+                  <CloseIcon sx={{ color: "#f44336", fontSize: 20 }} />
                 )
               ) : (
-                <Tooltip title={"Search it below"} placement="left">
+                <Tooltip title="Search it below" placement="left">
                   <IconButton
                     sx={{ p: 0.4 }}
-                    onClick={() => {
-                      triggerSearch(part);
-                    }}
+                    onClick={() => triggerSearch(part)}
                   >
-                    <SearchIcon sx={{ fontSize: "19px", color: "orange" }} />
+                    <SearchIcon sx={{ fontSize: 19, color: "orange" }} />
                   </IconButton>
                 </Tooltip>
               )}
+
               <Box
                 sx={{
                   flex: 1,
                   display: "flex",
+                  alignItems: "center",
                   gap: 0.5,
+                  flexWrap: "wrap",
                 }}
               >
-                {partGeneralization && (
+                {partGeneralization ? (
                   <Typography
                     variant="body2"
                     sx={{
@@ -177,27 +170,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   >
                     {part.title}
                   </Typography>
-                )}
-                {((inheritanceDetails || {})[part.id] || []).length > 0 ? (
-                  <ArrowRightAltIcon sx={{ color: "orange" }} />
                 ) : (
-                  ""
-                )}
-                {((inheritanceDetails || {})[part.id] || []).length > 0 ? (
-                  <Typography
-                    sx={{
-                      fontStyle: "italic",
-                      color: (theme) =>
-                        theme.palette.mode === "light" ? "#666" : "#999",
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    {(inheritanceDetails || {})[part.id][0]}
-                  </Typography>
-                ) : (
-                  ""
-                )}
-                {!partGeneralization && (
                   <Typography
                     variant="body2"
                     sx={{
@@ -210,21 +183,39 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     {part.title}
                   </Typography>
                 )}
+
+                {hasInheritance && (
+                  <>
+                    <ArrowRightAltIcon sx={{ color: "orange" }} />
+                    <Typography
+                      sx={{
+                        fontStyle: "italic",
+                        color: (theme) =>
+                          theme.palette.mode === "light" ? "#666" : "#999",
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      {inheritanceDetails[part.id][0]}
+                    </Typography>
+                  </>
+                )}
               </Box>
+
+              {/* Uncomment and adjust if needed */}
               {/* {part.isInherited && (
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: (theme) => theme.palette.mode === "light" ? "#f39c12" : "#e67e22",
-                    fontSize: "0.7rem",
-                    fontWeight: 500,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px"
-                  }}
-                >
-                  inherited
-                </Typography>
-              )} */}
+              <Typography
+                variant="caption"
+                sx={{
+                  color: (theme) => theme.palette.mode === "light" ? "#f39c12" : "#e67e22",
+                  fontSize: "0.7rem",
+                  fontWeight: 500,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px"
+                }}
+              >
+                inherited
+              </Typography>
+            )} */}
             </Box>
           );
         })}
@@ -255,14 +246,20 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           }}
         >
           {!triggerSearch && (
-            <IconButton
-              sx={{ border: "1px solid gray", p: 0, backgroundColor: "orange" }}
-              onClick={() => {
-                setDisplayDetails(false);
-              }}
-            >
-              <KeyboardArrowUpIcon />
-            </IconButton>
+            <Tooltip title={"Collapse"} placement="top">
+              <IconButton
+                sx={{
+                  border: "1px solid gray",
+                  p: 0,
+                  backgroundColor: "orange",
+                }}
+                onClick={() => {
+                  setDisplayDetails(false);
+                }}
+              >
+                <KeyboardArrowUpIcon />
+              </IconButton>
+            </Tooltip>
           )}{" "}
           <Typography>{"Generalizations' Parts:"}</Typography>
         </Typography>

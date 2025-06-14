@@ -41,7 +41,7 @@ interface PaginatedTreeData extends TreeData {
   allChildren?: TreeData[];
   isTopLoader?: boolean;
   isBottomLoader?: boolean;
-  loadDirection?: 'top' | 'bottom';
+  loadDirection?: "top" | "bottom";
 }
 
 function DraggableTree({
@@ -83,167 +83,238 @@ function DraggableTree({
   const [firstLoad, setFirstLoad] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set());
-  const [paginationState, setPaginationState] = useState<Map<string, number>>(new Map());
-  const [focusedWindowState, setFocusedWindowState] = useState<Map<string, {startIndex: number, endIndex: number}>>(new Map());
+  const [paginationState, setPaginationState] = useState<Map<string, number>>(
+    new Map(),
+  );
+  const [focusedWindowState, setFocusedWindowState] = useState<
+    Map<string, { startIndex: number; endIndex: number }>
+  >(new Map());
   const collapsingLoader = useRef<boolean>(false);
 
-  const getFocusedNodeWindow = useCallback((children: TreeData[], focusedNodeId: string): TreeData[] => {
-    const focusedIndex = children.findIndex(child => child.nodeId === focusedNodeId || child.id === focusedNodeId);
-    if (focusedIndex === -1) return children;
+  const getFocusedNodeWindow = useCallback(
+    (children: TreeData[], focusedNodeId: string): TreeData[] => {
+      const focusedIndex = children.findIndex(
+        (child) => child.nodeId === focusedNodeId || child.id === focusedNodeId,
+      );
+      if (focusedIndex === -1) return children;
 
-    const startIndex = Math.max(0, focusedIndex - Math.floor(INITIAL_LOAD_COUNT / 2));
-    const endIndex = Math.min(children.length, startIndex + INITIAL_LOAD_COUNT);
-    
-    return children.slice(startIndex, endIndex);
-  }, []);
+      const startIndex = Math.max(
+        0,
+        focusedIndex - Math.floor(INITIAL_LOAD_COUNT / 2),
+      );
+      const endIndex = Math.min(
+        children.length,
+        startIndex + INITIAL_LOAD_COUNT,
+      );
 
-  const processTreeData = useCallback((data: TreeData[]): PaginatedTreeData[] => {
-    return data.map(node => {
-      const processedNode: PaginatedTreeData = { 
-        ...node,
-        allChildren: node.children ? [...node.children] : undefined
-      };
-      
-      if (node.children && node.children.length > INITIAL_LOAD_COUNT && node.unclassified) {
-        const hasCurrentVisibleNode = currentVisibleNode?.id && 
-          node.children.some(child => child.nodeId === currentVisibleNode.id);
-        const focusedWindow = focusedWindowState.get(node.id);
+      return children.slice(startIndex, endIndex);
+    },
+    [],
+  );
 
-        if (hasCurrentVisibleNode) {
-          let actualStartIndex, actualEndIndex;
-          
-          if (focusedWindow) {
-            actualStartIndex = focusedWindow.startIndex;
-            actualEndIndex = focusedWindow.endIndex;
-          } else {
-            const focusedIndex = node.children.findIndex(child => child.nodeId === currentVisibleNode.id);
-            actualStartIndex = Math.max(0, focusedIndex - Math.floor(INITIAL_LOAD_COUNT / 2));
-            actualEndIndex = Math.min(node.children.length, actualStartIndex + INITIAL_LOAD_COUNT);
-          }
+  const processTreeData = useCallback(
+    (data: TreeData[]): PaginatedTreeData[] => {
+      return data.map((node) => {
+        const processedNode: PaginatedTreeData = {
+          ...node,
+          allChildren: node.children ? [...node.children] : undefined,
+        };
 
-          const visibleChildren = node.children.slice(actualStartIndex, actualEndIndex);
-          processedNode.children = [...visibleChildren];
+        if (
+          node.children &&
+          node.children.length > INITIAL_LOAD_COUNT &&
+          node.unclassified
+        ) {
+          const hasCurrentVisibleNode =
+            currentVisibleNode?.id &&
+            node.children.some(
+              (child) => child.nodeId === currentVisibleNode.id,
+            );
+          const focusedWindow = focusedWindowState.get(node.id);
 
-          if (actualStartIndex > 0) {
-            const topLoadMoreNode: PaginatedTreeData = {
-              id: `${node.id}-load-more-top`,
-              name: `Show ${Math.min(actualStartIndex, LOAD_MORE_COUNT)} more specializations`,
-              isLoadMore: true,
-              isTopLoader: true,
-              parentId: node.id,
-              totalChildren: node.children.length,
-              loadedChildren: INITIAL_LOAD_COUNT,
-              loadDirection: 'top',
-              nodeType: "load-more",
-              nodeId: `${node.id}-load-more-top`,
-            };
-            processedNode.children.unshift(topLoadMoreNode);
-          }
+          if (hasCurrentVisibleNode) {
+            let actualStartIndex, actualEndIndex;
 
-          if (actualEndIndex < node.children.length) {
-            const remainingCount = node.children.length - actualEndIndex;
-            const bottomLoadMoreNode: PaginatedTreeData = {
-              id: `${node.id}-load-more-bottom`,
-              name: `Show ${Math.min(remainingCount, LOAD_MORE_COUNT)} more specializations`,
-              isLoadMore: true,
-              isBottomLoader: true,
-              parentId: node.id,
-              totalChildren: node.children.length,
-              loadedChildren: INITIAL_LOAD_COUNT,
-              loadDirection: 'bottom',
-              nodeType: "load-more",
-              nodeId: `${node.id}-load-more-bottom`,
-            };
-            processedNode.children.push(bottomLoadMoreNode);
-          }
-        } else {
-          const loadedCount = paginationState.get(node.id) || INITIAL_LOAD_COUNT;
-          
-          if (loadedCount === -1) {
-            processedNode.children = [...node.children];
-          } else {
-            const visibleChildren = node.children.slice(0, loadedCount);
-            const remainingCount = node.children.length - loadedCount;
-            
+            if (focusedWindow) {
+              actualStartIndex = focusedWindow.startIndex;
+              actualEndIndex = focusedWindow.endIndex;
+            } else {
+              const focusedIndex = node.children.findIndex(
+                (child) => child.nodeId === currentVisibleNode.id,
+              );
+              actualStartIndex = Math.max(
+                0,
+                focusedIndex - Math.floor(INITIAL_LOAD_COUNT / 2),
+              );
+              actualEndIndex = Math.min(
+                node.children.length,
+                actualStartIndex + INITIAL_LOAD_COUNT,
+              );
+            }
+
+            const visibleChildren = node.children.slice(
+              actualStartIndex,
+              actualEndIndex,
+            );
             processedNode.children = [...visibleChildren];
-            
-            if (remainingCount > 0) {
-              const loadMoreNode: PaginatedTreeData = {
-                id: `${node.id}-load-more`,
-                name: `Show ${Math.min(remainingCount, LOAD_MORE_COUNT)} more specializations`,
+
+            if (actualStartIndex > 0) {
+              const topLoadMoreNode: PaginatedTreeData = {
+                id: `${node.id}-load-more-top`,
+                name: `Show ${Math.min(actualStartIndex, LOAD_MORE_COUNT)} more specializations`,
                 isLoadMore: true,
+                isTopLoader: true,
                 parentId: node.id,
                 totalChildren: node.children.length,
-                loadedChildren: loadedCount,
+                loadedChildren: INITIAL_LOAD_COUNT,
+                loadDirection: "top",
                 nodeType: "load-more",
-                nodeId: `${node.id}-load-more`,
+                nodeId: `${node.id}-load-more-top`,
               };
-              processedNode.children.push(loadMoreNode);
+              processedNode.children.unshift(topLoadMoreNode);
+            }
+
+            if (actualEndIndex < node.children.length) {
+              const remainingCount = node.children.length - actualEndIndex;
+              const bottomLoadMoreNode: PaginatedTreeData = {
+                id: `${node.id}-load-more-bottom`,
+                name: `Show ${Math.min(remainingCount, LOAD_MORE_COUNT)} more specializations`,
+                isLoadMore: true,
+                isBottomLoader: true,
+                parentId: node.id,
+                totalChildren: node.children.length,
+                loadedChildren: INITIAL_LOAD_COUNT,
+                loadDirection: "bottom",
+                nodeType: "load-more",
+                nodeId: `${node.id}-load-more-bottom`,
+              };
+              processedNode.children.push(bottomLoadMoreNode);
+            }
+          } else {
+            const loadedCount =
+              paginationState.get(node.id) || INITIAL_LOAD_COUNT;
+
+            if (loadedCount === -1) {
+              processedNode.children = [...node.children];
+            } else {
+              const visibleChildren = node.children.slice(0, loadedCount);
+              const remainingCount = node.children.length - loadedCount;
+
+              processedNode.children = [...visibleChildren];
+
+              if (remainingCount > 0) {
+                const loadMoreNode: PaginatedTreeData = {
+                  id: `${node.id}-load-more`,
+                  name: `Show ${Math.min(remainingCount, LOAD_MORE_COUNT)} more specializations`,
+                  isLoadMore: true,
+                  parentId: node.id,
+                  totalChildren: node.children.length,
+                  loadedChildren: loadedCount,
+                  nodeType: "load-more",
+                  nodeId: `${node.id}-load-more`,
+                };
+                processedNode.children.push(loadMoreNode);
+              }
             }
           }
-        }
-      } else if (node.children) {
-        processedNode.children = [...node.children];
-      }
-      
-      if (processedNode.children) {
-        processedNode.children = processTreeData(processedNode.children);
-      }
-      
-      return processedNode;
-    });
-  }, [paginationState, currentVisibleNode, getFocusedNodeWindow, focusedWindowState]);
-
-  const handleLoadMore = useCallback((loadMoreNodeId: string) => {
-    const loadMoreNode = findNode(treeData, loadMoreNodeId) as PaginatedTreeData;
-    if (!loadMoreNode || !loadMoreNode.parentId) return;
-
-    setLoadingStates(prev => new Set(prev).add(loadMoreNodeId));
-
-    setTimeout(() => {
-      if (loadMoreNode.isTopLoader || loadMoreNode.isBottomLoader) {
-        const parentNode = findNode(treeData, loadMoreNode.parentId!) as PaginatedTreeData;
-        if (!parentNode?.allChildren) return;
-
-        const currentWindow = focusedWindowState.get(loadMoreNode.parentId!) || (() => {
-          const focusedIndex = parentNode.allChildren!.findIndex(child => child.nodeId === currentVisibleNode?.id);
-          const startIndex = Math.max(0, focusedIndex - Math.floor(INITIAL_LOAD_COUNT / 2));
-          const endIndex = Math.min(parentNode.allChildren!.length, startIndex + INITIAL_LOAD_COUNT);
-          return { startIndex, endIndex };
-        })();
-
-        let newStartIndex = currentWindow.startIndex;
-        let newEndIndex = currentWindow.endIndex;
-
-        if (loadMoreNode.isTopLoader) {
-          newStartIndex = Math.max(0, currentWindow.startIndex - LOAD_MORE_COUNT);
-        } else if (loadMoreNode.isBottomLoader) {
-          newEndIndex = Math.min(parentNode.allChildren!.length, currentWindow.endIndex + LOAD_MORE_COUNT);
+        } else if (node.children) {
+          processedNode.children = [...node.children];
         }
 
-        setFocusedWindowState(prev => {
-          const newState = new Map(prev);
-          newState.set(loadMoreNode.parentId!, { startIndex: newStartIndex, endIndex: newEndIndex });
-          return newState;
-        });
-      } else {
-        const currentLoaded = loadMoreNode.loadedChildren || INITIAL_LOAD_COUNT;
-        const newLoadedCount = currentLoaded + LOAD_MORE_COUNT;
-        
-        setPaginationState(prev => {
-          const newState = new Map(prev);
-          newState.set(loadMoreNode.parentId!, newLoadedCount);
-          return newState;
-        });
-      }
+        if (processedNode.children) {
+          processedNode.children = processTreeData(processedNode.children);
+        }
 
-      setLoadingStates(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(loadMoreNodeId);
-        return newSet;
+        return processedNode;
       });
-    }, 300);
-  }, [treeData]);
+    },
+    [
+      paginationState,
+      currentVisibleNode,
+      getFocusedNodeWindow,
+      focusedWindowState,
+    ],
+  );
+
+  const handleLoadMore = useCallback(
+    (loadMoreNodeId: string) => {
+      const loadMoreNode = findNode(
+        treeData,
+        loadMoreNodeId,
+      ) as PaginatedTreeData;
+      if (!loadMoreNode || !loadMoreNode.parentId) return;
+
+      setLoadingStates((prev) => new Set(prev).add(loadMoreNodeId));
+
+      setTimeout(() => {
+        if (loadMoreNode.isTopLoader || loadMoreNode.isBottomLoader) {
+          const parentNode = findNode(
+            treeData,
+            loadMoreNode.parentId!,
+          ) as PaginatedTreeData;
+          if (!parentNode?.allChildren) return;
+
+          const currentWindow =
+            focusedWindowState.get(loadMoreNode.parentId!) ||
+            (() => {
+              const focusedIndex = parentNode.allChildren!.findIndex(
+                (child) => child.nodeId === currentVisibleNode?.id,
+              );
+              const startIndex = Math.max(
+                0,
+                focusedIndex - Math.floor(INITIAL_LOAD_COUNT / 2),
+              );
+              const endIndex = Math.min(
+                parentNode.allChildren!.length,
+                startIndex + INITIAL_LOAD_COUNT,
+              );
+              return { startIndex, endIndex };
+            })();
+
+          let newStartIndex = currentWindow.startIndex;
+          let newEndIndex = currentWindow.endIndex;
+
+          if (loadMoreNode.isTopLoader) {
+            newStartIndex = Math.max(
+              0,
+              currentWindow.startIndex - LOAD_MORE_COUNT,
+            );
+          } else if (loadMoreNode.isBottomLoader) {
+            newEndIndex = Math.min(
+              parentNode.allChildren!.length,
+              currentWindow.endIndex + LOAD_MORE_COUNT,
+            );
+          }
+
+          setFocusedWindowState((prev) => {
+            const newState = new Map(prev);
+            newState.set(loadMoreNode.parentId!, {
+              startIndex: newStartIndex,
+              endIndex: newEndIndex,
+            });
+            return newState;
+          });
+        } else {
+          const currentLoaded =
+            loadMoreNode.loadedChildren || INITIAL_LOAD_COUNT;
+          const newLoadedCount = currentLoaded + LOAD_MORE_COUNT;
+
+          setPaginationState((prev) => {
+            const newState = new Map(prev);
+            newState.set(loadMoreNode.parentId!, newLoadedCount);
+            return newState;
+          });
+        }
+
+        setLoadingStates((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(loadMoreNodeId);
+          return newSet;
+        });
+      }, 300);
+    },
+    [treeData],
+  );
 
   useEffect(() => {
     setTreeData(processTreeData(treeViewData));
@@ -368,10 +439,10 @@ function DraggableTree({
       if (!editEnabled || !user?.uname) return;
 
       const draggedNodes = args.dragNodes.map((node) => node.data);
-      if (draggedNodes[0].category || draggedNodes[0].isLoadMore) {
+      if (draggedNodes[0].isLoadMore) {
         return;
       }
-      
+
       const fromParents: any = args.dragNodes.map(
         (node) =>
           node.parent?.data || { id: "root", name: "Root", nodeType: null },
@@ -552,7 +623,7 @@ function DraggableTree({
           specializations,
         });
       }
-        /* Specialization Change Log */
+      /* Specialization Change Log */
       saveNewChangeLog(db, {
         nodeId: specializationId,
         modifiedBy: user?.uname,
@@ -576,13 +647,13 @@ function DraggableTree({
         fullNode: nodes[toParent.nodeId],
         skillsFuture,
       });
-        // await updateLinks(
-        //   newLinks,
-        //   { id: specializationId },
-        //   "specializations",
-        //   nodes,
-        //   db,
-        // );
+      // await updateLinks(
+      //   newLinks,
+      //   { id: specializationId },
+      //   "specializations",
+      //   nodes,
+      //   db,
+      // );
 
       await updateLinksForInheritance(
         db,
@@ -619,32 +690,38 @@ function DraggableTree({
     collapsingLoader.current = false;
   };
 
-  function Node({ node, style, dragHandle }: NodeRendererProps<PaginatedTreeData>) {
+  function Node({
+    node,
+    style,
+    dragHandle,
+  }: NodeRendererProps<PaginatedTreeData>) {
     const indentSize = Number.parseFloat(`${style.paddingLeft || 0}`);
     const inputRef = useRef<HTMLInputElement>(null);
     const isLoading = loadingStates.has(node.data.id);
 
     if (node.data.isLoadMore) {
-      let displayText = '•••';
-      
+      let displayText = "•••";
+
       return (
-        <Tooltip 
-          title={node.data.name} 
-          arrow 
+        <Tooltip
+          title={node.data.name}
+          arrow
           placement="top"
           PopperProps={{
             sx: {
-              '& .MuiTooltip-tooltip': {
-                backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#424242' : '#616161',
-                color: '#fff',
-                fontSize: '0.875rem',
+              "& .MuiTooltip-tooltip": {
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark" ? "#424242" : "#616161",
+                color: "#fff",
+                fontSize: "0.875rem",
                 fontWeight: 500,
-                borderRadius: '8px',
-                padding: '8px 12px',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
+                borderRadius: "8px",
+                padding: "8px 12px",
+                boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
               },
-              '& .MuiTooltip-arrow': {
-                color: (theme) => theme.palette.mode === 'dark' ? '#424242' : '#616161',
+              "& .MuiTooltip-arrow": {
+                color: (theme) =>
+                  theme.palette.mode === "dark" ? "#424242" : "#616161",
               },
             },
           }}
@@ -656,14 +733,18 @@ function DraggableTree({
             onClick={() => !isLoading && handleLoadMore(node.data.id)}
             sx={{
               cursor: isLoading ? "default" : "pointer",
-              transition: 'background-color 0.2s ease-in-out',
-              borderRadius: '4px',
-              userSelect: 'none',
-              '&:hover': {
-                backgroundColor: isLoading ? 'transparent' : 'rgba(255, 165, 0, 0.06)',
+              transition: "background-color 0.2s ease-in-out",
+              borderRadius: "4px",
+              userSelect: "none",
+              "&:hover": {
+                backgroundColor: isLoading
+                  ? "transparent"
+                  : "rgba(255, 165, 0, 0.06)",
               },
-              '&:active': {
-                backgroundColor: isLoading ? 'transparent' : 'rgba(255, 165, 0, 0.1)',
+              "&:active": {
+                backgroundColor: isLoading
+                  ? "transparent"
+                  : "rgba(255, 165, 0, 0.1)",
               },
             }}
           >
@@ -675,30 +756,32 @@ function DraggableTree({
             <FolderArrow node={node as NodeApi<PaginatedTreeData>} />
             <Box
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                color: isLoading ? 'rgba(255, 165, 0, 0.5)' : 'rgba(255, 165, 0, 0.8)',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                transition: 'all 0.2s ease-in-out',
-                '.loadMoreNode:hover &': {
-                  color: isLoading ? 'rgba(255, 165, 0, 0.5)' : '#ff8c00',
-                  transform: isLoading ? 'none' : 'scale(1.02)',
+                display: "flex",
+                alignItems: "center",
+                color: isLoading
+                  ? "rgba(255, 165, 0, 0.5)"
+                  : "rgba(255, 165, 0, 0.8)",
+                fontSize: "18px",
+                fontWeight: "bold",
+                transition: "all 0.2s ease-in-out",
+                ".loadMoreNode:hover &": {
+                  color: isLoading ? "rgba(255, 165, 0, 0.5)" : "#ff8c00",
+                  transform: isLoading ? "none" : "scale(1.02)",
                 },
               }}
             >
               {isLoading ? (
                 <Box
                   sx={{
-                    width: '16px',
-                    height: '16px',
-                    border: '2px solid rgba(255, 165, 0, 0.3)',
-                    borderTop: '2px solid rgba(255, 165, 0, 0.8)',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite',
-                    '@keyframes spin': {
-                      '0%': { transform: 'rotate(0deg)' },
-                      '100%': { transform: 'rotate(360deg)' },
+                    width: "16px",
+                    height: "16px",
+                    border: "2px solid rgba(255, 165, 0, 0.3)",
+                    borderTop: "2px solid rgba(255, 165, 0, 0.8)",
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite",
+                    "@keyframes spin": {
+                      "0%": { transform: "rotate(0deg)" },
+                      "100%": { transform: "rotate(360deg)" },
                     },
                   }}
                 />
@@ -996,7 +1079,10 @@ function FolderArrow({ node }: { node: NodeApi<TreeData> }) {
   );
 }
 
-function findNode(data: PaginatedTreeData[], id: string): PaginatedTreeData | null {
+function findNode(
+  data: PaginatedTreeData[],
+  id: string,
+): PaginatedTreeData | null {
   for (const node of data) {
     if (node.id === id) return node;
     if (node.children) {
