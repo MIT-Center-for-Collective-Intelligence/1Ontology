@@ -149,6 +149,7 @@ type ILinkNodeProps = {
   user: any;
   linkIndex: number;
   collectionIndex: number;
+  collectionName: string;
   selectedDiffNode: any;
   replaceWith: any;
   saveNewAndSwapIt: any;
@@ -179,6 +180,7 @@ const LinkNode = ({
   locked,
   user,
   collectionIndex,
+  collectionName,
   selectedDiffNode,
   replaceWith,
   saveNewAndSwapIt,
@@ -240,8 +242,15 @@ const LinkNode = ({
 
           // Handle for parts - break inheritance
           if (property === "parts" && nodeData.inheritance[property]?.ref) {
-            await breakInheritanceAndCopyParts(currentNodeId, linkId, nodes, user);
-            const updatedNodeDoc = await getDoc(doc(collection(db, NODES), currentNodeId));
+            await breakInheritanceAndCopyParts(
+              currentNodeId,
+              linkId,
+              nodes,
+              user,
+            );
+            const updatedNodeDoc = await getDoc(
+              doc(collection(db, NODES), currentNodeId),
+            );
             if (updatedNodeDoc.exists()) {
               Object.assign(nodeData, updatedNodeDoc.data());
             }
@@ -260,7 +269,10 @@ const LinkNode = ({
           let removedFromInheritanceParts = false;
 
           if (property === "parts") {
-            if (nodeData.inheritanceParts && nodeData.inheritanceParts[linkId]) {
+            if (
+              nodeData.inheritanceParts &&
+              nodeData.inheritanceParts[linkId]
+            ) {
               // Remove from inheritanceParts (broken inheritance scenario)
               delete nodeData.inheritanceParts[linkId];
               removedFromInheritanceParts = true;
@@ -317,11 +329,12 @@ const LinkNode = ({
             propertyUpdateObject.inheritanceParts = nodeData.inheritanceParts;
           } else {
             // Update direct properties for intact inheritance or other properties
-            propertyUpdateObject[`properties.${property}`] = nodeData.properties[property];
+            propertyUpdateObject[`properties.${property}`] =
+              nodeData.properties[property];
           }
 
           await updateDoc(nodeDoc.ref, propertyUpdateObject);
-          
+
           if (property !== "isPartOf" || nodeData.inheritance[property]) {
             const reference = nodeData.inheritance[property].ref;
             let updateObject: any = {
@@ -700,7 +713,7 @@ const LinkNode = ({
             backgroundColor: clonedNodesQueue.hasOwnProperty(link.id)
               ? ""
               : (theme) =>
-                theme.palette.mode === "dark" ? "#5f5e5d" : "#d9dfe6",
+                  theme.palette.mode === "dark" ? "#5f5e5d" : "#d9dfe6",
           },
         }}
       >
@@ -832,68 +845,68 @@ const LinkNode = ({
             property !== "isPartOf") ||
             (clonedNodesQueue.hasOwnProperty(link.id) &&
               property !== "generalizations")) && (
-              <>
-                {loadingIds.has(link.id) ? (
-                  <LoadingButton
-                    loading
-                    loadingIndicator={<CircularProgress size={20} />}
-                    sx={{
-                      borderRadius: "16px",
-                      padding: "3px",
-                      fontSize: "0.8rem",
-                      minWidth: "40px",
-                    }}
-                    disabled
-                  />
-                ) : (
-                  <Box sx={{ display: "flex" }}>
-                    {clonedNodesQueue.hasOwnProperty(link.id) && (
-                      <Tooltip title="Save">
-                        <IconButton
-                          sx={{
-                            ml: "18px",
-                            borderRadius: "18px",
-                            fontSize: "12px",
-                            p: 0.2,
-                          }}
-                          onClick={() => {
-                            saveNewSpecialization(link.id);
-                          }}
-                        >
-                          <CheckIcon sx={{ color: "green" }} />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    <Tooltip
-                      title={
-                        clonedNodesQueue.hasOwnProperty(link.id)
-                          ? "Cancel"
-                          : "Unlink"
-                      }
-                    >
+            <>
+              {loadingIds.has(link.id) ? (
+                <LoadingButton
+                  loading
+                  loadingIndicator={<CircularProgress size={20} />}
+                  sx={{
+                    borderRadius: "16px",
+                    padding: "3px",
+                    fontSize: "0.8rem",
+                    minWidth: "40px",
+                  }}
+                  disabled
+                />
+              ) : (
+                <Box sx={{ display: "flex" }}>
+                  {clonedNodesQueue.hasOwnProperty(link.id) && (
+                    <Tooltip title="Save">
                       <IconButton
                         sx={{
                           ml: "18px",
                           borderRadius: "18px",
                           fontSize: "12px",
                           p: 0.2,
-                          display: !enableEdit ? "none" : "block",
                         }}
-                        onClick={handleUnlinkNode}
+                        onClick={() => {
+                          saveNewSpecialization(link.id, collectionName);
+                        }}
                       >
-                        {clonedNodesQueue.hasOwnProperty(link.id) ? (
-                          <CloseIcon sx={{ color: "red" }} />
-                        ) : (
-                          <LinkOffIcon
-                            sx={{ color: enableEdit ? "orange" : "gray" }}
-                          />
-                        )}
+                        <CheckIcon sx={{ color: "green" }} />
                       </IconButton>
                     </Tooltip>
-                  </Box>
-                )}
-              </>
-            )}
+                  )}
+                  <Tooltip
+                    title={
+                      clonedNodesQueue.hasOwnProperty(link.id)
+                        ? "Cancel"
+                        : "Unlink"
+                    }
+                  >
+                    <IconButton
+                      sx={{
+                        ml: "18px",
+                        borderRadius: "18px",
+                        fontSize: "12px",
+                        p: 0.2,
+                        display: !enableEdit ? "none" : "block",
+                      }}
+                      onClick={handleUnlinkNode}
+                    >
+                      {clonedNodesQueue.hasOwnProperty(link.id) ? (
+                        <CloseIcon sx={{ color: "red" }} />
+                      ) : (
+                        <LinkOffIcon
+                          sx={{ color: enableEdit ? "orange" : "gray" }}
+                        />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )}
+            </>
+          )}
 
           {property === "parts" &&
             !currentImprovement &&

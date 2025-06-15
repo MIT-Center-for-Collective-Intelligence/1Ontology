@@ -300,15 +300,15 @@ const Node = ({
       searchValue: string | null,
       newId: string | null,
       mProperty: string,
+      collectionName: string = "main",
     ): Promise<INode | null> => {
       try {
+        debugger;
         setCloning(nodeId);
-
-        // Retrieve the document of the original node from Firestore.
-        const parentNodeDoc = await getDoc(doc(collection(db, NODES), nodeId));
+        const parentNodeRef = doc(collection(db, NODES), nodeId);
 
         // Extract data from the original node document.
-        const parentNodeData = parentNodeDoc.data() as INode;
+        const parentNodeData = nodes[nodeId] as INode;
 
         // Create a reference for the new node document in Firestore.
         const newNodeRef =
@@ -521,12 +521,12 @@ const Node = ({
         });
 
         // Create a new document in Firestore for the cloned node
-        await setDoc(newNodeRef, {
+        setDoc(newNodeRef, {
           ...newNode,
           locked: false,
           createdAt: new Date(),
         });
-        await Post("/triggerChroma", {
+        Post("/triggerChroma", {
           nodeId: newNodeRef.id,
           updateAll: true,
         });
@@ -545,10 +545,10 @@ const Node = ({
 
         setCloning(null);
         // Update the parent node's specializations
-        updateSpecializations(parentNodeData, newNodeRef.id);
+        updateSpecializations(parentNodeData, newNodeRef.id, collectionName);
 
         // Update the original parent node
-        await updateDoc(parentNodeDoc.ref, {
+        await updateDoc(parentNodeRef, {
           ...parentNodeData,
           updatedAt: new Date(),
         });
@@ -582,11 +582,18 @@ const Node = ({
     node: { id: string },
     searchValue = null,
     newId = null,
+    collectionName: string = "main",
   ) => {
     // Call the asynchronous function to clone the node with the given ID.
     // Close the modal or perform any necessary cleanup.
     // handleCloseAddLinksModel();
-    await cloneNode(node.id, searchValue, newId, selectedProperty);
+    await cloneNode(
+      node.id,
+      searchValue,
+      newId,
+      selectedProperty,
+      collectionName,
+    );
   };
 
   const editStructuredProperty = async (
@@ -649,7 +656,7 @@ const Node = ({
       addedElements: string[],
       selectedProperty: string,
       nodeId: string,
-      selectedCollection: string | null = null,
+      selectedCollection: string,
     ) => {
       try {
         if (
@@ -708,10 +715,16 @@ const Node = ({
             collectionIdx = 0;
           }
         }
+        const allExistingIds = new Set(
+          newValue.flatMap((collection: any) =>
+            collection.nodes.map((node: { id: string }) => node.id),
+          ),
+        );
+
+        addedElements = addedElements.filter((id) => !allExistingIds.has(id));
+
         newValue[collectionIdx].nodes.push(
-          ...addedElements.map((id) => {
-            return { id };
-          }),
+          ...addedElements.map((id) => ({ id })),
         );
         const nodesLength = previousValue
           ?.flatMap((c) => c.nodes)
@@ -739,7 +752,7 @@ const Node = ({
           selectedProperty === "specializations" ||
           selectedProperty === "generalizations"
         ) {
-          await updateLinks(
+          updateLinks(
             new Array(...addedElements),
             { id: nodeId },
             selectedProperty === "specializations"
@@ -846,7 +859,7 @@ const Node = ({
               id: lId,
             };
           });
-          await updatePropertyOf(
+          updatePropertyOf(
             addedLinks,
             { id: nodeId },
             selectedProperty,
@@ -859,7 +872,7 @@ const Node = ({
         await updateDoc(nodeDoc.ref, nodeData);
         //the user modified generalizations
         if (selectedProperty === "generalizations") {
-          await updateLinksForInheritance(
+          updateLinksForInheritance(
             db,
             nodeId,
             addedLinks,
@@ -869,7 +882,7 @@ const Node = ({
           );
         }
         if (selectedProperty === "specializations") {
-          await updateLinksForInheritanceSpecializations(
+          updateLinksForInheritanceSpecializations(
             db,
             nodeId,
             addedLinks,

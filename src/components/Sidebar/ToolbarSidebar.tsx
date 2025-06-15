@@ -132,7 +132,6 @@ type MainSidebarProps = {
   signOut: any;
   skillsFuture: boolean;
   skillsFutureApp: string;
-  setSkillsFutureApp: any;
 };
 
 const ToolbarSidebar = ({
@@ -165,7 +164,6 @@ const ToolbarSidebar = ({
   signOut,
   skillsFuture,
   skillsFutureApp,
-  setSkillsFutureApp,
 }: MainSidebarProps) => {
   const theme = useTheme();
   const db = getFirestore();

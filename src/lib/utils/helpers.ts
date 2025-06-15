@@ -216,12 +216,9 @@ export const removeNodeFromLinks = (
   // Iterate over the categories within each type of child-node.
   // If the child-node with the specified ID is found, remove it from the array.
   for (let collection of propertyValue) {
-    const elementIdx = collection.nodes.findIndex(
-      (link: { id: string }) => link.id === elementId,
+    collection.nodes = collection.nodes.filter(
+      (link: { id: string }) => link.id !== elementId,
     );
-    if (elementIdx !== -1) {
-      collection.nodes.splice(elementIdx, 1);
-    }
   }
 
   return LinkNodeData;
@@ -976,11 +973,14 @@ export const updateLinksForInheritance = async (
       const propertyRef = specializationData.inheritance[property]?.ref;
       if (!!propertyRef) {
         // Handling for parts property with broken inheritance
-        if (property === "parts" && specializationData.inheritance.parts?.ref === null) {
+        if (
+          property === "parts" &&
+          specializationData.inheritance.parts?.ref === null
+        ) {
           // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
           continue;
         }
-        
+
         let canDelete = true;
         let ignore = false;
         let inheritFromId = null;
@@ -1190,11 +1190,14 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
                 specializationData.inheritance[property].ref)
           ) {
             // Handling for parts property with broken inheritance
-            if (property === "parts" && specializationData.inheritance.parts?.ref === null) {
+            if (
+              property === "parts" &&
+              specializationData.inheritance.parts?.ref === null
+            ) {
               // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
               continue;
             }
-            
+
             if (!nextGeneralizationData.properties.hasOwnProperty(property)) {
               let canDelete = true;
               let inheritFrom = null;
@@ -1283,31 +1286,36 @@ export const updateLinks = async (
   nodes: { [nodeId: string]: INode },
   db: any,
 ) => {
+  debugger;
   for (let childId of links) {
     const childData = nodes[childId];
     if (!childData) continue;
     const childLinks = childData[linkType];
 
+    const existedElements = childLinks.flatMap((c) => c.nodes);
+    const indexElmt = existedElements.findIndex((c) => c.id === newLink.id);
+
     const mainCollection = childLinks.find(
       (collection) => collection.collectionName === "main",
     );
-
-    if (mainCollection) {
-      mainCollection.nodes.push(newLink);
-      const childRef = doc(collection(db, NODES), childId);
-      updateDoc(childRef, {
-        [linkType]: childLinks,
-      });
-    } else {
-      const newCollection = {
-        collectionName: "main",
-        nodes: [newLink],
-      };
-      childLinks.push(newCollection);
-      const childRef = doc(collection(db, NODES), childId);
-      await updateDoc(childRef, {
-        [linkType]: childLinks,
-      });
+    if (indexElmt === -1) {
+      if (mainCollection) {
+        mainCollection.nodes.push(newLink);
+        const childRef = doc(collection(db, NODES), childId);
+        updateDoc(childRef, {
+          [linkType]: childLinks,
+        });
+      } else {
+        const newCollection = {
+          collectionName: "main",
+          nodes: [newLink],
+        };
+        childLinks.push(newCollection);
+        const childRef = doc(collection(db, NODES), childId);
+        await updateDoc(childRef, {
+          [linkType]: childLinks,
+        });
+      }
     }
   }
 };

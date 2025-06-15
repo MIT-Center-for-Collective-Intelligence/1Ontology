@@ -75,16 +75,9 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
 }) => {
   const [selectedGeneralizationIndex, setSelectedGeneralizationIndex] =
     useState<number>(0);
-  const [generalizations, setGeneralizations] = useState<any>([]);
 
   if (selectedProperty !== "parts") return null;
-
-  useEffect(() => {
-    const generalizations: any = getAllGeneralizations();
-    console.log("55", generalizations);
-    setGeneralizations(generalizations);
-    setSelectedGeneralizationIndex(0);
-  }, []);
+  const generalizations: any = getAllGeneralizations();
 
   const handleSelectedGenChange = (
     event: React.SyntheticEvent,
@@ -97,7 +90,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     parts: string[],
     generalizationId: string,
   ) => {
-    console.log("parts-parts", inheritance, parts);
     const result: {
       from: string;
       to: string;
@@ -155,8 +147,14 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
         });
       }
     }
-
-    return result;
+    const seen = new Set();
+    const uniqueResult = result.filter((entry) => {
+      const key = `${entry.from}|${entry.to}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return uniqueResult;
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
@@ -168,7 +166,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       displayedParts,
       generalizationId,
     );
-    console.log("details", details);
+
     if (Object.keys(inheritanceDetails).length === 0) {
       return (
         <Typography
@@ -198,7 +196,12 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
 
     return (
       <List
-        sx={{ py: 1, border: "1px dashed gray", px: 1.8, borderRadius: "20px" }}
+        sx={{
+          py: 1,
+          border: parts.length > 0 ? "1px dashed gray" : "",
+          px: 1.8,
+          borderRadius: "20px",
+        }}
       >
         {details.map(
           (

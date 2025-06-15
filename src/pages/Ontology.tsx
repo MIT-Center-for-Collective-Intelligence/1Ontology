@@ -1130,7 +1130,12 @@ const Ontology = ({
     const _inheritanceDetails: any = {};
 
     const _currentVisibleNode = { ...currentVisibleNode };
-    const parts = _currentVisibleNode?.properties.parts || [];
+
+    let parts = _currentVisibleNode?.properties.parts || [];
+    const inheritanceRef = _currentVisibleNode.inheritance["parts"].ref;
+    if (inheritanceRef) {
+      parts = nodes[inheritanceRef].properties["parts"];
+    }
 
     const generalizations = (
       _currentVisibleNode?.generalizations || []
@@ -1168,7 +1173,7 @@ const Ontology = ({
         if (partIdex !== -1) {
           inheritanceDetails.push({
             genId: generalization.id,
-            partOf: generalization.id,
+            partOf: generalizationParts[0].nodes[partIdex].id,
           });
         }
       }

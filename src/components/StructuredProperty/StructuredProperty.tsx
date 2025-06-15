@@ -173,64 +173,81 @@ const StructuredProperty = ({
   const [displayDetails, setDisplayDetails] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
-  const [paginationState, setPaginationState] = useState<Map<string, number>>(new Map());
+  const [paginationState, setPaginationState] = useState<Map<string, number>>(
+    new Map(),
+  );
   const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set());
   const db = getFirestore();
 
-  const processCollectionData = useCallback((collections: ICollection[]): PaginatedCollection[] => {
-    if (property !== "specializations") return collections;
-    
-    return collections.map(collection => {
-      if (!currentVisibleNode.unclassified || !collection.nodes || collection.nodes.length <= INITIAL_LOAD_COUNT) {
-        return { ...collection, allNodes: collection.nodes ? [...collection.nodes] : [] };
-      }
+  const processCollectionData = useCallback(
+    (collections: ICollection[]): PaginatedCollection[] => {
+      if (property !== "specializations") return collections;
 
-      const loadedCount = paginationState.get(collection.collectionName) || INITIAL_LOAD_COUNT;
-      const allNodes = [...collection.nodes];
-      const visibleNodes = allNodes.slice(0, loadedCount);
-      const remainingCount = allNodes.length - loadedCount;
+      return collections.map((collection) => {
+        if (
+          !currentVisibleNode.unclassified ||
+          !collection.nodes ||
+          collection.nodes.length <= INITIAL_LOAD_COUNT
+        ) {
+          return {
+            ...collection,
+            allNodes: collection.nodes ? [...collection.nodes] : [],
+          };
+        }
 
-      const processedCollection: PaginatedCollection = {
-        ...collection,
-        nodes: [...visibleNodes],
-        allNodes,
-        loadedCount
-      };
+        const loadedCount =
+          paginationState.get(collection.collectionName) || INITIAL_LOAD_COUNT;
+        const allNodes = [...collection.nodes];
+        const visibleNodes = allNodes.slice(0, loadedCount);
+        const remainingCount = allNodes.length - loadedCount;
 
-      if (remainingCount > 0) {
-        const loadMoreNode: LoadMoreNode = {
-          id: `${collection.collectionName}-load-more`,
-          isLoadMore: true,
-          displayText: `Show ${Math.min(remainingCount, LOAD_MORE_COUNT)} more specializations`,
-          parentCollection: collection.collectionName
+        const processedCollection: PaginatedCollection = {
+          ...collection,
+          nodes: [...visibleNodes],
+          allNodes,
+          loadedCount,
         };
-        processedCollection.nodes.push(loadMoreNode);
-      }
 
-      return processedCollection;
-    });
-  }, [property, currentVisibleNode.unclassified, paginationState]);
+        if (remainingCount > 0) {
+          const loadMoreNode: LoadMoreNode = {
+            id: `${collection.collectionName}-load-more`,
+            isLoadMore: true,
+            displayText: `Show ${Math.min(remainingCount, LOAD_MORE_COUNT)} more specializations`,
+            parentCollection: collection.collectionName,
+          };
+          processedCollection.nodes.push(loadMoreNode);
+        }
 
-  const handleLoadMore = useCallback((loadMoreNodeId: string, collectionName: string) => {
-    setLoadingStates(prev => new Set(prev).add(loadMoreNodeId));
-
-    setTimeout(() => {
-      const currentLoaded = paginationState.get(collectionName) || INITIAL_LOAD_COUNT;
-      const newLoadedCount = currentLoaded + LOAD_MORE_COUNT;
-      
-      setPaginationState(prev => {
-        const newState = new Map(prev);
-        newState.set(collectionName, newLoadedCount);
-        return newState;
+        return processedCollection;
       });
+    },
+    [property, currentVisibleNode.unclassified, paginationState],
+  );
 
-      setLoadingStates(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(loadMoreNodeId);
-        return newSet;
-      });
-    }, 300);
-  }, [paginationState]);
+  const handleLoadMore = useCallback(
+    (loadMoreNodeId: string, collectionName: string) => {
+      setLoadingStates((prev) => new Set(prev).add(loadMoreNodeId));
+
+      setTimeout(() => {
+        const currentLoaded =
+          paginationState.get(collectionName) || INITIAL_LOAD_COUNT;
+        const newLoadedCount = currentLoaded + LOAD_MORE_COUNT;
+
+        setPaginationState((prev) => {
+          const newState = new Map(prev);
+          newState.set(collectionName, newLoadedCount);
+          return newState;
+        });
+
+        setLoadingStates((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(loadMoreNodeId);
+          return newSet;
+        });
+      }, 300);
+    },
+    [paginationState],
+  );
 
   const propertyValue: PaginatedCollection[] = useMemo(() => {
     try {
@@ -241,10 +258,10 @@ const StructuredProperty = ({
       } else {
         result =
           getPropertyValue(
-          nodes,
-          currentVisibleNode.inheritance[property]?.ref,
-          property,
-        ) || currentVisibleNode?.properties[property];
+            nodes,
+            currentVisibleNode.inheritance[property]?.ref,
+            property,
+          ) || currentVisibleNode?.properties[property];
       }
       if (!selectedDiffNode) {
         return processCollectionData(result || []);
@@ -297,13 +314,13 @@ const StructuredProperty = ({
           destination.index,
           0,
           {
-          id: draggableNodeId,
-          change: "added",
-          changeType: "sort",
-          randomId: doc(collection(db, NODES)).id,
-        },
-      );
-      return processCollectionData(previousValue);
+            id: draggableNodeId,
+            change: "added",
+            changeType: "sort",
+            randomId: doc(collection(db, NODES)).id,
+          },
+        );
+        return processCollectionData(previousValue);
       }
 
       for (let improvementChange of listOfChanges || []) {
@@ -351,7 +368,14 @@ const StructuredProperty = ({
       console.error(error);
       return [];
     }
-  }, [currentVisibleNode, nodes, property, selectedDiffNode, processCollectionData, db]);
+  }, [
+    currentVisibleNode,
+    nodes,
+    property,
+    selectedDiffNode,
+    processCollectionData,
+    db,
+  ]);
 
   const unlinkVisible = useCallback(
     (nodeId: string) => {
@@ -446,7 +470,7 @@ const StructuredProperty = ({
     });
   };
 
-  const saveNewSpecialization = async (nId: string) => {
+  const saveNewSpecialization = async (nId: string, collectionName: string) => {
     try {
       setLoadingIds((prev: Set<string>) => {
         const _prev = new Set(prev);
@@ -457,14 +481,18 @@ const StructuredProperty = ({
         { id: clonedNodesQueue[nId].id },
         clonedNodesQueue[nId].title,
         nId,
+        collectionName,
       );
       const addedElements: string[] = [nId];
+
       await handleSaveLinkChanges(
         [],
         addedElements,
         selectedProperty,
         currentVisibleNode?.id,
+        collectionName,
       );
+
       setClonedNodesQueue((prev: any) => {
         const _prev = { ...prev };
         delete _prev[nId];
@@ -804,7 +832,9 @@ const StructuredProperty = ({
             currentImprovement={currentImprovement}
             property={property}
             propertyValue={
-              selectedProperty === property ? (editableProperty ?? []) : (propertyValue ?? [])
+              selectedProperty === property
+                ? (editableProperty ?? [])
+                : (propertyValue ?? [])
             }
             setEditableProperty={setEditableProperty}
             getCategoryStyle={getCategoryStyle}
