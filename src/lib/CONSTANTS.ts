@@ -161,3 +161,17 @@ export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
 
 export const MODEL = "o3";
 export const GEMINI_MODEL = "gemini-2.5-pro-exp-03-25";
+
+export const SKILLS_FUTURE_APP_NAMES = [
+  "Full WordNet O*Net Verb Hierarchy - Tom's Version",
+  "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
+  "Ontology - Development Version",
+  "Ontology - Demo Version",
+  "Top-Down Gemini 2.5 Pro",
+  /*"Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
+  "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
+  "Holistic Embedding (Sector, Title, JobRole, CWF, Parts) - Gemini 2.5 Pro",
+  "O*Net Verbs o3 Deep Research",
+  "O*Net Verbs - o1 Pro", */
+  // "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
+];

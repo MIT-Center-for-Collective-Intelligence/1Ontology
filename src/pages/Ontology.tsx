@@ -151,7 +151,13 @@ const AddContext = (nodes: any, nodesObject: any): INode[] => {
   return nodes;
 };
 
-const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
+const Ontology = ({
+  skillsFuture = false,
+  appName,
+}: {
+  skillsFuture: boolean;
+  appName: string;
+}) => {
   const db = getFirestore();
   const [{ emailVerified, user }] = useAuth();
   const router = useRouter();
@@ -219,7 +225,6 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
   const [treeViewData, setTreeViewData] = useState([]);
   const [loadingNodes, setLoadingNodes] = useState(false);
-  const [appName, setAppName] = useState("Ontology - Development Version"); // this state is only been used for the Skills Future App
   const [partsInheritance, setPartsInheritance] = useState<any>({});
 
   const [scrollTrigger, setScrollTrigger] = useState(false);
@@ -1198,7 +1203,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
       >
         <Box
           component="img"
-          src="loader.gif"
+          src="../loader.gif"
           alt="Loading..."
           sx={{ width: 200, height: 200, borderRadius: "25px" }}
         />
@@ -1357,7 +1362,8 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                         value={appName}
                         onChange={(event) => {
                           setNodes({});
-                          setAppName(event.target.value);
+                          const app = event.target.value.replaceAll(" ", "_");
+                          router.replace(`/SkillsFuture/${app}`);
                         }}
                         label="Property Type"
                         sx={{ borderRadius: "20px" }}
@@ -1524,7 +1530,6 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
             signOut={signOut}
             skillsFuture={skillsFuture}
             skillsFutureApp={appName ?? null}
-            setSkillsFutureApp={setAppName}
           />
         </Container>
         {ConfirmDialog}
