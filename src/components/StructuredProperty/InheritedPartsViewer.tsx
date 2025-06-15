@@ -7,12 +7,22 @@ import {
   Checkbox,
   IconButton,
   Tooltip,
+  MenuItem,
+  Select,
+  ListItemText,
+  ListItemIcon,
+  ListItem,
+  List,
 } from "@mui/material";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
+
 import SearchIcon from "@mui/icons-material/Search";
+
+import AddIcon from "@mui/icons-material/Add";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import DragHandleIcon from "@mui/icons-material/DragHandle";
+import CloseIcon from "@mui/icons-material/Close";
 
 interface GeneralizationNode {
   id: string;
@@ -44,6 +54,7 @@ interface InheritedPartsViewerProps {
   readOnly?: boolean;
   setDisplayDetails: any;
   inheritanceDetails: any;
+  currentVisibleNode: any;
   triggerSearch?: any;
 }
 
@@ -59,37 +70,106 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   readOnly = false,
   setDisplayDetails,
   inheritanceDetails,
+  currentVisibleNode,
   triggerSearch,
 }) => {
-  const [selectedTab, setSelectedTab] = useState(0);
+  const [selectedGeneralizationIndex, setSelectedGeneralizationIndex] =
+    useState<number>(0);
+  const [generalizations, setGeneralizations] = useState<any>([]);
 
   if (selectedProperty !== "parts") return null;
 
-  const generalizations = getAllGeneralizations();
+  useEffect(() => {
+    const generalizations: any = getAllGeneralizations();
+    console.log("55", generalizations);
+    setGeneralizations(generalizations);
+    setSelectedGeneralizationIndex(0);
+  }, []);
 
-  if (generalizations.length === 0) {
-    return null;
-  }
-
-  // Reset to first tab if current selection is invalid
-  /*   useEffect(() => {
-    if (selectedTab >= generalizations.length) {
-      setSelectedTab(0);
-    }
-  }, [generalizations.length, selectedTab]); */
-
-  const handleTabChange = (
+  const handleSelectedGenChange = (
     event: React.SyntheticEvent,
     newValue: number,
   ): void => {
-    setSelectedTab(newValue);
+    setSelectedGeneralizationIndex(newValue);
+  };
+  const analyzeInheritance = (
+    inheritance: any,
+    parts: string[],
+    generalizationId: string,
+  ) => {
+    console.log("parts-parts", inheritance, parts);
+    const result: {
+      from: string;
+      to: string;
+      symbol: ">" | "x" | "=" | "+";
+    }[] = [];
+    const matchedParts = new Set();
+    const usedKeys = new Set();
+
+    for (const [key, entries] of Object.entries(inheritance)) {
+      if (entries === null) continue;
+
+      for (const entry of entries as any) {
+        if (entry.genId !== generalizationId) {
+          continue;
+        }
+        const part = entry.partOf;
+
+        if (parts.includes(part)) {
+          matchedParts.add(part);
+          usedKeys.add(key);
+
+          if (key === part) {
+            result.push({
+              from: part,
+              to: key,
+              symbol: "=",
+            });
+          } else {
+            result.push({
+              from: part,
+              to: key,
+              symbol: ">",
+            });
+          }
+        }
+      }
+    }
+
+    for (const part of parts) {
+      if (!matchedParts.has(part)) {
+        result.push({
+          from: part,
+          to: "",
+          symbol: "x",
+        });
+      }
+    }
+
+    for (const [key, value] of Object.entries(inheritance)) {
+      if (value === null) {
+        result.push({
+          from: "",
+          to: key,
+          symbol: "+",
+        });
+      }
+    }
+
+    return result;
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
     const parts = getGeneralizationParts(generalizationId);
-    const displayedParts = parts.slice(0, 10);
+    const displayedParts = parts.map((c) => c.id);
 
-    if (displayedParts.length === 0) {
+    const details = analyzeInheritance(
+      inheritanceDetails,
+      displayedParts,
+      generalizationId,
+    );
+    console.log("details", details);
+    if (Object.keys(inheritanceDetails).length === 0) {
       return (
         <Typography
           variant="body2"
@@ -117,112 +197,109 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     };
 
     return (
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, py: 1 }}>
-        {displayedParts.map((part) => {
-          const partGeneralization = getPartGeneralization(part.id);
-          const hasInheritance = (inheritanceDetails[part.id] || []).length > 0;
-          const isChecked = checkedItems.has(part.id);
-          const showCheck = readOnly && (isChecked || hasInheritance);
-
-          return (
-            <Box
-              key={part.id}
+      <List
+        sx={{ py: 1, border: "1px dashed gray", px: 1.8, borderRadius: "20px" }}
+      >
+        {details.map(
+          (
+            {
+              from,
+              to,
+              symbol,
+            }: {
+              from: string;
+              to: string;
+              symbol: ">" | "x" | "=" | "+";
+            },
+            index,
+          ) => (
+            <ListItem
+              key={`${from}-${to}`}
               sx={{
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
+                px: 0,
+                py: 0,
+                backgroundImage:
+                  index !== 0
+                    ? "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)"
+                    : "",
+                backgroundPosition: index !== 0 ? "top" : "",
+                backgroundRepeat: "repeat-x",
+                backgroundSize: "100% 1px",
               }}
             >
-              {readOnly ? (
-                showCheck ? (
-                  <CheckIcon sx={{ color: "#4caf50", fontSize: 20 }} />
-                ) : (
-                  <CloseIcon sx={{ color: "#f44336", fontSize: 20 }} />
-                )
-              ) : (
-                <Tooltip title="Search it below" placement="left">
-                  <IconButton
-                    sx={{ p: 0.4 }}
-                    onClick={() => triggerSearch(part)}
-                  >
-                    <SearchIcon sx={{ fontSize: 19, color: "orange" }} />
-                  </IconButton>
-                </Tooltip>
+              {!readOnly && from && (
+                <ListItemIcon sx={{ minWidth: "auto" }}>
+                  <Tooltip title="Search it below" placement="left">
+                    <IconButton
+                      sx={{ p: 0.4 }}
+                      onClick={() => triggerSearch(from)}
+                    >
+                      <SearchIcon sx={{ fontSize: 19, color: "orange" }} />
+                    </IconButton>
+                  </Tooltip>
+                </ListItemIcon>
               )}
 
-              <Box
-                sx={{
-                  flex: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  flexWrap: "wrap",
-                }}
-              >
-                {partGeneralization ? (
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: (theme) =>
-                        theme.palette.mode === "light" ? "#666" : "#999",
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    {part.title}
-                  </Typography>
-                ) : (
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: (theme) =>
-                        theme.palette.mode === "light" ? "#2c3e50" : "#e0e0e0",
-                      fontWeight: 400,
-                      fontSize: "1rem",
-                    }}
-                  >
-                    {part.title}
-                  </Typography>
-                )}
+              <ListItemText
+                primary={
+                  from ? (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: (theme) =>
+                          theme.palette.mode === "light" ? "#666" : "#999",
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      {nodes[from].title}
+                    </Typography>
+                  ) : null
+                }
+                sx={{ flex: 1, minWidth: 0.3 }}
+              />
 
-                {hasInheritance && (
-                  <>
-                    <ArrowRightAltIcon sx={{ color: "orange" }} />
+              <ListItemIcon sx={{ minWidth: "auto" }}>
+                {symbol === "x" ? (
+                  <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                ) : symbol === ">" ? (
+                  <ArrowForwardIosIcon sx={{ fontSize: 20, color: "orange" }} />
+                ) : symbol === "=" ? (
+                  <DragHandleIcon sx={{ fontSize: 20, color: "orange" }} />
+                ) : symbol === "+" ? (
+                  <AddIcon sx={{ fontSize: 20, color: "orange" }} />
+                ) : null}
+              </ListItemIcon>
+
+              <ListItemText
+                primary={
+                  to ? (
                     <Typography
                       sx={{
                         fontStyle: "italic",
                         color: (theme) =>
                           theme.palette.mode === "light" ? "#666" : "#999",
                         fontSize: "0.9rem",
+                        textAlign: "right",
                       }}
                     >
-                      {inheritanceDetails[part.id][0]}
+                      {nodes[to].title}
                     </Typography>
-                  </>
-                )}
-              </Box>
-
-              {/* Uncomment and adjust if needed */}
-              {/* {part.isInherited && (
-              <Typography
-                variant="caption"
-                sx={{
-                  color: (theme) => theme.palette.mode === "light" ? "#f39c12" : "#e67e22",
-                  fontSize: "0.7rem",
-                  fontWeight: 500,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px"
-                }}
-              >
-                inherited
-              </Typography>
-            )} */}
-            </Box>
-          );
-        })}
-      </Box>
+                  ) : null
+                }
+                sx={{ flex: 1, minWidth: 0.3 }}
+              />
+            </ListItem>
+          ),
+        )}
+      </List>
     );
   };
-
+  if (generalizations.length <= 0) {
+    return null;
+  }
   return (
     <Box
       sx={{
@@ -233,118 +310,141 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       }}
     >
       <Box>
-        <Typography
-          variant="subtitle2"
+        <Box
           sx={{
-            mb: 2,
-            fontWeight: 600,
             display: "flex",
-            fontSize: "0.85rem",
-            color: (theme) =>
-              theme.palette.mode === "light" ? "#2c3e50" : "#e0e0e0",
-            gap: "5px",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 2,
           }}
         >
+          <Typography>{"Generalization"}</Typography>
           {!triggerSearch && (
-            <Tooltip title={"Collapse"} placement="top">
+            <Tooltip title={"Collapse"} placement="top" sx={{ ml: "auto" }}>
               <IconButton
                 sx={{
                   border: "1px solid gray",
                   p: 0,
-                  backgroundColor: "orange",
+                  backgroundColor: "",
+                  color: "gray",
                 }}
                 onClick={() => {
                   setDisplayDetails(false);
                 }}
               >
-                <KeyboardArrowUpIcon />
+                <CloseIcon />
               </IconButton>
             </Tooltip>
-          )}{" "}
-          <Typography>{"Generalizations' Parts:"}</Typography>
+          )}
+        </Box>
+      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: "7px",
+        }}
+      >
+        {generalizations.length > 0 ? (
+          <Select
+            value={selectedGeneralizationIndex}
+            onChange={(e: any) => handleSelectedGenChange(e, e.target.value)}
+            displayEmpty
+            sx={{
+              backgroundColor: (theme) =>
+                theme.palette.mode === "light" ? "#fff" : "#2a2a2a",
+              color: (theme) =>
+                theme.palette.mode === "light" ? "#2c3e50" : "#e0e0e0",
+              "& .MuiSelect-icon": {
+                color: "#ff9500",
+              },
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#ff9500",
+              },
+              p: 0,
+              borderRadius: "25px",
+            }}
+            inputProps={{
+              sx: {
+                p: 1,
+                pl: "12px",
+              },
+            }}
+          >
+            {generalizations.map((generalization: any, index: number) => {
+              const parts = getGeneralizationParts(generalization.id);
+              const selectedPartsFromThisGen = parts.filter((part) =>
+                checkedItems.has(part.id),
+              );
+
+              return (
+                <MenuItem key={generalization.id} value={index}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      width: "100%",
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 500,
+                        fontSize: "0.85rem",
+                        flex: 1,
+                        textOverflow: "ellipsis",
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {generalization.title}
+                    </Typography>
+                    {selectedPartsFromThisGen.length > 0 && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "#ff9500",
+                          fontWeight: 600,
+                          fontSize: "0.75rem",
+                        }}
+                      >
+                        ({selectedPartsFromThisGen.length})
+                      </Typography>
+                    )}
+                  </Box>
+                </MenuItem>
+              );
+            })}
+          </Select>
+        ) : (
+          <Typography sx={{ color: "orange", fontWeight: "bold" }}>
+            {generalizations[0].title}
+          </Typography>
+        )}
+
+        <Box sx={{ mx: 2, display: "flex", alignItems: "center" }}>
+          <ArrowRightAltIcon sx={{ fontSize: "40px", color: "orange" }} />
+        </Box>
+
+        <Typography
+          sx={{
+            fontWeight: 500,
+            fontSize: "0.95rem",
+            maxWidth: "250px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {currentVisibleNode.title}
         </Typography>
       </Box>
 
-      <Tabs
-        value={selectedTab}
-        onChange={handleTabChange}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{
-          mb: 2,
-          "& .MuiTabs-scrollButtons": {
-            "&.Mui-disabled": { opacity: 0.3 },
-          },
-          "& .MuiTabs-indicator": {
-            backgroundColor: readOnly ? "#ff9500" : "#ff9500",
-          },
-        }}
-      >
-        {generalizations.map((generalization, index) => {
-          const parts = getGeneralizationParts(generalization.id);
-          const selectedPartsFromThisGen = parts.filter((part) =>
-            checkedItems.has(part.id),
-          );
-
-          return (
-            <Tab
-              key={generalization.id}
-              label={
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    minWidth: 0,
-                    maxWidth: "160px",
-                  }}
-                >
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontWeight: 500,
-                      fontSize: "0.85rem",
-                      textTransform: "none",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      flex: 1,
-                    }}
-                  >
-                    {generalization.title}
-                  </Typography>
-                  {selectedPartsFromThisGen.length > 0 && (
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: "#ff9500",
-                        fontWeight: 600,
-                        fontSize: "0.75rem",
-                      }}
-                    >
-                      ({selectedPartsFromThisGen.length})
-                    </Typography>
-                  )}
-                </Box>
-              }
-              sx={{
-                minWidth: "auto",
-                maxWidth: "180px",
-                px: 2,
-                py: 1,
-                textTransform: "none",
-                "&.Mui-selected": {
-                  color: "#ff9500",
-                },
-              }}
-            />
-          );
-        })}
-      </Tabs>
-
-      {selectedTab < generalizations.length && (
+      {selectedGeneralizationIndex < generalizations.length && (
         <Box sx={{ mt: 1.5 }}>
-          {getTabContent(generalizations[selectedTab].id)}
+          {getTabContent(generalizations[selectedGeneralizationIndex].id)}
         </Box>
       )}
     </Box>

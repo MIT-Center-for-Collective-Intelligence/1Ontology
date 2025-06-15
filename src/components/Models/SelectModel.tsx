@@ -776,6 +776,7 @@ const SelectModelModal = ({
             readOnly={false}
             setDisplayDetails={setDisplayDetails}
             inheritanceDetails={inheritanceDetails}
+            currentVisibleNode={currentVisibleNode}
             triggerSearch={triggerSearch}
           />
           <Box

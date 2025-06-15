@@ -159,9 +159,7 @@ type ILinkNodeProps = {
   glowIds: Set<string>;
   skillsFuture: boolean;
   currentImprovement: any;
-  partsInheritance: {
-    [nodeId: string]: { inheritedFrom: string; partInheritance: string };
-  };
+  partsInheritance: any;
   loadingIds: any;
   saveNewSpecialization: any;
   enableEdit: boolean;
@@ -732,21 +730,21 @@ const LinkNode = ({
                 <span
                   style={{ display: "flex", gap: "4px", whiteSpace: "nowrap" }}
                 >
-                  {partsInheritance[link.id]?.inheritedFrom && (
+                  {partsInheritance[link.id][0].genId && (
                     <>
                       Inherited from{" "}
                       <strong style={{ fontSize: "12px" }}>
                         {'"'}
-                        {partsInheritance[link.id].inheritedFrom}
+                        {nodes[partsInheritance[link.id][0].genId].title}
                         {'"'},
                       </strong>
                     </>
                   )}
-                  {partsInheritance[link.id]?.partInheritance && (
+                  {partsInheritance[link.id][0]?.partOf && (
                     <>
                       Part{" "}
                       <strong style={{ fontSize: "12px", color: "orange" }}>
-                        {partsInheritance[link.id].partInheritance}
+                        {nodes[partsInheritance[link.id][0].partOf].title}
                       </strong>
                     </>
                   )}
@@ -798,7 +796,7 @@ const LinkNode = ({
                 )}
               </Link>
 
-              {partsInheritance[link.id] && (
+              {/* {partsInheritance[link.id] && (
                 <Box
                   style={{
                     width: "14px",
@@ -815,7 +813,7 @@ const LinkNode = ({
                     boxShadow: "0 0 3px rgba(0, 0, 0, 0.3) inset",
                   }}
                 ></Box>
-              )}
+              )} */}
             </Box>
           </Tooltip>
         )}

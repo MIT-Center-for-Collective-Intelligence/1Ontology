@@ -219,13 +219,9 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
   const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
   const [treeViewData, setTreeViewData] = useState([]);
   const [loadingNodes, setLoadingNodes] = useState(false);
-  const [appName, setAppName] = useState("Ontology - Demo Version"); // this state is only been used for the Skills Future App
-  const [partsInheritance, setPartsInheritance] = useState<{
-    [nodeId: string]: { inheritedFrom: string; partInheritance: string };
-  }>({});
-  const [inheritanceDetails, setInheritanceDetails] = useState<{
-    [nodeId: string]: any;
-  }>({});
+  const [appName, setAppName] = useState("Ontology - Development Version"); // this state is only been used for the Skills Future App
+  const [partsInheritance, setPartsInheritance] = useState<any>({});
+
   const [scrollTrigger, setScrollTrigger] = useState(false);
   const [enableEdit, setEnableEdit] = useState(false);
   const [specializationNumsUnder, setSpecializationNumsUnder] = useState({});
@@ -1125,9 +1121,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
 
   useEffect(() => {
     if (!currentVisibleNode) return;
-    const inheritedParts: {
-      [nodeId: string]: { inheritedFrom: string; partInheritance: string };
-    } = {};
+
     const _inheritanceDetails: any = {};
 
     const _currentVisibleNode = { ...currentVisibleNode };
@@ -1138,9 +1132,9 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
     ).flatMap((c) => c.nodes);
     const checkGeneralizations = (
       nodeId: string,
-    ): { id: string; partInheritance: string } | null => {
-      let generalizationInhrt = null;
-      let partInheritance = null;
+    ): { genId: string; partOf: string | null }[] | null => {
+      let inheritanceDetails: { genId: string; partOf: string | null }[] = [];
+
       for (let generalization of generalizations) {
         if (!nodes[generalization.id]) {
           continue;
@@ -1152,28 +1146,29 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
         );
 
         let partOfIdx: any = -1;
-        if (!partInheritance) {
-          for (let { id } of generalizationParts[0].nodes) {
-            const specializationPart = nodes[id].specializations.flatMap(
-              (c) => c.nodes,
-            );
-            partOfIdx = specializationPart.findIndex((c) => c.id === nodeId);
-            if (partOfIdx !== -1) {
-              partInheritance = id;
-              generalizationInhrt = generalization.id;
-              break;
-            }
+
+        for (let { id } of generalizationParts[0].nodes) {
+          const specializationPart = nodes[id].specializations.flatMap(
+            (c) => c.nodes,
+          );
+          partOfIdx = specializationPart.findIndex((c) => c.id === nodeId);
+          if (partOfIdx !== -1) {
+            inheritanceDetails.push({
+              genId: generalization.id,
+              partOf: id,
+            });
           }
         }
-        if (partIdex !== -1 && !generalizationInhrt) {
-          generalizationInhrt = generalization.id;
+
+        if (partIdex !== -1) {
+          inheritanceDetails.push({
+            genId: generalization.id,
+            partOf: generalization.id,
+          });
         }
       }
-      if (generalizationInhrt || partInheritance) {
-        return {
-          id: generalizationInhrt ?? "",
-          partInheritance: partInheritance ?? "",
-        };
+      if (inheritanceDetails.length > 0) {
+        return inheritanceDetails;
       }
       return null;
     };
@@ -1182,33 +1177,12 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
       for (let collection of parts) {
         for (let node of collection.nodes) {
           if (nodes[node.id]) {
-            const { id, partInheritance } = checkGeneralizations(node.id) || {
-              id: "",
-              partInheritance: "",
-            };
-            if (id) {
-              inheritedParts[node.id] = {
-                inheritedFrom: id ? (nodes[id].title ?? "") : "",
-                partInheritance: partInheritance
-                  ? (nodes[partInheritance].title ?? "")
-                  : "",
-              };
-              if (partInheritance) {
-                if (_inheritanceDetails[partInheritance]) {
-                  _inheritanceDetails[partInheritance].push(
-                    nodes[node.id].title,
-                  );
-                } else {
-                  _inheritanceDetails[partInheritance] = [nodes[node.id].title];
-                }
-              }
-            }
+            _inheritanceDetails[node.id] = checkGeneralizations(node.id);
           }
         }
       }
     }
-    setInheritanceDetails(_inheritanceDetails);
-    setPartsInheritance(inheritedParts);
+    setPartsInheritance(_inheritanceDetails);
   }, [currentVisibleNode, nodes]);
 
   if (Object.keys(nodes).length <= 0) {
@@ -1513,7 +1487,7 @@ const Ontology = ({ skillsFuture = false }: { skillsFuture: boolean }) => {
                   partsInheritance={partsInheritance}
                   enableEdit={enableEdit}
                   setEnableEdit={setEnableEdit}
-                  inheritanceDetails={inheritanceDetails}
+                  inheritanceDetails={partsInheritance}
                 />
               )}
             </Box>

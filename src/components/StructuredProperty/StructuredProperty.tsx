@@ -877,7 +877,7 @@ const StructuredProperty = ({
             }}
           >
             <KeyboardArrowDownIcon />
-            Details
+            Inherited From
           </Button>
         )}
         {displayDetails &&
@@ -901,6 +901,7 @@ const StructuredProperty = ({
               readOnly={true}
               setDisplayDetails={setDisplayDetails}
               inheritanceDetails={inheritanceDetails}
+              currentVisibleNode={currentVisibleNode}
             />
           )}
       </Box>
