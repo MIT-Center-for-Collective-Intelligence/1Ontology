@@ -89,6 +89,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     inheritance: any,
     parts: string[],
     generalizationId: string,
+    currentParts: string[],
   ) => {
     const result: {
       from: string;
@@ -154,17 +155,33 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       seen.add(key);
       return true;
     });
+
+    uniqueResult.sort((a, b) => {
+      const indexA = currentParts.indexOf(a.to);
+      const indexB = currentParts.indexOf(b.to);
+
+      return (
+        (indexA === -1 ? Infinity : indexA) -
+        (indexB === -1 ? Infinity : indexB)
+      );
+    });
     return uniqueResult;
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
     const parts = getGeneralizationParts(generalizationId);
     const displayedParts = parts.map((c) => c.id);
+    const inheritanceRef = currentVisibleNode.inheritance["parts"].ref;
+    const _parts = inheritanceRef
+      ? nodes[inheritanceRef].properties["parts"]
+      : currentVisibleNode.properties["parts"];
+    const currentParts = _parts[0].nodes.map((c: { id: string }) => c.id);
 
     const details = analyzeInheritance(
       inheritanceDetails,
       displayedParts,
       generalizationId,
+      currentParts,
     );
 
     if (Object.keys(inheritanceDetails).length === 0) {
@@ -252,8 +269,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     <Typography
                       variant="body2"
                       sx={{
-                        color: (theme) =>
-                          theme.palette.mode === "light" ? "#666" : "#999",
                         fontSize: "0.9rem",
                       }}
                     >
@@ -282,8 +297,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     <Typography
                       sx={{
                         fontStyle: "italic",
-                        color: (theme) =>
-                          theme.palette.mode === "light" ? "#666" : "#999",
                         fontSize: "0.9rem",
                         textAlign: "right",
                       }}
@@ -321,7 +334,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             mb: 2,
           }}
         >
-          <Typography>{"Generalization"}</Typography>
+          <Typography>{"Parts inherited from generalizations"}</Typography>
           {!triggerSearch && (
             <Tooltip title={"Collapse"} placement="top" sx={{ ml: "auto" }}>
               <IconButton
@@ -354,6 +367,25 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             value={selectedGeneralizationIndex}
             onChange={(e: any) => handleSelectedGenChange(e, e.target.value)}
             displayEmpty
+            renderValue={(selected) => {
+              const selectedGen = generalizations[selected];
+              return (
+                <Tooltip title={selectedGen.title} placement="top">
+                  <Typography
+                    sx={{
+                      fontWeight: 500,
+                      fontSize: "0.85rem",
+                      textOverflow: "ellipsis",
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                      maxWidth: "200px",
+                    }}
+                  >
+                    {selectedGen.title}
+                  </Typography>
+                </Tooltip>
+              );
+            }}
             sx={{
               backgroundColor: (theme) =>
                 theme.palette.mode === "light" ? "#fff" : "#2a2a2a",
@@ -377,9 +409,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           >
             {generalizations.map((generalization: any, index: number) => {
               const parts = getGeneralizationParts(generalization.id);
-              const selectedPartsFromThisGen = parts.filter((part) =>
-                checkedItems.has(part.id),
-              );
 
               return (
                 <MenuItem key={generalization.id} value={index}>
@@ -391,58 +420,60 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                       width: "100%",
                     }}
                   >
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: 500,
-                        fontSize: "0.85rem",
-                        flex: 1,
-                        textOverflow: "ellipsis",
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {generalization.title}
-                    </Typography>
-                    {selectedPartsFromThisGen.length > 0 && (
+                    <Tooltip title={generalization.title}>
                       <Typography
-                        variant="caption"
+                        variant="body2"
                         sx={{
-                          color: "#ff9500",
-                          fontWeight: 600,
-                          fontSize: "0.75rem",
+                          fontWeight: 500,
+                          fontSize: "0.85rem",
+                          flex: 1,
+                          textOverflow: "ellipsis",
+                          overflow: "hidden",
+                          whiteSpace: "nowrap",
                         }}
                       >
-                        ({selectedPartsFromThisGen.length})
+                        {generalization.title}
                       </Typography>
-                    )}
+                    </Tooltip>
                   </Box>
                 </MenuItem>
               );
             })}
           </Select>
         ) : (
-          <Typography sx={{ color: "orange", fontWeight: "bold" }}>
-            {generalizations[0].title}
-          </Typography>
+          <Tooltip title={generalizations[0].title}>
+            <Typography sx={{ color: "orange", fontWeight: "bold" }}>
+              {generalizations[0].title}
+            </Typography>
+          </Tooltip>
         )}
 
         <Box sx={{ mx: 2, display: "flex", alignItems: "center" }}>
-          <ArrowRightAltIcon sx={{ fontSize: "40px", color: "orange" }} />
+          <ArrowRightAltIcon
+            sx={{
+              fontSize: "55px",
+              color: "orange",
+              fontWeight: "bold",
+              transform: "scaleX(2)",
+            }}
+          />
         </Box>
 
-        <Typography
-          sx={{
-            fontWeight: 500,
-            fontSize: "0.95rem",
-            maxWidth: "250px",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {currentVisibleNode.title}
-        </Typography>
+        <Tooltip title={currentVisibleNode.title}>
+          <Typography
+            sx={{
+              fontWeight: 500,
+              fontSize: "0.95rem",
+              maxWidth: "150px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              cursor: "default",
+            }}
+          >
+            {currentVisibleNode.title}
+          </Typography>
+        </Tooltip>
       </Box>
 
       {selectedGeneralizationIndex < generalizations.length && (

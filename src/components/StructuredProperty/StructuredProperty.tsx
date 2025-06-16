@@ -907,7 +907,7 @@ const StructuredProperty = ({
             }}
           >
             <KeyboardArrowDownIcon />
-            Inherited From
+            Parts inherited from ...
           </Button>
         )}
         {displayDetails &&
