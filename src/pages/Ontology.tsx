@@ -1133,7 +1133,7 @@ const Ontology = ({
 
     let parts = _currentVisibleNode?.properties.parts || [];
     const inheritanceRef = _currentVisibleNode.inheritance["parts"].ref;
-    if (inheritanceRef) {
+    if (inheritanceRef && nodes[inheritanceRef]) {
       parts = nodes[inheritanceRef].properties["parts"];
     }
 
@@ -1151,7 +1151,7 @@ const Ontology = ({
         }
         const refPartsId = nodes[generalization.id].inheritance["parts"].ref;
         let generalizationParts = nodes[generalization.id]?.properties.parts;
-        if (refPartsId) {
+        if (refPartsId && nodes[refPartsId]) {
           generalizationParts = nodes[refPartsId]?.properties.parts;
         }
 

@@ -172,9 +172,10 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     const parts = getGeneralizationParts(generalizationId);
     const displayedParts = parts.map((c) => c.id);
     const inheritanceRef = currentVisibleNode.inheritance["parts"].ref;
-    const _parts = inheritanceRef
-      ? nodes[inheritanceRef].properties["parts"]
-      : currentVisibleNode.properties["parts"];
+    const _parts =
+      inheritanceRef && nodes[inheritanceRef]
+        ? nodes[inheritanceRef].properties["parts"]
+        : currentVisibleNode.properties["parts"];
     const currentParts = _parts[0].nodes.map((c: { id: string }) => c.id);
 
     const details = analyzeInheritance(
@@ -358,7 +359,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
           px: "7px",
         }}
       >
@@ -408,8 +408,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             }}
           >
             {generalizations.map((generalization: any, index: number) => {
-              const parts = getGeneralizationParts(generalization.id);
-
               return (
                 <MenuItem key={generalization.id} value={index}>
                   <Box
@@ -448,15 +446,24 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           </Tooltip>
         )}
 
-        <Box sx={{ mx: 2, display: "flex", alignItems: "center" }}>
-          <ArrowRightAltIcon
+        <Box sx={{ mx: 2, display: "flex", alignItems: "center", height: 36 }}>
+          <Box
             sx={{
-              fontSize: "55px",
-              color: "orange",
-              fontWeight: "bold",
-              transform: "scaleX(2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
             }}
-          />
+          >
+            <ArrowRightAltIcon
+              sx={{
+                fontSize: 24,
+                color: "orange",
+                fontWeight: "bold",
+                transform: "scaleX(2)",
+              }}
+            />
+          </Box>
         </Box>
 
         <Tooltip title={currentVisibleNode.title}>
