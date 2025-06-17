@@ -1149,7 +1149,11 @@ const Ontology = ({
         if (!nodes[generalization.id]) {
           continue;
         }
-        const generalizationParts = nodes[generalization.id]?.properties.parts;
+        const refPartsId = nodes[generalization.id].inheritance["parts"].ref;
+        let generalizationParts = nodes[generalization.id]?.properties.parts;
+        if (refPartsId) {
+          generalizationParts = nodes[refPartsId]?.properties.parts;
+        }
 
         const partIdex = generalizationParts[0].nodes.findIndex(
           (c) => c.id === nodeId,
@@ -1158,7 +1162,7 @@ const Ontology = ({
         let partOfIdx: any = -1;
 
         for (let { id } of generalizationParts[0].nodes) {
-          const specializationPart = nodes[id].specializations.flatMap(
+          const specializationPart = (nodes[id]?.specializations || []).flatMap(
             (c) => c.nodes,
           );
           partOfIdx = specializationPart.findIndex((c) => c.id === nodeId);
