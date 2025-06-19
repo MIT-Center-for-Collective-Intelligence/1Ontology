@@ -528,9 +528,11 @@ export const saveNewChangeLog = (db: any, data: NodeChange) => {
   const changeUseRef = doc(collection(db, NODES_LOGS));
   setDoc(changeUseRef, data);
   const userRef = doc(collection(db, USERS), data.modifiedBy);
-  updateDoc(userRef, {
-    lasChangeMadeAt: new Date(),
-  });
+  if (data.modifiedBy !== "ouhrac") {
+    updateDoc(userRef, {
+      lasChangeMadeAt: new Date(),
+    });
+  }
   if (data.modifiedBy) {
     const nodeRef = doc(collection(db, NODES), data.nodeId);
     let updatesObject = {
