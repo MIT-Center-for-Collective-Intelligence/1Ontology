@@ -222,15 +222,6 @@
         display: block;
     }
 
-    .treeContainer {
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 40vh;
-        position: absolute;
-        display: flex;
-    }
-
     .tree {
         box-shadow: 0 -3px 6px rgb(0 0 0 / 0.15);
     }
