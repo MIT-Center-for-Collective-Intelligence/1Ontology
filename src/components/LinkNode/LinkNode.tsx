@@ -859,7 +859,6 @@ const LinkNode = ({
                     link.change === "removed" ? "line-through" : "none",
                 }}
               >
-                {link.id}
                 {/* link.title || */ title || regionalTitle}{" "}
                 {link.optional && selectedProperty !== property && (
                   <span
