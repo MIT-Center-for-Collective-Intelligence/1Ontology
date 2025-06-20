@@ -136,17 +136,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   const [{ user }] = useAuth();
   const scrollRef = useRef<any>(null);
 
-  const properties = useMemo(() => {
-    if (
-      (selectedDiffNode && selectedDiffNode?.changeType === "add property") ||
-      selectedDiffNode?.changeType === "add property"
-    ) {
-      return selectedDiffNode?.fullNode.properties;
-    } else {
-      return currentVisibleNode.properties;
-    }
-  }, [currentVisibleNode, selectedDiffNode]);
-
   const currentNode = useMemo(() => {
     if (
       selectedDiffNode &&
@@ -246,6 +235,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         return;
       }
       if (!newProperty.trim() || !newPropertyType.trim()) return;
+
       const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
       const properties = currentVisibleNode.properties;
       const previousValue = JSON.parse(
@@ -265,6 +255,26 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         ref: null,
         inheritanceType: "inheritUnlessAlreadyOverRidden",
       };
+      setCurrentVisibleNode((prev: any) => {
+        const _prev = { ...prev };
+        _prev.properties = properties;
+        _prev.propertyType = propertyType;
+        _prev.inheritance = inheritance;
+        return _prev;
+      });
+      setTimeout(() => {
+        const element = document.getElementById(`property-${newProperty}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+
+          element.style.transition = "box-shadow 0.3s ease";
+          element.style.boxShadow = "0 0 0 3px limegreen";
+
+          setTimeout(() => {
+            element.style.boxShadow = "";
+          }, 2000);
+        }
+      }, 1000);
       await updateDoc(nodeRef, {
         properties,
         propertyType,
@@ -317,6 +327,16 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   const orderOfProperties = useMemo(() => {
     const priorityOrder = PROPERTIES_ORDER[currentVisibleNode.nodeType] || [];
 
+    let properties = null;
+    if (
+      (selectedDiffNode && selectedDiffNode?.changeType === "add property") ||
+      selectedDiffNode?.changeType === "add property"
+    ) {
+      properties = selectedDiffNode?.fullNode.properties;
+    } else {
+      properties = currentVisibleNode.properties;
+    }
+    console.log("properties ==>", properties);
     const sortedKeys = Object.keys(properties || {})
       .filter(
         (p) =>
@@ -345,7 +365,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
       });
 
     return sortedKeys;
-  }, [currentVisibleNode, properties]);
+  }, [currentVisibleNode, selectedDiffNode]);
 
   const hasReferences = orderOfProperties.includes("References");
 
@@ -492,7 +512,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           addNewProperty={addNewProperty}
           setOpenAddProperty={setOpenAddProperty}
           locked={locked}
-          exitingProperties={Object.keys(properties || {})}
+          exitingProperties={Object.keys(currentVisibleNode.properties || {})}
         />
       )}
       {!locked && !openAddProperty && !currentImprovement && (

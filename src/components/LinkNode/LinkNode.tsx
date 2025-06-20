@@ -859,6 +859,7 @@ const LinkNode = ({
                     link.change === "removed" ? "line-through" : "none",
                 }}
               >
+                {link.id}
                 {/* link.title || */ title || regionalTitle}{" "}
                 {link.optional && selectedProperty !== property && (
                   <span
@@ -898,7 +899,7 @@ const LinkNode = ({
           {selectedProperty === property && selectedProperty === "parts" && (
             <Tooltip
               title={
-                link.optional ? "Make link non-optional" : "Make link optional"
+                link.optional ? "Make part non-optional" : "Make part optional"
               }
               placement="top"
             >
