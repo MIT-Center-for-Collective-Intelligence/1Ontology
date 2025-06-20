@@ -159,11 +159,13 @@ type ILinkNodeProps = {
   selectedProperty: string;
   glowIds: Set<string>;
   skillsFuture: boolean;
+  skillsFutureApp: string;
   currentImprovement: any;
   partsInheritance: any;
   loadingIds: any;
   saveNewSpecialization: any;
   enableEdit: boolean;
+  setEditableProperty: any;
 };
 
 const LinkNode = ({
@@ -172,6 +174,7 @@ const LinkNode = ({
   sx,
   property,
   currentVisibleNode,
+  setCurrentVisibleNode,
   navigateToNode,
   title,
   nodes,
@@ -190,11 +193,13 @@ const LinkNode = ({
   selectedProperty,
   glowIds,
   skillsFuture,
+  skillsFutureApp,
   currentImprovement,
   partsInheritance,
   loadingIds,
   saveNewSpecialization,
   enableEdit,
+  setEditableProperty,
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -247,6 +252,7 @@ const LinkNode = ({
               linkId,
               nodes,
               user,
+              skillsFutureApp,
             );
             const updatedNodeDoc = await getDoc(
               doc(collection(db, NODES), currentNodeId),
@@ -395,6 +401,7 @@ const LinkNode = ({
             changeType: "remove element",
             fullNode: currentVisibleNode,
             skillsFuture,
+            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
           recordLogs({
             action: "unlinked a node",
@@ -438,6 +445,44 @@ const LinkNode = ({
       });
     }
   };
+
+  const makeLinkOptional = useCallback(() => {
+    const nodeCopy = { ...currentVisibleNode };
+    const partInheredRef = nodeCopy.inheritance["parts"].ref;
+    const partsNodes = partInheredRef
+      ? nodes[partInheredRef].properties["parts"][0].nodes
+      : nodeCopy.properties["parts"][0].nodes;
+    const currentPartIndx = partsNodes.findIndex((c) => c.id === link.id);
+    console.log(currentPartIndx, "currentPartIndx==>");
+    if (currentPartIndx !== -1) {
+      partsNodes[currentPartIndx].optional =
+        !partsNodes[currentPartIndx].optional;
+      console.log(partsNodes);
+      console.log(link.id);
+
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+      setCurrentVisibleNode((prev: any) => {
+        const _prev = { ...prev };
+        _prev.properties["parts"].nodes = partsNodes;
+        return _prev;
+      });
+      setEditableProperty([
+        {
+          collectionName: "main",
+          nodes: partsNodes,
+        },
+      ]);
+      updateDoc(nodeRef, {
+        "properties.parts": [
+          {
+            collectionName: "main",
+            nodes: partsNodes,
+          },
+        ],
+        "inheritance.parts.ref": null,
+      });
+    }
+  }, [currentVisibleNode]);
 
   const unlinkSpecializationOrGeneralization = async (
     currentNodeId: string,
@@ -615,6 +660,7 @@ const LinkNode = ({
             changeType: "remove element",
             fullNode: currentVisibleNode,
             skillsFuture,
+            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
           if (property === "generalizations") {
             updateInheritanceWhenUnlinkAGeneralization(
@@ -740,28 +786,40 @@ const LinkNode = ({
           <Tooltip
             title={
               partsInheritance[link.id] ? (
-                <span
-                  style={{ display: "flex", gap: "4px", whiteSpace: "nowrap" }}
-                >
-                  {partsInheritance[link.id][0].genId && (
-                    <>
-                      Inherited from{" "}
-                      <strong style={{ fontSize: "12px" }}>
-                        {'"'}
-                        {nodes[partsInheritance[link.id][0].genId].title}
-                        {'"'},
-                      </strong>
-                    </>
+                <>
+                  <span
+                    style={{
+                      display: "flex",
+                      gap: "4px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {partsInheritance[link.id][0].genId &&
+                      nodes[partsInheritance[link.id][0].genId] && (
+                        <>
+                          Inherited from{" "}
+                          <strong style={{ fontSize: "12px" }}>
+                            {'"'}
+                            {nodes[partsInheritance[link.id][0].genId].title}
+                            {'"'},
+                          </strong>
+                        </>
+                      )}
+                    {partsInheritance[link.id][0]?.partOf && (
+                      <>
+                        Part{" "}
+                        <strong style={{ fontSize: "12px", color: "orange" }}>
+                          {nodes[partsInheritance[link.id][0].partOf]?.title}
+                        </strong>
+                      </>
+                    )}
+                  </span>
+                  {link.optional && (
+                    <span style={{ marginLeft: "2px" }}>{"(Optional)"}</span>
                   )}
-                  {partsInheritance[link.id][0]?.partOf && (
-                    <>
-                      Part{" "}
-                      <strong style={{ fontSize: "12px", color: "orange" }}>
-                        {nodes[partsInheritance[link.id][0].partOf].title}
-                      </strong>
-                    </>
-                  )}
-                </span>
+                </>
+              ) : link.optional ? (
+                <span style={{ marginLeft: "2px" }}>{"(Optional)"}</span>
               ) : (
                 ""
               )
@@ -802,10 +860,10 @@ const LinkNode = ({
                 }}
               >
                 {/* link.title || */ title || regionalTitle}{" "}
-                {link.optional && (
+                {link.optional && selectedProperty !== property && (
                   <span
-                    style={{ color: "gray", marginLeft: "2px" }}
-                  >{`(optional)`}</span>
+                    style={{ color: "orange", marginLeft: "2px" }}
+                  >{`O`}</span>
                 )}
               </Link>
 
@@ -836,6 +894,22 @@ const LinkNode = ({
             <SwapHorizIcon
               sx={{ color: getLinkColor(link.change), pl: "5px" }}
             />
+          )}{" "}
+          {selectedProperty === property && selectedProperty === "parts" && (
+            <Tooltip
+              title={
+                link.optional ? "Make link non-optional" : "Make link optional"
+              }
+              placement="top"
+            >
+              <Button
+                sx={{ ml: "auto", borderRadius: "25px", p: 0, width: "10px" }}
+                variant={link.optional ? "contained" : "outlined"}
+                onClick={makeLinkOptional}
+              >
+                O
+              </Button>
+            </Tooltip>
           )}
           {((!locked &&
             !linkLocked &&
@@ -907,7 +981,6 @@ const LinkNode = ({
               )}
             </>
           )}
-
           {property === "parts" &&
             !currentImprovement &&
             !selectedDiffNode &&

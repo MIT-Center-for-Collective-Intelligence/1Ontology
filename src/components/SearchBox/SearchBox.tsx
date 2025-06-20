@@ -67,7 +67,11 @@ export const SearchBox = ({
               <SearchIcon
                 sx={{
                   color: (theme) =>
-                    theme.palette.mode === "dark" ? "white!important" : "gray",
+                    glowSearchBox
+                      ? "rgba(0, 255, 0, 0.6)"
+                      : theme.palette.mode === "dark"
+                        ? "white!important"
+                        : "gray",
                 }}
               />
             </InputAdornment>

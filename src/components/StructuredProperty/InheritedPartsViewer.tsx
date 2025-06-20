@@ -256,7 +256,9 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                   <Tooltip title="Search it below" placement="left">
                     <IconButton
                       sx={{ p: 0.4 }}
-                      onClick={() => triggerSearch(from)}
+                      onClick={() =>
+                        triggerSearch({ id: from, title: nodes[from].title })
+                      }
                     >
                       <SearchIcon sx={{ fontSize: 19, color: "orange" }} />
                     </IconButton>
@@ -299,7 +301,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                       sx={{
                         fontStyle: "italic",
                         fontSize: "0.9rem",
-                        textAlign: "right",
+                        textAlign: "left",
+                        ml: 1.5,
                       }}
                     >
                       {nodes[to].title}
@@ -314,13 +317,14 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       </List>
     );
   };
+
   if (generalizations.length <= 0) {
     return null;
   }
   return (
     <Box
       sx={{
-        px: "15px",
+        px: "10px",
         py: "10px",
         backgroundColor: (theme) =>
           theme.palette.mode === "light" ? "#fafbfc" : "#1e1e1f",
@@ -335,7 +339,9 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             mb: 2,
           }}
         >
-          <Typography>{"Parts inherited from generalizations"}</Typography>
+          <Typography sx={{ ml: "7px" }}>
+            {"Parts inherited from generalizations"}
+          </Typography>
           {!triggerSearch && (
             <Tooltip title={"Collapse"} placement="top" sx={{ ml: "auto" }}>
               <IconButton
@@ -357,12 +363,14 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       </Box>
       <Box
         sx={{
+          position: "relative",
           display: "flex",
           alignItems: "center",
           px: "7px",
+          height: 40,
         }}
       >
-        {generalizations.length > 0 ? (
+        {generalizations.length > 1 ? (
           <Select
             value={selectedGeneralizationIndex}
             onChange={(e: any) => handleSelectedGenChange(e, e.target.value)}
@@ -378,7 +386,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                       textOverflow: "ellipsis",
                       overflow: "hidden",
                       whiteSpace: "nowrap",
-                      maxWidth: "200px",
+                      maxWidth: "170px",
                     }}
                   >
                     {selectedGen.title}
@@ -446,36 +454,35 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           </Tooltip>
         )}
 
-        <Box sx={{ mx: 2, display: "flex", alignItems: "center", height: 36 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-            }}
-          >
-            <ArrowRightAltIcon
-              sx={{
-                fontSize: 24,
-                color: "orange",
-                fontWeight: "bold",
-                transform: "scaleX(2)",
-              }}
-            />
-          </Box>
-        </Box>
+        <ArrowRightAltIcon
+          sx={{
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%) scaleX(2)",
+            fontSize: 24,
+            color: "orange",
+            fontWeight: "bold",
+            zIndex: 1,
+            pointerEvents: "none",
+          }}
+        />
 
         <Tooltip title={currentVisibleNode.title}>
           <Typography
             sx={{
+              position: "absolute",
+              top: "50%",
+              left: `calc(50% + 24px)`,
+              transform: "translateY(-50%)",
               fontWeight: 500,
               fontSize: "0.95rem",
-              maxWidth: "150px",
+              maxWidth: "210px",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               cursor: "default",
+              zIndex: 2,
             }}
           >
             {currentVisibleNode.title}

@@ -369,6 +369,8 @@ const Improvements = ({
           changeType: "add node",
           fullNode: newNode,
           reasoning,
+          skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
         // Record logs for the created node
         recordLogs({
@@ -490,6 +492,8 @@ const Improvements = ({
           modifiedAt: new Date(),
           changeType: "add element",
           fullNode: nodeParentData,
+          skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
       } catch (error) {
         confirmIt("Sorry there was an Error please try again!", "Ok", "");
@@ -612,6 +616,8 @@ const Improvements = ({
             modifiedAt: new Date(),
             changeType: "delete node",
             fullNode: currentNode,
+            skillsFuture,
+            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
           // Record a log entry for the deletion action
           clearNotifications(nodeRef.id);
@@ -938,6 +944,8 @@ const Improvements = ({
           changeType,
           fullNode: currentNode,
           reasoning: reasoning || "",
+          skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         };
         if (detailsChange) {
           changeLog.detailsChange = detailsChange;

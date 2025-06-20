@@ -71,6 +71,7 @@ interface NodeBodyProps {
   saveNewChangeLog: any;
   skillsFuture: boolean;
   enableEdit: boolean;
+  skillsFutureApp: string;
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -126,6 +127,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   saveNewChangeLog,
   skillsFuture,
   enableEdit,
+  skillsFutureApp,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -383,6 +385,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     user={user}
                     skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
+                    skillsFutureApp={skillsFutureApp}
                   />
                 ) : currentNode.propertyType[property] !== "string" ? (
                   <StructuredProperty
@@ -437,6 +440,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     selectedCollection={selectedCollection}
                     skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
+                    skillsFutureApp={skillsFutureApp}
                   />
                 ) : (
                   property !== "description" &&
@@ -454,6 +458,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       currentImprovement={currentImprovement}
                       skillsFuture={skillsFuture}
                       enableEdit={enableEdit}
+                      skillsFutureApp={skillsFutureApp}
                     />
                   )
                 )}

@@ -509,6 +509,7 @@ function DraggableTree({
             fullNode: nodes[parentId],
             skillsFuture,
             appName: skillsFutureApp,
+            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
         }
         return;
@@ -562,6 +563,7 @@ function DraggableTree({
           changeType: "sort elements",
           fullNode: nodes[toParent.nodeId],
           skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
         return;
       }
@@ -634,6 +636,7 @@ function DraggableTree({
         changeType: "modify elements",
         fullNode: nodes[specializationId],
         skillsFuture,
+        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
       });
 
       saveNewChangeLog(db, {
@@ -646,6 +649,7 @@ function DraggableTree({
         changeType: "modify elements",
         fullNode: nodes[toParent.nodeId],
         skillsFuture,
+        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
       });
       // await updateLinks(
       //   newLinks,

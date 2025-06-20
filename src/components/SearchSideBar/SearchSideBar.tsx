@@ -141,7 +141,6 @@ const SearchSideBar = ({
         skillsFuture,
         appName: skillsFuture ? skillsFutureApp : null,
       });
-      1;
 
       const searchDevelopment = searchWithFuse(searchValue).slice(
         0,

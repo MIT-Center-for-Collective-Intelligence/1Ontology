@@ -86,6 +86,7 @@ const SelectModelModal = ({
   saveNewSpecialization,
   setDisplayDetails,
   inheritanceDetails,
+  skillsFutureApp,
 }: {
   onSave: any;
   handleCloseAddLinksModel: any;
@@ -135,6 +136,7 @@ const SelectModelModal = ({
   saveNewSpecialization: any;
   setDisplayDetails?: any;
   inheritanceDetails?: any;
+  skillsFutureApp: string;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
   const [isUpdatingInheritance, setIsUpdatingInheritance] = useState(false);
@@ -343,6 +345,7 @@ const SelectModelModal = ({
               checkedId,
               nodes,
               user,
+              skillsFutureApp,
             );
           } else {
             const inheritanceRef = currentVisibleNode.inheritance.parts.ref;
@@ -392,6 +395,7 @@ const SelectModelModal = ({
               inheritedFromTitle,
               user,
               "add",
+              skillsFutureApp,
             );
           }
         } else {
@@ -403,6 +407,7 @@ const SelectModelModal = ({
             inheritedFromTitle,
             user,
             action,
+            skillsFutureApp,
           );
         }
 
@@ -938,6 +943,7 @@ const SelectModelModal = ({
               getTitleNode={() => {}}
               skillsFuture={skillsFuture}
               enableEdit={true}
+              skillsFutureApp={skillsFutureApp}
             />
           </Box>
         )}

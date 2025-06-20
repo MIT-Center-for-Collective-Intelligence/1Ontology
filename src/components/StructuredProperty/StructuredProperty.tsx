@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -7,6 +7,12 @@ import {
   Paper,
   useTheme,
   IconButton,
+  Card,
+  CardContent,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -109,6 +115,46 @@ type IStructuredPropertyProps = {
   };
   enableEdit: boolean;
   inheritanceDetails?: any;
+  skillsFutureApp: string;
+};
+const legendItems = [
+  { symbol: "O", description: "Optional" },
+  { symbol: "=", description: "The same part" },
+  { symbol: ">", description: "Specialized part" },
+  { symbol: "x", description: "Part not inherited" },
+  { symbol: "+", description: "New part" },
+];
+
+const Legend = ({
+  displayDetails,
+  displayOptional,
+}: {
+  displayDetails: boolean;
+  displayOptional: boolean;
+}) => {
+  return (
+    <Box
+      sx={{
+        maxWidth: 360,
+        borderRadius: 3,
+      }}
+    >
+      <List dense>
+        {(displayDetails
+          ? legendItems
+          : displayOptional
+            ? [legendItems[0]]
+            : []
+        ).map(({ symbol, description }) => (
+          <Box key={symbol} sx={{ gap: "13px", display: "flex", ml: "15px" }}>
+            <Typography sx={{ color: "orange" }}>{symbol}</Typography>
+            <Typography>=</Typography>
+            <Typography sx={{ fontSize: "15px" }}>{description}</Typography>
+          </Box>
+        ))}
+      </List>
+    </Box>
+  );
 };
 
 const StructuredProperty = ({
@@ -164,6 +210,7 @@ const StructuredProperty = ({
   partsInheritance,
   enableEdit,
   inheritanceDetails,
+  skillsFutureApp,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
   const [openAddCollection, setOpenAddCollection] = useState(false);
@@ -171,6 +218,7 @@ const StructuredProperty = ({
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   const [modifiedOrder, setModifiedOrder] = useState(false);
   const [displayDetails, setDisplayDetails] = useState(false);
+  const [displayOptional, setDisplayOptional] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
   const [paginationState, setPaginationState] = useState<Map<string, number>>(
@@ -376,6 +424,12 @@ const StructuredProperty = ({
     processCollectionData,
     db,
   ]);
+  useEffect(() => {
+    if (property === "parts") {
+      const someAreOptional = propertyValue[0].nodes.some((c) => !!c.optional);
+      setDisplayOptional(selectedProperty === "parts" || someAreOptional);
+    }
+  }, [propertyValue, selectedProperty]);
 
   const unlinkVisible = useCallback(
     (nodeId: string) => {
@@ -824,7 +878,6 @@ const StructuredProperty = ({
               </Box>
             )}
         </Box>
-
         {currentVisibleNode.propertyType[property] !== "array-string" && (
           <CollectionStructure
             locked={locked}
@@ -896,6 +949,13 @@ const StructuredProperty = ({
             enableEdit={enableEdit}
             handleLoadMore={handleLoadMore}
             loadingStates={loadingStates}
+            skillsFutureApp={skillsFutureApp}
+          />
+        )}{" "}
+        {property === "parts" && (
+          <Legend
+            displayDetails={displayDetails}
+            displayOptional={displayOptional}
           />
         )}
         {property === "parts" && !displayDetails && (
@@ -987,6 +1047,7 @@ const StructuredProperty = ({
             skillsFuture={skillsFuture}
             setDisplayDetails={setDisplayDetails}
             inheritanceDetails={inheritanceDetails}
+            skillsFutureApp={skillsFutureApp}
           />
         )}
       {/* {selectedProperty !== property && (

@@ -81,6 +81,7 @@ type ITextProps = {
   skillsFuture: boolean;
   setEnableEdit?: any;
   enableEdit: any;
+  skillsFutureApp: string;
 };
 
 const Text = ({
@@ -108,6 +109,7 @@ const Text = ({
   skillsFuture,
   setEnableEdit,
   enableEdit,
+  skillsFutureApp,
 }: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -155,6 +157,7 @@ const Text = ({
         changeType: "change text",
         fullNode: currentVisibleNode,
         skillsFuture,
+        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
       });
     },
     [currentVisibleNode?.id, db, property, user],

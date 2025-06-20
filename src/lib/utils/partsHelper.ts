@@ -90,6 +90,7 @@ export const propagatePartsChangeToSpecializations = async (
   nodeId: string,
   nodes: { [nodeId: string]: INode },
   user: any,
+  skillsFutureApp: string,
   updateLocalNodeCallback?: (
     nodeId: string,
     updatedNodeData: Partial<INode>,
@@ -165,7 +166,7 @@ export const propagatePartsChangeToSpecializations = async (
         // }
 
         if (user) {
-          await saveNewChangeLog(db, {
+          saveNewChangeLog(db, {
             nodeId: spec.id,
             modifiedBy: user.uname,
             modifiedProperty: "inheritanceParts",
@@ -177,7 +178,8 @@ export const propagatePartsChangeToSpecializations = async (
             changeDetails: {
               reason: `Parts inheritance updated due to changes in parent node ${nodeId}`,
             },
-            skillsFuture: false,
+            skillsFuture: !!skillsFutureApp,
+            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
         }
 
@@ -186,6 +188,7 @@ export const propagatePartsChangeToSpecializations = async (
           spec.id,
           updatedNodes,
           user,
+          skillsFutureApp,
           updateLocalNodeCallback,
         );
       } catch (error) {
@@ -211,6 +214,7 @@ export const saveAsInheritancePart = async (
   inheritedFromTitle: string,
   user: any,
   action: "add" | "remove" = "add",
+  skillsFutureApp: string,
 ): Promise<boolean> => {
   try {
     const db = getFirestore();
@@ -270,7 +274,7 @@ export const saveAsInheritancePart = async (
     // }
 
     if (user) {
-      await saveNewChangeLog(db, {
+      saveNewChangeLog(db, {
         nodeId: nodeId,
         modifiedBy: user.uname,
         modifiedProperty: "inheritanceParts",
@@ -285,7 +289,8 @@ export const saveAsInheritancePart = async (
           inheritedFromTitle,
           inheritedFromId,
         },
-        skillsFuture: false,
+        skillsFuture: !!skillsFutureApp,
+        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
       });
     }
 
@@ -305,6 +310,7 @@ export const breakInheritanceAndCopyParts = async (
   partIdToRemove: string,
   nodes: { [nodeId: string]: INode },
   user: any,
+  skillsFutureApp: string,
 ): Promise<boolean> => {
   try {
     const db = getFirestore();
@@ -358,7 +364,7 @@ export const breakInheritanceAndCopyParts = async (
     });
 
     if (user) {
-      await saveNewChangeLog(db, {
+      saveNewChangeLog(db, {
         nodeId: nodeId,
         modifiedBy: user.uname,
         modifiedProperty: "inheritanceParts",
@@ -371,7 +377,8 @@ export const breakInheritanceAndCopyParts = async (
           reason:
             "Broke inheritance and copied inherited parts to inheritanceParts",
         },
-        skillsFuture: false,
+        skillsFuture: !!skillsFutureApp,
+        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
       });
     }
 

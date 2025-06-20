@@ -533,7 +533,7 @@ export const saveNewChangeLog = (db: any, data: NodeChange) => {
       lasChangeMadeAt: new Date(),
     });
   }
-  if (data.modifiedBy) {
+  if (data.modifiedBy && data.modifiedBy !== "ouhrac") {
     const nodeRef = doc(collection(db, NODES), data.nodeId);
     let updatesObject = {
       contributors: arrayUnion(data.modifiedBy),

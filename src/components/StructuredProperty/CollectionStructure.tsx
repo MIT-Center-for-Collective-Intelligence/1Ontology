@@ -122,6 +122,7 @@ const CollectionStructure = ({
   enableEdit,
   handleLoadMore,
   loadingStates = new Set(),
+  skillsFutureApp,
 }: {
   model?: boolean;
   locked: boolean;
@@ -190,6 +191,7 @@ const CollectionStructure = ({
   enableEdit: boolean;
   handleLoadMore?: (loadMoreNodeId: string, collectionName: string) => void;
   loadingStates?: Set<string>;
+  skillsFutureApp: string;
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -493,6 +495,7 @@ const CollectionStructure = ({
             },
             fullNode: currentVisibleNode,
             skillsFuture,
+            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
 
           // Record a log of the sorting action
@@ -614,6 +617,7 @@ const CollectionStructure = ({
             addedCollection: newCollection || "",
           },
           skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
       } catch (error: any) {
         console.error(error);
@@ -791,6 +795,7 @@ const CollectionStructure = ({
             newValue: newCollection,
           },
           skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
       } catch (error: any) {
         console.error(error);
@@ -911,6 +916,7 @@ const CollectionStructure = ({
                 deletedCollection: collectionName || "",
               },
               skillsFuture,
+              ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
             });
           }
         } catch (error: any) {
@@ -1363,6 +1369,12 @@ const CollectionStructure = ({
                                                 setClonedNodesQueue={
                                                   setClonedNodesQueue
                                                 }
+                                                skillsFutureApp={
+                                                  skillsFutureApp
+                                                }
+                                                setEditableProperty={
+                                                  setEditableProperty
+                                                }
                                               />
                                             )}
                                           </Draggable>
@@ -1458,6 +1470,10 @@ const CollectionStructure = ({
                                               setClonedNodesQueue
                                             }
                                             partsInheritance={partsInheritance}
+                                            skillsFutureApp={skillsFutureApp}
+                                            setEditableProperty={
+                                              setEditableProperty
+                                            }
                                           />
                                         );
                                       },
@@ -1535,6 +1551,10 @@ const CollectionStructure = ({
                                               setClonedNodesQueue
                                             }
                                             partsInheritance={partsInheritance}
+                                            skillsFutureApp={skillsFutureApp}
+                                            setEditableProperty={
+                                              setEditableProperty
+                                            }
                                           />
                                         );
                                       },
@@ -1601,6 +1621,7 @@ const CollectionStructure = ({
                                 selectedCollection={selectedCollection}
                                 skillsFuture={skillsFuture}
                                 saveNewSpecialization={saveNewSpecialization}
+                                skillsFutureApp={skillsFutureApp}
                               />
                             )}
                           {property === "specializations" &&

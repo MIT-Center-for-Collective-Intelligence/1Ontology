@@ -1132,7 +1132,7 @@ const Ontology = ({
     const _currentVisibleNode = { ...currentVisibleNode };
 
     let parts = _currentVisibleNode?.properties.parts || [];
-    const inheritanceRef = _currentVisibleNode.inheritance["parts"].ref;
+    const inheritanceRef = _currentVisibleNode.inheritance["parts"]?.ref;
     if (inheritanceRef && nodes[inheritanceRef]) {
       parts = nodes[inheritanceRef].properties["parts"];
     }
@@ -1503,6 +1503,7 @@ const Ontology = ({
                   enableEdit={enableEdit}
                   setEnableEdit={setEnableEdit}
                   inheritanceDetails={partsInheritance}
+                  skillsFutureApp={appName ?? null}
                 />
               )}
             </Box>

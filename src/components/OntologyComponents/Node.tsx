@@ -175,6 +175,7 @@ type INodeProps = {
   enableEdit: any;
   setEnableEdit: any;
   inheritanceDetails: any;
+  skillsFutureApp: string;
 };
 
 const Node = ({
@@ -219,6 +220,7 @@ const Node = ({
   enableEdit,
   setEnableEdit,
   inheritanceDetails,
+  skillsFutureApp,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -541,6 +543,7 @@ const Node = ({
           changeType: "add node",
           fullNode: newNode,
           skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
 
         setCloning(null);
@@ -914,6 +917,7 @@ const Node = ({
           changeType: "modify elements",
           fullNode: nodeData,
           skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
       } catch (error: any) {
         // Handle any errors that occur during the process
@@ -987,6 +991,7 @@ const Node = ({
           changeType: "delete node",
           fullNode: currentNode,
           skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
         // Record a log entry for the deletion action
         clearNotifications(nodeRef.id);
@@ -1130,6 +1135,7 @@ const Node = ({
         }}
       >
         <Text
+          skillsFutureApp={skillsFutureApp}
           currentVisibleNode={currentVisibleNode}
           setCurrentVisibleNode={setCurrentVisibleNode}
           nodes={nodes}
@@ -1172,6 +1178,7 @@ const Node = ({
             currentImprovement={currentImprovement}
             reviewId={reviewId}
             setReviewId={setReviewId}
+            skillsFutureApp={skillsFutureApp}
           />
         )} */}
       </Box>
@@ -1188,6 +1195,7 @@ const Node = ({
         {/* description of the node */}
 
         <Text
+          skillsFutureApp={skillsFutureApp}
           nodes={nodes}
           text={onGetPropertyValue("description") as string}
           currentVisibleNode={currentVisibleNode}
@@ -1255,6 +1263,7 @@ const Node = ({
             selectedCollection={selectedCollection}
             skillsFuture={skillsFuture}
             enableEdit={enableEdit}
+            skillsFutureApp={skillsFutureApp}
           />
         )}
         {/* specializations and generalizations*/}
@@ -1317,6 +1326,7 @@ const Node = ({
               selectedCollection={selectedCollection}
               skillsFuture={skillsFuture}
               enableEdit={enableEdit}
+              skillsFutureApp={skillsFutureApp}
             />
           ))}
         </Stack>
@@ -1384,6 +1394,7 @@ const Node = ({
               partsInheritance={partsInheritance}
               enableEdit={enableEdit}
               inheritanceDetails={inheritanceDetails}
+              skillsFutureApp={skillsFutureApp}
             />
           ))}
         </Stack>
@@ -1451,6 +1462,7 @@ const Node = ({
           saveNewChangeLog={saveNewChangeLog}
           skillsFuture={skillsFuture}
           enableEdit={enableEdit}
+          skillsFutureApp={skillsFutureApp}
         />
       </Box>{" "}
       {ConfirmDialog}
