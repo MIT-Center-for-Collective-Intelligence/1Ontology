@@ -658,16 +658,14 @@ function DraggableTree({
       //   nodes,
       //   db,
       // );
-
+      const currentNewLinks = newGeneralizations[0].nodes;
       await updateLinksForInheritance(
         db,
         specializationId,
         addedLinks.map((id) => {
           return { id };
         }),
-        removedLinks.map((id) => {
-          return { id };
-        }),
+        currentNewLinks,
         specializationData,
         nodes,
       );

@@ -78,6 +78,8 @@ import {
   updatePartsAndPartsOf,
   updatePropertyOf,
   updateInheritanceWhenUnlinkAGeneralization,
+  updateLinksForInheritance,
+  updateLinksForInheritanceSpecializations,
 } from "@components/lib/utils/helpers";
 import { breakInheritanceAndCopyParts } from "@components/lib/utils/partsHelper";
 import {
@@ -663,18 +665,23 @@ const LinkNode = ({
             ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
           if (property === "generalizations") {
-            updateInheritanceWhenUnlinkAGeneralization(
+            const currentNewLinks = nodeData["generalizations"][0].nodes;
+            updateLinksForInheritance(
               db,
-              linkId,
+              currentNodeId,
+              [],
+              currentNewLinks,
               nodeData,
               nodes,
             );
           }
           if (property === "specializations") {
-            updateInheritanceWhenUnlinkAGeneralization(
+            updateLinksForInheritanceSpecializations(
               db,
               nodeDoc.id,
-              nodes[linkId],
+              [],
+              [{ id: linkId }],
+              nodeData,
               nodes,
             );
           }

@@ -222,11 +222,12 @@ const Improvements = ({
         });
         //the user modified generalizations
         if (property === "generalizations") {
+          const current = newValue[0].nodes;
           await updateLinksForInheritance(
             db,
             currentVisibleNode?.id,
             _addedLinks,
-            _removedLinks,
+            current,
             currentVisibleNode,
             nodes,
           );

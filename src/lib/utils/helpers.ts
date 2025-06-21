@@ -953,7 +953,7 @@ export const updateLinksForInheritance = async (
   db: Firestore,
   specializationId: string,
   addedLinks: { id: string }[],
-  removedLinks: { id: string }[],
+  currentNewLinks: { id: string }[],
   specializationData: INode,
   nodes: { [nodeId: string]: INode } | any,
 ) => {
@@ -987,7 +987,7 @@ export const updateLinksForInheritance = async (
         let ignore = false;
         let inheritFromId = null;
         let hasProperty = [];
-        for (let link of addedLinks) {
+        for (let link of currentNewLinks) {
           const generalizationData = nodes[link.id];
           if (
             propertyRef === link.id ||
@@ -1207,7 +1207,11 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
                 const generalizationData = nodes[generalization.id];
                 if (generalizationData.properties.hasOwnProperty(property)) {
                   canDelete = false;
-                  inheritFrom = generalization.id;
+                  /* inherit from the generalization of generalization or from the generalization itself  */
+                  inheritFrom =
+                    nodes[generalization.id].inheritance[property]?.ref ||
+                    generalization.id;
+
                   break;
                 }
               }
@@ -1288,7 +1292,6 @@ export const updateLinks = async (
   nodes: { [nodeId: string]: INode },
   db: any,
 ) => {
-  debugger;
   for (let childId of links) {
     const childData = nodes[childId];
     if (!childData) continue;

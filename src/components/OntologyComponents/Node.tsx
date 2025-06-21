@@ -305,7 +305,6 @@ const Node = ({
       collectionName: string = "main",
     ): Promise<INode | null> => {
       try {
-        debugger;
         setCloning(nodeId);
         const parentNodeRef = doc(collection(db, NODES), nodeId);
 
@@ -875,11 +874,12 @@ const Node = ({
         await updateDoc(nodeDoc.ref, nodeData);
         //the user modified generalizations
         if (selectedProperty === "generalizations") {
+          const currentNewLinks = newValue[0].nodes;
           updateLinksForInheritance(
             db,
             nodeId,
             addedLinks,
-            removedLinks,
+            currentNewLinks,
             nodeData,
             nodes,
           );
