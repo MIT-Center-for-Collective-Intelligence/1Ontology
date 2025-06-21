@@ -114,6 +114,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     res.status(200).json({});
   }
   const nodeDoc = await db.collection("nodes").doc(nodeId).get();
+
   const client = new ChromaClient({ path: url });
 
   const nodeData = nodeDoc.data() as INode;
@@ -138,7 +139,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const pageContent = `${nodeData.title}\n${!descriptionRef ? `Description:\n${rawDescription.trim()}` : ""}`;
 
     await collection.upsert({
-      documents: [pageContent],
+      documents: [pageContent.toLowerCase()],
       ids: [nodeId],
       metadatas: [
         {
@@ -150,9 +151,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
   if (deleteNode && nodeData.id) {
     await collection.delete({ ids: [nodeData.id] });
+    await collection.delete({ ids: [`${nodeData.id}-properties`] });
   }
 
-  const propertyOf = nodeData.propertyOf;
+  const propertyOf: { [propertyName: string]: ICollection[] } =
+    nodeData.propertyOf || {};
 
   const nodesDocs =
     nodeData.skillsFuture && nodeData.appName
@@ -175,15 +178,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
   });
   const updateDocuments = [];
-  const updateDocumentsIds = [];
+  const updateDocumentsIds: string[] = [];
   const nodeStructure = getFullNodeStructure(nodeData, nodesByIds);
-  updateDocuments.push(nodeStructure);
+  if (!deleteNode) {
+    updateDocumentsIds.push(`${nodeData.id}-properties`);
+    updateDocuments.push(nodeStructure);
+  }
 
-  for (let property in propertyOf) {
-    for (let { nodes } of propertyOf[property]) {
-      for (let { id } of nodes) {
-        const nodeStructure = getFullNodeStructure(nodesByIds[id], nodesByIds);
-        updateDocuments.push(nodeStructure);
+  for (let property of [
+    ...Object.keys(propertyOf),
+    "specializations",
+    "generalizations",
+  ]) {
+    let propertyValue = propertyOf[property];
+    if (property === "specializations" || property === "generalizations") {
+      propertyValue = nodeData[property];
+    }
+
+    for (let { id } of propertyValue.flatMap((c) => c.nodes)) {
+      const nodeStructure = getFullNodeStructure(nodesByIds[id], nodesByIds);
+      updateDocuments.push(nodeStructure);
+      if (!updateDocumentsIds.includes(`${id}-properties`)) {
         updateDocumentsIds.push(`${id}-properties`);
       }
     }
@@ -195,7 +210,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
       const chunkIdsLong = idsChunks[i];
       const chunkDocs = docsChunks[i];
-      const fullDocuments = chunkDocs.map((doc) => doc.content);
+      const fullDocuments = chunkDocs.map((doc) => doc.content.toLowerCase());
 
       const titles = chunkDocs.map((d) => {
         return {

@@ -527,9 +527,9 @@ const Node = ({
           locked: false,
           createdAt: new Date(),
         });
-        Post("/triggerChroma", {
+        await Post("/triggerChroma", {
           nodeId: newNodeRef.id,
-          updateAll: true,
+          updatedShortIds: true,
         });
 
         saveNewChangeLog(db, {
@@ -980,7 +980,10 @@ const Node = ({
         await removeIsPartOf(db, currentNode as INode, user?.uname);
         // Update the user document by removing the deleted node's ID
         await updateDoc(nodeRef, { deleted: true, deletedAt: new Date() });
-
+        await Post("/triggerChroma", {
+          deleteNode: true,
+          nodeId: currentNode.id,
+        });
         saveNewChangeLog(db, {
           nodeId: currentNode.id,
           modifiedBy: user?.uname,

@@ -136,28 +136,27 @@ const SearchSideBar = ({
     try {
       setErrorSearch(false);
       setLoadingSearchResult(true);
-      const response: any = await Post("/searchChroma", {
-        query: searchValue,
-        skillsFuture,
-        appName: skillsFuture ? skillsFutureApp : null,
-      });
+      const response: any = !development
+        ? await Post("/searchChroma", {
+            query: searchValue,
+            skillsFuture,
+            appName: skillsFuture ? skillsFutureApp : null,
+          })
+        : { results: [] };
 
       const searchDevelopment = searchWithFuse(searchValue).slice(
         0,
         development ? 30 : 2,
       );
       const results: any = [...(response.results || [])];
-      if (!development) {
-        searchDevelopment.reverse();
+
+      const existAlready = results.findIndex((c: { id: string }) => {
+        return c.id === searchDevelopment[0].id;
+      });
+      if (existAlready === -1) {
+        results.unshift(searchDevelopment[0]);
       }
-      for (let index = 0; index < 2; index++) {
-        const existAlready = results.findIndex((c: { id: string }) => {
-          return c.id === searchDevelopment[index].id;
-        });
-        if (existAlready === -1) {
-          results.unshift(searchDevelopment[index]);
-        }
-      }
+
       setSearchResults(development ? searchDevelopment : results);
     } catch (error) {
       setErrorSearch(true);
