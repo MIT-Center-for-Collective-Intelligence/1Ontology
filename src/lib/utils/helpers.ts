@@ -1446,9 +1446,26 @@ export const diffCollections = (
 
   const allCollectionNames = new Set([...oldMap.keys(), ...newMap.keys()]);
 
+  const oldNodeToCollection = new Map<string, string>();
+  for (const { collectionName, nodes } of oldValue) {
+    for (const node of nodes) {
+      oldNodeToCollection.set(node.id, collectionName);
+    }
+  }
+
+  const newNodeToCollection = new Map<string, string>();
+  for (const { collectionName, nodes } of newValue) {
+    for (const node of nodes) {
+      newNodeToCollection.set(node.id, collectionName);
+    }
+  }
+
   for (const collectionName of allCollectionNames) {
     const oldCollection = oldMap.get(collectionName);
     const newCollection = newMap.get(collectionName);
+
+    const isAddedCollection = !oldCollection && !!newCollection;
+    const isRemovedCollection = !!oldCollection && !newCollection;
 
     const oldNodes = new Map(
       (oldCollection?.nodes || []).map((n) => [n.id, n]),
@@ -1457,24 +1474,55 @@ export const diffCollections = (
       (newCollection?.nodes || []).map((n) => [n.id, n]),
     );
 
-    const nodeIds = new Set([...oldNodes.keys(), ...newNodes.keys()]);
-
-    const mergedNodes: ILinkNode[] = [];
+    const nodeIds = new Set([
+      ...oldNodes.keys(),
+      ...newNodes.keys(),
+    ]) as Set<string>;
+    const mergedNodes: any[] = [];
 
     for (const id of nodeIds) {
-      if (!oldNodes.has(id) && newNodes.has(id)) {
+      const inOld = oldNodes.has(id);
+      const inNew = newNodes.has(id);
+
+      if (!inOld && inNew) {
+        const originalCollection = oldNodeToCollection.get(id);
         const newNode = newNodes.get(id)!;
-        mergedNodes.push({ ...newNode, change: "added" });
-      } else if (oldNodes.has(id) && !newNodes.has(id)) {
+
+        if (originalCollection && originalCollection !== collectionName) {
+          mergedNodes.push({ ...newNode, change: "added", changeType: "sort" });
+        } else {
+          mergedNodes.push({ ...newNode, change: "added" });
+        }
+      } else if (inOld && !inNew) {
+        const newCollectionOfNode = newNodeToCollection.get(id);
         const oldNode = oldNodes.get(id)!;
-        mergedNodes.push({ ...oldNode, change: "removed" });
+
+        if (newCollectionOfNode && newCollectionOfNode !== collectionName) {
+          mergedNodes.push({
+            ...oldNode,
+            change: "removed",
+            changeType: "sort",
+          });
+        } else {
+          mergedNodes.push({ ...oldNode, change: "removed" });
+        }
       } else {
         mergedNodes.push({ id });
       }
     }
 
     if (mergedNodes.length > 0) {
-      result.push({ collectionName, nodes: mergedNodes });
+      const collectionChange = isAddedCollection
+        ? "added"
+        : isRemovedCollection
+          ? "removed"
+          : undefined;
+
+      result.push({
+        collectionName,
+        nodes: mergedNodes,
+        ...(collectionChange ? { change: collectionChange } : {}),
+      });
     }
   }
   return result;

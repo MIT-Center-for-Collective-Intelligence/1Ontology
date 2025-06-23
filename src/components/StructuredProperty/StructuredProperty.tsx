@@ -26,12 +26,26 @@ import {
 import {
   getGeneralizationParts,
   getAllGeneralizations,
+  breakInheritanceAndCopyParts,
 } from "@components/lib/utils/partsHelper";
 import { ICollection, ILinkNode, INode } from "@components/types/INode";
 import { DISPLAY } from "@components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
-import { collection, doc, getFirestore } from "firebase/firestore";
-import { recordLogs } from "@components/lib/utils/helpers";
+import {
+  collection,
+  doc,
+  getDoc,
+  getFirestore,
+  updateDoc,
+} from "firebase/firestore";
+import {
+  recordLogs,
+  saveNewChangeLog,
+  unlinkPropertyOf,
+  updateInheritance,
+  updatePartsAndPartsOf,
+  updatePropertyOf,
+} from "@components/lib/utils/helpers";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import VisualizeTheProperty from "./VisualizeTheProperty";
@@ -42,6 +56,8 @@ import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import CommentsSection from "./CommentsSection";
 import InheritedPartsViewer from "./InheritedPartsViewer";
+import InheritedPartsLegend from "../Common/InheritedPartsLegend";
+import { Post } from "@components/lib/utils/Post";
 
 const INITIAL_LOAD_COUNT = 20;
 const LOAD_MORE_COUNT = 20;
@@ -116,45 +132,6 @@ type IStructuredPropertyProps = {
   enableEdit: boolean;
   inheritanceDetails?: any;
   skillsFutureApp: string;
-};
-const legendItems = [
-  { symbol: "O", description: "Optional" },
-  { symbol: "=", description: "The same part" },
-  { symbol: ">", description: "Specialized part" },
-  { symbol: "x", description: "Part not inherited" },
-  { symbol: "+", description: "New part" },
-];
-
-const Legend = ({
-  displayDetails,
-  displayOptional,
-}: {
-  displayDetails: boolean;
-  displayOptional: boolean;
-}) => {
-  return (
-    <Box
-      sx={{
-        maxWidth: 360,
-        borderRadius: 3,
-      }}
-    >
-      <List dense>
-        {(displayDetails
-          ? legendItems
-          : displayOptional
-            ? [legendItems[0]]
-            : []
-        ).map(({ symbol, description }) => (
-          <Box key={symbol} sx={{ gap: "13px", display: "flex", ml: "15px" }}>
-            <Typography sx={{ color: "orange" }}>{symbol}</Typography>
-            <Typography>=</Typography>
-            <Typography sx={{ fontSize: "15px" }}>{description}</Typography>
-          </Box>
-        ))}
-      </List>
-    </Box>
-  );
 };
 
 const StructuredProperty = ({
@@ -311,6 +288,10 @@ const StructuredProperty = ({
             property,
           ) || currentVisibleNode?.properties[property];
       }
+      if (property === "parts") {
+        console.log(nodes[currentVisibleNode.inheritance[property]?.ref ?? ""]);
+        console.log("result", currentVisibleNode);
+      }
       if (!selectedDiffNode) {
         return processCollectionData(result || []);
       }
@@ -424,6 +405,7 @@ const StructuredProperty = ({
     processCollectionData,
     db,
   ]);
+  console.log("editableProperty", { selectedProperty }, editableProperty);
   useEffect(() => {
     if (property === "parts") {
       const someAreOptional = propertyValue[0].nodes.some((c) => !!c.optional);
@@ -677,6 +659,286 @@ const StructuredProperty = ({
 
     return inheritedParts;
   };
+  const unlinkNodeRelation = async (
+    currentNodeId: string,
+    linkId: string,
+    linkIndex: number,
+    collectionIndex: number,
+    fromModel: boolean = false,
+  ) => {
+    try {
+      debugger;
+      if (
+        fromModel ||
+        (await confirmIt(
+          `Are you sure you want remove this item the list?`,
+          `Remove`,
+          "Keep",
+        ))
+      ) {
+        console.log({
+          currentNodeId,
+          linkId,
+          linkIndex,
+          collectionIndex,
+          fromModel,
+        });
+
+        const nodeDoc = await getDoc(doc(collection(db, NODES), currentNodeId));
+        if (nodeDoc.exists()) {
+          const nodeData = nodeDoc.data() as any;
+
+          // Handle for parts - break inheritance
+          const inheritedRef = nodeData.inheritance[property]?.ref;
+          if (property === "parts" && inheritedRef) {
+            await breakInheritanceAndCopyParts(
+              currentNodeId,
+              linkId,
+              nodes,
+              user,
+              skillsFutureApp,
+            );
+            const inheritanceFrom = nodes[inheritedRef];
+
+            nodeData.properties["parts"] = inheritanceFrom.properties["parts"];
+          } else if (inheritedRef) {
+            // Existing logic for non-parts properties
+            const nodeId = nodeData.inheritance[property].ref;
+            const inheritedNode = nodes[nodeId as string];
+            nodeData.properties[property] = JSON.parse(
+              JSON.stringify(inheritedNode.properties[property]),
+            );
+          }
+          const previousValue = JSON.parse(
+            JSON.stringify(nodeData.properties[property]),
+          );
+
+          let removedFromInheritanceParts = false;
+
+          if (property === "parts") {
+            if (linkIndex === -1) {
+              linkIndex = nodeData.properties[property][
+                collectionIndex
+              ].nodes.findIndex((c: { id: string }) => c.id === linkId);
+            }
+            if (
+              nodeData.inheritanceParts &&
+              nodeData.inheritanceParts[linkId]
+            ) {
+              // Remove from inheritanceParts (broken inheritance scenario)
+              delete nodeData.inheritanceParts[linkId];
+              removedFromInheritanceParts = true;
+            } else if (
+              linkIndex !== -1 &&
+              Array.isArray(nodeData.properties[property]) &&
+              nodeData.propertyType[property] !== "string" &&
+              nodeData.propertyType[property] !== "string-array"
+            ) {
+              // Remove from direct parts (intact inheritance scenario)
+              nodeData.properties[property][collectionIndex].nodes.splice(
+                linkIndex,
+                1,
+              );
+            }
+          } else if (
+            linkIndex !== -1 &&
+            Array.isArray(nodeData.properties[property]) &&
+            nodeData.propertyType[property] !== "string" &&
+            nodeData.propertyType[property] !== "string-array"
+          ) {
+            // Remove from other properties (generalizations, specializations, etc.)
+            nodeData.properties[property][collectionIndex].nodes.splice(
+              linkIndex,
+              1,
+            );
+          }
+
+          let shouldBeRemovedFromParent = false;
+
+          if (property === "parts" && removedFromInheritanceParts) {
+            // For inheritanceParts removal, always remove from parent since it's not in direct properties
+            shouldBeRemovedFromParent = true;
+          } else {
+            // Existing logic for other properties
+            shouldBeRemovedFromParent = !(
+              Object.values(nodeData.properties[property]) as { id: string }[]
+            )
+              .flat()
+              .some((c: { id: string }) => c.id === linkId);
+          }
+
+          // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
+          // const childData = childDoc.data() as INode;
+          if (shouldBeRemovedFromParent) {
+            unlinkPropertyOf(db, property, currentVisibleNode?.id, linkId);
+          }
+
+          let propertyUpdateObject: any = {};
+
+          // Update based on where the item was removed from
+          if (property === "parts" && removedFromInheritanceParts) {
+            // Update inheritanceParts for broken inheritance
+            propertyUpdateObject.inheritanceParts = nodeData.inheritanceParts;
+          } else {
+            // Update direct properties for intact inheritance or other properties
+            propertyUpdateObject[`properties.${property}`] =
+              nodeData.properties[property];
+          }
+
+          await updateDoc(nodeDoc.ref, propertyUpdateObject);
+
+          if (property !== "isPartOf" || nodeData.inheritance[property]) {
+            const reference = nodeData.inheritance[property].ref;
+            let updateObject: any = {
+              [`inheritance.${property}.ref`]: null,
+            };
+            if (
+              reference &&
+              nodes[reference].textValue &&
+              nodes[reference].textValue.hasOwnProperty(property) &&
+              Array.isArray(nodeData.properties[property]) &&
+              nodeData.propertyType[property] !== "string" &&
+              nodeData.propertyType[property] !== "string-array"
+            ) {
+              const links = nodeData.properties[property].flatMap(
+                (c: any) => c.nodes,
+              );
+              if (property === "isPartOf") {
+                updatePartsAndPartsOf(
+                  links,
+                  { id: currentVisibleNode?.id },
+                  "isPartOf",
+                  db,
+                  nodes,
+                );
+              } else {
+                updatePropertyOf(
+                  links,
+                  { id: currentVisibleNode?.id },
+                  property,
+                  nodes,
+                  db,
+                );
+              }
+              updateObject = {
+                ...updateObject,
+                [`textValue.${property}`]: nodes[reference].textValue[property],
+              };
+            }
+            await updateDoc(nodeDoc.ref, updateObject);
+
+            await updateInheritance({
+              nodeId: nodeDoc.id,
+              updatedProperties: [property],
+              db,
+            });
+          }
+          await Post("/triggerChroma", {
+            nodeId: currentNodeId,
+            updateAll: false,
+          });
+          saveNewChangeLog(db, {
+            nodeId: currentVisibleNode?.id,
+            modifiedBy: user?.uname || "",
+            modifiedProperty: property,
+            previousValue,
+            newValue: nodeData.properties[property],
+            modifiedAt: new Date(),
+            changeType: "remove element",
+            fullNode: currentVisibleNode,
+            skillsFuture,
+            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          });
+          recordLogs({
+            action: "unlinked a node",
+            property,
+            unlinked: linkId,
+            node: nodeDoc.id,
+          });
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      await confirmIt(
+        `There is an issue with unlinking the node, please try again.`,
+        `Ok`,
+        "",
+      );
+    }
+  };
+
+  const linkNodeRelation = async ({
+    currentNodeId,
+    partId,
+  }: {
+    currentNodeId: string;
+    partId: string;
+  }) => {
+    try {
+      const nodeData = nodes[currentNodeId];
+
+      let parts = nodeData.properties["parts"];
+      const inheritanceRefId = nodeData.inheritance["parts"].ref;
+      if (inheritanceRefId) {
+        parts = nodes[inheritanceRefId].properties["parts"];
+      }
+      const previousPartsValue = JSON.parse(JSON.stringify(parts));
+      parts[0].nodes.push({
+        id: partId,
+      });
+
+      const nodeRef = doc(collection(db, NODES), currentNodeId);
+
+      const linkRef = doc(collection(db, NODES), partId);
+      const linkData = nodes[partId];
+      const previousIsPartOfValue = JSON.parse(
+        JSON.stringify(linkData.properties["isPartOf"]),
+      );
+      linkData.properties["isPartOf"][0].nodes.push({
+        id: currentNodeId,
+      });
+
+      updateDoc(linkRef, {
+        "properties.isPartOf": linkData.properties["isPartOf"],
+      });
+      updateDoc(nodeRef, {
+        "properties.parts": parts,
+        "inheritance.parts.ref": null,
+      });
+      saveNewChangeLog(db, {
+        nodeId: currentNodeId,
+        modifiedBy: user?.uname || "",
+        modifiedProperty: property,
+        previousValue: previousPartsValue,
+        newValue: parts,
+        modifiedAt: new Date(),
+        changeType: "add element",
+        fullNode: currentVisibleNode,
+        skillsFuture,
+        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+      });
+
+      saveNewChangeLog(db, {
+        nodeId: partId,
+        modifiedBy: user?.uname || "",
+        modifiedProperty: property,
+        previousValue: previousIsPartOfValue,
+        newValue: linkData.properties["isPartOf"],
+        modifiedAt: new Date(),
+        changeType: "add element",
+        fullNode: currentVisibleNode,
+        skillsFuture,
+        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+      });
+      await updateInheritance({
+        nodeId: currentNodeId,
+        updatedProperties: ["parts"],
+        db,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   if (
     (currentImprovement &&
@@ -684,8 +946,6 @@ const StructuredProperty = ({
       !currentImprovement?.newNode &&
       currentImprovement.modifiedProperty === property) ||
     (selectedDiffNode?.modifiedProperty === property &&
-      selectedDiffNode.changeType !== "add collection" &&
-      selectedDiffNode.changeType !== "delete collection" &&
       selectedDiffNode.changeType !== "edit collection")
   ) {
     return (
@@ -950,12 +1210,13 @@ const StructuredProperty = ({
             handleLoadMore={handleLoadMore}
             loadingStates={loadingStates}
             skillsFutureApp={skillsFutureApp}
+            unlinkNodeRelation={unlinkNodeRelation}
+            linkNodeRelation={linkNodeRelation}
           />
         )}{" "}
-        {property === "parts" && (
-          <Legend
-            displayDetails={displayDetails}
-            displayOptional={displayOptional}
+        {property === "parts" && displayOptional && (
+          <InheritedPartsLegend
+            legendItems={[{ symbol: "O", description: "Optional" }]}
           />
         )}
         {property === "parts" && !displayDetails && (
@@ -992,6 +1253,29 @@ const StructuredProperty = ({
               setDisplayDetails={setDisplayDetails}
               inheritanceDetails={inheritanceDetails}
               currentVisibleNode={currentVisibleNode}
+              addPart={
+                enableEdit
+                  ? (partId: string) => {
+                      linkNodeRelation({
+                        currentNodeId: currentVisibleNode.id,
+                        partId,
+                      });
+                    }
+                  : null
+              }
+              removePart={
+                enableEdit
+                  ? (partId: any) => {
+                      unlinkNodeRelation(
+                        currentVisibleNode.id,
+                        partId,
+                        -1,
+                        0,
+                        true,
+                      );
+                    }
+                  : null
+              }
             />
           )}
       </Box>
@@ -1048,6 +1332,8 @@ const StructuredProperty = ({
             setDisplayDetails={setDisplayDetails}
             inheritanceDetails={inheritanceDetails}
             skillsFutureApp={skillsFutureApp}
+            linkNodeRelation={linkNodeRelation}
+            unlinkNodeRelation={unlinkNodeRelation}
           />
         )}
       {/* {selectedProperty !== property && (

@@ -1,16 +1,7 @@
-import {
-  Avatar,
-  Box,
-  Button,
-  CircularProgress,
-  Paper,
-  Typography,
-  Pagination,
-} from "@mui/material";
+import { Box, CircularProgress, Typography, Pagination } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import {
   collection,
-  doc,
   getFirestore,
   limit,
   onSnapshot,
@@ -18,11 +9,10 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { INode, NodeChange } from "@components/types/INode";
+import { NodeChange } from "@components/types/INode";
 import { NODES_LOGS } from "@components/lib/firestoreClient/collections";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
-import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import ActivityDetails from "./ActivityDetails";
 
 const ITEMS_PER_PAGE = 15;
@@ -32,11 +22,13 @@ const NodeActivity = ({
   selectedDiffNode,
   displayDiff,
   activeUsers,
+  nodes,
 }: {
   selectedDiffNode: any;
   currentVisibleNode: any;
   displayDiff: any;
   activeUsers: any;
+  nodes: { [nodeId: string]: any };
 }) => {
   const db = getFirestore();
   const [logs, setLogs] = useState<(NodeChange & { id: string })[]>([]);
@@ -146,6 +138,7 @@ const NodeActivity = ({
               displayDiff={displayDiff}
               modifiedByDetails={activeUsers[log.modifiedBy]}
               selectedDiffNode={selectedDiffNode}
+              nodes={nodes}
             />
           ))}
 

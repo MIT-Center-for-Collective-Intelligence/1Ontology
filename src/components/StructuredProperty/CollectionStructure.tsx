@@ -123,6 +123,8 @@ const CollectionStructure = ({
   handleLoadMore,
   loadingStates = new Set(),
   skillsFutureApp,
+  unlinkNodeRelation,
+  linkNodeRelation,
 }: {
   model?: boolean;
   locked: boolean;
@@ -192,6 +194,8 @@ const CollectionStructure = ({
   handleLoadMore?: (loadMoreNodeId: string, collectionName: string) => void;
   loadingStates?: Set<string>;
   skillsFutureApp: string;
+  unlinkNodeRelation: any;
+  linkNodeRelation: any;
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -1375,6 +1379,9 @@ const CollectionStructure = ({
                                                 setEditableProperty={
                                                   setEditableProperty
                                                 }
+                                                unlinkNodeRelation={
+                                                  unlinkNodeRelation
+                                                }
                                               />
                                             )}
                                           </Draggable>
@@ -1474,6 +1481,9 @@ const CollectionStructure = ({
                                             setEditableProperty={
                                               setEditableProperty
                                             }
+                                            unlinkNodeRelation={
+                                              unlinkNodeRelation
+                                            }
                                           />
                                         );
                                       },
@@ -1555,6 +1565,9 @@ const CollectionStructure = ({
                                             setEditableProperty={
                                               setEditableProperty
                                             }
+                                            unlinkNodeRelation={
+                                              unlinkNodeRelation
+                                            }
                                           />
                                         );
                                       },
@@ -1622,6 +1635,8 @@ const CollectionStructure = ({
                                 skillsFuture={skillsFuture}
                                 saveNewSpecialization={saveNewSpecialization}
                                 skillsFutureApp={skillsFutureApp}
+                                linkNodeRelation={linkNodeRelation}
+                                unlinkNodeRelation={unlinkNodeRelation}
                               />
                             )}
                           {property === "specializations" &&

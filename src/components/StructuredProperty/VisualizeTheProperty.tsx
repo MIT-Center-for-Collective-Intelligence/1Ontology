@@ -43,16 +43,12 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                 borderTopRightRadius: "20px",
                 m: 0,
                 p: 2,
-                backgroundColor: (
-                  currentImprovement?.detailsOfChange?.addedCollections || []
-                ).includes(collection.collectionName)
-                  ? "green"
-                  : (
-                        currentImprovement?.detailsOfChange
-                          ?.removedCollections || []
-                      ).includes(collection.collectionName)
-                    ? "red"
-                    : "",
+                backgroundColor:
+                  collection.change === "added"
+                    ? "green"
+                    : collection.change === "removed"
+                      ? "red"
+                      : "",
 
                 // gap: "10px",
               }}
@@ -65,12 +61,12 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                   minHeight: "5px",
                   textDecoration:
                     collection.change === "removed" ? "line-through" : "",
-                  color:
+                  /*    color:
                     collection.change === "removed"
                       ? "red"
                       : collection.change === "added"
                         ? "green"
-                        : "",
+                        : "", */
                 }}
               >
                 {collection.collectionName !== "main"
@@ -136,7 +132,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                             : "",
                     }}
                   >
-                    {getTitle(nodes, node.id)}
+                    {node.title || getTitle(nodes, node.id)}
                   </Typography>
                   {node.optional && (
                     <span

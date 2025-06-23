@@ -1372,7 +1372,7 @@ const Ontology = ({
                         onChange={(event) => {
                           setNodes({});
                           const app = event.target.value.replaceAll(" ", "_");
-                          router.replace(`/SkillsFuture/${app}`);
+                          router.replace(`/${app}`);
                         }}
                         label="Property Type"
                         sx={{ borderRadius: "20px" }}

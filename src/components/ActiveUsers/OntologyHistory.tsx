@@ -11,6 +11,7 @@ const NodeActivity = ({
   selectedUser,
   skillsFuture,
   skillsFutureApp,
+  nodes,
 }: {
   selectedDiffNode: any;
   currentVisibleNode: any;
@@ -19,6 +20,7 @@ const NodeActivity = ({
   selectedUser: string;
   skillsFuture: boolean;
   skillsFutureApp: string;
+  nodes: { [nodeId: string]: any };
 }) => {
   const [tabIndex, setTabIndex] = useState<number>(0);
 
@@ -61,6 +63,7 @@ const NodeActivity = ({
           changeType={null}
           skillsFuture={skillsFuture}
           skillsFutureApp={skillsFutureApp}
+          nodes={nodes}
         />
       )}
       {tabIndex === 1 && (
@@ -72,6 +75,7 @@ const NodeActivity = ({
           changeType={"add-node"}
           skillsFuture={skillsFuture}
           skillsFutureApp={skillsFutureApp}
+          nodes={nodes}
         />
       )}
     </Box>

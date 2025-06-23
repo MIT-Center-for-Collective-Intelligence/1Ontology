@@ -708,7 +708,6 @@ const ToolbarSidebar = ({
       setNodesByTitle(nodesByT);
     }
   }, [nodes, user]);
-
   const getNewNodes = (newNodes: copilotNewNode[]): any => {
     try {
       if (!user?.uname) return;
@@ -1112,6 +1111,7 @@ const ToolbarSidebar = ({
             openLogsFor={openLogsFor}
             displayDiff={displayDiff}
             selectedDiffNode={selectedDiffNode}
+            nodes={nodes}
           />
         );
       case "chat":
@@ -1165,6 +1165,7 @@ const ToolbarSidebar = ({
             selectedDiffNode={selectedDiffNode}
             displayDiff={displayDiff}
             activeUsers={activeUsers}
+            nodes={nodes}
           />
         );
       case "improvements":
@@ -1201,6 +1202,7 @@ const ToolbarSidebar = ({
             selectedUser={selectedUser}
             skillsFuture={skillsFuture}
             skillsFutureApp={skillsFutureApp}
+            nodes={nodes}
           />
         );
       default:

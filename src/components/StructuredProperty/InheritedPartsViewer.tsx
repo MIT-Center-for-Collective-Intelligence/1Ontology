@@ -23,6 +23,7 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
+import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 
 interface GeneralizationNode {
   id: string;
@@ -56,6 +57,8 @@ interface InheritedPartsViewerProps {
   inheritanceDetails: any;
   currentVisibleNode: any;
   triggerSearch?: any;
+  addPart?: any;
+  removePart?: any;
 }
 
 const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
@@ -72,6 +75,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   inheritanceDetails,
   currentVisibleNode,
   triggerSearch,
+  addPart,
+  removePart,
 }) => {
   const [selectedGeneralizationIndex, setSelectedGeneralizationIndex] =
     useState<number>(0);
@@ -170,6 +175,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
 
   const getTabContent = (generalizationId: string): JSX.Element => {
     const parts = getGeneralizationParts(generalizationId);
+    console.log(parts, "parts");
     const displayedParts = parts.map((c) => c.id);
     const inheritanceRef = currentVisibleNode.inheritance["parts"].ref;
     const _parts =
@@ -177,7 +183,10 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
         ? nodes[inheritanceRef].properties["parts"]
         : currentVisibleNode.properties["parts"];
     const currentParts = _parts[0].nodes.map((c: { id: string }) => c.id);
-
+    console.log("hi", {
+      inheritanceDetails,
+      displayedParts,
+    });
     const details = analyzeInheritance(
       inheritanceDetails,
       displayedParts,
@@ -284,11 +293,39 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
 
               <ListItemIcon sx={{ minWidth: "auto" }}>
                 {symbol === "x" ? (
-                  <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                  !!addPart ? (
+                    <Tooltip title={"Add part"} placement="top">
+                      <IconButton
+                        sx={{ p: 0.5 }}
+                        onClick={() => {
+                          addPart(from);
+                        }}
+                      >
+                        <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                      </IconButton>
+                    </Tooltip>
+                  ) : (
+                    <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+                  )
                 ) : symbol === ">" ? (
                   <ArrowForwardIosIcon sx={{ fontSize: 20, color: "orange" }} />
                 ) : symbol === "=" ? (
-                  <DragHandleIcon sx={{ fontSize: 20, color: "orange" }} />
+                  !!removePart ? (
+                    <Tooltip title={"Remove part"} placement="top">
+                      <IconButton
+                        sx={{ p: 0.5 }}
+                        onClick={() => {
+                          removePart(to);
+                        }}
+                      >
+                        <DragHandleIcon
+                          sx={{ fontSize: 20, color: "orange" }}
+                        />
+                      </IconButton>
+                    </Tooltip>
+                  ) : (
+                    <DragHandleIcon sx={{ fontSize: 20, color: "orange" }} />
+                  )
                 ) : symbol === "+" ? (
                   <AddIcon sx={{ fontSize: 20, color: "orange" }} />
                 ) : null}
@@ -495,6 +532,15 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           {getTabContent(generalizations[selectedGeneralizationIndex].id)}
         </Box>
       )}
+
+      <InheritedPartsLegend
+        legendItems={[
+          { symbol: "=", description: "no change" },
+          { symbol: ">", description: "specialized part" },
+          { symbol: "x", description: "part not inherited" },
+          { symbol: "+", description: "part added" },
+        ]}
+      />
     </Box>
   );
 };

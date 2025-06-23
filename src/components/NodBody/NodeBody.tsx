@@ -336,7 +336,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     } else {
       properties = currentVisibleNode.properties;
     }
-    console.log("properties ==>", properties);
     const sortedKeys = Object.keys(properties || {})
       .filter(
         (p) =>

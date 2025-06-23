@@ -146,7 +146,7 @@ const Text = ({
 
   const saveChangeHistory = useCallback(
     (previousValue: string, newValue: string) => {
-      if (!user?.uname) return;
+      if (!user?.uname || previousValue.trim() === newValue.trim()) return;
       saveNewChangeLog(db, {
         nodeId: currentVisibleNode?.id,
         modifiedBy: user.uname,
@@ -477,6 +477,7 @@ const Text = ({
       (selectedDiffNode &&
         (selectedDiffNode.modifiedProperty !== property || structured)) ||
       ((currentVisibleNode.unclassified || !enableEdit) &&
+        selectedDiffNode?.modifiedProperty !== property &&
         property === "title") ? (
         <Typography
           sx={{ fontSize: property === "title" ? "25px" : "19px", p: "19px" }}

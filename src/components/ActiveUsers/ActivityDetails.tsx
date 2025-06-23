@@ -10,11 +10,13 @@ const ActivityDetails = ({
   displayDiff,
   modifiedByDetails,
   selectedDiffNode,
+  nodes,
 }: {
   activity: NodeChange;
   displayDiff: Function;
   modifiedByDetails?: any;
   selectedDiffNode: any;
+  nodes: { [nodeId: string]: any };
 }) => {
   const [isSelected, setIsSelected] = useState(false);
 
@@ -186,7 +188,8 @@ const ActivityDetails = ({
               mt: "6px",
             }}
           >
-            {activity.fullNode?.title}
+            {nodes[activity.nodeId]?.title || activity.fullNode?.title}
+            {/* {activity.fullNode?.title} */}
           </Typography>
           {activity.reasoning && (
             <Box
