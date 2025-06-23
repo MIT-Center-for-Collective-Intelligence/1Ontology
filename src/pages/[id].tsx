@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import withAuthUser from "@components/components/hoc/withAuthUser";
-import Ontology from "../Ontology";
+import Ontology from "./Ontology";
 import { useRouter } from "next/router";
 import { SKILLS_FUTURE_APP_NAMES } from "@components/lib/CONSTANTS";
 
