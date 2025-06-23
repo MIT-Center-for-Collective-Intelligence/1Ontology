@@ -87,6 +87,8 @@ const SelectModelModal = ({
   setDisplayDetails,
   inheritanceDetails,
   skillsFutureApp,
+  linkNodeRelation,
+  unlinkNodeRelation,
 }: {
   onSave: any;
   handleCloseAddLinksModel: any;
@@ -137,6 +139,8 @@ const SelectModelModal = ({
   setDisplayDetails?: any;
   inheritanceDetails?: any;
   skillsFutureApp: string;
+  linkNodeRelation: any;
+  unlinkNodeRelation: any;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
   const [isUpdatingInheritance, setIsUpdatingInheritance] = useState(false);
