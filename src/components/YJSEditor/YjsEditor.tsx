@@ -17,6 +17,7 @@ const YjsEditor = ({
   cursorPosition,
   onEditorReady,
   setEditorContent,
+  pendingInheritanceMessage,
 }: {
   fullname: string;
   property: string;
@@ -29,6 +30,7 @@ const YjsEditor = ({
   cursorPosition: number | null;
   onEditorReady?: (editor: any) => void;
   setEditorContent: any;
+  pendingInheritanceMessage?: any;
 }) => {
   return (
     <YjsEditorWrapper
@@ -43,6 +45,7 @@ const YjsEditor = ({
       cursorPosition={cursorPosition}
       onEditorReady={onEditorReady}
       setEditorContent={setEditorContent}
+      pendingInheritanceMessage={pendingInheritanceMessage}
     />
   );
 };
