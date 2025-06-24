@@ -12,11 +12,12 @@ import {
 import { NODES } from "@components/lib/firestoreClient/collections";
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
 import { DISPLAY, PROPERTIES_ORDER } from "@components/lib/CONSTANTS";
-import { recordLogs } from "@components/lib/utils/helpers";
+import { recordLogs, updateInheritance } from "@components/lib/utils/helpers";
 import AddPropertyForm from "../AddPropertyForm/AddPropertyForm";
 import { useAuth } from "../context/AuthContext";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
 import { NodeImageManager } from "./NodeImageManager";
+import { DisplayAddedRemovedProperty } from "../StructuredProperty/DisplayAddedRemovedProperty";
 
 interface NodeBodyProps {
   currentVisibleNode: INode;
@@ -72,6 +73,7 @@ interface NodeBodyProps {
   skillsFuture: boolean;
   enableEdit: boolean;
   skillsFutureApp: string;
+  deleteProperty: Function;
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -128,6 +130,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   skillsFuture,
   enableEdit,
   skillsFutureApp,
+  deleteProperty,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -367,6 +370,47 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   }, [currentVisibleNode, selectedDiffNode]);
 
   const hasReferences = orderOfProperties.includes("References");
+  const modifyProperty = ({
+    newValue,
+    previousValue,
+  }: {
+    newValue: string;
+    previousValue: string;
+  }) => {
+    try {
+      console.log({
+        newValue,
+        previousValue,
+      });
+      const currentNode = JSON.parse(JSON.stringify(currentVisibleNode));
+      const properties = currentNode.properties;
+
+      if (properties.hasOwnProperty(newValue)) {
+        confirmIt("This property already exist");
+        return;
+      }
+      properties[newValue] = properties[previousValue];
+
+      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+      updateDoc(nodeRef, {
+        properties,
+      });
+      /*     saveNewChangeLog(db, {
+        nodeId: currentNode.id,
+        modifiedBy: user?.uname,
+        modifiedProperty: property,
+        previousValue,
+        newValue,
+        modifiedAt: new Date(),
+        changeType: "remove property",
+        fullNode: currentNode,
+        skillsFuture,
+        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+      }); */
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <Box>
@@ -460,6 +504,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
                     skillsFutureApp={skillsFutureApp}
+                    deleteProperty={deleteProperty}
+                    // modifyProperty={modifyProperty}
                   />
                 ) : (
                   property !== "description" &&
@@ -478,6 +524,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       skillsFuture={skillsFuture}
                       enableEdit={enableEdit}
                       skillsFutureApp={skillsFutureApp}
+                      deleteProperty={deleteProperty}
+                      // modifyProperty={modifyProperty}
                     />
                   )
                 )}
@@ -485,6 +533,10 @@ const NodeBody: React.FC<NodeBodyProps> = ({
             </React.Fragment>
           );
         })}
+        {selectedDiffNode &&
+          selectedDiffNode.changeType === "remove property" && (
+            <DisplayAddedRemovedProperty selectedDiffNode={selectedDiffNode} />
+          )}
         {!hasReferences &&
           user &&
           (!skillsFuture ||
@@ -512,6 +564,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           setOpenAddProperty={setOpenAddProperty}
           locked={locked}
           exitingProperties={Object.keys(currentVisibleNode.properties || {})}
+          skillsFuture={skillsFuture}
         />
       )}
       {!locked && !openAddProperty && !currentImprovement && (

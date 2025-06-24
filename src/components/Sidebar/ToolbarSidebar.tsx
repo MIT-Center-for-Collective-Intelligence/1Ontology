@@ -639,7 +639,7 @@ const ToolbarSidebar = ({
     if (data === null) {
       setCurrentImprovement(null);
       setSelectedDiffNode(null);
-      if (nodes[currentVisibleNode?.id] == null) {
+      if (!nodes[currentVisibleNode?.id]) {
         navigateToNode(previousNodeId);
       } else {
         navigateToNode(currentVisibleNode?.id);

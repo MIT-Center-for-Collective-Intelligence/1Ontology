@@ -319,6 +319,7 @@ export const updateInheritance = async ({
         ...ObjectUpdates,
         [`inheritance.${property}`]: deleteField(),
         [`properties.${property}`]: deleteField(),
+        [`propertyType.${property}`]: deleteField(),
       };
     }
     updateDoc(nodeRef, ObjectUpdates);
@@ -388,82 +389,71 @@ const recursivelyUpdateSpecializations = async ({
   nestedCall?: boolean;
 }): Promise<any> => {
   // Fetch node data from Firestore
+  try {
+    const nodeRef = doc(collection(db, NODES), nodeId);
+    const nodeSnapshot = await getDoc(nodeRef);
+    const nodeData = nodeSnapshot.data() as INode;
+    const inheritance: IInheritance = nodeData.inheritance;
+    if (nestedCall) {
+      if (!nodeData) return;
 
-  const nodeRef = doc(collection(db, NODES), nodeId);
-  const nodeSnapshot = await getDoc(nodeRef);
-  const nodeData = nodeSnapshot.data() as INode;
-  const inheritance: IInheritance = nodeData.inheritance;
-  if (nestedCall) {
-    if (!nodeData) return;
+      // Get the inheritance type for the updated property
+      updatedProperties = updatedProperties.filter((p, index) => {
+        if (!inheritanceType[p]) {
+          inheritanceType[p] = {
+            ref: null,
+            inheritanceType: "inheritUnlessAlreadyOverRidden",
+          };
+        }
+        if (inheritanceType[p].inheritanceType === "neverInherit") {
+          return false;
+        }
 
-    // Get the inheritance type for the updated property
-    updatedProperties = updatedProperties.filter((p, index) => {
-      if (inheritanceType[p].inheritanceType === "neverInherit") {
-        return false;
-      }
+        // Handling for parts property with broken inheritance
+        if (p === "parts" && inheritance.parts?.ref === null) {
+          // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
+          return false;
+        }
 
-      // Handling for parts property with broken inheritance
-      if (p === "parts" && inheritance.parts?.ref === null) {
-        // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
-        return false;
-      }
+        const canInherit =
+          (inheritanceType[p].inheritanceType ===
+            "inheritUnlessAlreadyOverRidden" &&
+            inheritance[p].ref !== null) ||
+          inheritanceType[p].inheritanceType === "alwaysInherit";
 
-      const canInherit =
-        (inheritanceType[p].inheritanceType ===
-          "inheritUnlessAlreadyOverRidden" &&
-          inheritance[p].ref !== null) ||
-        inheritanceType[p].inheritanceType === "alwaysInherit";
+        return canInherit;
+      });
 
-      return canInherit;
-    });
+      batch = await updateProperty(
+        batch,
+        nodeRef,
+        updatedProperties,
+        deletedProperties,
+        addedProperties,
+        generalizationId,
+        db,
+      );
+    }
 
-    deletedProperties = deletedProperties.filter((p, index) => {
-      if (inheritanceType[p].inheritanceType === "neverInherit") {
-        return false;
-      }
+    let specializations = nodeData.specializations.flatMap((n) => n.nodes);
 
-      // Handling for parts property with broken inheritance
-      if (p === "parts" && inheritance.parts?.ref === null) {
-        // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
-        return false;
-      }
-
-      const canInherit =
-        (inheritanceType[p].inheritanceType ===
-          "inheritUnlessAlreadyOverRidden" &&
-          !!inheritance[p]?.ref) ||
-        inheritanceType[p].inheritanceType === "alwaysInherit";
-
-      return canInherit;
-    });
-
-    batch = await updateProperty(
-      batch,
-      nodeRef,
-      updatedProperties,
-      deletedProperties,
-      addedProperties,
-      generalizationId,
-      db,
-    );
+    for (const specialization of specializations) {
+      batch = await recursivelyUpdateSpecializations({
+        nodeId: specialization.id,
+        updatedProperties,
+        deletedProperties,
+        addedProperties,
+        batch,
+        nestedCall: true,
+        inheritanceType: inheritance,
+        generalizationId,
+        db,
+      });
+    }
+    return batch;
+  } catch (error) {
+    console.error(error);
   }
-
-  let specializations = nodeData.specializations.flatMap((n) => n.nodes);
-
-  for (const specialization of specializations) {
-    batch = await recursivelyUpdateSpecializations({
-      nodeId: specialization.id,
-      updatedProperties,
-      deletedProperties,
-      addedProperties,
-      batch,
-      nestedCall: true,
-      inheritanceType: inheritance,
-      generalizationId,
-      db,
-    });
-  }
-  return batch;
 };
 
 // Function to update a property in Firestore using a batch commit

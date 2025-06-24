@@ -73,7 +73,7 @@ The `Node` component is intended to be used within an application that requires 
 - The component is designed to work with a specific data structure and may require adaptation for different use cases.
 
 This documentation provides a high-level overview of the `Node` component and its capabilities. For detailed implementation and integration, refer to the source code and the specific application context in which the component is used.*/
-import { Popover, Stack, useMediaQuery } from "@mui/material";
+import { Popover, Stack, Typography, useMediaQuery } from "@mui/material";
 import { Box } from "@mui/system";
 import {
   collection,
@@ -1116,6 +1116,57 @@ const Node = ({
     },
     [eachOntologyPath],
   );
+  const deleteProperty = async (property: string) => {
+    try {
+      const confirm = await confirmIt(
+        <Box>
+          <Typography>
+            Are you sure you want to delete the property{" "}
+            <strong style={{ color: "orange" }}>{property}</strong> from this
+            node:
+          </Typography>
+        </Box>,
+        "Yes",
+        "Cancel",
+      );
+
+      if (confirm) {
+        const currentNode = { ...currentVisibleNode };
+        const properties = currentNode.properties;
+        console.log("properties==>", properties);
+        /*     
+        const propertyType = currentNode.propertyType;
+        const inheritance = currentNode.inheritance; */
+        if (properties.hasOwnProperty(property)) {
+          updateInheritance({
+            nodeId: currentNode.id,
+            updatedProperties: [],
+            deletedProperties: [property],
+            db,
+          });
+        }
+        const inheritedRef = currentNode.inheritance[property].ref;
+        const previousValue = inheritedRef
+          ? nodes[inheritedRef].properties[property]
+          : currentNode.properties[property];
+
+        saveNewChangeLog(db, {
+          nodeId: currentNode.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: property,
+          previousValue,
+          newValue: null,
+          modifiedAt: new Date(),
+          changeType: "remove property",
+          fullNode: currentNode,
+          skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   /* "root": "T
   of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'.
@@ -1470,6 +1521,7 @@ const Node = ({
           skillsFuture={skillsFuture}
           enableEdit={enableEdit}
           skillsFutureApp={skillsFutureApp}
+          deleteProperty={deleteProperty}
         />
       </Box>{" "}
       {ConfirmDialog}

@@ -22,6 +22,7 @@ import {
   getPropertyValue,
   getTitle,
   getTooltipHelper,
+  lowercaseFirstLetter,
 } from "@components/lib/utils/string.utils";
 import {
   getGeneralizationParts,
@@ -38,6 +39,7 @@ import {
   getFirestore,
   updateDoc,
 } from "firebase/firestore";
+import EditIcon from "@mui/icons-material/Edit";
 import {
   recordLogs,
   saveNewChangeLog,
@@ -58,6 +60,7 @@ import CommentsSection from "./CommentsSection";
 import InheritedPartsViewer from "./InheritedPartsViewer";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import { Post } from "@components/lib/utils/Post";
+import EditProperty from "../AddPropertyForm/EditProprety";
 
 const INITIAL_LOAD_COUNT = 20;
 const LOAD_MORE_COUNT = 20;
@@ -132,6 +135,8 @@ type IStructuredPropertyProps = {
   enableEdit: boolean;
   inheritanceDetails?: any;
   skillsFutureApp: string;
+  deleteProperty?: Function;
+  modifyProperty?: Function;
 };
 
 const StructuredProperty = ({
@@ -188,6 +193,8 @@ const StructuredProperty = ({
   enableEdit,
   inheritanceDetails,
   skillsFutureApp,
+  deleteProperty,
+  modifyProperty,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
   const [openAddCollection, setOpenAddCollection] = useState(false);
@@ -197,6 +204,8 @@ const StructuredProperty = ({
   const [displayDetails, setDisplayDetails] = useState(false);
   const [displayOptional, setDisplayOptional] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [editProperty, setEditProperty] = useState("");
+  const [newPropertyValue, setNewPropertyValue] = useState("");
 
   const [paginationState, setPaginationState] = useState<Map<string, number>>(
     new Map(),
@@ -667,7 +676,6 @@ const StructuredProperty = ({
     fromModel: boolean = false,
   ) => {
     try {
-      debugger;
       if (
         fromModel ||
         (await confirmIt(
@@ -1005,19 +1013,81 @@ const StructuredProperty = ({
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Tooltip title={getTooltipHelper(property)}>
-              <Typography
-                sx={{
-                  fontSize: "20px",
-                  fontWeight: 500,
-                  fontFamily: "Roboto, sans-serif",
+            {editProperty === property && modifyProperty ? (
+              <EditProperty
+                value={newPropertyValue}
+                onChange={setNewPropertyValue}
+                onSave={() => {
+                  modifyProperty({
+                    newValue: newPropertyValue,
+                    previousValue: property,
+                  });
+                  setEditProperty("");
+                  setNewPropertyValue("");
                 }}
-              >
-                {capitalizeFirstLetter(
-                  DISPLAY[property] ? DISPLAY[property] : property,
-                )}
-              </Typography>
-            </Tooltip>{" "}
+                onCancel={() => {
+                  setEditProperty("");
+                  setNewPropertyValue("");
+                }}
+                property={property}
+              />
+            ) : (
+              <Tooltip title={getTooltipHelper(lowercaseFirstLetter(property))}>
+                <Box
+                  sx={{
+                    position: "relative",
+                    display: "inline-block",
+                    pl: "1px",
+                    "&:hover":
+                      enableEdit && modifyProperty
+                        ? {
+                            border: "2px solid orange",
+                            borderRadius: "15px",
+                            pr: "15px",
+                            cursor: "pointer",
+                            backgroundColor: "gray",
+                          }
+                        : {},
+                    "&:hover .edit-icon":
+                      enableEdit && modifyProperty
+                        ? {
+                            display: "block",
+                          }
+                        : {},
+                  }}
+                  onClick={() => {
+                    setEditProperty(property);
+                    setNewPropertyValue(property);
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: "20px",
+                      fontWeight: 500,
+                      fontFamily: "Roboto, sans-serif",
+                      padding: "4px",
+                    }}
+                  >
+                    {capitalizeFirstLetter(
+                      DISPLAY[property] ? DISPLAY[property] : property,
+                    )}
+                  </Typography>
+                  <EditIcon
+                    className="edit-icon"
+                    sx={{
+                      position: "absolute",
+                      top: "-8px",
+                      right: "-8px",
+                      color: "orange",
+                      backgroundColor: "white",
+                      borderRadius: "50%",
+                      fontSize: "16px",
+                      display: "none",
+                    }}
+                  />
+                </Box>
+              </Tooltip>
+            )}
             {(property === "generalizations" ||
               property === "specializations" ||
               property === "isPartOf" ||
@@ -1134,6 +1204,20 @@ const StructuredProperty = ({
                         ?.title || ""}
                       {'")'}
                     </Typography>
+                  )}
+                {property !== "isPartOf" &&
+                  property !== "parts" &&
+                  property !== "specializations" &&
+                  property !== "generalizations" &&
+                  deleteProperty && (
+                    <Button
+                      sx={{ borderRadius: "25px" }}
+                      onClick={() => {
+                        deleteProperty(property);
+                      }}
+                    >
+                      Delete
+                    </Button>
                   )}
               </Box>
             )}

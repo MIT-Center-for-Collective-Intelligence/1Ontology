@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import {
   Box,
+  Button,
   IconButton,
   Paper,
   Switch,
@@ -14,6 +15,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+
 import {
   getDoc,
   collection,
@@ -53,6 +55,7 @@ import PropertyContributors from "../StructuredProperty/PropertyContributors";
 import EditIcon from "@mui/icons-material/Edit";
 import EditOffIcon from "@mui/icons-material/EditOff";
 import MarkdownEditor from "../Markdown/MarkdownEditor";
+import EditProperty from "../AddPropertyForm/EditProprety";
 // import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ITextProps = {
@@ -82,6 +85,8 @@ type ITextProps = {
   setEnableEdit?: any;
   enableEdit: any;
   skillsFutureApp: string;
+  modifyProperty?: Function;
+  deleteProperty?: Function;
 };
 
 const Text = ({
@@ -110,6 +115,8 @@ const Text = ({
   setEnableEdit,
   enableEdit,
   skillsFutureApp,
+  modifyProperty,
+  deleteProperty,
 }: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -131,6 +138,9 @@ const Text = ({
     }
     return null;
   }, [currentImprovement]);
+
+  const [editProperty, setEditProperty] = useState("");
+  const [newPropertyValue, setNewPropertyValue] = useState("");
 
   // // Maintain focus after inheritance change
   // useEffect(() => {
@@ -245,6 +255,12 @@ const Text = ({
     }
   }, [text, isEditing]);
 
+  const handleDeleteProperty = useCallback(() => {
+    if (deleteProperty) {
+      deleteProperty(property);
+    }
+  }, [property]);
+
   // useEffect(() => {
   //   setError("");
   //   if (selectTitle) {
@@ -329,7 +345,16 @@ const Text = ({
         borderRadius: "20px",
         /*         minWidth: "500px", */
         width: "100%",
-        border: structured ? "1px solid white" : "",
+        /*         border: structured ? "1px solid white" : "", */
+        border:
+          selectedDiffNode?.changeDetails?.addedProperty === property
+            ? selectedDiffNode?.changeType === "add property"
+              ? "3px solid #4ccf37"
+              : selectedDiffNode?.changeType === "remove property"
+                ? "3px solid rgb(224, 8, 11)"
+                : ""
+            : "",
+
         ...sx,
       }}
     >
@@ -344,29 +369,84 @@ const Text = ({
             pb: 1.5,
             borderTopRightRadius: property !== "title" ? "18px" : "",
             borderTopLeftRadius: property !== "title" ? "18px" : "",
-            backgroundColor:
-              selectedDiffNode &&
-              selectedDiffNode.changeType === "add property" &&
-              selectedDiffNode.changeDetails.addedProperty === property
-                ? theme.palette.mode === "dark"
-                  ? "green"
-                  : "#4ccf37"
-                : "",
           }}
         >
-          <Tooltip title={getTooltipHelper(lowercaseFirstLetter(property))}>
-            <Typography
-              sx={{
-                fontSize: "20px",
-                fontWeight: 500,
-                fontFamily: "Roboto, sans-serif",
+          {editProperty === property ? (
+            <EditProperty
+              value={newPropertyValue}
+              onChange={setNewPropertyValue}
+              onSave={() => {
+                modifyProperty({
+                  newValue: newPropertyValue,
+                  previousValue: property,
+                });
+                setEditProperty("");
+                setNewPropertyValue("");
               }}
-            >
-              {capitalizeFirstLetter(
-                DISPLAY[property] ? DISPLAY[property] : property,
-              )}
-            </Typography>
-          </Tooltip>
+              onCancel={() => {
+                setEditProperty("");
+                setNewPropertyValue("");
+              }}
+              property={property}
+            />
+          ) : (
+            <Tooltip title={getTooltipHelper(lowercaseFirstLetter(property))}>
+              <Box
+                sx={{
+                  position: "relative",
+                  display: "inline-block",
+                  pl: "1px",
+                  "&:hover":
+                    enableEdit && modifyProperty
+                      ? {
+                          border: "2px solid orange",
+                          borderRadius: "15px",
+                          pr: "15px",
+                          cursor: "pointer",
+                          backgroundColor: "gray",
+                        }
+                      : {},
+                  "&:hover .edit-icon":
+                    enableEdit && modifyProperty
+                      ? {
+                          display: "block",
+                        }
+                      : {},
+                }}
+                onClick={() => {
+                  setEditProperty(property);
+                  setNewPropertyValue(property);
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: "20px",
+                    fontWeight: 500,
+                    fontFamily: "Roboto, sans-serif",
+                    padding: "4px",
+                  }}
+                >
+                  {capitalizeFirstLetter(
+                    DISPLAY[property] ? DISPLAY[property] : property,
+                  )}
+                </Typography>
+                <EditIcon
+                  className="edit-icon"
+                  sx={{
+                    position: "absolute",
+                    top: "-8px",
+                    right: "-8px",
+                    color: "orange",
+                    backgroundColor: "white",
+                    borderRadius: "50%",
+                    fontSize: "16px",
+                    display: "none",
+                  }}
+                />
+              </Box>
+            </Tooltip>
+          )}
+
           <Box
             sx={{
               display: "flex",
@@ -416,6 +496,21 @@ const Text = ({
                   user={user}
                 />
               )}{" "}
+            {enableEdit &&
+              property !== "title" &&
+              property !== "description" &&
+              deleteProperty && (
+                <Tooltip title={"Delete property"} placement="top">
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    sx={{ borderRadius: "25px" }}
+                    onClick={handleDeleteProperty}
+                  >
+                    Delete
+                  </Button>
+                </Tooltip>
+              )}
             {/*{!locked && property !== "title" && property !== "ONetID" && (
               <Box
                 sx={{

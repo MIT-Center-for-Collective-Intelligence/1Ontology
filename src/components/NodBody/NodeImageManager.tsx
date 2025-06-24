@@ -440,7 +440,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
                   color: "text.secondary",
                 }}
               >
-                <Typography variant="body1">
+                <Typography variant="body1" sx={{ color: "gray" }}>
                   No images have been uploaded yet
                 </Typography>
               </Box>
@@ -713,6 +713,8 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
                         bgcolor: "orange.dark",
                       },
                       display: !enableEdit ? "none" : "flex",
+                      borderRadius: "25px",
+                      mr: "1.2px",
                     }}
                   >
                     Upload Images

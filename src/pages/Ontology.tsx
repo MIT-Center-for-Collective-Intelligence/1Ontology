@@ -1188,11 +1188,9 @@ const Ontology = ({
     };
 
     if (parts) {
-      for (let collection of parts) {
-        for (let node of collection.nodes) {
-          if (nodes[node.id]) {
-            _inheritanceDetails[node.id] = checkGeneralizations(node.id);
-          }
+      for (let node of parts[0].nodes) {
+        if (nodes[node.id]) {
+          _inheritanceDetails[node.id] = checkGeneralizations(node.id);
         }
       }
     }

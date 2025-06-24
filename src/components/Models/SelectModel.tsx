@@ -787,6 +787,15 @@ const SelectModelModal = ({
             inheritanceDetails={inheritanceDetails}
             currentVisibleNode={currentVisibleNode}
             triggerSearch={triggerSearch}
+            addPart={(partId: string) => {
+              linkNodeRelation({
+                currentNodeId: currentVisibleNode.id,
+                partId,
+              });
+            }}
+            removePart={(partId: any) => {
+              unlinkNodeRelation(currentVisibleNode.id, partId, -1, 0, true);
+            }}
           />
           <Box
             sx={{

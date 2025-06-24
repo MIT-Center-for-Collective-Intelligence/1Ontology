@@ -395,11 +395,16 @@ export const breakInheritanceAndCopyParts = async (
 export const getGeneralizationParts = (
   generalizationId: string,
   nodes: { [nodeId: string]: INode },
-): { id: string; title: string; isInherited: boolean }[] => {
+): { id: string; title: string; isInherited: boolean; optional: boolean }[] => {
   const generalizationNode = nodes[generalizationId];
   if (!generalizationNode) return [];
 
-  const parts: { id: string; title: string; isInherited: boolean }[] = [];
+  const parts: {
+    id: string;
+    title: string;
+    isInherited: boolean;
+    optional: boolean;
+  }[] = [];
 
   let genParts = generalizationNode.properties?.parts;
   const partRefId = generalizationNode.inheritance["parts"].ref;
@@ -415,6 +420,7 @@ export const getGeneralizationParts = (
             id: part.id,
             title: getTitle(nodes, part.id),
             isInherited: false,
+            optional: part.optional,
           });
         }
       });
@@ -422,7 +428,7 @@ export const getGeneralizationParts = (
   }
 
   // Add inherited parts
-  if (generalizationNode.inheritanceParts) {
+  /*   if (generalizationNode.inheritanceParts) {
     Object.keys(generalizationNode.inheritanceParts).forEach(
       (partId: string) => {
         const partInfo = generalizationNode.inheritanceParts[partId];
@@ -431,11 +437,12 @@ export const getGeneralizationParts = (
             id: partId,
             title: getTitle(nodes, partId),
             isInherited: true,
+            // optional:partInfo.
           });
         }
       },
     );
-  }
+  } */
 
   return parts;
 };

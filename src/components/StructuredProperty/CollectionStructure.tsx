@@ -1490,7 +1490,7 @@ const CollectionStructure = ({
                                     )}
 
                                   {/* Display inherited parts from inheritanceParts only if inheritance.parts.ref is null */}
-                                  {property === "parts" &&
+                                  {/*   {property === "parts" &&
                                     !currentVisibleNode.inheritance?.parts
                                       ?.ref &&
                                     nodes[currentVisibleNode.id]
@@ -1571,7 +1571,7 @@ const CollectionStructure = ({
                                           />
                                         );
                                       },
-                                    )}
+                                    )} */}
                                   {provided.placeholder}
                                 </Box>
                               )}

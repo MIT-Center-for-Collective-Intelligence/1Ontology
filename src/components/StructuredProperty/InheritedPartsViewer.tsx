@@ -183,10 +183,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
         ? nodes[inheritanceRef].properties["parts"]
         : currentVisibleNode.properties["parts"];
     const currentParts = _parts[0].nodes.map((c: { id: string }) => c.id);
-    console.log("hi", {
-      inheritanceDetails,
-      displayedParts,
-    });
+
     const details = analyzeInheritance(
       inheritanceDetails,
       displayedParts,
@@ -211,15 +208,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
         </Typography>
       );
     }
-
-    const getPartGeneralization = (partId: string): string | null => {
-      const partNode = nodes[partId];
-      if (!partNode?.generalizations?.[0]?.nodes?.[0]?.id) {
-        return null;
-      }
-      const firstGeneralizationId = partNode.generalizations[0].nodes[0].id;
-      return getTitle(nodes, firstGeneralizationId);
-    };
 
     return (
       <List
