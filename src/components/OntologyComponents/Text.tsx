@@ -376,10 +376,12 @@ const Text = ({
               value={newPropertyValue}
               onChange={setNewPropertyValue}
               onSave={() => {
-                modifyProperty({
-                  newValue: newPropertyValue,
-                  previousValue: property,
-                });
+                if (modifyProperty) {
+                  modifyProperty({
+                    newValue: newPropertyValue,
+                    previousValue: property,
+                  });
+                }
                 setEditProperty("");
                 setNewPropertyValue("");
               }}
