@@ -29,6 +29,8 @@ export const DISPLAY: {
   actor: "Actors",
   objectsActedOn: "Objects Acted On",
   ONetID: "O*Net ID",
+  generalizations: "Generalizations (Parents)",
+  specializations: "Specializations (Children)",
 };
 
 export const NO_IMAGE_USER =
