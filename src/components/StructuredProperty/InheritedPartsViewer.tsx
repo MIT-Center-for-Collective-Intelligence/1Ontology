@@ -175,7 +175,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
 
   const getTabContent = (generalizationId: string): JSX.Element => {
     const parts = getGeneralizationParts(generalizationId);
-    console.log(parts, "parts");
     const displayedParts = parts.map((c) => c.id);
     const inheritanceRef = currentVisibleNode.inheritance["parts"].ref;
     const _parts =

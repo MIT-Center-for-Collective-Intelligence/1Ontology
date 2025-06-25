@@ -378,10 +378,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     previousValue: string;
   }) => {
     try {
-      console.log({
-        newValue,
-        previousValue,
-      });
       const currentNode = JSON.parse(JSON.stringify(currentVisibleNode));
       const properties = currentNode.properties;
 

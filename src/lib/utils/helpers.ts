@@ -1501,19 +1501,17 @@ export const diffCollections = (
       }
     }
 
-    if (mergedNodes.length > 0) {
-      const collectionChange = isAddedCollection
-        ? "added"
-        : isRemovedCollection
-          ? "removed"
-          : undefined;
+    const collectionChange = isAddedCollection
+      ? "added"
+      : isRemovedCollection
+        ? "removed"
+        : undefined;
 
-      result.push({
-        collectionName,
-        nodes: mergedNodes,
-        ...(collectionChange ? { change: collectionChange } : {}),
-      });
-    }
+    result.push({
+      collectionName,
+      nodes: mergedNodes,
+      ...(collectionChange ? { change: collectionChange } : {}),
+    });
   }
   return result;
 };

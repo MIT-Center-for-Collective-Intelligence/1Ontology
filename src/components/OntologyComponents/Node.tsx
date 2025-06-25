@@ -1133,7 +1133,7 @@ const Node = ({
       if (confirm) {
         const currentNode = { ...currentVisibleNode };
         const properties = currentNode.properties;
-        console.log("properties==>", properties);
+
         /*     
         const propertyType = currentNode.propertyType;
         const inheritance = currentNode.inheritance; */

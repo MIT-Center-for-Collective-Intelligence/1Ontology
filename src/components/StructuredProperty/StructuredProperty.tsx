@@ -297,10 +297,7 @@ const StructuredProperty = ({
             property,
           ) || currentVisibleNode?.properties[property];
       }
-      if (property === "parts") {
-        console.log(nodes[currentVisibleNode.inheritance[property]?.ref ?? ""]);
-        console.log("result", currentVisibleNode);
-      }
+
       if (!selectedDiffNode) {
         return processCollectionData(result || []);
       }
@@ -414,7 +411,7 @@ const StructuredProperty = ({
     processCollectionData,
     db,
   ]);
-  console.log("editableProperty", { selectedProperty }, editableProperty);
+
   useEffect(() => {
     if (property === "parts") {
       const someAreOptional = propertyValue[0].nodes.some((c) => !!c.optional);
@@ -684,14 +681,6 @@ const StructuredProperty = ({
           "Keep",
         ))
       ) {
-        console.log({
-          currentNodeId,
-          linkId,
-          linkIndex,
-          collectionIndex,
-          fromModel,
-        });
-
         const nodeDoc = await getDoc(doc(collection(db, NODES), currentNodeId));
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as any;
