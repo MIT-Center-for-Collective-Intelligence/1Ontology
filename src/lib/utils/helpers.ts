@@ -1473,31 +1473,39 @@ export const diffCollections = (
     for (const id of nodeIds) {
       const inOld = oldNodes.has(id);
       const inNew = newNodes.has(id);
+      const oldNode = oldNodes.get(id);
+      const newNode = newNodes.get(id);
+
+      const title = newNode?.title ?? oldNode?.title ?? null;
 
       if (!inOld && inNew) {
         const originalCollection = oldNodeToCollection.get(id);
-        const newNode = newNodes.get(id)!;
 
         if (originalCollection && originalCollection !== collectionName) {
-          mergedNodes.push({ ...newNode, change: "added", changeType: "sort" });
+          mergedNodes.push({
+            ...newNode,
+            title,
+            change: "added",
+            changeType: "sort",
+          });
         } else {
-          mergedNodes.push({ ...newNode, change: "added" });
+          mergedNodes.push({ ...newNode, title, change: "added" });
         }
       } else if (inOld && !inNew) {
         const newCollectionOfNode = newNodeToCollection.get(id);
-        const oldNode = oldNodes.get(id)!;
 
         if (newCollectionOfNode && newCollectionOfNode !== collectionName) {
           mergedNodes.push({
             ...oldNode,
+            title,
             change: "removed",
             changeType: "sort",
           });
         } else {
-          mergedNodes.push({ ...oldNode, change: "removed" });
+          mergedNodes.push({ ...oldNode, title, change: "removed" });
         }
       } else {
-        mergedNodes.push({ id });
+        mergedNodes.push({ id, title });
       }
     }
 
@@ -1513,5 +1521,6 @@ export const diffCollections = (
       ...(collectionChange ? { change: collectionChange } : {}),
     });
   }
+
   return result;
 };
