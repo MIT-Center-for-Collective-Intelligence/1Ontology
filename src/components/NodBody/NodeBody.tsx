@@ -1,9 +1,10 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Box, Button, Typography, useTheme } from "@mui/material";
 import { ICollection, INode } from "@components/types/INode";
 import Text from "../OntologyComponents/Text";
 import {
   collection,
+  deleteField,
   doc,
   getFirestore,
   updateDoc,
@@ -12,7 +13,11 @@ import {
 import { NODES } from "@components/lib/firestoreClient/collections";
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
 import { DISPLAY, PROPERTIES_ORDER } from "@components/lib/CONSTANTS";
-import { recordLogs, updateInheritance } from "@components/lib/utils/helpers";
+import {
+  recordLogs,
+  saveNewChangeLog,
+  updateInheritance,
+} from "@components/lib/utils/helpers";
 import AddPropertyForm from "../AddPropertyForm/AddPropertyForm";
 import { useAuth } from "../context/AuthContext";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
@@ -69,7 +74,6 @@ interface NodeBodyProps {
   setGlowIds: any;
   selectedCollection: string;
   storage: any;
-  saveNewChangeLog: any;
   skillsFuture: boolean;
   enableEdit: boolean;
   skillsFutureApp: string;
@@ -126,7 +130,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   setGlowIds,
   selectedCollection,
   storage,
-  saveNewChangeLog,
   skillsFuture,
   enableEdit,
   skillsFutureApp,
@@ -277,7 +280,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
             element.style.boxShadow = "";
           }, 2000);
         }
-      }, 1000);
+      }, 500);
       await updateDoc(nodeRef, {
         properties,
         propertyType,
@@ -370,43 +373,84 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   }, [currentVisibleNode, selectedDiffNode]);
 
   const hasReferences = orderOfProperties.includes("References");
-  const modifyProperty = ({
-    newValue,
-    previousValue,
-  }: {
-    newValue: string;
-    previousValue: string;
-  }) => {
-    try {
-      const currentNode = JSON.parse(JSON.stringify(currentVisibleNode));
-      const properties = currentNode.properties;
 
-      if (properties.hasOwnProperty(newValue)) {
-        confirmIt("This property already exist");
-        return;
+  const modifyProperty = useCallback(
+    ({
+      newValue,
+      previousValue,
+    }: {
+      newValue: string;
+      previousValue: string;
+    }) => {
+      try {
+        if (!user?.uname) return;
+        console.log(user?.uname, "ok ==>", {
+          newValue,
+          previousValue,
+        });
+        const currentNode = JSON.parse(JSON.stringify(currentVisibleNode));
+        const properties = currentNode.properties;
+
+        if (
+          properties.hasOwnProperty(newValue) ||
+          newValue.toLowerCase() === "specializations" ||
+          newValue.toLowerCase() === "generalizations" ||
+          newValue.toLowerCase() === "title"
+        ) {
+          confirmIt("This property already exist");
+          return;
+        }
+
+        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+
+        const propertyValue = currentNode.properties[previousValue];
+        const propertyType = currentNode.propertyType[previousValue];
+        const inheritanceValue = currentNode.inheritance[previousValue];
+
+        let ObjectUpdates = {
+          [`propertyType.${previousValue}`]: deleteField(),
+          [`properties.${previousValue}`]: deleteField(),
+          [`inheritance.${previousValue}`]: deleteField(),
+          /* new values */
+          [`propertyType.${newValue}`]: propertyType,
+          [`properties.${newValue}`]: propertyValue,
+          [`inheritance.${newValue}`]: inheritanceValue,
+        };
+        if (currentNode.textValue && currentNode.textValue[previousValue]) {
+          const comments = currentNode.textValue[previousValue];
+          ObjectUpdates = {
+            ...ObjectUpdates,
+            [`textValue.${previousValue}`]: deleteField(),
+            [`textValue.${newValue}`]: comments,
+          };
+        }
+        if (currentNode.propertyOf && currentNode.propertyOf[previousValue]) {
+          const propertyOfValue = currentNode.propertyOf[previousValue];
+          ObjectUpdates = {
+            ...ObjectUpdates,
+            [`propertyOf.${previousValue}`]: deleteField(),
+            [`propertyOf.${newValue}`]: propertyOfValue,
+          };
+        }
+        updateDoc(nodeRef, ObjectUpdates);
+        saveNewChangeLog(db, {
+          nodeId: currentNode.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: newValue,
+          previousValue,
+          newValue,
+          modifiedAt: new Date(),
+          changeType: "edit property",
+          fullNode: currentNode,
+          skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        });
+      } catch (error) {
+        console.error(error);
       }
-      properties[newValue] = properties[previousValue];
-
-      const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
-      updateDoc(nodeRef, {
-        properties,
-      });
-      /*     saveNewChangeLog(db, {
-        nodeId: currentNode.id,
-        modifiedBy: user?.uname,
-        modifiedProperty: property,
-        previousValue,
-        newValue,
-        modifiedAt: new Date(),
-        changeType: "remove property",
-        fullNode: currentNode,
-        skillsFuture,
-        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
-      }); */
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    },
+    [user?.uname, currentVisibleNode],
+  );
 
   return (
     <Box>
@@ -501,7 +545,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     enableEdit={enableEdit}
                     skillsFutureApp={skillsFutureApp}
                     deleteProperty={deleteProperty}
-                    // modifyProperty={modifyProperty}
+                    modifyProperty={modifyProperty}
                   />
                 ) : (
                   property !== "description" &&
@@ -521,7 +565,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       enableEdit={enableEdit}
                       skillsFutureApp={skillsFutureApp}
                       deleteProperty={deleteProperty}
-                      // modifyProperty={modifyProperty}
+                      modifyProperty={modifyProperty}
                     />
                   )
                 )}

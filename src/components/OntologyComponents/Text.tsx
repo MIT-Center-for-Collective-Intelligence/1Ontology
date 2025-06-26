@@ -10,6 +10,7 @@ import {
   Button,
   IconButton,
   Paper,
+  Slide,
   Switch,
   TextField,
   Tooltip,
@@ -338,182 +339,187 @@ const Text = ({
   ]);
 
   return (
-    <Paper
-      id={`property-${property}`}
-      elevation={9}
-      sx={{
-        borderRadius: "20px",
-        /*         minWidth: "500px", */
-        width: "100%",
-        /*         border: structured ? "1px solid white" : "", */
-        border:
-          selectedDiffNode?.changeDetails?.addedProperty === property
-            ? selectedDiffNode?.changeType === "add property"
-              ? "3px solid #4ccf37"
-              : selectedDiffNode?.changeType === "remove property"
-                ? "3px solid rgb(224, 8, 11)"
-                : ""
-            : "",
+    <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={500}>
+      <Paper
+        id={`property-${property}`}
+        elevation={9}
+        sx={{
+          borderRadius: "20px",
+          /*         minWidth: "500px", */
+          width: "100%",
+          /*         border: structured ? "1px solid white" : "", */
+          border:
+            selectedDiffNode?.changeDetails?.addedProperty === property
+              ? selectedDiffNode?.changeType === "add property"
+                ? "3px solid #4ccf37"
+                : selectedDiffNode?.changeType === "remove property"
+                  ? "3px solid rgb(224, 8, 11)"
+                  : ""
+              : "",
 
-        ...sx,
-      }}
-    >
-      {!structured && (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            textAlign: "center",
-            background: backgroundColor,
-            p: 3,
-            pb: 1.5,
-            borderTopRightRadius: property !== "title" ? "18px" : "",
-            borderTopLeftRadius: property !== "title" ? "18px" : "",
-          }}
-        >
-          {editProperty === property ? (
-            <EditProperty
-              value={newPropertyValue}
-              onChange={setNewPropertyValue}
-              onSave={() => {
-                if (modifyProperty) {
-                  modifyProperty({
-                    newValue: newPropertyValue,
-                    previousValue: property,
-                  });
-                }
-                setEditProperty("");
-                setNewPropertyValue("");
-              }}
-              onCancel={() => {
-                setEditProperty("");
-                setNewPropertyValue("");
-              }}
-              property={property}
-            />
-          ) : (
-            <Tooltip title={getTooltipHelper(lowercaseFirstLetter(property))}>
-              <Box
-                sx={{
-                  position: "relative",
-                  display: "inline-block",
-                  pl: "1px",
-                  "&:hover":
-                    enableEdit && modifyProperty
-                      ? {
-                          border: "2px solid orange",
-                          borderRadius: "15px",
-                          pr: "15px",
-                          cursor: "pointer",
-                          backgroundColor: "gray",
-                        }
-                      : {},
-                  "&:hover .edit-icon":
-                    enableEdit && modifyProperty
-                      ? {
-                          display: "block",
-                        }
-                      : {},
-                }}
-                onClick={() => {
-                  setEditProperty(property);
-                  setNewPropertyValue(property);
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: "20px",
-                    fontWeight: 500,
-                    fontFamily: "Roboto, sans-serif",
-                    padding: "4px",
-                  }}
-                >
-                  {capitalizeFirstLetter(
-                    DISPLAY[property] ? DISPLAY[property] : property,
-                  )}
-                </Typography>
-                <EditIcon
-                  className="edit-icon"
-                  sx={{
-                    position: "absolute",
-                    top: "-8px",
-                    right: "-8px",
-                    color: "orange",
-                    backgroundColor: "white",
-                    borderRadius: "50%",
-                    fontSize: "16px",
-                    display: "none",
-                  }}
-                />
-              </Box>
-            </Tooltip>
-          )}
-
+          ...sx,
+        }}
+      >
+        {!structured && (
           <Box
             sx={{
               display: "flex",
-              ml: "auto",
-              gap: "14px",
               alignItems: "center",
+              textAlign: "center",
+              background: backgroundColor,
+              p: 3,
+              pb: 1.5,
+              borderTopRightRadius: property !== "title" ? "18px" : "",
+              borderTopLeftRadius: property !== "title" ? "18px" : "",
             }}
           >
-            {selectedDiffNode &&
-              selectedDiffNode.changeType === "delete node" &&
-              property === "title" && (
-                <Typography sx={{ mx: "5px", ml: "145px", fontWeight: "bold" }}>
-                  DELETED NODE
+            {editProperty === property ? (
+              <EditProperty
+                value={newPropertyValue}
+                onChange={setNewPropertyValue}
+                onSave={() => {
+                  if (modifyProperty) {
+                    modifyProperty({
+                      newValue: newPropertyValue,
+                      previousValue: property,
+                    });
+                  }
+                  setEditProperty("");
+                  setNewPropertyValue("");
+                }}
+                onCancel={() => {
+                  setEditProperty("");
+                  setNewPropertyValue("");
+                }}
+                property={property}
+              />
+            ) : (
+              <Tooltip title={getTooltipHelper(lowercaseFirstLetter(property))}>
+                <Box
+                  sx={{
+                    position: "relative",
+                    display: "inline-block",
+                    pl: "1px",
+                    "&:hover":
+                      enableEdit && modifyProperty
+                        ? {
+                            border: "2px solid orange",
+                            borderRadius: "15px",
+                            pr: "15px",
+                            cursor: "pointer",
+                            backgroundColor: "gray",
+                          }
+                        : {},
+                    "&:hover .edit-icon":
+                      enableEdit && modifyProperty
+                        ? {
+                            display: "block",
+                          }
+                        : {},
+                  }}
+                  onClick={() => {
+                    if (enableEdit && modifyProperty) {
+                      setEditProperty(property);
+                      setNewPropertyValue(property);
+                    }
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: "20px",
+                      fontWeight: 500,
+                      fontFamily: "Roboto, sans-serif",
+                      padding: "4px",
+                    }}
+                  >
+                    {capitalizeFirstLetter(
+                      DISPLAY[property] ? DISPLAY[property] : property,
+                    )}
+                  </Typography>
+                  <EditIcon
+                    className="edit-icon"
+                    sx={{
+                      position: "absolute",
+                      top: "-8px",
+                      right: "-8px",
+                      color: "orange",
+                      backgroundColor: "white",
+                      borderRadius: "50%",
+                      fontSize: "16px",
+                      display: "none",
+                    }}
+                  />
+                </Box>
+              </Tooltip>
+            )}
+
+            <Box
+              sx={{
+                display: "flex",
+                ml: "auto",
+                gap: "14px",
+                alignItems: "center",
+              }}
+            >
+              {selectedDiffNode &&
+                selectedDiffNode.changeType === "delete node" &&
+                property === "title" && (
+                  <Typography
+                    sx={{ mx: "5px", ml: "145px", fontWeight: "bold" }}
+                  >
+                    DELETED NODE
+                  </Typography>
+                )}
+              <PropertyContributors
+                currentVisibleNode={currentVisibleNode}
+                property={property}
+              />
+              {currentVisibleNode.inheritance[property]?.ref && (
+                <Typography sx={{ fontSize: "14px", ml: "9px" }}>
+                  {'(Inherited from "'}
+                  {getTitleNode(
+                    currentVisibleNode.inheritance[property].ref || "",
+                  )}
+                  {'")'}
                 </Typography>
               )}
-            <PropertyContributors
-              currentVisibleNode={currentVisibleNode}
-              property={property}
-            />
-            {currentVisibleNode.inheritance[property]?.ref && (
-              <Typography sx={{ fontSize: "14px", ml: "9px" }}>
-                {'(Inherited from "'}
-                {getTitleNode(
-                  currentVisibleNode.inheritance[property].ref || "",
+              {property === "title" &&
+                !selectedDiffNode &&
+                displaySidebar &&
+                !currentImprovement && (
+                  <ManageNodeButtons
+                    locked={locked}
+                    lockedInductor={!!currentVisibleNode.locked}
+                    root={root}
+                    manageLock={manageLock}
+                    deleteNode={deleteNode}
+                    getTitleNode={getTitleNode}
+                    handleLockNode={handleLockNode}
+                    navigateToNode={navigateToNode}
+                    displaySidebar={displaySidebar}
+                    activeSidebar={activeSidebar}
+                    unclassified={!!currentVisibleNode.unclassified}
+                    setEnableEdit={setEnableEdit}
+                    enableEdit={enableEdit}
+                    user={user}
+                  />
+                )}{" "}
+              {enableEdit &&
+                property !== "title" &&
+                property !== "description" &&
+                deleteProperty && (
+                  <Tooltip title={"Delete property"} placement="top">
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      sx={{ borderRadius: "25px" }}
+                      onClick={handleDeleteProperty}
+                    >
+                      Delete Property
+                    </Button>
+                  </Tooltip>
                 )}
-                {'")'}
-              </Typography>
-            )}
-            {property === "title" &&
-              !selectedDiffNode &&
-              displaySidebar &&
-              !currentImprovement && (
-                <ManageNodeButtons
-                  locked={locked}
-                  lockedInductor={!!currentVisibleNode.locked}
-                  root={root}
-                  manageLock={manageLock}
-                  deleteNode={deleteNode}
-                  getTitleNode={getTitleNode}
-                  handleLockNode={handleLockNode}
-                  navigateToNode={navigateToNode}
-                  displaySidebar={displaySidebar}
-                  activeSidebar={activeSidebar}
-                  unclassified={!!currentVisibleNode.unclassified}
-                  setEnableEdit={setEnableEdit}
-                  enableEdit={enableEdit}
-                  user={user}
-                />
-              )}{" "}
-            {enableEdit &&
-              property !== "title" &&
-              property !== "description" &&
-              deleteProperty && (
-                <Tooltip title={"Delete property"} placement="top">
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    sx={{ borderRadius: "25px" }}
-                    onClick={handleDeleteProperty}
-                  >
-                    Delete
-                  </Button>
-                </Tooltip>
-              )}
-            {/*{!locked && property !== "title" && property !== "ONetID" && (
+              {/*{!locked && property !== "title" && property !== "ONetID" && (
               <Box
                 sx={{
                   display: "flex",
@@ -551,90 +557,93 @@ const Text = ({
                 </Tooltip>
               </Box>
             )} */}
-            {property !== "title" &&
-              property !== "ONetID" &&
-              !currentImprovement &&
-              !currentVisibleNode.unclassified && (
-                <SelectInheritance
-                  currentVisibleNode={currentVisibleNode}
-                  property={property}
-                  nodes={nodes}
-                  enableEdit={enableEdit}
-                />
-              )}
-          </Box>
-        </Box>
-      )}
-      <Typography color="red" sx={{ pl: "5px" }}>
-        {error}
-      </Typography>
-      {!!currentVisibleNode.unclassified ||
-      currentImprovement?.newNode ||
-      locked ||
-      (selectedDiffNode &&
-        (selectedDiffNode.modifiedProperty !== property || structured)) ||
-      ((currentVisibleNode.unclassified || !enableEdit) &&
-        selectedDiffNode?.modifiedProperty !== property &&
-        property === "title") ? (
-        <Typography
-          sx={{ fontSize: property === "title" ? "25px" : "19px", p: "19px" }}
-        >
-          {text}
-        </Typography>
-      ) : (
-        <>
-          {currentImprovementChange && !currentImprovement.implemented ? (
-            <Box sx={{ p: 3 }}>
-              <Typography sx={{ color: "red", textDecoration: "line-through" }}>
-                {currentImprovementChange.previousValue}
-              </Typography>
-              <Typography sx={{ color: "green" }}>
-                {currentImprovementChange.newValue}
-              </Typography>
-            </Box>
-          ) : selectedDiffNode &&
-            selectedDiffNode.modifiedProperty === property ? (
-            <Box sx={{ p: "10px", borderRadius: "5px" }}>
-              <Box sx={{ display: "flow", gap: "3px", p: "14px" }}>
-                {renderDiff(
-                  selectedDiffNode.previousValue,
-                  selectedDiffNode.newValue,
+              {property !== "title" &&
+                property !== "ONetID" &&
+                !currentImprovement &&
+                !currentVisibleNode.unclassified && (
+                  <SelectInheritance
+                    currentVisibleNode={currentVisibleNode}
+                    property={property}
+                    nodes={nodes}
+                    enableEdit={enableEdit}
+                  />
                 )}
-              </Box>
             </Box>
-          ) : (
-            <>
-              <MarkdownEditor
-                content={{
-                  text: editorContent,
-                  property: property,
-                  structured: structured,
-                  onSave: onSaveTextChange,
-                }}
-                mode={{
-                  isPreview: !enableEdit,
-                  useWebsocket: switchToWebsocket,
-                  reference: reference,
-                }}
-                editor={{
-                  autoFocus: autoFocus,
-                  cursorPosition: cursorPosition,
-                  onCursorChange: setCursorPosition,
-                  checkDuplicateTitle: checkDuplicateTitle,
-                  saveChangeHistory: saveChangeHistory,
-                }}
-                collaborationData={{
-                  fullName: `${user?.fName} ${user?.lName}`,
-                  nodeId: currentVisibleNode?.id,
-                  randomProminentColor: randomProminentColor(),
-                }}
-                setEditorContent={setEditorContent}
-              />
-            </>
-          )}
-        </>
-      )}
-    </Paper>
+          </Box>
+        )}
+        <Typography color="red" sx={{ pl: "5px" }}>
+          {error}
+        </Typography>
+        {!!currentVisibleNode.unclassified ||
+        currentImprovement?.newNode ||
+        locked ||
+        (selectedDiffNode &&
+          (selectedDiffNode.modifiedProperty !== property || structured)) ||
+        ((currentVisibleNode.unclassified || !enableEdit) &&
+          selectedDiffNode?.modifiedProperty !== property &&
+          property === "title") ? (
+          <Typography
+            sx={{ fontSize: property === "title" ? "25px" : "19px", p: "19px" }}
+          >
+            {text}
+          </Typography>
+        ) : (
+          <>
+            {currentImprovementChange && !currentImprovement.implemented ? (
+              <Box sx={{ p: 3 }}>
+                <Typography
+                  sx={{ color: "red", textDecoration: "line-through" }}
+                >
+                  {currentImprovementChange.previousValue}
+                </Typography>
+                <Typography sx={{ color: "green" }}>
+                  {currentImprovementChange.newValue}
+                </Typography>
+              </Box>
+            ) : selectedDiffNode &&
+              selectedDiffNode.modifiedProperty === property ? (
+              <Box sx={{ p: "10px", borderRadius: "5px" }}>
+                <Box sx={{ display: "flow", gap: "3px", p: "14px" }}>
+                  {renderDiff(
+                    selectedDiffNode.previousValue,
+                    selectedDiffNode.newValue,
+                  )}
+                </Box>
+              </Box>
+            ) : (
+              <>
+                <MarkdownEditor
+                  content={{
+                    text: editorContent,
+                    property: property,
+                    structured: structured,
+                    onSave: onSaveTextChange,
+                  }}
+                  mode={{
+                    isPreview: !enableEdit,
+                    useWebsocket: switchToWebsocket,
+                    reference: reference,
+                  }}
+                  editor={{
+                    autoFocus: autoFocus,
+                    cursorPosition: cursorPosition,
+                    onCursorChange: setCursorPosition,
+                    checkDuplicateTitle: checkDuplicateTitle,
+                    saveChangeHistory: saveChangeHistory,
+                  }}
+                  collaborationData={{
+                    fullName: `${user?.fName} ${user?.lName}`,
+                    nodeId: currentVisibleNode?.id,
+                    randomProminentColor: randomProminentColor(),
+                  }}
+                  setEditorContent={setEditorContent}
+                />
+              </>
+            )}
+          </>
+        )}
+      </Paper>
+    </Slide>
   );
 };
 

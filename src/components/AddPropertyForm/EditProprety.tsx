@@ -41,6 +41,8 @@ const EditProperty = ({
         onKeyDown={(e) => {
           if (e.key === "Enter" && canSave) {
             onSave();
+          } else if (e.key === "Escape") {
+            onCancel();
           }
         }}
         error={inputError}

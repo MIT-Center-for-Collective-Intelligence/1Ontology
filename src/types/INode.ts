@@ -65,7 +65,7 @@ export type INode = {
     isPartOf: ICollection[];
   };
   inheritance: IInheritance;
-  inheritanceParts: { 
+  inheritanceParts: {
     [nodeId: string]: {
       inheritedFromTitle: string;
       inheritedFromId: string;
@@ -164,7 +164,8 @@ export type NodeChange = {
     | "edit collection"
     | "add images"
     | "remove images"
-    | "sort collections";
+    | "sort collections"
+    | "edit property";
   fullNode: INode | null;
   changeDetails?: { [key: string]: any };
   reasoning?: string;

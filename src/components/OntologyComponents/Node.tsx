@@ -1138,6 +1138,17 @@ const Node = ({
         const propertyType = currentNode.propertyType;
         const inheritance = currentNode.inheritance; */
         if (properties.hasOwnProperty(property)) {
+          const element = document.getElementById(`property-${property}`);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+
+            element.style.transition =
+              "box-shadow 0.3s ease, opacity 0.5s ease, transform 0.5s ease";
+            element.style.boxShadow = "0 0 0 3px red";
+            element.style.opacity = "0";
+            element.style.transform = "translateX(-20px)";
+          }
+
           updateInheritance({
             nodeId: currentNode.id,
             updatedProperties: [],
@@ -1517,7 +1528,6 @@ const Node = ({
           setGlowIds={setGlowIds}
           selectedCollection={selectedCollection}
           storage={storage}
-          saveNewChangeLog={saveNewChangeLog}
           skillsFuture={skillsFuture}
           enableEdit={enableEdit}
           skillsFutureApp={skillsFutureApp}

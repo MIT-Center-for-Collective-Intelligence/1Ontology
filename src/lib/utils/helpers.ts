@@ -21,6 +21,7 @@ import {
   getDocs,
   where,
   query,
+  FieldValue,
 } from "firebase/firestore";
 import { LOGS, NODES, NODES_LOGS, USERS } from "../firestoreClient/collections";
 import { NodeChange } from "@components/types/INode";
@@ -294,6 +295,7 @@ interface UpdateInheritanceParams {
   nodeId: string;
   updatedProperties: string[];
   deletedProperties?: string[];
+  editedProperties?: { previousValue: string; newValue: string }[];
   db: any;
 }
 // Function to handle inheritance
@@ -301,12 +303,15 @@ export const updateInheritance = async ({
   nodeId,
   updatedProperties,
   deletedProperties = [],
+  editedProperties = [],
   db,
 }: UpdateInheritanceParams): Promise<void> => {
   try {
     let batch: any = writeBatch(db);
-
     const nodeRef = doc(collection(db, NODES), nodeId);
+    const nodeDoc = await getDoc(nodeRef);
+    const nodeData = nodeDoc.data();
+
     let ObjectUpdates = {};
     for (let property of updatedProperties) {
       ObjectUpdates = {
@@ -320,17 +325,20 @@ export const updateInheritance = async ({
         [`inheritance.${property}`]: deleteField(),
         [`properties.${property}`]: deleteField(),
         [`propertyType.${property}`]: deleteField(),
+        [`propertyType.${property}`]: deleteField(),
+        [`propertyOf.${property}`]: deleteField(),
       };
     }
+
     updateDoc(nodeRef, ObjectUpdates);
-    const nodeDoc = await getDoc(nodeRef);
-    const nodeData = nodeDoc.data();
+
     // Recursively update specializations
     if (nodeData) {
       batch = await recursivelyUpdateSpecializations({
         nodeId: nodeId,
         updatedProperties,
         deletedProperties,
+        editedProperties,
         addedProperties: [],
         batch,
         inheritanceType: nodeData.inheritance,
@@ -367,6 +375,7 @@ const recursivelyUpdateSpecializations = async ({
   nodeId,
   updatedProperties,
   deletedProperties,
+  editedProperties = [],
   addedProperties,
   batch,
   inheritanceType,
@@ -377,6 +386,7 @@ const recursivelyUpdateSpecializations = async ({
   nodeId: string;
   updatedProperties: string[];
   deletedProperties: string[];
+  editedProperties?: { previousValue: string; newValue: string }[];
   addedProperties: {
     propertyName: string;
     propertyType: string;
@@ -429,8 +439,10 @@ const recursivelyUpdateSpecializations = async ({
         nodeRef,
         updatedProperties,
         deletedProperties,
+        editedProperties,
         addedProperties,
         generalizationId,
+        nodeData,
         db,
       );
     }
@@ -443,6 +455,7 @@ const recursivelyUpdateSpecializations = async ({
         updatedProperties,
         deletedProperties,
         addedProperties,
+        editedProperties,
         batch,
         nestedCall: true,
         inheritanceType: inheritance,
@@ -462,12 +475,14 @@ const updateProperty = async (
   nodeRef: DocumentReference,
   updatedProperties: string[],
   deletedProperties: string[],
+  editedProperties: { previousValue: string; newValue: string }[],
   addedProperties: {
     propertyName: string;
     propertyType: string;
     propertyValue: any;
   }[],
   inheritanceRef: string | null,
+  nodeData: INode,
   db: any,
 ) => {
   let ObjectUpdates = {};
@@ -499,6 +514,38 @@ const updateProperty = async (
       ObjectUpdates = {
         ...ObjectUpdates,
         [`propertyType.${property.propertyName}`]: property.propertyType,
+      };
+    }
+  }
+  for (let { previousValue, newValue } of editedProperties) {
+    const propertyValue = nodeData.properties[previousValue];
+    const propertyType = nodeData.propertyType[previousValue];
+    const inheritanceValue = nodeData.inheritance[previousValue];
+
+    ObjectUpdates = {
+      ...ObjectUpdates,
+      [`propertyType.${previousValue}`]: deleteField(),
+      [`properties.${previousValue}`]: deleteField(),
+      [`inheritance.${previousValue}`]: deleteField(),
+      /* new values */
+      [`propertyType.${newValue}`]: propertyType,
+      [`properties.${newValue}`]: propertyValue,
+      [`inheritance.${newValue}`]: inheritanceValue,
+    };
+    if (nodeData.textValue && nodeData.textValue[previousValue]) {
+      const comments = nodeData.textValue[previousValue];
+      ObjectUpdates = {
+        ...ObjectUpdates,
+        [`textValue.${previousValue}`]: deleteField(),
+        [`textValue.${newValue}`]: comments,
+      };
+    }
+    if (nodeData.propertyOf && nodeData.propertyOf[previousValue]) {
+      const propertyOfValue = nodeData.propertyOf[previousValue];
+      ObjectUpdates = {
+        ...ObjectUpdates,
+        [`propertyOf.${previousValue}`]: deleteField(),
+        [`propertyOf.${newValue}`]: propertyOfValue,
       };
     }
   }
