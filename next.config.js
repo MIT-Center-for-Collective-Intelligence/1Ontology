@@ -12,4 +12,13 @@ module.exports = {
 
     return config;
   },
+  async redirects() {
+    return [
+      {
+        source: "/SkillsFuture/:id*",
+        destination: "/",
+        permanent: false,
+      },
+    ];
+  },
 };
