@@ -181,50 +181,33 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
     );
   };
   return (
-    <Paper
-      elevation={9}
-      sx={{
-        borderRadius: "30px",
-        borderBottomRightRadius: "18px",
-        borderBottomLeftRadius: "18px",
-        minWidth: "500px",
-        width: "100%",
-        minHeight: "150px",
-        maxHeight: "100%",
-        overflow: "auto",
-        position: "relative",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <Box gap={2}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            background: (theme: any) =>
-              theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-            p: 3,
-          }}
-        >
-          <Tooltip title={getTooltipHelper(property)}>
-            <Typography
-              sx={{
-                fontSize: "20px",
-                fontWeight: 500,
-                fontFamily: "Roboto, sans-serif",
-                color: "orange",
-              }}
-            >
-              {capitalizeFirstLetter(
-                DISPLAY[property] ? DISPLAY[property] : property,
-              )}
-            </Typography>
-          </Tooltip>
-        </Box>
-        {renderValue(currentImprovement.detailsOfChange?.comparison || [])}
+    <Box gap={2}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          background: (theme: any) =>
+            theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+          p: 3,
+        }}
+      >
+        <Tooltip title={getTooltipHelper(property)}>
+          <Typography
+            sx={{
+              fontSize: "20px",
+              fontWeight: 500,
+              fontFamily: "Roboto, sans-serif",
+              color: "orange",
+            }}
+          >
+            {capitalizeFirstLetter(
+              DISPLAY[property] ? DISPLAY[property] : property,
+            )}
+          </Typography>
+        </Tooltip>
       </Box>
-    </Paper>
+      {renderValue(currentImprovement.detailsOfChange?.comparison || [])}
+    </Box>
   );
 };
 
