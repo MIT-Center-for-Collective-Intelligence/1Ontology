@@ -348,7 +348,7 @@ export const breakInheritanceAndCopyParts = async (
     Object.entries(generalizationInheritanceParts).forEach(
       ([partId, partInfo]) => {
         if (partInfo && partId !== partIdToRemove) {
-          nodeData.inheritanceParts[partId] = partInfo;
+          nodeData.inheritanceParts[partId] = partInfo as any;
         }
       },
     );
