@@ -698,7 +698,9 @@ const StructuredProperty = ({
             );
             const inheritanceFrom = nodes[inheritedRef];
 
-            nodeData.properties["parts"] = inheritanceFrom.properties["parts"];
+            nodeData.properties["parts"] = JSON.parse(
+              JSON.stringify(inheritanceFrom.properties["parts"]),
+            );
           } else if (inheritedRef) {
             // Existing logic for non-parts properties
             const nodeId = nodeData.inheritance[property].ref;
@@ -1355,9 +1357,7 @@ const StructuredProperty = ({
                 getAllGeneralizations={() =>
                   getAllGeneralizations(currentVisibleNode, nodes)
                 }
-                getGeneralizationParts={(generalizationId: string) =>
-                  getGeneralizationParts(generalizationId, nodes)
-                }
+                getGeneralizationParts={getGeneralizationParts}
                 getTitle={getTitle}
                 nodes={nodes}
                 checkedItems={getInheritedPartsSet()}

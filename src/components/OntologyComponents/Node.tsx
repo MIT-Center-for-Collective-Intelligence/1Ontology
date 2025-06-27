@@ -1228,6 +1228,7 @@ const Node = ({
           skillsFuture={skillsFuture}
           enableEdit={enableEdit}
           setEnableEdit={setEnableEdit}
+          handleCloseAddLinksModel={handleCloseAddLinksModel}
         />
 
         {/* {currentVisibleNode.nodeType === "context" && (

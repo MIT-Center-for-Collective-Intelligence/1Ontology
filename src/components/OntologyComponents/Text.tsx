@@ -88,6 +88,7 @@ type ITextProps = {
   skillsFutureApp: string;
   modifyProperty?: Function;
   deleteProperty?: Function;
+  handleCloseAddLinksModel?: any;
 };
 
 const Text = ({
@@ -118,6 +119,7 @@ const Text = ({
   skillsFutureApp,
   modifyProperty,
   deleteProperty,
+  handleCloseAddLinksModel,
 }: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -501,6 +503,7 @@ const Text = ({
                     unclassified={!!currentVisibleNode.unclassified}
                     setEnableEdit={setEnableEdit}
                     enableEdit={enableEdit}
+                    handleCloseAddLinksModel={handleCloseAddLinksModel}
                     user={user}
                   />
                 )}{" "}

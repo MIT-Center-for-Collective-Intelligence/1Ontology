@@ -34,6 +34,7 @@ const ManageNodeButtons = ({
   enableEdit,
   setEnableEdit,
   user,
+  handleCloseAddLinksModel,
 }: {
   locked: boolean;
   lockedInductor: boolean;
@@ -49,6 +50,7 @@ const ManageNodeButtons = ({
   enableEdit: any;
   setEnableEdit: any;
   user: any;
+  handleCloseAddLinksModel: any;
 }) => {
   const displayNodeChat = () => displaySidebar("chat");
   const displayNodeHistory = () => displaySidebar("nodeHistory");
@@ -111,7 +113,10 @@ const ManageNodeButtons = ({
           <ToggleButton
             value="edit"
             selected={enableEdit}
-            onChange={() => setEnableEdit((prev: boolean) => !prev)}
+            onChange={() => {
+              setEnableEdit((prev: boolean) => !prev);
+              handleCloseAddLinksModel();
+            }}
             aria-label="Toggle edit mode"
             sx={{
               display: "flex",

@@ -152,7 +152,6 @@ export const propagatePartsChangeToSpecializations = async (
         // Refresh inheritance tree for each affected part
         // const affectedPartIds = Object.keys(newInheritanceParts);
         // for (const partId of affectedPartIds) {
-        //   console.log(`Refreshing inheritance tree for part ${partId} due to specialization ${spec.id} inheritance update`);
 
         // Fetch the part node's data
         // const partNodeDoc = await getDoc(doc(collection(db, NODES), partId));
@@ -261,7 +260,6 @@ export const saveAsInheritancePart = async (
     };
 
     // // Refresh inheritance tree for the affected part
-    // console.log(`Refreshing inheritance tree for part ${partId} due to ${action} inheritance part in node ${nodeId}`);
 
     // // Fetch the part node's data
     // const partNodeDoc = await getDoc(doc(collection(db, NODES), partId));
@@ -324,7 +322,7 @@ export const breakInheritanceAndCopyParts = async (
       return false; // No inheritance to break
     }
 
-    const referencedNode = nodes[inheritanceRef];
+    const referencedNode = JSON.parse(JSON.stringify(nodes[inheritanceRef]));
 
     // Initialize inheritanceParts if it doesn't exist
     if (!nodeData.inheritanceParts) {
@@ -407,10 +405,11 @@ export const getGeneralizationParts = (
   }[] = [];
 
   let genParts = generalizationNode.properties?.parts;
-  const partRefId = generalizationNode.inheritance["parts"].ref;
-  if (partRefId) {
-    genParts = nodes[partRefId].properties["parts"];
+  const partInheritanceRef = generalizationNode.inheritance["parts"].ref;
+  if (partInheritanceRef) {
+    genParts = nodes[partInheritanceRef].properties["parts"];
   }
+
   // Add direct parts
   if (genParts) {
     genParts.forEach((collection: any) => {

@@ -384,10 +384,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     }) => {
       try {
         if (!user?.uname) return;
-        console.log(user?.uname, "ok ==>", {
-          newValue,
-          previousValue,
-        });
+
         const currentNode = JSON.parse(JSON.stringify(currentVisibleNode));
         const properties = currentNode.properties;
 

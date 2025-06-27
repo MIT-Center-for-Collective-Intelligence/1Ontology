@@ -24,6 +24,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
+import { INode } from "@components/types/INode";
 
 interface GeneralizationNode {
   id: string;
@@ -39,7 +40,10 @@ interface PartNode {
 interface InheritedPartsViewerProps {
   selectedProperty: string;
   getAllGeneralizations: () => GeneralizationNode[];
-  getGeneralizationParts: (generalizationId: string) => PartNode[];
+  getGeneralizationParts: (
+    generalizationId: string,
+    nodes: { [nodeId: string]: INode },
+  ) => PartNode[];
   getTitle: (nodes: { [id: string]: any }, nodeId: string) => string;
   nodes: { [id: string]: any };
   checkedItems: Set<string>;
@@ -174,18 +178,23 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
-    const parts = getGeneralizationParts(generalizationId);
-    const displayedParts = parts.map((c) => c.id);
+    const generalizationParts = getGeneralizationParts(
+      generalizationId,
+      nodes,
+    ).map((c) => c.id);
+
     const inheritanceRef = currentVisibleNode.inheritance["parts"].ref;
-    const _parts =
+    const currentNodeParts =
       inheritanceRef && nodes[inheritanceRef]
         ? nodes[inheritanceRef].properties["parts"]
         : currentVisibleNode.properties["parts"];
-    const currentParts = _parts[0].nodes.map((c: { id: string }) => c.id);
+    const currentParts = currentNodeParts[0].nodes.map(
+      (c: { id: string }) => c.id,
+    );
 
     const details = analyzeInheritance(
       inheritanceDetails,
-      displayedParts,
+      generalizationParts,
       generalizationId,
       currentParts,
     );
@@ -212,7 +221,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       <List
         sx={{
           py: 1,
-          border: parts.length > 0 ? "1px dashed gray" : "",
+          border: generalizationParts.length > 0 ? "1px dashed gray" : "",
           px: 1.8,
           borderRadius: "20px",
         }}
