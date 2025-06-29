@@ -1404,7 +1404,7 @@ const CollectionStructure = ({
                                   )}
 
                                   {/* Display inheritanceParts from the referenced generalization when inheritance.parts.ref exists */}
-                                  {property === "parts" &&
+                                  {/* {property === "parts" &&
                                     currentVisibleNode.inheritance?.parts
                                       ?.ref &&
                                     nodes[
@@ -1487,7 +1487,7 @@ const CollectionStructure = ({
                                           />
                                         );
                                       },
-                                    )}
+                                    )} */}
 
                                   {/* Display inherited parts from inheritanceParts only if inheritance.parts.ref is null */}
                                   {/*   {property === "parts" &&
