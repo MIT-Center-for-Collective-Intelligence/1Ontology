@@ -29,7 +29,7 @@ export const DISPLAY: {
   actor: "Actors",
   objectsActedOn: "Objects Acted On",
   ONetID: "O*Net ID",
-  generalizations: 'Generalizations ("Parents"',
+  generalizations: 'Generalizations ("Parents")',
   specializations: 'Specializations ("Children")',
 };
 
