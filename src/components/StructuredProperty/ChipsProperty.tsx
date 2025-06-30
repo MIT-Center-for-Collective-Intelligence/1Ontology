@@ -225,7 +225,11 @@ const ChipsProperty = ({
         tags={value}
         selectedTags={() => {}}
         updateTags={updateValue}
-        placeholder={`Type a new ${property} and click enter ↵ to add it..`}
+        placeholder={
+          enableEdit
+            ? `Type a new ${property} and click enter ↵ to add it..`
+            : ""
+        }
         added={
           currentImprovement?.modifiedProperty === property
             ? currentImprovement.detailsOfChange.addedElements || []
