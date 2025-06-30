@@ -130,6 +130,7 @@ import { getStorage } from "firebase/storage";
 import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 import { development } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
+import ChipsProperty from "../StructuredProperty/ChipsProperty";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -1260,8 +1261,21 @@ const Node = ({
           width: "100%",
         }}
       >
-        {/* title of the node */}
-
+        {/* alternatives of title of the node */}
+        {currentVisibleNode?.properties.hasOwnProperty("alternatives") && (
+          <ChipsProperty
+            currentVisibleNode={currentVisibleNode}
+            property={"alternatives"}
+            nodes={nodes}
+            locked={locked}
+            currentImprovement={currentImprovement}
+            selectedDiffNode={selectedDiffNode}
+            user={user}
+            skillsFuture={skillsFuture}
+            enableEdit={enableEdit}
+            skillsFutureApp={skillsFutureApp}
+          />
+        )}
         {/* description of the node */}
 
         <Text

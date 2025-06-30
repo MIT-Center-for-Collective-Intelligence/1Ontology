@@ -1248,7 +1248,7 @@ const StructuredProperty = ({
                 </Box>
               )}
           </Box>
-          {currentVisibleNode.propertyType[property] !== "array-string" && (
+          {currentVisibleNode.propertyType[property] !== "string-array" && (
             <CollectionStructure
               locked={locked}
               selectedDiffNode={selectedDiffNode}

@@ -342,6 +342,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     } else {
       properties = currentVisibleNode.properties;
     }
+    console.log(properties, "properties");
     const sortedKeys = Object.keys(properties || {})
       .filter(
         (p) =>
@@ -349,6 +350,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           p !== "isPartOf" &&
           p !== "description" &&
           p !== "actor" &&
+          p !== "alternatives" &&
           p !== "context" &&
           p !== "images",
       )
@@ -448,6 +450,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     },
     [user?.uname, currentVisibleNode],
   );
+  console.log("orderOfProperties ==>", orderOfProperties);
 
   return (
     <Box>

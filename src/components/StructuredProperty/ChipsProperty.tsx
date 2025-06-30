@@ -243,7 +243,8 @@ const ChipsProperty = ({
         readOnly={
           !!selectedDiffNode ||
           !!currentVisibleNode.unclassified ||
-          !!currentImprovement
+          !!currentImprovement ||
+          !enableEdit
         }
       />
     </Paper>
