@@ -314,7 +314,7 @@ function OntTree() {
   const getData = async () => {
     setLoading(true);
     const nodesDocs = await getDocs(
-      query(collection(db, "oNetNodesDecomposedTree")),
+      query(collection(db, "oNetNodesDecomposed")),
     );
     const nodes_data: any = [];
     const nodes: any = {};
