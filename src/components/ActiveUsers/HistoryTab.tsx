@@ -205,7 +205,6 @@ const NodeActivity = ({
     }
   };
 
-  console.log(logs);
   if (loading) {
     return (
       <Box
