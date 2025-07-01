@@ -166,13 +166,13 @@ const ChipsProperty = ({
         borderBottomLeftRadius: "18px",
         minWidth: "500px",
         width: "100%",
-        minHeight: "150px",
         maxHeight: "100%",
         overflow: "auto",
         position: "relative",
         display: "flex",
         flexDirection: "column",
         overflowX: "hidden",
+        pb: "10px",
       }}
     >
       {" "}

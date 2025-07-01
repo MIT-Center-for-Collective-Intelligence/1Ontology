@@ -1,4 +1,6 @@
+import { Box, Tooltip } from "@mui/material";
 import Chip from "@mui/material/Chip";
+import CancelIcon from "@mui/icons-material/Cancel";
 import TextField from "@mui/material/TextField";
 import { makeStyles } from "@mui/styles";
 import Downshift from "downshift";
@@ -51,7 +53,7 @@ const ChipInput = ({
     if (event.key === "Enter") {
       let newSelectedItem: any = [...tags];
       const duplicatedValues = newSelectedItem.indexOf(
-        event.target.value.trim()
+        event.target.value.trim(),
       );
 
       if (duplicatedValues !== -1) {
@@ -105,11 +107,36 @@ const ChipInput = ({
         {({ getInputProps }) => {
           const { onBlur, onChange, ...inputProps }: any = getInputProps({
             onKeyDown: handleKeyDown,
-            placeholder,
+            ...(placeholder ? { placeholder } : {}),
           });
           return (
             <div className="" style={{ ...style, border: "none" }}>
-              {(tags.length > 0 || !readOnly) && (
+              {readOnly ? (
+                <Box sx={{ ml: "10px", mb: "4px" }}>
+                  {tags.map((item: any, idx: number) => {
+                    const color = added.includes(item)
+                      ? "#115f07"
+                      : removed.includes(item)
+                        ? "red"
+                        : "";
+                    return (
+                      <Fragment key={idx}>
+                        <Chip
+                          sx={{
+                            background: `${color}`,
+                            fontSize: "20px",
+                          }}
+                          key={item}
+                          tabIndex={-1}
+                          label={item}
+                          className={classes.innerChip}
+                        />
+                         
+                      </Fragment>
+                    );
+                  })}
+                </Box>
+              ) : (
                 <TextField
                   label={label || ""}
                   className={classes.inputChip}
@@ -118,14 +145,15 @@ const ChipInput = ({
                       const color = added.includes(item)
                         ? "#115f07"
                         : removed.includes(item)
-                        ? "red"
-                        : "";
+                          ? "red"
+                          : "";
                       return (
                         <Fragment key={idx}>
                           {readOnly ? (
                             <Chip
                               sx={{
                                 background: `${color}`,
+                                fontSize: "20px",
                               }}
                               key={item}
                               tabIndex={-1}
@@ -136,6 +164,7 @@ const ChipInput = ({
                             <Chip
                               sx={{
                                 background: `${color}`,
+                                fontSize: "20px",
                               }}
                               key={item}
                               tabIndex={-1}
@@ -143,6 +172,11 @@ const ChipInput = ({
                               disabled={readOnly}
                               className={classes.innerChip}
                               onDelete={handleDelete(item)}
+                              deleteIcon={
+                                <Tooltip title="Remove" placement="top">
+                                  <CancelIcon />
+                                </Tooltip>
+                              }
                             />
                           )}
                         </Fragment>
