@@ -1,5 +1,5 @@
-import { Box, CircularProgress, Typography } from "@mui/material";
-import React, { useEffect, useMemo, useState } from "react";
+import { Box, CircularProgress, Typography, Button } from "@mui/material";
+import React, { useEffect, useState } from "react";
 import {
   collection,
   getFirestore,
@@ -8,6 +8,8 @@ import {
   orderBy,
   query,
   where,
+  startAfter,
+  getDocs,
 } from "firebase/firestore";
 import { NodeChange } from "@components/types/INode";
 import { NODES_LOGS } from "@components/lib/firestoreClient/collections";
@@ -36,9 +38,15 @@ const NodeActivity = ({
   const db = getFirestore();
   const [logs, setLogs] = useState<(NodeChange & { id: string })[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [hasMore, setHasMore] = useState<boolean>(true);
 
   useEffect(() => {
     setLogs([]);
+    setLastDoc(null);
+    setHasMore(true);
+    setLoading(true);
 
     let nodesQuery = null;
 
@@ -84,31 +92,120 @@ const NodeActivity = ({
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
       const docChanges = snapshot.docChanges();
-      setLogs((prev: any) => {
-        const updatedLogs = [...prev];
-        for (let change of docChanges) {
-          const changeData = change.doc.data();
-          if (
-            ((skillsFuture &&
-              changeData.skillsFuture &&
-              changeData.appName === skillsFutureApp) ||
-              (!skillsFuture && !changeData.skillsFuture)) &&
-            !changeData.deleted
-          ) {
-            const id = change.doc.id;
-            /*        if (id === "YLDwaHRDmfaLLsqUSdsO") { */
-            updatedLogs.push({ ...changeData, id });
-            /*             } */
-          }
+      const newLogs: (NodeChange & { id: string })[] = [];
+      
+      for (let change of docChanges) {
+        const changeData = change.doc.data();
+        if (
+          ((skillsFuture &&
+            changeData.skillsFuture &&
+            changeData.appName === skillsFutureApp) ||
+            (!skillsFuture && !changeData.skillsFuture)) &&
+          !changeData.deleted
+        ) {
+          newLogs.push({ ...changeData, id: change.doc.id } as NodeChange & { id: string });
+          /*        if (id === "YLDwaHRDmfaLLsqUSdsO") { */
+          /*             } */
         }
-        return updatedLogs; // Return the new array to trigger a re-render
-      });
+      }
+
+      setLogs(newLogs);
+      
+      if (!snapshot.empty) {
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+        setHasMore(snapshot.docs.length === 100);
+      }
+      
       setLoading(false);
     });
 
     return () => unsubscribeNodes();
-  }, [db, changeType, selectedUser]);
+  }, [db, changeType, selectedUser, skillsFuture, skillsFutureApp]);
 
+  const loadMore = async () => {
+    if (!lastDoc || loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+
+    try {
+      let moreQuery = null;
+
+      if (changeType === "add-node") {
+        if (selectedUser === "All") {
+          moreQuery = query(
+            collection(db, NODES_LOGS),
+            where("changeType", "==", "add node"),
+            where("skillsFuture", "==", !!skillsFuture),
+            orderBy("modifiedAt", "desc"),
+            startAfter(lastDoc),
+            limit(50),
+          );
+        } else {
+          moreQuery = query(
+            collection(db, NODES_LOGS),
+            where("changeType", "==", "add node"),
+            where("modifiedBy", "==", selectedUser),
+            where("skillsFuture", "==", !!skillsFuture),
+            orderBy("modifiedAt", "desc"),
+            startAfter(lastDoc),
+            limit(50),
+          );
+        }
+      } else {
+        if (selectedUser === "All") {
+          moreQuery = query(
+            collection(db, NODES_LOGS),
+            where("changeType", "!=", "add node"),
+            where("skillsFuture", "==", !!skillsFuture),
+            orderBy("modifiedAt", "desc"),
+            startAfter(lastDoc),
+            limit(50),
+          );
+        } else {
+          moreQuery = query(
+            collection(db, NODES_LOGS),
+            where("changeType", "!=", "add node"),
+            where("skillsFuture", "==", !!skillsFuture),
+            where("modifiedBy", "==", selectedUser),
+            orderBy("modifiedAt", "desc"),
+            startAfter(lastDoc),
+            limit(50),
+          );
+        }
+      }
+
+      const snapshot = await getDocs(moreQuery);
+      const moreLogs: (NodeChange & { id: string })[] = [];
+
+      snapshot.forEach((doc) => {
+        const changeData = doc.data();
+        if (
+          ((skillsFuture &&
+            changeData.skillsFuture &&
+            changeData.appName === skillsFutureApp) ||
+            (!skillsFuture && !changeData.skillsFuture)) &&
+          !changeData.deleted
+        ) {
+          moreLogs.push({ ...changeData, id: doc.id } as NodeChange & { id: string });
+        }
+      });
+
+      setLogs(prevLogs => [...prevLogs, ...moreLogs]);
+
+      if (!snapshot.empty) {
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+      }
+
+      setHasMore(snapshot.docs.length === 100);
+
+    } catch (error) {
+      console.error("Error loading more logs:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  console.log(logs);
   if (loading) {
     return (
       <Box
@@ -191,6 +288,26 @@ const NodeActivity = ({
               nodes={nodes}
             />
           ))}
+        
+        {logs.length > 0 && hasMore && (
+          <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={loadMore}
+              disabled={loadingMore}
+              sx={{ minWidth: 120, borderRadius: "35px" }}
+            >
+              {loadingMore ? (
+                <>
+                  <CircularProgress size={16} sx={{ mr: 1 }} />
+                  Loading...
+                </>
+              ) : (
+                "Show More"
+              )}
+            </Button>
+          </Box>
+        )}
       </>
     </Box>
   );
