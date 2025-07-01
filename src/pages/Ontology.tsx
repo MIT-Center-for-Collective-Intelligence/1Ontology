@@ -1320,7 +1320,6 @@ const Ontology = ({
                       onOpenNodesTree={onOpenNodesTree}
                       eachOntologyPath={eachOntologyPath}
                       skillsFuture={skillsFuture}
-                      scrollTrigger={scrollTrigger}
                       specializationNumsUnder={specializationNumsUnder}
                       skillsFutureApp={appName}
                     />

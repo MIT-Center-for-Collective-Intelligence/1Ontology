@@ -54,7 +54,6 @@ function DraggableTree({
   treeType,
   eachOntologyPath,
   skillsFuture = false,
-  scrollTrigger,
   specializationNumsUnder,
   skillsFutureApp,
 }: {
@@ -67,7 +66,6 @@ function DraggableTree({
   treeType?: string;
   eachOntologyPath?: any;
   skillsFuture?: boolean;
-  scrollTrigger: boolean;
   specializationNumsUnder: { [key: string]: number };
   skillsFutureApp: string;
 }) {
@@ -877,7 +875,7 @@ function DraggableTree({
                   </Tooltip>
                 )}
                 {(node.data.actionAlternatives || []).length > 0 && (
-                  <span style={{ color: "orange", marginRight: "8px" }}>
+                  <span style={{ color: "orange", marginLeft: "8px" }}>
                     Alternatives:
                   </span>
                 )}
@@ -911,21 +909,23 @@ function DraggableTree({
           gap: 1,
         }}
       >
-        <Button
-          variant={expanded ? "contained" : "outlined"}
-          size="small"
-          onClick={expandOrCollapseAll}
-          sx={{
-            borderRadius: "20px",
-            textTransform: "none",
-          }}
-        >
-          {collapsingLoader.current
-            ? "Collapsing..."
-            : expanded
-              ? "Collapse All"
-              : "Expand All"}
-        </Button>
+        {!treeType && (
+          <Button
+            variant={expanded ? "contained" : "outlined"}
+            size="small"
+            onClick={expandOrCollapseAll}
+            sx={{
+              borderRadius: "20px",
+              textTransform: "none",
+            }}
+          >
+            {collapsingLoader.current
+              ? "Collapsing..."
+              : expanded
+                ? "Collapse All"
+                : "Expand All"}
+          </Button>
+        )}
         {/* <Button
           variant="outlined"
           size="small"
