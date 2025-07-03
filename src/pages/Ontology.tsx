@@ -178,6 +178,7 @@ const Ontology = ({
   const [eachOntologyPath, setEachOntologyPath] = useState<{
     [key: string]: INodePath[];
   }>({});
+  const [multipleOntologyPaths, setMultipleOntologyPaths] = useState<{ [nodeId: string]: INodePath[][] }>({});
   const columnResizerRef = useRef<any>();
   const [lastUpdate, setLastUpdate] = useState<number | null>(null);
 
@@ -480,6 +481,92 @@ const Ontology = ({
     [nodes],
   );
 
+  // This function returns a map where each nodeId maps to an array of all possible paths to that node
+  const findMultipleOntologyPaths = useCallback(
+    ({
+      mainNodes,
+      path,
+      multipleOntologyPaths,
+      visited = new Set(),
+    }: {
+      mainNodes: INode[];
+      path: INodePath[];
+      multipleOntologyPaths: { [nodeId: string]: INodePath[][] };
+      visited?: Set<string>;
+    }): { [nodeId: string]: INodePath[][] } | undefined => {
+      try {
+        for (let node of mainNodes) {
+          if (!node) continue;
+
+          const pathSignature = `${node.id}-${path.map(p => p.id).join('-')}`;
+          if (visited.has(pathSignature)) continue;
+          visited.add(pathSignature);
+
+          const newPath = [
+            ...path,
+            {
+              title: node.title,
+              id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
+              category: !!node.category,
+            },
+          ];
+
+          if (!multipleOntologyPaths[node.id]) {
+            multipleOntologyPaths[node.id] = [newPath];
+          } else {
+            const newPathIds = newPath.map(p => p.id).join(':');
+            const isDuplicate = multipleOntologyPaths[node.id].some(existingPath =>
+              existingPath.map(p => p.id).join(':') === newPathIds
+            );
+
+            if (!isDuplicate) {
+              multipleOntologyPaths[node.id].push(newPath);
+            }
+          }
+
+          node.specializations.forEach((collection) => {
+            const specializationsData: INode[] = [];
+            collection.nodes.forEach((n: ILinkNode) =>
+              specializationsData.push(nodes[n.id]),
+            );
+
+            const subPath = [...newPath];
+            if (collection.collectionName !== "main") {
+              subPath.push({
+                title: collection.collectionName,
+                id: `${node.id}-${collection.collectionName.trim()}`,
+                category: true,
+              });
+            }
+
+            const result = findMultipleOntologyPaths({
+              mainNodes: specializationsData,
+              path: subPath,
+              multipleOntologyPaths,
+              visited,
+            });
+
+            if (result) {
+              multipleOntologyPaths = result;
+            }
+          });
+        }
+
+        return multipleOntologyPaths;
+      } catch (error: any) {
+        recordLogs({
+          type: "error",
+          error: JSON.stringify({
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          }),
+        });
+      }
+    },
+    [nodes],
+  );
+
   useEffect(() => {
     const mainNodes = Object.values(nodes).filter(
       (node: any) =>
@@ -493,6 +580,15 @@ const Ontology = ({
       });
       if (eachOntologyPath) {
         setEachOntologyPath(eachOntologyPath);
+      }
+
+      let multipleOntologyPaths = findMultipleOntologyPaths({
+        mainNodes,
+        path: [],
+        multipleOntologyPaths: {},
+      });
+      if (multipleOntologyPaths) {
+        setMultipleOntologyPaths(multipleOntologyPaths);
       }
     }
   }, [nodes]);
@@ -1319,6 +1415,7 @@ const Ontology = ({
                       nodes={nodes}
                       onOpenNodesTree={onOpenNodesTree}
                       eachOntologyPath={eachOntologyPath}
+                      multipleOntologyPaths={multipleOntologyPaths}
                       skillsFuture={skillsFuture}
                       scrollTrigger={scrollTrigger}
                       specializationNumsUnder={specializationNumsUnder}
