@@ -149,7 +149,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       ],
     });
   }
-  if (deleteNode && nodeData.id) {
+  if (!!deleteNode && nodeData.id) {
     await collection.delete({ ids: [nodeData.id] });
     await collection.delete({ ids: [`${nodeData.id}-properties`] });
   }
