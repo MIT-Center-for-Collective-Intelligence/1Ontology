@@ -409,62 +409,88 @@ const CollectionStructure = ({
           return;
         }
 
-        // Extract the source and destination collection IDs
-        const { droppableId: sourceCollection } = source; // The source collection
-        const { droppableId: destinationCollection } = destination; // The destination collection
-        const sourceCollectionIndex = Number(sourceCollection);
-        const destinationCollectionIndex = Number(destinationCollection);
+        const sourceCollectionIndex = Number(source.droppableId);
+        const destinationCollectionIndex = Number(destination.droppableId);
+
         if (model) {
+          // Perform UI update first
           setEditableProperty((prev: ICollection[]) => {
-            const nodeIdx = prev[sourceCollectionIndex].nodes.findIndex(
-              (link: ILinkNode) => link.id === draggableId,
+            const updated = [...prev];
+            const nodeIdx = updated[sourceCollectionIndex].nodes.findIndex(
+              (link: ILinkNode) => link.id === draggableId
             );
-            const moveValue = prev[sourceCollectionIndex].nodes[nodeIdx];
 
-            // Remove the item from the source category
-            prev[sourceCollectionIndex].nodes.splice(nodeIdx, 1);
+            if (nodeIdx === -1) return prev;
 
-            // Move the item to the destination category
-            prev[destinationCollectionIndex].nodes.splice(
-              destination.index,
-              0,
-              moveValue,
-            );
-            return prev;
+            const [movedElement] = updated[sourceCollectionIndex].nodes.splice(nodeIdx, 1);
+            updated[destinationCollectionIndex].nodes.splice(destination.index, 0, movedElement);
+
+            // Persist to database with the updated state
+            const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
+            const updatePath = property === "specializations" || property === "generalizations"
+              ? property
+              : `properties.${property}`;
+
+            updateDoc(nodeRef, {
+              [updatePath]: updated,
+              ...(property !== "specializations" && property !== "generalizations" && {
+                [`inheritance.${property}.ref`]: null
+              })
+            }).then(() => {
+              if (property !== "specializations" && property !== "generalizations") {
+                updateInheritance({
+                  nodeId: currentVisibleNode?.id,
+                  updatedProperties: [property],
+                  db,
+                });
+              }
+
+              saveNewChangeLog(db, {
+                nodeId: currentVisibleNode?.id,
+                modifiedBy: user?.uname,
+                modifiedProperty: property,
+                previousValue: prev,
+                newValue: updated,
+                modifiedAt: new Date(),
+                changeType: "sort elements",
+                changeDetails: { draggableId, source, destination },
+                fullNode: currentVisibleNode,
+                skillsFuture,
+                ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+              });
+            }).catch(error => {
+              console.error("Error persisting drag in model mode:", error);
+            });
+
+            return updated;
           });
+
           setModifiedOrder(true);
           return;
         }
-        // Ensure defined source and destination categories
-        if (sourceCollection && destinationCollection && propertyValue) {
-          // Ensure nodeData exists
 
-          const previousValue = JSON.parse(JSON.stringify(propertyValue));
+        const previousValue = JSON.parse(JSON.stringify(propertyValue));
+        const nodeIdx = propertyValue[sourceCollectionIndex].nodes.findIndex(
+          (link: ILinkNode) => link.id === draggableId,
+        );
 
-          if (!propertyValue) return;
-          // Find the index of the draggable item in the source category
+        // If the draggable item is found in the source category
+        if (nodeIdx !== -1) {
+          const moveValue =
+            propertyValue[sourceCollectionIndex].nodes[nodeIdx];
 
-          const nodeIdx = propertyValue[sourceCollectionIndex].nodes.findIndex(
-            (link: ILinkNode) => link.id === draggableId,
+          // Remove the item from the source category
+          propertyValue[sourceCollectionIndex].nodes.splice(nodeIdx, 1);
+
+          // Move the item to the destination category
+          propertyValue[destinationCollectionIndex].nodes.splice(
+            destination.index,
+            0,
+            moveValue,
           );
-
-          // If the draggable item is found in the source category
-          if (nodeIdx !== -1) {
-            const moveValue =
-              propertyValue[sourceCollectionIndex].nodes[nodeIdx];
-
-            // Remove the item from the source category
-            propertyValue[sourceCollectionIndex].nodes.splice(nodeIdx, 1);
-
-            // Move the item to the destination category
-            propertyValue[destinationCollectionIndex].nodes.splice(
-              destination.index,
-              0,
-              moveValue,
-            );
-          }
+        }
           // Update the nodeData with the new property values
-          const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
+        const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
           if (
             property === "specializations" ||
             property === "generalizations"
@@ -472,45 +498,44 @@ const CollectionStructure = ({
             updateDoc(nodeRef, {
               [property]: propertyValue,
             });
-          } else {
-            updateDoc(nodeRef, {
-              [`properties.${property}`]: propertyValue,
-              [`inheritance.${property}.ref`]: null,
-            });
-            updateInheritance({
-              nodeId: currentVisibleNode?.id,
-              updatedProperties: [property],
-              db,
-            });
-          }
-
-          saveNewChangeLog(db, {
+        } else {
+          updateDoc(nodeRef, {
+            [`properties.${property}`]: propertyValue,
+            [`inheritance.${property}.ref`]: null,
+          });
+          updateInheritance({
             nodeId: currentVisibleNode?.id,
-            modifiedBy: user?.uname,
-            modifiedProperty: property,
-            previousValue,
-            newValue: propertyValue,
-            modifiedAt: new Date(),
-            changeType: "sort elements",
+            updatedProperties: [property],
+            db,
+          });
+        }
+
+        saveNewChangeLog(db, {
+          nodeId: currentVisibleNode?.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: property,
+          previousValue,
+          newValue: propertyValue,
+          modifiedAt: new Date(),
+          changeType: "sort elements",
             changeDetails: {
               draggableNodeId: draggableId,
               source,
               destination,
             },
-            fullNode: currentVisibleNode,
-            skillsFuture,
-            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
-          });
+          fullNode: currentVisibleNode,
+          skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        });
 
           // Record a log of the sorting action
-          recordLogs({
-            action: "sort elements",
-            field: property,
-            sourceCategory: sourceCollection,
-            destinationCategory: destinationCollection,
-            nodeId: currentVisibleNode?.id,
-          });
-        }
+        recordLogs({
+          action: "sort elements",
+          field: property,
+          sourceCategory: source.droppableId,
+          destinationCategory: destination.droppableId,
+          nodeId: currentVisibleNode?.id,
+        });
       } catch (error: any) {
         // Log any errors that occur during the sorting process
         console.error(error);
@@ -524,7 +549,7 @@ const CollectionStructure = ({
         });
       }
     },
-    [currentVisibleNode, db, nodes, recordLogs, property],
+    [currentVisibleNode, db, nodes, property, model, setEditableProperty, setModifiedOrder]
   );
 
   const addCollection = useCallback(
@@ -997,7 +1022,7 @@ const CollectionStructure = ({
                             border:
                               selectedCollection ===
                                 collection.collectionName &&
-                              selectedProperty === property
+                                selectedProperty === property
                                 ? "2px solid green"
                                 : "",
                           }}
@@ -1006,7 +1031,7 @@ const CollectionStructure = ({
                           {property === "specializations" && (
                             <Box>
                               {editCollection === null ||
-                              editCollection !== collection.collectionName ? (
+                                editCollection !== collection.collectionName ? (
                                 <Box
                                   sx={{
                                     display: "flex",
@@ -1026,10 +1051,10 @@ const CollectionStructure = ({
                                   }}
                                 >
                                   {selectedDiffNode &&
-                                  selectedDiffNode.changeType ===
+                                    selectedDiffNode.changeType ===
                                     "edit collection" &&
-                                  selectedDiffNode.changeDetails
-                                    .modifiedCollection ===
+                                    selectedDiffNode.changeDetails
+                                      .modifiedCollection ===
                                     collection.collectionName ? (
                                     <Box sx={{ display: "flex" }}>
                                       <Typography
@@ -1114,7 +1139,7 @@ const CollectionStructure = ({
                                   {selectedProperty === property &&
                                     !!selectedCollection &&
                                     selectedCollection ===
-                                      collection.collectionName && (
+                                    collection.collectionName && (
                                       <Box
                                         sx={{
                                           display: "flex",
@@ -1189,7 +1214,7 @@ const CollectionStructure = ({
                                         if (
                                           newEditCollection.trim() &&
                                           collection.collectionName !==
-                                            newEditCollection
+                                          newEditCollection
                                         ) {
                                           saveEditCollection(newEditCollection);
                                         }
@@ -1209,7 +1234,7 @@ const CollectionStructure = ({
                                       disabled={
                                         !newEditCollection ||
                                         collection.collectionName ===
-                                          newEditCollection
+                                        newEditCollection
                                       }
                                       sx={{ ml: "5px" }}
                                     >
@@ -1217,7 +1242,7 @@ const CollectionStructure = ({
                                         sx={{
                                           color:
                                             !newEditCollection ||
-                                            collection.collectionName ===
+                                              collection.collectionName ===
                                               newEditCollection
                                               ? "gray"
                                               : "green",
@@ -1255,16 +1280,16 @@ const CollectionStructure = ({
                                   sx={{
                                     backgroundColor: snapshot.isDraggingOver
                                       ? (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? DESIGN_SYSTEM_COLORS.gray250
-                                            : DESIGN_SYSTEM_COLORS.notebookG400
+                                        theme.palette.mode === "light"
+                                          ? DESIGN_SYSTEM_COLORS.gray250
+                                          : DESIGN_SYSTEM_COLORS.notebookG400
                                       : "",
                                     borderRadius: "18px",
                                     userSelect: "none",
                                   }}
                                 >
                                   {propertyValue[collectionIndex].nodes.length >
-                                  0 ? (
+                                    0 ? (
                                     propertyValue[collectionIndex].nodes.map(
                                       (link: ILinkNode, index: number) => {
                                         if (isLoadMoreNode(link)) {
@@ -1293,10 +1318,10 @@ const CollectionStructure = ({
                                             ?.ref;
                                         const enhancedLink = inheritanceRef
                                           ? {
-                                              ...link,
-                                              inheritedFrom:
-                                                nodes[inheritanceRef]?.title,
-                                            }
+                                            ...link,
+                                            inheritedFrom:
+                                              nodes[inheritanceRef]?.title,
+                                          }
                                           : link;
 
                                         return (
@@ -1582,7 +1607,7 @@ const CollectionStructure = ({
                             selectedProperty === property &&
                             !!selectedProperty &&
                             selectedCollection ===
-                              collection.collectionName && (
+                            collection.collectionName && (
                               <SelectModelModal
                                 onSave={onSave}
                                 currentVisibleNode={currentVisibleNode}
