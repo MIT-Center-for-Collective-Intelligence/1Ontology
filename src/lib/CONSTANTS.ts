@@ -162,7 +162,7 @@ export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
 };
 
 export const MODEL = "o3";
-export const GEMINI_MODEL = "gemini-2.5-pro-exp-03-25";
+export const GEMINI_MODEL = "gemini-2.5-pro";
 
 export const SKILLS_FUTURE_APP_NAMES = [
   "Full WordNet O*Net Verb Hierarchy - Tom's Version",
