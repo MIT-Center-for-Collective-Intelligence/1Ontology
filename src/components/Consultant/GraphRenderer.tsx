@@ -161,6 +161,16 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
 
     return g;
   };
+  const modifyLink = (data: any) => {
+    const nodeId = data.v;
+    const childId = data.w;
+    const link = links.find(
+      (link) => link.source === nodeId && link.target === childId,
+    );
+
+    setSelectedLink({ ...link, ...data });
+    setTabIndex((appType || "") === "idea" ? 2 : 3);
+  };
 
   const renderGraph = (
     svg: d3.Selection<SVGSVGElement | null, unknown, null, undefined>,
@@ -183,6 +193,29 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
       setTabIndex((appType || "") === "idea" ? 2 : 3);
       setOpenSideBar(true);
       setSelectedLink(null);
+    });
+    var edges = svg.selectAll("g.edgePath");
+    edges.each(function (d) {
+      const edgePath = d3.select(this).select("path");
+      const totalLength = (edgePath.node() as SVGPathElement).getTotalLength();
+      const midpoint = totalLength / 2;
+      const midPoint = (edgePath.node() as SVGPathElement).getPointAtLength(
+        midpoint,
+      );
+
+      d3.select(this)
+        .append("text")
+        .attr("x", midPoint.x)
+        .attr("y", midPoint.y)
+        .attr("dy", ".35em")
+        .attr("text-anchor", "middle")
+        .text("✏️")
+        .style("cursor", "pointer")
+        .on("click", function (event: any) {
+          event.stopPropagation();
+
+          modifyLink(d);
+        });
     });
   };
 
@@ -233,7 +266,15 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
     return () => {
       svg.selectAll("*").remove();
     };
-  }, [nodes, links, newNode, selectedGroups, selectedLoop, graphOrientation]);
+  }, [
+    nodes,
+    links,
+    newNode,
+    selectedGroups,
+    selectedLoop,
+    graphOrientation,
+    selectedLink,
+  ]);
 
   return <svg ref={svgRef} width="100%" height="100%"></svg>;
 };
