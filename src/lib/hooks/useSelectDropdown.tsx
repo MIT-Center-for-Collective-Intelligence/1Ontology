@@ -26,8 +26,8 @@ const useSelectDropdown = () => {
     id: string;
     title: string;
   }>({
-    id: "gemini-2.5-pro-exp-03-25",
-    title: "Gemini-2.5 PRO EXP 03-25",
+    id: "gemini-2.5-pro",
+    title: "Gemini-2.5 PRO",
   });
   const [inputValue, setInputValue] = useState<string>("");
   const [numberValue, setNumberValue] = useState<number>(12);

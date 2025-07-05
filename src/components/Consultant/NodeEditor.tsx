@@ -213,7 +213,7 @@ const NodeEditor = ({
                 ))}
               </ul>
             </Typography>
-            {newNode.conversation.length > 0 && (
+            {(newNode?.conversation || []).length > 0 && (
               <Paper
                 elevation={3}
                 sx={{

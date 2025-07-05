@@ -1174,6 +1174,7 @@ const Consultant = () => {
                 setOpenSideBar={setOpenSideBar}
                 diagramId={selectedSolutionId || selectedDiagram?.id}
                 graphOrientation={graphOrientation}
+                appType="idea"
               />
             )}
             {!showLegendDrawer && (

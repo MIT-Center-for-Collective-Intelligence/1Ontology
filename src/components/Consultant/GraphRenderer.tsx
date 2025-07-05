@@ -56,6 +56,7 @@ interface GraphRendererProps {
   setOpenSideBar: any;
   diagramId: string;
   graphOrientation: "LR" | "TB";
+  appType?: string;
 }
 
 const GraphRenderer: React.FC<GraphRendererProps> = ({
@@ -73,6 +74,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
   setOpenSideBar,
   diagramId,
   graphOrientation,
+  appType,
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const theme = useTheme();
@@ -178,7 +180,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
         .filter((link) => link.source === nodeId)
         .map((link) => link.target);
       setNewNode({ ...nodes[nodeId], children, previous: true });
-      setTabIndex(3);
+      setTabIndex((appType || "") === "idea" ? 2 : 3);
       setOpenSideBar(true);
       setSelectedLink(null);
     });
