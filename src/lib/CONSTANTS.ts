@@ -165,11 +165,20 @@ export const MODEL = "o3";
 export const GEMINI_MODEL = "gemini-2.5-pro";
 
 export const SKILLS_FUTURE_APP_NAMES = [
-  "Full WordNet O*Net Verb Hierarchy - Tom's Version",
-  "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
-  "Ontology - Development Version",
-  "Ontology - Demo Version",
-  "Top-Down Gemini 2.5 Pro",
+  {
+    id: "Full WordNet O*Net Verb Hierarchy - Tom's Version",
+    name: "Full WordNet O*Net Verb Hierarchy - Tom's Version",
+  },
+  {
+    id: "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
+    name: "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
+  },
+  { id: "Ontology - Demo Version", name: "Ontology - Demo Version" },
+  {
+    id: "Ontology - Development Version",
+    name: "Ontology - Development Version",
+  },
+  { id: "Top-Down Gemini 2.5 Pro", name: "AI Peer Developed Ontology" },
   /*"Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
   "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
   "Holistic Embedding (Sector, Title, JobRole, CWF, Parts) - Gemini 2.5 Pro",
