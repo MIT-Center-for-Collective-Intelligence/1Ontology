@@ -26,6 +26,7 @@ import {
   query,
   where,
   getFirestore,
+  onSnapshot,
 } from "firebase/firestore";
 import * as Y from "yjs";
 import { useTheme } from "@emotion/react";
@@ -145,6 +146,33 @@ const Text = ({
 
   const [editProperty, setEditProperty] = useState("");
   const [newPropertyValue, setNewPropertyValue] = useState("");
+  const [aiPeer, setAiPeer] = useState({ on: true, waiting: true });
+
+  useEffect(() => {
+    if (property !== "title") {
+      return;
+    }
+    const usersQuery = query(
+      collection(db, "aiPeerLogs"),
+      where("__name__", "==", "1man"),
+    );
+    const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+      setAiPeer(() => {
+        const change = snapshot.docChanges()[0];
+        if (change) {
+          const doc = change.doc;
+          const data = doc.data();
+          return {
+            on: data?.aiPeer === "started",
+            waiting: !!data?.waitingAIPeer,
+          };
+        }
+        return { on: false, waiting: false };
+      });
+    });
+
+    return () => unsubscribe();
+  }, [nodes]);
 
   // // Maintain focus after inheritance change
   // useEffect(() => {
@@ -510,6 +538,7 @@ const Text = ({
                     enableEdit={enableEdit}
                     handleCloseAddLinksModel={handleCloseAddLinksModel}
                     user={user}
+                    aiPeer={aiPeer}
                   />
                 )}{" "}
               {enableEdit &&

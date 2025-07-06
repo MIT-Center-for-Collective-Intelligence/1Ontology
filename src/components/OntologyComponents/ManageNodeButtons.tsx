@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   IconButton,
   Link,
   Switch,
@@ -18,6 +19,8 @@ import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import DeleteIcon from "@mui/icons-material/Delete";
 import HistoryIcon from "@mui/icons-material/History";
 import { getTooltipHelper } from "@components/lib/utils/string.utils";
+import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
+import { db } from "@components/lib/firestoreServer/admin-exp";
 
 const ManageNodeButtons = ({
   locked,
@@ -35,6 +38,7 @@ const ManageNodeButtons = ({
   setEnableEdit,
   user,
   handleCloseAddLinksModel,
+  aiPeer,
 }: {
   locked: boolean;
   lockedInductor: boolean;
@@ -51,12 +55,18 @@ const ManageNodeButtons = ({
   setEnableEdit: any;
   user: any;
   handleCloseAddLinksModel: any;
+  aiPeer: { on: boolean; waiting: boolean };
 }) => {
+  const db = getFirestore();
   const displayNodeChat = () => displaySidebar("chat");
   const displayNodeHistory = () => displaySidebar("nodeHistory");
   const displayInheritanceSettings = () =>
     displaySidebar("inheritanceSettings");
 
+  const nextCall = () => {
+    const userRef = doc(collection(db, "aiPeerLogs"), "1man");
+    updateDoc(userRef, { waitingAIPeer: false });
+  };
   return (
     <Box>
       <Box
@@ -109,6 +119,23 @@ const ManageNodeButtons = ({
             </Box>
           )}
         </Box> */}{" "}
+        {aiPeer.on && (
+          <>
+            <Tooltip
+              title="The previous proposals has been implemented. Would you like to
+              continue?"
+            >
+              <Button
+                variant="outlined"
+                disabled={!aiPeer.waiting}
+                sx={{ borderRadius: "25px" }}
+                onClick={nextCall}
+              >
+                Continue AI-Peer
+              </Button>
+            </Tooltip>
+          </>
+        )}
         {user?.claims.editAccess && (
           <ToggleButton
             value="edit"
