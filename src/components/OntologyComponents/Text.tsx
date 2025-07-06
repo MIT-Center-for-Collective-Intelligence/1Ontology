@@ -149,7 +149,7 @@ const Text = ({
   const [aiPeer, setAiPeer] = useState({ on: true, waiting: true });
 
   useEffect(() => {
-    if (property !== "title") {
+    if (property !== "title" || user?.uname !== "1man") {
       return;
     }
     const usersQuery = query(
