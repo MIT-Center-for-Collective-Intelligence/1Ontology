@@ -134,10 +134,13 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                   >
                     {node.title || getTitle(nodes, node.id)}
                   </Typography>
+
                   {node.optional && (
-                    <span
-                      style={{ color: "gray", marginLeft: "9px" }}
-                    >{`(optional)`}</span>
+                    <Tooltip title={"optional"} placement="top">
+                      <Typography
+                        sx={{ color: "orange", marginLeft: "9px" }}
+                      >{`(O)`}</Typography>
+                    </Tooltip>
                   )}
                 </ListItem>
               ))}{" "}
@@ -165,9 +168,11 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                             currentImprovement.change.optionalParts.includes(
                               item,
                             ) && (
-                              <span
-                                style={{ color: "gray", marginLeft: "9px" }}
-                              >{`(optional)`}</span>
+                              <Tooltip title={"optional"}>
+                                <Typography
+                                  sx={{ color: "orange", marginLeft: "9px" }}
+                                >{`(O)`}</Typography>
+                              </Tooltip>
                             )}
                         </ListItem>
                       ),
