@@ -1,13 +1,11 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { ChromaClient } from "chromadb";
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { ChromaClient, OpenAIEmbeddingFunction } from "chromadb";
 import fbAuth from "@components/middlewares/fbAuth";
+import OpenAI from "openai";
+import Cors from "cors";
 
 const url = `${process.env.CHROMA_PROTOCOL}://${process.env.CHROMA_HOST}:${process.env.CHROMA_PORT}`;
-
-const openai = new OpenAI({
-  apiKey: process.env.MIT_CCI_API_KEY,
-});
 
 const sanitizeCollectionName = (title: string) => {
   return (
@@ -20,12 +18,29 @@ const sanitizeCollectionName = (title: string) => {
       .slice(0, 512) || "default_collection"
   );
 };
+const embeddingFunction = new OpenAIEmbeddingFunction({
+  openai_api_key: process.env.MIT_CCI_API_KEY,
+  openai_model: "text-embedding-3-large",
+});
+
+const runMiddleware = (req: any, res: any, fn: any) => {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result: any) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+};
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { query, skillsFuture, appName, user } = req.body.data;
     const { uname } = user?.userData;
     console.log(uname, "sent the following query", query, { appName });
+
+    /*     await runMiddleware(req, res, cors); */
 
     let collectionName = "";
     if (appName) {
@@ -35,22 +50,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     } else {
       collectionName = "ontology";
     }
-
     const client = new ChromaClient({ path: url });
 
     const collection = await client.getOrCreateCollection({
       name: collectionName,
+      embeddingFunction,
     });
-
-    const embeddingResponse = await openai.embeddings.create({
-      model: "text-embedding-3-small",
-      input: query,
-    });
-
-    const embeddedQuery = embeddingResponse.data[0].embedding;
-
     const results = await collection.query({
-      queryEmbeddings: [embeddedQuery],
+      queryTexts: query,
       nResults: 40,
     });
 
@@ -59,10 +66,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const otherMatches = [];
 
     const uniqueResults = new Set();
-    for (const result of metaDatas) {
+    for (let result of metaDatas) {
       const replacedId = result.id.replace("-properties", "");
       if (!uniqueResults.has(replacedId)) {
-        uniqueResults.add(replacedId);
+        uniqueResults.add(result.id);
 
         if (
           result.title &&
@@ -74,7 +81,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         }
       }
     }
-
     const resultsAlt = [...exactMatches, ...otherMatches];
     return res.status(200).json({ results: resultsAlt });
   } catch (error) {

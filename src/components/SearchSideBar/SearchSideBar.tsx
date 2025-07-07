@@ -156,7 +156,7 @@ const SearchSideBar = ({
               return c.id === searchDevelopment[0].id;
             })
           : -1;
-      if (existAlready === -1) {
+      if (existAlready === -1 && searchDevelopment.length > 0) {
         results.unshift(searchDevelopment[0]);
       }
 
