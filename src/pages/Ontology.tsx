@@ -652,8 +652,8 @@ const Ontology = ({
       }
 
       const specializations = node.specializations;
-      let collections = [];
-      let mainChildren = [];
+      let childrenInOrder = [];
+      
       for (let collection of specializations) {
         const children = [];
         for (let _node of collection.nodes) {
@@ -662,17 +662,31 @@ const Ontology = ({
           }
         }
 
-        // if (children.length > 0) {
-        if (collection.collectionName !== "main") {
+        if (collection.collectionName === "main") {
+          // Add main items directly with position metadata
+          const mainChildren = getTreeView(children, visited, [...path, node.id]);
+          mainChildren.forEach((child: any, index: any) => {
+            childrenInOrder.push({
+              ...child,
+              isMainItem: true,
+              originalCollectionIndex: specializations.indexOf(collection),
+            });
+          });
+        } else {
+          // For other collections
           const id = [...path, node.id, collection.collectionName].join("-");
 
           if (visited.has(id)) {
             if (typeof visited.get(id) !== "boolean") {
-              newNodes.push(visited.get(id));
+              childrenInOrder.push({
+                ...visited.get(id),
+                originalCollectionIndex: specializations.indexOf(collection),
+              });
             }
             continue;
           }
           visited.set(id, true);
+          
           const _children = getTreeView(children, visited, [...path, node.id]);
           const record = {
             id: id,
@@ -680,25 +694,20 @@ const Ontology = ({
             nodeType: node.nodeType,
             name: collection.collectionName,
             children: _children,
-
             category: true,
             unclassified: node.unclassified,
+            originalCollectionIndex: specializations.indexOf(collection),
           };
-          collections.push(record);
+          childrenInOrder.push(record);
           visited.set(id, record);
-        } else {
-          mainChildren.push(...children);
         }
-
-        // } else {
-        //   collections.push({
-        //     id: `${parentId}-${node.id}`,
-        //     nodeId: node.id,
-        //     name: node.title,
-        //     category: !!parentId
-        //   });
-        // }
       }
+
+      // Sort by collection index to maintain order
+      childrenInOrder.sort((a, b) => 
+        (a.originalCollectionIndex || 0) - (b.originalCollectionIndex || 0)
+      );
+
       const id = [...path, node.id].join("-");
       if (visited.has(id)) {
         if (typeof visited.get(id) !== "boolean") {
@@ -707,15 +716,13 @@ const Ontology = ({
         continue;
       }
       visited.set(id, true);
+      
       const record = {
         id,
         nodeId: node.id,
         name: node.title,
         nodeType: node.nodeType,
-        children: [
-          ...collections,
-          ...getTreeView(mainChildren, visited, [...path, node.id]),
-        ],
+        children: childrenInOrder,
         category: !!node.category,
         unclassified: node.unclassified,
       };
