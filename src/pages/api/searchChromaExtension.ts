@@ -66,6 +66,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     });
 
     const embeddedQuery = embeddingResponse.data[0].embedding;
+    console.log(embeddedQuery, "embeddedQuery");
     const results = await collection.query({
       queryEmbeddings: [embeddedQuery],
       nResults: 40,

@@ -48,7 +48,7 @@ import {
   DropResult,
 } from "@hello-pangea/dnd";
 import { LoadingButton } from "@mui/lab";
-import SelectModelModal from "../Models/SelectModel";
+import SelectModel from "../Models/SelectModel";
 
 interface LoadMoreNode extends ILinkNode {
   id: string;
@@ -414,27 +414,26 @@ const CollectionStructure = ({
         const { droppableId: destinationCollection } = destination; // The destination collection
         const sourceCollectionIndex = Number(sourceCollection);
         const destinationCollectionIndex = Number(destinationCollection);
-        if (model) {
-          setEditableProperty((prev: ICollection[]) => {
-            const nodeIdx = prev[sourceCollectionIndex].nodes.findIndex(
-              (link: ILinkNode) => link.id === draggableId,
-            );
-            const moveValue = prev[sourceCollectionIndex].nodes[nodeIdx];
 
-            // Remove the item from the source category
-            prev[sourceCollectionIndex].nodes.splice(nodeIdx, 1);
+        setEditableProperty((prev: ICollection[]) => {
+          const nodeIdx = prev[sourceCollectionIndex].nodes.findIndex(
+            (link: ILinkNode) => link.id === draggableId,
+          );
+          const moveValue = prev[sourceCollectionIndex].nodes[nodeIdx];
 
-            // Move the item to the destination category
-            prev[destinationCollectionIndex].nodes.splice(
-              destination.index,
-              0,
-              moveValue,
-            );
-            return prev;
-          });
-          setModifiedOrder(true);
-          return;
-        }
+          // Remove the item from the source category
+          prev[sourceCollectionIndex].nodes.splice(nodeIdx, 1);
+
+          // Move the item to the destination category
+          prev[destinationCollectionIndex].nodes.splice(
+            destination.index,
+            0,
+            moveValue,
+          );
+          return prev;
+        });
+        setModifiedOrder(true);
+
         // Ensure defined source and destination categories
         if (sourceCollection && destinationCollection && propertyValue) {
           // Ensure nodeData exists
@@ -1583,7 +1582,7 @@ const CollectionStructure = ({
                             !!selectedProperty &&
                             selectedCollection ===
                               collection.collectionName && (
-                              <SelectModelModal
+                              <SelectModel
                                 onSave={onSave}
                                 currentVisibleNode={currentVisibleNode}
                                 nodes={nodes}

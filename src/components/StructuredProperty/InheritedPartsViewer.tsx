@@ -13,10 +13,11 @@ import {
   ListItemIcon,
   ListItem,
   List,
+  Link,
 } from "@mui/material";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
-
+import RemoveIcon from "@mui/icons-material/Remove";
 import SearchIcon from "@mui/icons-material/Search";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -60,6 +61,7 @@ interface InheritedPartsViewerProps {
   setDisplayDetails: any;
   inheritanceDetails: any;
   currentVisibleNode: any;
+  navigateToNode?: any;
   triggerSearch?: any;
   addPart?: any;
   removePart?: any;
@@ -81,6 +83,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   triggerSearch,
   addPart,
   removePart,
+  navigateToNode,
 }) => {
   const [selectedGeneralizationIndex, setSelectedGeneralizationIndex] =
     useState<number>(0);
@@ -256,7 +259,47 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                 backgroundSize: "100% 1px",
               }}
             >
-              {!readOnly && from && (
+              {!readOnly && symbol === "x" && !!addPart && (
+                <Tooltip title={"Add part"} placement="top">
+                  <IconButton
+                    sx={{ p: 0.5 }}
+                    onClick={() => {
+                      addPart(from);
+                    }}
+                  >
+                    <AddIcon
+                      sx={{
+                        fontSize: 20,
+                        color: "green",
+                        border: "1px solid green",
+                        borderRadius: "50%",
+                      }}
+                    />
+                  </IconButton>
+                </Tooltip>
+              )}
+
+              {!readOnly && symbol === "=" && !!removePart && (
+                <Tooltip title={"Remove part"} placement="top">
+                  <IconButton
+                    sx={{ p: 0.5 }}
+                    onClick={() => {
+                      removePart(to);
+                    }}
+                  >
+                    <RemoveIcon
+                      sx={{
+                        fontSize: 20,
+                        color: "red",
+                        border: "1px solid red",
+                        borderRadius: "50%",
+                      }}
+                    />
+                  </IconButton>
+                </Tooltip>
+              )}
+
+              {!readOnly && from && symbol !== "x" && symbol !== "=" && (
                 <ListItemIcon sx={{ minWidth: "auto" }}>
                   <Tooltip title="Search it below" placement="left">
                     <IconButton
@@ -274,14 +317,22 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               <ListItemText
                 primary={
                   from ? (
-                    <Typography
-                      variant="body2"
+                    <Link
+                      underline={!!navigateToNode ? "hover" : "none"}
+                      onClick={() => {
+                        if (navigateToNode) {
+                          navigateToNode(from);
+                        }
+                      }}
                       sx={{
+                        cursor: !!navigateToNode ? "pointer" : "",
+                        color: (them) =>
+                          them.palette.mode === "dark" ? "white" : "black",
                         fontSize: "0.9rem",
                       }}
                     >
                       {nodes[from].title}
-                    </Typography>
+                    </Link>
                   ) : null
                 }
                 sx={{ flex: 1, minWidth: 0.3 }}
@@ -289,39 +340,11 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
 
               <ListItemIcon sx={{ minWidth: "auto" }}>
                 {symbol === "x" ? (
-                  !!addPart ? (
-                    <Tooltip title={"Add part"} placement="top">
-                      <IconButton
-                        sx={{ p: 0.5 }}
-                        onClick={() => {
-                          addPart(from);
-                        }}
-                      >
-                        <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
-                      </IconButton>
-                    </Tooltip>
-                  ) : (
-                    <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
-                  )
+                  <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
                 ) : symbol === ">" ? (
                   <ArrowForwardIosIcon sx={{ fontSize: 20, color: "orange" }} />
                 ) : symbol === "=" ? (
-                  !!removePart ? (
-                    <Tooltip title={"Remove part"} placement="top">
-                      <IconButton
-                        sx={{ p: 0.5 }}
-                        onClick={() => {
-                          removePart(to);
-                        }}
-                      >
-                        <DragHandleIcon
-                          sx={{ fontSize: 20, color: "orange" }}
-                        />
-                      </IconButton>
-                    </Tooltip>
-                  ) : (
-                    <DragHandleIcon sx={{ fontSize: 20, color: "orange" }} />
-                  )
+                  <DragHandleIcon sx={{ fontSize: 20, color: "orange" }} />
                 ) : symbol === "+" ? (
                   <AddIcon sx={{ fontSize: 20, color: "orange" }} />
                 ) : null}
@@ -330,16 +353,22 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               <ListItemText
                 primary={
                   to ? (
-                    <Typography
+                    <Link
+                      underline={!!navigateToNode ? "hover" : "none"}
+                      onClick={() => {
+                        if (navigateToNode) {
+                          navigateToNode(to);
+                        }
+                      }}
                       sx={{
-                        fontStyle: "italic",
+                        cursor: !!navigateToNode ? "pointer" : "",
+                        color: (them) =>
+                          them.palette.mode === "dark" ? "white" : "black",
                         fontSize: "0.9rem",
-                        textAlign: "left",
-                        ml: 1.5,
                       }}
                     >
                       {nodes[to].title}
-                    </Typography>
+                    </Link>
                   ) : null
                 }
                 sx={{ flex: 1, minWidth: 0.3 }}

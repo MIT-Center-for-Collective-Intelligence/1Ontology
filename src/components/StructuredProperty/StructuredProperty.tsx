@@ -53,7 +53,7 @@ import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import VisualizeTheProperty from "./VisualizeTheProperty";
 import CollectionStructure from "./CollectionStructure";
-import SelectModelModal from "../Models/SelectModel";
+import SelectModel from "../Models/SelectModel";
 import { LoadingButton } from "@mui/lab";
 import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
@@ -415,6 +415,7 @@ const StructuredProperty = ({
 
   useEffect(() => {
     if (property === "parts") {
+      console.log(propertyValue, "propertyValue");
       const someAreOptional = propertyValue[0].nodes.some((c) => !!c.optional);
       setDisplayOptional(selectedProperty === "parts" || someAreOptional);
     }
@@ -1254,11 +1255,7 @@ const StructuredProperty = ({
               selectedDiffNode={selectedDiffNode}
               currentImprovement={currentImprovement}
               property={property}
-              propertyValue={
-                selectedProperty === property
-                  ? (editableProperty ?? [])
-                  : (propertyValue ?? [])
-              }
+              propertyValue={propertyValue ?? []}
               setEditableProperty={setEditableProperty}
               getCategoryStyle={getCategoryStyle}
               navigateToNode={navigateToNode}
@@ -1289,7 +1286,9 @@ const StructuredProperty = ({
               setSearchValue={setSearchValue}
               searchValue={searchValue}
               searchResultsForSelection={searchResultsForSelection}
-              checkedItems={checkedItems}
+              checkedItems={
+                new Set(propertyValue.flatMap((c) => c.nodes).map((c) => c.id))
+              }
               setCheckedItems={setCheckedItems}
               setCheckedItemsCopy={setCheckedItemsCopy}
               checkedItemsCopy={checkedItemsCopy}
@@ -1390,13 +1389,14 @@ const StructuredProperty = ({
                       }
                     : null
                 }
+                navigateToNode={navigateToNode}
               />
             )}
         </Box>
         {handleCloseAddLinksModel &&
           selectedProperty === property &&
           !selectedCollection && (
-            <SelectModelModal
+            <SelectModel
               onSave={onSave}
               currentVisibleNode={currentVisibleNode}
               nodes={nodes}
@@ -1405,7 +1405,9 @@ const StructuredProperty = ({
               setSearchValue={setSearchValue}
               searchValue={searchValue}
               searchResultsForSelection={searchResultsForSelection}
-              checkedItems={checkedItems}
+              checkedItems={
+                new Set(propertyValue.flatMap((c) => c.nodes).map((c) => c.id))
+              }
               setCheckedItems={setCheckedItems}
               setCheckedItemsCopy={setCheckedItemsCopy}
               checkedItemsCopy={checkedItemsCopy}
