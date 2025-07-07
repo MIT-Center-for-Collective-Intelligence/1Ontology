@@ -137,7 +137,7 @@ const SearchSideBar = ({
       setErrorSearch(false);
       setLoadingSearchResult(true);
       const response: any = !development
-        ? await Post("/searchChromaExtension", {
+        ? await Post("/searchChroma", {
             query: searchValue,
             skillsFuture,
             appName: skillsFuture ? skillsFutureApp : null,

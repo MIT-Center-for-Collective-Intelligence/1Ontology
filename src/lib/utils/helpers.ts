@@ -797,6 +797,7 @@ export const createNewNode = (
     nodeType: parentNodeData.nodeType,
     skillsFuture: !!skillsFuture,
     ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+    createdAt: new Date(),
   };
   delete newNode.root;
   if (newNode?.textValue?.specializations) {
