@@ -133,10 +133,7 @@ const SearchSideBar = ({
   }, []);
 
   const searchQuery = useCallback(async () => {
-    const fuseSearch = searchWithFuse(searchValue).slice(
-      0,
-      development ? 30 : 2,
-    );
+    const fuseSearch = searchWithFuse(searchValue).slice(0, 30);
 
     try {
       setErrorSearch(false);
