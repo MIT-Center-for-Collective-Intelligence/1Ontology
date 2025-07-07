@@ -150,15 +150,19 @@ const SearchSideBar = ({
       );
       const results: any = [...(response.results || [])];
 
-      const existAlready = results.findIndex((c: { id: string }) => {
-        return c.id === searchDevelopment[0].id;
-      });
+      const existAlready =
+        searchDevelopment.length > 0
+          ? results.findIndex((c: { id: string }) => {
+              return c.id === searchDevelopment[0].id;
+            })
+          : -1;
       if (existAlready === -1) {
         results.unshift(searchDevelopment[0]);
       }
 
       setSearchResults(development ? searchDevelopment : results);
     } catch (error) {
+      console.error(error);
       setErrorSearch(true);
     } finally {
       setLoadingSearchResult(false);
