@@ -61,23 +61,12 @@ const UserActivity = ({
     );
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
-      const docChanges = snapshot.docChanges();
-      const newLogs: (NodeChange & { id: string })[] = [];
+      const docs = snapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      })) as (NodeChange & { id: string })[];
 
-      for (let change of docChanges) {
-        const changeData: any = change.doc.data();
-        const id = change.doc.id;
-        newLogs.push({ ...changeData, id });
-      }
-
-      const sortedLogs = newLogs.sort((a: any, b: any) => {
-        return (
-          new Date(b.modifiedAt.toDate()).getTime() -
-          new Date(a.modifiedAt.toDate()).getTime()
-        );
-      });
-
-      setLogs(sortedLogs);
+      setLogs(docs);
       
       if (!snapshot.empty) {
         setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
