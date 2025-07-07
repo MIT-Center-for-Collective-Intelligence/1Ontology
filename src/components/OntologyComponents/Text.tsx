@@ -146,10 +146,10 @@ const Text = ({
 
   const [editProperty, setEditProperty] = useState("");
   const [newPropertyValue, setNewPropertyValue] = useState("");
-  const [aiPeer, setAiPeer] = useState({ on: true, waiting: true });
+  const [aiPeer, setAiPeer] = useState({ on: false, waiting: false });
 
   useEffect(() => {
-    if (property !== "title" || user?.uname !== "1man") {
+    if (property !== "title" /* || user?.uname !== "1man" */) {
       return;
     }
     const usersQuery = query(

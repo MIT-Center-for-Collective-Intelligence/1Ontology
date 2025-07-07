@@ -374,7 +374,7 @@ function OntTree() {
       </TreeItem>
     );
   };
-  console.log("treeData", JSON.stringify(treeData, null, 2));
+
   if (loading) {
     return (
       <Box
