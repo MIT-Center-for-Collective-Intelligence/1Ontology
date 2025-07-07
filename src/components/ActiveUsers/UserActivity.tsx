@@ -17,6 +17,8 @@ import {
   orderBy,
   query,
   where,
+  startAfter,
+  getDocs,
 } from "firebase/firestore";
 import { NodeChange } from "@components/types/INode";
 import { NODES_LOGS } from "@components/lib/firestoreClient/collections";
@@ -24,8 +26,6 @@ import { getChangeDescription } from "@components/lib/utils/helpers";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 import ActivityDetails from "./ActivityDetails";
-
-const ITEMS_PER_PAGE = 15;
 
 const UserActivity = ({
   openLogsFor,
@@ -41,13 +41,17 @@ const UserActivity = ({
   const db = getFirestore();
   const [logs, setLogs] = useState<(NodeChange & { id: string })[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [hasMore, setHasMore] = useState<boolean>(true);
 
   useEffect(() => {
     if (!openLogsFor?.uname) return;
 
     setLogs([]);
-    setCurrentPage(1);
+    setLastDoc(null);
+    setHasMore(true);
+    setLoading(true);
 
     const nodesQuery = query(
       collection(db, NODES_LOGS),
@@ -55,38 +59,61 @@ const UserActivity = ({
       orderBy("modifiedAt", "desc"),
       limit(100),
     );
+
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
-      const docChanges = snapshot.docChanges();
+      const docs = snapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      })) as (NodeChange & { id: string })[];
 
-      setLogs((prev: (NodeChange & { id: string })[]) => {
-        for (let change of docChanges) {
-          const changeData: any = change.doc.data();
-          const id = change.doc.id;
-          prev.push({ ...changeData, id });
-        }
-
-        return prev.sort((a: any, b: any) => {
-          return (
-            new Date(b.modifiedAt.toDate()).getTime() -
-            new Date(a.modifiedAt.toDate()).getTime()
-          );
-        });
-      });
+      setLogs(docs);
+      
+      if (!snapshot.empty) {
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+        setHasMore(snapshot.docs.length === 100);
+      }
+      
       setLoading(false);
     });
 
     return () => unsubscribeNodes();
   }, [db, openLogsFor?.uname]);
 
-  const indexOfLastLog = currentPage * ITEMS_PER_PAGE;
-  const indexOfFirstLog = indexOfLastLog - ITEMS_PER_PAGE;
-  const currentLogs = logs.slice(indexOfFirstLog, indexOfLastLog);
+  const loadMore = async () => {
+    if (!lastDoc || loadingMore || !hasMore) return;
 
-  const handlePageChange = (
-    event: React.ChangeEvent<unknown>,
-    value: number,
-  ) => {
-    setCurrentPage(value);
+    setLoadingMore(true);
+
+    try {
+      const moreQuery = query(
+        collection(db, NODES_LOGS),
+        where("modifiedBy", "==", openLogsFor.uname),
+        orderBy("modifiedAt", "desc"),
+        startAfter(lastDoc),
+        limit(50),
+      );
+
+      const snapshot = await getDocs(moreQuery);
+      const moreLogs: (NodeChange & { id: string })[] = [];
+
+      snapshot.forEach((doc) => {
+        const changeData = doc.data();
+        moreLogs.push({ ...changeData, id: doc.id } as NodeChange & { id: string });
+      });
+
+      setLogs(prevLogs => [...prevLogs, ...moreLogs]);
+
+      if (!snapshot.empty) {
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+      }
+
+      setHasMore(snapshot.docs.length === 50);
+
+    } catch (error) {
+      console.error("Error loading more logs:", error);
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
   if (loading) {
@@ -148,7 +175,7 @@ const UserActivity = ({
 
       {logs.length > 0 && (
         <>
-          {currentLogs.map((log) => (
+          {logs.map((log) => (
             <ActivityDetails
               key={log.id}
               activity={log}
@@ -158,23 +185,25 @@ const UserActivity = ({
             />
           ))}
 
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              mt: 8,
-              mb: 2,
-            }}
-          >
-            <Pagination
-              count={Math.ceil(logs.length / ITEMS_PER_PAGE)}
-              page={currentPage}
-              onChange={handlePageChange}
-              color="primary"
-              showFirstButton
-              showLastButton
-            />
-          </Box>
+          {hasMore && (
+            <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={loadMore}
+                disabled={loadingMore}
+                sx={{ minWidth: 120, borderRadius: "35px" }}
+              >
+                {loadingMore ? (
+                  <>
+                    <CircularProgress size={16} sx={{ mr: 1 }} />
+                    Loading...
+                  </>
+                ) : (
+                  "Show More"
+                )}
+              </Button>
+            </Box>
+          )}
         </>
       )}
     </Box>

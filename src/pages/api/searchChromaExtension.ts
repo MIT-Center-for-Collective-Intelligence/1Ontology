@@ -4,6 +4,7 @@ import { ChromaClient, OpenAIEmbeddingFunction } from "chromadb";
 import fbAuth from "@components/middlewares/fbAuth";
 import OpenAI from "openai";
 import Cors from "cors";
+import { openai } from "./helpers";
 
 const url = `${process.env.CHROMA_PROTOCOL}://${process.env.CHROMA_HOST}:${process.env.CHROMA_PORT}`;
 
@@ -58,10 +59,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const collection = await client.getOrCreateCollection({
       name: collectionName,
-      embeddingFunction,
     });
+    const embeddingResponse = await openai.embeddings.create({
+      model: "text-embedding-3-small",
+      input: query,
+    });
+
+    const embeddedQuery = embeddingResponse.data[0].embedding;
+    console.log(embeddedQuery, "embeddedQuery");
     const results = await collection.query({
-      queryTexts: query,
+      queryEmbeddings: [embeddedQuery],
       nResults: 40,
     });
 
@@ -73,7 +80,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     for (let result of metaDatas) {
       const replacedId = result.id.replace("-properties", "");
       if (!uniqueResults.has(replacedId)) {
-        uniqueResults.add(result.id);
+        uniqueResults.add(replacedId);
 
         if (
           result.title &&

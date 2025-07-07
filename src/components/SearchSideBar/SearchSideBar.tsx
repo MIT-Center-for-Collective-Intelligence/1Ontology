@@ -133,6 +133,8 @@ const SearchSideBar = ({
   }, []);
 
   const searchQuery = useCallback(async () => {
+    const fuseSearch = searchWithFuse(searchValue).slice(0, 30);
+
     try {
       setErrorSearch(false);
       setLoadingSearchResult(true);
@@ -144,22 +146,23 @@ const SearchSideBar = ({
           })
         : { results: [] };
 
-      const searchDevelopment = searchWithFuse(searchValue).slice(
-        0,
-        development ? 30 : 2,
-      );
       const results: any = [...(response.results || [])];
 
-      const existAlready = results.findIndex((c: { id: string }) => {
-        return c.id === searchDevelopment[0].id;
-      });
-      if (existAlready === -1) {
-        results.unshift(searchDevelopment[0]);
+      const existAlready =
+        fuseSearch.length > 0
+          ? results.findIndex((c: { id: string }) => {
+              return c.id === fuseSearch[0].id;
+            })
+          : -1;
+      if (existAlready === -1 && fuseSearch.length > 0) {
+        results.unshift(fuseSearch[0]);
       }
 
-      setSearchResults(development ? searchDevelopment : results);
+      setSearchResults(development ? fuseSearch : results);
     } catch (error) {
-      setErrorSearch(true);
+      setSearchResults(fuseSearch);
+      console.error(error);
+      // setErrorSearch(true);
     } finally {
       setLoadingSearchResult(false);
     }

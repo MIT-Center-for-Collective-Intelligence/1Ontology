@@ -342,7 +342,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     } else {
       properties = currentVisibleNode.properties;
     }
-    console.log(properties, "properties");
+
     const sortedKeys = Object.keys(properties || {})
       .filter(
         (p) =>
@@ -377,7 +377,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   const hasReferences = orderOfProperties.includes("References");
 
   const modifyProperty = useCallback(
-    ({
+    async ({
       newValue,
       previousValue,
     }: {
@@ -432,6 +432,13 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           };
         }
         updateDoc(nodeRef, ObjectUpdates);
+        await updateInheritance({
+          nodeId: currentVisibleNode.id,
+          updatedProperties: [],
+          deletedProperties: [],
+          editedProperties: [{ previousValue, newValue }],
+          db,
+        });
         saveNewChangeLog(db, {
           nodeId: currentNode.id,
           modifiedBy: user?.uname,
@@ -450,7 +457,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     },
     [user?.uname, currentVisibleNode],
   );
-  console.log("orderOfProperties ==>", orderOfProperties);
 
   return (
     <Box>

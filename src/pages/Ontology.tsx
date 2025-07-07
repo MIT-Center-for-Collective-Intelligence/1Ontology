@@ -102,7 +102,11 @@ import withAuthUser from "@components/components/hoc/withAuthUser";
 import { useAuth } from "@components/components/context/AuthContext";
 import { useRouter } from "next/router";
 import GraphView from "@components/components/OntologyComponents/GraphView";
-import { DISPLAY, SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
+import {
+  DISPLAY,
+  SCROLL_BAR_STYLE,
+  SKILLS_FUTURE_APP_NAMES,
+} from "@components/lib/CONSTANTS";
 import { NODES, USERS } from "@components/lib/firestoreClient/collections";
 
 import { recordLogs } from "@components/lib/utils/helpers";
@@ -496,6 +500,7 @@ const Ontology = ({
       }
     }
   }, [nodes]);
+
   // Function to generate a tree structure of specializations based on main nodes
   const getSpecializationsTree = (
     _nodes: INode[],
@@ -647,8 +652,8 @@ const Ontology = ({
       }
 
       const specializations = node.specializations;
-      let collections = [];
-      let mainChildren = [];
+      let childrenInOrder = [];
+      
       for (let collection of specializations) {
         const children = [];
         for (let _node of collection.nodes) {
@@ -657,17 +662,31 @@ const Ontology = ({
           }
         }
 
-        // if (children.length > 0) {
-        if (collection.collectionName !== "main") {
+        if (collection.collectionName === "main") {
+          // Add main items directly with position metadata
+          const mainChildren = getTreeView(children, visited, [...path, node.id]);
+          mainChildren.forEach((child: any, index: any) => {
+            childrenInOrder.push({
+              ...child,
+              isMainItem: true,
+              originalCollectionIndex: specializations.indexOf(collection),
+            });
+          });
+        } else {
+          // For other collections
           const id = [...path, node.id, collection.collectionName].join("-");
 
           if (visited.has(id)) {
             if (typeof visited.get(id) !== "boolean") {
-              newNodes.push(visited.get(id));
+              childrenInOrder.push({
+                ...visited.get(id),
+                originalCollectionIndex: specializations.indexOf(collection),
+              });
             }
             continue;
           }
           visited.set(id, true);
+          
           const _children = getTreeView(children, visited, [...path, node.id]);
           const record = {
             id: id,
@@ -675,25 +694,20 @@ const Ontology = ({
             nodeType: node.nodeType,
             name: collection.collectionName,
             children: _children,
-
             category: true,
             unclassified: node.unclassified,
+            originalCollectionIndex: specializations.indexOf(collection),
           };
-          collections.push(record);
+          childrenInOrder.push(record);
           visited.set(id, record);
-        } else {
-          mainChildren.push(...children);
         }
-
-        // } else {
-        //   collections.push({
-        //     id: `${parentId}-${node.id}`,
-        //     nodeId: node.id,
-        //     name: node.title,
-        //     category: !!parentId
-        //   });
-        // }
       }
+
+      // Sort by collection index to maintain order
+      childrenInOrder.sort((a, b) => 
+        (a.originalCollectionIndex || 0) - (b.originalCollectionIndex || 0)
+      );
+
       const id = [...path, node.id].join("-");
       if (visited.has(id)) {
         if (typeof visited.get(id) !== "boolean") {
@@ -702,15 +716,13 @@ const Ontology = ({
         continue;
       }
       visited.set(id, true);
+      
       const record = {
         id,
         nodeId: node.id,
         name: node.title,
         nodeType: node.nodeType,
-        children: [
-          ...collections,
-          ...getTreeView(mainChildren, visited, [...path, node.id]),
-        ],
+        children: childrenInOrder,
         category: !!node.category,
         unclassified: node.unclassified,
       };
@@ -1007,6 +1019,19 @@ const Ontology = ({
         return;
       } */
       handleCloseAddLinksModel();
+      if (currentVisibleNode && nodeId === currentVisibleNode.id) {
+        const element = document.getElementById(`property-title`);
+        if (element) {
+          setTimeout(() => {
+            element.style.transition = "box-shadow 0.3s ease";
+            element.style.boxShadow = "0 0 10px 3px rgba(255, 165, 0, 0.7)";
+          }, 500);
+          setTimeout(() => {
+            element.style.boxShadow = "";
+          }, 2000);
+        }
+      }
+
       if (nodes[nodeId]) {
         setCurrentVisibleNode(nodes[nodeId]);
         initializeExpanded(eachOntologyPath[nodeId]);
@@ -1141,7 +1166,7 @@ const Ontology = ({
       _currentVisibleNode?.generalizations || []
     ).flatMap((c) => c.nodes);
     const checkGeneralizations = (
-      nodeId: string,
+      partId: string,
     ): { genId: string; partOf: string | null }[] | null => {
       let inheritanceDetails: { genId: string; partOf: string | null }[] = [];
 
@@ -1156,20 +1181,37 @@ const Ontology = ({
         }
 
         const partIdex = generalizationParts[0].nodes.findIndex(
-          (c) => c.id === nodeId,
+          (c) => c.id === partId,
         );
 
         let partOfIdx: any = -1;
 
-        for (let { id } of generalizationParts[0].nodes) {
-          const specializationPart = (nodes[id]?.specializations || []).flatMap(
-            (c) => c.nodes,
-          );
-          partOfIdx = specializationPart.findIndex((c) => c.id === nodeId);
-          if (partOfIdx !== -1) {
+        if (partIdex === -1) {
+          for (let { id } of generalizationParts[0].nodes) {
+            const specializationPart = (
+              nodes[id]?.specializations || []
+            ).flatMap((c) => c.nodes);
+            partOfIdx = specializationPart.findIndex((c) => c.id === partId);
+
             inheritanceDetails.push({
               genId: generalization.id,
               partOf: id,
+            });
+          }
+        }
+        if (partIdex === -1) {
+          const ontologyPathForPart = eachOntologyPath[partId] ?? [];
+
+          const exacts = generalizationParts[0].nodes.filter((n) => {
+            const findIndex = ontologyPathForPart.findIndex(
+              (d) => d.id === n.id,
+            );
+            return findIndex !== -1;
+          });
+          if (exacts.length > 0) {
+            inheritanceDetails.push({
+              genId: generalization.id,
+              partOf: exacts[0].id,
             });
           }
         }
@@ -1374,21 +1416,9 @@ const Ontology = ({
                         label="Property Type"
                         sx={{ borderRadius: "20px" }}
                       >
-                        {[
-                          // "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
-                          "Full WordNet O*Net Verb Hierarchy - Tom's Version",
-                          "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
-                          "Ontology - Demo Version",
-                          "Ontology - Development Version",
-                          /*"Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
-                          "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
-                          "Holistic Embedding (Sector, Title, JobRole, CWF, Parts) - Gemini 2.5 Pro",
-                          "O*Net Verbs o3 Deep Research",
-                          "O*Net Verbs - o1 Pro", */
-                          "Top-Down Gemini 2.5 Pro",
-                        ].map((item) => (
-                          <MenuItem key={item} value={item}>
-                            {item}
+                        {SKILLS_FUTURE_APP_NAMES.map(({ id, name }) => (
+                          <MenuItem key={id} value={id}>
+                            {name}
                           </MenuItem>
                         ))}
                       </Select>

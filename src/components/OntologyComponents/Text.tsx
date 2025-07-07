@@ -26,6 +26,7 @@ import {
   query,
   where,
   getFirestore,
+  onSnapshot,
 } from "firebase/firestore";
 import * as Y from "yjs";
 import { useTheme } from "@emotion/react";
@@ -57,6 +58,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import EditOffIcon from "@mui/icons-material/EditOff";
 import MarkdownEditor from "../Markdown/MarkdownEditor";
 import EditProperty from "../AddPropertyForm/EditProprety";
+import { Post } from "@components/lib/utils/Post";
 // import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ITextProps = {
@@ -144,6 +146,33 @@ const Text = ({
 
   const [editProperty, setEditProperty] = useState("");
   const [newPropertyValue, setNewPropertyValue] = useState("");
+  const [aiPeer, setAiPeer] = useState({ on: false, waiting: false });
+
+  useEffect(() => {
+    if (property !== "title" /* || user?.uname !== "1man" */) {
+      return;
+    }
+    const usersQuery = query(
+      collection(db, "aiPeerLogs"),
+      where("__name__", "==", "1man"),
+    );
+    const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+      setAiPeer(() => {
+        const change = snapshot.docChanges()[0];
+        if (change) {
+          const doc = change.doc;
+          const data = doc.data();
+          return {
+            on: data?.aiPeer === "started",
+            waiting: !!data?.waitingAIPeer,
+          };
+        }
+        return { on: false, waiting: false };
+      });
+    });
+
+    return () => unsubscribe();
+  }, [nodes]);
 
   // // Maintain focus after inheritance change
   // useEffect(() => {
@@ -158,10 +187,10 @@ const Text = ({
   }, [currentVisibleNode]);
 
   const saveChangeHistory = useCallback(
-    (previousValue: string, newValue: string) => {
+    async (previousValue: string, newValue: string, nodeId: string) => {
       if (!user?.uname || previousValue.trim() === newValue.trim()) return;
       saveNewChangeLog(db, {
-        nodeId: currentVisibleNode?.id,
+        nodeId,
         modifiedBy: user.uname,
         modifiedProperty: property,
         previousValue: previousValue,
@@ -172,8 +201,12 @@ const Text = ({
         skillsFuture,
         ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
       });
+      await Post("/triggerChroma", {
+        nodeId: nodeId,
+        updatedShortIds: property === "title" || property === "description",
+      });
     },
-    [currentVisibleNode?.id, db, property, user],
+    [db, property, user],
   );
 
   const onSaveTextChange = useCallback(
@@ -505,6 +538,7 @@ const Text = ({
                     enableEdit={enableEdit}
                     handleCloseAddLinksModel={handleCloseAddLinksModel}
                     user={user}
+                    aiPeer={aiPeer}
                   />
                 )}{" "}
               {enableEdit &&

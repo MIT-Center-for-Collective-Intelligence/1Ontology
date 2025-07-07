@@ -517,7 +517,12 @@ const updateProperty = async (
       };
     }
   }
+  let updatedEditedProperty = false;
   for (let { previousValue, newValue } of editedProperties) {
+    if (!nodeData.properties.hasOwnProperty(previousValue)) {
+      continue;
+    }
+    updatedEditedProperty = true;
     const propertyValue = nodeData.properties[previousValue];
     const propertyType = nodeData.propertyType[previousValue];
     const inheritanceValue = nodeData.inheritance[previousValue];
@@ -552,8 +557,15 @@ const updateProperty = async (
   if (batch._committed) {
     batch = writeBatch(db);
   }
-  batch.update(nodeRef, ObjectUpdates);
-  if (batch._mutations.length > 400) {
+  if (
+    updatedEditedProperty ||
+    updatedProperties.length > 0 ||
+    addedProperties.length > 0 ||
+    deletedProperties.length > 0
+  ) {
+    batch.update(nodeRef, ObjectUpdates);
+  }
+  if (batch._mutations.length > 100) {
     await batch.commit();
     batch = writeBatch(db);
   }
@@ -785,6 +797,7 @@ export const createNewNode = (
     nodeType: parentNodeData.nodeType,
     skillsFuture: !!skillsFuture,
     ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+    createdAt: new Date(),
   };
   delete newNode.root;
   if (newNode?.textValue?.specializations) {

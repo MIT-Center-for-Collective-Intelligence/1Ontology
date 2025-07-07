@@ -92,24 +92,50 @@ const NodeActivity = ({
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
       const docChanges = snapshot.docChanges();
-      const newLogs: (NodeChange & { id: string })[] = [];
       
-      for (let change of docChanges) {
-        const changeData = change.doc.data();
-        if (
-          ((skillsFuture &&
-            changeData.skillsFuture &&
-            changeData.appName === skillsFutureApp) ||
-            (!skillsFuture && !changeData.skillsFuture)) &&
-          !changeData.deleted
-        ) {
-          newLogs.push({ ...changeData, id: change.doc.id } as NodeChange & { id: string });
-          /*        if (id === "YLDwaHRDmfaLLsqUSdsO") { */
-          /*             } */
+      setLogs(prevLogs => {
+        let updatedLogs = [...prevLogs];
+        const newAdditions: (NodeChange & { id: string })[] = [];
+        
+        docChanges.forEach((change) => {
+          const changeData = change.doc.data();
+          
+          if (
+            ((skillsFuture &&
+              changeData.skillsFuture &&
+              changeData.appName === skillsFutureApp) ||
+              (!skillsFuture && !changeData.skillsFuture)) &&
+            !changeData.deleted
+          ) {
+            const logWithId = { ...changeData, id: change.doc.id } as NodeChange & { id: string };
+            
+            if (change.type === 'added') {
+              const exists = updatedLogs.some(log => log.id === change.doc.id);
+              if (!exists) {
+                newAdditions.push(logWithId);
+              }
+            } else if (change.type === 'modified') {
+              const index = updatedLogs.findIndex(log => log.id === change.doc.id);
+              if (index !== -1) {
+                updatedLogs[index] = logWithId;
+              }
+            } else if (change.type === 'removed') {
+              updatedLogs = updatedLogs.filter(log => log.id !== change.doc.id);
+            }
+          } else {
+            if (change.type === 'modified') {
+              updatedLogs = updatedLogs.filter(log => log.id !== change.doc.id);
+            }
+          }
+        });
+        
+        // Add all new additions to the top
+        if (newAdditions.length > 0) {
+          updatedLogs = [...newAdditions, ...updatedLogs];
         }
-      }
-
-      setLogs(newLogs);
+        
+        return updatedLogs;
+      });
       
       if (!snapshot.empty) {
         setLastDoc(snapshot.docs[snapshot.docs.length - 1]);

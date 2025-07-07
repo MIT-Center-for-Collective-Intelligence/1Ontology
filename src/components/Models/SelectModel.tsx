@@ -42,7 +42,7 @@ import {
 } from "@components/lib/utils/partsHelper";
 import { getTitle } from "@components/lib/utils/string.utils";
 
-const SelectModelModal = ({
+const SelectModel = ({
   handleCloseAddLinksModel,
   onSave,
   selectedProperty,
@@ -674,7 +674,6 @@ const SelectModelModal = ({
       setGlowSearchBox(false);
     }, 1000);
   };
-
   const renderSearchOrTree = () =>
     searchValue ? (
       <ExpandSearchResult
@@ -982,7 +981,7 @@ const SelectModelModal = ({
   );
 };
 
-export default SelectModelModal;
+export default SelectModel;
 {
   /* Selected Items Section */
 }

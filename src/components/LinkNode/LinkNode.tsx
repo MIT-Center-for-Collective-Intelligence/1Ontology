@@ -494,7 +494,7 @@ const LinkNode = ({
         }
         await Post("/triggerChroma", {
           nodeId: currentNodeId,
-          updateAll: false,
+          updatedShortIds: false,
         });
       }
     } catch (error: any) {
