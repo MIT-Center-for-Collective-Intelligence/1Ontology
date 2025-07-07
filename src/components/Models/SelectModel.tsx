@@ -148,6 +148,22 @@ const SelectModel = ({
 
   const db = getFirestore();
 
+  const refreshEditableProperty = useCallback(() => {
+    let freshData: ICollection[] = [];
+
+    if (selectedProperty === "specializations" || selectedProperty === "generalizations") {
+      freshData = currentVisibleNode[selectedProperty as "specializations" | "generalizations"] || [];
+    } else {
+      freshData = onGetPropertyValue(
+        nodes,
+        currentVisibleNode.inheritance[selectedProperty]?.ref,
+        selectedProperty
+      ) || currentVisibleNode?.properties[selectedProperty] || [];
+    }
+
+    setEditableProperty([...freshData]);
+  }, [selectedProperty, currentVisibleNode, nodes, setEditableProperty]);
+
   // Initialize checkedItems with parts that are already inherited
   useEffect(() => {
     if (
@@ -215,6 +231,12 @@ const SelectModel = ({
     nodes,
     isUpdatingInheritance,
   ]);
+
+  useEffect(() => {
+    if (selectedProperty && currentVisibleNode) {
+      refreshEditableProperty();
+    }
+  }, [selectedProperty, currentVisibleNode?.id, refreshEditableProperty]);
 
   const getSelectingModelTitle = (
     property: string,
@@ -304,11 +326,7 @@ const SelectModel = ({
       addedElements.push(checkedId);
     }
 
-    setLoadingIds((prev: Set<string>) => {
-      const _prev = new Set(prev);
-      _prev.add(checkedId);
-      return _prev;
-    });
+    setLoadingIds((prev: Set<string>) => new Set(prev).add(checkedId));
 
     // Handle parts property with new inheritance logic
     if (selectedProperty === "parts" && fromGeneralizationDropdown) {
@@ -375,11 +393,11 @@ const SelectModel = ({
                     newInheritanceParts[part.id] = {
                       inheritedFromTitle: part.isInherited
                         ? referencedNode.inheritanceParts[part.id]
-                            .inheritedFromTitle
+                          .inheritedFromTitle
                         : referencedNode.title,
                       inheritedFromId: part.isInherited
                         ? referencedNode.inheritanceParts[part.id]
-                            .inheritedFromId
+                          .inheritedFromId
                         : inheritanceRef,
                     };
                   }
@@ -415,35 +433,28 @@ const SelectModel = ({
           );
         }
 
-        // Update checkedItems immediately for inheritance parts
-        setCheckedItems((checkedItems: any) => {
-          let _oldChecked = new Set(checkedItems);
-          if (_oldChecked.has(checkedId)) {
-            _oldChecked.delete(checkedId);
+        // Refresh state after inheritance operations
+        refreshEditableProperty();
+
+        setCheckedItems((prev: Set<string>) => {
+          const updated = new Set(prev);
+          if (updated.has(checkedId)) {
+            updated.delete(checkedId);
           } else {
-            if (radioSelection) {
-              _oldChecked = new Set();
-            }
-            _oldChecked.add(checkedId);
+            if (radioSelection) updated.clear();
+            updated.add(checkedId);
           }
-          if (
-            selectedProperty === "generalizations" &&
-            _oldChecked.size === 0
-          ) {
-            return checkedItems;
+          if (selectedProperty === "generalizations" && updated.size === 0) {
+            return prev;
           }
-          return _oldChecked;
+          return updated;
         });
 
         // Update newOnes state for inheritance parts
-        setNewOnes((newOnes: any) => {
-          let _oldChecked = new Set(newOnes);
-          if (_oldChecked.has(checkedId)) {
-            _oldChecked.delete(checkedId);
-          } else {
-            _oldChecked.add(checkedId);
-          }
-          return _oldChecked;
+        setNewOnes((prev: Set<string>) => {
+          const updated = new Set(prev);
+          updated.has(checkedId) ? updated.delete(checkedId) : updated.add(checkedId);
+          return updated;
         });
       } catch (error) {
         console.error("Error saving inheritance part:", error);
@@ -453,98 +464,73 @@ const SelectModel = ({
     } else {
       // Existing logic for non-parts properties or direct parts
       setEditableProperty((prev: ICollection[]) => {
-        const _prev = [...prev];
+        const updated = [...prev];
         if (checkedItems.has(checkedId)) {
-          for (let collection of _prev) {
-            collection.nodes = collection.nodes.filter(
-              (n) => n.id !== checkedId,
-            );
-          }
+          updated.forEach(collection => {
+            collection.nodes = collection.nodes.filter(n => n.id !== checkedId);
+          });
         } else {
-          if (selectedCollection) {
-            const collectionIdx = _prev.findIndex(
-              (c) => c.collectionName === selectedCollection,
-            );
-            if (collectionIdx !== -1) {
-              _prev[collectionIdx].nodes.push({
-                id: checkedId,
-              });
-            }
-          } else {
-            const collectionIdx = _prev.findIndex(
-              (c) => c.collectionName === "main",
-            );
-            if (collectionIdx !== -1) {
-              _prev[collectionIdx].nodes.push({
-                id: checkedId,
-              });
-            } else {
-              _prev.push({
-                collectionName: "main",
-                nodes: [
-                  {
-                    id: checkedId,
-                  },
-                ],
-              });
-            }
+          const targetCollectionName = selectedCollection || "main";
+          let targetCollection = updated.find(c => c.collectionName === targetCollectionName);
+
+          if (!targetCollection) {
+            targetCollection = { collectionName: "main", nodes: [] };
+            updated.push(targetCollection);
           }
+
+          targetCollection.nodes.push({ id: checkedId });
         }
-        return _prev;
+        return updated;
       });
 
       setAddedElements((prev: Set<string>) => {
-        const _prev = new Set(prev);
-        if (_prev.has(checkedId)) {
-          _prev.delete(checkedId);
-        } else {
-          _prev.add(checkedId);
-        }
-        return _prev;
+        const updated = new Set(prev);
+        updated.has(checkedId) ? updated.delete(checkedId) : updated.add(checkedId);
+        return updated;
       });
+
+      setCheckedItems((prev: Set<string>) => {
+        const updated = new Set(prev);
+        if (updated.has(checkedId)) {
+          updated.delete(checkedId);
+        } else {
+          if (radioSelection) updated.clear();
+          updated.add(checkedId);
+        }
+        if (selectedProperty === "generalizations" && updated.size === 0) {
+          return prev;
+        }
+        return updated;
+      });
+
+      setNewOnes((prev: Set<string>) => {
+        const updated = new Set(prev);
+        updated.has(checkedId) ? updated.delete(checkedId) : updated.add(checkedId);
+        return updated;
+      });
+
+      // Persist changes and refresh state
+      try {
+        await handleSaveLinkChanges(
+          removedElements,
+          addedElements,
+          selectedProperty,
+          currentVisibleNode?.id,
+          selectedCollection,
+        );
+
+        // Refresh editableProperty after database update
+        setTimeout(() => refreshEditableProperty(), 100);
+      } catch (error) {
+        console.error("Error saving link changes:", error);
+      }
     }
 
     scrollToElement(checkedId);
-
-    // Update checkedItems and newOnes for non-inheritance parts (inheritance parts are handled above)
-    if (!(selectedProperty === "parts" && fromGeneralizationDropdown)) {
-      setCheckedItems((checkedItems: any) => {
-        let _oldChecked = new Set(checkedItems);
-        if (_oldChecked.has(checkedId)) {
-          _oldChecked.delete(checkedId);
-        } else {
-          if (radioSelection) {
-            _oldChecked = new Set();
-          }
-          _oldChecked.add(checkedId);
-        }
-        if (selectedProperty === "generalizations" && _oldChecked.size === 0) {
-          return checkedItems;
-        }
-        return _oldChecked;
-      });
-
-      setNewOnes((newOnes: any) => {
-        let _oldChecked = new Set(newOnes);
-        if (_oldChecked.has(checkedId)) {
-          _oldChecked.delete(checkedId);
-        } else {
-          _oldChecked.add(checkedId);
-        }
-        return _oldChecked;
-      });
-      await handleSaveLinkChanges(
-        removedElements,
-        addedElements,
-        selectedProperty,
-        currentVisibleNode?.id,
-        selectedCollection,
-      );
-    }
     setLoadingIds((prev: Set<string>) => {
-      const _prev = new Set(prev);
-      _prev.delete(checkedId);
-      return _prev;
+      const updated = new Set(prev);
+      updated.delete(checkedId);
+      return updated;
     });
   };
 
@@ -813,9 +799,9 @@ const SelectModel = ({
               title={`Create as a new Specialization 
                     ${
                       selectedProperty !== "specializations"
-                        ? `Under ${getCreateNewButtonText}`
-                        : ""
-                    } Node`}
+                  ? `Under ${getCreateNewButtonText}`
+                  : ""
+                } Node`}
             >
               <Button
                 onClick={async () => {
@@ -863,7 +849,7 @@ const SelectModel = ({
                   isSaving ||
                   searchValue.length < 3 ||
                   searchResultsForSelection[0]?.title.trim() ===
-                    searchValue.trim() ||
+                  searchValue.trim() ||
                   disabledButton
                 }
               >
