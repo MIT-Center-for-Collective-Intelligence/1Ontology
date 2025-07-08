@@ -416,20 +416,23 @@ const CollectionStructure = ({
         const destinationCollectionIndex = Number(destinationCollection);
 
         setEditableProperty((prev: ICollection[]) => {
-          const nodeIdx = prev[sourceCollectionIndex].nodes.findIndex(
-            (link: ILinkNode) => link.id === draggableId,
-          );
-          const moveValue = prev[sourceCollectionIndex].nodes[nodeIdx];
+          if (prev.length > 0) {
+            const nodeIdx = prev[sourceCollectionIndex].nodes.findIndex(
+              (link: ILinkNode) => link.id === draggableId,
+            );
+            const moveValue = prev[sourceCollectionIndex].nodes[nodeIdx];
 
-          // Remove the item from the source category
-          prev[sourceCollectionIndex].nodes.splice(nodeIdx, 1);
+            // Remove the item from the source category
+            prev[sourceCollectionIndex].nodes.splice(nodeIdx, 1);
 
-          // Move the item to the destination category
-          prev[destinationCollectionIndex].nodes.splice(
-            destination.index,
-            0,
-            moveValue,
-          );
+            // Move the item to the destination category
+            prev[destinationCollectionIndex].nodes.splice(
+              destination.index,
+              0,
+              moveValue,
+            );
+          }
+
           return prev;
         });
         setModifiedOrder(true);
