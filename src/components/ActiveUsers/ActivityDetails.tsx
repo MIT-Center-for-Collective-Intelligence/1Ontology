@@ -25,21 +25,20 @@ const ActivityDetails = ({
       sx={{
         display: "flex",
         flexDirection: "column",
-        mt: "8px",
+        mt: 2,
       }}
     >
       <Paper
         elevation={3}
         sx={{
-          padding: 2,
-          marginX: "15px",
-          mt: 0,
           position: "relative",
-          borderRadius: "12px",
-          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+          p: 3,
+          mx: 2,
+          borderRadius: 3,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
           transition: "box-shadow 0.3s ease-in-out",
           "&:hover": {
-            boxShadow: "0px 16px 40px rgba(0, 0, 0, 0.15)",
+            boxShadow: "0 12px 32px rgba(0,0,0,0.15)",
           },
           backgroundColor: (theme) =>
             theme.palette.mode === "dark"
@@ -51,91 +50,67 @@ const ActivityDetails = ({
                 : "#e9ebf5",
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            position: "absolute",
-            top: 12,
-            left: 12,
-          }}
-        >
-          {modifiedByDetails && (
+        {modifiedByDetails && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              mb: 2,
+            }}
+          >
             <OptimizedAvatar
-              alt={modifiedByDetails.fName + " " + modifiedByDetails.lName}
+              alt={`${modifiedByDetails.fName} ${modifiedByDetails.lName}`}
               imageUrl={modifiedByDetails.imageUrl || ""}
               size={40}
               sx={{
-                width: "40px",
-                height: "40px",
+                width: 40,
+                height: 40,
                 borderRadius: "50%",
                 objectFit: "cover",
               }}
             />
-          )}
-
-          {modifiedByDetails && (
-            <Box
-              sx={{
-                marginLeft: 1,
-                fontSize: "14px",
-                color: "text.primary",
-              }}
-            >
-              <Box sx={{ alignItems: "center", display: "flex", gap: "7px" }}>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                  }}
-                >
-                  {modifiedByDetails.fName} {modifiedByDetails.lName}{" "}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    color: "text.secondary",
-                  }}
-                >
-                  {" "}
-                  {dayjs(new Date(activity.modifiedAt.toDate()))
-                    .fromNow()
-                    .includes("NaN")
-                    ? "a few minutes ago"
-                    : `${dayjs(new Date(activity.modifiedAt.toDate())).fromNow()}`}
-                </Typography>
-              </Box>
-              {modifiedByDetails && (
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontSize: "13px",
-                    // mt: 2,
-                    // mb: 1.5,
-                    mx: "2px",
-                    color: "text.secondary",
-                  }}
-                >
-                  {getChangeDescription(activity, "")}
-                </Typography>
-              )}
+            <Box>
+              <Typography sx={{ fontWeight: 600 }}>
+                {modifiedByDetails.fName} {modifiedByDetails.lName}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: "12px",
+                  color: "text.secondary",
+                }}
+              >
+                {dayjs(new Date(activity.modifiedAt.toDate()))
+                  .fromNow()
+                  .includes("NaN")
+                  ? "a few minutes ago"
+                  : `${dayjs(new Date(activity.modifiedAt.toDate())).fromNow()}`}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  color: "text.secondary",
+                  mt: 0.5,
+                }}
+              >
+                {getChangeDescription(activity, "")}
+              </Typography>
             </Box>
-          )}
-        </Box>
+          </Box>
+        )}
+
         {!modifiedByDetails && (
           <Typography
-            variant="body2"
             sx={{
               fontSize: "13px",
-              // mt: 2,
-              // mb: 1.5,
-              mx: "10px",
               color: "text.secondary",
+              mb: 2,
             }}
           >
             {getChangeDescription(activity, "")}
           </Typography>
         )}
+
         <Button
           onClick={() => {
             if (isSelected || selectedDiffNode?.id === activity.id) {
@@ -144,9 +119,7 @@ const ActivityDetails = ({
               displayDiff(null);
               displayDiff(activity);
               setIsSelected(true);
-              setTimeout(() => {
-                setIsSelected(false);
-              }, 500);
+              setTimeout(() => setIsSelected(false), 500);
             }
           }}
           variant={
@@ -155,13 +128,18 @@ const ActivityDetails = ({
               : "outlined"
           }
           sx={{
-            borderRadius: "20px",
             position: "absolute",
-            top: 12,
-            right: 12,
-            padding: "4px 12px",
+            top: 16,
+            right: 16,
+            borderRadius: 20,
             fontSize: "12px",
-            ml: "14px",
+            textTransform: "none",
+            px: 2,
+            py: 0.5,
+            backgroundColor:
+              isSelected || selectedDiffNode?.id === activity.id
+                ? undefined
+                : "#29292a",
           }}
         >
           {isSelected || selectedDiffNode?.id === activity.id
@@ -171,43 +149,36 @@ const ActivityDetails = ({
 
         <Box
           sx={{
-            paddingBottom: 4,
-            paddingLeft: 2,
-            paddingTop: modifiedByDetails ? 9 : 4,
+            mt: modifiedByDetails ? 1 : 0,
           }}
         >
           <Typography
             variant="h6"
             sx={{
-              fontWeight: "bold",
-              fontSize: "20px",
-              wordWrap: "break-word",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              mt: "6px",
+              fontWeight: 700,
+              fontSize: "18px",
+              mb: activity.reasoning ? 2 : 0,
+              wordBreak: "break-word",
             }}
           >
             {nodes[activity.nodeId]?.title || activity.fullNode?.title}
-            {/* {activity.fullNode?.title} */}
           </Typography>
+
           {activity.reasoning && (
             <Box
               sx={{
-                width: "100%",
-                overflow: "hidden",
-                wordWrap: "break-word",
                 p: 2,
-                border: "1px solid gray",
-                borderRadius: "17px",
+                border: "1px solid #ccc",
+                borderRadius: 2,
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark" ? "#424242" : "#f9f9f9",
               }}
             >
-              <Typography sx={{ fontWeight: "bold" }}>Comments:</Typography>
+              <Typography sx={{ fontWeight: 600, mb: 1 }}>Comments</Typography>
               <Typography
                 sx={{
-                  wordWrap: "break-word",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
+                  fontSize: "14px",
+                  wordBreak: "break-word",
                 }}
               >
                 {activity.reasoning}

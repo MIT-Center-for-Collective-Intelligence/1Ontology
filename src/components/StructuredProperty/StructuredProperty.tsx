@@ -972,7 +972,7 @@ const StructuredProperty = ({
           border:
             selectedProperty === property && !selectedCollection
               ? "2px solid green"
-              : "",
+              : "2px solid orange",
         }}
       >
         <VisualizeTheProperty
