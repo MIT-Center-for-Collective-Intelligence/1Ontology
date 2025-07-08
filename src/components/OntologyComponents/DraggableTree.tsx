@@ -432,7 +432,7 @@ function DraggableTree({
     parentId: string | null;
     parentNode: NodeApi<PaginatedTreeData> | null;
     index: number;
-  }) => {
+    }) => {
     try {
       if (!editEnabled || !user?.uname) return;
 
@@ -608,6 +608,7 @@ function DraggableTree({
       for (let linkId of removedLinks) {
         await unlinkPropertyOf(db, "generalizations", specializationId, linkId);
       }
+      
       const newGeneralizationData = nodes[toParent.nodeId];
       const specializations = newGeneralizationData.specializations;
       const previousSValue = JSON.parse(JSON.stringify(specializations));
@@ -615,10 +616,32 @@ function DraggableTree({
       const alreadyExist = newGeneralizationData.specializations
         .flatMap((c: ICollection) => c.nodes)
         .map((n: { id: string }) => n.id);
+        
       if (!alreadyExist.includes(specializationId)) {
-        specializations[0].nodes.splice(args.index, 0, {
+        let targetCollectionIndex = 0;
+        
+        if (toParent.category) {
+          targetCollectionIndex = specializations.findIndex(
+            (s: ICollection) => s.collectionName === toParent.name
+          );
+        } else {
+          const mainCollectionIndex = specializations.findIndex(
+            (s: ICollection) => s.collectionName === "main"
+          );
+          
+          if (mainCollectionIndex !== -1) {
+            targetCollectionIndex = mainCollectionIndex;
+          }
+        }
+        
+        if (targetCollectionIndex === -1) {
+          targetCollectionIndex = 0;
+        }
+        
+        specializations[targetCollectionIndex].nodes.splice(args.index, 0, {
           id: specializationId,
         });
+        
         await updateDoc(doc(collection(db, NODES), toParent.nodeId), {
           specializations,
         });
