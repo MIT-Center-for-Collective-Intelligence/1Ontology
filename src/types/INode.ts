@@ -74,7 +74,9 @@ export type INode = {
   specializations: ICollection[];
   generalizations: ICollection[];
   root: string;
-  propertyType: { [key: string]: string | "string" | "string-array" };
+  propertyType: {
+    [key: string]: string | "string" | "string-array" | "string-select";
+  };
   nodeType: INodeTypes;
   textValue: { [propertyName: string]: string };
   createdBy: string;

@@ -664,7 +664,8 @@ const ToolbarSidebar = ({
         data.modifiedProperty === "specializations" ||
         data.modifiedProperty === "generalizations") &&
       modified_property_type !== "string" &&
-      modified_property_type !== "string-array"
+      modified_property_type !== "string-array" &&
+      modified_property_type !== "string-select"
     ) {
       const diff = diffCollections(data.previousValue, data.newValue);
       data.detailsOfChange = { comparison: diff };

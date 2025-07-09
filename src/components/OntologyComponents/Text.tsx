@@ -149,7 +149,10 @@ const Text = ({
   const [aiPeer, setAiPeer] = useState({ on: false, waiting: false });
 
   useEffect(() => {
-    if (property !== "title" || user?.uname !== "1man") {
+    if (
+      property !== "title" ||
+      (user?.uname !== "1man" && user?.uname !== "ouhrac")
+    ) {
       return;
     }
     const usersQuery = query(
@@ -597,7 +600,8 @@ const Text = ({
               {property !== "title" &&
                 property !== "ONetID" &&
                 !currentImprovement &&
-                !currentVisibleNode.unclassified && (
+                !currentVisibleNode.unclassified &&
+                currentVisibleNode.inheritance[property] && (
                   <SelectInheritance
                     currentVisibleNode={currentVisibleNode}
                     property={property}

@@ -23,6 +23,7 @@ import { useAuth } from "../context/AuthContext";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
 import { NodeImageManager } from "./NodeImageManager";
 import { DisplayAddedRemovedProperty } from "../StructuredProperty/DisplayAddedRemovedProperty";
+import SelectProperty from "../StructuredProperty/SelectProprety";
 
 interface NodeBodyProps {
   currentVisibleNode: INode;
@@ -483,7 +484,25 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 </Box>
               )}
               <Box sx={{ mt: "15px" }}>
-                {currentNode.propertyType[property] === "string-array" ? (
+                {currentNode.propertyType[property] === "string-select" ? (
+                  <SelectProperty
+                    currentVisibleNode={currentVisibleNode}
+                    property={property}
+                    nodes={nodes}
+                    selectedDiffNode={selectedDiffNode}
+                    currentImprovement={currentImprovement}
+                    user={user}
+                    options={[
+                      "A single human",
+                      "Collaboration of humans",
+                      "Collaboration of humans and AI",
+                      "AI",
+                    ]}
+                    skillsFuture={skillsFuture}
+                    enableEdit={enableEdit}
+                    skillsFutureApp={skillsFutureApp}
+                  />
+                ) : currentNode.propertyType[property] === "string-array" ? (
                   <ChipsProperty
                     currentVisibleNode={currentVisibleNode}
                     property={property}

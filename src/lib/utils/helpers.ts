@@ -635,7 +635,9 @@ export const getChangeDescription = (
           ? "Specialization"
           : modifiedProperty === "generalizations"
             ? "Generalization"
-            : capitalizeFirstLetter(modifiedProperty || "")
+            : modifiedProperty === "parts"
+              ? "Part"
+              : capitalizeFirstLetter(modifiedProperty || "")
       } in:`;
     case "add elements":
       return `Added "${displayText}" Under:`;

@@ -1665,7 +1665,13 @@ const CollectionStructure = ({
                                 fullWidth
                                 variant="outlined"
                               >
-                                <AddIcon />
+                                <AddIcon
+                                  sx={{
+                                    borderRadius: "50%",
+                                    border: "1px solid orange",
+                                    mr: "5px",
+                                  }}
+                                />
 
                                 {`Add ${capitalizeFirstLetter(
                                   DISPLAY[property] || property,
