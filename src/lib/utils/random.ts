@@ -33,7 +33,7 @@ export const handleDownload = async ({ nodes }: { nodes: any }) => {
       if (_nodes.length === 0) return {};
 
       for (let node of _nodes) {
-        if (!node || visited.has(node.id)) {
+        if (!node) {
           continue;
         }
         visited.add(node.id);
@@ -73,7 +73,7 @@ export const handleDownload = async ({ nodes }: { nodes: any }) => {
               generalizationsNames;
           } else {
             newSpecializationsTree[nodeTitle].specializations[
-              collection.collectionName
+              `[${collection.collectionName}]`
             ] = {
               title: `[${collection.collectionName}]`,
               specializations: buildTree(
