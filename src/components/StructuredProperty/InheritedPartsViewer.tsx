@@ -97,6 +97,33 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   ): void => {
     setSelectedGeneralizationIndex(newValue);
   };
+
+  const getPartOptionalStatus = (partId: string, nodeId: string): boolean => {
+    const node = nodes[nodeId];
+    if (!node?.properties?.parts) return false;
+    
+    for (const collection of node.properties.parts) {
+      const part = collection.nodes.find((n: any) => n.id === partId);
+      if (part) return !!part.optional;
+    }
+    return false;
+  };
+
+  const getCurrentPartOptionalStatus = (partId: string): boolean => {
+    const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
+    const currentNodeParts = inheritanceRef && nodes[inheritanceRef]
+      ? nodes[inheritanceRef].properties["parts"]
+      : currentVisibleNode.properties["parts"];
+    
+    if (!currentNodeParts) return false;
+    
+    for (const collection of currentNodeParts) {
+      const part = collection.nodes.find((n: any) => n.id === partId);
+      if (part) return !!part.optional;
+    }
+    return false;
+  };
+
   const analyzeInheritance = (
     inheritance: any,
     parts: string[],
@@ -107,6 +134,9 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       from: string;
       to: string;
       symbol: ">" | "x" | "=" | "+";
+      fromOptional?: boolean;
+      toOptional?: boolean;
+      optionalChange?: "added" | "removed" | "none";
     }[] = [];
     const matchedParts = new Set();
     const usedKeys = new Set();
@@ -124,17 +154,31 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           matchedParts.add(part);
           usedKeys.add(key);
 
+          const fromOptional = getPartOptionalStatus(part, generalizationId);
+          const toOptional = getCurrentPartOptionalStatus(key);
+          
+          let optionalChange: "added" | "removed" | "none" = "none";
+          if (fromOptional !== toOptional) {
+            optionalChange = toOptional ? "added" : "removed";
+          }
+
           if (key === part) {
             result.push({
               from: part,
               to: key,
               symbol: "=",
+              fromOptional,
+              toOptional,
+              optionalChange,
             });
           } else {
             result.push({
               from: part,
               to: key,
               symbol: ">",
+              fromOptional,
+              toOptional,
+              optionalChange,
             });
           }
         }
@@ -147,6 +191,9 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           from: part,
           to: "",
           symbol: "x",
+          fromOptional: getPartOptionalStatus(part, generalizationId),
+          toOptional: false,
+          optionalChange: "none",
         });
       }
     }
@@ -157,9 +204,13 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           from: "",
           to: key,
           symbol: "+",
+          fromOptional: false,
+          toOptional: getCurrentPartOptionalStatus(key),
+          optionalChange: "none",
         });
       }
     }
+
     const seen = new Set();
     const uniqueResult = result.filter((entry) => {
       const key = `${entry.from}|${entry.to}`;
@@ -168,9 +219,15 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       return true;
     });
 
+    const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
+    const currentNodeParts = inheritanceRef && nodes[inheritanceRef]
+      ? nodes[inheritanceRef].properties["parts"]
+      : currentVisibleNode.properties["parts"];
+    const currentPartsOrder = currentNodeParts?.[0]?.nodes?.map((c: any) => c.id) || [];
+
     uniqueResult.sort((a, b) => {
-      const indexA = currentParts.indexOf(a.to);
-      const indexB = currentParts.indexOf(b.to);
+      const indexA = currentPartsOrder.indexOf(a.to);
+      const indexB = currentPartsOrder.indexOf(b.to);
 
       return (
         (indexA === -1 ? Infinity : indexA) -
@@ -178,6 +235,36 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       );
     });
     return uniqueResult;
+  };
+
+  const formatPartTitle = (
+    partId: string, 
+    isOptional: boolean, 
+    optionalChange?: "added" | "removed" | "none"
+  ) => {
+    const title = nodes[partId]?.title || "";
+    
+    if (optionalChange === "added") {
+      return (
+        <Box component="span" sx={{ display: "inline" }}>
+          {title} <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>+(O)</Box>
+        </Box>
+      );
+    } else if (optionalChange === "removed") {
+      return (
+        <Box component="span" sx={{ display: "inline" }}>
+          {title} <Box component="span" sx={{ textDecoration: "line-through", color: "#ff9500", fontWeight: "bold" }}>(O)</Box>
+        </Box>
+      );
+    } else if (isOptional) {
+      return (
+        <Box component="span" sx={{ display: "inline" }}>
+          {title} <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>(O)</Box>
+        </Box>
+      );
+    }
+    
+    return title;
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
@@ -229,153 +316,140 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           borderRadius: "20px",
         }}
       >
-        {details.map(
-          (
-            {
-              from,
-              to,
-              symbol,
-            }: {
-              from: string;
-              to: string;
-              symbol: ">" | "x" | "=" | "+";
-            },
-            index,
-          ) => (
-            <ListItem
-              key={`${from}-${to}`}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                px: 0,
-                py: 0,
-                backgroundImage:
-                  index !== 0
-                    ? "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)"
-                    : "",
-                backgroundPosition: index !== 0 ? "top" : "",
-                backgroundRepeat: "repeat-x",
-                backgroundSize: "100% 1px",
-              }}
-            >
-              {!readOnly && symbol === "x" && !!addPart && (
-                <Tooltip title={"Add part"} placement="top">
-                  <IconButton
-                    sx={{ p: 0.5 }}
-                    onClick={() => {
-                      addPart(from);
+        {details.map((entry, index) => (
+          <ListItem
+            key={`${entry.from}-${entry.to}`}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              px: 0,
+              py: 0,
+              backgroundImage:
+                index !== 0
+                  ? "repeating-linear-gradient(to right, gray 0, gray 1px, transparent 1px, transparent 6px)"
+                  : "",
+              backgroundPosition: index !== 0 ? "top" : "",
+              backgroundRepeat: "repeat-x",
+              backgroundSize: "100% 1px",
+            }}
+          >
+            {!readOnly && entry.symbol === "x" && !!addPart && (
+              <Tooltip title={"Add part"} placement="top">
+                <IconButton
+                  sx={{ p: 0.5 }}
+                  onClick={() => {
+                    addPart(entry.from);
+                  }}
+                >
+                  <AddIcon
+                    sx={{
+                      fontSize: 20,
+                      color: "green",
+                      border: "1px solid green",
+                      borderRadius: "50%",
                     }}
-                  >
-                    <AddIcon
-                      sx={{
-                        fontSize: 20,
-                        color: "green",
-                        border: "1px solid green",
-                        borderRadius: "50%",
-                      }}
-                    />
-                  </IconButton>
-                </Tooltip>
-              )}
+                  />
+                </IconButton>
+              </Tooltip>
+            )}
 
-              {!readOnly && symbol === "=" && !!removePart && (
-                <Tooltip title={"Remove part"} placement="top">
-                  <IconButton
-                    sx={{ p: 0.5 }}
-                    onClick={() => {
-                      removePart(to);
+            {!readOnly && entry.symbol === "=" && !!removePart && (
+              <Tooltip title={"Remove part"} placement="top">
+                <IconButton
+                  sx={{ p: 0.5 }}
+                  onClick={() => {
+                    removePart(entry.to);
+                  }}
+                >
+                  <RemoveIcon
+                    sx={{
+                      fontSize: 20,
+                      color: "red",
+                      border: "1px solid red",
+                      borderRadius: "50%",
                     }}
-                  >
-                    <RemoveIcon
-                      sx={{
-                        fontSize: 20,
-                        color: "red",
-                        border: "1px solid red",
-                        borderRadius: "50%",
-                      }}
-                    />
-                  </IconButton>
-                </Tooltip>
-              )}
+                  />
+                </IconButton>
+              </Tooltip>
+            )}
 
-              {!readOnly && from && symbol !== "x" && symbol !== "=" && (
-                <ListItemIcon sx={{ minWidth: "auto" }}>
-                  <Tooltip title="Search it below" placement="left">
-                    <IconButton
-                      sx={{ p: 0.4 }}
-                      onClick={() =>
-                        triggerSearch({ id: from, title: nodes[from].title })
-                      }
-                    >
-                      <SearchIcon sx={{ fontSize: 19, color: "orange" }} />
-                    </IconButton>
-                  </Tooltip>
-                </ListItemIcon>
-              )}
-
-              <ListItemText
-                primary={
-                  from ? (
-                    <Link
-                      underline={!!navigateToNode ? "hover" : "none"}
-                      onClick={() => {
-                        if (navigateToNode) {
-                          navigateToNode(from);
-                        }
-                      }}
-                      sx={{
-                        cursor: !!navigateToNode ? "pointer" : "",
-                        color: (them) =>
-                          them.palette.mode === "dark" ? "white" : "black",
-                        fontSize: "0.9rem",
-                      }}
-                    >
-                      {nodes[from].title}
-                    </Link>
-                  ) : null
-                }
-                sx={{ flex: 1, minWidth: 0.3 }}
-              />
-
+            {!readOnly && entry.from && entry.symbol !== "x" && entry.symbol !== "=" && (
               <ListItemIcon sx={{ minWidth: "auto" }}>
-                {symbol === "x" ? (
-                  <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
-                ) : symbol === ">" ? (
-                  <ArrowForwardIosIcon sx={{ fontSize: 20, color: "orange" }} />
-                ) : symbol === "=" ? (
-                  <DragHandleIcon sx={{ fontSize: 20, color: "orange" }} />
-                ) : symbol === "+" ? (
-                  <AddIcon sx={{ fontSize: 20, color: "orange" }} />
-                ) : null}
+                <Tooltip title="Search it below" placement="left">
+                  <IconButton
+                    sx={{ p: 0.4 }}
+                    onClick={() =>
+                      triggerSearch({ id: entry.from, title: nodes[entry.from].title })
+                    }
+                  >
+                    <SearchIcon sx={{ fontSize: 19, color: "orange" }} />
+                  </IconButton>
+                </Tooltip>
               </ListItemIcon>
+            )}
 
-              <ListItemText
-                primary={
-                  to ? (
-                    <Link
-                      underline={!!navigateToNode ? "hover" : "none"}
-                      onClick={() => {
-                        if (navigateToNode) {
-                          navigateToNode(to);
-                        }
-                      }}
-                      sx={{
-                        cursor: !!navigateToNode ? "pointer" : "",
-                        color: (them) =>
-                          them.palette.mode === "dark" ? "white" : "black",
-                        fontSize: "0.9rem",
-                      }}
-                    >
-                      {nodes[to].title}
-                    </Link>
-                  ) : null
-                }
-                sx={{ flex: 1, minWidth: 0.3 }}
-              />
-            </ListItem>
-          ),
-        )}
+            <ListItemText
+              primary={
+                entry.from ? (
+                  <Link
+                    underline={!!navigateToNode ? "hover" : "none"}
+                    onClick={() => {
+                      if (navigateToNode) {
+                        navigateToNode(entry.from);
+                      }
+                    }}
+                    sx={{
+                      cursor: !!navigateToNode ? "pointer" : "",
+                      color: (them) =>
+                        them.palette.mode === "dark" ? "white" : "black",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {formatPartTitle(entry.from, entry.fromOptional || false)}
+                  </Link>
+                ) : null
+              }
+              sx={{ flex: 1, minWidth: 0.3 }}
+            />
+
+            <ListItemIcon sx={{ minWidth: "auto" }}>
+              {entry.symbol === "x" ? (
+                <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
+              ) : entry.symbol === ">" ? (
+                <ArrowForwardIosIcon sx={{ fontSize: 20, color: "orange" }} />
+              ) : entry.symbol === "=" ? (
+                <DragHandleIcon sx={{ fontSize: 20, color: "orange" }} />
+              ) : entry.symbol === "+" ? (
+                <AddIcon sx={{ fontSize: 20, color: "orange" }} />
+              ) : null}
+            </ListItemIcon>
+
+            <ListItemText
+              primary={
+                entry.to ? (
+                  <Link
+                    underline={!!navigateToNode ? "hover" : "none"}
+                    onClick={() => {
+                      if (navigateToNode) {
+                        navigateToNode(entry.to);
+                      }
+                    }}
+                    sx={{
+                      cursor: !!navigateToNode ? "pointer" : "",
+                      color: (them) =>
+                        them.palette.mode === "dark" ? "white" : "black",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {formatPartTitle(entry.to, entry.toOptional || false, entry.optionalChange)}
+                  </Link>
+                ) : null
+              }
+              sx={{ flex: 1, minWidth: 0.3 }}
+            />
+          </ListItem>
+        ))}
       </List>
     );
   };
