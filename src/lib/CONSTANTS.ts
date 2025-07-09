@@ -31,6 +31,9 @@ export const DISPLAY: {
   ONetID: "O*Net ID",
   generalizations: 'Generalizations ("Parents")',
   specializations: 'Specializations ("Children")',
+  most_efficiently_performed_by: "Most Efficiently Performed By",
+  reason_for_most_efficiently_performed_by:
+    "Reason for Most Efficiently Performed By",
 };
 
 export const NO_IMAGE_USER =
