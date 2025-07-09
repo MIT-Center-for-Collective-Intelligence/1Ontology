@@ -47,10 +47,14 @@ export const handleDownload = async ({ nodes }: { nodes: any }) => {
         parts = Array.isArray(parts)
           ? parts.flatMap((c) => c.nodes).map((c) => nodes[c.id].title.trim())
           : [];
+        const inheritanceDescriptionRef = node.inheritance["description"].ref;
+        const description = inheritanceDescriptionRef
+          ? nodes[inheritanceDescriptionRef]
+          : node.properties["description"];
 
         newSpecializationsTree[nodeTitle] = {
           title: nodeTitle,
-          description: node.properties["description"],
+          description,
           parts,
           specializations: {},
           generalizations: {},
