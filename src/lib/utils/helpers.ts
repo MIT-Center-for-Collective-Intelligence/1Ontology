@@ -665,6 +665,8 @@ export const getChangeDescription = (
       return `Added new "Image" in:`;
     case "remove images":
       return `Removed "Image" in:`;
+    case "edit property":
+      return `Changed the name of a property in:`;
     default:
       return `Made an unknown change to:`;
   }

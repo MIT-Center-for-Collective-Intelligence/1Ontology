@@ -439,7 +439,9 @@ const Text = ({
                     display: "inline-block",
                     pl: "1px",
                     "&:hover":
-                      enableEdit && modifyProperty
+                      enableEdit &&
+                      modifyProperty &&
+                      property !== "reason_for_most_efficiently_performed_by"
                         ? {
                             border: "2px solid orange",
                             borderRadius: "15px",
@@ -449,7 +451,9 @@ const Text = ({
                           }
                         : {},
                     "&:hover .edit-icon":
-                      enableEdit && modifyProperty
+                      enableEdit &&
+                      modifyProperty &&
+                      property !== "reason_for_most_efficiently_performed_by"
                         ? {
                             display: "block",
                           }
@@ -462,18 +466,56 @@ const Text = ({
                     }
                   }}
                 >
-                  <Typography
-                    sx={{
-                      fontSize: "20px",
-                      fontWeight: 500,
-                      fontFamily: "Roboto, sans-serif",
-                      padding: "4px",
-                    }}
-                  >
-                    {capitalizeFirstLetter(
-                      DISPLAY[property] ? DISPLAY[property] : property,
-                    )}
-                  </Typography>
+                  {selectedDiffNode?.modifiedProperty === property &&
+                  selectedDiffNode.changeType === "edit property" ? (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        background: (theme: any) =>
+                          theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                        p: 3,
+                        gap: "10px",
+                      }}
+                    >
+                      {" "}
+                      <Typography
+                        sx={{
+                          fontSize: "20px",
+                          fontWeight: 500,
+                          fontFamily: "Roboto, sans-serif",
+                          color: "red",
+                          textDecoration: "line-through",
+                        }}
+                      >
+                        {selectedDiffNode.previousValue}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: "20px",
+                          fontWeight: 500,
+                          fontFamily: "Roboto, sans-serif",
+                          color: "green",
+                        }}
+                      >
+                        {selectedDiffNode.newValue}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Typography
+                      sx={{
+                        fontSize: "20px",
+                        fontWeight: 500,
+                        fontFamily: "Roboto, sans-serif",
+                        padding: "4px",
+                      }}
+                    >
+                      {capitalizeFirstLetter(
+                        DISPLAY[property] ? DISPLAY[property] : property,
+                      )}
+                    </Typography>
+                  )}
+
                   <EditIcon
                     className="edit-icon"
                     sx={{
@@ -642,7 +684,8 @@ const Text = ({
                 </Typography>
               </Box>
             ) : selectedDiffNode &&
-              selectedDiffNode.modifiedProperty === property ? (
+              selectedDiffNode.modifiedProperty === property &&
+              selectedDiffNode.changeType === "change text" ? (
               <Box sx={{ p: "10px", borderRadius: "5px" }}>
                 <Box sx={{ display: "flow", gap: "3px", p: "14px" }}>
                   {renderDiff(

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { Box, Button, Typography, useTheme } from "@mui/material";
+import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
 import { ICollection, INode } from "@components/types/INode";
 import Text from "../OntologyComponents/Text";
 import {
@@ -621,6 +621,64 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 enableEdit={enableEdit}
               />
             </Box>
+          )}
+        {selectedDiffNode?.changeType === "edit property" &&
+          !(selectedDiffNode.newValue in currentVisibleNode.properties) && (
+            <Paper
+              id={`property-${selectedDiffNode.modifiedProperty}`}
+              elevation={9}
+              sx={{
+                borderRadius: "30px",
+                borderBottomRightRadius: "18px",
+                borderBottomLeftRadius: "18px",
+                minWidth: "500px",
+                width: "100%",
+                maxHeight: "100%",
+                overflow: "auto",
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                overflowX: "hidden",
+                pb: "10px",
+                mt: "14px",
+                minHeight: "100px",
+              }}
+            >
+              {" "}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  background: (theme: any) =>
+                    theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                  p: 3,
+                  gap: "10px",
+                }}
+              >
+                {" "}
+                <Typography
+                  sx={{
+                    fontSize: "20px",
+                    fontWeight: 500,
+                    fontFamily: "Roboto, sans-serif",
+                    color: "red",
+                    textDecoration: "line-through",
+                  }}
+                >
+                  {selectedDiffNode.previousValue}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "20px",
+                    fontWeight: 500,
+                    fontFamily: "Roboto, sans-serif",
+                    color: "green",
+                  }}
+                >
+                  {selectedDiffNode.newValue}
+                </Typography>
+              </Box>
+            </Paper>
           )}
       </Box>
       {!locked && openAddProperty && (
