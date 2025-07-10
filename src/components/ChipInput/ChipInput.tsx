@@ -25,6 +25,7 @@ const ChipInput = ({
   selectedTags: any;
   updateTags: (newValue: string[], added: string[], removed: string[]) => void;
   placeholder: any;
+  fontSize?: string;
   //
   readOnly?: any;
   itemId?: any;
@@ -46,6 +47,7 @@ const ChipInput = ({
     added = [],
     removed = [],
     style = {},
+    fontSize,
     ...other
   } = props;
   const [inputValue, setInputValue] = React.useState("");
@@ -124,7 +126,7 @@ const ChipInput = ({
                         <Chip
                           sx={{
                             background: `${color}`,
-                            fontSize: "20px",
+                            fontSize: fontSize || "20px",
                           }}
                           key={item}
                           tabIndex={-1}
@@ -153,7 +155,7 @@ const ChipInput = ({
                             <Chip
                               sx={{
                                 background: `${color}`,
-                                fontSize: "20px",
+                                fontSize: fontSize || "20px",
                               }}
                               key={item}
                               tabIndex={-1}
@@ -164,7 +166,7 @@ const ChipInput = ({
                             <Chip
                               sx={{
                                 background: `${color}`,
-                                fontSize: "20px",
+                                fontSize: fontSize || "20px",
                               }}
                               key={item}
                               tabIndex={-1}

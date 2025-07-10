@@ -139,14 +139,14 @@ const ActivityDetails = ({
             backgroundColor:
               isSelected || selectedDiffNode?.id === activity.id
                 ? undefined
-                : "#29292a",
+                : (theme) =>
+                    theme.palette.mode === "dark" ? "#29292a" : "#d3d3d3",
           }}
         >
           {isSelected || selectedDiffNode?.id === activity.id
             ? "Unselect"
             : "View"}
         </Button>
-
         <Box
           sx={{
             mt: modifiedByDetails ? 1 : 0,
@@ -186,6 +186,14 @@ const ActivityDetails = ({
             </Box>
           )}
         </Box>
+        <div>
+          <span>
+            {"activity id"} {activity.id}
+          </span>
+          <span>
+            {"--node id"} {activity.nodeId}
+          </span>
+        </div>
       </Paper>
     </Box>
   );

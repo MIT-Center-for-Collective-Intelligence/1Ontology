@@ -167,7 +167,8 @@ export type NodeChange = {
     | "add images"
     | "remove images"
     | "sort collections"
-    | "edit property";
+    | "edit property"
+    | "change select-string";
   fullNode: INode | null;
   changeDetails?: { [key: string]: any };
   reasoning?: string;

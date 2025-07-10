@@ -11,6 +11,8 @@ import {
   Typography,
   Select,
   MenuItem,
+  TextField,
+  Button,
 } from "@mui/material";
 import {
   saveNewChangeLog,
@@ -19,8 +21,10 @@ import {
 import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import PropertyContributors from "./PropertyContributors";
-import SelectInheritance from "../SelectInheritance/SelectInheritance";
+
 import { DISPLAY } from "@components/lib/CONSTANTS";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ChipInput from "../ChipInput/ChipInput";
 
 const SelectProperty = ({
   currentVisibleNode,
@@ -46,29 +50,34 @@ const SelectProperty = ({
   skillsFutureApp: string;
 }) => {
   const db = getFirestore();
-  const [value, setValue] = useState<string>("");
+  const [value, setValue] = useState<
+    { performer: string; reason: string; URLs: string[] }[]
+  >([]);
 
-  const propertyValue: string = useMemo(() => {
+  const propertyValue: any[] = useMemo(() => {
+    let result = [];
     if (
       currentImprovement &&
       currentImprovement.modifiedProperty === property
     ) {
-      return currentImprovement.detailsOfChange.newValue || "";
+      result = currentImprovement.detailsOfChange.newValue || [];
+    } else if (
+      selectedDiffNode &&
+      selectedDiffNode.modifiedProperty === property
+    ) {
+      result = selectedDiffNode.newValue || [];
+    } else {
+      const prop = currentVisibleNode.properties[property];
+      result = Array.isArray(prop) ? prop : [];
     }
-    if (selectedDiffNode && selectedDiffNode.modifiedProperty === property) {
-      return selectedDiffNode.newValue || "";
-    }
-
-    const result = currentVisibleNode.properties[property];
-
-    return typeof result === "string" ? result : "";
+    return result;
   }, [property, currentVisibleNode, selectedDiffNode, currentImprovement]);
 
   useEffect(() => {
-    setValue(propertyValue);
+    setValue(JSON.parse(JSON.stringify(propertyValue)));
   }, [propertyValue]);
 
-  const updateValue = async (newValue: string) => {
+  const updateValue = async (newValue: any) => {
     try {
       if (
         !!currentImprovement ||
@@ -79,16 +88,11 @@ const SelectProperty = ({
 
       setValue(newValue);
 
-      const previousValue: string = currentVisibleNode.properties[
-        property
-      ] as string;
+      const previousValue: any = JSON.parse(
+        JSON.stringify(currentVisibleNode.properties[property]),
+      );
 
       const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-
-      await updateDoc(nodeRef, {
-        [`properties.${property}`]: newValue,
-        [`inheritance.${property}.ref`]: null,
-      });
 
       if (
         !!currentVisibleNode.inheritance[property] &&
@@ -101,43 +105,123 @@ const SelectProperty = ({
         });
       }
 
-      saveNewChangeLog(db, {
+      await saveNewChangeLog(db, {
         nodeId: currentVisibleNode?.id,
         modifiedBy: user?.uname,
         modifiedProperty: property,
         previousValue,
         newValue,
         modifiedAt: new Date(),
-        changeType: "change text",
+        changeType: "change select-string",
         fullNode: currentVisibleNode,
-        changeDetails: {
-          addedElements: [newValue],
-          removedElements: [previousValue],
-        },
         skillsFuture,
         ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+      });
+      await updateDoc(nodeRef, {
+        [`properties.${property}`]: newValue,
+        [`inheritance.${property}.ref`]: null,
       });
     } catch (error) {
       console.error(error);
     }
   };
 
-  const renderDiff = (previousValue: string, newValue: string) => {
+  const handlePerformerChange = (index: number, newPerformer: string) => {
+    const updated = [...value];
+    updated[index].performer = newPerformer;
+    updateValue(updated);
+  };
+
+  const handleReasonChange = (index: number, newReason: string) => {
+    const updated = [...value];
+    updated[index].reason = newReason;
+    setValue(updated);
+    updateValue(updated);
+  };
+
+  const handleURLsChange = (
+    index: number,
+    newURLs: string[],
+    added: string[],
+    removed: string[],
+  ) => {
+    const updated = [...value];
+    updated[index].URLs = newURLs;
+    updateValue(updated);
+  };
+
+  const handleAddEntry = () => {
+    const updated = [...value, { performer: "", reason: "", URLs: [] }];
+    updateValue(updated);
+  };
+
+  const handleRemoveEntry = (index: number) => {
+    const updated = [...value];
+    updated.splice(index, 1);
+    updateValue(updated);
+  };
+  const DiffLine = ({
+    label,
+    prev,
+    next,
+  }: {
+    label: string;
+    prev: string;
+    next: string;
+  }) => {
+    if (prev === next) {
+      return (
+        <Typography sx={{ mb: 0.5 }}>
+          {label}: {next || "-"}
+        </Typography>
+      );
+    }
+
     return (
-      <div>
-        <div
-          style={{
-            color: "red",
-            textDecoration: "line-through",
-            textTransform: "capitalize",
-          }}
-        >
-          {previousValue}
-        </div>
-        <div style={{ color: "green", textTransform: "capitalize" }}>
-          {newValue}
-        </div>
-      </div>
+      <Typography sx={{ mb: 0.5 }}>
+        {label}:{" "}
+        <span style={{ color: "red", textDecoration: "line-through" }}>
+          {prev || "-"}
+        </span>{" "}
+        → <span style={{ color: "green" }}>{next || "-"}</span>
+      </Typography>
+    );
+  };
+
+  const renderDiff = (previousValue: any[], newValue: any[]) => {
+    const maxLength = Math.max(previousValue.length, newValue.length);
+
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {[...Array(maxLength)].map((_, index) => {
+          const prev = previousValue[index] || {};
+          const next = newValue[index] || {};
+
+          return (
+            <Paper
+              key={index}
+              sx={{ p: 2, border: "1px solid #ccc", borderRadius: "10px" }}
+            >
+              <Typography sx={{ fontWeight: "bold", mb: 1 }}>
+                Entry {index + 1}
+              </Typography>
+
+              <DiffLine
+                label="Performer"
+                prev={prev.performer}
+                next={next.performer}
+              />
+              <DiffLine label="Reason" prev={prev.reason} next={next.reason} />
+
+              <DiffLine
+                label="URLs"
+                prev={(prev.URLs || []).join(", ")}
+                next={(next.URLs || []).join(", ")}
+              />
+            </Paper>
+          );
+        })}
+      </Box>
     );
   };
 
@@ -190,6 +274,7 @@ const SelectProperty = ({
           />
         </Box>
       </Box>
+
       {selectedDiffNode && selectedDiffNode.modifiedProperty === property ? (
         <Box sx={{ p: "10px", borderRadius: "5px" }}>
           <Box sx={{ display: "flow", gap: "3px", p: "14px" }}>
@@ -200,28 +285,114 @@ const SelectProperty = ({
           </Box>
         </Box>
       ) : (
-        <Box sx={{ p: 3 }}>
-          {enableEdit &&
-          !selectedDiffNode &&
-          !currentVisibleNode.unclassified &&
-          !currentImprovement ? (
-            <Select
-              value={value.toLowerCase()}
-              onChange={(e) => updateValue(e.target.value as string)}
-              fullWidth
+        <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 4 }}>
+          {value.map((entry, index) => (
+            <Box
+              key={index}
+              sx={{
+                p: 2,
+                borderRadius: "10px",
+                border: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "1px solid #ccc"
+                    : "1px solid #221f1f",
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark" ? "#3f3f40" : "#e2e2e2",
+              }}
             >
-              {options.map((opt) => (
-                <MenuItem key={opt} value={opt}>
-                  {opt}
-                </MenuItem>
-              ))}
-            </Select>
-          ) : (
-            <Typography
-              sx={{ fontSize: "18px", p: 1, textTransform: "capitalize" }}
+              {enableEdit ? (
+                <Box>
+                  <Button
+                    onClick={() => handleRemoveEntry(index)}
+                    sx={{
+                      mt: 1,
+                      color: "red",
+                      border: "1px solid red",
+                      borderRadius: "15px",
+                      ml: "auto",
+                      mb: "10px",
+                    }}
+                  >
+                    Delete
+                  </Button>
+                  <Select
+                    value={entry.performer || ""}
+                    onChange={(e) =>
+                      handlePerformerChange(index, e.target.value)
+                    }
+                    fullWidth
+                    sx={{ borderRadius: "20px" }}
+                  >
+                    {[
+                      "a single human",
+                      "collaboration of humans",
+                      "collaboration of humans and ai",
+                      "ai",
+                    ].map((opt) => (
+                      <MenuItem key={opt} value={opt}>
+                        {opt}
+                      </MenuItem>
+                    ))}
+                  </Select>
+
+                  <TextField
+                    label="Reason"
+                    value={entry.reason || ""}
+                    onChange={(e) => handleReasonChange(index, e.target.value)}
+                    fullWidth
+                    multiline
+                    sx={{ mt: 2 }}
+                  />
+                  <Box
+                    sx={{
+                      border: "1px solid gray",
+                      borderRadius: "15px",
+                      mt: "15px",
+                    }}
+                  >
+                    <ChipInput
+                      tags={entry.URLs || []}
+                      selectedTags={() => {}}
+                      updateTags={(newTags, added, removed) =>
+                        handleURLsChange(index, newTags, added, removed)
+                      }
+                      placeholder="Add URL"
+                      label="URLs"
+                      fontSize="10px"
+                    />
+                  </Box>
+                </Box>
+              ) : (
+                <>
+                  <Typography
+                    sx={{ fontSize: "18px", textTransform: "capitalize" }}
+                  >
+                    Performer: {entry.performer}
+                  </Typography>
+                  <Typography sx={{ fontSize: "18px", mt: 1 }}>
+                    Reason: {entry.reason}
+                  </Typography>
+                  <ChipInput
+                    tags={entry.URLs || []}
+                    selectedTags={() => {}}
+                    updateTags={() => {}}
+                    placeholder="URLs"
+                    readOnly
+                    fontSize="10px"
+                  />
+                </>
+              )}
+            </Box>
+          ))}
+
+          {enableEdit && (
+            <Button
+              variant="outlined"
+              onClick={handleAddEntry}
+              sx={{ alignSelf: "flex-start", borderRadius: "25px" }}
             >
-              {value}
-            </Typography>
+              Add Entry
+            </Button>
           )}
         </Box>
       )}
