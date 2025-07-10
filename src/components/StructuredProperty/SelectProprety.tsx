@@ -123,25 +123,22 @@ const SelectProperty = ({
   };
 
   const renderDiff = (previousValue: string, newValue: string) => {
-    try {
-      return (
-        <div>
-          <div style={{ color: "red", textDecoration: "line-through" }}>
-            {previousValue}
-          </div>
-          <div style={{ color: "green" }}>{newValue}</div>
+    return (
+      <div>
+        <div
+          style={{
+            color: "red",
+            textDecoration: "line-through",
+            textTransform: "capitalize",
+          }}
+        >
+          {previousValue}
         </div>
-      );
-    } catch (error) {
-      return (
-        <div>
-          <div style={{ color: "red", textDecoration: "line-through" }}>
-            {previousValue}
-          </div>
-          <div style={{ color: "green" }}>{newValue}</div>
+        <div style={{ color: "green", textTransform: "capitalize" }}>
+          {newValue}
         </div>
-      );
-    }
+      </div>
+    );
   };
 
   return (
@@ -209,7 +206,7 @@ const SelectProperty = ({
           !currentVisibleNode.unclassified &&
           !currentImprovement ? (
             <Select
-              value={value}
+              value={value.toLowerCase()}
               onChange={(e) => updateValue(e.target.value as string)}
               fullWidth
             >
@@ -220,7 +217,11 @@ const SelectProperty = ({
               ))}
             </Select>
           ) : (
-            <Typography sx={{ fontSize: "18px", p: 1 }}>{value}</Typography>
+            <Typography
+              sx={{ fontSize: "18px", p: 1, textTransform: "capitalize" }}
+            >
+              {value}
+            </Typography>
           )}
         </Box>
       )}
