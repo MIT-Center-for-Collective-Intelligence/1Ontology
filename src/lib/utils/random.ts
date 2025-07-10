@@ -49,7 +49,7 @@ export const handleDownload = async ({ nodes }: { nodes: any }) => {
           : [];
         const inheritanceDescriptionRef = node.inheritance["description"].ref;
         const description = inheritanceDescriptionRef
-          ? nodes[inheritanceDescriptionRef]
+          ? nodes[inheritanceDescriptionRef].properties["description"] || ""
           : node.properties["description"];
 
         newSpecializationsTree[nodeTitle] = {
@@ -65,8 +65,8 @@ export const handleDownload = async ({ nodes }: { nodes: any }) => {
           collection.nodes.forEach((nodeLink: { id: string }) => {
             specializations.push(nodes[nodeLink.id]);
           });
-          const generalizationsNames = node.generalizations[0].nodes.map((c) =>
-            nodes[c.id].title.trim(),
+          const generalizationsNames = node.generalizations[0].nodes.map(
+            (c: { id: string }) => nodes[c.id].title.trim(),
           );
           if (collection.collectionName === "main") {
             newSpecializationsTree[nodeTitle].specializations = {
