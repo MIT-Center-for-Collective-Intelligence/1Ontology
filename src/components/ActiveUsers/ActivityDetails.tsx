@@ -186,14 +186,6 @@ const ActivityDetails = ({
             </Box>
           )}
         </Box>
-        <div>
-          <span>
-            {"activity id"} {activity.id}
-          </span>
-          <span>
-            {"--node id"} {activity.nodeId}
-          </span>
-        </div>
       </Paper>
     </Box>
   );
