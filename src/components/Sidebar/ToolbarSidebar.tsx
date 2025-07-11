@@ -681,19 +681,39 @@ const ToolbarSidebar = ({
     setTimeout(() => {
       const modifiedProperty = data.modifiedProperty;
       const changedProperty = data.changeDetails?.addedProperty;
+      const targetProperty = modifiedProperty || changedProperty;
 
-      if (modifiedProperty) {
-        const element = document.getElementById(`property-${modifiedProperty}`);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
-          return;
+      if (targetProperty) {
+        let firstChangedNodeId = null;
+
+        if (data.detailsOfChange?.comparison) {
+          for (const collection of data.detailsOfChange.comparison) {
+            const changedNode = collection.nodes.find((node: any) => 
+              node.change === "added" || 
+              node.change === "removed" || 
+              node.change === "modified" ||
+              node.changeType === "sort"
+            );
+            if (changedNode) {
+              firstChangedNodeId = changedNode.id;
+              break;
+            }
+          }
         }
-      }
 
-      if (changedProperty) {
-        const element = document.getElementById(`property-${changedProperty}`);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Scroll to the specific changed element
+        if (firstChangedNodeId) {
+          const changedElement = document.getElementById(`${firstChangedNodeId}-${targetProperty}`);
+          if (changedElement) {
+            changedElement.scrollIntoView({ behavior: "smooth", block: "center" });
+            return;
+          }
+        }
+
+        // Fallback: scroll to property container
+        const propertyElement = document.getElementById(`property-${targetProperty}`);
+        if (propertyElement) {
+          propertyElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }
     }, 1000);

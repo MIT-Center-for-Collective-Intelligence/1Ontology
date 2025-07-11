@@ -95,7 +95,10 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
             </Box>
             <List>
               {collection.nodes.map((node: any) => (
-                <ListItem key={node.id}>
+                <ListItem 
+                  key={node.id}
+                  id={node.change ? `${node.id}-${property}` : undefined}
+                >
                   <DragIndicatorIcon
                     sx={{
                       color:
