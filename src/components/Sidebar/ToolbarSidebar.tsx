@@ -12,6 +12,9 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import EditIcon from "@mui/icons-material/Edit";
 import DownloadIcon from "@mui/icons-material/Download";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+
 import {
   Avatar,
   Button,
@@ -688,11 +691,12 @@ const ToolbarSidebar = ({
 
         if (data.detailsOfChange?.comparison) {
           for (const collection of data.detailsOfChange.comparison) {
-            const changedNode = collection.nodes.find((node: any) => 
-              node.change === "added" || 
-              node.change === "removed" || 
-              node.change === "modified" ||
-              node.changeType === "sort"
+            const changedNode = collection.nodes.find(
+              (node: any) =>
+                node.change === "added" ||
+                node.change === "removed" ||
+                node.change === "modified" ||
+                node.changeType === "sort",
             );
             if (changedNode) {
               firstChangedNodeId = changedNode.id;
@@ -703,17 +707,27 @@ const ToolbarSidebar = ({
 
         // Scroll to the specific changed element
         if (firstChangedNodeId) {
-          const changedElement = document.getElementById(`${firstChangedNodeId}-${targetProperty}`);
+          const changedElement = document.getElementById(
+            `${firstChangedNodeId}-${targetProperty}`,
+          );
           if (changedElement) {
-            changedElement.scrollIntoView({ behavior: "smooth", block: "center" });
+            changedElement.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
             return;
           }
         }
 
         // Fallback: scroll to property container
-        const propertyElement = document.getElementById(`property-${targetProperty}`);
+        const propertyElement = document.getElementById(
+          `property-${targetProperty}`,
+        );
         if (propertyElement) {
-          propertyElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          propertyElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
         }
       }
     }, 1000);
@@ -1320,13 +1334,13 @@ const ToolbarSidebar = ({
         p: activeSidebar ? 0 : 2,
       }}
       onMouseEnter={() => {
-        if (!activeSidebar) {
+        /*  if (!activeSidebar) {
           setHovered(true);
         } else {
           setHovered(false);
-        }
+        } */
       }}
-      onMouseLeave={() => setHovered(false)}
+      // onMouseLeave={() => setHovered(false)}
     >
       {!!activeSidebar ? (
         <Box>
@@ -1640,6 +1654,55 @@ const ToolbarSidebar = ({
           />
         </>
       )}
+      {!activeSidebar && (
+        <Box
+          sx={{
+            pt: "14px",
+            display: "flex",
+            justifyContent: "flex-start",
+          }}
+        >
+          <Tooltip title={hovered ? "Collapse" : "Expand"} placement="left">
+            {hovered ? (
+              <ChevronRightIcon
+                onClick={() => {
+                  setHovered((prev) => !prev);
+                }}
+                sx={{
+                  borderRadius: "50%",
+                  mt: "auto",
+                  p: "3px",
+                  cursor: "pointer",
+                  fontSize: "30px",
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "dark" ? "#717171" : "#b8b6b6",
+                  ":hover": {
+                    backgroundColor: "orange",
+                  },
+                }}
+              />
+            ) : (
+              <ChevronLeftIcon
+                onClick={() => {
+                  setHovered((prev) => !prev);
+                }}
+                sx={{
+                  borderRadius: "50%",
+                  mt: "auto",
+                  p: "3px",
+                  cursor: "pointer",
+                  fontSize: "30px",
+                  backgroundColor: "green",
+                  ":hover": {
+                    backgroundColor: "orange",
+                  },
+                }}
+              />
+            )}
+          </Tooltip>
+        </Box>
+      )}
+
       {isAuthenticated && user && renderProfileMenu}
       {dropdownDialog}
     </Box>

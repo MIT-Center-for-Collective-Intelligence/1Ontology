@@ -1,4 +1,4 @@
-import { Button, Typography } from "@mui/material";
+import { Button, Tooltip, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import NextImage from "next/image";
 import React, { ReactNode } from "react";
@@ -27,73 +27,75 @@ export const SidebarButton = ({
   rightFloatingOption = null,
 }: SidebarButtonsProps) => {
   return (
-    <Button
-      id={id}
-      onClick={onClick}
-      sx={{
-        minWidth: "52px",
-        width: "100%",
-        height: "40px",
-        borderRadius: "16px",
-        backgroundColor: variant === "fill" ? "#F38744" : undefined,
-        lineHeight: "19px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: toolbarIsOpen ? "space-between" : "center",
-        ":hover": {
-          backgroundColor: (theme) =>
-            variant === "fill"
-              ? theme.palette.mode === "dark"
-                ? "#F38744"
-                : "#FF914E"
-              : theme.palette.mode === "dark"
-              ? "#55402B"
-              : "#FFE2D0",
-        },
-      }}
-    >
-      <Box
+    <Tooltip title={text} placement="left">
+      <Button
+        id={id}
+        onClick={onClick}
         sx={{
-          // border: "solid 1px royalBlue",
+          minWidth: "52px",
+          width: "100%",
+          height: "40px",
+          borderRadius: "16px",
+          backgroundColor: variant === "fill" ? "#F38744" : undefined,
+          lineHeight: "19px",
           display: "flex",
           alignItems: "center",
-          fontSize: "19px",
-          position: "relative",
+          justifyContent: toolbarIsOpen ? "space-between" : "center",
+          ":hover": {
+            backgroundColor: (theme) =>
+              variant === "fill"
+                ? theme.palette.mode === "dark"
+                  ? "#F38744"
+                  : "#FF914E"
+                : theme.palette.mode === "dark"
+                  ? "#55402B"
+                  : "#FFE2D0",
+          },
         }}
       >
-        {icon}
-        {toolbarIsOpen && (
-          <Typography
-            className="toolbarDescription"
-            sx={{
-              ml: "10px",
-              mr: "5px",
-              textOverflow: "ellipsis",
-              overflow: "hidden",
-              maxWidth: "90px",
-              whiteSpace: "nowrap",
-              fontWeight: "500",
-              fontSize: "14px",
-              color: (theme) =>
-                variant === "fill"
-                  ? DESIGN_SYSTEM_COLORS.gray200
-                  : theme.palette.mode === "dark"
-                  ? "#EAECF0"
-                  : "#1D2939",
-            }}
-          >
-            {text}
-          </Typography>
-        )}
-      </Box>
-      {!toolbarIsOpen && rightFloatingOption && (
         <Box
-          sx={{ position: "absolute", top: "8px", right: "12px", ml: "10px" }}
+          sx={{
+            // border: "solid 1px royalBlue",
+            display: "flex",
+            alignItems: "center",
+            fontSize: "19px",
+            position: "relative",
+          }}
         >
-          {rightFloatingOption}
+          {icon}
+          {toolbarIsOpen && (
+            <Typography
+              className="toolbarDescription"
+              sx={{
+                ml: "10px",
+                mr: "5px",
+                textOverflow: "ellipsis",
+                overflow: "hidden",
+                maxWidth: "90px",
+                whiteSpace: "nowrap",
+                fontWeight: "500",
+                fontSize: "14px",
+                color: (theme) =>
+                  variant === "fill"
+                    ? DESIGN_SYSTEM_COLORS.gray200
+                    : theme.palette.mode === "dark"
+                      ? "#EAECF0"
+                      : "#1D2939",
+              }}
+            >
+              {text}
+            </Typography>
+          )}
         </Box>
-      )}
-      {toolbarIsOpen && rightOption}
-    </Button>
+        {!toolbarIsOpen && rightFloatingOption && (
+          <Box
+            sx={{ position: "absolute", top: "8px", right: "12px", ml: "10px" }}
+          >
+            {rightFloatingOption}
+          </Box>
+        )}
+        {toolbarIsOpen && rightOption}
+      </Button>
+    </Tooltip>
   );
 };
