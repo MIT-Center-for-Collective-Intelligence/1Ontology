@@ -354,6 +354,7 @@ const StructuredProperty = ({
             change: "added",
             changeType: "sort",
             randomId: doc(collection(db, NODES)).id,
+            diffElementId: `${draggableNodeId}-${property}`,
           },
         );
         return processCollectionData(previousValue);
@@ -376,6 +377,7 @@ const StructuredProperty = ({
                     ...nodeLink,
                     change: "added",
                     randomId: doc(collection(db, NODES)).id,
+                    diffElementId: `${nodeLink.id}-${property}`,
                   };
                 }
               });
@@ -388,6 +390,7 @@ const StructuredProperty = ({
                     ...prevElement,
                     change: "removed",
                     randomId: doc(collection(db, NODES)).id,
+                    diffElementId: `${prevElement.id}-${property}`,
                   });
                 }
               });
