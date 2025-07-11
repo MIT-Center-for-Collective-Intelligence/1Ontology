@@ -137,9 +137,38 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       fromOptional?: boolean;
       toOptional?: boolean;
       optionalChange?: "added" | "removed" | "none";
+      hops?: number;
     }[] = [];
+    
     const matchedParts = new Set();
     const usedKeys = new Set();
+    const usedGeneralizationParts = new Set();
+
+    const findHierarchicalDistance = (fromPartId: string, toPartId: string, visited = new Set()): number => {
+      if (visited.has(fromPartId)) return -1;
+      if (fromPartId === toPartId) return 0;
+      
+      visited.add(fromPartId);
+      const fromNode = nodes[fromPartId];
+      if (!fromNode?.properties?.parts) return -1;
+      
+      let minDistance = -1;
+      
+      for (const collection of fromNode.properties.parts) {
+        for (const part of collection.nodes) {
+          if (part.id === toPartId) {
+            return 1;
+          }
+          
+          const deeperDistance = findHierarchicalDistance(part.id, toPartId, new Set(visited));
+          if (deeperDistance !== -1) {
+            minDistance = minDistance === -1 ? 1 + deeperDistance : Math.min(minDistance, 1 + deeperDistance);
+          }
+        }
+      }
+      
+      return minDistance;
+    };
 
     for (const [key, entries] of Object.entries(inheritance)) {
       if (entries === null) continue;
@@ -170,8 +199,11 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               fromOptional,
               toOptional,
               optionalChange,
+              hops: 0,
             });
+            usedGeneralizationParts.add(part);
           } else {
+            const hops = findHierarchicalDistance(part, key);
             result.push({
               from: part,
               to: key,
@@ -179,51 +211,131 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               fromOptional,
               toOptional,
               optionalChange,
+              hops,
             });
           }
         }
       }
     }
 
-    for (const part of parts) {
-      if (!matchedParts.has(part)) {
-        result.push({
-          from: part,
-          to: "",
-          symbol: "x",
-          fromOptional: getPartOptionalStatus(part, generalizationId),
-          toOptional: false,
-          optionalChange: "none",
-        });
+    for (const generalizationPart of parts) {
+      if (!matchedParts.has(generalizationPart)) {
+        for (const currentPart of currentParts) {
+          const hops = findHierarchicalDistance(generalizationPart, currentPart);
+          if (hops !== -1) {
+            const fromOptional = getPartOptionalStatus(generalizationPart, generalizationId);
+            const toOptional = getCurrentPartOptionalStatus(currentPart);
+            
+            let optionalChange: "added" | "removed" | "none" = "none";
+            if (fromOptional !== toOptional) {
+              optionalChange = toOptional ? "added" : "removed";
+            }
+
+            result.push({
+              from: generalizationPart,
+              to: currentPart,
+              symbol: ">",
+              fromOptional,
+              toOptional,
+              optionalChange,
+              hops,
+            });
+            matchedParts.add(generalizationPart);
+            break;
+          }
+        }
       }
     }
 
-    for (const [key, value] of Object.entries(inheritance)) {
-      if (value === null) {
-        result.push({
-          from: "",
-          to: key,
-          symbol: "+",
-          fromOptional: false,
-          toOptional: getCurrentPartOptionalStatus(key),
-          optionalChange: "none",
-        });
+    const specializationMappings = result.filter(entry => entry.symbol === ">");
+    
+    const groupedByGeneralization = specializationMappings.reduce((acc, entry) => {
+      if (!usedGeneralizationParts.has(entry.from)) {
+        if (!acc[entry.from]) acc[entry.from] = [];
+        acc[entry.from].push(entry);
       }
-    }
-
-    const seen = new Set();
-    const uniqueResult = result.filter((entry) => {
-      const key = `${entry.from}|${entry.to}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+      return acc;
+    }, {} as Record<string, typeof result>);
 
     const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
     const currentNodeParts = inheritanceRef && nodes[inheritanceRef]
       ? nodes[inheritanceRef].properties["parts"]
       : currentVisibleNode.properties["parts"];
     const currentPartsOrder = currentNodeParts?.[0]?.nodes?.map((c: any) => c.id) || [];
+
+    const filteredSpecializations = Object.entries(groupedByGeneralization).map(([fromPart, entries]) => {
+      if (entries.length === 1) {
+        return entries[0];
+      }
+      
+      return entries.reduce((closest, current) => {
+        const currentHops = current.hops ?? -1;
+        const closestHops = closest.hops ?? -1;
+        
+        if (currentHops === -1 && closestHops === -1) {
+          const currentIndex = currentPartsOrder.indexOf(current.to);
+          const closestIndex = currentPartsOrder.indexOf(closest.to);
+          const selected = currentIndex < closestIndex ? current : closest;
+          return selected;
+        } else if (currentHops === -1) {
+          return closest;
+        } else if (closestHops === -1) {
+          return current;
+        } else if (currentHops < closestHops) {
+          return current;
+        } else if (currentHops === closestHops) {
+          const currentIndex = currentPartsOrder.indexOf(current.to);
+          const closestIndex = currentPartsOrder.indexOf(closest.to);
+          const selected = currentIndex < closestIndex ? current : closest;
+          return selected;
+        }
+        
+        return closest;
+      });
+    });
+
+    const directMatches = result.filter(entry => entry.symbol === "=");
+    const finalSpecializations = filteredSpecializations.filter(entry => 
+      !usedGeneralizationParts.has(entry.from)
+    );
+
+    const finalResult = [...directMatches, ...finalSpecializations];
+
+    for (const part of parts) {
+      if (!matchedParts.has(part) && !usedGeneralizationParts.has(part)) {
+        finalResult.push({
+          from: part,
+          to: "",
+          symbol: "x",
+          fromOptional: getPartOptionalStatus(part, generalizationId),
+          toOptional: false,
+          optionalChange: "none",
+          hops: -1,
+        });
+      }
+    }
+
+    for (const [key, value] of Object.entries(inheritance)) {
+      if (value === null) {
+        finalResult.push({
+          from: "",
+          to: key,
+          symbol: "+",
+          fromOptional: false,
+          toOptional: getCurrentPartOptionalStatus(key),
+          optionalChange: "none",
+          hops: 0,
+        });
+      }
+    }
+
+    const seen = new Set();
+    const uniqueResult = finalResult.filter((entry) => {
+      const key = `${entry.from}|${entry.to}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 
     uniqueResult.sort((a, b) => {
       const indexA = currentPartsOrder.indexOf(a.to);
@@ -234,6 +346,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
         (indexB === -1 ? Infinity : indexB)
       );
     });
+
     return uniqueResult;
   };
 
