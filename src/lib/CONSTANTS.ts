@@ -181,7 +181,7 @@ export const SKILLS_FUTURE_APP_NAMES = [
     id: "Ontology - Development Version",
     name: "Ontology - Development Version",
   },
-  { id: "Top-Down Gemini 2.5 Pro", name: "AI Peer Developed Ontology" },
+  { id: "Top-Down Gemini 2.5 Pro", name: "AI Peer Generated Ontology" },
   /*"Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
   "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
   "Holistic Embedding (Sector, Title, JobRole, CWF, Parts) - Gemini 2.5 Pro",

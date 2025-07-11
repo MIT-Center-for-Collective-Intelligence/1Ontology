@@ -11,16 +11,16 @@ import {
   Typography,
   Select,
   MenuItem,
+  TextField,
+  Chip,
 } from "@mui/material";
-import {
-  saveNewChangeLog,
-  updateInheritance,
-} from "@components/lib/utils/helpers";
+import { saveNewChangeLog } from "@components/lib/utils/helpers";
 import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import PropertyContributors from "./PropertyContributors";
-import SelectInheritance from "../SelectInheritance/SelectInheritance";
+
 import { DISPLAY } from "@components/lib/CONSTANTS";
+import ChipInput from "../ChipInput/ChipInput";
 
 const SelectProperty = ({
   currentVisibleNode,
@@ -46,29 +46,41 @@ const SelectProperty = ({
   skillsFutureApp: string;
 }) => {
   const db = getFirestore();
-  const [value, setValue] = useState<string>("");
+  const [value, setValue] = useState<{
+    performer: string;
+    reason: string;
+    sources: { domain: string; title: string }[];
+  }>({
+    performer: "",
+    reason: "",
+    sources: [],
+  });
 
-  const propertyValue: string = useMemo(() => {
+  const propertyValue: any[] = useMemo(() => {
+    let result = [];
     if (
       currentImprovement &&
       currentImprovement.modifiedProperty === property
     ) {
-      return currentImprovement.detailsOfChange.newValue || "";
+      result = currentImprovement.detailsOfChange.newValue || [];
+    } else if (
+      selectedDiffNode &&
+      selectedDiffNode.modifiedProperty === property
+    ) {
+      result = selectedDiffNode.newValue || [];
+    } else {
+      const prop = currentVisibleNode.properties[property];
+      result = Array.isArray(prop) ? prop : [];
     }
-    if (selectedDiffNode && selectedDiffNode.modifiedProperty === property) {
-      return selectedDiffNode.newValue || "";
-    }
-
-    const result = currentVisibleNode.properties[property];
-
-    return typeof result === "string" ? result : "";
+    return result;
   }, [property, currentVisibleNode, selectedDiffNode, currentImprovement]);
 
   useEffect(() => {
-    setValue(propertyValue);
-  }, [propertyValue]);
+    const prop = currentVisibleNode.properties[property];
+    setValue(JSON.parse(JSON.stringify(prop)));
+  }, [property, currentVisibleNode.id]);
 
-  const updateValue = async (newValue: string) => {
+  const updateValue = async (newValue: any) => {
     try {
       if (
         !!currentImprovement ||
@@ -76,30 +88,14 @@ const SelectProperty = ({
         !!currentVisibleNode.unclassified
       )
         return;
-
+      console.log(newValue);
       setValue(newValue);
 
-      const previousValue: string = currentVisibleNode.properties[
-        property
-      ] as string;
+      const previousValue: any = JSON.parse(
+        JSON.stringify(currentVisibleNode.properties[property]),
+      );
 
       const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-
-      await updateDoc(nodeRef, {
-        [`properties.${property}`]: newValue,
-        [`inheritance.${property}.ref`]: null,
-      });
-
-      if (
-        !!currentVisibleNode.inheritance[property] &&
-        !!currentVisibleNode.inheritance[property]?.ref
-      ) {
-        await updateInheritance({
-          nodeId: currentVisibleNode?.id,
-          updatedProperties: [property],
-          db,
-        });
-      }
 
       saveNewChangeLog(db, {
         nodeId: currentVisibleNode?.id,
@@ -108,41 +104,198 @@ const SelectProperty = ({
         previousValue,
         newValue,
         modifiedAt: new Date(),
-        changeType: "change text",
+        changeType: "change select-string",
         fullNode: currentVisibleNode,
-        changeDetails: {
-          addedElements: [newValue],
-          removedElements: [previousValue],
-        },
         skillsFuture,
         ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+      });
+      await updateDoc(nodeRef, {
+        [`properties.${property}`]: newValue,
+        [`inheritance.${property}.ref`]: null,
       });
     } catch (error) {
       console.error(error);
     }
   };
+  console.log(value, "value");
+  const handlePerformerChange = (newPerformer: string) => {
+    const updated = { ...value };
+    updated.performer = newPerformer;
+    updateValue(updated);
+  };
 
-  const renderDiff = (previousValue: string, newValue: string) => {
-    try {
-      return (
-        <div>
-          <div style={{ color: "red", textDecoration: "line-through" }}>
-            {previousValue}
-          </div>
-          <div style={{ color: "green" }}>{newValue}</div>
-        </div>
+  const handleReasonChange = (newReason: string) => {
+    const updated = { ...value };
+    updated.reason = newReason;
+    setValue(updated);
+    updateValue(updated);
+  };
+
+  const handleURLsChange = (
+    sources: string[],
+    added: string[],
+    removed: string[],
+  ) => {
+    const newSources: { title: string; domain: string }[] = sources.map(
+      (str) => {
+        const domainMatch = str.match(/Domain:(.*?) Title:/);
+        const titleMatch = str.match(/Title:(.*)/);
+
+        if (domainMatch && titleMatch) {
+          return {
+            domain: domainMatch[1].trim(),
+            title: titleMatch[1].trim(),
+          };
+        } else {
+          return {
+            domain: "",
+            title: str.trim(),
+          };
+        }
+      },
+    );
+    const updated = { ...value };
+    updated.sources = newSources;
+    updateValue(updated);
+  };
+  console.log("selectedDiffNode", selectedDiffNode);
+  interface Source {
+    domain?: string;
+    title: string;
+  }
+
+  interface Value {
+    performer: string;
+    reason: string;
+    sources: Source[];
+  }
+
+  function renderDiff(previousValue: Value, newValue: Value): React.ReactNode {
+    const blocks: React.ReactNode[] = [];
+
+    const isDifferent = (a: unknown, b: unknown) =>
+      JSON.stringify(a) !== JSON.stringify(b);
+
+    // Performer
+    if (previousValue.performer !== newValue.performer) {
+      blocks.push(
+        <Box key="performer" sx={{ mb: 2 }}>
+          <Typography sx={{ fontSize: "20px" }}>Performer:</Typography>
+          <Box sx={{ color: "red", textDecoration: "line-through" }}>
+            {previousValue.performer}
+          </Box>
+          <Box sx={{ color: "green" }}>{newValue.performer}</Box>
+        </Box>,
       );
-    } catch (error) {
-      return (
-        <div>
-          <div style={{ color: "red", textDecoration: "line-through" }}>
-            {previousValue}
-          </div>
-          <div style={{ color: "green" }}>{newValue}</div>
-        </div>
+    } else {
+      blocks.push(
+        <Box key="performer" sx={{ mb: 2 }}>
+          <Typography sx={{ fontSize: "20px" }}>Performer:</Typography>
+          <Box>{newValue.performer}</Box>
+        </Box>,
       );
     }
-  };
+
+    if (previousValue.reason !== newValue.reason) {
+      blocks.push(
+        <Box key="reason" sx={{ mb: 2 }}>
+          <Typography sx={{ fontSize: "20px" }}>Reason:</Typography>
+          <Box sx={{ color: "red", textDecoration: "line-through" }}>
+            {" "}
+            {previousValue.reason}
+          </Box>
+          <Box sx={{ color: "green" }}> {newValue.reason}</Box>
+        </Box>,
+      );
+    } else {
+      blocks.push(
+        <Box key="reason" sx={{ mb: 2 }}>
+          <Typography sx={{ fontSize: "20px" }}>Reason:</Typography>
+          <Box>{newValue.reason}</Box>
+        </Box>,
+      );
+    }
+
+    const prevSources = previousValue.sources || [];
+    const newSources = newValue.sources || [];
+    const sourcesChanged = isDifferent(prevSources, newSources);
+
+    if (sourcesChanged) {
+      blocks.push(
+        <Box key="sources">
+          <Typography sx={{ fontSize: "20px" }}>Sources:</Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: "5px", mb: 1 }}>
+            {prevSources.length > 0 ? (
+              prevSources.map((c, i) => (
+                <Chip
+                  key={`prev-${i}`}
+                  label={
+                    c.domain
+                      ? `Domain:${c.domain} Title:${c.title}`
+                      : `${c.title}`
+                  }
+                  sx={{ backgroundColor: "red", color: "white" }}
+                />
+              ))
+            ) : (
+              <Chip
+                label="No sources"
+                sx={{ backgroundColor: "red", color: "white" }}
+              />
+            )}
+          </Box>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+            {newSources.length > 0 ? (
+              newSources.map((c, i) => (
+                <Chip
+                  key={`new-${i}`}
+                  label={
+                    c.domain
+                      ? `Domain:${c.domain} Title:${c.title}`
+                      : `${c.title}`
+                  }
+                  sx={{ backgroundColor: "green", color: "white" }}
+                />
+              ))
+            ) : (
+              <Chip
+                label="No sources"
+                sx={{ backgroundColor: "green", color: "white" }}
+              />
+            )}
+          </Box>
+        </Box>,
+      );
+    } else {
+      blocks.push(
+        <Box key="sources">
+          <Typography sx={{ fontSize: "20px" }}>Sources:</Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+            {newSources.length > 0 ? (
+              newSources.map((c, i) => (
+                <Chip
+                  key={`same-${i}`}
+                  label={
+                    c.domain
+                      ? `Domain:${c.domain} Title:${c.title}`
+                      : `${c.title}`
+                  }
+                  sx={{ backgroundColor: "grey.400", color: "white" }}
+                />
+              ))
+            ) : (
+              <Chip
+                label="No sources"
+                sx={{ backgroundColor: "grey.400", color: "white" }}
+              />
+            )}
+          </Box>
+        </Box>,
+      );
+    }
+
+    return <>{blocks}</>;
+  }
 
   return (
     <Paper
@@ -193,6 +346,7 @@ const SelectProperty = ({
           />
         </Box>
       </Box>
+
       {selectedDiffNode && selectedDiffNode.modifiedProperty === property ? (
         <Box sx={{ p: "10px", borderRadius: "5px" }}>
           <Box sx={{ display: "flow", gap: "3px", p: "14px" }}>
@@ -203,25 +357,98 @@ const SelectProperty = ({
           </Box>
         </Box>
       ) : (
-        <Box sx={{ p: 3 }}>
-          {enableEdit &&
-          !selectedDiffNode &&
-          !currentVisibleNode.unclassified &&
-          !currentImprovement ? (
-            <Select
-              value={value}
-              onChange={(e) => updateValue(e.target.value as string)}
-              fullWidth
-            >
-              {options.map((opt) => (
-                <MenuItem key={opt} value={opt}>
-                  {opt}
-                </MenuItem>
-              ))}
-            </Select>
-          ) : (
-            <Typography sx={{ fontSize: "18px", p: 1 }}>{value}</Typography>
-          )}
+        <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 4 }}>
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: "10px",
+              border: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "1px solid #ccc"
+                  : "1px solid #221f1f",
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark" ? "#3f3f40" : "#e2e2e2",
+            }}
+          >
+            {enableEdit ? (
+              <Box>
+                <Select
+                  value={value.performer || ""}
+                  onChange={(e) => handlePerformerChange(e.target.value)}
+                  fullWidth
+                  sx={{ borderRadius: "20px" }}
+                >
+                  {[
+                    "A single human",
+                    "Collaboration of humans",
+                    "Collaboration of humans and AI",
+                    "AI",
+                  ].map((opt) => (
+                    <MenuItem key={opt} value={opt}>
+                      {opt}
+                    </MenuItem>
+                  ))}
+                </Select>
+
+                <TextField
+                  label="Reason"
+                  value={value.reason || ""}
+                  onChange={(e) => handleReasonChange(e.target.value)}
+                  fullWidth
+                  multiline
+                  sx={{ mt: 2 }}
+                />
+                <Box
+                  sx={{
+                    border: "1px solid gray",
+                    borderRadius: "15px",
+                    mt: "15px",
+                  }}
+                >
+                  <ChipInput
+                    tags={(value.sources || []).map((c) =>
+                      c.domain
+                        ? `Domain:${c.domain} Title:${c.title}`
+                        : `${c.title}`,
+                    )}
+                    selectedTags={() => {}}
+                    updateTags={(newTags, added, removed) =>
+                      handleURLsChange(newTags, added, removed)
+                    }
+                    placeholder="Add URL"
+                    label="Sources"
+                    fontSize="10px"
+                  />
+                </Box>
+              </Box>
+            ) : (
+              <>
+                <Typography
+                  sx={{ fontSize: "18px", textTransform: "capitalize" }}
+                >
+                  Performer: {value.performer}
+                </Typography>
+                <Typography sx={{ fontSize: "18px", mt: 1 }}>
+                  Reason: {value.reason}
+                </Typography>
+                <Box sx={{ mt: "6px" }}>
+                  <Typography>Sources:</Typography>
+                  <ChipInput
+                    tags={(value.sources || []).map((c) =>
+                      c.domain
+                        ? `Domain:${c.domain} Title:${c.title}`
+                        : `${c.title}`,
+                    )}
+                    selectedTags={() => {}}
+                    updateTags={() => {}}
+                    placeholder="Sources"
+                    readOnly
+                    fontSize="10px"
+                  />
+                </Box>
+              </>
+            )}
+          </Box>
         </Box>
       )}
     </Paper>

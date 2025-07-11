@@ -139,7 +139,14 @@ const NodeActivity = ({
       
       if (!snapshot.empty) {
         setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-        setHasMore(snapshot.docs.length === 100);
+        const validDocsCount = snapshot.docs.filter(doc => {
+          const data = doc.data();
+          return ((skillsFuture && data.skillsFuture && data.appName === skillsFutureApp) ||
+                  (!skillsFuture && !data.skillsFuture)) && !data.deleted;
+        }).length;
+        setHasMore(validDocsCount === 100);
+      } else {
+        setHasMore(false);
       }
       
       setLoading(false);
@@ -222,7 +229,7 @@ const NodeActivity = ({
         setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
       }
 
-      setHasMore(snapshot.docs.length === 100);
+      setHasMore(moreLogs.length === 50);
 
     } catch (error) {
       console.error("Error loading more logs:", error);

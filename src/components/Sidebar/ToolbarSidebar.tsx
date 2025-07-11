@@ -1532,17 +1532,17 @@ const ToolbarSidebar = ({
               text="Chatroom"
               toolbarIsOpen={hovered}
             />
-            {/* {!!user?.manageLock && ( */}
-              <SidebarButton
-                id="toolbar-help-button"
-                icon={<HistoryIcon />}
-                onClick={() => {
-                  handleExpandSidebar("history");
-                }}
-                text="Edit History"
-                toolbarIsOpen={hovered}
-              />
-            {/* )} */}
+
+            <SidebarButton
+              id="toolbar-help-button"
+              icon={<HistoryIcon />}
+              onClick={() => {
+                handleExpandSidebar("history");
+              }}
+              text="Edit History"
+              toolbarIsOpen={hovered}
+            />
+
             {!!user?.admin &&
               (window.location.origin.startsWith("http://localhost") ||
                 window.location.origin ===

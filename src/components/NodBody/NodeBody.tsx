@@ -493,10 +493,10 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     currentImprovement={currentImprovement}
                     user={user}
                     options={[
-                      "A single human",
-                      "Collaboration of humans",
-                      "Collaboration of humans and AI",
-                      "AI",
+                      "a single human",
+                      "collaboration of humans",
+                      "collaboration of humans and ai",
+                      "ai",
                     ]}
                     skillsFuture={skillsFuture}
                     enableEdit={enableEdit}

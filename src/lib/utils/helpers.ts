@@ -667,6 +667,8 @@ export const getChangeDescription = (
       return `Removed "Image" in:`;
     case "edit property":
       return `Changed the name of a property in:`;
+    case "change select-string":
+      return "Updated Most Efficiently Performed By in:";
     default:
       return `Made an unknown change to:`;
   }
