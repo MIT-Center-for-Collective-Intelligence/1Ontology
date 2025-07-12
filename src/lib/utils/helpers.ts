@@ -827,17 +827,24 @@ export const updateSpecializations = (
   const collectionIdx = parentNode.specializations.findIndex(
     (spec) => spec.collectionName === collectionName,
   );
-  if (collectionIdx === -1) {
-    // Create the collection if it doesn't exist
-    parentNode.specializations.push({
-      collectionName,
-      nodes: [{ id: newNodeRefId }],
-    });
-  } else {
-    // Add the new node to the collection if it exists
-    parentNode.specializations[collectionIdx].nodes.push({
-      id: newNodeRefId,
-    });
+
+  const alreadyExistIdx = parentNode.specializations
+    .flatMap((c) => c.nodes)
+    .findIndex((n) => n.id === newNodeRefId);
+
+  if (alreadyExistIdx === -1) {
+    if (collectionIdx === -1) {
+      // Create the collection if it doesn't exist
+      parentNode.specializations.push({
+        collectionName,
+        nodes: [{ id: newNodeRefId }],
+      });
+    } else {
+      // Add the new node to the collection if it exists
+      parentNode.specializations[collectionIdx].nodes.push({
+        id: newNodeRefId,
+      });
+    }
   }
 };
 

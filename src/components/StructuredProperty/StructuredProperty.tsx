@@ -518,6 +518,9 @@ const StructuredProperty = ({
 
   const saveNewSpecialization = async (nId: string, collectionName: string) => {
     try {
+      if (loadingIds.has(nId)) {
+        return;
+      }
       setLoadingIds((prev: Set<string>) => {
         const _prev = new Set(prev);
         _prev.add(nId);
