@@ -151,14 +151,23 @@ const SelectModel = ({
   const refreshEditableProperty = useCallback(() => {
     let freshData: ICollection[] = [];
 
-    if (selectedProperty === "specializations" || selectedProperty === "generalizations") {
-      freshData = currentVisibleNode[selectedProperty as "specializations" | "generalizations"] || [];
+    if (
+      selectedProperty === "specializations" ||
+      selectedProperty === "generalizations"
+    ) {
+      freshData =
+        currentVisibleNode[
+          selectedProperty as "specializations" | "generalizations"
+        ] || [];
     } else {
-      freshData = onGetPropertyValue(
-        nodes,
-        currentVisibleNode.inheritance[selectedProperty]?.ref,
-        selectedProperty
-      ) || currentVisibleNode?.properties[selectedProperty] || [];
+      freshData =
+        onGetPropertyValue(
+          nodes,
+          currentVisibleNode.inheritance[selectedProperty]?.ref,
+          selectedProperty,
+        ) ||
+        currentVisibleNode?.properties[selectedProperty] ||
+        [];
     }
 
     setEditableProperty([...freshData]);
@@ -393,11 +402,11 @@ const SelectModel = ({
                     newInheritanceParts[part.id] = {
                       inheritedFromTitle: part.isInherited
                         ? referencedNode.inheritanceParts[part.id]
-                          .inheritedFromTitle
+                            .inheritedFromTitle
                         : referencedNode.title,
                       inheritedFromId: part.isInherited
                         ? referencedNode.inheritanceParts[part.id]
-                          .inheritedFromId
+                            .inheritedFromId
                         : inheritanceRef,
                     };
                   }
@@ -453,7 +462,9 @@ const SelectModel = ({
         // Update newOnes state for inheritance parts
         setNewOnes((prev: Set<string>) => {
           const updated = new Set(prev);
-          updated.has(checkedId) ? updated.delete(checkedId) : updated.add(checkedId);
+          updated.has(checkedId)
+            ? updated.delete(checkedId)
+            : updated.add(checkedId);
           return updated;
         });
       } catch (error) {
@@ -466,12 +477,16 @@ const SelectModel = ({
       setEditableProperty((prev: ICollection[]) => {
         const updated = [...prev];
         if (checkedItems.has(checkedId)) {
-          updated.forEach(collection => {
-            collection.nodes = collection.nodes.filter(n => n.id !== checkedId);
+          updated.forEach((collection) => {
+            collection.nodes = collection.nodes.filter(
+              (n) => n.id !== checkedId,
+            );
           });
         } else {
           const targetCollectionName = selectedCollection || "main";
-          let targetCollection = updated.find(c => c.collectionName === targetCollectionName);
+          let targetCollection = updated.find(
+            (c) => c.collectionName === targetCollectionName,
+          );
 
           if (!targetCollection) {
             targetCollection = { collectionName: "main", nodes: [] };
@@ -485,7 +500,9 @@ const SelectModel = ({
 
       setAddedElements((prev: Set<string>) => {
         const updated = new Set(prev);
-        updated.has(checkedId) ? updated.delete(checkedId) : updated.add(checkedId);
+        updated.has(checkedId)
+          ? updated.delete(checkedId)
+          : updated.add(checkedId);
         return updated;
       });
 
@@ -505,7 +522,9 @@ const SelectModel = ({
 
       setNewOnes((prev: Set<string>) => {
         const updated = new Set(prev);
-        updated.has(checkedId) ? updated.delete(checkedId) : updated.add(checkedId);
+        updated.has(checkedId)
+          ? updated.delete(checkedId)
+          : updated.add(checkedId);
         return updated;
       });
 
@@ -691,6 +710,7 @@ const SelectModel = ({
         }
         getNumOfGeneralizations={getNumOfGeneralizations}
         selectedProperty={selectedProperty}
+        currentVisibleNode={currentVisibleNode}
       />
     ) : (
       <TreeViewSimplified
@@ -799,9 +819,9 @@ const SelectModel = ({
               title={`Create as a new Specialization 
                     ${
                       selectedProperty !== "specializations"
-                  ? `Under ${getCreateNewButtonText}`
-                  : ""
-                } Node`}
+                        ? `Under ${getCreateNewButtonText}`
+                        : ""
+                    } Node`}
             >
               <Button
                 onClick={async () => {
@@ -849,7 +869,7 @@ const SelectModel = ({
                   isSaving ||
                   searchValue.length < 3 ||
                   searchResultsForSelection[0]?.title.trim() ===
-                  searchValue.trim() ||
+                    searchValue.trim() ||
                   disabledButton
                 }
               >
