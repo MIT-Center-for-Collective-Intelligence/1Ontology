@@ -444,6 +444,7 @@ const SelectProperty = ({
                     placeholder="Sources"
                     readOnly
                     fontSize="10px"
+                    clickable={true}
                   />
                 </Box>
               </>

@@ -25,6 +25,7 @@ const ChipInput = ({
   selectedTags: any;
   updateTags: (newValue: string[], added: string[], removed: string[]) => void;
   placeholder: any;
+  clickable?: boolean;
   fontSize?: string;
   //
   readOnly?: any;
@@ -40,6 +41,7 @@ const ChipInput = ({
     selectedTags,
     updateTags,
     placeholder,
+    clickable,
     //
     readOnly,
     itemId,
@@ -98,6 +100,16 @@ const ChipInput = ({
   const handleInputChange = (event: any) => {
     setInputValue(event.target.value);
   };
+  const handleClick = (item: string) => {
+    const domainMatch = item.match(/Domain:(.*?) Title:/);
+    const titleMatch = item.match(/Title:(.*)/);
+    if (domainMatch && titleMatch) {
+      const domain = domainMatch[1].trim();
+      const title = titleMatch[1].trim();
+      const query = encodeURIComponent(`site: ${domain} ${title}`);
+      window.open(`https://www.google.com/search?q=${query}`, "_blank");
+    }
+  };
 
   return (
     <React.Fragment>
@@ -127,11 +139,22 @@ const ChipInput = ({
                           sx={{
                             background: `${color}`,
                             fontSize: fontSize || "20px",
+                            cursor: "pointer",
+                            ":hover": {
+                              backgroundColor: "orange",
+                            },
                           }}
                           key={item}
                           tabIndex={-1}
                           label={item}
                           className={classes.innerChip}
+                          onClick={
+                            clickable
+                              ? () => {
+                                  handleClick(item);
+                                }
+                              : undefined
+                          }
                         />
                          
                       </Fragment>
@@ -154,13 +177,13 @@ const ChipInput = ({
                           {readOnly ? (
                             <Chip
                               sx={{
-                                background: `${color}`,
                                 fontSize: fontSize || "20px",
                               }}
                               key={item}
                               tabIndex={-1}
                               label={item}
                               className={classes.innerChip}
+                              clickable={clickable}
                             />
                           ) : (
                             <Chip
