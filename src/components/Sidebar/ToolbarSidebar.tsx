@@ -1675,8 +1675,6 @@ const ToolbarSidebar = ({
                   p: "3px",
                   cursor: "pointer",
                   fontSize: "30px",
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "dark" ? "#717171" : "#b8b6b6",
                   ":hover": {
                     backgroundColor: "orange",
                   },
@@ -1693,8 +1691,6 @@ const ToolbarSidebar = ({
                   p: "3px",
                   cursor: "pointer",
                   fontSize: "30px",
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "dark" ? "#717171" : "#b8b6b6",
                   ":hover": {
                     backgroundColor: "orange",
                   },
