@@ -88,7 +88,7 @@ const SelectProperty = ({
         !!currentVisibleNode.unclassified
       )
         return;
-      console.log(newValue);
+
       setValue(newValue);
 
       const previousValue: any = JSON.parse(
@@ -117,7 +117,7 @@ const SelectProperty = ({
       console.error(error);
     }
   };
-  console.log(value, "value");
+
   const handlePerformerChange = (newPerformer: string) => {
     const updated = { ...value };
     updated.performer = newPerformer;
@@ -158,7 +158,7 @@ const SelectProperty = ({
     updated.sources = newSources;
     updateValue(updated);
   };
-  console.log("selectedDiffNode", selectedDiffNode);
+
   interface Source {
     domain?: string;
     title: string;

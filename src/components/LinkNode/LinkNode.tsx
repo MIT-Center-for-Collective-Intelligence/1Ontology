@@ -858,14 +858,20 @@ const LinkNode = ({
             <Tooltip
               title="Save and replace with"
               placement="top"
-              sx={{ mt: "15px", alignItems: "center" }}
+              sx={{ alignItems: "center" }}
             >
               <IconButton
                 onClick={() => {
                   setAddNew(false);
                   saveNewAndSwapIt(newPart, link.id);
                 }}
-                sx={{ p: 0.3, m: "6px", bgcolor: "green" }}
+                sx={{
+                  p: 0.3,
+                  m: "6px",
+                  mt: "15px",
+                  bgcolor: "green",
+                  border: "1px solid",
+                }}
                 disabled={!newPart.trim()}
               >
                 <SwapHorizIcon
@@ -875,13 +881,13 @@ const LinkNode = ({
             </Tooltip>
           )}
           {addNew && (
-            <Tooltip title="Cancel" placement="top">
+            <Tooltip title="Cancel" placement="bottom">
               <IconButton
                 onClick={() => {
                   setAddNew(false);
                   setNewPart("");
                 }}
-                sx={{ p: 0.3, m: "6px", bgcolor: "red" }}
+                sx={{ p: 0.3, m: "6px", bgcolor: "red", mt: "15px" }}
               >
                 <CloseIcon sx={{ color: "white" }} />
               </IconButton>
@@ -893,7 +899,13 @@ const LinkNode = ({
               onChange={(e: any) => {
                 setNewPart(e.target.value);
               }}
-              sx={{ width: "80%", m: "6px" }}
+              sx={{
+                width: "80%",
+                m: "6px",
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "25px",
+                },
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   // saveNodeTitle();
@@ -905,6 +917,7 @@ const LinkNode = ({
                 inputProps: {
                   style: {
                     padding: 10,
+                    borderRadius: "25px",
                   },
                 },
               }}
