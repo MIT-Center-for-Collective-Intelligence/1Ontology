@@ -227,9 +227,19 @@ const LinkNode = ({
   }, [link.id, nodes, title]); */
 
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
-  const handleNavigateToNode = useCallback(() => {
-    navigateToNode(link.id);
-  }, [navigateToNode, link.id]);
+  const handleNavigateToNode = useCallback(
+    (e: any) => {
+      if (!navigateToNode) return;
+
+      if (e.metaKey || e.ctrlKey) {
+        const url = `${window.location.origin}${window.location.pathname}#${link.id}`;
+        window.open(url, "_blank");
+      } else {
+        navigateToNode(link.id);
+      }
+    },
+    [navigateToNode, link.id],
+  );
 
   const removeNodeLink = async (
     type: "specializations" | "generalizations",

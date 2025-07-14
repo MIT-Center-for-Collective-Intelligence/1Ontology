@@ -25,7 +25,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
-import { INode } from "@components/types/INode";
+import { ICollection, INode } from "@components/types/INode";
 
 interface GeneralizationNode {
   id: string;
@@ -148,14 +148,15 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     const findHierarchicalDistance = (
       fromPartId: string,
       toPartId: string,
-      visited = new Set(),
+      visited = new Set<string>(),
     ): number => {
       if (visited.has(fromPartId)) return -1;
       if (fromPartId === toPartId) return 0;
 
       visited.add(fromPartId);
+
       const fromNode = nodes[fromPartId];
-      if (!fromNode?.properties?.parts) return -1;
+      if (!fromNode) return -1;
 
       let minDistance = -1;
 
@@ -164,18 +165,23 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           if (part.id === toPartId) {
             return 1;
           }
+        }
+      }
+      for (let specializationNode of fromNode.specializations.flatMap(
+        (c: ICollection) => c.nodes,
+      )) {
+        const deeperDistance = findHierarchicalDistance(
+          specializationNode.id,
+          toPartId,
+          new Set(visited),
+        );
 
-          const deeperDistance = findHierarchicalDistance(
-            part.id,
-            toPartId,
-            new Set(visited),
-          );
-          if (deeperDistance !== -1) {
-            minDistance =
-              minDistance === -1
-                ? 1 + deeperDistance
-                : Math.min(minDistance, 1 + deeperDistance);
-          }
+        if (deeperDistance !== -1) {
+          const totalDistance = 1 + deeperDistance;
+          minDistance =
+            minDistance === -1
+              ? totalDistance
+              : Math.min(minDistance, totalDistance);
         }
       }
 
@@ -557,8 +563,13 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                 entry.from ? (
                   <Link
                     underline={!!navigateToNode ? "hover" : "none"}
-                    onClick={() => {
-                      if (navigateToNode) {
+                    onClick={(e) => {
+                      if (!navigateToNode) return;
+
+                      if (e.metaKey || e.ctrlKey) {
+                        const url = `${window.location.origin}${window.location.pathname}#${entry.from}`;
+                        window.open(url, "_blank");
+                      } else {
                         navigateToNode(entry.from);
                       }
                     }}
@@ -593,8 +604,13 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                 entry.to ? (
                   <Link
                     underline={!!navigateToNode ? "hover" : "none"}
-                    onClick={() => {
-                      if (navigateToNode) {
+                    onClick={(e) => {
+                      if (!navigateToNode) return;
+
+                      if (e.metaKey || e.ctrlKey) {
+                        const url = `${window.location.origin}${window.location.pathname}#${entry.to}`;
+                        window.open(url, "_blank");
+                      } else {
                         navigateToNode(entry.to);
                       }
                     }}
