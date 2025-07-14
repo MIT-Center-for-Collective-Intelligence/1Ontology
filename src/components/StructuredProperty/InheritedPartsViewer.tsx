@@ -101,7 +101,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   const getPartOptionalStatus = (partId: string, nodeId: string): boolean => {
     const node = nodes[nodeId];
     if (!node?.properties?.parts) return false;
-    
+
     for (const collection of node.properties.parts) {
       const part = collection.nodes.find((n: any) => n.id === partId);
       if (part) return !!part.optional;
@@ -111,12 +111,13 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
 
   const getCurrentPartOptionalStatus = (partId: string): boolean => {
     const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
-    const currentNodeParts = inheritanceRef && nodes[inheritanceRef]
-      ? nodes[inheritanceRef].properties["parts"]
-      : currentVisibleNode.properties["parts"];
-    
+    const currentNodeParts =
+      inheritanceRef && nodes[inheritanceRef]
+        ? nodes[inheritanceRef].properties["parts"]
+        : currentVisibleNode.properties["parts"];
+
     if (!currentNodeParts) return false;
-    
+
     for (const collection of currentNodeParts) {
       const part = collection.nodes.find((n: any) => n.id === partId);
       if (part) return !!part.optional;
@@ -139,34 +140,45 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       optionalChange?: "added" | "removed" | "none";
       hops?: number;
     }[] = [];
-    
+
     const matchedParts = new Set();
     const usedKeys = new Set();
     const usedGeneralizationParts = new Set();
 
-    const findHierarchicalDistance = (fromPartId: string, toPartId: string, visited = new Set()): number => {
+    const findHierarchicalDistance = (
+      fromPartId: string,
+      toPartId: string,
+      visited = new Set(),
+    ): number => {
       if (visited.has(fromPartId)) return -1;
       if (fromPartId === toPartId) return 0;
-      
+
       visited.add(fromPartId);
       const fromNode = nodes[fromPartId];
       if (!fromNode?.properties?.parts) return -1;
-      
+
       let minDistance = -1;
-      
+
       for (const collection of fromNode.properties.parts) {
         for (const part of collection.nodes) {
           if (part.id === toPartId) {
             return 1;
           }
-          
-          const deeperDistance = findHierarchicalDistance(part.id, toPartId, new Set(visited));
+
+          const deeperDistance = findHierarchicalDistance(
+            part.id,
+            toPartId,
+            new Set(visited),
+          );
           if (deeperDistance !== -1) {
-            minDistance = minDistance === -1 ? 1 + deeperDistance : Math.min(minDistance, 1 + deeperDistance);
+            minDistance =
+              minDistance === -1
+                ? 1 + deeperDistance
+                : Math.min(minDistance, 1 + deeperDistance);
           }
         }
       }
-      
+
       return minDistance;
     };
 
@@ -185,7 +197,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
 
           const fromOptional = getPartOptionalStatus(part, generalizationId);
           const toOptional = getCurrentPartOptionalStatus(key);
-          
+
           let optionalChange: "added" | "removed" | "none" = "none";
           if (fromOptional !== toOptional) {
             optionalChange = toOptional ? "added" : "removed";
@@ -221,11 +233,17 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     for (const generalizationPart of parts) {
       if (!matchedParts.has(generalizationPart)) {
         for (const currentPart of currentParts) {
-          const hops = findHierarchicalDistance(generalizationPart, currentPart);
+          const hops = findHierarchicalDistance(
+            generalizationPart,
+            currentPart,
+          );
           if (hops !== -1) {
-            const fromOptional = getPartOptionalStatus(generalizationPart, generalizationId);
+            const fromOptional = getPartOptionalStatus(
+              generalizationPart,
+              generalizationId,
+            );
             const toOptional = getCurrentPartOptionalStatus(currentPart);
-            
+
             let optionalChange: "added" | "removed" | "none" = "none";
             if (fromOptional !== toOptional) {
               optionalChange = toOptional ? "added" : "removed";
@@ -247,56 +265,65 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       }
     }
 
-    const specializationMappings = result.filter(entry => entry.symbol === ">");
-    
-    const groupedByGeneralization = specializationMappings.reduce((acc, entry) => {
-      if (!usedGeneralizationParts.has(entry.from)) {
-        if (!acc[entry.from]) acc[entry.from] = [];
-        acc[entry.from].push(entry);
-      }
-      return acc;
-    }, {} as Record<string, typeof result>);
+    const specializationMappings = result.filter(
+      (entry) => entry.symbol === ">",
+    );
+
+    const groupedByGeneralization = specializationMappings.reduce(
+      (acc, entry) => {
+        if (!usedGeneralizationParts.has(entry.from)) {
+          if (!acc[entry.from]) acc[entry.from] = [];
+          acc[entry.from].push(entry);
+        }
+        return acc;
+      },
+      {} as Record<string, typeof result>,
+    );
 
     const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
-    const currentNodeParts = inheritanceRef && nodes[inheritanceRef]
-      ? nodes[inheritanceRef].properties["parts"]
-      : currentVisibleNode.properties["parts"];
-    const currentPartsOrder = currentNodeParts?.[0]?.nodes?.map((c: any) => c.id) || [];
+    const currentNodeParts =
+      inheritanceRef && nodes[inheritanceRef]
+        ? nodes[inheritanceRef].properties["parts"]
+        : currentVisibleNode.properties["parts"];
+    const currentPartsOrder =
+      currentNodeParts?.[0]?.nodes?.map((c: any) => c.id) || [];
 
-    const filteredSpecializations = Object.entries(groupedByGeneralization).map(([fromPart, entries]) => {
-      if (entries.length === 1) {
-        return entries[0];
-      }
-      
-      return entries.reduce((closest, current) => {
-        const currentHops = current.hops ?? -1;
-        const closestHops = closest.hops ?? -1;
-        
-        if (currentHops === -1 && closestHops === -1) {
-          const currentIndex = currentPartsOrder.indexOf(current.to);
-          const closestIndex = currentPartsOrder.indexOf(closest.to);
-          const selected = currentIndex < closestIndex ? current : closest;
-          return selected;
-        } else if (currentHops === -1) {
-          return closest;
-        } else if (closestHops === -1) {
-          return current;
-        } else if (currentHops < closestHops) {
-          return current;
-        } else if (currentHops === closestHops) {
-          const currentIndex = currentPartsOrder.indexOf(current.to);
-          const closestIndex = currentPartsOrder.indexOf(closest.to);
-          const selected = currentIndex < closestIndex ? current : closest;
-          return selected;
+    const filteredSpecializations = Object.entries(groupedByGeneralization).map(
+      ([fromPart, entries]) => {
+        if (entries.length === 1) {
+          return entries[0];
         }
-        
-        return closest;
-      });
-    });
 
-    const directMatches = result.filter(entry => entry.symbol === "=");
-    const finalSpecializations = filteredSpecializations.filter(entry => 
-      !usedGeneralizationParts.has(entry.from)
+        return entries.reduce((closest, current) => {
+          const currentHops = current.hops ?? -1;
+          const closestHops = closest.hops ?? -1;
+
+          if (currentHops === -1 && closestHops === -1) {
+            const currentIndex = currentPartsOrder.indexOf(current.to);
+            const closestIndex = currentPartsOrder.indexOf(closest.to);
+            const selected = currentIndex < closestIndex ? current : closest;
+            return selected;
+          } else if (currentHops === -1) {
+            return closest;
+          } else if (closestHops === -1) {
+            return current;
+          } else if (currentHops < closestHops) {
+            return current;
+          } else if (currentHops === closestHops) {
+            const currentIndex = currentPartsOrder.indexOf(current.to);
+            const closestIndex = currentPartsOrder.indexOf(closest.to);
+            const selected = currentIndex < closestIndex ? current : closest;
+            return selected;
+          }
+
+          return closest;
+        });
+      },
+    );
+
+    const directMatches = result.filter((entry) => entry.symbol === "=");
+    const finalSpecializations = filteredSpecializations.filter(
+      (entry) => !usedGeneralizationParts.has(entry.from),
     );
 
     const finalResult = [...directMatches, ...finalSpecializations];
@@ -316,7 +343,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     }
 
     for (const [key, value] of Object.entries(inheritance)) {
-      if (value === null) {
+      const existIdx = finalResult.findIndex((c) => c.to === key);
+      if (existIdx === -1) {
         finalResult.push({
           from: "",
           to: key,
@@ -351,32 +379,48 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const formatPartTitle = (
-    partId: string, 
-    isOptional: boolean, 
-    optionalChange?: "added" | "removed" | "none"
+    partId: string,
+    isOptional: boolean,
+    optionalChange?: "added" | "removed" | "none",
   ) => {
     const title = nodes[partId]?.title || "";
-    
+
     if (optionalChange === "added") {
       return (
         <Box component="span" sx={{ display: "inline" }}>
-          {title} <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>+(O)</Box>
+          {title}{" "}
+          <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>
+            +(O)
+          </Box>
         </Box>
       );
     } else if (optionalChange === "removed") {
       return (
         <Box component="span" sx={{ display: "inline" }}>
-          {title} <Box component="span" sx={{ textDecoration: "line-through", color: "#ff9500", fontWeight: "bold" }}>(O)</Box>
+          {title}{" "}
+          <Box
+            component="span"
+            sx={{
+              textDecoration: "line-through",
+              color: "#ff9500",
+              fontWeight: "bold",
+            }}
+          >
+            (O)
+          </Box>
         </Box>
       );
     } else if (isOptional) {
       return (
         <Box component="span" sx={{ display: "inline" }}>
-          {title} <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>(O)</Box>
+          {title}{" "}
+          <Box component="span" sx={{ color: "#ff9500", fontWeight: "bold" }}>
+            (O)
+          </Box>
         </Box>
       );
     }
-    
+
     return title;
   };
 
@@ -487,20 +531,26 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               </Tooltip>
             )}
 
-            {!readOnly && entry.from && entry.symbol !== "x" && entry.symbol !== "=" && (
-              <ListItemIcon sx={{ minWidth: "auto" }}>
-                <Tooltip title="Search it below" placement="left">
-                  <IconButton
-                    sx={{ p: 0.4 }}
-                    onClick={() =>
-                      triggerSearch({ id: entry.from, title: nodes[entry.from].title })
-                    }
-                  >
-                    <SearchIcon sx={{ fontSize: 19, color: "orange" }} />
-                  </IconButton>
-                </Tooltip>
-              </ListItemIcon>
-            )}
+            {!readOnly &&
+              entry.from &&
+              entry.symbol !== "x" &&
+              entry.symbol !== "=" && (
+                <ListItemIcon sx={{ minWidth: "auto" }}>
+                  <Tooltip title="Search it below" placement="left">
+                    <IconButton
+                      sx={{ p: 0.4 }}
+                      onClick={() =>
+                        triggerSearch({
+                          id: entry.from,
+                          title: nodes[entry.from].title,
+                        })
+                      }
+                    >
+                      <SearchIcon sx={{ fontSize: 19, color: "orange" }} />
+                    </IconButton>
+                  </Tooltip>
+                </ListItemIcon>
+              )}
 
             <ListItemText
               primary={
@@ -555,7 +605,11 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                       fontSize: "0.9rem",
                     }}
                   >
-                    {formatPartTitle(entry.to, entry.toOptional || false, entry.optionalChange)}
+                    {formatPartTitle(
+                      entry.to,
+                      entry.toOptional || false,
+                      entry.optionalChange,
+                    )}
                   </Link>
                 ) : null
               }
