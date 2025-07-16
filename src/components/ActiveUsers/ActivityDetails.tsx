@@ -4,6 +4,7 @@ import { getChangeDescription } from "@components/lib/utils/helpers";
 import { NodeChange } from "@components/types/INode";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
+import MarkdownRender from "../Markdown/MarkdownRender";
 
 const ActivityDetails = ({
   activity,
@@ -175,14 +176,22 @@ const ActivityDetails = ({
               }}
             >
               <Typography sx={{ fontWeight: 600, mb: 1 }}>Comments</Typography>
-              <Typography
+              <MarkdownRender
+                text={activity.reasoning}
+                sx={{
+                  fontSize: "16px",
+                  fontWeight: 400,
+                  letterSpacing: "inherit",
+                }}
+              />
+              {/*<Typography
                 sx={{
                   fontSize: "14px",
                   wordBreak: "break-word",
                 }}
               >
                 {activity.reasoning}
-              </Typography>
+              </Typography> */}
             </Box>
           )}
         </Box>
