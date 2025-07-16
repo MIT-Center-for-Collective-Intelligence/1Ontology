@@ -311,8 +311,47 @@ const LinkNode = ({
       const nodeD =
         property === "generalizations" ? nodes[currentNodeId] : nodes[linkId];
       const linksLength = nodeD.generalizations.flatMap((c) => c.nodes).length;
+      const firstGen = nodeD.generalizations[0]?.nodes[0]?.id || "";
       if (
-        fromModel ||
+        linksLength <= 1 &&
+        ((property === "specializations" &&
+          nodes[currentNodeId]?.title.trim().toLowerCase() ===
+            "unclassified") ||
+          (property === "generalizations" &&
+            nodes[firstGen]?.title === "unclassified"))
+      ) {
+        await confirmIt(
+          <Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                mb: "14px",
+              }}
+            >
+              <LinkOffIcon />
+            </Box>
+            <Typography sx={{ fontWeight: "bold" }}>
+              You cannot unlink this node
+            </Typography>
+            {linksLength <= 1 ? (
+              <Typography sx={{ mt: "15px" }}>
+                {`There's no other generalization linked to this node. Other than 
+              ${UNCLASSIFIED[nodes[linkId].nodeType]}`}
+                .
+              </Typography>
+            ) : (
+              ""
+            )}
+          </Box>,
+          "Ok",
+          "",
+        );
+        return;
+      }
+      if (
+        linksLength > 1 ||
         (await confirmIt(
           <Box>
             <Box
