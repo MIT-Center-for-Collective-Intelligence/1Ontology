@@ -75,6 +75,7 @@ const NodeActivity = ({
           collection(db, NODES_LOGS),
           where("changeType", "!=", "add node"),
           where("skillsFuture", "==", !!skillsFuture),
+          where("appName", "==", skillsFutureApp),
           orderBy("modifiedAt", "desc"),
           limit(100),
         );
@@ -84,6 +85,7 @@ const NodeActivity = ({
           where("changeType", "!=", "add node"),
           where("skillsFuture", "==", !!skillsFuture),
           where("modifiedBy", "==", selectedUser),
+          where("appName", "==", skillsFutureApp),
           orderBy("modifiedAt", "desc"),
           limit(100),
         );
@@ -190,6 +192,7 @@ const NodeActivity = ({
             collection(db, NODES_LOGS),
             where("changeType", "!=", "add node"),
             where("skillsFuture", "==", !!skillsFuture),
+            where("appName", "==", skillsFutureApp),
             orderBy("modifiedAt", "desc"),
             startAfter(lastDoc),
             limit(50),
@@ -200,6 +203,7 @@ const NodeActivity = ({
             where("changeType", "!=", "add node"),
             where("skillsFuture", "==", !!skillsFuture),
             where("modifiedBy", "==", selectedUser),
+            where("appName", "==", skillsFutureApp),
             orderBy("modifiedAt", "desc"),
             startAfter(lastDoc),
             limit(50),
