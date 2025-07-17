@@ -24,6 +24,7 @@ import ChipsProperty from "../StructuredProperty/ChipsProperty";
 import { NodeImageManager } from "./NodeImageManager";
 import { DisplayAddedRemovedProperty } from "../StructuredProperty/DisplayAddedRemovedProperty";
 import SelectProperty from "../StructuredProperty/SelectProprety";
+import NumericProperty from "../StructuredProperty/NumericProperty";
 
 interface NodeBodyProps {
   currentVisibleNode: INode;
@@ -255,6 +256,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
 
       if (newPropertyType.toLowerCase() === "string") {
         properties[newProperty] = "";
+      } else if (newPropertyType.toLowerCase() === "numeric") {
+        properties[newProperty] = 0;
       } else {
         properties[newProperty] = [{ collectionName: "main", nodes: [] }];
       }
@@ -514,6 +517,21 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
                     skillsFutureApp={skillsFutureApp}
+                  />
+                ) : currentNode.propertyType[property] === "numeric" ? (
+                  <NumericProperty
+                    currentVisibleNode={currentNode}
+                    property={property}
+                    value={onGetPropertyValue(property)}
+                    nodes={nodes}
+                    locked={locked}
+                    selectedDiffNode={selectedDiffNode}
+                    currentImprovement={currentImprovement}
+                    skillsFuture={skillsFuture}
+                    enableEdit={enableEdit}
+                    skillsFutureApp={skillsFutureApp}
+                    deleteProperty={deleteProperty}
+                    modifyProperty={modifyProperty}
                   />
                 ) : currentNode.propertyType[property] !== "string" ? (
                   <StructuredProperty

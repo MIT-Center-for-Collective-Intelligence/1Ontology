@@ -16,6 +16,7 @@ import {
 import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import PropertyContributors from "./PropertyContributors";
+import InheritanceDetailsPanel from "./InheritanceDetailsPanel";
 
 const ChipsProperty = ({
   currentVisibleNode,
@@ -250,6 +251,11 @@ const ChipsProperty = ({
           !!currentImprovement ||
           !enableEdit
         }
+      />
+      <InheritanceDetailsPanel
+        property={property}
+        currentVisibleNode={currentVisibleNode}
+        nodes={nodes}
       />
     </Paper>
   );
