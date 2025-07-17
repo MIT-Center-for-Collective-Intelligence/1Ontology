@@ -1,4 +1,10 @@
-import { Box, CircularProgress, Typography, Button } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  Typography,
+  Button,
+  Slide,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
 import {
   collection,
@@ -227,14 +233,13 @@ const NodeActivity = ({
         }
       });
 
-      setLogs(prevLogs => [...prevLogs, ...moreLogs]);
+      setLogs((prevLogs) => [...prevLogs, ...moreLogs]);
 
       if (!snapshot.empty) {
         setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
       }
 
       setHasMore(moreLogs.length === 50);
-
     } catch (error) {
       console.error("Error loading more logs:", error);
     } finally {
@@ -315,14 +320,18 @@ const NodeActivity = ({
       <>
         {logs.length > 0 &&
           logs.map((log) => (
-            <ActivityDetails
-              key={log.id}
-              activity={log}
-              displayDiff={displayDiff}
-              modifiedByDetails={activeUsers[log.modifiedBy]}
-              selectedDiffNode={selectedDiffNode}
-              nodes={nodes}
-            />
+            <Slide key={log.id} direction="down" in={true} timeout={900}>
+              <Box>
+                <ActivityDetails
+                  key={log.id}
+                  activity={log}
+                  displayDiff={displayDiff}
+                  modifiedByDetails={activeUsers[log.modifiedBy]}
+                  selectedDiffNode={selectedDiffNode}
+                  nodes={nodes}
+                />
+              </Box>
+            </Slide>
           ))}
         
         {logs.length > 0 && hasMore && (
