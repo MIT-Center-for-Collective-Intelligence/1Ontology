@@ -59,6 +59,7 @@ import EditOffIcon from "@mui/icons-material/EditOff";
 import MarkdownEditor from "../Markdown/MarkdownEditor";
 import EditProperty from "../AddPropertyForm/EditProprety";
 import { Post } from "@components/lib/utils/Post";
+import InheritanceDetailsPanel from "../StructuredProperty/InheritanceDetailsPanel";
 // import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ITextProps = {
@@ -726,6 +727,11 @@ const Text = ({
             )}
           </>
         )}
+        <InheritanceDetailsPanel
+          property={property}
+          currentVisibleNode={currentVisibleNode}
+          nodes={nodes}
+        />
       </Paper>
     </Slide>
   );

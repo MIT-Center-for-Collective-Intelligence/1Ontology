@@ -10,6 +10,7 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
+import { development } from "@components/lib/CONSTANTS";
 
 interface AddPropertyFormProps {
   addNewProperty: (title: string, type: string) => void;
@@ -110,6 +111,7 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
                   "Evaluation Dimension",
                   "Incentive",
                   "Reward",
+                  ...(development === true ? ["Numeric"] : []) // Only enable numeric in dev for now
                 ]
             ).map((item) => (
               <MenuItem key={item} value={item}>
