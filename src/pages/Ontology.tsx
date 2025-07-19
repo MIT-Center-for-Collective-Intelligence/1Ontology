@@ -639,15 +639,25 @@ const Ontology = ({
     }
   }, [nodes]);
 
-  const getTreeView = (
-    mainCategories: INode[],
-    visited: Map<string, any> = new Map(),
-    path: string[],
-  ): any => {
+  const getTreeView = ({ mainCategories, visited, path }: any): any => {
     const newNodes = [];
 
     for (let node of mainCategories) {
-      if (!node) {
+      if (!node) continue;
+
+      const currentPath = [...path, node.id];
+      const pathNode = currentPath.join("-");
+
+      if (
+        path.includes(node.id) ||
+        (visited.has(pathNode) && currentPath.length !== 1)
+      ) {
+        if (
+          typeof visited.get(pathNode) !== "boolean" &&
+          visited.get(pathNode)
+        ) {
+          newNodes.push(visited.get(pathNode));
+        }
         continue;
       }
 
@@ -662,32 +672,30 @@ const Ontology = ({
           }
         }
 
+        visited.set(pathNode, true);
         if (collection.collectionName === "main") {
-          // Add main items directly with position metadata
-          const mainChildren = getTreeView(children, visited, [...path, node.id]);
-          mainChildren.forEach((child: any, index: any) => {
-            childrenInOrder.push({
-              ...child,
-              isMainItem: true,
-              originalCollectionIndex: specializations.indexOf(collection),
-            });
+          const mainChildren = getTreeView({
+            mainCategories: children,
+            visited,
+            path: currentPath,
           });
-        } else {
-          // For other collections
-          const id = [...path, node.id, collection.collectionName].join("-");
-
-          if (visited.has(id)) {
-            if (typeof visited.get(id) !== "boolean") {
+          for (let child of mainChildren) {
+            if (child && "id" in child) {
               childrenInOrder.push({
-                ...visited.get(id),
+                ...child,
+                isMainItem: true,
                 originalCollectionIndex: specializations.indexOf(collection),
               });
             }
-            continue;
           }
-          visited.set(id, true);
-          
-          const _children = getTreeView(children, visited, [...path, node.id]);
+        } else {
+          const id = [...currentPath, collection.collectionName].join("-");
+
+          const _children = getTreeView({
+            mainCategories: children,
+            visited,
+            path: currentPath,
+          });
           const record = {
             id: id,
             nodeId: node.id,
@@ -699,26 +707,16 @@ const Ontology = ({
             originalCollectionIndex: specializations.indexOf(collection),
           };
           childrenInOrder.push(record);
-          visited.set(id, record);
         }
       }
 
-      // Sort by collection index to maintain order
-      childrenInOrder.sort((a, b) => 
-        (a.originalCollectionIndex || 0) - (b.originalCollectionIndex || 0)
+      childrenInOrder.sort(
+        (a, b) =>
+          (a.originalCollectionIndex || 0) - (b.originalCollectionIndex || 0),
       );
 
-      const id = [...path, node.id].join("-");
-      if (visited.has(id)) {
-        if (typeof visited.get(id) !== "boolean") {
-          newNodes.push(visited.get(id));
-        }
-        continue;
-      }
-      visited.set(id, true);
-      
       const record = {
-        id,
+        id: pathNode,
         nodeId: node.id,
         name: node.title,
         nodeType: node.nodeType,
@@ -726,7 +724,7 @@ const Ontology = ({
         category: !!node.category,
         unclassified: node.unclassified,
       };
-      visited.set(id, record);
+      visited.set(pathNode, record);
       newNodes.push(record);
     }
     return newNodes;
@@ -784,7 +782,12 @@ const Ontology = ({
       setSpecializationNumsUnder(specNums);
     }
 
-    const _result = getTreeView(mainCategories, new Map(), []);
+    const _result = getTreeView({
+      mainCategories,
+      visited: new Map(),
+      path: [],
+    });
+
     setTreeViewData(_result);
     // Set the generated tree structure for visualization
     setTreeVisualization(treeOfSpecializations);
