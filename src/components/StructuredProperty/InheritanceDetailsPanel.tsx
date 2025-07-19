@@ -518,7 +518,9 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
                                 : "rgba(0, 0, 0, 0.6)",
                           }}
                         >
-                          (Inherited from "{source.inheritedFrom}")
+                          (Inherited from {`"`}
+                          {source.inheritedFrom}
+                          {`"`})
                         </Typography>
                       )}
 
