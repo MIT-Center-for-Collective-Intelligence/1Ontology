@@ -1497,6 +1497,98 @@ export const extractJSON = (text: string) => {
     return { jsonObject: {}, isJSON: false };
   }
 };
+const findLcsNames = (
+  oldValue: ICollection[],
+  newValue: ICollection[],
+): Set<string> => {
+  const oldNames = oldValue.map((c) => c.collectionName);
+  const newNames = newValue.map((c) => c.collectionName);
+  const m = oldNames.length;
+  const n = newNames.length;
+
+  const dp = Array(m + 1)
+    .fill(0)
+    .map(() => Array(n + 1).fill(0));
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (oldNames[i - 1] === newNames[j - 1]) {
+        dp[i][j] = 1 + dp[i - 1][j - 1];
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  const lcs = new Set<string>();
+  let i = m;
+  let j = n;
+  while (i > 0 && j > 0) {
+    if (oldNames[i - 1] === newNames[j - 1]) {
+      lcs.add(oldNames[i - 1]);
+      i--;
+      j--;
+    } else if (dp[i - 1][j] > dp[i][j - 1]) {
+      i--;
+    } else {
+      j--;
+    }
+  }
+  return lcs;
+};
+
+export const diffSortedCollections = (
+  oldValue: ICollection[],
+  newValue: ICollection[],
+): ICollection[] => {
+  console.log({
+    oldValue,
+    newValue,
+  });
+  const oldOrder = new Map(oldValue.map((c, i) => [c.collectionName, i]));
+  const newMap = new Map(newValue.map((c) => [c.collectionName, c]));
+
+  const lcsNames = findLcsNames(oldValue, newValue);
+
+  let result: ICollection[] = newValue.map((newCol) => {
+    const wasInOld = oldOrder.has(newCol.collectionName);
+    const isStable = lcsNames.has(newCol.collectionName);
+
+    if (isStable) {
+      return { ...newCol };
+    } else if (wasInOld) {
+      return { ...newCol, changeType: "sort", change: "added" };
+    } else {
+      return { ...newCol, change: "added" };
+    }
+  });
+
+  const removedOrMovedItems: { index: number; collection: ICollection }[] = [];
+  oldValue.forEach((oldCol, oldIndex) => {
+    if (!lcsNames.has(oldCol.collectionName)) {
+      const isInNew = newMap.has(oldCol.collectionName);
+      if (isInNew) {
+        removedOrMovedItems.push({
+          index: oldIndex,
+          collection: { ...oldCol, changeType: "sort", change: "removed" },
+        });
+      } else {
+        removedOrMovedItems.push({
+          index: oldIndex,
+          collection: { ...oldCol, change: "removed" },
+        });
+      }
+    }
+  });
+
+  removedOrMovedItems
+    .sort((a, b) => b.index - a.index)
+    .forEach(({ index, collection }) => {
+      result.splice(index, 0, collection);
+    });
+
+  return result;
+};
 
 export const diffCollections = (
   oldValue: ICollection[],

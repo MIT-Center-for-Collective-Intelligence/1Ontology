@@ -44,7 +44,12 @@ export type ILinkNode = {
   optional?: boolean;
 };
 
-export type ICollection = { collectionName: string; nodes: ILinkNode[] };
+export type ICollection = {
+  collectionName: string;
+  nodes: ILinkNode[];
+  change?: any;
+  changeType?: string;
+};
 export type IInheritance = {
   [key: string]: {
     ref: string | null;

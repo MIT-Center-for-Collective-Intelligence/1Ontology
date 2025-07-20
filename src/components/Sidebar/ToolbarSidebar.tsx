@@ -49,6 +49,7 @@ import { INotification } from "@components/types/IChat";
 import {
   createNewNode,
   diffCollections,
+  diffSortedCollections,
   generateInheritance,
   synchronizeStuff,
 } from "@components/lib/utils/helpers";
@@ -671,7 +672,11 @@ const ToolbarSidebar = ({
       modified_property_type !== "string-select" &&
       modified_property_type !== "numeric"
     ) {
-      const diff = diffCollections(data.previousValue, data.newValue);
+      const diff =
+        data.changeType === "sort collections"
+          ? diffSortedCollections(data.previousValue, data.newValue)
+          : diffCollections(data.previousValue, data.newValue);
+
       data.detailsOfChange = { comparison: diff };
     }
     setTimeout(() => {

@@ -53,6 +53,9 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                 // gap: "10px",
               }}
             >
+              {collection.changeType === "sort" && (
+                <SwapHorizIcon sx={{ mr: "6px" }} />
+              )}
               <Typography
                 sx={{
                   fontSize: "20px",
@@ -60,7 +63,10 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                   fontFamily: "Roboto, sans-serif",
                   minHeight: "5px",
                   textDecoration:
-                    collection.change === "removed" ? "line-through" : "",
+                    collection.change === "removed" &&
+                    collection.changeType !== "sort"
+                      ? "line-through"
+                      : "",
                   /*    color:
                     collection.change === "removed"
                       ? "red"
@@ -95,7 +101,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
             </Box>
             <List>
               {collection.nodes.map((node: any) => (
-                <ListItem 
+                <ListItem
                   key={node.id}
                   id={node.change ? `${node.id}-${property}` : undefined}
                 >

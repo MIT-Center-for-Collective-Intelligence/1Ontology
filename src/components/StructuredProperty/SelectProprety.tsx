@@ -19,7 +19,7 @@ import { collection, doc, getFirestore, updateDoc } from "firebase/firestore";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import PropertyContributors from "./PropertyContributors";
 
-import { DISPLAY } from "@components/lib/CONSTANTS";
+import { DISPLAY, performerColors } from "@components/lib/CONSTANTS";
 import ChipInput from "../ChipInput/ChipInput";
 
 const SelectProperty = ({
@@ -131,29 +131,8 @@ const SelectProperty = ({
     updateValue(updated);
   };
 
-  const handleURLsChange = (
-    sources: string[],
-    added: string[],
-    removed: string[],
-  ) => {
-    const newSources: { title: string; domain: string }[] = sources.map(
-      (str) => {
-        const domainMatch = str.match(/Domain:(.*?) Title:/);
-        const titleMatch = str.match(/Title:(.*)/);
-
-        if (domainMatch && titleMatch) {
-          return {
-            domain: domainMatch[1].trim(),
-            title: titleMatch[1].trim(),
-          };
-        } else {
-          return {
-            domain: "",
-            title: str.trim(),
-          };
-        }
-      },
-    );
+  const handleURLsChange = (sources: { title: string; domain: string }[]) => {
+    const newSources: { title: string; domain: string }[] = sources;
     const updated = { ...value };
     updated.sources = newSources;
     updateValue(updated);
@@ -406,18 +385,14 @@ const SelectProperty = ({
                   }}
                 >
                   <ChipInput
-                    tags={(value.sources || []).map((c) =>
-                      c.domain
-                        ? `Domain:${c.domain} Title:${c.title}`
-                        : `${c.title}`,
-                    )}
+                    tags={value.sources}
                     selectedTags={() => {}}
-                    updateTags={(newTags, added, removed) =>
-                      handleURLsChange(newTags, added, removed)
+                    updateTags={(newTags: any, added, removed) =>
+                      handleURLsChange(newTags)
                     }
                     placeholder="Add URL"
                     label="Sources"
-                    fontSize="10px"
+                    fontSize="17px"
                   />
                 </Box>
               </Box>
@@ -434,16 +409,12 @@ const SelectProperty = ({
                 <Box sx={{ mt: "6px" }}>
                   <Typography>Sources:</Typography>
                   <ChipInput
-                    tags={(value.sources || []).map((c) =>
-                      c.domain
-                        ? `Domain:${c.domain} Title:${c.title}`
-                        : `${c.title}`,
-                    )}
+                    tags={value.sources}
                     selectedTags={() => {}}
                     updateTags={() => {}}
                     placeholder="Sources"
                     readOnly
-                    fontSize="10px"
+                    fontSize="17px"
                     clickable={true}
                   />
                 </Box>
@@ -452,6 +423,23 @@ const SelectProperty = ({
           </Box>
         </Box>
       )}
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 2,
+          mt: 2,
+          alignItems: "center",
+          ml: "10px",
+        }}
+      >
+        {Object.keys(performerColors).map((cTitle) => (
+          <Chip
+            label={cTitle}
+            sx={{ backgroundColor: performerColors[cTitle], color: "white" }}
+          />
+        ))}
+      </Box>
     </Paper>
   );
 };

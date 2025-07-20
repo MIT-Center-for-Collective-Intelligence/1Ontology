@@ -6,6 +6,7 @@ import { makeStyles } from "@mui/styles";
 import Downshift from "downshift";
 import PropTypes from "prop-types";
 import React, { Fragment } from "react";
+import { performerColors } from "@components/lib/CONSTANTS";
 
 const useStyles: any = makeStyles(() => ({
   inputChip: {
@@ -18,12 +19,21 @@ const useStyles: any = makeStyles(() => ({
   },
 }));
 
+type TagType = {
+  title: string;
+  added?: boolean;
+  removed?: boolean;
+};
 const ChipInput = ({
   ...props
 }: {
-  tags: any;
+  tags: TagType[];
   selectedTags: any;
-  updateTags: (newValue: string[], added: string[], removed: string[]) => void;
+  updateTags: (
+    newValue: TagType[],
+    added: TagType[],
+    removed: TagType[],
+  ) => void;
   placeholder: any;
   clickable?: boolean;
   fontSize?: string;
@@ -52,6 +62,8 @@ const ChipInput = ({
     fontSize,
     ...other
   } = props;
+  console.log(tags, "tags===>");
+
   const [inputValue, setInputValue] = React.useState("");
   const handleKeyDown = (event: any) => {
     if (event.key === "Enter") {
@@ -126,37 +138,38 @@ const ChipInput = ({
           return (
             <div className="" style={{ ...style, border: "none" }}>
               {readOnly ? (
-                <Box sx={{ ml: "10px", mb: "4px" }}>
+                <Box sx={{ ml: "10px", mb: "4px", mt: "14px" }}>
                   {tags.map((item: any, idx: number) => {
-                    const color = added.includes(item)
-                      ? "#115f07"
-                      : removed.includes(item)
-                        ? "red"
-                        : "";
+                    const displayText = item.domain
+                      ? `Domain:${item.domain} Title:${item.title}`
+                      : item.title;
+
+                    const backgroundColor =
+                      performerColors[item.supports] || "grey";
+
                     return (
                       <Fragment key={idx}>
                         <Chip
                           sx={{
-                            background: `${color}`,
+                            background: backgroundColor,
                             fontSize: fontSize || "20px",
-                            cursor: "pointer",
-                            ":hover": {
-                              backgroundColor: "orange",
-                            },
+                            cursor: clickable ? "pointer" : "default",
+                            ":hover": clickable
+                              ? { backgroundColor: "orange" }
+                              : {},
+                            my: "3px",
+                            mx: "3px",
                           }}
-                          key={item}
-                          tabIndex={-1}
-                          label={item}
+                          label={displayText}
                           className={classes.innerChip}
                           onClick={
                             clickable
                               ? () => {
-                                  handleClick(item);
+                                  handleClick(displayText);
                                 }
                               : undefined
                           }
                         />
-                         
                       </Fragment>
                     );
                   })}
@@ -166,10 +179,10 @@ const ChipInput = ({
                   label={label || ""}
                   className={classes.inputChip}
                   InputProps={{
-                    startAdornment: tags.map((item: any, idx: number) => {
-                      const color = added.includes(item)
+                    startAdornment: tags.map((item: TagType, idx: number) => {
+                      const color = item.added
                         ? "#115f07"
-                        : removed.includes(item)
+                        : item.removed
                           ? "red"
                           : "";
                       return (
@@ -178,10 +191,12 @@ const ChipInput = ({
                             <Chip
                               sx={{
                                 fontSize: fontSize || "20px",
+                                my: "3px",
+                                mx: "3px",
                               }}
-                              key={item}
+                              key={item.title}
                               tabIndex={-1}
-                              label={item}
+                              label={item.title}
                               className={classes.innerChip}
                               clickable={clickable}
                             />
@@ -190,10 +205,12 @@ const ChipInput = ({
                               sx={{
                                 background: `${color}`,
                                 fontSize: fontSize || "20px",
+                                my: "3px",
+                                mx: "3px",
                               }}
-                              key={item}
+                              key={item.title}
                               tabIndex={-1}
-                              label={item}
+                              label={item.title}
                               disabled={readOnly}
                               className={classes.innerChip}
                               onDelete={handleDelete(item)}
@@ -223,6 +240,7 @@ const ChipInput = ({
                         border: "none",
                       },
                     },
+                    pt: "15px",
                   }}
                 />
               )}

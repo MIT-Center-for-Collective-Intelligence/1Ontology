@@ -42,7 +42,7 @@ const ChipsProperty = ({
   skillsFutureApp: string;
 }) => {
   const db = getFirestore();
-  const [value, setValue] = useState<string[]>([]);
+  const [value, setValue] = useState<{ title: string }[]>([]);
 
   const propertyValue: string[] = useMemo(() => {
     if (
@@ -88,13 +88,19 @@ const ChipsProperty = ({
   ]);
 
   useEffect(() => {
-    setValue(propertyValue);
+    setValue(
+      propertyValue.map((c) => {
+        return {
+          title: c,
+        };
+      }),
+    );
   }, [propertyValue]);
 
   const updateValue = async (
-    newValue: string[],
-    added: string[],
-    removed: string[],
+    newValue: { title: string }[],
+    added: { title: string }[],
+    removed: { title: string }[],
   ) => {
     try {
       if (
@@ -113,7 +119,7 @@ const ChipsProperty = ({
       const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
 
       await updateDoc(nodeRef, {
-        [`properties.${property}`]: newValue,
+        [`properties.${property}`]: newValue.map((c) => c.title),
         [`inheritance.${property}.ref`]: null,
       });
       if (!!currentVisibleNode.inheritance[property]?.ref) {
@@ -141,13 +147,13 @@ const ChipsProperty = ({
         modifiedBy: user?.uname,
         modifiedProperty: property,
         previousValue,
-        newValue,
+        newValue: newValue.map((c) => c.title),
         modifiedAt: new Date(),
         changeType: changeMessage,
         fullNode: currentVisibleNode,
         changeDetails: {
-          addedElements: added,
-          removedElements: removed,
+          addedElements: added.map((c) => c.title),
+          removedElements: removed.map((c) => c.title),
         },
         skillsFuture,
         ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
