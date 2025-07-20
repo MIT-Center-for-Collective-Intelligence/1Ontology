@@ -435,6 +435,7 @@ const SelectProperty = ({
       >
         {Object.keys(performerColors).map((cTitle) => (
           <Chip
+            key={cTitle}
             label={cTitle}
             sx={{ backgroundColor: performerColors[cTitle], color: "white" }}
           />
