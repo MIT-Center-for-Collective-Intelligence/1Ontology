@@ -189,3 +189,10 @@ export const SKILLS_FUTURE_APP_NAMES = [
   "O*Net Verbs - o1 Pro", */
   // "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
 ];
+
+export const performerColors: Record<string, string> = {
+  "A single human": "#1976d2",
+  "Collaboration of humans": "#9c27b0",
+  "Collaboration of humans and AI": "#734946",
+  AI: "#4caf50",
+};
