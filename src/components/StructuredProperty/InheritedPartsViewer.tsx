@@ -2,9 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
-  Tabs,
-  Tab,
-  Checkbox,
   IconButton,
   Tooltip,
   MenuItem,
@@ -14,10 +11,8 @@ import {
   ListItem,
   List,
   Link,
-  ListItemButton,
   Popover,
 } from "@mui/material";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import RemoveIcon from "@mui/icons-material/Remove";
 import SearchIcon from "@mui/icons-material/Search";
@@ -28,8 +23,6 @@ import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import { ICollection, INode } from "@components/types/INode";
-import { NODES } from "@components/lib/firestoreClient/collections";
-import { db } from "@components/lib/firestoreServer/admin-exp";
 import {
   query,
   collection,
@@ -59,18 +52,7 @@ interface InheritedPartsViewerProps {
     generalizationId: string,
     nodes: { [nodeId: string]: INode },
   ) => PartNode[];
-  getTitle: (nodes: { [id: string]: any }, nodeId: string) => string;
   nodes: { [id: string]: any };
-  checkedItems: Set<string>;
-  markItemAsChecked: (
-    checkedId: string,
-    radioSelection?: boolean,
-    fromGeneralizationDropdown?: {
-      generalizationId: string;
-      generalizationTitle: string;
-    },
-  ) => void;
-  isSaving: boolean;
   readOnly?: boolean;
   setDisplayDetails: any;
   inheritanceDetails: any;
@@ -80,16 +62,21 @@ interface InheritedPartsViewerProps {
   addPart?: any;
   removePart?: any;
 }
+type TransferInheritance = {
+  from: string;
+  to: string;
+  symbol: string;
+  fromOptional: boolean;
+  toOptional: boolean;
+  optionalChange: "added" | "removed" | "none";
+  hops: number;
+};
 
 const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   selectedProperty,
   getAllGeneralizations,
   getGeneralizationParts,
-  getTitle,
   nodes,
-  checkedItems,
-  markItemAsChecked,
-  isSaving,
   readOnly = false,
   setDisplayDetails,
   inheritanceDetails,
@@ -343,34 +330,48 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     const currentPartsOrder =
       currentNodeParts?.[0]?.nodes?.map((c: any) => c.id) || [];
 
-    const filteredSpecializations = Object.entries(groupedByGeneralization).map(
-      ([from, entries]) => {
-        if (entries.length === 1) return entries[0];
+    const hasSeenTo = new Set();
 
-        return entries.reduce((a, b) => {
-          const aHops = a.hops ?? -1;
-          const bHops = b.hops ?? -1;
-          if (inheritanceForParts[from] && inheritanceForParts[from] === b.to) {
-            return b;
-          }
-          if (aHops === -1 && bHops === -1) {
-            return currentPartsOrder.indexOf(a.to) <=
-              currentPartsOrder.indexOf(b.to)
-              ? a
-              : b;
-          }
-          if (aHops === -1) return b;
-          if (bHops === -1) return a;
+    const filteredSpecializations: TransferInheritance[] = Object.entries(
+      groupedByGeneralization,
+    ).reduce((acc, [from, entries]) => {
+      const picked =
+        entries.length === 1
+          ? entries[0]
+          : entries.reduce((a, b) => {
+              const aHops = a.hops ?? -1;
+              const bHops = b.hops ?? -1;
+              if (
+                inheritanceForParts[from] &&
+                inheritanceForParts[from] === b.to
+              ) {
+                return b;
+              }
+              if (aHops === -1 && bHops === -1) {
+                return currentPartsOrder.indexOf(a.to) <=
+                  currentPartsOrder.indexOf(b.to)
+                  ? a
+                  : b;
+              }
+              if (aHops === -1) return b;
+              if (bHops === -1) return a;
 
-          if (aHops !== bHops) return aHops < bHops ? a : b;
+              if (aHops !== bHops) return aHops < bHops ? a : b;
 
-          return currentPartsOrder.indexOf(a.to) <=
-            currentPartsOrder.indexOf(b.to)
-            ? a
-            : b;
-        });
-      },
-    );
+              return currentPartsOrder.indexOf(a.to) <=
+                currentPartsOrder.indexOf(b.to)
+                ? a
+                : b;
+            });
+
+      if (!hasSeenTo.has(picked.to)) {
+        hasSeenTo.add(picked.to);
+        acc.push(picked);
+      }
+
+      return acc;
+    }, [] as any);
+
     const nonPickedOnes: any = {};
 
     for (let key in groupedByGeneralization) {
@@ -664,16 +665,29 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                 {entry.symbol === "x" ? (
                   <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
                 ) : entry.symbol === ">" ? (
-                  <Tooltip title="Switch to">
+                  <Tooltip
+                    title={
+                      (nonPickedOnes[entry.from] || []).length > 0
+                        ? "Switch to"
+                        : ""
+                    }
+                  >
                     <ArrowForwardIosIcon
                       sx={{
                         fontSize: 20,
                         color: "orange",
-                        ":hover": {
-                          backgroundColor: "gray",
-                          borderRadius: "50%",
-                          p: 0.2,
-                        },
+                        backgroundColor:
+                          (nonPickedOnes[entry.from] || []).length > 0
+                            ? "#4a4646"
+                            : "",
+                        p: 0.2,
+                        borderRadius: "50%",
+                        ":hover":
+                          (nonPickedOnes[entry.from] || []).length > 0
+                            ? {
+                                backgroundColor: "gray",
+                              }
+                            : {},
                       }}
                       onClick={(e) => handleClick(e, entry.from)}
                     />
