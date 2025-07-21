@@ -1362,11 +1362,7 @@ const StructuredProperty = ({
                   getAllGeneralizations(currentVisibleNode, nodes)
                 }
                 getGeneralizationParts={getGeneralizationParts}
-                getTitle={getTitle}
                 nodes={nodes}
-                checkedItems={getInheritedPartsSet()}
-                markItemAsChecked={() => {}}
-                isSaving={false}
                 readOnly={true}
                 setDisplayDetails={setDisplayDetails}
                 inheritanceDetails={inheritanceDetails}
