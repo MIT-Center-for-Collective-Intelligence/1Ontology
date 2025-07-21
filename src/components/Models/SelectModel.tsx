@@ -782,11 +782,7 @@ const SelectModel = ({
             getGeneralizationParts={(generalizationId: string) =>
               getGeneralizationParts(generalizationId, nodes)
             }
-            getTitle={getTitle}
             nodes={nodes}
-            checkedItems={checkedItems}
-            markItemAsChecked={markItemAsChecked}
-            isSaving={isSaving}
             readOnly={false}
             setDisplayDetails={setDisplayDetails}
             inheritanceDetails={inheritanceDetails}
