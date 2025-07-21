@@ -669,6 +669,8 @@ export const getChangeDescription = (
       return `Changed the name of a property in:`;
     case "change select-string":
       return "Updated Most Efficiently Performed By in:";
+    case "sort collections":
+      return "Reordered collections in:";
     default:
       return `Made an unknown change to:`;
   }
