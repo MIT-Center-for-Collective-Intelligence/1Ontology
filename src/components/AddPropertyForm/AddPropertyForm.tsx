@@ -111,7 +111,7 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
                   "Evaluation Dimension",
                   "Incentive",
                   "Reward",
-                  ...(development === true ? ["Numeric"] : []) // Only enable numeric in dev for now
+                  "Numeric",
                 ]
             ).map((item) => (
               <MenuItem key={item} value={item}>

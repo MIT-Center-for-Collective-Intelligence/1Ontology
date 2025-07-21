@@ -14,6 +14,11 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
 import { DISPLAY } from "@components/lib/CONSTANTS";
 
+export interface NumericValue {
+  value: number | string;
+  unit: string;
+}
+
 export interface InheritanceSource {
   nodeId: string;
   nodeTitle: string;
@@ -49,6 +54,19 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
   const theme = useTheme();
   const [showInheritanceDetails, setShowInheritanceDetails] = useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
+
+  const parseNumericValue = useCallback((val: any): NumericValue => {
+    if (typeof val === "object" && val !== null && "value" in val) {
+      return {
+        value: val.value || "",
+        unit: val.unit || "",
+      };
+    }
+    return {
+      value: val || "",
+      unit: "",
+    };
+  }, []);
 
   const inheritanceData = useMemo((): InheritanceDetailsData => {
     const generalizationNodes =
@@ -90,7 +108,7 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
 
     const getDefaultValue = () => {
       const propertyType = currentVisibleNode.propertyType[property];
-      if (propertyType === "numeric") return 0;
+      if (propertyType === "numeric") return { value: 0, unit: "" };
       if (propertyType === "string-array") return [];
       if (Array.isArray(currentVisibleNode.properties[property])) return [];
       return "";
@@ -136,6 +154,9 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
     const isNumeric =
       propertyType === "numeric" ||
       typeof firstValue === "number" ||
+      (typeof firstValue === "object" &&
+        firstValue !== null &&
+        "value" in firstValue) ||
       (!isNaN(Number(firstValue)) &&
         firstValue !== "" &&
         typeof firstValue === "string");
@@ -153,7 +174,21 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
       inheritanceSources.length > 0
     ) {
       if (isNumeric) {
-        aggregatedValue = inheritanceSources[0].value;
+        if (propertyType === "numeric") {
+          const firstSource = inheritanceSources[0];
+          const parsedValue = parseNumericValue(firstSource.value);
+
+          for (let i = 1; i < inheritanceSources.length; i++) {
+            const otherValue = parseNumericValue(inheritanceSources[i].value);
+            if (otherValue.unit && !parsedValue.unit) {
+              parsedValue.unit = otherValue.unit;
+            }
+          }
+
+          aggregatedValue = parsedValue;
+        } else {
+          aggregatedValue = inheritanceSources[0].value;
+        }
       } else if (propertyType === "string-array") {
         const allItems = inheritanceSources.flatMap((source: { value: any }) =>
           Array.isArray(source.value) ? source.value : [],
@@ -180,7 +215,7 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
       isNumeric,
       isMultiLine,
     };
-  }, [currentVisibleNode, nodes, property]);
+  }, [currentVisibleNode, nodes, property, parseNumericValue]);
 
   useEffect(() => {
     setSelectedTab(0);
@@ -196,11 +231,7 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
   const detectPropertyType = useCallback(() => {
     const { propertyType, isNumeric } = inheritanceData;
     if (propertyType) return propertyType;
-    if (
-      isNumeric ||
-      typeof inheritanceData.inheritanceSources[0]?.value === "number"
-    )
-      return "numeric";
+    if (isNumeric) return "numeric";
     if (Array.isArray(inheritanceData.inheritanceSources[0]?.value))
       return "string-array";
     return "string";
@@ -212,6 +243,7 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
 
       switch (propType) {
         case "numeric":
+          const numericValue = parseNumericValue(source.value);
           return (
             <Typography
               sx={{
@@ -220,7 +252,8 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
                 color: theme.palette.mode === "dark" ? "#ffffff" : "#000000",
               }}
             >
-              {source.value !== "" ? `${source.value}` : "No value"}
+              {numericValue.value !== "" ? numericValue.value : "0"}
+              {numericValue.unit && ` ${numericValue.unit}`}
             </Typography>
           );
 
@@ -303,7 +336,7 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
           );
       }
     },
-    [detectPropertyType, inheritanceData, theme],
+    [detectPropertyType, theme, parseNumericValue],
   );
 
   // const getHelpText = useCallback(() => {
@@ -518,9 +551,7 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
                                 : "rgba(0, 0, 0, 0.6)",
                           }}
                         >
-                          (Inherited from {`"`}
-                          {source.inheritedFrom}
-                          {`"`})
+                          (Inherited from "{source.inheritedFrom}")
                         </Typography>
                       )}
 
