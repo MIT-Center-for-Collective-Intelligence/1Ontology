@@ -289,7 +289,7 @@ const SearchSideBar = ({
           zIndex: 1000,
         }}
       />
-      {loadingSearchResult && (
+      {loadingSearchResult && isFocused && (
         <List sx={{ zIndex: 10 }}>
           {[...Array(15)].map((_, index) => (
             <Box key={index} sx={{ px: 4, mt: "0px" }}>
