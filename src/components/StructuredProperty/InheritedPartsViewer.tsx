@@ -102,6 +102,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
 
   const handleClose = () => {
     setAnchorEl(null);
+    setPickingFor("");
   };
 
   const open = Boolean(anchorEl);
@@ -675,11 +676,13 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     <ArrowForwardIosIcon
                       sx={{
                         fontSize: 20,
-                        color: "orange",
+                        color: pickingFor === entry.from ? "white" : "orange",
                         backgroundColor:
-                          (nonPickedOnes[entry.from] || []).length > 0
-                            ? "#4a4646"
-                            : "",
+                          pickingFor === entry.from
+                            ? "orange"
+                            : (nonPickedOnes[entry.from] || []).length > 0
+                              ? "#4a4646"
+                              : "",
                         p: 0.2,
                         borderRadius: "50%",
                         ":hover":
