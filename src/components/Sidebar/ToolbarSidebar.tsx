@@ -57,11 +57,15 @@ import { getNotificationsSnapshot } from "@components/client/firestore/notificat
 import {
   collection,
   doc,
+  getDoc,
+  getDocs,
   getFirestore,
   onSnapshot,
   query,
+  setDoc,
   Timestamp,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import SearchSideBar from "../SearchSideBar/SearchSideBar";
 import ActiveUsers from "../ActiveUsers/ActiveUsers";
@@ -196,8 +200,12 @@ const ToolbarSidebar = ({
   const [improvements, setImprovements] = useState<any>([]);
   const [copilotMessage, setCopilotMessage] = useState("");
   const { selectIt, dropdownDialog } = useSelectDropdown();
+  const [oNetProgress, setONetProgress] = useState({ added: 0, remaining: 0 });
 
   const handleProfileMenuOpen = (event: any) => {
+    if (user?.uname === "1man" || user?.uname === "ouhrac") {
+      loadProgress();
+    }
     setProfileMenuOpen(event.currentTarget);
   };
   const [selectedUser, setSelectedUser] = useState("All");
@@ -213,6 +221,44 @@ const ToolbarSidebar = ({
     const userDoc = doc(collection(db, USERS), user?.uname);
     await updateDoc(userDoc, { imageUrl });
   };
+
+  const loadProgress = async () => {
+    try {
+      const oNetProgressRef = doc(collection(db, "onetTasks"), "progress");
+      const oNetProgressDoc = await getDoc(oNetProgressRef);
+      if (oNetProgressDoc.exists()) {
+        const oNetProgressData = oNetProgressDoc.data();
+        setONetProgress({
+          added: oNetProgressData.added,
+          remaining: oNetProgressData.remaining,
+        });
+      }
+      const addedQuery = query(
+        collection(db, "onetTasks"),
+        where("added", "==", true),
+      );
+      const addedOnetDocsSnapshot = await getDocs(addedQuery);
+
+      const nonAddedQuery = query(
+        collection(db, "onetTasks"),
+        where("added", "==", false),
+      );
+      const remainingOnetDocsSnapshot = await getDocs(nonAddedQuery);
+      setONetProgress({
+        added: addedOnetDocsSnapshot.docs.length,
+        remaining: remainingOnetDocsSnapshot.docs.length,
+      });
+      setDoc(oNetProgressRef, {
+        added: addedOnetDocsSnapshot.docs.length,
+        remaining: remainingOnetDocsSnapshot.docs.length,
+        updatedAt: new Date(),
+        updatedBy: user?.uname ?? "",
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const onNavigateToNode = useCallback(
     (nodeTitle: string) => {
       if (!nodeTitle) {
@@ -488,8 +534,46 @@ const ToolbarSidebar = ({
         </Box>
       )}
       {isAuthenticated && user && (
-        <Box sx={{ pl: 3, textAlign: "center", mt: "15px" }}>
-          <Typography sx={{ fontSize: "25px" }}>Hi, {user?.fName}!</Typography>
+        <Box sx={{ pl: 3, textAlign: "center", mt: "20px" }}>
+          <Typography variant="h5" sx={{ fontWeight: 500 }}>
+            Hi, {user?.fName}!
+          </Typography>
+          {(user.uname === "1man" || user.uname === "ouhrac") && (
+            <Box
+              sx={{
+                border: "1px solid gray",
+                borderRadius: "20px",
+                mr: "16px",
+                mt: "8px",
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "light" ? "#fffdfd" : "#252525",
+                py: "8px",
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                sx={{ mt: 1, color: "text.secondary", fontWeight: "bold" }}
+              >
+                O*NET Progress
+              </Typography>
+              <Typography variant="body1" sx={{ mt: 0.5 }}>
+                <Box
+                  component="span"
+                  sx={{ fontWeight: 500, color: "success.main" }}
+                >
+                  {oNetProgress.added}
+                </Box>{" "}
+                added /{" "}
+                <Box
+                  component="span"
+                  sx={{ fontWeight: 500, color: "warning.main" }}
+                >
+                  {oNetProgress.remaining}
+                </Box>{" "}
+                remaining
+              </Typography>
+            </Box>
+          )}
         </Box>
       )}
       {isAuthenticated && user && (
@@ -1369,20 +1453,20 @@ const ToolbarSidebar = ({
                   mt: "14px",
                 }}
               >
-                <Box sx={{ position: "relative", display: "inline-block" }}>
-                  <OptimizedAvatar
-                    alt={openLogsFor.fullname}
-                    imageUrl={openLogsFor.imageUrl || ""}
-                    size={40}
-                    sx={{
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                      transition: "transform 0.3s ease",
-                    }}
-                  />
-                </Box>
+                <OptimizedAvatar
+                  alt={openLogsFor.fullname}
+                  imageUrl={openLogsFor.imageUrl || ""}
+                  size={40}
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    ml: "170px",
+                    transition: "transform 0.3s ease",
+                  }}
+                />
+
                 <Box>
                   <Typography>
                     {openLogsFor.fName}
