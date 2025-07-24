@@ -1,18 +1,16 @@
 import React, { useCallback, useMemo, useState, useEffect } from "react";
 import {
-  Modal,
   Box,
-  Paper,
-  Typography,
   Button,
+  IconButton,
+  Paper,
   Tooltip,
-  Divider,
+  Typography,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 
 import ExpandSearchResult from "../OntologyComponents/ExpandSearchResult";
 import TreeViewSimplified from "../OntologyComponents/TreeViewSimplified";
-import { SearchBox } from "../SearchBox/SearchBox";
-import InheritedPartsViewer from "../StructuredProperty/InheritedPartsViewer";
 import Text from "../OntologyComponents/Text";
 import {
   SCROLL_BAR_STYLE,
@@ -20,7 +18,6 @@ import {
   UNCLASSIFIED,
 } from "@components/lib/CONSTANTS";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
-import CloseIcon from "@mui/icons-material/Close";
 import { ICollection, ILinkNode, INodeTypes } from "@components/types/INode";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import {
@@ -33,14 +30,13 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
-import { LoadingButton } from "@mui/lab";
 import {
   saveAsInheritancePart,
   getGeneralizationParts,
-  getAllGeneralizations,
   breakInheritanceAndCopyParts,
 } from "@components/lib/utils/partsHelper";
-import { getTitle } from "@components/lib/utils/string.utils";
+import { SearchBox } from "../SearchBox/SearchBox";
+import { property } from "lodash";
 
 const SelectModel = ({
   handleCloseAddLinksModel,
@@ -84,7 +80,6 @@ const SelectModel = ({
   selectedCollection,
   skillsFuture,
   saveNewSpecialization,
-  setDisplayDetails,
   inheritanceDetails,
   skillsFutureApp,
   linkNodeRelation,
@@ -136,7 +131,6 @@ const SelectModel = ({
   selectedCollection: string;
   skillsFuture: boolean;
   saveNewSpecialization: any;
-  setDisplayDetails?: any;
   inheritanceDetails?: any;
   skillsFutureApp: string;
   linkNodeRelation: any;
@@ -745,12 +739,15 @@ const SelectModel = ({
     <Paper
       sx={{
         display: "flex",
-        borderRadius: "19px",
+        borderRadius: "7px",
         /*      width: "100%",
         height: "100%", */
         // m: "19px",
+        border: "2px solid",
         mx: "5px",
+        mb: "7px",
       }}
+      elevation={6}
     >
       <Box
         sx={{
@@ -764,6 +761,28 @@ const SelectModel = ({
           },
         }}
       >
+        {" "}
+        {selectedProperty === "parts" && (
+          <Box sx={{ display: "flex", ml: "14px", mt: "13px" }}>
+            <Typography sx={{ fontSize: "20px" }}>Add new part:</Typography>{" "}
+            <Box
+              sx={{
+                display: "flex",
+                pt: 0,
+                m: "7px",
+                ml: "auto",
+                gap: "14px",
+              }}
+            >
+              <IconButton
+                onClick={handleCloseAddLinksModel}
+                sx={{ borderRadius: "25px", backgroundColor: "gray", p: "2px" }}
+              >
+                <CloseIcon sx={{ color: "white" }} />
+              </IconButton>
+            </Box>
+          </Box>
+        )}
         <Box
           sx={{
             position: "sticky",
@@ -774,30 +793,6 @@ const SelectModel = ({
               theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
           }}
         >
-          <InheritedPartsViewer
-            selectedProperty={selectedProperty}
-            getAllGeneralizations={() =>
-              getAllGeneralizations(currentVisibleNode, nodes)
-            }
-            getGeneralizationParts={(generalizationId: string) =>
-              getGeneralizationParts(generalizationId, nodes)
-            }
-            nodes={nodes}
-            readOnly={false}
-            setDisplayDetails={setDisplayDetails}
-            inheritanceDetails={inheritanceDetails}
-            currentVisibleNode={currentVisibleNode}
-            triggerSearch={triggerSearch}
-            addPart={(partId: string) => {
-              linkNodeRelation({
-                currentNodeId: currentVisibleNode.id,
-                partId,
-              });
-            }}
-            removePart={(partId: any) => {
-              unlinkNodeRelation(currentVisibleNode.id, partId, -1, 0, true);
-            }}
-          />
           <Box
             sx={{
               display: "flex",
@@ -942,6 +937,7 @@ const SelectModel = ({
               </strong>{" "}
               to link, you can describe them below:
             </Typography>
+
             <Text
               text={onGetPropertyValue(selectedProperty, true) as string}
               currentVisibleNode={currentVisibleNode}
@@ -953,7 +949,7 @@ const SelectModel = ({
               confirmIt={confirmIt}
               structured
               currentImprovement={currentImprovement}
-              sx={{ borderRadius: "none", backgroundColor: "" }}
+              sx={{ borderRadius: "none", backgroundColor: "gray" }}
               getTitleNode={() => {}}
               skillsFuture={skillsFuture}
               enableEdit={true}

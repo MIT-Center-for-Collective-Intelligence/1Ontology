@@ -62,7 +62,6 @@ const ChipInput = ({
     fontSize,
     ...other
   } = props;
-  console.log(tags, "tags===>");
 
   const [inputValue, setInputValue] = React.useState("");
   const handleKeyDown = (event: any) => {

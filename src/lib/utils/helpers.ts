@@ -1543,10 +1543,6 @@ export const diffSortedCollections = (
   oldValue: ICollection[],
   newValue: ICollection[],
 ): ICollection[] => {
-  console.log({
-    oldValue,
-    newValue,
-  });
   const oldOrder = new Map(oldValue.map((c, i) => [c.collectionName, i]));
   const newMap = new Map(newValue.map((c) => [c.collectionName, c]));
 
@@ -1674,6 +1670,21 @@ export const diffCollections = (
       } else {
         mergedNodes.push({ id, title });
       }
+    }
+    if (newCollection) {
+      const newOrder = newCollection.nodes.map((n) => n.id);
+
+      mergedNodes.sort((a, b) => {
+        const aInNew = newNodes.has(a.id);
+        const bInNew = newNodes.has(b.id);
+
+        if (aInNew && bInNew) {
+          return newOrder.indexOf(a.id) - newOrder.indexOf(b.id);
+        }
+        if (aInNew && !bInNew) return -1;
+        if (!aInNew && bInNew) return 1;
+        return 0;
+      });
     }
 
     const collectionChange = isAddedCollection

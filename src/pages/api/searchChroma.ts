@@ -38,7 +38,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { query, skillsFuture, appName, user } = req.body.data;
     const { uname } = user?.userData;
-    console.log(uname, "sent the following query", query, { appName });
 
     /*     await runMiddleware(req, res, cors); */
 

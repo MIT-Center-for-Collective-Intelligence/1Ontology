@@ -407,7 +407,7 @@ export const getGeneralizationParts = (
   let genParts = generalizationNode.properties?.parts;
   const partInheritanceRef = generalizationNode.inheritance["parts"].ref;
   if (partInheritanceRef) {
-    genParts = nodes[partInheritanceRef].properties["parts"];
+    genParts = nodes[partInheritanceRef]?.properties["parts"] || [];
   }
 
   // Add direct parts

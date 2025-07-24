@@ -195,6 +195,24 @@ const ActivityDetails = ({
             </Box>
           )}
         </Box>
+        {process.env.NODE_ENV === "development" && (
+          <div>
+            <ul>
+              <li>
+                <span style={{ color: "orange" }}>Activity ID:</span>{" "}
+                {activity.id}
+              </li>
+              <li>
+                <span style={{ color: "orange" }}>Node ID:</span>{" "}
+                {activity.nodeId}
+              </li>
+              <li>
+                <span style={{ color: "orange" }}>Log LLM ID:</span>{" "}
+                {activity.logLLMId}
+              </li>
+            </ul>
+          </div>
+        )}
       </Paper>
     </Box>
   );

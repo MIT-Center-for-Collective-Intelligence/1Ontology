@@ -16,7 +16,7 @@ import {
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import RemoveIcon from "@mui/icons-material/Remove";
 import SearchIcon from "@mui/icons-material/Search";
-
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
@@ -328,7 +328,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       currentNodeParts?.[0]?.nodes?.map((c: any) => c.id) || [];
 
     const hasSeenTo = new Set();
-    console.log("groupedByGeneralization", groupedByGeneralization);
     const filteredSpecializations: TransferInheritance[] = Object.entries(
       groupedByGeneralization,
     ).reduce((acc, [from, entries]) => {
@@ -761,20 +760,32 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             vertical: "center",
             horizontal: "left",
           }}
+          PaperProps={{
+            sx: {
+              border: "2px solid orange",
+              backgroundColor: (theme) =>
+                theme.palette.mode === "light" ? "#cccccc" : "#524e4e",
+            },
+          }}
         >
           <List>
             {(nonPickedOnes[pickingFor] || []).map((option: string) => (
-              <ListItem disablePadding key={option}>
+              <ListItem
+                disablePadding
+                key={option}
+                sx={{
+                  px: 2,
+                  cursor: "pointer",
+                  ":hover": {
+                    backgroundColor: "gray",
+                  },
+                  gap: "5px",
+                }}
+              >
+                <SwapHorizIcon />
                 <ListItemText
                   primary={nodes[option].title}
                   onClick={() => handleSelect(option)}
-                  sx={{
-                    px: 2,
-                    cursor: "pointer",
-                    ":hover": {
-                      backgroundColor: "gray",
-                    },
-                  }}
                 />
               </ListItem>
             ))}
