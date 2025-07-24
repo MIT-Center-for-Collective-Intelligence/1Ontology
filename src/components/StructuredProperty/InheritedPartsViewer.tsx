@@ -384,14 +384,18 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           hops: 0,
         });
       }
-      nonPickedOnes[key] = groupedByGeneralization[key]
-        .filter((c) => {
-          const index = filteredSpecializations.findIndex(
-            (l) => l.to === c.to && l.from === c.from,
-          );
-          return index === -1;
-        })
-        .map((c) => c.to);
+      nonPickedOnes[key] = new Array(
+        ...new Set(
+          groupedByGeneralization[key]
+            .filter((c) => {
+              const index = filteredSpecializations.findIndex(
+                (l) => l.to === c.to && l.from === c.from,
+              );
+              return index === -1;
+            })
+            .map((c) => c.to),
+        ),
+      );
     }
 
     const directMatches = result.filter((entry) => entry.symbol === "=");
