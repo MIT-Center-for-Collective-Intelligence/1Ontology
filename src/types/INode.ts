@@ -180,6 +180,7 @@ export type NodeChange = {
   skillsFuture?: boolean;
   appName?: string;
   detailsOfChange?: any;
+  logLLMId?: string;
 };
 
 export type PromptChange = {
