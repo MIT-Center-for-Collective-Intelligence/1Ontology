@@ -22,7 +22,11 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
-import { ICollection, INode } from "@components/types/INode";
+import {
+  ICollection,
+  INode,
+  TransferInheritance,
+} from "@components/types/INode";
 import {
   query,
   collection,
@@ -32,7 +36,8 @@ import {
   doc,
   setDoc,
 } from "firebase/firestore";
-const INHERITANCE_FOR_PARTS_COLLECTION_NAME = "inheritanceForParts";
+
+import { INHERITANCE_FOR_PARTS_COLLECTION_NAME } from "@components/lib/firestoreClient/collections";
 
 interface GeneralizationNode {
   id: string;
@@ -62,15 +67,6 @@ interface InheritedPartsViewerProps {
   addPart?: any;
   removePart?: any;
 }
-type TransferInheritance = {
-  from: string;
-  to: string;
-  symbol: string;
-  fromOptional: boolean;
-  toOptional: boolean;
-  optionalChange: "added" | "removed" | "none";
-  hops: number;
-};
 
 const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   selectedProperty,
@@ -332,7 +328,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       currentNodeParts?.[0]?.nodes?.map((c: any) => c.id) || [];
 
     const hasSeenTo = new Set();
-
+    console.log("groupedByGeneralization", groupedByGeneralization);
     const filteredSpecializations: TransferInheritance[] = Object.entries(
       groupedByGeneralization,
     ).reduce((acc, [from, entries]) => {
@@ -376,6 +372,18 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     const nonPickedOnes: any = {};
 
     for (let key in groupedByGeneralization) {
+      const exist = filteredSpecializations.findIndex((c) => c.from === key);
+      if (exist === -1) {
+        filteredSpecializations.push({
+          from: key,
+          to: "",
+          symbol: "x",
+          fromOptional: false,
+          toOptional: false,
+          optionalChange: "none",
+          hops: 0,
+        });
+      }
       nonPickedOnes[key] = groupedByGeneralization[key]
         .filter((c) => {
           const index = filteredSpecializations.findIndex(
@@ -510,7 +518,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       generalizationId,
       currentParts,
     );
-
     if (Object.keys(inheritanceDetails).length === 0) {
       return (
         <Typography

@@ -15,3 +15,4 @@ export const ALGORITHMS = "algorithms";
 export const GROUPS = "groups";
 export const LINKS = "links";
 export const DIAGRAMS = "diagrams";
+export const INHERITANCE_FOR_PARTS_COLLECTION_NAME = "inheritanceForParts";

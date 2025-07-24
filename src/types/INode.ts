@@ -315,3 +315,13 @@ export function isLoopActivity(activity: IActivity): activity is ILoopActivity {
 export function isTaskActivity(activity: IActivity): activity is ITaskActivity {
   return activity.type === ACTIVITY_TYPES.TASK;
 }
+
+export type TransferInheritance = {
+  from: string;
+  to: string;
+  symbol: string;
+  fromOptional: boolean;
+  toOptional: boolean;
+  optionalChange: "added" | "removed" | "none";
+  hops: number;
+};
