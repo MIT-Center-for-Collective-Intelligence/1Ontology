@@ -818,7 +818,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                   whiteSpace: "nowrap",
-                                  p: 0,
                                 }}
                                 MenuProps={{
                                   PaperProps: {
@@ -828,6 +827,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       "&::-webkit-scrollbar": {
                                         display: "none",
                                       },
+                                    },
+                                  },
+                                  MenuListProps: {
+                                    sx: {
+                                      paddingTop: 0,
+                                      paddingBottom: 0,
                                     },
                                   },
                                 }}
