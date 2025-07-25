@@ -713,6 +713,14 @@ function DraggableTree({
     collapsingLoader.current = false;
   };
 
+  const generateDomElementId = (node: NodeApi<PaginatedTreeData>): string => {
+    const { id } = node.data;
+    const isRootNode = node.level === 0;
+    
+    // Prefix root nodes to prevent browser hash auto-scrolling
+    return isRootNode ? `tree-root-${id}` : id;
+  };
+
   function Node({
     node,
     style,
@@ -752,7 +760,7 @@ function DraggableTree({
           <Box
             style={style}
             className={clsx(styles.node, styles.loadMoreNode)}
-            id={node.data.id}
+            id={generateDomElementId(node)}
             onClick={() => !isLoading && handleLoadMore(node.data.id)}
             sx={{
               cursor: isLoading ? "default" : "pointer",
@@ -823,7 +831,7 @@ function DraggableTree({
         style={style}
         className={clsx(styles.node, node.state)}
         onClick={() => node.isInternal && node.toggle()}
-        id={node.data.id}
+        id={generateDomElementId(node)}
         sx={{
           backgroundColor:
             node.data.nodeId === currentVisibleNode?.id && !node.data.category
