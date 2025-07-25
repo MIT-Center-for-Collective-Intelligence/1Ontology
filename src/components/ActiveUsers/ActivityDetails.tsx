@@ -1,10 +1,11 @@
-import { Box, Typography, Paper, Button } from "@mui/material";
+import { Box, Typography, Paper, Button, Tooltip } from "@mui/material";
 import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import { getChangeDescription } from "@components/lib/utils/helpers";
 import { NodeChange } from "@components/types/INode";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import MarkdownRender from "../Markdown/MarkdownRender";
+import moment from "moment";
 
 const ActivityDetails = ({
   activity,
@@ -20,6 +21,19 @@ const ActivityDetails = ({
   nodes: { [nodeId: string]: any };
 }) => {
   const [isSelected, setIsSelected] = useState(false);
+  const getToolTip = () => {
+    let tooltipText = "";
+    const modifiedMoment = moment(activity.modifiedAt.toDate());
+    if (modifiedMoment.isSame(moment(), "day")) {
+      tooltipText = `Today at ${modifiedMoment.format("h:mm:ssa")}`;
+    } else if (modifiedMoment.isSame(moment().subtract(1, "day"), "day")) {
+      tooltipText = `Yesterday at ${modifiedMoment.format("h:mm:ssA")}`;
+    } else {
+      tooltipText = modifiedMoment.format("MMM Do [at] h:mm:ss A");
+    }
+
+    return tooltipText;
+  };
 
   return (
     <Box
@@ -75,18 +89,39 @@ const ActivityDetails = ({
               <Typography sx={{ fontWeight: 600 }}>
                 {modifiedByDetails.fName} {modifiedByDetails.lName}
               </Typography>
-              <Typography
-                sx={{
-                  fontSize: "12px",
-                  color: "text.secondary",
+              <Tooltip
+                title={getToolTip()}
+                placement="top"
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      backgroundColor: "black",
+                      color: "#fff",
+                      fontSize: "12px",
+                      "& .MuiTooltip-arrow": {
+                        color: "black",
+                      },
+                    },
+                  },
                 }}
               >
-                {dayjs(new Date(activity.modifiedAt.toDate()))
-                  .fromNow()
-                  .includes("NaN")
-                  ? "a few minutes ago"
-                  : `${dayjs(new Date(activity.modifiedAt.toDate())).fromNow()}`}
-              </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "12px",
+                    color: "text.secondary",
+                    display: "inline",
+                    ":hover": {
+                      borderBottom: "2px solid gray",
+                    },
+                  }}
+                >
+                  {dayjs(new Date(activity.modifiedAt.toDate()))
+                    .fromNow()
+                    .includes("NaN")
+                    ? "a few minutes ago"
+                    : `${dayjs(new Date(activity.modifiedAt.toDate())).fromNow()}`}
+                </Typography>
+              </Tooltip>
               <Typography
                 sx={{
                   fontSize: "13px",
