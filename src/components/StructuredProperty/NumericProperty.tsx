@@ -15,12 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import {
-  collection,
-  doc,
-  updateDoc,
-  getFirestore,
-} from "firebase/firestore";
+import { collection, doc, updateDoc, getFirestore } from "firebase/firestore";
 import { useTheme } from "@emotion/react";
 import { INode } from "@components/types/INode";
 import { NODES } from "@components/lib/firestoreClient/collections";
@@ -39,11 +34,17 @@ import PropertyContributors from "../StructuredProperty/PropertyContributors";
 import EditIcon from "@mui/icons-material/Edit";
 import EditProperty from "../AddPropertyForm/EditProprety";
 import InheritanceDetailsPanel from "./InheritanceDetailsPanel";
+import SelectInheritance from "../SelectInheritance/SelectInheritance";
+
+interface NumericPropertyValue {
+  value: number | string;
+  unit: string;
+}
 
 type INumericPropertyProps = {
   currentVisibleNode: INode;
   property: string;
-  value: number | string;
+  value: NumericPropertyValue | number | string;
   nodes: any;
   locked: boolean;
   selectedDiffNode: any;
@@ -73,18 +74,33 @@ const NumericProperty = ({
 }: INumericPropertyProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
-  const [numericValue, setNumericValue] = useState<number | string>(value);
+  const [numericValue, setNumericValue] = useState<number | string>("");
+  const [unit, setUnit] = useState<string>("");
   const [error, setError] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingValue, setIsEditingValue] = useState(false);
+  const [isEditingUnit, setIsEditingUnit] = useState(false);
   const [{ user }] = useAuth();
   const [reference, setReference] = useState<string | null>(null);
   const [editProperty, setEditProperty] = useState("");
   const [newPropertyValue, setNewPropertyValue] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const valueInputRef = useRef<HTMLInputElement>(null);
+  const unitInputRef = useRef<HTMLInputElement>(null);
 
-  const displayValue = useMemo(() => {
-    return value;
+  const normalizedValue = useMemo((): NumericPropertyValue => {
+    if (typeof value === "object" && value !== null && "value" in value) {
+      return {
+        value: value.value || "",
+        unit: value.unit || "",
+      };
+    }
+    return {
+      value: value || "",
+      unit: "",
+    };
   }, [value]);
+
+  const displayValue = useMemo(() => normalizedValue.value, [normalizedValue]);
+  const displayUnit = useMemo(() => normalizedValue.unit, [normalizedValue]);
 
   const currentImprovementChange = useMemo(() => {
     if (currentImprovement?.newNode || !currentImprovement) return null;
@@ -92,25 +108,37 @@ const NumericProperty = ({
       return currentImprovement.detailsOfChange;
     }
     return null;
-  }, [currentImprovement]);
+  }, [currentImprovement, property]);
 
   useEffect(() => {
     setReference(currentVisibleNode.inheritance[property]?.ref || null);
-  }, [currentVisibleNode]);
+  }, [currentVisibleNode, property]);
+
+  useEffect(() => {
+    if (!isEditingValue && !isEditingUnit) {
+      setNumericValue(displayValue);
+      setUnit(displayUnit);
+    }
+  }, [displayValue, displayUnit, isEditingValue, isEditingUnit]);
 
   const saveChangeHistory = useCallback(
     async (
-      previousValue: number | string,
-      newValue: number | string,
+      previousValue: NumericPropertyValue,
+      newValue: NumericPropertyValue,
       nodeId: string,
     ) => {
-      if (!user?.uname || previousValue === newValue) return;
+      if (
+        !user?.uname ||
+        JSON.stringify(previousValue) === JSON.stringify(newValue)
+      )
+        return;
+
       saveNewChangeLog(db, {
         nodeId,
         modifiedBy: user.uname,
         modifiedProperty: property,
-        previousValue: previousValue.toString(),
-        newValue: newValue.toString(),
+        previousValue: JSON.stringify(previousValue),
+        newValue: JSON.stringify(newValue),
         modifiedAt: new Date(),
         changeType: "change text",
         fullNode: currentVisibleNode,
@@ -122,23 +150,28 @@ const NumericProperty = ({
   );
 
   const onSaveNumericChange = useCallback(
-    async (newValue: number | string) => {
+    async (newValue: number | string, newUnit: string) => {
       if (!user?.uname) return;
 
-      const previousValue = currentVisibleNode.properties[property];
+      const previousValue = normalizedValue;
 
       try {
-        const numericNewValue =
+        const processedValue =
           typeof newValue === "string"
             ? newValue === ""
               ? ""
               : parseFloat(newValue)
             : newValue;
 
+        const newPropertyValue: NumericPropertyValue = {
+          value: processedValue,
+          unit: newUnit.trim(),
+        };
+
         const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
 
         const updateData = {
-          [`properties.${property}`]: numericNewValue,
+          [`properties.${property}`]: newPropertyValue,
           ...(reference ? { [`inheritance.${property}.ref`]: null } : {}),
         };
 
@@ -154,11 +187,12 @@ const NumericProperty = ({
 
         await saveChangeHistory(
           previousValue,
-          numericNewValue,
+          newPropertyValue,
           currentVisibleNode?.id,
         );
 
-        setIsEditing(false);
+        setIsEditingValue(false);
+        setIsEditingUnit(false);
       } catch (error) {
         console.error("Error saving numeric value:", error);
         setError("Failed to save value");
@@ -171,14 +205,9 @@ const NumericProperty = ({
       property,
       db,
       saveChangeHistory,
+      normalizedValue,
     ],
   );
-
-  useEffect(() => {
-    if (!isEditing) {
-      setNumericValue(displayValue);
-    }
-  }, [displayValue, isEditing]);
 
   const handleDeleteProperty = useCallback(() => {
     if (deleteProperty) {
@@ -195,33 +224,63 @@ const NumericProperty = ({
     [],
   );
 
+  const handleUnitChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const inputValue = event.target.value;
+      setUnit(inputValue);
+      setError("");
+    },
+    [],
+  );
+
   const handleKeyPress = useCallback(
-    (event: React.KeyboardEvent) => {
+    (event: React.KeyboardEvent, field: "value" | "unit") => {
       if (event.key === "Enter" && !error) {
         event.preventDefault();
-        onSaveNumericChange(numericValue);
+        onSaveNumericChange(numericValue, unit);
       }
       if (event.key === "Escape") {
-        setNumericValue(displayValue);
-        setIsEditing(false);
+        if (field === "value") {
+          setNumericValue(displayValue);
+          setIsEditingValue(false);
+        } else {
+          setUnit(displayUnit);
+          setIsEditingUnit(false);
+        }
         setError("");
       }
     },
-    [numericValue, error, onSaveNumericChange, displayValue],
+    [numericValue, unit, error, onSaveNumericChange, displayValue, displayUnit],
   );
 
-  const handleBlur = useCallback(() => {
-    if (!error && numericValue !== displayValue) {
-      onSaveNumericChange(numericValue);
-    } else {
-      setNumericValue(displayValue);
-      setIsEditing(false);
-      setError("");
-    }
-  }, [numericValue, displayValue, error, onSaveNumericChange]);
+  const handleBlur = useCallback(
+    (field: "value" | "unit") => {
+      const hasChanged =
+        field === "value"
+          ? numericValue !== displayValue
+          : unit !== displayUnit;
+
+      if (!error && hasChanged) {
+        onSaveNumericChange(numericValue, unit);
+      } else {
+        if (field === "value") {
+          setNumericValue(displayValue);
+          setIsEditingValue(false);
+        } else {
+          setUnit(displayUnit);
+          setIsEditingUnit(false);
+        }
+        setError("");
+      }
+    },
+    [numericValue, unit, displayValue, displayUnit, error, onSaveNumericChange],
+  );
 
   const backgroundColor = useMemo(() => {
-    if (selectedDiffNode?.changeType === "delete node" && property === "title") {
+    if (
+      selectedDiffNode?.changeType === "delete node" &&
+      property === "title"
+    ) {
       return "red";
     }
     if (selectedDiffNode?.changeType === "add node" && property === "title") {
@@ -232,20 +291,28 @@ const NumericProperty = ({
 
   const renderDiffChanges = () => {
     if (currentImprovementChange && !currentImprovement.implemented) {
+      const prevValue = JSON.parse(currentImprovementChange.previousValue);
+      const newValue = JSON.parse(currentImprovementChange.newValue);
+
       return (
         <Box sx={{ p: 3 }}>
           <Typography sx={{ color: "red", textDecoration: "line-through" }}>
-            {currentImprovementChange.previousValue}
+            {`${prevValue.value}${prevValue.unit ? ` ${prevValue.unit}` : ""}`}
           </Typography>
           <Typography sx={{ color: "green" }}>
-            {currentImprovementChange.newValue}
+            {`${newValue.value}${newValue.unit ? ` ${newValue.unit}` : ""}`}
           </Typography>
         </Box>
       );
     }
 
-    if (selectedDiffNode?.modifiedProperty === property && 
-        selectedDiffNode.changeType === "change text") {
+    if (
+      selectedDiffNode?.modifiedProperty === property &&
+      selectedDiffNode.changeType === "change text"
+    ) {
+      const prevValue = JSON.parse(selectedDiffNode.previousValue);
+      const newValue = JSON.parse(selectedDiffNode.newValue);
+
       return (
         <Box sx={{ p: 3 }}>
           <Box sx={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -257,7 +324,7 @@ const NumericProperty = ({
                 textDecoration: "line-through",
               }}
             >
-              {selectedDiffNode.previousValue}
+              {`${prevValue.value}${prevValue.unit ? ` ${prevValue.unit}` : ""}`}
             </Typography>
             <Typography
               sx={{
@@ -266,7 +333,7 @@ const NumericProperty = ({
                 color: "green",
               }}
             >
-              {selectedDiffNode.newValue}
+              {`${newValue.value}${newValue.unit ? ` ${newValue.unit}` : ""}`}
             </Typography>
           </Box>
         </Box>
@@ -276,11 +343,12 @@ const NumericProperty = ({
     return null;
   };
 
-  const isReadOnly = !!currentVisibleNode.unclassified || 
-                     currentImprovement?.newNode || 
-                     locked || 
-                     !enableEdit ||
-                     (selectedDiffNode && selectedDiffNode.modifiedProperty !== property);
+  const isReadOnly =
+    !!currentVisibleNode.unclassified ||
+    currentImprovement?.newNode ||
+    locked ||
+    !enableEdit ||
+    (selectedDiffNode && selectedDiffNode.modifiedProperty !== property);
 
   return (
     <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={500}>
@@ -301,7 +369,6 @@ const NumericProperty = ({
           ...sx,
         }}
       >
-        {/* Header */}
         <Box
           sx={{
             display: "flex",
@@ -414,6 +481,16 @@ const NumericProperty = ({
                 {'")'}
               </Typography>
             )}
+            {!currentImprovement &&
+              !currentVisibleNode.unclassified &&
+              currentVisibleNode.inheritance[property] && (
+                <SelectInheritance
+                  currentVisibleNode={currentVisibleNode}
+                  property={property}
+                  nodes={nodes}
+                  enableEdit={enableEdit}
+                />
+              )}
             {enableEdit && deleteProperty && (
               <Tooltip title={"Delete property"} placement="top">
                 <Button
@@ -443,38 +520,65 @@ const NumericProperty = ({
                 p: "19px",
               }}
             >
-              {displayValue !== "" ? displayValue : "No value"}
+              {displayValue !== ""
+                ? `${displayValue}${displayUnit ? ` ${displayUnit}` : ""}`
+                : `0${displayUnit ? ` ${displayUnit}` : ""}`}
             </Typography>
           </Box>
         ) : (
           <>
             {renderDiffChanges() || (
               <Box sx={{ p: 3 }}>
-                <TextField
-                  ref={inputRef}
-                  type="number"
-                  value={numericValue}
-                  onChange={handleValueChange}
-                  onKeyDown={handleKeyPress}
-                  onBlur={handleBlur}
-                  onFocus={() => setIsEditing(true)}
-                  placeholder="Enter a numeric value..."
-                  fullWidth
-                  variant="outlined"
-                  error={!!error}
-                  helperText={error}
-                  InputProps={{
-                    sx: {
-                      fontSize: "16px",
-                      borderRadius: "12px",
-                    },
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "12px",
-                    },
-                  }}
-                />
+                <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
+                  <TextField
+                    ref={valueInputRef}
+                    type="number"
+                    value={numericValue}
+                    onChange={handleValueChange}
+                    onKeyDown={(e) => handleKeyPress(e, "value")}
+                    onBlur={() => handleBlur("value")}
+                    onFocus={() => setIsEditingValue(true)}
+                    placeholder="Enter value..."
+                    variant="outlined"
+                    error={!!error}
+                    helperText={error}
+                    sx={{
+                      flex: 2,
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "12px",
+                      },
+                    }}
+                    InputProps={{
+                      sx: {
+                        fontSize: "16px",
+                        borderRadius: "12px",
+                      },
+                    }}
+                  />
+
+                  <TextField
+                    ref={unitInputRef}
+                    value={unit}
+                    onChange={handleUnitChange}
+                    onKeyDown={(e) => handleKeyPress(e, "unit")}
+                    onBlur={() => handleBlur("unit")}
+                    onFocus={() => setIsEditingUnit(true)}
+                    placeholder="Unit"
+                    variant="outlined"
+                    sx={{
+                      flex: 1,
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "12px",
+                      },
+                    }}
+                    InputProps={{
+                      sx: {
+                        fontSize: "16px",
+                        borderRadius: "12px",
+                      },
+                    }}
+                  />
+                </Box>
               </Box>
             )}
           </>
