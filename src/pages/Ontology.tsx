@@ -911,11 +911,9 @@ const Ontology = ({
     }
     // setOntologyPath(eachOntologyPath[currentVisibleNode?.id]);
 
-    if (!isRootNode) {
-      updateTheUrl([
+    updateTheUrl([
         { id: currentVisibleNode?.id, title: currentVisibleNode.title },
       ]);
-    }
   }, [currentVisibleNode?.id, eachOntologyPath]);
 
   // Callback function to add a new node to the database
