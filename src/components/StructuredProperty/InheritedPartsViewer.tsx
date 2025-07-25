@@ -762,13 +762,14 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           }}
           PaperProps={{
             sx: {
-              border: "2px solid orange",
+              border: "1.5px solid orange",
+              borderRadius: "10px",
               backgroundColor: (theme) =>
                 theme.palette.mode === "light" ? "#cccccc" : "#524e4e",
             },
           }}
         >
-          <List>
+          <List sx={{ p: 0, mx: "4px" }}>
             {(nonPickedOnes[pickingFor] || []).map((option: string) => (
               <ListItem
                 disablePadding
@@ -780,6 +781,9 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     backgroundColor: "gray",
                   },
                   gap: "5px",
+                  border: "1px solid gray",
+                  borderRadius: "25px",
+                  my: "4px",
                 }}
               >
                 <SwapHorizIcon />

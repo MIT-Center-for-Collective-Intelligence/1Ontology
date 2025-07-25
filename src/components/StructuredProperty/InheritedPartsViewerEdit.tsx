@@ -108,6 +108,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   }>({});
   const [pickingFor, setPickingFor] = useState<string>("");
   const [anchorEl, setAnchorEl] = useState(null);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
 
   const handleClose = () => {
     setAnchorEl(null);
@@ -778,8 +779,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                         primary={
                           entry.to ? (
                             <Tooltip
-                              title={nodes[entry.to].title}
+                              title={!isSelectOpen ? nodes[entry.to].title : ""}
                               placement="top"
+                              disableHoverListener={isSelectOpen}
                             >
                               <Select
                                 value={entry.to}
@@ -787,6 +789,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                   const newPartId = e.target.value;
                                   replaceWith(entry.to, newPartId);
                                 }}
+                                onOpen={() => setIsSelectOpen(true)}
+                                onClose={() => setIsSelectOpen(false)}
                                 size="small"
                                 renderValue={() => (
                                   <Box
@@ -814,19 +818,32 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                   whiteSpace: "nowrap",
+                                  p: 0,
                                 }}
                                 MenuProps={{
                                   PaperProps: {
                                     sx: {
                                       border: "2px solid orange",
                                       borderRadius: "12px",
+                                      "&::-webkit-scrollbar": {
+                                        display: "none",
+                                      },
                                     },
                                   },
                                 }}
                               >
                                 {getSpecializations(entry.to).length > 0 && (
                                   <ListSubheader
-                                    sx={{ color: "orange", fontSize: "16px" }}
+                                    sx={{
+                                      color: "orange",
+                                      fontSize: "16px",
+                                      backgroundColor: (theme) =>
+                                        theme.palette.mode === "dark"
+                                          ? "#000000"
+                                          : "#545252",
+                                      borderBottomLeftRadius: "15px",
+                                      borderBottomRightRadius: "15px",
+                                    }}
                                   >
                                     Specializations{" "}
                                   </ListSubheader>
@@ -836,7 +853,14 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                     <MenuItem
                                       key={`spec-${spec.id}`}
                                       value={spec.id}
-                                      sx={{ display: "flex", gap: "10px" }}
+                                      sx={{
+                                        display: "flex",
+                                        gap: "10px",
+                                        border: "1px solid gray",
+                                        borderRadius: "25px",
+                                        my: "4px",
+                                        mx: "8px",
+                                      }}
                                     >
                                       <SwapHorizIcon />
                                       <Typography>{spec.title}</Typography>
@@ -846,7 +870,16 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
                                 {getGeneralizations(entry.to).length > 0 && (
                                   <ListSubheader
-                                    sx={{ color: "orange", fontSize: "16px" }}
+                                    sx={{
+                                      color: "orange",
+                                      fontSize: "16px",
+                                      backgroundColor: (theme) =>
+                                        theme.palette.mode === "dark"
+                                          ? "#000000"
+                                          : "#545252",
+                                      borderBottomLeftRadius: "15px",
+                                      borderBottomRightRadius: "15px",
+                                    }}
                                   >
                                     Generalizations
                                   </ListSubheader>
@@ -859,6 +892,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       sx={{
                                         display: "flex",
                                         gap: "10px",
+                                        border: "1px solid gray",
+                                        borderRadius: "25px",
+                                        my: "4px",
+                                        mx: "8px",
                                       }}
                                     >
                                       <SwapHorizIcon />{" "}
@@ -895,13 +932,14 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           }}
           PaperProps={{
             sx: {
-              border: "2px solid orange",
+              border: "1.5px solid orange",
+              borderRadius: "10px",
               backgroundColor: (theme) =>
                 theme.palette.mode === "light" ? "#cccccc" : "#524e4e",
             },
           }}
         >
-          <List>
+          <List sx={{ p: 0, mx: "4px" }}>
             {(nonPickedOnes[pickingFor] || []).map((option: string) => (
               <ListItem
                 disablePadding
@@ -913,6 +951,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                     backgroundColor: "gray",
                   },
                   gap: "5px",
+                  border: "1px solid gray",
+                  borderRadius: "25px",
+                  my: "4px",
                 }}
               >
                 <SwapHorizIcon />
