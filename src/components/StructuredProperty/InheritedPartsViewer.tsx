@@ -12,6 +12,8 @@ import {
   List,
   Link,
   Popover,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import RemoveIcon from "@mui/icons-material/Remove";
@@ -83,6 +85,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   navigateToNode,
 }) => {
   const db = getFirestore();
+  const [activeTab, setActiveTab] = React.useState<string | null>(null);
+  const generalizations: GeneralizationNode[] = getAllGeneralizations();
   const [selectedGeneralizationIndex, setSelectedGeneralizationIndex] =
     useState<number>(0);
   const [inheritanceForParts, setInheritanceForParts] = useState<{
@@ -123,9 +127,27 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     });
     return () => unsubscribeNodes();
   }, [currentVisibleNode.id]);
+  useEffect(() => {
+    // Set the first generalization as the active tab initially
+    if (generalizations.length > 0 && !activeTab) {
+      setActiveTab(generalizations[0].id);
+    } else if (
+      generalizations.length > 0 &&
+      !generalizations.find((g) => g.id === activeTab)
+    ) {
+      // If the active tab is no longer in the list, reset to the first one
+      setActiveTab(generalizations[0].id);
+    } else if (generalizations.length === 0) {
+      // Clear active tab if there are no generalizations
+      setActiveTab(null);
+    }
+  }, [generalizations, activeTab]);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
+    setActiveTab(newValue);
+  };
 
   if (selectedProperty !== "parts") return null;
-  const generalizations: any = getAllGeneralizations();
 
   const handleSelectedGenChange = (
     event: React.SyntheticEvent,
@@ -777,15 +799,18 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       </>
     );
   };
+  const activeGeneralization = generalizations.find((g) => g.id === activeTab);
 
   if (generalizations.length <= 0) {
     return null;
   }
+
   return (
     <Box
       sx={{
         px: "10px",
         py: "10px",
+        mt: "8px",
         backgroundColor: (theme) =>
           theme.palette.mode === "light" ? "#fafbfc" : "#1e1e1f",
       }}
@@ -796,12 +821,13 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            mb: 2,
+            mb: 1,
           }}
         >
-          <Typography sx={{ ml: "7px" }}>
-            {"Parts inherited from generalizations"}
+          <Typography sx={{ ml: "7px", fontSize: "19px", fontWeight: "bold" }}>
+            {"Parts inherited from generalizations:"}
           </Typography>
+
           {!triggerSearch && (
             <Tooltip title={"Collapse"} placement="top" sx={{ ml: "auto" }}>
               <IconButton
@@ -821,143 +847,113 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           )}
         </Box>
       </Box>
-      <Box
-        sx={{
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          px: "7px",
-          height: 40,
-        }}
-      >
-        {generalizations.length > 1 ? (
-          <Select
-            value={selectedGeneralizationIndex}
-            onChange={(e: any) => handleSelectedGenChange(e, e.target.value)}
-            displayEmpty
-            renderValue={(selected) => {
-              const selectedGen = generalizations[selected];
-              return (
-                <Tooltip title={selectedGen.title} placement="top">
-                  <Typography
-                    sx={{
-                      fontWeight: 500,
-                      fontSize: "0.85rem",
-                      textOverflow: "ellipsis",
-                      overflow: "hidden",
-                      whiteSpace: "nowrap",
-                      maxWidth: "170px",
-                    }}
-                  >
-                    {selectedGen.title}
-                  </Typography>
-                </Tooltip>
-              );
-            }}
+
+      {generalizations.length > 1 && (
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          aria-label="Generalization selection tabs"
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ mt: 2.5, border: "1px solid gray", borderRadius: "25px" }}
+        >
+          {generalizations.map((generalization) => (
+            <Tab
+              key={generalization.id}
+              label={generalization.title}
+              value={generalization.id}
+              sx={{
+                textTransform: "none",
+                fontWeight: activeTab === generalization.id ? 900 : 500,
+                bgcolor:
+                  activeTab === generalization.id
+                    ? (theme) =>
+                        theme.palette.mode === "light" ? "#bfbfbf" : "#4c4c4c"
+                    : "transparent",
+                borderRadius: "16px",
+              }}
+            />
+          ))}
+        </Tabs>
+      )}
+
+      {activeGeneralization && (
+        <Box key={activeGeneralization.id}>
+          <Box
             sx={{
-              backgroundColor: (theme) =>
-                theme.palette.mode === "light" ? "#fff" : "#2a2a2a",
-              color: (theme) =>
-                theme.palette.mode === "light" ? "#2c3e50" : "#e0e0e0",
-              "& .MuiSelect-icon": {
-                color: "#ff9500",
-              },
-              "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#ff9500",
-              },
-              p: 0,
-              borderRadius: "25px",
-            }}
-            inputProps={{
-              sx: {
-                p: 1,
-                pl: "12px",
-              },
+              display: "flex",
+              alignItems: "center",
+              height: 40,
+              position: "relative",
+              mx: 2,
             }}
           >
-            {generalizations.map((generalization: any, index: number) => {
-              return (
-                <MenuItem key={generalization.id} value={index}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      width: "100%",
-                    }}
-                  >
-                    <Tooltip title={generalization.title}>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: 500,
-                          fontSize: "0.85rem",
-                          flex: 1,
-                          textOverflow: "ellipsis",
-                          overflow: "hidden",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {generalization.title}
-                      </Typography>
-                    </Tooltip>
-                  </Box>
-                </MenuItem>
-              );
-            })}
-          </Select>
-        ) : (
-          <Tooltip title={generalizations[0].title}>
-            <Typography sx={{ color: "orange", fontWeight: "bold" }}>
-              {generalizations[0].title}
-            </Typography>
-          </Tooltip>
-        )}
+            {/* Left Text */}
+            <Box
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                pr: "30px", // space to avoid overlap with center icon
+              }}
+            >
+              <Tooltip title={activeGeneralization.title}>
+                <Typography
+                  sx={{
+                    color: "orange",
+                    fontWeight: "bold",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {activeGeneralization.title}
+                </Typography>
+              </Tooltip>
+            </Box>
 
-        <ArrowRightAltIcon
-          sx={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%) scaleX(2)",
-            fontSize: 24,
-            color: "orange",
-            fontWeight: "bold",
-            zIndex: 1,
-            pointerEvents: "none",
-          }}
-        />
+            <Box
+              sx={{
+                position: "absolute",
+                left: "50%",
+                transform: "translateX(-50%)",
+              }}
+            >
+              <ArrowRightAltIcon sx={{ color: "orange", fontSize: "50px" }} />
+            </Box>
 
-        <Tooltip title={currentVisibleNode.title}>
-          <Typography
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: `calc(50% + 24px)`,
-              transform: "translateY(-50%)",
-              fontWeight: 500,
-              fontSize: "0.95rem",
-              maxWidth: "210px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              cursor: "default",
-              zIndex: 2,
-            }}
-          >
-            {currentVisibleNode.title}
-          </Typography>
-        </Tooltip>
-      </Box>
+            <Box
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                pl: "30px",
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
+            >
+              <Tooltip title={currentVisibleNode.title}>
+                <Typography
+                  sx={{
+                    fontWeight: 500,
+                    fontSize: "0.95rem",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    cursor: "default",
+                  }}
+                >
+                  {currentVisibleNode.title}
+                </Typography>
+              </Tooltip>
+            </Box>
+          </Box>
 
-      {selectedGeneralizationIndex < generalizations.length && (
-        <Box sx={{ mt: 1.5 }}>
-          {getTabContent(generalizations[selectedGeneralizationIndex].id)}
+          {getTabContent(activeGeneralization.id)}
         </Box>
       )}
 
       <InheritedPartsLegend
         legendItems={[
+          { symbol: "(o)", description: "Optional" },
           { symbol: "=", description: "no change" },
           { symbol: ">", description: "specialized part" },
           { symbol: "x", description: "part not inherited" },

@@ -1427,7 +1427,7 @@ const StructuredProperty = ({
                   replaceWith={replaceWith}
                   skillsFutureApp={skillsFutureApp}
                 />
-              ) : (
+              ) : displayDetails ? (
                 <InheritedPartsViewer
                   selectedProperty={property}
                   getAllGeneralizations={() =>
@@ -1464,7 +1464,7 @@ const StructuredProperty = ({
                   }
                   navigateToNode={navigateToNode}
                 />
-              )}
+              ) : null}
             </>
           )}
         </Box>
