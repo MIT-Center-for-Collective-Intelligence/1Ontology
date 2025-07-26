@@ -25,9 +25,9 @@ const ActivityDetails = ({
     let tooltipText = "";
     const modifiedMoment = moment(activity.modifiedAt.toDate());
     if (modifiedMoment.isSame(moment(), "day")) {
-      tooltipText = `Today at ${modifiedMoment.format("h:mm:ssa")}`;
+      tooltipText = `Today at ${modifiedMoment.format("h:mm:ss A")}`;
     } else if (modifiedMoment.isSame(moment().subtract(1, "day"), "day")) {
-      tooltipText = `Yesterday at ${modifiedMoment.format("h:mm:ssA")}`;
+      tooltipText = `Yesterday at ${modifiedMoment.format("h:mm:ss A")}`;
     } else {
       tooltipText = modifiedMoment.format("MMM Do [at] h:mm:ss A");
     }
@@ -237,7 +237,7 @@ const ActivityDetails = ({
                 <span style={{ color: "orange" }}>Activity ID:</span>{" "}
                 {activity.id}
               </li>
-              <li>
+              <li>  
                 <span style={{ color: "orange" }}>Node ID:</span>{" "}
                 {activity.nodeId}
               </li>
