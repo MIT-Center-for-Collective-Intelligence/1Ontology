@@ -676,35 +676,14 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                 {entry.symbol === "x" ? (
                   <CloseIcon sx={{ fontSize: 20, color: "orange" }} />
                 ) : entry.symbol === ">" ? (
-                  <Tooltip
-                    title={
-                      (nonPickedOnes[entry.from] || []).length > 0
-                        ? "Switch to"
-                        : ""
-                    }
-                  >
-                    <ArrowForwardIosIcon
-                      sx={{
-                        fontSize: 20,
-                        color: pickingFor === entry.from ? "white" : "orange",
-                        backgroundColor:
-                          pickingFor === entry.from
-                            ? "orange"
-                            : (nonPickedOnes[entry.from] || []).length > 0
-                              ? "#4a4646"
-                              : "",
-                        p: 0.2,
-                        borderRadius: "50%",
-                        ":hover":
-                          (nonPickedOnes[entry.from] || []).length > 0
-                            ? {
-                                backgroundColor: "gray",
-                              }
-                            : {},
-                      }}
-                      onClick={(e) => handleClick(e, entry.from)}
-                    />
-                  </Tooltip>
+                  <ArrowForwardIosIcon
+                    sx={{
+                      fontSize: 20,
+                      color: pickingFor === entry.from ? "white" : "orange",
+                      p: 0.2,
+                      borderRadius: "50%",
+                    }}
+                  />
                 ) : entry.symbol === "=" ? (
                   <DragHandleIcon sx={{ fontSize: 20, color: "orange" }} />
                 ) : entry.symbol === "+" ? (

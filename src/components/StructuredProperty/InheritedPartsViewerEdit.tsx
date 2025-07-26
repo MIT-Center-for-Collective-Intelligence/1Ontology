@@ -840,12 +840,15 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 {getSpecializations(entry.to).length > 0 && (
                                   <ListSubheader
                                     sx={{
-                                      color: "orange",
+                                      color: (theme) =>
+                                        theme.palette.mode === "dark"
+                                          ? "white"
+                                          : "black",
                                       fontSize: "16px",
                                       backgroundColor: (theme) =>
                                         theme.palette.mode === "dark"
                                           ? "#000000"
-                                          : "#545252",
+                                          : "#d0d5dd",
                                       borderBottomLeftRadius: "15px",
                                       borderBottomRightRadius: "15px",
                                     }}
@@ -876,12 +879,15 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 {getGeneralizations(entry.to).length > 0 && (
                                   <ListSubheader
                                     sx={{
-                                      color: "orange",
+                                      color: (theme) =>
+                                        theme.palette.mode === "dark"
+                                          ? "white"
+                                          : "black",
                                       fontSize: "16px",
                                       backgroundColor: (theme) =>
                                         theme.palette.mode === "dark"
                                           ? "#000000"
-                                          : "#545252",
+                                          : "#d0d5dd",
                                       borderBottomLeftRadius: "15px",
                                       borderBottomRightRadius: "15px",
                                     }}
@@ -940,7 +946,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               border: "1.5px solid orange",
               borderRadius: "10px",
               backgroundColor: (theme) =>
-                theme.palette.mode === "light" ? "#cccccc" : "#524e4e",
+                theme.palette.mode === "light" ? "#f8f8f8" : "#524e4e",
             },
           }}
         >
@@ -953,7 +959,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                   px: 2,
                   cursor: "pointer",
                   ":hover": {
-                    backgroundColor: "gray",
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark" ? "#3c3939" : "#e6e6e6",
                   },
                   gap: "5px",
                   border: "1px solid gray",
