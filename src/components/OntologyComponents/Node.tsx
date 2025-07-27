@@ -1564,9 +1564,11 @@ const Node = ({
                       ),
                     );
                     const taskData = taskDoc.data();
-                    const url = `https://www.onetonline.org/search/task/choose/${taskData["O*NET-SOC Code"]}`;
+                    if (taskData) {
+                      const url = `https://www.onetonline.org/search/task/choose/${taskData["O*NET-SOC Code"]}`;
 
-                    window.open(url, "_blank");
+                      window.open(url, "_blank");
+                    }
                   }
                 }}
                 sx={{
