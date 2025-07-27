@@ -112,6 +112,10 @@ export type INode = {
   appName?: string;
   skillsFuture?: boolean;
   rootId?: string;
+  oNetTask?: {
+    id: string;
+    title: string;
+  };
 };
 
 export type TreeVisual = {
