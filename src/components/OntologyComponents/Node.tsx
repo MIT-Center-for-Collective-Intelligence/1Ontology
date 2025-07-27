@@ -73,7 +73,7 @@ The `Node` component is intended to be used within an application that requires 
 - The component is designed to work with a specific data structure and may require adaptation for different use cases.
 
 This documentation provides a high-level overview of the `Node` component and its capabilities. For detailed implementation and integration, refer to the source code and the specific application context in which the component is used.*/
-import { Popover, Stack, Typography, useMediaQuery } from "@mui/material";
+import { Link, Popover, Stack, Typography, useMediaQuery } from "@mui/material";
 import { Box } from "@mui/system";
 import {
   collection,
@@ -1548,6 +1548,36 @@ const Node = ({
           skillsFutureApp={skillsFutureApp}
           deleteProperty={deleteProperty}
         />
+        {currentVisibleNode.oNetTask &&
+          currentVisibleNode.specializations.flatMap((c) => c.nodes).length <=
+            0 && (
+            <Box sx={{ display: "flex", gap: "4px", mt: "20px" }}>
+              <Typography>O*Net Task:</Typography>
+              <Link
+                underline="hover"
+                onClick={async () => {
+                  if (!!currentVisibleNode.oNetTask?.id) {
+                    const taskDoc = await getDoc(
+                      doc(
+                        collection(db, "onetTasks"),
+                        currentVisibleNode.oNetTask.id,
+                      ),
+                    );
+                    const taskData = taskDoc.data();
+                    const url = `https://www.onetonline.org/search/task/choose/${taskData["O*NET-SOC Code"]}`;
+
+                    window.open(url, "_blank");
+                  }
+                }}
+                sx={{
+                  cursor: "pointer",
+                  mx: "5px",
+                }}
+              >
+                {currentVisibleNode.oNetTask.title}
+              </Link>
+            </Box>
+          )}
       </Box>{" "}
       {ConfirmDialog}
     </Box>
