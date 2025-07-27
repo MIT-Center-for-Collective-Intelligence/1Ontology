@@ -17,7 +17,6 @@ import {
   Slide,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import {
   capitalizeFirstLetter,
@@ -1366,24 +1365,6 @@ const StructuredProperty = ({
               legendItems={[{ symbol: "(o)", description: "Optional" }]}
             />
           )}
-          {property === "parts" && !displayDetails && !enableEdit && (
-            <Button
-              variant="outlined"
-              sx={{
-                borderRadius: "25px",
-                p: 0.5,
-                px: 2,
-                ml: "10px",
-                mb: "9px",
-              }}
-              onClick={() => {
-                setDisplayDetails((prev) => !prev);
-              }}
-            >
-              <KeyboardArrowDownIcon />
-              Parts inherited from ...
-            </Button>
-          )}
           {property === "parts" && !selectedDiffNode && !currentImprovement && (
             <>
               {enableEdit ? (
@@ -1427,7 +1408,7 @@ const StructuredProperty = ({
                   replaceWith={replaceWith}
                   skillsFutureApp={skillsFutureApp}
                 />
-              ) : displayDetails ? (
+              ) : (
                 <InheritedPartsViewer
                   selectedProperty={property}
                   getAllGeneralizations={() =>
@@ -1463,8 +1444,9 @@ const StructuredProperty = ({
                       : null
                   }
                   navigateToNode={navigateToNode}
+                  displayDetails={displayDetails}
                 />
-              ) : null}
+              )}
             </>
           )}
         </Box>

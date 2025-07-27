@@ -14,7 +14,9 @@ import {
   Popover,
   Tabs,
   Tab,
+  Button,
 } from "@mui/material";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import RemoveIcon from "@mui/icons-material/Remove";
 import SearchIcon from "@mui/icons-material/Search";
@@ -62,6 +64,7 @@ interface InheritedPartsViewerProps {
   nodes: { [id: string]: any };
   readOnly?: boolean;
   setDisplayDetails: any;
+  displayDetails: boolean;
   inheritanceDetails: any;
   currentVisibleNode: any;
   navigateToNode?: any;
@@ -77,6 +80,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   nodes,
   readOnly = false,
   setDisplayDetails,
+  displayDetails,
   inheritanceDetails,
   currentVisibleNode,
   triggerSearch,
@@ -806,160 +810,188 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   }
 
   return (
-    <Box
-      sx={{
-        px: "10px",
-        py: "10px",
-        mt: "8px",
-        backgroundColor: (theme) =>
-          theme.palette.mode === "light" ? "#fafbfc" : "#1e1e1f",
-      }}
-    >
-      <Box>
-        <Box
+    <Box>
+      {!displayDetails && (
+        <Button
+          variant="outlined"
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            mb: 1,
+            borderRadius: "25px",
+            p: 0.5,
+            px: 2,
+            ml: "10px",
+            mb: "9px",
+          }}
+          onClick={() => {
+            setDisplayDetails((prev: boolean) => !prev);
           }}
         >
-          <Typography sx={{ ml: "7px", fontSize: "19px", fontWeight: "bold" }}>
-            {"Parts inherited from generalizations:"}
-          </Typography>
-
-          {!triggerSearch && (
-            <Tooltip title={"Collapse"} placement="top" sx={{ ml: "auto" }}>
-              <IconButton
-                sx={{
-                  border: "1px solid gray",
-                  p: 0,
-                  backgroundColor: "",
-                  color: "gray",
-                }}
-                onClick={() => {
-                  setDisplayDetails(false);
-                }}
-              >
-                <CloseIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-      </Box>
-
-      {generalizations.length > 1 && (
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          aria-label="Generalization selection tabs"
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{ mt: 2.5, border: "1px solid gray", borderRadius: "25px" }}
-        >
-          {generalizations.map((generalization) => (
-            <Tab
-              key={generalization.id}
-              label={generalization.title}
-              value={generalization.id}
-              sx={{
-                textTransform: "none",
-                fontWeight: activeTab === generalization.id ? 900 : 500,
-                bgcolor:
-                  activeTab === generalization.id
-                    ? (theme) =>
-                        theme.palette.mode === "light" ? "#bfbfbf" : "#4c4c4c"
-                    : "transparent",
-                borderRadius: "16px",
-              }}
-            />
-          ))}
-        </Tabs>
+          <KeyboardArrowDownIcon />
+          Parts inherited from ...
+        </Button>
       )}
-
-      {activeGeneralization && (
-        <Box key={activeGeneralization.id}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              height: 40,
-              position: "relative",
-              mx: 2,
-            }}
-          >
-            {/* Left Text */}
+      {displayDetails && (
+        <Box
+          sx={{
+            px: "10px",
+            py: "10px",
+            mt: "8px",
+            backgroundColor: (theme) =>
+              theme.palette.mode === "light" ? "#fafbfc" : "#1e1e1f",
+          }}
+        >
+          <Box>
             <Box
               sx={{
-                flex: 1,
-                minWidth: 0,
-                pr: "30px", // space to avoid overlap with center icon
-              }}
-            >
-              <Tooltip title={activeGeneralization.title}>
-                <Typography
-                  sx={{
-                    color: "orange",
-                    fontWeight: "bold",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {activeGeneralization.title}
-                </Typography>
-              </Tooltip>
-            </Box>
-
-            <Box
-              sx={{
-                position: "absolute",
-                left: "50%",
-                transform: "translateX(-50%)",
-              }}
-            >
-              <ArrowRightAltIcon sx={{ color: "orange", fontSize: "50px" }} />
-            </Box>
-
-            <Box
-              sx={{
-                flex: 1,
-                minWidth: 0,
-                pl: "30px",
                 display: "flex",
-                justifyContent: "flex-end",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 1,
               }}
             >
-              <Tooltip title={currentVisibleNode.title}>
-                <Typography
-                  sx={{
-                    fontWeight: 500,
-                    fontSize: "0.95rem",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    cursor: "default",
-                  }}
-                >
-                  {currentVisibleNode.title}
-                </Typography>
-              </Tooltip>
+              <Typography
+                sx={{ ml: "7px", fontSize: "19px", fontWeight: "bold" }}
+              >
+                {"Parts inherited from generalizations:"}
+              </Typography>
+
+              {!triggerSearch && (
+                <Tooltip title={"Collapse"} placement="top" sx={{ ml: "auto" }}>
+                  <IconButton
+                    sx={{
+                      border: "1px solid gray",
+                      p: 0,
+                      backgroundColor: "",
+                      color: "gray",
+                    }}
+                    onClick={() => {
+                      setDisplayDetails(false);
+                    }}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Box>
           </Box>
 
-          {getTabContent(activeGeneralization.id)}
+          {generalizations.length > 1 && (
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              aria-label="Generalization selection tabs"
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{ mt: 2.5, border: "1px solid gray", borderRadius: "25px" }}
+            >
+              {generalizations.map((generalization) => (
+                <Tab
+                  key={generalization.id}
+                  label={generalization.title}
+                  value={generalization.id}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: activeTab === generalization.id ? 900 : 500,
+                    bgcolor:
+                      activeTab === generalization.id
+                        ? (theme) =>
+                            theme.palette.mode === "light"
+                              ? "#bfbfbf"
+                              : "#4c4c4c"
+                        : "transparent",
+                    borderRadius: "16px",
+                  }}
+                />
+              ))}
+            </Tabs>
+          )}
+
+          {activeGeneralization && (
+            <Box key={activeGeneralization.id}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  height: 40,
+                  position: "relative",
+                  mx: 2,
+                }}
+              >
+                {/* Left Text */}
+                <Box
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    pr: "30px", // space to avoid overlap with center icon
+                  }}
+                >
+                  <Tooltip title={activeGeneralization.title}>
+                    <Typography
+                      sx={{
+                        color: "orange",
+                        fontWeight: "bold",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {activeGeneralization.title}
+                    </Typography>
+                  </Tooltip>
+                </Box>
+
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                  }}
+                >
+                  <ArrowRightAltIcon
+                    sx={{ color: "orange", fontSize: "50px" }}
+                  />
+                </Box>
+
+                <Box
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    pl: "30px",
+                    display: "flex",
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  <Tooltip title={currentVisibleNode.title}>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        fontSize: "0.95rem",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        cursor: "default",
+                      }}
+                    >
+                      {currentVisibleNode.title}
+                    </Typography>
+                  </Tooltip>
+                </Box>
+              </Box>
+
+              {getTabContent(activeGeneralization.id)}
+            </Box>
+          )}
+
+          <InheritedPartsLegend
+            legendItems={[
+              { symbol: "(o)", description: "Optional" },
+              { symbol: "=", description: "no change" },
+              { symbol: ">", description: "specialized part" },
+              { symbol: "x", description: "part not inherited" },
+              { symbol: "+", description: "part added" },
+            ]}
+          />
         </Box>
       )}
-
-      <InheritedPartsLegend
-        legendItems={[
-          { symbol: "(o)", description: "Optional" },
-          { symbol: "=", description: "no change" },
-          { symbol: ">", description: "specialized part" },
-          { symbol: "x", description: "part not inherited" },
-          { symbol: "+", description: "part added" },
-        ]}
-      />
     </Box>
   );
 };
