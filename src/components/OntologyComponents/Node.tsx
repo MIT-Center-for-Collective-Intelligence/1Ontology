@@ -1551,7 +1551,7 @@ const Node = ({
         {currentVisibleNode.oNetTask &&
           currentVisibleNode.specializations.flatMap((c) => c.nodes).length <=
             0 && (
-            <Box sx={{ display: "flex", gap: "4px", mt: "20px" }}>
+            <Box sx={{ gap: "4px", mt: "20px" }}>
               <Typography>O*Net Task:</Typography>
               <Link
                 underline="hover"
