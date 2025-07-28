@@ -86,6 +86,7 @@ import SneakMessage from "@components/components/OntologyComponents/SneakMessage
 import Node from "@components/components/OntologyComponents/Node";
 import TreeViewSimplified from "@components/components/OntologyComponents/TreeViewSimplified";
 import {
+  ICollection,
   ILinkNode,
   ILockedNode,
   INode,
@@ -234,6 +235,7 @@ const Ontology = ({
   const [scrollTrigger, setScrollTrigger] = useState(false);
   const [enableEdit, setEnableEdit] = useState(false);
   const [specializationNumsUnder, setSpecializationNumsUnder] = useState({});
+  const [editableProperty, setEditableProperty] = useState<ICollection[]>([]);
 
   const treeRef = useRef<TreeApi<TreeData>>(null);
 
@@ -255,6 +257,7 @@ const Ontology = ({
     setCheckedItems(new Set());
     setClonedNodesQueue({});
     setLoadingIds(new Set());
+    setEditableProperty([]);
   };
 
   useEffect(() => {
@@ -1193,11 +1196,12 @@ const Ontology = ({
               nodes[id]?.specializations || []
             ).flatMap((c) => c.nodes);
             partOfIdx = specializationPart.findIndex((c) => c.id === partId);
-
-            inheritanceDetails.push({
-              genId: generalization.id,
-              partOf: id,
-            });
+            if (partOfIdx !== -1) {
+              inheritanceDetails.push({
+                genId: generalization.id,
+                partOf: id,
+              });
+            }
           }
         }
         if (partIdex === -1) {
@@ -1532,6 +1536,8 @@ const Ontology = ({
                   setEnableEdit={setEnableEdit}
                   inheritanceDetails={partsInheritance}
                   skillsFutureApp={appName ?? null}
+                  editableProperty={editableProperty}
+                  setEditableProperty={setEditableProperty}
                 />
               )}
             </Box>

@@ -177,6 +177,8 @@ type INodeProps = {
   setEnableEdit: any;
   inheritanceDetails: any;
   skillsFutureApp: string;
+  editableProperty: any;
+  setEditableProperty: any;
 };
 
 const Node = ({
@@ -222,6 +224,8 @@ const Node = ({
   setEnableEdit,
   inheritanceDetails,
   skillsFutureApp,
+  editableProperty,
+  setEditableProperty,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -235,8 +239,6 @@ const Node = ({
   const storage = getStorage();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [width, setWidth] = useState<number>(0);
-
-  const [editableProperty, setEditableProperty] = useState<ICollection[]>([]);
 
   /* */
   const [glowIds, setGlowIds] = useState<Set<string>>(new Set());
