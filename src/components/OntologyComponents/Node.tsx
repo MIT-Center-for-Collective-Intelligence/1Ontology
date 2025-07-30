@@ -73,7 +73,7 @@ The `Node` component is intended to be used within an application that requires 
 - The component is designed to work with a specific data structure and may require adaptation for different use cases.
 
 This documentation provides a high-level overview of the `Node` component and its capabilities. For detailed implementation and integration, refer to the source code and the specific application context in which the component is used.*/
-import { Stack, Typography, useMediaQuery } from "@mui/material";
+import { Link, Paper, Stack, Typography, useMediaQuery } from "@mui/material";
 import { Box } from "@mui/system";
 import {
   collection,
@@ -1250,6 +1250,71 @@ const Node = ({
           />
         )} */}
       </Box>
+      {currentVisibleNode.oNetTask &&
+        currentVisibleNode.specializations.flatMap((c) => c.nodes).length <=
+          0 && (
+          <Paper
+            id="property-onet-task"
+            elevation={9}
+            sx={{
+              borderRadius: "30px",
+              borderBottomRightRadius: "18px",
+              borderBottomLeftRadius: "18px",
+              minWidth: "500px",
+              width: "100%",
+              maxHeight: "100%",
+              overflow: "auto",
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              overflowX: "hidden",
+              pb: "10px",
+              mt: "14px",
+              minHeight: "100px",
+              mb: "10px",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                background: (theme: any) =>
+                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                p: 3,
+                gap: "10px",
+              }}
+            >
+              {" "}
+              <Typography>O*Net Link</Typography>
+            </Box>
+            <Link
+              underline="hover"
+              onClick={async () => {
+                if (!!currentVisibleNode.oNetTask?.id) {
+                  const taskDoc = await getDoc(
+                    doc(
+                      collection(db, "onetTasks"),
+                      currentVisibleNode.oNetTask.id,
+                    ),
+                  );
+                  const taskData = taskDoc.data();
+                  if (taskData) {
+                    const url = `https://www.onetonline.org/search/task/choose/${taskData["O*NET-SOC Code"]}`;
+
+                    window.open(url, "_blank");
+                  }
+                }
+              }}
+              sx={{
+                cursor: "pointer",
+                mx: "5px",
+                p: "10px",
+              }}
+            >
+              {currentVisibleNode.oNetTask.title}
+            </Link>
+          </Paper>
+        )}
       <Box
         sx={{
           display: "flex",
