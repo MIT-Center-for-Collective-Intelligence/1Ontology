@@ -140,7 +140,7 @@ const ChipInput = ({
                 <Box sx={{ ml: "10px", mb: "4px", mt: "14px" }}>
                   {tags.map((item: any, idx: number) => {
                     const displayText = item.domain
-                      ? `Domain:${item.domain} Title:${item.title}`
+                      ? `Domain: ${item.domain} Title: ${item.title}`
                       : item.title;
 
                     const backgroundColor =
