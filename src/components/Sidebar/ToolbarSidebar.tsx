@@ -1459,30 +1459,29 @@ const ToolbarSidebar = ({
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "5px",
+                  gap: "15px",
                   mt: "14px",
                 }}
               >
-                <OptimizedAvatar
-                  alt={openLogsFor.fullname}
-                  imageUrl={openLogsFor.imageUrl || ""}
-                  size={40}
-                  sx={{
-                    width: "100%",
-                    height: "100%",
-                    borderRadius: "50%",
-                    objectFit: "cover",
-                    ml: "170px",
-                    transition: "transform 0.3s ease",
-                  }}
-                />
-
                 <Box>
-                  <Typography>
-                    {openLogsFor.fName}
-                    {"'s Edit History"}
-                  </Typography>
+                  <OptimizedAvatar
+                    alt={openLogsFor.fullname}
+                    imageUrl={openLogsFor.imageUrl || ""}
+                    size={40}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      transition: "transform 0.3s ease",
+                    }}
+                  />
                 </Box>
+
+                <Typography sx={{ fontWeight: "bold", fontSize: "20px" }}>
+                  {openLogsFor.fName}
+                  {"'s Edit History"}
+                </Typography>
               </Box>
             )}
 
