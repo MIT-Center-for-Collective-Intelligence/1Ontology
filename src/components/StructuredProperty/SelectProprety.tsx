@@ -210,7 +210,7 @@ const SelectProperty = ({
                   key={`prev-${i}`}
                   label={
                     c.domain
-                      ? `Domain:${c.domain} Title:${c.title}`
+                      ? `Domain: ${c.domain} Title: ${c.title}`
                       : `${c.title}`
                   }
                   sx={{ backgroundColor: "red", color: "white" }}
@@ -230,7 +230,7 @@ const SelectProperty = ({
                   key={`new-${i}`}
                   label={
                     c.domain
-                      ? `Domain:${c.domain} Title:${c.title}`
+                      ? `Domain: ${c.domain} Title: ${c.title}`
                       : `${c.title}`
                   }
                   sx={{ backgroundColor: "green", color: "white" }}
@@ -256,7 +256,7 @@ const SelectProperty = ({
                   key={`same-${i}`}
                   label={
                     c.domain
-                      ? `Domain:${c.domain} Title:${c.title}`
+                      ? `Domain: ${c.domain} Title: ${c.title}`
                       : `${c.title}`
                   }
                   sx={{ backgroundColor: "grey.400", color: "white" }}

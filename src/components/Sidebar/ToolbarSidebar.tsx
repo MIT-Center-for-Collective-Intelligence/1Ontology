@@ -390,7 +390,10 @@ const ToolbarSidebar = ({
         sx: {
           width: "280px",
           padding: "8px 0",
-          borderRadius: "25px",
+          borderRadius: "13px",
+          backgroundColor: (theme) =>
+            theme.palette.mode === "light" ? "#dfdfdf" : "",
+          border: "1px solid gray",
         },
       }}
     >
@@ -404,8 +407,13 @@ const ToolbarSidebar = ({
           color: "text.secondary",
           zIndex: 1,
           "&:hover": {
-            backgroundColor: "rgba(237, 228, 228, 0.04)",
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark" ? "gray" : "#f4f4f4",
           },
+          border: "1px solid gray",
+          borderRadius: "25px",
+
+          p: 0.5,
         }}
       >
         <CloseIcon fontSize="small" />
@@ -493,15 +501,15 @@ const ToolbarSidebar = ({
                   position: "absolute",
                   bottom: 0,
                   right: 0,
-                  bgcolor: isUploading ? "orange" : theme.palette.primary.main,
+                  bgcolor: isUploading ? "orange" : "gray",
                   color: theme.palette.primary.contrastText,
-                  width: 24,
-                  height: 24,
+                  width: 28,
+                  height: 28,
                   borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  border: `2px solid ${theme.palette.background.paper}`,
+                  border: `1px solid white`,
                   cursor: "pointer",
                   "&:hover": {
                     bgcolor: isUploading
@@ -519,7 +527,7 @@ const ToolbarSidebar = ({
                     {percentageUploaded}%
                   </Typography>
                 ) : (
-                  <EditIcon sx={{ fontSize: "14px" }} />
+                  <CameraAltIcon sx={{ fontSize: "19px", color: "white" }} />
                 )}
               </Box>
             </Box>
@@ -601,7 +609,9 @@ const ToolbarSidebar = ({
           }}
         >
           <LogoutIcon fontSize="medium" sx={{ color: "gray" }} />
-          <Typography variant="body1">Sign out</Typography>
+          <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+            Sign out
+          </Typography>
         </Button>
       )}
     </Menu>
@@ -1571,19 +1581,31 @@ const ToolbarSidebar = ({
           {renderContent(activeSidebar)}
         </Box>
       ) : (
-        <>
-          <Box sx={{ mb: 2, mr: "10px" }}>
+        <Box>
+          <Box sx={{ mb: 2, mr: "15px" }}>
             <img src={getLog} alt="mit logo" width={"auto"} height={"40px"} />
           </Box>
 
           {/* Button for Avatar and Full Name */}
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Box onClick={handleProfileMenuOpen}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <Box
+              onClick={handleProfileMenuOpen}
+              sx={{
+                border: "2px solid #1ff81f",
+                borderRadius: "50%",
+                ml: "3px",
+              }}
+            >
               {user && (
                 <OptimizedAvatar
                   alt={`${user?.fName} ${user?.lName}`}
                   imageUrl={activeUsers[user?.uname]?.imageUrl || ""}
-                  size={45}
+                  size={43}
                   sx={{
                     width: "100%",
                     height: "100%",
@@ -1599,13 +1621,14 @@ const ToolbarSidebar = ({
                 />
               )}
             </Box>
-
             <Typography
               sx={{
                 ml: 2,
                 transition: "opacity 0.3s ease",
                 opacity: hovered ? 1 : 0,
                 minWidth: "120px",
+                fontWeight: "bold",
+                color: "#f4e2e2",
               }}
             >
               {`${user?.fName} ${user?.lName}`}
@@ -1742,7 +1765,7 @@ const ToolbarSidebar = ({
             activeUsers={activeUsers}
             currentUser={user}
           />
-        </>
+        </Box>
       )}
       {!activeSidebar && (
         <Box
