@@ -1580,7 +1580,7 @@ const ToolbarSidebar = ({
           {renderContent(activeSidebar)}
         </Box>
       ) : (
-        <Box>
+        <>
           <Box sx={{ mb: 2, mr: "15px" }}>
             <img src={getLog} alt="mit logo" width={"auto"} height={"40px"} />
           </Box>
@@ -1764,7 +1764,7 @@ const ToolbarSidebar = ({
             activeUsers={activeUsers}
             currentUser={user}
           />
-        </Box>
+        </>
       )}
       {!activeSidebar && (
         <Box
