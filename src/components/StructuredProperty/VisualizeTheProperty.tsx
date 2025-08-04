@@ -7,6 +7,9 @@ import { Paper, Typography, Box, Tooltip, List, ListItem } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { ICollection } from "@components/types/INode";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 
 type CollectionListProps = {
   currentImprovement: any;
@@ -99,23 +102,14 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                 </Tooltip>
               )} */}
             </Box>
-            <List>
+            <List sx={{ pl: 2 }}>
               {collection.nodes.map((node: any) => (
                 <ListItem
                   key={node.id}
                   id={node.change ? `${node.id}-${property}` : undefined}
+                  sx={{ p: 1 }}
                 >
-                  <DragIndicatorIcon
-                    sx={{
-                      color:
-                        node.change === "added"
-                          ? "green"
-                          : node.change === "removed"
-                            ? "red"
-                            : "",
-                    }}
-                  />
-                  {node.changeType === "sort" && (
+                  {node.changeType === "sort" ? (
                     <SwapHorizIcon
                       sx={{
                         color:
@@ -124,7 +118,39 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                             : node.change === "removed"
                               ? "red"
                               : "",
-                        pl: "5px",
+
+                        mr: "3px",
+                        fontSize: "27px",
+                      }}
+                    />
+                  ) : node.change === "added" ? (
+                    <AddIcon
+                      sx={{
+                        color: "green",
+                        mr: "3px",
+                        fontSize: "27px",
+                      }}
+                    />
+                  ) : node.change === "removed" ? (
+                    <RemoveIcon
+                      sx={{
+                        color: "red",
+                        mr: "3px",
+                        fontSize: "27px",
+                      }}
+                    />
+                  ) : (
+                    <FiberManualRecordIcon
+                      sx={{
+                        color:
+                          node.change === "added"
+                            ? "green"
+                            : node.change === "removed"
+                              ? "red"
+                              : "",
+                        fontSize: "15px",
+                        mr: "10px",
+                        pl: "4px",
                       }}
                     />
                   )}
@@ -160,11 +186,6 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                     {currentImprovement.detailsOfChange.addedNonExistentElements.map(
                       (item: string, index: number) => (
                         <ListItem key={item}>
-                          <DragIndicatorIcon
-                            sx={{
-                              color: "green",
-                            }}
-                          />
                           <Typography
                             key={index}
                             variant="body1"
