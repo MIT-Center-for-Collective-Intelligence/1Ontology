@@ -136,6 +136,9 @@ const Text = ({
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
   const [switchToWebsocket, setSwitchToWebSocket] = useState(true);
   // const [isPreviewMode, setIsPreviewMode] = useState(false);
+
+  const isEditorialNotes = (property: string) => property === 'editorialNotes';
+  
   const currentImprovementChange = useMemo(() => {
     if (currentImprovement?.newNode || !currentImprovement) return null;
 
@@ -150,11 +153,11 @@ const Text = ({
   const [aiPeer, setAiPeer] = useState({ on: false, waiting: false });
 
   const getTextValue = useMemo(() => {
-    if (property === "Editorial Notes") {
-      return currentVisibleNode.properties?.[property] || "";
+    if (isEditorialNotes(property)) {
+      return currentVisibleNode.properties.editorialNotes || "";
     }
     return text;
-  }, [property, currentVisibleNode.properties, text]);
+  }, [property, currentVisibleNode.properties.editorialNotes, text]);
 
   useEffect(() => {
     if (
@@ -193,7 +196,7 @@ const Text = ({
   //   }
   // }, [currentVisibleNode.inheritance[property]?.ref]);
   useEffect(() => {
-    if (property === "Editorial Notes") {
+    if (isEditorialNotes(property)) {
       setReference(null);
     } else {
       setReference(currentVisibleNode.inheritance[property]?.ref || null);
@@ -228,18 +231,17 @@ const Text = ({
     async (copyValue: string) => {
       if (!user?.uname) return;
 
-      if (property === "Editorial Notes") {
+      if (isEditorialNotes(property)) {
         const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
+        const updateData: any = {
+          "properties.editorialNotes": copyValue
+        };
+        
         if (structured) {
-          await updateDoc(nodeRef, {
-            [`textValue.${property}`]: copyValue,
-            [`properties.${property}`]: copyValue,
-          });
-        } else {
-          await updateDoc(nodeRef, {
-            [`properties.${property}`]: copyValue,
-          });
+          updateData["textValue.editorialNotes"] = copyValue;
         }
+        
+        await updateDoc(nodeRef, updateData);
         return;
       }
 
@@ -590,13 +592,9 @@ const Text = ({
                 property={property}
               />
               {currentVisibleNode.inheritance[property]?.ref &&
-                property !== "Editorial Notes" && (
+                !isEditorialNotes(property) && (
                   <Typography sx={{ fontSize: "14px", ml: "9px" }}>
-                    {'(Inherited from "'}
-                    {getTitleNode(
-                      currentVisibleNode.inheritance[property].ref || "",
-                    )}
-                    {'")'}
+                    {`(Inherited from "${getTitleNode(currentVisibleNode.inheritance[property].ref)}")`}
                   </Typography>
                 )}
               {property === "title" &&
@@ -677,7 +675,7 @@ const Text = ({
             )} */}
               {property !== "title" &&
                 property !== "ONetID" &&
-                property !== "Editorial Notes" &&
+                !isEditorialNotes(property) &&
                 !currentImprovement &&
                 !currentVisibleNode.unclassified &&
                 currentVisibleNode.inheritance[property] && (
@@ -742,10 +740,8 @@ const Text = ({
                   }}
                   mode={{
                     isPreview: !enableEdit,
-                    useWebsocket:
-                      switchToWebsocket && property !== "Editorial Notes",
-                    reference:
-                      property === "Editorial Notes" ? null : reference,
+                    useWebsocket: switchToWebsocket && !isEditorialNotes(property),
+                    reference: isEditorialNotes(property) ? null : reference,
                   }}
                   editor={{
                     autoFocus: autoFocus,
@@ -765,7 +761,7 @@ const Text = ({
             )}
           </>
         )}
-        {property !== "Editorial Notes" && (
+        {!isEditorialNotes(property) && (
           <InheritanceDetailsPanel
             property={property}
             currentVisibleNode={currentVisibleNode}

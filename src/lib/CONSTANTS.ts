@@ -34,6 +34,7 @@ export const DISPLAY: {
   most_efficiently_performed_by: "Most Efficiently Performed By",
   reason_for_most_efficiently_performed_by:
     "Reason for Most Efficiently Performed By",
+  editorialNotes: "Editorial Notes",
 };
 
 export const NO_IMAGE_USER =
