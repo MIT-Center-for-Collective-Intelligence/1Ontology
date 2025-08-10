@@ -721,9 +721,18 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                         backgroundColor: "gray",
                                       }
                                     : {},
-                                cursor: "pointer",
+                                cursor:
+                                  (nonPickedOnes[entry.from] || []).length > 0
+                                    ? "pointer"
+                                    : "",
                               }}
-                              onClick={(e) => handleClick(e, entry.from)}
+                              onClick={(e) => {
+                                if (
+                                  (nonPickedOnes[entry.from] || []).length > 0
+                                ) {
+                                  handleClick(e, entry.from);
+                                }
+                              }}
                             />
                           </Tooltip>
                         ) : entry.symbol === "=" ? (
