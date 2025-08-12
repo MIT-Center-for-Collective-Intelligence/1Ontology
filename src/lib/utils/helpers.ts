@@ -808,6 +808,7 @@ export const createNewNode = (
     createdAt: new Date(),
   };
   delete newNode.root;
+  delete newNode.oNetTask;
   if (newNode?.textValue?.specializations) {
     delete newNode.textValue.specializations;
   }
