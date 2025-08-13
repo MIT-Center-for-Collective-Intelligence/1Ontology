@@ -1261,7 +1261,12 @@ const StructuredProperty = ({
                     property !== "specializations" &&
                     property !== "isPartOf" &&
                     property !== "parts" &&
-                    !currentVisibleNode.unclassified && (
+                    !currentVisibleNode.unclassified &&
+                    !(
+                      currentVisibleNode.inheritance[property]?.ref === null &&
+                      currentVisibleNode.inheritance[property]
+                        ?.inheritanceType === "neverInherit"
+                    ) && (
                       <SelectInheritance
                         currentVisibleNode={currentVisibleNode}
                         property={property}

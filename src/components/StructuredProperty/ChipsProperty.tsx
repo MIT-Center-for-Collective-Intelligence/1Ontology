@@ -218,14 +218,20 @@ const ChipsProperty = ({
             currentVisibleNode={currentVisibleNode}
             property={property}
           />
-          {!currentImprovement && !currentVisibleNode.unclassified && (
-            <SelectInheritance
-              currentVisibleNode={currentVisibleNode}
-              property={property}
-              nodes={nodes}
-              enableEdit={enableEdit}
-            />
-          )}
+          {!currentImprovement &&
+            !currentVisibleNode.unclassified &&
+            !(
+              currentVisibleNode.inheritance[property]?.ref === null &&
+              currentVisibleNode.inheritance[property]?.inheritanceType ===
+                "neverInherit"
+            ) && (
+              <SelectInheritance
+                currentVisibleNode={currentVisibleNode}
+                property={property}
+                nodes={nodes}
+                enableEdit={enableEdit}
+              />
+            )}
         </Box>
       </Box>
       <ChipInput

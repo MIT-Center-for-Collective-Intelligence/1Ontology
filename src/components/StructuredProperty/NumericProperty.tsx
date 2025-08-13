@@ -483,7 +483,12 @@ const NumericProperty = ({
             )}
             {!currentImprovement &&
               !currentVisibleNode.unclassified &&
-              currentVisibleNode.inheritance[property] && (
+              currentVisibleNode.inheritance[property] &&
+              !(
+                currentVisibleNode.inheritance[property]?.ref === null &&
+                currentVisibleNode.inheritance[property]?.inheritanceType ===
+                  "neverInherit"
+              ) && (
                 <SelectInheritance
                   currentVisibleNode={currentVisibleNode}
                   property={property}
