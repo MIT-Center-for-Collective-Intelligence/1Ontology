@@ -68,6 +68,7 @@ export type INode = {
     [propertyName: string]: any;
     parts: ICollection[];
     isPartOf: ICollection[];
+    editorialNotes: string;
   };
   inheritance: IInheritance;
   inheritanceParts: {
