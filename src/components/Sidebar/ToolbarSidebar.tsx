@@ -1730,7 +1730,11 @@ const ToolbarSidebar = ({
               id="toolbar-theme-button"
               icon={<DownloadIcon />}
               onClick={() => {
-                handleDownload({ nodes });
+                try {
+                  handleDownload({ nodes });
+                } catch (error) {
+                  confirmIt("There was an error downloading the JSON!");
+                }
               }}
               text={"Download JSON"}
               toolbarIsOpen={hovered}
