@@ -9,6 +9,9 @@ export const GUIDELINES = "guidelines";
 export const PROMPT_LOGS = "promptLogs";
 export const COPILOT_PROMPTS = "copilotPrompts";
 export const NODES_ONET = "oNetNodes";
+export const API_KEYS = "apiKeys";
+export const API_LOGS = 'apiLogs';
+export const API_METRICS = 'apiMetrics';
 export const ALGORITHMS = "algorithms";
 
 /* consultant */
