@@ -819,6 +819,7 @@ export const createNewNode = (
   if (newNode?.textValue?.generalizations) {
     delete newNode.textValue.generalizations;
   }
+  newNode.properties.editorialNotes = "";
   return newNode;
 };
 

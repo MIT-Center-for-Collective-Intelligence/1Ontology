@@ -366,6 +366,10 @@ const NodeBody: React.FC<NodeBodyProps> = ({
         if (a === "References") return 1;
         if (b === "References") return -1;
 
+        // Force "editorialNotes" to be placed at the very bottom (after References)
+        if (a === "editorialNotes") return 1;
+        if (b === "editorialNotes") return -1;
+
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
 
         if (indexA !== -1) return -1;

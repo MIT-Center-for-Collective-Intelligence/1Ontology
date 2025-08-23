@@ -136,6 +136,9 @@ const Text = ({
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
   const [switchToWebsocket, setSwitchToWebSocket] = useState(true);
   // const [isPreviewMode, setIsPreviewMode] = useState(false);
+
+  const isEditorialNotes = (property: string) => property === 'editorialNotes';
+  
   const currentImprovementChange = useMemo(() => {
     if (currentImprovement?.newNode || !currentImprovement) return null;
 
@@ -148,6 +151,13 @@ const Text = ({
   const [editProperty, setEditProperty] = useState("");
   const [newPropertyValue, setNewPropertyValue] = useState("");
   const [aiPeer, setAiPeer] = useState({ on: false, waiting: false });
+
+  const getTextValue = useMemo(() => {
+    if (isEditorialNotes(property)) {
+      return currentVisibleNode.properties.editorialNotes || "";
+    }
+    return text;
+  }, [property, currentVisibleNode.properties.editorialNotes, text]);
 
   useEffect(() => {
     if (
@@ -186,9 +196,13 @@ const Text = ({
   //   }
   // }, [currentVisibleNode.inheritance[property]?.ref]);
   useEffect(() => {
-    setReference(currentVisibleNode.inheritance[property]?.ref || null);
-    // setAutoFocus(false);
-  }, [currentVisibleNode]);
+    if (isEditorialNotes(property)) {
+      setReference(null);
+    } else {
+      setReference(currentVisibleNode.inheritance[property]?.ref || null);
+      // setAutoFocus(false);
+    }
+  }, [currentVisibleNode, property]);
 
   const saveChangeHistory = useCallback(
     async (previousValue: string, newValue: string, nodeId: string) => {
@@ -216,6 +230,20 @@ const Text = ({
   const onSaveTextChange = useCallback(
     async (copyValue: string) => {
       if (!user?.uname) return;
+
+      if (isEditorialNotes(property)) {
+        const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
+        const updateData: any = {
+          "properties.editorialNotes": copyValue
+        };
+        
+        if (structured) {
+          updateData["textValue.editorialNotes"] = copyValue;
+        }
+        
+        await updateDoc(nodeRef, updateData);
+        return;
+      }
 
       // Mark that we want to keep focus after inheritance breaks
       focusAfterSaveRef.current = true;
@@ -286,14 +314,22 @@ const Text = ({
         });
       }
     },
-    [user?.uname, currentVisibleNode?.id, reference, property, db, nodes],
+    [
+      user?.uname,
+      currentVisibleNode?.id,
+      reference,
+      property,
+      db,
+      nodes,
+      structured,
+    ],
   );
 
   useEffect(() => {
     if (!isEditing) {
-      setEditorContent(text);
+      setEditorContent(getTextValue);
     }
-  }, [text, isEditing]);
+  }, [getTextValue, isEditing]);
 
   const handleDeleteProperty = useCallback(() => {
     if (deleteProperty) {
@@ -555,15 +591,12 @@ const Text = ({
                 currentVisibleNode={currentVisibleNode}
                 property={property}
               />
-              {currentVisibleNode.inheritance[property]?.ref && (
-                <Typography sx={{ fontSize: "14px", ml: "9px" }}>
-                  {'(Inherited from "'}
-                  {getTitleNode(
-                    currentVisibleNode.inheritance[property].ref || "",
-                  )}
-                  {'")'}
-                </Typography>
-              )}
+              {currentVisibleNode.inheritance[property]?.ref &&
+                !isEditorialNotes(property) && (
+                  <Typography sx={{ fontSize: "14px", ml: "9px" }}>
+                    {`(Inherited from "${getTitleNode(currentVisibleNode.inheritance[property].ref)}")`}
+                  </Typography>
+                )}
               {property === "title" &&
                 !selectedDiffNode &&
                 displaySidebar &&
@@ -642,6 +675,7 @@ const Text = ({
             )} */}
               {property !== "title" &&
                 property !== "ONetID" &&
+                !isEditorialNotes(property) &&
                 !currentImprovement &&
                 !currentVisibleNode.unclassified &&
                 currentVisibleNode.inheritance[property] && (
@@ -669,7 +703,7 @@ const Text = ({
           <Typography
             sx={{ fontSize: property === "title" ? "25px" : "19px", p: "19px" }}
           >
-            {text}
+            {getTextValue}
           </Typography>
         ) : (
           <>
@@ -706,8 +740,8 @@ const Text = ({
                   }}
                   mode={{
                     isPreview: !enableEdit,
-                    useWebsocket: switchToWebsocket,
-                    reference: reference,
+                    useWebsocket: switchToWebsocket && !isEditorialNotes(property),
+                    reference: isEditorialNotes(property) ? null : reference,
                   }}
                   editor={{
                     autoFocus: autoFocus,
@@ -727,11 +761,13 @@ const Text = ({
             )}
           </>
         )}
-        <InheritanceDetailsPanel
-          property={property}
-          currentVisibleNode={currentVisibleNode}
-          nodes={nodes}
-        />
+        {!isEditorialNotes(property) && (
+          <InheritanceDetailsPanel
+            property={property}
+            currentVisibleNode={currentVisibleNode}
+            nodes={nodes}
+          />
+        )}
       </Paper>
     </Slide>
   );
