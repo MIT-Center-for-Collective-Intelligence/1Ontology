@@ -52,11 +52,16 @@ This component is a key part of the application, providing a rich interface for 
 import { Bar, Container, Section } from "@column-resizer/react";
 
 import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import SearchIcon from "@mui/icons-material/Search";
+import CloseIcon from "@mui/icons-material/Close";
+import MenuIcon from "@mui/icons-material/Menu";
 import {
   Box,
   Button,
   CircularProgress,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   Select,
@@ -240,6 +245,24 @@ const Ontology = ({
   const treeRef = useRef<TreeApi<TreeData>>(null);
 
   const firstLoad = useRef(true);
+
+  // Mobile state
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileTreeOpen, setMobileTreeOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // Auto-focus search input on mobile search open
+  useEffect(() => {
+    if (mobileSearchOpen && isMobile) {
+      // Small delay to ensure the component is rendered
+      setTimeout(() => {
+        const searchInput = document.querySelector('input[placeholder="Search..."]') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }, 100);
+    }
+  }, [mobileSearchOpen, isMobile]);
 
   const signOut = async () => {
     router.push(ROUTES.signIn);
@@ -1131,16 +1154,43 @@ const Ontology = ({
     return () => clearInterval(intervalId);
   }, [lastInteractionDate]);
 
+  // Handle escape key for mobile overlays
+  // useEffect(() => {
+  //   const handleEscape = (e: KeyboardEvent) => {
+  //     if (e.key === "Escape") {
+  //       if (mobileSearchOpen) {
+  //         setMobileSearchOpen(false);
+  //       }
+  //       if (mobileTreeOpen) {
+  //         setMobileTreeOpen(false);
+  //       }
+  //     }
+  //   };
+
+  //   if (isMobile) {
+  //     window.addEventListener("keydown", handleEscape);
+  //     return () => window.removeEventListener("keydown", handleEscape);
+  //   }
+  // }, [isMobile, mobileSearchOpen, mobileTreeOpen]);
+
   const displaySidebar = useCallback(
     (sidebarName: "chat" | "nodeHistory" | "inheritanceSettings") => {
       if (activeSidebar === sidebarName) {
         setActiveSidebar(null);
+        // Close mobile sidebar when deactivating
+        if (isMobile) {
+          setMobileSidebarOpen(false);
+        }
       } else {
         setSelectedChatTab(0);
         handleExpandSidebar(sidebarName);
+        // Open mobile sidebar when activating on mobile
+        if (isMobile) {
+          setMobileSidebarOpen(true);
+        }
       }
     },
-    [activeSidebar],
+    [activeSidebar, isMobile],
   );
 
   const compareTitles = (title1: string, title2: string): boolean => {
@@ -1272,6 +1322,291 @@ const Ontology = ({
           {currentVisibleNode ? currentVisibleNode.title : "1ontology"}
         </title>
       </Head>
+      
+      {/* Mobile Header */}
+      {isMobile && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1000,
+            backgroundColor: theme.palette.mode === "dark" ? "#303134" : "white",
+            borderBottom: "1px solid",
+            borderColor: theme.palette.mode === "dark" 
+              ? "rgba(255, 255, 255, 0.08)" 
+              : "rgba(0, 0, 0, 0.08)",
+            display: "flex",
+            alignItems: "center",
+            padding: "8px 16px",
+            gap: 1,
+          }}
+        >
+          <IconButton
+            onClick={() => setMobileTreeOpen(!mobileTreeOpen)}
+            sx={{
+              color: mobileTreeOpen ? theme.palette.primary.main : theme.palette.text.secondary,
+            }}
+          >
+            <AccountTreeIcon />
+          </IconButton>
+          
+          <Box
+            onClick={() => setMobileSearchOpen(true)}
+            sx={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              backgroundColor: theme.palette.action.hover,
+              borderRadius: "20px",
+              padding: "8px 16px",
+              cursor: "pointer",
+              "&:hover": {
+                backgroundColor: theme.palette.action.selected,
+              },
+            }}
+          >
+            <SearchIcon sx={{ color: theme.palette.text.secondary, mr: 1 }} />
+            <Typography
+              variant="body2"
+              sx={{
+                color: theme.palette.text.secondary,
+                flex: 1,
+              }}
+            >
+              Search ontology...
+            </Typography>
+          </Box>
+
+          <IconButton
+            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+            sx={{
+              color: mobileSidebarOpen ? theme.palette.primary.main : theme.palette.text.secondary,
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
+        </Box>
+      )}
+
+      {/* Mobile Search Overlay */}
+      {isMobile && mobileSearchOpen && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 1100,
+            backgroundColor: theme.palette.background.default,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              padding: "8px 16px",
+              borderBottom: "1px solid",
+              borderColor: theme.palette.mode === "dark" 
+                ? "rgba(255, 255, 255, 0.08)" 
+                : "rgba(0, 0, 0, 0.08)",
+              gap: 1,
+            }}
+          >
+            <IconButton
+              onClick={() => setMobileSearchOpen(false)}
+              sx={{ color: theme.palette.text.primary }}
+            >
+              <CloseIcon />
+            </IconButton>
+            <Typography variant="h6" sx={{ flex: 1 }}>
+              Search
+            </Typography>
+          </Box>
+          
+          <Box 
+            sx={{ 
+              height: "calc(100vh - 64px)", 
+              overflow: "auto",
+              ...SCROLL_BAR_STYLE,
+            }}
+          >
+            <SearchSideBar
+              openSearchedNode={(node: INode, searched: boolean = true) => {
+                openSearchedNode(node, searched);
+                setMobileSearchOpen(false);
+              }}
+              searchWithFuse={searchWithFuse}
+              lastSearches={lastSearches}
+              updateLastSearches={updateLastSearches}
+              skillsFuture={skillsFuture}
+              skillsFutureApp={appName}
+            />
+          </Box>
+        </Box>
+      )}
+
+      {/* Mobile Tree Panel */}
+      {isMobile && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: "56px", // Below mobile header
+            left: 0,
+            right: 0,
+            height: mobileTreeOpen ? "50vh" : "0",
+            backgroundColor: theme.palette.mode === "dark" ? "#303134" : "white",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            zIndex: 999,
+            transition: "height 0.3s ease-in-out",
+            borderBottom: mobileTreeOpen ? "1px solid" : "none",
+            borderColor: theme.palette.mode === "dark" 
+              ? "rgba(255, 255, 255, 0.08)" 
+              : "rgba(0, 0, 0, 0.08)",
+          }}
+        >
+          {skillsFuture && (
+            <Box sx={{ 
+              m: "10px", 
+              mt: "20px", 
+              flexShrink: 0,
+              opacity: mobileTreeOpen ? 1 : 0,
+              transition: "opacity 0.3s ease-in-out",
+            }}>
+              <FormControl
+                variant="outlined"
+                sx={{ borderRadius: "20px" }}
+                fullWidth
+              >
+                <InputLabel id="mobile-property-type-label">
+                  Which Ontology
+                </InputLabel>
+                <Select
+                  labelId="mobile-property-type-label"
+                  value={appName}
+                  onChange={(event) => {
+                    setNodes({});
+                    const app = event.target.value.replaceAll(" ", "_");
+                    router.replace(`/${app}`);
+                  }}
+                  label="Property Type"
+                  sx={{ borderRadius: "20px" }}
+                >
+                  {SKILLS_FUTURE_APP_NAMES.map(({ id, name }) => (
+                    <MenuItem key={id} value={id}>
+                      {name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          )}
+          <Box
+            sx={{
+              flex: 1,
+              overflow: "auto",
+              paddingTop: skillsFuture ? "0" : "16px", // Add top padding only if no ontology selector
+              opacity: mobileTreeOpen ? 1 : 0,
+              transition: "opacity 0.3s ease-in-out",
+              ...SCROLL_BAR_STYLE,
+            }}
+          >
+            <DraggableTree
+            treeViewData={treeViewData}
+            setSnackbarMessage={setSnackbarMessage}
+            treeRef={treeRef}
+            currentVisibleNode={currentVisibleNode}
+            nodes={nodes}
+            onOpenNodesTree={(nodeId: string) => {
+              onOpenNodesTree(nodeId);
+              // Don't close tree on node selection to allow parallel browsing
+            }}
+            eachOntologyPath={eachOntologyPath}
+            skillsFuture={skillsFuture}
+            specializationNumsUnder={specializationNumsUnder}
+            skillsFutureApp={appName}
+          />
+          </Box>
+        </Box>
+      )}
+
+      {/* Mobile Sidebar Panel */}
+      {isMobile && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            right: mobileSidebarOpen 
+              ? 0 
+              : activeSidebar 
+                ? { xs: "-90%", sm: "-450px" }
+                : "-70px",
+            width: activeSidebar 
+              ? { xs: "90%", sm: "450px" }
+              : "70px",
+            height: "100vh",
+            backgroundColor: "transparent",
+            zIndex: 1200,
+            transition: "right 0.3s ease-in-out, width 0.3s ease-in-out",
+            borderTopLeftRadius: "8px",
+            borderBottomLeftRadius: "8px",
+            overflow: "visible",
+          }}
+        >
+          <MemoizedToolbarSidebar
+            toolbarRef={toolbarRef}
+            user={user}
+            openSearchedNode={openSearchedNode}
+            searchWithFuse={searchWithFuse}
+            nodes={nodes}
+            selectedDiffNode={selectedDiffNode}
+            setSelectedDiffNode={setSelectedDiffNode}
+            currentVisibleNode={currentVisibleNode}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            confirmIt={confirmIt}
+            activeSidebar={activeSidebar}
+            setActiveSidebar={setActiveSidebar}
+            handleExpandSidebar={handleExpandSidebar}
+            navigateToNode={navigateToNode}
+            treeVisualization={treeVisualization}
+            expandedNodes={expandedNodes}
+            setExpandedNodes={setExpandedNodes}
+            onOpenNodesTree={onOpenNodesTree}
+            setDisplayGuidelines={setDisplayGuidelines}
+            currentImprovement={currentImprovement}
+            setCurrentImprovement={setCurrentImprovement}
+            lastSearches={lastSearches}
+            updateLastSearches={updateLastSearches}
+            selectedChatTab={selectedChatTab}
+            setSelectedChatTab={setSelectedChatTab}
+            displayGuidelines={displayGuidelines}
+            signOut={signOut}
+            skillsFuture={skillsFuture}
+            skillsFutureApp={appName}
+          />
+        </Box>
+      )}
+
+      {/* Mobile Sidebar Backdrop */}
+      {isMobile && mobileSidebarOpen && (
+        <Box
+          onClick={() => setMobileSidebarOpen(false)}
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.3)",
+            zIndex: 1100,
+          }}
+        />
+      )}
+
       <Box>
         <Container
           style={{
@@ -1280,6 +1615,12 @@ const Ontology = ({
             overflow: "hidden",
             backgroundColor:
               theme.palette.mode === "dark" ? "#1b1a1a" : "#f8f9fa",
+            paddingTop: isMobile 
+              ? mobileTreeOpen 
+                ? "calc(56px + 50vh)" // Mobile header + tree panel height
+                : "56px" // Just mobile header
+              : "0",
+            transition: isMobile ? "padding-top 0.3s ease-in-out" : "none",
           }}
           columnResizerRef={columnResizerRef}
         >
@@ -1442,32 +1783,34 @@ const Ontology = ({
             </Section>
           )}
 
-          <Bar
-            size={0.1}
-            style={{
-              background: "transparent",
-              cursor: "col-resize",
-              position: "relative",
-              borderRadius: "4px",
-            }}
-          >
-            <SettingsEthernetIcon
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                color: (theme) =>
-                  theme.palette.mode === "dark"
-                    ? theme.palette.common.gray50
-                    : theme.palette.common.notebookMainBlack,
-                borderRadius: "50%",
-                ":hover": {
-                  backgroundColor: "orange",
-                },
+          {!isMobile && (
+            <Bar
+              size={0.1}
+              style={{
+                background: "transparent",
+                cursor: "col-resize",
+                position: "relative",
+                borderRadius: "4px",
               }}
-            />
-          </Bar>
+            >
+              <SettingsEthernetIcon
+                sx={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  color: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? theme.palette.common.gray50
+                      : theme.palette.common.notebookMainBlack,
+                  borderRadius: "50%",
+                  ":hover": {
+                    backgroundColor: "orange",
+                  },
+                }}
+              />
+            </Bar>
+          )}
 
           <Section minSize={0}>
             <Box
@@ -1480,7 +1823,12 @@ const Ontology = ({
                 p: "20px",
                 pt: 0,
                 overflow: "auto",
-                height: "100vh",
+                height: isMobile 
+                  ? mobileTreeOpen 
+                    ? "calc(100vh - 56px - 50vh)" // Account for header + tree
+                    : "calc(100vh - 56px)" // Just header
+                  : "100vh",
+                transition: isMobile ? "height 0.3s ease-in-out" : "none",
                 "&::-webkit-scrollbar": {
                   display: "none",
                 },
@@ -1543,7 +1891,8 @@ const Ontology = ({
             </Box>
           </Section>
 
-          <MemoizedToolbarSidebar
+          {!isMobile && (
+            <MemoizedToolbarSidebar
             // isHovered={toolbarIsHovered}
             toolbarRef={toolbarRef}
             user={user}
@@ -1575,6 +1924,7 @@ const Ontology = ({
             skillsFuture={skillsFuture}
             skillsFutureApp={appName ?? null}
           />
+          )}
         </Container>
         {ConfirmDialog}
         <SneakMessage

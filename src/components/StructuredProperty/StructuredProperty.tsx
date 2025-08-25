@@ -7,6 +7,7 @@ import {
   Tooltip,
   Paper,
   useTheme,
+  useMediaQuery,
   IconButton,
   Card,
   CardContent,
@@ -199,6 +200,7 @@ const StructuredProperty = ({
   modifyProperty,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery("(max-width:599px)");
   const [openAddCollection, setOpenAddCollection] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -989,7 +991,7 @@ const StructuredProperty = ({
           borderRadius: property !== "context" ? "30px" : "",
           borderBottomRightRadius: "18px",
           borderBottomLeftRadius: "18px",
-          minWidth: "500px",
+          minWidth: isMobile ? "100%" : "500px",
           width: "100%",
           minHeight: "150px",
           maxHeight: "100%",
@@ -1027,7 +1029,7 @@ const StructuredProperty = ({
           borderRadius: property !== "context" ? "30px" : "",
           borderBottomRightRadius: "18px",
           borderBottomLeftRadius: "18px",
-          minWidth: "500px",
+          minWidth: isMobile ? "100%" : "500px",
           width: "100%",
           minHeight: "150px",
           maxHeight: "100%",
