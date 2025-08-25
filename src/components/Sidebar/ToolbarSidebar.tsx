@@ -28,6 +28,7 @@ import {
   Tooltip,
   Typography,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 
 import mitLogoLight from "../../../public/MIT-Logo-Small-Light.png";
@@ -174,6 +175,7 @@ const ToolbarSidebar = ({
   skillsFutureApp,
 }: MainSidebarProps) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery("(max-width:599px)");
   const db = getFirestore();
   const [{ isAuthenticated }] = useAuth();
   const [handleThemeSwitch] = useThemeChange();
@@ -1418,7 +1420,13 @@ const ToolbarSidebar = ({
     <Box
       ref={toolbarRef}
       sx={{
-        width: !!activeSidebar ? "450px" : hovered ? "190px" : "70px",
+        width: !!activeSidebar 
+          ? isMobile 
+            ? "100%" 
+            : "450px" 
+          : hovered 
+            ? "190px" 
+            : "70px",
         // transition: "width 0.1s ease",
         height: "100vh",
         background:
@@ -1779,41 +1787,43 @@ const ToolbarSidebar = ({
             mt: "auto",
           }}
         >
-          <Tooltip title={hovered ? "Collapse" : "Expand"} placement="left">
-            {hovered ? (
-              <ChevronRightIcon
-                onClick={() => {
-                  setHovered((prev) => !prev);
-                }}
-                sx={{
-                  borderRadius: "50%",
-                  mt: "auto",
-                  p: "3px",
-                  cursor: "pointer",
-                  fontSize: "30px",
-                  ":hover": {
-                    backgroundColor: "orange",
-                  },
-                }}
-              />
-            ) : (
-              <ChevronLeftIcon
-                onClick={() => {
-                  setHovered((prev) => !prev);
-                }}
-                sx={{
-                  borderRadius: "50%",
-                  mt: "auto",
-                  p: "3px",
-                  cursor: "pointer",
-                  fontSize: "30px",
-                  ":hover": {
-                    backgroundColor: "orange",
-                  },
-                }}
-              />
-            )}
-          </Tooltip>
+          {!isMobile && (
+            <Tooltip title={hovered ? "Collapse" : "Expand"} placement="left">
+              {hovered ? (
+                <ChevronRightIcon
+                  onClick={() => {
+                    setHovered((prev) => !prev);
+                  }}
+                  sx={{
+                    borderRadius: "50%",
+                    mt: "auto",
+                    p: "3px",
+                    cursor: "pointer",
+                    fontSize: "30px",
+                    ":hover": {
+                      backgroundColor: "orange",
+                    },
+                  }}
+                />
+              ) : (
+                <ChevronLeftIcon
+                  onClick={() => {
+                    setHovered((prev) => !prev);
+                  }}
+                  sx={{
+                    borderRadius: "50%",
+                    mt: "auto",
+                    p: "3px",
+                    cursor: "pointer",
+                    fontSize: "30px",
+                    ":hover": {
+                      backgroundColor: "orange",
+                    },
+                  }}
+                />
+              )}
+            </Tooltip>
+          )}
         </Box>
       )}
 
