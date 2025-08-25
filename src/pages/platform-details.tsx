@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import {
   AppBar,
@@ -25,6 +26,7 @@ import {
   Divider,
   useMediaQuery,
 } from "@mui/material";
+import { useAuth } from "../components/context/AuthContext";
 import {
   LightMode as LightModeIcon,
   DarkMode as DarkModeIcon,
@@ -355,6 +357,7 @@ const PlatformDetailsPage = () => {
     create: true,
     move: true,
   });
+  const [authState] = useAuth();
 
   // Mobile state management
   const isMobile = useMediaQuery("(max-width:599px)");
@@ -448,6 +451,10 @@ const PlatformDetailsPage = () => {
   };
 
   return (
+    <>
+      <Head>
+        <title>Software Platform for Editing the Ontology of Activities</title>
+      </Head>
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
@@ -541,16 +548,36 @@ const PlatformDetailsPage = () => {
                   onClick={handleThemeSwitch}
                 />
 
-                <Button
-                  variant="text"
-                  color="primary"
-                  sx={{ display: { xs: "none", sm: "inline-flex" } }}
-                >
-                  Sign In
-                </Button>
-                <Button variant="contained" color="primary">
-                  Register
-                </Button>
+                {authState.isAuthenticated ? (
+                  <Button 
+                    variant="contained" 
+                    color="primary"
+                    component="a"
+                    href="/"
+                  >
+                    Go to Platform
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="text"
+                      color="primary"
+                      component="a"
+                      href="/signin"
+                      sx={{ display: { xs: "none", sm: "inline-flex" } }}
+                    >
+                      Sign In
+                    </Button>
+                    <Button 
+                      variant="contained" 
+                      color="primary"
+                      component="a"
+                      href="/signup"
+                    >
+                      Register
+                    </Button>
+                  </>
+                )}
 
                 <IconButton sx={{ display: { xs: "flex", md: "none" } }}>
                   <MenuIcon />
@@ -2332,10 +2359,11 @@ const PlatformDetailsPage = () => {
                   color="primary"
                   size="large"
                   endIcon={<OpenInNew />}
-                  sx={{ px: 4 }}
+                  component="a"
                   href="/"
+                  sx={{ px: 4 }}
                 >
-                  Access Research Platform
+                  {authState.isAuthenticated ? "Go to Platform" : "Access Research Platform"}
                 </Button>
               </Box>
             </Box>
@@ -2346,165 +2374,83 @@ const PlatformDetailsPage = () => {
         <Box
           component="footer"
           sx={{
-            py: 10,
-            bgcolor: (theme) =>
-              theme.palette.mode === "dark"
-                ? "linear-gradient(135deg, #0a0a0a 0%, #121212 100%)"
-                : "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
+            py: 6,
+            bgcolor: "background.paper",
             borderTop: (theme) =>
               theme.palette.mode === "dark"
-                ? "1px solid rgba(255,255,255,0.12)"
-                : "1px solid rgba(0,0,0,0.15)",
-            position: "relative",
+                ? "1px solid rgba(255,255,255,0.08)"
+                : "1px solid rgba(0,0,0,0.08)",
           }}
         >
-          {/* Subtle footer pattern */}
-          <Box
-            sx={{
-              position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-              background: (theme) =>
-                theme.palette.mode === "dark"
-                  ? "radial-gradient(circle at 80% 20%, rgba(255,152,0,0.02) 0%, transparent 50%)"
-                  : "radial-gradient(circle at 80% 20%, rgba(255,152,0,0.03) 0%, transparent 50%)",
-              zIndex: 0,
-            }}
-          />
-
-          <Container maxWidth="xl" sx={{ position: "relative", zIndex: 1 }}>
-            <Grid container spacing={6}>
-              <Grid item xs={12} md={8}>
-                <Box
-                  sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}
-                >
-                  <Typography
-                    variant="h5"
-                    sx={{
-                    fontWeight: 600,
-                      color: "primary.main",
-                      fontFamily:
-                        '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-                      letterSpacing: "-0.01em",
-                    }}
-                  >
-                    MIT
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{
-                    fontWeight: 400,
-                      color: (theme) =>
-                        theme.palette.mode === "dark" ? "#f8f9fa" : "#1a1a1a",
-                      fontFamily:
-                        '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-                      letterSpacing: "-0.01em",
-                    }}
-                  >
-                    Ontology Platform
+          <Container maxWidth="xl">
+            <Grid container spacing={4} justifyContent="space-between" alignItems="center">
+              {/* Left Section - Logo & Title */}
+              <Grid item xs={12} md={4}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+                  <img
+                    src={isDark ? "/MIT-Logo-small-Dark.png" : "/MIT-Logo-Small-Light.png"}
+                    alt="MIT Logo"
+                    style={{ height: "28px", width: "auto" }}
+                  />
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    Ontology of Collective Intelligence
                   </Typography>
                 </Box>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: (theme) =>
-                      theme.palette.mode === "dark" ? "#94a3b8" : "#64748b",
-                  mb: 4,
-                  lineHeight: 1.7,
-                    maxWidth: "500px",
-                    fontFamily:
-                      '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-                  }}
-                >
-                  Advanced software platform for creating, editing, and
-                  navigating complex ontological structures in AI and future of
-                  work research.
+                <Typography variant="body2" color="text.secondary">
+                  © {new Date().getFullYear()} MIT. All rights reserved.
                 </Typography>
               </Grid>
 
+              {/* Middle Section - Navigation */}
               <Grid item xs={12} md={4}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                  fontWeight: 600,
-                  mb: 3,
-                    color: (theme) =>
-                      theme.palette.mode === "dark" ? "#f8f9fa" : "#1a1a1a",
-                    fontFamily:
-                      '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-                  }}
-                >
-                  Resources
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {[
-                    "Platform Documentation",
-                    "API Reference",
-                    "User Guide",
-                    "Research Info",
-                  ].map((item, index) => (
+                    { title: "Home", href: "/landing" },
+                    { title: "Platform", href: "/platform-details" },
+                    { title: "AI Uses", href: "/ai-uses" },
+                  ].map((link, idx) => (
                     <Typography
-                      key={index}
+                      key={idx}
                       component="a"
-                      href={
-                        item === "Research Info" ? "https://m3s.mit.edu/" : "#"
-                      }
-                      target={item === "Research Info" ? "_blank" : undefined}
-                      rel={
-                        item === "Research Info"
-                          ? "noopener noreferrer"
-                          : undefined
-                      }
-                      variant="body1"
+                      href={link.href}
                       sx={{
-                        color: (theme) =>
-                          theme.palette.mode === "dark" ? "#94a3b8" : "#64748b",
+                        color: "text.secondary",
+                        fontSize: "0.9rem",
                         textDecoration: "none",
-                        fontFamily:
-                          '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-                        transition: "all 0.2s ease",
-                        "&:hover": {
-                          color: "primary.main",
-                          transform: "translateX(4px)",
-                        },
+                        "&:hover": { color: "primary.main" },
                       }}
                     >
-                      {item}
+                      {link.title}
                     </Typography>
                   ))}
                 </Box>
               </Grid>
+
+              {/* Right Section - Accessibility Info Only */}
+              <Grid item xs={12} md={4}>
+                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+                  <Typography
+                    component="a"
+                    href="https://accessibility.mit.edu/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: "0.9rem",
+                      textDecoration: "none",
+                      "&:hover": { color: "primary.main" },
+                    }}
+                  >
+                    Accessibility Info
+                  </Typography>
+                </Box>
+              </Grid>
             </Grid>
-
-            <Divider
-              sx={{
-              my: 6,
-                borderColor: (theme) =>
-                  theme.palette.mode === "dark"
-                    ? "rgba(255,255,255,0.12)"
-                    : "rgba(0,0,0,0.15)",
-              }}
-            />
-
-            <Typography
-              variant="body2"
-              align="center"
-              sx={{
-                color: (theme) =>
-                  theme.palette.mode === "dark" ? "#6b7280" : "#9ca3af",
-                fontFamily:
-                  '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-              }}
-            >
-              © 2025 MIT. Software Platform for Editing the Ontology of
-              Activities.
-            </Typography>
           </Container>
         </Box>
       </Box>
     </ThemeProvider>
+    </>
   );
 };
 

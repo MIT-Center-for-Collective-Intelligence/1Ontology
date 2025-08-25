@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
+import Head from "next/head";
 import {
   AppBar,
   Box,
@@ -26,6 +27,7 @@ import {
   InputAdornment,
   Divider,
 } from "@mui/material";
+import { useAuth } from "../components/context/AuthContext";
 import {
   Brightness4,
   Brightness7,
@@ -68,6 +70,7 @@ const LandingPage = () => {
   const router = useRouter();
   const [isDark, setIsDark] = useState(true);
   const [hovered, setHovered] = useState(false);
+  const [authState] = useAuth();
 
   const theme = createTheme({
     palette: {
@@ -125,8 +128,13 @@ const LandingPage = () => {
   ];
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <>
+      <Head>
+        <title>AI and the Future of Work - An Ontology Approach</title>
+        <meta name="description" content="A comprehensive framework to systematically understand where and how AI can be used, and what this means for people and organizations." />
+      </Head>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
       <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
         {/* Navigation */}
         <AppBar
@@ -218,16 +226,36 @@ const LandingPage = () => {
                   toolbarIsOpen={hovered}
                 />
 
-                <Button
-                  variant="text"
-                  color="primary"
-                  sx={{ display: { xs: "none", sm: "inline-flex" } }}
-                >
-                  Sign In
-                </Button>
-                <Button variant="contained" color="primary">
-                  Register
-                </Button>
+                {authState.isAuthenticated ? (
+                  <Button 
+                    variant="contained" 
+                    color="primary"
+                    component="a"
+                    href="/"
+                  >
+                    Go to Platform
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="text"
+                      color="primary"
+                      component="a"
+                      href="/signin"
+                      sx={{ display: { xs: "none", sm: "inline-flex" } }}
+                    >
+                      Sign In
+                    </Button>
+                    <Button 
+                      variant="contained" 
+                      color="primary"
+                      component="a"
+                      href="/signup"
+                    >
+                      Register
+                    </Button>
+                  </>
+                )}
 
                 <IconButton sx={{ display: { xs: "flex", md: "none" } }}>
                   <MenuIcon />
@@ -481,8 +509,9 @@ const LandingPage = () => {
                               fontWeight: 400,
                               color: "text.primary",
                               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-                              display: "inline-block",
+                              display: { xs: "block", lg: "inline-block" },
                               position: "relative",
+                              textAlign: { xs: "left", lg: "center" },
                             }}
                           >
                             <Typography
@@ -524,10 +553,10 @@ const LandingPage = () => {
                               pointerEvents: "none",
                             }}
                           >
-                            {/* Left arrow: down-left-down (moved 15px right) */}
+                            {/* Left arrow: down-left-down (moved 15px left) */}
                             <path
                               id="arrow1q1"
-                              d="M 95 6.5 L 95 33.8 L 62.5 33.8 L 62.5 55.25"
+                              d="M 80 6.5 L 80 33.8 L 47.5 33.8 L 47.5 55.25"
                               stroke="#ff9800"
                               strokeWidth="2"
                               fill="none"
@@ -536,14 +565,14 @@ const LandingPage = () => {
 
                             {/* Left arrow head pointing down */}
                             <polygon
-                              points="62.5,61.75 57.3,55.25 67.7,55.25"
+                              points="47.5,61.75 42.3,55.25 52.7,55.25"
                               fill="#ff9800"
                             />
 
                             {/* Right arrow: down-right-down (horizontal line 105px longer) */}
                             <path
                               id="arrow2q1"
-                              d="M 185 6.5 L 185 33.8 L 322.5 33.8 L 322.5 55.25"
+                              d="M 170 6.5 L 170 33.8 L 307.5 33.8 L 307.5 55.25"
                               stroke="#ff9800"
                               strokeWidth="2"
                               fill="none"
@@ -552,7 +581,7 @@ const LandingPage = () => {
 
                             {/* Right arrow head pointing down */}
                             <polygon
-                              points="322.5,61.75 317.3,55.25 327.7,55.25"
+                              points="307.5,61.75 302.3,55.25 312.7,55.25"
                               fill="#ff9800"
                             />
                           </svg>
@@ -562,7 +591,7 @@ const LandingPage = () => {
                         <Box
                           sx={{
                             display: "flex",
-                            justifyContent: "center",
+                            justifyContent: { xs: "flex-start", lg: "center" },
                             alignItems: "center",
                             gap: 10,
                             pt: "15px",
@@ -641,7 +670,7 @@ const LandingPage = () => {
                     </Box>
 
                     {/* Second Question */}
-                    <Box sx={{ textAlign: "center", position: "relative" }}>
+                    <Box sx={{ textAlign: { xs: "left", lg: "center" }, position: "relative" }}>
                       <Typography
                         variant="body1"
                         sx={{
@@ -651,6 +680,7 @@ const LandingPage = () => {
                           fontSize: "1.2rem",
                           fontFamily:
                             '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                          textAlign: { xs: "left", lg: "center" },
                         }}
                       >
                         What does this mean for
@@ -719,7 +749,7 @@ const LandingPage = () => {
                     <Box
                       sx={{
                         display: "flex",
-                        justifyContent: "center",
+                        justifyContent: { xs: "flex-start", lg: "center" },
                         alignItems: "center",
                         gap: 10,
                         pt: "25px",
@@ -1847,122 +1877,144 @@ const LandingPage = () => {
 
           <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
             <Box sx={{ textAlign: "center" }}>
-              <Button
-                variant="contained"
-                color="primary"
-                size="large"
-                endIcon={<OpenInNew />}
-                sx={{ px: 4 }}
-                href="/"
+              <Typography
+                variant="h3"
+                sx={{
+                  mb: 3,
+                  fontWeight: 300,
+                  fontSize: { xs: "1.75rem", md: "2.25rem", lg: "2.75rem" },
+                  letterSpacing: "-0.02em",
+                  color: (theme) =>
+                    theme.palette.mode === "dark" ? "#f8f9fa" : "#1a1a1a",
+                  fontFamily:
+                    '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                }}
               >
-                Access Research Platform
-              </Button>
+                Start Exploring the Platform
+              </Typography>
+
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 5,
+                  color: (theme) =>
+                    theme.palette.mode === "dark" ? "#94a3b8" : "#64748b",
+                  lineHeight: 1.7,
+                  maxWidth: "600px",
+                  mx: "auto",
+                  fontWeight: 400,
+                  fontSize: { xs: "1rem", md: "1.125rem" },
+                  fontFamily:
+                    '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                }}
+              >
+                Access our comprehensive ontology editing platform and contribute to
+                advancing our understanding of AI integration in work processes.
+              </Typography>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 3,
+                  justifyContent: "center",
+                  flexDirection: { xs: "column", sm: "row" },
+                  alignItems: "center",
+                }}
+              >
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  endIcon={<OpenInNew />}
+                  component="a"
+                  href="/"
+                  sx={{ px: 4 }}
+                >
+                  {authState.isAuthenticated ? "Go to Platform" : "Access Research Platform"}
+                </Button>
+              </Box>
             </Box>
           </Container>
         </Box>
 
         {/* Footer */}
-{/* Footer */}
-<Box
-  component="footer"
-  sx={{
-    py: 6,
-    bgcolor: "background.paper",
-    borderTop: (theme) =>
-      theme.palette.mode === "dark"
-        ? "1px solid rgba(255,255,255,0.08)"
-        : "1px solid rgba(0,0,0,0.08)",
-  }}
->
-  <Container maxWidth="xl">
-    <Grid container spacing={4} justifyContent="space-between" alignItems="flex-start">
-      {/* Left Section - Logo & Title */}
-      <Grid item xs={12} md={4}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-          <img
-            src={isDark ? "/MIT-Logo-small-Dark.png" : "/MIT-Logo-Small-Light.png"}
-            alt="MIT Logo"
-            style={{ height: "28px", width: "auto" }}
-          />
-          <Typography variant="body1" sx={{ fontWeight: 500 }}>
-            Ontology of Collective Intelligence
-          </Typography>
-        </Box>
-        <Typography variant="body2" color="text.secondary">
-          © {new Date().getFullYear()} MIT. All rights reserved.
-        </Typography>
-      </Grid>
+        <Box
+          component="footer"
+          sx={{
+            py: 6,
+            bgcolor: "background.paper",
+            borderTop: (theme) =>
+              theme.palette.mode === "dark"
+                ? "1px solid rgba(255,255,255,0.08)"
+                : "1px solid rgba(0,0,0,0.08)",
+          }}
+        >
+          <Container maxWidth="xl">
+            <Grid container spacing={4} justifyContent="space-between" alignItems="center">
+              {/* Left Section - Logo & Title */}
+              <Grid item xs={12} md={4}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+                  <img
+                    src={isDark ? "/MIT-Logo-small-Dark.png" : "/MIT-Logo-Small-Light.png"}
+                    alt="MIT Logo"
+                    style={{ height: "28px", width: "auto" }}
+                  />
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    Ontology of Collective Intelligence
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary">
+                  © {new Date().getFullYear()} MIT. All rights reserved.
+                </Typography>
+              </Grid>
 
-      {/* Middle Section - Navigation */}
-      <Grid item xs={12} md={4}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          {navigationLinks.map((link, idx) => (
-            <Typography
-              key={idx}
-              component="a"
-              href={link.href}
-              sx={{
-                color: "text.secondary",
-                fontSize: "0.9rem",
-                textDecoration: "none",
-                "&:hover": { color: "primary.main" },
-              }}
-            >
-              {link.title}
-            </Typography>
-          ))}
-        </Box>
-      </Grid>
+              {/* Middle Section - Navigation */}
+              <Grid item xs={12} md={4}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  {navigationLinks.map((link, idx) => (
+                    <Typography
+                      key={idx}
+                      component="a"
+                      href={link.href}
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: "0.9rem",
+                        textDecoration: "none",
+                        "&:hover": { color: "primary.main" },
+                      }}
+                    >
+                      {link.title}
+                    </Typography>
+                  ))}
+                </Box>
+              </Grid>
 
-      {/* Right Section - Accessibility & Policies */}
-      <Grid item xs={12} md={4}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          <Typography
-            component="a"
-            href="https://accessibility.mit.edu/"
-            target="_blank"
-            rel="noopener noreferrer"
-            sx={{
-              color: "text.secondary",
-              fontSize: "0.9rem",
-              textDecoration: "none",
-              "&:hover": { color: "primary.main" },
-            }}
-          >
-            Accessibility Info
-          </Typography>
-          <Typography
-            component="a"
-            href="/privacy"
-            sx={{
-              color: "text.secondary",
-              fontSize: "0.9rem",
-              textDecoration: "none",
-              "&:hover": { color: "primary.main" },
-            }}
-          >
-            Privacy Policy
-          </Typography>
-          <Typography
-            component="a"
-            href="/terms"
-            sx={{
-              color: "text.secondary",
-              fontSize: "0.9rem",
-              textDecoration: "none",
-              "&:hover": { color: "primary.main" },
-            }}
-          >
-            Terms of Use
-          </Typography>
+              {/* Right Section - Accessibility Info Only */}
+              <Grid item xs={12} md={4}>
+                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+                  <Typography
+                    component="a"
+                    href="https://accessibility.mit.edu/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: "0.9rem",
+                      textDecoration: "none",
+                      "&:hover": { color: "primary.main" },
+                    }}
+                  >
+                    Accessibility Info
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Container>
         </Box>
-      </Grid>
-    </Grid>
-  </Container>
-</Box>
 
-      </Box>
-    </ThemeProvider>
+        </Box>
+      </ThemeProvider>
+    </>
   );
 };
 

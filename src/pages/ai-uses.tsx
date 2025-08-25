@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import {
   AppBar,
@@ -13,14 +14,15 @@ import {
   createTheme,
   CssBaseline,
   Card,
-  CardContent,
   Divider,
   Chip,
 } from "@mui/material";
+import { useAuth } from "../components/context/AuthContext";
 import {
   LightMode as LightModeIcon,
   DarkMode as DarkModeIcon,
   Menu as MenuIcon,
+  OpenInNew,
 } from "@mui/icons-material";
 import TreeVisualization, { TreeNode } from "../components/TreeVisualization";
 
@@ -160,6 +162,7 @@ const OntologyExplorer = () => {
   const router = useRouter();
   const [isDark, setIsDark] = useState(true);
   const [viewType, setViewType] = useState<"tree" | "sunburst">("tree");
+  const [authState] = useAuth();
 
   const theme = createTheme({
     palette: {
@@ -202,6 +205,10 @@ const OntologyExplorer = () => {
   const handleThemeSwitch = () => setIsDark(!isDark);
 
   return (
+    <>
+      <Head>
+        <title>Where AI Can Be Useful</title>
+      </Head>
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
@@ -291,16 +298,36 @@ const OntologyExplorer = () => {
                   {isDark ? <LightModeIcon /> : <DarkModeIcon />}
                 </IconButton>
 
-                <Button
-                  variant="text"
-                  color="primary"
-                  sx={{ display: { xs: "none", sm: "inline-flex" } }}
-                >
-                  Sign In
-                </Button>
-                <Button variant="contained" color="primary">
-                  Register
-                </Button>
+                {authState.isAuthenticated ? (
+                  <Button 
+                    variant="contained" 
+                    color="primary"
+                    component="a"
+                    href="/"
+                  >
+                    Go to Platform
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="text"
+                      color="primary"
+                      component="a"
+                      href="/signin"
+                      sx={{ display: { xs: "none", sm: "inline-flex" } }}
+                    >
+                      Sign In
+                    </Button>
+                    <Button 
+                      variant="contained" 
+                      color="primary"
+                      component="a"
+                      href="/signup"
+                    >
+                      Register
+                    </Button>
+                    </>
+                )}
 
                 <IconButton sx={{ display: { xs: "flex", md: "none" } }}>
                   <MenuIcon />
@@ -379,80 +406,41 @@ const OntologyExplorer = () => {
               </Typography>
             </Box>
 
-            {/* Motivation & Methodology Cards */}
-            <Grid container spacing={4} sx={{ maxWidth: "1200px", mx: "auto" }}>
-              {/* Motivation Card */}
-              <Grid item xs={12} lg={6}>
-                <Card
-                  sx={{
-                    height: "100%",
-                    bgcolor: (theme) =>
-                      theme.palette.mode === "dark"
-                        ? "rgba(255,255,255,0.03)"
-                        : "rgba(255,255,255,0.7)",
-                    borderRadius: 3,
-                    border: (theme) =>
-                      theme.palette.mode === "dark"
-                        ? "1px solid rgba(255,255,255,0.08)"
-                        : "1px solid rgba(0,0,0,0.08)",
-                    boxShadow: (theme) =>
-                      theme.palette.mode === "dark"
-                        ? "0 8px 32px rgba(0,0,0,0.2)"
-                        : "0 8px 32px rgba(0,0,0,0.08)",
-                    backdropFilter: "blur(20px)",
-                    transition: "all 0.3s ease",
-                    "&:hover": {
-                      transform: "translateY(-2px)",
-                      boxShadow: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "0 12px 40px rgba(0,0,0,0.3)"
-                          : "0 12px 40px rgba(0,0,0,0.12)",
-                    },
-                  }}
-                >
-                  <CardContent sx={{ p: 4 }}>
-                    {/* Header with underline */}
-                    <Box
+            {/* Motivation & Methodology - Subtle Layout */}
+            <Box sx={{ maxWidth: "1200px", mx: "auto", mb: 4 }}>
+              <Grid 
+                container 
+                spacing={12}
+                sx={{ position: "relative" }}
+              >
+                {/* Motivation Section */}
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ pr: { xs: 0, md: 3 } }}>
+                    <Typography
+                      variant="h5"
                       sx={{
-                        borderBottom: "3px solid #ff9800",
-                        pb: 1,
+                        fontWeight: 600,
+                        color: "primary.main",
                         mb: 3,
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                       }}
                     >
-                      <Typography
-                        variant="h4"
-                        sx={{
-                          fontWeight: 600,
-                          color: "#ff9800",
-                          fontFamily:
-                            '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-                        }}
-                      >
-                        Motivation
-                      </Typography>
-                    </Box>
+                      Motivation
+                    </Typography>
 
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 2.5,
-                      }}
-                    >
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
                       <Typography
                         variant="body1"
                         sx={{
                           color: "text.primary",
                           lineHeight: 1.6,
-                          fontFamily:
-                            '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                          fontWeight: 400,
+                          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                         }}
                       >
                         • The rapid emergence of thousands of AI applications
                         across diverse domains underscores an urgent question:{" "}
-                        <strong
-                          style={{ color: "#ff9800", fontStyle: "italic" }}
-                        >
+                        <strong style={{ color: "#ff9800", fontStyle: "italic" }}>
                           Where can AI be useful?
                         </strong>
                       </Typography>
@@ -462,8 +450,8 @@ const OntologyExplorer = () => {
                         sx={{
                           color: "text.primary",
                           lineHeight: 1.6,
-                          fontFamily:
-                            '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                          fontWeight: 400,
+                          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                         }}
                       >
                         • We adopt an{" "}
@@ -481,8 +469,8 @@ const OntologyExplorer = () => {
                         sx={{
                           color: "text.primary",
                           lineHeight: 1.6,
-                          fontFamily:
-                            '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                          fontWeight: 400,
+                          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                         }}
                       >
                         • By observing{" "}
@@ -503,8 +491,8 @@ const OntologyExplorer = () => {
                         sx={{
                           color: "text.primary",
                           lineHeight: 1.6,
-                          fontFamily:
-                            '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                          fontWeight: 400,
+                          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                         }}
                       >
                         • When a task is heavily automated in one domain, it may
@@ -515,76 +503,35 @@ const OntologyExplorer = () => {
                         to other domains with similar functional demands.
                       </Typography>
                     </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
+                  </Box>
+                </Grid>
 
-              {/* Methodology Card */}
-              <Grid item xs={12} lg={6}>
-                <Card
-                  sx={{
-                    height: "100%",
-                    bgcolor: (theme) =>
-                      theme.palette.mode === "dark"
-                        ? "rgba(255,255,255,0.03)"
-                        : "rgba(255,255,255,0.7)",
-                    borderRadius: 3,
-                    border: (theme) =>
-                      theme.palette.mode === "dark"
-                        ? "1px solid rgba(255,255,255,0.08)"
-                        : "1px solid rgba(0,0,0,0.08)",
-                    boxShadow: (theme) =>
-                      theme.palette.mode === "dark"
-                        ? "0 8px 32px rgba(0,0,0,0.2)"
-                        : "0 8px 32px rgba(0,0,0,0.08)",
-                    backdropFilter: "blur(20px)",
-                    transition: "all 0.3s ease",
-                    "&:hover": {
-                      transform: "translateY(-2px)",
-                      boxShadow: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "0 12px 40px rgba(0,0,0,0.3)"
-                          : "0 12px 40px rgba(0,0,0,0.12)",
-                    },
-                  }}
-                >
-                  <CardContent sx={{ p: 4 }}>
-                    {/* Header with underline */}
-                    <Box
+
+
+                {/* Methodology Section */}
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ pl: { xs: 0, md: 3 } }}>
+                    <Typography
+                      variant="h5"
                       sx={{
-                        borderBottom: "3px solid #ff9800",
-                        pb: 1,
+                        fontWeight: 600,
+                        color: "primary.main",
                         mb: 3,
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                       }}
                     >
-                      <Typography
-                        variant="h4"
-                        sx={{
-                          fontWeight: 600,
-                          color: "#ff9800",
-                          fontFamily:
-                            '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-                        }}
-                      >
-                        Methodology
-                      </Typography>
-                    </Box>
+                      Methodology
+                    </Typography>
 
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 2.5,
-                      }}
-                    >
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
                       <Box>
                         <Typography
                           variant="body1"
                           sx={{
                             color: "text.primary",
                             lineHeight: 1.6,
-                            fontFamily:
-                              '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                            fontWeight: 400,
+                            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                           }}
                         >
                           •{" "}
@@ -599,20 +546,35 @@ const OntologyExplorer = () => {
                           reflect functional and semantic relationships among
                           tasks.
                         </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: "text.secondary",
-                            fontStyle: "italic",
-                            display: "block",
-                            mt: 0.5,
-                            fontFamily:
-                              '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-                          }}
-                        >
-                          (see companion poster: "AI and the Future of Work: The
-                          Ontology Approach")
-                        </Typography>
+                        <Box sx={{ mt: 2 }}>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            href="/landing"
+                            endIcon={<OpenInNew sx={{ fontSize: 16 }} />}
+                            sx={{
+                              fontSize: "0.8rem",
+                              px: 2.5,
+                              py: 1,
+                              borderColor: "primary.main",
+                              color: "primary.main",
+                              fontWeight: 500,
+                              borderRadius: 1.5,
+                              textTransform: "none",
+                              fontFamily:
+                                '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                              transition: "all 0.2s ease",
+                              "&:hover": {
+                                bgcolor: "rgba(255,152,0,0.08)",
+                                borderColor: "primary.dark",
+                                color: "primary.dark",
+                                transform: "translateY(-1px)",
+                              },
+                            }}
+                          >
+                            AI and the Future of Work: The Ontology Approach
+                          </Button>
+                        </Box>
                       </Box>
 
                       <Typography
@@ -620,8 +582,8 @@ const OntologyExplorer = () => {
                         sx={{
                           color: "text.primary",
                           lineHeight: 1.6,
-                          fontFamily:
-                            '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                          fontWeight: 400,
+                          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                         }}
                       >
                         •{" "}
@@ -644,8 +606,8 @@ const OntologyExplorer = () => {
                         sx={{
                           color: "text.primary",
                           lineHeight: 1.6,
-                          fontFamily:
-                            '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                          fontWeight: 400,
+                          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                         }}
                       >
                         •{" "}
@@ -659,20 +621,26 @@ const OntologyExplorer = () => {
                         to ensure contextual accuracy and semantic alignment.
                       </Typography>
                     </Box>
-                  </CardContent>
-                </Card>
+                  </Box>
+                </Grid>
               </Grid>
-            </Grid>
+            </Box>
           </Container>
         </Box>
 
         {/* Interactive Tree Section */}
-        <Box sx={{ py: 8 }}>
+        <Box sx={{ py: 12 }}>
           <Container maxWidth="xl">
             <Typography
               variant="h4"
               align="center"
-              sx={{ mb: 6, fontWeight: 600 }}
+              sx={{ 
+                mb: 8, 
+                fontWeight: 300,
+                fontSize: { xs: "1.75rem", md: "2.25rem" },
+                letterSpacing: "-0.02em",
+                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif'
+              }}
             >
               Interactive Ontology Visualization
             </Typography>
@@ -684,8 +652,96 @@ const OntologyExplorer = () => {
               onViewTypeChange={setViewType}
             />
 
+            {/* Helper Content */}
+            <Box sx={{ maxWidth: "900px", mx: "auto", mt: 10, mb: 8 }}>
+              <Grid container spacing={8}>
+                <Grid item xs={12} md={4}>
+                  <Box>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 600,
+                        color: "primary.main",
+                        mb: 2,
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                      }}
+                    >
+                      Verb Hierarchy
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "text.primary",
+                        lineHeight: 1.6,
+                        fontWeight: 400,
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                      }}
+                    >
+                      The tree diagram represents hierarchical levels of the verb ontology, progressing from general to specific tasks from left to right, with{" "}
+                      <strong style={{ color: "#ff9800" }}>"Act"</strong> as the root node at the far left of the structure.
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <Box>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 600,
+                        color: "primary.main",
+                        mb: 2,
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                      }}
+                    >
+                      Number of AI Apps
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "text.primary",
+                        lineHeight: 1.6,
+                        fontWeight: 400,
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                      }}
+                    >
+                      Color intensity encodes the number of AI Apps associated with that activity. <strong style={{ color: "#ff9800" }}>Darker shades</strong> indicate higher concentrations of AI Apps performing that activity.
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <Box>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 600,
+                        color: "primary.main",
+                        mb: 2,
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                      }}
+                    >
+                      Analysis Insights
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "text.primary",
+                        lineHeight: 1.6,
+                        fontWeight: 400,
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                      }}
+                    >
+                      By quantifying and visualizing the distribution of AI Apps across this verb taxonomy, we identify{" "}
+                      <strong style={{ color: "#ff9800" }}>patterns of concentration</strong>, reveal underrepresented task areas, and assess the breadth and limitations of current AI deployment.
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+
             {/* Legend */}
-            <Box sx={{ mt: 4, mb: 3 }}>
+            <Box sx={{ mt: 8, mb: 6 }}>
               <Box
                 sx={{
                   maxWidth: "800px",
@@ -853,40 +909,36 @@ const OntologyExplorer = () => {
 
             {/* Stats */}
             <Box
-              sx={{ mt: 4, display: "flex", justifyContent: "center", gap: 4 }}
+              sx={{ mt: 8, display: "flex", justifyContent: "center", gap: 6 }}
             >
-              <Card sx={{ minWidth: 120, textAlign: "center" }}>
-                <CardContent sx={{ p: 2 }}>
-                  <Typography
-                    variant="h6"
-                    sx={{ color: "primary.main", fontWeight: 600 }}
-                  >
-                    {simplifiedSampleData.appCount.toLocaleString()}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "text.secondary" }}
-                  >
-                    AI Applications
-                  </Typography>
-                </CardContent>
+              <Card sx={{ minWidth: 120, textAlign: "center", p: 2 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ color: "primary.main", fontWeight: 600 }}
+                >
+                  {simplifiedSampleData.appCount.toLocaleString()}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "text.secondary" }}
+                >
+                  AI Applications
+                </Typography>
               </Card>
 
-              <Card sx={{ minWidth: 120, textAlign: "center" }}>
-                <CardContent sx={{ p: 2 }}>
-                  <Typography
-                    variant="h6"
-                    sx={{ color: "secondary.main", fontWeight: 600 }}
-                  >
-                    {countNodes(simplifiedSampleData)}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "text.secondary" }}
-                  >
-                    Ontology Nodes
-                  </Typography>
-                </CardContent>
+              <Card sx={{ minWidth: 120, textAlign: "center", p: 2 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ color: "secondary.main", fontWeight: 600 }}
+                >
+                  {countNodes(simplifiedSampleData)}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "text.secondary" }}
+                >
+                  Ontology Nodes
+                </Typography>
               </Card>
             </Box>
           </Container>
@@ -903,103 +955,74 @@ const OntologyExplorer = () => {
           }}
         >
           <Container maxWidth="xl">
-            <Grid container spacing={4}>
-              <Grid item xs={12} md={8}>
-                <Box
-                  sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
-                >
-                  <Typography
-                    variant="h6"
-                    sx={{ fontWeight: 700, color: "primary.main" }}
-                  >
-                    MIT
-                  </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    AI Ontology Explorer
+            <Grid container spacing={4} justifyContent="space-between" alignItems="center">
+              {/* Left Section - Logo & Title */}
+              <Grid item xs={12} md={4}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+                  <img
+                    src={isDark ? "/MIT-Logo-small-Dark.png" : "/MIT-Logo-Small-Light.png"}
+                    alt="MIT Logo"
+                    style={{ height: "28px", width: "auto" }}
+                  />
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    Ontology of Collective Intelligence
                   </Typography>
                 </Box>
-                <Typography
-                  variant="body2"
-                  sx={{ color: "text.secondary", mb: 3, lineHeight: 1.6 }}
-                >
-                  Interactive visualization platform for exploring AI
-                  applications within the ontology of work activities. Part of
-                  the comprehensive research on AI and the future of work.
+                <Typography variant="body2" color="text.secondary">
+                  © {new Date().getFullYear()} MIT. All rights reserved.
                 </Typography>
               </Grid>
 
+              {/* Middle Section - Navigation */}
               <Grid item xs={12} md={4}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                  Resources
-                </Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  {[
+                    { title: "Home", href: "/landing" },
+                    { title: "Platform", href: "/platform-details" },
+                    { title: "AI Uses", href: "/ai-uses" },
+                  ].map((link, idx) => (
+                    <Typography
+                      key={idx}
+                      component="a"
+                      href={link.href}
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: "0.9rem",
+                        textDecoration: "none",
+                        "&:hover": { color: "primary.main" },
+                      }}
+                    >
+                      {link.title}
+                    </Typography>
+                  ))}
+                </Box>
+              </Grid>
+
+              {/* Right Section - Accessibility Info Only */}
+              <Grid item xs={12} md={4}>
+                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
                   <Typography
                     component="a"
-                    href="#"
-                    variant="body2"
-                    sx={{
-                      color: "text.secondary",
-                      textDecoration: "none",
-                      "&:hover": { color: "primary.main" },
-                    }}
-                  >
-                    Research Documentation
-                  </Typography>
-                  <Typography
-                    component="a"
-                    href="#"
-                    variant="body2"
-                    sx={{
-                      color: "text.secondary",
-                      textDecoration: "none",
-                      "&:hover": { color: "primary.main" },
-                    }}
-                  >
-                    Data Export
-                  </Typography>
-                  <Typography
-                    component="a"
-                    href="#"
-                    variant="body2"
-                    sx={{
-                      color: "text.secondary",
-                      textDecoration: "none",
-                      "&:hover": { color: "primary.main" },
-                    }}
-                  >
-                    API Access
-                  </Typography>
-                  <Typography
-                    component="a"
-                    href="https://m3s.mit.edu/"
+                    href="https://accessibility.mit.edu/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    variant="body2"
                     sx={{
                       color: "text.secondary",
+                      fontSize: "0.9rem",
                       textDecoration: "none",
                       "&:hover": { color: "primary.main" },
                     }}
                   >
-                    Research Info
+                    Accessibility Info
                   </Typography>
                 </Box>
               </Grid>
             </Grid>
-
-            <Divider sx={{ my: 4 }} />
-
-            <Typography
-              variant="body2"
-              align="center"
-              sx={{ color: "text.secondary" }}
-            >
-              © 2025 MIT. T6. Designing Human-AI Teams - AI Ontology Explorer.
-            </Typography>
           </Container>
         </Box>
       </Box>
     </ThemeProvider>
+    </>
   );
 };
 
