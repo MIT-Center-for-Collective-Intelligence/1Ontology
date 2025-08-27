@@ -974,169 +974,170 @@ const CollectionStructure = ({
         <Droppable droppableId="categories" type="CATEGORY">
           {(provided) => (
             <Box ref={provided.innerRef} {...provided.droppableProps}>
-              {(propertyValue || []).map(
-                (collection: ICollection, collectionIndex: number) => {
-                  return (
-                    <Draggable
-                      key={collection.collectionName + collectionIndex}
-                      draggableId={`${collectionIndex}`}
-                      index={collectionIndex}
-                      isDragDisabled={
-                        property !== "specializations" || !enableEdit
-                      }
-                    >
-                      {(provided) => (
-                        <Paper
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          id={`${collectionIndex}`}
-                          sx={{
-                            mt: "15px",
-                            borderRadius: "20px",
-                            border:
-                              selectedCollection ===
-                                collection.collectionName &&
-                              selectedProperty === property
-                                ? "2px solid green"
-                                : "",
-                          }}
-                          elevation={property !== "specializations" ? 0 : 3}
-                        >
-                          {property === "specializations" && (
-                            <Box>
-                              {editCollection === null ||
-                              editCollection !== collection.collectionName ? (
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    background: (theme: any) =>
-                                      theme.palette.mode === "dark"
-                                        ? "#242425"
-                                        : "#d0d5dd",
-                                    borderTopLeftRadius: "21px",
-                                    borderTopRightRadius: "21px",
-                                    m: 0,
-                                    p: 2,
-                                    gap: "10px",
-                                    backgroundColor: getCategoryStyle(
-                                      collection.collectionName,
-                                    ),
-                                  }}
-                                >
-                                  {selectedDiffNode &&
-                                  selectedDiffNode.changeType ===
-                                    "edit collection" &&
-                                  selectedDiffNode.changeDetails
-                                    .modifiedCollection ===
-                                    collection.collectionName ? (
-                                    <Box sx={{ display: "flex" }}>
+              {Array.isArray(propertyValue || []) &&
+                (propertyValue || []).map(
+                  (collection: ICollection, collectionIndex: number) => {
+                    return (
+                      <Draggable
+                        key={collection.collectionName + collectionIndex}
+                        draggableId={`${collectionIndex}`}
+                        index={collectionIndex}
+                        isDragDisabled={
+                          property !== "specializations" || !enableEdit
+                        }
+                      >
+                        {(provided) => (
+                          <Paper
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            id={`${collectionIndex}`}
+                            sx={{
+                              mt: "15px",
+                              borderRadius: "20px",
+                              border:
+                                selectedCollection ===
+                                  collection.collectionName &&
+                                selectedProperty === property
+                                  ? "2px solid green"
+                                  : "",
+                            }}
+                            elevation={property !== "specializations" ? 0 : 3}
+                          >
+                            {property === "specializations" && (
+                              <Box>
+                                {editCollection === null ||
+                                editCollection !== collection.collectionName ? (
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      background: (theme: any) =>
+                                        theme.palette.mode === "dark"
+                                          ? "#242425"
+                                          : "#d0d5dd",
+                                      borderTopLeftRadius: "21px",
+                                      borderTopRightRadius: "21px",
+                                      m: 0,
+                                      p: 2,
+                                      gap: "10px",
+                                      backgroundColor: getCategoryStyle(
+                                        collection.collectionName,
+                                      ),
+                                    }}
+                                  >
+                                    {selectedDiffNode &&
+                                    selectedDiffNode.changeType ===
+                                      "edit collection" &&
+                                    selectedDiffNode.changeDetails
+                                      .modifiedCollection ===
+                                      collection.collectionName ? (
+                                      <Box sx={{ display: "flex" }}>
+                                        <Typography
+                                          sx={{
+                                            fontWeight: "bold",
+                                            mr: "13px",
+                                            color: "red",
+                                            textDecoration: "line-through",
+                                          }}
+                                        >
+                                          {capitalizeFirstLetter(
+                                            collection.collectionName,
+                                          )}
+                                        </Typography>
+                                        <Typography
+                                          sx={{
+                                            fontWeight: "bold",
+                                            mr: "13px",
+                                            color: "green",
+                                          }}
+                                        >
+                                          {capitalizeFirstLetter(
+                                            selectedDiffNode.changeDetails
+                                              .newValue,
+                                          )}
+                                        </Typography>
+                                      </Box>
+                                    ) : collection.collectionName !== "main" ? (
                                       <Typography
                                         sx={{
                                           fontWeight: "bold",
                                           mr: "13px",
-                                          color: "red",
-                                          textDecoration: "line-through",
                                         }}
                                       >
                                         {capitalizeFirstLetter(
                                           collection.collectionName,
                                         )}
                                       </Typography>
-                                      <Typography
-                                        sx={{
-                                          fontWeight: "bold",
-                                          mr: "13px",
-                                          color: "green",
-                                        }}
-                                      >
-                                        {capitalizeFirstLetter(
-                                          selectedDiffNode.changeDetails
-                                            .newValue,
-                                        )}
-                                      </Typography>
-                                    </Box>
-                                  ) : collection.collectionName !== "main" ? (
-                                    <Typography
-                                      sx={{
-                                        fontWeight: "bold",
-                                        mr: "13px",
-                                      }}
-                                    >
-                                      {capitalizeFirstLetter(
-                                        collection.collectionName,
-                                      )}
-                                    </Typography>
-                                  ) : (
-                                    <></>
-                                  )}
-                                  {!selectedDiffNode &&
-                                    collection.collectionName !== "main" &&
-                                    !currentImprovement &&
-                                    !model && (
-                                      <Box
-                                        sx={{
-                                          display: !enableEdit
-                                            ? "none"
-                                            : "flex",
-                                          ml: "auto",
-                                          gap: "5px",
-                                        }}
-                                      >
-                                        <Tooltip title="Edit collection title">
-                                          <IconButton
-                                            onClick={() => {
-                                              handleEditCollection(
-                                                collection.collectionName,
-                                              );
-                                            }}
-                                          >
-                                            <EditIcon />
-                                          </IconButton>
-                                        </Tooltip>
+                                    ) : (
+                                      <></>
+                                    )}
+                                    {!selectedDiffNode &&
+                                      collection.collectionName !== "main" &&
+                                      !currentImprovement &&
+                                      !model && (
+                                        <Box
+                                          sx={{
+                                            display: !enableEdit
+                                              ? "none"
+                                              : "flex",
+                                            ml: "auto",
+                                            gap: "5px",
+                                          }}
+                                        >
+                                          <Tooltip title="Edit collection title">
+                                            <IconButton
+                                              onClick={() => {
+                                                handleEditCollection(
+                                                  collection.collectionName,
+                                                );
+                                              }}
+                                            >
+                                              <EditIcon />
+                                            </IconButton>
+                                          </Tooltip>
 
-                                        <Tooltip title="Delete collection">
-                                          <IconButton
-                                            onClick={() =>
-                                              deleteCollection(
-                                                property,
-                                                collectionIndex,
-                                                collection.collectionName,
-                                              )
-                                            }
-                                          >
-                                            <DeleteIcon />
-                                          </IconButton>
-                                        </Tooltip>
-                                      </Box>
-                                    )}{" "}
-                                  {selectedProperty === property &&
-                                    !!selectedCollection &&
-                                    selectedCollection ===
-                                      collection.collectionName && (
-                                      <Box
-                                        sx={{
-                                          display: "flex",
-                                          pt: 0,
-                                          ml: "auto",
-                                          gap: "14px",
-                                        }}
-                                      >
-                                        <Tooltip title={"Close Editing"}>
-                                          <IconButton
-                                            onClick={handleCloseAddLinksModel}
-                                            sx={{
-                                              borderRadius: "25px",
-                                              backgroundColor: "red",
-                                            }}
-                                          >
-                                            <CloseIcon
-                                              sx={{ color: "white" }}
-                                            />
-                                          </IconButton>
-                                        </Tooltip>
-                                        {/*<LoadingButton
+                                          <Tooltip title="Delete collection">
+                                            <IconButton
+                                              onClick={() =>
+                                                deleteCollection(
+                                                  property,
+                                                  collectionIndex,
+                                                  collection.collectionName,
+                                                )
+                                              }
+                                            >
+                                              <DeleteIcon />
+                                            </IconButton>
+                                          </Tooltip>
+                                        </Box>
+                                      )}{" "}
+                                    {selectedProperty === property &&
+                                      !!selectedCollection &&
+                                      selectedCollection ===
+                                        collection.collectionName && (
+                                        <Box
+                                          sx={{
+                                            display: "flex",
+                                            pt: 0,
+                                            ml: "auto",
+                                            gap: "14px",
+                                          }}
+                                        >
+                                          <Tooltip title={"Close Editing"}>
+                                            <IconButton
+                                              onClick={handleCloseAddLinksModel}
+                                              sx={{
+                                                borderRadius: "25px",
+                                                backgroundColor: "red",
+                                              }}
+                                            >
+                                              <CloseIcon
+                                                sx={{ color: "white" }}
+                                              />
+                                            </IconButton>
+                                          </Tooltip>
+                                          {/*<LoadingButton
                                           size="small"
                                           onClick={onSave}
                                           loading={isSaving}
@@ -1153,258 +1154,266 @@ const CollectionStructure = ({
                                         >
                                           Save
                                         </LoadingButton> */}
-                                      </Box>
-                                    )}
-                                </Box>
-                              ) : editCollection ===
-                                collection.collectionName ? (
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    background: (theme: any) =>
-                                      theme.palette.mode === "dark"
-                                        ? "#242425"
-                                        : "#d0d5dd",
-                                    borderTopLeftRadius: "21px",
-                                    borderTopRightRadius: "21px",
-                                    m: 0,
-                                    p: 2,
-                                    gap: "10px",
-                                    backgroundColor: getCategoryStyle(
-                                      collection.collectionName,
-                                    ),
-                                  }}
-                                >
-                                  <TextField
-                                    sx={{ p: 0 }}
-                                    fullWidth
-                                    placeholder="Edit collection..."
-                                    onChange={(e) =>
-                                      setNewEditCollection(e.target.value)
-                                    }
-                                    autoFocus
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") {
-                                        if (
-                                          newEditCollection.trim() &&
-                                          collection.collectionName !==
-                                            newEditCollection
-                                        ) {
-                                          saveEditCollection(newEditCollection);
-                                        }
-                                      }
-                                      if (e.key === "Escape") {
-                                        setEditCollection(null);
-                                        setNewEditCollection("");
-                                      }
+                                        </Box>
+                                      )}
+                                  </Box>
+                                ) : editCollection ===
+                                  collection.collectionName ? (
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      background: (theme: any) =>
+                                        theme.palette.mode === "dark"
+                                          ? "#242425"
+                                          : "#d0d5dd",
+                                      borderTopLeftRadius: "21px",
+                                      borderTopRightRadius: "21px",
+                                      m: 0,
+                                      p: 2,
+                                      gap: "10px",
+                                      backgroundColor: getCategoryStyle(
+                                        collection.collectionName,
+                                      ),
                                     }}
-                                    value={newEditCollection}
-                                  />
-                                  <Tooltip title="Save">
-                                    <IconButton
-                                      onClick={() => {
-                                        saveEditCollection(newEditCollection);
-                                      }}
-                                      disabled={
-                                        !newEditCollection ||
-                                        collection.collectionName ===
-                                          newEditCollection
+                                  >
+                                    <TextField
+                                      sx={{ p: 0 }}
+                                      fullWidth
+                                      placeholder="Edit collection..."
+                                      onChange={(e) =>
+                                        setNewEditCollection(e.target.value)
                                       }
-                                      sx={{ ml: "5px" }}
-                                    >
-                                      <DoneIcon
-                                        sx={{
-                                          color:
-                                            !newEditCollection ||
-                                            collection.collectionName ===
+                                      autoFocus
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                          if (
+                                            newEditCollection.trim() &&
+                                            collection.collectionName !==
                                               newEditCollection
-                                              ? "gray"
-                                              : "green",
-                                        }}
-                                      />
-                                    </IconButton>
-                                  </Tooltip>
-                                  <Tooltip title="Cancel">
-                                    <IconButton
-                                      onClick={() => {
-                                        setEditCollection(null);
-                                        setNewEditCollection("");
-                                      }}
-                                      sx={{ ml: "5px" }}
-                                    >
-                                      <CloseIcon sx={{ color: "red" }} />
-                                    </IconButton>
-                                  </Tooltip>
-                                </Box>
-                              ) : (
-                                <></>
-                              )}
-                            </Box>
-                          )}
-
-                          <List sx={{ p: 1 }}>
-                            <Droppable
-                              droppableId={`${collectionIndex}`}
-                              type="LINK"
-                            >
-                              {(provided, snapshot) => (
-                                <Box
-                                  {...provided.droppableProps}
-                                  ref={provided.innerRef}
-                                  sx={{
-                                    backgroundColor: snapshot.isDraggingOver
-                                      ? (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? DESIGN_SYSTEM_COLORS.gray250
-                                            : DESIGN_SYSTEM_COLORS.notebookG400
-                                      : "",
-                                    borderRadius: "18px",
-                                    userSelect: "none",
-                                  }}
-                                >
-                                  {propertyValue[collectionIndex].nodes.length >
-                                  0 ? (
-                                    propertyValue[collectionIndex].nodes.map(
-                                      (link: ILinkNode, index: number) => {
-                                        if (isLoadMoreNode(link)) {
-                                          const isLoading = loadingStates?.has(
-                                            link.id,
-                                          );
-                                          return (
-                                            <LoadMoreButton
-                                              key={link.id}
-                                              loadMoreNode={link}
-                                              isLoading={isLoading}
-                                              onLoadMore={() =>
-                                                handleLoadMore?.(
-                                                  link.id,
-                                                  link.parentCollection,
-                                                )
-                                              }
-                                            />
-                                          );
+                                          ) {
+                                            saveEditCollection(
+                                              newEditCollection,
+                                            );
+                                          }
                                         }
+                                        if (e.key === "Escape") {
+                                          setEditCollection(null);
+                                          setNewEditCollection("");
+                                        }
+                                      }}
+                                      value={newEditCollection}
+                                    />
+                                    <Tooltip title="Save">
+                                      <IconButton
+                                        onClick={() => {
+                                          saveEditCollection(newEditCollection);
+                                        }}
+                                        disabled={
+                                          !newEditCollection ||
+                                          collection.collectionName ===
+                                            newEditCollection
+                                        }
+                                        sx={{ ml: "5px" }}
+                                      >
+                                        <DoneIcon
+                                          sx={{
+                                            color:
+                                              !newEditCollection ||
+                                              collection.collectionName ===
+                                                newEditCollection
+                                                ? "gray"
+                                                : "green",
+                                          }}
+                                        />
+                                      </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Cancel">
+                                      <IconButton
+                                        onClick={() => {
+                                          setEditCollection(null);
+                                          setNewEditCollection("");
+                                        }}
+                                        sx={{ ml: "5px" }}
+                                      >
+                                        <CloseIcon sx={{ color: "red" }} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </Box>
+                                ) : (
+                                  <></>
+                                )}
+                              </Box>
+                            )}
 
-                                        // Add inheritance data if this is a parts property with intact inheritance
-                                        const inheritanceRef =
-                                          property === "parts" &&
-                                          currentVisibleNode.inheritance?.parts
-                                            ?.ref;
-                                        const enhancedLink = inheritanceRef
-                                          ? {
-                                              ...link,
-                                              inheritedFrom:
-                                                nodes[inheritanceRef]?.title,
-                                            }
-                                          : link;
-
-                                        return (
-                                          <Draggable
-                                            key={
-                                              link.randomId ||
-                                              `${link.id}-${index}`
-                                            }
-                                            draggableId={link.id}
-                                            index={index}
-                                            isDragDisabled={!enableEdit}
-                                          >
-                                            {(provided) => (
-                                              <LinkNode
-                                                provided={provided}
-                                                navigateToNode={navigateToNode}
-                                                setSnackbarMessage={
-                                                  setSnackbarMessage
-                                                }
-                                                currentVisibleNode={
-                                                  currentVisibleNode
-                                                }
-                                                setCurrentVisibleNode={
-                                                  setCurrentVisibleNode
-                                                }
-                                                sx={{ pl: 1 }}
-                                                link={enhancedLink}
-                                                property={property}
-                                                title={getTitle(nodes, link.id)}
-                                                nodes={nodes}
-                                                linkIndex={index}
-                                                /* unlinkVisible={unlinkVisible(
-                                                  link.id,
-                                                )} */
-                                                linkLocked={false}
-                                                locked={
-                                                  locked || !!currentImprovement
-                                                }
-                                                user={user}
-                                                collectionIndex={
-                                                  collectionIndex
-                                                }
-                                                collectionName={
-                                                  propertyValue[collectionIndex]
-                                                    .collectionName
-                                                }
-                                                selectedDiffNode={
-                                                  selectedDiffNode
-                                                }
-                                                replaceWith={replaceWith}
-                                                saveNewAndSwapIt={
-                                                  saveNewAndSwapIt
-                                                }
-                                                clonedNodesQueue={
-                                                  clonedNodesQueue
-                                                }
-                                                unlinkElement={unlinkElement}
-                                                selectedProperty={
-                                                  selectedProperty
-                                                }
-                                                glowIds={glowIds}
-                                                skillsFuture={skillsFuture}
-                                                currentImprovement={
-                                                  currentImprovement
-                                                }
-                                                partsInheritance={
-                                                  partsInheritance
-                                                }
-                                                loadingIds={loadingIds}
-                                                saveNewSpecialization={
-                                                  saveNewSpecialization
-                                                }
-                                                enableEdit={enableEdit}
-                                                setClonedNodesQueue={
-                                                  setClonedNodesQueue
-                                                }
-                                                skillsFutureApp={
-                                                  skillsFutureApp
-                                                }
-                                                setEditableProperty={
-                                                  setEditableProperty
-                                                }
-                                                unlinkNodeRelation={
-                                                  unlinkNodeRelation
+                            <List sx={{ p: 1 }}>
+                              <Droppable
+                                droppableId={`${collectionIndex}`}
+                                type="LINK"
+                              >
+                                {(provided, snapshot) => (
+                                  <Box
+                                    {...provided.droppableProps}
+                                    ref={provided.innerRef}
+                                    sx={{
+                                      backgroundColor: snapshot.isDraggingOver
+                                        ? (theme) =>
+                                            theme.palette.mode === "light"
+                                              ? DESIGN_SYSTEM_COLORS.gray250
+                                              : DESIGN_SYSTEM_COLORS.notebookG400
+                                        : "",
+                                      borderRadius: "18px",
+                                      userSelect: "none",
+                                    }}
+                                  >
+                                    {propertyValue[collectionIndex].nodes
+                                      .length > 0 ? (
+                                      propertyValue[collectionIndex].nodes.map(
+                                        (link: ILinkNode, index: number) => {
+                                          if (isLoadMoreNode(link)) {
+                                            const isLoading =
+                                              loadingStates?.has(link.id);
+                                            return (
+                                              <LoadMoreButton
+                                                key={link.id}
+                                                loadMoreNode={link}
+                                                isLoading={isLoading}
+                                                onLoadMore={() =>
+                                                  handleLoadMore?.(
+                                                    link.id,
+                                                    link.parentCollection,
+                                                  )
                                                 }
                                               />
-                                            )}
-                                          </Draggable>
-                                        );
-                                      },
-                                    )
-                                  ) : (
-                                    <Typography
-                                      variant="body2"
-                                      sx={{
-                                        p: 2,
-                                        color: "text.secondary",
-                                        textAlign: "center",
-                                      }}
-                                    >
-                                      {collection.collectionName === "main"
-                                        ? ""
-                                        : "No items"}
-                                    </Typography>
-                                  )}
+                                            );
+                                          }
 
-                                  {/* Display inheritanceParts from the referenced generalization when inheritance.parts.ref exists */}
-                                  {/* {property === "parts" &&
+                                          // Add inheritance data if this is a parts property with intact inheritance
+                                          const inheritanceRef =
+                                            property === "parts" &&
+                                            currentVisibleNode.inheritance
+                                              ?.parts?.ref;
+                                          const enhancedLink = inheritanceRef
+                                            ? {
+                                                ...link,
+                                                inheritedFrom:
+                                                  nodes[inheritanceRef]?.title,
+                                              }
+                                            : link;
+
+                                          return (
+                                            <Draggable
+                                              key={
+                                                link.randomId ||
+                                                `${link.id}-${index}`
+                                              }
+                                              draggableId={link.id}
+                                              index={index}
+                                              isDragDisabled={!enableEdit}
+                                            >
+                                              {(provided) => (
+                                                <LinkNode
+                                                  provided={provided}
+                                                  navigateToNode={
+                                                    navigateToNode
+                                                  }
+                                                  setSnackbarMessage={
+                                                    setSnackbarMessage
+                                                  }
+                                                  currentVisibleNode={
+                                                    currentVisibleNode
+                                                  }
+                                                  setCurrentVisibleNode={
+                                                    setCurrentVisibleNode
+                                                  }
+                                                  sx={{ pl: 1 }}
+                                                  link={enhancedLink}
+                                                  property={property}
+                                                  title={getTitle(
+                                                    nodes,
+                                                    link.id,
+                                                  )}
+                                                  nodes={nodes}
+                                                  linkIndex={index}
+                                                  /* unlinkVisible={unlinkVisible(
+                                                  link.id,
+                                                )} */
+                                                  linkLocked={false}
+                                                  locked={
+                                                    locked ||
+                                                    !!currentImprovement
+                                                  }
+                                                  user={user}
+                                                  collectionIndex={
+                                                    collectionIndex
+                                                  }
+                                                  collectionName={
+                                                    propertyValue[
+                                                      collectionIndex
+                                                    ].collectionName
+                                                  }
+                                                  selectedDiffNode={
+                                                    selectedDiffNode
+                                                  }
+                                                  replaceWith={replaceWith}
+                                                  saveNewAndSwapIt={
+                                                    saveNewAndSwapIt
+                                                  }
+                                                  clonedNodesQueue={
+                                                    clonedNodesQueue
+                                                  }
+                                                  unlinkElement={unlinkElement}
+                                                  selectedProperty={
+                                                    selectedProperty
+                                                  }
+                                                  glowIds={glowIds}
+                                                  skillsFuture={skillsFuture}
+                                                  currentImprovement={
+                                                    currentImprovement
+                                                  }
+                                                  partsInheritance={
+                                                    partsInheritance
+                                                  }
+                                                  loadingIds={loadingIds}
+                                                  saveNewSpecialization={
+                                                    saveNewSpecialization
+                                                  }
+                                                  enableEdit={enableEdit}
+                                                  setClonedNodesQueue={
+                                                    setClonedNodesQueue
+                                                  }
+                                                  skillsFutureApp={
+                                                    skillsFutureApp
+                                                  }
+                                                  setEditableProperty={
+                                                    setEditableProperty
+                                                  }
+                                                  unlinkNodeRelation={
+                                                    unlinkNodeRelation
+                                                  }
+                                                />
+                                              )}
+                                            </Draggable>
+                                          );
+                                        },
+                                      )
+                                    ) : (
+                                      <Typography
+                                        variant="body2"
+                                        sx={{
+                                          p: 2,
+                                          color: "text.secondary",
+                                          textAlign: "center",
+                                        }}
+                                      >
+                                        {collection.collectionName === "main"
+                                          ? ""
+                                          : "No items"}
+                                      </Typography>
+                                    )}
+
+                                    {/* Display inheritanceParts from the referenced generalization when inheritance.parts.ref exists */}
+                                    {/* {property === "parts" &&
                                     currentVisibleNode.inheritance?.parts
                                       ?.ref &&
                                     nodes[
@@ -1489,8 +1498,8 @@ const CollectionStructure = ({
                                       },
                                     )} */}
 
-                                  {/* Display inherited parts from inheritanceParts only if inheritance.parts.ref is null */}
-                                  {/*   {property === "parts" &&
+                                    {/* Display inherited parts from inheritanceParts only if inheritance.parts.ref is null */}
+                                    {/*   {property === "parts" &&
                                     !currentVisibleNode.inheritance?.parts
                                       ?.ref &&
                                     nodes[currentVisibleNode.id]
@@ -1572,110 +1581,110 @@ const CollectionStructure = ({
                                         );
                                       },
                                     )} */}
-                                  {provided.placeholder}
-                                </Box>
+                                    {provided.placeholder}
+                                  </Box>
+                                )}
+                              </Droppable>
+                            </List>
+
+                            {handleCloseAddLinksModel &&
+                              selectedProperty === property &&
+                              !!selectedProperty &&
+                              selectedCollection ===
+                                collection.collectionName && (
+                                <SelectModelModal
+                                  onSave={onSave}
+                                  currentVisibleNode={currentVisibleNode}
+                                  nodes={nodes}
+                                  handleCloseAddLinksModel={
+                                    handleCloseAddLinksModel
+                                  }
+                                  selectedProperty={selectedProperty}
+                                  setSearchValue={setSearchValue}
+                                  searchValue={searchValue}
+                                  searchResultsForSelection={
+                                    searchResultsForSelection
+                                  }
+                                  checkedItems={checkedItems}
+                                  setCheckedItems={setCheckedItems}
+                                  setCheckedItemsCopy={setCheckedItemsCopy}
+                                  checkedItemsCopy={checkedItemsCopy}
+                                  handleCloning={handleCloning}
+                                  user={user}
+                                  selectFromTree={selectFromTree}
+                                  expandedNodes={expandedNodes}
+                                  setExpandedNodes={setExpandedNodes}
+                                  handleToggle={handleToggle}
+                                  getPath={getPath}
+                                  handleSaveLinkChanges={handleSaveLinkChanges}
+                                  checkDuplicateTitle={checkDuplicateTitle}
+                                  cloning={cloning}
+                                  setClonedNodesQueue={setClonedNodesQueue}
+                                  newOnes={newOnes}
+                                  setNewOnes={setNewOnes}
+                                  loadingIds={loadingIds}
+                                  setLoadingIds={setLoadingIds}
+                                  editableProperty={editableProperty}
+                                  onGetPropertyValue={onGetPropertyValue}
+                                  setRemovedElements={setRemovedElements}
+                                  setAddedElements={setAddedElements}
+                                  clonedNodesQueue={clonedNodesQueue}
+                                  isSaving={isSaving}
+                                  scrollToElement={scrollToElement}
+                                  addACloneNodeQueue={addACloneNodeQueue}
+                                  removedElements={removedElements}
+                                  addedElements={addedElements}
+                                  setCurrentVisibleNode={setCurrentVisibleNode}
+                                  setEditableProperty={setEditableProperty}
+                                  locked={locked}
+                                  selectedDiffNode={selectedDiffNode}
+                                  confirmIt={confirmIt}
+                                  currentImprovement={currentImprovement}
+                                  selectedCollection={selectedCollection}
+                                  skillsFuture={skillsFuture}
+                                  saveNewSpecialization={saveNewSpecialization}
+                                  skillsFutureApp={skillsFutureApp}
+                                  linkNodeRelation={linkNodeRelation}
+                                  unlinkNodeRelation={unlinkNodeRelation}
+                                />
                               )}
-                            </Droppable>
-                          </List>
+                            {property === "specializations" &&
+                              selectedProperty !== property && (
+                                <Button
+                                  onClick={() =>
+                                    editStructuredProperty(
+                                      property,
+                                      collection.collectionName,
+                                    )
+                                  }
+                                  sx={{
+                                    borderRadius: "18px",
+                                    backgroundColor: BUTTON_COLOR,
+                                    ":hover": {
+                                      backgroundColor:
+                                        theme.palette.mode === "light"
+                                          ? "#f0f0f0"
+                                          : "",
+                                    },
+                                    // ml: "auto",
+                                    display: !enableEdit ? "none" : "flex",
+                                  }}
+                                  fullWidth
+                                  variant="outlined"
+                                >
+                                  <AddIcon />
 
-                          {handleCloseAddLinksModel &&
-                            selectedProperty === property &&
-                            !!selectedProperty &&
-                            selectedCollection ===
-                              collection.collectionName && (
-                              <SelectModelModal
-                                onSave={onSave}
-                                currentVisibleNode={currentVisibleNode}
-                                nodes={nodes}
-                                handleCloseAddLinksModel={
-                                  handleCloseAddLinksModel
-                                }
-                                selectedProperty={selectedProperty}
-                                setSearchValue={setSearchValue}
-                                searchValue={searchValue}
-                                searchResultsForSelection={
-                                  searchResultsForSelection
-                                }
-                                checkedItems={checkedItems}
-                                setCheckedItems={setCheckedItems}
-                                setCheckedItemsCopy={setCheckedItemsCopy}
-                                checkedItemsCopy={checkedItemsCopy}
-                                handleCloning={handleCloning}
-                                user={user}
-                                selectFromTree={selectFromTree}
-                                expandedNodes={expandedNodes}
-                                setExpandedNodes={setExpandedNodes}
-                                handleToggle={handleToggle}
-                                getPath={getPath}
-                                handleSaveLinkChanges={handleSaveLinkChanges}
-                                checkDuplicateTitle={checkDuplicateTitle}
-                                cloning={cloning}
-                                setClonedNodesQueue={setClonedNodesQueue}
-                                newOnes={newOnes}
-                                setNewOnes={setNewOnes}
-                                loadingIds={loadingIds}
-                                setLoadingIds={setLoadingIds}
-                                editableProperty={editableProperty}
-                                onGetPropertyValue={onGetPropertyValue}
-                                setRemovedElements={setRemovedElements}
-                                setAddedElements={setAddedElements}
-                                clonedNodesQueue={clonedNodesQueue}
-                                isSaving={isSaving}
-                                scrollToElement={scrollToElement}
-                                addACloneNodeQueue={addACloneNodeQueue}
-                                removedElements={removedElements}
-                                addedElements={addedElements}
-                                setCurrentVisibleNode={setCurrentVisibleNode}
-                                setEditableProperty={setEditableProperty}
-                                locked={locked}
-                                selectedDiffNode={selectedDiffNode}
-                                confirmIt={confirmIt}
-                                currentImprovement={currentImprovement}
-                                selectedCollection={selectedCollection}
-                                skillsFuture={skillsFuture}
-                                saveNewSpecialization={saveNewSpecialization}
-                                skillsFutureApp={skillsFutureApp}
-                                linkNodeRelation={linkNodeRelation}
-                                unlinkNodeRelation={unlinkNodeRelation}
-                              />
-                            )}
-                          {property === "specializations" &&
-                            selectedProperty !== property && (
-                              <Button
-                                onClick={() =>
-                                  editStructuredProperty(
-                                    property,
-                                    collection.collectionName,
-                                  )
-                                }
-                                sx={{
-                                  borderRadius: "18px",
-                                  backgroundColor: BUTTON_COLOR,
-                                  ":hover": {
-                                    backgroundColor:
-                                      theme.palette.mode === "light"
-                                        ? "#f0f0f0"
-                                        : "",
-                                  },
-                                  // ml: "auto",
-                                  display: !enableEdit ? "none" : "flex",
-                                }}
-                                fullWidth
-                                variant="outlined"
-                              >
-                                <AddIcon />
-
-                                {`Add ${capitalizeFirstLetter(
-                                  DISPLAY[property] || property,
-                                )}`}
-                              </Button>
-                            )}
-                        </Paper>
-                      )}
-                    </Draggable>
-                  );
-                },
-              )}
+                                  {`Add ${capitalizeFirstLetter(
+                                    DISPLAY[property] || property,
+                                  )}`}
+                                </Button>
+                              )}
+                          </Paper>
+                        )}
+                      </Draggable>
+                    );
+                  },
+                )}
               {provided.placeholder}
             </Box>
           )}
