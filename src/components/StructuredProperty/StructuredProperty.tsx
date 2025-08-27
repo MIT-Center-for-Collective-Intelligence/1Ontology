@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import AddIcon from "@mui/icons-material/Add";
 import {
   Box,
   Button,
@@ -6,6 +7,7 @@ import {
   Tooltip,
   Paper,
   useTheme,
+  useMediaQuery,
   IconButton,
   Card,
   CardContent,
@@ -16,7 +18,6 @@ import {
   Slide,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import {
   capitalizeFirstLetter,
@@ -53,7 +54,7 @@ import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import VisualizeTheProperty from "./VisualizeTheProperty";
 import CollectionStructure from "./CollectionStructure";
-import SelectModelModal from "../Models/SelectModel";
+import SelectModel from "../Models/SelectModel";
 import { LoadingButton } from "@mui/lab";
 import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
@@ -62,6 +63,7 @@ import InheritedPartsViewer from "./InheritedPartsViewer";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import { Post } from "@components/lib/utils/Post";
 import EditProperty from "../AddPropertyForm/EditProprety";
+import InheritedPartsViewerEdit from "./InheritedPartsViewerEdit";
 
 const INITIAL_LOAD_COUNT = 20;
 const LOAD_MORE_COUNT = 20;
@@ -198,13 +200,13 @@ const StructuredProperty = ({
   modifyProperty,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery("(max-width:599px)");
   const [openAddCollection, setOpenAddCollection] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   const [modifiedOrder, setModifiedOrder] = useState(false);
   const [displayDetails, setDisplayDetails] = useState(false);
   const [displayOptional, setDisplayOptional] = useState(false);
-  const [showComments, setShowComments] = useState(false);
   const [editProperty, setEditProperty] = useState("");
   const [newPropertyValue, setNewPropertyValue] = useState("");
 
@@ -354,6 +356,7 @@ const StructuredProperty = ({
             change: "added",
             changeType: "sort",
             randomId: doc(collection(db, NODES)).id,
+            diffElementId: `${draggableNodeId}-${property}`,
           },
         );
         return processCollectionData(previousValue);
@@ -376,6 +379,7 @@ const StructuredProperty = ({
                     ...nodeLink,
                     change: "added",
                     randomId: doc(collection(db, NODES)).id,
+                    diffElementId: `${nodeLink.id}-${property}`,
                   };
                 }
               });
@@ -388,6 +392,7 @@ const StructuredProperty = ({
                     ...prevElement,
                     change: "removed",
                     randomId: doc(collection(db, NODES)).id,
+                    diffElementId: `${prevElement.id}-${property}`,
                   });
                 }
               });
@@ -515,6 +520,9 @@ const StructuredProperty = ({
 
   const saveNewSpecialization = async (nId: string, collectionName: string) => {
     try {
+      if (loadingIds.has(nId)) {
+        return;
+      }
       setLoadingIds((prev: Set<string>) => {
         const _prev = new Set(prev);
         _prev.add(nId);
@@ -939,6 +947,33 @@ const StructuredProperty = ({
       console.error(error);
     }
   };
+  const replaceWith = useCallback(
+    async (partId: string, newPartId: string) => {
+      try {
+        scrollToElement(partId);
+        if (property === "parts" && currentVisibleNode?.id) {
+          const _propertyValue = currentVisibleNode.properties["parts"];
+          const elementIdx = _propertyValue[0].nodes.findIndex(
+            (n: { id: string }) => n.id === partId,
+          );
+          const existIdx = _propertyValue[0].nodes.findIndex(
+            (n: { id: string }) => n.id === newPartId,
+          );
+
+          if (existIdx === -1) {
+            _propertyValue[0].nodes[elementIdx].id = newPartId;
+            const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
+            updateDoc(nodeRef, {
+              "properties.parts": _propertyValue,
+            });
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [currentVisibleNode?.id, db, property],
+  );
 
   if (
     (currentImprovement &&
@@ -956,7 +991,7 @@ const StructuredProperty = ({
           borderRadius: property !== "context" ? "30px" : "",
           borderBottomRightRadius: "18px",
           borderBottomLeftRadius: "18px",
-          minWidth: "500px",
+          minWidth: isMobile ? "100%" : "500px",
           width: "100%",
           minHeight: "150px",
           maxHeight: "100%",
@@ -972,7 +1007,7 @@ const StructuredProperty = ({
           border:
             selectedProperty === property && !selectedCollection
               ? "2px solid green"
-              : "",
+              : "2px solid orange",
         }}
       >
         <VisualizeTheProperty
@@ -994,7 +1029,7 @@ const StructuredProperty = ({
           borderRadius: property !== "context" ? "30px" : "",
           borderBottomRightRadius: "18px",
           borderBottomLeftRadius: "18px",
-          minWidth: "500px",
+          minWidth: isMobile ? "100%" : "500px",
           width: "100%",
           minHeight: "150px",
           maxHeight: "100%",
@@ -1122,24 +1157,26 @@ const StructuredProperty = ({
               )}
             </Box>
 
-            {selectedProperty === property && !selectedCollection && (
-              <Box
-                sx={{
-                  display: "flex",
-                  pt: 0,
-                  ml: "auto",
-                  gap: "14px",
-                }}
-              >
-                <Tooltip title={"Close Editing"}>
-                  <IconButton
-                    onClick={handleCloseAddLinksModel}
-                    sx={{ borderRadius: "25px", backgroundColor: "red" }}
-                  >
-                    <CloseIcon sx={{ color: "white" }} />
-                  </IconButton>
-                </Tooltip>
-                {/*  <LoadingButton
+            {selectedProperty === property &&
+              !selectedCollection &&
+              property !== "parts" && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    pt: 0,
+                    ml: "auto",
+                    gap: "14px",
+                  }}
+                >
+                  <Tooltip title={"Close Editing"}>
+                    <IconButton
+                      onClick={handleCloseAddLinksModel}
+                      sx={{ borderRadius: "25px", backgroundColor: "red" }}
+                    >
+                      <CloseIcon sx={{ color: "white" }} />
+                    </IconButton>
+                  </Tooltip>
+                  {/*  <LoadingButton
                 size="small"
                 onClick={onSave}
                 loading={isSaving}
@@ -1152,8 +1189,8 @@ const StructuredProperty = ({
               >
                 Save
               </LoadingButton> */}
-              </Box>
-            )}
+                </Box>
+              )}
             {(!currentVisibleNode.unclassified ||
               property === "specializations") &&
               selectedProperty !== property &&
@@ -1203,7 +1240,7 @@ const StructuredProperty = ({
                         </Button>
                       </Tooltip>
                     )}
-                  {property !== "specializations" && (
+                  {property !== "specializations" && property !== "parts" && (
                     <Button
                       onClick={() => editStructuredProperty(property)}
                       sx={{
@@ -1248,155 +1285,202 @@ const StructuredProperty = ({
                 </Box>
               )}
           </Box>
-          {currentVisibleNode.propertyType[property] !== "array-string" && (
-            <CollectionStructure
-              locked={locked}
-              selectedDiffNode={selectedDiffNode}
-              currentImprovement={currentImprovement}
-              property={property}
-              propertyValue={
-                selectedProperty === property
-                  ? (editableProperty ?? [])
-                  : (propertyValue ?? [])
-              }
-              setEditableProperty={setEditableProperty}
-              getCategoryStyle={getCategoryStyle}
-              navigateToNode={navigateToNode}
-              setSnackbarMessage={setSnackbarMessage}
-              currentVisibleNode={currentVisibleNode}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              nodes={nodes}
-              unlinkVisible={unlinkVisible}
-              editStructuredProperty={editStructuredProperty}
-              confirmIt={confirmIt}
-              logChange={logChange}
-              cloneNode={cloneNode}
-              openAddCollection={openAddCollection}
-              setOpenAddCollection={setOpenAddCollection}
-              unlinkElement={unlinkElement}
-              selectedProperty={selectedProperty}
-              clonedNodesQueue={clonedNodesQueue}
-              model={!!selectedProperty}
-              setModifiedOrder={setModifiedOrder}
-              glowIds={glowIds}
-              scrollToElement={scrollToElement}
-              selectedCollection={selectedCollection}
-              handleCloseAddLinksModel={handleCloseAddLinksModel}
-              onSave={onSave}
-              isSaving={isSaving}
-              addedElements={addedElements}
-              removedElements={removedElements}
-              setSearchValue={setSearchValue}
-              searchValue={searchValue}
-              searchResultsForSelection={searchResultsForSelection}
-              checkedItems={checkedItems}
-              setCheckedItems={setCheckedItems}
-              setCheckedItemsCopy={setCheckedItemsCopy}
-              checkedItemsCopy={checkedItemsCopy}
-              handleCloning={handleCloning}
-              user={user}
-              selectFromTree={selectFromTree}
-              expandedNodes={expandedNodes}
-              setExpandedNodes={setExpandedNodes}
-              handleToggle={handleToggle}
-              getPath={getPath}
-              handleSaveLinkChanges={handleSaveLinkChanges}
-              checkDuplicateTitle={checkDuplicateTitle}
-              cloning={cloning}
-              setClonedNodesQueue={setClonedNodesQueue}
-              newOnes={newOnes}
-              setNewOnes={setNewOnes}
-              loadingIds={loadingIds}
-              saveNewSpecialization={saveNewSpecialization}
-              setLoadingIds={setLoadingIds}
-              editableProperty={editableProperty}
-              onGetPropertyValue={onGetPropertyValue}
-              setRemovedElements={setRemovedElements}
-              setAddedElements={setAddedElements}
-              addACloneNodeQueue={addACloneNodeQueue}
-              skillsFuture={skillsFuture}
-              partsInheritance={partsInheritance ?? {}}
-              enableEdit={enableEdit}
-              handleLoadMore={handleLoadMore}
-              loadingStates={loadingStates}
-              skillsFutureApp={skillsFutureApp}
-              unlinkNodeRelation={unlinkNodeRelation}
-              linkNodeRelation={linkNodeRelation}
-            />
-          )}{" "}
-          {property === "parts" && displayOptional && (
+          {(property !== "parts" || !enableEdit) &&
+            currentVisibleNode.propertyType[property] !== "string-array" && (
+              <CollectionStructure
+                locked={locked}
+                selectedDiffNode={selectedDiffNode}
+                currentImprovement={currentImprovement}
+                property={property}
+                propertyValue={propertyValue ?? []}
+                setEditableProperty={setEditableProperty}
+                getCategoryStyle={getCategoryStyle}
+                navigateToNode={navigateToNode}
+                setSnackbarMessage={setSnackbarMessage}
+                currentVisibleNode={currentVisibleNode}
+                setCurrentVisibleNode={setCurrentVisibleNode}
+                nodes={nodes}
+                unlinkVisible={unlinkVisible}
+                editStructuredProperty={editStructuredProperty}
+                confirmIt={confirmIt}
+                logChange={logChange}
+                cloneNode={cloneNode}
+                openAddCollection={openAddCollection}
+                setOpenAddCollection={setOpenAddCollection}
+                unlinkElement={unlinkElement}
+                selectedProperty={selectedProperty}
+                clonedNodesQueue={clonedNodesQueue}
+                model={!!selectedProperty}
+                setModifiedOrder={setModifiedOrder}
+                glowIds={glowIds}
+                scrollToElement={scrollToElement}
+                selectedCollection={selectedCollection}
+                handleCloseAddLinksModel={handleCloseAddLinksModel}
+                onSave={onSave}
+                isSaving={isSaving}
+                addedElements={addedElements}
+                removedElements={removedElements}
+                setSearchValue={setSearchValue}
+                searchValue={searchValue}
+                searchResultsForSelection={searchResultsForSelection}
+                checkedItems={
+                  new Set(
+                    propertyValue.flatMap((c) => c.nodes).map((c) => c.id),
+                  )
+                }
+                setCheckedItems={setCheckedItems}
+                setCheckedItemsCopy={setCheckedItemsCopy}
+                checkedItemsCopy={checkedItemsCopy}
+                handleCloning={handleCloning}
+                user={user}
+                selectFromTree={selectFromTree}
+                expandedNodes={expandedNodes}
+                setExpandedNodes={setExpandedNodes}
+                handleToggle={handleToggle}
+                getPath={getPath}
+                handleSaveLinkChanges={handleSaveLinkChanges}
+                checkDuplicateTitle={checkDuplicateTitle}
+                cloning={cloning}
+                setClonedNodesQueue={setClonedNodesQueue}
+                newOnes={newOnes}
+                setNewOnes={setNewOnes}
+                loadingIds={loadingIds}
+                saveNewSpecialization={saveNewSpecialization}
+                setLoadingIds={setLoadingIds}
+                editableProperty={editableProperty}
+                onGetPropertyValue={onGetPropertyValue}
+                setRemovedElements={setRemovedElements}
+                setAddedElements={setAddedElements}
+                addACloneNodeQueue={addACloneNodeQueue}
+                skillsFuture={skillsFuture}
+                partsInheritance={partsInheritance ?? {}}
+                enableEdit={enableEdit}
+                handleLoadMore={handleLoadMore}
+                loadingStates={loadingStates}
+                skillsFutureApp={skillsFutureApp}
+                unlinkNodeRelation={unlinkNodeRelation}
+                linkNodeRelation={linkNodeRelation}
+              />
+            )}{" "}
+          {property === "parts" && displayOptional && !enableEdit && (
             <InheritedPartsLegend
-              legendItems={[{ symbol: "O", description: "Optional" }]}
+              legendItems={[{ symbol: "(o)", description: "Optional" }]}
             />
           )}
-          {property === "parts" && !displayDetails && (
+          {property === "parts" && !selectedDiffNode && !currentImprovement && (
+            <>
+              {enableEdit ? (
+                <InheritedPartsViewerEdit
+                  selectedProperty={property}
+                  getAllGeneralizations={() =>
+                    getAllGeneralizations(currentVisibleNode, nodes)
+                  }
+                  getGeneralizationParts={getGeneralizationParts}
+                  nodes={nodes}
+                  readOnly={true}
+                  inheritanceDetails={inheritanceDetails}
+                  currentVisibleNode={currentVisibleNode}
+                  setDisplayDetails={setDisplayDetails}
+                  enableEdit={enableEdit}
+                  addPart={
+                    enableEdit
+                      ? (partId: string) => {
+                          linkNodeRelation({
+                            currentNodeId: currentVisibleNode.id,
+                            partId,
+                          });
+                        }
+                      : null
+                  }
+                  removePart={
+                    enableEdit
+                      ? (partId: any) => {
+                          unlinkNodeRelation(
+                            currentVisibleNode.id,
+                            partId,
+                            -1,
+                            0,
+                            true,
+                          );
+                        }
+                      : null
+                  }
+                  user={user}
+                  navigateToNode={navigateToNode}
+                  replaceWith={replaceWith}
+                  skillsFutureApp={skillsFutureApp}
+                />
+              ) : (
+                <InheritedPartsViewer
+                  selectedProperty={property}
+                  getAllGeneralizations={() =>
+                    getAllGeneralizations(currentVisibleNode, nodes)
+                  }
+                  getGeneralizationParts={getGeneralizationParts}
+                  nodes={nodes}
+                  readOnly={true}
+                  inheritanceDetails={inheritanceDetails}
+                  currentVisibleNode={currentVisibleNode}
+                  setDisplayDetails={setDisplayDetails}
+                  addPart={
+                    enableEdit
+                      ? (partId: string) => {
+                          linkNodeRelation({
+                            currentNodeId: currentVisibleNode.id,
+                            partId,
+                          });
+                        }
+                      : null
+                  }
+                  removePart={
+                    enableEdit
+                      ? (partId: any) => {
+                          unlinkNodeRelation(
+                            currentVisibleNode.id,
+                            partId,
+                            -1,
+                            0,
+                            true,
+                          );
+                        }
+                      : null
+                  }
+                  navigateToNode={navigateToNode}
+                  displayDetails={displayDetails}
+                />
+              )}
+            </>
+          )}
+        </Box>
+        {property === "parts" &&
+          enableEdit &&
+          selectedProperty !== property && (
             <Button
-              variant="outlined"
               sx={{
                 borderRadius: "25px",
-                p: 0.5,
-                px: 2,
-                ml: "10px",
-                mb: "9px",
+                border: "1px solid",
+                m: "0px 5px 5px 5px",
+                mt: "auto",
               }}
               onClick={() => {
-                setDisplayDetails((prev) => !prev);
+                editStructuredProperty(property);
               }}
             >
-              <KeyboardArrowDownIcon />
-              Parts inherited from ...
+              {" "}
+              <AddIcon
+                sx={{
+                  borderRadius: "50%",
+                  border: "1px solid orange",
+                  mr: "5px",
+                }}
+              />
+              Add new Part
             </Button>
           )}
-          {displayDetails &&
-            property === "parts" &&
-            selectedProperty !== property &&
-            !selectedDiffNode &&
-            !currentImprovement && (
-              <InheritedPartsViewer
-                selectedProperty={property}
-                getAllGeneralizations={() =>
-                  getAllGeneralizations(currentVisibleNode, nodes)
-                }
-                getGeneralizationParts={getGeneralizationParts}
-                getTitle={getTitle}
-                nodes={nodes}
-                checkedItems={getInheritedPartsSet()}
-                markItemAsChecked={() => {}}
-                isSaving={false}
-                readOnly={true}
-                setDisplayDetails={setDisplayDetails}
-                inheritanceDetails={inheritanceDetails}
-                currentVisibleNode={currentVisibleNode}
-                addPart={
-                  enableEdit
-                    ? (partId: string) => {
-                        linkNodeRelation({
-                          currentNodeId: currentVisibleNode.id,
-                          partId,
-                        });
-                      }
-                    : null
-                }
-                removePart={
-                  enableEdit
-                    ? (partId: any) => {
-                        unlinkNodeRelation(
-                          currentVisibleNode.id,
-                          partId,
-                          -1,
-                          0,
-                          true,
-                        );
-                      }
-                    : null
-                }
-              />
-            )}
-        </Box>
         {handleCloseAddLinksModel &&
           selectedProperty === property &&
           !selectedCollection && (
-            <SelectModelModal
+            <SelectModel
               onSave={onSave}
               currentVisibleNode={currentVisibleNode}
               nodes={nodes}
@@ -1405,7 +1489,9 @@ const StructuredProperty = ({
               setSearchValue={setSearchValue}
               searchValue={searchValue}
               searchResultsForSelection={searchResultsForSelection}
-              checkedItems={checkedItems}
+              checkedItems={
+                new Set(propertyValue.flatMap((c) => c.nodes).map((c) => c.id))
+              }
               setCheckedItems={setCheckedItems}
               setCheckedItemsCopy={setCheckedItemsCopy}
               checkedItemsCopy={checkedItemsCopy}
@@ -1443,7 +1529,6 @@ const StructuredProperty = ({
               scrollToElement={scrollToElement}
               selectedCollection={selectedCollection}
               skillsFuture={skillsFuture}
-              setDisplayDetails={setDisplayDetails}
               inheritanceDetails={inheritanceDetails}
               skillsFutureApp={skillsFutureApp}
               linkNodeRelation={linkNodeRelation}

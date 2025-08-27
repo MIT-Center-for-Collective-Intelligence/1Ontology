@@ -55,7 +55,6 @@ function DraggableTree({
   eachOntologyPath,
   multipleOntologyPaths,
   skillsFuture = false,
-  scrollTrigger,
   specializationNumsUnder,
   skillsFutureApp,
 }: {
@@ -69,7 +68,6 @@ function DraggableTree({
   eachOntologyPath?: any;
   multipleOntologyPaths?: any;
   skillsFuture?: boolean;
-  scrollTrigger: boolean;
   specializationNumsUnder: { [key: string]: number };
   skillsFutureApp: string;
 }) {
@@ -469,7 +467,7 @@ function DraggableTree({
     parentId: string | null;
     parentNode: NodeApi<PaginatedTreeData> | null;
     index: number;
-  }) => {
+    }) => {
     try {
       if (!editEnabled || !user?.uname) return;
 
@@ -645,6 +643,7 @@ function DraggableTree({
       for (let linkId of removedLinks) {
         await unlinkPropertyOf(db, "generalizations", specializationId, linkId);
       }
+      
       const newGeneralizationData = nodes[toParent.nodeId];
       const specializations = newGeneralizationData.specializations;
       const previousSValue = JSON.parse(JSON.stringify(specializations));
@@ -652,10 +651,32 @@ function DraggableTree({
       const alreadyExist = newGeneralizationData.specializations
         .flatMap((c: ICollection) => c.nodes)
         .map((n: { id: string }) => n.id);
+        
       if (!alreadyExist.includes(specializationId)) {
-        specializations[0].nodes.splice(args.index, 0, {
+        let targetCollectionIndex = 0;
+        
+        if (toParent.category) {
+          targetCollectionIndex = specializations.findIndex(
+            (s: ICollection) => s.collectionName === toParent.name
+          );
+        } else {
+          const mainCollectionIndex = specializations.findIndex(
+            (s: ICollection) => s.collectionName === "main"
+          );
+          
+          if (mainCollectionIndex !== -1) {
+            targetCollectionIndex = mainCollectionIndex;
+          }
+        }
+        
+        if (targetCollectionIndex === -1) {
+          targetCollectionIndex = 0;
+        }
+        
+        specializations[targetCollectionIndex].nodes.splice(args.index, 0, {
           id: specializationId,
         });
+        
         await updateDoc(doc(collection(db, NODES), toParent.nodeId), {
           specializations,
         });
@@ -727,6 +748,14 @@ function DraggableTree({
     collapsingLoader.current = false;
   };
 
+  const generateDomElementId = (node: NodeApi<PaginatedTreeData>): string => {
+    const { id } = node.data;
+    const isRootNode = node.level === 0;
+    
+    // Prefix root nodes to prevent browser hash auto-scrolling
+    return isRootNode ? `tree-root-${id}` : id;
+  };
+
   function Node({
     node,
     style,
@@ -766,7 +795,7 @@ function DraggableTree({
           <Box
             style={style}
             className={clsx(styles.node, styles.loadMoreNode)}
-            id={node.data.id}
+            id={generateDomElementId(node)}
             onClick={() => !isLoading && handleLoadMore(node.data.id)}
             sx={{
               cursor: isLoading ? "default" : "pointer",
@@ -837,7 +866,7 @@ function DraggableTree({
         style={style}
         className={clsx(styles.node, node.state)}
         onClick={() => node.isInternal && node.toggle()}
-        id={node.data.id}
+        id={generateDomElementId(node)}
         sx={{
           backgroundColor:
             node.data.nodeId === currentVisibleNode?.id && !node.data.category
@@ -912,7 +941,7 @@ function DraggableTree({
                   </Tooltip>
                 )}
                 {(node.data.actionAlternatives || []).length > 0 && (
-                  <span style={{ color: "orange", marginRight: "8px" }}>
+                  <span style={{ color: "orange", marginLeft: "8px" }}>
                     Alternatives:
                   </span>
                 )}
@@ -946,21 +975,23 @@ function DraggableTree({
           gap: 1,
         }}
       >
-        <Button
-          variant={expanded ? "contained" : "outlined"}
-          size="small"
-          onClick={expandOrCollapseAll}
-          sx={{
-            borderRadius: "20px",
-            textTransform: "none",
-          }}
-        >
-          {collapsingLoader.current
-            ? "Collapsing..."
-            : expanded
-              ? "Collapse All"
-              : "Expand All"}
-        </Button>
+        {!treeType && (
+          <Button
+            variant={expanded ? "contained" : "outlined"}
+            size="small"
+            onClick={expandOrCollapseAll}
+            sx={{
+              borderRadius: "20px",
+              textTransform: "none",
+            }}
+          >
+            {collapsingLoader.current
+              ? "Collapsing..."
+              : expanded
+                ? "Collapse All"
+                : "Expand All"}
+          </Button>
+        )}
         {/* <Button
           variant="outlined"
           size="small"

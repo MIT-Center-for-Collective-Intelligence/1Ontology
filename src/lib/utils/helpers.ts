@@ -517,7 +517,12 @@ const updateProperty = async (
       };
     }
   }
+  let updatedEditedProperty = false;
   for (let { previousValue, newValue } of editedProperties) {
+    if (!nodeData.properties.hasOwnProperty(previousValue)) {
+      continue;
+    }
+    updatedEditedProperty = true;
     const propertyValue = nodeData.properties[previousValue];
     const propertyType = nodeData.propertyType[previousValue];
     const inheritanceValue = nodeData.inheritance[previousValue];
@@ -552,8 +557,15 @@ const updateProperty = async (
   if (batch._committed) {
     batch = writeBatch(db);
   }
-  batch.update(nodeRef, ObjectUpdates);
-  if (batch._mutations.length > 400) {
+  if (
+    updatedEditedProperty ||
+    updatedProperties.length > 0 ||
+    addedProperties.length > 0 ||
+    deletedProperties.length > 0
+  ) {
+    batch.update(nodeRef, ObjectUpdates);
+  }
+  if (batch._mutations.length > 100) {
     await batch.commit();
     batch = writeBatch(db);
   }
@@ -623,7 +635,9 @@ export const getChangeDescription = (
           ? "Specialization"
           : modifiedProperty === "generalizations"
             ? "Generalization"
-            : capitalizeFirstLetter(modifiedProperty || "")
+            : modifiedProperty === "parts"
+              ? "Part"
+              : capitalizeFirstLetter(modifiedProperty || "")
       } in:`;
     case "add elements":
       return `Added "${displayText}" Under:`;
@@ -651,6 +665,12 @@ export const getChangeDescription = (
       return `Added new "Image" in:`;
     case "remove images":
       return `Removed "Image" in:`;
+    case "edit property":
+      return `Changed the name of a property in:`;
+    case "change select-string":
+      return "Updated Most Efficiently Performed By in:";
+    case "sort collections":
+      return "Reordered collections in:";
     default:
       return `Made an unknown change to:`;
   }
@@ -785,8 +805,10 @@ export const createNewNode = (
     nodeType: parentNodeData.nodeType,
     skillsFuture: !!skillsFuture,
     ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+    createdAt: new Date(),
   };
   delete newNode.root;
+  delete newNode.oNetTask;
   if (newNode?.textValue?.specializations) {
     delete newNode.textValue.specializations;
   }
@@ -808,17 +830,24 @@ export const updateSpecializations = (
   const collectionIdx = parentNode.specializations.findIndex(
     (spec) => spec.collectionName === collectionName,
   );
-  if (collectionIdx === -1) {
-    // Create the collection if it doesn't exist
-    parentNode.specializations.push({
-      collectionName,
-      nodes: [{ id: newNodeRefId }],
-    });
-  } else {
-    // Add the new node to the collection if it exists
-    parentNode.specializations[collectionIdx].nodes.push({
-      id: newNodeRefId,
-    });
+
+  const alreadyExistIdx = parentNode.specializations
+    .flatMap((c) => c.nodes)
+    .findIndex((n) => n.id === newNodeRefId);
+
+  if (alreadyExistIdx === -1) {
+    if (collectionIdx === -1) {
+      // Create the collection if it doesn't exist
+      parentNode.specializations.push({
+        collectionName,
+        nodes: [{ id: newNodeRefId }],
+      });
+    } else {
+      // Add the new node to the collection if it exists
+      parentNode.specializations[collectionIdx].nodes.push({
+        id: newNodeRefId,
+      });
+    }
   }
 };
 
@@ -1471,6 +1500,94 @@ export const extractJSON = (text: string) => {
     return { jsonObject: {}, isJSON: false };
   }
 };
+const findLcsNames = (
+  oldValue: ICollection[],
+  newValue: ICollection[],
+): Set<string> => {
+  const oldNames = oldValue.map((c) => c.collectionName);
+  const newNames = newValue.map((c) => c.collectionName);
+  const m = oldNames.length;
+  const n = newNames.length;
+
+  const dp = Array(m + 1)
+    .fill(0)
+    .map(() => Array(n + 1).fill(0));
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (oldNames[i - 1] === newNames[j - 1]) {
+        dp[i][j] = 1 + dp[i - 1][j - 1];
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  const lcs = new Set<string>();
+  let i = m;
+  let j = n;
+  while (i > 0 && j > 0) {
+    if (oldNames[i - 1] === newNames[j - 1]) {
+      lcs.add(oldNames[i - 1]);
+      i--;
+      j--;
+    } else if (dp[i - 1][j] > dp[i][j - 1]) {
+      i--;
+    } else {
+      j--;
+    }
+  }
+  return lcs;
+};
+
+export const diffSortedCollections = (
+  oldValue: ICollection[],
+  newValue: ICollection[],
+): ICollection[] => {
+  const oldOrder = new Map(oldValue.map((c, i) => [c.collectionName, i]));
+  const newMap = new Map(newValue.map((c) => [c.collectionName, c]));
+
+  const lcsNames = findLcsNames(oldValue, newValue);
+
+  let result: ICollection[] = newValue.map((newCol) => {
+    const wasInOld = oldOrder.has(newCol.collectionName);
+    const isStable = lcsNames.has(newCol.collectionName);
+
+    if (isStable) {
+      return { ...newCol };
+    } else if (wasInOld) {
+      return { ...newCol, changeType: "sort", change: "added" };
+    } else {
+      return { ...newCol, change: "added" };
+    }
+  });
+
+  const removedOrMovedItems: { index: number; collection: ICollection }[] = [];
+  oldValue.forEach((oldCol, oldIndex) => {
+    if (!lcsNames.has(oldCol.collectionName)) {
+      const isInNew = newMap.has(oldCol.collectionName);
+      if (isInNew) {
+        removedOrMovedItems.push({
+          index: oldIndex,
+          collection: { ...oldCol, changeType: "sort", change: "removed" },
+        });
+      } else {
+        removedOrMovedItems.push({
+          index: oldIndex,
+          collection: { ...oldCol, change: "removed" },
+        });
+      }
+    }
+  });
+
+  removedOrMovedItems
+    .sort((a, b) => b.index - a.index)
+    .forEach(({ index, collection }) => {
+      result.splice(index, 0, collection);
+    });
+
+  return result;
+};
 
 export const diffCollections = (
   oldValue: ICollection[],
@@ -1554,6 +1671,21 @@ export const diffCollections = (
       } else {
         mergedNodes.push({ id, title });
       }
+    }
+    if (newCollection) {
+      const newOrder = newCollection.nodes.map((n) => n.id);
+
+      mergedNodes.sort((a, b) => {
+        const aInNew = newNodes.has(a.id);
+        const bInNew = newNodes.has(b.id);
+
+        if (aInNew && bInNew) {
+          return newOrder.indexOf(a.id) - newOrder.indexOf(b.id);
+        }
+        if (aInNew && !bInNew) return -1;
+        if (!aInNew && bInNew) return 1;
+        return 0;
+      });
     }
 
     const collectionChange = isAddedCollection

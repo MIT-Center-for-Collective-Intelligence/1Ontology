@@ -73,26 +73,21 @@ The `Node` component is intended to be used within an application that requires 
 - The component is designed to work with a specific data structure and may require adaptation for different use cases.
 
 This documentation provides a high-level overview of the `Node` component and its capabilities. For detailed implementation and integration, refer to the source code and the specific application context in which the component is used.*/
-import { Popover, Stack, Typography, useMediaQuery } from "@mui/material";
+import { Link, Paper, Stack, Typography, useMediaQuery } from "@mui/material";
 import { Box } from "@mui/system";
 import {
   collection,
   doc,
   getDoc,
-  getDocs,
   getFirestore,
-  query,
   setDoc,
   updateDoc,
-  where,
-  writeBatch,
 } from "firebase/firestore";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Text from "./Text";
 import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import {
   ICollection,
-  ILinkNode,
   INode,
   INodeTypes,
   MainSpecializations,
@@ -130,6 +125,7 @@ import { getStorage } from "firebase/storage";
 import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 import { development } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
+import ChipsProperty from "../StructuredProperty/ChipsProperty";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -176,6 +172,8 @@ type INodeProps = {
   setEnableEdit: any;
   inheritanceDetails: any;
   skillsFutureApp: string;
+  editableProperty: any;
+  setEditableProperty: any;
 };
 
 const Node = ({
@@ -221,6 +219,8 @@ const Node = ({
   setEnableEdit,
   inheritanceDetails,
   skillsFutureApp,
+  editableProperty,
+  setEditableProperty,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -234,8 +234,6 @@ const Node = ({
   const storage = getStorage();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [width, setWidth] = useState<number>(0);
-
-  const [editableProperty, setEditableProperty] = useState<ICollection[]>([]);
 
   /* */
   const [glowIds, setGlowIds] = useState<Set<string>>(new Set());
@@ -1252,6 +1250,71 @@ const Node = ({
           />
         )} */}
       </Box>
+      {currentVisibleNode.oNetTask &&
+        currentVisibleNode.specializations.flatMap((c) => c.nodes).length <=
+          0 && (
+          <Paper
+            id="property-onet-task"
+            elevation={9}
+            sx={{
+              borderRadius: "30px",
+              borderBottomRightRadius: "18px",
+              borderBottomLeftRadius: "18px",
+              minWidth: "500px",
+              width: "100%",
+              maxHeight: "100%",
+              overflow: "auto",
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              overflowX: "hidden",
+              pb: "10px",
+              mt: "14px",
+              minHeight: "100px",
+              mb: "10px",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                background: (theme: any) =>
+                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                p: 3,
+                gap: "10px",
+              }}
+            >
+              {" "}
+              <Typography>O*Net Link</Typography>
+            </Box>
+            <Link
+              underline="hover"
+              onClick={async () => {
+                if (!!currentVisibleNode.oNetTask?.id) {
+                  const taskDoc = await getDoc(
+                    doc(
+                      collection(db, "onetTasks"),
+                      currentVisibleNode.oNetTask.id,
+                    ),
+                  );
+                  const taskData = taskDoc.data();
+                  if (taskData) {
+                    const url = `https://www.onetonline.org/search/task/choose/${taskData["O*NET-SOC Code"]}`;
+
+                    window.open(url, "_blank");
+                  }
+                }
+              }}
+              sx={{
+                cursor: "pointer",
+                mx: "5px",
+                p: "10px",
+              }}
+            >
+              {currentVisibleNode.oNetTask.title}
+            </Link>
+          </Paper>
+        )}
       <Box
         sx={{
           display: "flex",
@@ -1260,8 +1323,21 @@ const Node = ({
           width: "100%",
         }}
       >
-        {/* title of the node */}
-
+        {/* alternatives of title of the node */}
+        {currentVisibleNode?.properties.hasOwnProperty("alternatives") && (
+          <ChipsProperty
+            currentVisibleNode={currentVisibleNode}
+            property={"alternatives"}
+            nodes={nodes}
+            locked={locked}
+            currentImprovement={currentImprovement}
+            selectedDiffNode={selectedDiffNode}
+            user={user}
+            skillsFuture={skillsFuture}
+            enableEdit={enableEdit}
+            skillsFutureApp={skillsFutureApp}
+          />
+        )}
         {/* description of the node */}
 
         <Text

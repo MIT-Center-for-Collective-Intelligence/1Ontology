@@ -149,7 +149,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       ],
     });
   }
-  if (deleteNode && nodeData.id) {
+  if (!!deleteNode && nodeData.id) {
     await collection.delete({ ids: [nodeData.id] });
     await collection.delete({ ids: [`${nodeData.id}-properties`] });
   }
@@ -225,7 +225,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         metadatas: titles,
       });
     } catch (error) {
-      console.log("Error embedding batch:", error);
+      console.error("Error embedding batch:", error);
     }
   }
   return res.status(200).json({});

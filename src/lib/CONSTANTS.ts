@@ -1,4 +1,5 @@
 import { DESIGN_SYSTEM_COLORS } from "./theme/colors";
+export const development = process.env.NODE_ENV === "development";
 
 // TO-DO: Consider storing this data in the database to identify node types in the project
 
@@ -31,6 +32,9 @@ export const DISPLAY: {
   ONetID: "O*Net ID",
   generalizations: 'Generalizations ("Parents")',
   specializations: 'Specializations ("Children")',
+  most_efficiently_performed_by: "Most Efficiently Performed By",
+  reason_for_most_efficiently_performed_by:
+    "Reason for Most Efficiently Performed By",
 };
 
 export const NO_IMAGE_USER =
@@ -104,7 +108,7 @@ export const UNCLASSIFIED: any = {
   incentive: "Unclassified incentives",
   reward: "Unclassified rewards",
 };
-export const development = process.env.NODE_ENV === "development";
+
 export const WS_URL = development
   ? `ws://${process.env.NEXT_PUBLIC_DEV_WS_SERVER}/ws`
   : `wss://${process.env.NEXT_PUBLIC_WS_SERVER}/ws`;
@@ -162,14 +166,27 @@ export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
 };
 
 export const MODEL = "o3";
-export const GEMINI_MODEL = "gemini-2.5-pro-exp-03-25";
+export const GEMINI_MODEL = "gemini-2.5-pro";
 
 export const SKILLS_FUTURE_APP_NAMES = [
-  "Full WordNet O*Net Verb Hierarchy - Tom's Version",
-  "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
-  "Ontology - Development Version",
-  "Ontology - Demo Version",
-  "Top-Down Gemini 2.5 Pro",
+  {
+    id: "Full WordNet O*Net Verb Hierarchy - Tom's Version",
+    name: "Full WordNet O*Net Verb Hierarchy - Tom's Version",
+  },
+  {
+    id: "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
+    name: "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
+  },
+  { id: "Ontology - Demo Version", name: "Ontology - Demo Version" },
+  {
+    id: "Ontology - Development Version",
+    name: "Ontology - Development Version",
+  },
+  { id: "Top-Down Gemini 2.5 Pro", name: "AI Peer Generated Ontology" },
+  {
+    id: "activities-actors-objects-gemini-2-5pro",
+    name: "Activities, Actors, Objects - Gemini 2.5 Pro",
+  },
   /*"Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
   "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
   "Holistic Embedding (Sector, Title, JobRole, CWF, Parts) - Gemini 2.5 Pro",
@@ -177,3 +194,10 @@ export const SKILLS_FUTURE_APP_NAMES = [
   "O*Net Verbs - o1 Pro", */
   // "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
 ];
+
+export const performerColors: Record<string, string> = {
+  "A single human": "#1976d2",
+  "Collaboration of humans": "#9c27b0",
+  "Collaboration of humans and AI": "#734946",
+  AI: "#4caf50",
+};

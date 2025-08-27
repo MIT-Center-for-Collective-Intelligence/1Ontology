@@ -154,7 +154,8 @@ export const getStructureForJSON = (
       delete properties[property];
     } else if (
       typeof properties[property] !== "string" &&
-      data.propertyType[property] !== "string-array"
+      data.propertyType[property] !== "string-array" &&
+      data.propertyType[property] !== "string-select"
     ) {
       properties[property] = getTitles(properties[property]);
     }

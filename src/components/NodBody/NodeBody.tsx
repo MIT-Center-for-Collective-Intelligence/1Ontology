@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { Box, Button, Typography, useTheme } from "@mui/material";
+import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
 import { ICollection, INode } from "@components/types/INode";
 import Text from "../OntologyComponents/Text";
 import {
@@ -23,6 +23,8 @@ import { useAuth } from "../context/AuthContext";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
 import { NodeImageManager } from "./NodeImageManager";
 import { DisplayAddedRemovedProperty } from "../StructuredProperty/DisplayAddedRemovedProperty";
+import SelectProperty from "../StructuredProperty/SelectProprety";
+import NumericProperty from "../StructuredProperty/NumericProperty";
 
 interface NodeBodyProps {
   currentVisibleNode: INode;
@@ -254,6 +256,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
 
       if (newPropertyType.toLowerCase() === "string") {
         properties[newProperty] = "";
+      } else if (newPropertyType.toLowerCase() === "numeric") {
+        properties[newProperty] = 0;
       } else {
         properties[newProperty] = [{ collectionName: "main", nodes: [] }];
       }
@@ -342,6 +346,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     } else {
       properties = currentVisibleNode.properties;
     }
+
     const sortedKeys = Object.keys(properties || {})
       .filter(
         (p) =>
@@ -349,6 +354,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           p !== "isPartOf" &&
           p !== "description" &&
           p !== "actor" &&
+          p !== "alternatives" &&
           p !== "context" &&
           p !== "images",
       )
@@ -375,7 +381,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   const hasReferences = orderOfProperties.includes("References");
 
   const modifyProperty = useCallback(
-    ({
+    async ({
       newValue,
       previousValue,
     }: {
@@ -430,6 +436,13 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           };
         }
         updateDoc(nodeRef, ObjectUpdates);
+        await updateInheritance({
+          nodeId: currentVisibleNode.id,
+          updatedProperties: [],
+          deletedProperties: [],
+          editedProperties: [{ previousValue, newValue }],
+          db,
+        });
         saveNewChangeLog(db, {
           nodeId: currentNode.id,
           modifiedBy: user?.uname,
@@ -474,7 +487,25 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 </Box>
               )}
               <Box sx={{ mt: "15px" }}>
-                {currentNode.propertyType[property] === "string-array" ? (
+                {currentNode.propertyType[property] === "string-select" ? (
+                  <SelectProperty
+                    currentVisibleNode={currentVisibleNode}
+                    property={property}
+                    nodes={nodes}
+                    selectedDiffNode={selectedDiffNode}
+                    currentImprovement={currentImprovement}
+                    user={user}
+                    options={[
+                      "a single human",
+                      "collaboration of humans",
+                      "collaboration of humans and ai",
+                      "ai",
+                    ]}
+                    skillsFuture={skillsFuture}
+                    enableEdit={enableEdit}
+                    skillsFutureApp={skillsFutureApp}
+                  />
+                ) : currentNode.propertyType[property] === "string-array" ? (
                   <ChipsProperty
                     currentVisibleNode={currentVisibleNode}
                     property={property}
@@ -486,6 +517,21 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
                     skillsFutureApp={skillsFutureApp}
+                  />
+                ) : currentNode.propertyType[property] === "numeric" ? (
+                  <NumericProperty
+                    currentVisibleNode={currentNode}
+                    property={property}
+                    value={onGetPropertyValue(property)}
+                    nodes={nodes}
+                    locked={locked}
+                    selectedDiffNode={selectedDiffNode}
+                    currentImprovement={currentImprovement}
+                    skillsFuture={skillsFuture}
+                    enableEdit={enableEdit}
+                    skillsFutureApp={skillsFutureApp}
+                    deleteProperty={deleteProperty}
+                    modifyProperty={modifyProperty}
                   />
                 ) : currentNode.propertyType[property] !== "string" ? (
                   <StructuredProperty
@@ -593,6 +639,64 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 enableEdit={enableEdit}
               />
             </Box>
+          )}
+        {selectedDiffNode?.changeType === "edit property" &&
+          !(selectedDiffNode.newValue in currentVisibleNode.properties) && (
+            <Paper
+              id={`property-${selectedDiffNode.modifiedProperty}`}
+              elevation={9}
+              sx={{
+                borderRadius: "30px",
+                borderBottomRightRadius: "18px",
+                borderBottomLeftRadius: "18px",
+                minWidth: "500px",
+                width: "100%",
+                maxHeight: "100%",
+                overflow: "auto",
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                overflowX: "hidden",
+                pb: "10px",
+                mt: "14px",
+                minHeight: "100px",
+              }}
+            >
+              {" "}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  background: (theme: any) =>
+                    theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                  p: 3,
+                  gap: "10px",
+                }}
+              >
+                {" "}
+                <Typography
+                  sx={{
+                    fontSize: "20px",
+                    fontWeight: 500,
+                    fontFamily: "Roboto, sans-serif",
+                    color: "red",
+                    textDecoration: "line-through",
+                  }}
+                >
+                  {selectedDiffNode.previousValue}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "20px",
+                    fontWeight: 500,
+                    fontFamily: "Roboto, sans-serif",
+                    color: "green",
+                  }}
+                >
+                  {selectedDiffNode.newValue}
+                </Typography>
+              </Box>
+            </Paper>
           )}
       </Box>
       {!locked && openAddProperty && (

@@ -7,6 +7,9 @@ import { Paper, Typography, Box, Tooltip, List, ListItem } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { ICollection } from "@components/types/INode";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 
 type CollectionListProps = {
   currentImprovement: any;
@@ -53,6 +56,9 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                 // gap: "10px",
               }}
             >
+              {collection.changeType === "sort" && (
+                <SwapHorizIcon sx={{ mr: "6px" }} />
+              )}
               <Typography
                 sx={{
                   fontSize: "20px",
@@ -60,7 +66,10 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                   fontFamily: "Roboto, sans-serif",
                   minHeight: "5px",
                   textDecoration:
-                    collection.change === "removed" ? "line-through" : "",
+                    collection.change === "removed" &&
+                    collection.changeType !== "sort"
+                      ? "line-through"
+                      : "",
                   /*    color:
                     collection.change === "removed"
                       ? "red"
@@ -93,20 +102,14 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                 </Tooltip>
               )} */}
             </Box>
-            <List>
+            <List sx={{ pl: 2 }}>
               {collection.nodes.map((node: any) => (
-                <ListItem key={node.id}>
-                  <DragIndicatorIcon
-                    sx={{
-                      color:
-                        node.change === "added"
-                          ? "green"
-                          : node.change === "removed"
-                            ? "red"
-                            : "",
-                    }}
-                  />
-                  {node.changeType === "sort" && (
+                <ListItem
+                  key={node.id}
+                  id={node.change ? `${node.id}-${property}` : undefined}
+                  sx={{ p: 1 }}
+                >
+                  {node.changeType === "sort" ? (
                     <SwapHorizIcon
                       sx={{
                         color:
@@ -115,7 +118,39 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                             : node.change === "removed"
                               ? "red"
                               : "",
-                        pl: "5px",
+
+                        mr: "3px",
+                        fontSize: "27px",
+                      }}
+                    />
+                  ) : node.change === "added" ? (
+                    <AddIcon
+                      sx={{
+                        color: "green",
+                        mr: "3px",
+                        fontSize: "27px",
+                      }}
+                    />
+                  ) : node.change === "removed" ? (
+                    <RemoveIcon
+                      sx={{
+                        color: "red",
+                        mr: "3px",
+                        fontSize: "27px",
+                      }}
+                    />
+                  ) : (
+                    <FiberManualRecordIcon
+                      sx={{
+                        color:
+                          node.change === "added"
+                            ? "green"
+                            : node.change === "removed"
+                              ? "red"
+                              : "",
+                        fontSize: "15px",
+                        mr: "10px",
+                        pl: "4px",
                       }}
                     />
                   )}
@@ -134,10 +169,13 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                   >
                     {node.title || getTitle(nodes, node.id)}
                   </Typography>
+
                   {node.optional && (
-                    <span
-                      style={{ color: "gray", marginLeft: "9px" }}
-                    >{`(optional)`}</span>
+                    <Tooltip title={"optional"} placement="top">
+                      <Typography
+                        sx={{ color: "orange", marginLeft: "9px" }}
+                      >{`(O)`}</Typography>
+                    </Tooltip>
                   )}
                 </ListItem>
               ))}{" "}
@@ -148,11 +186,6 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                     {currentImprovement.detailsOfChange.addedNonExistentElements.map(
                       (item: string, index: number) => (
                         <ListItem key={item}>
-                          <DragIndicatorIcon
-                            sx={{
-                              color: "green",
-                            }}
-                          />
                           <Typography
                             key={index}
                             variant="body1"
@@ -165,9 +198,11 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                             currentImprovement.change.optionalParts.includes(
                               item,
                             ) && (
-                              <span
-                                style={{ color: "gray", marginLeft: "9px" }}
-                              >{`(optional)`}</span>
+                              <Tooltip title={"optional"}>
+                                <Typography
+                                  sx={{ color: "orange", marginLeft: "9px" }}
+                                >{`(O)`}</Typography>
+                              </Tooltip>
                             )}
                         </ListItem>
                       ),

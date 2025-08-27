@@ -227,9 +227,19 @@ const LinkNode = ({
   }, [link.id, nodes, title]); */
 
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
-  const handleNavigateToNode = useCallback(() => {
-    navigateToNode(link.id);
-  }, [navigateToNode, link.id]);
+  const handleNavigateToNode = useCallback(
+    (e: any) => {
+      if (!navigateToNode) return;
+
+      if (e.metaKey || e.ctrlKey) {
+        const url = `${window.location.origin}${window.location.pathname}#${link.id}`;
+        window.open(url, "_blank");
+      } else {
+        navigateToNode(link.id);
+      }
+    },
+    [navigateToNode, link.id],
+  );
 
   const removeNodeLink = async (
     type: "specializations" | "generalizations",
@@ -301,8 +311,47 @@ const LinkNode = ({
       const nodeD =
         property === "generalizations" ? nodes[currentNodeId] : nodes[linkId];
       const linksLength = nodeD.generalizations.flatMap((c) => c.nodes).length;
+      const firstGen = nodeD.generalizations[0]?.nodes[0]?.id || "";
       if (
-        fromModel ||
+        linksLength <= 1 &&
+        ((property === "specializations" &&
+          nodes[currentNodeId]?.title.trim().toLowerCase() ===
+            "unclassified") ||
+          (property === "generalizations" &&
+            nodes[firstGen]?.title === "unclassified"))
+      ) {
+        await confirmIt(
+          <Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                mb: "14px",
+              }}
+            >
+              <LinkOffIcon />
+            </Box>
+            <Typography sx={{ fontWeight: "bold" }}>
+              You cannot unlink this node
+            </Typography>
+            {linksLength <= 1 ? (
+              <Typography sx={{ mt: "15px" }}>
+                {`There's no other generalization linked to this node. Other than 
+              ${UNCLASSIFIED[nodes[linkId].nodeType]}`}
+                .
+              </Typography>
+            ) : (
+              ""
+            )}
+          </Box>,
+          "Ok",
+          "",
+        );
+        return;
+      }
+      if (
+        linksLength > 1 ||
         (await confirmIt(
           <Box>
             <Box
@@ -494,7 +543,7 @@ const LinkNode = ({
         }
         await Post("/triggerChroma", {
           nodeId: currentNodeId,
-          updateAll: false,
+          updatedShortIds: false,
         });
       }
     } catch (error: any) {
@@ -858,14 +907,20 @@ const LinkNode = ({
             <Tooltip
               title="Save and replace with"
               placement="top"
-              sx={{ mt: "15px", alignItems: "center" }}
+              sx={{ alignItems: "center" }}
             >
               <IconButton
                 onClick={() => {
                   setAddNew(false);
                   saveNewAndSwapIt(newPart, link.id);
                 }}
-                sx={{ p: 0.3, m: "6px", bgcolor: "green" }}
+                sx={{
+                  p: 0.3,
+                  m: "6px",
+                  mt: "15px",
+                  bgcolor: "green",
+                  border: "1px solid",
+                }}
                 disabled={!newPart.trim()}
               >
                 <SwapHorizIcon
@@ -875,13 +930,13 @@ const LinkNode = ({
             </Tooltip>
           )}
           {addNew && (
-            <Tooltip title="Cancel" placement="top">
+            <Tooltip title="Cancel" placement="bottom">
               <IconButton
                 onClick={() => {
                   setAddNew(false);
                   setNewPart("");
                 }}
-                sx={{ p: 0.3, m: "6px", bgcolor: "red" }}
+                sx={{ p: 0.3, m: "6px", bgcolor: "red", mt: "15px" }}
               >
                 <CloseIcon sx={{ color: "white" }} />
               </IconButton>
@@ -893,7 +948,13 @@ const LinkNode = ({
               onChange={(e: any) => {
                 setNewPart(e.target.value);
               }}
-              sx={{ width: "80%", m: "6px" }}
+              sx={{
+                width: "80%",
+                m: "6px",
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "25px",
+                },
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   // saveNodeTitle();
@@ -905,6 +966,7 @@ const LinkNode = ({
                 inputProps: {
                   style: {
                     padding: 10,
+                    borderRadius: "25px",
                   },
                 },
               }}
