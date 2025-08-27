@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import {
@@ -26,8 +26,10 @@ import {
   TextField,
   InputAdornment,
   Divider,
+  Drawer,
+  ListItemButton,
 } from "@mui/material";
-import { useAuth } from "../components/context/AuthContext";
+import { useThemeManager } from "../lib/hooks/useThemeManager";
 import {
   Brightness4,
   Brightness7,
@@ -68,9 +70,9 @@ const SidebarButton = ({
 
 const LandingPage = () => {
   const router = useRouter();
-  const [isDark, setIsDark] = useState(true);
-  const [hovered, setHovered] = useState(false);
-  const [authState] = useAuth();
+  const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } = useThemeManager();
+  const [hovered, setHovered] = React.useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
 
   const theme = createTheme({
     palette: {
@@ -110,7 +112,7 @@ const LandingPage = () => {
     },
   });
 
-  const handleThemeSwitch = () => setIsDark(!isDark);
+
 
   const navigationLinks = [
     {
@@ -124,6 +126,10 @@ const LandingPage = () => {
     {
       title: "AI Uses",
       href: "/ai-uses",
+    },
+    {
+      title: "Team",
+      href: "/team",
     },
   ];
 
@@ -148,7 +154,7 @@ const LandingPage = () => {
           <Container maxWidth="xl">
             <Toolbar sx={{ justifyContent: "space-between", py: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Box component="a" href="/landing" sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
                   <img
                     src={
                       isDark
@@ -226,7 +232,15 @@ const LandingPage = () => {
                   toolbarIsOpen={hovered}
                 />
 
-                {authState.isAuthenticated ? (
+                {isAuthLoading ? (
+                  <Button 
+                    variant="contained" 
+                    color="primary"
+                    disabled
+                  >
+                    Loading...
+                  </Button>
+                ) : isAuthenticated ? (
                   <Button 
                     variant="contained" 
                     color="primary"
@@ -257,13 +271,46 @@ const LandingPage = () => {
                   </>
                 )}
 
-                <IconButton sx={{ display: { xs: "flex", md: "none" } }}>
+                <IconButton 
+                  sx={{ display: { xs: "flex", md: "none" } }}
+                  onClick={() => setMobileNavOpen(true)}
+                  aria-label="Open navigation menu"
+                >
                   <MenuIcon />
                 </IconButton>
               </Box>
             </Toolbar>
           </Container>
         </AppBar>
+
+        {/* Mobile Navigation Drawer */}
+        <Drawer
+          anchor="right"
+          open={mobileNavOpen}
+          onClose={() => setMobileNavOpen(false)}
+          ModalProps={{ keepMounted: true }}
+        >
+          <Box
+            sx={{ width: 280, p: 2 }}
+            role="presentation"
+            onClick={() => setMobileNavOpen(false)}
+            onKeyDown={() => setMobileNavOpen(false)}
+          >
+            <Typography variant="subtitle2" sx={{ px: 1, py: 1, color: "text.secondary" }}>
+              Menu
+            </Typography>
+            <Divider sx={{ mb: 1 }} />
+            <List>
+              {navigationLinks.map((link, index) => (
+                <ListItem key={index} disablePadding>
+                  <ListItemButton component="a" href={link.href}>
+                    <ListItemText primary={link.title} />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        </Drawer>
 
         {/* Hero Section - Subtle */}
         <Box
@@ -336,6 +383,8 @@ const LandingPage = () => {
               {/* CTA Button */}
               <Box sx={{ display: "flex", justifyContent: "center" }}>
                 <Button
+                  component="a"
+                  href="/platform-details"
                   variant="contained"
                   color="primary"
                   size="medium"
@@ -1930,7 +1979,7 @@ const LandingPage = () => {
                   href="/"
                   sx={{ px: 4 }}
                 >
-                  {authState.isAuthenticated ? "Go to Platform" : "Access Research Platform"}
+                  {isAuthenticated ? "Go to Platform" : "Access Research Platform"}
                 </Button>
               </Box>
             </Box>
@@ -1950,27 +1999,44 @@ const LandingPage = () => {
           }}
         >
           <Container maxWidth="xl">
-            <Grid container spacing={4} justifyContent="space-between" alignItems="center">
-              {/* Left Section - Logo & Title */}
-              <Grid item xs={12} md={4}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-                  <img
-                    src={isDark ? "/MIT-Logo-small-Dark.png" : "/MIT-Logo-Small-Light.png"}
-                    alt="MIT Logo"
-                    style={{ height: "28px", width: "auto" }}
-                  />
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    Ontology of Collective Intelligence
+            <Grid container spacing={0} justifyContent="space-between" alignItems={{ xs: "flex-start", md: "center" }}>
+              {/* Logo & Title */}
+              <Grid item xs={12} md={3}>
+                <Box sx={{ 
+                  display: "flex", 
+                  flexDirection: "column", 
+                  pr: { md: 3 },
+                  mb: { xs: 3, md: 0 },
+                  textAlign: { xs: "center", md: "left" }
+                }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, justifyContent: { xs: "center", md: "flex-start" } }}>
+                    <img
+                      src={isDark ? "/MIT-Logo-small-Dark.png" : "/MIT-Logo-Small-Light.png"}
+                      alt="MIT Logo"
+                      style={{ height: "28px", width: "auto" }}
+                    />
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      Ontology of Collective Intelligence
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    © {new Date().getFullYear()} MIT. All rights reserved.
                   </Typography>
                 </Box>
-                <Typography variant="body2" color="text.secondary">
-                  © {new Date().getFullYear()} MIT. All rights reserved.
-                </Typography>
               </Grid>
 
-              {/* Middle Section - Navigation */}
-              <Grid item xs={12} md={4}>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              {/* Navigation Links */}
+              <Grid item xs={6} md={3}>
+                <Box sx={{ 
+                  display: "flex", 
+                  flexDirection: "column", 
+                  gap: 1, 
+                  px: { md: 3 }, 
+                  ml: { md: 6 },
+                  mb: { xs: 3, md: 0 },
+                  justifyContent: "center", 
+                  height: "100%" 
+                }}>
                   {navigationLinks.map((link, idx) => (
                     <Typography
                       key={idx}
@@ -1989,9 +2055,75 @@ const LandingPage = () => {
                 </Box>
               </Grid>
 
-              {/* Right Section - Accessibility Info Only */}
-              <Grid item xs={12} md={4}>
-                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+              {/* Desktop Divider */}
+              <Box sx={{ 
+                width: "1px", 
+                bgcolor: "divider", 
+                mx: 2,
+                display: { xs: "none", md: "block" },
+                alignSelf: "stretch"
+              }} />
+
+              {/* Related Project Links */}
+              <Grid item xs={6} md={3}>
+                <Box sx={{ 
+                  display: "flex", 
+                  flexDirection: "column", 
+                  gap: 1, 
+                  px: { md: 3 },
+                  mb: { xs: 3, md: 0 },
+                  justifyContent: "center", 
+                  height: "100%" 
+                }}>
+                  <Typography
+                    component="a"
+                    href="https://m3s.mit.edu/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: "0.9rem",
+                      textDecoration: "none",
+                      "&:hover": { color: "primary.main" },
+                    }}
+                  >
+                    M3S - Mens Manus and Machina
+                  </Typography>
+                  <Typography
+                    component="a"
+                    href="https://cci.mit.edu/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: "0.9rem",
+                      textDecoration: "none",
+                      "&:hover": { color: "primary.main" },
+                    }}
+                  >
+                    MIT Center for Collective Intelligence
+                  </Typography>
+                </Box>
+              </Grid>
+
+              {/* Desktop Divider */}
+              <Box sx={{ 
+                width: "1px", 
+                bgcolor: "divider", 
+                mx: 2,
+                display: { xs: "none", md: "block" },
+                alignSelf: "stretch"
+              }} />
+
+              {/* Accessibility Info */}
+              <Grid item xs={12} md={2}>
+                <Box sx={{ 
+                  display: "flex", 
+                  justifyContent: { xs: "center", md: "center" }, 
+                  alignItems: "center", 
+                  height: "100%", 
+                  pl: { md: 3 } 
+                }}>
                   <Typography
                     component="a"
                     href="https://accessibility.mit.edu/"

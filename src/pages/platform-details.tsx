@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import {
@@ -25,8 +25,10 @@ import {
   InputAdornment,
   Divider,
   useMediaQuery,
+  Drawer,
+  ListItemButton,
 } from "@mui/material";
-import { useAuth } from "../components/context/AuthContext";
+import { useThemeManager } from "../lib/hooks/useThemeManager";
 import {
   LightMode as LightModeIcon,
   DarkMode as DarkModeIcon,
@@ -350,14 +352,13 @@ const MessageBubble = ({
 
 const PlatformDetailsPage = () => {
   const router = useRouter();
-  const [isDark, setIsDark] = useState(true);
-  const [expandedItems, setExpandedItems] = useState({
+  const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } = useThemeManager();
+  const [expandedItems, setExpandedItems] = React.useState({
     act: true,
     actHow: true,
     create: true,
     move: true,
   });
-  const [authState] = useAuth();
 
   // Mobile state management
   const isMobile = useMediaQuery("(max-width:599px)");
@@ -365,7 +366,8 @@ const PlatformDetailsPage = () => {
   const isSmallDesktop = useMediaQuery("(max-width:1439px)");
   const isPartsBubbleBreakpoint = useMediaQuery("(max-width:1500px)");
   const isSemanticSearchBreakpoint = useMediaQuery("(max-width:1725px)");
-  const [mobileTreeOpen, setMobileTreeOpen] = useState(false);
+  const [mobileTreeOpen, setMobileTreeOpen] = React.useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
 
   // Responsive scaling calculation
   const getResponsiveScale = () => {
@@ -385,7 +387,7 @@ const PlatformDetailsPage = () => {
     return 1 - (scaleFactor * 0.1);
   };
 
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = React.useState(1);
 
   // Update scale on window resize
   useEffect(() => {
@@ -441,7 +443,7 @@ const PlatformDetailsPage = () => {
     },
   });
 
-  const handleThemeSwitch = () => setIsDark(!isDark);
+
 
   const handleItemClick = (item: keyof typeof expandedItems) => {
     setExpandedItems((prev) => ({
@@ -472,7 +474,7 @@ const PlatformDetailsPage = () => {
           <Container maxWidth="xl">
             <Toolbar sx={{ justifyContent: "space-between", py: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Box component="a" href="/landing" sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
                   <img
                     src={
                       isDark
@@ -511,6 +513,7 @@ const PlatformDetailsPage = () => {
                     { title: "Home", href: "/landing" },
                     { title: "Platform", href: "/platform-details" },
                     { title: "AI Uses", href: "/ai-uses" },
+                    { title: "Team", href: "/team" },
                   ].map((link, index) => {
                     const isActive = router.pathname === link.href;
                     
@@ -548,7 +551,15 @@ const PlatformDetailsPage = () => {
                   onClick={handleThemeSwitch}
                 />
 
-                {authState.isAuthenticated ? (
+                {isAuthLoading ? (
+                  <Button 
+                    variant="contained" 
+                    color="primary"
+                    disabled
+                  >
+                    Loading...
+                  </Button>
+                ) : isAuthenticated ? (
                   <Button 
                     variant="contained" 
                     color="primary"
@@ -579,13 +590,51 @@ const PlatformDetailsPage = () => {
                   </>
                 )}
 
-                <IconButton sx={{ display: { xs: "flex", md: "none" } }}>
+                <IconButton 
+                  sx={{ display: { xs: "flex", md: "none" } }}
+                  onClick={() => setMobileNavOpen(true)}
+                  aria-label="Open navigation menu"
+                >
                   <MenuIcon />
                 </IconButton>
               </Box>
             </Toolbar>
           </Container>
         </AppBar>
+
+        {/* Mobile Navigation Drawer */}
+        <Drawer
+          anchor="right"
+          open={mobileNavOpen}
+          onClose={() => setMobileNavOpen(false)}
+          ModalProps={{ keepMounted: true }}
+        >
+          <Box
+            sx={{ width: 280, p: 2 }}
+            role="presentation"
+            onClick={() => setMobileNavOpen(false)}
+            onKeyDown={() => setMobileNavOpen(false)}
+          >
+            <Typography variant="subtitle2" sx={{ px: 1, py: 1, color: "text.secondary" }}>
+              Menu
+            </Typography>
+            <Divider sx={{ mb: 1 }} />
+            <List>
+              {[
+                { title: "Home", href: "/landing" },
+                { title: "Platform", href: "/platform-details" },
+                { title: "AI Uses", href: "/ai-uses" },
+                { title: "Team", href: "/team" },
+              ].map((link, index) => (
+                <ListItem key={index} disablePadding>
+                  <ListItemButton component="a" href={link.href}>
+                    <ListItemText primary={link.title} />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        </Drawer>
 
         {/* Combined Hero and Overview Section */}
         <Box
@@ -2363,7 +2412,7 @@ const PlatformDetailsPage = () => {
                   href="/"
                   sx={{ px: 4 }}
                 >
-                  {authState.isAuthenticated ? "Go to Platform" : "Access Research Platform"}
+                  {isAuthenticated ? "Go to Platform" : "Access Research Platform"}
                 </Button>
               </Box>
             </Box>
@@ -2383,31 +2432,53 @@ const PlatformDetailsPage = () => {
           }}
         >
           <Container maxWidth="xl">
-            <Grid container spacing={4} justifyContent="space-between" alignItems="center">
-              {/* Left Section - Logo & Title */}
-              <Grid item xs={12} md={4}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-                  <img
-                    src={isDark ? "/MIT-Logo-small-Dark.png" : "/MIT-Logo-Small-Light.png"}
-                    alt="MIT Logo"
-                    style={{ height: "28px", width: "auto" }}
-                  />
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    Ontology of Collective Intelligence
+            <Grid container spacing={0} justifyContent="space-between" alignItems={{ xs: "flex-start", md: "center" }}>
+              {/* Logo & Title */}
+              <Grid item xs={12} md={3}>
+                <Box sx={{ 
+                  display: "flex", 
+                  flexDirection: "column", 
+                  pr: { md: 3 },
+                  mb: { xs: 3, md: 0 },
+                  textAlign: { xs: "center", md: "left" }
+                }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, justifyContent: { xs: "center", md: "flex-start" } }}>
+                    <img
+                      src={isDark ? "/MIT-Logo-small-Dark.png" : "/MIT-Logo-Small-Light.png"}
+                      alt="MIT Logo"
+                      style={{ height: "28px", width: "auto" }}
+                    />
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      Ontology of Collective Intelligence
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    © {new Date().getFullYear()} MIT. All rights reserved.
                   </Typography>
                 </Box>
-                <Typography variant="body2" color="text.secondary">
-                  © {new Date().getFullYear()} MIT. All rights reserved.
-                </Typography>
               </Grid>
 
-              {/* Middle Section - Navigation */}
-              <Grid item xs={12} md={4}>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              {/* Navigation Links */}
+              <Grid item xs={12} md={3}>
+                <Box sx={{ 
+                  display: "flex", 
+                  flexDirection: { xs: "row", md: "column" }, 
+                  flexWrap: { xs: "wrap", md: "nowrap" },
+                  columnGap: { xs: 2, md: 0 },
+                  rowGap: { xs: 1, md: 1 },
+                  justifyContent: { xs: "center", md: "center" },
+                  alignItems: { xs: "center", md: "flex-start" },
+                  textAlign: { xs: "center", md: "left" },
+                  px: { md: 3 }, 
+                  ml: { md: 6 },
+                  mb: { xs: 3, md: 0 },
+                  height: "100%" 
+                }}>
                   {[
                     { title: "Home", href: "/landing" },
                     { title: "Platform", href: "/platform-details" },
                     { title: "AI Uses", href: "/ai-uses" },
+                    { title: "Team", href: "/team" },
                   ].map((link, idx) => (
                     <Typography
                       key={idx}
@@ -2418,6 +2489,8 @@ const PlatformDetailsPage = () => {
                         fontSize: "0.9rem",
                         textDecoration: "none",
                         "&:hover": { color: "primary.main" },
+                        px: { xs: 0.5, md: 0 },
+                        py: { xs: 0.25, md: 0 },
                       }}
                     >
                       {link.title}
@@ -2426,9 +2499,76 @@ const PlatformDetailsPage = () => {
                 </Box>
               </Grid>
 
-              {/* Right Section - Accessibility Info Only */}
-              <Grid item xs={12} md={4}>
-                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+              {/* Desktop Divider */}
+              <Box sx={{ 
+                width: "1px", 
+                bgcolor: "divider", 
+                mx: 2,
+                display: { xs: "none", md: "block" },
+                alignSelf: "stretch"
+              }} />
+
+              {/* Related Project Links */}
+              <Grid item xs={12} md={3}>
+                <Box sx={{ 
+                  display: "flex", 
+                  flexDirection: "column", 
+                  gap: 1, 
+                  px: { md: 3 },
+                  mb: { xs: 3, md: 0 }, 
+                  justifyContent: { xs: "center", md: "center" },
+                  alignItems: { xs: "center", md: "flex-start" },
+                  height: "100%" 
+                }}>
+                  <Typography
+                    component="a"
+                    href="https://m3s.mit.edu/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: "0.9rem",
+                      textDecoration: "none",
+                      "&:hover": { color: "primary.main" },
+                    }}
+                  >
+                    M3S - Mens Manus and Machina
+                  </Typography>
+                  <Typography
+                    component="a"
+                    href="https://cci.mit.edu/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: "0.9rem",
+                      textDecoration: "none",
+                      "&:hover": { color: "primary.main" },
+                    }}
+                  >
+                    MIT Center for Collective Intelligence
+                  </Typography>
+                </Box>
+              </Grid>
+
+              {/* Desktop Divider */}
+              <Box sx={{ 
+                width: "1px", 
+                bgcolor: "divider", 
+                mx: 2,
+                display: { xs: "none", md: "block" },
+                alignSelf: "stretch"
+              }} />
+
+              {/* Accessibility Info */}
+              <Grid item xs={12} md={2}>
+                <Box sx={{ 
+                  display: "flex", 
+                  justifyContent: { xs: "center", md: "center" }, 
+                  alignItems: "center", 
+                  height: "100%", 
+                  pl: { md: 3 } 
+                }}>
                   <Typography
                     component="a"
                     href="https://accessibility.mit.edu/"

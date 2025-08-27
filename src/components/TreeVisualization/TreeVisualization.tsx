@@ -8,20 +8,22 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   Typography,
-  Chip,
   Zoom,
+  Fade,
 } from '@mui/material';
 import {
   InfoOutlined,
   ZoomIn,
   ZoomOut,
   CenterFocusStrong,
+  Close as CloseIcon,
+  ChevronRight,
 } from '@mui/icons-material';
 
 // Type definitions
 export interface TreeNode {
+  id: string;
   name: string;
   children: TreeNode[];
   appCount: number;
@@ -32,6 +34,7 @@ interface TreeVisualizationProps {
   isDark: boolean;
   viewType: 'tree' | 'sunburst';
   onViewTypeChange: (type: 'tree' | 'sunburst') => void;
+  focusNodeId?: string; // Optional prop to specify which node to focus on
 }
 
 const TreeVisualization: React.FC<TreeVisualizationProps> = ({
@@ -39,6 +42,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
   isDark,
   viewType,
   onViewTypeChange,
+  focusNodeId,
 }) => {
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -106,8 +110,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
 
     tooltip.html(`
       <strong>${d.data.name}</strong><br/>
-      AI Applications: ${d.data.appCount?.toLocaleString() || 0}<br/>
-      Level: ${d.depth}
+      AI Applications: ${d.data.appCount?.toLocaleString() || 0}
     `)
     .style("left", (event.pageX + 10) + "px")
     .style("top", (event.pageY - 10) + "px");
@@ -122,7 +125,9 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
     // D3 hierarchy expects a 'value' property for sizing
     const addValues = (node: TreeNode): TreeNode & { value: number } => {
       return {
-        ...node,
+        id: node.id,
+        name: node.name,
+        appCount: node.appCount,
         value: node.appCount || 0,
         children: node.children ? node.children.map(addValues) : []
       };
@@ -291,8 +296,10 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
     feMerge.append("feMergeNode").attr("in", "SourceGraphic");
 
     // Create beautiful paths with enhanced styling and visible borders
+    const segmentData = root.descendants().filter(d => d.depth > 0); // Skip root
+    
     const path = g.selectAll("path")
-      .data(root.descendants().filter(d => d.depth > 0)) // Skip root
+      .data(segmentData, (d: any) => d.data.id)
       .enter().append("path")
       .attr("d", d => arc(d as d3.HierarchyRectangularNode<TreeNode & { value: number }>))
       .style("fill", d => getArcColor(d.value || 0, d.depth))
@@ -390,110 +397,15 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       })
 
 
-    // Add labels for segments with improved positioning and visibility
-    const label = g.selectAll("text")
-      .data(root.descendants().filter(d => {
-        const rectNode = d as d3.HierarchyRectangularNode<TreeNode & { value: number }>;
-        // More lenient filtering - show labels for larger segments
-        const angleSpan = rectNode.x1! - rectNode.x0!;
-        const radialSpan = rectNode.y1! - rectNode.y0!;
-        return d.depth > 0 && angleSpan > 0.05 && radialSpan > 12 && d.data.name.length > 0;
-      }))
-      .enter().append("text")
-      .attr("transform", d => {
-        const rectNode = d as d3.HierarchyRectangularNode<TreeNode & { value: number }>;
-        // Calculate center angle in radians
-        const centerAngle = (rectNode.x0! + rectNode.x1!) / 2;
-        // Convert to degrees
-        const angleDegrees = centerAngle * 180 / Math.PI;
-        // Calculate middle radius
-        const midRadius = (rectNode.y0! + rectNode.y1!) / 2;
-        
-        // Improved text rotation logic
-        let textRotation = angleDegrees - 90;
-        
-        // Keep text readable by flipping when it would be upside down
-        if (angleDegrees > 90 && angleDegrees < 270) {
-          textRotation += 180;
-        }
-        
-        return `rotate(${textRotation}) translate(${midRadius},0)`;
-      })
-      .attr("dy", "0.35em")
-      .style("text-anchor", "middle")
-      .style("fill", d => {
-        // Improved contrast calculation
-        const baseColor = getArcColor(d.value || 0, d.depth);
-        const color = d3.color(baseColor);
-        if (!color) return isDark ? "#ffffff" : "#000000";
-        
-        const luminance = color.displayable() ? 
-          0.299 * color.rgb().r + 0.587 * color.rgb().g + 0.114 * color.rgb().b : 128;
-        
-        // More conservative contrast thresholds
-        return luminance > 140 ? "#000000" : "#ffffff";
-      })
-      .style("font-size", d => {
-        const rectNode = d as d3.HierarchyRectangularNode<TreeNode & { value: number }>;
-        // Better font size calculation based on available space
-        const angleSpan = rectNode.x1! - rectNode.x0!;
-        const radialSpan = rectNode.y1! - rectNode.y0!;
-        const avgRadius = (rectNode.y0! + rectNode.y1!) / 2;
-        
-        // Calculate available arc length at middle radius
-        const arcLength = angleSpan * avgRadius;
-        
-        // Dynamic font size based on available space
-        let fontSize = Math.min(14, Math.max(8, arcLength / 6));
-        
-        // Adjust for radial space
-        fontSize = Math.min(fontSize, radialSpan / 2);
-        
-        return Math.floor(fontSize) + "px";
-      })
-      .style("font-weight", "600")
-      .style("font-family", "'Inter', 'Arial', sans-serif")
-      .style("pointer-events", "none")
-      .style("text-shadow", d => {
-        const baseColor = getArcColor(d.value || 0, d.depth);
-        const color = d3.color(baseColor);
-        const luminance = color?.displayable() ? 
-          0.299 * color.rgb().r + 0.587 * color.rgb().g + 0.114 * color.rgb().b : 128;
-        
-        return luminance > 140 ? 
-          "1px 1px 3px rgba(255,255,255,0.9)" : 
-          "1px 1px 3px rgba(0,0,0,0.9)";
-      })
-      .style("letter-spacing", "0.2px")
-      .text(d => {
-        const rectNode = d as d3.HierarchyRectangularNode<TreeNode & { value: number }>;
-        const angleSpan = rectNode.x1! - rectNode.x0!;
-        const avgRadius = (rectNode.y0! + rectNode.y1!) / 2;
-        const arcLength = angleSpan * avgRadius;
-        
-        // More intelligent text truncation
-        const name = d.data.name;
-        
-        if (arcLength > 120) {
-          return name.length > 20 ? name.substring(0, 18) + "..." : name;
-        } else if (arcLength > 80) {
-          return name.length > 15 ? name.substring(0, 13) + "..." : name;
-        } else if (arcLength > 50) {
-          return name.length > 10 ? name.substring(0, 8) + "..." : name;
-        } else if (arcLength > 30) {
-          return name.length > 6 ? name.substring(0, 5) + "..." : name;
-        }
-        
-        return "";
-      });
+    // Segment labels removed for cleaner sunburst appearance
 
-    // Beautiful center circle with improved styling
-    const centerRadius = Math.max(30, radius * 0.15);
+    // Beautiful center circle with enhanced styling
+    const centerRadius = Math.max(40, radius * 0.18);
     
-    // Add center gradient with better colors
+    // Clean, sophisticated center gradient
     const centerGradient = defs.append("radialGradient")
       .attr("id", "centerGradient")
-      .attr("cx", "50%")
+      .attr("cx", "40%")
       .attr("cy", "30%")
       .attr("r", "100%");
     
@@ -513,64 +425,74 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
         .attr("stop-color", "#ffffff");
       centerGradient.append("stop")
         .attr("offset", "50%")
-        .attr("stop-color", "#f7fafc");
+        .attr("stop-color", "#f8fafc");
       centerGradient.append("stop")
         .attr("offset", "100%")
-        .attr("stop-color", "#edf2f7");
+        .attr("stop-color", "#e2e8f0");
     }
 
-    // Outer decorative ring
+    // Single subtle outer ring
     g.append("circle")
-      .attr("r", centerRadius + 4)
+      .attr("r", centerRadius + 3)
       .style("fill", "none")
-      .style("stroke", isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)")
-      .style("stroke-width", "1.5px")
-      .style("stroke-dasharray", "3,2");
+      .style("stroke", isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)")
+      .style("stroke-width", "1px")
+      .style("opacity", 0.6);
 
-    // Main center circle with better interactivity and visible border
-    g.append("circle")
+    // Main center circle with clean styling
+    const centerCircle = g.append("circle")
       .attr("r", centerRadius)
       .style("fill", "url(#centerGradient)")
-      .style("stroke", isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)")
-      .style("stroke-width", "2px")
+      .style("stroke", isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)")
+      .style("stroke-width", "1.5px")
       .style("cursor", "default")
-      .style("filter", "drop-shadow(0 2px 8px rgba(0,0,0,0.15))")
-      .style("transition", "all 0.3s ease")
+      .style("filter", "drop-shadow(0 2px 8px rgba(0,0,0,0.1))")
+      .style("transition", "all 0.2s ease")
+      
+    // Subtle hover effects
+    centerCircle
       .on("mouseover", function() {
         d3.select(this)
-          .style("filter", "drop-shadow(0 4px 12px rgba(0,0,0,0.25)) brightness(1.05)")
-          .style("stroke", isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)")
-          .style("stroke-width", "3px")
+          .style("filter", "drop-shadow(0 4px 12px rgba(0,0,0,0.15))")
+          .style("stroke", isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.2)")
+          .style("stroke-width", "2px")
           .style("transform", "scale(1.02)");
       })
       .on("mouseout", function() {
         d3.select(this)
-          .style("filter", "drop-shadow(0 2px 8px rgba(0,0,0,0.15))")
-          .style("stroke", isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)")
-          .style("stroke-width", "2px")
+          .style("filter", "drop-shadow(0 2px 8px rgba(0,0,0,0.1))")
+          .style("stroke", isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)")
+          .style("stroke-width", "1.5px")
           .style("transform", "scale(1)");
       });
 
-    // Enhanced center text with better typography
+    // Clean, sophisticated center text
+    const titleFontSize = Math.min(16, centerRadius / 2.8);
+    const subtitleFontSize = Math.min(12, centerRadius / 4);
+    
+    // Main title with clean styling
     g.append("text")
       .attr("text-anchor", "middle")
       .attr("dy", "-0.2em")
-      .style("fill", isDark ? "#ffffff" : "#1a202c")
-      .style("font-size", Math.min(16, centerRadius / 3) + "px")
-      .style("font-weight", "700")
-      .style("font-family", "'Inter', 'Arial', sans-serif")
-      .style("text-shadow", isDark ? "0 1px 3px rgba(0,0,0,0.5)" : "0 1px 3px rgba(255,255,255,0.8)")
-      .style("letter-spacing", "0.5px")
+      .style("fill", isDark ? "#e2e8f0" : "#2d3748")
+      .style("font-size", titleFontSize + "px")
+      .style("font-weight", "600")
+      .style("font-family", "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif")
+      .style("letter-spacing", "0.1px")
+      .style("text-rendering", "optimizeLegibility")
       .text(root.data.name.length > 15 ? root.data.name.substring(0, 12) + "..." : root.data.name);
 
+    // Subtitle with subtle styling
     g.append("text")
       .attr("text-anchor", "middle")
-      .attr("dy", "1.3em")
-      .style("fill", isDark ? "#a0aec0" : "#4a5568")
-      .style("font-size", Math.min(12, centerRadius / 4) + "px")
+      .attr("dy", "1.2em")
+      .style("fill", isDark ? "#a0aec0" : "#718096")
+      .style("font-size", subtitleFontSize + "px")
       .style("font-weight", "500")
-      .style("font-family", "'Inter', 'Arial', sans-serif")
-      .style("text-shadow", isDark ? "0 1px 2px rgba(0,0,0,0.3)" : "0 1px 2px rgba(255,255,255,0.5)")
+      .style("font-family", "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif")
+      .style("letter-spacing", "0.05px")
+      .style("text-rendering", "optimizeLegibility")
+      .style("opacity", 0.9)
       .text(`${(root.value || 0).toLocaleString()} apps`);
 
 
@@ -600,15 +522,17 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
     svg.classed("sunburst-view", false)
        .style("background", "transparent"); // Clear any background gradients
 
-    const width = 1400;
-    const height = 900;
-    const margin = { top: 20, right: 120, bottom: 30, left: 120 };
+    const width = 1800;
+    const height = 1200;
+    const margin = { top: 40, right: 200, bottom: 40, left: 200 };
 
     // Find max count for color scaling
     const maxCount = findMaxAppCount(data);
 
-    // Create tree layout
-    const treemap = d3.tree<TreeNode>().size([height - margin.top - margin.bottom, width - margin.left - margin.right]);
+    // Create tree layout with increased spacing
+    const treemap = d3.tree<TreeNode>()
+      .size([height - margin.top - margin.bottom, width - margin.left - margin.right])
+      .nodeSize([80, 300]); // [height, width] - increases spacing between nodes
     
     // Create hierarchy
     const root = d3.hierarchy<TreeNode>(data);
@@ -673,38 +597,38 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
         hideTooltip();
       });
 
-    // Add labels with better positioning
+    // Add labels with improved positioning for better readability
     node.append("text")
       .attr("dy", ".35em")
-      .attr("x", d => d.children ? -35 : 35)
+      .attr("x", d => d.children ? -50 : 50)
       .style("text-anchor", d => d.children ? "end" : "start")
       .style("fill", isDark ? "#fff" : "#333")
-      .style("font-size", "11px")
+      .style("font-size", "12px")
       .style("font-weight", "600")
       .text(d => d.data.name)
       .each(function(d) {
-        // Wrap long text
+        // Wrap long text with more space
         const text = d3.select(this);
         const words = d.data.name.split(/\s+/).reverse();
         let word: string | undefined;
         let line: string[] = [];
         let lineNumber = 0;
-        const lineHeight = 1.1;
+        const lineHeight = 1.2;
         const y = text.attr("y");
         const dy = parseFloat(text.attr("dy"));
         let tspan = text.text(null).append("tspan")
-          .attr("x", d.children ? -35 : 35)
+          .attr("x", d.children ? -50 : 50)
           .attr("y", y).attr("dy", dy + "em");
         
         while (word = words.pop()) {
           line.push(word);
           tspan.text(line.join(" "));
-          if ((tspan.node()?.getComputedTextLength() || 0) > 120) {
+          if ((tspan.node()?.getComputedTextLength() || 0) > 180) {
             line.pop();
             tspan.text(line.join(" "));
             line = [word];
             tspan = text.append("tspan")
-              .attr("x", d.children ? -35 : 35)
+              .attr("x", d.children ? -50 : 50)
               .attr("y", y)
               .attr("dy", ++lineNumber * lineHeight + dy + "em")
               .text(word);
@@ -712,28 +636,33 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
         }
       });
 
-    // Add app count badges
+    // Add app count badges with better positioning
     node.filter(d => d.data.appCount > 0)
       .append("rect")
-      .attr("x", 20)
-      .attr("y", -20)
-      .attr("width", d => Math.max(30, d.data.appCount.toString().length * 8))
-      .attr("height", 16)
-      .attr("rx", 8)
+      .attr("x", 30)
+      .attr("y", -25)
+      .attr("width", d => Math.max(35, d.data.appCount.toString().length * 9))
+      .attr("height", 18)
+      .attr("rx", 9)
       .style("fill", "#ff9800")
       .style("stroke", "#fff")
-      .style("stroke-width", "1px");
+      .style("stroke-width", "1.5px");
 
     node.filter(d => d.data.appCount > 0)
       .append("text")
-      .attr("x", d => 20 + Math.max(30, d.data.appCount.toString().length * 8) / 2)
-      .attr("y", -12)
+      .attr("x", d => 30 + Math.max(35, d.data.appCount.toString().length * 9) / 2)
+      .attr("y", -16)
       .attr("dy", ".35em")
       .style("text-anchor", "middle")
       .style("fill", "white")
-      .style("font-size", "10px")
+      .style("font-size", "11px")
       .style("font-weight", "bold")
       .text(d => d.data.appCount.toLocaleString());
+
+    // Auto-focus functionality disabled for now (keeping prop for future use)
+    // if (focusNodeId && viewType === 'tree') {
+    //   // Focus node logic would go here
+    // }
   };
 
   const handleNodeClick = (event: any, d: d3.HierarchyPointNode<TreeNode>) => {
@@ -777,7 +706,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [data, isDark, viewType]);
+  }, [data, isDark, viewType, focusNodeId]);
 
   return (
     <Box>
@@ -868,82 +797,214 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
         TransitionProps={{ timeout: 300 }}
         PaperProps={{
           sx: {
-            borderRadius: 3,
-            maxHeight: '80vh'
+            borderRadius: 2,
+            maxHeight: '80vh',
+            boxShadow: isDark
+              ? '0 12px 40px rgba(0,0,0,0.35)'
+              : '0 12px 30px rgba(0,0,0,0.10)',
+            bgcolor: isDark ? 'rgba(20,20,22,0.85)' : 'rgba(255,255,255,0.9)',
+            border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
+            backdropFilter: 'blur(10px) saturate(120%)',
           }
         }}
       >
         <DialogTitle sx={{ 
-          bgcolor: 'primary.main', 
-          color: 'white', 
+          bgcolor: 'transparent',
+          color: isDark ? '#cbd5e0' : '#334155',
           display: 'flex', 
           alignItems: 'center', 
-          gap: 2
+          justifyContent: 'space-between',
+          pb: 1.5,
+          pt: 2,
+          px: 3,
+          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
         }}>
-          <InfoOutlined />
-          Node Information
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+            <Box sx={{
+              width: 28,
+              height: 28,
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: isDark
+                ? 'linear-gradient(135deg, rgba(239,68,68,0.25), rgba(255,255,255,0.06))'
+                : 'linear-gradient(135deg, rgba(252,165,165,0.6), rgba(148,163,184,0.35))',
+              border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.06)',
+            }}>
+              <InfoOutlined sx={{ fontSize: 16, color: isDark ? '#fca5a5' : '#b91c1c' }} />
+            </Box>
+            <Typography variant="h6" sx={{ 
+              fontWeight: 500,
+              fontSize: '0.95rem',
+              color: isDark ? '#e2e8f0' : '#1f2937',
+              letterSpacing: 0.1,
+              opacity: 0.9
+            }}>
+              Node Information
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={() => setDialogOpen(false)}
+            sx={{
+              color: isDark ? '#a0aec0' : '#64748b',
+              '&:hover': {
+                bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
+                color: isDark ? '#e2e8f0' : '#334155',
+              },
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <CloseIcon sx={{ fontSize: 20 }} />
+          </IconButton>
         </DialogTitle>
+        <Box sx={{
+          height: 2,
+          mx: 3,
+          borderRadius: 1,
+          background: isDark
+            ? 'linear-gradient(90deg, rgba(239,68,68,0.35), rgba(255,255,255,0.06), rgba(239,68,68,0.35))'
+            : 'linear-gradient(90deg, rgba(248,113,113,0.6), rgba(100,116,139,0.2), rgba(248,113,113,0.6))',
+          opacity: 0.6,
+        }} />
         
-        <DialogContent sx={{ p: 3 }}>
+        <DialogContent sx={{ p: 3, pt: 2 }}>
           {selectedNode && (
             <Box>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                {selectedNode.name}
-              </Typography>
+              {/* Node Name */}
+              <Fade in timeout={350}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    mb: 2.5, 
+                    fontWeight: 500,
+                    color: isDark ? '#e5e7eb' : '#0f172a',
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                    fontSize: '1.02rem',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {selectedNode.name}
+                </Typography>
+              </Fade>
             
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                    AI Applications Count:
-                  </Typography>
-                  <Typography variant="h4" sx={{ color: 'secondary.main', fontWeight: 'bold' }}>
-                    {selectedNode.appCount.toLocaleString()}
-                  </Typography>
-                </Box>
-                      
-                {selectedNode.children && selectedNode.children.length > 0 && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.25 }}>
+                {/* AI Applications Count */}
+                <Fade in timeout={400}>
                   <Box>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                      Child Categories ({selectedNode.children.length}):
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontWeight: 400, 
+                        color: isDark ? '#a0aec0' : '#64748b',
+                        mb: 1.25,
+                        fontSize: '0.78rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        opacity: 0.7
+                      }}
+                    >
+                      AI Applications
                     </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      {selectedNode.children.map((child, index) => (
-                        <Box key={index} sx={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
-                          alignItems: 'center',
-                          p: 1,
-                          bgcolor: 'action.hover',
-                          borderRadius: 1
-                        }}>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {child.name}
-                          </Typography>
-                          <Chip 
-                            label={child.appCount.toLocaleString()} 
-                            size="small" 
-                            color="primary" 
-                            variant="outlined" 
-                          />
-                        </Box>
-                      ))}
+                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                      <Typography 
+                        variant="h4" 
+                        sx={{ 
+                          color: isDark ? '#e2e8f0' : '#0f172a',
+                          fontWeight: 500,
+                          fontSize: '1.35rem',
+                          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                        }}
+                      >
+                        {selectedNode.appCount.toLocaleString()}
+                      </Typography>
+                      <Typography 
+                        variant="caption"
+                        sx={{
+                          color: isDark ? 'rgba(252,165,165,0.9)' : '#b91c1c',
+                          fontWeight: 600,
+                          letterSpacing: '0.02em'
+                        }}
+                      >
+                        apps
+                      </Typography>
                     </Box>
                   </Box>
+                </Fade>
+                      
+                {/* Child Categories */}
+                {selectedNode.children && selectedNode.children.length > 0 && (
+                  <Fade in timeout={450}>
+                    <Box>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          fontWeight: 500, 
+                          color: isDark ? '#a0aec0' : '#64748b',
+                          mb: 1.5,
+                          fontSize: '0.84rem',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em'
+                        }}
+                      >
+                        Child Categories ({selectedNode.children.length})
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {selectedNode.children.map((child, index) => (
+                          <Box key={index} onClick={() => setSelectedNode(child)} sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            p: 1.5,
+                            px: 2,
+                            bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                            borderRadius: 1.25,
+                            border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.05)',
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
+                              transform: 'translateX(2px)'
+                            },
+                            cursor: 'pointer'
+                          }}>
+                            <Typography 
+                              variant="body2" 
+                              sx={{ 
+                                fontWeight: 500,
+                                color: isDark ? '#e5e7eb' : '#1f2937',
+                                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif'
+                              }}
+                            >
+                              {child.name}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  px: 1.25,
+                                  py: 0.25,
+                                  borderRadius: 1,
+                                  bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
+                                  color: isDark ? '#ffffff' : '#0f172a',
+                                  fontWeight: 600,
+                                  fontSize: '0.72rem',
+                                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif'
+                                }}
+                              >
+                                {child.appCount.toLocaleString()}
+                              </Typography>
+                              <ChevronRight sx={{ fontSize: 16, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(15,23,42,0.35)' }} />
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  </Fade>
                 )}
               </Box>
             </Box>
           )}
         </DialogContent>
-        
-        <DialogActions sx={{ p: 3 }}>
-          <Button 
-            onClick={() => setDialogOpen(false)} 
-            variant="contained" 
-            color="primary"
-          >
-            Close
-          </Button>
-        </DialogActions>
       </Dialog>
     </Box>
   );
