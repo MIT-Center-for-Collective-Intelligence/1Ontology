@@ -767,6 +767,26 @@ export const createNewNode = (
   skillsFuture: boolean,
   skillsFutureApp?: string,
 ): INode => {
+  const updatedProperties: { [key: string]: any } = {};
+  const updatedInheritance: IInheritance = { ...inheritance };
+
+  // Process each property from parent
+  for (const propertyName in parentNodeData.properties) {
+    if (shouldNeverInheritValue(parentNodeData.inheritance, propertyName)) {
+      // Copy property structure but use default value instead of parent's value
+      updatedProperties[propertyName] = getDefaultValueForProperty(
+        parentNodeData.propertyType[propertyName],
+      );
+      // Ensure inheritance ref is null for neverInherit properties
+      if (updatedInheritance[propertyName]) {
+        updatedInheritance[propertyName].ref = null;
+      }
+    } else {
+      // Normal inheritance - copy the actual value
+      updatedProperties[propertyName] = parentNodeData.properties[propertyName];
+    }
+  }
+
   const newNode: any = {
     ...parentNodeData,
     contributors: [],
@@ -776,7 +796,7 @@ export const createNewNode = (
     unclassified: false,
     id: newNodeRefId,
     title: newTitle,
-    inheritance,
+    inheritance: updatedInheritance,
     specializations: [
       {
         collectionName: "main",
@@ -798,7 +818,7 @@ export const createNewNode = (
     root: parentNodeData.root || "",
     numberOfGeneralizations: (parentNodeData.numberOfGeneralizations || 0) + 1,
     properties: {
-      ...parentNodeData.properties,
+      ...updatedProperties,
       isPartOf: [{ collectionName: "main", nodes: [] }],
     },
     propertyType: { ...parentNodeData.propertyType },
@@ -1165,7 +1185,14 @@ export const updateLinksForInheritanceSpecializations = async (
           addedProperties.push({
             propertyName: property,
             propertyType: generalizationData.propertyType[property],
-            propertyValue: generalizationData.properties[property],
+            propertyValue: shouldNeverInheritValue(
+              generalizationData.inheritance,
+              property,
+            )
+              ? getDefaultValueForProperty(
+                  generalizationData.propertyType[property],
+                )
+              : generalizationData.properties[property],
           });
         }
       }
@@ -1302,7 +1329,14 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
             addedProperties.push({
               propertyName: property,
               propertyType: nextGeneralizationData.propertyType[property],
-              propertyValue: nextGeneralizationData.properties[property],
+              propertyValue: shouldNeverInheritValue(
+                nextGeneralizationData.inheritance,
+                property,
+              )
+                ? getDefaultValueForProperty(
+                    nextGeneralizationData.propertyType[property],
+                  )
+                : nextGeneralizationData.properties[property],
             });
           }
         }
@@ -1702,4 +1736,27 @@ export const diffCollections = (
   }
 
   return result;
+};
+
+export const shouldNeverInheritValue = (
+  inheritance: IInheritance,
+  propertyName: string,
+): boolean => {
+  return inheritance[propertyName]?.inheritanceType === "neverInherit";
+};
+
+// Helper function to get default value for a property based on its type
+export const getDefaultValueForProperty = (propertyType: string): any => {
+  switch (propertyType) {
+    case "string":
+      return "";
+    case "string-array":
+      return [];
+    case "string-select":
+      return "";
+    case "numeric":
+      return 0;
+    default:
+      return "";
+  }
 };
