@@ -25,6 +25,11 @@ const SelectInheritance = ({
   nodes: { [nodeId: string]: INode };
   enableEdit: boolean;
 }) => {
+  // Don't render if inheritanceType is neverInherit
+  if (currentVisibleNode.inheritance[property]?.inheritanceType === "neverInherit") {
+    return null;
+  }
+
   const db = getFirestore();
   const [generalizations, setGeneralizations] = useState<
     { id: string; title: string }[]
