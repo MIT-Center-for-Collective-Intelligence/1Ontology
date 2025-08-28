@@ -48,7 +48,7 @@ import {
   DropResult,
 } from "@hello-pangea/dnd";
 import { LoadingButton } from "@mui/lab";
-import SelectModelModal from "../Models/SelectModel";
+import SelectModel from "../Models/SelectModel";
 
 interface LoadMoreNode extends ILinkNode {
   id: string;
@@ -123,6 +123,8 @@ const CollectionStructure = ({
   handleLoadMore,
   loadingStates = new Set(),
   skillsFutureApp,
+  unlinkNodeRelation,
+  linkNodeRelation,
 }: {
   model?: boolean;
   locked: boolean;
@@ -192,6 +194,8 @@ const CollectionStructure = ({
   handleLoadMore?: (loadMoreNodeId: string, collectionName: string) => void;
   loadingStates?: Set<string>;
   skillsFutureApp: string;
+  unlinkNodeRelation: any;
+  linkNodeRelation: any;
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -410,8 +414,9 @@ const CollectionStructure = ({
         const { droppableId: destinationCollection } = destination; // The destination collection
         const sourceCollectionIndex = Number(sourceCollection);
         const destinationCollectionIndex = Number(destinationCollection);
-        if (model) {
-          setEditableProperty((prev: ICollection[]) => {
+
+        setEditableProperty((prev: ICollection[]) => {
+          if (prev.length > 0) {
             const nodeIdx = prev[sourceCollectionIndex].nodes.findIndex(
               (link: ILinkNode) => link.id === draggableId,
             );
@@ -426,11 +431,12 @@ const CollectionStructure = ({
               0,
               moveValue,
             );
-            return prev;
-          });
-          setModifiedOrder(true);
-          return;
-        }
+          }
+
+          return prev;
+        });
+        setModifiedOrder(true);
+
         // Ensure defined source and destination categories
         if (sourceCollection && destinationCollection && propertyValue) {
           // Ensure nodeData exists
@@ -1375,6 +1381,9 @@ const CollectionStructure = ({
                                                 setEditableProperty={
                                                   setEditableProperty
                                                 }
+                                                unlinkNodeRelation={
+                                                  unlinkNodeRelation
+                                                }
                                               />
                                             )}
                                           </Draggable>
@@ -1397,7 +1406,7 @@ const CollectionStructure = ({
                                   )}
 
                                   {/* Display inheritanceParts from the referenced generalization when inheritance.parts.ref exists */}
-                                  {property === "parts" &&
+                                  {/* {property === "parts" &&
                                     currentVisibleNode.inheritance?.parts
                                       ?.ref &&
                                     nodes[
@@ -1474,13 +1483,16 @@ const CollectionStructure = ({
                                             setEditableProperty={
                                               setEditableProperty
                                             }
+                                            unlinkNodeRelation={
+                                              unlinkNodeRelation
+                                            }
                                           />
                                         );
                                       },
-                                    )}
+                                    )} */}
 
                                   {/* Display inherited parts from inheritanceParts only if inheritance.parts.ref is null */}
-                                  {property === "parts" &&
+                                  {/*   {property === "parts" &&
                                     !currentVisibleNode.inheritance?.parts
                                       ?.ref &&
                                     nodes[currentVisibleNode.id]
@@ -1555,10 +1567,13 @@ const CollectionStructure = ({
                                             setEditableProperty={
                                               setEditableProperty
                                             }
+                                            unlinkNodeRelation={
+                                              unlinkNodeRelation
+                                            }
                                           />
                                         );
                                       },
-                                    )}
+                                    )} */}
                                   {provided.placeholder}
                                 </Box>
                               )}
@@ -1570,7 +1585,7 @@ const CollectionStructure = ({
                             !!selectedProperty &&
                             selectedCollection ===
                               collection.collectionName && (
-                              <SelectModelModal
+                              <SelectModel
                                 onSave={onSave}
                                 currentVisibleNode={currentVisibleNode}
                                 nodes={nodes}
@@ -1622,6 +1637,8 @@ const CollectionStructure = ({
                                 skillsFuture={skillsFuture}
                                 saveNewSpecialization={saveNewSpecialization}
                                 skillsFutureApp={skillsFutureApp}
+                                linkNodeRelation={linkNodeRelation}
+                                unlinkNodeRelation={unlinkNodeRelation}
                               />
                             )}
                           {property === "specializations" &&
@@ -1648,7 +1665,13 @@ const CollectionStructure = ({
                                 fullWidth
                                 variant="outlined"
                               >
-                                <AddIcon />
+                                <AddIcon
+                                  sx={{
+                                    borderRadius: "50%",
+                                    border: "1px solid orange",
+                                    mr: "5px",
+                                  }}
+                                />
 
                                 {`Add ${capitalizeFirstLetter(
                                   DISPLAY[property] || property,

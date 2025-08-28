@@ -61,7 +61,7 @@ const QuillEditor = ({
           },
         },
         placeholder: `${capitalizeFirstLetter(
-          DISPLAY[property] ? DISPLAY[property] : property
+          DISPLAY[property] ? DISPLAY[property] : property,
         )}...`,
         theme: "snow",
         formats: [],
@@ -100,24 +100,24 @@ const QuillEditor = ({
         }
       };
     }
-  }, [nodeId]);
+  }, [nodeId, text]);
 
   return (
     <>
-    <Box
-      ref={editorContainerRef}
-      sx={{
-        borderBottomRightRadius: "20px",
-        borderBottomLeftRadius: "20px",
-        minHeight: "70px",
-        border: "none !important",
+      <Box
+        ref={editorContainerRef}
+        sx={{
+          borderBottomRightRadius: "20px",
+          borderBottomLeftRadius: "20px",
+          minHeight: "70px",
+          border: "none !important",
           fontSize:
             property === "title" ? "24px !important" : "18px !important",
-        "& .ql-editor.ql-blank::before": {
-          color: "gray !important",
-        },
-      }}
-    />
+          "& .ql-editor.ql-blank::before": {
+            color: "gray !important",
+          },
+        }}
+      />
     </>
   );
 };

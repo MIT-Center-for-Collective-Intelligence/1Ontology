@@ -31,7 +31,7 @@ const GEMINI_MODELS = [
   "gemini-2.0-flash-exp",
   "gemini-2.0-flash-thinking-exp",
   "gemini-exp-1206",
-  "gemini-2.5-pro-exp-03-25",
+  "gemini-2.5-pro",
 ];
 
 type GeminiModels =

@@ -27,3 +27,5 @@ gcloud run deploy $IMAGE_NAME \
    --region $REGION \
    --allow-unauthenticated \
    --timeout $TIMEOUT
+   
+gcloud artifacts docker images delete $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME:latest --quiet

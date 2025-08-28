@@ -59,12 +59,12 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         setSelection(range);
       }
     });
-    
+
     if (previousModeRef.current && !mode.isPreview) {
       setTimeout(() => {
         if (editorRef.current) {
           editorRef.current.focus();
-          
+
           // Restore previous selection if it exists, otherwise select end of content
           if (selection) {
             editorRef.current.setSelection(selection.index, selection.length);
@@ -72,7 +72,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             const length = editorRef.current.getText().length;
             editorRef.current.setSelection(length, 0);
           }
-          
+
           // Update selection after a brief delay
           setTimeout(() => {
             if (editorRef.current) {
@@ -146,7 +146,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             )}
           </Box>
 
-          {content.property !== "title" && (
+          {content.property !== "title" && !!content.text.trim() && (
             <>
               <Box>
                 <Divider

@@ -22,12 +22,6 @@ const embeddingFunction = new OpenAIEmbeddingFunction({
   openai_api_key: process.env.MIT_CCI_API_KEY,
   openai_model: "text-embedding-3-large",
 });
-const cors = Cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  optionsSuccessStatus: 200,
-});
 
 const runMiddleware = (req: any, res: any, fn: any) => {
   return new Promise((resolve, reject) => {
@@ -42,9 +36,10 @@ const runMiddleware = (req: any, res: any, fn: any) => {
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { query, skillsFuture, appName } = req.body;
+    const { query, skillsFuture, appName, user } = req.body.data;
+    const { uname } = user?.userData;
 
-/*     await runMiddleware(req, res, cors); */
+    /*     await runMiddleware(req, res, cors); */
 
     let collectionName = "";
     if (appName) {
@@ -93,4 +88,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default handler;
+export default fbAuth(handler);

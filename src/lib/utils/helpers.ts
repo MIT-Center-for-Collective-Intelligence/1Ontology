@@ -21,6 +21,7 @@ import {
   getDocs,
   where,
   query,
+  FieldValue,
 } from "firebase/firestore";
 import { LOGS, NODES, NODES_LOGS, USERS } from "../firestoreClient/collections";
 import { NodeChange } from "@components/types/INode";
@@ -294,6 +295,7 @@ interface UpdateInheritanceParams {
   nodeId: string;
   updatedProperties: string[];
   deletedProperties?: string[];
+  editedProperties?: { previousValue: string; newValue: string }[];
   db: any;
 }
 // Function to handle inheritance
@@ -301,12 +303,15 @@ export const updateInheritance = async ({
   nodeId,
   updatedProperties,
   deletedProperties = [],
+  editedProperties = [],
   db,
 }: UpdateInheritanceParams): Promise<void> => {
   try {
     let batch: any = writeBatch(db);
-
     const nodeRef = doc(collection(db, NODES), nodeId);
+    const nodeDoc = await getDoc(nodeRef);
+    const nodeData = nodeDoc.data();
+
     let ObjectUpdates = {};
     for (let property of updatedProperties) {
       ObjectUpdates = {
@@ -319,17 +324,21 @@ export const updateInheritance = async ({
         ...ObjectUpdates,
         [`inheritance.${property}`]: deleteField(),
         [`properties.${property}`]: deleteField(),
+        [`propertyType.${property}`]: deleteField(),
+        [`propertyType.${property}`]: deleteField(),
+        [`propertyOf.${property}`]: deleteField(),
       };
     }
+
     updateDoc(nodeRef, ObjectUpdates);
-    const nodeDoc = await getDoc(nodeRef);
-    const nodeData = nodeDoc.data();
+
     // Recursively update specializations
     if (nodeData) {
       batch = await recursivelyUpdateSpecializations({
         nodeId: nodeId,
         updatedProperties,
         deletedProperties,
+        editedProperties,
         addedProperties: [],
         batch,
         inheritanceType: nodeData.inheritance,
@@ -366,6 +375,7 @@ const recursivelyUpdateSpecializations = async ({
   nodeId,
   updatedProperties,
   deletedProperties,
+  editedProperties = [],
   addedProperties,
   batch,
   inheritanceType,
@@ -376,6 +386,7 @@ const recursivelyUpdateSpecializations = async ({
   nodeId: string;
   updatedProperties: string[];
   deletedProperties: string[];
+  editedProperties?: { previousValue: string; newValue: string }[];
   addedProperties: {
     propertyName: string;
     propertyType: string;
@@ -388,82 +399,74 @@ const recursivelyUpdateSpecializations = async ({
   nestedCall?: boolean;
 }): Promise<any> => {
   // Fetch node data from Firestore
+  try {
+    const nodeRef = doc(collection(db, NODES), nodeId);
+    const nodeSnapshot = await getDoc(nodeRef);
+    const nodeData = nodeSnapshot.data() as INode;
+    const inheritance: IInheritance = nodeData.inheritance;
+    if (nestedCall) {
+      if (!nodeData) return;
 
-  const nodeRef = doc(collection(db, NODES), nodeId);
-  const nodeSnapshot = await getDoc(nodeRef);
-  const nodeData = nodeSnapshot.data() as INode;
-  const inheritance: IInheritance = nodeData.inheritance;
-  if (nestedCall) {
-    if (!nodeData) return;
+      // Get the inheritance type for the updated property
+      updatedProperties = updatedProperties.filter((p, index) => {
+        if (!inheritanceType[p]) {
+          inheritanceType[p] = {
+            ref: null,
+            inheritanceType: "inheritUnlessAlreadyOverRidden",
+          };
+        }
+        if (inheritanceType[p].inheritanceType === "neverInherit") {
+          return false;
+        }
 
-    // Get the inheritance type for the updated property
-    updatedProperties = updatedProperties.filter((p, index) => {
-      if (inheritanceType[p].inheritanceType === "neverInherit") {
-        return false;
-      }
+        // Handling for parts property with broken inheritance
+        if (p === "parts" && inheritance.parts?.ref === null) {
+          // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
+          return false;
+        }
 
-      // Handling for parts property with broken inheritance
-      if (p === "parts" && inheritance.parts?.ref === null) {
-        // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
-        return false;
-      }
+        const canInherit =
+          (inheritanceType[p].inheritanceType ===
+            "inheritUnlessAlreadyOverRidden" &&
+            inheritance[p].ref !== null) ||
+          inheritanceType[p].inheritanceType === "alwaysInherit";
 
-      const canInherit =
-        (inheritanceType[p].inheritanceType ===
-          "inheritUnlessAlreadyOverRidden" &&
-          inheritance[p].ref !== null) ||
-        inheritanceType[p].inheritanceType === "alwaysInherit";
+        return canInherit;
+      });
 
-      return canInherit;
-    });
+      batch = await updateProperty(
+        batch,
+        nodeRef,
+        updatedProperties,
+        deletedProperties,
+        editedProperties,
+        addedProperties,
+        generalizationId,
+        nodeData,
+        db,
+      );
+    }
 
-    deletedProperties = deletedProperties.filter((p, index) => {
-      if (inheritanceType[p].inheritanceType === "neverInherit") {
-        return false;
-      }
+    let specializations = nodeData.specializations.flatMap((n) => n.nodes);
 
-      // Handling for parts property with broken inheritance
-      if (p === "parts" && inheritance.parts?.ref === null) {
-        // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
-        return false;
-      }
-
-      const canInherit =
-        (inheritanceType[p].inheritanceType ===
-          "inheritUnlessAlreadyOverRidden" &&
-          !!inheritance[p]?.ref) ||
-        inheritanceType[p].inheritanceType === "alwaysInherit";
-
-      return canInherit;
-    });
-
-    batch = await updateProperty(
-      batch,
-      nodeRef,
-      updatedProperties,
-      deletedProperties,
-      addedProperties,
-      generalizationId,
-      db,
-    );
+    for (const specialization of specializations) {
+      batch = await recursivelyUpdateSpecializations({
+        nodeId: specialization.id,
+        updatedProperties,
+        deletedProperties,
+        addedProperties,
+        editedProperties,
+        batch,
+        nestedCall: true,
+        inheritanceType: inheritance,
+        generalizationId,
+        db,
+      });
+    }
+    return batch;
+  } catch (error) {
+    console.error(error);
   }
-
-  let specializations = nodeData.specializations.flatMap((n) => n.nodes);
-
-  for (const specialization of specializations) {
-    batch = await recursivelyUpdateSpecializations({
-      nodeId: specialization.id,
-      updatedProperties,
-      deletedProperties,
-      addedProperties,
-      batch,
-      nestedCall: true,
-      inheritanceType: inheritance,
-      generalizationId,
-      db,
-    });
-  }
-  return batch;
 };
 
 // Function to update a property in Firestore using a batch commit
@@ -472,12 +475,14 @@ const updateProperty = async (
   nodeRef: DocumentReference,
   updatedProperties: string[],
   deletedProperties: string[],
+  editedProperties: { previousValue: string; newValue: string }[],
   addedProperties: {
     propertyName: string;
     propertyType: string;
     propertyValue: any;
   }[],
   inheritanceRef: string | null,
+  nodeData: INode,
   db: any,
 ) => {
   let ObjectUpdates = {};
@@ -512,11 +517,55 @@ const updateProperty = async (
       };
     }
   }
+  let updatedEditedProperty = false;
+  for (let { previousValue, newValue } of editedProperties) {
+    if (!nodeData.properties.hasOwnProperty(previousValue)) {
+      continue;
+    }
+    updatedEditedProperty = true;
+    const propertyValue = nodeData.properties[previousValue];
+    const propertyType = nodeData.propertyType[previousValue];
+    const inheritanceValue = nodeData.inheritance[previousValue];
+
+    ObjectUpdates = {
+      ...ObjectUpdates,
+      [`propertyType.${previousValue}`]: deleteField(),
+      [`properties.${previousValue}`]: deleteField(),
+      [`inheritance.${previousValue}`]: deleteField(),
+      /* new values */
+      [`propertyType.${newValue}`]: propertyType,
+      [`properties.${newValue}`]: propertyValue,
+      [`inheritance.${newValue}`]: inheritanceValue,
+    };
+    if (nodeData.textValue && nodeData.textValue[previousValue]) {
+      const comments = nodeData.textValue[previousValue];
+      ObjectUpdates = {
+        ...ObjectUpdates,
+        [`textValue.${previousValue}`]: deleteField(),
+        [`textValue.${newValue}`]: comments,
+      };
+    }
+    if (nodeData.propertyOf && nodeData.propertyOf[previousValue]) {
+      const propertyOfValue = nodeData.propertyOf[previousValue];
+      ObjectUpdates = {
+        ...ObjectUpdates,
+        [`propertyOf.${previousValue}`]: deleteField(),
+        [`propertyOf.${newValue}`]: propertyOfValue,
+      };
+    }
+  }
   if (batch._committed) {
     batch = writeBatch(db);
   }
-  batch.update(nodeRef, ObjectUpdates);
-  if (batch._mutations.length > 400) {
+  if (
+    updatedEditedProperty ||
+    updatedProperties.length > 0 ||
+    addedProperties.length > 0 ||
+    deletedProperties.length > 0
+  ) {
+    batch.update(nodeRef, ObjectUpdates);
+  }
+  if (batch._mutations.length > 100) {
     await batch.commit();
     batch = writeBatch(db);
   }
@@ -586,7 +635,9 @@ export const getChangeDescription = (
           ? "Specialization"
           : modifiedProperty === "generalizations"
             ? "Generalization"
-            : capitalizeFirstLetter(modifiedProperty || "")
+            : modifiedProperty === "parts"
+              ? "Part"
+              : capitalizeFirstLetter(modifiedProperty || "")
       } in:`;
     case "add elements":
       return `Added "${displayText}" Under:`;
@@ -614,6 +665,12 @@ export const getChangeDescription = (
       return `Added new "Image" in:`;
     case "remove images":
       return `Removed "Image" in:`;
+    case "edit property":
+      return `Changed the name of a property in:`;
+    case "change select-string":
+      return "Updated Most Efficiently Performed By in:";
+    case "sort collections":
+      return "Reordered collections in:";
     default:
       return `Made an unknown change to:`;
   }
@@ -748,8 +805,10 @@ export const createNewNode = (
     nodeType: parentNodeData.nodeType,
     skillsFuture: !!skillsFuture,
     ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+    createdAt: new Date(),
   };
   delete newNode.root;
+  delete newNode.oNetTask;
   if (newNode?.textValue?.specializations) {
     delete newNode.textValue.specializations;
   }
@@ -771,17 +830,24 @@ export const updateSpecializations = (
   const collectionIdx = parentNode.specializations.findIndex(
     (spec) => spec.collectionName === collectionName,
   );
-  if (collectionIdx === -1) {
-    // Create the collection if it doesn't exist
-    parentNode.specializations.push({
-      collectionName,
-      nodes: [{ id: newNodeRefId }],
-    });
-  } else {
-    // Add the new node to the collection if it exists
-    parentNode.specializations[collectionIdx].nodes.push({
-      id: newNodeRefId,
-    });
+
+  const alreadyExistIdx = parentNode.specializations
+    .flatMap((c) => c.nodes)
+    .findIndex((n) => n.id === newNodeRefId);
+
+  if (alreadyExistIdx === -1) {
+    if (collectionIdx === -1) {
+      // Create the collection if it doesn't exist
+      parentNode.specializations.push({
+        collectionName,
+        nodes: [{ id: newNodeRefId }],
+      });
+    } else {
+      // Add the new node to the collection if it exists
+      parentNode.specializations[collectionIdx].nodes.push({
+        id: newNodeRefId,
+      });
+    }
   }
 };
 
@@ -1434,6 +1500,94 @@ export const extractJSON = (text: string) => {
     return { jsonObject: {}, isJSON: false };
   }
 };
+const findLcsNames = (
+  oldValue: ICollection[],
+  newValue: ICollection[],
+): Set<string> => {
+  const oldNames = oldValue.map((c) => c.collectionName);
+  const newNames = newValue.map((c) => c.collectionName);
+  const m = oldNames.length;
+  const n = newNames.length;
+
+  const dp = Array(m + 1)
+    .fill(0)
+    .map(() => Array(n + 1).fill(0));
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (oldNames[i - 1] === newNames[j - 1]) {
+        dp[i][j] = 1 + dp[i - 1][j - 1];
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  const lcs = new Set<string>();
+  let i = m;
+  let j = n;
+  while (i > 0 && j > 0) {
+    if (oldNames[i - 1] === newNames[j - 1]) {
+      lcs.add(oldNames[i - 1]);
+      i--;
+      j--;
+    } else if (dp[i - 1][j] > dp[i][j - 1]) {
+      i--;
+    } else {
+      j--;
+    }
+  }
+  return lcs;
+};
+
+export const diffSortedCollections = (
+  oldValue: ICollection[],
+  newValue: ICollection[],
+): ICollection[] => {
+  const oldOrder = new Map(oldValue.map((c, i) => [c.collectionName, i]));
+  const newMap = new Map(newValue.map((c) => [c.collectionName, c]));
+
+  const lcsNames = findLcsNames(oldValue, newValue);
+
+  let result: ICollection[] = newValue.map((newCol) => {
+    const wasInOld = oldOrder.has(newCol.collectionName);
+    const isStable = lcsNames.has(newCol.collectionName);
+
+    if (isStable) {
+      return { ...newCol };
+    } else if (wasInOld) {
+      return { ...newCol, changeType: "sort", change: "added" };
+    } else {
+      return { ...newCol, change: "added" };
+    }
+  });
+
+  const removedOrMovedItems: { index: number; collection: ICollection }[] = [];
+  oldValue.forEach((oldCol, oldIndex) => {
+    if (!lcsNames.has(oldCol.collectionName)) {
+      const isInNew = newMap.has(oldCol.collectionName);
+      if (isInNew) {
+        removedOrMovedItems.push({
+          index: oldIndex,
+          collection: { ...oldCol, changeType: "sort", change: "removed" },
+        });
+      } else {
+        removedOrMovedItems.push({
+          index: oldIndex,
+          collection: { ...oldCol, change: "removed" },
+        });
+      }
+    }
+  });
+
+  removedOrMovedItems
+    .sort((a, b) => b.index - a.index)
+    .forEach(({ index, collection }) => {
+      result.splice(index, 0, collection);
+    });
+
+  return result;
+};
 
 export const diffCollections = (
   oldValue: ICollection[],
@@ -1446,9 +1600,26 @@ export const diffCollections = (
 
   const allCollectionNames = new Set([...oldMap.keys(), ...newMap.keys()]);
 
+  const oldNodeToCollection = new Map<string, string>();
+  for (const { collectionName, nodes } of oldValue) {
+    for (const node of nodes) {
+      oldNodeToCollection.set(node.id, collectionName);
+    }
+  }
+
+  const newNodeToCollection = new Map<string, string>();
+  for (const { collectionName, nodes } of newValue) {
+    for (const node of nodes) {
+      newNodeToCollection.set(node.id, collectionName);
+    }
+  }
+
   for (const collectionName of allCollectionNames) {
     const oldCollection = oldMap.get(collectionName);
     const newCollection = newMap.get(collectionName);
+
+    const isAddedCollection = !oldCollection && !!newCollection;
+    const isRemovedCollection = !!oldCollection && !newCollection;
 
     const oldNodes = new Map(
       (oldCollection?.nodes || []).map((n) => [n.id, n]),
@@ -1457,25 +1628,78 @@ export const diffCollections = (
       (newCollection?.nodes || []).map((n) => [n.id, n]),
     );
 
-    const nodeIds = new Set([...oldNodes.keys(), ...newNodes.keys()]);
-
-    const mergedNodes: ILinkNode[] = [];
+    const nodeIds = new Set([
+      ...oldNodes.keys(),
+      ...newNodes.keys(),
+    ]) as Set<string>;
+    const mergedNodes: any[] = [];
 
     for (const id of nodeIds) {
-      if (!oldNodes.has(id) && newNodes.has(id)) {
-        const newNode = newNodes.get(id)!;
-        mergedNodes.push({ ...newNode, change: "added" });
-      } else if (oldNodes.has(id) && !newNodes.has(id)) {
-        const oldNode = oldNodes.get(id)!;
-        mergedNodes.push({ ...oldNode, change: "removed" });
+      const inOld = oldNodes.has(id);
+      const inNew = newNodes.has(id);
+      const oldNode = oldNodes.get(id);
+      const newNode = newNodes.get(id);
+
+      const title = newNode?.title ?? oldNode?.title ?? null;
+
+      if (!inOld && inNew) {
+        const originalCollection = oldNodeToCollection.get(id);
+
+        if (originalCollection && originalCollection !== collectionName) {
+          mergedNodes.push({
+            ...newNode,
+            title,
+            change: "added",
+            changeType: "sort",
+          });
+        } else {
+          mergedNodes.push({ ...newNode, title, change: "added" });
+        }
+      } else if (inOld && !inNew) {
+        const newCollectionOfNode = newNodeToCollection.get(id);
+
+        if (newCollectionOfNode && newCollectionOfNode !== collectionName) {
+          mergedNodes.push({
+            ...oldNode,
+            title,
+            change: "removed",
+            changeType: "sort",
+          });
+        } else {
+          mergedNodes.push({ ...oldNode, title, change: "removed" });
+        }
       } else {
-        mergedNodes.push({ id });
+        mergedNodes.push({ id, title });
       }
     }
+    if (newCollection) {
+      const newOrder = newCollection.nodes.map((n) => n.id);
 
-    if (mergedNodes.length > 0) {
-      result.push({ collectionName, nodes: mergedNodes });
+      mergedNodes.sort((a, b) => {
+        const aInNew = newNodes.has(a.id);
+        const bInNew = newNodes.has(b.id);
+
+        if (aInNew && bInNew) {
+          return newOrder.indexOf(a.id) - newOrder.indexOf(b.id);
+        }
+        if (aInNew && !bInNew) return -1;
+        if (!aInNew && bInNew) return 1;
+        return 0;
+      });
     }
+
+    const collectionChange = isAddedCollection
+      ? "added"
+      : isRemovedCollection
+        ? "removed"
+        : undefined;
+
+    result.push({
+      collectionName,
+      nodes: mergedNodes,
+      ...(collectionChange ? { change: collectionChange } : {}),
+    });
   }
+
   return result;
 };

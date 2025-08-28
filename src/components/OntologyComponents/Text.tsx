@@ -7,13 +7,16 @@ import React, {
 } from "react";
 import {
   Box,
+  Button,
   IconButton,
   Paper,
+  Slide,
   Switch,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
+
 import {
   getDoc,
   collection,
@@ -23,6 +26,7 @@ import {
   query,
   where,
   getFirestore,
+  onSnapshot,
 } from "firebase/firestore";
 import * as Y from "yjs";
 import { useTheme } from "@emotion/react";
@@ -53,6 +57,10 @@ import PropertyContributors from "../StructuredProperty/PropertyContributors";
 import EditIcon from "@mui/icons-material/Edit";
 import EditOffIcon from "@mui/icons-material/EditOff";
 import MarkdownEditor from "../Markdown/MarkdownEditor";
+import EditProperty from "../AddPropertyForm/EditProprety";
+import { Post } from "@components/lib/utils/Post";
+import InheritanceDetailsPanel from "../StructuredProperty/InheritanceDetailsPanel";
+// import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ITextProps = {
   currentVisibleNode: INode;
@@ -81,6 +89,9 @@ type ITextProps = {
   setEnableEdit?: any;
   enableEdit: any;
   skillsFutureApp: string;
+  modifyProperty?: Function;
+  deleteProperty?: Function;
+  handleCloseAddLinksModel?: any;
 };
 
 const Text = ({
@@ -109,6 +120,9 @@ const Text = ({
   setEnableEdit,
   enableEdit,
   skillsFutureApp,
+  modifyProperty,
+  deleteProperty,
+  handleCloseAddLinksModel,
 }: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -121,9 +135,10 @@ const Text = ({
   const [autoFocus, setAutoFocus] = useState(false);
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
   const [switchToWebsocket, setSwitchToWebSocket] = useState(true);
-  const [pendingInheritanceMessage, setPendingInheritanceMessage] = useState<any>(null);   // State to hold inheritance message that needs to be sent
+  const [pendingInheritanceMessage, setPendingInheritanceMessage] =
+    useState<any>(null); // State to hold inheritance message that needs to be sent
   // const [isPreviewMode, setIsPreviewMode] = useState(false);
-  
+
   const currentImprovementChange = useMemo(() => {
     if (currentImprovement?.newNode || !currentImprovement) return null;
 
@@ -132,6 +147,39 @@ const Text = ({
     }
     return null;
   }, [currentImprovement]);
+
+  const [editProperty, setEditProperty] = useState("");
+  const [newPropertyValue, setNewPropertyValue] = useState("");
+  const [aiPeer, setAiPeer] = useState({ on: false, waiting: false });
+
+  useEffect(() => {
+    if (
+      property !== "title" ||
+      (user?.uname !== "1man" && user?.uname !== "ouhrac")
+    ) {
+      return;
+    }
+    const usersQuery = query(
+      collection(db, "aiPeerLogs"),
+      where("__name__", "==", "1man"),
+    );
+    const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+      setAiPeer(() => {
+        const change = snapshot.docChanges()[0];
+        if (change) {
+          const doc = change.doc;
+          const data = doc.data();
+          return {
+            on: data?.aiPeer === "started",
+            waiting: !!data?.waitingAIPeer,
+          };
+        }
+        return { on: false, waiting: false };
+      });
+    });
+
+    return () => unsubscribe();
+  }, [nodes]);
 
   // // Maintain focus after inheritance change
   // useEffect(() => {
@@ -146,42 +194,50 @@ const Text = ({
   }, [currentVisibleNode]);
 
   // Handler for inheritance changes from SelectInheritance
-  const handleInheritanceChange = useCallback((inheritanceProperty: string, newInheritanceRef: string) => {
-    // Only process if it's for this property
-    if (inheritanceProperty === property) {
-      
-      const inheritanceMessage = {
-        type: 'inheritance-restored',
-        nodeId: currentVisibleNode.id,
-        property: inheritanceProperty,
-        newInheritanceRef: newInheritanceRef,
-        timestamp: Date.now()
-      };
-      
-      // Return the message for SelectInheritance
-      return inheritanceMessage;
-    }
-    return null;
-  }, [currentVisibleNode.id, property]);
+  const handleInheritanceChange = useCallback(
+    (inheritanceProperty: string, newInheritanceRef: string) => {
+      // Only process if it's for this property
+      if (inheritanceProperty === property) {
+        const inheritanceMessage = {
+          type: "inheritance-restored",
+          nodeId: currentVisibleNode.id,
+          property: inheritanceProperty,
+          newInheritanceRef: newInheritanceRef,
+          timestamp: Date.now(),
+        };
+
+        // Return the message for SelectInheritance
+        return inheritanceMessage;
+      }
+      return null;
+    },
+    [currentVisibleNode.id, property],
+  );
 
   // Function to trigger inheritance message sending
-  const triggerInheritanceSend = useCallback((inheritanceProperty: string, newInheritanceRef: string) => {
-    const message = handleInheritanceChange(inheritanceProperty, newInheritanceRef);
-    if (message) {
-      setPendingInheritanceMessage(message);
-      
-      // Clear the message after a short delay
-      setTimeout(() => {
-        setPendingInheritanceMessage(null);
-      }, 2000);
-    }
-  }, [handleInheritanceChange]);
+  const triggerInheritanceSend = useCallback(
+    (inheritanceProperty: string, newInheritanceRef: string) => {
+      const message = handleInheritanceChange(
+        inheritanceProperty,
+        newInheritanceRef,
+      );
+      if (message) {
+        setPendingInheritanceMessage(message);
+
+        // Clear the message after a short delay
+        setTimeout(() => {
+          setPendingInheritanceMessage(null);
+        }, 2000);
+      }
+    },
+    [handleInheritanceChange],
+  );
 
   const saveChangeHistory = useCallback(
-    (previousValue: string, newValue: string) => {
-      if (!user?.uname) return;
+    async (previousValue: string, newValue: string, nodeId: string) => {
+      if (!user?.uname || previousValue.trim() === newValue.trim()) return;
       saveNewChangeLog(db, {
-        nodeId: currentVisibleNode?.id,
+        nodeId,
         modifiedBy: user.uname,
         modifiedProperty: property,
         previousValue: previousValue,
@@ -192,8 +248,12 @@ const Text = ({
         skillsFuture,
         ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
       });
+      await Post("/triggerChroma", {
+        nodeId: nodeId,
+        updatedShortIds: property === "title" || property === "description",
+      });
     },
-    [currentVisibleNode?.id, db, property, user],
+    [db, property, user],
   );
 
   const onSaveTextChange = useCallback(
@@ -278,6 +338,12 @@ const Text = ({
     }
   }, [text, isEditing]);
 
+  const handleDeleteProperty = useCallback(() => {
+    if (deleteProperty) {
+      deleteProperty(property);
+    }
+  }, [property]);
+
   // useEffect(() => {
   //   setError("");
   //   if (selectTitle) {
@@ -355,101 +421,231 @@ const Text = ({
   ]);
 
   return (
-    <Paper
-      id={`property-${property}`}
-      elevation={9}
-      sx={{
-        borderRadius: "20px",
-        /*         minWidth: "500px", */
-        width: "100%",
-        border: structured ? "1px solid white" : "",
-        ...sx,
-      }}
-    >
-      {!structured && (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            textAlign: "center",
-            background: backgroundColor,
-            p: 3,
-            pb: 1.5,
-            borderTopRightRadius: property !== "title" ? "18px" : "",
-            borderTopLeftRadius: property !== "title" ? "18px" : "",
-            backgroundColor:
-              selectedDiffNode &&
-              selectedDiffNode.changeType === "add property" &&
-              selectedDiffNode.changeDetails.addedProperty === property
-                ? theme.palette.mode === "dark"
-                  ? "green"
-                  : "#4ccf37"
-                : "",
-          }}
-        >
-          <Tooltip title={getTooltipHelper(lowercaseFirstLetter(property))}>
-            <Typography
-              sx={{
-                fontSize: "20px",
-                fontWeight: 500,
-                fontFamily: "Roboto, sans-serif",
-              }}
-            >
-              {capitalizeFirstLetter(
-                DISPLAY[property] ? DISPLAY[property] : property,
-              )}
-            </Typography>
-          </Tooltip>
+    <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={500}>
+      <Paper
+        id={`property-${property}`}
+        elevation={9}
+        sx={{
+          borderRadius: "20px",
+          /*         minWidth: "500px", */
+          width: "100%",
+          /*         border: structured ? "1px solid white" : "", */
+          border:
+            selectedDiffNode?.changeDetails?.addedProperty === property
+              ? selectedDiffNode?.changeType === "add property"
+                ? "3px solid #4ccf37"
+                : selectedDiffNode?.changeType === "remove property"
+                  ? "3px solid rgb(224, 8, 11)"
+                  : ""
+              : "",
+
+          ...sx,
+        }}
+      >
+        {!structured && (
           <Box
             sx={{
               display: "flex",
-              ml: "auto",
-              gap: "14px",
               alignItems: "center",
+              textAlign: "center",
+              background: backgroundColor,
+              p: 3,
+              pb: 1.5,
+              borderTopRightRadius: property !== "title" ? "18px" : "",
+              borderTopLeftRadius: property !== "title" ? "18px" : "",
             }}
           >
-            {selectedDiffNode &&
-              selectedDiffNode.changeType === "delete node" &&
-              property === "title" && (
-                <Typography sx={{ mx: "5px", ml: "145px", fontWeight: "bold" }}>
-                  DELETED NODE
+            {editProperty === property ? (
+              <EditProperty
+                value={newPropertyValue}
+                onChange={setNewPropertyValue}
+                onSave={() => {
+                  if (modifyProperty) {
+                    modifyProperty({
+                      newValue: newPropertyValue,
+                      previousValue: property,
+                    });
+                  }
+                  setEditProperty("");
+                  setNewPropertyValue("");
+                }}
+                onCancel={() => {
+                  setEditProperty("");
+                  setNewPropertyValue("");
+                }}
+                property={property}
+              />
+            ) : (
+              <Tooltip title={getTooltipHelper(lowercaseFirstLetter(property))}>
+                <Box
+                  sx={{
+                    position: "relative",
+                    display: "inline-block",
+                    pl: "1px",
+                    "&:hover":
+                      enableEdit &&
+                      modifyProperty &&
+                      property !== "reason_for_most_efficiently_performed_by"
+                        ? {
+                            border: "2px solid orange",
+                            borderRadius: "15px",
+                            pr: "15px",
+                            cursor: "pointer",
+                            backgroundColor: "gray",
+                          }
+                        : {},
+                    "&:hover .edit-icon":
+                      enableEdit &&
+                      modifyProperty &&
+                      property !== "reason_for_most_efficiently_performed_by"
+                        ? {
+                            display: "block",
+                          }
+                        : {},
+                  }}
+                  onClick={() => {
+                    if (enableEdit && modifyProperty) {
+                      setEditProperty(property);
+                      setNewPropertyValue(property);
+                    }
+                  }}
+                >
+                  {selectedDiffNode?.modifiedProperty === property &&
+                  selectedDiffNode.changeType === "edit property" ? (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        background: (theme: any) =>
+                          theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                        p: 3,
+                        gap: "10px",
+                      }}
+                    >
+                      {" "}
+                      <Typography
+                        sx={{
+                          fontSize: "20px",
+                          fontWeight: 500,
+                          fontFamily: "Roboto, sans-serif",
+                          color: "red",
+                          textDecoration: "line-through",
+                        }}
+                      >
+                        {selectedDiffNode.previousValue}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: "20px",
+                          fontWeight: 500,
+                          fontFamily: "Roboto, sans-serif",
+                          color: "green",
+                        }}
+                      >
+                        {selectedDiffNode.newValue}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Typography
+                      sx={{
+                        fontSize: "20px",
+                        fontWeight: 500,
+                        fontFamily: "Roboto, sans-serif",
+                        padding: "4px",
+                      }}
+                    >
+                      {capitalizeFirstLetter(
+                        DISPLAY[property] ? DISPLAY[property] : property,
+                      )}
+                    </Typography>
+                  )}
+
+                  <EditIcon
+                    className="edit-icon"
+                    sx={{
+                      position: "absolute",
+                      top: "-8px",
+                      right: "-8px",
+                      color: "orange",
+                      backgroundColor: "white",
+                      borderRadius: "50%",
+                      fontSize: "16px",
+                      display: "none",
+                    }}
+                  />
+                </Box>
+              </Tooltip>
+            )}
+
+            <Box
+              sx={{
+                display: "flex",
+                ml: "auto",
+                gap: "14px",
+                alignItems: "center",
+              }}
+            >
+              {selectedDiffNode &&
+                selectedDiffNode.changeType === "delete node" &&
+                property === "title" && (
+                  <Typography
+                    sx={{ mx: "5px", ml: "145px", fontWeight: "bold" }}
+                  >
+                    DELETED NODE
+                  </Typography>
+                )}
+              <PropertyContributors
+                currentVisibleNode={currentVisibleNode}
+                property={property}
+              />
+              {currentVisibleNode.inheritance[property]?.ref && (
+                <Typography sx={{ fontSize: "14px", ml: "9px" }}>
+                  {'(Inherited from "'}
+                  {getTitleNode(
+                    currentVisibleNode.inheritance[property].ref || "",
+                  )}
+                  {'")'}
                 </Typography>
               )}
-            <PropertyContributors
-              currentVisibleNode={currentVisibleNode}
-              property={property}
-            />
-            {currentVisibleNode.inheritance[property]?.ref && (
-              <Typography sx={{ fontSize: "14px", ml: "9px" }}>
-                {'(Inherited from "'}
-                {getTitleNode(
-                  currentVisibleNode.inheritance[property].ref || "",
+              {property === "title" &&
+                !selectedDiffNode &&
+                displaySidebar &&
+                !currentImprovement && (
+                  <ManageNodeButtons
+                    locked={locked}
+                    lockedInductor={!!currentVisibleNode.locked}
+                    root={root}
+                    manageLock={manageLock}
+                    deleteNode={deleteNode}
+                    getTitleNode={getTitleNode}
+                    handleLockNode={handleLockNode}
+                    navigateToNode={navigateToNode}
+                    displaySidebar={displaySidebar}
+                    activeSidebar={activeSidebar}
+                    unclassified={!!currentVisibleNode.unclassified}
+                    setEnableEdit={setEnableEdit}
+                    enableEdit={enableEdit}
+                    handleCloseAddLinksModel={handleCloseAddLinksModel}
+                    user={user}
+                    aiPeer={aiPeer}
+                  />
+                )}{" "}
+              {enableEdit &&
+                property !== "title" &&
+                property !== "description" &&
+                deleteProperty && (
+                  <Tooltip title={"Delete property"} placement="top">
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      sx={{ borderRadius: "25px" }}
+                      onClick={handleDeleteProperty}
+                    >
+                      Delete Property
+                    </Button>
+                  </Tooltip>
                 )}
-                {'")'}
-              </Typography>
-            )}
-            {property === "title" &&
-              !selectedDiffNode &&
-              displaySidebar &&
-              !currentImprovement && (
-                <ManageNodeButtons
-                  locked={locked}
-                  lockedInductor={!!currentVisibleNode.locked}
-                  root={root}
-                  manageLock={manageLock}
-                  deleteNode={deleteNode}
-                  getTitleNode={getTitleNode}
-                  handleLockNode={handleLockNode}
-                  navigateToNode={navigateToNode}
-                  displaySidebar={displaySidebar}
-                  activeSidebar={activeSidebar}
-                  unclassified={!!currentVisibleNode.unclassified}
-                  setEnableEdit={setEnableEdit}
-                  enableEdit={enableEdit}
-                  user={user}
-                />
-              )}{" "}
-            {/*{!locked && property !== "title" && property !== "ONetID" && (
+              {/*{!locked && property !== "title" && property !== "ONetID" && (
               <Box
                 sx={{
                   display: "flex",
@@ -487,91 +683,100 @@ const Text = ({
                 </Tooltip>
               </Box>
             )} */}
-            {property !== "title" &&
-              property !== "ONetID" &&
-              !currentImprovement &&
-              !currentVisibleNode.unclassified && (
-                <SelectInheritance
-                  currentVisibleNode={currentVisibleNode}
-                  property={property}
-                  nodes={nodes}
-                  enableEdit={enableEdit}
-                  onInheritanceChange={triggerInheritanceSend}
-                />
-              )}
-          </Box>
-        </Box>
-      )}
-      <Typography color="red" sx={{ pl: "5px" }}>
-        {error}
-      </Typography>
-      {!!currentVisibleNode.unclassified ||
-      currentImprovement?.newNode ||
-      locked ||
-      (selectedDiffNode &&
-        (selectedDiffNode.modifiedProperty !== property || structured)) ||
-      ((currentVisibleNode.unclassified || !enableEdit) &&
-        property === "title") ? (
-        <Typography
-          sx={{ fontSize: property === "title" ? "25px" : "19px", p: "19px" }}
-        >
-          {text}
-        </Typography>
-      ) : (
-        <>
-          {currentImprovementChange && !currentImprovement.implemented ? (
-            <Box sx={{ p: 3 }}>
-              <Typography sx={{ color: "red", textDecoration: "line-through" }}>
-                {currentImprovementChange.previousValue}
-              </Typography>
-              <Typography sx={{ color: "green" }}>
-                {currentImprovementChange.newValue}
-              </Typography>
-            </Box>
-          ) : selectedDiffNode &&
-            selectedDiffNode.modifiedProperty === property ? (
-            <Box sx={{ p: "10px", borderRadius: "5px" }}>
-              <Box sx={{ display: "flow", gap: "3px", p: "14px" }}>
-                {renderDiff(
-                  selectedDiffNode.previousValue,
-                  selectedDiffNode.newValue,
+              {property !== "title" &&
+                property !== "ONetID" &&
+                !currentImprovement &&
+                !currentVisibleNode.unclassified &&
+                currentVisibleNode.inheritance[property] && (
+                  <SelectInheritance
+                    currentVisibleNode={currentVisibleNode}
+                    property={property}
+                    nodes={nodes}
+                    enableEdit={enableEdit}
+                  />
                 )}
-              </Box>
             </Box>
-          ) : (
-            <>
-              <MarkdownEditor
-                content={{
-                  text: editorContent,
-                  property: property,
-                  structured: structured,
-                  onSave: onSaveTextChange,
-                }}
-                mode={{
-                  isPreview: !enableEdit,
-                  useWebsocket: switchToWebsocket,
-                  reference: reference,
-                }}
-                editor={{
-                  autoFocus: autoFocus,
-                  cursorPosition: cursorPosition,
-                  onCursorChange: setCursorPosition,
-                  checkDuplicateTitle: checkDuplicateTitle,
-                  saveChangeHistory: saveChangeHistory,
-                }}
-                collaborationData={{
-                  fullName: `${user?.fName} ${user?.lName}`,
-                  nodeId: currentVisibleNode?.id,
-                  randomProminentColor: randomProminentColor(),
-                }}
-                setEditorContent={setEditorContent}
-                pendingInheritanceMessage={pendingInheritanceMessage}
-              />
-            </>
-          )}
-        </>
-      )}
-    </Paper>
+          </Box>
+        )}
+        <Typography color="red" sx={{ pl: "5px" }}>
+          {error}
+        </Typography>
+        {!!currentVisibleNode.unclassified ||
+        currentImprovement?.newNode ||
+        locked ||
+        (selectedDiffNode &&
+          (selectedDiffNode.modifiedProperty !== property || structured)) ||
+        ((currentVisibleNode.unclassified || !enableEdit) &&
+          selectedDiffNode?.modifiedProperty !== property &&
+          property === "title") ? (
+          <Typography
+            sx={{ fontSize: property === "title" ? "25px" : "19px", p: "19px" }}
+          >
+            {text}
+          </Typography>
+        ) : (
+          <>
+            {currentImprovementChange && !currentImprovement.implemented ? (
+              <Box sx={{ p: 3 }}>
+                <Typography
+                  sx={{ color: "red", textDecoration: "line-through" }}
+                >
+                  {currentImprovementChange.previousValue}
+                </Typography>
+                <Typography sx={{ color: "green" }}>
+                  {currentImprovementChange.newValue}
+                </Typography>
+              </Box>
+            ) : selectedDiffNode &&
+              selectedDiffNode.modifiedProperty === property &&
+              selectedDiffNode.changeType === "change text" ? (
+              <Box sx={{ p: "10px", borderRadius: "5px" }}>
+                <Box sx={{ display: "flow", gap: "3px", p: "14px" }}>
+                  {renderDiff(
+                    selectedDiffNode.previousValue,
+                    selectedDiffNode.newValue,
+                  )}
+                </Box>
+              </Box>
+            ) : (
+              <>
+                <MarkdownEditor
+                  content={{
+                    text: editorContent,
+                    property: property,
+                    structured: structured,
+                    onSave: onSaveTextChange,
+                  }}
+                  mode={{
+                    isPreview: !enableEdit,
+                    useWebsocket: switchToWebsocket,
+                    reference: reference,
+                  }}
+                  editor={{
+                    autoFocus: autoFocus,
+                    cursorPosition: cursorPosition,
+                    onCursorChange: setCursorPosition,
+                    checkDuplicateTitle: checkDuplicateTitle,
+                    saveChangeHistory: saveChangeHistory,
+                  }}
+                  collaborationData={{
+                    fullName: `${user?.fName} ${user?.lName}`,
+                    nodeId: currentVisibleNode?.id,
+                    randomProminentColor: randomProminentColor(),
+                  }}
+                  setEditorContent={setEditorContent}
+                />
+              </>
+            )}
+          </>
+        )}
+        <InheritanceDetailsPanel
+          property={property}
+          currentVisibleNode={currentVisibleNode}
+          nodes={nodes}
+        />
+      </Paper>
+    </Slide>
   );
 };
 

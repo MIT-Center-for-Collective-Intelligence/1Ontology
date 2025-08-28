@@ -53,8 +53,8 @@ function DraggableTree({
   treeRef,
   treeType,
   eachOntologyPath,
+  multipleOntologyPaths,
   skillsFuture = false,
-  scrollTrigger,
   specializationNumsUnder,
   skillsFutureApp,
 }: {
@@ -66,8 +66,8 @@ function DraggableTree({
   treeRef: any;
   treeType?: string;
   eachOntologyPath?: any;
+  multipleOntologyPaths?: any;
   skillsFuture?: boolean;
-  scrollTrigger: boolean;
   specializationNumsUnder: { [key: string]: number };
   skillsFutureApp: string;
 }) {
@@ -90,6 +90,7 @@ function DraggableTree({
     Map<string, { startIndex: number; endIndex: number }>
   >(new Map());
   const collapsingLoader = useRef<boolean>(false);
+  const isTreeClickRef = useRef(false);
 
   const getFocusedNodeWindow = useCallback(
     (children: TreeData[], focusedNodeId: string): TreeData[] => {
@@ -330,58 +331,90 @@ function DraggableTree({
 
     return rect.top >= 0 && rect.bottom <= viewportHeight;
   };
-  const expandNodeById = async (nodeId: string) => {
+  const expandNodeById = useCallback(async (targetNodeId: string) => {
     const tree = treeRef.current;
-    if (!tree || !nodeId) return;
+    if (!tree || !targetNodeId) return;
+    
+    const allPaths = multipleOntologyPaths?.[targetNodeId];
+    if (!allPaths?.length) return;
 
-    //  Expand all parent nodes
-    let currentNode = tree.get(nodeId);
-    if (currentNode) {
-      let parentNode = currentNode.parent;
-      while (parentNode) {
+    const parentPathsWithDepth = new Map<string, number>();
+
+    for (const path of allPaths) {
+      const pathIds = path
+        .filter((p: any) => !p.category)
+        .map((c: { id: string }) => c.id)
+        .join("-");
+
+      const segments = pathIds.split('-');
+      for (let i = 1; i < segments.length; i++) {
+        const parentId = segments.slice(0, i + 1).join('-');
+        if (parentId !== pathIds) {
+          parentPathsWithDepth.set(parentId, i);
+        }
+      }
+    }
+
+    const sortedPaths = Array.from(parentPathsWithDepth.entries())
+      .sort(([, depthA], [, depthB]) => depthA - depthB);
+
+    for (const [parentId] of sortedPaths) {
+      const parentNode = tree.get(parentId);
+      if (parentNode && !parentNode.isOpen) {
         parentNode.open();
-        parentNode = parentNode.parent;
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        if (parentNode.children) {
+          for (const child of parentNode.children) {
+            if (child.data.category && !child.isOpen) {
+              child.open();
+              await new Promise(resolve => setTimeout(resolve, 25));
+            }
+          }
+        }
       }
     }
 
-    if (!isNodeVisible(nodeId)) {
-      await tree.scrollTo(nodeId);
-    }
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-    setTimeout(() => {
-      const targetNode = tree.get(nodeId);
-      if (targetNode) {
-        targetNode.select();
-        /*const element = document.getElementById(nodeId);
-        element?.scrollIntoView({ behavior: "smooth", block: "center" }); */
-      }
-    }, 500);
-  };
+    // scroll to first node
+    const path = eachOntologyPath[targetNodeId]
+      ?.filter((p: any) => !p.category)
+      ?.map((c: { id: string }) => c.id)
+      ?.join("-") || "";
+    const rootId = allPaths[0][0]?.id?.split("-")[0];
+    const nodeIdWithPath = skillsFuture ? `${path}` : `${rootId}-${path}`;
+
+    if (!isNodeVisible(nodeIdWithPath)) {
+      await tree.scrollTo(nodeIdWithPath);
+    }
+  }, [treeData, eachOntologyPath, multipleOntologyPaths]);
 
   useEffect(() => {
     const tree = treeRef.current;
-    if (tree && currentVisibleNode?.id) {
-      // Wait for the tree to initialize its nodes before scrolling
-      const timeout = setTimeout(() => {
-        /*         const generalizationId =
-          currentVisibleNode.generalizations[0]?.nodes[0]?.id; */
-        if (!eachOntologyPath[currentVisibleNode.id]) {
-          return;
-        }
-        const rootId =
-          eachOntologyPath[currentVisibleNode.id][0].id.split("-")[0];
+    if (!tree || !currentVisibleNode?.id) return;
 
-        const path = eachOntologyPath[currentVisibleNode.id]
-          .filter((p: any) => !p.category)
-          .map((c: { id: string }) => c.id)
-          .join("-");
-        expandNodeById(skillsFuture ? `${path}` : `${rootId}-${path}`);
-        setFirstLoad(false);
+    const timeout = setTimeout(async () => {
+      const targetNodeId = currentVisibleNode.id;
+      const isFromTreeClick = isTreeClickRef.current;
+
+      if (firstLoad || !isFromTreeClick) {
+        await expandNodeById(targetNodeId);
+      }
+
+      setTimeout(() => {
+        const targetNode = tree.get(targetNodeId);
+        if (targetNode) {
+          targetNode.select();
+        }
       }, 500);
 
-      return () => clearTimeout(timeout);
-    }
-  }, [treeRef, currentVisibleNode?.id]);
+      isTreeClickRef.current = false;
+      setFirstLoad(false);
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [treeRef, currentVisibleNode?.id, multipleOntologyPaths]);
 
   useEffect(() => {
     const tree = treeRef.current;
@@ -434,7 +467,7 @@ function DraggableTree({
     parentId: string | null;
     parentNode: NodeApi<PaginatedTreeData> | null;
     index: number;
-  }) => {
+    }) => {
     try {
       if (!editEnabled || !user?.uname) return;
 
@@ -610,6 +643,7 @@ function DraggableTree({
       for (let linkId of removedLinks) {
         await unlinkPropertyOf(db, "generalizations", specializationId, linkId);
       }
+      
       const newGeneralizationData = nodes[toParent.nodeId];
       const specializations = newGeneralizationData.specializations;
       const previousSValue = JSON.parse(JSON.stringify(specializations));
@@ -617,10 +651,32 @@ function DraggableTree({
       const alreadyExist = newGeneralizationData.specializations
         .flatMap((c: ICollection) => c.nodes)
         .map((n: { id: string }) => n.id);
+        
       if (!alreadyExist.includes(specializationId)) {
-        specializations[0].nodes.splice(args.index, 0, {
+        let targetCollectionIndex = 0;
+        
+        if (toParent.category) {
+          targetCollectionIndex = specializations.findIndex(
+            (s: ICollection) => s.collectionName === toParent.name
+          );
+        } else {
+          const mainCollectionIndex = specializations.findIndex(
+            (s: ICollection) => s.collectionName === "main"
+          );
+          
+          if (mainCollectionIndex !== -1) {
+            targetCollectionIndex = mainCollectionIndex;
+          }
+        }
+        
+        if (targetCollectionIndex === -1) {
+          targetCollectionIndex = 0;
+        }
+        
+        specializations[targetCollectionIndex].nodes.splice(args.index, 0, {
           id: specializationId,
         });
+        
         await updateDoc(doc(collection(db, NODES), toParent.nodeId), {
           specializations,
         });
@@ -692,6 +748,14 @@ function DraggableTree({
     collapsingLoader.current = false;
   };
 
+  const generateDomElementId = (node: NodeApi<PaginatedTreeData>): string => {
+    const { id } = node.data;
+    const isRootNode = node.level === 0;
+    
+    // Prefix root nodes to prevent browser hash auto-scrolling
+    return isRootNode ? `tree-root-${id}` : id;
+  };
+
   function Node({
     node,
     style,
@@ -731,7 +795,7 @@ function DraggableTree({
           <Box
             style={style}
             className={clsx(styles.node, styles.loadMoreNode)}
-            id={node.data.id}
+            id={generateDomElementId(node)}
             onClick={() => !isLoading && handleLoadMore(node.data.id)}
             sx={{
               cursor: isLoading ? "default" : "pointer",
@@ -802,12 +866,12 @@ function DraggableTree({
         style={style}
         className={clsx(styles.node, node.state)}
         onClick={() => node.isInternal && node.toggle()}
-        id={node.data.id}
+        id={generateDomElementId(node)}
         sx={{
           backgroundColor:
             node.data.nodeId === currentVisibleNode?.id && !node.data.category
               ? (theme) =>
-                  theme.palette.mode === "dark" ? "#26631c" : "#4ccf37"
+                theme.palette.mode === "dark" ? "#26631c" : "#4ccf37"
               : "",
         }}
       >
@@ -877,7 +941,7 @@ function DraggableTree({
                   </Tooltip>
                 )}
                 {(node.data.actionAlternatives || []).length > 0 && (
-                  <span style={{ color: "orange", marginRight: "8px" }}>
+                  <span style={{ color: "orange", marginLeft: "8px" }}>
                     Alternatives:
                   </span>
                 )}
@@ -911,21 +975,23 @@ function DraggableTree({
           gap: 1,
         }}
       >
-        <Button
-          variant={expanded ? "contained" : "outlined"}
-          size="small"
-          onClick={expandOrCollapseAll}
-          sx={{
-            borderRadius: "20px",
-            textTransform: "none",
-          }}
-        >
-          {collapsingLoader.current
-            ? "Collapsing..."
-            : expanded
-              ? "Collapse All"
-              : "Expand All"}
-        </Button>
+        {!treeType && (
+          <Button
+            variant={expanded ? "contained" : "outlined"}
+            size="small"
+            onClick={expandOrCollapseAll}
+            sx={{
+              borderRadius: "20px",
+              textTransform: "none",
+            }}
+          >
+            {collapsingLoader.current
+              ? "Collapsing..."
+              : expanded
+                ? "Collapse All"
+                : "Expand All"}
+          </Button>
+        )}
         {/* <Button
           variant="outlined"
           size="small"
@@ -1003,6 +1069,7 @@ function DraggableTree({
                   if (!!node.data.category || node.data.isLoadMore) {
                     return;
                   }
+                  isTreeClickRef.current = true;
                   onOpenNodesTree(node.data.nodeId);
                 }}
                 onFocus={(node) => setFocused(node.data)}
@@ -1013,8 +1080,8 @@ function DraggableTree({
                 }}
                 disableDrag={!editEnabled}
                 disableDrop={!editEnabled}
-                // onScroll={}
-                // onMove={handleMove}
+              // onScroll={}
+              // onMove={handleMove}
               >
                 {Node}
               </Tree>

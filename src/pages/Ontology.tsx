@@ -52,11 +52,16 @@ This component is a key part of the application, providing a rich interface for 
 import { Bar, Container, Section } from "@column-resizer/react";
 
 import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import SearchIcon from "@mui/icons-material/Search";
+import CloseIcon from "@mui/icons-material/Close";
+import MenuIcon from "@mui/icons-material/Menu";
 import {
   Box,
   Button,
   CircularProgress,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   Select,
@@ -86,6 +91,7 @@ import SneakMessage from "@components/components/OntologyComponents/SneakMessage
 import Node from "@components/components/OntologyComponents/Node";
 import TreeViewSimplified from "@components/components/OntologyComponents/TreeViewSimplified";
 import {
+  ICollection,
   ILinkNode,
   ILockedNode,
   INode,
@@ -102,7 +108,11 @@ import withAuthUser from "@components/components/hoc/withAuthUser";
 import { useAuth } from "@components/components/context/AuthContext";
 import { useRouter } from "next/router";
 import GraphView from "@components/components/OntologyComponents/GraphView";
-import { DISPLAY, SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
+import {
+  DISPLAY,
+  SCROLL_BAR_STYLE,
+  SKILLS_FUTURE_APP_NAMES,
+} from "@components/lib/CONSTANTS";
 import { NODES, USERS } from "@components/lib/firestoreClient/collections";
 
 import { recordLogs } from "@components/lib/utils/helpers";
@@ -178,6 +188,7 @@ const Ontology = ({
   const [eachOntologyPath, setEachOntologyPath] = useState<{
     [key: string]: INodePath[];
   }>({});
+  const [multipleOntologyPaths, setMultipleOntologyPaths] = useState<{ [nodeId: string]: INodePath[][] }>({});
   const columnResizerRef = useRef<any>();
   const [lastUpdate, setLastUpdate] = useState<number | null>(null);
 
@@ -230,10 +241,29 @@ const Ontology = ({
   const [scrollTrigger, setScrollTrigger] = useState(false);
   const [enableEdit, setEnableEdit] = useState(false);
   const [specializationNumsUnder, setSpecializationNumsUnder] = useState({});
+  const [editableProperty, setEditableProperty] = useState<ICollection[]>([]);
 
   const treeRef = useRef<TreeApi<TreeData>>(null);
 
   const firstLoad = useRef(true);
+
+  // Mobile state
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileTreeOpen, setMobileTreeOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // Auto-focus search input on mobile search open
+  useEffect(() => {
+    if (mobileSearchOpen && isMobile) {
+      // Small delay to ensure the component is rendered
+      setTimeout(() => {
+        const searchInput = document.querySelector('input[placeholder="Search..."]') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }, 100);
+    }
+  }, [mobileSearchOpen, isMobile]);
 
   const signOut = async () => {
     router.push(ROUTES.signIn);
@@ -251,6 +281,7 @@ const Ontology = ({
     setCheckedItems(new Set());
     setClonedNodesQueue({});
     setLoadingIds(new Set());
+    setEditableProperty([]);
   };
 
   useEffect(() => {
@@ -480,6 +511,92 @@ const Ontology = ({
     [nodes],
   );
 
+  // This function returns a map where each nodeId maps to an array of all possible paths to that node
+  const findMultipleOntologyPaths = useCallback(
+    ({
+      mainNodes,
+      path,
+      multipleOntologyPaths,
+      visited = new Set(),
+    }: {
+      mainNodes: INode[];
+      path: INodePath[];
+      multipleOntologyPaths: { [nodeId: string]: INodePath[][] };
+      visited?: Set<string>;
+    }): { [nodeId: string]: INodePath[][] } | undefined => {
+      try {
+        for (let node of mainNodes) {
+          if (!node) continue;
+
+          const pathSignature = `${node.id}-${path.map(p => p.id).join('-')}`;
+          if (visited.has(pathSignature)) continue;
+          visited.add(pathSignature);
+
+          const newPath = [
+            ...path,
+            {
+              title: node.title,
+              id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
+              category: !!node.category,
+            },
+          ];
+
+          if (!multipleOntologyPaths[node.id]) {
+            multipleOntologyPaths[node.id] = [newPath];
+          } else {
+            const newPathIds = newPath.map(p => p.id).join(':');
+            const isDuplicate = multipleOntologyPaths[node.id].some(existingPath =>
+              existingPath.map(p => p.id).join(':') === newPathIds
+            );
+
+            if (!isDuplicate) {
+              multipleOntologyPaths[node.id].push(newPath);
+            }
+          }
+
+          node.specializations.forEach((collection) => {
+            const specializationsData: INode[] = [];
+            collection.nodes.forEach((n: ILinkNode) =>
+              specializationsData.push(nodes[n.id]),
+            );
+
+            const subPath = [...newPath];
+            if (collection.collectionName !== "main") {
+              subPath.push({
+                title: collection.collectionName,
+                id: `${node.id}-${collection.collectionName.trim()}`,
+                category: true,
+              });
+            }
+
+            const result = findMultipleOntologyPaths({
+              mainNodes: specializationsData,
+              path: subPath,
+              multipleOntologyPaths,
+              visited,
+            });
+
+            if (result) {
+              multipleOntologyPaths = result;
+            }
+          });
+        }
+
+        return multipleOntologyPaths;
+      } catch (error: any) {
+        recordLogs({
+          type: "error",
+          error: JSON.stringify({
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          }),
+        });
+      }
+    },
+    [nodes],
+  );
+
   useEffect(() => {
     const mainNodes = Object.values(nodes).filter(
       (node: any) =>
@@ -494,8 +611,18 @@ const Ontology = ({
       if (eachOntologyPath) {
         setEachOntologyPath(eachOntologyPath);
       }
+
+      let multipleOntologyPaths = findMultipleOntologyPaths({
+        mainNodes,
+        path: [],
+        multipleOntologyPaths: {},
+      });
+      if (multipleOntologyPaths) {
+        setMultipleOntologyPaths(multipleOntologyPaths);
+      }
     }
   }, [nodes]);
+
   // Function to generate a tree structure of specializations based on main nodes
   const getSpecializationsTree = (
     _nodes: INode[],
@@ -634,21 +761,31 @@ const Ontology = ({
     }
   }, [nodes]);
 
-  const getTreeView = (
-    mainCategories: INode[],
-    visited: Map<string, any> = new Map(),
-    path: string[],
-  ): any => {
+  const getTreeView = ({ mainCategories, visited, path }: any): any => {
     const newNodes = [];
 
     for (let node of mainCategories) {
-      if (!node) {
+      if (!node) continue;
+
+      const currentPath = [...path, node.id];
+      const pathNode = currentPath.join("-");
+
+      if (
+        path.includes(node.id) ||
+        (visited.has(pathNode) && currentPath.length !== 1)
+      ) {
+        if (
+          typeof visited.get(pathNode) !== "boolean" &&
+          visited.get(pathNode)
+        ) {
+          newNodes.push(visited.get(pathNode));
+        }
         continue;
       }
 
       const specializations = node.specializations;
-      let collections = [];
-      let mainChildren = [];
+      let childrenInOrder = [];
+      
       for (let collection of specializations) {
         const children = [];
         for (let _node of collection.nodes) {
@@ -657,64 +794,59 @@ const Ontology = ({
           }
         }
 
-        // if (children.length > 0) {
-        if (collection.collectionName !== "main") {
-          const id = [...path, node.id, collection.collectionName].join("-");
-
-          if (visited.has(id)) {
-            if (typeof visited.get(id) !== "boolean") {
-              newNodes.push(visited.get(id));
+        visited.set(pathNode, true);
+        if (collection.collectionName === "main") {
+          const mainChildren = getTreeView({
+            mainCategories: children,
+            visited,
+            path: currentPath,
+          });
+          for (let child of mainChildren) {
+            if (child && "id" in child) {
+              childrenInOrder.push({
+                ...child,
+                isMainItem: true,
+                originalCollectionIndex: specializations.indexOf(collection),
+              });
             }
-            continue;
           }
-          visited.set(id, true);
-          const _children = getTreeView(children, visited, [...path, node.id]);
+        } else {
+          const id = [...currentPath, collection.collectionName].join("-");
+
+          const _children = getTreeView({
+            mainCategories: children,
+            visited,
+            path: currentPath,
+          });
           const record = {
             id: id,
             nodeId: node.id,
             nodeType: node.nodeType,
             name: collection.collectionName,
             children: _children,
-
             category: true,
             unclassified: node.unclassified,
+            originalCollectionIndex: specializations.indexOf(collection),
           };
-          collections.push(record);
-          visited.set(id, record);
-        } else {
-          mainChildren.push(...children);
+          childrenInOrder.push(record);
         }
+      }
 
-        // } else {
-        //   collections.push({
-        //     id: `${parentId}-${node.id}`,
-        //     nodeId: node.id,
-        //     name: node.title,
-        //     category: !!parentId
-        //   });
-        // }
-      }
-      const id = [...path, node.id].join("-");
-      if (visited.has(id)) {
-        if (typeof visited.get(id) !== "boolean") {
-          newNodes.push(visited.get(id));
-        }
-        continue;
-      }
-      visited.set(id, true);
+      childrenInOrder.sort(
+        (a, b) =>
+          (a.originalCollectionIndex || 0) - (b.originalCollectionIndex || 0),
+      );
+
       const record = {
-        id,
+        id: pathNode,
         nodeId: node.id,
         name: node.title,
         nodeType: node.nodeType,
-        children: [
-          ...collections,
-          ...getTreeView(mainChildren, visited, [...path, node.id]),
-        ],
+        children: childrenInOrder,
         category: !!node.category,
         unclassified: node.unclassified,
       };
-      visited.set(id, record);
+      visited.set(pathNode, record);
       newNodes.push(record);
     }
     return newNodes;
@@ -772,7 +904,12 @@ const Ontology = ({
       setSpecializationNumsUnder(specNums);
     }
 
-    const _result = getTreeView(mainCategories, new Map(), []);
+    const _result = getTreeView({
+      mainCategories,
+      visited: new Map(),
+      path: [],
+    });
+
     setTreeViewData(_result);
     // Set the generated tree structure for visualization
     setTreeVisualization(treeOfSpecializations);
@@ -896,11 +1033,9 @@ const Ontology = ({
     }
     // setOntologyPath(eachOntologyPath[currentVisibleNode?.id]);
 
-    if (!isRootNode) {
-      updateTheUrl([
+    updateTheUrl([
         { id: currentVisibleNode?.id, title: currentVisibleNode.title },
       ]);
-    }
   }, [currentVisibleNode?.id, eachOntologyPath]);
 
   // Callback function to add a new node to the database
@@ -1007,6 +1142,19 @@ const Ontology = ({
         return;
       } */
       handleCloseAddLinksModel();
+      if (currentVisibleNode && nodeId === currentVisibleNode.id) {
+        const element = document.getElementById(`property-title`);
+        if (element) {
+          setTimeout(() => {
+            element.style.transition = "box-shadow 0.3s ease";
+            element.style.boxShadow = "0 0 10px 3px rgba(255, 165, 0, 0.7)";
+          }, 500);
+          setTimeout(() => {
+            element.style.boxShadow = "";
+          }, 2000);
+        }
+      }
+
       if (nodes[nodeId]) {
         setCurrentVisibleNode(nodes[nodeId]);
         initializeExpanded(eachOntologyPath[nodeId]);
@@ -1102,16 +1250,43 @@ const Ontology = ({
     return () => clearInterval(intervalId);
   }, [lastInteractionDate]);
 
+  // Handle escape key for mobile overlays
+  // useEffect(() => {
+  //   const handleEscape = (e: KeyboardEvent) => {
+  //     if (e.key === "Escape") {
+  //       if (mobileSearchOpen) {
+  //         setMobileSearchOpen(false);
+  //       }
+  //       if (mobileTreeOpen) {
+  //         setMobileTreeOpen(false);
+  //       }
+  //     }
+  //   };
+
+  //   if (isMobile) {
+  //     window.addEventListener("keydown", handleEscape);
+  //     return () => window.removeEventListener("keydown", handleEscape);
+  //   }
+  // }, [isMobile, mobileSearchOpen, mobileTreeOpen]);
+
   const displaySidebar = useCallback(
     (sidebarName: "chat" | "nodeHistory" | "inheritanceSettings") => {
       if (activeSidebar === sidebarName) {
         setActiveSidebar(null);
+        // Close mobile sidebar when deactivating
+        if (isMobile) {
+          setMobileSidebarOpen(false);
+        }
       } else {
         setSelectedChatTab(0);
         handleExpandSidebar(sidebarName);
+        // Open mobile sidebar when activating on mobile
+        if (isMobile) {
+          setMobileSidebarOpen(true);
+        }
       }
     },
-    [activeSidebar],
+    [activeSidebar, isMobile],
   );
 
   const compareTitles = (title1: string, title2: string): boolean => {
@@ -1141,7 +1316,7 @@ const Ontology = ({
       _currentVisibleNode?.generalizations || []
     ).flatMap((c) => c.nodes);
     const checkGeneralizations = (
-      nodeId: string,
+      partId: string,
     ): { genId: string; partOf: string | null }[] | null => {
       let inheritanceDetails: { genId: string; partOf: string | null }[] = [];
 
@@ -1156,20 +1331,38 @@ const Ontology = ({
         }
 
         const partIdex = generalizationParts[0].nodes.findIndex(
-          (c) => c.id === nodeId,
+          (c) => c.id === partId,
         );
 
         let partOfIdx: any = -1;
 
-        for (let { id } of generalizationParts[0].nodes) {
-          const specializationPart = (nodes[id]?.specializations || []).flatMap(
-            (c) => c.nodes,
-          );
-          partOfIdx = specializationPart.findIndex((c) => c.id === nodeId);
-          if (partOfIdx !== -1) {
+        if (partIdex === -1) {
+          for (let { id } of generalizationParts[0].nodes) {
+            const specializationPart = (
+              nodes[id]?.specializations || []
+            ).flatMap((c) => c.nodes);
+            partOfIdx = specializationPart.findIndex((c) => c.id === partId);
+            if (partOfIdx !== -1) {
+              inheritanceDetails.push({
+                genId: generalization.id,
+                partOf: id,
+              });
+            }
+          }
+        }
+        if (partIdex === -1) {
+          const ontologyPathForPart = eachOntologyPath[partId] ?? [];
+
+          const exacts = generalizationParts[0].nodes.filter((n) => {
+            const findIndex = ontologyPathForPart.findIndex(
+              (d) => d.id === n.id,
+            );
+            return findIndex !== -1;
+          });
+          if (exacts.length > 0) {
             inheritanceDetails.push({
               genId: generalization.id,
-              partOf: id,
+              partOf: exacts[0].id,
             });
           }
         }
@@ -1188,11 +1381,9 @@ const Ontology = ({
     };
 
     if (parts) {
-      for (let collection of parts) {
-        for (let node of collection.nodes) {
-          if (nodes[node.id]) {
-            _inheritanceDetails[node.id] = checkGeneralizations(node.id);
-          }
+      for (let node of parts[0].nodes) {
+        if (nodes[node.id]) {
+          _inheritanceDetails[node.id] = checkGeneralizations(node.id);
         }
       }
     }
@@ -1227,6 +1418,291 @@ const Ontology = ({
           {currentVisibleNode ? currentVisibleNode.title : "1ontology"}
         </title>
       </Head>
+      
+      {/* Mobile Header */}
+      {isMobile && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1000,
+            backgroundColor: theme.palette.mode === "dark" ? "#303134" : "white",
+            borderBottom: "1px solid",
+            borderColor: theme.palette.mode === "dark" 
+              ? "rgba(255, 255, 255, 0.08)" 
+              : "rgba(0, 0, 0, 0.08)",
+            display: "flex",
+            alignItems: "center",
+            padding: "8px 16px",
+            gap: 1,
+          }}
+        >
+          <IconButton
+            onClick={() => setMobileTreeOpen(!mobileTreeOpen)}
+            sx={{
+              color: mobileTreeOpen ? theme.palette.primary.main : theme.palette.text.secondary,
+            }}
+          >
+            <AccountTreeIcon />
+          </IconButton>
+          
+          <Box
+            onClick={() => setMobileSearchOpen(true)}
+            sx={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              backgroundColor: theme.palette.action.hover,
+              borderRadius: "20px",
+              padding: "8px 16px",
+              cursor: "pointer",
+              "&:hover": {
+                backgroundColor: theme.palette.action.selected,
+              },
+            }}
+          >
+            <SearchIcon sx={{ color: theme.palette.text.secondary, mr: 1 }} />
+            <Typography
+              variant="body2"
+              sx={{
+                color: theme.palette.text.secondary,
+                flex: 1,
+              }}
+            >
+              Search ontology...
+            </Typography>
+          </Box>
+
+          <IconButton
+            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+            sx={{
+              color: mobileSidebarOpen ? theme.palette.primary.main : theme.palette.text.secondary,
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
+        </Box>
+      )}
+
+      {/* Mobile Search Overlay */}
+      {isMobile && mobileSearchOpen && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 1100,
+            backgroundColor: theme.palette.background.default,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              padding: "8px 16px",
+              borderBottom: "1px solid",
+              borderColor: theme.palette.mode === "dark" 
+                ? "rgba(255, 255, 255, 0.08)" 
+                : "rgba(0, 0, 0, 0.08)",
+              gap: 1,
+            }}
+          >
+            <IconButton
+              onClick={() => setMobileSearchOpen(false)}
+              sx={{ color: theme.palette.text.primary }}
+            >
+              <CloseIcon />
+            </IconButton>
+            <Typography variant="h6" sx={{ flex: 1 }}>
+              Search
+            </Typography>
+          </Box>
+          
+          <Box 
+            sx={{ 
+              height: "calc(100vh - 64px)", 
+              overflow: "auto",
+              ...SCROLL_BAR_STYLE,
+            }}
+          >
+            <SearchSideBar
+              openSearchedNode={(node: INode, searched: boolean = true) => {
+                openSearchedNode(node, searched);
+                setMobileSearchOpen(false);
+              }}
+              searchWithFuse={searchWithFuse}
+              lastSearches={lastSearches}
+              updateLastSearches={updateLastSearches}
+              skillsFuture={skillsFuture}
+              skillsFutureApp={appName}
+            />
+          </Box>
+        </Box>
+      )}
+
+      {/* Mobile Tree Panel */}
+      {isMobile && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: "56px", // Below mobile header
+            left: 0,
+            right: 0,
+            height: mobileTreeOpen ? "50vh" : "0",
+            backgroundColor: theme.palette.mode === "dark" ? "#303134" : "white",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            zIndex: 999,
+            transition: "height 0.3s ease-in-out",
+            borderBottom: mobileTreeOpen ? "1px solid" : "none",
+            borderColor: theme.palette.mode === "dark" 
+              ? "rgba(255, 255, 255, 0.08)" 
+              : "rgba(0, 0, 0, 0.08)",
+          }}
+        >
+          {skillsFuture && (
+            <Box sx={{ 
+              m: "10px", 
+              mt: "20px", 
+              flexShrink: 0,
+              opacity: mobileTreeOpen ? 1 : 0,
+              transition: "opacity 0.3s ease-in-out",
+            }}>
+              <FormControl
+                variant="outlined"
+                sx={{ borderRadius: "20px" }}
+                fullWidth
+              >
+                <InputLabel id="mobile-property-type-label">
+                  Which Ontology
+                </InputLabel>
+                <Select
+                  labelId="mobile-property-type-label"
+                  value={appName}
+                  onChange={(event) => {
+                    setNodes({});
+                    const app = event.target.value.replaceAll(" ", "_");
+                    router.replace(`/${app}`);
+                  }}
+                  label="Property Type"
+                  sx={{ borderRadius: "20px" }}
+                >
+                  {SKILLS_FUTURE_APP_NAMES.map(({ id, name }) => (
+                    <MenuItem key={id} value={id}>
+                      {name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          )}
+          <Box
+            sx={{
+              flex: 1,
+              overflow: "auto",
+              paddingTop: skillsFuture ? "0" : "16px", // Add top padding only if no ontology selector
+              opacity: mobileTreeOpen ? 1 : 0,
+              transition: "opacity 0.3s ease-in-out",
+              ...SCROLL_BAR_STYLE,
+            }}
+          >
+            <DraggableTree
+            treeViewData={treeViewData}
+            setSnackbarMessage={setSnackbarMessage}
+            treeRef={treeRef}
+            currentVisibleNode={currentVisibleNode}
+            nodes={nodes}
+            onOpenNodesTree={(nodeId: string) => {
+              onOpenNodesTree(nodeId);
+              // Don't close tree on node selection to allow parallel browsing
+            }}
+            eachOntologyPath={eachOntologyPath}
+            skillsFuture={skillsFuture}
+            specializationNumsUnder={specializationNumsUnder}
+            skillsFutureApp={appName}
+          />
+          </Box>
+        </Box>
+      )}
+
+      {/* Mobile Sidebar Panel */}
+      {isMobile && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            right: mobileSidebarOpen 
+              ? 0 
+              : activeSidebar 
+                ? { xs: "-90%", sm: "-450px" }
+                : "-70px",
+            width: activeSidebar 
+              ? { xs: "90%", sm: "450px" }
+              : "70px",
+            height: "100vh",
+            backgroundColor: "transparent",
+            zIndex: 1200,
+            transition: "right 0.3s ease-in-out, width 0.3s ease-in-out",
+            borderTopLeftRadius: "8px",
+            borderBottomLeftRadius: "8px",
+            overflow: "visible",
+          }}
+        >
+          <MemoizedToolbarSidebar
+            toolbarRef={toolbarRef}
+            user={user}
+            openSearchedNode={openSearchedNode}
+            searchWithFuse={searchWithFuse}
+            nodes={nodes}
+            selectedDiffNode={selectedDiffNode}
+            setSelectedDiffNode={setSelectedDiffNode}
+            currentVisibleNode={currentVisibleNode}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            confirmIt={confirmIt}
+            activeSidebar={activeSidebar}
+            setActiveSidebar={setActiveSidebar}
+            handleExpandSidebar={handleExpandSidebar}
+            navigateToNode={navigateToNode}
+            treeVisualization={treeVisualization}
+            expandedNodes={expandedNodes}
+            setExpandedNodes={setExpandedNodes}
+            onOpenNodesTree={onOpenNodesTree}
+            setDisplayGuidelines={setDisplayGuidelines}
+            currentImprovement={currentImprovement}
+            setCurrentImprovement={setCurrentImprovement}
+            lastSearches={lastSearches}
+            updateLastSearches={updateLastSearches}
+            selectedChatTab={selectedChatTab}
+            setSelectedChatTab={setSelectedChatTab}
+            displayGuidelines={displayGuidelines}
+            signOut={signOut}
+            skillsFuture={skillsFuture}
+            skillsFutureApp={appName}
+          />
+        </Box>
+      )}
+
+      {/* Mobile Sidebar Backdrop */}
+      {isMobile && mobileSidebarOpen && (
+        <Box
+          onClick={() => setMobileSidebarOpen(false)}
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.3)",
+            zIndex: 1100,
+          }}
+        />
+      )}
+
       <Box>
         <Container
           style={{
@@ -1235,6 +1711,12 @@ const Ontology = ({
             overflow: "hidden",
             backgroundColor:
               theme.palette.mode === "dark" ? "#1b1a1a" : "#f8f9fa",
+            paddingTop: isMobile 
+              ? mobileTreeOpen 
+                ? "calc(56px + 50vh)" // Mobile header + tree panel height
+                : "56px" // Just mobile header
+              : "0",
+            transition: isMobile ? "padding-top 0.3s ease-in-out" : "none",
           }}
           columnResizerRef={columnResizerRef}
         >
@@ -1321,8 +1803,8 @@ const Ontology = ({
                       nodes={nodes}
                       onOpenNodesTree={onOpenNodesTree}
                       eachOntologyPath={eachOntologyPath}
+                      multipleOntologyPaths={multipleOntologyPaths}
                       skillsFuture={skillsFuture}
-                      scrollTrigger={scrollTrigger}
                       specializationNumsUnder={specializationNumsUnder}
                       skillsFutureApp={appName}
                     />
@@ -1372,26 +1854,14 @@ const Ontology = ({
                         onChange={(event) => {
                           setNodes({});
                           const app = event.target.value.replaceAll(" ", "_");
-                          router.replace(`/SkillsFuture/${app}`);
+                          router.replace(`/${app}`);
                         }}
                         label="Property Type"
                         sx={{ borderRadius: "20px" }}
                       >
-                        {[
-                          // "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
-                          "Full WordNet O*Net Verb Hierarchy - Tom's Version",
-                          "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
-                          "Ontology - Demo Version",
-                          "Ontology - Development Version",
-                          /*"Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
-                          "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
-                          "Holistic Embedding (Sector, Title, JobRole, CWF, Parts) - Gemini 2.5 Pro",
-                          "O*Net Verbs o3 Deep Research",
-                          "O*Net Verbs - o1 Pro", */
-                          "Top-Down Gemini 2.5 Pro",
-                        ].map((item) => (
-                          <MenuItem key={item} value={item}>
-                            {item}
+                        {SKILLS_FUTURE_APP_NAMES.map(({ id, name }) => (
+                          <MenuItem key={id} value={id}>
+                            {name}
                           </MenuItem>
                         ))}
                       </Select>
@@ -1410,32 +1880,34 @@ const Ontology = ({
             </Section>
           )}
 
-          <Bar
-            size={0.1}
-            style={{
-              background: "transparent",
-              cursor: "col-resize",
-              position: "relative",
-              borderRadius: "4px",
-            }}
-          >
-            <SettingsEthernetIcon
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                color: (theme) =>
-                  theme.palette.mode === "dark"
-                    ? theme.palette.common.gray50
-                    : theme.palette.common.notebookMainBlack,
-                borderRadius: "50%",
-                ":hover": {
-                  backgroundColor: "orange",
-                },
+          {!isMobile && (
+            <Bar
+              size={0.1}
+              style={{
+                background: "transparent",
+                cursor: "col-resize",
+                position: "relative",
+                borderRadius: "4px",
               }}
-            />
-          </Bar>
+            >
+              <SettingsEthernetIcon
+                sx={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  color: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? theme.palette.common.gray50
+                      : theme.palette.common.notebookMainBlack,
+                  borderRadius: "50%",
+                  ":hover": {
+                    backgroundColor: "orange",
+                  },
+                }}
+              />
+            </Bar>
+          )}
 
           <Section minSize={0}>
             <Box
@@ -1448,7 +1920,12 @@ const Ontology = ({
                 p: "20px",
                 pt: 0,
                 overflow: "auto",
-                height: "100vh",
+                height: isMobile 
+                  ? mobileTreeOpen 
+                    ? "calc(100vh - 56px - 50vh)" // Account for header + tree
+                    : "calc(100vh - 56px)" // Just header
+                  : "100vh",
+                transition: isMobile ? "height 0.3s ease-in-out" : "none",
                 "&::-webkit-scrollbar": {
                   display: "none",
                 },
@@ -1504,12 +1981,15 @@ const Ontology = ({
                   setEnableEdit={setEnableEdit}
                   inheritanceDetails={partsInheritance}
                   skillsFutureApp={appName ?? null}
+                  editableProperty={editableProperty}
+                  setEditableProperty={setEditableProperty}
                 />
               )}
             </Box>
           </Section>
 
-          <MemoizedToolbarSidebar
+          {!isMobile && (
+            <MemoizedToolbarSidebar
             // isHovered={toolbarIsHovered}
             toolbarRef={toolbarRef}
             user={user}
@@ -1541,6 +2021,7 @@ const Ontology = ({
             skillsFuture={skillsFuture}
             skillsFutureApp={appName ?? null}
           />
+          )}
         </Container>
         {ConfirmDialog}
         <SneakMessage

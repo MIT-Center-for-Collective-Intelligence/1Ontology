@@ -1,9 +1,12 @@
+import { Box, Tooltip } from "@mui/material";
 import Chip from "@mui/material/Chip";
+import CancelIcon from "@mui/icons-material/Cancel";
 import TextField from "@mui/material/TextField";
 import { makeStyles } from "@mui/styles";
 import Downshift from "downshift";
 import PropTypes from "prop-types";
 import React, { Fragment } from "react";
+import { performerColors } from "@components/lib/CONSTANTS";
 
 const useStyles: any = makeStyles(() => ({
   inputChip: {
@@ -16,13 +19,24 @@ const useStyles: any = makeStyles(() => ({
   },
 }));
 
+type TagType = {
+  title: string;
+  added?: boolean;
+  removed?: boolean;
+};
 const ChipInput = ({
   ...props
 }: {
-  tags: any;
+  tags: TagType[];
   selectedTags: any;
-  updateTags: (newValue: string[], added: string[], removed: string[]) => void;
+  updateTags: (
+    newValue: TagType[],
+    added: TagType[],
+    removed: TagType[],
+  ) => void;
   placeholder: any;
+  clickable?: boolean;
+  fontSize?: string;
   //
   readOnly?: any;
   itemId?: any;
@@ -37,6 +51,7 @@ const ChipInput = ({
     selectedTags,
     updateTags,
     placeholder,
+    clickable,
     //
     readOnly,
     itemId,
@@ -44,14 +59,16 @@ const ChipInput = ({
     added = [],
     removed = [],
     style = {},
+    fontSize,
     ...other
   } = props;
+
   const [inputValue, setInputValue] = React.useState("");
   const handleKeyDown = (event: any) => {
     if (event.key === "Enter") {
       let newSelectedItem: any = [...tags];
       const duplicatedValues = newSelectedItem.indexOf(
-        event.target.value.trim()
+        event.target.value.trim(),
       );
 
       if (duplicatedValues !== -1) {
@@ -94,6 +111,16 @@ const ChipInput = ({
   const handleInputChange = (event: any) => {
     setInputValue(event.target.value);
   };
+  const handleClick = (item: string) => {
+    const domainMatch = item.match(/Domain:(.*?) Title:/);
+    const titleMatch = item.match(/Title:(.*)/);
+    if (domainMatch && titleMatch) {
+      const domain = domainMatch[1].trim();
+      const title = titleMatch[1].trim();
+      const query = encodeURIComponent(`site: ${domain} ${title}`);
+      window.open(`https://www.google.com/search?q=${query}`, "_blank");
+    }
+  };
 
   return (
     <React.Fragment>
@@ -105,44 +132,92 @@ const ChipInput = ({
         {({ getInputProps }) => {
           const { onBlur, onChange, ...inputProps }: any = getInputProps({
             onKeyDown: handleKeyDown,
-            placeholder,
+            ...(placeholder ? { placeholder } : {}),
           });
           return (
             <div className="" style={{ ...style, border: "none" }}>
-              {(tags.length > 0 || !readOnly) && (
+              {readOnly ? (
+                <Box sx={{ ml: "10px", mb: "4px", mt: "14px" }}>
+                  {tags.map((item: any, idx: number) => {
+                    const displayText = item.domain
+                      ? `Domain: ${item.domain} Title: ${item.title}`
+                      : item.title;
+
+                    const backgroundColor =
+                      performerColors[item.supports] || "grey";
+
+                    return (
+                      <Fragment key={idx}>
+                        <Chip
+                          sx={{
+                            background: backgroundColor,
+                            fontSize: fontSize || "20px",
+                            cursor: clickable ? "pointer" : "default",
+                            ":hover": clickable
+                              ? { backgroundColor: "orange" }
+                              : {},
+                            my: "3px",
+                            mx: "3px",
+                          }}
+                          label={displayText}
+                          className={classes.innerChip}
+                          onClick={
+                            clickable
+                              ? () => {
+                                  handleClick(displayText);
+                                }
+                              : undefined
+                          }
+                        />
+                      </Fragment>
+                    );
+                  })}
+                </Box>
+              ) : (
                 <TextField
                   label={label || ""}
                   className={classes.inputChip}
                   InputProps={{
-                    startAdornment: tags.map((item: any, idx: number) => {
-                      const color = added.includes(item)
+                    startAdornment: tags.map((item: TagType, idx: number) => {
+                      const color = item.added
                         ? "#115f07"
-                        : removed.includes(item)
-                        ? "red"
-                        : "";
+                        : item.removed
+                          ? "red"
+                          : "";
                       return (
                         <Fragment key={idx}>
                           {readOnly ? (
                             <Chip
                               sx={{
-                                background: `${color}`,
+                                fontSize: fontSize || "20px",
+                                my: "3px",
+                                mx: "3px",
                               }}
-                              key={item}
+                              key={item.title}
                               tabIndex={-1}
-                              label={item}
+                              label={item.title}
                               className={classes.innerChip}
+                              clickable={clickable}
                             />
                           ) : (
                             <Chip
                               sx={{
                                 background: `${color}`,
+                                fontSize: fontSize || "20px",
+                                my: "3px",
+                                mx: "3px",
                               }}
-                              key={item}
+                              key={item.title}
                               tabIndex={-1}
-                              label={item}
+                              label={item.title}
                               disabled={readOnly}
                               className={classes.innerChip}
                               onDelete={handleDelete(item)}
+                              deleteIcon={
+                                <Tooltip title="Remove" placement="top">
+                                  <CancelIcon />
+                                </Tooltip>
+                              }
                             />
                           )}
                         </Fragment>
@@ -164,6 +239,7 @@ const ChipInput = ({
                         border: "none",
                       },
                     },
+                    pt: "15px",
                   }}
                 />
               )}

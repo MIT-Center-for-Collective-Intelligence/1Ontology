@@ -44,7 +44,12 @@ export type ILinkNode = {
   optional?: boolean;
 };
 
-export type ICollection = { collectionName: string; nodes: ILinkNode[] };
+export type ICollection = {
+  collectionName: string;
+  nodes: ILinkNode[];
+  change?: any;
+  changeType?: string;
+};
 export type IInheritance = {
   [key: string]: {
     ref: string | null;
@@ -65,7 +70,7 @@ export type INode = {
     isPartOf: ICollection[];
   };
   inheritance: IInheritance;
-  inheritanceParts: { 
+  inheritanceParts: {
     [nodeId: string]: {
       inheritedFromTitle: string;
       inheritedFromId: string;
@@ -74,7 +79,9 @@ export type INode = {
   specializations: ICollection[];
   generalizations: ICollection[];
   root: string;
-  propertyType: { [key: string]: string | "string" | "string-array" };
+  propertyType: {
+    [key: string]: string | "string" | "string-array" | "string-select";
+  };
   nodeType: INodeTypes;
   textValue: { [propertyName: string]: string };
   createdBy: string;
@@ -105,6 +112,10 @@ export type INode = {
   appName?: string;
   skillsFuture?: boolean;
   rootId?: string;
+  oNetTask?: {
+    id: string;
+    title: string;
+  };
 };
 
 export type TreeVisual = {
@@ -164,13 +175,16 @@ export type NodeChange = {
     | "edit collection"
     | "add images"
     | "remove images"
-    | "sort collections";
+    | "sort collections"
+    | "edit property"
+    | "change select-string";
   fullNode: INode | null;
   changeDetails?: { [key: string]: any };
   reasoning?: string;
   skillsFuture?: boolean;
   appName?: string;
   detailsOfChange?: any;
+  logLLMId?: string;
 };
 
 export type PromptChange = {
@@ -306,3 +320,13 @@ export function isLoopActivity(activity: IActivity): activity is ILoopActivity {
 export function isTaskActivity(activity: IActivity): activity is ITaskActivity {
   return activity.type === ACTIVITY_TYPES.TASK;
 }
+
+export type TransferInheritance = {
+  from: string;
+  to: string;
+  symbol: string;
+  fromOptional: boolean;
+  toOptional: boolean;
+  optionalChange: "added" | "removed" | "none";
+  hops: number;
+};

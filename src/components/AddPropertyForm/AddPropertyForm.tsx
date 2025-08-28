@@ -10,12 +10,14 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
+import { development } from "@components/lib/CONSTANTS";
 
 interface AddPropertyFormProps {
   addNewProperty: (title: string, type: string) => void;
   locked: boolean;
   setOpenAddProperty: any;
   exitingProperties: string[];
+  skillsFuture: boolean;
 }
 
 const SpecialCharacterRegex = /^[a-zA-Z0-9 ]*$/; // Adjust regex as necessary
@@ -25,6 +27,7 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
   locked,
   setOpenAddProperty,
   exitingProperties,
+  skillsFuture,
 }) => {
   const [propertyType, setPropertyType] = useState<string>("String");
   const [newPropertyTitle, setNewPropertyTitle] = useState<string>("");
@@ -56,7 +59,7 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
       exitingProperties.some(
         (p) =>
           p.replaceAll(" ", "").trim().toLowerCase() ===
-          newPropertyTitle.replaceAll(" ", "").trim().toLowerCase()
+          newPropertyTitle.replaceAll(" ", "").trim().toLowerCase(),
       )
     ) {
       setDuplicateError(true);
@@ -98,15 +101,19 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
             label="Property Type"
             sx={{ borderRadius: "20px" }}
           >
-            {[
-              "String",
-              "Activity",
-              "Object",
-              "Actor",
-              "Evaluation Dimension",
-              "Incentive",
-              "Reward",
-            ].map((item) => (
+            {(skillsFuture
+              ? ["String", "Activity"]
+              : [
+                  "String",
+                  "Activity",
+                  "Object",
+                  "Actor",
+                  "Evaluation Dimension",
+                  "Incentive",
+                  "Reward",
+                  "Numeric",
+                ]
+            ).map((item) => (
               <MenuItem key={item} value={item}>
                 {item}
               </MenuItem>
@@ -123,8 +130,8 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
             inputError
               ? "Max 30 characters, no special characters allowed."
               : duplicateError
-              ? "This property already exists."
-              : ""
+                ? "This property already exists."
+                : ""
           }
           InputLabelProps={{
             sx: { color: "grey" },

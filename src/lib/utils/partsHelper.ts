@@ -152,7 +152,6 @@ export const propagatePartsChangeToSpecializations = async (
         // Refresh inheritance tree for each affected part
         // const affectedPartIds = Object.keys(newInheritanceParts);
         // for (const partId of affectedPartIds) {
-        //   console.log(`Refreshing inheritance tree for part ${partId} due to specialization ${spec.id} inheritance update`);
 
         // Fetch the part node's data
         // const partNodeDoc = await getDoc(doc(collection(db, NODES), partId));
@@ -261,7 +260,6 @@ export const saveAsInheritancePart = async (
     };
 
     // // Refresh inheritance tree for the affected part
-    // console.log(`Refreshing inheritance tree for part ${partId} due to ${action} inheritance part in node ${nodeId}`);
 
     // // Fetch the part node's data
     // const partNodeDoc = await getDoc(doc(collection(db, NODES), partId));
@@ -324,7 +322,7 @@ export const breakInheritanceAndCopyParts = async (
       return false; // No inheritance to break
     }
 
-    const referencedNode = nodes[inheritanceRef];
+    const referencedNode = JSON.parse(JSON.stringify(nodes[inheritanceRef]));
 
     // Initialize inheritanceParts if it doesn't exist
     if (!nodeData.inheritanceParts) {
@@ -350,7 +348,7 @@ export const breakInheritanceAndCopyParts = async (
     Object.entries(generalizationInheritanceParts).forEach(
       ([partId, partInfo]) => {
         if (partInfo && partId !== partIdToRemove) {
-          nodeData.inheritanceParts[partId] = partInfo;
+          nodeData.inheritanceParts[partId] = partInfo as any;
         }
       },
     );
@@ -395,17 +393,23 @@ export const breakInheritanceAndCopyParts = async (
 export const getGeneralizationParts = (
   generalizationId: string,
   nodes: { [nodeId: string]: INode },
-): { id: string; title: string; isInherited: boolean }[] => {
+): { id: string; title: string; isInherited: boolean; optional: boolean }[] => {
   const generalizationNode = nodes[generalizationId];
   if (!generalizationNode) return [];
 
-  const parts: { id: string; title: string; isInherited: boolean }[] = [];
+  const parts: {
+    id: string;
+    title: string;
+    isInherited: boolean;
+    optional: boolean;
+  }[] = [];
 
   let genParts = generalizationNode.properties?.parts;
-  const partRefId = generalizationNode.inheritance["parts"].ref;
-  if (partRefId) {
-    genParts = nodes[partRefId].properties["parts"];
+  const partInheritanceRef = generalizationNode.inheritance["parts"].ref;
+  if (partInheritanceRef) {
+    genParts = nodes[partInheritanceRef]?.properties["parts"] || [];
   }
+
   // Add direct parts
   if (genParts) {
     genParts.forEach((collection: any) => {
@@ -415,6 +419,7 @@ export const getGeneralizationParts = (
             id: part.id,
             title: getTitle(nodes, part.id),
             isInherited: false,
+            optional: part.optional,
           });
         }
       });
@@ -422,7 +427,7 @@ export const getGeneralizationParts = (
   }
 
   // Add inherited parts
-  if (generalizationNode.inheritanceParts) {
+  /*   if (generalizationNode.inheritanceParts) {
     Object.keys(generalizationNode.inheritanceParts).forEach(
       (partId: string) => {
         const partInfo = generalizationNode.inheritanceParts[partId];
@@ -431,11 +436,12 @@ export const getGeneralizationParts = (
             id: partId,
             title: getTitle(nodes, partId),
             isInherited: true,
+            // optional:partInfo.
           });
         }
       },
     );
-  }
+  } */
 
   return parts;
 };

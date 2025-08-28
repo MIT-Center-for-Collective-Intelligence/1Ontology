@@ -1,9 +1,10 @@
-import React, { useMemo, useRef, useState } from "react";
-import { Box, Button, Typography, useTheme } from "@mui/material";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
 import { ICollection, INode } from "@components/types/INode";
 import Text from "../OntologyComponents/Text";
 import {
   collection,
+  deleteField,
   doc,
   getFirestore,
   updateDoc,
@@ -12,11 +13,18 @@ import {
 import { NODES } from "@components/lib/firestoreClient/collections";
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
 import { DISPLAY, PROPERTIES_ORDER } from "@components/lib/CONSTANTS";
-import { recordLogs } from "@components/lib/utils/helpers";
+import {
+  recordLogs,
+  saveNewChangeLog,
+  updateInheritance,
+} from "@components/lib/utils/helpers";
 import AddPropertyForm from "../AddPropertyForm/AddPropertyForm";
 import { useAuth } from "../context/AuthContext";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
 import { NodeImageManager } from "./NodeImageManager";
+import { DisplayAddedRemovedProperty } from "../StructuredProperty/DisplayAddedRemovedProperty";
+import SelectProperty from "../StructuredProperty/SelectProprety";
+import NumericProperty from "../StructuredProperty/NumericProperty";
 
 interface NodeBodyProps {
   currentVisibleNode: INode;
@@ -68,10 +76,10 @@ interface NodeBodyProps {
   setGlowIds: any;
   selectedCollection: string;
   storage: any;
-  saveNewChangeLog: any;
   skillsFuture: boolean;
   enableEdit: boolean;
   skillsFutureApp: string;
+  deleteProperty: Function;
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -124,10 +132,10 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   setGlowIds,
   selectedCollection,
   storage,
-  saveNewChangeLog,
   skillsFuture,
   enableEdit,
   skillsFutureApp,
+  deleteProperty,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -248,6 +256,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
 
       if (newPropertyType.toLowerCase() === "string") {
         properties[newProperty] = "";
+      } else if (newPropertyType.toLowerCase() === "numeric") {
+        properties[newProperty] = 0;
       } else {
         properties[newProperty] = [{ collectionName: "main", nodes: [] }];
       }
@@ -274,7 +284,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
             element.style.boxShadow = "";
           }, 2000);
         }
-      }, 1000);
+      }, 500);
       await updateDoc(nodeRef, {
         properties,
         propertyType,
@@ -336,7 +346,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
     } else {
       properties = currentVisibleNode.properties;
     }
-    console.log("properties ==>", properties);
+
     const sortedKeys = Object.keys(properties || {})
       .filter(
         (p) =>
@@ -344,6 +354,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           p !== "isPartOf" &&
           p !== "description" &&
           p !== "actor" &&
+          p !== "alternatives" &&
           p !== "context" &&
           p !== "images",
       )
@@ -368,6 +379,88 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   }, [currentVisibleNode, selectedDiffNode]);
 
   const hasReferences = orderOfProperties.includes("References");
+
+  const modifyProperty = useCallback(
+    async ({
+      newValue,
+      previousValue,
+    }: {
+      newValue: string;
+      previousValue: string;
+    }) => {
+      try {
+        if (!user?.uname) return;
+
+        const currentNode = JSON.parse(JSON.stringify(currentVisibleNode));
+        const properties = currentNode.properties;
+
+        if (
+          properties.hasOwnProperty(newValue) ||
+          newValue.toLowerCase() === "specializations" ||
+          newValue.toLowerCase() === "generalizations" ||
+          newValue.toLowerCase() === "title"
+        ) {
+          confirmIt("This property already exist");
+          return;
+        }
+
+        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+
+        const propertyValue = currentNode.properties[previousValue];
+        const propertyType = currentNode.propertyType[previousValue];
+        const inheritanceValue = currentNode.inheritance[previousValue];
+
+        let ObjectUpdates = {
+          [`propertyType.${previousValue}`]: deleteField(),
+          [`properties.${previousValue}`]: deleteField(),
+          [`inheritance.${previousValue}`]: deleteField(),
+          /* new values */
+          [`propertyType.${newValue}`]: propertyType,
+          [`properties.${newValue}`]: propertyValue,
+          [`inheritance.${newValue}`]: inheritanceValue,
+        };
+        if (currentNode.textValue && currentNode.textValue[previousValue]) {
+          const comments = currentNode.textValue[previousValue];
+          ObjectUpdates = {
+            ...ObjectUpdates,
+            [`textValue.${previousValue}`]: deleteField(),
+            [`textValue.${newValue}`]: comments,
+          };
+        }
+        if (currentNode.propertyOf && currentNode.propertyOf[previousValue]) {
+          const propertyOfValue = currentNode.propertyOf[previousValue];
+          ObjectUpdates = {
+            ...ObjectUpdates,
+            [`propertyOf.${previousValue}`]: deleteField(),
+            [`propertyOf.${newValue}`]: propertyOfValue,
+          };
+        }
+        updateDoc(nodeRef, ObjectUpdates);
+        await updateInheritance({
+          nodeId: currentVisibleNode.id,
+          updatedProperties: [],
+          deletedProperties: [],
+          editedProperties: [{ previousValue, newValue }],
+          db,
+        });
+        saveNewChangeLog(db, {
+          nodeId: currentNode.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: newValue,
+          previousValue,
+          newValue,
+          modifiedAt: new Date(),
+          changeType: "edit property",
+          fullNode: currentNode,
+          skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [user?.uname, currentVisibleNode],
+  );
 
   return (
     <Box>
@@ -394,7 +487,25 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 </Box>
               )}
               <Box sx={{ mt: "15px" }}>
-                {currentNode.propertyType[property] === "string-array" ? (
+                {currentNode.propertyType[property] === "string-select" ? (
+                  <SelectProperty
+                    currentVisibleNode={currentVisibleNode}
+                    property={property}
+                    nodes={nodes}
+                    selectedDiffNode={selectedDiffNode}
+                    currentImprovement={currentImprovement}
+                    user={user}
+                    options={[
+                      "a single human",
+                      "collaboration of humans",
+                      "collaboration of humans and ai",
+                      "ai",
+                    ]}
+                    skillsFuture={skillsFuture}
+                    enableEdit={enableEdit}
+                    skillsFutureApp={skillsFutureApp}
+                  />
+                ) : currentNode.propertyType[property] === "string-array" ? (
                   <ChipsProperty
                     currentVisibleNode={currentVisibleNode}
                     property={property}
@@ -406,6 +517,21 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
                     skillsFutureApp={skillsFutureApp}
+                  />
+                ) : currentNode.propertyType[property] === "numeric" ? (
+                  <NumericProperty
+                    currentVisibleNode={currentNode}
+                    property={property}
+                    value={onGetPropertyValue(property)}
+                    nodes={nodes}
+                    locked={locked}
+                    selectedDiffNode={selectedDiffNode}
+                    currentImprovement={currentImprovement}
+                    skillsFuture={skillsFuture}
+                    enableEdit={enableEdit}
+                    skillsFutureApp={skillsFutureApp}
+                    deleteProperty={deleteProperty}
+                    modifyProperty={modifyProperty}
                   />
                 ) : currentNode.propertyType[property] !== "string" ? (
                   <StructuredProperty
@@ -461,6 +587,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
                     skillsFutureApp={skillsFutureApp}
+                    deleteProperty={deleteProperty}
+                    modifyProperty={modifyProperty}
                   />
                 ) : (
                   property !== "description" &&
@@ -479,6 +607,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       skillsFuture={skillsFuture}
                       enableEdit={enableEdit}
                       skillsFutureApp={skillsFutureApp}
+                      deleteProperty={deleteProperty}
+                      modifyProperty={modifyProperty}
                     />
                   )
                 )}
@@ -486,6 +616,10 @@ const NodeBody: React.FC<NodeBodyProps> = ({
             </React.Fragment>
           );
         })}
+        {selectedDiffNode &&
+          selectedDiffNode.changeType === "remove property" && (
+            <DisplayAddedRemovedProperty selectedDiffNode={selectedDiffNode} />
+          )}
         {!hasReferences &&
           user &&
           (!skillsFuture ||
@@ -506,6 +640,64 @@ const NodeBody: React.FC<NodeBodyProps> = ({
               />
             </Box>
           )}
+        {selectedDiffNode?.changeType === "edit property" &&
+          !(selectedDiffNode.newValue in currentVisibleNode.properties) && (
+            <Paper
+              id={`property-${selectedDiffNode.modifiedProperty}`}
+              elevation={9}
+              sx={{
+                borderRadius: "30px",
+                borderBottomRightRadius: "18px",
+                borderBottomLeftRadius: "18px",
+                minWidth: "500px",
+                width: "100%",
+                maxHeight: "100%",
+                overflow: "auto",
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                overflowX: "hidden",
+                pb: "10px",
+                mt: "14px",
+                minHeight: "100px",
+              }}
+            >
+              {" "}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  background: (theme: any) =>
+                    theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                  p: 3,
+                  gap: "10px",
+                }}
+              >
+                {" "}
+                <Typography
+                  sx={{
+                    fontSize: "20px",
+                    fontWeight: 500,
+                    fontFamily: "Roboto, sans-serif",
+                    color: "red",
+                    textDecoration: "line-through",
+                  }}
+                >
+                  {selectedDiffNode.previousValue}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "20px",
+                    fontWeight: 500,
+                    fontFamily: "Roboto, sans-serif",
+                    color: "green",
+                  }}
+                >
+                  {selectedDiffNode.newValue}
+                </Typography>
+              </Box>
+            </Paper>
+          )}
       </Box>
       {!locked && openAddProperty && (
         <AddPropertyForm
@@ -513,6 +705,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           setOpenAddProperty={setOpenAddProperty}
           locked={locked}
           exitingProperties={Object.keys(currentVisibleNode.properties || {})}
+          skillsFuture={skillsFuture}
         />
       )}
       {!locked && !openAddProperty && !currentImprovement && (

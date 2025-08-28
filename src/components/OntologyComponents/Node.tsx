@@ -73,26 +73,21 @@ The `Node` component is intended to be used within an application that requires 
 - The component is designed to work with a specific data structure and may require adaptation for different use cases.
 
 This documentation provides a high-level overview of the `Node` component and its capabilities. For detailed implementation and integration, refer to the source code and the specific application context in which the component is used.*/
-import { Popover, Stack, useMediaQuery } from "@mui/material";
+import { Link, Paper, Stack, Typography, useMediaQuery } from "@mui/material";
 import { Box } from "@mui/system";
 import {
   collection,
   doc,
   getDoc,
-  getDocs,
   getFirestore,
-  query,
   setDoc,
   updateDoc,
-  where,
-  writeBatch,
 } from "firebase/firestore";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Text from "./Text";
 import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import {
   ICollection,
-  ILinkNode,
   INode,
   INodeTypes,
   MainSpecializations,
@@ -130,6 +125,7 @@ import { getStorage } from "firebase/storage";
 import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 import { development } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
+import ChipsProperty from "../StructuredProperty/ChipsProperty";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -176,6 +172,8 @@ type INodeProps = {
   setEnableEdit: any;
   inheritanceDetails: any;
   skillsFutureApp: string;
+  editableProperty: any;
+  setEditableProperty: any;
 };
 
 const Node = ({
@@ -221,6 +219,8 @@ const Node = ({
   setEnableEdit,
   inheritanceDetails,
   skillsFutureApp,
+  editableProperty,
+  setEditableProperty,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -234,8 +234,6 @@ const Node = ({
   const storage = getStorage();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [width, setWidth] = useState<number>(0);
-
-  const [editableProperty, setEditableProperty] = useState<ICollection[]>([]);
 
   /* */
   const [glowIds, setGlowIds] = useState<Set<string>>(new Set());
@@ -979,7 +977,11 @@ const Node = ({
         // call removeIsPartOf function to remove the node link from all the nodes where it's linked
         await removeIsPartOf(db, currentNode as INode, user?.uname);
         // Update the user document by removing the deleted node's ID
-        await updateDoc(nodeRef, { deleted: true, deletedAt: new Date() });
+        await updateDoc(nodeRef, {
+          deleted: true,
+          deletedAt: new Date(),
+          deletedBy: user.uname,
+        });
         await Post("/triggerChroma", {
           deleteNode: true,
           nodeId: currentNode.id,
@@ -1112,6 +1114,68 @@ const Node = ({
     },
     [eachOntologyPath],
   );
+  const deleteProperty = async (property: string) => {
+    try {
+      const confirm = await confirmIt(
+        <Box>
+          <Typography>
+            Are you sure you want to delete the property{" "}
+            <strong style={{ color: "orange" }}>{property}</strong> from this
+            node:
+          </Typography>
+        </Box>,
+        "Yes",
+        "Cancel",
+      );
+
+      if (confirm) {
+        const currentNode = { ...currentVisibleNode };
+        const properties = currentNode.properties;
+
+        /*     
+        const propertyType = currentNode.propertyType;
+        const inheritance = currentNode.inheritance; */
+        if (properties.hasOwnProperty(property)) {
+          const element = document.getElementById(`property-${property}`);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+
+            element.style.transition =
+              "box-shadow 0.3s ease, opacity 0.5s ease, transform 0.5s ease";
+            element.style.boxShadow = "0 0 0 3px red";
+            element.style.opacity = "0";
+            element.style.transform = "translateX(-20px)";
+          }
+
+          updateInheritance({
+            nodeId: currentNode.id,
+            updatedProperties: [],
+            deletedProperties: [property],
+            db,
+          });
+        }
+        const inheritedRef = currentNode.inheritance[property].ref;
+        const previousValue = inheritedRef
+          ? nodes[inheritedRef].properties[property]
+          : currentNode.properties[property];
+
+        saveNewChangeLog(db, {
+          nodeId: currentNode.id,
+          modifiedBy: user?.uname,
+          modifiedProperty: property,
+          previousValue,
+          newValue: null,
+          modifiedAt: new Date(),
+          changeType: "remove property",
+          fullNode: currentNode,
+          skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   /* "root": "T
   of the direct specializations of 'Act'/'Actor'/'Evaluation Dimension'/'Incentive'/'Reward'.
@@ -1162,6 +1226,7 @@ const Node = ({
           skillsFuture={skillsFuture}
           enableEdit={enableEdit}
           setEnableEdit={setEnableEdit}
+          handleCloseAddLinksModel={handleCloseAddLinksModel}
         />
 
         {/* {currentVisibleNode.nodeType === "context" && (
@@ -1185,6 +1250,71 @@ const Node = ({
           />
         )} */}
       </Box>
+      {currentVisibleNode.oNetTask &&
+        currentVisibleNode.specializations.flatMap((c) => c.nodes).length <=
+          0 && (
+          <Paper
+            id="property-onet-task"
+            elevation={9}
+            sx={{
+              borderRadius: "30px",
+              borderBottomRightRadius: "18px",
+              borderBottomLeftRadius: "18px",
+              minWidth: "500px",
+              width: "100%",
+              maxHeight: "100%",
+              overflow: "auto",
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              overflowX: "hidden",
+              pb: "10px",
+              mt: "14px",
+              minHeight: "100px",
+              mb: "10px",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                background: (theme: any) =>
+                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                p: 3,
+                gap: "10px",
+              }}
+            >
+              {" "}
+              <Typography>O*Net Link</Typography>
+            </Box>
+            <Link
+              underline="hover"
+              onClick={async () => {
+                if (!!currentVisibleNode.oNetTask?.id) {
+                  const taskDoc = await getDoc(
+                    doc(
+                      collection(db, "onetTasks"),
+                      currentVisibleNode.oNetTask.id,
+                    ),
+                  );
+                  const taskData = taskDoc.data();
+                  if (taskData) {
+                    const url = `https://www.onetonline.org/search/task/choose/${taskData["O*NET-SOC Code"]}`;
+
+                    window.open(url, "_blank");
+                  }
+                }
+              }}
+              sx={{
+                cursor: "pointer",
+                mx: "5px",
+                p: "10px",
+              }}
+            >
+              {currentVisibleNode.oNetTask.title}
+            </Link>
+          </Paper>
+        )}
       <Box
         sx={{
           display: "flex",
@@ -1193,8 +1323,21 @@ const Node = ({
           width: "100%",
         }}
       >
-        {/* title of the node */}
-
+        {/* alternatives of title of the node */}
+        {currentVisibleNode?.properties.hasOwnProperty("alternatives") && (
+          <ChipsProperty
+            currentVisibleNode={currentVisibleNode}
+            property={"alternatives"}
+            nodes={nodes}
+            locked={locked}
+            currentImprovement={currentImprovement}
+            selectedDiffNode={selectedDiffNode}
+            user={user}
+            skillsFuture={skillsFuture}
+            enableEdit={enableEdit}
+            skillsFutureApp={skillsFutureApp}
+          />
+        )}
         {/* description of the node */}
 
         <Text
@@ -1462,10 +1605,10 @@ const Node = ({
           setGlowIds={setGlowIds}
           selectedCollection={selectedCollection}
           storage={storage}
-          saveNewChangeLog={saveNewChangeLog}
           skillsFuture={skillsFuture}
           enableEdit={enableEdit}
           skillsFutureApp={skillsFutureApp}
+          deleteProperty={deleteProperty}
         />
       </Box>{" "}
       {ConfirmDialog}

@@ -28,6 +28,7 @@ const ExpandSearchResult = ({
   getNumOfGeneralizations,
   selectedProperty,
   addACloneNodeQueue,
+  currentVisibleNode,
 }: {
   searchResultsForSelection: any;
   markItemAsChecked: any;
@@ -41,6 +42,7 @@ const ExpandSearchResult = ({
   getNumOfGeneralizations: any;
   selectedProperty: any;
   addACloneNodeQueue: any;
+  currentVisibleNode: any;
 }) => {
   const [expanded, setExpanded] = useState<string[]>([]);
 
@@ -65,6 +67,7 @@ const ExpandSearchResult = ({
           getNumOfGeneralizations={getNumOfGeneralizations}
           selectedProperty={selectedProperty}
           addACloneNodeQueue={addACloneNodeQueue}
+          currentVisibleNode={currentVisibleNode}
         />
       }
     />
@@ -95,6 +98,7 @@ const ExpandSearchResult = ({
               getNumOfGeneralizations={getNumOfGeneralizations}
               selectedProperty={selectedProperty}
               addACloneNodeQueue={addACloneNodeQueue}
+              currentVisibleNode={currentVisibleNode}
             />
           }
           sx={{
@@ -123,6 +127,8 @@ const ExpandSearchResult = ({
 
             "& .MuiTreeItem-content": {
               p: 0,
+              px: 4,
+              borderRadius: "25px",
             },
           }}
         >
@@ -145,6 +151,7 @@ const NodeLabel = ({
   getNumOfGeneralizations,
   selectedProperty,
   addACloneNodeQueue,
+  currentVisibleNode,
 }: {
   node: any;
   markItemAsChecked: any;
@@ -157,6 +164,7 @@ const NodeLabel = ({
   getNumOfGeneralizations: any;
   selectedProperty: any;
   addACloneNodeQueue: any;
+  currentVisibleNode: any;
 }) => {
   const isChecked = checkedItems.has(node.id);
   const isLocked = !user?.manageLock && node.locked;
@@ -212,7 +220,21 @@ const NodeLabel = ({
       {handleCloning && !isSaving && (
         <Tooltip title={"Add Specialization"}>
           <IconButton
-            sx={{ m: "9px", borderRadius: "25px", fontSize: "0.8rem" }}
+            sx={{
+              borderRadius: "16px",
+              marginLeft: "3px",
+              textTransform: "none",
+              fontSize: "0.8rem",
+              padding: "0px",
+              color: currentVisibleNode?.id === node.id ? "#251306" : "#388E3C",
+              backgroundColor:
+                currentVisibleNode?.id === node.id ? "#E8F5E9" : "",
+              "&:hover": {
+                borderColor: "#2E7D32",
+                backgroundColor:
+                  currentVisibleNode?.id === node.id ? "#388E3C" : "#E8F5E9",
+              },
+            }}
             onClick={(e) => {
               e.stopPropagation();
               addACloneNodeQueue(node.id);

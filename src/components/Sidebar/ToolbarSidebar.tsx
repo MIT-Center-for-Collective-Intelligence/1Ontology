@@ -12,6 +12,9 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import EditIcon from "@mui/icons-material/Edit";
 import DownloadIcon from "@mui/icons-material/Download";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+
 import {
   Avatar,
   Button,
@@ -25,6 +28,7 @@ import {
   Tooltip,
   Typography,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 
 import mitLogoLight from "../../../public/MIT-Logo-Small-Light.png";
@@ -46,6 +50,7 @@ import { INotification } from "@components/types/IChat";
 import {
   createNewNode,
   diffCollections,
+  diffSortedCollections,
   generateInheritance,
   synchronizeStuff,
 } from "@components/lib/utils/helpers";
@@ -53,11 +58,15 @@ import { getNotificationsSnapshot } from "@components/client/firestore/notificat
 import {
   collection,
   doc,
+  getDoc,
+  getDocs,
   getFirestore,
   onSnapshot,
   query,
+  setDoc,
   Timestamp,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import SearchSideBar from "../SearchSideBar/SearchSideBar";
 import ActiveUsers from "../ActiveUsers/ActiveUsers";
@@ -166,6 +175,7 @@ const ToolbarSidebar = ({
   skillsFutureApp,
 }: MainSidebarProps) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery("(max-width:599px)");
   const db = getFirestore();
   const [{ isAuthenticated }] = useAuth();
   const [handleThemeSwitch] = useThemeChange();
@@ -192,8 +202,12 @@ const ToolbarSidebar = ({
   const [improvements, setImprovements] = useState<any>([]);
   const [copilotMessage, setCopilotMessage] = useState("");
   const { selectIt, dropdownDialog } = useSelectDropdown();
+  const [oNetProgress, setONetProgress] = useState({ added: 0, remaining: 0 });
 
   const handleProfileMenuOpen = (event: any) => {
+    if (user?.uname === "1man" || user?.uname === "ouhrac") {
+      loadProgress();
+    }
     setProfileMenuOpen(event.currentTarget);
   };
   const [selectedUser, setSelectedUser] = useState("All");
@@ -209,6 +223,44 @@ const ToolbarSidebar = ({
     const userDoc = doc(collection(db, USERS), user?.uname);
     await updateDoc(userDoc, { imageUrl });
   };
+
+  const loadProgress = async () => {
+    try {
+      const oNetProgressRef = doc(collection(db, "onetTasks"), "progress");
+      const oNetProgressDoc = await getDoc(oNetProgressRef);
+      if (oNetProgressDoc.exists()) {
+        const oNetProgressData = oNetProgressDoc.data();
+        setONetProgress({
+          added: oNetProgressData.added,
+          remaining: oNetProgressData.remaining,
+        });
+      }
+      const addedQuery = query(
+        collection(db, "onetTasks"),
+        where("added", "==", true),
+      );
+      const addedOnetDocsSnapshot = await getDocs(addedQuery);
+
+      const nonAddedQuery = query(
+        collection(db, "onetTasks"),
+        where("added", "==", false),
+      );
+      const remainingOnetDocsSnapshot = await getDocs(nonAddedQuery);
+      setONetProgress({
+        added: addedOnetDocsSnapshot.docs.length,
+        remaining: remainingOnetDocsSnapshot.docs.length,
+      });
+      setDoc(oNetProgressRef, {
+        added: addedOnetDocsSnapshot.docs.length,
+        remaining: remainingOnetDocsSnapshot.docs.length,
+        updatedAt: new Date(),
+        updatedBy: user?.uname ?? "",
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const onNavigateToNode = useCallback(
     (nodeTitle: string) => {
       if (!nodeTitle) {
@@ -340,7 +392,10 @@ const ToolbarSidebar = ({
         sx: {
           width: "280px",
           padding: "8px 0",
-          borderRadius: "25px",
+          borderRadius: "13px",
+          backgroundColor: (theme) =>
+            theme.palette.mode === "light" ? "#dfdfdf" : "",
+          border: "1px solid gray",
         },
       }}
     >
@@ -354,8 +409,13 @@ const ToolbarSidebar = ({
           color: "text.secondary",
           zIndex: 1,
           "&:hover": {
-            backgroundColor: "rgba(237, 228, 228, 0.04)",
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark" ? "gray" : "#f4f4f4",
           },
+          border: "1px solid gray",
+          borderRadius: "25px",
+
+          p: 0.5,
         }}
       >
         <CloseIcon fontSize="small" />
@@ -443,15 +503,15 @@ const ToolbarSidebar = ({
                   position: "absolute",
                   bottom: 0,
                   right: 0,
-                  bgcolor: isUploading ? "orange" : theme.palette.primary.main,
+                  bgcolor: isUploading ? "orange" : "gray",
                   color: theme.palette.primary.contrastText,
-                  width: 24,
-                  height: 24,
+                  width: 28,
+                  height: 28,
                   borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  border: `2px solid ${theme.palette.background.paper}`,
+                  border: `1px solid white`,
                   cursor: "pointer",
                   "&:hover": {
                     bgcolor: isUploading
@@ -469,7 +529,7 @@ const ToolbarSidebar = ({
                     {percentageUploaded}%
                   </Typography>
                 ) : (
-                  <EditIcon sx={{ fontSize: "14px" }} />
+                  <CameraAltIcon sx={{ fontSize: "19px", color: "white" }} />
                 )}
               </Box>
             </Box>
@@ -484,8 +544,46 @@ const ToolbarSidebar = ({
         </Box>
       )}
       {isAuthenticated && user && (
-        <Box sx={{ pl: 3, textAlign: "center", mt: "15px" }}>
-          <Typography sx={{ fontSize: "25px" }}>Hi, {user?.fName}!</Typography>
+        <Box sx={{ pl: 3, textAlign: "center", mt: "20px" }}>
+          <Typography variant="h5" sx={{ fontWeight: 500 }}>
+            Hi, {user?.fName}!
+          </Typography>
+          {(user.uname === "1man" || user.uname === "ouhrac") && (
+            <Box
+              sx={{
+                border: "1px solid gray",
+                borderRadius: "20px",
+                mr: "16px",
+                mt: "8px",
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "light" ? "#fffdfd" : "#252525",
+                py: "8px",
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                sx={{ mt: 1, color: "text.secondary", fontWeight: "bold" }}
+              >
+                O*NET Progress
+              </Typography>
+              <Typography variant="body1" sx={{ mt: 0.5 }}>
+                <Box
+                  component="span"
+                  sx={{ fontWeight: 500, color: "success.main" }}
+                >
+                  {oNetProgress.added}
+                </Box>{" "}
+                added /{" "}
+                <Box
+                  component="span"
+                  sx={{ fontWeight: 500, color: "warning.main" }}
+                >
+                  {oNetProgress.remaining}
+                </Box>{" "}
+                remaining
+              </Typography>
+            </Box>
+          )}
         </Box>
       )}
       {isAuthenticated && user && (
@@ -513,7 +611,9 @@ const ToolbarSidebar = ({
           }}
         >
           <LogoutIcon fontSize="medium" sx={{ color: "gray" }} />
-          <Typography variant="body1">Sign out</Typography>
+          <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+            Sign out
+          </Typography>
         </Button>
       )}
     </Menu>
@@ -639,7 +739,7 @@ const ToolbarSidebar = ({
     if (data === null) {
       setCurrentImprovement(null);
       setSelectedDiffNode(null);
-      if (nodes[currentVisibleNode?.id] == null) {
+      if (!nodes[currentVisibleNode?.id]) {
         navigateToNode(previousNodeId);
       } else {
         navigateToNode(currentVisibleNode?.id);
@@ -664,9 +764,15 @@ const ToolbarSidebar = ({
         data.modifiedProperty === "specializations" ||
         data.modifiedProperty === "generalizations") &&
       modified_property_type !== "string" &&
-      modified_property_type !== "string-array"
+      modified_property_type !== "string-array" &&
+      modified_property_type !== "string-select" &&
+      modified_property_type !== "numeric"
     ) {
-      const diff = diffCollections(data.previousValue, data.newValue);
+      const diff =
+        data.changeType === "sort collections"
+          ? diffSortedCollections(data.previousValue, data.newValue)
+          : diffCollections(data.previousValue, data.newValue);
+
       data.detailsOfChange = { comparison: diff };
     }
     setTimeout(() => {
@@ -680,19 +786,50 @@ const ToolbarSidebar = ({
     setTimeout(() => {
       const modifiedProperty = data.modifiedProperty;
       const changedProperty = data.changeDetails?.addedProperty;
+      const targetProperty = modifiedProperty || changedProperty;
 
-      if (modifiedProperty) {
-        const element = document.getElementById(`property-${modifiedProperty}`);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
-          return;
+      if (targetProperty) {
+        let firstChangedNodeId = null;
+
+        if (data.detailsOfChange?.comparison) {
+          for (const collection of data.detailsOfChange.comparison) {
+            const changedNode = collection.nodes.find(
+              (node: any) =>
+                node.change === "added" ||
+                node.change === "removed" ||
+                node.change === "modified" ||
+                node.changeType === "sort",
+            );
+            if (changedNode) {
+              firstChangedNodeId = changedNode.id;
+              break;
+            }
+          }
         }
-      }
 
-      if (changedProperty) {
-        const element = document.getElementById(`property-${changedProperty}`);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Scroll to the specific changed element
+        if (firstChangedNodeId) {
+          const changedElement = document.getElementById(
+            `${firstChangedNodeId}-${targetProperty}`,
+          );
+          if (changedElement) {
+            changedElement.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+            return;
+          }
+        }
+
+        // Fallback: scroll to property container
+        const propertyElement = document.getElementById(
+          `property-${targetProperty}`,
+        );
+        if (propertyElement) {
+          propertyElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
         }
       }
     }, 1000);
@@ -708,7 +845,6 @@ const ToolbarSidebar = ({
       setNodesByTitle(nodesByT);
     }
   }, [nodes, user]);
-
   const getNewNodes = (newNodes: copilotNewNode[]): any => {
     try {
       if (!user?.uname) return;
@@ -1112,6 +1248,7 @@ const ToolbarSidebar = ({
             openLogsFor={openLogsFor}
             displayDiff={displayDiff}
             selectedDiffNode={selectedDiffNode}
+            nodes={nodes}
           />
         );
       case "chat":
@@ -1165,6 +1302,7 @@ const ToolbarSidebar = ({
             selectedDiffNode={selectedDiffNode}
             displayDiff={displayDiff}
             activeUsers={activeUsers}
+            nodes={nodes}
           />
         );
       case "improvements":
@@ -1201,6 +1339,7 @@ const ToolbarSidebar = ({
             selectedUser={selectedUser}
             skillsFuture={skillsFuture}
             skillsFutureApp={skillsFutureApp}
+            nodes={nodes}
           />
         );
       default:
@@ -1281,7 +1420,13 @@ const ToolbarSidebar = ({
     <Box
       ref={toolbarRef}
       sx={{
-        width: !!activeSidebar ? "450px" : hovered ? "190px" : "70px",
+        width: !!activeSidebar 
+          ? isMobile 
+            ? "100%" 
+            : "450px" 
+          : hovered 
+            ? "190px" 
+            : "70px",
         // transition: "width 0.1s ease",
         height: "100vh",
         background:
@@ -1297,13 +1442,13 @@ const ToolbarSidebar = ({
         p: activeSidebar ? 0 : 2,
       }}
       onMouseEnter={() => {
-        if (!activeSidebar) {
+        /*  if (!activeSidebar) {
           setHovered(true);
         } else {
           setHovered(false);
-        }
+        } */
       }}
-      onMouseLeave={() => setHovered(false)}
+      // onMouseLeave={() => setHovered(false)}
     >
       {!!activeSidebar ? (
         <Box>
@@ -1322,11 +1467,11 @@ const ToolbarSidebar = ({
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "5px",
+                  gap: "15px",
                   mt: "14px",
                 }}
               >
-                <Box sx={{ position: "relative", display: "inline-block" }}>
+                <Box>
                   <OptimizedAvatar
                     alt={openLogsFor.fullname}
                     imageUrl={openLogsFor.imageUrl || ""}
@@ -1340,12 +1485,11 @@ const ToolbarSidebar = ({
                     }}
                   />
                 </Box>
-                <Box>
-                  <Typography>
-                    {openLogsFor.fName}
-                    {"'s Edit History"}
-                  </Typography>
-                </Box>
+
+                <Typography sx={{ fontWeight: "bold", fontSize: "20px" }}>
+                  {openLogsFor.fName}
+                  {"'s Edit History"}
+                </Typography>
               </Box>
             )}
 
@@ -1445,18 +1589,30 @@ const ToolbarSidebar = ({
         </Box>
       ) : (
         <>
-          <Box sx={{ mb: 2, mr: "10px" }}>
+          <Box sx={{ mb: 2, mr: "15px" }}>
             <img src={getLog} alt="mit logo" width={"auto"} height={"40px"} />
           </Box>
 
           {/* Button for Avatar and Full Name */}
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Box onClick={handleProfileMenuOpen}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <Box
+              onClick={handleProfileMenuOpen}
+              sx={{
+                border: "2px solid #1ff81f",
+                borderRadius: "50%",
+                ml: "3px",
+              }}
+            >
               {user && (
                 <OptimizedAvatar
                   alt={`${user?.fName} ${user?.lName}`}
                   imageUrl={activeUsers[user?.uname]?.imageUrl || ""}
-                  size={45}
+                  size={43}
                   sx={{
                     width: "100%",
                     height: "100%",
@@ -1472,13 +1628,14 @@ const ToolbarSidebar = ({
                 />
               )}
             </Box>
-
             <Typography
               sx={{
                 ml: 2,
                 transition: "opacity 0.3s ease",
                 opacity: hovered ? 1 : 0,
                 minWidth: "120px",
+                fontWeight: "bold",
+                color: "#f4e2e2",
               }}
             >
               {`${user?.fName} ${user?.lName}`}
@@ -1509,17 +1666,17 @@ const ToolbarSidebar = ({
               text="Chatroom"
               toolbarIsOpen={hovered}
             />
-            {!!user?.manageLock && (
-              <SidebarButton
-                id="toolbar-help-button"
-                icon={<HistoryIcon />}
-                onClick={() => {
-                  handleExpandSidebar("history");
-                }}
-                text="Edit History"
-                toolbarIsOpen={hovered}
-              />
-            )}
+
+            <SidebarButton
+              id="toolbar-help-button"
+              icon={<HistoryIcon />}
+              onClick={() => {
+                handleExpandSidebar("history");
+              }}
+              text="Edit History"
+              toolbarIsOpen={hovered}
+            />
+
             {!!user?.admin &&
               (window.location.origin.startsWith("http://localhost") ||
                 window.location.origin ===
@@ -1581,7 +1738,11 @@ const ToolbarSidebar = ({
               id="toolbar-theme-button"
               icon={<DownloadIcon />}
               onClick={() => {
-                handleDownload({ nodes });
+                try {
+                  handleDownload({ nodes });
+                } catch (error) {
+                  confirmIt("There was an error downloading the JSON!");
+                }
               }}
               text={"Download JSON"}
               toolbarIsOpen={hovered}
@@ -1617,6 +1778,55 @@ const ToolbarSidebar = ({
           />
         </>
       )}
+      {!activeSidebar && (
+        <Box
+          sx={{
+            pt: "14px",
+            display: "flex",
+            justifyContent: "flex-start",
+            mt: "auto",
+          }}
+        >
+          {!isMobile && (
+            <Tooltip title={hovered ? "Collapse" : "Expand"} placement="left">
+              {hovered ? (
+                <ChevronRightIcon
+                  onClick={() => {
+                    setHovered((prev) => !prev);
+                  }}
+                  sx={{
+                    borderRadius: "50%",
+                    mt: "auto",
+                    p: "3px",
+                    cursor: "pointer",
+                    fontSize: "30px",
+                    ":hover": {
+                      backgroundColor: "orange",
+                    },
+                  }}
+                />
+              ) : (
+                <ChevronLeftIcon
+                  onClick={() => {
+                    setHovered((prev) => !prev);
+                  }}
+                  sx={{
+                    borderRadius: "50%",
+                    mt: "auto",
+                    p: "3px",
+                    cursor: "pointer",
+                    fontSize: "30px",
+                    ":hover": {
+                      backgroundColor: "orange",
+                    },
+                  }}
+                />
+              )}
+            </Tooltip>
+          )}
+        </Box>
+      )}
+
       {isAuthenticated && user && renderProfileMenu}
       {dropdownDialog}
     </Box>

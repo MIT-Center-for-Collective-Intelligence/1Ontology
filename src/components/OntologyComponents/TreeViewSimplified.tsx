@@ -153,6 +153,7 @@ const TreeViewSimplified = ({
 
             "& .MuiTreeItem-content": {
               p: 0,
+              borderRadius: "25px",
             },
           }}
         >
@@ -234,10 +235,9 @@ const NodeLabel = ({
       sx={{
         display: "flex",
         alignItems: "center",
-        py: "8px",
+        py: "4px",
         pr: "8px",
         paddingLeft: "4px",
-        borderRadius: "10px",
         backgroundColor:
           currentVisibleNode?.id === nodeId
             ? (theme) => (theme.palette.mode === "dark" ? "#125f07" : "#1fb509")

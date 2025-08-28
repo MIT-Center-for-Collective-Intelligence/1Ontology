@@ -1,18 +1,16 @@
 import React, { useCallback, useMemo, useState, useEffect } from "react";
 import {
-  Modal,
   Box,
-  Paper,
-  Typography,
   Button,
+  IconButton,
+  Paper,
   Tooltip,
-  Divider,
+  Typography,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 
 import ExpandSearchResult from "../OntologyComponents/ExpandSearchResult";
 import TreeViewSimplified from "../OntologyComponents/TreeViewSimplified";
-import { SearchBox } from "../SearchBox/SearchBox";
-import InheritedPartsViewer from "../StructuredProperty/InheritedPartsViewer";
 import Text from "../OntologyComponents/Text";
 import {
   SCROLL_BAR_STYLE,
@@ -20,7 +18,6 @@ import {
   UNCLASSIFIED,
 } from "@components/lib/CONSTANTS";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
-import CloseIcon from "@mui/icons-material/Close";
 import { ICollection, ILinkNode, INodeTypes } from "@components/types/INode";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import {
@@ -33,16 +30,15 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
-import { LoadingButton } from "@mui/lab";
 import {
   saveAsInheritancePart,
   getGeneralizationParts,
-  getAllGeneralizations,
   breakInheritanceAndCopyParts,
 } from "@components/lib/utils/partsHelper";
-import { getTitle } from "@components/lib/utils/string.utils";
+import { SearchBox } from "../SearchBox/SearchBox";
+import { property } from "lodash";
 
-const SelectModelModal = ({
+const SelectModel = ({
   handleCloseAddLinksModel,
   onSave,
   selectedProperty,
@@ -84,9 +80,10 @@ const SelectModelModal = ({
   selectedCollection,
   skillsFuture,
   saveNewSpecialization,
-  setDisplayDetails,
   inheritanceDetails,
   skillsFutureApp,
+  linkNodeRelation,
+  unlinkNodeRelation,
 }: {
   onSave: any;
   handleCloseAddLinksModel: any;
@@ -134,15 +131,41 @@ const SelectModelModal = ({
   selectedCollection: string;
   skillsFuture: boolean;
   saveNewSpecialization: any;
-  setDisplayDetails?: any;
   inheritanceDetails?: any;
   skillsFutureApp: string;
+  linkNodeRelation: any;
+  unlinkNodeRelation: any;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
   const [isUpdatingInheritance, setIsUpdatingInheritance] = useState(false);
   const [glowSearchBox, setGlowSearchBox] = useState(false);
 
   const db = getFirestore();
+
+  const refreshEditableProperty = useCallback(() => {
+    let freshData: ICollection[] = [];
+
+    if (
+      selectedProperty === "specializations" ||
+      selectedProperty === "generalizations"
+    ) {
+      freshData =
+        currentVisibleNode[
+          selectedProperty as "specializations" | "generalizations"
+        ] || [];
+    } else {
+      freshData =
+        onGetPropertyValue(
+          nodes,
+          currentVisibleNode.inheritance[selectedProperty]?.ref,
+          selectedProperty,
+        ) ||
+        currentVisibleNode?.properties[selectedProperty] ||
+        [];
+    }
+
+    setEditableProperty([...freshData]);
+  }, [selectedProperty, currentVisibleNode, nodes, setEditableProperty]);
 
   // Initialize checkedItems with parts that are already inherited
   useEffect(() => {
@@ -211,6 +234,12 @@ const SelectModelModal = ({
     nodes,
     isUpdatingInheritance,
   ]);
+
+  useEffect(() => {
+    if (selectedProperty && currentVisibleNode) {
+      refreshEditableProperty();
+    }
+  }, [selectedProperty, currentVisibleNode?.id, refreshEditableProperty]);
 
   const getSelectingModelTitle = (
     property: string,
@@ -300,11 +329,7 @@ const SelectModelModal = ({
       addedElements.push(checkedId);
     }
 
-    setLoadingIds((prev: Set<string>) => {
-      const _prev = new Set(prev);
-      _prev.add(checkedId);
-      return _prev;
-    });
+    setLoadingIds((prev: Set<string>) => new Set(prev).add(checkedId));
 
     // Handle parts property with new inheritance logic
     if (selectedProperty === "parts" && fromGeneralizationDropdown) {
@@ -411,35 +436,30 @@ const SelectModelModal = ({
           );
         }
 
-        // Update checkedItems immediately for inheritance parts
-        setCheckedItems((checkedItems: any) => {
-          let _oldChecked = new Set(checkedItems);
-          if (_oldChecked.has(checkedId)) {
-            _oldChecked.delete(checkedId);
+        // Refresh state after inheritance operations
+        refreshEditableProperty();
+
+        setCheckedItems((prev: Set<string>) => {
+          const updated = new Set(prev);
+          if (updated.has(checkedId)) {
+            updated.delete(checkedId);
           } else {
-            if (radioSelection) {
-              _oldChecked = new Set();
-            }
-            _oldChecked.add(checkedId);
+            if (radioSelection) updated.clear();
+            updated.add(checkedId);
           }
-          if (
-            selectedProperty === "generalizations" &&
-            _oldChecked.size === 0
-          ) {
-            return checkedItems;
+          if (selectedProperty === "generalizations" && updated.size === 0) {
+            return prev;
           }
-          return _oldChecked;
+          return updated;
         });
 
         // Update newOnes state for inheritance parts
-        setNewOnes((newOnes: any) => {
-          let _oldChecked = new Set(newOnes);
-          if (_oldChecked.has(checkedId)) {
-            _oldChecked.delete(checkedId);
-          } else {
-            _oldChecked.add(checkedId);
-          }
-          return _oldChecked;
+        setNewOnes((prev: Set<string>) => {
+          const updated = new Set(prev);
+          updated.has(checkedId)
+            ? updated.delete(checkedId)
+            : updated.add(checkedId);
+          return updated;
         });
       } catch (error) {
         console.error("Error saving inheritance part:", error);
@@ -449,98 +469,81 @@ const SelectModelModal = ({
     } else {
       // Existing logic for non-parts properties or direct parts
       setEditableProperty((prev: ICollection[]) => {
-        const _prev = [...prev];
+        const updated = [...prev];
         if (checkedItems.has(checkedId)) {
-          for (let collection of _prev) {
+          updated.forEach((collection) => {
             collection.nodes = collection.nodes.filter(
               (n) => n.id !== checkedId,
             );
-          }
+          });
         } else {
-          if (selectedCollection) {
-            const collectionIdx = _prev.findIndex(
-              (c) => c.collectionName === selectedCollection,
-            );
-            if (collectionIdx !== -1) {
-              _prev[collectionIdx].nodes.push({
-                id: checkedId,
-              });
-            }
-          } else {
-            const collectionIdx = _prev.findIndex(
-              (c) => c.collectionName === "main",
-            );
-            if (collectionIdx !== -1) {
-              _prev[collectionIdx].nodes.push({
-                id: checkedId,
-              });
-            } else {
-              _prev.push({
-                collectionName: "main",
-                nodes: [
-                  {
-                    id: checkedId,
-                  },
-                ],
-              });
-            }
+          const targetCollectionName = selectedCollection || "main";
+          let targetCollection = updated.find(
+            (c) => c.collectionName === targetCollectionName,
+          );
+
+          if (!targetCollection) {
+            targetCollection = { collectionName: "main", nodes: [] };
+            updated.push(targetCollection);
           }
+
+          targetCollection.nodes.push({ id: checkedId });
         }
-        return _prev;
+        return updated;
       });
 
       setAddedElements((prev: Set<string>) => {
-        const _prev = new Set(prev);
-        if (_prev.has(checkedId)) {
-          _prev.delete(checkedId);
-        } else {
-          _prev.add(checkedId);
-        }
-        return _prev;
+        const updated = new Set(prev);
+        updated.has(checkedId)
+          ? updated.delete(checkedId)
+          : updated.add(checkedId);
+        return updated;
       });
+
+      setCheckedItems((prev: Set<string>) => {
+        const updated = new Set(prev);
+        if (updated.has(checkedId)) {
+          updated.delete(checkedId);
+        } else {
+          if (radioSelection) updated.clear();
+          updated.add(checkedId);
+        }
+        if (selectedProperty === "generalizations" && updated.size === 0) {
+          return prev;
+        }
+        return updated;
+      });
+
+      setNewOnes((prev: Set<string>) => {
+        const updated = new Set(prev);
+        updated.has(checkedId)
+          ? updated.delete(checkedId)
+          : updated.add(checkedId);
+        return updated;
+      });
+
+      // Persist changes and refresh state
+      try {
+        await handleSaveLinkChanges(
+          removedElements,
+          addedElements,
+          selectedProperty,
+          currentVisibleNode?.id,
+          selectedCollection,
+        );
+
+        // Refresh editableProperty after database update
+        setTimeout(() => refreshEditableProperty(), 100);
+      } catch (error) {
+        console.error("Error saving link changes:", error);
+      }
     }
 
     scrollToElement(checkedId);
-
-    // Update checkedItems and newOnes for non-inheritance parts (inheritance parts are handled above)
-    if (!(selectedProperty === "parts" && fromGeneralizationDropdown)) {
-      setCheckedItems((checkedItems: any) => {
-        let _oldChecked = new Set(checkedItems);
-        if (_oldChecked.has(checkedId)) {
-          _oldChecked.delete(checkedId);
-        } else {
-          if (radioSelection) {
-            _oldChecked = new Set();
-          }
-          _oldChecked.add(checkedId);
-        }
-        if (selectedProperty === "generalizations" && _oldChecked.size === 0) {
-          return checkedItems;
-        }
-        return _oldChecked;
-      });
-
-      setNewOnes((newOnes: any) => {
-        let _oldChecked = new Set(newOnes);
-        if (_oldChecked.has(checkedId)) {
-          _oldChecked.delete(checkedId);
-        } else {
-          _oldChecked.add(checkedId);
-        }
-        return _oldChecked;
-      });
-      await handleSaveLinkChanges(
-        removedElements,
-        addedElements,
-        selectedProperty,
-        currentVisibleNode?.id,
-        selectedCollection,
-      );
-    }
     setLoadingIds((prev: Set<string>) => {
-      const _prev = new Set(prev);
-      _prev.delete(checkedId);
-      return _prev;
+      const updated = new Set(prev);
+      updated.delete(checkedId);
+      return updated;
     });
   };
 
@@ -684,7 +687,6 @@ const SelectModelModal = ({
       setGlowSearchBox(false);
     }, 1000);
   };
-
   const renderSearchOrTree = () =>
     searchValue ? (
       <ExpandSearchResult
@@ -702,6 +704,7 @@ const SelectModelModal = ({
         }
         getNumOfGeneralizations={getNumOfGeneralizations}
         selectedProperty={selectedProperty}
+        currentVisibleNode={currentVisibleNode}
       />
     ) : (
       <TreeViewSimplified
@@ -736,12 +739,15 @@ const SelectModelModal = ({
     <Paper
       sx={{
         display: "flex",
-        borderRadius: "19px",
+        borderRadius: "7px",
         /*      width: "100%",
         height: "100%", */
         // m: "19px",
+        border: "2px solid",
         mx: "5px",
+        mb: "7px",
       }}
+      elevation={6}
     >
       <Box
         sx={{
@@ -755,6 +761,28 @@ const SelectModelModal = ({
           },
         }}
       >
+        {" "}
+        {selectedProperty === "parts" && (
+          <Box sx={{ display: "flex", ml: "14px", mt: "13px" }}>
+            <Typography sx={{ fontSize: "20px" }}>Add new part:</Typography>{" "}
+            <Box
+              sx={{
+                display: "flex",
+                pt: 0,
+                m: "7px",
+                ml: "auto",
+                gap: "14px",
+              }}
+            >
+              <IconButton
+                onClick={handleCloseAddLinksModel}
+                sx={{ borderRadius: "25px", backgroundColor: "gray", p: "2px" }}
+              >
+                <CloseIcon sx={{ color: "white" }} />
+              </IconButton>
+            </Box>
+          </Box>
+        )}
         <Box
           sx={{
             position: "sticky",
@@ -765,25 +793,6 @@ const SelectModelModal = ({
               theme.palette.mode === "light" ? "#f0f0f0" : "#303134",
           }}
         >
-          <InheritedPartsViewer
-            selectedProperty={selectedProperty}
-            getAllGeneralizations={() =>
-              getAllGeneralizations(currentVisibleNode, nodes)
-            }
-            getGeneralizationParts={(generalizationId: string) =>
-              getGeneralizationParts(generalizationId, nodes)
-            }
-            getTitle={getTitle}
-            nodes={nodes}
-            checkedItems={checkedItems}
-            markItemAsChecked={markItemAsChecked}
-            isSaving={isSaving}
-            readOnly={false}
-            setDisplayDetails={setDisplayDetails}
-            inheritanceDetails={inheritanceDetails}
-            currentVisibleNode={currentVisibleNode}
-            triggerSearch={triggerSearch}
-          />
           <Box
             sx={{
               display: "flex",
@@ -928,6 +937,7 @@ const SelectModelModal = ({
               </strong>{" "}
               to link, you can describe them below:
             </Typography>
+
             <Text
               text={onGetPropertyValue(selectedProperty, true) as string}
               currentVisibleNode={currentVisibleNode}
@@ -939,7 +949,7 @@ const SelectModelModal = ({
               confirmIt={confirmIt}
               structured
               currentImprovement={currentImprovement}
-              sx={{ borderRadius: "none", backgroundColor: "" }}
+              sx={{ borderRadius: "none", backgroundColor: "gray" }}
               getTitleNode={() => {}}
               skillsFuture={skillsFuture}
               enableEdit={true}
@@ -983,7 +993,7 @@ const SelectModelModal = ({
   );
 };
 
-export default SelectModelModal;
+export default SelectModel;
 {
   /* Selected Items Section */
 }

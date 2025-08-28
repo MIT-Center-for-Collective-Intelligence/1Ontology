@@ -1,7 +1,18 @@
-//The `Ontology` component serves as the main interface for managing and visualizing ontologies within a collaborative platform.
-import withAuthUser from "@components/components/hoc/withAuthUser";
-import Ontology from "./Ontology";
-export default withAuthUser({
-  shouldRedirectToLogin: true,
-  shouldRedirectToHomeIfAuthenticated: false,
-})(Ontology);
+import { SKILLS_FUTURE_APP_NAMES } from "@components/lib/CONSTANTS";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
+
+const DEFAULT_APP_ID = SKILLS_FUTURE_APP_NAMES[3].id.replaceAll(" ", "_");
+
+const SkillsFutureDefault = () => {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    router.replace(`/${DEFAULT_APP_ID}`);
+  }, [router.isReady]);
+
+  return null;
+};
+
+export default SkillsFutureDefault;

@@ -168,6 +168,7 @@ type ILinkNodeProps = {
   saveNewSpecialization: any;
   enableEdit: boolean;
   setEditableProperty: any;
+  unlinkNodeRelation: any;
 };
 
 const LinkNode = ({
@@ -202,6 +203,7 @@ const LinkNode = ({
   saveNewSpecialization,
   enableEdit,
   setEditableProperty,
+  unlinkNodeRelation,
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -225,203 +227,19 @@ const LinkNode = ({
   }, [link.id, nodes, title]); */
 
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
-  const handleNavigateToNode = useCallback(() => {
-    navigateToNode(link.id);
-  }, [navigateToNode, link.id]);
+  const handleNavigateToNode = useCallback(
+    (e: any) => {
+      if (!navigateToNode) return;
 
-  const unlinkNodeRelation = async (
-    currentNodeId: string,
-    linkId: string,
-    fromModel: boolean = false,
-  ) => {
-    try {
-      if (
-        fromModel ||
-        (await confirmIt(
-          `Are you sure you want remove this item the list?`,
-          `Remove`,
-          "Keep",
-        ))
-      ) {
-        const nodeDoc = await getDoc(doc(collection(db, NODES), currentNodeId));
-        if (nodeDoc.exists()) {
-          const nodeData = nodeDoc.data() as any;
-
-          // Handle for parts - break inheritance
-          if (property === "parts" && nodeData.inheritance[property]?.ref) {
-            await breakInheritanceAndCopyParts(
-              currentNodeId,
-              linkId,
-              nodes,
-              user,
-              skillsFutureApp,
-            );
-            const updatedNodeDoc = await getDoc(
-              doc(collection(db, NODES), currentNodeId),
-            );
-            if (updatedNodeDoc.exists()) {
-              Object.assign(nodeData, updatedNodeDoc.data());
-            }
-          } else if (nodeData.inheritance[property]?.ref) {
-            // Existing logic for non-parts properties
-            const nodeId = nodeData.inheritance[property].ref;
-            const inheritedNode = nodes[nodeId as string];
-            nodeData.properties[property] = JSON.parse(
-              JSON.stringify(inheritedNode.properties[property]),
-            );
-          }
-          const previousValue = JSON.parse(
-            JSON.stringify(nodeData.properties[property]),
-          );
-
-          let removedFromInheritanceParts = false;
-
-          if (property === "parts") {
-            if (
-              nodeData.inheritanceParts &&
-              nodeData.inheritanceParts[linkId]
-            ) {
-              // Remove from inheritanceParts (broken inheritance scenario)
-              delete nodeData.inheritanceParts[linkId];
-              removedFromInheritanceParts = true;
-            } else if (
-              linkIndex !== -1 &&
-              Array.isArray(nodeData.properties[property]) &&
-              nodeData.propertyType[property] !== "string" &&
-              nodeData.propertyType[property] !== "string-array"
-            ) {
-              // Remove from direct parts (intact inheritance scenario)
-              nodeData.properties[property][collectionIndex].nodes.splice(
-                linkIndex,
-                1,
-              );
-            }
-          } else if (
-            linkIndex !== -1 &&
-            Array.isArray(nodeData.properties[property]) &&
-            nodeData.propertyType[property] !== "string" &&
-            nodeData.propertyType[property] !== "string-array"
-          ) {
-            // Remove from other properties (generalizations, specializations, etc.)
-            nodeData.properties[property][collectionIndex].nodes.splice(
-              linkIndex,
-              1,
-            );
-          }
-
-          let shouldBeRemovedFromParent = false;
-
-          if (property === "parts" && removedFromInheritanceParts) {
-            // For inheritanceParts removal, always remove from parent since it's not in direct properties
-            shouldBeRemovedFromParent = true;
-          } else {
-            // Existing logic for other properties
-            shouldBeRemovedFromParent = !(
-              Object.values(nodeData.properties[property]) as { id: string }[]
-            )
-              .flat()
-              .some((c: { id: string }) => c.id === linkId);
-          }
-
-          // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
-          // const childData = childDoc.data() as INode;
-          if (shouldBeRemovedFromParent) {
-            unlinkPropertyOf(db, property, currentVisibleNode?.id, linkId);
-          }
-
-          let propertyUpdateObject: any = {};
-
-          // Update based on where the item was removed from
-          if (property === "parts" && removedFromInheritanceParts) {
-            // Update inheritanceParts for broken inheritance
-            propertyUpdateObject.inheritanceParts = nodeData.inheritanceParts;
-          } else {
-            // Update direct properties for intact inheritance or other properties
-            propertyUpdateObject[`properties.${property}`] =
-              nodeData.properties[property];
-          }
-
-          await updateDoc(nodeDoc.ref, propertyUpdateObject);
-
-          if (property !== "isPartOf" || nodeData.inheritance[property]) {
-            const reference = nodeData.inheritance[property].ref;
-            let updateObject: any = {
-              [`inheritance.${property}.ref`]: null,
-            };
-            if (
-              reference &&
-              nodes[reference].textValue &&
-              nodes[reference].textValue.hasOwnProperty(property) &&
-              Array.isArray(nodeData.properties[property]) &&
-              nodeData.propertyType[property] !== "string" &&
-              nodeData.propertyType[property] !== "string-array"
-            ) {
-              const links = nodeData.properties[property].flatMap(
-                (c) => c.nodes,
-              );
-              if (property === "isPartOf") {
-                updatePartsAndPartsOf(
-                  links,
-                  { id: currentVisibleNode?.id },
-                  "isPartOf",
-                  db,
-                  nodes,
-                );
-              } else {
-                updatePropertyOf(
-                  links,
-                  { id: currentVisibleNode?.id },
-                  property,
-                  nodes,
-                  db,
-                );
-              }
-              updateObject = {
-                ...updateObject,
-                [`textValue.${property}`]: nodes[reference].textValue[property],
-              };
-            }
-            await updateDoc(nodeDoc.ref, updateObject);
-
-            await updateInheritance({
-              nodeId: nodeDoc.id,
-              updatedProperties: [property],
-              db,
-            });
-          }
-          await Post("/triggerChroma", {
-            nodeId: currentNodeId,
-            updateAll: false,
-          });
-          saveNewChangeLog(db, {
-            nodeId: currentVisibleNode?.id,
-            modifiedBy: user?.uname,
-            modifiedProperty: property,
-            previousValue,
-            newValue: nodeData.properties[property],
-            modifiedAt: new Date(),
-            changeType: "remove element",
-            fullNode: currentVisibleNode,
-            skillsFuture,
-            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
-          });
-          recordLogs({
-            action: "unlinked a node",
-            property,
-            unlinked: linkId,
-            node: nodeDoc.id,
-          });
-        }
+      if (e.metaKey || e.ctrlKey) {
+        const url = `${window.location.origin}${window.location.pathname}#${link.id}`;
+        window.open(url, "_blank");
+      } else {
+        navigateToNode(link.id);
       }
-    } catch (error) {
-      console.error(error);
-      await confirmIt(
-        `There is an issue with unlinking the node, please try again.`,
-        `Ok`,
-        "",
-      );
-    }
-  };
+    },
+    [navigateToNode, link.id],
+  );
 
   const removeNodeLink = async (
     type: "specializations" | "generalizations",
@@ -455,12 +273,10 @@ const LinkNode = ({
       ? nodes[partInheredRef].properties["parts"][0].nodes
       : nodeCopy.properties["parts"][0].nodes;
     const currentPartIndx = partsNodes.findIndex((c) => c.id === link.id);
-    console.log(currentPartIndx, "currentPartIndx==>");
+
     if (currentPartIndx !== -1) {
       partsNodes[currentPartIndx].optional =
         !partsNodes[currentPartIndx].optional;
-      console.log(partsNodes);
-      console.log(link.id);
 
       const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
       setCurrentVisibleNode((prev: any) => {
@@ -495,8 +311,47 @@ const LinkNode = ({
       const nodeD =
         property === "generalizations" ? nodes[currentNodeId] : nodes[linkId];
       const linksLength = nodeD.generalizations.flatMap((c) => c.nodes).length;
+      const firstGen = nodeD.generalizations[0]?.nodes[0]?.id || "";
       if (
-        fromModel ||
+        linksLength <= 1 &&
+        ((property === "specializations" &&
+          nodes[currentNodeId]?.title.trim().toLowerCase() ===
+            "unclassified") ||
+          (property === "generalizations" &&
+            nodes[firstGen]?.title === "unclassified"))
+      ) {
+        await confirmIt(
+          <Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                mb: "14px",
+              }}
+            >
+              <LinkOffIcon />
+            </Box>
+            <Typography sx={{ fontWeight: "bold" }}>
+              You cannot unlink this node
+            </Typography>
+            {linksLength <= 1 ? (
+              <Typography sx={{ mt: "15px" }}>
+                {`There's no other generalization linked to this node. Other than 
+              ${UNCLASSIFIED[nodes[linkId].nodeType]}`}
+                .
+              </Typography>
+            ) : (
+              ""
+            )}
+          </Box>,
+          "Ok",
+          "",
+        );
+        return;
+      }
+      if (
+        linksLength > 1 ||
         (await confirmIt(
           <Box>
             <Box
@@ -688,7 +543,7 @@ const LinkNode = ({
         }
         await Post("/triggerChroma", {
           nodeId: currentNodeId,
-          updateAll: false,
+          updatedShortIds: false,
         });
       }
     } catch (error: any) {
@@ -717,7 +572,13 @@ const LinkNode = ({
         fromModel,
       );
     } else {
-      unlinkNodeRelation(currentVisibleNode.id, link.id, fromModel);
+      unlinkNodeRelation(
+        currentVisibleNode.id,
+        link.id,
+        linkIndex,
+        collectionIndex,
+        fromModel,
+      );
     }
   };
   const getLinkColor = (changeType: "added" | "removed") => {
@@ -870,7 +731,7 @@ const LinkNode = ({
                 {link.optional && selectedProperty !== property && (
                   <span
                     style={{ color: "orange", marginLeft: "2px" }}
-                  >{`O`}</span>
+                  >{`(O)`}</span>
                 )}
               </Link>
 
@@ -1046,14 +907,20 @@ const LinkNode = ({
             <Tooltip
               title="Save and replace with"
               placement="top"
-              sx={{ mt: "15px", alignItems: "center" }}
+              sx={{ alignItems: "center" }}
             >
               <IconButton
                 onClick={() => {
                   setAddNew(false);
                   saveNewAndSwapIt(newPart, link.id);
                 }}
-                sx={{ p: 0.3, m: "6px", bgcolor: "green" }}
+                sx={{
+                  p: 0.3,
+                  m: "6px",
+                  mt: "15px",
+                  bgcolor: "green",
+                  border: "1px solid",
+                }}
                 disabled={!newPart.trim()}
               >
                 <SwapHorizIcon
@@ -1063,13 +930,13 @@ const LinkNode = ({
             </Tooltip>
           )}
           {addNew && (
-            <Tooltip title="Cancel" placement="top">
+            <Tooltip title="Cancel" placement="bottom">
               <IconButton
                 onClick={() => {
                   setAddNew(false);
                   setNewPart("");
                 }}
-                sx={{ p: 0.3, m: "6px", bgcolor: "red" }}
+                sx={{ p: 0.3, m: "6px", bgcolor: "red", mt: "15px" }}
               >
                 <CloseIcon sx={{ color: "white" }} />
               </IconButton>
@@ -1081,7 +948,13 @@ const LinkNode = ({
               onChange={(e: any) => {
                 setNewPart(e.target.value);
               }}
-              sx={{ width: "80%", m: "6px" }}
+              sx={{
+                width: "80%",
+                m: "6px",
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "25px",
+                },
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   // saveNodeTitle();
@@ -1093,6 +966,7 @@ const LinkNode = ({
                 inputProps: {
                   style: {
                     padding: 10,
+                    borderRadius: "25px",
                   },
                 },
               }}
