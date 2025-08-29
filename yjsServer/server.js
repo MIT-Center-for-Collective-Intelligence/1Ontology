@@ -36,6 +36,7 @@ const inheritanceMap = new Map(); // sourceDocId -> Set of dependent docIds (par
 const forwardingMap = new Map(); // dependentDocId -> sourceDocId (child -> parent ["ws/nodeB-description" -> "ws/nodeA-description"])
 const inheritanceCache = new Map(); // nodeId-property -> inheritance data (cached firebase inheritance queries)
 const inheritanceLocks = new Map(); // docId -> boolean (for breaking inheritance)
+const inheritanceSetupCache = new Map(); // docId -> Y.Doc instance (track which Y.Doc instances have had inheritance setup)
 
 // Function to get inheritance information
 // Check if a document should inherit from another document
@@ -218,8 +219,10 @@ const breakInheritance = async (docId) => {
       
       // Clear cache
       inheritanceCache.delete(`${nodeId}-${property}`);
+      // Clear setup cache to allow inheritance re-evaluations
+      inheritanceSetupCache.delete(docId);
       
-      console.log(`Inheritance broken for ${docId}. Removed from mappings.`);
+      console.log(`Inheritance broken for ${docId}. Removed from mappings and cleared processed tracking.`);
     }
   } catch (error) {
     console.error(`Error breaking inheritance for ${docId}:`, error);
@@ -265,6 +268,8 @@ const handleInheritanceRestoration = async (docId, changeData) => {
     
     // Clear inheritance cache
     inheritanceCache.delete(`${nodeId}-${property}`);
+    // Clear inheritance setup cache tracking
+    inheritanceSetupCache.delete(docId);
     
     // Re-establish inheritance if not overridden
     if (newInheritanceRef !== 'inheritance-overridden') {
@@ -360,7 +365,20 @@ wss.on("connection", async (conn, req) => {
   });
   
   // Setup inheritance forwarding for this document
-  const inherits = await setupInheritanceForwarding(docId);
+  let inherits = false;
+  const currentDoc = docs.get(docId);
+  const processedDoc = inheritanceSetupCache.get(docId);
+  
+  if (!processedDoc || processedDoc !== currentDoc) {
+    // Either never processed, or Y.js created a new Y.Doc instance
+    inheritanceSetupCache.set(docId, currentDoc);
+    inherits = await setupInheritanceForwarding(docId);
+    console.log(`Inheritance setup completed for ${docId} - inherits: ${inherits} (new Y.Doc: ${!processedDoc})`);
+  } else {
+    // This doc has been processed, check if it inherits without running inheritance forwarding
+    inherits = forwardingMap.has(docId);
+    console.log(`Document ${docId} already processed - inherits: ${inherits} (same Y.Doc)`);
+  }
   
   doc.on("update", (update, origin) => {
     if (origin) {
@@ -555,12 +573,23 @@ setInterval(() => {
       ids.push({ id, connUsers: Array.from(connUsers) });
     });
     
+    // Clean up processed tracking for documents with no connections
+    // Without this, tracking Map will hold references to Y.Doc instances that Y.js has removed
+    docs.forEach((doc, docId) => {
+      const connectionCount = doc.conns?.size || 0;
+      if (connectionCount === 0 && inheritanceSetupCache.has(docId)) {
+        console.log(`Cleaning up setup cache for disconnected document: ${docId}`);
+        inheritanceSetupCache.delete(docId);
+      }
+    });
+    
     // Add inheritance to stats
     const inheritanceStats = {
       inheritanceRelationships: inheritanceMap.size,
       forwardingRelationships: forwardingMap.size,
       inheritanceLocks: inheritanceLocks.size,
-      cacheSize: inheritanceCache.size
+      cacheSize: inheritanceCache.size,
+      processedDocuments: inheritanceSetupCache.size
     };
     
     const stats = {
