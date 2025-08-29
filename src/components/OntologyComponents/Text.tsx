@@ -135,7 +135,10 @@ const Text = ({
   const [autoFocus, setAutoFocus] = useState(false);
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
   const [switchToWebsocket, setSwitchToWebSocket] = useState(true);
+  const [pendingInheritanceMessage, setPendingInheritanceMessage] =
+    useState<any>(null); // State to hold inheritance message that needs to be sent
   // const [isPreviewMode, setIsPreviewMode] = useState(false);
+
   const currentImprovementChange = useMemo(() => {
     if (currentImprovement?.newNode || !currentImprovement) return null;
 
@@ -189,6 +192,46 @@ const Text = ({
     setReference(currentVisibleNode.inheritance[property]?.ref || null);
     // setAutoFocus(false);
   }, [currentVisibleNode]);
+
+  // Handler for inheritance changes from SelectInheritance
+  const handleInheritanceChange = useCallback(
+    (inheritanceProperty: string, newInheritanceRef: string) => {
+      // Only process if it's for this property
+      if (inheritanceProperty === property) {
+        const inheritanceMessage = {
+          type: "inheritance-restored",
+          nodeId: currentVisibleNode.id,
+          property: inheritanceProperty,
+          newInheritanceRef: newInheritanceRef,
+          timestamp: Date.now(),
+        };
+
+        // Return the message for SelectInheritance
+        return inheritanceMessage;
+      }
+      return null;
+    },
+    [currentVisibleNode.id, property],
+  );
+
+  // Function to trigger inheritance message sending
+  const triggerInheritanceSend = useCallback(
+    (inheritanceProperty: string, newInheritanceRef: string) => {
+      const message = handleInheritanceChange(
+        inheritanceProperty,
+        newInheritanceRef,
+      );
+      if (message) {
+        setPendingInheritanceMessage(message);
+
+        // Clear the message after a short delay
+        setTimeout(() => {
+          setPendingInheritanceMessage(null);
+        }, 2000);
+      }
+    },
+    [handleInheritanceChange],
+  );
 
   const saveChangeHistory = useCallback(
     async (previousValue: string, newValue: string, nodeId: string) => {
@@ -650,6 +693,7 @@ const Text = ({
                     property={property}
                     nodes={nodes}
                     enableEdit={enableEdit}
+                    onInheritanceChange={triggerInheritanceSend}
                   />
                 )}
             </Box>
@@ -722,6 +766,7 @@ const Text = ({
                     randomProminentColor: randomProminentColor(),
                   }}
                   setEditorContent={setEditorContent}
+                  pendingInheritanceMessage={pendingInheritanceMessage}
                 />
               </>
             )}
