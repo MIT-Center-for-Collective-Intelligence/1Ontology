@@ -693,6 +693,7 @@ const Text = ({
                     property={property}
                     nodes={nodes}
                     enableEdit={enableEdit}
+                    onInheritanceChange={triggerInheritanceSend}
                   />
                 )}
             </Box>
@@ -765,6 +766,7 @@ const Text = ({
                     randomProminentColor: randomProminentColor(),
                   }}
                   setEditorContent={setEditorContent}
+                  pendingInheritanceMessage={pendingInheritanceMessage}
                 />
               </>
             )}
