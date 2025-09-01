@@ -96,9 +96,11 @@ const SelectInheritance = ({
       for (let link of links) {
         const nodeRef = doc(collection(db, NODES), link.id);
         if (
-          !nodes[link.id].inheritance.ref ||
-          generalizationId === nodes[link.id].inheritance[property].ref ||
-          modifiedInheritanceFor === nodes[link.id].inheritance[property].ref
+          nodes[link.id] && (
+            !nodes[link.id].inheritance[property]?.ref ||
+            generalizationId === nodes[link.id].inheritance[property]?.ref ||
+            modifiedInheritanceFor === nodes[link.id].inheritance[property]?.ref
+          )
         ) {
           let objectUpdate = {
             [`inheritance.${property}.ref`]: ref,
@@ -114,14 +116,16 @@ const SelectInheritance = ({
           newBatch = writeBatch(db);
         }
 
-        newBatch = await updateSpecializationsInheritance(
-          nodes[link.id].specializations,
-          newBatch,
-          property,
-          ref,
-          link.id,
-          modifiedInheritanceFor,
-        );
+        if (nodes[link.id]?.specializations) {
+          newBatch = await updateSpecializationsInheritance(
+            nodes[link.id].specializations,
+            newBatch,
+            property,
+            ref,
+            link.id,
+            modifiedInheritanceFor,
+          );
+        }
       }
     }
 
