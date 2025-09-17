@@ -4,6 +4,7 @@ const StaticServer = require("node-static").Server;
 const ywsUtils = require("y-websocket/bin/utils");
 const setupWSConnection = ywsUtils.setupWSConnection;
 const docs = ywsUtils.docs;
+const getYDoc = ywsUtils.getYDoc;
 const env = require("lib0/environment");
 const nostatic = env.hasParam("--nostatic");
 const Y = require("yjs");
@@ -37,6 +38,7 @@ const forwardingMap = new Map(); // dependentDocId -> sourceDocId (child -> pare
 const inheritanceCache = new Map(); // nodeId-property -> inheritance data (cached firebase inheritance queries)
 const inheritanceLocks = new Map(); // docId -> boolean (for breaking inheritance)
 const inheritanceSetupCache = new Map(); // docId -> Y.Doc instance (track which Y.Doc instances have had inheritance setup)
+const inheritanceInitLocks = new Map(); // docId -> Promise (prevent duplicate inheritance initialization)
 
 // Function to get inheritance information
 // Check if a document should inherit from another document
@@ -95,37 +97,11 @@ const setupInheritanceForwarding = async (docId) => {
     inheritanceMap.get(sourceDocId).add(docId);
     forwardingMap.set(docId, sourceDocId);
     
-    // Ensure source document exists and is initialized
+    // Ensure source document exists 
     if (!docs.has(sourceDocId)) {
       console.log(`Creating source document: ${sourceDocId}`);
-      const sourceDoc = new Y.Doc();
-      docs.set(sourceDocId, sourceDoc);
-      
-      // Load source document content
-      await loadContent(sourceDocId, false);
-    } else {
-      // If source document already exists, copy its content to inheriting document
-      console.log(`Source document exists, copying content to ${docId}`);
-      const sourceDoc = docs.get(sourceDocId);
-      const inheritingDoc = docs.get(docId);
-      
-      if (sourceDoc && inheritingDoc) {
-        const sourceText = sourceDoc.getText("quill");
-        const inheritingText = inheritingDoc.getText("quill");
-        const sourceContent = sourceText.toString();
-        
-        if (sourceContent && inheritingText.toString() !== sourceContent) {
-          console.log(`Initializing ${docId} with content from ${sourceDocId}: "${sourceContent}"`);
-          
-          // Use setTimeout to avoid triggering inheritance breaking
-          setTimeout(() => {
-            inheritingDoc.transact(() => {
-              inheritingText.delete(0, inheritingText.length);
-              inheritingText.insert(0, sourceContent);
-            }, "inheritance-init");
-          }, 100);
-        }
-      }
+      const sourceDoc = getYDoc(sourceDocId);
+      console.log(`Source document ${sourceDocId} created and will be loaded when needed`);
     }
     
     return true; // This document inherits
@@ -287,8 +263,7 @@ const handleInheritanceRestoration = async (docId, changeData) => {
       // Ensure source document exists
       if (!docs.has(newSourceDocId)) {
         console.log(`Creating new source document: ${newSourceDocId}`);
-        const sourceDoc = new Y.Doc();
-        docs.set(newSourceDocId, sourceDoc);
+        getYDoc(newSourceDocId);
         await loadContent(newSourceDocId, false);
       }
       
@@ -404,11 +379,79 @@ wss.on("connection", async (conn, req) => {
     }
   });
 
-  // Load content if not initialized and not inheriting
-  if (!isInitialized && doc && !inherits) {
-    loadContent(docId, !!structuredProperty);
+  // Load content if not initialized
+  if (!isInitialized && doc) {
+    if (!inherits) {
+      // Non-inheriting documents load their own content
+      loadContent(docId, !!structuredProperty);
+    } else {
+      // Inheriting documents need coordinated initialization
+      initializeInheritedDocument(docId, !!structuredProperty);
+    }
   }
 });
+
+// Function to handle coordinated initialization of inherited documents
+const initializeInheritedDocument = async (docId, structuredProperty) => {
+  // Check if already being initialized
+  if (inheritanceInitLocks.has(docId)) {
+    console.log(`Inheritance initialization already in progress for ${docId}`);
+    return inheritanceInitLocks.get(docId);
+  }
+
+  const sourceDocId = forwardingMap.get(docId);
+  if (!sourceDocId) {
+    console.log(`No source document found for inherited document ${docId}`);
+    return;
+  }
+
+  // Create and store the initialization promise
+  const initPromise = (async () => {
+    try {
+      console.log(`Starting inheritance initialization for ${docId} from ${sourceDocId}`);
+      
+      // Ensure source document is loaded
+      if (!initializedDocs.has(sourceDocId)) {
+        console.log(`Loading source document ${sourceDocId} for inheritance`);
+        await loadContent(sourceDocId, structuredProperty);
+      }
+      
+      // Wait for source content to be fully loaded
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Copy content from source to inheriting document
+      const sourceDoc = docs.get(sourceDocId);
+      const inheritingDoc = docs.get(docId);
+      
+      if (sourceDoc && inheritingDoc) {
+        const sourceContent = sourceDoc.getText("quill").toString();
+        const inheritingText = inheritingDoc.getText("quill");
+        
+        if (sourceContent) {
+          console.log(`Loading inherited content for ${docId} from ${sourceDocId}: "${sourceContent}"`);
+          inheritingDoc.transact(() => {
+            inheritingText.delete(0, inheritingText.length);
+            inheritingText.insert(0, sourceContent);
+          }, "inheritance-init");
+        }
+        
+        // Mark as initialized
+        initializedDocs.add(docId);
+        console.log(`Inheritance initialization completed for ${docId}`);
+      } else {
+        console.error(`Failed to get documents for inheritance: source=${!!sourceDoc}, inheriting=${!!inheritingDoc}`);
+      }
+    } catch (error) {
+      console.error(`Error during inheritance initialization for ${docId}:`, error);
+    } finally {
+      // Clean up the lock
+      inheritanceInitLocks.delete(docId);
+    }
+  })();
+
+  inheritanceInitLocks.set(docId, initPromise);
+  return initPromise;
+};
 
 const loadContent = async (docId, structured) => {
   if (lockMap.get(docId)) {
@@ -440,14 +483,14 @@ const loadContent = async (docId, structured) => {
     if (firestoreData) {
       let content = "";
       if (property === "title") {
-        content = firestoreData[property];
+        content = firestoreData[property] || "";
       } else {
         if (structured) {
           content = firestoreData?.textValue
             ? firestoreData?.textValue[property] || ""
             : "";
         } else {
-          content = firestoreData.properties[property];
+          content = firestoreData.properties[property] || "";
         }
       }
 
@@ -468,8 +511,10 @@ const loadContent = async (docId, structured) => {
                 yText.delete(0, yText.length);
                 yText.insert(0, content);
               }, "server-load");
-              initializedDocs.add(docId);
             }
+            // Always mark as initialized after content loading attempt
+            initializedDocs.add(docId);
+            console.log(`Document ${docId} marked as initialized`);
           }, 200);
         }
       }
@@ -577,9 +622,15 @@ setInterval(() => {
     // Without this, tracking Map will hold references to Y.Doc instances that Y.js has removed
     docs.forEach((doc, docId) => {
       const connectionCount = doc.conns?.size || 0;
-      if (connectionCount === 0 && inheritanceSetupCache.has(docId)) {
-        console.log(`Cleaning up setup cache for disconnected document: ${docId}`);
-        inheritanceSetupCache.delete(docId);
+      if (connectionCount === 0) {
+        if (inheritanceSetupCache.has(docId)) {
+          console.log(`Cleaning up setup cache for disconnected document: ${docId}`);
+          inheritanceSetupCache.delete(docId);
+        }
+        if (inheritanceInitLocks.has(docId)) {
+          console.log(`Cleaning up initialization lock for disconnected document: ${docId}`);
+          inheritanceInitLocks.delete(docId);
+        }
       }
     });
     
@@ -589,7 +640,8 @@ setInterval(() => {
       forwardingRelationships: forwardingMap.size,
       inheritanceLocks: inheritanceLocks.size,
       cacheSize: inheritanceCache.size,
-      processedDocuments: inheritanceSetupCache.size
+      processedDocuments: inheritanceSetupCache.size,
+      initializationLocks: inheritanceInitLocks.size
     };
     
     const stats = {
