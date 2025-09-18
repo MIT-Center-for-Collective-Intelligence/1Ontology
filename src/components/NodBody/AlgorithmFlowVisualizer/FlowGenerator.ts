@@ -33,6 +33,8 @@ interface NodePosition {
   lastX: number;
   lastY: number;
   lastId: string;
+  // For handling multiple branch endpoints when skipping join/merge nodes
+  branchEndpoints?: string[];
 }
 
 /**
@@ -48,9 +50,12 @@ interface EdgeStyle {
  */
 const NODE_TYPES = {
   SEQUENTIAL: "sequential",
+  SEQUENTIAL_CONTAINER: "sequential-container",
   PARALLEL: "parallel",
+  PARALLEL_CONTAINER: "parallel-container",
   CONDITION: "condition",
   LOOP: "loop",
+  LOOP_CONTAINER: "loop-container",
   TASK: "task",
   JOIN: "join",
   MERGE: "merge",
@@ -72,13 +77,21 @@ export class FlowGenerator {
   private nodeId = 1;
   private joinId = 1000;
   private isDarkMode: boolean;
+  private navigateToNode?: (nodeId: string) => void;
+  private enableEdit: boolean;
+  private onNodeDelete?: (nodeId: string) => void;
+  private onNodeUpdate?: (nodeId: string, updates: any) => void;
+  private onEdgeDelete?: (edgeId: string) => void;
 
   /** Default node dimensions by type */
   private readonly nodeDimensions: Record<string, NodeDimensions> = {
     [NODE_TYPES.SEQUENTIAL]: { width: 180, height: 60 },
+    [NODE_TYPES.SEQUENTIAL_CONTAINER]: { width: 300, height: 200 },
     [NODE_TYPES.PARALLEL]: { width: 180, height: 60 },
+    [NODE_TYPES.PARALLEL_CONTAINER]: { width: 400, height: 200 },
     [NODE_TYPES.CONDITION]: { width: 160, height: 160 },
-    [NODE_TYPES.LOOP]: { width: 180, height: 80 },
+    [NODE_TYPES.LOOP]: { width: 200, height: 80 },
+    [NODE_TYPES.LOOP_CONTAINER]: { width: 300, height: 250 },
     [NODE_TYPES.TASK]: { width: 160, height: 40 },
     [NODE_TYPES.JOIN]: { width: 60, height: 30 },
     [NODE_TYPES.MERGE]: { width: 60, height: 30 },
@@ -93,8 +106,20 @@ export class FlowGenerator {
     edgeBuffer: 40,
   };
 
-  constructor(isDarkMode: boolean) {
+  constructor(
+    isDarkMode: boolean, 
+    navigateToNode?: (nodeId: string) => void,
+    enableEdit: boolean = false,
+    onNodeDelete?: (nodeId: string) => void,
+    onNodeUpdate?: (nodeId: string, updates: any) => void,
+    onEdgeDelete?: (edgeId: string) => void
+  ) {
     this.isDarkMode = isDarkMode;
+    this.navigateToNode = navigateToNode;
+    this.enableEdit = enableEdit;
+    this.onNodeDelete = onNodeDelete;
+    this.onNodeUpdate = onNodeUpdate;
+    this.onEdgeDelete = onEdgeDelete;
   }
 
   /**
@@ -107,17 +132,30 @@ export class FlowGenerator {
 
     const rootId = algorithm.id || `algorithm-${this.nodeId++}`;
 
-    // Three-pass layout algorithm
-    const dimensions = this.calculateDimensions(algorithm);
-    this.assignPositions(
-      algorithm,
-      rootId,
-      0,
-      -dimensions.height / 2,
-      null,
-      true,
-    );
+    // Handle root Sequential nodes by processing sub-activities directly
+    if (algorithm.type === NODE_TYPES.SEQUENTIAL && algorithm.sub_activities && algorithm.sub_activities.length > 0) {
+      // Calculate dimensions based on sub-activities instead of the wrapper
+      const dimensions = this.calculateDimensions(algorithm);
+      
+      // Process the algorithm as a wrapper (no visual node created)
+      // Ensure the passed object satisfies IActivity's required 'id'
+      const sequentialWrapper = { ...(algorithm as unknown as IActivity), id: rootId } as IActivity;
+      this.layoutSequentialActivity(sequentialWrapper, `root-${rootId}`, 0, -dimensions.height / 2);
+    } else {
+      // Normal processing for other root node types
+      const dimensions = this.calculateDimensions(algorithm);
+      this.assignPositions(
+        algorithm,
+        rootId,
+        0,
+        -dimensions.height / 2,
+        null,
+        true,
+      );
+    }
+    
     this.optimizeEdgeRouting();
+    this.addContainerEdges(); // Add container edges for parallel containers
     this.centerLayout();
 
     return {
@@ -156,17 +194,36 @@ export class FlowGenerator {
   private getNodeColor(type: string): string {
     switch (type) {
       case NODE_TYPES.SEQUENTIAL:
+      case NODE_TYPES.SEQUENTIAL_CONTAINER:
         return this.isDarkMode ? "#90caf9" : "#1976d2";
       case NODE_TYPES.PARALLEL:
+      case NODE_TYPES.PARALLEL_CONTAINER:
         return this.isDarkMode ? "#ce93d8" : "#9c27b0";
       case NODE_TYPES.CONDITION:
         return this.isDarkMode ? "#ffb74d" : "#f57c00";
       case NODE_TYPES.LOOP:
         return this.isDarkMode ? "#81c784" : "#43a047";
+      case NODE_TYPES.LOOP_CONTAINER:
+        return this.isDarkMode ? "#81c784" : "#43a047";
       case NODE_TYPES.TASK:
       default:
         return this.isDarkMode ? "#b0bec5" : "#607d8b";
     }
+  }
+
+  /**
+   * Determines if an activity will be rendered as a container
+   */
+  private isContainerActivity(activity: any): boolean {
+    // Activities that create containers
+    return (
+      (activity.type === NODE_TYPES.SEQUENTIAL && activity.sub_activities && activity.sub_activities.length > 0) ||
+      (activity.type === NODE_TYPES.PARALLEL && activity.sub_activities && activity.sub_activities.length > 0) ||
+      (activity.type === NODE_TYPES.LOOP && activity.sub_activities && activity.sub_activities.length > 0) ||
+      activity.type === NODE_TYPES.SEQUENTIAL_CONTAINER ||
+      activity.type === NODE_TYPES.PARALLEL_CONTAINER ||
+      activity.type === NODE_TYPES.LOOP_CONTAINER
+    );
   }
 
   /**
@@ -242,12 +299,17 @@ export class FlowGenerator {
     nodeHeight: number,
   ): SubtreeDimensions {
     let width = 0;
-    let height = nodeHeight;
+    let height = 0; // Start with 0 since we're not showing the sequential wrapper node
 
     for (const subActivity of activity.sub_activities!) {
       const subDimensions = this.calculateDimensions(subActivity);
       width = Math.max(width, subDimensions.width);
       height += this.spacing.vertical + subDimensions.height;
+    }
+
+    // Remove extra vertical spacing for the first element
+    if (activity.sub_activities!.length > 0) {
+      height -= this.spacing.vertical;
     }
 
     // Add padding for readability
@@ -282,8 +344,7 @@ export class FlowGenerator {
       }
     }
 
-    // Account for join node
-    height += this.spacing.vertical + this.getNodeHeight(NODE_TYPES.JOIN);
+    // Skip join node - no additional height needed
 
     // Extra padding for branches
     if (activity.sub_activities!.length > 2) {
@@ -292,7 +353,7 @@ export class FlowGenerator {
 
     return {
       width: Math.max(nodeWidth, width),
-      height: nodeHeight + this.spacing.vertical + height,
+      height: height, // No wrapper node height, no join node height
     };
   }
 
@@ -328,14 +389,12 @@ export class FlowGenerator {
     const totalWidth =
       trueWidth + falseWidth + this.spacing.branch + this.spacing.edgeBuffer;
 
-    // Account for merge node
+    // Skip merge node - just account for the condition node and the tallest branch
     const maxBranchHeight = Math.max(trueHeight, falseHeight);
     const totalHeight =
       nodeHeight +
       this.spacing.vertical +
-      maxBranchHeight +
-      this.spacing.vertical +
-      this.getNodeHeight(NODE_TYPES.MERGE);
+      maxBranchHeight;
 
     return {
       width: Math.max(nodeWidth, totalWidth),
@@ -364,6 +423,49 @@ export class FlowGenerator {
     width = Math.max(width, nodeWidth + 80);
 
     return { width, height };
+  }
+
+  /**
+   * Adds container edges for parallel containers to visualize task distribution
+   * Only creates edges to direct task children, NOT to nested containers
+   */
+  private addContainerEdges(): void {
+    // Find all parallel containers
+    const parallelContainers = this.nodes.filter(node => 
+      node.type === 'parallel-container'
+    );
+
+    for (const container of parallelContainers) {
+      // Find direct child nodes that are NOT containers
+      const directTaskChildren = this.nodes.filter(node => 
+        node.parentId === container.id && 
+        node.type !== 'parallel-container' && 
+        node.type !== 'sequential-container'
+      );
+
+      if (directTaskChildren.length > 0) {
+        // Create edges from container's top source handle to direct task children only
+        const containerEdges = directTaskChildren.map(child => ({
+          id: `container-${container.id}-to-${child.id}`,
+          source: container.id,
+          target: child.id,
+          sourceHandle: 'source-top', // Container's top source handle for distribution
+          targetHandle: null,  // Child's target handle (top) - null uses default
+          type: 'default',
+          style: {
+            stroke: this.getNodeColor('parallel-container'), // Use parallel color
+            strokeWidth: 2,
+          },
+          data: {
+            containerEdge: true,
+            containerType: 'parallel',
+          },
+        }));
+
+        this.edges.push(...containerEdges);
+        console.log(`📊 FlowGenerator: Created ${containerEdges.length} container edges for ${container.id} (to direct tasks only)`);
+      }
+    }
   }
 
   /**
@@ -499,7 +601,24 @@ export class FlowGenerator {
     y: number,
     isConditionPath: boolean | null = null,
     isRoot: boolean = false,
+    additionalParents: string[] = [],
+    parentActivityType?: string,
   ): NodePosition {
+    // Special handling for parallel activities - go straight to container without creating a parallel node
+    if (activity.type === NODE_TYPES.PARALLEL && activity.sub_activities && activity.sub_activities.length > 0) {
+      return this.layoutParallelActivityWithContainer(activity, parentId, x, y, isConditionPath, isRoot, additionalParents, parentActivityType);
+    }
+    
+    // Special handling for sequential activities - use container without creating a sequential node
+    if (activity.type === NODE_TYPES.SEQUENTIAL && activity.sub_activities && activity.sub_activities.length > 0 && !isRoot) {
+      return this.layoutSequentialActivityWithContainer(activity, parentId, x, y, isConditionPath, isRoot, additionalParents, parentActivityType);
+    }
+    
+    // Special handling for loop activities - use container instead of creating a loop node
+    if (activity.type === NODE_TYPES.LOOP && activity.sub_activities && activity.sub_activities.length > 0) {
+      return this.layoutLoopActivityWithContainer(activity, parentId, x, y, isConditionPath, isRoot, additionalParents, parentActivityType);
+    }
+    
     const currentId = activity.id ? activity.id : this.getNodeId(activity.type);
     const nodeWidth = this.getNodeWidth(activity.type);
     const nodeHeight = this.getNodeHeight(activity.type);
@@ -512,21 +631,33 @@ export class FlowGenerator {
 
     // Connect from parent to this node (if not root)
     if (!isRoot) {
-      this.addEdge(parentId, currentId, isConditionPath, activity.type);
+      this.addEdge(parentId, currentId, isConditionPath, activity.type, parentActivityType);
+      
+      // Connect from additional parents (for multi-branch scenarios)
+      additionalParents.forEach(additionalParentId => {
+        this.addEdge(additionalParentId, currentId, isConditionPath, activity.type, parentActivityType);
+      });
     }
 
     let lastNodeId = currentId;
     let lastX = x;
     let lastY = y + nodeHeight;
 
+    // Handle container types (empty containers that can be filled by users)
+    if (activity.type === NODE_TYPES.SEQUENTIAL_CONTAINER || activity.type === NODE_TYPES.PARALLEL_CONTAINER || activity.type === NODE_TYPES.LOOP_CONTAINER) {
+      return this.createEmptyContainer(activity, currentId, parentId, x, y, isConditionPath, isRoot, additionalParents, parentActivityType);
+    }
+
     // Process sub-activities based on activity type
     if (activity.sub_activities && activity.sub_activities.length > 0) {
       switch (activity.type) {
         case NODE_TYPES.SEQUENTIAL:
-          return this.layoutSequentialActivity(activity, currentId, x, lastY);
+          // This case should not be reached due to early return above for sequential with sub-activities
+          return this.layoutSequentialActivityWithContainer(activity, parentId, x, y, isConditionPath, isRoot, additionalParents, parentActivityType);
 
         case NODE_TYPES.PARALLEL:
-          return this.layoutParallelActivity(activity, currentId, x, lastY);
+          // This case should not be reached due to early return above
+          return this.layoutParallelActivityWithContainer(activity, parentId, x, y, isConditionPath, isRoot, additionalParents, parentActivityType);
 
         case NODE_TYPES.CONDITION:
           return this.layoutConditionActivity(activity, currentId, x, lastY);
@@ -549,8 +680,9 @@ export class FlowGenerator {
     y: number,
     isConditionPath: boolean | null = null,
     isRoot: boolean = false,
+    parentId?: string,
   ): void {
-    this.nodes.push({
+    const nodeData: any = {
       id,
       type: activity.type,
       position: { x, y },
@@ -570,8 +702,21 @@ export class FlowGenerator {
           : activity.loop_condition
             ? Object.keys(activity.loop_condition)[0]
             : undefined,
+        node_id: activity.type === 'task' ? activity.id : undefined,
+        navigateToNode: this.navigateToNode,
+        enableEdit: this.enableEdit,
+        onNodeDelete: this.onNodeDelete,
+        onNodeUpdate: this.onNodeUpdate,
       },
-    });
+    };
+
+    // Add parent relationship and extent constraint for child nodes
+    if (parentId) {
+      nodeData.parentId = parentId;
+      nodeData.extent = 'parent';
+    }
+
+    this.nodes.push(nodeData);
   }
 
   /**
@@ -582,6 +727,8 @@ export class FlowGenerator {
     targetId: string,
     isConditionPath: boolean | null = null,
     activityType: string,
+    parentActivityType?: string,
+    sourceHandle?: string,
   ): void {
     if (isConditionPath === true) {
       // True condition path
@@ -626,16 +773,18 @@ export class FlowGenerator {
         },
       });
     } else {
-      // Normal connection
+      // Normal connection - use parent activity type for color if specified (for parallel sub-activities)
+      const edgeColorType = parentActivityType || activityType;
       this.edges.push({
         id: `${sourceId}-${targetId}`,
         source: sourceId,
         target: targetId,
+        sourceHandle: sourceHandle, // Use the specific source handle if provided
         animated: false,
-        style: { stroke: this.getNodeColor(activityType), strokeWidth: 2 },
+        style: { stroke: this.getNodeColor(edgeColorType), strokeWidth: 2 },
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          color: this.getNodeColor(activityType),
+          color: this.getNodeColor(edgeColorType),
         },
       });
     }
@@ -649,22 +798,49 @@ export class FlowGenerator {
     parentId: string,
     x: number,
     startY: number,
+    additionalParents: string[] = [],
   ): NodePosition {
-    let currentY = startY + this.spacing.vertical;
-    let lastNodeId = parentId;
+    let currentY = startY;
+    let lastResult: NodePosition | null = null;
     let lastX = x;
+    
+    // For the first activity, add initial spacing only if we have a real parent (not dummy root)
+    let isFirst = true;
 
-    for (const subActivity of activity.sub_activities!) {
-      const result = this.assignPositions(subActivity, lastNodeId, x, currentY);
-      lastNodeId = result.lastId;
+    for (let i = 0; i < activity.sub_activities!.length; i++) {
+      const subActivity = activity.sub_activities![i];
+      const currentParentId = lastResult ? lastResult.lastId : parentId;
+      
+      if (isFirst && !parentId.startsWith('root-')) {
+        currentY += this.spacing.vertical;
+      }
+      isFirst = false;
+      
+      // Handle additional parents for the first activity (when skipping sequential wrapper)
+      let currentAdditionalParents: string[] = [];
+      
+      if (i === 0) {
+        // First activity gets the additional parents passed from the skipped sequential wrapper
+        currentAdditionalParents = additionalParents;
+      } else if (lastResult?.branchEndpoints) {
+        // Subsequent activities get branch endpoints from previous activity
+        currentAdditionalParents = lastResult.branchEndpoints.filter(id => id !== currentParentId);
+      }
+      
+      const result = this.assignPositions(subActivity, currentParentId, x, currentY, null, false, currentAdditionalParents);
+
+      lastResult = result;
       lastX = result.lastX;
-      currentY = result.lastY + this.spacing.vertical;
+
+      // Use double spacing for containers to create more breathing room
+      const spacing = this.isContainerActivity(subActivity) ? this.spacing.vertical * 2 : this.spacing.vertical;
+      currentY = result.lastY + spacing;
     }
 
-    return {
+    return lastResult || {
       lastX,
       lastY: currentY - this.spacing.vertical,
-      lastId: lastNodeId,
+      lastId: parentId,
     };
   }
 
@@ -714,6 +890,10 @@ export class FlowGenerator {
         parentId,
         branchX,
         startY + this.spacing.vertical,
+        null,
+        false,
+        [],
+        NODE_TYPES.PARALLEL,
       );
 
       branchResults.push(result);
@@ -723,23 +903,24 @@ export class FlowGenerator {
       branchX += dimensions.width / 2;
     }
 
-    // Create a join node to merge parallel branches
-    const joinNodeId = this.createJoinNode(
-      x,
-      maxY + this.spacing.vertical,
-      NODE_TYPES.PARALLEL,
-    );
+    // Skip creating join node - return all branch endpoints for connection
+    if (branchResults.length > 1) {
+      // Find the branch that extends furthest down (highest Y coordinate)
+      const furthestResult = branchResults.reduce((furthest, current) => 
+        current.lastY > furthest.lastY ? current : furthest
+      );
 
-    // Connect branch endpoints to join node
-    branchResults.forEach((result) => {
-      this.addEdge(result.lastId, joinNodeId, null, NODE_TYPES.PARALLEL);
-    });
-
-    return {
-      lastX: x,
-      lastY: maxY + this.spacing.vertical + this.getNodeHeight(NODE_TYPES.JOIN),
-      lastId: joinNodeId,
-    };
+      // Return position with all branch endpoints for multi-connection
+      return {
+        lastX: x,
+        lastY: furthestResult.lastY,
+        lastId: furthestResult.lastId, // Primary connection point
+        branchEndpoints: branchResults.map(result => result.lastId), // All endpoints for connection
+      };
+    } else {
+      // Single branch case - just return the branch result
+      return branchResults[0] || { lastX: x, lastY: startY, lastId: parentId };
+    }
   }
 
   /**
@@ -836,47 +1017,18 @@ export class FlowGenerator {
     // Find furthest Y position
     const maxY = Math.max(trueResult.lastY, falseResult.lastY);
 
-    // Create merge node
-    const mergeNodeId = this.createJoinNode(
-      x,
-      maxY + this.spacing.vertical,
-      NODE_TYPES.CONDITION,
-    );
-
-    // Connect branches to merge node
-    if (trueActivity) {
-      this.edges.push({
-        id: `${trueResult.lastId}-${mergeNodeId}`,
-        source: trueResult.lastId,
-        target: mergeNodeId,
-        type: "smoothstep",
-        style: {
-          stroke: "#4caf50",
-          strokeWidth: 2,
-        },
-        markerEnd: { type: MarkerType.ArrowClosed, color: "#4caf50" },
-      });
-    }
-
-    if (falseActivity) {
-      this.edges.push({
-        id: `${falseResult.lastId}-${mergeNodeId}`,
-        source: falseResult.lastId,
-        target: mergeNodeId,
-        type: "smoothstep",
-        style: {
-          stroke: "#f44336",
-          strokeWidth: 2,
-        },
-        markerEnd: { type: MarkerType.ArrowClosed, color: "#f44336" },
-      });
-    }
+    // Skip creating merge node - return all branch endpoints for connection
+    const furthestResult = trueResult.lastY > falseResult.lastY ? trueResult : falseResult;
+    const branchEndpoints = [];
+    
+    if (trueActivity) branchEndpoints.push(trueResult.lastId);
+    if (falseActivity) branchEndpoints.push(falseResult.lastId);
 
     return {
       lastX: x,
-      lastY:
-        maxY + this.spacing.vertical + this.getNodeHeight(NODE_TYPES.MERGE),
-      lastId: mergeNodeId,
+      lastY: maxY,
+      lastId: furthestResult.lastId, // Primary connection point
+      branchEndpoints: branchEndpoints.length > 1 ? branchEndpoints : undefined, // All endpoints for connection
     };
   }
 
@@ -927,6 +1079,623 @@ export class FlowGenerator {
       lastX: x,
       lastY: currentY - this.spacing.vertical,
       lastId: lastSubNodeId,
+    };
+  }
+
+  /**
+   * Layouts parallel activities with container grouping
+   */
+  private layoutParallelActivityWithContainer(
+    activity: IActivity,
+    parentId: string,
+    x: number,
+    y: number,
+    isConditionPath: boolean | null = null,
+    isRoot: boolean = false,
+    additionalParents: string[] = [],
+    parentActivityType?: string,
+  ): NodePosition {
+    const containerId = activity.id ? activity.id : this.getNodeId("parallel-container");
+    
+    // Calculate container dimensions with more generous padding
+    const baseDimensions = this.calculateParallelDimensions(
+      activity,
+      this.getNodeWidth(activity.type),
+      this.getNodeHeight(activity.type)
+    );
+    const containerDimensions = {
+      width: baseDimensions.width + this.spacing.horizontal,
+      height: baseDimensions.height + this.spacing.vertical
+    };
+    
+    // Create container node at the same position where parallel node would have been
+    const containerX = x - containerDimensions.width / 2;
+    const containerY = y;
+    
+    this.addContainerNode(
+      activity,
+      containerId,
+      containerX,
+      containerY,
+      containerDimensions.width,
+      containerDimensions.height,
+      isConditionPath,
+      isRoot
+    );
+
+    // Connect container to parent
+    if (!isRoot) {
+      this.addEdge(parentId, containerId, isConditionPath, activity.type, parentActivityType);
+      additionalParents.forEach(additionalParentId => {
+        this.addEdge(additionalParentId, containerId, isConditionPath, activity.type, parentActivityType);
+      });
+    }
+
+    // Layout parallel branches directly inside the container WITHOUT an intermediate parallel node
+    const subActivities = activity.sub_activities!;
+    const branchResults: NodePosition[] = [];
+    
+    // Calculate positioning for parallel nodes with proportional spacing
+    const nodeWidth = this.getNodeWidth('task'); // All task nodes have same width
+    const containerPadding = 40; // Padding from container edges for breathing room
+    
+    // Start Y position accounting for distribution handle
+    const branchStartY = 100;
+    
+    // Calculate proportional spacing for perfect distribution
+    const availableWidth = containerDimensions.width - (2 * containerPadding); // Width available for nodes and spacing
+    const totalNodeWidth = subActivities.length * nodeWidth; // Total width of all nodes
+    const availableSpacing = availableWidth - totalNodeWidth; // Remaining space for gaps
+    const nodeSpacing = availableSpacing / (subActivities.length + 1); // Equal gaps (including edges)
+    
+    // Force coordinate system to start from left edge (x=0) instead of center  
+    const coordinateOffset = containerDimensions.width * 0.75; // Offset for centered coordinate system
+    const startX = containerPadding + nodeSpacing - coordinateOffset; // Start with padding + first gap
+    
+    console.log(`🏗️ Parallel Container ${containerId}:`);
+    console.log(`   Container dimensions: ${containerDimensions.width}x${containerDimensions.height}`);
+    console.log(`   Node count: ${subActivities.length}, Node width: ${nodeWidth}, Spacing: ${nodeSpacing}`);
+    console.log(`   Available width: ${availableWidth}, Total node width: ${totalNodeWidth}`);
+    console.log(`   Proportional spacing: ${nodeSpacing}, Coordinate offset: ${coordinateOffset}, Start X: ${startX}`);
+    
+    let maxY = branchStartY;
+    
+    // Position each node with proper relative coordinates
+    for (let i = 0; i < subActivities.length; i++) {
+      const subActivity = subActivities[i];
+      
+      // Calculate X position relative to container (top-left corner of the node)
+      const relativeX = startX + (i * (nodeWidth + nodeSpacing));
+      
+      console.log(`📍 Node ${i} (${subActivity.id || subActivity.type}):`);
+      console.log(`   Left edge calculation: ${startX} + (${i} * (${nodeWidth} + ${nodeSpacing})) = ${relativeX}`);
+      console.log(`   Node spans from ${relativeX} to ${relativeX + nodeWidth}`);
+      
+      const result = this.assignPositionsInContainer(
+        subActivity,
+        containerId,
+        relativeX, // This is relative to container, not absolute
+        branchStartY,
+        null,
+        false,
+        [],
+        containerId,
+        NODE_TYPES.PARALLEL,
+        true // Skip parent edge for parallel branches
+      );
+      
+      branchResults.push(result);
+      maxY = Math.max(maxY, result.lastY);
+    }
+
+    // Return branch endpoints for connection, similar to original parallel layout
+    if (branchResults.length > 1) {
+      // Find the branch that extends furthest down (highest Y coordinate)
+      const furthestResult = branchResults.reduce((furthest, current) => 
+        current.lastY > furthest.lastY ? current : furthest
+      );
+
+      // Return position with all branch endpoints for multi-connection
+      // Since child positions are relative to container, convert back to global coordinates
+      return {
+        lastX: x,
+        lastY: y + furthestResult.lastY, // Container Y + relative child Y
+        lastId: furthestResult.lastId, // Primary connection point
+        branchEndpoints: branchResults.map(result => result.lastId), // All endpoints for connection
+      };
+    } else {
+      // Single branch case - convert relative position back to global
+      const singleResult = branchResults[0];
+      return singleResult ? {
+        lastX: x,
+        lastY: y + singleResult.lastY, // Container Y + relative child Y
+        lastId: singleResult.lastId
+      } : { 
+        lastX: x, 
+        lastY: y + containerDimensions.height, 
+        lastId: containerId 
+      };
+    }
+  }
+
+  /**
+   * Assigns positions to nodes within containers (for parent-child relationships)
+   */
+  private assignPositionsInContainer(
+    activity: any,
+    parentId: string,
+    x: number,
+    y: number,
+    isConditionPath: boolean | null = null,
+    isRoot: boolean = false,
+    additionalParents: string[] = [],
+    containerId: string,
+    parentActivityType?: string,
+    skipParentEdge: boolean = false,
+  ): NodePosition {
+    const currentId = activity.id ? activity.id : this.getNodeId(activity.type);
+    const nodeWidth = this.getNodeWidth(activity.type);
+    const nodeHeight = this.getNodeHeight(activity.type);
+
+    // For nodes within containers, position relative to container
+    const nodeX = x - nodeWidth / 2;
+    this.addNode(activity, currentId, nodeX, y, isConditionPath, isRoot, containerId);
+
+    // Only create edges if not skipped (for parallel branches, we skip the parent edge)
+    if (!isRoot && !skipParentEdge && parentId !== containerId) {
+      this.addEdge(parentId, currentId, isConditionPath, activity.type, parentActivityType);
+      additionalParents.forEach(additionalParentId => {
+        this.addEdge(additionalParentId, currentId, isConditionPath, activity.type, parentActivityType);
+      });
+    }
+
+    // Process sub-activities
+    if (activity.sub_activities && activity.sub_activities.length > 0) {
+      switch (activity.type) {
+        case NODE_TYPES.SEQUENTIAL:
+          // For sequential activities inside containers, handle sub-activities directly
+          let currentSubY = y + nodeHeight + this.spacing.vertical;
+          let lastSubResult: NodePosition = { lastX: x, lastY: currentSubY, lastId: currentId };
+          
+          for (let i = 0; i < activity.sub_activities.length; i++) {
+            const subActivity = activity.sub_activities[i];
+            const subResult = this.assignPositionsInContainer(
+              subActivity,
+              lastSubResult.lastId,
+              x,
+              currentSubY,
+              null,
+              false,
+              [],
+              containerId,
+              NODE_TYPES.SEQUENTIAL,
+              false
+            );
+            lastSubResult = subResult;
+            currentSubY = subResult.lastY + this.spacing.vertical;
+          }
+          
+          return lastSubResult;
+
+        case NODE_TYPES.PARALLEL:
+          return this.layoutParallelActivityWithContainer(activity, currentId, x, y, isConditionPath, false, additionalParents, parentActivityType);
+
+        case NODE_TYPES.CONDITION:
+          return this.layoutConditionActivity(activity, currentId, x, y + nodeHeight);
+
+        case NODE_TYPES.LOOP:
+          return this.layoutLoopActivity(activity, currentId, x, y + nodeHeight);
+      }
+    }
+
+    return { lastX: x, lastY: y + nodeHeight, lastId: currentId };
+  }
+
+  /**
+   * Creates a container node (group type) for parallel activities
+   */
+  private addContainerNode(
+    activity: IActivity,
+    id: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    isConditionPath: boolean | null = null,
+    isRoot: boolean = false,
+    explicitContainerType?: string,
+  ): void {
+    const isParallel = activity.type === NODE_TYPES.PARALLEL || explicitContainerType === 'parallel-container';
+    const isLoop = activity.type === NODE_TYPES.LOOP || explicitContainerType === 'loop-container';
+    const containerType = explicitContainerType || (isLoop ? 'loop-container' : isParallel ? 'parallel-container' : 'sequential-container');
+    
+    this.nodes.push({
+      id,
+      type: containerType,
+      position: { x, y },
+      style: {
+        width,
+        height,
+      },
+      data: {
+        id,
+        position: { x, y },
+        data: null,
+        label: `${activity.name || activity.type.charAt(0).toUpperCase() + activity.type.slice(1)} Container`,
+        type: containerType,
+        activityId: isRoot ? activity.id || "root" : activity.id,
+        hasSubActivities: true,
+        isConditionTrue: isConditionPath,
+        variables: activity.variables,
+        condition: isLoop ? (activity.loop_condition ? Object.keys(activity.loop_condition)[0] : activity.condition) : undefined, // Add condition for loop containers
+        navigateToNode: this.navigateToNode,
+        enableEdit: this.enableEdit,
+        onNodeDelete: this.onNodeDelete,
+        onNodeUpdate: this.onNodeUpdate,
+        // No size restrictions - containers can be resized freely
+      },
+    });
+  }
+
+  /**
+   * Creates an empty container that users can fill with child nodes
+   */
+  private createEmptyContainer(
+    activity: any,
+    currentId: string,
+    parentId: string,
+    x: number,
+    y: number,
+    isConditionPath: boolean | null = null,
+    isRoot: boolean = false,
+    additionalParents: string[] = [],
+    parentActivityType?: string,
+  ): NodePosition {
+    const nodeWidth = this.getNodeWidth(activity.type);
+    const nodeHeight = this.getNodeHeight(activity.type);
+    
+    // Position the container
+    const containerX = x - nodeWidth / 2;
+    const containerY = y;
+    
+    const isParallel = activity.type === NODE_TYPES.PARALLEL_CONTAINER;
+    
+    // Create the empty container with the new ResizableContainer component
+    this.nodes.push({
+      id: currentId,
+      type: activity.type, // Use the actual container type
+      position: { x: containerX, y: containerY },
+      style: {
+        width: nodeWidth,
+        height: nodeHeight,
+      },
+      data: {
+        id: currentId,
+        position: { x: containerX, y: containerY },
+        data: null,
+        label: activity.name || `${activity.type.replace('-container', '').charAt(0).toUpperCase() + activity.type.replace('-container', '').slice(1)} Container`,
+        type: activity.type,
+        activityId: isRoot ? activity.id || "root" : activity.id,
+        hasSubActivities: false, // Start empty
+        isConditionTrue: isConditionPath,
+        variables: activity.variables,
+        condition: activity.type === 'loop-container' ? (activity.loop_condition ? Object.keys(activity.loop_condition)[0] : activity.condition) : undefined,
+        navigateToNode: this.navigateToNode,
+        enableEdit: this.enableEdit,
+        onNodeDelete: this.onNodeDelete,
+        onNodeUpdate: this.onNodeUpdate,
+        // No size restrictions - containers can be resized freely
+      },
+    });
+
+    // Connect to parent if not root
+    if (!isRoot) {
+      this.addEdge(parentId, currentId, isConditionPath, activity.type, parentActivityType);
+      additionalParents.forEach(additionalParentId => {
+        this.addEdge(additionalParentId, currentId, isConditionPath, activity.type, parentActivityType);
+      });
+    }
+
+    return { 
+      lastX: x, 
+      lastY: y + nodeHeight, 
+      lastId: currentId 
+    };
+  }
+
+  /**
+   * Layouts sequential activities with container grouping
+   */
+  private layoutSequentialActivityWithContainer(
+    activity: IActivity,
+    parentId: string,
+    x: number,
+    y: number,
+    isConditionPath: boolean | null = null,
+    isRoot: boolean = false,
+    additionalParents: string[] = [],
+    parentActivityType?: string,
+  ): NodePosition {
+    const containerId = activity.id ? activity.id : this.getNodeId("sequential-container");
+    
+    // Calculate container dimensions with padding
+    const baseDimensions = this.calculateSequentialDimensions(
+      activity,
+      this.getNodeWidth(activity.type),
+      this.getNodeHeight(activity.type)
+    );
+    const containerDimensions = {
+      width: baseDimensions.width + this.spacing.horizontal,
+      height: baseDimensions.height + this.spacing.vertical
+    };
+    
+    // Create container node
+    const containerX = x - containerDimensions.width / 2;
+    const containerY = y;
+    
+    this.addContainerNode(
+      activity,
+      containerId,
+      containerX,
+      containerY,
+      containerDimensions.width,
+      containerDimensions.height,
+      isConditionPath,
+      isRoot
+    );
+
+    // Connect container to parent
+    if (!isRoot) {
+      this.addEdge(parentId, containerId, isConditionPath, activity.type, parentActivityType);
+      additionalParents.forEach(additionalParentId => {
+        this.addEdge(additionalParentId, containerId, isConditionPath, activity.type, parentActivityType);
+      });
+    }
+
+    // Layout sequential activities directly inside the container with improved spacing
+    const subActivities = activity.sub_activities!;
+    const containerPadding = 20;
+    let currentY = containerPadding + 80; // Start below container header, accounting for padding
+    let lastResult: NodePosition | null = null;
+    
+    // Calculate optimal vertical spacing
+    const availableHeight = containerDimensions.height - (2 * containerPadding) - 30; // Account for header
+    const nodeSpacing = Math.max(this.spacing.vertical * 0.7, availableHeight / (subActivities.length * 2));
+    
+    // Process each sub-activity with improved centering
+    for (let i = 0; i < subActivities.length; i++) {
+      const subActivity = subActivities[i];
+      const currentParentId = lastResult ? lastResult.lastId : containerId;
+      
+      if (i > 0) {
+        currentY += Math.min(nodeSpacing, this.spacing.vertical);
+      }
+      
+      
+      // Skip parent edge for the first activity (it's inside the container)
+      const skipParentEdge = i === 0;
+      
+      const result = this.assignPositionsInContainer(
+        subActivity,
+        currentParentId,
+        containerDimensions.width / 2, // Center horizontally in container
+        currentY,
+        null,
+        false,
+        [],
+        containerId,
+        NODE_TYPES.SEQUENTIAL,
+        skipParentEdge
+      );
+      
+      lastResult = result;
+      currentY = result.lastY + this.spacing.vertical;
+    }
+
+    // Return the last activity's position converted to global coordinates
+    return lastResult ? {
+      lastX: x,
+      lastY: y + (lastResult.lastY),
+      lastId: lastResult.lastId,
+    } : {
+      lastX: x,
+      lastY: y + containerDimensions.height,
+      lastId: containerId,
+    };
+  }
+
+  /**
+   * Layouts loop activities with container grouping
+   */
+  private layoutLoopActivityWithContainer(
+    activity: IActivity,
+    parentId: string,
+    x: number,
+    y: number,
+    isConditionPath: boolean | null = null,
+    isRoot: boolean = false,
+    additionalParents: string[] = [],
+    parentActivityType?: string,
+  ): NodePosition {
+    const containerId = activity.id ? activity.id : this.getNodeId("loop-container");
+
+    // Calculate container dimensions with padding and extra spacing for loop containers
+    const baseDimensions = this.calculateSequentialDimensions(
+      activity,
+      this.getNodeWidth(activity.type),
+      this.getNodeHeight(activity.type)
+    );
+    const extraVerticalSpacing = 80; // Additional space for top and bottom margins
+    const containerDimensions = {
+      width: baseDimensions.width + this.spacing.horizontal,
+      height: baseDimensions.height + this.spacing.vertical + extraVerticalSpacing
+    };
+    
+    // Create container node
+    const containerX = x - containerDimensions.width / 2;
+    const containerY = y;
+    
+    this.addContainerNode(
+      activity,
+      containerId,
+      containerX,
+      containerY,
+      containerDimensions.width,
+      containerDimensions.height,
+      isConditionPath,
+      isRoot,
+      "loop-container"
+    );
+
+    // Connect container to parent
+    if (!isRoot) {
+      this.addEdge(parentId, containerId, isConditionPath, activity.type, parentActivityType);
+      additionalParents.forEach(additionalParentId => {
+        this.addEdge(additionalParentId, containerId, isConditionPath, activity.type, parentActivityType);
+      });
+    }
+
+    // Layout loop activities directly inside the container with improved spacing
+    const subActivities = activity.sub_activities!;
+    const containerPadding = 20;
+    const topSpacing = 120; // Increased spacing from inner handler to first node
+    const bottomSpacing = 60; // Extra spacing after last node to container bottom
+    let currentY = containerPadding + topSpacing; // Start with more space below container header
+    let lastResult: NodePosition | null = null;
+
+    // Calculate optimal vertical spacing
+    const availableHeight = containerDimensions.height - (2 * containerPadding) - topSpacing - bottomSpacing; // Account for header and extra spacing
+    const nodeSpacing = Math.max(this.spacing.vertical * 0.7, availableHeight / (subActivities.length * 2));
+    
+    // Process each sub-activity with improved centering
+    for (let i = 0; i < subActivities.length; i++) {
+      const subActivity = subActivities[i];
+      const subNodeWidth = this.getNodeWidth(subActivity.type);
+      const subX = containerDimensions.width / 2; // Center within container
+
+      // For the first sub-activity, connect it to the container's internal handle
+      const parentNodeId = i === 0 ? containerId : (lastResult ? lastResult.lastId : containerId);
+
+      const result = this.assignPositionsInContainer(
+        subActivity,
+        parentNodeId,
+        subX,
+        currentY,
+        isConditionPath,
+        false,
+        [],
+        activity.type
+      );
+
+      // Set extent to keep nodes within container
+      const subNode = this.nodes.find(n => n.id === result.lastId);
+      if (subNode) {
+        subNode.parentId = containerId;
+        subNode.extent = 'parent';
+      }
+
+      // Create explicit connection from container's internal handle to first sub-activity
+      if (i === 0) {
+        this.addEdge(containerId, result.lastId, null, activity.type, parentActivityType, 'source-top');
+      }
+
+      lastResult = result;
+      currentY = result.lastY + nodeSpacing;
+    }
+
+    // Note: Loop feedback edges are handled by the loop container's internal logic
+    // External connections will use the last sub-activity, not the container
+
+    // Return the last sub-activity as the connection point, not the container
+    // This ensures the next sequential task connects to the last node inside the loop
+    return lastResult ? {
+      lastX: x,
+      lastY: y + (lastResult.lastY),
+      lastId: lastResult.lastId, // Return the last sub-activity's ID, not the container ID
+    } : {
+      lastX: x,
+      lastY: y + containerDimensions.height,
+      lastId: containerId,
+    };
+  }
+
+  /**
+   * Creates an empty sequential container that users can populate
+   */
+  private layoutSequentialContainer(
+    activity: IActivity,
+    parentId: string,
+    x: number,
+    y: number,
+    isConditionPath: boolean | null = null,
+    isRoot: boolean = false,
+    additionalParents: string[] = [],
+    parentActivityType?: string,
+  ): NodePosition {
+    const containerId = activity.id ? activity.id : this.getNodeId("sequential-container");
+    const containerDimensions = {
+      width: this.getNodeWidth(NODE_TYPES.SEQUENTIAL_CONTAINER),
+      height: this.getNodeHeight(NODE_TYPES.SEQUENTIAL_CONTAINER)
+    };
+
+    // Create container
+    const containerX = x - containerDimensions.width / 2;
+    const containerY = y;
+
+    this.addContainerNode(
+      activity,
+      containerId,
+      containerX,
+      containerY,
+      containerDimensions.width,
+      containerDimensions.height,
+      isConditionPath,
+      isRoot
+    );
+
+    // Connect container to parent
+    if (!isRoot) {
+      this.addEdge(parentId, containerId, isConditionPath, activity.type, parentActivityType);
+      additionalParents.forEach(additionalParentId => {
+        this.addEdge(additionalParentId, containerId, isConditionPath, activity.type, parentActivityType);
+      });
+    }
+
+    // Process any existing sub-activities
+    if (activity.sub_activities && activity.sub_activities.length > 0) {
+      let currentY = this.spacing.vertical / 2;
+      let lastResult: NodePosition | null = null;
+
+      for (let i = 0; i < activity.sub_activities.length; i++) {
+        const subActivity = activity.sub_activities[i];
+        const currentParentId = lastResult ? lastResult.lastId : containerId;
+
+        if (i > 0) {
+          currentY += this.spacing.vertical;
+        }
+
+        const result = this.assignPositionsInContainer(
+          subActivity,
+          currentParentId,
+          containerDimensions.width / 2,
+          currentY,
+          null,
+          false,
+          [],
+          containerId,
+          undefined,
+          false
+        );
+
+        lastResult = result;
+        currentY = result.lastY + this.spacing.vertical;
+      }
+    }
+
+    return {
+      lastX: x,
+      lastY: y + containerDimensions.height,
+      lastId: containerId,
     };
   }
 }

@@ -4,8 +4,8 @@ import {
   Paper,
   Box,
   Typography,
-  Tabs,
-  Tab,
+  // Tabs,
+  // Tab,
   Divider,
   CircularProgress,
   useTheme,
@@ -25,6 +25,8 @@ import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import { Post } from "@components/lib/utils/Post";
 import { ALGORITHMS } from "@components/lib/firestoreClient/collections";
 import { development } from "@components/lib/CONSTANTS";
+import { useFlowLock } from "@components/hooks/useFlowLock";
+import LockIcon from "@mui/icons-material/Lock";
 
 const sampleAlgorithmsData = {
   algorithms: [
@@ -36,11 +38,13 @@ const sampleAlgorithmsData = {
           name: "Gather and Prepare Supplies",
           id: "S1",
           type: "task",
+          node_id: "PxOmj3zmLqhr6oKxH2xl",
         },
         {
           name: "Set Up Safety Measures",
           id: "S2",
           type: "task",
+          node_id: "safety-measures-002",
         },
         {
           name: "Check Cabin Soil Level",
@@ -53,11 +57,13 @@ const sampleAlgorithmsData = {
               name: "Basic Vacuum",
               id: "S4",
               type: "task",
+              node_id: "basic-vacuum-004",
             },
             {
               name: "Deep Vacuum",
               id: "S5",
               type: "task",
+              node_id: "deep-vacuum-005",
             },
           ],
         },
@@ -70,6 +76,7 @@ const sampleAlgorithmsData = {
               name: "Disinfect Lavatories",
               id: "S7",
               type: "task",
+              node_id: "disinfect-lavatories-007",
             },
             {
               name: "Clean Overhead Bins",
@@ -89,6 +96,7 @@ const sampleAlgorithmsData = {
               name: "Wipe & Disinfect Surfaces",
               id: "S10",
               type: "task",
+              node_id: "wipe-disinfect-010",
             },
           ],
         },
@@ -96,6 +104,7 @@ const sampleAlgorithmsData = {
           name: "Final Inspection",
           id: "S11",
           type: "task",
+          node_id: "final-inspection-011",
         },
       ],
       performance_model:
@@ -118,11 +127,13 @@ const sampleAlgorithmsData = {
               name: "Gather Supplies",
               id: "S2",
               type: "task",
+              node_id: "gather-supplies-parallel-002",
             },
             {
               name: "Set Up Safety Cones",
               id: "S3",
               type: "task",
+              node_id: "safety-cones-003",
             },
           ],
         },
@@ -137,11 +148,13 @@ const sampleAlgorithmsData = {
               name: "Include Lavatory Cleaning",
               id: "S5",
               type: "task",
+              node_id: "include-lavatory-005",
             },
             {
               name: "Skip Lavatory Cleaning",
               id: "S6",
               type: "task",
+              node_id: "skip-lavatory-006",
             },
           ],
         },
@@ -154,6 +167,7 @@ const sampleAlgorithmsData = {
               name: "Clean Overhead Bins",
               id: "S8",
               type: "task",
+              node_id: "clean-overhead-008",
             },
             {
               name: "Seat Row Cleaning Loop",
@@ -166,6 +180,7 @@ const sampleAlgorithmsData = {
                   name: "Vacuum Row",
                   id: "S10",
                   type: "task",
+                  node_id: "vacuum-row-010",
                 },
               ],
             },
@@ -173,6 +188,7 @@ const sampleAlgorithmsData = {
               name: "Clean Galley and Service Areas",
               id: "S11",
               type: "task",
+              node_id: "clean-galley-011",
             },
           ],
         },
@@ -359,9 +375,11 @@ const sampleAlgorithmsData = {
  */
 interface NodeActivityFlowProps {
   node: INode;
-  confirmIt: any;
+  confirmIt: (message: string) => void;
   nodes: { [id: string]: INode };
   onNodeAdd?: (parentId: string, newNodeData: Partial<INode>) => void;
+  navigateToNode?: (nodeId: string) => void;
+  enableEdit?: boolean;
 }
 
 /**
@@ -373,16 +391,30 @@ interface NodeActivityFlowProps {
 const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
   node,
   confirmIt,
+  nodes,
+  navigateToNode,
+  enableEdit = false,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const db = getFirestore();
-  const [activeTab, setActiveTab] = useState<number>(0);
+  // const [activeTab, setActiveTab] = useState<number>(0);
   const [algorithms, setAlgorithms] = useState<IAlgorithm[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [openAiRequestLoading, setOpenAiRequestLoading] = useState(false);
+  // Flow lock hook
+  const {
+    isLocked,
+    lockedBy,
+    canEdit,
+    isMyLock,
+    acquireLock,
+    releaseLock,
+    error: lockError,
+  } = useFlowLock(node.id);
 
   useEffect(() => {
+    console.log('NodeActivityFlow: navigateToNode function:', !!navigateToNode);
     const algorithmsCollection = query(
       collection(db, ALGORITHMS),
       where("__name__", "==", node.id),
@@ -410,22 +442,52 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
   }, [node.id, db]);
 
   const generateFlowCharts = async () => {
+    // Check if user can generate (not locked by someone else)
+    if (!canEdit) {
+      confirmIt(
+        `Cannot generate flows: Currently being edited by ${lockedBy}`
+      );
+      return;
+    }
+
     try {
+      // Acquire lock before generating
+      await acquireLock();
+      if (!isMyLock) {
+        confirmIt(
+          lockError || "Failed to acquire editing lock"
+        );
+        return;
+      }
+
       setOpenAiRequestLoading(true);
       await Post("/flowchart", { nodeId: node.id });
     } catch (error) {
-      /*       confirmIt(
-        "The was an error generating Activity Flows, please try again!",
-      ); */
       console.error(error);
+      confirmIt(
+        "There was an error generating Activity Flows, please try again!"
+      );
     } finally {
       setOpenAiRequestLoading(false);
+      // Release lock after generation
+      await releaseLock();
     }
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
+  // Automatically acquire lock when enableEdit becomes true (when user starts editing)
+  useEffect(() => {
+    if (enableEdit && !isLocked) {
+      // Try to acquire lock when user wants to edit
+      acquireLock();
+    } else if (!enableEdit && isMyLock) {
+      // Release lock when user stops editing
+      releaseLock();
+    }
+  }, [enableEdit, isLocked, isMyLock, acquireLock, releaseLock]);
+
+  // const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  //   setActiveTab(newValue);
+  // };
 
   return (
     <Paper
@@ -467,25 +529,74 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
         >
           Activity Flow
         </Typography>
-        {!development && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {/* Lock status indicator - only show when locked by someone else */}
+          {isLocked && !isMyLock && (
+            <Tooltip title={`Currently being edited by ${lockedBy}`}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 1,
+                  backgroundColor: theme.palette.warning.main + "20",
+                  border: `1px solid ${theme.palette.warning.main}`,
+                }}
+              >
+                <LockIcon 
+                  sx={{ 
+                    fontSize: 16,
+                    color: theme.palette.warning.main
+                  }} 
+                />
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    fontWeight: 500,
+                    color: theme.palette.warning.main
+                  }}
+                >
+                  {lockedBy}
+                </Typography>
+              </Box>
+            </Tooltip>
+          )}
+
+          {/* Generate button */}
           <Tooltip
-            title={`Generate ${algorithms.length > 0 ? "New" : ""} Activity Flows`}
+            title={
+              !canEdit 
+                ? `Cannot generate: Currently being edited by ${lockedBy}`
+                : `Generate ${algorithms.length > 0 ? "New" : ""} Activity Flows`
+            }
           >
-            {openAiRequestLoading ? (
-              <CircularProgress />
-            ) : (
-              <IconButton onClick={generateFlowCharts}>
-                <AutoFixHighIcon />
-              </IconButton>
-            )}
+            <span>
+              {openAiRequestLoading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <IconButton 
+                  onClick={generateFlowCharts}
+                  disabled={!canEdit}
+                  // sx={{
+                  //   color: canEdit 
+                  //     ? theme.palette.primary.main 
+                  //     : theme.palette.action.disabled,
+                  // }}
+                >
+                  <AutoFixHighIcon />
+                </IconButton>
+              )}
+            </span>
           </Tooltip>
-        )}
+        </Box>
       </Box>
 
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
         {algorithms.length > 0 ? (
           <>
-            {/* Algorithm tabs */}
+            {/* Algorithm tabs - Commented out for single algorithm display
             <Box
               sx={{
                 display: "flex",
@@ -528,6 +639,7 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
                 ))}
               </Tabs>
             </Box>
+            */}
 
             {/* Algorithm flowchart */}
             <Box sx={{ flex: 1, overflow: "hidden" }}>
@@ -545,8 +657,12 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
               ) : (
                 <ReactFlowProvider>
                   <AlgorithmFlowVisualizer
-                    algorithm={algorithms[activeTab]}
+                    algorithm={algorithms[0]}
                     isDarkMode={isDarkMode}
+                    navigateToNode={navigateToNode}
+                    enableEdit={enableEdit && canEdit}
+                    currentNode={node}
+                    nodes={nodes}
                   />
                 </ReactFlowProvider>
               )}
@@ -554,16 +670,16 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
 
             <Divider />
             <Box>
-              {algorithms[activeTab]?.advantages && (
+              {algorithms[0]?.advantages && (
                 <Typography sx={{ p: 2 }}>
                   <strong style={{ color: "orange" }}>Advantages:</strong>{" "}
-                  {algorithms[activeTab]?.advantages}
+                  {algorithms[0]?.advantages}
                 </Typography>
               )}
-              {algorithms[activeTab]?.disadvantages && (
+              {algorithms[0]?.disadvantages && (
                 <Typography sx={{ p: 2 }}>
                   <strong style={{ color: "orange" }}>Disadvantages:</strong>{" "}
-                  {algorithms[activeTab]?.disadvantages}
+                  {algorithms[0]?.disadvantages}
                 </Typography>
               )}
             </Box>
