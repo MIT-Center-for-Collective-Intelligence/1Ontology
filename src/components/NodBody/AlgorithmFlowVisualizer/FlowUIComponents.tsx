@@ -456,24 +456,6 @@ export const LegendPanel: React.FC<LegendPanelProps> = ({
   // Node type information with icons and colors
   const legendItems = [
     {
-      icon: <ConditionIcon fontSize="small" />,
-      label: "Condition",
-      type: "condition",
-      color: isDarkMode ? "#ffb74d" : "#f57c00",
-    },
-    {
-      icon: <LoopIcon fontSize="small" />,
-      label: "Loop",
-      type: "loop",
-      color: isDarkMode ? "#81c784" : "#43a047",
-    },
-    {
-      icon: <ContainerIcon fontSize="small" />,
-      label: "Container",
-      type: "container",
-      color: isDarkMode ? "#81c784" : "#43a047",
-    },
-    {
       icon: <ArrowIcon fontSize="small" sx={{ border: '1px dashed', borderRadius: '2px', p: 0.2 }} />,
       label: "Sequential Container",
       type: "sequential-container",
@@ -484,6 +466,18 @@ export const LegendPanel: React.FC<LegendPanelProps> = ({
       label: "Parallel Container",
       type: "parallel-container",
       color: isDarkMode ? "#ce93d8" : "#9c27b0",
+    },
+    {
+      icon: <LoopIcon fontSize="small" sx={{ border: '1px dashed', borderRadius: '2px', p: 0.2 }} />,
+      label: "Loop Container",
+      type: "loop-container",
+      color: isDarkMode ? "#81c784" : "#43a047",
+    },
+    {
+      icon: <ConditionIcon fontSize="small" />,
+      label: "Condition",
+      type: "condition",
+      color: isDarkMode ? "#ffb74d" : "#f57c00",
     },
     {
       icon: <TaskIcon fontSize="small" />,

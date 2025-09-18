@@ -516,11 +516,12 @@ const AlgorithmFlowVisualizer: React.FC<AlgorithmFlowVisualizerProps> = ({
       case 'parallel-container':
         handleCreateParallelContainer();
         break;
-      case 'condition':
-        setShowConditionCreation(true);
-        break;
+      case 'loop-container':
       case 'loop':
         setShowLoopCreation(true);
+        break;
+      case 'condition':
+        setShowConditionCreation(true);
         break;
       default:
         break;
@@ -942,10 +943,10 @@ const AlgorithmFlowVisualizer: React.FC<AlgorithmFlowVisualizerProps> = ({
   }, [enableEdit]);
 
   // Selection change handler for multi-select
-  const onSelectionChange: OnSelectionChange = useCallback(({ nodes, edges }) => {
+  const onSelectionChange: OnSelectionChange = useCallback(({ nodes, edges }: any) => {
     console.log(`🎯 Selection changed: ${nodes.length} nodes, ${edges.length} edges`);
-    console.log('Selected node IDs:', nodes.map(n => n.id));
-    console.log('Selected edge IDs:', edges.map(e => e.id));
+    console.log('Selected node IDs:', nodes.map((n: any) => n.id));
+    console.log('Selected edge IDs:', edges.map((e: any) => e.id));
     
     setSelectedNodes(nodes);
     setSelectedEdges(edges);
