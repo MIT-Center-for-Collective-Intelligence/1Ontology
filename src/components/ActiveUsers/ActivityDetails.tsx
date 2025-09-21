@@ -65,6 +65,42 @@ const ActivityDetails = ({
                 : "#e9ebf5",
         }}
       >
+        {!modifiedByDetails && (
+          <Tooltip
+            title={getToolTip()}
+            placement="top"
+            componentsProps={{
+              tooltip: {
+                sx: {
+                  backgroundColor: "black",
+                  color: "#fff",
+                  fontSize: "12px",
+                  "& .MuiTooltip-arrow": {
+                    color: "black",
+                  },
+                },
+              },
+            }}
+            sx={{ mb: "5px" }}
+          >
+            <Typography
+              sx={{
+                fontSize: "12px",
+                color: "text.secondary",
+                display: "inline",
+                ":hover": {
+                  borderBottom: "2px solid gray",
+                },
+              }}
+            >
+              {dayjs(new Date(activity.modifiedAt.toDate()))
+                .fromNow()
+                .includes("NaN")
+                ? "a few minutes ago"
+                : `${dayjs(new Date(activity.modifiedAt.toDate())).fromNow()}`}
+            </Typography>
+          </Tooltip>
+        )}
         {modifiedByDetails && (
           <Box
             sx={{
@@ -140,7 +176,6 @@ const ActivityDetails = ({
             sx={{
               fontSize: "13px",
               color: "text.secondary",
-              mb: 2,
             }}
           >
             {getChangeDescription(activity, "")}
@@ -237,7 +272,7 @@ const ActivityDetails = ({
                 <span style={{ color: "orange" }}>Activity ID:</span>{" "}
                 {activity.id}
               </li>
-              <li>  
+              <li>
                 <span style={{ color: "orange" }}>Node ID:</span>{" "}
                 {activity.nodeId}
               </li>

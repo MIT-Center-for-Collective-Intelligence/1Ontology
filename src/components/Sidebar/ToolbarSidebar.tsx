@@ -1249,6 +1249,7 @@ const ToolbarSidebar = ({
             displayDiff={displayDiff}
             selectedDiffNode={selectedDiffNode}
             nodes={nodes}
+            appName={skillsFutureApp}
           />
         );
       case "chat":
