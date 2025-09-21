@@ -19,11 +19,13 @@ const SelectInheritance = ({
   property,
   nodes,
   enableEdit,
+  onInheritanceChange, // Callback to communicate with Text component
 }: {
   currentVisibleNode: INode;
   property: string;
   nodes: { [nodeId: string]: INode };
   enableEdit: boolean;
+  onInheritanceChange?: (property: string, newInheritanceRef: string) => any;
 }) => {
   // Don't render if inheritanceType is neverInherit
   if (currentVisibleNode.inheritance[property]?.inheritanceType === "neverInherit") {
@@ -127,7 +129,8 @@ const SelectInheritance = ({
 
     return newBatch;
   };
-  const changeInheritance = (
+
+  const changeInheritance = async (
     event: React.ChangeEvent<HTMLInputElement>,
     property: string,
   ) => {
@@ -137,30 +140,39 @@ const SelectInheritance = ({
       if (newGeneralizationId && newGeneralizationId !== inheritanceRef) {
         const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
         const newGeneralization = nodes[newGeneralizationId];
-        if (newGeneralization.inheritance[property].ref) {
+        
+        if (newGeneralization?.inheritance?.[property]?.ref) {
           newGeneralizationId = newGeneralization.inheritance[property].ref;
         }
 
         updateDoc(nodeRef, {
           [`inheritance.${property}.ref`]: newGeneralizationId,
-        })
-          .then(async () => {
-            let batch = writeBatch(db);
-            batch = await updateSpecializationsInheritance(
-              nodes[currentVisibleNode?.id].specializations,
-              batch,
-              property,
-              newGeneralizationId,
-              currentVisibleNode?.id,
-              currentVisibleNode?.id,
-            );
-            await batch.commit();
-          })
-          .catch((error) => {
-            console.error("Failed to update inheritance:", error);
-          });
+        });
+
+        // Notify parent component (Text) about the inheritance change
+        // This will trigger the Yjs awareness message via MarkdownEditor to YjsEditorWrapper
+        if (onInheritanceChange) {
+          onInheritanceChange(property, newGeneralizationId);
+        }
+
+        // Update specializations
+        try {
+          let batch = writeBatch(db);
+          batch = await updateSpecializationsInheritance(
+            nodes[currentVisibleNode?.id].specializations,
+            batch,
+            property,
+            newGeneralizationId,
+            currentVisibleNode?.id,
+            currentVisibleNode?.id,
+          );
+          await batch.commit();
+        } catch (error) {
+          console.error("Failed to update specializations:", error);
+        }
       }
     } catch (error: any) {
+      console.error("Failed to update inheritance:", error);
       recordLogs({
         type: "error",
         error: JSON.stringify({
@@ -172,6 +184,7 @@ const SelectInheritance = ({
       });
     }
   };
+
   return (
     <Box sx={{ ml: "auto" }}>
       <TextField
