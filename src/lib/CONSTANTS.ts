@@ -1,8 +1,6 @@
 import { DESIGN_SYSTEM_COLORS } from "./theme/colors";
 export const development = process.env.NODE_ENV === "development";
 
-// TO-DO: Consider storing this data in the database to identify node types in the project
-
 // Defining an object to hold initial values for various node types
 
 export const DISPLAY: {
@@ -182,7 +180,8 @@ export const SKILLS_FUTURE_APP_NAMES = [
     id: "Ontology - Development Version",
     name: "Ontology - Development Version",
   },
-  { id: "Top-Down Gemini 2.5 Pro", name: "AI Peer Generated Ontology" },
+  { id: "Top-Down Gemini 2.5 Pro", name: "Old AI Peer Ontology" },
+  { id: "ai-peer-ontology", name: "AI Peer Ontology" },
   {
     id: "activities-actors-objects-gemini-2-5pro",
     name: "Activities, Actors, Objects - Gemini 2.5 Pro",

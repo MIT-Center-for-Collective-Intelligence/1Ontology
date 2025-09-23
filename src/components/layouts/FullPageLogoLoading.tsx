@@ -7,7 +7,7 @@ import { Box } from "@mui/material";
 // import CircularProgress from "@mui/material/CircularProgress";
 import Image from "next/image";
 
-import LogoDarkMode from "../../../public/animated-icon-1cademy.gif";
+import LogoDarkMode from "../../../public/loader.gif";
 
 const FullPageLogoLoading = () => {
   return (
