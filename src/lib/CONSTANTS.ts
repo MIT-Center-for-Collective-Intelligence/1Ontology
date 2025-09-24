@@ -168,30 +168,24 @@ export const GEMINI_MODEL = "gemini-2.5-pro";
 
 export const SKILLS_FUTURE_APP_NAMES = [
   {
-    id: "Full WordNet O*Net Verb Hierarchy - Tom's Version",
+    id: "full-wordnet-o*net-verb-hierarchy-toms-version",
     name: "Full WordNet O*Net Verb Hierarchy - Tom's Version",
   },
   {
-    id: "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
+    id: "full-wordnet-o*net-verb-hierarchy-manual-gpt-upper",
     name: "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
   },
-  { id: "Ontology - Demo Version", name: "Ontology - Demo Version" },
+  { id: "ontology-demo-version", name: "Ontology - Demo Version" },
   {
-    id: "Ontology - Development Version",
+    id: "ontology-development-version",
     name: "Ontology - Development Version",
   },
-  { id: "Top-Down Gemini 2.5 Pro", name: "Old AI Peer Ontology" },
+  { id: "old-ai-peer-ontology", name: "Old AI Peer Ontology" },
   { id: "ai-peer-ontology", name: "AI Peer Ontology" },
   {
-    id: "activities-actors-objects-gemini-2-5pro",
-    name: "Activities, Actors, Objects - Gemini 2.5 Pro",
+    id: "top-down-ai-peer-ontology",
+    name: "Top Down AI Peer Ontology",
   },
-  /*"Holistic Embedding - o3-mini Proposer-Reviewer Generated Titles & Parts",
-  "Holistic Embedding - Gemini 2.5 Pro Generated Titles & Parts",
-  "Holistic Embedding (Sector, Title, JobRole, CWF, Parts) - Gemini 2.5 Pro",
-  "O*Net Verbs o3 Deep Research",
-  "O*Net Verbs - o1 Pro", */
-  // "Full WordNet O*Net Verb Hierarchy Auto GPT Upper",
 ];
 
 export const performerColors: Record<string, string> = {
