@@ -119,7 +119,7 @@ const YjsEditorWrapper = ({
     );
     provider.on("sync", (isSynced: boolean) => {
       if (isSynced) {
-                setSynced(true);
+        setSynced(true);
 
         // Initial check for duplicates when document first loads
         if (property === "title") {
