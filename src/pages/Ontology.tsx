@@ -787,7 +787,12 @@ const Ontology = ({
 
   useEffect(() => {
     if (currentVisibleNode?.id) {
-      setCurrentVisibleNode(nodes[currentVisibleNode?.id]);
+      setCurrentVisibleNode((prev) => {
+        if (nodes[currentVisibleNode?.id]) {
+          return nodes[currentVisibleNode?.id];
+        }
+        return prev;
+      });
     }
   }, [nodes]);
 
