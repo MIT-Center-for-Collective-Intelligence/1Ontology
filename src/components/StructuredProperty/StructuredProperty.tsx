@@ -528,12 +528,6 @@ const StructuredProperty = ({
         _prev.add(nId);
         return _prev;
       });
-      await handleCloning(
-        { id: clonedNodesQueue[nId].id },
-        clonedNodesQueue[nId].title,
-        nId,
-        collectionName,
-      );
       const addedElements: string[] = [nId];
 
       await handleSaveLinkChanges(
@@ -543,17 +537,19 @@ const StructuredProperty = ({
         currentVisibleNode?.id,
         collectionName,
       );
-
-      setClonedNodesQueue((prev: any) => {
-        const _prev = { ...prev };
-        delete _prev[nId];
-        return _prev;
-      });
       setLoadingIds((prev: Set<string>) => {
         const _prev = new Set(prev);
         _prev.delete(nId);
         return _prev;
       });
+      const id = clonedNodesQueue[nId].id;
+      const title = clonedNodesQueue[nId].title;
+      setClonedNodesQueue((prev: any) => {
+        const _prev = { ...prev };
+        delete _prev[nId];
+        return _prev;
+      });
+      await handleCloning({ id }, title, nId, collectionName);
     } catch (error) {
       console.error(error);
     }

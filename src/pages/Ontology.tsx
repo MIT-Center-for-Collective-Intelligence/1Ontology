@@ -271,6 +271,36 @@ const Ontology = ({
   };
 
   const handleCloseAddLinksModel = () => {
+    setCurrentVisibleNode((prev: any) => {
+      const _prev = { ...prev };
+      if (_prev && selectedProperty) {
+        if (
+          selectedProperty === "specializations" ||
+          selectedProperty === "generalizations"
+        ) {
+          _prev[selectedProperty] = _prev[selectedProperty].map(
+            (collection: ICollection) => {
+              collection.nodes = collection.nodes.filter(
+                (n: { id: string }) => !clonedNodesQueue[n.id],
+              );
+              return collection;
+            },
+          );
+        } else {
+          _prev.properties[selectedProperty] = _prev.properties[
+            selectedProperty
+          ].map((collection: ICollection) => {
+            collection.nodes = collection.nodes.filter(
+              (n: { id: string }) => !clonedNodesQueue[n.id],
+            );
+            return collection;
+          });
+        }
+      }
+
+      return _prev;
+    });
+
     setSelectedProperty("");
     setSelectedCollection("");
     setSearchValue("");
