@@ -1,5 +1,5 @@
 import { DESIGN_SYSTEM_COLORS } from "./theme/colors";
-export const development = process.env.NODE_ENV === "development";
+export const development = process.env.NODE_ENV !== "development";
 
 // Defining an object to hold initial values for various node types
 
@@ -185,6 +185,10 @@ export const SKILLS_FUTURE_APP_NAMES = [
   {
     id: "top-down-ai-peer-ontology",
     name: "Top Down AI Peer Ontology",
+  },
+  {
+    id: "final-hierarchy-with-o*net",
+    name: "Final Hierarchy with O*Net",
   },
 ];
 
