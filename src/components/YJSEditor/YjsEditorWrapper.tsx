@@ -44,6 +44,7 @@ const YjsEditorWrapper = ({
   cursorPosition,
   onEditorReady,
   setEditorContent,
+  fallbackContent,
 }: {
   fullname: string;
   property: string;
@@ -56,6 +57,7 @@ const YjsEditorWrapper = ({
   cursorPosition: number | null;
   onEditorReady?: (editor: Quill) => void;
   setEditorContent: any;
+  fallbackContent?: string;
 }) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
@@ -117,7 +119,7 @@ const YjsEditorWrapper = ({
     );
     provider.on("sync", (isSynced: boolean) => {
       if (isSynced) {
-        setSynced(true);
+                setSynced(true);
 
         // Initial check for duplicates when document first loads
         if (property === "title") {
@@ -163,12 +165,25 @@ const YjsEditorWrapper = ({
 
       editorRef.current = editor;
 
+      // Show fallback content if yjs is not synced
+      if (!synced && fallbackContent) {
+        editor.setText(fallbackContent);
+      }
+
       // Notify parent when editor is ready
       if (onEditorReady) {
         onEditorReady(editor);
       }
 
-      const binding = new QuillBinding(yText, editor, provider.awareness);
+      let binding: QuillBinding;
+
+      // Since quill binding instantly overwrites the firestore
+      // Create binding only when WebSocket connects successfully
+      provider.on("status", (event) => {
+        if (event.status === "connected" && !binding) {
+          binding = new QuillBinding(yText, editor, provider.awareness);
+        }
+      });
 
       provider.awareness.setLocalStateField("user", {
         name: fullname,
@@ -225,7 +240,9 @@ const YjsEditorWrapper = ({
         saveChangeLog(changeHistoryRef.current);
         provider.disconnect();
         provider.destroy();
-        binding.destroy();
+        if (binding) {
+          binding.destroy();
+        }
         editor.off("selection-change", handleSelectionChange);
         editor.off("text-change");
         window.removeEventListener("beforeunload", saveChanges);
