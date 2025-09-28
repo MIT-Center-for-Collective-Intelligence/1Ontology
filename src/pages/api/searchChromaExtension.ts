@@ -43,7 +43,7 @@ const runMiddleware = (req: any, res: any, fn: any) => {
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { query, skillsFuture, appName } = req.body;
+    const { query, skillsFuture, appName, resultsNum } = req.body;
 
     await runMiddleware(req, res, cors);
 
@@ -69,7 +69,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const results = await collection.query({
       queryEmbeddings: [embeddedQuery],
-      nResults: 40,
+      nResults: resultsNum || 40,
     });
 
     const metaDatas: any = results.metadatas[0];
