@@ -77,7 +77,9 @@ import {
   Timestamp,
   collection,
   doc,
+  getDocs,
   getFirestore,
+  limit,
   onSnapshot,
   query,
   setDoc,
@@ -242,7 +244,7 @@ const Ontology = ({
   const [enableEdit, setEnableEdit] = useState(false);
   const [specializationNumsUnder, setSpecializationNumsUnder] = useState({});
   const [editableProperty, setEditableProperty] = useState<ICollection[]>([]);
-
+  const [rootNode, setRootNode] = useState<string | null>(null);
   const treeRef = useRef<TreeApi<TreeData>>(null);
 
   const firstLoad = useRef(true);
@@ -726,12 +728,28 @@ const Ontology = ({
     // Return the main specializations tree
     return newSpecializationsTree;
   };
+  const getRootNode = async () => {
+    const rootQuery = query(
+      collection(db, NODES),
+      where("deleted", "==", false),
+      where("root", "==", true),
+      where("appName", "==", appName),
+      limit(1),
+    );
+    const nodesDocs = await getDocs(rootQuery);
+    if (nodesDocs.docs.length > 0) {
+      const root = nodesDocs.docs[0];
+      setRootNode(root.id);
+    }
+  };
+
 
   useEffect(() => {
     // Create a query for the NODES collection where "deleted" is false
     let nodesQuery = null;
 
     if (skillsFuture && appName) {
+      getRootNode();
       nodesQuery = query(
         collection(db, NODES),
         where("deleted", "==", false),
@@ -794,7 +812,7 @@ const Ontology = ({
         return prev;
       });
     }
-  }, [nodes]);
+  }, [nodes, appName]);
 
   const getTreeView = ({ mainCategories, visited, path }: any): any => {
     const newNodes = [];
@@ -959,11 +977,11 @@ const Ontology = ({
       } else if (user?.currentNode && nodes[user.currentNode]) {
         setCurrentVisibleNode(nodes[user.currentNode]);
       } else {
-        setCurrentVisibleNode(nodes["hn9pGQNxmQe9Xod5MuKK"]!);
+        setCurrentVisibleNode(nodes[rootNode || "hn9pGQNxmQe9Xod5MuKK"]!);
       }
       firstLoad.current = false;
     }
-  }, [user?.currentNode]);
+  }, [user?.currentNode, rootNode]);
 
   // Function to update the user document with the current ontology path
   const openedANode = async (currentNode: string) => {
