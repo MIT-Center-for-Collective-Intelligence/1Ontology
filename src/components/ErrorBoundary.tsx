@@ -52,12 +52,19 @@ class ErrorBoundary extends React.Component<
       // You can render any custom fallback UI
       return (
         <Stack
-          alignItems={"center"}
-          justifyContent={"center"}
-          spacing={"20px"}
+          alignItems="center"
+          justifyContent="center"
+          spacing="20px"
           sx={{
-            p: "20px",
-            minHeight: "100vh",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            p: 2,
+            boxSizing: "border-box",
+            overflow: "hidden",
+            backgroundColor: "#2e2e2e",
           }}
         >
           <Typography
@@ -66,11 +73,14 @@ class ErrorBoundary extends React.Component<
               fontSize: { xs: "40px", md: "60px" },
               fontWeight: 500,
               textAlign: "center",
+              color: "#b5b5b5",
             }}
           >
             Oops, there is an error!
           </Typography>
-          <Typography sx={{ fontSize: "20px", textAlign: "center" }}>
+          <Typography
+            sx={{ fontSize: "20px", textAlign: "center", color: "white" }}
+          >
             Our team is actively working to fix the issue. Please try again
             later. Thank you for your patience.
           </Typography>
