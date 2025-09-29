@@ -1,9 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ChromaClient, OpenAIEmbeddingFunction } from "chromadb";
 import fbAuth from "@components/middlewares/fbAuth";
-import OpenAI from "openai";
-import Cors from "cors";
 
 const url = `${process.env.CHROMA_PROTOCOL}://${process.env.CHROMA_HOST}:${process.env.CHROMA_PORT}`;
 
@@ -36,7 +33,7 @@ const runMiddleware = (req: any, res: any, fn: any) => {
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { query, skillsFuture, appName, user } = req.body.data;
+    const { query, skillsFuture, appName, user, nodeType } = req.body.data;
     const { uname } = user?.userData;
 
     /*     await runMiddleware(req, res, cors); */
@@ -58,7 +55,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const results = await collection.query({
       queryTexts: query,
       nResults: 40,
+      ...(nodeType
+        ? {
+            where: {
+              nodeType,
+            },
+          }
+        : {}),
     });
+    console.log(JSON.stringify(results, null, 2));
 
     const metaDatas: any = results.metadatas[0];
     const exactMatches = [];

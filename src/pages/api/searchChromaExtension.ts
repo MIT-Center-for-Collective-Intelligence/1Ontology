@@ -1,8 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ChromaClient, OpenAIEmbeddingFunction } from "chromadb";
-import fbAuth from "@components/middlewares/fbAuth";
-import OpenAI from "openai";
 import Cors from "cors";
 import { openai } from "./helpers";
 
@@ -43,7 +40,7 @@ const runMiddleware = (req: any, res: any, fn: any) => {
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { query, skillsFuture, appName, resultsNum } = req.body;
+    const { query, skillsFuture, appName, resultsNum, nodeType } = req.body;
 
     await runMiddleware(req, res, cors);
 
@@ -70,6 +67,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const results = await collection.query({
       queryEmbeddings: [embeddedQuery],
       nResults: resultsNum || 40,
+      ...(nodeType
+        ? {
+            where: {
+              nodeType,
+            },
+          }
+        : {}),
     });
 
     const metaDatas: any = results.metadatas[0];

@@ -66,6 +66,7 @@ const getFullNodeStructure = (
     id: nodeData.id,
     title: nodeData.title,
     content: `${fullDescription}`,
+    nodeType: nodeData.nodeType,
   };
 };
 const createChunks = (elements: any[], chunkSize = 10): any[][] => {
@@ -212,17 +213,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const chunkDocs = docsChunks[i];
       const fullDocuments = chunkDocs.map((doc) => doc.content.toLowerCase());
 
-      const titles = chunkDocs.map((d) => {
+      const metadatas = chunkDocs.map((d) => {
         return {
           title: d.title,
           id: d.id,
+          nodeType: d.nodeType,
         };
       });
 
       await collection.upsert({
         documents: fullDocuments,
         ids: chunkIdsLong,
-        metadatas: titles,
+        metadatas,
       });
     } catch (error) {
       console.error("Error embedding batch:", error);
