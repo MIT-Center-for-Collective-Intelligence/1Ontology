@@ -131,6 +131,10 @@ const LandingPage = () => {
       title: "Team",
       href: "/team",
     },
+    {
+      title: "Treemap",
+      href: "/treemap",
+    },
   ];
 
   return (

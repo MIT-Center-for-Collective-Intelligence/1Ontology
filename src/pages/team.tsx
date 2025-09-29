@@ -285,14 +285,29 @@ const TeamPage = () => {
       .catch((err) => console.error("Error loading publications data:", err));
   }, []);
 
-  // Get team data structure directly
+  // Function to sort members by last name
+  const sortMembersByLastName = (members: TeamMember[]) => {
+    return [...members].sort((a, b) => {
+      const lastNameA = a.name.split(' ').pop()?.toLowerCase() || '';
+      const lastNameB = b.name.split(' ').pop()?.toLowerCase() || '';
+      return lastNameA.localeCompare(lastNameB);
+    });
+  };
+
+  // Get team data structure directly and sort members
   const membersByRole = teamData?.roles || {};
-  
+  const sortedMembersByRole = Object.fromEntries(
+    Object.entries(membersByRole).map(([role, members]) => [
+      role,
+      sortMembersByLastName(members)
+    ])
+  );
+
   // Define role order for consistent display
   const roleOrder = ["Faculty Members", "Researchers", "Developers"];
-  const sortedRoles = roleOrder.filter(role => membersByRole[role]);
+  const sortedRoles = roleOrder.filter(role => sortedMembersByRole[role]);
   // Add any additional roles not in the predefined order
-  const otherRoles = Object.keys(membersByRole).filter(role => !roleOrder.includes(role));
+  const otherRoles = Object.keys(sortedMembersByRole).filter(role => !roleOrder.includes(role));
   const orderedRoles = [...sortedRoles, ...otherRoles];
 
   const theme = createTheme({
@@ -331,6 +346,7 @@ const TeamPage = () => {
     { title: "Platform", href: "/platform-details" },
     { title: "AI Uses", href: "/ai-uses" },
     { title: "Team", href: "/team" },
+    { title: "Treemap", href: "/treemap" },
   ];
 
   if (!teamData) {
@@ -521,6 +537,7 @@ const TeamPage = () => {
                   { title: "Platform", href: "/platform-details" },
                   { title: "AI Uses", href: "/ai-uses" },
                   { title: "Team", href: "/team" },
+                  { title: "Treemap", href: "/treemap" },
                 ].map((link, index) => (
                   <ListItem key={index} disablePadding>
                     <ListItemButton component="a" href={link.href}>
@@ -566,7 +583,7 @@ const TeamPage = () => {
           <Box sx={{ py: { xs: 4, md: 6 } }}>
             <Container maxWidth="xl">
               {orderedRoles.map((role, roleIndex) => {
-                const members = membersByRole[role];
+                const members = sortedMembersByRole[role];
                 return (
                 <Box key={role} sx={{ mb: { xs: 6, md: 8 } }}>
                   {/* Role Section Header */}

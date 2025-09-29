@@ -514,6 +514,7 @@ const PlatformDetailsPage = () => {
                     { title: "Platform", href: "/platform-details" },
                     { title: "AI Uses", href: "/ai-uses" },
                     { title: "Team", href: "/team" },
+                    { title: "Treemap", href: "/treemap" },
                   ].map((link, index) => {
                     const isActive = router.pathname === link.href;
                     
@@ -625,6 +626,7 @@ const PlatformDetailsPage = () => {
                 { title: "Platform", href: "/platform-details" },
                 { title: "AI Uses", href: "/ai-uses" },
                 { title: "Team", href: "/team" },
+                { title: "Treemap", href: "/treemap" },
               ].map((link, index) => (
                 <ListItem key={index} disablePadding>
                   <ListItemButton component="a" href={link.href}>
@@ -2479,6 +2481,7 @@ const PlatformDetailsPage = () => {
                     { title: "Platform", href: "/platform-details" },
                     { title: "AI Uses", href: "/ai-uses" },
                     { title: "Team", href: "/team" },
+                    { title: "Treemap", href: "/treemap" },
                   ].map((link, idx) => (
                     <Typography
                       key={idx}

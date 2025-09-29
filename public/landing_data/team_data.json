@@ -2,66 +2,21 @@
   "roles": {
     "Faculty Members": [
       {
-        "name": "Thomas Malone",
-        "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/thomas-malone.jpg"
-      },
-      {
-        "name": "Charles Fine",
-        "affiliation": "MIT Sloan School of Management",
-        "image": "/team/charles-fine.jpg"
-      },
-      {
         "name": "Abdullah Almaatouq",
         "affiliation": "MIT Sloan School of Management",
         "image": "/team/abdullah-almaatouq.jpg"
+      },
+      {
+        "name": "Thomas Malone",
+        "affiliation": "MIT Center for Collective Intelligence",
+        "image": "/team/thomas-malone.jpg"
       }
     ],
     "Researchers": [
       {
-        "name": "Robert Laubacher",
-        "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/robert-laubacher.jpg"
-      },
-      {
-        "name": "Kathleen Kennedy",
-        "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/kathleen-kennedy.jpg"
-      },
-      {
-        "name": "Iman YeckehZaare",
-        "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/iman-yeckehzaare.jpg"
-      },
-      {
-        "name": "Dicle Uzunyayla",
-        "affiliation": "TIGRIS Design",
-        "image": "/team/dicle-uzunyayla.jpg"
-      },
-      {
-        "name": "Alok Prakash",
-        "affiliation": "Singapore-MIT Alliance for Research and Technology",
-        "image": "/team/alok-prakash.jpg"
-      },
-      {
-        "name": "Michelle Vaccaro",
-        "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/michelle-vaccaro.jpg"
-      },
-      {
         "name": "Alice Cai",
         "affiliation": "MIT Center for Collective Intelligence",
         "image": "/team/alice-cai.jpg"
-      },
-      {
-        "name": "Isabella Loaiza",
-        "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/isabella-loaiza.jpg"
-      },
-      {
-        "name": "Shuo Sun",
-        "affiliation": "Singapore-MIT Alliance for Research and Technology",
-        "image": "/team/shuo-sun.jpg"
       },
       {
         "name": "Vasiliki Charisi",
@@ -69,9 +24,9 @@
         "image": "/team/vasiliki-charisi.jpg"
       },
       {
-        "name": "Steven Rick",
-        "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/steven-rick.jpg"
+        "name": "Jie Gao",
+        "affiliation": "Singapore-MIT Alliance for Research and Technology",
+        "image": "/team/jie-gao.jpg"
       },
       {
         "name": "Jennifer Heyman",
@@ -79,9 +34,49 @@
         "image": "/team/jennifer-heyman.jpg"
       },
       {
-        "name": "Jie Gao",
+        "name": "Kathleen Kennedy",
+        "affiliation": "MIT Center for Collective Intelligence",
+        "image": "/team/kathleen-kennedy.jpg"
+      },
+      {
+        "name": "Robert Laubacher",
+        "affiliation": "MIT Center for Collective Intelligence",
+        "image": "/team/robert-laubacher.jpg"
+      },
+      {
+        "name": "Isabella Loaiza",
+        "affiliation": "MIT Center for Collective Intelligence",
+        "image": "/team/isabella-loaiza.jpg"
+      },
+      {
+        "name": "Alok Prakash",
         "affiliation": "Singapore-MIT Alliance for Research and Technology",
-        "image": "/team/jie-gao.jpg"
+        "image": "/team/alok-prakash.jpg"
+      },
+      {
+        "name": "Steven Rick",
+        "affiliation": "MIT Center for Collective Intelligence",
+        "image": "/team/steven-rick.jpg"
+      },
+      {
+        "name": "Shuo Sun",
+        "affiliation": "Singapore-MIT Alliance for Research and Technology",
+        "image": "/team/shuo-sun.jpg"
+      },
+      {
+        "name": "Dicle Uzunyayla",
+        "affiliation": "TIGRIS Design",
+        "image": "/team/dicle-uzunyayla.jpg"
+      },
+      {
+        "name": "Michelle Vaccaro",
+        "affiliation": "MIT Center for Collective Intelligence",
+        "image": "/team/michelle-vaccaro.jpg"
+      },
+      {
+        "name": "Iman YeckehZaare",
+        "affiliation": "MIT Center for Collective Intelligence",
+        "image": "/team/iman-yeckehzaare.jpg"
       }
     ],
     "Developers": [

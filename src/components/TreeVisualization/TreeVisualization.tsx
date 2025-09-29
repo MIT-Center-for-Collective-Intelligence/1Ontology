@@ -49,39 +49,33 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
   const [zoomLevel, setZoomLevel] = useState(1);
   const svgRef = useRef(null);
   const containerRef = useRef(null);
+  const sunburstZoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+  const treeZoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
 
-  // Color calculation logic based on frequency
+  // Color calculation logic matching treemap implementation exactly
   const getNodeColor = (appCount: number, maxCount: number, isDark: boolean): string => {
-    if (appCount === 0) {
-      return isDark ? '#444' : '#e0e0e0';
+    // 0-1 apps handling - pure white (same as treemap)
+    if (appCount <= 1) {
+      return "rgb(255, 255, 255)";
     }
-    
-    // Calculate intensity based on app count (0 to 1)
-    const intensity = Math.sqrt(appCount / maxCount); // Using square root for better distribution
-    
-    // Color scale from light to bright red
-    const baseColors = {
-      light: {
-        low: '#ffebee',     // Very light pink
-        medium: '#ef5350',  // Medium red
-        high: '#c62828'     // Dark red
-      },
-      dark: {
-        low: '#4a2c2a',     // Dark red-brown
-        medium: '#f44336',  // Bright red
-        high: '#ff1744'     // Very bright red
-      }
-    };
-    
-    const colors = isDark ? baseColors.dark : baseColors.light;
-    
-    if (intensity < 0.3) {
-      return colors.low;
-    } else if (intensity < 0.7) {
-      return colors.medium;
-    } else {
-      return colors.high;
-    }
+
+    // For apps > 1, use logarithmic scaling starting from 2 (same as treemap)
+    const minColorCount = 2; // Start coloring from 2 apps
+    const logMax = Math.log(maxCount);
+    const logCurrent = Math.log(appCount);
+    const logMin = Math.log(minColorCount);
+
+    // Normalize to 0-1 range using log scale
+    const intensity = Math.max(0, (logCurrent - logMin) / (logMax - logMin));
+
+    // Apply square root curve for smoother progression (same as treemap)
+    const enhancedIntensity = Math.sqrt(intensity);
+
+    // Normal: White to red (high app count = red, low app count = white)
+    const r = 255; // Keep red channel at max
+    const g = Math.floor(255 * (1 - enhancedIntensity * 0.85)); // Reduce green gradually
+    const b = Math.floor(255 * (1 - enhancedIntensity * 0.85)); // Reduce blue gradually
+    return `rgb(${r}, ${g}, ${b})`;
   };
 
   // Find maximum app count in the tree for color scaling
@@ -128,7 +122,8 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
         id: node.id,
         name: node.name,
         appCount: node.appCount,
-        value: node.appCount || 0,
+        // Use equal sizing (1 for leaf nodes) for structural hierarchy - this determines arc size
+        value: node.children && node.children.length > 0 ? 0 : 1,
         children: node.children ? node.children.map(addValues) : []
       };
     };
@@ -155,15 +150,11 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       .style("border", isDark ? "1px solid rgba(239,68,68,0.3)" : "1px solid rgba(239,68,68,0.2)")
       .style("opacity", 0);
 
-    const percentage = (((d.value || 0) / (d.parent?.value || 1)) * 100).toFixed(1);
-    const totalPercentage = (((d.value || 0) / (d.ancestors().slice(-1)[0].value || 1)) * 100).toFixed(1);
+    const appCount = d.data.appCount || 0;
 
     tooltip.html(`
       <div style="font-weight: 700; margin-bottom: 8px; font-size: 16px; color: ${isDark ? '#ff6b6b' : '#c53030'};">${d.data.name}</div>
-      <div style="margin-bottom: 4px;">Applications: <span style="color: ${isDark ? '#ff8a80' : '#e53e3e'}; font-weight: 600;">${(d.value || 0).toLocaleString()}</span></div>
-      <div style="margin-bottom: 4px; opacity: 0.8;">Depth: Level ${d.depth}</div>
-      <div style="margin-bottom: 4px; opacity: 0.8;">Share of parent: <span style="font-weight: 600;">${percentage}%</span></div>
-      <div style="margin-bottom: 4px; opacity: 0.8;">Share of total: <span style="font-weight: 600;">${totalPercentage}%</span></div>
+      <div>AI Applications: <span style="color: ${isDark ? '#ff8a80' : '#e53e3e'}; font-weight: 600;">${appCount.toLocaleString()}</span></div>
     `)
     .style("left", (event.pageX + 15) + "px")
     .style("top", (event.pageY - 15) + "px");
@@ -193,83 +184,92 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
     // Remove any view-specific classes
     svg.classed("tree-view", false);
 
-    // Get container dimensions
+    // Get container dimensions - use fixed size for sunburst regardless of container height
     const container = containerRef.current as HTMLElement | null;
     const containerRect = container?.getBoundingClientRect();
-    const width = containerRect?.width || 800;
-    const height = containerRect?.height || 800;
-    const radius = Math.min(width, height) / 2 - 40; // Leave margin for labels
+    const containerWidth = containerRect?.width || 1200;
+    const containerHeight = containerRect?.height || 600;
+    const width = Math.min(containerWidth - 40, 1200); // Leave margin
+    // Use fixed height for sunburst sizing calculation to maintain consistent size
+    const designHeight = 1200; // Fixed reference height for sunburst sizing
+    const height = Math.min(designHeight - 40, 1200); // Use design height instead of container height
+    const size = Math.min(width, height);
+    const radius = (size / 4) * 0.9; // 10% smaller than previous size
 
-    // Create the main SVG with sunburst-specific background
+    // Create the main SVG with proper sizing
     const svg_container = svg
-      .attr("width", width)
-      .attr("height", height)
-      .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("width", "100%")
+      .attr("height", "100%")
+      .attr("viewBox", `${-size / 2} ${-size / 2} ${size} ${size}`)
       .style("background", `radial-gradient(circle, ${isDark ? '#1a1a1a' : '#fafafa'} 0%, ${isDark ? '#0d1117' : '#f6f8fa'} 100%)`)
-      .classed("sunburst-view", true); // Add class to identify sunburst styling
+      .style("font", "10px sans-serif")
+      .classed("sunburst-view", true);
 
-    // Create main group with proper centering
-    const g = svg_container
-      .append("g")
-      .attr("transform", `translate(${width / 2},${height / 2})`);
+    // Create main group (already centered by viewBox)
+    const g = svg_container.append("g");
 
-    // Add zoom behavior
-    svg_container.call(d3.zoom<SVGSVGElement, unknown>()
+    // Add zoom behavior (simplified with viewBox centering)
+    const zoomBehavior = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 3])
       .on("zoom", (event) => {
-        g.attr("transform", `translate(${width / 2},${height / 2}) ${event.transform}`);
-      }) as any);
+        g.attr("transform", event.transform);
+        // Update zoom level state to keep buttons in sync
+        setZoomLevel(event.transform.k);
+      });
 
-    // Create partition layout
-    const partition = d3.partition<TreeNode & { value: number }>()
-      .size([2 * Math.PI, radius]);
+    svg_container.call(zoomBehavior as any);
+    sunburstZoomRef.current = zoomBehavior;
 
-    // Create hierarchy and calculate positions
-    const root = d3.hierarchy<TreeNode & { value: number }>(prepareSunburstData(data))
+    // Create hierarchy first (Observable pattern)
+    const hierarchy = d3.hierarchy<TreeNode & { value: number }>(prepareSunburstData(data))
       .sum(d => d.value)
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
-    partition(root);
+    // Create partition layout with almost no gap from center
+    const root = d3.partition<TreeNode & { value: number }>()
+      .size([2 * Math.PI, hierarchy.height + 0.05]) // Minimal gap of +0.05
+      (hierarchy);
 
-    // Find max value for color scaling
-    const maxValue = d3.max(root.descendants(), d => d.value) || 1;
+    // Set current state for each node (Observable pattern)
+    root.each(d => (d as any).current = d);
 
-    // Improved color scale function with better contrast
-    const getArcColor = (value: number, depth: number): string => {
-      if (value === 0) return isDark ? '#2a2a2a' : '#f5f5f5';
-      
-      const intensity = Math.sqrt(value / maxValue);
-      
-      // Better color variants with improved contrast
-      const colorVariants = {
-        light: [
-          '#fef2f2', '#fecaca', '#fca5a5', '#f87171', '#ef4444', 
-          '#dc2626', '#b91c1c', '#991b1b', '#7f1d1d', '#450a0a'
-        ],
-        dark: [
-          '#451a1a', '#7c2d2d', '#991b1b', '#b91c1c', '#dc2626',
-          '#ef4444', '#f87171', '#fca5a5', '#fecaca', '#fef2f2'
-        ]
-      };
-      
-      const colors = isDark ? colorVariants.dark : colorVariants.light;
-      
-      // Better color selection algorithm
-      const baseIndex = Math.min(depth * 2, colors.length - 3);
-      const intensityOffset = Math.floor(intensity * 2);
-      const colorIndex = Math.min(baseIndex + intensityOffset, colors.length - 1);
-      
-      return colors[colorIndex];
+    // Find max AI app count for color scaling (not the structural 'value')
+    const maxAppCount = d3.max(root.descendants(), d => d.data.appCount) || 1;
+
+    // Color scale matching the treemap implementation - white to red gradient
+    const getArcColor = (appCount: number, depth: number): string => {
+      // 0-1 apps handling - pure white
+      if (appCount <= 1) {
+        return "rgb(255, 255, 255)";
+      }
+
+      // For apps > 1, use logarithmic scaling starting from 2 (same as treemap)
+      const minColorCount = 2; // Start coloring from 2 apps
+      const logMax = Math.log(maxAppCount);
+      const logCurrent = Math.log(appCount);
+      const logMin = Math.log(minColorCount);
+
+      // Normalize to 0-1 range using log scale
+      const intensity = Math.max(0, (logCurrent - logMin) / (logMax - logMin));
+
+      // Apply square root curve for smoother progression (same as treemap)
+      const enhancedIntensity = Math.sqrt(intensity);
+
+      // Normal: White to red (high app count = red, low app count = white)
+      const r = 255; // Keep red channel at max
+      const g = Math.floor(255 * (1 - enhancedIntensity * 0.85)); // Reduce green gradually
+      const b = Math.floor(255 * (1 - enhancedIntensity * 0.85)); // Reduce blue gradually
+      return `rgb(${r}, ${g}, ${b})`;
     };
 
-    // Create beautiful arc generator with rounded corners
-    const arc = d3.arc<d3.HierarchyRectangularNode<TreeNode & { value: number }>>()
-      .startAngle(d => d.x0!)
-      .endAngle(d => d.x1!)
-      .innerRadius(d => d.y0!)
-      .outerRadius(d => d.y1!)
-      .cornerRadius(2)
-      .padAngle(0.005);
+    // Create arc generator using Observable pattern
+    const arc = d3.arc<any>()
+      .startAngle(d => d.x0)
+      .endAngle(d => d.x1)
+      .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005))
+      .padRadius(radius * 1.5)
+      .innerRadius(d => d.y0 * radius)
+      .outerRadius(d => Math.max(d.y0 * radius, d.y1 * radius - 1));
 
     // Add gradient definitions
     const defs = svg_container.append("defs");
@@ -295,35 +295,13 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
     feMerge.append("feMergeNode").attr("in", "offset");
     feMerge.append("feMergeNode").attr("in", "SourceGraphic");
 
-    // Create beautiful paths with enhanced styling and visible borders
-    const segmentData = root.descendants().filter(d => d.depth > 0); // Skip root
-    
+    // Create paths using Observable pattern
     const path = g.selectAll("path")
-      .data(segmentData, (d: any) => d.data.id)
-      .enter().append("path")
-      .attr("d", d => arc(d as d3.HierarchyRectangularNode<TreeNode & { value: number }>))
-      .style("fill", d => getArcColor(d.value || 0, d.depth))
-      .style("stroke", d => {
-        // Dynamic border color based on fill and theme
-        const fillColor = getArcColor(d.value || 0, d.depth);
-        const color = d3.color(fillColor);
-        
-        if (!color) return isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
-        
-        const luminance = color.displayable() ? 
-          0.299 * color.rgb().r + 0.587 * color.rgb().g + 0.114 * color.rgb().b : 128;
-        
-        // Use darker borders for light segments, lighter borders for dark segments
-        if (luminance > 200) {
-          return "rgba(0,0,0,0.4)"; // Dark border for very light segments
-        } else if (luminance > 150) {
-          return "rgba(0,0,0,0.25)"; // Medium dark border for light segments
-        } else if (luminance > 80) {
-          return isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.3)"; // Adaptive border
-        } else {
-          return "rgba(255,255,255,0.3)"; // Light border for dark segments
-        }
-      })
+      .data(root.descendants().slice(1)) // Skip root (Observable pattern)
+      .join("path")
+      .attr("fill", d => getArcColor(d.data.appCount || 0, d.depth))
+      .attr("d", d => arc((d as any).current))
+      .style("stroke", "rgba(255,255,255,0.3)")
       .style("stroke-width", "1px")
       .style("cursor", "default")
       .style("filter", "drop-shadow(0 1px 3px rgba(0,0,0,0.1))")
@@ -333,23 +311,8 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
         // Enhanced hover effect with better performance and enhanced borders
         const currentPath = d3.select(this);
         
-        // Calculate enhanced border color for hover
-        const fillColor = getArcColor(d.value || 0, d.depth);
-        const color = d3.color(fillColor);
-        let hoverBorderColor;
-        
-        if (color) {
-          const luminance = color.displayable() ? 
-            0.299 * color.rgb().r + 0.587 * color.rgb().g + 0.114 * color.rgb().b : 128;
-          
-          if (luminance > 150) {
-            hoverBorderColor = "rgba(0,0,0,0.6)"; // Strong dark border for light segments
-          } else {
-            hoverBorderColor = "rgba(255,255,255,0.6)"; // Strong light border for dark segments
-          }
-        } else {
-          hoverBorderColor = isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)";
-        }
+        // Constant hover border color
+        const hoverBorderColor = "rgba(255,255,255,0.8)";
         
         currentPath
           .style("stroke", hoverBorderColor)
@@ -364,43 +327,279 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
         highlightPath(d as d3.HierarchyRectangularNode<TreeNode & { value: number }>);
       })
       .on("mouseout", function(event, d) {
-        // Reset to original border styling
-        const fillColor = getArcColor(d.value || 0, d.depth);
-        const color = d3.color(fillColor);
-        let originalBorderColor;
-        
-        if (color) {
-          const luminance = color.displayable() ? 
-            0.299 * color.rgb().r + 0.587 * color.rgb().g + 0.114 * color.rgb().b : 128;
-          
-          if (luminance > 200) {
-            originalBorderColor = "rgba(0,0,0,0.4)";
-          } else if (luminance > 150) {
-            originalBorderColor = "rgba(0,0,0,0.25)";
-          } else if (luminance > 80) {
-            originalBorderColor = isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.3)";
-          } else {
-            originalBorderColor = "rgba(255,255,255,0.3)";
-          }
-        } else {
-          originalBorderColor = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
-        }
-        
+        // Reset to constant original border styling
         d3.select(this)
-          .style("stroke", originalBorderColor)
+          .style("stroke", "rgba(255,255,255,0.3)")
           .style("stroke-width", "1px")
           .style("filter", "drop-shadow(0 1px 3px rgba(0,0,0,0.1))")
           .style("opacity", 0.95);
-        
+
         hideSunburstTooltip();
         clearHighlight();
       })
 
 
-    // Segment labels removed for cleaner sunburst appearance
+    // Show text on virtually all nodes - no restrictions
+    const labelVisible = (d: any) => {
+      // Show text on all nodes regardless of size or depth
+      const visible = true;
+      console.log(`Label visibility for "${d.data.name}": depth=${d.depth}, always visible=${visible}`);
+      return visible;
+    };
 
-    // Beautiful center circle with enhanced styling
-    const centerRadius = Math.max(40, radius * 0.18);
+    const labelTransform = (d: any) => {
+      const x = (d.x0 + d.x1) / 2 * 180 / Math.PI;
+      const y = (d.y0 + d.y1) / 2 * radius;
+      return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
+    };
+
+    // Function to split text with dashes for line breaks
+    const splitTextWithDash = (text: string, maxLength: number, forceBreak = false) => {
+      console.log(`Splitting text: "${text}" with maxLength: ${maxLength}, forceBreak: ${forceBreak}`); // Debug log
+
+      const words = text.split(' ');
+
+      // Force line break if text has more than 3 words
+      const hasMoreThanThreeWords = words.length > 3;
+
+      // Don't line break if total text length is less than 15 characters AND has 3 or fewer words AND not forced
+      if (text.length < 15 && !hasMoreThanThreeWords && !forceBreak) return [text];
+
+      // Allow much longer lines to utilize available segment width
+      const effectiveMaxLength = Math.max(4, Math.min(maxLength, 25)); // Allow much longer lines
+
+      if (text.length <= effectiveMaxLength && !hasMoreThanThreeWords && !forceBreak) return [text];
+
+      const lines: string[] = [];
+      let currentLine = '';
+
+      for (const word of words) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+
+        if (testLine.length <= effectiveMaxLength) {
+          currentLine = testLine;
+        } else {
+          if (currentLine) {
+            lines.push(currentLine + '-'); // Add dash
+            currentLine = word;
+          } else {
+            // Word is longer than maxLength, split it
+            if (word.length > effectiveMaxLength) {
+              lines.push(word.substring(0, effectiveMaxLength - 1) + '-');
+              currentLine = word.substring(effectiveMaxLength - 1);
+            } else {
+              currentLine = word;
+            }
+          }
+        }
+      }
+
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+
+      console.log(`Result lines:`, lines); // Debug log
+      return lines.slice(0, 3); // Limit to 3 lines max
+    };
+
+    const label = g.append("g")
+      .attr("pointer-events", "none")
+      .attr("text-anchor", "middle")
+      .style("user-select", "none")
+      .selectAll("g")
+      .data(root.descendants().slice(1))
+      .join("g")
+      .attr("transform", d => labelTransform((d as any).current))
+      .attr("opacity", d => +labelVisible((d as any).current))
+      .each(function(d: any) {
+        const textGroup = d3.select(this);
+
+        // Calculate available space
+        const arcLength = (d.x1 - d.x0) * ((d.y0 + d.y1) / 2 * radius);
+        const radialSpace = (d.y1 - d.y0) * radius;
+
+        console.log(`Segment "${d.data.name}": arcLength=${arcLength.toFixed(2)}, radialSpace=${radialSpace.toFixed(2)}`); // Debug log
+
+        // Calculate depth-based font size - larger in center, smaller toward outer rings
+        const baseFontSize = Math.max(26, radialSpace / 4); // Start with 26px base size (increased by 12px)
+        const depthScaleFactor = Math.pow(0.85, d.depth); // Reduce by 15% for each depth level
+        const depthAdjustedFontSize = baseFontSize * depthScaleFactor;
+        const fontSize = Math.max(2, Math.min(26, depthAdjustedFontSize)); // Minimum 2px, maximum 26px (increased by 12px)
+        const charWidth = fontSize * 0.35; // Increased character width for better line breaking (was 0.25)
+        let maxCharsPerLine = Math.floor((arcLength * 1.1) / charWidth); // Reduced available width for better line breaking (was 1.4)
+
+        // Special handling for first level (depth 1) - force smaller text width for better line breaks
+        if (d.depth === 1) {
+          maxCharsPerLine = Math.min(maxCharsPerLine, 12); // Limit first level to ~12 characters per line
+          console.log(`First level node "${d.data.name}" - forcing maxCharsPerLine to ${maxCharsPerLine}`);
+        }
+
+        console.log(`fontSize=${fontSize}, charWidth=${charWidth}, maxCharsPerLine=${maxCharsPerLine}`); // Debug log
+
+        // Almost no restrictions - show text on virtually every node
+        if (maxCharsPerLine < 0.5 || radialSpace < 1 || fontSize < 1) {
+          console.log(`Skipping text for "${d.data.name}" - truly too small (maxChars=${maxCharsPerLine}, radialSpace=${radialSpace}, fontSize=${fontSize})`);
+          return;
+        }
+
+        // More aggressive text fitting - utilize all available space
+        let lines;
+        const words = d.data.name.split(' ');
+        const hasMoreThanThreeWords = words.length > 3;
+
+        // Special condition for 2nd and 3rd level: force line break if >=2 spaces AND >15 characters
+        const isSecondOrThirdLevel = d.depth === 2 || d.depth === 3;
+        const spaceCount = (d.data.name.match(/ /g) || []).length;
+        const hasTwoOrMoreSpaces = spaceCount >= 2;
+        const hasMoreThanFifteenChars = d.data.name.length > 15;
+        const shouldForceBreakLevel23 = isSecondOrThirdLevel && hasTwoOrMoreSpaces && hasMoreThanFifteenChars;
+
+        // Debug logging for all nodes to see depth levels
+        if (d.data.name.includes("physical objects") || d.data.name.includes("separate")) {
+          console.log(`DEBUG: "${d.data.name}" - depth=${d.depth}, chars=${d.data.name.length}, spaces=${spaceCount}, isLevel2or3=${isSecondOrThirdLevel}, shouldForceBreak=${shouldForceBreakLevel23}`);
+        }
+
+        // Debug logging for level 2/3 force break condition
+        if (isSecondOrThirdLevel) {
+          console.log(`Level ${d.depth} node "${d.data.name}": chars=${d.data.name.length}, spaces=${spaceCount}, shouldForceBreak=${shouldForceBreakLevel23}`);
+        }
+
+        // Priority 1: Force break for level 2/3 with >=2 spaces and >15 chars (ignore if text fits)
+        if (shouldForceBreakLevel23) {
+          console.log(`PRIORITY 1: Force breaking "${d.data.name}" (level ${d.depth})`);
+          lines = splitTextWithDash(d.data.name, maxCharsPerLine, true); // forceBreak = true
+        } else if (d.data.name.length <= maxCharsPerLine && !hasMoreThanThreeWords) {
+          // Priority 2: If the whole text fits AND has 3 or fewer words, don't break it at all
+          console.log(`PRIORITY 2: Keeping single line "${d.data.name}" (fits: ${d.data.name.length <= maxCharsPerLine}, words: ${words.length})`);
+          lines = [d.data.name];
+        } else {
+          // Priority 3: Always try to break text to use all available space (either too long OR >3 words)
+          console.log(`PRIORITY 3: Standard breaking "${d.data.name}" (too long or >3 words)`);
+          lines = splitTextWithDash(d.data.name, maxCharsPerLine);
+
+          // If we get no lines or very few characters, try more aggressive approaches
+          if (lines.length === 0 || lines.join('').length < 3) {
+            const firstWord = d.data.name.split(' ')[0];
+            if (firstWord.length <= maxCharsPerLine && maxCharsPerLine >= 2) {
+              // Show at least the first word
+              lines = [firstWord];
+            } else if (maxCharsPerLine >= 3) {
+              // Show truncated with ellipsis
+              lines = [d.data.name.substring(0, maxCharsPerLine - 1) + "…"];
+            } else if (maxCharsPerLine >= 2) {
+              // Show just first few characters
+              lines = [d.data.name.substring(0, maxCharsPerLine)];
+            }
+          }
+        }
+
+        // Apply ellipsis logic for nodes with >2 lines and few children (except leaf nodes)
+        const isLeafNode = !d.children || d.children.length === 0;
+        const hasFewChildren = d.children && d.children.length < 10; // Consider <10 children as "few"
+
+        // Calculate if this node gets a small segment (for leaf nodes)
+        let hasSmallSegment = false;
+        if (isLeafNode && d.parent) {
+          const parentChildren = d.parent.children || [];
+          const totalSiblings = parentChildren.length;
+
+          // Case 1: Parent has many children (>10), so this leaf gets a small segment
+          const tooManySiblings = totalSiblings > 10;
+
+          // Case 2: Parent has only one child (this leaf), and parent gets truncated
+          // In this case, parent and child share the same segment size, so if parent is truncated, child should be too
+          const isOnlyChild = totalSiblings === 1;
+          const parentWillBeTruncated = isOnlyChild && d.parent &&
+                                       (!d.parent.children || d.parent.children.length < 10) &&
+                                       lines.length > 2; // Parent would meet truncation criteria
+
+          // Case 3: This leaf node is the only leaf among its siblings (other siblings are non-leaf)
+          const leafSiblings = parentChildren.filter((sibling: { children: string | any[]; }) => !sibling.children || sibling.children.length === 0);
+          const isOnlyLeafAmongSiblings = leafSiblings.length === 1 && totalSiblings > 1;
+
+          hasSmallSegment = tooManySiblings || (isOnlyChild && parentWillBeTruncated) || isOnlyLeafAmongSiblings;
+
+          const reason = tooManySiblings ? `${totalSiblings} siblings` :
+                        (isOnlyChild && parentWillBeTruncated) ? 'only child of truncated parent' :
+                        isOnlyLeafAmongSiblings ? 'only leaf among siblings' : 'none';
+          console.log(`Leaf node "${d.data.name}" small segment: ${hasSmallSegment} (${reason})`);
+        }
+
+        // Apply ellipsis to non-leaf nodes with few children OR leaf nodes with small segments OR all leaf nodes with >15 characters OR nodes with only one child and >15 characters
+        // BUT never apply ellipsis to first level nodes (depth 1) - they should only get line breaks
+        const isFirstLevel = d.depth === 1;
+        const leafNodeWithLongText = isLeafNode && d.data.name.length > 15 && !isFirstLevel;
+        const singleChildNodeWithLongText = !isLeafNode && d.children && d.children.length === 1 && d.data.name.length > 15 && !isFirstLevel;
+        const shouldApplyEllipsis = (!isLeafNode && hasFewChildren && lines.length > 2 && !isFirstLevel) ||
+                                   (isLeafNode && hasSmallSegment && lines.length > 2 && !isFirstLevel) ||
+                                   leafNodeWithLongText ||
+                                   singleChildNodeWithLongText;
+
+        if (shouldApplyEllipsis) {
+          // For qualifying nodes with >2 lines, use ellipsis
+          const firstLine = lines[0];
+          const availableChars = maxCharsPerLine - 1; // Reserve space for ellipsis
+          if (firstLine.length <= availableChars) {
+            lines = [firstLine + "…"];
+          } else {
+            lines = [firstLine.substring(0, availableChars) + "…"];
+          }
+          const nodeType = isLeafNode ? "leaf" : "non-leaf";
+          let reason: string;
+          if (leafNodeWithLongText) {
+            reason = `${d.data.name.length} characters (>15)`;
+          } else if (singleChildNodeWithLongText) {
+            reason = `single child + ${d.data.name.length} characters (>15)`;
+          } else if (isLeafNode) {
+            reason = `${d.parent?.children?.length || 0} siblings`;
+          } else {
+            reason = `${d.children?.length || 0} children`;
+          }
+          console.log(`Applied ellipsis to ${nodeType} "${d.data.name}" (${reason}): "${lines[0]}"`);
+        }
+
+        const lineHeight = fontSize * 1.1; // Tighter line spacing
+        const totalHeight = lines.length * lineHeight;
+        const startY = -(totalHeight / 2) + (lineHeight / 2);
+
+        console.log(`"${d.data.name}" split into ${lines.length} lines:`, lines); // Debug log
+
+        // If no lines were generated, force at least the first few characters
+        if (lines.length === 0 && d.data.name.length > 0) {
+          lines.push(d.data.name.substring(0, Math.min(8, d.data.name.length)));
+          console.log(`Forced fallback text for "${d.data.name}": "${lines[0]}"`);
+        }
+
+        lines.forEach((line: string, i: number) => {
+          textGroup.append("text")
+            .attr("dy", startY + (i * lineHeight))
+            .attr("x", 0)
+            .style("font-size", fontSize + "px")
+            .style("font-weight", d.depth === 1 ? "600" : "500")
+            .style("fill", () => {
+              // Calculate text color based on background
+              const fillColor = getArcColor(d.data.appCount || 0, d.depth);
+              const color = d3.color(fillColor);
+
+              if (!color) return isDark ? "#ffffff" : "#000000";
+
+              const luminance = color.displayable() ?
+                0.299 * color.rgb().r + 0.587 * color.rgb().g + 0.114 * color.rgb().b : 128;
+
+              // Use white text on dark backgrounds, dark text on light backgrounds
+              if (luminance < 140) {
+                return "#ffffff";
+              } else {
+                return "#000000";
+              }
+            })
+            .style("text-shadow", "none")
+            .text(line);
+        });
+      });
+
+    // Beautiful center circle with enhanced styling - 50% of radius
+    const centerRadius = Math.max(60, radius * 0.5);
     
     // Clean, sophisticated center gradient
     const centerGradient = defs.append("radialGradient")
@@ -439,7 +638,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       .style("stroke-width", "1px")
       .style("opacity", 0.6);
 
-    // Main center circle with clean styling
+    // Main center circle with clean gradient styling
     const centerCircle = g.append("circle")
       .attr("r", centerRadius)
       .style("fill", "url(#centerGradient)")
@@ -467,8 +666,8 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       });
 
     // Clean, sophisticated center text
-    const titleFontSize = Math.min(16, centerRadius / 2.8);
-    const subtitleFontSize = Math.min(12, centerRadius / 4);
+    const titleFontSize = Math.min(32, centerRadius / 2.5); // Increased by 12px (was 20px)
+    const subtitleFontSize = Math.min(28, centerRadius / 3.5); // Increased by 12px (was 16px)
     
     // Main title with clean styling
     g.append("text")
@@ -493,7 +692,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       .style("letter-spacing", "0.05px")
       .style("text-rendering", "optimizeLegibility")
       .style("opacity", 0.9)
-      .text(`${(root.value || 0).toLocaleString()} apps`);
+      .text(`${(root.data.appCount || 0).toLocaleString()} AI apps`);
 
 
 
@@ -522,17 +721,17 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
     svg.classed("sunburst-view", false)
        .style("background", "transparent"); // Clear any background gradients
 
-    const width = 1800;
-    const height = 1200;
-    const margin = { top: 40, right: 200, bottom: 40, left: 200 };
+    const width = 12000; // Doubled again from 6000 to accommodate extreme horizontal spacing
+    const height = 4000; // Keep height the same since we're mainly increasing horizontal gaps
+    const margin = { top: 200, right: 800, bottom: 200, left: 800 }; // Much larger margins
 
     // Find max count for color scaling
     const maxCount = findMaxAppCount(data);
 
-    // Create tree layout with increased spacing
+    // Create tree layout with extreme horizontal spacing for zoom-independent text
     const treemap = d3.tree<TreeNode>()
       .size([height - margin.top - margin.bottom, width - margin.left - margin.right])
-      .nodeSize([80, 300]); // [height, width] - increases spacing between nodes
+      .nodeSize([600, 3000]); // [height, width] - doubled horizontal spacing from 1500 to 3000
     
     // Create hierarchy
     const root = d3.hierarchy<TreeNode>(data);
@@ -546,12 +745,36 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       .style("background", "transparent") // Ensure transparent background for tree view
       .classed("tree-view", true); // Add class to identify tree styling
 
+    // Create zoom behavior for tree view with limited zoom out
+    const treeZoomBehavior = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.1, 10]) // Limited zoom out from 0.01 to 0.1 (10x minimum zoom)
+      .on("zoom", function(event) {
+        svg_g.attr("transform", `translate(${margin.left},${margin.top}) ${event.transform}`);
+        // Update zoom level state to keep buttons in sync
+        setZoomLevel(event.transform.k);
+
+        // Update text size to scale inversely with zoom for constant readability
+        const baseFontSize = 18;
+        const baseBadgeFontSize = 16; // Increased to match the new badge font size
+        const scaledFontSize = baseFontSize / event.transform.k;
+        const scaledBadgeFontSize = baseBadgeFontSize / event.transform.k;
+
+        // Update node label text to maintain constant apparent size
+        svg_g.selectAll(".tree-node-text")
+          .style("font-size", scaledFontSize + "px");
+
+        // Update badge text to maintain constant apparent size
+        svg_g.selectAll(".tree-badge-text")
+          .style("font-size", scaledBadgeFontSize + "px");
+      });
+
     const svg_g = svg_container
-      .call(d3.zoom<SVGSVGElement, unknown>().on("zoom", function(event) {
-        svg_g.attr("transform", event.transform);
-      }) as any)
+      .call(treeZoomBehavior as any)
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Store the zoom behavior reference for tree view
+    treeZoomRef.current = treeZoomBehavior;
 
     // Add links with curved paths
     const link = svg_g.selectAll(".link")
@@ -575,9 +798,9 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       .style("cursor", "pointer")
       .on("click", (event, d) => handleNodeClick(event, d as d3.HierarchyPointNode<TreeNode>));
 
-    // Add circles with frequency-based colors
+    // Add circles with frequency-based colors - allow smaller circles
     node.append("circle")
-      .attr("r", d => Math.max(8, Math.min(25, Math.sqrt(d.data.appCount || 0) * 0.8)))
+      .attr("r", d => Math.max(4, Math.min(25, Math.sqrt(d.data.appCount || 0) * 0.8)))
       .style("fill", d => getNodeColor(d.data.appCount || 0, maxCount, isDark))
       .style("stroke", d => d.data.appCount > 0 ? "#333" : "#999")
       .style("stroke-width", "2px")
@@ -603,27 +826,30 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       .attr("x", d => d.children ? -50 : 50)
       .style("text-anchor", d => d.children ? "end" : "start")
       .style("fill", isDark ? "#fff" : "#333")
-      .style("font-size", "12px")
+      .style("font-size", "18px")
       .style("font-weight", "600")
+      .style("font-family", '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif')
+      .classed("tree-node-text", true)
       .text(d => d.data.name)
       .each(function(d) {
-        // Wrap long text with more space
+        // Wrap long text with more space for larger font
         const text = d3.select(this);
         const words = d.data.name.split(/\s+/).reverse();
         let word: string | undefined;
         let line: string[] = [];
         let lineNumber = 0;
-        const lineHeight = 1.2;
+        const lineHeight = 1.3; // Increased line height for larger text
+        const maxWidth = 800; // Dramatically increased from 400px to accommodate massive spacing and zoom-independent text
         const y = text.attr("y");
         const dy = parseFloat(text.attr("dy"));
         let tspan = text.text(null).append("tspan")
           .attr("x", d.children ? -50 : 50)
           .attr("y", y).attr("dy", dy + "em");
-        
+
         while (word = words.pop()) {
           line.push(word);
           tspan.text(line.join(" "));
-          if ((tspan.node()?.getComputedTextLength() || 0) > 180) {
+          if ((tspan.node()?.getComputedTextLength() || 0) > maxWidth) {
             line.pop();
             tspan.text(line.join(" "));
             line = [word];
@@ -636,27 +862,34 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
         }
       });
 
-    // Add app count badges with better positioning
+    // Add app count badges with dynamic positioning based on zoom level
+    // Calculate badge distance based on inverse of zoom (closer when zoomed in, farther when zoomed out)
+    const baseBadgeDistance = 50; // Base distance when at 1x zoom
+    const maxBadgeDistance = 130; // Maximum distance when zoomed out
+    const badgeDistance = Math.min(maxBadgeDistance, baseBadgeDistance + (baseBadgeDistance / (zoomLevel || 1)));
+
     node.filter(d => d.data.appCount > 0)
       .append("rect")
-      .attr("x", 30)
-      .attr("y", -25)
-      .attr("width", d => Math.max(35, d.data.appCount.toString().length * 9))
-      .attr("height", 18)
-      .attr("rx", 9)
+      .attr("x", d => -Math.max(60, d.data.appCount.toString().length * 14) / 2) // Center horizontally
+      .attr("y", badgeDistance) // Dynamic position based on zoom level
+      .attr("width", d => Math.max(60, d.data.appCount.toString().length * 14))
+      .attr("height", 28) // Slightly taller for larger text
+      .attr("rx", 14)
       .style("fill", "#ff9800")
       .style("stroke", "#fff")
       .style("stroke-width", "1.5px");
 
     node.filter(d => d.data.appCount > 0)
       .append("text")
-      .attr("x", d => 30 + Math.max(35, d.data.appCount.toString().length * 9) / 2)
-      .attr("y", -16)
+      .attr("x", 0) // Center horizontally at node position
+      .attr("y", badgeDistance + 14) // Position in center of badge (distance + 28/2)
       .attr("dy", ".35em")
       .style("text-anchor", "middle")
       .style("fill", "white")
-      .style("font-size", "11px")
+      .style("font-size", "16px") // Increased from 14px to match larger text theme
       .style("font-weight", "bold")
+      .style("font-family", '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif')
+      .classed("tree-badge-text", true)
       .text(d => d.data.appCount.toLocaleString());
 
     // Auto-focus functionality disabled for now (keeping prop for future use)
@@ -689,7 +922,10 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
     const renderVisualization = () => {
       // Always reset styling before rendering
       resetSVGStyling();
-      
+
+      // Reset zoom level when switching views
+      setZoomLevel(1);
+
       if (viewType === 'tree') {
         renderTree(data);
       } else {
@@ -730,23 +966,48 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
         </Box>
         
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton 
-            size="small" 
-            onClick={() => setZoomLevel(prev => Math.min(prev + 0.2, 3))}
+          <IconButton
+            size="small"
+            onClick={() => {
+              const currentZoomRef = viewType === 'sunburst' ? sunburstZoomRef : treeZoomRef;
+              if (currentZoomRef.current && svgRef.current) {
+                const svg = d3.select(svgRef.current);
+                const maxZoom = viewType === 'sunburst' ? 3 : 10;
+                const newScale = Math.min(zoomLevel + 0.2, maxZoom);
+                const transition = svg.transition().duration(300);
+                currentZoomRef.current.scaleTo(transition as any, newScale);
+              }
+            }}
             sx={{ bgcolor: 'action.hover' }}
           >
             <ZoomIn />
           </IconButton>
-          <IconButton 
-            size="small" 
-            onClick={() => setZoomLevel(prev => Math.max(prev - 0.2, 0.5))}
+          <IconButton
+            size="small"
+            onClick={() => {
+              const currentZoomRef = viewType === 'sunburst' ? sunburstZoomRef : treeZoomRef;
+              if (currentZoomRef.current && svgRef.current) {
+                const svg = d3.select(svgRef.current);
+                const minZoom = viewType === 'sunburst' ? 0.5 : 0.1; // Limited tree view zoom out
+                const newScale = Math.max(zoomLevel - 0.2, minZoom);
+                const transition = svg.transition().duration(300);
+                currentZoomRef.current.scaleTo(transition as any, newScale);
+              }
+            }}
             sx={{ bgcolor: 'action.hover' }}
           >
             <ZoomOut />
           </IconButton>
-          <IconButton 
-            size="small" 
-            onClick={() => setZoomLevel(1)}
+          <IconButton
+            size="small"
+            onClick={() => {
+              const currentZoomRef = viewType === 'sunburst' ? sunburstZoomRef : treeZoomRef;
+              if (currentZoomRef.current && svgRef.current) {
+                const svg = d3.select(svgRef.current);
+                const transition = svg.transition().duration(500);
+                currentZoomRef.current.transform(transition as any, d3.zoomIdentity);
+              }
+            }}
             sx={{ bgcolor: 'action.hover' }}
           >
             <CenterFocusStrong />
@@ -757,11 +1018,11 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       {/* Visualization */}
       <Paper 
         elevation={6}
-        sx={{ 
+        sx={{
           position: 'relative',
           overflow: 'hidden',
           borderRadius: 3,
-          height: viewType === 'sunburst' ? 800 : 600,
+          height: 600, // Same height for both views
           background: isDark 
             ? 'linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%)'
             : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
@@ -778,10 +1039,8 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
           ref={svgRef}
           width="100%"
           height="100%"
-          style={{ 
+          style={{
             cursor: 'grab',
-            transform: `scale(${zoomLevel})`,
-            transformOrigin: 'center center',
             display: 'block'
           }}
         />
