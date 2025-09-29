@@ -190,6 +190,10 @@ export const SKILLS_FUTURE_APP_NAMES = [
     id: "final-hierarchy-with-o*net",
     name: "Final Hierarchy with O*Net",
   },
+  {
+    id: "only-specifications-ai-peer",
+    name: "Only Specifications AI Peer Ontology",
+  },
 ];
 
 export const performerColors: Record<string, string> = {
