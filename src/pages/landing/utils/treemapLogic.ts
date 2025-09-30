@@ -144,7 +144,14 @@ export const layoutTreemap = (
     .paddingTop((d: any) => {
       // Reserve more space for parent node titles and gap
       if (d.children && d.children.length > 0) {
-        const titleHeight = Math.max(30, 40 - d.depth * 5);
+        // Check if this is a parent of leaf nodes (all children have no children)
+        const isParentOfLeaves = d.children.every((child: any) => !child.children || child.children.length === 0);
+
+        if (isParentOfLeaves) {
+          return 20; // Minimum padding for parents of leaf nodes
+        }
+
+        const titleHeight = Math.max(22, 30 - d.depth * 5);
         return titleHeight;
       }
       return 0;
@@ -205,7 +212,16 @@ export const layoutTreemap = (
 // Filter out tiny rectangles that appear as lines
 export const filterVisibleNodes = (nodes: TreemapNode[], minSize: number = 3): TreemapNode[] => {
   return nodes.filter(node => {
-    return node.width >= minSize && node.height >= minSize;
+    // Check if this is a leaf node (no children)
+    const isLeaf = !node.children || node.children.length === 0;
+
+    if (isLeaf) {
+      // Leaf nodes must have at least 6px height
+      return node.width >= minSize && node.height > 6;
+    } else {
+      // Parent nodes use the default minSize
+      return node.width >= minSize && node.height >= minSize;
+    }
   });
 };
 

@@ -12,7 +12,14 @@ import { LOGS, USERS } from '../firestoreClient/collections';
 
 export const useThemeManager = () => {
   const [authState, { dispatch }] = useAuth();
-  const [isDark, setIsDark] = useState(true);
+  // Initialize from localStorage immediately to avoid flash
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('preferred-theme');
+      return savedTheme ? savedTheme === 'dark' : true;
+    }
+    return true;
+  });
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const db = getFirestore();
 
@@ -20,20 +27,19 @@ export const useThemeManager = () => {
   useEffect(() => {
     // Set loading to false once we have the initial auth state
     setIsAuthLoading(false);
-    
+
     if (authState.isAuthenticated && authState.settings?.theme) {
       // User is logged in, use their preferred theme from AuthContext
       const newIsDark = authState.settings.theme === 'Dark';
       setIsDark(newIsDark);
+      // Sync to localStorage for consistency
+      localStorage.setItem('preferred-theme', newIsDark ? 'dark' : 'light');
     } else {
-      // User is not logged in, check localStorage
+      // User is not logged in, check localStorage (already initialized in state)
       const savedTheme = localStorage.getItem('preferred-theme');
       if (savedTheme) {
         const newIsDark = savedTheme === 'dark';
         setIsDark(newIsDark);
-      } else {
-        // Default to dark theme
-        setIsDark(true);
       }
     }
   }, [authState.isAuthenticated, authState.settings?.theme]);

@@ -7,11 +7,48 @@ export interface TextRenderingOptions {
   minNodeHeight: number;
 }
 
+// Truncate text with ellipsis to fit within maxWidth
+export const truncateText = (
+  text: string,
+  maxWidth: number,
+  ctx: CanvasRenderingContext2D
+): string => {
+  const textWidth = ctx.measureText(text).width;
+
+  if (textWidth <= maxWidth) {
+    return text;
+  }
+
+  const ellipsis = '...';
+  const ellipsisWidth = ctx.measureText(ellipsis).width;
+
+  // Binary search for the right length
+  let left = 0;
+  let right = text.length;
+  let bestFit = '';
+
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const candidate = text.substring(0, mid) + ellipsis;
+    const candidateWidth = ctx.measureText(candidate).width;
+
+    if (candidateWidth <= maxWidth) {
+      bestFit = candidate;
+      left = mid + 1;
+    } else {
+      right = mid - 1;
+    }
+  }
+
+  return bestFit || ellipsis;
+};
+
 // Helper function to break text into lines that fit the width
 export const breakTextIntoLines = (
   text: string,
   maxWidth: number,
-  ctx: CanvasRenderingContext2D
+  ctx: CanvasRenderingContext2D,
+  truncate: boolean = false
 ): string[] => {
   const words = text.split(' ');
   const lines: string[] = [];
@@ -28,8 +65,13 @@ export const breakTextIntoLines = (
         lines.push(currentLine);
         currentLine = word;
       } else {
-        // Word is too long, just add it anyway
-        lines.push(word);
+        // Word is too long - truncate it if requested
+        if (truncate) {
+          lines.push(truncateText(word, maxWidth, ctx));
+        } else {
+          lines.push(word);
+        }
+        currentLine = '';
       }
     }
   }
@@ -66,6 +108,23 @@ export const calculateOptimalTextLines = (
   const availableWidth = node.width - 2 * options.padding;
   const availableHeight = node.height - 2 * options.padding;
 
+  // Calculate max lines that can fit
+  const maxLines = Math.max(1, Math.floor(availableHeight / options.lineHeight));
+
+  // If available height is too small for even one line, try anyway with minimal space
+  if (availableHeight < options.lineHeight && node.height >= options.lineHeight) {
+    // Recalculate with less padding
+    const minPadding = 2;
+    const newAvailableHeight = node.height - 2 * minPadding;
+    if (newAvailableHeight >= options.lineHeight) {
+      // Continue with 1 line
+      return calculateOptimalTextLines(node, ctx, {
+        ...options,
+        padding: minPadding
+      });
+    }
+  }
+
   // Try different text options and break into lines
   let textLines: string[] = [];
 
@@ -74,17 +133,30 @@ export const calculateOptimalTextLines = (
   if (combinedMetrics.width <= availableWidth) {
     textLines = [combinedText];
   } else {
-    // Try breaking combined text into lines
-    const brokenCombined = breakTextIntoLines(combinedText, availableWidth, ctx);
-    if (brokenCombined.length * options.lineHeight <= availableHeight) {
+    // Try breaking combined text into lines with truncation
+    const brokenCombined = breakTextIntoLines(combinedText, availableWidth, ctx, true);
+    if (brokenCombined.length <= maxLines) {
       textLines = brokenCombined;
     } else {
-      // Try just the name, broken into lines if needed
-      const brokenName = breakTextIntoLines(baseName, availableWidth, ctx);
-      if (brokenName.length * options.lineHeight <= availableHeight) {
-        textLines = brokenName;
+      // Try just the name, broken into lines with truncation
+      const brokenName = breakTextIntoLines(baseName, availableWidth, ctx, true);
+      if (brokenName.length <= maxLines) {
+        textLines = brokenName.slice(0, maxLines);
+      } else {
+        // If still too many lines, truncate to fit available space
+        textLines = brokenName.slice(0, maxLines);
+        // Make sure the last line has ellipsis
+        if (textLines.length > 0 && brokenName.length > maxLines) {
+          const lastLine = textLines[textLines.length - 1];
+          textLines[textLines.length - 1] = truncateText(lastLine, availableWidth, ctx);
+        }
       }
     }
+  }
+
+  // Ensure we don't exceed max lines
+  if (textLines.length > maxLines) {
+    textLines = textLines.slice(0, maxLines);
   }
 
   return textLines;
@@ -193,9 +265,19 @@ export const drawTreemapNode = (
     textLines.forEach((line, index) => {
       const lineY = node.y + 2 + (index * (scaledFontSize + 2));
 
-      // Only render if the line fits within the node height (text top + font size + bottom padding)
-      if (lineY + scaledFontSize <= node.y + node.height - 6) {
+      // Calculate if this line would fit with bottom padding
+      const fitsWithPadding = lineY + scaledFontSize <= node.y + node.height - 6;
+      const fitsWithoutPadding = lineY + scaledFontSize <= node.y + node.height;
+
+      // Render if it fits with padding
+      if (fitsWithPadding) {
         ctx.fillText(line, node.x + 2, lineY);
+      }
+      // Or truncate and render if it fits without padding
+      else if (fitsWithoutPadding) {
+        const availableWidth = node.width - 4; // Account for left padding
+        const truncatedLine = truncateText(line, availableWidth, ctx);
+        ctx.fillText(truncatedLine, node.x + 2, lineY);
       }
     });
 
@@ -223,8 +305,8 @@ export const renderTreemap = (
   const renderingOptions: TextRenderingOptions = {
     padding: Math.max(2, 5 / zoom),
     lineHeight: 0, // Will be calculated per node
-    minNodeWidth: 20,
-    minNodeHeight: 16
+    minNodeWidth: 15,
+    minNodeHeight: 8
   };
 
   // Draw all visible nodes

@@ -46,11 +46,15 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
 }) => {
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
+  const [sunburstZoomLevel, setSunburstZoomLevel] = useState(1);
+  const [treeZoomLevel, setTreeZoomLevel] = useState(1);
   const svgRef = useRef(null);
   const containerRef = useRef(null);
   const sunburstZoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const treeZoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+  // Store complete zoom transforms (scale + translation) for each view
+  const sunburstTransformRef = useRef<d3.ZoomTransform>(d3.zoomIdentity);
+  const treeTransformRef = useRef<d3.ZoomTransform>(d3.zoomIdentity);
 
   // Color calculation logic matching treemap implementation exactly
   const getNodeColor = (appCount: number, maxCount: number, isDark: boolean): string => {
@@ -213,12 +217,18 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       .scaleExtent([0.5, 3])
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
-        // Update zoom level state to keep buttons in sync
-        setZoomLevel(event.transform.k);
+        // Save complete transform and update zoom level state
+        sunburstTransformRef.current = event.transform;
+        setSunburstZoomLevel(event.transform.k);
       });
 
     svg_container.call(zoomBehavior as any);
     sunburstZoomRef.current = zoomBehavior;
+
+    // Restore previous zoom transform if it exists
+    if (sunburstTransformRef.current && sunburstTransformRef.current.k !== 1) {
+      svg_container.call(zoomBehavior.transform as any, sunburstTransformRef.current);
+    }
 
     // Create hierarchy first (Observable pattern)
     const hierarchy = d3.hierarchy<TreeNode & { value: number }>(prepareSunburstData(data))
@@ -366,9 +376,16 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       if (text.length < 15 && !hasMoreThanThreeWords && !forceBreak) return [text];
 
       // Allow much longer lines to utilize available segment width
-      const effectiveMaxLength = Math.max(4, Math.min(maxLength, 25)); // Allow much longer lines
+      // When forceBreak is true, use a smaller max length to ensure breaking happens
+      const spaceCount = (text.match(/ /g) || []).length;
+      const effectiveMaxLength = forceBreak
+        ? (spaceCount < 2
+            ? Math.max(4, Math.min(maxLength, 13))  // <2 spaces: max 13 chars per line
+            : Math.max(4, Math.min(maxLength, 20))) // ≥2 spaces: max 20 chars per line
+        : Math.max(4, Math.min(maxLength, 25)); // Normal: max 25 chars per line
 
-      if (text.length <= effectiveMaxLength && !hasMoreThanThreeWords && !forceBreak) return [text];
+      // If forceBreak is true, skip the early return check to ensure breaking happens
+      if (!forceBreak && text.length <= effectiveMaxLength && !hasMoreThanThreeWords) return [text];
 
       const lines: string[] = [];
       let currentLine = '';
@@ -380,12 +397,12 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
           currentLine = testLine;
         } else {
           if (currentLine) {
-            lines.push(currentLine + '-'); // Add dash
+            lines.push(currentLine); // No dash - breaking at word boundary
             currentLine = word;
           } else {
-            // Word is longer than maxLength, split it
+            // Word is longer than maxLength, split it mid-word
             if (word.length > effectiveMaxLength) {
-              lines.push(word.substring(0, effectiveMaxLength - 1) + '-');
+              lines.push(word.substring(0, effectiveMaxLength - 1) + '-'); // Add dash when splitting word
               currentLine = word.substring(effectiveMaxLength - 1);
             } else {
               currentLine = word;
@@ -399,7 +416,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       }
 
       console.log(`Result lines:`, lines); // Debug log
-      return lines.slice(0, 3); // Limit to 3 lines max
+      return lines.slice(0, 5); // Limit to 5 lines max
     };
 
     const label = g.append("g")
@@ -436,9 +453,18 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
 
         console.log(`fontSize=${fontSize}, charWidth=${charWidth}, maxCharsPerLine=${maxCharsPerLine}`); // Debug log
 
+        // Log all nodes to see which ones are being processed
+        if (d.data.name.toLowerCase().includes("transfer") || d.data.name.toLowerCase().includes("exchange")) {
+          console.log(`🔍 FOUND "${d.data.name}" at depth ${d.depth} - checking if text will be rendered...`);
+          console.log(`  maxCharsPerLine=${maxCharsPerLine}, radialSpace=${radialSpace}, fontSize=${fontSize}`);
+        }
+
         // Almost no restrictions - show text on virtually every node
         if (maxCharsPerLine < 0.5 || radialSpace < 1 || fontSize < 1) {
           console.log(`Skipping text for "${d.data.name}" - truly too small (maxChars=${maxCharsPerLine}, radialSpace=${radialSpace}, fontSize=${fontSize})`);
+          if (d.data.name.toLowerCase().includes("transfer") || d.data.name.toLowerCase().includes("exchange")) {
+            console.log(`⚠️ SKIPPING "${d.data.name}" - too small to render text`);
+          }
           return;
         }
 
@@ -447,34 +473,40 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
         const words = d.data.name.split(' ');
         const hasMoreThanThreeWords = words.length > 3;
 
-        // Special condition for 2nd and 3rd level: force line break if >=2 spaces AND >15 characters
+        // Special condition for 2nd and 3rd level: force line break if >1 space AND >15 characters
         const isSecondOrThirdLevel = d.depth === 2 || d.depth === 3;
         const spaceCount = (d.data.name.match(/ /g) || []).length;
-        const hasTwoOrMoreSpaces = spaceCount >= 2;
+        const hasMoreThanOneSpace = spaceCount >= 1;
         const hasMoreThanFifteenChars = d.data.name.length > 15;
-        const shouldForceBreakLevel23 = isSecondOrThirdLevel && hasTwoOrMoreSpaces && hasMoreThanFifteenChars;
+        const shouldForceBreakLevel23 = isSecondOrThirdLevel && hasMoreThanOneSpace && hasMoreThanFifteenChars;
 
-        // Debug logging for all nodes to see depth levels
-        if (d.data.name.includes("physical objects") || d.data.name.includes("separate")) {
-          console.log(`DEBUG: "${d.data.name}" - depth=${d.depth}, chars=${d.data.name.length}, spaces=${spaceCount}, isLevel2or3=${isSecondOrThirdLevel}, shouldForceBreak=${shouldForceBreakLevel23}`);
-        }
-
-        // Debug logging for level 2/3 force break condition
+        // Debug logging for ALL level 2 and 3 nodes
         if (isSecondOrThirdLevel) {
-          console.log(`Level ${d.depth} node "${d.data.name}": chars=${d.data.name.length}, spaces=${spaceCount}, shouldForceBreak=${shouldForceBreakLevel23}`);
+          console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+          console.log(`DEBUG LEVEL ${d.depth} NODE: "${d.data.name}"`);
+          console.log(`  chars=${d.data.name.length}`);
+          console.log(`  spaces=${spaceCount}`);
+          console.log(`  words=${words.length}`);
+          console.log(`  hasMoreThanOneSpace=${hasMoreThanOneSpace} (needs: spaceCount > 1, actual: ${spaceCount})`);
+          console.log(`  hasMoreThanFifteenChars=${hasMoreThanFifteenChars} (needs: length > 15, actual: ${d.data.name.length})`);
+          console.log(`  shouldForceBreak=${shouldForceBreakLevel23}`);
+          console.log(`  maxCharsPerLine=${maxCharsPerLine}`);
+          console.log(`  textFitsInOneLine=${d.data.name.length <= maxCharsPerLine}`);
+          console.log(`  hasMoreThanThreeWords=${hasMoreThanThreeWords}`);
+          console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
         }
 
-        // Priority 1: Force break for level 2/3 with >=2 spaces and >15 chars (ignore if text fits)
+        // Priority 1: Force break for level 2/3 with >1 space and >15 chars (ignore if text fits)
         if (shouldForceBreakLevel23) {
-          console.log(`PRIORITY 1: Force breaking "${d.data.name}" (level ${d.depth})`);
+          console.log(`✓ PRIORITY 1: Force breaking "${d.data.name}" (level ${d.depth})`);
           lines = splitTextWithDash(d.data.name, maxCharsPerLine, true); // forceBreak = true
         } else if (d.data.name.length <= maxCharsPerLine && !hasMoreThanThreeWords) {
           // Priority 2: If the whole text fits AND has 3 or fewer words, don't break it at all
-          console.log(`PRIORITY 2: Keeping single line "${d.data.name}" (fits: ${d.data.name.length <= maxCharsPerLine}, words: ${words.length})`);
+          console.log(`✓ PRIORITY 2: Keeping single line "${d.data.name}" (fits: ${d.data.name.length <= maxCharsPerLine}, words: ${words.length}, maxChars: ${maxCharsPerLine})`);
           lines = [d.data.name];
         } else {
           // Priority 3: Always try to break text to use all available space (either too long OR >3 words)
-          console.log(`PRIORITY 3: Standard breaking "${d.data.name}" (too long or >3 words)`);
+          console.log(`✓ PRIORITY 3: Standard breaking "${d.data.name}" (too long or >3 words, maxChars: ${maxCharsPerLine})`);
           lines = splitTextWithDash(d.data.name, maxCharsPerLine);
 
           // If we get no lines or very few characters, try more aggressive approaches
@@ -728,10 +760,10 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
     // Find max count for color scaling
     const maxCount = findMaxAppCount(data);
 
-    // Create tree layout with extreme horizontal spacing for zoom-independent text
+    // Create tree layout with increased vertical spacing
     const treemap = d3.tree<TreeNode>()
       .size([height - margin.top - margin.bottom, width - margin.left - margin.right])
-      .nodeSize([600, 3000]); // [height, width] - doubled horizontal spacing from 1500 to 3000
+      .nodeSize([400, 2500]); // [vertical, horizontal] - increased vertical spacing from 300 to 400
     
     // Create hierarchy
     const root = d3.hierarchy<TreeNode>(data);
@@ -747,11 +779,13 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
 
     // Create zoom behavior for tree view with limited zoom out
     const treeZoomBehavior = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 10]) // Limited zoom out from 0.01 to 0.1 (10x minimum zoom)
+      .scaleExtent([0.1, 10]) // Limited zoom out to 0.1 (10x minimum zoom)
       .on("zoom", function(event) {
-        svg_g.attr("transform", `translate(${margin.left},${margin.top}) ${event.transform}`);
-        // Update zoom level state to keep buttons in sync
-        setZoomLevel(event.transform.k);
+        // Apply zoom transform - the margin offset is already applied to svg_g
+        svg_g.attr("transform", event.transform);
+        // Save complete transform and update zoom level state
+        treeTransformRef.current = event.transform;
+        setTreeZoomLevel(event.transform.k);
 
         // Update text size to scale inversely with zoom for constant readability
         const baseFontSize = 18;
@@ -766,6 +800,27 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
         // Update badge text to maintain constant apparent size
         svg_g.selectAll(".tree-badge-text")
           .style("font-size", scaledBadgeFontSize + "px");
+
+        // Update edge stroke width to scale inversely with zoom for constant visibility
+        const baseStrokeWidth = 2;
+        const scaledStrokeWidth = baseStrokeWidth / event.transform.k;
+        svg_g.selectAll(".link")
+          .style("stroke-width", scaledStrokeWidth + "px");
+
+        // Scale node circles inversely with zoom for constant visibility
+        svg_g.selectAll(".tree-node-circle")
+          .attr("r", function() {
+            const baseRadius = parseFloat(d3.select(this).attr("data-base-radius") || "10");
+            return baseRadius / event.transform.k;
+          })
+          .style("stroke-width", (2 / event.transform.k) + "px");
+
+        // Hide badges (rectangles and text) when zoomed out below 0.3
+        const showBadges = event.transform.k >= 0.3;
+        svg_g.selectAll(".tree-badge-rect")
+          .style("opacity", showBadges ? 1 : 0);
+        svg_g.selectAll(".tree-badge-text")
+          .style("opacity", showBadges ? 1 : 0);
       });
 
     const svg_g = svg_container
@@ -775,6 +830,12 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
 
     // Store the zoom behavior reference for tree view
     treeZoomRef.current = treeZoomBehavior;
+
+    // Restore previous zoom transform if it exists - do this BEFORE adding nodes/text
+    const shouldRestoreTransform = treeTransformRef.current && treeTransformRef.current.k !== 1;
+    if (shouldRestoreTransform) {
+      svg_container.call(treeZoomBehavior.transform as any, treeTransformRef.current);
+    }
 
     // Add links with curved paths
     const link = svg_g.selectAll(".link")
@@ -801,9 +862,11 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
     // Add circles with frequency-based colors - allow smaller circles
     node.append("circle")
       .attr("r", d => Math.max(4, Math.min(25, Math.sqrt(d.data.appCount || 0) * 0.8)))
+      .attr("data-base-radius", d => Math.max(4, Math.min(25, Math.sqrt(d.data.appCount || 0) * 0.8)))
       .style("fill", d => getNodeColor(d.data.appCount || 0, maxCount, isDark))
       .style("stroke", d => d.data.appCount > 0 ? "#333" : "#999")
       .style("stroke-width", "2px")
+      .classed("tree-node-circle", true)
       .on("mouseover", function(event, d) {
         d3.select(this)
           .style("stroke-width", "4px")
@@ -832,14 +895,23 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       .classed("tree-node-text", true)
       .text(d => d.data.name)
       .each(function(d) {
-        // Wrap long text with more space for larger font
+        // Wrap long text to fit within node spacing to prevent overlap
         const text = d3.select(this);
         const words = d.data.name.split(/\s+/).reverse();
         let word: string | undefined;
         let line: string[] = [];
         let lineNumber = 0;
         const lineHeight = 1.3; // Increased line height for larger text
-        const maxWidth = 800; // Dramatically increased from 400px to accommodate massive spacing and zoom-independent text
+
+        // Check if text has more than 3 spaces (4+ words) AND more than 18 characters
+        const spaceCount = (d.data.name.match(/ /g) || []).length;
+        const charCount = d.data.name.length;
+        const forceLineBreak = spaceCount > 3 && charCount > 18;
+
+        // Reduced maxWidth to account for zoom-independent text scaling and prevent overlap
+        // If forcing line break, use smaller maxWidth to wrap more aggressively
+        const maxWidth = forceLineBreak ? 250 : 400;
+
         const y = text.attr("y");
         const dy = parseFloat(text.attr("dy"));
         let tspan = text.text(null).append("tspan")
@@ -866,7 +938,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
     // Calculate badge distance based on inverse of zoom (closer when zoomed in, farther when zoomed out)
     const baseBadgeDistance = 50; // Base distance when at 1x zoom
     const maxBadgeDistance = 130; // Maximum distance when zoomed out
-    const badgeDistance = Math.min(maxBadgeDistance, baseBadgeDistance + (baseBadgeDistance / (zoomLevel || 1)));
+    const badgeDistance = Math.min(maxBadgeDistance, baseBadgeDistance + (baseBadgeDistance / (treeZoomLevel || 1)));
 
     node.filter(d => d.data.appCount > 0)
       .append("rect")
@@ -877,7 +949,8 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       .attr("rx", 14)
       .style("fill", "#ff9800")
       .style("stroke", "#fff")
-      .style("stroke-width", "1.5px");
+      .style("stroke-width", "1.5px")
+      .classed("tree-badge-rect", true);
 
     node.filter(d => d.data.appCount > 0)
       .append("text")
@@ -896,6 +969,31 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
     // if (focusNodeId && viewType === 'tree') {
     //   // Focus node logic would go here
     // }
+
+    // Apply the scaling manually if we restored a transform (since .call doesn't trigger the zoom event)
+    if (shouldRestoreTransform) {
+      const transform = treeTransformRef.current;
+      const baseFontSize = 18;
+      const baseBadgeFontSize = 16;
+      const scaledFontSize = baseFontSize / transform.k;
+      const scaledBadgeFontSize = baseBadgeFontSize / transform.k;
+      const baseStrokeWidth = 2;
+      const scaledStrokeWidth = baseStrokeWidth / transform.k;
+
+      svg_g.selectAll(".tree-node-text").style("font-size", scaledFontSize + "px");
+      svg_g.selectAll(".tree-badge-text").style("font-size", scaledBadgeFontSize + "px");
+      svg_g.selectAll(".link").style("stroke-width", scaledStrokeWidth + "px");
+      svg_g.selectAll(".tree-node-circle")
+        .attr("r", function() {
+          const baseRadius = parseFloat(d3.select(this).attr("data-base-radius") || "10");
+          return baseRadius / transform.k;
+        })
+        .style("stroke-width", (2 / transform.k) + "px");
+
+      const showBadges = transform.k >= 0.3;
+      svg_g.selectAll(".tree-badge-rect").style("opacity", showBadges ? 1 : 0);
+      svg_g.selectAll(".tree-badge-text").style("opacity", showBadges ? 1 : 0);
+    }
   };
 
   const handleNodeClick = (event: any, d: d3.HierarchyPointNode<TreeNode>) => {
@@ -923,8 +1021,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       // Always reset styling before rendering
       resetSVGStyling();
 
-      // Reset zoom level when switching views
-      setZoomLevel(1);
+      // Don't reset zoom levels - preserve them when switching views
 
       if (viewType === 'tree') {
         renderTree(data);
@@ -942,7 +1039,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [data, isDark, viewType, focusNodeId]);
+  }, [data, isDark, viewType, focusNodeId]); // viewType causes re-render on switch
 
   return (
     <Box>
@@ -954,7 +1051,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
             onClick={() => onViewTypeChange('tree')}
             size="small"
           >
-            Tree View
+            DAG View
           </Button>
           <Button
             variant={viewType === 'sunburst' ? 'contained' : 'outlined'}
@@ -970,12 +1067,25 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
             size="small"
             onClick={() => {
               const currentZoomRef = viewType === 'sunburst' ? sunburstZoomRef : treeZoomRef;
+              const currentZoomLevel = viewType === 'sunburst' ? sunburstZoomLevel : treeZoomLevel;
               if (currentZoomRef.current && svgRef.current) {
                 const svg = d3.select(svgRef.current);
+                const container = containerRef.current as HTMLElement | null;
+                if (!container) return;
+
                 const maxZoom = viewType === 'sunburst' ? 3 : 10;
-                const newScale = Math.min(zoomLevel + 0.2, maxZoom);
+                // Use smaller increment for tree view for smoother zooming
+                const increment = viewType === 'tree' ? 0.05 : 0.2;
+                const newScale = Math.min(currentZoomLevel + increment, maxZoom);
+
+                // Calculate viewport center point for zooming
+                const containerRect = container.getBoundingClientRect();
+                const centerX = containerRect.width / 2;
+                const centerY = containerRect.height / 2;
+
                 const transition = svg.transition().duration(300);
-                currentZoomRef.current.scaleTo(transition as any, newScale);
+                // Zoom towards the center of the viewport
+                currentZoomRef.current.scaleTo(transition as any, newScale, [centerX, centerY]);
               }
             }}
             sx={{ bgcolor: 'action.hover' }}
@@ -986,12 +1096,25 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
             size="small"
             onClick={() => {
               const currentZoomRef = viewType === 'sunburst' ? sunburstZoomRef : treeZoomRef;
+              const currentZoomLevel = viewType === 'sunburst' ? sunburstZoomLevel : treeZoomLevel;
               if (currentZoomRef.current && svgRef.current) {
                 const svg = d3.select(svgRef.current);
+                const container = containerRef.current as HTMLElement | null;
+                if (!container) return;
+
                 const minZoom = viewType === 'sunburst' ? 0.5 : 0.1; // Limited tree view zoom out
-                const newScale = Math.max(zoomLevel - 0.2, minZoom);
+                // Use smaller increment for tree view for smoother zooming
+                const increment = viewType === 'tree' ? 0.05 : 0.2;
+                const newScale = Math.max(currentZoomLevel - increment, minZoom);
+
+                // Calculate viewport center point for zooming
+                const containerRect = container.getBoundingClientRect();
+                const centerX = containerRect.width / 2;
+                const centerY = containerRect.height / 2;
+
                 const transition = svg.transition().duration(300);
-                currentZoomRef.current.scaleTo(transition as any, newScale);
+                // Zoom towards the center of the viewport
+                currentZoomRef.current.scaleTo(transition as any, newScale, [centerX, centerY]);
               }
             }}
             sx={{ bgcolor: 'action.hover' }}
@@ -1005,7 +1128,30 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
               if (currentZoomRef.current && svgRef.current) {
                 const svg = d3.select(svgRef.current);
                 const transition = svg.transition().duration(500);
-                currentZoomRef.current.transform(transition as any, d3.zoomIdentity);
+
+                if (viewType === 'tree') {
+                  // For tree view, zoom to minimum scale and center the content
+                  const targetScale = 0.1;
+                  const container = containerRef.current as HTMLElement | null;
+                  const containerWidth = container?.clientWidth || 600;
+                  const containerHeight = container?.clientHeight || 600;
+
+                  // Calculate the center of the tree (approximate center based on tree dimensions)
+                  const treeCenterX = 6000; // Approximate horizontal center of the tree layout
+                  const treeCenterY = 2000; // Approximate vertical center of the tree layout
+
+                  // Calculate translate to center the tree in the viewport
+                  const translateX = containerWidth / 2 - treeCenterX * targetScale;
+                  const translateY = containerHeight / 2 - treeCenterY * targetScale;
+
+                  currentZoomRef.current.transform(
+                    transition as any,
+                    d3.zoomIdentity.translate(translateX, translateY).scale(targetScale)
+                  );
+                } else {
+                  // For sunburst, reset to identity
+                  currentZoomRef.current.transform(transition as any, d3.zoomIdentity);
+                }
               }
             }}
             sx={{ bgcolor: 'action.hover' }}

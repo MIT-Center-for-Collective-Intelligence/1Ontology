@@ -1,26 +1,18 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Head from "next/head";
-import { useRouter } from "next/router";
 import {
-  AppBar,
   Box,
-  Button,
   Container,
   IconButton,
-  Toolbar,
   Typography,
   ThemeProvider,
-  createTheme,
   CssBaseline,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Divider,
   Chip,
 } from "@mui/material";
-import { useThemeManager } from "../lib/hooks/useThemeManager";
+import { useThemeManager } from "../../lib/hooks/useThemeManager";
+import { createLandingTheme } from "../../theme/landingTheme";
+import { Navigation } from "./_components/Navigation";
+import { MobileDrawer } from "./_components/MobileDrawer";
 import {
   TreeNode,
   TreemapNode,
@@ -37,8 +29,8 @@ import {
   findHoveredNode,
   calculateTooltipData,
   calculateTooltipPosition,
-} from "../lib/utils/treemapLogic";
-import { renderTreemap } from "../lib/utils/treemapRendering";
+} from "./utils/treemapLogic";
+import { renderTreemap } from "./utils/treemapRendering";
 import {
   LightMode as LightModeIcon,
   DarkMode as DarkModeIcon,
@@ -50,7 +42,6 @@ import {
 
 
 const TreemapPage = () => {
-  const router = useRouter();
   const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } = useThemeManager();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [data, setData] = useState<TreeNode | null>(null);
@@ -68,26 +59,7 @@ const TreemapPage = () => {
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [reverseColors, setReverseColors] = useState(false);
 
-  const theme = createTheme({
-    palette: {
-      mode: isDark ? "dark" : "light",
-      primary: {
-        main: "#ff9800",
-        light: "#ffb74d",
-        dark: "#f57c00",
-      },
-      secondary: {
-        main: "#2196f3",
-      },
-      background: {
-        default: isDark ? "#121212" : "#fafafa",
-        paper: isDark ? "#1e1e1e" : "#ffffff",
-      },
-    },
-    typography: {
-      fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    },
-  });
+  const theme = createLandingTheme(isDark);
 
   // Load data
   useEffect(() => {
@@ -126,8 +98,8 @@ const TreemapPage = () => {
     if (!canvasRef.current || !data) return;
 
     // Set treemap bounds (fixed size for layout)
-    const treemapWidth = 1200;
-    const treemapHeight = 800;
+    const treemapWidth = 1450;
+    const treemapHeight = 1000;
 
     // Update bounds if they haven't been set
     if (treemapBounds.width === 0) {
@@ -305,138 +277,19 @@ const TreemapPage = () => {
         <CssBaseline />
         <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
           {/* Navigation */}
-          <AppBar
-            position="fixed"
-            elevation={0}
-            sx={{
-              bgcolor: "background.paper",
-              backdropFilter: "blur(8px)",
-              borderBottom: 1,
-              borderColor: "divider",
-            }}
-          >
-            <Container maxWidth="xl">
-              <Toolbar sx={{ justifyContent: "space-between", py: 1 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Box component="a" href="/landing" sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
-                    <img
-                      src={isDark ? "/MIT-Logo-small-Dark.png" : "/MIT-Logo-Small-Light.png"}
-                      alt="MIT Logo"
-                      style={{ height: "32px", width: "auto" }}
-                    />
-                  </Box>
-                  <Box sx={{ display: { xs: "none", sm: "block" } }}>
-                    <Typography variant="body1" sx={{ fontWeight: 500, color: "text.primary" }}>
-                      Ontology of Collective Intelligence
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                      AI & Future of Work
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 3 }}>
-                    {[
-                      { title: "Home", href: "/landing" },
-                      { title: "Platform", href: "/platform-details" },
-                      { title: "AI Uses", href: "/ai-uses" },
-                      { title: "Treemap", href: "/treemap" },
-                      { title: "Team", href: "/team" },
-                    ].map((link, index) => {
-                      const isActive = router.pathname === link.href;
-                      return (
-                        <Button
-                          key={index}
-                          component="a"
-                          href={link.href}
-                          sx={{
-                            color: isActive ? "primary.main" : "text.primary",
-                            bgcolor: isActive ? "rgba(255,152,0,0.1)" : "transparent",
-                            fontWeight: isActive ? 600 : 400,
-                            "&:hover": {
-                              color: "primary.main",
-                              bgcolor: "rgba(255,152,0,0.1)",
-                            },
-                            textTransform: "none",
-                            borderRadius: 1,
-                          }}
-                        >
-                          {link.title}
-                        </Button>
-                      );
-                    })}
-                  </Box>
-
-                  <IconButton onClick={handleThemeSwitch} sx={{ bgcolor: "action.hover" }}>
-                    {isDark ? <LightModeIcon /> : <DarkModeIcon />}
-                  </IconButton>
-
-                  {isAuthLoading ? (
-                    <Button variant="contained" color="primary" disabled>
-                      Loading...
-                    </Button>
-                  ) : isAuthenticated ? (
-                    <Button variant="contained" color="primary" component="a" href="/">
-                      Go to Platform
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        variant="text"
-                        color="primary"
-                        component="a"
-                        href="/signin"
-                        sx={{ display: { xs: "none", sm: "inline-flex" } }}
-                      >
-                        Sign In
-                      </Button>
-                      <Button variant="contained" color="primary" component="a" href="/signup">
-                        Register
-                      </Button>
-                    </>
-                  )}
-
-                  <IconButton
-                    sx={{ display: { xs: "flex", md: "none" } }}
-                    onClick={() => setMobileNavOpen(true)}
-                  >
-                    <MenuIcon />
-                  </IconButton>
-                </Box>
-              </Toolbar>
-            </Container>
-          </AppBar>
+          <Navigation
+            isDark={isDark}
+            handleThemeSwitch={handleThemeSwitch}
+            isAuthenticated={isAuthenticated}
+            isAuthLoading={isAuthLoading}
+            onMobileMenuOpen={() => setMobileNavOpen(true)}
+          />
 
           {/* Mobile Navigation Drawer */}
-          <Drawer
-            anchor="right"
+          <MobileDrawer
             open={mobileNavOpen}
             onClose={() => setMobileNavOpen(false)}
-            ModalProps={{ keepMounted: true }}
-          >
-            <Box sx={{ width: 280, p: 2 }}>
-              <Typography variant="subtitle2" sx={{ px: 1, py: 1, color: "text.secondary" }}>
-                Menu
-              </Typography>
-              <Divider sx={{ mb: 1 }} />
-              <List>
-                {[
-                  { title: "Home", href: "/landing" },
-                  { title: "Platform", href: "/platform-details" },
-                  { title: "AI Uses", href: "/ai-uses" },
-                  { title: "Treemap", href: "/treemap" },
-                  { title: "Team", href: "/team" },
-                ].map((link, index) => (
-                  <ListItem key={index} disablePadding>
-                    <ListItemButton component="a" href={link.href}>
-                      <ListItemText primary={link.title} />
-                    </ListItemButton>
-                  </ListItem>
-                ))}
-              </List>
-            </Box>
-          </Drawer>
+          />
 
           {/* Main Content */}
           <Box sx={{ pt: 10 }}>

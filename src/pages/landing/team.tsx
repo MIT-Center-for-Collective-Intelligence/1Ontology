@@ -1,34 +1,21 @@
 import React, { useEffect, useState } from "react";
 import Head from "next/head";
-import { useRouter } from "next/router";
 import {
-  AppBar,
   Avatar,
   Box,
-  Button,
   Container,
   Grid,
-  IconButton,
-  Toolbar,
   Typography,
   ThemeProvider,
-  createTheme,
   CssBaseline,
   Fade,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Divider,
 } from "@mui/material";
-import { useThemeManager } from "../lib/hooks/useThemeManager";
-import {
-  LightMode as LightModeIcon,
-  DarkMode as DarkModeIcon,
-  Menu as MenuIcon,
-  OpenInNew,
-} from "@mui/icons-material";
+import { useThemeManager } from "../../lib/hooks/useThemeManager";
+import { createLandingTheme } from "../../theme/landingTheme";
+import { Navigation } from "./_components/Navigation";
+import { MobileDrawer } from "./_components/MobileDrawer";
+import { Footer } from "./_components/Footer";
+import { OpenInNew } from "@mui/icons-material";
 
 interface TeamMember {
   name: string;
@@ -265,7 +252,6 @@ const PublicationItem = ({ publication, index }: { publication: Publication; ind
 };
 
 const TeamPage = () => {
-  const router = useRouter();
   const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } = useThemeManager();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [teamData, setTeamData] = useState<TeamData | null>(null);
@@ -310,44 +296,7 @@ const TeamPage = () => {
   const otherRoles = Object.keys(sortedMembersByRole).filter(role => !roleOrder.includes(role));
   const orderedRoles = [...sortedRoles, ...otherRoles];
 
-  const theme = createTheme({
-    palette: {
-      mode: isDark ? "dark" : "light",
-      primary: {
-        main: "#ff9800",
-        light: "#ffb74d",
-        dark: "#f57c00",
-      },
-      secondary: {
-        main: "#2196f3",
-      },
-      background: {
-        default: isDark ? "#121212" : "#f9fafb",
-        paper: isDark ? "#1e1e1e" : "#ffffff",
-      },
-    },
-    typography: {
-      fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    },
-    components: {
-      MuiButton: {
-        styleOverrides: {
-          root: {
-            textTransform: "none",
-            borderRadius: 8,
-          },
-        },
-      },
-    },
-  });
-
-  const navigationLinks = [
-    { title: "Home", href: "/landing" },
-    { title: "Platform", href: "/platform-details" },
-    { title: "AI Uses", href: "/ai-uses" },
-    { title: "Team", href: "/team" },
-    { title: "Treemap", href: "/treemap" },
-  ];
+  const theme = createLandingTheme(isDark);
 
   if (!teamData) {
     return (
@@ -380,174 +329,19 @@ const TeamPage = () => {
         <CssBaseline />
         <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
           {/* Navigation */}
-          <AppBar
-            position="fixed"
-            elevation={0}
-            sx={{
-              bgcolor: "background.default",
-              backdropFilter: "blur(8px)",
-            }}
-          >
-            <Container maxWidth="xl">
-              <Toolbar sx={{ justifyContent: "space-between", py: 1 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Box component="a" href="/landing" sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
-                    <img
-                      src={
-                        isDark
-                          ? "/MIT-Logo-small-Dark.png"
-                          : "/MIT-Logo-Small-Light.png"
-                      }
-                      alt="MIT Logo"
-                      style={{ height: "32px", width: "auto" }}
-                    />
-                  </Box>
-                  <Box sx={{ display: { xs: "none", sm: "block" } }}>
-                    <Typography
-                      variant="body1"
-                      sx={{ fontWeight: 500, color: "text.primary" }}
-                    >
-                      Ontology of Collective Intelligence
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: "text.secondary" }}
-                    >
-                      AI & Future of Work
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Box
-                    sx={{
-                      display: { xs: "none", md: "flex" },
-                      alignItems: "center",
-                      gap: 3,
-                    }}
-                  >
-                    {navigationLinks.map((link, index) => {
-                      const isActive = router.pathname === link.href;
-                      
-                      return (
-                        <Button
-                          key={index}
-                          component="a"
-                          href={link.href}
-                          sx={{
-                            color: isActive ? "primary.main" : "text.primary",
-                            bgcolor: isActive ? "rgba(255,152,0,0.1)" : "transparent",
-                            fontWeight: isActive ? 600 : 400,
-                            "&:hover": { 
-                              color: "primary.main",
-                              bgcolor: "rgba(255,152,0,0.1)",
-                            },
-                            textTransform: "none",
-                            borderRadius: 1,
-                          }}
-                        >
-                          {link.title}
-                        </Button>
-                      );
-                    })}
-                  </Box>
-
-                  <SidebarButton
-                    icon={
-                      theme.palette.mode === "dark" ? (
-                        <LightModeIcon />
-                      ) : (
-                        <DarkModeIcon />
-                      )
-                    }
-                    onClick={handleThemeSwitch}
-                  />
-
-                  {isAuthLoading ? (
-                    <Button 
-                      variant="contained" 
-                      color="primary"
-                      disabled
-                    >
-                      Loading...
-                    </Button>
-                  ) : isAuthenticated ? (
-                    <Button 
-                      variant="contained" 
-                      color="primary"
-                      component="a"
-                      href="/"
-                    >
-                      Go to Platform
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        variant="text"
-                        color="primary"
-                        component="a"
-                        href="/signin"
-                        sx={{ display: { xs: "none", sm: "inline-flex" } }}
-                      >
-                        Sign In
-                      </Button>
-                      <Button 
-                        variant="contained" 
-                        color="primary"
-                        component="a"
-                        href="/signup"
-                      >
-                        Register
-                      </Button>
-                    </>
-                  )}
-
-                  <IconButton 
-                    sx={{ display: { xs: "flex", md: "none" } }}
-                    onClick={() => setMobileNavOpen(true)}
-                    aria-label="Open navigation menu"
-                  >
-                    <MenuIcon />
-                  </IconButton>
-                </Box>
-              </Toolbar>
-            </Container>
-          </AppBar>
+          <Navigation
+            isDark={isDark}
+            handleThemeSwitch={handleThemeSwitch}
+            isAuthenticated={isAuthenticated}
+            isAuthLoading={isAuthLoading}
+            onMobileMenuOpen={() => setMobileNavOpen(true)}
+          />
 
           {/* Mobile Navigation Drawer */}
-          <Drawer
-            anchor="right"
+          <MobileDrawer
             open={mobileNavOpen}
             onClose={() => setMobileNavOpen(false)}
-            ModalProps={{ keepMounted: true }}
-          >
-            <Box
-              sx={{ width: 280, p: 2 }}
-              role="presentation"
-              onClick={() => setMobileNavOpen(false)}
-              onKeyDown={() => setMobileNavOpen(false)}
-            >
-              <Typography variant="subtitle2" sx={{ px: 1, py: 1, color: "text.secondary" }}>
-                Menu
-              </Typography>
-              <Divider sx={{ mb: 1 }} />
-              <List>
-                {[
-                  { title: "Home", href: "/landing" },
-                  { title: "Platform", href: "/platform-details" },
-                  { title: "AI Uses", href: "/ai-uses" },
-                  { title: "Team", href: "/team" },
-                  { title: "Treemap", href: "/treemap" },
-                ].map((link, index) => (
-                  <ListItem key={index} disablePadding>
-                    <ListItemButton component="a" href={link.href}>
-                      <ListItemText primary={link.title} />
-                    </ListItemButton>
-                  </ListItem>
-                ))}
-              </List>
-            </Box>
-          </Drawer>
+          />
 
           {/* Hero Section */}
           <Box
@@ -794,169 +588,7 @@ const TeamPage = () => {
           </Box> */}
 
           {/* Footer */}
-          <Box
-            component="footer"
-            sx={{
-              py: 6,
-              bgcolor: "background.paper",
-              borderTop: (theme) =>
-                theme.palette.mode === "dark"
-                  ? "1px solid rgba(255,255,255,0.08)"
-                  : "1px solid rgba(0,0,0,0.08)",
-            }}
-          >
-            <Container maxWidth="xl">
-              <Grid container spacing={0} justifyContent="space-between" alignItems={{ xs: "flex-start", md: "center" }}>
-                {/* Logo & Title */}
-                <Grid item xs={12} md={3}>
-                  <Box sx={{ 
-                    display: "flex", 
-                    flexDirection: "column", 
-                    pr: { md: 3 },
-                    mb: { xs: 3, md: 0 },
-                    textAlign: { xs: "center", md: "left" }
-                  }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, justifyContent: { xs: "center", md: "flex-start" } }}>
-                      <img
-                        src={isDark ? "/MIT-Logo-small-Dark.png" : "/MIT-Logo-Small-Light.png"}
-                        alt="MIT Logo"
-                        style={{ height: "28px", width: "auto" }}
-                      />
-                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                        Ontology of Collective Intelligence
-                      </Typography>
-                    </Box>
-                    <Typography variant="body2" color="text.secondary">
-                      © {new Date().getFullYear()} MIT. All rights reserved.
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                {/* Navigation Links */}
-                <Grid item xs={12} md={3}>
-                  <Box sx={{ 
-                    display: "flex", 
-                    flexDirection: { xs: "row", md: "column" }, 
-                    flexWrap: { xs: "wrap", md: "nowrap" },
-                    columnGap: { xs: 2, md: 0 },
-                    rowGap: { xs: 1, md: 1 },
-                    justifyContent: { xs: "center", md: "center" },
-                    alignItems: { xs: "center", md: "flex-start" },
-                    textAlign: { xs: "center", md: "left" },
-                    px: { md: 3 }, 
-                    ml: { md: 6 },
-                    mb: { xs: 3, md: 0 },
-                    height: "100%" 
-                  }}>
-                    {navigationLinks.map((link, idx) => (
-                      <Typography
-                        key={idx}
-                        component="a"
-                        href={link.href}
-                        sx={{
-                          color: "text.secondary",
-                          fontSize: "0.9rem",
-                          textDecoration: "none",
-                          "&:hover": { color: "primary.main" },
-                          px: { xs: 0.5, md: 0 },
-                          py: { xs: 0.25, md: 0 },
-                        }}
-                      >
-                        {link.title}
-                      </Typography>
-                    ))}
-                  </Box>
-                </Grid>
-
-                {/* Desktop Divider */}
-                <Box sx={{ 
-                  width: "1px", 
-                  bgcolor: "divider", 
-                  mx: 2,
-                  display: { xs: "none", md: "block" },
-                  alignSelf: "stretch"
-                }} />
-
-                {/* Related Project Links */}
-                <Grid item xs={12} md={3}>
-                  <Box sx={{ 
-                    display: "flex", 
-                    flexDirection: "column", 
-                    gap: 1, 
-                    px: { md: 3 },
-                    mb: { xs: 3, md: 0 }, 
-                    justifyContent: { xs: "center", md: "center" },
-                    alignItems: { xs: "center", md: "flex-start" },
-                    height: "100%" 
-                  }}>
-                    <Typography
-                      component="a"
-                      href="https://m3s.mit.edu/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      sx={{
-                        color: "text.secondary",
-                        fontSize: "0.9rem",
-                        textDecoration: "none",
-                        "&:hover": { color: "primary.main" },
-                      }}
-                    >
-                      M3S - Mens Manus and Machina
-                    </Typography>
-                    <Typography
-                      component="a"
-                      href="https://cci.mit.edu/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      sx={{
-                        color: "text.secondary",
-                        fontSize: "0.9rem",
-                        textDecoration: "none",
-                        "&:hover": { color: "primary.main" },
-                      }}
-                    >
-                      MIT Center for Collective Intelligence
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                {/* Desktop Divider */}
-                <Box sx={{ 
-                  width: "1px", 
-                  bgcolor: "divider", 
-                  mx: 2,
-                  display: { xs: "none", md: "block" },
-                  alignSelf: "stretch"
-                }} />
-
-                {/* Accessibility Info */}
-                <Grid item xs={12} md={2}>
-                  <Box sx={{ 
-                    display: "flex", 
-                    justifyContent: { xs: "center", md: "center" }, 
-                    alignItems: "center", 
-                    height: "100%", 
-                    pl: { md: 3 } 
-                  }}>
-                    <Typography
-                      component="a"
-                      href="https://accessibility.mit.edu/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      sx={{
-                        color: "text.secondary",
-                        fontSize: "0.9rem",
-                        textDecoration: "none",
-                        "&:hover": { color: "primary.main" },
-                      }}
-                    >
-                      Accessibility Info
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Container>
-          </Box>
+          <Footer isDark={isDark} />
         </Box>
       </ThemeProvider>
     </>
