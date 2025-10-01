@@ -179,7 +179,7 @@ const OntologyExplorer = () => {
   const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } =
     useThemeManager();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [viewType, setViewType] = useState<"tree" | "sunburst">("tree");
+  const [viewType, setViewType] = useState<"tree" | "sunburst">("sunburst");
   const [data, setData] = useState<TreeNode | null>(null);
 
   useEffect(() => {

@@ -52,10 +52,10 @@ export const processTreeData = (node: TreeNode, parent?: TreeNode, level = 0): T
 };
 
 // Color scale from white (0-1 apps) to pleasant red (max apps) - identical in both modes
-export const getColor = (appCount: number, maxCount: number): string => {
-  // 0-1 apps should always be white regardless of theme
+export const getColor = (appCount: number, maxCount: number, reverseColors: boolean = false): string => {
+  // 0-1 apps should always be white/red depending on reverseColors
   if (appCount <= 1) {
-    return "rgb(255, 255, 255)"; // Pure white in both modes
+    return reverseColors ? "rgba(229, 56, 56, 1)" : "rgb(255, 255, 255)"; // Darker red for reverse mode
   }
 
   // For apps > 1, use logarithmic scaling starting from 2
@@ -70,11 +70,19 @@ export const getColor = (appCount: number, maxCount: number): string => {
   // Apply square root curve for smoother progression
   const enhancedIntensity = Math.sqrt(intensity);
 
-  // Same white to red progression in both light and dark modes
-  const r = 255; // Keep red channel at max
-  const g = Math.floor(255 * (1 - enhancedIntensity * 0.85)); // Reduce green gradually
-  const b = Math.floor(255 * (1 - enhancedIntensity * 0.85)); // Reduce blue gradually
-  return `rgb(${r}, ${g}, ${b})`;
+  if (reverseColors) {
+    // Red to white progression - start from rgba(229, 56, 56) to pure white
+    const r = Math.floor(229 + (255 - 229) * enhancedIntensity); // Start from 229, increase to 255
+    const g = Math.floor(56 + (255 - 56) * enhancedIntensity); // Start from 56, increase to 255
+    const b = Math.floor(56 + (255 - 56) * enhancedIntensity); // Start from 56, increase to 255
+    return `rgb(${r}, ${g}, ${b})`;
+  } else {
+    // White to red progression (original behavior)
+    const r = 255; // Keep red channel at max
+    const g = Math.floor(255 * (1 - enhancedIntensity * 0.85)); // Reduce green gradually
+    const b = Math.floor(255 * (1 - enhancedIntensity * 0.85)); // Reduce blue gradually
+    return `rgb(${r}, ${g}, ${b})`;
+  }
 };
 
 // Calculate font size based on depth (independent of zoom)
@@ -93,9 +101,6 @@ export const countDescendants = (node: TreeNode, totalTreeLeaves?: number): numb
 
   // For parent nodes, count all leaf descendants
   const totalLeaves = node.children.reduce((sum, child) => sum + countDescendants(child), 0);
-  if (node.name === 'Send information') {
-    console.log(`Node ${node.name} has totalLeaves of ${totalLeaves}`);
-  }
   return totalLeaves;
   // Apply moderate scaling to prevent huge differences, then multiply by total tree leaves
   // const scaledValue = Math.sqrt(totalLeaves) + 1;
@@ -126,7 +131,8 @@ export const layoutTreemap = (
   rootNode: TreeNode,
   width: number,
   height: number,
-  maxCount: number
+  maxCount: number,
+  reverseColors: boolean = false
 ): TreemapNode[] => {
   // Calculate total leaves in the entire tree
   const totalTreeLeaves = countTotalLeaves(rootNode);
@@ -162,21 +168,6 @@ export const layoutTreemap = (
   // Apply layout
   treemapLayout(root);
 
-  // Debug: check the hierarchy structure
-  console.log('D3 Root:', root);
-  console.log('Root children count:', root.children?.length || 0);
-
-  // Debug Express Live children specifically
-  root.each((node) => {
-    if (node.data.name === "Express Live" && node.children) {
-      console.log("=== EXPRESS LIVE CHILDREN D3 VALUES ===");
-      node.children.forEach((child: any) => {
-        const area = (child.x1 - child.x0) * (child.y1 - child.y0);
-        console.log(`${child.data.name}: D3 value=${child.value}, area=${area.toFixed(2)}, size=${(child.x1 - child.x0).toFixed(1)}x${(child.y1 - child.y0).toFixed(1)}`);
-      });
-    }
-  });
-
   // Convert D3 nodes to our TreemapNode format
   const result: TreemapNode[] = [];
 
@@ -189,7 +180,7 @@ export const layoutTreemap = (
       y: node.y0,
       width: node.x1 - node.x0,
       height: node.y1 - node.y0,
-      color: getColor(node.data.appCount, maxCount),
+      color: getColor(node.data.appCount, maxCount, reverseColors),
       fontSize: getFontSize(node.depth),
       value: node.value,
       depth: node.depth,
