@@ -32,11 +32,13 @@ const UserActivity = ({
   displayDiff,
   selectedDiffNode,
   nodes,
+  appName,
 }: {
   openLogsFor: any;
   displayDiff: Function;
   selectedDiffNode: any;
   nodes: any;
+  appName: string;
 }) => {
   const db = getFirestore();
   const [logs, setLogs] = useState<(NodeChange & { id: string })[]>([]);
@@ -53,12 +55,20 @@ const UserActivity = ({
     setHasMore(true);
     setLoading(true);
 
-    const nodesQuery = query(
-      collection(db, NODES_LOGS),
-      where("modifiedBy", "==", openLogsFor.uname),
-      orderBy("modifiedAt", "desc"),
-      limit(100),
-    );
+    const nodesQuery = appName
+      ? query(
+          collection(db, NODES_LOGS),
+          where("modifiedBy", "==", openLogsFor.uname),
+          where("appName", "==", appName),
+          orderBy("modifiedAt", "desc"),
+          limit(100),
+        )
+      : query(
+          collection(db, NODES_LOGS),
+          where("modifiedBy", "==", openLogsFor.uname),
+          orderBy("modifiedAt", "desc"),
+          limit(100),
+        );
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
       const docs = snapshot.docs.map((doc) => ({
@@ -67,12 +77,12 @@ const UserActivity = ({
       })) as (NodeChange & { id: string })[];
 
       setLogs(docs);
-      
+
       if (!snapshot.empty) {
         setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
         setHasMore(snapshot.docs.length === 100);
       }
-      
+
       setLoading(false);
     });
 
@@ -98,17 +108,18 @@ const UserActivity = ({
 
       snapshot.forEach((doc) => {
         const changeData = doc.data();
-        moreLogs.push({ ...changeData, id: doc.id } as NodeChange & { id: string });
+        moreLogs.push({ ...changeData, id: doc.id } as NodeChange & {
+          id: string;
+        });
       });
 
-      setLogs(prevLogs => [...prevLogs, ...moreLogs]);
+      setLogs((prevLogs) => [...prevLogs, ...moreLogs]);
 
       if (!snapshot.empty) {
         setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
       }
 
       setHasMore(snapshot.docs.length === 50);
-
     } catch (error) {
       console.error("Error loading more logs:", error);
     } finally {

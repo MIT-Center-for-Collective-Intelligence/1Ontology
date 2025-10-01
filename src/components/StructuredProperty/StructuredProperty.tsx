@@ -7,6 +7,7 @@ import {
   Tooltip,
   Paper,
   useTheme,
+  useMediaQuery,
   IconButton,
   Card,
   CardContent,
@@ -199,6 +200,7 @@ const StructuredProperty = ({
   modifyProperty,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery("(max-width:599px)");
   const [openAddCollection, setOpenAddCollection] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -526,12 +528,6 @@ const StructuredProperty = ({
         _prev.add(nId);
         return _prev;
       });
-      await handleCloning(
-        { id: clonedNodesQueue[nId].id },
-        clonedNodesQueue[nId].title,
-        nId,
-        collectionName,
-      );
       const addedElements: string[] = [nId];
 
       await handleSaveLinkChanges(
@@ -541,17 +537,19 @@ const StructuredProperty = ({
         currentVisibleNode?.id,
         collectionName,
       );
-
-      setClonedNodesQueue((prev: any) => {
-        const _prev = { ...prev };
-        delete _prev[nId];
-        return _prev;
-      });
       setLoadingIds((prev: Set<string>) => {
         const _prev = new Set(prev);
         _prev.delete(nId);
         return _prev;
       });
+      const id = clonedNodesQueue[nId].id;
+      const title = clonedNodesQueue[nId].title;
+      setClonedNodesQueue((prev: any) => {
+        const _prev = { ...prev };
+        delete _prev[nId];
+        return _prev;
+      });
+      await handleCloning({ id }, title, nId, collectionName);
     } catch (error) {
       console.error(error);
     }
@@ -989,7 +987,7 @@ const StructuredProperty = ({
           borderRadius: property !== "context" ? "30px" : "",
           borderBottomRightRadius: "18px",
           borderBottomLeftRadius: "18px",
-          minWidth: "500px",
+          minWidth: isMobile ? "100%" : "500px",
           width: "100%",
           minHeight: "150px",
           maxHeight: "100%",
@@ -1027,7 +1025,7 @@ const StructuredProperty = ({
           borderRadius: property !== "context" ? "30px" : "",
           borderBottomRightRadius: "18px",
           borderBottomLeftRadius: "18px",
-          minWidth: "500px",
+          minWidth: isMobile ? "100%" : "500px",
           width: "100%",
           minHeight: "150px",
           maxHeight: "100%",

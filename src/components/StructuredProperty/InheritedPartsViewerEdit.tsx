@@ -567,7 +567,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       nodes,
     ).map((c) => c.id);
 
-    const inheritanceRef = currentVisibleNode.inheritance["parts"].ref;
+    const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
     const currentNodeParts =
       inheritanceRef && nodes[inheritanceRef]
         ? nodes[inheritanceRef].properties["parts"]

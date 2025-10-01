@@ -488,7 +488,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
               )}
               <Box sx={{ mt: "15px" }}>
                 {currentNode.propertyType[property] === "string-select" ? (
-                  <SelectProperty
+                  <></>
+                ) : /*    <SelectProperty
                     currentVisibleNode={currentVisibleNode}
                     property={property}
                     nodes={nodes}
@@ -504,8 +505,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
                     skillsFutureApp={skillsFutureApp}
-                  />
-                ) : currentNode.propertyType[property] === "string-array" ? (
+                  /> */
+                currentNode.propertyType[property] === "string-array" ? (
                   <ChipsProperty
                     currentVisibleNode={currentVisibleNode}
                     property={property}

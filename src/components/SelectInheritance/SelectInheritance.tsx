@@ -167,6 +167,12 @@ const SelectInheritance = ({
       });
     }
   };
+  // Don't render if inheritanceType is neverInherit
+  if (
+    currentVisibleNode.inheritance[property]?.inheritanceType === "neverInherit"
+  ) {
+    return null;
+  }
   return (
     <Box sx={{ ml: "auto" }}>
       <TextField
