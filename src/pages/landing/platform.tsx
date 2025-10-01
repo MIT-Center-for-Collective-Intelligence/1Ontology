@@ -1113,7 +1113,7 @@ const PlatformDetailsPage = () => {
                                       '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                                   }}
                                 >
-                                  Generalizations ("Parents")
+                                  Generalizations ({`"Parents"`})
                                 </Typography>
                               </Box>
                               <MessageBubble 
@@ -1199,7 +1199,7 @@ const PlatformDetailsPage = () => {
                                       '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                                   }}
                                 >
-                                  Specializations ("Children")
+                                  Specializations ({`"Children"`})
                                 </Typography>
                               </Box>
                               <MessageBubble 

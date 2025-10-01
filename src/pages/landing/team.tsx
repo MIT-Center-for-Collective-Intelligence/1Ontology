@@ -9,6 +9,7 @@ import {
   ThemeProvider,
   CssBaseline,
   Fade,
+  IconButton,
 } from "@mui/material";
 import { useThemeManager } from "../../lib/hooks/useThemeManager";
 import { createLandingTheme } from "../../theme/landingTheme";

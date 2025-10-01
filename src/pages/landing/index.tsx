@@ -715,9 +715,9 @@ const LandingPage = () => {
                         component="span"
                         sx={{ color: "primary.main", fontWeight: 600 }}
                       >
-                        "family trees"
+                        {`"family trees"`}
                       </Typography>{" "}
-                      of the different types of activities (an "ontology").
+                      of the different types of activities (an {`"ontology"`}).
                     </Typography>
 
                     <Typography
@@ -865,7 +865,7 @@ const LandingPage = () => {
                         >
                           Learning
                         </Typography>{" "}
-                        from activity "relatives"
+                        from activity {`"relatives"`}
                       </Typography>
                       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
                         <Typography
@@ -1204,8 +1204,8 @@ const LandingPage = () => {
                               ml: 2,
                             }}
                           >
-                            Predicting skills needed for today's new jobs and
-                            future jobs that do not yet exist
+                            {`Predicting skills needed for today's new jobs and
+                            future jobs that do not yet exist`}
                           </Typography>
                         </Box>
                       </Box>
@@ -1464,7 +1464,7 @@ const LandingPage = () => {
                   lineHeight: 1.6,
                 }}
               >
-                Specializations "inherit" (and may "over-ride") properties from
+                Specializations {`"inherit"`} (and may {`"over-ride"`}) properties from
                 their generalizations:
               </Typography>
 

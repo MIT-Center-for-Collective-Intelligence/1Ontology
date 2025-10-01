@@ -473,13 +473,13 @@ const OntologyExplorer = () => {
                         </strong>{" "}
                         Leveraged the{" "}
                         <strong style={{ fontStyle: "italic" }}>
-                          "There's an AI for That"
+                          {"There's an AI for That"}
                         </strong>{" "}
                         platform, which catalogs over{" "}
-                        <strong>13,000 AI Apps</strong> across diverse domains.
+                        <strong>13,000 AI Apps</strong> {`across diverse domains.
                         Each entry includes metadata such as the app's name,
                         function, task description, tags, and taglines, enabling
-                        rich task-level analysis.
+                        rich task-level analysis.`}
                       </Typography>
 
                       <Typography
@@ -560,7 +560,7 @@ const OntologyExplorer = () => {
                       }}
                     >
                       The DAG diagram represents hierarchical levels of the verb ontology, progressing from general to specific tasks from left to right, with{" "}
-                      <strong style={{ color: "#ff9800" }}>"Act"</strong> as the root node at the far left of the structure.
+                      <strong style={{ color: "#ff9800" }}>{`"Act"`}</strong> as the root node at the far left of the structure.
                     </Typography>
                   </Box>
                 </Grid>
