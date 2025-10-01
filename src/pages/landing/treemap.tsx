@@ -14,11 +14,14 @@ import {
   ThemeProvider,
   CssBaseline,
   Chip,
+  Button,
+  Switch,
 } from "@mui/material";
 import { useThemeManager } from "../../lib/hooks/useThemeManager";
 import { createLandingTheme } from "../../theme/landingTheme";
 import Navigation from "./_components/Navigation";
 import MobileDrawer from "./_components/MobileDrawer";
+import Footer from "./_components/Footer";
 import {
   TreeNode,
   TreemapNode,
@@ -44,6 +47,7 @@ import {
   ZoomIn,
   ZoomOut,
   CenterFocusStrong,
+  HelpOutline,
 } from "@mui/icons-material";
 import { renderTreemap } from "@components/utilsLandingPage/treemapRendering";
 
@@ -97,9 +101,10 @@ const TreemapPage = () => {
       treemapBounds.width,
       treemapBounds.height,
       maxCount,
+      reverseColors,
     );
     return filterVisibleNodes(nodes, 3);
-  }, [data, treemapBounds.width, treemapBounds.height, maxCount]);
+  }, [data, treemapBounds.width, treemapBounds.height, maxCount, reverseColors]);
 
   // Draw treemap
   const drawTreemap = useCallback(() => {
@@ -132,6 +137,7 @@ const TreemapPage = () => {
       panY,
       isDark,
       maxCount,
+      reverseColors,
     );
   }, [
     treemapNodes,
@@ -141,6 +147,7 @@ const TreemapPage = () => {
     panY,
     isDark,
     maxCount,
+    reverseColors,
     treemapBounds,
   ]);
 
@@ -393,7 +400,57 @@ const TreemapPage = () => {
                 </Box>
 
                 {/* Controls */}
-                <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+                  {/* Color Scale Toggle */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        color: !reverseColors ? "primary.main" : "text.secondary",
+                        transition: "color 0.2s",
+                      }}
+                    >
+                      Red
+                    </Typography>
+                    <Switch
+                      checked={reverseColors}
+                      onChange={(e) => setReverseColors(e.target.checked)}
+                      size="small"
+                      sx={{
+                        "& .MuiSwitch-switchBase.Mui-checked": {
+                          color: "primary.main",
+                        },
+                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                          bgcolor: "primary.light",
+                        },
+                        "& .MuiSwitch-switchBase": {
+                          color: "primary.main",
+                        },
+                        "& .MuiSwitch-track": {
+                          bgcolor: "primary.light",
+                        },
+                      }}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        color: reverseColors ? "primary.main" : "text.secondary",
+                        transition: "color 0.2s",
+                      }}
+                    >
+                      White
+                    </Typography>
+                  </Box>
                   <Chip
                     label={`Zoom: ${(zoom * 100).toFixed(0)}%`}
                     size="small"
@@ -457,6 +514,29 @@ const TreemapPage = () => {
                     <CenterFocusStrong />
                   </IconButton>
                 </Box>
+              </Box>
+            </Container>
+
+            {/* How to Use Instructions */}
+            <Container maxWidth="xl" sx={{ mb: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                }}
+              >
+                <HelpOutline sx={{ fontSize: 16, color: "text.secondary", opacity: 0.7 }} />
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    fontWeight: 400,
+                    fontSize: "0.875rem",
+                  }}
+                >
+                  Click and drag to pan • Scroll or pinch to zoom • Hover blocks for AI app counts
+                </Typography>
               </Box>
             </Container>
 
@@ -565,6 +645,9 @@ const TreemapPage = () => {
               </Card>
             </Container> */}
           </Box>
+
+          {/* Footer */}
+          <Footer isDark={isDark} />
         </Box>
       </ThemeProvider>
     </>

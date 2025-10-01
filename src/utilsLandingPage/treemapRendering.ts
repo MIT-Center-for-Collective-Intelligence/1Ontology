@@ -188,9 +188,31 @@ export const calculateOptimalTextLines = (
 export const shouldUseWhiteText = (
   appCount: number,
   maxCount: number,
+  reverseColors: boolean = false,
 ): boolean => {
-  const textIntensity = appCount / maxCount;
-  return textIntensity > 0.4; // Use white text on darker red backgrounds
+  // Handle edge case
+  if (appCount <= 1) {
+    return reverseColors; // Red background needs white text, white background needs black text
+  }
+
+  // Use the same logarithmic + sqrt calculation as color intensity
+  const minColorCount = 2;
+  const logMax = Math.log(maxCount);
+  const logCurrent = Math.log(appCount);
+  const logMin = Math.log(minColorCount);
+
+  const intensity = Math.max(0, (logCurrent - logMin) / (logMax - logMin));
+  const enhancedIntensity = Math.sqrt(intensity);
+
+  if (reverseColors) {
+    // In reverse mode: red (low count) needs white text, white (high count) needs black text
+    // Background goes from red to white as enhancedIntensity increases
+    return enhancedIntensity < 0.4; // Use white text when background is still red-ish
+  } else {
+    // In normal mode: white (low count) needs black text, red (high count) needs white text
+    // Background goes from white to red as enhancedIntensity increases
+    return enhancedIntensity > 0.6; // Use white text when background is red-ish
+  }
 };
 
 // Setup canvas context for rendering
@@ -234,6 +256,7 @@ export const drawTreemapNode = (
   zoom: number,
   maxCount: number,
   options: TextRenderingOptions,
+  reverseColors: boolean = false,
 ): void => {
   const appCount = node.appCount || 1; // Fallback to 1 if undefined
 
@@ -261,7 +284,7 @@ export const drawTreemapNode = (
   ctx.font = `${scaledFontSize}px Inter, sans-serif`;
 
   // Determine text color based on background intensity
-  const useWhiteText = shouldUseWhiteText(appCount, maxCount);
+  const useWhiteText = shouldUseWhiteText(appCount, maxCount, reverseColors);
   ctx.fillStyle = useWhiteText ? "#ffffff" : "#000000";
   ctx.textAlign = "left";
   ctx.textBaseline = "top"; // This means Y position is the TOP of the text
@@ -324,6 +347,7 @@ export const renderTreemap = (
   panY: number,
   isDark: boolean,
   maxCount: number,
+  reverseColors: boolean = false,
 ): void => {
   const ctx = setupCanvasContext(canvas, isDark);
   if (!ctx) return;
@@ -341,7 +365,7 @@ export const renderTreemap = (
   // Draw all visible nodes
   nodes.forEach((node) => {
     const isHovered = hoveredNodeId === node.id;
-    drawTreemapNode(ctx, node, isHovered, zoom, maxCount, renderingOptions);
+    drawTreemapNode(ctx, node, isHovered, zoom, maxCount, renderingOptions, reverseColors);
   });
 
   ctx.restore();

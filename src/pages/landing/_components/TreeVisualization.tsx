@@ -353,7 +353,6 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
     const labelVisible = (d: any) => {
       // Show text on all nodes regardless of size or depth
       const visible = true;
-      console.log(`Label visibility for "${d.data.name}": depth=${d.depth}, always visible=${visible}`);
       return visible;
     };
 
@@ -365,7 +364,6 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
 
     // Function to split text with dashes for line breaks
     const splitTextWithDash = (text: string, maxLength: number, forceBreak = false) => {
-      console.log(`Splitting text: "${text}" with maxLength: ${maxLength}, forceBreak: ${forceBreak}`); // Debug log
 
       const words = text.split(' ');
 
@@ -415,7 +413,6 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
         lines.push(currentLine);
       }
 
-      console.log(`Result lines:`, lines); // Debug log
       return lines.slice(0, 5); // Limit to 5 lines max
     };
 
@@ -435,7 +432,6 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
         const arcLength = (d.x1 - d.x0) * ((d.y0 + d.y1) / 2 * radius);
         const radialSpace = (d.y1 - d.y0) * radius;
 
-        console.log(`Segment "${d.data.name}": arcLength=${arcLength.toFixed(2)}, radialSpace=${radialSpace.toFixed(2)}`); // Debug log
 
         // Calculate depth-based font size - larger in center, smaller toward outer rings
         const baseFontSize = Math.max(26, radialSpace / 4); // Start with 26px base size (increased by 12px)
@@ -448,22 +444,16 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
         // Special handling for first level (depth 1) - force smaller text width for better line breaks
         if (d.depth === 1) {
           maxCharsPerLine = Math.min(maxCharsPerLine, 12); // Limit first level to ~12 characters per line
-          console.log(`First level node "${d.data.name}" - forcing maxCharsPerLine to ${maxCharsPerLine}`);
         }
 
-        console.log(`fontSize=${fontSize}, charWidth=${charWidth}, maxCharsPerLine=${maxCharsPerLine}`); // Debug log
 
         // Log all nodes to see which ones are being processed
         if (d.data.name.toLowerCase().includes("transfer") || d.data.name.toLowerCase().includes("exchange")) {
-          console.log(`🔍 FOUND "${d.data.name}" at depth ${d.depth} - checking if text will be rendered...`);
-          console.log(`  maxCharsPerLine=${maxCharsPerLine}, radialSpace=${radialSpace}, fontSize=${fontSize}`);
         }
 
         // Almost no restrictions - show text on virtually every node
         if (maxCharsPerLine < 0.5 || radialSpace < 1 || fontSize < 1) {
-          console.log(`Skipping text for "${d.data.name}" - truly too small (maxChars=${maxCharsPerLine}, radialSpace=${radialSpace}, fontSize=${fontSize})`);
           if (d.data.name.toLowerCase().includes("transfer") || d.data.name.toLowerCase().includes("exchange")) {
-            console.log(`⚠️ SKIPPING "${d.data.name}" - too small to render text`);
           }
           return;
         }
@@ -482,31 +472,16 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
 
         // Debug logging for ALL level 2 and 3 nodes
         if (isSecondOrThirdLevel) {
-          console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-          console.log(`DEBUG LEVEL ${d.depth} NODE: "${d.data.name}"`);
-          console.log(`  chars=${d.data.name.length}`);
-          console.log(`  spaces=${spaceCount}`);
-          console.log(`  words=${words.length}`);
-          console.log(`  hasMoreThanOneSpace=${hasMoreThanOneSpace} (needs: spaceCount > 1, actual: ${spaceCount})`);
-          console.log(`  hasMoreThanFifteenChars=${hasMoreThanFifteenChars} (needs: length > 15, actual: ${d.data.name.length})`);
-          console.log(`  shouldForceBreak=${shouldForceBreakLevel23}`);
-          console.log(`  maxCharsPerLine=${maxCharsPerLine}`);
-          console.log(`  textFitsInOneLine=${d.data.name.length <= maxCharsPerLine}`);
-          console.log(`  hasMoreThanThreeWords=${hasMoreThanThreeWords}`);
-          console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
         }
 
         // Priority 1: Force break for level 2/3 with >1 space and >15 chars (ignore if text fits)
         if (shouldForceBreakLevel23) {
-          console.log(`✓ PRIORITY 1: Force breaking "${d.data.name}" (level ${d.depth})`);
           lines = splitTextWithDash(d.data.name, maxCharsPerLine, true); // forceBreak = true
         } else if (d.data.name.length <= maxCharsPerLine && !hasMoreThanThreeWords) {
           // Priority 2: If the whole text fits AND has 3 or fewer words, don't break it at all
-          console.log(`✓ PRIORITY 2: Keeping single line "${d.data.name}" (fits: ${d.data.name.length <= maxCharsPerLine}, words: ${words.length}, maxChars: ${maxCharsPerLine})`);
           lines = [d.data.name];
         } else {
           // Priority 3: Always try to break text to use all available space (either too long OR >3 words)
-          console.log(`✓ PRIORITY 3: Standard breaking "${d.data.name}" (too long or >3 words, maxChars: ${maxCharsPerLine})`);
           lines = splitTextWithDash(d.data.name, maxCharsPerLine);
 
           // If we get no lines or very few characters, try more aggressive approaches
@@ -554,7 +529,6 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
           const reason = tooManySiblings ? `${totalSiblings} siblings` :
                         (isOnlyChild && parentWillBeTruncated) ? 'only child of truncated parent' :
                         isOnlyLeafAmongSiblings ? 'only leaf among siblings' : 'none';
-          console.log(`Leaf node "${d.data.name}" small segment: ${hasSmallSegment} (${reason})`);
         }
 
         // Apply ellipsis to non-leaf nodes with few children OR leaf nodes with small segments OR all leaf nodes with >15 characters OR nodes with only one child and >15 characters
@@ -587,19 +561,16 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
           } else {
             reason = `${d.children?.length || 0} children`;
           }
-          console.log(`Applied ellipsis to ${nodeType} "${d.data.name}" (${reason}): "${lines[0]}"`);
         }
 
         const lineHeight = fontSize * 1.1; // Tighter line spacing
         const totalHeight = lines.length * lineHeight;
         const startY = -(totalHeight / 2) + (lineHeight / 2);
 
-        console.log(`"${d.data.name}" split into ${lines.length} lines:`, lines); // Debug log
 
         // If no lines were generated, force at least the first few characters
         if (lines.length === 0 && d.data.name.length > 0) {
           lines.push(d.data.name.substring(0, Math.min(8, d.data.name.length)));
-          console.log(`Forced fallback text for "${d.data.name}": "${lines[0]}"`);
         }
 
         lines.forEach((line: string, i: number) => {
@@ -1047,18 +1018,18 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
           <Button
-            variant={viewType === 'tree' ? 'contained' : 'outlined'}
-            onClick={() => onViewTypeChange('tree')}
-            size="small"
-          >
-            DAG View
-          </Button>
-          <Button
             variant={viewType === 'sunburst' ? 'contained' : 'outlined'}
             onClick={() => onViewTypeChange('sunburst')}
             size="small"
           >
             Sunburst View
+          </Button>
+          <Button
+            variant={viewType === 'tree' ? 'contained' : 'outlined'}
+            onClick={() => onViewTypeChange('tree')}
+            size="small"
+          >
+            DAG View
           </Button>
         </Box>
         
