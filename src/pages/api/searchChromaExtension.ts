@@ -77,22 +77,24 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     });
 
     const metaDatas: any = results.metadatas[0];
+    const distances: any = results.distances ? results.distances[0] : [];
     const exactMatches = [];
     const otherMatches = [];
 
     const uniqueResults = new Set();
-    for (let result of metaDatas) {
+    for (let resultIdx = 0; resultIdx < metaDatas.length; resultIdx++) {
+      const result = metaDatas[resultIdx];
       const replacedId = result.id.replace("-properties", "");
       if (!uniqueResults.has(replacedId)) {
-        uniqueResults.add(replacedId);
+        uniqueResults.add(result.id);
 
         if (
           result.title &&
           result.title.trim().toLowerCase() === query.trim().toLowerCase()
         ) {
-          exactMatches.push(result);
+          exactMatches.push({ ...result, distance: distances[resultIdx] || 0 });
         } else {
-          otherMatches.push(result);
+          otherMatches.push({ ...result, distance: distances[resultIdx] || 0 });
         }
       }
     }
