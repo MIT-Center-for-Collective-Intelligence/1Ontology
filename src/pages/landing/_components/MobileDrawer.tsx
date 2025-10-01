@@ -17,7 +17,7 @@ interface MobileDrawerProps {
   onClose: () => void;
 }
 
-export const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose }) => {
+const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose }) => {
   return (
     <Drawer
       anchor="right"
@@ -53,3 +53,4 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose }) => 
     </Drawer>
   );
 };
+export default MobileDrawer;

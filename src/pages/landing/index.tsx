@@ -15,9 +15,9 @@ import {
   ChevronRight,
   OpenInNew,
 } from "@mui/icons-material";
-import { Navigation } from "./_components/Navigation";
-import { MobileDrawer } from "./_components/MobileDrawer";
-import { Footer } from "./_components/Footer";
+import  Navigation  from "./_components/Navigation";
+import  MobileDrawer  from "./_components/MobileDrawer";
+import  Footer  from "./_components/Footer";
 import { createLandingTheme } from "../../theme/landingTheme";
 
 const LandingPage = () => {

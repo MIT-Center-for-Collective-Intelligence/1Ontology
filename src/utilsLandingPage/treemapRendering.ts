@@ -1,4 +1,4 @@
-import { TreemapNode } from './treemapLogic';
+import { TreemapNode } from "./treemapLogic";
 
 export interface TextRenderingOptions {
   padding: number;
@@ -11,7 +11,7 @@ export interface TextRenderingOptions {
 export const truncateText = (
   text: string,
   maxWidth: number,
-  ctx: CanvasRenderingContext2D
+  ctx: CanvasRenderingContext2D,
 ): string => {
   const textWidth = ctx.measureText(text).width;
 
@@ -19,13 +19,13 @@ export const truncateText = (
     return text;
   }
 
-  const ellipsis = '...';
+  const ellipsis = "...";
   const ellipsisWidth = ctx.measureText(ellipsis).width;
 
   // Binary search for the right length
   let left = 0;
   let right = text.length;
-  let bestFit = '';
+  let bestFit = "";
 
   while (left <= right) {
     const mid = Math.floor((left + right) / 2);
@@ -48,11 +48,11 @@ export const breakTextIntoLines = (
   text: string,
   maxWidth: number,
   ctx: CanvasRenderingContext2D,
-  truncate: boolean = false
+  truncate: boolean = false,
 ): string[] => {
-  const words = text.split(' ');
+  const words = text.split(" ");
   const lines: string[] = [];
-  let currentLine = '';
+  let currentLine = "";
 
   for (const word of words) {
     const testLine = currentLine ? `${currentLine} ${word}` : word;
@@ -71,7 +71,7 @@ export const breakTextIntoLines = (
         } else {
           lines.push(word);
         }
-        currentLine = '';
+        currentLine = "";
       }
     }
   }
@@ -84,7 +84,9 @@ export const breakTextIntoLines = (
 };
 
 // Create text content for a node
-export const createNodeTextContent = (node: TreemapNode): {
+export const createNodeTextContent = (
+  node: TreemapNode,
+): {
   baseName: string;
   appCountText: string;
   combinedText: string;
@@ -100,7 +102,7 @@ export const createNodeTextContent = (node: TreemapNode): {
 export const calculateOptimalTextLines = (
   node: TreemapNode,
   ctx: CanvasRenderingContext2D,
-  options: TextRenderingOptions
+  options: TextRenderingOptions,
 ): string[] => {
   const { baseName, combinedText } = createNodeTextContent(node);
 
@@ -109,10 +111,16 @@ export const calculateOptimalTextLines = (
   const availableHeight = node.height - 2 * options.padding;
 
   // Calculate max lines that can fit
-  const maxLines = Math.max(1, Math.floor(availableHeight / options.lineHeight));
+  const maxLines = Math.max(
+    1,
+    Math.floor(availableHeight / options.lineHeight),
+  );
 
   // If available height is too small for even one line, try anyway with minimal space
-  if (availableHeight < options.lineHeight && node.height >= options.lineHeight) {
+  if (
+    availableHeight < options.lineHeight &&
+    node.height >= options.lineHeight
+  ) {
     // Recalculate with less padding
     const minPadding = 2;
     const newAvailableHeight = node.height - 2 * minPadding;
@@ -120,7 +128,7 @@ export const calculateOptimalTextLines = (
       // Continue with 1 line
       return calculateOptimalTextLines(node, ctx, {
         ...options,
-        padding: minPadding
+        padding: minPadding,
       });
     }
   }
@@ -134,12 +142,22 @@ export const calculateOptimalTextLines = (
     textLines = [combinedText];
   } else {
     // Try breaking combined text into lines with truncation
-    const brokenCombined = breakTextIntoLines(combinedText, availableWidth, ctx, true);
+    const brokenCombined = breakTextIntoLines(
+      combinedText,
+      availableWidth,
+      ctx,
+      true,
+    );
     if (brokenCombined.length <= maxLines) {
       textLines = brokenCombined;
     } else {
       // Try just the name, broken into lines with truncation
-      const brokenName = breakTextIntoLines(baseName, availableWidth, ctx, true);
+      const brokenName = breakTextIntoLines(
+        baseName,
+        availableWidth,
+        ctx,
+        true,
+      );
       if (brokenName.length <= maxLines) {
         textLines = brokenName.slice(0, maxLines);
       } else {
@@ -148,7 +166,11 @@ export const calculateOptimalTextLines = (
         // Make sure the last line has ellipsis
         if (textLines.length > 0 && brokenName.length > maxLines) {
           const lastLine = textLines[textLines.length - 1];
-          textLines[textLines.length - 1] = truncateText(lastLine, availableWidth, ctx);
+          textLines[textLines.length - 1] = truncateText(
+            lastLine,
+            availableWidth,
+            ctx,
+          );
         }
       }
     }
@@ -163,7 +185,10 @@ export const calculateOptimalTextLines = (
 };
 
 // Determine if white text should be used based on background intensity
-export const shouldUseWhiteText = (appCount: number, maxCount: number): boolean => {
+export const shouldUseWhiteText = (
+  appCount: number,
+  maxCount: number,
+): boolean => {
   const textIntensity = appCount / maxCount;
   return textIntensity > 0.4; // Use white text on darker red backgrounds
 };
@@ -171,7 +196,7 @@ export const shouldUseWhiteText = (appCount: number, maxCount: number): boolean 
 // Setup canvas context for rendering
 export const setupCanvasContext = (
   canvas: HTMLCanvasElement,
-  isDark: boolean
+  isDark: boolean,
 ): CanvasRenderingContext2D | null => {
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
@@ -194,7 +219,7 @@ export const applyCanvasTransform = (
   ctx: CanvasRenderingContext2D,
   panX: number,
   panY: number,
-  zoom: number
+  zoom: number,
 ): void => {
   ctx.save();
   ctx.translate(panX, panY);
@@ -208,7 +233,7 @@ export const drawTreemapNode = (
   isHovered: boolean,
   zoom: number,
   maxCount: number,
-  options: TextRenderingOptions
+  options: TextRenderingOptions,
 ): void => {
   const appCount = node.appCount || 1; // Fallback to 1 if undefined
 
@@ -222,7 +247,10 @@ export const drawTreemapNode = (
   ctx.strokeRect(node.x, node.y, node.width, node.height);
 
   // Skip text rendering if node is too small
-  if (node.width <= options.minNodeWidth || node.height <= options.minNodeHeight) {
+  if (
+    node.width <= options.minNodeWidth ||
+    node.height <= options.minNodeHeight
+  ) {
     return;
   }
 
@@ -241,7 +269,7 @@ export const drawTreemapNode = (
   // Calculate optimal text lines
   const textLines = calculateOptimalTextLines(node, ctx, {
     ...options,
-    lineHeight: scaledFontSize + 2
+    lineHeight: scaledFontSize + 2,
   });
 
   // Render multi-line text if we have lines to show
@@ -263,10 +291,11 @@ export const drawTreemapNode = (
 
     // Render each line - with textBaseline="top", Y is the top of the text
     textLines.forEach((line, index) => {
-      const lineY = node.y + 2 + (index * (scaledFontSize + 2));
+      const lineY = node.y + 2 + index * (scaledFontSize + 2);
 
       // Calculate if this line would fit with bottom padding
-      const fitsWithPadding = lineY + scaledFontSize <= node.y + node.height - 6;
+      const fitsWithPadding =
+        lineY + scaledFontSize <= node.y + node.height - 6;
       const fitsWithoutPadding = lineY + scaledFontSize <= node.y + node.height;
 
       // Render if it fits with padding
@@ -294,7 +323,7 @@ export const renderTreemap = (
   panX: number,
   panY: number,
   isDark: boolean,
-  maxCount: number
+  maxCount: number,
 ): void => {
   const ctx = setupCanvasContext(canvas, isDark);
   if (!ctx) return;
@@ -306,11 +335,11 @@ export const renderTreemap = (
     padding: Math.max(2, 5 / zoom),
     lineHeight: 0, // Will be calculated per node
     minNodeWidth: 15,
-    minNodeHeight: 8
+    minNodeHeight: 8,
   };
 
   // Draw all visible nodes
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     const isHovered = hoveredNodeId === node.id;
     drawTreemapNode(ctx, node, isHovered, zoom, maxCount, renderingOptions);
   });

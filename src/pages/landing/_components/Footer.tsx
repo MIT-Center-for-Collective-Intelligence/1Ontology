@@ -1,18 +1,16 @@
 import React from "react";
 import Link from "next/link";
+import { Box, Container, Grid, Typography } from "@mui/material";
 import {
-  Box,
-  Container,
-  Grid,
-  Typography,
-} from "@mui/material";
-import { LANDING_ROUTES, EXTERNAL_LINKS } from "../../../constants/landingRoutes";
+  LANDING_ROUTES,
+  EXTERNAL_LINKS,
+} from "../../../constants/landingRoutes";
 
 interface FooterProps {
   isDark: boolean;
 }
 
-export const Footer: React.FC<FooterProps> = ({ isDark }) => {
+const Footer: React.FC<FooterProps> = ({ isDark }) => {
   return (
     <Box
       component="footer"
@@ -201,3 +199,5 @@ export const Footer: React.FC<FooterProps> = ({ isDark }) => {
     </Box>
   );
 };
+
+export default Footer;

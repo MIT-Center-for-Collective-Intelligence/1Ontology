@@ -25,7 +25,7 @@ interface NavigationProps {
   onMobileMenuOpen: () => void;
 }
 
-export const Navigation: React.FC<NavigationProps> = ({
+const Navigation: React.FC<NavigationProps> = ({
   isDark,
   handleThemeSwitch,
   isAuthenticated,
@@ -49,7 +49,11 @@ export const Navigation: React.FC<NavigationProps> = ({
             <Link href="/landing" passHref legacyBehavior>
               <Box
                 component="a"
-                sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  cursor: "pointer",
+                }}
               >
                 <img
                   src={
@@ -121,11 +125,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               </Button>
             ) : isAuthenticated ? (
               <Link href="/" passHref legacyBehavior>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  component="a"
-                >
+                <Button variant="contained" color="primary" component="a">
                   Go to Platform
                 </Button>
               </Link>
@@ -142,11 +142,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                   </Button>
                 </Link>
                 <Link href="/signup" passHref legacyBehavior>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    component="a"
-                  >
+                  <Button variant="contained" color="primary" component="a">
                     Register
                   </Button>
                 </Link>
@@ -166,3 +162,4 @@ export const Navigation: React.FC<NavigationProps> = ({
     </AppBar>
   );
 };
+export default Navigation;

@@ -23,9 +23,9 @@ import {
 } from "@mui/material";
 import { useThemeManager } from "../../lib/hooks/useThemeManager";
 import { createLandingTheme } from "../../theme/landingTheme";
-import { Navigation } from "./_components/Navigation";
-import { MobileDrawer } from "./_components/MobileDrawer";
-import { Footer } from "./_components/Footer";
+import  Navigation  from "./_components/Navigation";
+import  MobileDrawer  from "./_components/MobileDrawer";
+import  Footer  from "./_components/Footer";
 import {
   Search,
   KeyboardArrowDown,

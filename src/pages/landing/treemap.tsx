@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import Head from "next/head";
 import {
   Box,
@@ -11,8 +17,8 @@ import {
 } from "@mui/material";
 import { useThemeManager } from "../../lib/hooks/useThemeManager";
 import { createLandingTheme } from "../../theme/landingTheme";
-import { Navigation } from "./_components/Navigation";
-import { MobileDrawer } from "./_components/MobileDrawer";
+import Navigation from "./_components/Navigation";
+import MobileDrawer from "./_components/MobileDrawer";
 import {
   TreeNode,
   TreemapNode,
@@ -29,8 +35,8 @@ import {
   findHoveredNode,
   calculateTooltipData,
   calculateTooltipPosition,
-} from "./utils/treemapLogic";
-import { renderTreemap } from "./utils/treemapRendering";
+} from "../../utilsLandingPage/treemapLogic";
+
 import {
   LightMode as LightModeIcon,
   DarkMode as DarkModeIcon,
@@ -39,10 +45,11 @@ import {
   ZoomOut,
   CenterFocusStrong,
 } from "@mui/icons-material";
-
+import { renderTreemap } from "@components/utilsLandingPage/treemapRendering";
 
 const TreemapPage = () => {
-  const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } = useThemeManager();
+  const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } =
+    useThemeManager();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [data, setData] = useState<TreeNode | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -54,7 +61,10 @@ const TreemapPage = () => {
   const [panY, setPanY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
-  const [treemapBounds, setTreemapBounds] = useState<TreemapBounds>({ width: 0, height: 0 });
+  const [treemapBounds, setTreemapBounds] = useState<TreemapBounds>({
+    width: 0,
+    height: 0,
+  });
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [reverseColors, setReverseColors] = useState(false);
@@ -82,16 +92,14 @@ const TreemapPage = () => {
       return [];
     }
 
-    const nodes = layoutTreemap(data, treemapBounds.width, treemapBounds.height, maxCount);
+    const nodes = layoutTreemap(
+      data,
+      treemapBounds.width,
+      treemapBounds.height,
+      maxCount,
+    );
     return filterVisibleNodes(nodes, 3);
   }, [data, treemapBounds.width, treemapBounds.height, maxCount]);
-
-
-
-
-
-
-
 
   // Draw treemap
   const drawTreemap = useCallback(() => {
@@ -123,44 +131,73 @@ const TreemapPage = () => {
       panX,
       panY,
       isDark,
-      maxCount
+      maxCount,
     );
-  }, [treemapNodes, hoveredNodeId, zoom, panX, panY, isDark, maxCount, treemapBounds]);
+  }, [
+    treemapNodes,
+    hoveredNodeId,
+    zoom,
+    panX,
+    panY,
+    isDark,
+    maxCount,
+    treemapBounds,
+  ]);
 
   // Constrain zoom and pan within bounds
-  const constrainViewCallback = useCallback((newZoom: number, newPanX: number, newPanY: number) => {
-    if (!canvasRef.current) {
-      return { zoom: newZoom, panX: newPanX, panY: newPanY };
-    }
+  const constrainViewCallback = useCallback(
+    (newZoom: number, newPanX: number, newPanY: number) => {
+      if (!canvasRef.current) {
+        return { zoom: newZoom, panX: newPanX, panY: newPanY };
+      }
 
-    const rect = canvasRef.current.getBoundingClientRect();
-    return constrainView(newZoom, newPanX, newPanY, rect.width, rect.height, treemapBounds);
-  }, [treemapBounds]);
+      const rect = canvasRef.current.getBoundingClientRect();
+      return constrainView(
+        newZoom,
+        newPanX,
+        newPanY,
+        rect.width,
+        rect.height,
+        treemapBounds,
+      );
+    },
+    [treemapBounds],
+  );
 
   // Handle mouse wheel for zooming - center-based like buttons
-  const handleWheel = useCallback((e: WheelEvent) => {
-    if (!canvasRef.current || !treemapBounds.width) return;
+  const handleWheel = useCallback(
+    (e: WheelEvent) => {
+      if (!canvasRef.current || !treemapBounds.width) return;
 
-    e.preventDefault();
+      e.preventDefault();
 
-    const rect = canvasRef.current.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
+      const rect = canvasRef.current.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
 
-    // Improved zoom sensitivity - much more gradual
-    const deltaY = Math.sign(e.deltaY);
-    const zoomFactor = deltaY > 0 ? 0.95 : 1.05;
+      // Improved zoom sensitivity - much more gradual
+      const deltaY = Math.sign(e.deltaY);
+      const zoomFactor = deltaY > 0 ? 0.95 : 1.05;
 
-    // Use the extracted utility function
-    const newViewState = calculateCenterZoom(
-      zoom, panX, panY, zoomFactor, centerX, centerY,
-      rect.width, rect.height, treemapBounds
-    );
+      // Use the extracted utility function
+      const newViewState = calculateCenterZoom(
+        zoom,
+        panX,
+        panY,
+        zoomFactor,
+        centerX,
+        centerY,
+        rect.width,
+        rect.height,
+        treemapBounds,
+      );
 
-    setZoom(newViewState.zoom);
-    setPanX(newViewState.panX);
-    setPanY(newViewState.panY);
-  }, [zoom, panX, panY, treemapBounds]);
+      setZoom(newViewState.zoom);
+      setPanX(newViewState.panX);
+      setPanY(newViewState.panY);
+    },
+    [zoom, panX, panY, treemapBounds],
+  );
 
   // Handle mouse events for panning
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -168,43 +205,61 @@ const TreemapPage = () => {
     setLastMousePos({ x: e.clientX, y: e.clientY });
   }, []);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    // Handle dragging
-    if (isDragging) {
-      const deltaX = e.clientX - lastMousePos.x;
-      const deltaY = e.clientY - lastMousePos.y;
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      // Handle dragging
+      if (isDragging) {
+        const deltaX = e.clientX - lastMousePos.x;
+        const deltaY = e.clientY - lastMousePos.y;
 
-      const newPanX = panX + deltaX;
-      const newPanY = panY + deltaY;
+        const newPanX = panX + deltaX;
+        const newPanY = panY + deltaY;
 
-      const constrained = constrainViewCallback(zoom, newPanX, newPanY);
+        const constrained = constrainViewCallback(zoom, newPanX, newPanY);
 
-      setPanX(constrained.panX);
-      setPanY(constrained.panY);
-      setLastMousePos({ x: e.clientX, y: e.clientY });
-      return;
-    }
+        setPanX(constrained.panX);
+        setPanY(constrained.panY);
+        setLastMousePos({ x: e.clientX, y: e.clientY });
+        return;
+      }
 
-    // Handle hover detection when not dragging
-    if (!canvasRef.current || !data) return;
+      // Handle hover detection when not dragging
+      if (!canvasRef.current || !data) return;
 
-    const rect = canvasRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+      const rect = canvasRef.current.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
 
-    // Find which node is under the mouse using memoized nodes
-    const hoveredNode = findHoveredNode(mouseX, mouseY, panX, panY, zoom, treemapNodes);
+      // Find which node is under the mouse using memoized nodes
+      const hoveredNode = findHoveredNode(
+        mouseX,
+        mouseY,
+        panX,
+        panY,
+        zoom,
+        treemapNodes,
+      );
 
-    if (hoveredNode) {
-      setHoveredNodeId(hoveredNode.id);
-      // Convert block coordinates to screen coordinates for tooltip positioning
-      const tooltipData = calculateTooltipData(hoveredNode, zoom, panX, panY);
-      setTooltipData(tooltipData);
-    } else {
-      setHoveredNodeId(null);
-      setTooltipData(null);
-    }
-  }, [isDragging, lastMousePos, panX, panY, constrainViewCallback, treemapNodes, zoom]);
+      if (hoveredNode) {
+        setHoveredNodeId(hoveredNode.id);
+        // Convert block coordinates to screen coordinates for tooltip positioning
+        const tooltipData = calculateTooltipData(hoveredNode, zoom, panX, panY);
+        setTooltipData(tooltipData);
+      } else {
+        setHoveredNodeId(null);
+        setTooltipData(null);
+      }
+    },
+    [
+      isDragging,
+      lastMousePos,
+      panX,
+      panY,
+      constrainViewCallback,
+      treemapNodes,
+      zoom,
+    ],
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -260,7 +315,14 @@ const TreemapPage = () => {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "100vh",
+          }}
+        >
           <Typography>Loading treemap data...</Typography>
         </Box>
       </ThemeProvider>
@@ -270,8 +332,13 @@ const TreemapPage = () => {
   return (
     <>
       <Head>
-        <title>AI Applications Treemap - Ontology of Collective Intelligence</title>
-        <meta name="description" content="Interactive treemap visualization of AI applications classified by our ontology" />
+        <title>
+          AI Applications Treemap - Ontology of Collective Intelligence
+        </title>
+        <meta
+          name="description"
+          content="Interactive treemap visualization of AI applications classified by our ontology"
+        />
       </Head>
       <ThemeProvider theme={theme}>
         <CssBaseline />
@@ -295,13 +362,33 @@ const TreemapPage = () => {
           <Box sx={{ pt: 10 }}>
             {/* Header */}
             <Container maxWidth="xl" sx={{ mb: 4 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: 2,
+                }}
+              >
                 <Box>
-                  <Typography variant="h3" sx={{ fontWeight: 300, mb: 1, fontSize: { xs: "1.75rem", md: "2.5rem" } }}>
+                  <Typography
+                    variant="h3"
+                    sx={{
+                      fontWeight: 300,
+                      mb: 1,
+                      fontSize: { xs: "1.75rem", md: "2.5rem" },
+                    }}
+                  >
                     AI Applications Treemap
                   </Typography>
-                  <Typography variant="h6" sx={{ color: "text.secondary", fontWeight: 400 }}>
-                    Interactive visualization of {data.appCount.toLocaleString()} AI apps classified by ontology
+                  <Typography
+                    variant="h6"
+                    sx={{ color: "text.secondary", fontWeight: 400 }}
+                  >
+                    Interactive visualization of{" "}
+                    {data.appCount.toLocaleString()} AI apps classified by
+                    ontology
                   </Typography>
                 </Box>
 
@@ -320,8 +407,15 @@ const TreemapPage = () => {
                       const centerY = rect.height / 2;
 
                       const newViewState = calculateCenterZoom(
-                        zoom, panX, panY, 1.1, centerX, centerY,
-                        rect.width, rect.height, treemapBounds
+                        zoom,
+                        panX,
+                        panY,
+                        1.1,
+                        centerX,
+                        centerY,
+                        rect.width,
+                        rect.height,
+                        treemapBounds,
                       );
 
                       setZoom(newViewState.zoom);
@@ -340,8 +434,15 @@ const TreemapPage = () => {
                       const centerY = rect.height / 2;
 
                       const newViewState = calculateCenterZoom(
-                        zoom, panX, panY, 0.9, centerX, centerY,
-                        rect.width, rect.height, treemapBounds
+                        zoom,
+                        panX,
+                        panY,
+                        0.9,
+                        centerX,
+                        centerY,
+                        rect.width,
+                        rect.height,
+                        treemapBounds,
                       );
 
                       setZoom(newViewState.zoom);
@@ -360,14 +461,17 @@ const TreemapPage = () => {
             </Container>
 
             {/* Treemap Canvas */}
-            <Box ref={containerRef} sx={{ position: "relative", height: "calc(100vh - 200px)" }}>
+            <Box
+              ref={containerRef}
+              sx={{ position: "relative", height: "calc(100vh - 200px)" }}
+            >
               <canvas
                 ref={canvasRef}
                 style={{
                   width: "100%",
                   height: "100%",
                   cursor: isDragging ? "grabbing" : "default",
-                  display: "block"
+                  display: "block",
                 }}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -380,44 +484,48 @@ const TreemapPage = () => {
               />
 
               {/* Tooltip */}
-              {tooltipData && !isDragging && (() => {
-                // Position tooltip using extracted utility
-                const containerRect = containerRef.current?.getBoundingClientRect();
-                if (!containerRect) return null;
+              {tooltipData &&
+                !isDragging &&
+                (() => {
+                  // Position tooltip using extracted utility
+                  const containerRect =
+                    containerRef.current?.getBoundingClientRect();
+                  if (!containerRect) return null;
 
-                const { left: tooltipLeft, top: tooltipTop } = calculateTooltipPosition(
-                  tooltipData,
-                  containerRect.width,
-                  containerRect.height
-                );
+                  const { left: tooltipLeft, top: tooltipTop } =
+                    calculateTooltipPosition(
+                      tooltipData,
+                      containerRect.width,
+                      containerRect.height,
+                    );
 
-                return (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      left: tooltipLeft,
-                      top: tooltipTop,
-                      bgcolor: "rgba(0, 0, 0, 0.9)",
-                      color: "white",
-                      padding: "8px 12px",
-                      borderRadius: "4px",
-                      pointerEvents: "none",
-                      zIndex: 1000,
-                      fontSize: "14px",
-                      maxWidth: "250px",
-                      whiteSpace: "nowrap",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.3)"
-                    }}
-                  >
-                    <Box sx={{ fontWeight: "bold", marginBottom: "4px" }}>
-                      {tooltipData.name}
+                  return (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        left: tooltipLeft,
+                        top: tooltipTop,
+                        bgcolor: "rgba(0, 0, 0, 0.9)",
+                        color: "white",
+                        padding: "8px 12px",
+                        borderRadius: "4px",
+                        pointerEvents: "none",
+                        zIndex: 1000,
+                        fontSize: "14px",
+                        maxWidth: "250px",
+                        whiteSpace: "nowrap",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                      }}
+                    >
+                      <Box sx={{ fontWeight: "bold", marginBottom: "4px" }}>
+                        {tooltipData.name}
+                      </Box>
+                      <Box sx={{ fontSize: "12px", opacity: 0.9 }}>
+                        {tooltipData.appCount} AI apps
+                      </Box>
                     </Box>
-                    <Box sx={{ fontSize: "12px", opacity: 0.9 }}>
-                      {tooltipData.appCount} AI apps
-                    </Box>
-                  </Box>
-                );
-              })()}
+                  );
+                })()}
             </Box>
 
             {/* Instructions */}

@@ -13,9 +13,9 @@ import {
 } from "@mui/material";
 import { useThemeManager } from "../../lib/hooks/useThemeManager";
 import { createLandingTheme } from "../../theme/landingTheme";
-import { Navigation } from "./_components/Navigation";
-import { MobileDrawer } from "./_components/MobileDrawer";
-import { Footer } from "./_components/Footer";
+import Navigation from "./_components/Navigation";
+import MobileDrawer from "./_components/MobileDrawer";
+import Footer from "./_components/Footer";
 import { OpenInNew } from "@mui/icons-material";
 
 interface TeamMember {
@@ -59,7 +59,13 @@ const SidebarButton = ({
 );
 
 // Team Member Component with Role and Affiliation
-const TeamMemberCard = ({ member, index }: { member: TeamMember; index: number }) => {
+const TeamMemberCard = ({
+  member,
+  index,
+}: {
+  member: TeamMember;
+  index: number;
+}) => {
   return (
     <Fade in={true} timeout={600 + index * 100}>
       <Box
@@ -129,7 +135,13 @@ const TeamMemberCard = ({ member, index }: { member: TeamMember; index: number }
 };
 
 // Clean Publication Item Component
-const PublicationItem = ({ publication, index }: { publication: Publication; index: number }) => {
+const PublicationItem = ({
+  publication,
+  index,
+}: {
+  publication: Publication;
+  index: number;
+}) => {
   return (
     <Fade in={true} timeout={600 + index * 50}>
       <Box
@@ -213,7 +225,7 @@ const PublicationItem = ({ publication, index }: { publication: Publication; ind
           >
             {publication.authors.join(", ")}
           </Typography>
-          
+
           <Typography
             variant="body2"
             sx={{
@@ -253,10 +265,12 @@ const PublicationItem = ({ publication, index }: { publication: Publication; ind
 };
 
 const TeamPage = () => {
-  const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } = useThemeManager();
+  const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } =
+    useThemeManager();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [teamData, setTeamData] = useState<TeamData | null>(null);
-  const [publicationsData, setPublicationsData] = useState<PublicationsData | null>(null);
+  const [publicationsData, setPublicationsData] =
+    useState<PublicationsData | null>(null);
 
   useEffect(() => {
     // Fetch team data
@@ -264,7 +278,7 @@ const TeamPage = () => {
       .then((res) => res.json())
       .then((data) => setTeamData(data))
       .catch((err) => console.error("Error loading team data:", err));
-    
+
     // Fetch publications data
     fetch("/landing_data/publications_data.json")
       .then((res) => res.json())
@@ -275,8 +289,8 @@ const TeamPage = () => {
   // Function to sort members by last name
   const sortMembersByLastName = (members: TeamMember[]) => {
     return [...members].sort((a, b) => {
-      const lastNameA = a.name.split(' ').pop()?.toLowerCase() || '';
-      const lastNameB = b.name.split(' ').pop()?.toLowerCase() || '';
+      const lastNameA = a.name.split(" ").pop()?.toLowerCase() || "";
+      const lastNameB = b.name.split(" ").pop()?.toLowerCase() || "";
       return lastNameA.localeCompare(lastNameB);
     });
   };
@@ -286,15 +300,17 @@ const TeamPage = () => {
   const sortedMembersByRole = Object.fromEntries(
     Object.entries(membersByRole).map(([role, members]) => [
       role,
-      sortMembersByLastName(members)
-    ])
+      sortMembersByLastName(members),
+    ]),
   );
 
   // Define role order for consistent display
   const roleOrder = ["Faculty Members", "Researchers", "Developers"];
-  const sortedRoles = roleOrder.filter(role => sortedMembersByRole[role]);
+  const sortedRoles = roleOrder.filter((role) => sortedMembersByRole[role]);
   // Add any additional roles not in the predefined order
-  const otherRoles = Object.keys(sortedMembersByRole).filter(role => !roleOrder.includes(role));
+  const otherRoles = Object.keys(sortedMembersByRole).filter(
+    (role) => !roleOrder.includes(role),
+  );
   const orderedRoles = [...sortedRoles, ...otherRoles];
 
   const theme = createLandingTheme(isDark);
@@ -380,56 +396,56 @@ const TeamPage = () => {
               {orderedRoles.map((role, roleIndex) => {
                 const members = sortedMembersByRole[role];
                 return (
-                <Box key={role} sx={{ mb: { xs: 6, md: 8 } }}>
-                  {/* Role Section Header */}
-                  <Box sx={{ mb: 4, textAlign: "center" }}>
-                    <Typography
-                      variant="h5"
-                      component="h2"
-                      sx={{
-                        fontWeight: 500,
-                        fontSize: { xs: "1.25rem", md: "1.5rem" },
-                        letterSpacing: "-0.01em",
-                        color: "text.primary",
-                        fontFamily:
-                          '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-                        mb: 1,
-                      }}
-                    >
-                      {role}
-                    </Typography>
-                    <Box
-                      sx={{
-                        width: 60,
-                        height: 3,
-                        bgcolor: "primary.main",
-                        borderRadius: 1.5,
-                        mx: "auto",
-                        opacity: 0.8,
-                      }}
-                    />
-                  </Box>
-
-                  {/* Members Grid */}
-                  <Grid container spacing={3} justifyContent="center">
-                    {members.map((member, memberIndex) => (
-                      <Grid 
-                        item 
-                        xs={6} 
-                        sm={4} 
-                        md={3} 
-                        lg={2.4} 
-                        key={`${role}-${memberIndex}`}
-                        sx={{ display: "flex", justifyContent: "center" }}
+                  <Box key={role} sx={{ mb: { xs: 6, md: 8 } }}>
+                    {/* Role Section Header */}
+                    <Box sx={{ mb: 4, textAlign: "center" }}>
+                      <Typography
+                        variant="h5"
+                        component="h2"
+                        sx={{
+                          fontWeight: 500,
+                          fontSize: { xs: "1.25rem", md: "1.5rem" },
+                          letterSpacing: "-0.01em",
+                          color: "text.primary",
+                          fontFamily:
+                            '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                          mb: 1,
+                        }}
                       >
-                        <TeamMemberCard 
-                          member={member} 
-                          index={roleIndex * 10 + memberIndex} 
-                        />
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Box>
+                        {role}
+                      </Typography>
+                      <Box
+                        sx={{
+                          width: 60,
+                          height: 3,
+                          bgcolor: "primary.main",
+                          borderRadius: 1.5,
+                          mx: "auto",
+                          opacity: 0.8,
+                        }}
+                      />
+                    </Box>
+
+                    {/* Members Grid */}
+                    <Grid container spacing={3} justifyContent="center">
+                      {members.map((member, memberIndex) => (
+                        <Grid
+                          item
+                          xs={6}
+                          sm={4}
+                          md={3}
+                          lg={2.4}
+                          key={`${role}-${memberIndex}`}
+                          sx={{ display: "flex", justifyContent: "center" }}
+                        >
+                          <TeamMemberCard
+                            member={member}
+                            index={roleIndex * 10 + memberIndex}
+                          />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
                 );
               })}
             </Container>
