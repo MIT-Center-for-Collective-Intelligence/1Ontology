@@ -146,6 +146,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         {
           title: nodeData.title,
           id: nodeData.id,
+          nodeType: nodeData.nodeType,
         },
       ],
     });
@@ -154,7 +155,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     await collection.delete({ ids: [nodeData.id] });
     await collection.delete({ ids: [`${nodeData.id}-properties`] });
   }
-
+  if (nodeData.appName === "only-specifications-ai-peer") {
+    return res.status(200).json({});
+  }
   const propertyOf: { [propertyName: string]: ICollection[] } =
     nodeData.propertyOf || {};
 
