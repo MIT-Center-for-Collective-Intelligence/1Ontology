@@ -130,6 +130,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                 checkDuplicateTitle={editor.checkDuplicateTitle}
                 onEditorReady={handleEditorReady}
                 setEditorContent={setEditorContent}
+                fallbackContent={content.text}
               />
             ) : (
               <SimpleEditor
