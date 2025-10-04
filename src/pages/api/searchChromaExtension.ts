@@ -2,6 +2,9 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { ChromaClient, OpenAIEmbeddingFunction } from "chromadb";
 import Cors from "cors";
 import { openai } from "./helpers";
+import { db } from "@components/lib/firestoreServer/admin";
+import { LOGS } from "@components/lib/firestoreClient/collections";
+import { getDoerCreate } from "@components/lib/utils/helpers";
 
 const url = `${process.env.CHROMA_PROTOCOL}://${process.env.CHROMA_HOST}:${process.env.CHROMA_PORT}`;
 
@@ -40,7 +43,8 @@ const runMiddleware = (req: any, res: any, fn: any) => {
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { query, skillsFuture, appName, resultsNum } = req.body;
+    const { query, skillsFuture, appName, user, nodeType, resultsNum } =
+      req.body;
 
     await runMiddleware(req, res, cors);
 
@@ -52,21 +56,23 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     } else {
       collectionName = "ontology";
     }
+
     const client = new ChromaClient({ path: url });
 
     const collection = await client.getOrCreateCollection({
       name: collectionName,
+      embeddingFunction,
     });
-    const embeddingResponse = await openai.embeddings.create({
-      model: "text-embedding-3-small",
-      input: query,
-    });
-
-    const embeddedQuery = embeddingResponse.data[0].embedding;
-
     const results = await collection.query({
-      queryEmbeddings: [embeddedQuery],
+      queryTexts: query,
       nResults: resultsNum || 40,
+      ...(nodeType
+        ? {
+            where: {
+              nodeType,
+            },
+          }
+        : {}),
     });
 
     const metaDatas: any = results.metadatas[0];
@@ -90,6 +96,22 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
     }
     const resultsAlt = [...exactMatches, ...otherMatches];
+    const logData = {
+      at: "searchChroma",
+      query,
+      results: resultsAlt,
+      appName,
+    };
+    const logRef = db.collection(LOGS).doc();
+    const uname = "ai-peer-extension";
+    const doerCreate = getDoerCreate(uname || "");
+    await logRef.set({
+      type: "info",
+      ...logData,
+      createdAt: new Date(),
+      doer: uname,
+      doerCreate,
+    });
     return res.status(200).json({ results: resultsAlt });
   } catch (error) {
     console.error(error);
