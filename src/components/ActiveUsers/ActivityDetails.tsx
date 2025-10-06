@@ -3,7 +3,7 @@ import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import { getChangeDescription } from "@components/lib/utils/helpers";
 import { NodeChange } from "@components/types/INode";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import moment from "moment";
 
@@ -269,8 +269,7 @@ const ActivityDetails = ({
           <div>
             <ul>
               <li>
-                <span style={{ color: "orange" }}>Activity ID:</span>{" "}
-                {activity.id}
+                <span style={{ color: "orange" }}>Log ID:</span> {activity.id}
               </li>
               <li>
                 <span style={{ color: "orange" }}>Node ID:</span>{" "}

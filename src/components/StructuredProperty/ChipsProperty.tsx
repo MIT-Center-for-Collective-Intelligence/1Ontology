@@ -42,9 +42,15 @@ const ChipsProperty = ({
   skillsFutureApp: string;
 }) => {
   const db = getFirestore();
-  const [value, setValue] = useState<{ title: string }[]>([]);
+  const [value, setValue] = useState<
+    { title: string; added?: boolean; removed?: boolean }[]
+  >([]);
 
-  const propertyValue: string[] = useMemo(() => {
+  const propertyValue: {
+    title: string;
+    added?: boolean;
+    removed?: boolean;
+  }[] = useMemo(() => {
     if (
       currentImprovement &&
       currentImprovement.modifiedProperty === property
@@ -55,17 +61,17 @@ const ChipsProperty = ({
       ];
     }
     if (selectedDiffNode && selectedDiffNode.modifiedProperty === property) {
-      if (
-        selectedDiffNode.changeDetails &&
-        selectedDiffNode.changeDetails.addedElements.length > 0
-      ) {
-        return selectedDiffNode.newValue;
-      } else if (
-        selectedDiffNode.changeDetails &&
-        selectedDiffNode.changeDetails.removedElements.length > 0
-      ) {
-        return selectedDiffNode.previousValue;
-      }
+      const previousValue: string[] = selectedDiffNode.previousValue;
+      const newValue: string[] = selectedDiffNode.newValue;
+
+      const allTitles = Array.from(new Set([...previousValue, ...newValue]));
+
+      const result = allTitles.map((title) => ({
+        title,
+        added: !previousValue.includes(title) && newValue.includes(title),
+        removed: previousValue.includes(title) && !newValue.includes(title),
+      }));
+      return result;
     }
     const result = currentVisibleNode.inheritance[property]?.ref
       ? getPropertyValue(
@@ -77,7 +83,11 @@ const ChipsProperty = ({
 
     return Array.isArray(result) &&
       result.every((item) => typeof item === "string")
-      ? result
+      ? result.map((alt) => {
+          return {
+            title: alt,
+          };
+        })
       : [];
   }, [
     property,
@@ -88,13 +98,8 @@ const ChipsProperty = ({
   ]);
 
   useEffect(() => {
-    setValue(
-      propertyValue.map((c) => {
-        return {
-          title: c,
-        };
-      }),
-    );
+    console.log(propertyValue, "propertyValue");
+    setValue(propertyValue);
   }, [propertyValue]);
 
   const updateValue = async (
@@ -180,6 +185,10 @@ const ChipsProperty = ({
         flexDirection: "column",
         overflowX: "hidden",
         pb: "10px",
+        border:
+          selectedDiffNode?.modifiedProperty === property
+            ? "1.5px solid orange"
+            : "",
       }}
     >
       {" "}
@@ -237,26 +246,13 @@ const ChipsProperty = ({
             ? `Type a new ${property} and click enter ↵ to add it..`
             : ""
         }
-        added={
-          currentImprovement?.modifiedProperty === property
-            ? currentImprovement.detailsOfChange.addedElements || []
-            : selectedDiffNode?.modifiedProperty === property
-              ? selectedDiffNode?.changeDetails?.addedElements || []
-              : []
-        }
-        removed={
-          currentImprovement?.modifiedProperty === property
-            ? currentImprovement.detailsOfChange.removedElements || []
-            : selectedDiffNode?.modifiedProperty === property
-              ? selectedDiffNode?.changeDetails?.removedElements || []
-              : []
-        }
         readOnly={
           !!selectedDiffNode ||
           !!currentVisibleNode.unclassified ||
           !!currentImprovement ||
           !enableEdit
         }
+        fontSize="19px"
       />
       <InheritanceDetailsPanel
         property={property}

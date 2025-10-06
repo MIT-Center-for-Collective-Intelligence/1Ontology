@@ -15,7 +15,7 @@ const useStyles: any = makeStyles(() => ({
     },
   },
   innerChip: {
-    margin: "15px 10px 0px 0",
+    margin: "0px 10px 0px 0",
   },
 }));
 
@@ -41,8 +41,6 @@ const ChipInput = ({
   readOnly?: any;
   itemId?: any;
   label?: any;
-  added?: any;
-  removed?: any;
   style?: any;
 }) => {
   const classes = useStyles();
@@ -56,8 +54,6 @@ const ChipInput = ({
     readOnly,
     itemId,
     label,
-    added = [],
-    removed = [],
     style = {},
     fontSize,
     ...other
@@ -145,12 +141,16 @@ const ChipInput = ({
 
                     const backgroundColor =
                       performerColors[item.supports] || "grey";
-
+                    const color = item.added
+                      ? "#459a3a"
+                      : item.removed
+                        ? "red"
+                        : "";
                     return (
                       <Fragment key={idx}>
                         <Chip
                           sx={{
-                            background: backgroundColor,
+                            background: color || backgroundColor,
                             fontSize: fontSize || "20px",
                             cursor: clickable ? "pointer" : "default",
                             ":hover": clickable
