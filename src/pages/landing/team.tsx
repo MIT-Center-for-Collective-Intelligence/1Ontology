@@ -22,6 +22,7 @@ interface TeamMember {
   name: string;
   affiliation: string;
   image?: string;
+  role?: string;
 }
 
 interface TeamData {
@@ -113,6 +114,25 @@ const TeamMemberCard = ({
         >
           {member.name}
         </Typography>
+
+        {/* Role */}
+        {member.role && (
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              fontWeight: 500,
+              fontSize: { xs: "0.875rem", sm: "0.9rem" },
+              fontFamily:
+                '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+              textAlign: "center",
+              lineHeight: 1.4,
+              mb: 0.25,
+            }}
+          >
+            {member.role}
+          </Typography>
+        )}
 
         {/* Affiliation */}
         <Typography
@@ -305,7 +325,7 @@ const TeamPage = () => {
   );
 
   // Define role order for consistent display
-  const roleOrder = ["Faculty Members", "Researchers", "Developers"];
+  const roleOrder = ["Faculty Members", "Researchers", "Developers", "Interns", "Alumni"];
   const sortedRoles = roleOrder.filter((role) => sortedMembersByRole[role]);
   // Add any additional roles not in the predefined order
   const otherRoles = Object.keys(sortedMembersByRole).filter(

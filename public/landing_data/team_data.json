@@ -4,96 +4,136 @@
       {
         "name": "Abdullah Almaatouq",
         "affiliation": "MIT Sloan School of Management",
-        "image": "/team/abdullah-almaatouq.jpg"
+        "image": "/team/abdullah-almaatouq.jpg",
+        "role": "Assistant Professor"
       },
       {
         "name": "Thomas Malone",
         "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/thomas-malone.jpg"
+        "image": "/team/thomas-malone.jpg",
+        "role": "Director"
       }
     ],
     "Researchers": [
       {
         "name": "Alice Cai",
         "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/alice-cai.jpg"
+        "image": "/team/alice-cai.jpg",
+        "role": "PhD Student"
       },
       {
         "name": "Vasiliki Charisi",
         "affiliation": "Singapore-MIT Alliance for Research and Technology",
-        "image": "/team/vasiliki-charisi.jpg"
-      },
-      {
-        "name": "Jie Gao",
-        "affiliation": "Singapore-MIT Alliance for Research and Technology",
-        "image": "/team/jie-gao.jpg"
-      },
-      {
-        "name": "Jennifer Heyman",
-        "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/jennifer-heyman.jpg"
+        "image": "/team/vasiliki-charisi.jpg",
+        "role": "Research Scientist"
       },
       {
         "name": "Kathleen Kennedy",
         "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/kathleen-kennedy.jpg"
+        "image": "/team/kathleen-kennedy.jpg",
+        "role": "Executive Director"
       },
       {
         "name": "Robert Laubacher",
         "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/robert-laubacher.jpg"
+        "image": "/team/robert-laubacher.jpg",
+        "role": "Associate Director, Research Scientist"
       },
       {
         "name": "Isabella Loaiza",
         "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/isabella-loaiza.jpg"
+        "image": "/team/isabella-loaiza.jpg",
+        "role": "Director"
       },
       {
         "name": "Alok Prakash",
         "affiliation": "Singapore-MIT Alliance for Research and Technology",
-        "image": "/team/alok-prakash.jpg"
-      },
-      {
-        "name": "Steven Rick",
-        "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/steven-rick.jpg"
+        "image": "/team/alok-prakash.jpg",
+        "role": "CTO and Scientific Director"
       },
       {
         "name": "Shuo Sun",
         "affiliation": "Singapore-MIT Alliance for Research and Technology",
-        "image": "/team/shuo-sun.jpg"
+        "image": "/team/shuo-sun.jpg",
+        "role": "Postdoctoral Associate"
       },
       {
         "name": "Dicle Uzunyayla",
         "affiliation": "TIGRIS Design",
-        "image": "/team/dicle-uzunyayla.jpg"
+        "image": "/team/dicle-uzunyayla.jpg",
+        "role": "Director"
       },
       {
         "name": "Michelle Vaccaro",
         "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/michelle-vaccaro.jpg"
+        "image": "/team/michelle-vaccaro.jpg",
+        "role": "PhD Student"
       },
       {
         "name": "Xinru Wang",
         "affiliation": "Singapore-MIT Alliance for Research and Technology",
-        "image": "/team/xinru-wang.jpg"
+        "image": "/team/xinru-wang.jpg",
+        "role": "Postdoctoral Associate"
       },
       {
         "name": "Iman YeckehZaare",
         "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/iman-yeckehzaare.jpg"
+        "image": "/team/iman-yeckehzaare.jpg",
+        "role": "Postdoctoral Associate"
       }
     ],
     "Developers": [
       {
         "name": "Abdessamad Ouhra Ali",
         "affiliation": "MIT Center for Collective Intelligence",
-        "image": "/team/sam-ouhra.jpg"
+        "image": "/team/sam-ouhra.jpg",
+        "role": "Fullstack Developer"
       },
       {
         "name": "Soe Min Thant",
         "affiliation": "Singapore-MIT Alliance for Research and Technology",
-        "image": "/team/soe-min-thant.jpg"
+        "image": "/team/soe-min-thant.jpg",
+        "role": "Fullstack Developer"
+      }
+    ],
+    "Interns": [
+      {
+        "name": "Xinyue CHEN",
+        "affiliation": "National University of Singapore",
+        "image": "/team/xinyue-chen.jpg",
+        "role": "Visiting Student"
+      },
+      {
+        "name": "Zhexuan MA",
+        "affiliation": "National University of Singapore",
+        "image": "/team/zhexuan-ma.jpg",
+        "role": "Visiting Student"
+      },
+      {
+        "name": "Jiacheng Zhang",
+        "affiliation": "National University of Singapore",
+        "image": "/team/jiacheng-zhang.jpg",
+        "role": "Visiting Student"
+      }
+    ],
+    "Alumni": [
+      {
+        "name": "Jie Gao",
+        "affiliation": "Singapore-MIT Alliance for Research and Technology",
+        "image": "/team/jie-gao.jpg",
+        "role": "Postdoctoral Associate"
+      },
+      {
+        "name": "Jennifer Heyman",
+        "affiliation": "MIT Center for Collective Intelligence",
+        "image": "/team/jennifer-heyman.jpg",
+        "role": "Postdoctoral Associate"
+      },
+      {
+        "name": "Steven Rick",
+        "affiliation": "MIT Center for Collective Intelligence",
+        "image": "/team/steven-rick.jpg",
+        "role": "Postdoctoral Associate"
       }
     ]
   }
