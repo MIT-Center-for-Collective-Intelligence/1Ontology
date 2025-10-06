@@ -136,7 +136,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         doerCreate,
       });
 
-      return res.status(200).json({ results: _data });
+      return res.status(200).json({ results: topResults });
     }
 
     const results = await collection.query({
