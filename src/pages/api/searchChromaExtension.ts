@@ -54,8 +54,6 @@ const cosineSimilarity = (vecA: any[], vecB: any[]) => {
   return dot / (normA * normB);
 };
 
-const _query = `AI-powered credit score boosting made easy. Dovly is an AI credit engine designed to empower users in their journey towards financial freedom. This tool provides a platform for monitoring, building, and repairing credit profiles. Leveraging AI technology, Dovly handles credit disputes with all three credit bureaus and provides weekly TransUnion credit reports and scores, along with enhanced credit monitoring and ID theft alerts. A core feature is the smart AI credit engine, engineered to optimize results by analyzing a user's unique credit situation and matching them with a personalized action plan. Additionally, it offers credit building offers and personalized tips and guides tailored to a user's financial situation to assist in strengthen their credit profile. Users can enroll online in minutes, with an assurance that enrolling does not negatively impact their credit score. Dovly also includes ID theft insurance and provides regular updates, tips, and recommendations to its users.`;
-
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const {
@@ -98,7 +96,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
       const response = await openai.embeddings.create({
         model: "text-embedding-3-large",
-        input: [_query],
+        input: [query],
       });
       const embeddings = response.data?.map((item) => item.embedding) ?? [];
       const queryEmbedding = embeddings[0];
