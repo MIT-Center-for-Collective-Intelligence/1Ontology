@@ -47,14 +47,15 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [sunburstZoomLevel, setSunburstZoomLevel] = useState(1);
-  const [treeZoomLevel, setTreeZoomLevel] = useState(1);
+  const [treeZoomLevel, setTreeZoomLevel] = useState(0.1);
   const svgRef = useRef(null);
   const containerRef = useRef(null);
   const sunburstZoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const treeZoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   // Store complete zoom transforms (scale + translation) for each view
   const sunburstTransformRef = useRef<d3.ZoomTransform>(d3.zoomIdentity);
-  const treeTransformRef = useRef<d3.ZoomTransform>(d3.zoomIdentity);
+
+  const treeTransformRef = useRef<d3.ZoomTransform | null>(null);
 
   // Color calculation logic matching treemap implementation exactly
   const getNodeColor = (appCount: number, maxCount: number, isDark: boolean): string => {
@@ -802,9 +803,22 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
     // Store the zoom behavior reference for tree view
     treeZoomRef.current = treeZoomBehavior;
 
-    // Restore previous zoom transform if it exists - do this BEFORE adding nodes/text
-    const shouldRestoreTransform = treeTransformRef.current && treeTransformRef.current.k !== 1;
-    if (shouldRestoreTransform) {
+    if (treeTransformRef.current === null) {
+      const targetScale = 0.1;
+      const container = containerRef.current as HTMLElement | null;
+      const containerWidth = container?.clientWidth || 600;
+      const containerHeight = container?.clientHeight || 600;
+
+      const treeCenterX = 6000;
+      const treeCenterY = 2000;
+
+      const translateX = containerWidth / 2 - treeCenterX * targetScale;
+      const translateY = containerHeight / 2 - treeCenterY * targetScale;
+
+      treeTransformRef.current = d3.zoomIdentity.translate(translateX, translateY).scale(targetScale);
+    }
+
+    if (treeTransformRef.current) {
       svg_container.call(treeZoomBehavior.transform as any, treeTransformRef.current);
     }
 
@@ -941,8 +955,8 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({
     //   // Focus node logic would go here
     // }
 
-    // Apply the scaling manually if we restored a transform (since .call doesn't trigger the zoom event)
-    if (shouldRestoreTransform) {
+    // Apply the scaling manually because .call doesn't trigger zoom
+    if (treeTransformRef.current) {
       const transform = treeTransformRef.current;
       const baseFontSize = 18;
       const baseBadgeFontSize = 16;
