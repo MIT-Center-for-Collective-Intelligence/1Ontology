@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { ChromaClient, OpenAIEmbeddingFunction } from "chromadb";
+import { ChromaClient, IncludeEnum, OpenAIEmbeddingFunction } from "chromadb";
 import Cors from "cors";
 import { openai } from "./helpers";
 import { db } from "@components/lib/firestoreServer/admin";
@@ -41,10 +41,32 @@ const runMiddleware = (req: any, res: any, fn: any) => {
   });
 };
 
+const cosineSimilarity = (vecA: any[], vecB: any[]) => {
+  if (vecA.length !== vecB.length) {
+    throw new Error("Embedding vectors must have the same length.");
+  }
+  const dot = vecA.reduce((acc, val, idx) => acc + val * vecB[idx], 0);
+  const normA = Math.sqrt(vecA.reduce((acc, val) => acc + val * val, 0));
+  const normB = Math.sqrt(vecB.reduce((acc, val) => acc + val * val, 0));
+  if (normA === 0 || normB === 0) {
+    throw new Error("Cannot compute similarity for zero-length embeddings.");
+  }
+  return dot / (normA * normB);
+};
+
+const _query = `AI-powered credit score boosting made easy. Dovly is an AI credit engine designed to empower users in their journey towards financial freedom. This tool provides a platform for monitoring, building, and repairing credit profiles. Leveraging AI technology, Dovly handles credit disputes with all three credit bureaus and provides weekly TransUnion credit reports and scores, along with enhanced credit monitoring and ID theft alerts. A core feature is the smart AI credit engine, engineered to optimize results by analyzing a user's unique credit situation and matching them with a personalized action plan. Additionally, it offers credit building offers and personalized tips and guides tailored to a user's financial situation to assist in strengthen their credit profile. Users can enroll online in minutes, with an assurance that enrolling does not negatively impact their credit score. Dovly also includes ID theft insurance and provides regular updates, tips, and recommendations to its users.`;
+
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { query, skillsFuture, appName, user, nodeType, resultsNum } =
-      req.body;
+    const {
+      query,
+      skillsFuture,
+      appName,
+      user,
+      nodeType,
+      resultsNum,
+      searchAll,
+    } = req.body;
 
     await runMiddleware(req, res, cors);
 
@@ -63,6 +85,62 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       name: collectionName,
       embeddingFunction,
     });
+    if (searchAll) {
+      const allData = await collection.get({
+        include: [IncludeEnum.Embeddings, IncludeEnum.Metadatas],
+        ...(nodeType
+          ? {
+              where: {
+                nodeType,
+              },
+            }
+          : {}),
+      });
+      const response = await openai.embeddings.create({
+        model: "text-embedding-3-large",
+        input: [_query],
+      });
+      const embeddings = response.data?.map((item) => item.embedding) ?? [];
+      const queryEmbedding = embeddings[0];
+
+      const _data = [];
+      for (let nodeIdx = 0; nodeIdx < allData.metadatas.length; nodeIdx++) {
+        if (allData.metadatas[nodeIdx]?.nodeType === "activity") {
+          const similarity = cosineSimilarity(
+            queryEmbedding,
+            (allData.embeddings || [])[nodeIdx],
+          );
+
+          _data.push({
+            ...allData.metadatas[nodeIdx],
+            similarity,
+          });
+        }
+      }
+      _data.sort((a, b) => b.similarity - a.similarity);
+      const topResults = _data.slice(0, resultsNum);
+
+      const logRef = db.collection(LOGS).doc();
+      const uname = "ai-peer-extension";
+      const doerCreate = getDoerCreate(uname || "");
+      const logData = {
+        at: "searchChroma",
+        query,
+        results: topResults,
+        appName,
+      };
+
+      await logRef.set({
+        type: "info",
+        ...logData,
+        createdAt: new Date(),
+        doer: uname,
+        doerCreate,
+      });
+
+      return res.status(200).json({ results: _data });
+    }
+
     const results = await collection.query({
       queryTexts: query,
       nResults: resultsNum || 40,
@@ -76,6 +154,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     });
 
     const metaDatas: any = results.metadatas[0];
+    const distances: any = (results.distances || [])[0];
     const exactMatches = [];
     const otherMatches = [];
 
