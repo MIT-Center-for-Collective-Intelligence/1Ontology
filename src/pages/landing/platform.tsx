@@ -34,7 +34,6 @@ import {
   OpenInNew,
   AccountTree as AccountTreeIcon,
 } from "@mui/icons-material";
-import { useRouter } from "next/router";
 
 // Modern Tooltip Component
 type FeatureType =
@@ -334,7 +333,6 @@ const MessageBubble = ({
 };
 
 const PlatformDetailsPage = () => {
-  const router = useRouter();
   const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } = useThemeManager();
   const [expandedItems, setExpandedItems] = React.useState({
     act: true,
@@ -398,11 +396,7 @@ const PlatformDetailsPage = () => {
       [item]: !prev[item],
     }));
   };
-  useEffect(() => {
-    if(!router.isReady) return;
-    router.replace(`/`);
-  }, [router.isReady]);
-  return <></>;
+
   return (
     <>
       <Head>
