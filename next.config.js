@@ -19,6 +19,11 @@ module.exports = {
         destination: "/",
         permanent: false,
       },
+      {
+        source: "/landing/:path*",
+        destination: "/",
+        permanent: true,
+      },
     ];
   },
 };
