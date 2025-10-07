@@ -17,6 +17,7 @@ import Navigation from "./_components/Navigation";
 import MobileDrawer from "./_components/MobileDrawer";
 import Footer from "./_components/Footer";
 import { OpenInNew } from "@mui/icons-material";
+import { useRouter } from "next/router";
 
 interface TeamMember {
   name: string;
@@ -285,6 +286,7 @@ const PublicationItem = ({
 };
 
 const TeamPage = () => {
+  const router = useRouter();
   const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } =
     useThemeManager();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -334,7 +336,12 @@ const TeamPage = () => {
   const orderedRoles = [...sortedRoles, ...otherRoles];
 
   const theme = createLandingTheme(isDark);
-
+  useEffect(() => {
+    if(!router.isReady) return;
+    router.replace(`/`);
+  }, [router.isReady]);
+  return <></>;
+  
   if (!teamData) {
     return (
       <Box

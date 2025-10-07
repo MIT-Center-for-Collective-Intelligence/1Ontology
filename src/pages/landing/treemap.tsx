@@ -50,12 +50,14 @@ import {
   HelpOutline,
 } from "@mui/icons-material";
 import { renderTreemap } from "@components/utilsLandingPage/treemapRendering";
+import { useRouter } from "next/router";
 
 const TreemapPage = () => {
+  const router = useRouter();
   const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } =
     useThemeManager();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [data, setData] = useState<TreeNode | null>(null);
+  const [data, setData] = useState<TreeNode | null | any>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -69,8 +71,8 @@ const TreemapPage = () => {
     width: 0,
     height: 0,
   });
-  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
-  const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null | any >(null);
+  const [tooltipData, setTooltipData] = useState<TooltipData | null | any>(null);
   const [reverseColors, setReverseColors] = useState(false);
 
   const theme = createLandingTheme(isDark);
@@ -104,7 +106,13 @@ const TreemapPage = () => {
       reverseColors,
     );
     return filterVisibleNodes(nodes, 3);
-  }, [data, treemapBounds.width, treemapBounds.height, maxCount, reverseColors]);
+  }, [
+    data,
+    treemapBounds.width,
+    treemapBounds.height,
+    maxCount,
+    reverseColors,
+  ]);
 
   // Draw treemap
   const drawTreemap = useCallback(() => {
@@ -317,7 +325,12 @@ const TreemapPage = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [drawTreemap]);
+  useEffect(() => {
+    if (!router.isReady) return;
+    router.replace(`/`);
+  }, [router.isReady]);
 
+  return <></>;
   if (!data) {
     return (
       <ThemeProvider theme={theme}>
@@ -414,7 +427,9 @@ const TreemapPage = () => {
                       sx={{
                         fontWeight: 600,
                         fontSize: "0.75rem",
-                        color: !reverseColors ? "primary.main" : "text.secondary",
+                        color: !reverseColors
+                          ? "primary.main"
+                          : "text.secondary",
                         transition: "color 0.2s",
                       }}
                     >
@@ -428,9 +443,10 @@ const TreemapPage = () => {
                         "& .MuiSwitch-switchBase.Mui-checked": {
                           color: "primary.main",
                         },
-                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                          bgcolor: "primary.light",
-                        },
+                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                          {
+                            bgcolor: "primary.light",
+                          },
                         "& .MuiSwitch-switchBase": {
                           color: "primary.main",
                         },
@@ -444,7 +460,9 @@ const TreemapPage = () => {
                       sx={{
                         fontWeight: 600,
                         fontSize: "0.75rem",
-                        color: reverseColors ? "primary.main" : "text.secondary",
+                        color: reverseColors
+                          ? "primary.main"
+                          : "text.secondary",
                         transition: "color 0.2s",
                       }}
                     >
@@ -526,7 +544,9 @@ const TreemapPage = () => {
                   gap: 0.5,
                 }}
               >
-                <HelpOutline sx={{ fontSize: 16, color: "text.secondary", opacity: 0.7 }} />
+                <HelpOutline
+                  sx={{ fontSize: 16, color: "text.secondary", opacity: 0.7 }}
+                />
                 <Typography
                   variant="body2"
                   sx={{
@@ -535,7 +555,8 @@ const TreemapPage = () => {
                     fontSize: "0.875rem",
                   }}
                 >
-                  Click and drag to pan • Scroll or pinch to zoom • Hover blocks for AI app counts
+                  Click and drag to pan • Scroll or pinch to zoom • Hover blocks
+                  for AI app counts
                 </Typography>
               </Box>
             </Container>
@@ -568,7 +589,7 @@ const TreemapPage = () => {
                 !isDragging &&
                 (() => {
                   // Position tooltip using extracted utility
-                  const containerRect =
+                  const containerRect : any =
                     containerRef.current?.getBoundingClientRect();
                   if (!containerRect) return null;
 

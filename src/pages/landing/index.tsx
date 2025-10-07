@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Head from "next/head";
 import {
   Box,
@@ -19,15 +19,19 @@ import  Navigation  from "./_components/Navigation";
 import  MobileDrawer  from "./_components/MobileDrawer";
 import  Footer  from "./_components/Footer";
 import { createLandingTheme } from "../../theme/landingTheme";
+import { useRouter } from "next/router";
 
 const LandingPage = () => {
+  const router = useRouter();
   const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } = useThemeManager();
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
 
   const theme = createLandingTheme(isDark);
-
-
-
+useEffect(() => {
+  if(!router.isReady) return;
+  router.replace(`/`);
+}, [router.isReady]);
+return <></>;
 
   return (
     <>

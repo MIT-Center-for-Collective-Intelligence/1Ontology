@@ -18,6 +18,7 @@ import MobileDrawer from "./_components/MobileDrawer";
 import Footer from "./_components/Footer";
 import { OpenInNew } from "@mui/icons-material";
 import TreeVisualization, { TreeNode } from "./_components/TreeVisualization";
+import { useRouter } from "next/router";
 
 // Data definition moved to TreeVisualization component
 
@@ -176,18 +177,23 @@ const simplifiedSampleData: TreeNode = {
 };
 
 const OntologyExplorer = () => {
+  const router = useRouter();
   const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } =
     useThemeManager();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [viewType, setViewType] = useState<"tree" | "sunburst">("sunburst");
-  const [data, setData] = useState<TreeNode | null>(null);
+  const [data, setData] = useState<TreeNode | null | any>(null);
 
   useEffect(() => {
     fetch("/landing_data/tree_data.json")
       .then((res) => res.json())
       .then((json) => setData(json));
   }, []);
-
+  useEffect(() => {
+    if (!router.isReady) return;
+    router.replace(`/`);
+  }, [router.isReady]);
+  return <></>;
   if (!data) {
     return <p>Loading ontology...</p>;
   }
