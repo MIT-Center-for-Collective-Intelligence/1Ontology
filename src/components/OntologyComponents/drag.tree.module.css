@@ -101,7 +101,6 @@
 
 .tree {
     border-radius: 16px;
-    background: #efefef;
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
 }
@@ -232,12 +231,6 @@
 
     .mobileWarning {
         display: block;
-    }
-}
-
-@media (prefers-color-scheme: dark) {
-    .tree {
-        background: transparent;
     }
 }
 
