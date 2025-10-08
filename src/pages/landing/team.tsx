@@ -325,7 +325,7 @@ const TeamPage = () => {
   );
 
   // Define role order for consistent display
-  const roleOrder = ["Faculty Members", "Researchers", "Developers", "Interns", "Alumni"];
+  const roleOrder = ["Faculty Members", "Researchers", "Developers", "MIT Undergraduates", "Interns", "Alumni"];
   const sortedRoles = roleOrder.filter((role) => sortedMembersByRole[role]);
   // Add any additional roles not in the predefined order
   const otherRoles = Object.keys(sortedMembersByRole).filter(

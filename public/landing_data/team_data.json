@@ -96,6 +96,20 @@
         "role": "Fullstack Developer"
       }
     ],
+    "MIT Undergraduates": [
+      {
+        "name": "Aiman Imran",
+        "affiliation": "Massachusetts Institute of Technology",
+        "image": "/team/aiman-imran.jpg",
+        "role": "Undergraduate Student"
+      },
+      {
+        "name": "Manasa Kudumu",
+        "affiliation": "Massachusetts Institute of Technology",
+        "image": "/team/manasa-kudumu.jpg",
+        "role": "Undergraduate Student"
+      }
+    ],
     "Interns": [
       {
         "name": "Xinyue CHEN",
