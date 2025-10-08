@@ -99,21 +99,35 @@
     "Interns": [
       {
         "name": "Xinyue CHEN",
-        "affiliation": "National University of Singapore",
+        "affiliation": "Singapore-MIT Alliance for Research and Technology",
         "image": "/team/xinyue-chen.jpg",
         "role": "Visiting Student"
       },
       {
         "name": "Zhexuan MA",
-        "affiliation": "National University of Singapore",
+        "affiliation": "Singapore-MIT Alliance for Research and Technology",
         "image": "/team/zhexuan-ma.jpg",
         "role": "Visiting Student"
       },
       {
         "name": "Jiacheng Zhang",
-        "affiliation": "National University of Singapore",
+        "affiliation": "Singapore-MIT Alliance for Research and Technology",
         "image": "/team/jiacheng-zhang.jpg",
         "role": "Visiting Student"
+      }
+    ],
+    "MIT Undergraduates": [
+      {
+        "name": "Aiman Imran",
+        "affiliation": "Massachusetts Institute of Technology",
+        "image": "/team/aiman-imran.jpg",
+        "role": "Undergraduate Student"
+      },
+      {
+        "name": "Manasa Kudumu",
+        "affiliation": "Massachusetts Institute of Technology",
+        "image": "/team/manasa-kudumu.jpg",
+        "role": "Undergraduate Student"
       }
     ],
     "Alumni": [
