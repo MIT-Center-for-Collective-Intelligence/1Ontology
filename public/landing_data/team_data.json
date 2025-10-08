@@ -96,6 +96,26 @@
         "role": "Fullstack Developer"
       }
     ],
+    "Interns": [
+      {
+        "name": "Xinyue CHEN",
+        "affiliation": "Singapore-MIT Alliance for Research and Technology",
+        "image": "/team/xinyue-chen.jpg",
+        "role": "Visiting Student"
+      },
+      {
+        "name": "Zhexuan MA",
+        "affiliation": "Singapore-MIT Alliance for Research and Technology",
+        "image": "/team/zhexuan-ma.jpg",
+        "role": "Visiting Student"
+      },
+      {
+        "name": "Jiacheng Zhang",
+        "affiliation": "Singapore-MIT Alliance for Research and Technology",
+        "image": "/team/jiacheng-zhang.jpg",
+        "role": "Visiting Student"
+      }
+    ],
     "MIT Undergraduates": [
       {
         "name": "Aiman Imran",
@@ -108,26 +128,6 @@
         "affiliation": "Massachusetts Institute of Technology",
         "image": "/team/manasa-kudumu.jpg",
         "role": "Undergraduate Student"
-      }
-    ],
-    "Interns": [
-      {
-        "name": "Xinyue CHEN",
-        "affiliation": "National University of Singapore",
-        "image": "/team/xinyue-chen.jpg",
-        "role": "Visiting Student"
-      },
-      {
-        "name": "Zhexuan MA",
-        "affiliation": "National University of Singapore",
-        "image": "/team/zhexuan-ma.jpg",
-        "role": "Visiting Student"
-      },
-      {
-        "name": "Jiacheng Zhang",
-        "affiliation": "National University of Singapore",
-        "image": "/team/jiacheng-zhang.jpg",
-        "role": "Visiting Student"
       }
     ],
     "Alumni": [
