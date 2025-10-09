@@ -33,6 +33,7 @@ import {
   convertHierarchyToTreeData,
   FEATURES,
 } from "@components/lib/utils/treeHierarchyLoader";
+import { Post } from "@components/lib/utils/Post";
 
 const INDENT_STEP = 15;
 const INITIAL_LOAD_COUNT = 6;
@@ -98,7 +99,11 @@ function DraggableTree({
   const isTreeClickRef = useRef(false);
 
   // Load tree hierarchy from static file if feature flag is enabled
-  const { hierarchy, loading: hierarchyLoading, error: hierarchyError } = useTreeHierarchy();
+  const {
+    hierarchy,
+    loading: hierarchyLoading,
+    error: hierarchyError,
+  } = useTreeHierarchy(skillsFutureApp);
 
   // Memoize the conversion to prevent infinite loops
   const staticTreeData = useMemo(() => {
@@ -360,64 +365,69 @@ function DraggableTree({
 
     return rect.top >= 0 && rect.bottom <= viewportHeight;
   };
-  const expandNodeById = useCallback(async (targetNodeId: string) => {
-    const tree = treeRef.current;
-    if (!tree || !targetNodeId) return;
-    
-    const allPaths = multipleOntologyPaths?.[targetNodeId];
-    if (!allPaths?.length) return;
+  const expandNodeById = useCallback(
+    async (targetNodeId: string) => {
+      const tree = treeRef.current;
+      if (!tree || !targetNodeId) return;
 
-    const parentPathsWithDepth = new Map<string, number>();
+      const allPaths = multipleOntologyPaths?.[targetNodeId];
+      if (!allPaths?.length) return;
 
-    for (const path of allPaths) {
-      const pathIds = path
-        .filter((p: any) => !p.category)
-        .map((c: { id: string }) => c.id)
-        .join("-");
+      const parentPathsWithDepth = new Map<string, number>();
 
-      const segments = pathIds.split('-');
-      for (let i = 1; i < segments.length; i++) {
-        const parentId = segments.slice(0, i + 1).join('-');
-        if (parentId !== pathIds) {
-          parentPathsWithDepth.set(parentId, i);
+      for (const path of allPaths) {
+        const pathIds = path
+          .filter((p: any) => !p.category)
+          .map((c: { id: string }) => c.id)
+          .join("-");
+
+        const segments = pathIds.split("-");
+        for (let i = 1; i < segments.length; i++) {
+          const parentId = segments.slice(0, i + 1).join("-");
+          if (parentId !== pathIds) {
+            parentPathsWithDepth.set(parentId, i);
+          }
         }
       }
-    }
 
-    const sortedPaths = Array.from(parentPathsWithDepth.entries())
-      .sort(([, depthA], [, depthB]) => depthA - depthB);
+      const sortedPaths = Array.from(parentPathsWithDepth.entries()).sort(
+        ([, depthA], [, depthB]) => depthA - depthB,
+      );
 
-    for (const [parentId] of sortedPaths) {
-      const parentNode = tree.get(parentId);
-      if (parentNode && !parentNode.isOpen) {
-        parentNode.open();
-        await new Promise(resolve => setTimeout(resolve, 50));
+      for (const [parentId] of sortedPaths) {
+        const parentNode = tree.get(parentId);
+        if (parentNode && !parentNode.isOpen) {
+          parentNode.open();
+          await new Promise((resolve) => setTimeout(resolve, 50));
 
-        if (parentNode.children) {
-          for (const child of parentNode.children) {
-            if (child.data.category && !child.isOpen) {
-              child.open();
-              await new Promise(resolve => setTimeout(resolve, 25));
+          if (parentNode.children) {
+            for (const child of parentNode.children) {
+              if (child.data.category && !child.isOpen) {
+                child.open();
+                await new Promise((resolve) => setTimeout(resolve, 25));
+              }
             }
           }
         }
       }
-    }
 
-    await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // scroll to first node
-    const path = eachOntologyPath[targetNodeId]
-      ?.filter((p: any) => !p.category)
-      ?.map((c: { id: string }) => c.id)
-      ?.join("-") || "";
-    const rootId = allPaths[0][0]?.id?.split("-")[0];
-    const nodeIdWithPath = skillsFuture ? `${path}` : `${rootId}-${path}`;
+      // scroll to first node
+      const path =
+        eachOntologyPath[targetNodeId]
+          ?.filter((p: any) => !p.category)
+          ?.map((c: { id: string }) => c.id)
+          ?.join("-") || "";
+      const rootId = allPaths[0][0]?.id?.split("-")[0];
+      const nodeIdWithPath = skillsFuture ? `${path}` : `${rootId}-${path}`;
 
-    if (!isNodeVisible(nodeIdWithPath)) {
-      await tree.scrollTo(nodeIdWithPath);
-    }
-  }, [treeData, eachOntologyPath, multipleOntologyPaths]);
+      if (!isNodeVisible(nodeIdWithPath)) {
+        await tree.scrollTo(nodeIdWithPath);
+      }
+    },
+    [treeData, eachOntologyPath, multipleOntologyPaths],
+  );
 
   useEffect(() => {
     const tree = treeRef.current;
@@ -501,7 +511,7 @@ function DraggableTree({
     parentId: string | null;
     parentNode: NodeApi<PaginatedTreeData> | null;
     index: number;
-    }) => {
+  }) => {
     try {
       if (!editEnabled || !user?.uname) return;
 
@@ -677,7 +687,7 @@ function DraggableTree({
       for (let linkId of removedLinks) {
         await unlinkPropertyOf(db, "generalizations", specializationId, linkId);
       }
-      
+
       const newGeneralizationData = nodes[toParent.nodeId];
       const specializations = newGeneralizationData.specializations;
       const previousSValue = JSON.parse(JSON.stringify(specializations));
@@ -685,32 +695,32 @@ function DraggableTree({
       const alreadyExist = newGeneralizationData.specializations
         .flatMap((c: ICollection) => c.nodes)
         .map((n: { id: string }) => n.id);
-        
+
       if (!alreadyExist.includes(specializationId)) {
         let targetCollectionIndex = 0;
-        
+
         if (toParent.category) {
           targetCollectionIndex = specializations.findIndex(
-            (s: ICollection) => s.collectionName === toParent.name
+            (s: ICollection) => s.collectionName === toParent.name,
           );
         } else {
           const mainCollectionIndex = specializations.findIndex(
-            (s: ICollection) => s.collectionName === "main"
+            (s: ICollection) => s.collectionName === "main",
           );
-          
+
           if (mainCollectionIndex !== -1) {
             targetCollectionIndex = mainCollectionIndex;
           }
         }
-        
+
         if (targetCollectionIndex === -1) {
           targetCollectionIndex = 0;
         }
-        
+
         specializations[targetCollectionIndex].nodes.splice(args.index, 0, {
           id: specializationId,
         });
-        
+
         await updateDoc(doc(collection(db, NODES), toParent.nodeId), {
           specializations,
         });
@@ -785,7 +795,7 @@ function DraggableTree({
   const generateDomElementId = (node: NodeApi<PaginatedTreeData>): string => {
     const { id } = node.data;
     const isRootNode = node.level === 0;
-    
+
     // Prefix root nodes to prevent browser hash auto-scrolling
     return isRootNode ? `tree-root-${id}` : id;
   };
@@ -905,7 +915,7 @@ function DraggableTree({
           backgroundColor:
             node.data.nodeId === currentVisibleNode?.id && !node.data.category
               ? (theme) =>
-                theme.palette.mode === "dark" ? "#26631c" : "#4ccf37"
+                  theme.palette.mode === "dark" ? "#26631c" : "#4ccf37"
               : "",
         }}
       >
@@ -1131,8 +1141,8 @@ function DraggableTree({
                 }}
                 disableDrag={!editEnabled}
                 disableDrop={!editEnabled}
-              // onScroll={}
-              // onMove={handleMove}
+                // onScroll={}
+                // onMove={handleMove}
               >
                 {Node}
               </Tree>

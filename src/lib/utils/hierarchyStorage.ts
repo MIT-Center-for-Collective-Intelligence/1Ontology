@@ -15,42 +15,11 @@ const getAuthToken = async (): Promise<string> => {
 };
 
 /**
- * Fetch the latest hierarchy version via API
- */
-export const fetchLatestHierarchy = async (appName: string): Promise<any> => {
-  try {
-    const token = await getAuthToken();
-
-    const response = await fetch(`/api/hierarchy/${appName}?version=latest`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Failed to fetch hierarchy");
-    }
-
-    const result = await response.json();
-    console.log(
-      `✅ Fetched latest hierarchy: version ${result.version}, ${result.hierarchy.stats.totalNodes} nodes`
-    );
-
-    return result.hierarchy;
-  } catch (error: any) {
-    console.error(`Failed to fetch latest hierarchy for ${appName}:`, error);
-    throw error;
-  }
-};
-
-/**
  * Fetch a specific hierarchy version by timestamp via API
  */
 export const fetchHierarchyByTimestamp = async (
   appName: string,
-  timestamp: number
+  timestamp: number,
 ): Promise<any> => {
   try {
     const token = await getAuthToken();
@@ -62,7 +31,7 @@ export const fetchHierarchyByTimestamp = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -72,14 +41,14 @@ export const fetchHierarchyByTimestamp = async (
 
     const result = await response.json();
     console.log(
-      `✅ Fetched hierarchy version ${result.version}, ${result.hierarchy.stats.totalNodes} nodes`
+      `✅ Fetched hierarchy version ${result.version}, ${result.hierarchy.stats.totalNodes} nodes`,
     );
 
     return result.hierarchy;
   } catch (error: any) {
     console.error(
       `Failed to fetch hierarchy version ${timestamp} for ${appName}:`,
-      error
+      error,
     );
     throw error;
   }
@@ -89,7 +58,7 @@ export const fetchHierarchyByTimestamp = async (
  * List all hierarchy versions for an app via API
  */
 export const listHierarchyVersions = async (
-  appName: string
+  appName: string,
 ): Promise<{
   appName: string;
   totalVersions: number;

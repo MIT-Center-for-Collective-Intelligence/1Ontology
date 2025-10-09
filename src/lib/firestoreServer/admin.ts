@@ -2,7 +2,7 @@ import admin from "firebase-admin";
 import { App, cert, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { development } from "../CONSTANTS";
-import { Storage } from "firebase-admin/storage";
+const { Storage } = require("@google-cloud/storage");
 
 const configs = development
   ? {
@@ -48,6 +48,8 @@ const dbCausal = getFirestore(app as any, "causal-diagram");
 export const MAX_TRANSACTION_WRITES = 499;
 const db = getFirestore();
 
-export const storage = new Storage();
+export const storage = new Storage({
+  credentials: configs,
+});
 
 export { admin, db, app, dbCausal };

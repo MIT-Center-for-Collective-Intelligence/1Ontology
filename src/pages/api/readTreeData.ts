@@ -17,6 +17,7 @@ import { extractJSON, getDoerCreate } from "@components/lib/utils/helpers";
 // const { Storage } = require(“@google-cloud/storage”);
 
 import { storage } from "@components/lib/firestoreServer/admin";
+import { development } from "@components/lib/CONSTANTS";
 
 const saveLogs = (
   uname: string,
@@ -37,8 +38,6 @@ const saveLogs = (
   }
 };
 
-let guidelines: any = null;
-
 async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
   try {
     // Support both POST and GET methods
@@ -48,14 +47,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
 
     // Get uname from fbAuth middleware (attached to req.body.data.user.userData)
     const { uname } = req.body?.data?.user?.userData || {};
-
-    if (!uname) {
-      return res.status(401).json({ error: "Unauthorized: User not authenticated" });
+    const { appName } = req.body;
+    if (!uname || !appName) {
+      return res
+        .status(401)
+        .json({ error: "Unauthorized: User not authenticated" });
     }
-
     // Get tree data from Firebase Storage
-    const bucket = storage.bucket();
-    const fileName = "1760015678218.json";
+    const bucket = storage.bucket(
+      `gs://${development ? process.env.NEXT_PUBLIC_STORAGE_BUCKET : process.env.NEXT_PUBLIC_DEV_STORAGE_BUCKET}`,
+    );
+    const fileName = `ontology-hierarchies/${appName === "default" ? "original" : appName}/tree-hierarchy.json`;
 
     try {
       // Try to fetch from Firebase Storage first
@@ -102,13 +104,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
 
     return res.status(200).json({
       success: true,
-      message: "Tree data should be loaded from static file: /tree-hierarchy.json",
+      message:
+        "Tree data should be loaded from static file: /tree-hierarchy.json",
       source: "static-file",
       metadata: {
         timestamp: new Date().toISOString(),
       },
     });
-
   } catch (error: any) {
     console.error("Error in readTreeData handler:", error);
 

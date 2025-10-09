@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { fetchLatestHierarchy } from "./hierarchyStorage";
 import { getAuth } from "firebase/auth";
+import { Post } from "./Post";
 
 // ============================================================================
 // FEATURE FLAGS
@@ -111,66 +111,13 @@ export const useTreeHierarchy = (appName: string = "default") => {
         setLoading(true);
 
         let data: TreeHierarchy;
-
-        if (FEATURES.USE_FIREBASE_STORAGE) {
-          // Load from Firebase Storage via API
-          data = await fetchLatestHierarchy(appName);
-        } else {
-          // Load from readTreeData API endpoint
-          try {
-            // Get Firebase auth token
-            const auth = getAuth();
-            const user = auth.currentUser;
-
-            if (!user) {
-              throw new Error("User not authenticated");
-            }
-
-            const token = await user.getIdToken();
-
-            const response = await fetch("/api/readTreeData", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-              },
-            });
-
-            if (!response.ok) {
-              throw new Error(`API request failed: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-
-            // Check if we got data from the API or need to use static file
-            if (result.success && result.data) {
-              data = result.data;
-            } else if (result.source === "static-file") {
-              // API told us to use static file
-              const staticResponse = await fetch("/tree-hierarchy.json");
-
-              if (!staticResponse.ok) {
-                throw new Error(`Failed to load hierarchy: ${staticResponse.statusText}`);
-              }
-
-              data = await staticResponse.json();
-            } else {
-              throw new Error("No data returned from API");
-            }
-          } catch (apiError) {
-            // Fallback to static file if API fails or user not authenticated
-            console.warn("API failed, falling back to static file:", apiError);
-            const staticResponse = await fetch("/tree-hierarchy.json");
-
-            if (!staticResponse.ok) {
-              throw new Error(`Failed to load hierarchy: ${staticResponse.statusText}`);
-            }
-
-            data = await staticResponse.json();
-          }
+        const response: any = await Post("/readTreeData", {
+          appName,
+        });
+        console.log(response);
+        if (response) {
+          setHierarchy(response.data);
         }
-
-        setHierarchy(data);
         setError(null);
       } catch (err) {
         console.error("Error loading tree hierarchy:", err);
@@ -192,13 +139,16 @@ export const useTreeHierarchy = (appName: string = "default") => {
 // ============================================================================
 
 export const convertHierarchyToTreeData = (
-  hierarchy: TreeHierarchy | null
+  hierarchy: TreeHierarchy | null,
 ): TreeData[] => {
   if (!hierarchy) return [];
 
   const { roots, nodes } = hierarchy;
 
-  const buildTreeNode = (nodeId: string, parentPath: string[] = []): TreeData | null => {
+  const buildTreeNode = (
+    nodeId: string,
+    parentPath: string[] = [],
+  ): TreeData | null => {
     const hierarchyNode = nodes[nodeId];
     if (!hierarchyNode) return null;
 
@@ -277,7 +227,7 @@ export const convertHierarchyToTreeData = (
 
 export const getNodeFromHierarchy = (
   hierarchy: TreeHierarchy | null,
-  nodeId: string
+  nodeId: string,
 ): HierarchyNode | null => {
   if (!hierarchy) return null;
   return hierarchy.nodes[nodeId] || null;
@@ -290,7 +240,7 @@ export const getNodeFromHierarchy = (
 export const getAllChildrenIds = (
   hierarchy: TreeHierarchy | null,
   nodeId: string,
-  visited: Set<string> = new Set()
+  visited: Set<string> = new Set(),
 ): string[] => {
   if (!hierarchy || visited.has(nodeId)) return [];
 
@@ -314,7 +264,7 @@ export const getAllChildrenIds = (
 
 export const getPathToNode = (
   hierarchy: TreeHierarchy | null,
-  nodeId: string
+  nodeId: string,
 ): string[] => {
   if (!hierarchy) return [];
 
@@ -331,7 +281,7 @@ export const getPathToNode = (
 
 export const searchNodesByTitle = (
   hierarchy: TreeHierarchy | null,
-  searchTerm: string
+  searchTerm: string,
 ): HierarchyNode[] => {
   if (!hierarchy || !searchTerm) return [];
 
