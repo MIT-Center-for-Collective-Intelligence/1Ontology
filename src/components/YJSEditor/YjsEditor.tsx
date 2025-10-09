@@ -17,6 +17,7 @@ const YjsEditor = ({
   cursorPosition,
   onEditorReady,
   setEditorContent,
+  fallbackContent,
 }: {
   fullname: string;
   property: string;
@@ -29,6 +30,7 @@ const YjsEditor = ({
   cursorPosition: number | null;
   onEditorReady?: (editor: any) => void;
   setEditorContent: any;
+  fallbackContent?: string;
 }) => {
   return (
     <YjsEditorWrapper
@@ -43,6 +45,7 @@ const YjsEditor = ({
       cursorPosition={cursorPosition}
       onEditorReady={onEditorReady}
       setEditorContent={setEditorContent}
+      fallbackContent={fallbackContent}
     />
   );
 };
