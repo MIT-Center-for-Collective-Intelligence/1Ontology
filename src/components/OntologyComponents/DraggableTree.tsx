@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { NodeApi, NodeRendererProps, Tree, TreeApi } from "react-arborist";
 import SyncAltIcon from "@mui/icons-material/SyncAlt";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
@@ -28,6 +28,11 @@ import { ICollection, TreeData } from "@components/types/INode";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
 import { FillFlexParent } from "./fill-flex-parent";
+import {
+  useTreeHierarchy,
+  convertHierarchyToTreeData,
+  FEATURES,
+} from "@components/lib/utils/treeHierarchyLoader";
 
 const INDENT_STEP = 15;
 const INITIAL_LOAD_COUNT = 6;
@@ -58,10 +63,10 @@ function DraggableTree({
   specializationNumsUnder,
   skillsFutureApp,
 }: {
-  treeViewData: any;
+  treeViewData?: any;
   setSnackbarMessage: any;
-  nodes: any;
-  currentVisibleNode: any;
+  nodes?: any;
+  currentVisibleNode?: any;
   onOpenNodesTree: any;
   treeRef: any;
   treeType?: string;
@@ -91,6 +96,15 @@ function DraggableTree({
   >(new Map());
   const collapsingLoader = useRef<boolean>(false);
   const isTreeClickRef = useRef(false);
+
+  // Load tree hierarchy from static file if feature flag is enabled
+  const { hierarchy, loading: hierarchyLoading, error: hierarchyError } = useTreeHierarchy();
+
+  // Memoize the conversion to prevent infinite loops
+  const staticTreeData = useMemo(() => {
+    if (!FEATURES.USE_STATIC_NODES || !hierarchy) return null;
+    return convertHierarchyToTreeData(hierarchy);
+  }, [hierarchy]);
 
   const getFocusedNodeWindow = useCallback(
     (children: TreeData[], focusedNodeId: string): TreeData[] => {
@@ -317,9 +331,24 @@ function DraggableTree({
     [treeData],
   );
 
+  // Initial load of tree data - only run when source data changes
   useEffect(() => {
-    setTreeData(processTreeData(treeViewData));
-  }, [treeViewData, processTreeData]);
+    if (FEATURES.USE_STATIC_NODES) {
+      // For static hierarchy, use data directly without pagination processing
+      if (staticTreeData && !hierarchyLoading) {
+        setTreeData(staticTreeData as PaginatedTreeData[]);
+      }
+    } else {
+      // For dynamic data, process with pagination
+      setTreeData(processTreeData(treeViewData));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    staticTreeData,
+    hierarchyLoading,
+    // Only include treeViewData and processTreeData when NOT using static hierarchy
+    ...(FEATURES.USE_STATIC_NODES ? [] : [treeViewData, processTreeData]),
+  ]);
 
   const isNodeVisible = (nodeId: string): boolean => {
     const element = document.getElementById(nodeId);
@@ -432,6 +461,11 @@ function DraggableTree({
   useEffect(() => {
     const tree = treeRef.current;
     setCount(tree?.visibleNodes.length ?? 0);
+
+    // Skip updating tree data when using static nodes
+    if (FEATURES.USE_STATIC_NODES) {
+      return;
+    }
 
     const handler = setTimeout(() => {
       setTreeData(processTreeData(treeViewData));
@@ -975,6 +1009,23 @@ function DraggableTree({
           gap: 1,
         }}
       >
+        {/* Loading indicator for static hierarchy */}
+        {FEATURES.USE_STATIC_NODES && hierarchyLoading && (
+          <Typography variant="caption" sx={{ color: "orange", px: 1 }}>
+            Loading tree hierarchy...
+          </Typography>
+        )}
+        {FEATURES.USE_STATIC_NODES && hierarchyError && (
+          <Typography variant="caption" sx={{ color: "red", px: 1 }}>
+            Error loading hierarchy: {hierarchyError.message}
+          </Typography>
+        )}
+        {FEATURES.USE_STATIC_NODES && !hierarchyLoading && !hierarchyError && (
+          <Typography variant="caption" sx={{ color: "green", px: 1 }}>
+            Using static nodes
+          </Typography>
+        )}
+
         {!treeType && (
           <Button
             variant={expanded ? "contained" : "outlined"}

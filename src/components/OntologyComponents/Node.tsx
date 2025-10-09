@@ -126,6 +126,7 @@ import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 import { development } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
+import { FEATURES } from "@components/lib/utils/treeHierarchyLoader";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -1610,6 +1611,60 @@ const Node = ({
           skillsFutureApp={skillsFutureApp}
           deleteProperty={deleteProperty}
         />
+        {/* Debug Box: Display Fetched Node Data in Single Node Snapshot Mode */}
+        {FEATURES.USE_STATIC_NODES && (
+          <Paper
+            elevation={9}
+            sx={{
+              borderRadius: "30px",
+              borderBottomRightRadius: "18px",
+              borderBottomLeftRadius: "18px",
+              minWidth: "500px",
+              width: "100%",
+              maxHeight: "100%",
+              overflow: "auto",
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              overflowX: "hidden",
+              pb: "10px",
+              mt: 2,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                background: (theme: any) =>
+                  theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                p: 3,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: "20px",
+                  fontWeight: 500,
+                  fontFamily: "Roboto, sans-serif",
+                }}
+              >
+                
+              </Typography>
+            </Box>
+            <Box sx={{ p: 3 }}>
+              <pre
+                style={{
+                  margin: 0,
+                  fontSize: "10px",
+                  fontFamily: "monospace",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                }}
+              >
+                {JSON.stringify(currentVisibleNode, null, 2)}
+              </pre>
+            </Box>
+          </Paper>
+        )}
       </Box>{" "}
       {ConfirmDialog}
     </Box>

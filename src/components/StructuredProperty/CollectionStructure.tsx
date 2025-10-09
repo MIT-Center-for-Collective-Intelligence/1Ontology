@@ -1327,7 +1327,7 @@ const CollectionStructure = ({
                                                 sx={{ pl: 1 }}
                                                 link={enhancedLink}
                                                 property={property}
-                                                title={getTitle(nodes, link.id)}
+                                                title={getTitle(nodes, link.id, link)}
                                                 nodes={nodes}
                                                 linkIndex={index}
                                                 /* unlinkVisible={unlinkVisible(
@@ -1446,7 +1446,7 @@ const CollectionStructure = ({
                                                 info.inheritedFromTitle,
                                             }}
                                             property={property}
-                                            title={getTitle(nodes, nodeId)}
+                                            title={getTitle(nodes, nodeId, { id: nodeId })}
                                             nodes={nodes}
                                             linkIndex={-1} // -1 indicates inherited part
                                             linkLocked={false}
@@ -1530,7 +1530,7 @@ const CollectionStructure = ({
                                                 info.inheritedFromTitle,
                                             }}
                                             property={property}
-                                            title={getTitle(nodes, nodeId)}
+                                            title={getTitle(nodes, nodeId, { id: nodeId })}
                                             nodes={nodes}
                                             linkIndex={-1} // -1 indicates inherited part
                                             linkLocked={false}

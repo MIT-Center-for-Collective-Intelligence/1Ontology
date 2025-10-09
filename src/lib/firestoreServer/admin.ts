@@ -2,6 +2,7 @@ import admin from "firebase-admin";
 import { App, cert, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { development } from "../CONSTANTS";
+import { Storage } from "firebase-admin/storage";
 
 const configs = development
   ? {
@@ -46,5 +47,7 @@ if (!admin.apps.filter((a: any) => a.name === "[DEFAULT]").length) {
 const dbCausal = getFirestore(app as any, "causal-diagram");
 export const MAX_TRANSACTION_WRITES = 499;
 const db = getFirestore();
+
+export const storage = new Storage();
 
 export { admin, db, app, dbCausal };
