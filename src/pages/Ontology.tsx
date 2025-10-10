@@ -125,6 +125,12 @@ import GuidLines from "@components/components/Guidelines/GuideLines";
 import SearchSideBar from "@components/components/SearchSideBar/SearchSideBar";
 import Head from "next/head";
 import DraggableTree from "@components/components/OntologyComponents/DraggableTree";
+import {
+  FEATURES,
+  getNodeFromHierarchy,
+  useTreeHierarchy,
+} from "@components/lib/utils/treeHierarchyLoader";
+import { useNodeSnapshot } from "@components/lib/utils/nodeFetcher";
 import { TreeApi } from "react-arborist";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
 import ROUTES from "@components/lib/utils/routes";
@@ -175,9 +181,22 @@ const Ontology = ({
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:599px)");
   const [nodes, setNodes] = useState<{ [id: string]: INode }>({});
+
+  const { hierarchy } = useTreeHierarchy(appName);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const { node: fetchedNode, loading: nodeLoading } =
+    useNodeSnapshot(selectedNodeId);
   const [currentVisibleNode, setCurrentVisibleNode] = useState<INode | null>(
     null,
   );
+
+  // Sync fetched node to currentVisibleNode when using static nodes
+  useEffect(() => {
+    if (FEATURES.USE_STATIC_NODES && fetchedNode) {
+      setCurrentVisibleNode(fetchedNode);
+    }
+  }, [fetchedNode]);
+
   // const [ontologyPath, setOntologyPath] = useState<INodePath[]>([]);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
   const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
@@ -259,7 +278,9 @@ const Ontology = ({
     if (mobileSearchOpen && isMobile) {
       // Small delay to ensure the component is rendered
       setTimeout(() => {
-        const searchInput = document.querySelector('input[placeholder="Search..."]') as HTMLInputElement;
+        const searchInput = document.querySelector(
+          'input[placeholder="Search..."]',
+        ) as HTMLInputElement;
         if (searchInput) {
           searchInput.focus();
         }
@@ -745,6 +766,12 @@ const Ontology = ({
 
 
   useEffect(() => {
+    // Skip loading nodes from Firestore if using static nodes
+    if (FEATURES.USE_STATIC_NODES) {
+      setLoadingNodes(false);
+      return;
+    }
+
     // Create a query for the NODES collection where "deleted" is false
     let nodesQuery = null;
 
@@ -906,6 +933,11 @@ const Ontology = ({
   };
 
   useEffect(() => {
+    // Skip tree view data generation when using static nodes
+    if (FEATURES.USE_STATIC_NODES) {
+      return;
+    }
+
     // Filter nodes to get only those with a defined category
     const spreadNodes = Object.values(nodes);
     let mainCategories = spreadNodes.filter(
@@ -972,16 +1004,28 @@ const Ontology = ({
     // if (currentVisibleNode) return;
     if (firstLoad) {
       const nodeFromHash = window.location.hash.split("#").reverse()[0];
-      if (nodeFromHash && nodes[nodeFromHash]) {
-        setCurrentVisibleNode(nodes[nodeFromHash]);
-      } else if (user?.currentNode && nodes[user.currentNode]) {
-        setCurrentVisibleNode(nodes[user.currentNode]);
+      
+      // For static nodes, just set the ID to fetch
+      if (FEATURES.USE_STATIC_NODES) {
+        
+        const initialNodeId =
+          nodeFromHash ||
+          user?.currentNode ||
+          rootNode ||
+          "hn9pGQNxmQe9Xod5MuKK";
+        setSelectedNodeId(initialNodeId);
       } else {
-        setCurrentVisibleNode(nodes[rootNode || "hn9pGQNxmQe9Xod5MuKK"]!);
+        if (nodeFromHash && nodes[nodeFromHash]) {
+          setCurrentVisibleNode(nodes[nodeFromHash]);
+        } else if (user?.currentNode && nodes[user.currentNode]) {
+          setCurrentVisibleNode(nodes[user.currentNode]);
+        } else {
+          setCurrentVisibleNode(nodes[rootNode || "hn9pGQNxmQe9Xod5MuKK"]!);
+        }
       }
       firstLoad.current = false;
     }
-  }, [user?.currentNode, rootNode]);
+  }, [user?.currentNode, rootNode, nodes]);
 
   // Function to update the user document with the current ontology path
   const openedANode = async (currentNode: string) => {
@@ -1132,16 +1176,52 @@ const Ontology = ({
         return newExpanded;
       }); */
 
-      // Check if node exists and has a category
-      if (nodes[nodeId] && !nodes[nodeId].category) {
-        // Set the currently open node
-        setCurrentVisibleNode(nodes[nodeId]);
+      // When using static nodes, fetch individual node snapshot when navigating through tree
+      if (FEATURES.USE_STATIC_NODES) {
+        // Get basic data from hierarchy if available for immediate UI feedback
+        const hierarchyNode = hierarchy
+          ? getNodeFromHierarchy(hierarchy, nodeId)
+          : null;
 
-        // Record logs for the action of clicking the tree-view
-        recordLogs({
-          action: "clicked tree-view",
-          itemClicked: nodes[nodeId].id,
-        });
+        // Needs fix on better approach
+        if (hierarchyNode) {
+          setCurrentVisibleNode({
+            id: nodeId,
+            title: hierarchyNode.title,
+            deleted: false,
+            properties: {
+              parts: [{ collectionName: "main", nodes: [] }],
+              isPartOf: [{ collectionName: "main", nodes: [] }],
+            },
+            inheritance: {},
+            inheritanceParts: {},
+            specializations: [{ collectionName: "main", nodes: [] }],
+            generalizations: [{ collectionName: "main", nodes: [] }],
+            root: "",
+            propertyType: {},
+            nodeType: (hierarchyNode.nodeType || "activity") as INodeTypes,
+            textValue: {},
+            createdBy: "",
+            category: hierarchyNode.category,
+            locked: hierarchyNode.locked,
+            unclassified: hierarchyNode.unclassified,
+          });
+        }
+
+        // Fetch node data
+        setSelectedNodeId(nodeId);
+      } else {
+        // Check if node exists and has a category
+        if (nodes[nodeId] && !nodes[nodeId].category) {
+          // Set the currently open node
+          setCurrentVisibleNode(nodes[nodeId]);
+
+          // Record logs for the action of clicking the tree-view
+          recordLogs({
+            action: "clicked tree-view",
+            itemClicked: nodes[nodeId].id,
+          });
+        }
       }
     },
     [nodes, user],
@@ -1443,7 +1523,8 @@ const Ontology = ({
     setPartsInheritance(_inheritanceDetails);
   }, [currentVisibleNode, nodes]);
 
-  if (Object.keys(nodes).length <= 0) {
+  // Only show loading if not using static nodes and nodes haven't loaded yet
+  if (!FEATURES.USE_STATIC_NODES && Object.keys(nodes).length <= 0) {
     return (
       <Box
         sx={{
@@ -1471,7 +1552,7 @@ const Ontology = ({
           {currentVisibleNode ? currentVisibleNode.title : "1ontology"}
         </title>
       </Head>
-      
+
       {/* Mobile Header */}
       {isMobile && (
         <Box
@@ -1484,8 +1565,8 @@ const Ontology = ({
             backgroundColor: theme.palette.mode === "dark" ? "#303134" : "white",
             borderBottom: "1px solid",
             borderColor: theme.palette.mode === "dark" 
-              ? "rgba(255, 255, 255, 0.08)" 
-              : "rgba(0, 0, 0, 0.08)",
+                ? "rgba(255, 255, 255, 0.08)"
+                : "rgba(0, 0, 0, 0.08)",
             display: "flex",
             alignItems: "center",
             padding: "8px 16px",
@@ -1500,7 +1581,7 @@ const Ontology = ({
           >
             <AccountTreeIcon />
           </IconButton>
-          
+
           <Box
             onClick={() => setMobileSearchOpen(true)}
             sx={{
@@ -1559,8 +1640,8 @@ const Ontology = ({
               padding: "8px 16px",
               borderBottom: "1px solid",
               borderColor: theme.palette.mode === "dark" 
-                ? "rgba(255, 255, 255, 0.08)" 
-                : "rgba(0, 0, 0, 0.08)",
+                  ? "rgba(255, 255, 255, 0.08)"
+                  : "rgba(0, 0, 0, 0.08)",
               gap: 1,
             }}
           >
@@ -1574,10 +1655,10 @@ const Ontology = ({
               Search
             </Typography>
           </Box>
-          
-          <Box 
-            sx={{ 
-              height: "calc(100vh - 64px)", 
+
+          <Box
+            sx={{
+              height: "calc(100vh - 64px)",
               overflow: "auto",
               ...SCROLL_BAR_STYLE,
             }}
@@ -1614,17 +1695,17 @@ const Ontology = ({
             transition: "height 0.3s ease-in-out",
             borderBottom: mobileTreeOpen ? "1px solid" : "none",
             borderColor: theme.palette.mode === "dark" 
-              ? "rgba(255, 255, 255, 0.08)" 
-              : "rgba(0, 0, 0, 0.08)",
+                ? "rgba(255, 255, 255, 0.08)"
+                : "rgba(0, 0, 0, 0.08)",
           }}
         >
           {skillsFuture && (
             <Box sx={{ 
-              m: "10px", 
-              mt: "20px", 
-              flexShrink: 0,
-              opacity: mobileTreeOpen ? 1 : 0,
-              transition: "opacity 0.3s ease-in-out",
+                m: "10px",
+                mt: "20px",
+                flexShrink: 0,
+                opacity: mobileTreeOpen ? 1 : 0,
+                transition: "opacity 0.3s ease-in-out",
             }}>
               <FormControl
                 variant="outlined"
@@ -1665,20 +1746,20 @@ const Ontology = ({
             }}
           >
             <DraggableTree
-            treeViewData={treeViewData}
-            setSnackbarMessage={setSnackbarMessage}
-            treeRef={treeRef}
-            currentVisibleNode={currentVisibleNode}
-            nodes={nodes}
-            onOpenNodesTree={(nodeId: string) => {
-              onOpenNodesTree(nodeId);
-              // Don't close tree on node selection to allow parallel browsing
-            }}
-            eachOntologyPath={eachOntologyPath}
-            skillsFuture={skillsFuture}
-            specializationNumsUnder={specializationNumsUnder}
-            skillsFutureApp={appName}
-          />
+              treeViewData={treeViewData}
+              setSnackbarMessage={setSnackbarMessage}
+              treeRef={treeRef}
+              currentVisibleNode={currentVisibleNode}
+              nodes={nodes}
+              onOpenNodesTree={(nodeId: string) => {
+                onOpenNodesTree(nodeId);
+                // Don't close tree on node selection to allow parallel browsing
+              }}
+              eachOntologyPath={eachOntologyPath}
+              skillsFuture={skillsFuture}
+              specializationNumsUnder={specializationNumsUnder}
+              skillsFutureApp={appName}
+            />
           </Box>
         </Box>
       )}
@@ -1689,9 +1770,9 @@ const Ontology = ({
           sx={{
             position: "fixed",
             top: 0,
-            right: mobileSidebarOpen 
-              ? 0 
-              : activeSidebar 
+            right: mobileSidebarOpen
+              ? 0
+              : activeSidebar
                 ? { xs: "-90%", sm: "-450px" }
                 : "-70px",
             width: activeSidebar 
@@ -1764,8 +1845,8 @@ const Ontology = ({
             overflow: "hidden",
             backgroundColor:
               theme.palette.mode === "dark" ? "#1b1a1a" : "#f8f9fa",
-            paddingTop: isMobile 
-              ? mobileTreeOpen 
+            paddingTop: isMobile
+              ? mobileTreeOpen
                 ? "calc(56px + 50vh)" // Mobile header + tree panel height
                 : "56px" // Just mobile header
               : "0",
@@ -1973,8 +2054,8 @@ const Ontology = ({
                 p: "20px",
                 pt: 0,
                 overflow: "auto",
-                height: isMobile 
-                  ? mobileTreeOpen 
+                height: isMobile
+                  ? mobileTreeOpen
                     ? "calc(100vh - 56px - 50vh)" // Account for header + tree
                     : "calc(100vh - 56px)" // Just header
                   : "100vh",
@@ -2043,37 +2124,37 @@ const Ontology = ({
 
           {!isMobile && (
             <MemoizedToolbarSidebar
-            // isHovered={toolbarIsHovered}
-            toolbarRef={toolbarRef}
-            user={user}
-            openSearchedNode={openSearchedNode}
-            searchWithFuse={searchWithFuse}
-            nodes={nodes}
-            selectedDiffNode={selectedDiffNode}
-            setSelectedDiffNode={setSelectedDiffNode}
-            currentVisibleNode={currentVisibleNode}
-            setCurrentVisibleNode={setCurrentVisibleNode}
-            confirmIt={confirmIt}
-            activeSidebar={activeSidebar}
-            setActiveSidebar={setActiveSidebar}
-            handleExpandSidebar={handleExpandSidebar}
-            navigateToNode={navigateToNode}
-            treeVisualization={treeVisualization}
-            expandedNodes={expandedNodes}
-            setExpandedNodes={setExpandedNodes}
-            onOpenNodesTree={onOpenNodesTree}
-            setDisplayGuidelines={setDisplayGuidelines}
-            currentImprovement={currentImprovement}
-            setCurrentImprovement={setCurrentImprovement}
-            lastSearches={lastSearches}
-            updateLastSearches={updateLastSearches}
-            selectedChatTab={selectedChatTab}
-            setSelectedChatTab={setSelectedChatTab}
-            displayGuidelines={displayGuidelines}
-            signOut={signOut}
-            skillsFuture={skillsFuture}
-            skillsFutureApp={appName ?? null}
-          />
+              // isHovered={toolbarIsHovered}
+              toolbarRef={toolbarRef}
+              user={user}
+              openSearchedNode={openSearchedNode}
+              searchWithFuse={searchWithFuse}
+              nodes={nodes}
+              selectedDiffNode={selectedDiffNode}
+              setSelectedDiffNode={setSelectedDiffNode}
+              currentVisibleNode={currentVisibleNode}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              confirmIt={confirmIt}
+              activeSidebar={activeSidebar}
+              setActiveSidebar={setActiveSidebar}
+              handleExpandSidebar={handleExpandSidebar}
+              navigateToNode={navigateToNode}
+              treeVisualization={treeVisualization}
+              expandedNodes={expandedNodes}
+              setExpandedNodes={setExpandedNodes}
+              onOpenNodesTree={onOpenNodesTree}
+              setDisplayGuidelines={setDisplayGuidelines}
+              currentImprovement={currentImprovement}
+              setCurrentImprovement={setCurrentImprovement}
+              lastSearches={lastSearches}
+              updateLastSearches={updateLastSearches}
+              selectedChatTab={selectedChatTab}
+              setSelectedChatTab={setSelectedChatTab}
+              displayGuidelines={displayGuidelines}
+              signOut={signOut}
+              skillsFuture={skillsFuture}
+              skillsFutureApp={appName ?? null}
+            />
           )}
         </Container>
         {ConfirmDialog}
