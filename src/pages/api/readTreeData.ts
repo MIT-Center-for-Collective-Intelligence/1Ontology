@@ -55,7 +55,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     }
     // Get tree data from Firebase Storage
     const bucket = storage.bucket(
-      `gs://${development ? process.env.NEXT_PUBLIC_STORAGE_BUCKET : process.env.NEXT_PUBLIC_DEV_STORAGE_BUCKET}`,
+      `gs://${development ? process.env.NEXT_PUBLIC_DEV_STORAGE_BUCKET : process.env.NEXT_PUBLIC_STORAGE_BUCKET}`,
     );
     const fileName = `ontology-hierarchies/${appName === "default" ? "original" : appName}/tree-hierarchy.json`;
 

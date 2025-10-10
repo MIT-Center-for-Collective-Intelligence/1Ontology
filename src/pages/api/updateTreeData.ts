@@ -15,8 +15,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     .where("appName", "==", appName)
     .where("deleted", "==", false)
     .get();
-
-  const generatedTree = generateTree(nodesSnapshot);
+  const nodes: any = {};
+  for (let nodeDoc of nodesSnapshot.docs) {
+    nodes[nodeDoc.id] = nodeDoc.data();
+  }
+  const generatedTree = generateTree(nodes);
+  console.log(generatedTree, "generatedTree");
 
   await uploadToStorage(generatedTree, appName);
 
@@ -165,7 +169,7 @@ function generateTree(nodes: any) {
 
 async function uploadToStorage(newData: any, appName: string) {
   const bucket = storage.bucket(
-    `gs://${development ? process.env.NEXT_PUBLIC_STORAGE_BUCKET : process.env.NEXT_PUBLIC_DEV_STORAGE_BUCKET}`,
+    `gs://${development ? process.env.DEV_ONTOLOGY_STORAGE_BUCKET : process.env.PROD_ONTOLOGY_STORAGE_BUCKET}`,
   );
   const fileName = `ontology-hierarchies/${appName === "default" ? "original" : appName}/tree-hierarchy.json`;
 
