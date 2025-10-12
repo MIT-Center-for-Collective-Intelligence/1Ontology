@@ -113,7 +113,7 @@ import GraphView from "@components/components/OntologyComponents/GraphView";
 import {
   DISPLAY,
   SCROLL_BAR_STYLE,
-  SKILLS_FUTURE_APP_NAMES,
+  ONTOLOGY_APPS,
 } from "@components/lib/CONSTANTS";
 import { NODES, USERS } from "@components/lib/firestoreClient/collections";
 
@@ -1645,7 +1645,7 @@ const Ontology = ({
                   label="Property Type"
                   sx={{ borderRadius: "20px" }}
                 >
-                  {SKILLS_FUTURE_APP_NAMES.map(({ id, name }) => (
+                  {ONTOLOGY_APPS.map(({ id, name }) => (
                     <MenuItem key={id} value={id}>
                       {name}
                     </MenuItem>
@@ -1912,7 +1912,7 @@ const Ontology = ({
                         label="Property Type"
                         sx={{ borderRadius: "20px" }}
                       >
-                        {SKILLS_FUTURE_APP_NAMES.map(({ id, name }) => (
+                        {ONTOLOGY_APPS.map(({ id, name }) => (
                           <MenuItem key={id} value={id}>
                             {name}
                           </MenuItem>

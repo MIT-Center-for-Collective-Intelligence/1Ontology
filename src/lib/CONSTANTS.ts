@@ -166,7 +166,7 @@ export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
 export const MODEL = "o3";
 export const GEMINI_MODEL = "gemini-2.5-pro";
 
-export const SKILLS_FUTURE_APP_NAMES = [
+export const ONTOLOGY_APPS = [
   {
     id: "full-wordnet-o*net-verb-hierarchy-toms-version",
     name: "Full WordNet O*Net Verb Hierarchy - Tom's Version",
