@@ -66,7 +66,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       searchAll,
     } = req.body;
 
-    await runMiddleware(req, res, cors);
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,DELETE,OPTIONS",
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization",
+    );
 
     let collectionName = "";
     if (appName) {
