@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { ChromaClient, OpenAIEmbeddingFunction } from "chromadb";
+import { ChromaClient, IncludeEnum, OpenAIEmbeddingFunction } from "chromadb";
 import fbAuth from "@components/middlewares/fbAuth";
 import { db } from "@components/lib/firestoreServer/admin";
 import { getDoerCreate } from "@components/lib/utils/helpers";
@@ -34,6 +34,19 @@ const runMiddleware = (req: any, res: any, fn: any) => {
   });
 };
 
+const cosineSimilarity = (vecA: any[], vecB: any[]) => {
+  if (vecA.length !== vecB.length) {
+    throw new Error("Embedding vectors must have the same length.");
+  }
+  const dot = vecA.reduce((acc, val, idx) => acc + val * vecB[idx], 0);
+  const normA = Math.sqrt(vecA.reduce((acc, val) => acc + val * val, 0));
+  const normB = Math.sqrt(vecB.reduce((acc, val) => acc + val * val, 0));
+  if (normA === 0 || normB === 0) {
+    throw new Error("Cannot compute similarity for zero-length embeddings.");
+  }
+  return dot / (normA * normB);
+};
+
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { query, skillsFuture, appName, user, nodeType, resultsNum } =
@@ -54,7 +67,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const embeddingResponse = await openai.embeddings.create({
       model: "text-embedding-3-large", // must match the stored embeddings
-      input: query,
+      input: query.toLowerCase(),
     });
 
     const queryEmbedding = embeddingResponse.data[0].embedding;
@@ -64,6 +77,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     });
     const results = await collection.query({
       queryEmbeddings: [queryEmbedding],
+      include: [IncludeEnum.Embeddings, IncludeEnum.Metadatas],
       nResults: resultsNum || 40,
       ...(nodeType
         ? {
@@ -75,33 +89,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     });
 
     const metaDatas: any = results.metadatas[0];
-    const distances: any = results.distances ? results.distances[0] : [];
-    const exactMatches = [];
-    const otherMatches = [];
+    const embeddings: any = (results.embeddings || [])[0];
 
-    const uniqueResults = new Set();
-    for (let resultIdx = 0; resultIdx < metaDatas.length; resultIdx++) {
-      const result = metaDatas[resultIdx];
-      const replacedId = result.id.replace("-properties", "");
-      if (!uniqueResults.has(replacedId)) {
-        uniqueResults.add(result.id);
+    const topResults = [];
+    for (let nodeIdx = 0; nodeIdx < metaDatas.length; nodeIdx++) {
+      if (metaDatas[nodeIdx]?.nodeType === "activity") {
+        const similarity = cosineSimilarity(
+          queryEmbedding,
+          (embeddings || [])[nodeIdx],
+        );
 
-        if (
-          result.title &&
-          result.title.trim().toLowerCase() === query.trim().toLowerCase()
-        ) {
-          exactMatches.push({ ...result, distance: distances[resultIdx] || 0 });
-        } else {
-          otherMatches.push({ ...result, distance: distances[resultIdx] || 0 });
-        }
+        topResults.push({
+          ...metaDatas[nodeIdx],
+          similarity,
+        });
       }
     }
 
-    const resultsAlt = [...exactMatches, ...otherMatches];
+    topResults.sort((a, b) => b.similarity - a.similarity);
+
     const logData = {
       at: "searchChroma",
       query,
-      results: resultsAlt,
+      results: topResults,
       appName,
     };
     const logRef = db.collection(LOGS).doc();
@@ -113,7 +123,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       doer: uname,
       doerCreate,
     });
-    return res.status(200).json({ results: resultsAlt });
+    return res.status(200).json({ results: topResults });
   } catch (error) {
     console.error(error);
     return res.status(500).json({});
