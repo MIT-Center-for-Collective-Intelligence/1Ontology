@@ -206,9 +206,14 @@ const SearchSideBar = ({
         background: isFocused
           ? theme.palette.mode === "dark"
             ? "black"
-            : "white"
+            : "#dcdcdc"
           : "",
+        borderRadius: "25px",
         ...SCROLL_BAR_STYLE,
+        /*         border: isFocused ? "1px solid gray" : "", */
+        mt: "5px",
+        /*         mx: "5px", */
+        /*         mb: "194px", */
       }}
     >
       <GlobalStyles
@@ -236,10 +241,13 @@ const SearchSideBar = ({
           sx: {
             fontSize: "19px",
             borderRadius: "45px",
-            background: (theme) =>
-              theme.palette.mode === "dark"
-                ? "black !important"
-                : "white !important",
+            padding: "2px 2px",
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderRadius: "45px",
+            },
+            "& input": {
+              padding: "0px 0",
+            },
           },
           startAdornment: (
             <IconButton
@@ -277,10 +285,6 @@ const SearchSideBar = ({
           p: "8px",
           position: "sticky",
           top: "0px",
-          background: (theme) =>
-            theme.palette.mode === "dark"
-              ? "black !important"
-              : "white !important",
           zIndex: 1000,
         }}
       />

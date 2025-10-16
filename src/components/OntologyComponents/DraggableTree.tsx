@@ -970,8 +970,8 @@ function DraggableTree({
           zIndex: 20,
           backgroundColor: (theme) =>
             theme.palette.mode === "dark" ? "#303134" : "#ffffff",
-          pl: "10px",
-          py: "4px",
+          pl: "5px",
+          py: "7px",
           gap: 1,
         }}
       >
@@ -1061,7 +1061,7 @@ function DraggableTree({
                 searchTerm={searchTerm}
                 className={styles.tree}
                 rowClassName={styles.row}
-                paddingTop={15}
+                paddingTop={5}
                 indent={INDENT_STEP}
                 overscanCount={50}
                 // onSelect={(selected) => setSelectedCount(selected.length)}
