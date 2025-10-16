@@ -60,6 +60,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Divider,
   FormControl,
   IconButton,
   InputLabel,
@@ -190,7 +191,9 @@ const Ontology = ({
   const [eachOntologyPath, setEachOntologyPath] = useState<{
     [key: string]: INodePath[];
   }>({});
-  const [multipleOntologyPaths, setMultipleOntologyPaths] = useState<{ [nodeId: string]: INodePath[][] }>({});
+  const [multipleOntologyPaths, setMultipleOntologyPaths] = useState<{
+    [nodeId: string]: INodePath[][];
+  }>({});
   const columnResizerRef = useRef<any>();
   const [lastUpdate, setLastUpdate] = useState<number | null>(null);
 
@@ -259,7 +262,9 @@ const Ontology = ({
     if (mobileSearchOpen && isMobile) {
       // Small delay to ensure the component is rendered
       setTimeout(() => {
-        const searchInput = document.querySelector('input[placeholder="Search..."]') as HTMLInputElement;
+        const searchInput = document.querySelector(
+          'input[placeholder="Search..."]',
+        ) as HTMLInputElement;
         if (searchInput) {
           searchInput.focus();
         }
@@ -560,7 +565,7 @@ const Ontology = ({
         for (let node of mainNodes) {
           if (!node) continue;
 
-          const pathSignature = `${node.id}-${path.map(p => p.id).join('-')}`;
+          const pathSignature = `${node.id}-${path.map((p) => p.id).join("-")}`;
           if (visited.has(pathSignature)) continue;
           visited.add(pathSignature);
 
@@ -576,9 +581,10 @@ const Ontology = ({
           if (!multipleOntologyPaths[node.id]) {
             multipleOntologyPaths[node.id] = [newPath];
           } else {
-            const newPathIds = newPath.map(p => p.id).join(':');
-            const isDuplicate = multipleOntologyPaths[node.id].some(existingPath =>
-              existingPath.map(p => p.id).join(':') === newPathIds
+            const newPathIds = newPath.map((p) => p.id).join(":");
+            const isDuplicate = multipleOntologyPaths[node.id].some(
+              (existingPath) =>
+                existingPath.map((p) => p.id).join(":") === newPathIds,
             );
 
             if (!isDuplicate) {
@@ -743,7 +749,6 @@ const Ontology = ({
     }
   };
 
-
   useEffect(() => {
     // Create a query for the NODES collection where "deleted" is false
     let nodesQuery = null;
@@ -838,7 +843,7 @@ const Ontology = ({
 
       const specializations = node.specializations;
       let childrenInOrder = [];
-      
+
       for (let collection of specializations) {
         const children = [];
         for (let _node of collection.nodes) {
@@ -1087,8 +1092,8 @@ const Ontology = ({
     // setOntologyPath(eachOntologyPath[currentVisibleNode?.id]);
 
     updateTheUrl([
-        { id: currentVisibleNode?.id, title: currentVisibleNode.title },
-      ]);
+      { id: currentVisibleNode?.id, title: currentVisibleNode.title },
+    ]);
   }, [currentVisibleNode?.id, eachOntologyPath]);
 
   // Callback function to add a new node to the database
@@ -1471,7 +1476,7 @@ const Ontology = ({
           {currentVisibleNode ? currentVisibleNode.title : "1ontology"}
         </title>
       </Head>
-      
+
       {/* Mobile Header */}
       {isMobile && (
         <Box
@@ -1481,11 +1486,13 @@ const Ontology = ({
             left: 0,
             right: 0,
             zIndex: 1000,
-            backgroundColor: theme.palette.mode === "dark" ? "#303134" : "white",
+            backgroundColor:
+              theme.palette.mode === "dark" ? "#303134" : "white",
             borderBottom: "1px solid",
-            borderColor: theme.palette.mode === "dark" 
-              ? "rgba(255, 255, 255, 0.08)" 
-              : "rgba(0, 0, 0, 0.08)",
+            borderColor:
+              theme.palette.mode === "dark"
+                ? "rgba(255, 255, 255, 0.08)"
+                : "rgba(0, 0, 0, 0.08)",
             display: "flex",
             alignItems: "center",
             padding: "8px 16px",
@@ -1495,12 +1502,14 @@ const Ontology = ({
           <IconButton
             onClick={() => setMobileTreeOpen(!mobileTreeOpen)}
             sx={{
-              color: mobileTreeOpen ? theme.palette.primary.main : theme.palette.text.secondary,
+              color: mobileTreeOpen
+                ? theme.palette.primary.main
+                : theme.palette.text.secondary,
             }}
           >
             <AccountTreeIcon />
           </IconButton>
-          
+
           <Box
             onClick={() => setMobileSearchOpen(true)}
             sx={{
@@ -1531,7 +1540,9 @@ const Ontology = ({
           <IconButton
             onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
             sx={{
-              color: mobileSidebarOpen ? theme.palette.primary.main : theme.palette.text.secondary,
+              color: mobileSidebarOpen
+                ? theme.palette.primary.main
+                : theme.palette.text.secondary,
             }}
           >
             <MenuIcon />
@@ -1558,9 +1569,10 @@ const Ontology = ({
               alignItems: "center",
               padding: "8px 16px",
               borderBottom: "1px solid",
-              borderColor: theme.palette.mode === "dark" 
-                ? "rgba(255, 255, 255, 0.08)" 
-                : "rgba(0, 0, 0, 0.08)",
+              borderColor:
+                theme.palette.mode === "dark"
+                  ? "rgba(255, 255, 255, 0.08)"
+                  : "rgba(0, 0, 0, 0.08)",
               gap: 1,
             }}
           >
@@ -1574,10 +1586,10 @@ const Ontology = ({
               Search
             </Typography>
           </Box>
-          
-          <Box 
-            sx={{ 
-              height: "calc(100vh - 64px)", 
+
+          <Box
+            sx={{
+              height: "calc(100vh - 64px)",
               overflow: "auto",
               ...SCROLL_BAR_STYLE,
             }}
@@ -1606,26 +1618,30 @@ const Ontology = ({
             left: 0,
             right: 0,
             height: mobileTreeOpen ? "50vh" : "0",
-            backgroundColor: theme.palette.mode === "dark" ? "#303134" : "white",
+            backgroundColor:
+              theme.palette.mode === "dark" ? "#303134" : "white",
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",
             zIndex: 999,
             transition: "height 0.3s ease-in-out",
             borderBottom: mobileTreeOpen ? "1px solid" : "none",
-            borderColor: theme.palette.mode === "dark" 
-              ? "rgba(255, 255, 255, 0.08)" 
-              : "rgba(0, 0, 0, 0.08)",
+            borderColor:
+              theme.palette.mode === "dark"
+                ? "rgba(255, 255, 255, 0.08)"
+                : "rgba(0, 0, 0, 0.08)",
           }}
         >
           {skillsFuture && (
-            <Box sx={{ 
-              m: "10px", 
-              mt: "20px", 
-              flexShrink: 0,
-              opacity: mobileTreeOpen ? 1 : 0,
-              transition: "opacity 0.3s ease-in-out",
-            }}>
+            <Box
+              sx={{
+                m: "10px",
+                mt: "20px",
+                flexShrink: 0,
+                opacity: mobileTreeOpen ? 1 : 0,
+                transition: "opacity 0.3s ease-in-out",
+              }}
+            >
               <FormControl
                 variant="outlined"
                 sx={{ borderRadius: "20px" }}
@@ -1665,20 +1681,19 @@ const Ontology = ({
             }}
           >
             <DraggableTree
-            treeViewData={treeViewData}
-            setSnackbarMessage={setSnackbarMessage}
-            treeRef={treeRef}
-            currentVisibleNode={currentVisibleNode}
-            nodes={nodes}
-            onOpenNodesTree={(nodeId: string) => {
-              onOpenNodesTree(nodeId);
-              // Don't close tree on node selection to allow parallel browsing
-            }}
-            eachOntologyPath={eachOntologyPath}
-            skillsFuture={skillsFuture}
-            specializationNumsUnder={specializationNumsUnder}
-            skillsFutureApp={appName}
-          />
+              treeViewData={treeViewData}
+              setSnackbarMessage={setSnackbarMessage}
+              treeRef={treeRef}
+              currentVisibleNode={currentVisibleNode}
+              nodes={nodes}
+              onOpenNodesTree={(nodeId: string) => {
+                onOpenNodesTree(nodeId);
+                // Don't close tree on node selection to allow parallel browsing
+              }}
+              skillsFuture={skillsFuture}
+              specializationNumsUnder={specializationNumsUnder}
+              skillsFutureApp={appName}
+            />
           </Box>
         </Box>
       )}
@@ -1689,14 +1704,12 @@ const Ontology = ({
           sx={{
             position: "fixed",
             top: 0,
-            right: mobileSidebarOpen 
-              ? 0 
-              : activeSidebar 
+            right: mobileSidebarOpen
+              ? 0
+              : activeSidebar
                 ? { xs: "-90%", sm: "-450px" }
                 : "-70px",
-            width: activeSidebar 
-              ? { xs: "90%", sm: "450px" }
-              : "70px",
+            width: activeSidebar ? { xs: "90%", sm: "450px" } : "70px",
             height: "100vh",
             backgroundColor: "transparent",
             zIndex: 1200,
@@ -1764,10 +1777,10 @@ const Ontology = ({
             overflow: "hidden",
             backgroundColor:
               theme.palette.mode === "dark" ? "#1b1a1a" : "#f8f9fa",
-            paddingTop: isMobile 
-              ? mobileTreeOpen 
-                ? "calc(56px + 50vh)" // Mobile header + tree panel height
-                : "56px" // Just mobile header
+            paddingTop: isMobile
+              ? mobileTreeOpen
+                ? "calc(56px + 50vh)"
+                : "56px"
               : "0",
             transition: isMobile ? "padding-top 0.3s ease-in-out" : "none",
           }}
@@ -1790,38 +1803,10 @@ const Ontology = ({
                 borderStyle: "none solid none none",
               }}
             >
-              <Tabs
-                value={viewValue}
-                onChange={handleViewChange}
-                sx={{
-                  width: "100%",
-                  borderColor: "divider",
-                  position: "absolute",
-                  top: 76,
-                  zIndex: 9,
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                  ".MuiTab-root.Mui-selected": {
-                    color: "#ff6d00",
-                  },
-                }}
-              >
-                <Tab
-                  label="Outline"
-                  {...a11yProps(0)}
-                  sx={{ width: "50%", fontSize: "20px" }}
-                />
-                <Tab
-                  label="Graph View"
-                  {...a11yProps(1)}
-                  sx={{ width: "50%", fontSize: "20px" }}
-                />
-              </Tabs>
-
               <Box
                 sx={{
                   height: "100vh",
-                  marginTop: "156px",
+                  marginTop: "166px",
                   flexGrow: 1,
                   overflow: "auto",
                   ...SCROLL_BAR_STYLE,
@@ -1855,20 +1840,10 @@ const Ontology = ({
                       currentVisibleNode={currentVisibleNode}
                       nodes={nodes}
                       onOpenNodesTree={onOpenNodesTree}
-                      eachOntologyPath={eachOntologyPath}
-                      multipleOntologyPaths={multipleOntologyPaths}
                       skillsFuture={skillsFuture}
                       specializationNumsUnder={specializationNumsUnder}
                       skillsFutureApp={appName}
                     />
-
-                    {/*  <TreeViewSimplified
-                      treeVisualization={treeVisualization}
-                      onOpenNodesTree={onOpenNodesTree}
-                      expandedNodes={expandedNodes}
-                      setExpandedNodes={setExpandedNodes}
-                      currentVisibleNode={currentVisibleNode}
-                    /> */}
                   </Box>
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
@@ -1888,11 +1863,13 @@ const Ontology = ({
                   position: "absolute",
                   top: 0,
                   width: "100%",
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "dark" ? "#191c21" : "#eaecf0",
                 }}
               >
                 {" "}
                 {skillsFuture && (
-                  <Box sx={{ m: "10px" }}>
+                  <Box sx={{ m: "10px", mb: "0px", p: 0 }}>
                     <FormControl
                       variant="outlined"
                       sx={{ borderRadius: "20px" }}
@@ -1909,11 +1886,33 @@ const Ontology = ({
                           const app = event.target.value.replaceAll(" ", "_");
                           router.replace(`/${app}`);
                         }}
-                        label="Property Type"
-                        sx={{ borderRadius: "20px" }}
+                        label="Ontology Type"
+                        sx={{
+                          borderRadius: "20px",
+                          "& .MuiSelect-select": {
+                            padding: "10px 14px",
+                          },
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: {
+                              backgroundColor: (theme) =>
+                                theme.palette.mode === "dark" ? "#1a1a1a" : "",
+                              borderLeftBottomRadius: "20px",
+                              borderRightBottomRadius: "20px",
+                              p: 0,
+                            },
+                          },
+                        }}
                       >
                         {ONTOLOGY_APPS.map(({ id, name }) => (
-                          <MenuItem key={id} value={id}>
+                          <MenuItem
+                            key={id}
+                            value={id}
+                            sx={{
+                              borderRadius: "25px",
+                            }}
+                          >
                             {name}
                           </MenuItem>
                         ))}
@@ -1928,7 +1927,32 @@ const Ontology = ({
                   updateLastSearches={updateLastSearches}
                   skillsFuture={skillsFuture}
                   skillsFutureApp={appName}
-                />
+                />{" "}
+                <Divider sx={{ borderBottomWidth: 1.5, borderColor: "gray" }} />
+                <Tabs
+                  value={viewValue}
+                  onChange={handleViewChange}
+                  sx={{
+                    width: "100%",
+                    borderColor: "divider",
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+                    ".MuiTab-root.Mui-selected": {
+                      color: "#ff6d00",
+                    },
+                  }}
+                >
+                  <Tab
+                    label="Outline"
+                    {...a11yProps(0)}
+                    sx={{ width: "50%", fontSize: "19px" }}
+                  />
+                  <Tab
+                    label="Graph View"
+                    {...a11yProps(1)}
+                    sx={{ width: "50%", fontSize: "19px" }}
+                  />
+                </Tabs>
               </Box>
             </Section>
           )}
@@ -1973,8 +1997,8 @@ const Ontology = ({
                 p: "20px",
                 pt: 0,
                 overflow: "auto",
-                height: isMobile 
-                  ? mobileTreeOpen 
+                height: isMobile
+                  ? mobileTreeOpen
                     ? "calc(100vh - 56px - 50vh)" // Account for header + tree
                     : "calc(100vh - 56px)" // Just header
                   : "100vh",
@@ -2043,37 +2067,37 @@ const Ontology = ({
 
           {!isMobile && (
             <MemoizedToolbarSidebar
-            // isHovered={toolbarIsHovered}
-            toolbarRef={toolbarRef}
-            user={user}
-            openSearchedNode={openSearchedNode}
-            searchWithFuse={searchWithFuse}
-            nodes={nodes}
-            selectedDiffNode={selectedDiffNode}
-            setSelectedDiffNode={setSelectedDiffNode}
-            currentVisibleNode={currentVisibleNode}
-            setCurrentVisibleNode={setCurrentVisibleNode}
-            confirmIt={confirmIt}
-            activeSidebar={activeSidebar}
-            setActiveSidebar={setActiveSidebar}
-            handleExpandSidebar={handleExpandSidebar}
-            navigateToNode={navigateToNode}
-            treeVisualization={treeVisualization}
-            expandedNodes={expandedNodes}
-            setExpandedNodes={setExpandedNodes}
-            onOpenNodesTree={onOpenNodesTree}
-            setDisplayGuidelines={setDisplayGuidelines}
-            currentImprovement={currentImprovement}
-            setCurrentImprovement={setCurrentImprovement}
-            lastSearches={lastSearches}
-            updateLastSearches={updateLastSearches}
-            selectedChatTab={selectedChatTab}
-            setSelectedChatTab={setSelectedChatTab}
-            displayGuidelines={displayGuidelines}
-            signOut={signOut}
-            skillsFuture={skillsFuture}
-            skillsFutureApp={appName ?? null}
-          />
+              // isHovered={toolbarIsHovered}
+              searchWithFuse={searchWithFuse}
+              toolbarRef={toolbarRef}
+              user={user}
+              openSearchedNode={openSearchedNode}
+              nodes={nodes}
+              selectedDiffNode={selectedDiffNode}
+              setSelectedDiffNode={setSelectedDiffNode}
+              currentVisibleNode={currentVisibleNode}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              confirmIt={confirmIt}
+              activeSidebar={activeSidebar}
+              setActiveSidebar={setActiveSidebar}
+              handleExpandSidebar={handleExpandSidebar}
+              navigateToNode={navigateToNode}
+              treeVisualization={treeVisualization}
+              expandedNodes={expandedNodes}
+              setExpandedNodes={setExpandedNodes}
+              onOpenNodesTree={onOpenNodesTree}
+              setDisplayGuidelines={setDisplayGuidelines}
+              currentImprovement={currentImprovement}
+              setCurrentImprovement={setCurrentImprovement}
+              lastSearches={lastSearches}
+              updateLastSearches={updateLastSearches}
+              selectedChatTab={selectedChatTab}
+              setSelectedChatTab={setSelectedChatTab}
+              displayGuidelines={displayGuidelines}
+              signOut={signOut}
+              skillsFuture={skillsFuture}
+              skillsFutureApp={appName ?? null}
+            />
           )}
         </Container>
         {ConfirmDialog}
