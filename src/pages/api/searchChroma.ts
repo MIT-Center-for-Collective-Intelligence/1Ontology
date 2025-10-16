@@ -4,6 +4,7 @@ import fbAuth from "@components/middlewares/fbAuth";
 import { db } from "@components/lib/firestoreServer/admin";
 import { getDoerCreate } from "@components/lib/utils/helpers";
 import { LOGS } from "@components/lib/firestoreClient/collections";
+import { openai } from "./helpers";
 const url = `${process.env.CHROMA_PROTOCOL}://${process.env.CHROMA_HOST}:${process.env.CHROMA_PORT}`;
 
 const sanitizeCollectionName = (title: string) => {
@@ -51,12 +52,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
     const client = new ChromaClient({ path: url });
 
+    const embeddingResponse = await openai.embeddings.create({
+      model: "text-embedding-3-large", // must match the stored embeddings
+      input: query,
+    });
+
+    const queryEmbedding = embeddingResponse.data[0].embedding;
     const collection = await client.getOrCreateCollection({
       name: collectionName,
       embeddingFunction,
     });
     const results = await collection.query({
-      queryTexts: query,
+      queryEmbeddings: [queryEmbedding],
       nResults: resultsNum || 40,
       ...(nodeType
         ? {
