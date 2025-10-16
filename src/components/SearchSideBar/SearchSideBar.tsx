@@ -147,15 +147,10 @@ const SearchSideBar = ({
         : { results: [] };
 
       const results: any = [...(response.results || [])];
+      console.log(results, "results");
 
-      const existAlready =
-        fuseSearch.length > 0
-          ? results.findIndex((c: { id: string }) => {
-              return c.id === fuseSearch[0].id;
-            })
-          : -1;
-      if (existAlready === -1 && fuseSearch.length > 0) {
-        results.unshift(fuseSearch[0]);
+      if (results.length <= 0 && fuseSearch.length > 0) {
+        results.push(...fuseSearch);
       }
 
       setSearchResults(development ? fuseSearch : results);
