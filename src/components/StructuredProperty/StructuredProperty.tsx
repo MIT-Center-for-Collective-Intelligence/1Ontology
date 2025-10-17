@@ -837,10 +837,6 @@ const StructuredProperty = ({
               db,
             });
           }
-          await Post("/triggerChroma", {
-            nodeId: currentNodeId,
-            updateAll: false,
-          });
           saveNewChangeLog(db, {
             nodeId: currentVisibleNode?.id,
             modifiedBy: user?.uname || "",

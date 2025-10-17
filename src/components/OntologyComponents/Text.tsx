@@ -205,10 +205,12 @@ const Text = ({
         skillsFuture,
         ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
       });
-      await Post("/triggerChroma", {
-        nodeId: nodeId,
-        updatedShortIds: property === "title" || property === "description",
-      });
+      if (property === "title" || property === "description") {
+        await Post("/triggerChroma", {
+          nodeId: nodeId,
+          update: true,
+        });
+      }
     },
     [db, property, user],
   );

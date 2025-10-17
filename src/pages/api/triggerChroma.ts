@@ -3,10 +3,11 @@ import { ICollection, INode } from "@components/types/INode";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextApiRequest, NextApiResponse } from "next";
 import { delay } from "@components/lib/utils/utils";
-import { ChromaClient, OpenAIEmbeddingFunction } from "chromadb";
+import { ChromaClient, Embedding, OpenAIEmbeddingFunction } from "chromadb";
 import fbAuth from "@components/middlewares/fbAuth";
 import { development } from "@components/lib/CONSTANTS";
 import Cors from "cors";
+import { openai } from "./helpers";
 
 const EMBEDDING_MODEL = "gemini-embedding-exp-03-07";
 
@@ -109,7 +110,7 @@ const runMiddleware = (req: any, res: any, fn: any) => {
   });
 };
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { nodeId, updatedShortIds, deleteNode } = req.body;
+  const { nodeId, update, deleted } = req.body;
   await runMiddleware(req, res, cors);
   if (development) {
     res.status(200).json({});
@@ -133,105 +134,33 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     embeddingFunction: embeddingFunction,
   });
 
-  if (updatedShortIds) {
+  if (update) {
     const descriptionRef = nodeData.inheritance?.description?.ref;
     const rawDescription = nodeData.properties?.description || "";
-
     const pageContent = `${nodeData.title}\n${!descriptionRef ? `Description:\n${rawDescription.trim()}` : ""}`;
 
-    await collection.upsert({
-      documents: [pageContent.toLowerCase()],
-      ids: [nodeId],
-      metadatas: [
-        {
-          title: nodeData.title,
-          id: nodeData.id,
-          nodeType: nodeData.nodeType,
-        },
-      ],
+    const embeddingsResponse = await openai.embeddings.create({
+      model: "text-embedding-3-large",
+      input: pageContent,
     });
-  }
-  if (!!deleteNode && nodeData.id) {
-    await collection.delete({ ids: [nodeData.id] });
-    await collection.delete({ ids: [`${nodeData.id}-properties`] });
-  }
-  if (nodeData.appName === "only-specifications-ai-peer") {
-    return res.status(200).json({});
-  }
-  const propertyOf: { [propertyName: string]: ICollection[] } =
-    nodeData.propertyOf || {};
-
-  const nodesDocs =
-    nodeData.skillsFuture && nodeData.appName
-      ? await db
-          .collection("nodes")
-          .where("deleted", "==", false)
-          .where("appName", "==", nodeData.appName)
-          .get()
-      : await db
-          .collection("nodes")
-          .where("deleted", "==", false)
-          .where("skillsFuture", "==", false)
-          .get();
-
-  const nodesByIds: Record<string, any> = {};
-  nodesDocs.docs.forEach((n) => {
-    const nodeData = n.data();
-    if (!nodeData.category) {
-      nodesByIds[n.id] = nodeData;
-    }
-  });
-  const updateDocuments = [];
-  const updateDocumentsIds: string[] = [];
-  const nodeStructure = getFullNodeStructure(nodeData, nodesByIds);
-  if (!deleteNode) {
-    updateDocumentsIds.push(`${nodeData.id}-properties`);
-    updateDocuments.push(nodeStructure);
-  }
-
-  for (let property of [
-    ...Object.keys(propertyOf),
-    "specializations",
-    "generalizations",
-  ]) {
-    let propertyValue = propertyOf[property];
-    if (property === "specializations" || property === "generalizations") {
-      propertyValue = nodeData[property];
-    }
-
-    for (let { id } of propertyValue.flatMap((c) => c.nodes)) {
-      const nodeStructure = getFullNodeStructure(nodesByIds[id], nodesByIds);
-      updateDocuments.push(nodeStructure);
-      if (!updateDocumentsIds.includes(`${id}-properties`)) {
-        updateDocumentsIds.push(`${id}-properties`);
-      }
-    }
-  }
-  const docsChunks = createChunks(updateDocuments);
-  const idsChunks = createChunks(updateDocumentsIds);
-
-  for (let i = 0; i < idsChunks.length; i++) {
-    try {
-      const chunkIdsLong = idsChunks[i];
-      const chunkDocs = docsChunks[i];
-      const fullDocuments = chunkDocs.map((doc) => doc.content.toLowerCase());
-
-      const metadatas = chunkDocs.map((d) => {
-        return {
-          title: d.title,
-          id: d.id,
-          nodeType: d.nodeType,
-        };
-      });
+    if (embeddingsResponse.data.length > 0) {
+      const _embedding = embeddingsResponse.data[0].embedding;
 
       await collection.upsert({
-        documents: fullDocuments,
-        ids: chunkIdsLong,
-        metadatas,
+        documents: [pageContent.toLowerCase()],
+        ids: [nodeId],
+        metadatas: [
+          {
+            title: nodeData.title,
+            id: nodeData.id,
+            nodeType: nodeData.nodeType,
+          },
+        ],
+        embeddings: [_embedding],
       });
-    } catch (error) {
-      console.error("Error embedding batch:", error);
     }
+  } else if (deleted && nodeData.id) {
+    await collection.delete({ ids: [nodeData.id] });
   }
   return res.status(200).json({});
 }
