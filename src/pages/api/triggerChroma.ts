@@ -110,59 +110,69 @@ const runMiddleware = (req: any, res: any, fn: any) => {
   });
 };
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { nodeId, update, deleted } = req.body;
-  await runMiddleware(req, res, cors);
-  if (development) {
-    res.status(200).json({});
-  }
-  const nodeDoc = await db.collection("nodes").doc(nodeId).get();
-
-  const client = new ChromaClient({ path: url });
-
-  const nodeData = nodeDoc.data() as INode;
-  let collectionName = "";
-  if (nodeData.appName) {
-    collectionName = `ontology-${sanitizeCollectionName(nodeData.appName)}`;
-  } else if (nodeData.skillsFuture) {
-    collectionName = "ontology-skills";
-  } else {
-    collectionName = "ontology";
-  }
-
-  let collection = await client.getOrCreateCollection({
-    name: collectionName,
-    embeddingFunction: embeddingFunction,
-  });
-
-  if (update) {
-    const descriptionRef = nodeData.inheritance?.description?.ref;
-    const rawDescription = nodeData.properties?.description || "";
-    const pageContent = `${nodeData.title}\n${!descriptionRef ? `Description:\n${rawDescription.trim()}` : ""}`;
-
-    const embeddingsResponse = await openai.embeddings.create({
-      model: "text-embedding-3-large",
-      input: pageContent,
-    });
-    if (embeddingsResponse.data.length > 0) {
-      const _embedding = embeddingsResponse.data[0].embedding;
-
-      await collection.upsert({
-        documents: [pageContent.toLowerCase()],
-        ids: [nodeId],
-        metadatas: [
-          {
-            title: nodeData.title,
-            id: nodeData.id,
-            nodeType: nodeData.nodeType,
-          },
-        ],
-        embeddings: [_embedding],
-      });
+  try {
+    const { nodeId, update, deleted } = req.body;
+    await runMiddleware(req, res, cors);
+    if (development) {
+      res.status(200).json({});
     }
-  } else if (deleted && nodeData.id) {
-    await collection.delete({ ids: [nodeData.id] });
+    console.log(nodeId, "nodeId");
+
+    const nodeDoc = await db.collection("nodes").doc(nodeId).get();
+
+    const client = new ChromaClient({ path: url });
+
+    const nodeData = nodeDoc.data() as INode;
+    if (!nodeData) {
+      throw new Error("empty");
+    }
+    let collectionName = "";
+    if (nodeData.appName) {
+      collectionName = `ontology-${sanitizeCollectionName(nodeData.appName)}`;
+    } else if (nodeData.skillsFuture) {
+      collectionName = "ontology-skills";
+    } else {
+      collectionName = "ontology";
+    }
+
+    let collection = await client.getOrCreateCollection({
+      name: collectionName,
+      embeddingFunction: embeddingFunction,
+    });
+
+    if (update) {
+      const descriptionRef = nodeData.inheritance?.description?.ref;
+      const rawDescription = nodeData.properties?.description || "";
+      const pageContent = `${nodeData.title}\n${!descriptionRef ? `Description:\n${rawDescription.trim()}` : ""}`;
+
+      const embeddingsResponse = await openai.embeddings.create({
+        model: "text-embedding-3-large",
+        input: pageContent,
+      });
+      if (embeddingsResponse.data.length > 0) {
+        const _embedding = embeddingsResponse.data[0].embedding;
+
+        await collection.upsert({
+          documents: [pageContent.toLowerCase()],
+          ids: [nodeId],
+          metadatas: [
+            {
+              title: nodeData.title,
+              id: nodeData.id,
+              nodeType: nodeData.nodeType,
+            },
+          ],
+          embeddings: [_embedding],
+        });
+      }
+    } else if (deleted && nodeData.id) {
+      await collection.delete({ ids: [nodeData.id] });
+    }
+    return res.status(200).json({});
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({});
   }
-  return res.status(200).json({});
 }
 
 export default handler;
