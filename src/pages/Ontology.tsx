@@ -1900,7 +1900,9 @@ const Ontology = ({
                                 theme.palette.mode === "dark" ? "#1a1a1a" : "",
                               borderLeftBottomRadius: "20px",
                               borderRightBottomRadius: "20px",
-                              p: 0,
+                              px: 1.5,
+                              border: "1.5px solid gray",
+                              borderRadius: "25px",
                             },
                           },
                         }}
@@ -1911,6 +1913,19 @@ const Ontology = ({
                             value={id}
                             sx={{
                               borderRadius: "25px",
+                              mt: "3px",
+                              border: "1px solid gray",
+                              background:
+                                "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
+                              fontSize: "15px",
+                              fontWeight: appName === id ? "bold" : "400",
+                              color:
+                                appName === id
+                                  ? (theme) =>
+                                      theme.palette.mode === "light"
+                                        ? "#FF6600"
+                                        : "orange"
+                                  : "",
                             }}
                           >
                             {name}
