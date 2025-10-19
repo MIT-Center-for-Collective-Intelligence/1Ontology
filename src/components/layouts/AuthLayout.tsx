@@ -77,7 +77,7 @@ import { AppBackground, AuthLayoutActions } from "@components/types/IAuth";
 import { useAuth } from "../context/AuthContext";
 import mitLogoDark from "../../../public/MIT-Logo-small-Dark.png";
 const AuthLayoutContext = createContext<AuthLayoutActions | undefined>(
-  undefined
+  undefined,
 );
 
 type Props = {
@@ -235,7 +235,7 @@ const AuthLayout: FC<Props> = ({ children }) => {
                 <Typography textAlign={"center"} variant="caption">
                   The Ontology of Collective Intelligence
                 </Typography>
-                <Box
+                {/*       <Box
                   aria-label="sign in and sing up options"
                   sx={{
                     border: "solid 2px",
@@ -284,7 +284,7 @@ const AuthLayout: FC<Props> = ({ children }) => {
                       SIGN UP
                     </Button>
                   </Link>
-                </Box>
+                </Box> */}
               </Box>
             </Box>
           )}
@@ -361,7 +361,7 @@ const useAuthDispatch = () => {
 };
 
 export const useAuthLayout = (): [
-  setBackground: Dispatch<SetStateAction<AppBackground>>
+  setBackground: Dispatch<SetStateAction<AppBackground>>,
 ] => [useAuthDispatch().setBackground];
 
 export default AuthLayout;

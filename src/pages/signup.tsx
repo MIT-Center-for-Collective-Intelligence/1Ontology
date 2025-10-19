@@ -24,7 +24,7 @@ import { FirebaseError } from "firebase/app";
 import { useFormik } from "formik";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
-import React, { ReactNode } from "react";
+import React, { ReactNode, useEffect } from "react";
 import { useMutation } from "react-query";
 import * as yup from "yup";
 
@@ -57,7 +57,7 @@ const signUp = (data: any) => {
       const userRecord = await createUserWithEmailAndPassword(
         auth,
         data.email,
-        data.password
+        data.password,
       );
       const { uid } = userRecord.user;
       const newUser = {
@@ -85,6 +85,9 @@ const SignUpPage: NextPageWithLayout = () => {
   const router = useRouter();
   const [, { handleError }] = useAuth();
   const { enqueueSnackbar } = useSnackbar();
+  useEffect(() => {
+    router.push(ROUTES.signIn);
+  }, [router]);
 
   const mutateSignUp = useMutation<any, unknown, SignUpData>(signUp, {
     onSuccess: async (data, variables) => {
@@ -96,7 +99,7 @@ const SignUpPage: NextPageWithLayout = () => {
           {
             variant: "success",
             autoHideDuration: 10000,
-          }
+          },
         );
       } catch (error) {
         console.error(error);
@@ -132,7 +135,7 @@ const SignUpPage: NextPageWithLayout = () => {
       .min(4, "A username with at least 4 characters is required")
       .matches(
         /^((?!(__.*__)|\.|\/).)*$/,
-        "Usernames should not contain . or / or __"
+        "Usernames should not contain . or / or __",
       ),
     password: yup
       .string()
@@ -142,7 +145,7 @@ const SignUpPage: NextPageWithLayout = () => {
       .string()
       .oneOf(
         [yup.ref("password"), null],
-        "Password must match re-entered password"
+        "Password must match re-entered password",
       )
       .required("Re-enter password is required"),
   });

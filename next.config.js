@@ -19,6 +19,11 @@ module.exports = {
         destination: "/",
         permanent: false,
       },
+      {
+        source: "/signup",
+        destination: "/signin",
+        permanent: true,
+      },
       /* {
         source: "/landing/:path*",
         destination: "/",
