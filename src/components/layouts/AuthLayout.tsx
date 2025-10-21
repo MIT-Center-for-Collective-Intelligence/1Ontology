@@ -111,48 +111,31 @@ const AuthLayout: FC<Props> = ({ children }) => {
   }
 
   return (
-    <Box>
-      {settings.theme === "Dark" && (
-        <Box
-          data-testid="auth-layout"
-          sx={{
-            width: "100vw",
-            height: "100vh",
-            position: "fixed",
-            filter: "brightness(1.95)",
-            zIndex: -2,
-          }}
-        >
-          <img
-            alt="Library"
-            src={darkModeLibraryImage.src}
-            // layout="fill"
-            // objectFit="cover"
-            // priority
-          />
-        </Box>
-      )}
-      {settings.theme === "Light" && (
-        <Box
-          data-testid="auth-layout"
-          sx={{
-            width: "100vw",
-            height: "100vh",
-            position: "fixed",
-            // filter: "brightness(1.4)",
-            zIndex: -2,
-          }}
-        >
-          <Image
-            alt="Library"
-            src={lightModeLibraryImage}
-            layout="fill"
-            objectFit="cover"
-            priority
-          />
-        </Box>
-      )}
+    <Box sx={{ position: "relative", width: "100vw", height: "100vh" }}>
+      {/* Background Image */}
+      <Box
+        data-testid="auth-layout"
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          zIndex: -2,
+          backgroundImage: `url(${
+            settings.theme === "Dark"
+              ? darkModeLibraryImage.src
+              : lightModeLibraryImage.src
+          })`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          filter:
+            settings.theme === "Dark" ? "brightness(1.95)" : "brightness(1.2)",
+        }}
+      />
 
+      {/* Main Container */}
       <Box
         sx={{
           width: "100vw",
@@ -167,16 +150,15 @@ const AuthLayout: FC<Props> = ({ children }) => {
             width: "1300px",
             height: { xs: "100vh", md: "95vh" },
             display: "flex",
-            flexDirection: { sx: "column", md: "row" },
-            color: (theme) => theme.palette.common.white,
+            flexDirection: { xs: "column", md: "row" },
+            color: "white",
             background: (theme) =>
-              settings.theme === "Dark"
+              theme.palette.mode === "dark"
                 ? theme.palette.common.darkGrayBackground
                 : theme.palette.common.white,
-            // backgroundImage: `url(${settings.theme === "Dark" ? darkModeLibraryImage.src : lightModeLibraryImage.src})`,
+            borderRadius: "25px",
           }}
         >
-          {/* left panel */}
           {isEqualOrBiggerThanMedium && (
             <Box
               sx={{
@@ -188,165 +170,66 @@ const AuthLayout: FC<Props> = ({ children }) => {
                 flexDirection: "column",
                 justifyContent: "center",
                 alignItems: "center",
+                overflow: "hidden",
               }}
             >
-              {/* this this image has absolute position, by their configuration */}
               {settings.theme === "Dark" && (
-                <img
-                  alt="Library"
-                  src={darkModeLibraryImage.src}
-                  style={{
+                <Box
+                  sx={{
+                    position: "absolute",
                     width: "100%",
                     height: "100%",
-                    objectFit: "cover",
+                    backgroundImage: `url(${darkModeLibraryImage.src})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
                     filter: "blur(4px)",
-                    position: "absolute",
+                    zIndex: 0,
                   }}
                 />
               )}
 
-              <Box sx={{ zIndex: 1 }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                  }}
+              <Box sx={{ zIndex: 1, textAlign: "center" }}>
+                <a
+                  rel="noreferrer"
+                  target="_blank"
+                  href="https://www.mit.edu/"
+                  aria-label="Go to School of Information"
                 >
-                  <a
-                    rel="noreferrer"
-                    target="_blank"
-                    href="https://www.mit.edu/"
-                    aria-label="Go to School of information"
-                  >
-                    <Avatar
-                      src={mitLogoDark.src}
-                      alt="logo"
-                      sx={{
-                        cursor: "pointer",
-                        width: "140px",
-                        height: "auto",
-                        borderRadius: 0,
-                      }}
-                    />
-                  </a>
-                </Box>
+                  <Avatar
+                    src={mitLogoDark.src}
+                    alt="MIT logo"
+                    sx={{
+                      cursor: "pointer",
+                      width: "140px",
+                      height: "auto",
+                      borderRadius: 0,
+                      mx: "auto",
+                    }}
+                  />
+                </a>
 
-                <Typography textAlign={"center"} variant="caption">
+                <Typography
+                  textAlign="center"
+                  variant="caption"
+                  mt={1}
+                  sx={{ fontWeight: "bold", fontSize: "26px" }}
+                >
                   The Ontology of Collective Intelligence
                 </Typography>
-                {/*       <Box
-                  aria-label="sign in and sing up options"
-                  sx={{
-                    border: "solid 2px",
-                    borderColor: (theme) =>
-                      theme.palette.mode === "dark"
-                        ? "common.white"
-                        : "common.black",
-                    mt: "16px",
-                  }}
-                >
-                  <Link href={ROUTES.signIn}>
-                    <Button
-                      color="secondary"
-                      variant={
-                        router.pathname === ROUTES.signIn
-                          ? "contained"
-                          : "outlined"
-                      }
-                      sx={{
-                        width: "50%",
-                        p: "12px 16px",
-                        textAlign: "center",
-                        borderRadius: "0px",
-                        border: "0px",
-                      }}
-                    >
-                      LOG IN
-                    </Button>
-                  </Link>
-                  <Link href={ROUTES.signUp}>
-                    <Button
-                      color="secondary"
-                      variant={
-                        router.pathname === ROUTES.signUp
-                          ? "contained"
-                          : "outlined"
-                      }
-                      sx={{
-                        width: "50%",
-                        p: "12px 16px",
-                        textAlign: "center",
-                        borderRadius: "0px",
-                        border: "0px",
-                      }}
-                    >
-                      SIGN UP
-                    </Button>
-                  </Link>
-                </Box> */}
               </Box>
             </Box>
           )}
-          {/* right panel */}
-          <Box sx={{ width: "100%", height: "inherit" }}>
-            <Box sx={{ height: "inherit", width: "100%", overflowY: "auto" }}>
-              <Box sx={{ maxWidth: "400px", py: "40px", mx: "auto" }}>
-                {!isEqualOrBiggerThanMedium && (
-                  <Box
-                    aria-label="sign in and sing up options"
-                    sx={{
-                      border: "solid 2px",
-                      borderColor: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "common.white"
-                          : "common.black",
-                      mb: "16px",
-                    }}
-                  >
-                    <Link href={ROUTES.signIn}>
-                      <Button
-                        color="secondary"
-                        variant={
-                          router.pathname === ROUTES.signIn
-                            ? "contained"
-                            : "outlined"
-                        }
-                        sx={{
-                          width: "50%",
-                          p: "12px 16px",
-                          textAlign: "center",
-                          borderRadius: "0px",
-                          border: "0px",
-                        }}
-                      >
-                        LOG IN
-                      </Button>
-                    </Link>
-                    <Link href={ROUTES.signUp}>
-                      <Button
-                        color="secondary"
-                        variant={
-                          router.pathname === ROUTES.signUp
-                            ? "contained"
-                            : "outlined"
-                        }
-                        sx={{
-                          width: "50%",
-                          p: "12px 16px",
-                          textAlign: "center",
-                          borderRadius: "0px",
-                          border: "0px",
-                        }}
-                      >
-                        SIGN UP
-                      </Button>
-                    </Link>
-                  </Box>
-                )}
-                {children}
-              </Box>
-            </Box>
+
+          <Box
+            sx={{
+              width: "100%",
+              height: "inherit",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {children}
           </Box>
         </Box>
       </Box>
@@ -365,3 +248,59 @@ export const useAuthLayout = (): [
 ] => [useAuthDispatch().setBackground];
 
 export default AuthLayout;
+
+{
+  /* Login / Signup Buttons (mobile only) */
+}
+{
+  /*     {!isEqualOrBiggerThanMedium && (
+                  <Box
+                    aria-label="sign in and sign up options"
+                    sx={{
+                      border: "2px solid",
+                      borderColor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "common.white"
+                          : "common.black",
+                      mb: "16px",
+                    }}
+                  >
+                    <Link href={ROUTES.signIn}>
+                      <Button
+                        color="secondary"
+                        variant={
+                          router.pathname === ROUTES.signIn
+                            ? "contained"
+                            : "outlined"
+                        }
+                        sx={{
+                          width: "50%",
+                          p: "12px 16px",
+                          borderRadius: 0,
+                          border: 0,
+                        }}
+                      >
+                        LOG IN
+                      </Button>
+                    </Link>
+                    <Link href={ROUTES.signUp}>
+                      <Button
+                        color="secondary"
+                        variant={
+                          router.pathname === ROUTES.signUp
+                            ? "contained"
+                            : "outlined"
+                        }
+                        sx={{
+                          width: "50%",
+                          p: "12px 16px",
+                          borderRadius: 0,
+                          border: 0,
+                        }}
+                      >
+                        SIGN UP
+                      </Button>
+                    </Link>
+                  </Box>
+                )} */
+}
