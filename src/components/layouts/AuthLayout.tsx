@@ -227,6 +227,8 @@ const AuthLayout: FC<Props> = ({ children }) => {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              background:
+                "linear-gradient(135deg, rgba(80, 80, 80, 0.9), rgba(40, 40, 40, 0.7))",
             }}
           >
             {children}

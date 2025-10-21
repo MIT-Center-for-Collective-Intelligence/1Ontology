@@ -147,7 +147,6 @@ const SearchSideBar = ({
         : { results: [] };
 
       const results: any = [...(response.results || [])];
-      console.log(results, "results");
 
       if (results.length <= 0 && fuseSearch.length > 0) {
         results.push(...fuseSearch);

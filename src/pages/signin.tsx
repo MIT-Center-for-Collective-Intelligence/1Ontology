@@ -106,7 +106,7 @@ const SignInPage: NextPageWithLayout = () => {
           mx: "auto",
           textAlign: "center",
           background:
-            "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
+            "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02)) !important",
         }}
       >
         <Typography
@@ -115,7 +115,7 @@ const SignInPage: NextPageWithLayout = () => {
             mb: 3,
             fontWeight: 700,
             color: "primary.main",
-            fontSize: { xs: "32px", sm: "40px" },
+            fontSize: { xs: "32px", sm: "50px" },
           }}
         >
           Sign In
@@ -199,9 +199,13 @@ const SignInPage: NextPageWithLayout = () => {
           <NextLink href={ROUTES.forgotPassword} passHref>
             <Button
               sx={{
-                mt: 2,
+                mt: 4,
                 textTransform: "none",
                 fontSize: "14px",
+                borderRadius: "25px",
+                ":hover": {
+                  border: "1px solid gray",
+                },
               }}
             >
               Forgot Password?
