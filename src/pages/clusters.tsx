@@ -411,6 +411,8 @@ function OntTree() {
             treeType="oNet"
             skillsFutureApp={""}
             specializationNumsUnder={{}}
+            eachOntologyPath={{}}
+            multipleOntologyPaths={{}}
           />
         </Box>
         {/*  <Box
