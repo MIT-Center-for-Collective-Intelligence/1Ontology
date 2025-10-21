@@ -191,9 +191,7 @@ const Ontology = ({
   const [eachOntologyPath, setEachOntologyPath] = useState<{
     [key: string]: INodePath[];
   }>({});
-  const [multipleOntologyPaths, setMultipleOntologyPaths] = useState<{
-    [nodeId: string]: INodePath[][];
-  }>({});
+  const [multipleOntologyPaths, setMultipleOntologyPaths] = useState<any>({});
   const columnResizerRef = useRef<any>();
   const [lastUpdate, setLastUpdate] = useState<number | null>(null);
 
@@ -1693,6 +1691,8 @@ const Ontology = ({
               skillsFuture={skillsFuture}
               specializationNumsUnder={specializationNumsUnder}
               skillsFutureApp={appName}
+              multipleOntologyPaths={multipleOntologyPaths}
+              eachOntologyPath={eachOntologyPath}
             />
           </Box>
         </Box>
@@ -1843,6 +1843,8 @@ const Ontology = ({
                       skillsFuture={skillsFuture}
                       specializationNumsUnder={specializationNumsUnder}
                       skillsFutureApp={appName}
+                      multipleOntologyPaths={multipleOntologyPaths}
+                      eachOntologyPath={eachOntologyPath}
                     />
                   </Box>
                 </TabPanel>
