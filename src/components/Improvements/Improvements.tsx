@@ -44,6 +44,7 @@ import { useAuth } from "../context/AuthContext";
 import { generateUniqueTitle } from "@components/lib/utils/string.utils";
 import { development } from "@components/lib/CONSTANTS";
 import { newId } from "@components/lib/utils/newFirestoreId";
+import FullPageLogoLoading from "../layouts/FullPageLogoLoading";
 type ImprovementsProps = {
   currentImprovement: any;
   setCurrentImprovement: any;
@@ -962,22 +963,7 @@ const Improvements = ({
   return (
     <Box textAlign="center" sx={{ width: "450px", mt: "27px" }}>
       {isLoadingCopilot ? (
-        <Container
-          maxWidth="sm"
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: "100vh",
-          }}
-        >
-          <Box
-            component="img"
-            src="loader.gif"
-            alt="Loading..."
-            sx={{ width: 200, height: 200, borderRadius: "25px" }}
-          />
-        </Container>
+        <FullPageLogoLoading />
       ) : improvements.length > 0 ? (
         <Box
           sx={{

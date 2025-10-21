@@ -24,6 +24,7 @@ import {
 } from "firebase/firestore";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import BedtimeIcon from "@mui/icons-material/Bedtime";
+import FullPageLogoLoading from "../layouts/FullPageLogoLoading";
 
 const LoadingConsultant = () => {
   return (
@@ -200,24 +201,7 @@ const PromptDialogComponent = ({
     };
   }, [debouncedSavePrompt]);
   if (loadingResponse === "generate") {
-    return (
-      <Container
-        maxWidth="sm"
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-        }}
-      >
-        <Box
-          component="img"
-          src="loader.gif"
-          alt="Loading..."
-          sx={{ width: 200, height: 200, borderRadius: "25px" }}
-        />
-      </Container>
-    );
+    return <FullPageLogoLoading />;
   }
   return (
     <Box

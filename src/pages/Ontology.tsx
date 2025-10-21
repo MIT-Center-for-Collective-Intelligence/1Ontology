@@ -130,6 +130,7 @@ import { TreeApi } from "react-arborist";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
 import ROUTES from "@components/lib/utils/routes";
 import { getAuth } from "firebase/auth";
+import FullPageLogoLoading from "@components/components/layouts/FullPageLogoLoading";
 const stem = require("wink-porter2-stemmer");
 const tokenizer = require("wink-tokenizer");
 
@@ -1447,24 +1448,7 @@ const Ontology = ({
   }, [currentVisibleNode, nodes]);
 
   if (Object.keys(nodes).length <= 0) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          flexDirection: "column",
-        }}
-      >
-        <Box
-          component="img"
-          src="../loader.gif"
-          alt="Loading..."
-          sx={{ width: 200, height: 200, borderRadius: "25px" }}
-        />
-      </Box>
-    );
+    return <FullPageLogoLoading />;
   }
 
   return (
