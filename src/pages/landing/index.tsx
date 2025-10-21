@@ -295,13 +295,14 @@ const LandingPage = () => {
                         >
                           <Typography
                             sx={{
-                              fontSize: "1.2rem",
+                              fontSize: { xs: "1rem", sm: "1.2rem" },
                               fontWeight: 400,
                               color: "text.primary",
                               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                               display: { xs: "block", lg: "inline-block" },
                               position: "relative",
                               textAlign: { xs: "left", lg: "center" },
+                              marginLeft: { xs: "32px", sm: "56px", lg: "0px" },
                             }}
                           >
                             <Typography
@@ -310,7 +311,7 @@ const LandingPage = () => {
                                 color: "primary.main",
                                 fontWeight: 700,
                                 position: "relative",
-                                fontSize: "1.2rem",
+                                fontSize: { xs: "1rem", sm: "1.2rem" },
                               }}
                               id="where-word"
                             >
@@ -323,7 +324,7 @@ const LandingPage = () => {
                                 color: "primary.main",
                                 fontWeight: 700,
                                 position: "relative",
-                                fontSize: "1.2rem",
+                                fontSize: { xs: "1rem", sm: "1.2rem" },
                               }}
                               id="how-word"
                             >
@@ -383,7 +384,7 @@ const LandingPage = () => {
                             display: "flex",
                             justifyContent: { xs: "flex-start", lg: "center" },
                             alignItems: "center",
-                            gap: 10,
+                            gap: { xs: 6, sm: 10 },
                             pt: "15px",
                           }}
                         >
@@ -467,24 +468,25 @@ const LandingPage = () => {
                           mb: 2,
                           fontWeight: 600,
                           color: "text.primary",
-                          fontSize: "1.2rem",
+                          fontSize: { xs: "1rem", sm: "1.2rem" },
                           fontFamily:
                             '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
                           textAlign: { xs: "left", lg: "center" },
+                          marginLeft: { xs: "80px", sm: "86px", lg: "0px" },
                         }}
                       >
                         What does this mean for
                         <br />
                         <Typography
                           component="span"
-                          sx={{ color: "primary.main", fontWeight: 700, fontSize: "1.2rem" }}
+                          sx={{ color: "primary.main", fontWeight: 700, fontSize: { xs: "1rem", sm: "1.2rem" } }}
                         >
                           people
                         </Typography>{" "}
                         and{" "}
                         <Typography
                           component="span"
-                          sx={{ color: "primary.main", fontWeight: 700, fontSize: "1.2rem" }}
+                          sx={{ color: "primary.main", fontWeight: 700, fontSize: { xs: "1rem", sm: "1.2rem" } }}
                         >
                           organizations
                         </Typography>
@@ -541,7 +543,7 @@ const LandingPage = () => {
                         display: "flex",
                         justifyContent: { xs: "flex-start", lg: "center" },
                         alignItems: "center",
-                        gap: 10,
+                        gap: { xs: 6, sm: 10 },
                         pt: "25px",
                       }}
                     >
