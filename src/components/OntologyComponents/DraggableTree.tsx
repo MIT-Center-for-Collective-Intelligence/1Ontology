@@ -334,11 +334,11 @@ function DraggableTree({
   const expandNodeById = useCallback(
     async (targetNodeId: string) => {
       const tree = treeRef.current;
-      console.log(targetNodeId, "targetNodeId", tree);
+
       if (!tree || !targetNodeId) return;
 
       const allPaths = multipleOntologyPaths?.[targetNodeId];
-      console.log(allPaths, "allPaths");
+
       if (!allPaths?.length) return;
 
       const parentPathsWithDepth = new Map<string, number>();
@@ -361,7 +361,7 @@ function DraggableTree({
       const sortedPaths = Array.from(parentPathsWithDepth.entries()).sort(
         ([, depthA], [, depthB]) => depthA - depthB,
       );
-      console.log(sortedPaths, "sortedPaths");
+
       for (const [parentId] of sortedPaths) {
         const parentNode = tree.get(parentId);
         if (parentNode && !parentNode.isOpen) {
@@ -378,7 +378,6 @@ function DraggableTree({
           }
         }
       }
-      console.log("targetNodeId 1");
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // scroll to first node
@@ -390,9 +389,7 @@ function DraggableTree({
       const rootId = allPaths[0][0]?.id?.split("-")[0];
       const nodeIdWithPath = skillsFuture ? `${path}` : `${rootId}-${path}`;
 
-      console.log("targetNodeId 2");
       if (!isNodeVisible(nodeIdWithPath)) {
-        console.log("targetNodeId 3");
         await tree.scrollTo(nodeIdWithPath);
       }
     },
@@ -401,7 +398,7 @@ function DraggableTree({
 
   useEffect(() => {
     const tree = treeRef.current;
-    console.log(currentVisibleNode?.id, tree);
+
     if (!tree || !currentVisibleNode?.id) return;
 
     const timeout = setTimeout(async () => {

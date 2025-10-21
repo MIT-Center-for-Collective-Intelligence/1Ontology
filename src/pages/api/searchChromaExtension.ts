@@ -66,15 +66,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       resultsNum,
       searchAll,
     } = req.body;
-    console.log({
-      query,
-      skillsFuture,
-      appName,
-      user,
-      nodeType,
-      resultsNum,
-      searchAll,
-    });
+
     searchAll = false;
     let collectionName = "";
     if (appName) {
@@ -86,7 +78,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     const client = new ChromaClient({ path: url });
-    console.log(collectionName, "collectionName");
+
     const collection = await client.getOrCreateCollection({
       name: collectionName,
       embeddingFunction,
