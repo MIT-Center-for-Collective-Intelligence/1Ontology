@@ -126,11 +126,6 @@ import GuidLines from "@components/components/Guidelines/GuideLines";
 import SearchSideBar from "@components/components/SearchSideBar/SearchSideBar";
 import Head from "next/head";
 import DraggableTree from "@components/components/OntologyComponents/DraggableTree";
-import {
-  FEATURES,
-  getNodeFromHierarchy,
-  useTreeHierarchy,
-} from "@components/lib/utils/treeHierarchyLoader";
 import { useNodeSnapshot } from "@components/lib/utils/nodeFetcher";
 import { TreeApi } from "react-arborist";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
@@ -184,7 +179,6 @@ const Ontology = ({
   const isMobile = useMediaQuery("(max-width:599px)");
   const [nodes, setNodes] = useState<{ [id: string]: INode }>({});
 
-  const { hierarchy } = useTreeHierarchy(appName);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const { node: fetchedNode, loading: nodeLoading } =
     useNodeSnapshot(selectedNodeId);
@@ -194,7 +188,7 @@ const Ontology = ({
 
   // Sync fetched node to currentVisibleNode when using static nodes
   useEffect(() => {
-    if (FEATURES.USE_STATIC_NODES && fetchedNode) {
+    if (fetchedNode) {
       setCurrentVisibleNode(fetchedNode);
     }
   }, [fetchedNode]);
@@ -768,12 +762,6 @@ const Ontology = ({
   };
 
   useEffect(() => {
-    // Skip loading nodes from Firestore if using static nodes
-    if (FEATURES.USE_STATIC_NODES) {
-      setLoadingNodes(false);
-      return;
-    }
-
     // Create a query for the NODES collection where "deleted" is false
     let nodesQuery = null;
 
@@ -935,11 +923,6 @@ const Ontology = ({
   };
 
   useEffect(() => {
-    // Skip tree view data generation when using static nodes
-    if (FEATURES.USE_STATIC_NODES) {
-      return;
-    }
-
     // Filter nodes to get only those with a defined category
     const spreadNodes = Object.values(nodes);
     let mainCategories = spreadNodes.filter(
@@ -1006,24 +989,12 @@ const Ontology = ({
     // if (currentVisibleNode) return;
     if (firstLoad) {
       const nodeFromHash = window.location.hash.split("#").reverse()[0];
-      
-      // For static nodes, just set the ID to fetch
-      if (FEATURES.USE_STATIC_NODES) {
-        
-        const initialNodeId =
-          nodeFromHash ||
-          user?.currentNode ||
-          rootNode ||
-          "hn9pGQNxmQe9Xod5MuKK";
-        setSelectedNodeId(initialNodeId);
+      if (nodeFromHash && nodes[nodeFromHash]) {
+        setCurrentVisibleNode(nodes[nodeFromHash]);
+      } else if (user?.currentNode && nodes[user.currentNode]) {
+        setCurrentVisibleNode(nodes[user.currentNode]);
       } else {
-        if (nodeFromHash && nodes[nodeFromHash]) {
-          setCurrentVisibleNode(nodes[nodeFromHash]);
-        } else if (user?.currentNode && nodes[user.currentNode]) {
-          setCurrentVisibleNode(nodes[user.currentNode]);
-        } else {
-          setCurrentVisibleNode(nodes[rootNode || "hn9pGQNxmQe9Xod5MuKK"]!);
-        }
+        setCurrentVisibleNode(nodes[rootNode || "hn9pGQNxmQe9Xod5MuKK"]!);
       }
       firstLoad.current = false;
     }
@@ -1178,52 +1149,16 @@ const Ontology = ({
         return newExpanded;
       }); */
 
-      // When using static nodes, fetch individual node snapshot when navigating through tree
-      if (FEATURES.USE_STATIC_NODES) {
-        // Get basic data from hierarchy if available for immediate UI feedback
-        const hierarchyNode = hierarchy
-          ? getNodeFromHierarchy(hierarchy, nodeId)
-          : null;
+      // Check if node exists and has a category
+      if (nodes[nodeId] && !nodes[nodeId].category) {
+        // Set the currently open node
+        setCurrentVisibleNode(nodes[nodeId]);
 
-        // Needs fix on better approach
-        if (hierarchyNode) {
-          setCurrentVisibleNode({
-            id: nodeId,
-            title: hierarchyNode.title,
-            deleted: false,
-            properties: {
-              parts: [{ collectionName: "main", nodes: [] }],
-              isPartOf: [{ collectionName: "main", nodes: [] }],
-            },
-            inheritance: {},
-            inheritanceParts: {},
-            specializations: [{ collectionName: "main", nodes: [] }],
-            generalizations: [{ collectionName: "main", nodes: [] }],
-            root: "",
-            propertyType: {},
-            nodeType: (hierarchyNode.nodeType || "activity") as INodeTypes,
-            textValue: {},
-            createdBy: "",
-            category: hierarchyNode.category,
-            locked: hierarchyNode.locked,
-            unclassified: hierarchyNode.unclassified,
-          });
-        }
-
-        // Fetch node data
-        setSelectedNodeId(nodeId);
-      } else {
-        // Check if node exists and has a category
-        if (nodes[nodeId] && !nodes[nodeId].category) {
-          // Set the currently open node
-          setCurrentVisibleNode(nodes[nodeId]);
-
-          // Record logs for the action of clicking the tree-view
-          recordLogs({
-            action: "clicked tree-view",
-            itemClicked: nodes[nodeId].id,
-          });
-        }
+        // Record logs for the action of clicking the tree-view
+        recordLogs({
+          action: "clicked tree-view",
+          itemClicked: nodes[nodeId].id,
+        });
       }
     },
     [nodes, user],

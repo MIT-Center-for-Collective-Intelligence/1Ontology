@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { getFirestore, doc, collection, onSnapshot, getDocs, query, where, documentId } from "firebase/firestore";
 import { INode, ICollection, ILinkNode } from "@components/types/INode";
 import { NODES } from "../firestoreClient/collections";
-import { FEATURES } from "./treeHierarchyLoader";
 
 /**
  * Extract all linked node IDs from a node's properties
@@ -195,8 +194,7 @@ export const useNodeSnapshot = (nodeId: string | null) => {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Only use snapshot when static nodes feature is enabled and nodeId exists
-    if (!nodeId || !FEATURES.USE_STATIC_NODES) {
+    if (!nodeId) {
       setNode(null);
       setLoading(false);
       return;
