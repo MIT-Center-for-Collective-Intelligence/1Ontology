@@ -527,7 +527,7 @@ const Node = ({
         });
         await Post("/triggerChroma", {
           nodeId: newNodeRef.id,
-          updatedShortIds: true,
+          update: true,
         });
 
         saveNewChangeLog(db, {
@@ -983,7 +983,7 @@ const Node = ({
           deletedBy: user.uname,
         });
         await Post("/triggerChroma", {
-          deleteNode: true,
+          deleted: true,
           nodeId: currentNode.id,
         });
         saveNewChangeLog(db, {

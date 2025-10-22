@@ -98,7 +98,6 @@ const ChipsProperty = ({
   ]);
 
   useEffect(() => {
-    console.log(propertyValue, "propertyValue");
     setValue(propertyValue);
   }, [propertyValue]);
 

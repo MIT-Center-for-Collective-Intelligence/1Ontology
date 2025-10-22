@@ -541,10 +541,6 @@ const LinkNode = ({
             );
           }
         }
-        await Post("/triggerChroma", {
-          nodeId: currentNodeId,
-          updatedShortIds: false,
-        });
       }
     } catch (error: any) {
       console.error(error);

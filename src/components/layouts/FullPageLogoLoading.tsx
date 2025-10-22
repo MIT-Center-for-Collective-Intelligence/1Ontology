@@ -35,6 +35,7 @@ const FullPageLogoLoading = () => {
           alt="logo"
           width={250}
           height={250}
+          style={{ borderRadius: "25px" }}
         />
         {/* <CircularProgress sx={{ mt: 5 }} /> */}
       </Box>

@@ -25,7 +25,14 @@ import { getFirebaseFriendlyError } from "@components/lib/utils/firebaseErrors";
 import ROUTES from "@components/lib/utils/routes";
 import { NextPageWithLayout } from "@components/types/IAuth";
 import { LoadingButton } from "@mui/lab";
-import { Box, Button, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  GlobalStyles,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { FirebaseError } from "firebase/app";
 import { useFormik } from "formik";
 import NextLink from "next/link";
@@ -82,50 +89,95 @@ const SignInPage: NextPageWithLayout = () => {
   });
 
   return (
-    <Box sx={{ p: { xs: "8px", md: "24px", width: "100%" }, my: "92px" }}>
-      <Typography variant="h1" sx={{ mb: "8px" }}>
-        Log in
-      </Typography>
-
-      <form data-testid="signin-form" onSubmit={formik.handleSubmit}>
-        <TextField
-          id="email"
-          name="email"
-          label="Email"
-          type="email"
-          value={formik.values.email}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          variant="outlined"
-          error={Boolean(formik.errors.email) && Boolean(formik.touched.email)}
-          helperText={formik.errors.email}
-          fullWidth
-          sx={{ mb: "24px" }}
-        />
-        <TextField
-          id="password"
-          name="password"
-          label="Password"
-          type="password"
-          value={formik.values.password}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          variant="outlined"
-          error={
-            Boolean(formik.errors.password) && Boolean(formik.touched.password)
-          }
-          helperText={formik.errors.password}
-          fullWidth
-        />
-        <Box
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+      }}
+    >
+      <Paper
+        elevation={6}
+        sx={{
+          p: { xs: 3, sm: 5 },
+          borderRadius: "25px",
+          maxWidth: 420,
+          width: "100%",
+          mx: "auto",
+          textAlign: "center",
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02)) !important",
+        }}
+      >
+        <Typography
+          variant="h4"
           sx={{
-            textAlign: "center",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            my: "32px",
+            mb: 3,
+            fontWeight: 700,
+            color: "primary.main",
+            fontSize: { xs: "32px", sm: "50px" },
           }}
         >
+          Sign In
+        </Typography>
+        <GlobalStyles
+          styles={{
+            "& input:-webkit-autofill": {
+              boxShadow: `0px 0px 0px 100px #313131 inset !important`,
+              WebkitTextFillColor: `${"#fff"} !important`,
+              caretColor: "#fff !important",
+            },
+          }}
+        />
+        <form data-testid="signin-form" onSubmit={formik.handleSubmit}>
+          <TextField
+            id="email"
+            name="email"
+            label="Email"
+            type="email"
+            value={formik.values.email}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            variant="outlined"
+            error={Boolean(formik.errors.email && formik.touched.email)}
+            helperText={formik.touched.email && formik.errors.email}
+            fullWidth
+            sx={{ mb: 3 }}
+            InputProps={{
+              sx: {
+                fontSize: "19px",
+                borderRadius: "20px",
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderRadius: "20px",
+                },
+              },
+            }}
+          />
+
+          <TextField
+            id="password"
+            name="password"
+            label="Password"
+            type="password"
+            value={formik.values.password}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            variant="outlined"
+            error={Boolean(formik.errors.password && formik.touched.password)}
+            helperText={formik.touched.password && formik.errors.password}
+            fullWidth
+            sx={{ mb: 4 }}
+            InputProps={{
+              sx: {
+                fontSize: "19px",
+                borderRadius: "20px",
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderRadius: "20px",
+                },
+              },
+            }}
+          />
+
           <LoadingButton
             aria-label="submit"
             loading={isLoading}
@@ -133,15 +185,34 @@ const SignInPage: NextPageWithLayout = () => {
             type="submit"
             variant="contained"
             fullWidth
-            sx={{ borderRadius: "26px", width: "90px" }}
+            sx={{
+              borderRadius: "30px",
+              py: 1.5,
+              fontWeight: 600,
+              fontSize: "16px",
+              letterSpacing: "0.5px",
+            }}
           >
-            LOG IN
+            Sign In
           </LoadingButton>
+
           <NextLink href={ROUTES.forgotPassword} passHref>
-            <Button sx={{ my: "20px" }}>Forgot Password?</Button>
+            <Button
+              sx={{
+                mt: 4,
+                textTransform: "none",
+                fontSize: "14px",
+                borderRadius: "25px",
+                ":hover": {
+                  border: "1px solid gray",
+                },
+              }}
+            >
+              Forgot Password?
+            </Button>
           </NextLink>
-        </Box>
-      </form>
+        </form>
+      </Paper>
     </Box>
   );
 };

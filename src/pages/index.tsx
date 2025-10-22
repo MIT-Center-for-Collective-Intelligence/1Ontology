@@ -1,9 +1,9 @@
-import { SKILLS_FUTURE_APP_NAMES } from "@components/lib/CONSTANTS";
+import { ONTOLOGY_APPS } from "@components/lib/CONSTANTS";
 import { useAuth } from "@components/components/context/AuthContext";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 
-const DEFAULT_APP_ID = SKILLS_FUTURE_APP_NAMES[3].id.replaceAll(" ", "_");
+const DEFAULT_APP_ID = ONTOLOGY_APPS[3].id.replaceAll(" ", "_");
 
 const SkillsFutureDefault = () => {
   const router = useRouter();

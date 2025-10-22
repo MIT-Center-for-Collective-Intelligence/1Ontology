@@ -71,8 +71,8 @@ function DraggableTree({
   onOpenNodesTree: any;
   treeRef: any;
   treeType?: string;
-  eachOntologyPath?: any;
-  multipleOntologyPaths?: any;
+  eachOntologyPath: any;
+  multipleOntologyPaths: any;
   skillsFuture?: boolean;
   specializationNumsUnder: { [key: string]: number };
   skillsFutureApp: string;
@@ -368,9 +368,11 @@ function DraggableTree({
   const expandNodeById = useCallback(
     async (targetNodeId: string) => {
       const tree = treeRef.current;
+
       if (!tree || !targetNodeId) return;
 
       const allPaths = multipleOntologyPaths?.[targetNodeId];
+
       if (!allPaths?.length) return;
 
       const parentPathsWithDepth = new Map<string, number>();
@@ -410,7 +412,6 @@ function DraggableTree({
           }
         }
       }
-
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // scroll to first node
@@ -426,11 +427,12 @@ function DraggableTree({
         await tree.scrollTo(nodeIdWithPath);
       }
     },
-    [treeData, eachOntologyPath, multipleOntologyPaths],
+    [treeRef, multipleOntologyPaths, eachOntologyPath, skillsFuture],
   );
 
   useEffect(() => {
     const tree = treeRef.current;
+
     if (!tree || !currentVisibleNode?.id) return;
 
     const timeout = setTimeout(async () => {
@@ -453,7 +455,13 @@ function DraggableTree({
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [treeRef, currentVisibleNode?.id, multipleOntologyPaths]);
+  }, [
+    treeRef,
+    currentVisibleNode?.id,
+    multipleOntologyPaths,
+    firstLoad,
+    expandNodeById,
+  ]);
 
   useEffect(() => {
     const tree = treeRef.current;
@@ -1014,8 +1022,8 @@ function DraggableTree({
           zIndex: 20,
           backgroundColor: (theme) =>
             theme.palette.mode === "dark" ? "#303134" : "#ffffff",
-          pl: "10px",
-          py: "4px",
+          pl: "5px",
+          py: "7px",
           gap: 1,
         }}
       >
@@ -1122,7 +1130,7 @@ function DraggableTree({
                 searchTerm={searchTerm}
                 className={styles.tree}
                 rowClassName={styles.row}
-                paddingTop={15}
+                paddingTop={5}
                 indent={INDENT_STEP}
                 overscanCount={50}
                 // onSelect={(selected) => setSelectedCount(selected.length)}

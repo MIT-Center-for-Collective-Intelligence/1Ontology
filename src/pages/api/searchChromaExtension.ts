@@ -56,7 +56,8 @@ const cosineSimilarity = (vecA: any[], vecB: any[]) => {
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const {
+    await runMiddleware(req, res, cors);
+    let {
       query,
       skillsFuture,
       appName,
@@ -66,8 +67,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       searchAll,
     } = req.body;
 
-    await runMiddleware(req, res, cors);
-
+    searchAll = false;
     let collectionName = "";
     if (appName) {
       collectionName = `ontology-${sanitizeCollectionName(appName)}`;
@@ -83,7 +83,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       name: collectionName,
       embeddingFunction,
     });
-    if (searchAll) {
+    /*    if (searchAll) {
       const allData = await collection.get({
         include: [IncludeEnum.Embeddings, IncludeEnum.Metadatas],
         ...(nodeType
@@ -94,6 +94,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             }
           : {}),
       });
+      console.log("embeddings loaded");
       const response = await openai.embeddings.create({
         model: "text-embedding-3-large",
         input: [query],
@@ -137,10 +138,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
 
       return res.status(200).json({ results: topResults });
-    }
+    } */
+    console.log("searching");
+    const embeddingResponse = await openai.embeddings.create({
+      model: "text-embedding-3-large", // must match your stored embeddings
+      input: query,
+    });
+
+    const queryEmbedding = embeddingResponse.data[0].embedding;
 
     const results = await collection.query({
-      queryTexts: query,
+      queryEmbeddings: [queryEmbedding],
+      include: [IncludeEnum.Embeddings, IncludeEnum.Metadatas],
       nResults: resultsNum || 40,
       ...(nodeType
         ? {
@@ -152,31 +161,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     });
 
     const metaDatas: any = results.metadatas[0];
-    const distances: any = (results.distances || [])[0];
-    const exactMatches = [];
-    const otherMatches = [];
+    const embeddings: any = (results.embeddings || [])[0];
 
-    const uniqueResults = new Set();
-    for (let result of metaDatas) {
-      const replacedId = result.id.replace("-properties", "");
-      if (!uniqueResults.has(replacedId)) {
-        uniqueResults.add(replacedId);
+    const _data = [];
+    for (let nodeIdx = 0; nodeIdx < metaDatas.length; nodeIdx++) {
+      if (metaDatas[nodeIdx]?.nodeType === "activity") {
+        const similarity = cosineSimilarity(
+          queryEmbedding,
+          (embeddings || [])[nodeIdx],
+        );
 
-        if (
-          result.title &&
-          result.title.trim().toLowerCase() === query.trim().toLowerCase()
-        ) {
-          exactMatches.push(result);
-        } else {
-          otherMatches.push(result);
-        }
+        _data.push({
+          ...metaDatas[nodeIdx],
+          similarity,
+        });
       }
     }
-    const resultsAlt = [...exactMatches, ...otherMatches];
+    _data.sort((a, b) => b.similarity - a.similarity);
+    const topResults = _data.slice(0, resultsNum);
+
     const logData = {
       at: "searchChroma",
       query,
-      results: resultsAlt,
+      results: topResults,
       appName,
     };
     const logRef = db.collection(LOGS).doc();
@@ -189,7 +196,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       doer: uname,
       doerCreate,
     });
-    return res.status(200).json({ results: resultsAlt });
+    return res.status(200).json({ results: topResults });
   } catch (error) {
     console.error(error);
     return res.status(500).json({});

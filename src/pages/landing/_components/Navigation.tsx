@@ -136,16 +136,16 @@ const Navigation: React.FC<NavigationProps> = ({
                     variant="text"
                     color="primary"
                     component="a"
-                    sx={{ display: { xs: "none", sm: "inline-flex" } }}
+                    // sx={{ display: { xs: "none", sm: "inline-flex" } }}
                   >
                     Sign In
                   </Button>
                 </Link>
-                <Link href="/signup" passHref legacyBehavior>
+                {/* <Link href="/signup" passHref legacyBehavior>
                   <Button variant="contained" color="primary" component="a">
                     Register
                   </Button>
-                </Link>
+                </Link> */}
               </>
             )}
 
