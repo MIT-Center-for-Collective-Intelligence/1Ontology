@@ -198,9 +198,6 @@ const Ontology = ({
   const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [viewValue, setViewValue] = useState<number>(0);
-  const fuse = new Fuse(AddContext(Object.values(nodes), nodes), {
-    keys: ["title", "context.title"],
-  });
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [eachOntologyPath, setEachOntologyPath] = useState<{
     [key: string]: INodePath[];
@@ -422,25 +419,6 @@ const Ontology = ({
       );
       return limitedSearches;
     });
-  };
-
-  // Function to perform a search using Fuse.js library
-  const searchWithFuse = (query: string, nodeType?: INodeTypes): INode[] => {
-    // Return an empty array if the query is empty
-    if (!query) {
-      return [];
-    }
-
-    // Perform search using Fuse.js, filter out deleted items
-    return fuse
-      .search(query)
-      .map((result) => result.item)
-      .filter(
-        (item: INode) =>
-          !item.deleted &&
-          !item.category &&
-          (!nodeType || nodeType === item.nodeType),
-      );
   };
 
   const handleViewChange = (event: any, newValue: number) => {
@@ -1594,7 +1572,6 @@ const Ontology = ({
                 openSearchedNode(node, searched);
                 setMobileSearchOpen(false);
               }}
-              searchWithFuse={searchWithFuse}
               lastSearches={lastSearches}
               updateLastSearches={updateLastSearches}
               skillsFuture={skillsFuture}
@@ -1720,7 +1697,6 @@ const Ontology = ({
             toolbarRef={toolbarRef}
             user={user}
             openSearchedNode={openSearchedNode}
-            searchWithFuse={searchWithFuse}
             nodes={nodes}
             selectedDiffNode={selectedDiffNode}
             setSelectedDiffNode={setSelectedDiffNode}
@@ -1936,7 +1912,6 @@ const Ontology = ({
                 )}
                 <SearchSideBar
                   openSearchedNode={openSearchedNode}
-                  searchWithFuse={searchWithFuse}
                   lastSearches={lastSearches}
                   updateLastSearches={updateLastSearches}
                   skillsFuture={skillsFuture}
@@ -2038,7 +2013,6 @@ const Ontology = ({
                   nodes={nodes}
                   navigateToNode={navigateToNode}
                   eachOntologyPath={eachOntologyPath}
-                  searchWithFuse={searchWithFuse}
                   locked={!!currentVisibleNode.locked && !user?.manageLock}
                   selectedDiffNode={selectedDiffNode}
                   displaySidebar={displaySidebar}
@@ -2082,7 +2056,6 @@ const Ontology = ({
           {!isMobile && (
             <MemoizedToolbarSidebar
               // isHovered={toolbarIsHovered}
-              searchWithFuse={searchWithFuse}
               toolbarRef={toolbarRef}
               user={user}
               openSearchedNode={openSearchedNode}

@@ -136,7 +136,6 @@ type INodeProps = {
   nodes: { [id: string]: INode };
   navigateToNode: (nodeId: string) => void;
   eachOntologyPath: { [key: string]: any };
-  searchWithFuse: (query: string, nodeType?: INodeTypes) => INode[];
   locked: boolean;
   selectedDiffNode: NodeChange | null;
   displaySidebar: Function;
@@ -184,7 +183,6 @@ const Node = ({
   nodes,
   user,
   navigateToNode,
-  searchWithFuse,
   locked,
   selectedDiffNode,
   displaySidebar,
@@ -237,6 +235,9 @@ const Node = ({
 
   /* */
   const [glowIds, setGlowIds] = useState<Set<string>>(new Set());
+  const [searchResultsForSelection, setSearchResultsForSelection] = useState<any[]>([]);
+  const [loadingSearch, setLoadingSearch] = useState(false);
+  const [errorSearch, setErrorSearch] = useState(false);
 
   useEffect(() => {
     const element = document.getElementById("node-section");
@@ -255,23 +256,73 @@ const Node = ({
     }
   }, []);
 
-  const searchResultsForSelection = useMemo(() => {
-    const propertyType = currentVisibleNode.propertyType[
-      selectedProperty
-    ] as INodeTypes;
-    if (propertyType) {
-      return searchWithFuse(searchValue, propertyType);
+  // COMMENTED OUT IN THE PROCESS OF DEPRECATING NODES OBJECT 
+  // const searchResultsForSelection = useMemo(() => {
+  //   const propertyType = currentVisibleNode.propertyType[
+  //     selectedProperty
+  //   ] as INodeTypes;
+  //   if (propertyType) {
+  //     return searchWithFuse(searchValue, propertyType);
+  //   }
+  //   if (
+  //     selectedProperty === "specializations" ||
+  //     selectedProperty === "generalizations" ||
+  //     selectedProperty === "parts" ||
+  //     selectedProperty === "isPartOf"
+  //   ) {
+  //     return searchWithFuse(searchValue, currentVisibleNode.nodeType);
+  //   }
+  //   return [];
+  // }, [searchValue, selectedProperty]);
+
+  const searchQuery = useCallback(async () => {
+    if (!searchValue.trim()) {
+      setSearchResultsForSelection([]);
+      return;
     }
-    if (
-      selectedProperty === "specializations" ||
-      selectedProperty === "generalizations" ||
-      selectedProperty === "parts" ||
-      selectedProperty === "isPartOf"
-    ) {
-      return searchWithFuse(searchValue, currentVisibleNode.nodeType);
+
+    try {
+      setErrorSearch(false);
+      setLoadingSearch(true);
+
+      let nodeTypeFilter = null;
+      const propertyType = currentVisibleNode.propertyType[
+        selectedProperty
+      ] as INodeTypes;
+
+      if (propertyType) {
+        nodeTypeFilter = propertyType;
+      } else if (
+        selectedProperty === "specializations" ||
+        selectedProperty === "generalizations" ||
+        selectedProperty === "parts" ||
+        selectedProperty === "isPartOf"
+      ) {
+        nodeTypeFilter = currentVisibleNode.nodeType;
+      }
+
+      const response: any = await Post("/searchChroma", {
+        query: searchValue,
+        skillsFuture,
+        appName: skillsFuture ? skillsFutureApp : null,
+        ...(nodeTypeFilter ? { nodeType: nodeTypeFilter } : {}),
+      });
+
+      const results: any = [...(response.results || [])];
+      setSearchResultsForSelection(results);
+    } catch (error) {
+      console.error(error);
+      setErrorSearch(true);
+    } finally {
+      setLoadingSearch(false);
     }
-    return [];
-  }, [searchValue, selectedProperty]);
+  }, [searchValue, selectedProperty, currentVisibleNode, skillsFuture, skillsFutureApp]);
+
+  const onSearchKeyDown = (event: any) => {
+    if (event.key === "Enter") {
+      searchQuery();
+    }
+  };
 
   const addACloneNodeQueue = (nodeId: string, title?: string) => {
     const newId = doc(collection(db, NODES)).id;
@@ -1078,15 +1129,44 @@ const Node = ({
   );
 
   // Memoized this to prevent useEffect re-runs in YjsEditorWrapper
-  const checkDuplicateTitle = useCallback(
-    (newTitle: string) => {
-      try {
-        const fuseSearch = searchWithFuse(newTitle.trim()).slice(0, 10);
+  // COMMENTED OUT IN THE PROCESS OF DEPRECATING NODES OBJECT 
+  // const checkDuplicateTitle = useCallback(
+  //   (newTitle: string) => {
+  //     try {
+  //       const fuseSearch = searchWithFuse(newTitle.trim()).slice(0, 10);
 
+  //       const checkFlag =
+  //         fuseSearch.length > 0 &&
+  //         fuseSearch.some(
+  //           (s) =>
+  //             s.title.trim() === newTitle.trim() &&
+  //             currentVisibleNode?.id !== s.id,
+  //         );
+
+  //       return checkFlag;
+  //     } catch (error) {
+  //       console.error(error);
+  //     }
+  //   },
+  //   [searchWithFuse, currentVisibleNode?.id],
+  // );
+
+  // This new method of checking duplicate titles using chromadb
+  // might not be efficient. This comment acts as a flag for improvement later on.
+  const checkDuplicateTitle = useCallback(
+    async (newTitle: string) => {
+      try {
+        const response: any = await Post("/searchChroma", {
+          query: newTitle.trim(),
+          skillsFuture,
+          appName: skillsFuture ? skillsFutureApp : null,
+        });
+
+        const results = response.results || [];
         const checkFlag =
-          fuseSearch.length > 0 &&
-          fuseSearch.some(
-            (s) =>
+          results.length > 0 &&
+          results.slice(0, 10).some(
+            (s: any) =>
               s.title.trim() === newTitle.trim() &&
               currentVisibleNode?.id !== s.id,
           );
@@ -1094,9 +1174,10 @@ const Node = ({
         return checkFlag;
       } catch (error) {
         console.error(error);
+        return false;
       }
     },
-    [searchWithFuse, currentVisibleNode?.id],
+    [skillsFuture, skillsFutureApp, currentVisibleNode?.id],
   );
 
   const getPath = useCallback(
@@ -1377,6 +1458,10 @@ const Node = ({
             setSearchValue={setSearchValue}
             searchValue={searchValue}
             searchResultsForSelection={searchResultsForSelection}
+            onSearchKeyDown={onSearchKeyDown}
+            searchQuery={searchQuery}
+            loadingSearch={loadingSearch}
+            errorSearch={errorSearch}
             checkedItems={checkedItems}
             setCheckedItems={setCheckedItems}
             setCheckedItemsCopy={setCheckedItemsCopy}
@@ -1440,6 +1525,10 @@ const Node = ({
               setSearchValue={setSearchValue}
               searchValue={searchValue}
               searchResultsForSelection={searchResultsForSelection}
+              onSearchKeyDown={onSearchKeyDown}
+              searchQuery={searchQuery}
+              loadingSearch={loadingSearch}
+              errorSearch={errorSearch}
               checkedItems={checkedItems}
               setCheckedItems={setCheckedItems}
               setCheckedItemsCopy={setCheckedItemsCopy}
@@ -1506,6 +1595,10 @@ const Node = ({
               setSearchValue={setSearchValue}
               searchValue={searchValue}
               searchResultsForSelection={searchResultsForSelection}
+              onSearchKeyDown={onSearchKeyDown}
+              searchQuery={searchQuery}
+              loadingSearch={loadingSearch}
+              errorSearch={errorSearch}
               checkedItems={checkedItems}
               setCheckedItems={setCheckedItems}
               setCheckedItemsCopy={setCheckedItemsCopy}
@@ -1575,6 +1668,10 @@ const Node = ({
           setSearchValue={setSearchValue}
           searchValue={searchValue}
           searchResultsForSelection={searchResultsForSelection}
+          onSearchKeyDown={onSearchKeyDown}
+          searchQuery={searchQuery}
+          loadingSearch={loadingSearch}
+          errorSearch={errorSearch}
           checkedItems={checkedItems}
           setCheckedItems={setCheckedItems}
           setCheckedItemsCopy={setCheckedItemsCopy}

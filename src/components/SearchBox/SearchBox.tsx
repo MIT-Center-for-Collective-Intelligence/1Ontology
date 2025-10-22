@@ -14,6 +14,7 @@ type IProps = {
   label: string;
   glowSearchBox?: boolean;
   sx?: any;
+  onKeyDown?: (event: any) => void;
 };
 
 export const SearchBox = ({
@@ -22,6 +23,7 @@ export const SearchBox = ({
   label,
   glowSearchBox,
   sx,
+  onKeyDown,
 }: IProps) => {
   const [inputValue, setInputValue] = useState("");
 
@@ -62,6 +64,7 @@ export const SearchBox = ({
           sx={inputStyles}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={onKeyDown}
           startAdornment={
             <InputAdornment position="start">
               <SearchIcon
@@ -98,6 +101,7 @@ export const SearchBox = ({
           sx={inputStyles}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={onKeyDown}
           endAdornment={
             <InputAdornment position="end">
               <IconButton

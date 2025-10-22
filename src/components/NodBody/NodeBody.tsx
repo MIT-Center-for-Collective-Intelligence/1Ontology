@@ -46,6 +46,10 @@ interface NodeBodyProps {
   setSearchValue?: any;
   searchValue?: any;
   searchResultsForSelection?: any;
+  onSearchKeyDown?: any;
+  searchQuery?: any;
+  loadingSearch?: boolean;
+  errorSearch?: boolean;
   checkedItems?: any;
   setCheckedItems?: any;
   setCheckedItemsCopy?: any;
@@ -102,6 +106,10 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   setSearchValue,
   searchValue,
   searchResultsForSelection,
+  onSearchKeyDown,
+  searchQuery,
+  loadingSearch,
+  errorSearch,
   checkedItems,
   setCheckedItems,
   setCheckedItemsCopy,
@@ -555,6 +563,10 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     setSearchValue={setSearchValue}
                     searchValue={searchValue}
                     searchResultsForSelection={searchResultsForSelection}
+                    onSearchKeyDown={onSearchKeyDown}
+                    searchQuery={searchQuery}
+                    loadingSearch={loadingSearch}
+                    errorSearch={errorSearch}
                     checkedItems={checkedItems}
                     setCheckedItems={setCheckedItems}
                     setCheckedItemsCopy={setCheckedItemsCopy}

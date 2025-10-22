@@ -115,7 +115,6 @@ type MainSidebarProps = {
   toolbarRef: any;
   user: User | null;
   openSearchedNode: Function;
-  searchWithFuse: Function;
   nodes: { [nodeId: string]: any };
   selectedDiffNode: any;
   setSelectedDiffNode: any;
@@ -147,7 +146,6 @@ const ToolbarSidebar = ({
   toolbarRef,
   user,
   openSearchedNode,
-  searchWithFuse,
   nodes,
   selectedDiffNode,
   setSelectedDiffNode,
@@ -1235,7 +1233,6 @@ const ToolbarSidebar = ({
         return (
           <SearchSideBar
             openSearchedNode={openSearchedNode}
-            searchWithFuse={searchWithFuse}
             lastSearches={lastSearches}
             updateLastSearches={updateLastSearches}
             skillsFuture={skillsFuture}
@@ -1258,7 +1255,6 @@ const ToolbarSidebar = ({
             currentVisibleNode={currentVisibleNode}
             user={user}
             confirmIt={confirmIt}
-            searchWithFuse={searchWithFuse}
             treeVisualization={treeVisualization}
             expandedNodes={expandedNodes}
             setExpandedNodes={setExpandedNodes}
@@ -1274,6 +1270,8 @@ const ToolbarSidebar = ({
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
             nodes={nodes}
+            skillsFuture={skillsFuture}
+            skillsFutureApp={skillsFutureApp}
           />
         );
       case "chat-discussion":
@@ -1282,7 +1280,6 @@ const ToolbarSidebar = ({
             currentVisibleNode={currentVisibleNode}
             user={user}
             confirmIt={confirmIt}
-            searchWithFuse={searchWithFuse}
             treeVisualization={treeVisualization}
             expandedNodes={expandedNodes}
             setExpandedNodes={setExpandedNodes}
@@ -1292,6 +1289,8 @@ const ToolbarSidebar = ({
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
             nodes={nodes}
+            skillsFuture={skillsFuture}
+            skillsFutureApp={skillsFutureApp}
           />
         );
       case "inheritanceSettings":

@@ -8,6 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import SearchIcon from "@mui/icons-material/Search";
 
 import ExpandSearchResult from "../OntologyComponents/ExpandSearchResult";
 import TreeViewSimplified from "../OntologyComponents/TreeViewSimplified";
@@ -46,6 +47,10 @@ const SelectModel = ({
   setSearchValue,
   searchValue,
   searchResultsForSelection,
+  onSearchKeyDown,
+  searchQuery,
+  loadingSearch,
+  errorSearch,
   handleSaveLinkChanges,
   checkedItems,
   setCheckedItems,
@@ -92,6 +97,10 @@ const SelectModel = ({
   setSearchValue: any;
   searchValue: any;
   searchResultsForSelection: any;
+  onSearchKeyDown?: any;
+  searchQuery?: any;
+  loadingSearch?: boolean;
+  errorSearch?: boolean;
   setCheckedItems: any;
   setCheckedItemsCopy: any;
   checkedItemsCopy: any;
@@ -805,7 +814,19 @@ const SelectModel = ({
               search={searchValue}
               glowSearchBox={glowSearchBox}
               label="Search ..."
+              onKeyDown={onSearchKeyDown}
             />
+            {searchValue && searchQuery && (
+              <Tooltip title={"Search in the Ontology"}>
+                <IconButton
+                  sx={{ mr: "5px" }}
+                  onClick={searchQuery}
+                  color="primary"
+                >
+                  <SearchIcon />
+                </IconButton>
+              </Tooltip>
+            )}
             <Tooltip
               title={`Create as a new Specialization 
                     ${

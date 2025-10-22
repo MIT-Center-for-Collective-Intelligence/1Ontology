@@ -1,5 +1,6 @@
 import { MESSAGES, USERS } from "@components/lib/firestoreClient/collections";
 import CloseIcon from "@mui/icons-material/Close";
+import SearchIcon from "@mui/icons-material/Search";
 import { TabPanel, a11yProps } from "@components/lib/utils/TabPanel";
 
 import {
@@ -12,6 +13,9 @@ import {
   Paper,
   Typography,
   IconButton,
+  Skeleton,
+  Alert,
+  Tooltip,
 } from "@mui/material";
 import {
   query,
@@ -23,7 +27,6 @@ import {
 import React, {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -33,12 +36,12 @@ import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import TreeViewSimplified from "../OntologyComponents/TreeViewSimplified";
 import { SearchBox } from "../SearchBox/SearchBox";
 import { INode } from "@components/types/INode";
+import { Post } from "@components/lib/utils/Post";
 
 const ChatSideBar = ({
   currentVisibleNode,
   user,
   confirmIt,
-  searchWithFuse,
   treeVisualization,
   expandedNodes,
   setExpandedNodes,
@@ -48,11 +51,12 @@ const ChatSideBar = ({
   selectedChatTab,
   setSelectedChatTab,
   nodes,
+  skillsFuture,
+  skillsFutureApp,
 }: {
   currentVisibleNode: any;
   user: any;
   confirmIt: any;
-  searchWithFuse: any;
   treeVisualization: any;
   expandedNodes: any;
   setExpandedNodes: any;
@@ -62,6 +66,8 @@ const ChatSideBar = ({
   selectedChatTab: number;
   setSelectedChatTab: Function;
   nodes: { [nodeId: string]: INode };
+  skillsFuture: boolean;
+  skillsFutureApp: string;
 }) => {
   const db = getFirestore();
   const [users, setUsers] = useState<
@@ -75,6 +81,9 @@ const ChatSideBar = ({
   >([]);
   const [openModel, setOpenModel] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [loadingSearchResult, setLoadingSearchResult] = useState(false);
+  const [errorSearch, setErrorSearch] = useState(false);
   const scrollingRef = useRef<any>();
 
   const handleChatTabsChange = (event: any, newValue: number) => {
@@ -85,14 +94,31 @@ const ChatSideBar = ({
     // });
   };
 
-  const searchResults = useMemo(() => {
-    /*  recordLogs({
-      action: "Searched",
-      query: searchValue,
-    }); */
-    return searchWithFuse(searchValue);
-  }, [searchValue]);
+  const searchQuery = useCallback(async () => {
+    try {
+      setErrorSearch(false);
+      setLoadingSearchResult(true);
+      const response: any = await Post("/searchChroma", {
+        query: searchValue,
+        skillsFuture,
+        appName: skillsFuture ? skillsFutureApp : null,
+      });
 
+      const results: any = [...(response.results || [])];
+      setSearchResults(results);
+    } catch (error) {
+      console.error(error);
+      setErrorSearch(true);
+    } finally {
+      setLoadingSearchResult(false);
+    }
+  }, [searchValue, skillsFuture, skillsFutureApp]);
+
+  const onKeyDown = (event: any) => {
+    if (event.key === "Enter") {
+      searchQuery();
+    }
+  };
   useEffect(() => {
     (async () => {
       if (!db) return;
@@ -296,7 +322,19 @@ const ChatSideBar = ({
                 setSearch={setSearchValue}
                 search={searchValue}
                 label={"Search ..."}
+                onKeyDown={onKeyDown}
               />
+              {searchValue && (
+                <Tooltip title={"Search in the Ontology"}>
+                  <IconButton
+                    sx={{ mr: "5px" }}
+                    onClick={searchQuery}
+                    color="primary"
+                  >
+                    <SearchIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
               <IconButton
                 onClick={() => {
                   setOpenModel(false);
@@ -307,7 +345,23 @@ const ChatSideBar = ({
             </Box>
           </Paper>
           <Paper>
-            {searchValue ? (
+            {loadingSearchResult ? (
+              <Box sx={{ px: 4, mt: "0px" }}>
+                {[...Array(15)].map((_, index) => (
+                  <Skeleton
+                    key={index}
+                    variant="text"
+                    height={55}
+                    width="100%"
+                    sx={{ p: 0 }}
+                  />
+                ))}
+              </Box>
+            ) : errorSearch ? (
+              <Alert severity="error">
+                There was an error searching through the ontology.
+              </Alert>
+            ) : searchValue ? (
               <Box>
                 {" "}
                 {searchResults.map((node: any) => (

@@ -101,6 +101,10 @@ type IStructuredPropertyProps = {
   setSearchValue?: any;
   searchValue?: any;
   searchResultsForSelection?: any;
+  onSearchKeyDown?: any;
+  searchQuery?: any;
+  loadingSearch?: boolean;
+  errorSearch?: boolean;
   checkedItems?: any;
   setCheckedItems?: any;
   setCheckedItemsCopy?: any;
@@ -161,6 +165,10 @@ const StructuredProperty = ({
   setSearchValue,
   searchValue,
   searchResultsForSelection,
+  onSearchKeyDown,
+  searchQuery,
+  loadingSearch,
+  errorSearch,
   checkedItems,
   setCheckedItems,
   setCheckedItemsCopy,
@@ -1315,6 +1323,10 @@ const StructuredProperty = ({
                 setSearchValue={setSearchValue}
                 searchValue={searchValue}
                 searchResultsForSelection={searchResultsForSelection}
+                onSearchKeyDown={onSearchKeyDown}
+                searchQuery={searchQuery}
+                loadingSearch={loadingSearch}
+                errorSearch={errorSearch}
                 checkedItems={
                   new Set(
                     propertyValue.flatMap((c) => c.nodes).map((c) => c.id),
@@ -1481,6 +1493,10 @@ const StructuredProperty = ({
               setSearchValue={setSearchValue}
               searchValue={searchValue}
               searchResultsForSelection={searchResultsForSelection}
+              onSearchKeyDown={onSearchKeyDown}
+              searchQuery={searchQuery}
+              loadingSearch={loadingSearch}
+              errorSearch={errorSearch}
               checkedItems={
                 new Set(propertyValue.flatMap((c) => c.nodes).map((c) => c.id))
               }

@@ -94,6 +94,10 @@ const CollectionStructure = ({
   setSearchValue,
   searchValue,
   searchResultsForSelection,
+  onSearchKeyDown,
+  searchQuery,
+  loadingSearch,
+  errorSearch,
   checkedItems,
   setCheckedItems,
   setCheckedItemsCopy,
@@ -162,6 +166,10 @@ const CollectionStructure = ({
   setSearchValue: any;
   searchValue: any;
   searchResultsForSelection: any;
+  onSearchKeyDown?: any;
+  searchQuery?: any;
+  loadingSearch?: boolean;
+  errorSearch?: boolean;
   checkedItems: any;
   setCheckedItems: any;
   setCheckedItemsCopy: any;
@@ -1598,6 +1606,10 @@ const CollectionStructure = ({
                                 searchResultsForSelection={
                                   searchResultsForSelection
                                 }
+                                onSearchKeyDown={onSearchKeyDown}
+                                searchQuery={searchQuery}
+                                loadingSearch={loadingSearch}
+                                errorSearch={errorSearch}
                                 checkedItems={checkedItems}
                                 setCheckedItems={setCheckedItems}
                                 setCheckedItemsCopy={setCheckedItemsCopy}

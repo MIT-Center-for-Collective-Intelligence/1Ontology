@@ -27,14 +27,12 @@ import { Post } from "@components/lib/utils/Post";
 
 const SearchSideBar = ({
   openSearchedNode,
-  searchWithFuse,
   lastSearches,
   updateLastSearches,
   skillsFuture,
   skillsFutureApp,
 }: {
   openSearchedNode: any;
-  searchWithFuse: any;
   lastSearches: any[];
   updateLastSearches: Function;
   skillsFuture: boolean;
@@ -51,9 +49,6 @@ const SearchSideBar = ({
 
   const theme = useTheme();
 
-  const getSearchResults = (query: string) => {
-    return searchWithFuse(query).slice(0, 30);
-  };
 
   // const searchResults = useMemo(() => {
   //   /*  recordLogs({
@@ -69,22 +64,23 @@ const SearchSideBar = ({
   const handleFocus = () => {
     setIsFocused(true);
 
-    if (searchValue.trim() !== "") {
+    // COMMENTED OUT IN THE PROCESS OF DEPRECATING NODES OBJECT 
+    // if (searchValue.trim() !== "") {
       // Force a fresh search to verify if the node still exists
-      const freshResults = getSearchResults(searchValue.trim());
+      // const freshResults = getSearchResults(searchValue.trim());
 
-      if (freshResults.length === 0) {
-        setSearchValue("");
-        setIsListOpen(!!lastSearches.length);
-      } else {
-        // Force a re-render to update the search results
-        setSearchRefreshKey((prevKey) => prevKey + 1);
-        setIsListOpen(true);
-      }
-    } else if (lastSearches.length > 0) {
-      // Display last searches if no current search value
-      setIsListOpen(true);
-    }
+    //   if (freshResults.length === 0) {
+    //     setSearchValue("");
+    //     setIsListOpen(!!lastSearches.length);
+    //   } else {
+    //     // Force a re-render to update the search results
+    //     setSearchRefreshKey((prevKey) => prevKey + 1);
+    //     setIsListOpen(true);
+    //   }
+    // } else if (lastSearches.length > 0) {
+    //   // Display last searches if no current search value
+    //   setIsListOpen(true);
+    // }
 
     updateLastSearches();
   };
@@ -133,28 +129,20 @@ const SearchSideBar = ({
   }, []);
 
   const searchQuery = useCallback(async () => {
-    const fuseSearch = searchWithFuse(searchValue).slice(0, 30);
 
     try {
       setErrorSearch(false);
       setLoadingSearchResult(true);
-      const response: any = !development
-        ? await Post("/searchChroma", {
-            query: searchValue,
-            skillsFuture,
-            appName: skillsFuture ? skillsFutureApp : null,
-          })
-        : { results: [] };
+      const response: any = await Post("/searchChroma", {
+        query: searchValue,
+        skillsFuture,
+        appName: skillsFuture ? skillsFutureApp : null,
+      });
 
       const results: any = [...(response.results || [])];
 
-      if (results.length <= 0 && fuseSearch.length > 0) {
-        results.push(...fuseSearch);
-      }
-
-      setSearchResults(development ? fuseSearch : results);
+      setSearchResults(results);
     } catch (error) {
-      setSearchResults(fuseSearch);
       console.error(error);
       // setErrorSearch(true);
     } finally {
