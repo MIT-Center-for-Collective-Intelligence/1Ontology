@@ -186,7 +186,7 @@ const Ontology = ({
     null,
   );
 
-  // Sync fetched node to currentVisibleNode when using static nodes
+  // Sync fetched node to currentVisibleNode
   useEffect(() => {
     if (fetchedNode) {
       setCurrentVisibleNode(fetchedNode);
@@ -199,10 +199,6 @@ const Ontology = ({
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [viewValue, setViewValue] = useState<number>(0);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-  const [eachOntologyPath, setEachOntologyPath] = useState<{
-    [key: string]: INodePath[];
-  }>({});
-  const [multipleOntologyPaths, setMultipleOntologyPaths] = useState<any>({});
   const columnResizerRef = useRef<any>();
   const [lastUpdate, setLastUpdate] = useState<number | null>(null);
 
@@ -380,37 +376,25 @@ const Ontology = ({
     return () => {
       window.removeEventListener("hashchange", handleHashChange);
     };
-  }, [eachOntologyPath]);
+  }, []);
 
   // Function to update last searches
+  // Note: Validation removed as part of nodes object deprecation
+  // Note: Invalid nodes will fail when clicked via useNodeSnapshot
   const updateLastSearches = (searchedNode: any) => {
     setLastSearches((prevSearches) => {
-      // If searchedNode is null, only filter valid searches from prevSearches
+      // If searchedNode is null, return current searches unchanged
       if (!searchedNode) {
-        const validSearches = prevSearches.filter((node) => {
-          const nodeInNodes = nodes[node.id];
-          return nodeInNodes && !nodeInNodes.deleted; // Keep only non-deleted nodes
-        });
-
-        localStorage.setItem(
-          `lastSearches_${user?.userId}`,
-          JSON.stringify(validSearches),
-        );
-        return validSearches;
+        return prevSearches;
       }
 
-      // Proceed with the usual update if searchedNode is not null
+      // Remove duplicates and add new search to the front
       const filteredSearches = prevSearches.filter(
         (s) => s.id !== searchedNode.id,
       );
       const updatedSearches = [searchedNode, ...filteredSearches];
 
-      const validSearches = updatedSearches.filter((node) => {
-        const nodeInNodes = nodes[node.id];
-        return nodeInNodes && !nodeInNodes.deleted; // Keep only non-deleted nodes
-      });
-
-      const limitedSearches = validSearches.slice(0, 20);
+      const limitedSearches = updatedSearches.slice(0, 20);
 
       // Update localStorage with the new list of searches
       localStorage.setItem(
@@ -459,197 +443,6 @@ const Ontology = ({
 
   /* ------- ------- ------- */
 
-  // This function finds the path of a node in a nested structure of mainNodes and their children.
-  const findOntologyPath = useCallback(
-    ({
-      mainNodes,
-      path,
-      eachOntologyPath,
-      visited = new Set(),
-    }: {
-      mainNodes: INode[];
-      path: INodePath[];
-      eachOntologyPath: { [nodeId: string]: INodePath[] };
-      visited?: Set<string>;
-    }): { [nodeId: string]: INodePath[] } | undefined => {
-      try {
-        for (let node of mainNodes) {
-          if (!node || visited.has(node.id)) {
-            continue;
-          }
-
-          visited.add(node.id);
-
-          eachOntologyPath[node.id] = [
-            ...path,
-            {
-              title: node.title,
-              id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
-              category: !!node.category,
-            },
-          ];
-
-          node.specializations.forEach((collection) => {
-            const specializationsData: INode[] = [];
-
-            collection.nodes.forEach((n: ILinkNode) =>
-              specializationsData.push(nodes[n.id]),
-            );
-
-            const subPath = [...path];
-            subPath.push({
-              title: node.title,
-              id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
-              category: !!node.category,
-            });
-            if (collection.collectionName !== "main") {
-              subPath.push({
-                title: collection.collectionName,
-                id: `${node.id}-${collection.collectionName.trim()}`,
-                category: true,
-              });
-            }
-            // Recursively call the findOntologyPath function for the filtered specializations
-            const result = findOntologyPath({
-              mainNodes: specializationsData,
-              path: [...subPath],
-              eachOntologyPath,
-              visited,
-            });
-            if (result) {
-              eachOntologyPath = result;
-            }
-          });
-        }
-
-        // Return the accumulated ontology paths
-        return eachOntologyPath;
-      } catch (error: any) {
-        recordLogs({
-          type: "error",
-          error: JSON.stringify({
-            name: error.name,
-            message: error.message,
-            stack: error.stack,
-          }),
-        });
-      }
-    },
-    [nodes],
-  );
-
-  // This function returns a map where each nodeId maps to an array of all possible paths to that node
-  const findMultipleOntologyPaths = useCallback(
-    ({
-      mainNodes,
-      path,
-      multipleOntologyPaths,
-      visited = new Set(),
-    }: {
-      mainNodes: INode[];
-      path: INodePath[];
-      multipleOntologyPaths: { [nodeId: string]: INodePath[][] };
-      visited?: Set<string>;
-    }): { [nodeId: string]: INodePath[][] } | undefined => {
-      try {
-        for (let node of mainNodes) {
-          if (!node) continue;
-
-          const pathSignature = `${node.id}-${path.map((p) => p.id).join("-")}`;
-          if (visited.has(pathSignature)) continue;
-          visited.add(pathSignature);
-
-          const newPath = [
-            ...path,
-            {
-              title: node.title,
-              id: !!node.category ? `${node.id}-${node.title.trim()}` : node.id,
-              category: !!node.category,
-            },
-          ];
-
-          if (!multipleOntologyPaths[node.id]) {
-            multipleOntologyPaths[node.id] = [newPath];
-          } else {
-            const newPathIds = newPath.map((p) => p.id).join(":");
-            const isDuplicate = multipleOntologyPaths[node.id].some(
-              (existingPath) =>
-                existingPath.map((p) => p.id).join(":") === newPathIds,
-            );
-
-            if (!isDuplicate) {
-              multipleOntologyPaths[node.id].push(newPath);
-            }
-          }
-
-          node.specializations.forEach((collection) => {
-            const specializationsData: INode[] = [];
-            collection.nodes.forEach((n: ILinkNode) =>
-              specializationsData.push(nodes[n.id]),
-            );
-
-            const subPath = [...newPath];
-            if (collection.collectionName !== "main") {
-              subPath.push({
-                title: collection.collectionName,
-                id: `${node.id}-${collection.collectionName.trim()}`,
-                category: true,
-              });
-            }
-
-            const result = findMultipleOntologyPaths({
-              mainNodes: specializationsData,
-              path: subPath,
-              multipleOntologyPaths,
-              visited,
-            });
-
-            if (result) {
-              multipleOntologyPaths = result;
-            }
-          });
-        }
-
-        return multipleOntologyPaths;
-      } catch (error: any) {
-        recordLogs({
-          type: "error",
-          error: JSON.stringify({
-            name: error.name,
-            message: error.message,
-            stack: error.stack,
-          }),
-        });
-      }
-    },
-    [nodes],
-  );
-
-  useEffect(() => {
-    const mainNodes = Object.values(nodes).filter(
-      (node: any) =>
-        node.category || (typeof node.root === "boolean" && !!node.root),
-    );
-    if (mainNodes.length > 0) {
-      let eachOntologyPath = findOntologyPath({
-        mainNodes,
-        path: [],
-        eachOntologyPath: {},
-      });
-      if (eachOntologyPath) {
-        setEachOntologyPath(eachOntologyPath);
-      }
-
-      let multipleOntologyPaths = findMultipleOntologyPaths({
-        mainNodes,
-        path: [],
-        multipleOntologyPaths: {},
-      });
-      if (multipleOntologyPaths) {
-        setMultipleOntologyPaths(multipleOntologyPaths);
-      }
-    }
-  }, [nodes]);
 
   // Function to generate a tree structure of specializations based on main nodes
   const getSpecializationsTree = (
@@ -1071,20 +864,10 @@ const Ontology = ({
 
     openedANode(currentVisibleNode?.id);
 
-    // Check if this is a root node - if so, skip initializeExpanded to prevent scrolling
-    const isRootNode =
-      eachOntologyPath[currentVisibleNode?.id] &&
-      eachOntologyPath[currentVisibleNode?.id].length === 1;
-
-    if (expandedNodes.size === 0 && !isRootNode) {
-      initializeExpanded(eachOntologyPath[currentVisibleNode?.id]);
-    }
-    // setOntologyPath(eachOntologyPath[currentVisibleNode?.id]);
-
     updateTheUrl([
       { id: currentVisibleNode?.id, title: currentVisibleNode.title },
     ]);
-  }, [currentVisibleNode?.id, eachOntologyPath]);
+  }, [currentVisibleNode?.id]);
 
   // Callback function to add a new node to the database
 
@@ -1203,20 +986,23 @@ const Ontology = ({
         }
       }
 
-      if (nodes[nodeId]) {
-        setCurrentVisibleNode(nodes[nodeId]);
-        initializeExpanded(eachOntologyPath[nodeId]);
-        setSelectedDiffNode(null);
-        setScrollTrigger((prev) => !prev);
-      }
+      // Use the single node-fetch approach instead of nodes object
+      // setSelectedNodeId triggers useNodeSnapshot hook which fetches from Firestore
+      // The fetched node is auto-synced to currentVisibleNode via useEffect (lines 190-194)
+      setSelectedNodeId(nodeId);
+
+      // Note: intializeExpanded is commented out due to changes in draggableTree behavior
+      // initializeExpanded(eachOntologyPath[nodeId]);
+      
+      setSelectedDiffNode(null);
+      setScrollTrigger((prev) => !prev);
     },
     [
       selectedProperty,
       addedElements,
       removedElements,
-      nodes,
-      eachOntologyPath,
       currentImprovement,
+      setSelectedNodeId,
     ],
   );
 
@@ -1347,96 +1133,98 @@ const Ontology = ({
     );
   };
 
-  useEffect(() => {
-    if (!currentVisibleNode) return;
+  // COMMENTED OUT AS PART OF DEPRECATING NODES OBJECT 
+  // Note: This is required for parts property in displaying their inheritance
+  // useEffect(() => {
+  //   if (!currentVisibleNode) return;
 
-    const _inheritanceDetails: any = {};
+  //   const _inheritanceDetails: any = {};
 
-    const _currentVisibleNode = { ...currentVisibleNode };
+  //   const _currentVisibleNode = { ...currentVisibleNode };
 
-    let parts = _currentVisibleNode?.properties.parts || [];
-    const inheritanceRef = _currentVisibleNode.inheritance["parts"]?.ref;
-    if (inheritanceRef && nodes[inheritanceRef]) {
-      parts = nodes[inheritanceRef].properties["parts"];
-    }
+  //   let parts = _currentVisibleNode?.properties.parts || [];
+  //   const inheritanceRef = _currentVisibleNode.inheritance["parts"]?.ref;
+  //   if (inheritanceRef && nodes[inheritanceRef]) {
+  //     parts = nodes[inheritanceRef].properties["parts"];
+  //   }
 
-    const generalizations = (
-      _currentVisibleNode?.generalizations || []
-    ).flatMap((c) => c.nodes);
-    const checkGeneralizations = (
-      partId: string,
-    ): { genId: string; partOf: string | null }[] | null => {
-      let inheritanceDetails: { genId: string; partOf: string | null }[] = [];
+  //   const generalizations = (
+  //     _currentVisibleNode?.generalizations || []
+  //   ).flatMap((c) => c.nodes);
+  //   const checkGeneralizations = (
+  //     partId: string,
+  //   ): { genId: string; partOf: string | null }[] | null => {
+  //     let inheritanceDetails: { genId: string; partOf: string | null }[] = [];
 
-      for (let generalization of generalizations) {
-        if (!nodes[generalization.id]) {
-          continue;
-        }
-        const refPartsId = nodes[generalization.id].inheritance["parts"].ref;
-        let generalizationParts = nodes[generalization.id]?.properties.parts;
-        if (refPartsId && nodes[refPartsId]) {
-          generalizationParts = nodes[refPartsId]?.properties.parts;
-        }
+  //     for (let generalization of generalizations) {
+  //       if (!nodes[generalization.id]) {
+  //         continue;
+  //       }
+  //       const refPartsId = nodes[generalization.id].inheritance["parts"].ref;
+  //       let generalizationParts = nodes[generalization.id]?.properties.parts;
+  //       if (refPartsId && nodes[refPartsId]) {
+  //         generalizationParts = nodes[refPartsId]?.properties.parts;
+  //       }
 
-        const partIdex = generalizationParts[0].nodes.findIndex(
-          (c) => c.id === partId,
-        );
+  //       const partIdex = generalizationParts[0].nodes.findIndex(
+  //         (c) => c.id === partId,
+  //       );
 
-        let partOfIdx: any = -1;
+  //       let partOfIdx: any = -1;
 
-        if (partIdex === -1) {
-          for (let { id } of generalizationParts[0].nodes) {
-            const specializationPart = (
-              nodes[id]?.specializations || []
-            ).flatMap((c) => c.nodes);
-            partOfIdx = specializationPart.findIndex((c) => c.id === partId);
-            if (partOfIdx !== -1) {
-              inheritanceDetails.push({
-                genId: generalization.id,
-                partOf: id,
-              });
-            }
-          }
-        }
-        if (partIdex === -1) {
-          const ontologyPathForPart = eachOntologyPath[partId] ?? [];
+  //       if (partIdex === -1) {
+  //         for (let { id } of generalizationParts[0].nodes) {
+  //           const specializationPart = (
+  //             nodes[id]?.specializations || []
+  //           ).flatMap((c) => c.nodes);
+  //           partOfIdx = specializationPart.findIndex((c) => c.id === partId);
+  //           if (partOfIdx !== -1) {
+  //             inheritanceDetails.push({
+  //               genId: generalization.id,
+  //               partOf: id,
+  //             });
+  //           }
+  //         }
+  //       }
+  //       if (partIdex === -1) {
+  //         const ontologyPathForPart = eachOntologyPath[partId] ?? [];
 
-          const exacts = generalizationParts[0].nodes.filter((n) => {
-            const findIndex = ontologyPathForPart.findIndex(
-              (d) => d.id === n.id,
-            );
-            return findIndex !== -1;
-          });
-          if (exacts.length > 0) {
-            inheritanceDetails.push({
-              genId: generalization.id,
-              partOf: exacts[0].id,
-            });
-          }
-        }
+  //         const exacts = generalizationParts[0].nodes.filter((n) => {
+  //           const findIndex = ontologyPathForPart.findIndex(
+  //             (d) => d.id === n.id,
+  //           );
+  //           return findIndex !== -1;
+  //         });
+  //         if (exacts.length > 0) {
+  //           inheritanceDetails.push({
+  //             genId: generalization.id,
+  //             partOf: exacts[0].id,
+  //           });
+  //         }
+  //       }
 
-        if (partIdex !== -1) {
-          inheritanceDetails.push({
-            genId: generalization.id,
-            partOf: generalizationParts[0].nodes[partIdex].id,
-          });
-        }
-      }
-      if (inheritanceDetails.length > 0) {
-        return inheritanceDetails;
-      }
-      return null;
-    };
+  //       if (partIdex !== -1) {
+  //         inheritanceDetails.push({
+  //           genId: generalization.id,
+  //           partOf: generalizationParts[0].nodes[partIdex].id,
+  //         });
+  //       }
+  //     }
+  //     if (inheritanceDetails.length > 0) {
+  //       return inheritanceDetails;
+  //     }
+  //     return null;
+  //   };
 
-    if (parts) {
-      for (let node of parts[0].nodes) {
-        if (nodes[node.id]) {
-          _inheritanceDetails[node.id] = checkGeneralizations(node.id);
-        }
-      }
-    }
-    setPartsInheritance(_inheritanceDetails);
-  }, [currentVisibleNode, nodes]);
+  //   if (parts) {
+  //     for (let node of parts[0].nodes) {
+  //       if (nodes[node.id]) {
+  //         _inheritanceDetails[node.id] = checkGeneralizations(node.id);
+  //       }
+  //     }
+  //   }
+  //   setPartsInheritance(_inheritanceDetails);
+  // }, [currentVisibleNode, nodes]);
 
   if (Object.keys(nodes).length <= 0) {
     return <FullPageLogoLoading />;
@@ -1665,8 +1453,6 @@ const Ontology = ({
               skillsFuture={skillsFuture}
               specializationNumsUnder={specializationNumsUnder}
               skillsFutureApp={appName}
-              multipleOntologyPaths={multipleOntologyPaths}
-              eachOntologyPath={eachOntologyPath}
             />
           </Box>
         </Box>
@@ -1816,8 +1602,6 @@ const Ontology = ({
                       skillsFuture={skillsFuture}
                       specializationNumsUnder={specializationNumsUnder}
                       skillsFutureApp={appName}
-                      multipleOntologyPaths={multipleOntologyPaths}
-                      eachOntologyPath={eachOntologyPath}
                     />
                   </Box>
                 </TabPanel>
@@ -2012,7 +1796,6 @@ const Ontology = ({
                   mainSpecializations={mainSpecializations}
                   nodes={nodes}
                   navigateToNode={navigateToNode}
-                  eachOntologyPath={eachOntologyPath}
                   locked={!!currentVisibleNode.locked && !user?.manageLock}
                   selectedDiffNode={selectedDiffNode}
                   displaySidebar={displaySidebar}

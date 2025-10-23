@@ -66,8 +66,8 @@ function DraggableTree({
   onOpenNodesTree: any;
   treeRef: any;
   treeType?: string;
-  eachOntologyPath: any;
-  multipleOntologyPaths: any;
+  eachOntologyPath?: any;
+  multipleOntologyPaths?: any;
   skillsFuture?: boolean;
   specializationNumsUnder: { [key: string]: number };
   skillsFutureApp: string;

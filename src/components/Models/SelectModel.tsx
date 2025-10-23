@@ -62,7 +62,6 @@ const SelectModel = ({
   expandedNodes,
   setExpandedNodes,
   handleToggle,
-  getPath,
   locked,
   selectedDiffNode,
   confirmIt,
@@ -112,7 +111,6 @@ const SelectModel = ({
   expandedNodes: any;
   setExpandedNodes: any;
   handleToggle: any;
-  getPath: any;
   locked: any;
   selectedDiffNode: any;
   confirmIt: any;
@@ -730,7 +728,7 @@ const SelectModel = ({
         stopPropagation={
           selectedProperty === "generalizations" ? currentVisibleNode?.id : ""
         }
-        preventLoops={getPath(currentVisibleNode?.id, selectedProperty)}
+        preventLoops={new Set()} // as getPart is removed, add an empty Set() as placeholder
         manageLock={user?.manageLock}
         cloning={cloning}
         addACloneNodeQueue={_add}

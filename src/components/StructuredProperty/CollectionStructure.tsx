@@ -107,7 +107,6 @@ const CollectionStructure = ({
   expandedNodes,
   setExpandedNodes,
   handleToggle,
-  getPath,
   handleSaveLinkChanges,
   checkDuplicateTitle,
   cloning,
@@ -180,7 +179,6 @@ const CollectionStructure = ({
   expandedNodes: any;
   setExpandedNodes: any;
   handleToggle: any;
-  getPath: any;
   handleSaveLinkChanges: any;
   checkDuplicateTitle: any;
   cloning: any;
@@ -1620,7 +1618,6 @@ const CollectionStructure = ({
                                 expandedNodes={expandedNodes}
                                 setExpandedNodes={setExpandedNodes}
                                 handleToggle={handleToggle}
-                                getPath={getPath}
                                 handleSaveLinkChanges={handleSaveLinkChanges}
                                 checkDuplicateTitle={checkDuplicateTitle}
                                 cloning={cloning}

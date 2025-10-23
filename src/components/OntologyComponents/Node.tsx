@@ -135,7 +135,6 @@ type INodeProps = {
   mainSpecializations: MainSpecializations;
   nodes: { [id: string]: INode };
   navigateToNode: (nodeId: string) => void;
-  eachOntologyPath: { [key: string]: any };
   locked: boolean;
   selectedDiffNode: NodeChange | null;
   displaySidebar: Function;
@@ -188,7 +187,6 @@ const Node = ({
   displaySidebar,
   activeSidebar,
   currentImprovement,
-  eachOntologyPath,
   setNodes,
   checkedItems,
   setCheckedItems,
@@ -1180,21 +1178,6 @@ const Node = ({
     [skillsFuture, skillsFutureApp, currentVisibleNode?.id],
   );
 
-  const getPath = useCallback(
-    (nodeId: string, selectedProperty: string): Set<string> => {
-      if (selectedProperty === "generalizations") {
-        return new Set([nodeId]);
-      }
-      if (
-        selectedProperty === "specializations" &&
-        !!eachOntologyPath[nodeId]
-      ) {
-        return new Set(eachOntologyPath[nodeId].map((p: any) => p.id));
-      }
-      return new Set();
-    },
-    [eachOntologyPath],
-  );
   const deleteProperty = async (property: string) => {
     try {
       const confirm = await confirmIt(
@@ -1472,7 +1455,6 @@ const Node = ({
             expandedNodes={expandedNodes}
             setExpandedNodes={setExpandedNodes}
             handleToggle={handleToggle}
-            getPath={getPath}
             handleSaveLinkChanges={handleSaveLinkChanges}
             checkDuplicateTitle={checkDuplicateTitle}
             cloning={cloning}
@@ -1539,7 +1521,6 @@ const Node = ({
               expandedNodes={expandedNodes}
               setExpandedNodes={setExpandedNodes}
               handleToggle={handleToggle}
-              getPath={getPath}
               handleSaveLinkChanges={handleSaveLinkChanges}
               checkDuplicateTitle={checkDuplicateTitle}
               cloning={cloning}
@@ -1609,7 +1590,6 @@ const Node = ({
               expandedNodes={expandedNodes}
               setExpandedNodes={setExpandedNodes}
               handleToggle={handleToggle}
-              getPath={getPath}
               handleSaveLinkChanges={handleSaveLinkChanges}
               checkDuplicateTitle={checkDuplicateTitle}
               cloning={cloning}
@@ -1681,7 +1661,6 @@ const Node = ({
           expandedNodes={expandedNodes}
           setExpandedNodes={setExpandedNodes}
           handleToggle={handleToggle}
-          getPath={getPath}
           handleSaveLinkChanges={handleSaveLinkChanges}
           checkDuplicateTitle={checkDuplicateTitle}
           cloning={cloning}

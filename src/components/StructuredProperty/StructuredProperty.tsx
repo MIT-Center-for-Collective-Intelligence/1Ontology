@@ -115,7 +115,6 @@ type IStructuredPropertyProps = {
   expandedNodes?: any;
   setExpandedNodes?: any;
   handleToggle?: any;
-  getPath?: any;
   handleSaveLinkChanges?: any;
   checkDuplicateTitle?: any;
   cloning?: any;
@@ -179,7 +178,6 @@ const StructuredProperty = ({
   expandedNodes,
   setExpandedNodes,
   handleToggle,
-  getPath,
   handleSaveLinkChanges,
   checkDuplicateTitle,
   cloning,
@@ -1341,7 +1339,6 @@ const StructuredProperty = ({
                 expandedNodes={expandedNodes}
                 setExpandedNodes={setExpandedNodes}
                 handleToggle={handleToggle}
-                getPath={getPath}
                 handleSaveLinkChanges={handleSaveLinkChanges}
                 checkDuplicateTitle={checkDuplicateTitle}
                 cloning={cloning}
@@ -1509,7 +1506,6 @@ const StructuredProperty = ({
               expandedNodes={expandedNodes}
               setExpandedNodes={setExpandedNodes}
               handleToggle={handleToggle}
-              getPath={getPath}
               handleSaveLinkChanges={handleSaveLinkChanges}
               checkDuplicateTitle={checkDuplicateTitle}
               cloning={cloning}
