@@ -45,6 +45,8 @@ type ITreeViewSimplifiedProps = {
   loadingIds: Set<string>;
 };
 
+// Note: This component no longer functions correctly due to the nodes object deprecation.
+// Refactor or replace it with draggableTree.
 const TreeViewSimplified = ({
   treeVisualization,
   onOpenNodesTree,

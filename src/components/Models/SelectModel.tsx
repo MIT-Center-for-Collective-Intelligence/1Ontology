@@ -58,7 +58,6 @@ const SelectModel = ({
   handleCloning,
   user,
   nodes,
-  selectFromTree,
   expandedNodes,
   setExpandedNodes,
   handleToggle,
@@ -107,7 +106,6 @@ const SelectModel = ({
   handleCloning: any;
   user: any;
   nodes: any;
-  selectFromTree: any;
   expandedNodes: any;
   setExpandedNodes: any;
   handleToggle: any;
@@ -715,7 +713,7 @@ const SelectModel = ({
       />
     ) : (
       <TreeViewSimplified
-        treeVisualization={selectFromTree()}
+        treeVisualization={() => ({})} // as selectFromTree() is removed, add an empty function as placeholder
         expandedNodes={expandedNodes}
         setExpandedNodes={setExpandedNodes}
         onOpenNodesTree={handleToggle}

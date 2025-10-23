@@ -73,12 +73,15 @@ import dagreD3 from "dagre-d3";
 import { TreeVisual } from "@components/types/INode";
 
 type IDagGraphProps = {
-  treeVisualization: TreeVisual;
+  treeVisualization?: TreeVisual;
   setExpandedNodes: (state: Set<string>) => void;
   expandedNodes: Set<string>;
   onOpenNodeDagre: (ontologyId: string) => void;
   currentVisibleNode: any;
 };
+
+// Note: This component no longer functions correctly due to the nodes object deprecation.
+// Refactor it to use different data type.
 
 const GraphView = ({
   treeVisualization,

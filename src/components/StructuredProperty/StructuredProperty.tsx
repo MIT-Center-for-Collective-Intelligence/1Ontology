@@ -111,7 +111,6 @@ type IStructuredPropertyProps = {
   checkedItemsCopy?: any;
   handleCloning?: any;
   user?: any;
-  selectFromTree?: any;
   expandedNodes?: any;
   setExpandedNodes?: any;
   handleToggle?: any;
@@ -174,7 +173,6 @@ const StructuredProperty = ({
   checkedItemsCopy,
   handleCloning,
   user,
-  selectFromTree,
   expandedNodes,
   setExpandedNodes,
   handleToggle,
@@ -1335,7 +1333,6 @@ const StructuredProperty = ({
                 checkedItemsCopy={checkedItemsCopy}
                 handleCloning={handleCloning}
                 user={user}
-                selectFromTree={selectFromTree}
                 expandedNodes={expandedNodes}
                 setExpandedNodes={setExpandedNodes}
                 handleToggle={handleToggle}
@@ -1502,7 +1499,6 @@ const StructuredProperty = ({
               checkedItemsCopy={checkedItemsCopy}
               handleCloning={handleCloning}
               user={user}
-              selectFromTree={selectFromTree}
               expandedNodes={expandedNodes}
               setExpandedNodes={setExpandedNodes}
               handleToggle={handleToggle}

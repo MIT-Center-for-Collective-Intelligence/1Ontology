@@ -125,7 +125,7 @@ type MainSidebarProps = {
   setActiveSidebar: any;
   handleExpandSidebar: any;
   navigateToNode: any;
-  treeVisualization: any;
+  treeVisualization?: any; // this has not been removed completely yet due to number of components relying on this. this will be removed before production
   expandedNodes: any;
   setExpandedNodes: any;
   onOpenNodesTree: any;

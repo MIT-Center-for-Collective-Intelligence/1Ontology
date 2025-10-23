@@ -132,7 +132,6 @@ type INodeProps = {
   setCurrentVisibleNode: (node: INode) => void;
   setSnackbarMessage: (message: string) => void;
   user: User;
-  mainSpecializations: MainSpecializations;
   nodes: { [id: string]: INode };
   navigateToNode: (nodeId: string) => void;
   locked: boolean;
@@ -178,7 +177,6 @@ const Node = ({
   currentVisibleNode,
   setCurrentVisibleNode,
   setSnackbarMessage,
-  mainSpecializations,
   nodes,
   user,
   navigateToNode,
@@ -681,22 +679,6 @@ const Node = ({
     }
     setCheckedItems(new Set(previousCheckedItems));
     setCheckedItemsCopy(new Set(previousCheckedItems));
-  };
-
-  const selectFromTree = () => {
-    if (
-      ["parts", "isPartOf", "specializations", "generalizations"].includes(
-        selectedProperty,
-      )
-    ) {
-      return (
-        mainSpecializations[currentVisibleNode.nodeType]?.specializations || {}
-      );
-    } else {
-      const propertyType = currentVisibleNode.propertyType[selectedProperty];
-
-      return mainSpecializations[propertyType]?.specializations || {};
-    }
   };
 
   const handleSaveLinkChanges = useCallback(
@@ -1451,7 +1433,6 @@ const Node = ({
             checkedItemsCopy={checkedItemsCopy}
             handleCloning={handleCloning}
             user={user}
-            selectFromTree={selectFromTree}
             expandedNodes={expandedNodes}
             setExpandedNodes={setExpandedNodes}
             handleToggle={handleToggle}
@@ -1517,7 +1498,6 @@ const Node = ({
               checkedItemsCopy={checkedItemsCopy}
               handleCloning={handleCloning}
               user={user}
-              selectFromTree={selectFromTree}
               expandedNodes={expandedNodes}
               setExpandedNodes={setExpandedNodes}
               handleToggle={handleToggle}
@@ -1586,7 +1566,6 @@ const Node = ({
               checkedItemsCopy={checkedItemsCopy}
               handleCloning={handleCloning}
               user={user}
-              selectFromTree={selectFromTree}
               expandedNodes={expandedNodes}
               setExpandedNodes={setExpandedNodes}
               handleToggle={handleToggle}
@@ -1657,7 +1636,6 @@ const Node = ({
           setCheckedItemsCopy={setCheckedItemsCopy}
           checkedItemsCopy={checkedItemsCopy}
           handleCloning={handleCloning}
-          selectFromTree={selectFromTree}
           expandedNodes={expandedNodes}
           setExpandedNodes={setExpandedNodes}
           handleToggle={handleToggle}

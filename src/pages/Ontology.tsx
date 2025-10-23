@@ -195,7 +195,6 @@ const Ontology = ({
 
   // const [ontologyPath, setOntologyPath] = useState<INodePath[]>([]);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
-  const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [viewValue, setViewValue] = useState<number>(0);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
@@ -602,160 +601,6 @@ const Ontology = ({
     }
   }, [nodes, appName]);
 
-  const getTreeView = ({ mainCategories, visited, path }: any): any => {
-    const newNodes = [];
-
-    for (let node of mainCategories) {
-      if (!node) continue;
-
-      const currentPath = [...path, node.id];
-      const pathNode = currentPath.join("-");
-
-      if (
-        path.includes(node.id) ||
-        (visited.has(pathNode) && currentPath.length !== 1)
-      ) {
-        if (
-          typeof visited.get(pathNode) !== "boolean" &&
-          visited.get(pathNode)
-        ) {
-          newNodes.push(visited.get(pathNode));
-        }
-        continue;
-      }
-
-      const specializations = node.specializations;
-      let childrenInOrder = [];
-
-      for (let collection of specializations) {
-        const children = [];
-        for (let _node of collection.nodes) {
-          if (nodes[_node.id]) {
-            children.push(nodes[_node.id]);
-          }
-        }
-
-        visited.set(pathNode, true);
-        if (collection.collectionName === "main") {
-          const mainChildren = getTreeView({
-            mainCategories: children,
-            visited,
-            path: currentPath,
-          });
-          for (let child of mainChildren) {
-            if (child && "id" in child) {
-              childrenInOrder.push({
-                ...child,
-                isMainItem: true,
-                originalCollectionIndex: specializations.indexOf(collection),
-              });
-            }
-          }
-        } else {
-          const id = [...currentPath, collection.collectionName].join("-");
-
-          const _children = getTreeView({
-            mainCategories: children,
-            visited,
-            path: currentPath,
-          });
-          const record = {
-            id: id,
-            nodeId: node.id,
-            nodeType: node.nodeType,
-            name: collection.collectionName,
-            children: _children,
-            category: true,
-            unclassified: node.unclassified,
-            originalCollectionIndex: specializations.indexOf(collection),
-          };
-          childrenInOrder.push(record);
-        }
-      }
-
-      childrenInOrder.sort(
-        (a, b) =>
-          (a.originalCollectionIndex || 0) - (b.originalCollectionIndex || 0),
-      );
-
-      const record = {
-        id: pathNode,
-        nodeId: node.id,
-        name: node.title,
-        nodeType: node.nodeType,
-        children: childrenInOrder,
-        category: !!node.category,
-        unclassified: node.unclassified,
-      };
-      visited.set(pathNode, record);
-      newNodes.push(record);
-    }
-    return newNodes;
-  };
-
-  useEffect(() => {
-    // Filter nodes to get only those with a defined category
-    const spreadNodes = Object.values(nodes);
-    let mainCategories = spreadNodes.filter(
-      (node: INode) =>
-        node.category || (typeof node.root === "boolean" && !!node.root),
-    );
-    if (skillsFuture) {
-      mainCategories = mainCategories.sort((a: any, b: any) => {
-        const aHasAct = a.title.toLowerCase().includes("act");
-        const bHasAct = b.title.toLowerCase().includes("act");
-        return Number(bHasAct) - Number(aHasAct);
-      });
-    }
-    // Sort main nodes based on a predefined order
-    mainCategories.sort((nodeA: any, nodeB: any) => {
-      const order = [
-        "WHAT: Activities and Objects",
-        "WHO: Actors",
-        "WHY: Evaluation",
-        "Where: Context",
-        "ONet",
-      ];
-      const nodeATitle = nodeA.title;
-      const nodeBTitle = nodeB.title;
-      return order.indexOf(nodeATitle) - order.indexOf(nodeBTitle);
-    });
-    // Generate a tree structure of specializations from the sorted main nodes
-    let treeOfSpecializations = getSpecializationsTree(mainCategories, []);
-    const specNums: any = {};
-    if (
-      skillsFuture &&
-      (appName === "Full WordNet O*Net Verb Hierarchy - Tom's Version" ||
-        appName === "Ontology - Demo Version" ||
-        appName === "Ontology - Development Version")
-    ) {
-      for (let rootNode of mainCategories) {
-        const filterMNodes = spreadNodes.filter(
-          (c) => c.rootId === rootNode.id,
-        );
-        specNums[rootNode.id] = filterMNodes.length;
-        const start =
-          appName === "Full WordNet O*Net Verb Hierarchy - Tom's Version"
-            ? "[original task]"
-            : "[o*net]";
-        specNums[`${rootNode.id}-extra`] = filterMNodes.filter((n) =>
-          n.title.toLowerCase().startsWith(start),
-        ).length;
-      }
-      setSpecializationNumsUnder(specNums);
-    }
-
-    const _result = getTreeView({
-      mainCategories,
-      visited: new Map(),
-      path: [],
-    });
-
-    setTreeViewData(_result);
-    // Set the generated tree structure for visualization
-    setTreeVisualization(treeOfSpecializations);
-  }, [nodes]);
-
   useEffect(() => {
     // if (currentVisibleNode) return;
     if (firstLoad) {
@@ -924,32 +769,6 @@ const Ontology = ({
     },
     [nodes, user],
   );
-
-  // Function to retrieve main specializations from tree visualization data
-  const getMainSpecializations = (treeVisualization: TreeVisual) => {
-    let mainSpecializations: MainSpecializations = {};
-
-    // Loop through categories in tree visualization
-    for (let category in treeVisualization) {
-      mainSpecializations = {
-        ...mainSpecializations,
-        ...treeVisualization[category].specializations,
-      };
-    }
-
-    for (let type in mainSpecializations) {
-      if (nodes[mainSpecializations[type].id]?.nodeType) {
-        mainSpecializations[nodes[mainSpecializations[type].id].nodeType] =
-          mainSpecializations[type];
-      }
-      delete mainSpecializations[type];
-    }
-    return mainSpecializations;
-  };
-
-  const mainSpecializations = useMemo(() => {
-    return getMainSpecializations(treeVisualization);
-  }, [treeVisualization]);
 
   const navigateToNode = useCallback(
     async (nodeId: string) => {
@@ -1493,7 +1312,6 @@ const Ontology = ({
             setActiveSidebar={setActiveSidebar}
             handleExpandSidebar={handleExpandSidebar}
             navigateToNode={navigateToNode}
-            treeVisualization={treeVisualization}
             expandedNodes={expandedNodes}
             setExpandedNodes={setExpandedNodes}
             onOpenNodesTree={onOpenNodesTree}
@@ -1607,7 +1425,6 @@ const Ontology = ({
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
                   <GraphView
-                    treeVisualization={treeVisualization}
                     setExpandedNodes={setExpandedNodes}
                     expandedNodes={expandedNodes}
                     onOpenNodeDagre={onOpenNodeDagre}
@@ -1793,7 +1610,6 @@ const Ontology = ({
                   setCurrentVisibleNode={setCurrentVisibleNode}
                   setSnackbarMessage={setSnackbarMessage}
                   user={user}
-                  mainSpecializations={mainSpecializations}
                   nodes={nodes}
                   navigateToNode={navigateToNode}
                   locked={!!currentVisibleNode.locked && !user?.manageLock}
@@ -1852,7 +1668,6 @@ const Ontology = ({
               setActiveSidebar={setActiveSidebar}
               handleExpandSidebar={handleExpandSidebar}
               navigateToNode={navigateToNode}
-              treeVisualization={treeVisualization}
               expandedNodes={expandedNodes}
               setExpandedNodes={setExpandedNodes}
               onOpenNodesTree={onOpenNodesTree}

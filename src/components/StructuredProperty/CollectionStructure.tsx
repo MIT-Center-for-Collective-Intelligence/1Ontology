@@ -103,7 +103,6 @@ const CollectionStructure = ({
   setCheckedItemsCopy,
   checkedItemsCopy,
   handleCloning,
-  selectFromTree,
   expandedNodes,
   setExpandedNodes,
   handleToggle,
@@ -175,7 +174,6 @@ const CollectionStructure = ({
   checkedItemsCopy: any;
   handleCloning: any;
   user: any;
-  selectFromTree: any;
   expandedNodes: any;
   setExpandedNodes: any;
   handleToggle: any;
@@ -1614,7 +1612,6 @@ const CollectionStructure = ({
                                 checkedItemsCopy={checkedItemsCopy}
                                 handleCloning={handleCloning}
                                 user={user}
-                                selectFromTree={selectFromTree}
                                 expandedNodes={expandedNodes}
                                 setExpandedNodes={setExpandedNodes}
                                 handleToggle={handleToggle}
