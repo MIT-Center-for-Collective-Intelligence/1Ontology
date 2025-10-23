@@ -177,7 +177,6 @@ const Ontology = ({
   const [{ emailVerified, user }] = useAuth();
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:599px)");
-  const [nodes, setNodes] = useState<{ [id: string]: INode }>({});
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const { node: fetchedNode, loading: nodeLoading } =
@@ -442,105 +441,24 @@ const Ontology = ({
 
   /* ------- ------- ------- */
 
-  const getRootNode = async () => {
-    const rootQuery = query(
-      collection(db, NODES),
-      where("deleted", "==", false),
-      where("root", "==", true),
-      where("appName", "==", appName),
-      limit(1),
-    );
-    const nodesDocs = await getDocs(rootQuery);
-    if (nodesDocs.docs.length > 0) {
-      const root = nodesDocs.docs[0];
-      setRootNode(root.id);
-    }
-  };
-
   useEffect(() => {
-    // Create a query for the NODES collection where "deleted" is false
-    let nodesQuery = null;
-
-    if (skillsFuture && appName) {
-      getRootNode();
-      nodesQuery = query(
-        collection(db, NODES),
-        where("deleted", "==", false),
-        where("appName", "==", appName),
-      );
-    } else {
-      nodesQuery = query(
-        collection(db, NODES),
-        where("deleted", "==", false),
-        where("skillsFuture", "==", false),
-      );
-    }
-    setLoadingNodes(true);
-    // Set up a snapshot listener to track changes in the nodes collection
-    const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
-      // Get the changes (added, modified, removed) in the snapshot
-      const docChanges = snapshot.docChanges();
-
-      // Update the state based on the changes in the nodes collection
-      setNodes((prev: any) => {
-        const _prev = { ...prev };
-        let changed = false;
-
-        for (let change of docChanges) {
-          const nodeId = change.doc.id;
-          const data = { id: nodeId, ...change.doc.data() };
-
-          if (change.type === "removed") {
-            if (nodeId in _prev) {
-              delete _prev[nodeId];
-              changed = true;
-            }
-          } else {
-            const prevNode = _prev[nodeId];
-            const isDifferent =
-              JSON.stringify(prevNode) !== JSON.stringify(data);
-            if (isDifferent) {
-              _prev[nodeId] = data;
-              changed = true;
-            }
-          }
-        }
-
-        return _prev;
-      });
-    });
-    setTimeout(() => {
-      setLoadingNodes(false);
-    }, 4000);
-    // Unsubscribe from the snapshot listener when the component is unmounted
-    return () => unsubscribeNodes();
-  }, [db, appName]);
-
-  useEffect(() => {
-    if (currentVisibleNode?.id) {
-      setCurrentVisibleNode((prev) => {
-        if (nodes[currentVisibleNode?.id]) {
-          return nodes[currentVisibleNode?.id];
-        }
-        return prev;
-      });
-    }
-  }, [nodes, appName]);
-
-  useEffect(() => {
-    // if (currentVisibleNode) return;
-    if (firstLoad) {
+    if (firstLoad.current) {
       const nodeFromHash = window.location.hash.split("#").reverse()[0];
-      if (nodeFromHash && nodes[nodeFromHash]) {
-        setCurrentVisibleNode(nodes[nodeFromHash]);
-      } else if (user?.currentNode && nodes[user.currentNode]) {
-        setCurrentVisibleNode(nodes[user.currentNode]);
+
+      let initialNodeId: string;
+      if (nodeFromHash) {
+        initialNodeId = nodeFromHash;
+      } else if (user?.currentNode) {
+        initialNodeId = user.currentNode;
       } else {
-        setCurrentVisibleNode(nodes[rootNode || "hn9pGQNxmQe9Xod5MuKK"]!);
+        initialNodeId = rootNode || "hn9pGQNxmQe9Xod5MuKK";
       }
+
+      // Trigger fetch for initial node
+      setSelectedNodeId(initialNodeId);
       firstLoad.current = false;
     }
-  }, [user?.currentNode, rootNode, nodes]);
+  }, [user?.currentNode, rootNode, setSelectedNodeId]);
 
   // Function to update the user document with the current ontology path
   const openedANode = async (currentNode: string) => {
@@ -567,69 +485,9 @@ const Ontology = ({
     path.forEach((p: any) => (newHash = newHash + `#${p.id.trim()}`));
     window.location.hash = newHash;
   };
-  const initializeExpanded = (ontologyPath: INodePath[]) => {
-    if (!ontologyPath) {
-      return;
-    }
-    const newExpandedSet: Set<string> = new Set();
-
-    const node = nodes[ontologyPath[ontologyPath.length - 1].id];
-    const nodeGeneralizations = node.generalizations[0].nodes;
-
-    const generalizationSet: Set<string> = new Set(
-      nodeGeneralizations.map((g) => g.id),
-    );
-
-    // Initialize the expanded set with the current node's ID
-    newExpandedSet.add(node.id);
-
-    const addGeneralizationsToSet = (id: string, expandedSet: any) => {
-      if (expandedSet.has(id)) return;
-
-      expandedSet.add(id);
-
-      const currentNode = nodes[id];
-
-      if (!currentNode) return;
-
-      if (
-        currentNode &&
-        currentNode.generalizations &&
-        currentNode.generalizations.length > 0
-      ) {
-        const generalizations = currentNode.generalizations[0].nodes;
-
-        currentNode.specializations?.forEach((specialization) => {
-          if (specialization.collectionName !== "main") {
-            specialization.nodes.forEach((spec) => {
-              if (
-                generalizationSet.has(spec.id) ||
-                newExpandedSet.has(spec.id)
-              ) {
-                addGeneralizationsToSet(
-                  `${currentNode.id}-${specialization.collectionName.trim()}`,
-                  expandedSet,
-                );
-              }
-            });
-          }
-        });
-        generalizations.forEach((g) =>
-          addGeneralizationsToSet(g.id, expandedSet),
-        );
-      }
-    };
-    for (let generalization of nodeGeneralizations) {
-      addGeneralizationsToSet(generalization.id, newExpandedSet);
-    }
-    for (let node of ontologyPath) {
-      newExpandedSet.add(node.id);
-    }
-    setExpandedNodes(newExpandedSet);
-  };
 
   useEffect(() => {
-    if (!currentVisibleNode?.id || !nodes[currentVisibleNode?.id]) {
+    if (!currentVisibleNode?.id) {
       return;
     }
 
@@ -640,35 +498,33 @@ const Ontology = ({
     ]);
   }, [currentVisibleNode?.id]);
 
-  // Callback function to add a new node to the database
-
+  // COMMENTED OUT AS PART OF OF DEPRECATING NODES OBJECT
   // Define a callback function to handle the opening of the ontology DAGRE view.
-  const onOpenNodeDagre = useCallback(
-    async (nodeId: string) => {
-      // Check if a user is logged in, if not, exit the function.
-      if (!user) return;
+  // const onOpenNodeDagre = useCallback(
+  //   async (nodeId: string) => {
+  //     // Check if a user is logged in, if not, exit the function.
+  //     if (!user) return;
 
-      // Check if the node with the specified ID exists and is not a main node (no category).
-      if (nodes[nodeId] && !nodes[nodeId].category) {
-        // Set the currentVisibleNode as the currently selected node.
-        setCurrentVisibleNode(nodes[nodeId]);
+  //     // Check if the node with the specified ID exists and is not a main node (no category).
+  //     if (nodes[nodeId] && !nodes[nodeId].category) {
+  //       // Set the currentVisibleNode as the currently selected node.
+  //       setCurrentVisibleNode(nodes[nodeId]);
 
-        // Record logs for the action of opening the DAGRE view for the node.
-        recordLogs({
-          action: "opened dagre-view",
-          itemClicked: nodes[nodeId].id,
-        });
-      }
-    },
-    // Dependency array includes ontologies and user, ensuring the function re-renders when these values change.
-    [nodes, user],
-  );
+  //       // Record logs for the action of opening the DAGRE view for the node.
+  //       recordLogs({
+  //         action: "opened dagre-view",
+  //         itemClicked: nodes[nodeId].id,
+  //       });
+  //     }
+  //   },
+  //   // Dependency array includes ontologies and user, ensuring the function re-renders when these values change.
+  //   [nodes, user],
+  // );
 
   // Function to handle opening node tree
   const onOpenNodesTree = useCallback(
     async (nodeId: string) => {
       // Check if user is logged in
-
       if (!user) return;
       //update the expanded state
       /*    setExpandedNodes((prevExpanded: Set<string>) => {
@@ -681,19 +537,18 @@ const Ontology = ({
         return newExpanded;
       }); */
 
-      // Check if node exists and has a category
-      if (nodes[nodeId] && !nodes[nodeId].category) {
-        // Set the currently open node
-        setCurrentVisibleNode(nodes[nodeId]);
+      // Trigger node fetch - this updates currentVisibleNode via useNodeSnapshot + useEffect
+      // The useNodeSnapshot hook fetches the node from Firestore
+      // The useEffect (lines 190-194) syncs fetchedNode to currentVisibleNode
+      setSelectedNodeId(nodeId);
 
-        // Record logs for the action of clicking the tree-view
-        recordLogs({
-          action: "clicked tree-view",
-          itemClicked: nodes[nodeId].id,
-        });
-      }
+      // Record logs for the action of clicking the tree-view
+      recordLogs({
+        action: "clicked tree-view",
+        itemClicked: nodeId,
+      });
     },
-    [nodes, user],
+    [user, setSelectedNodeId],
   );
 
   const navigateToNode = useCallback(
@@ -738,7 +593,7 @@ const Ontology = ({
 
       // Note: intializeExpanded is commented out due to changes in draggableTree behavior
       // initializeExpanded(eachOntologyPath[nodeId]);
-      
+
       setSelectedDiffNode(null);
       setScrollTrigger((prev) => !prev);
     },
@@ -878,7 +733,7 @@ const Ontology = ({
     );
   };
 
-  // COMMENTED OUT AS PART OF DEPRECATING NODES OBJECT 
+  // COMMENTED OUT AS PART OF DEPRECATING NODES OBJECT
   // Note: This is required for parts property in displaying their inheritance
   // useEffect(() => {
   //   if (!currentVisibleNode) return;
@@ -971,7 +826,7 @@ const Ontology = ({
   //   setPartsInheritance(_inheritanceDetails);
   // }, [currentVisibleNode, nodes]);
 
-  if (Object.keys(nodes).length <= 0) {
+  if (nodeLoading) {
     return <FullPageLogoLoading />;
   }
 
@@ -1159,7 +1014,6 @@ const Ontology = ({
                   labelId="mobile-property-type-label"
                   value={appName}
                   onChange={(event) => {
-                    setNodes({});
                     const app = event.target.value.replaceAll(" ", "_");
                     router.replace(`/${app}`);
                   }}
@@ -1190,7 +1044,6 @@ const Ontology = ({
               setSnackbarMessage={setSnackbarMessage}
               treeRef={treeRef}
               currentVisibleNode={currentVisibleNode}
-              nodes={nodes}
               onOpenNodesTree={(nodeId: string) => {
                 onOpenNodesTree(nodeId);
                 // Don't close tree on node selection to allow parallel browsing
@@ -1353,7 +1206,7 @@ const Ontology = ({
                   <GraphView
                     setExpandedNodes={setExpandedNodes}
                     expandedNodes={expandedNodes}
-                    onOpenNodeDagre={onOpenNodeDagre}
+                    // onOpenNodeDagre={onOpenNodeDagre}
                     currentVisibleNode={currentVisibleNode}
                     // nodes={nodes}
                   />
@@ -1384,7 +1237,6 @@ const Ontology = ({
                         labelId="property-type-label"
                         value={appName}
                         onChange={(event) => {
-                          setNodes({});
                           const app = event.target.value.replaceAll(" ", "_");
                           router.replace(`/${app}`);
                         }}
