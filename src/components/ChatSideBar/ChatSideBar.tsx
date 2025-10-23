@@ -50,7 +50,6 @@ const ChatSideBar = ({
   chatTabs,
   selectedChatTab,
   setSelectedChatTab,
-  nodes,
   skillsFuture,
   skillsFutureApp,
 }: {
@@ -65,7 +64,6 @@ const ChatSideBar = ({
   chatTabs: { title: string; id: string; placeholder: string }[];
   selectedChatTab: number;
   setSelectedChatTab: Function;
-  nodes: { [nodeId: string]: INode };
   skillsFuture: boolean;
   skillsFutureApp: string;
 }) => {
@@ -285,7 +283,6 @@ const ChatSideBar = ({
               confirmIt={confirmIt}
               setOpenSelectModel={setOpenModel}
               navigateToNode={navigateToNode}
-              nodes={nodes}
               scrollingRef={scrollingRef}
               placeholder={tab.placeholder}
             />

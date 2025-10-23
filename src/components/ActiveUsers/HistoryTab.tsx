@@ -30,7 +30,6 @@ const NodeActivity = ({
   selectedUser,
   skillsFuture,
   skillsFutureApp,
-  nodes,
 }: {
   selectedDiffNode: any;
   displayDiff: any;
@@ -39,7 +38,6 @@ const NodeActivity = ({
   selectedUser: string;
   skillsFuture: boolean;
   skillsFutureApp: string;
-  nodes: { [nodeId: string]: any };
 }) => {
   const db = getFirestore();
   const [logs, setLogs] = useState<(NodeChange & { id: string })[]>([]);
@@ -332,7 +330,6 @@ const NodeActivity = ({
                   displayDiff={displayDiff}
                   modifiedByDetails={activeUsers[log.modifiedBy]}
                   selectedDiffNode={selectedDiffNode}
-                  nodes={nodes}
                 />
               </Box>
             </Slide>

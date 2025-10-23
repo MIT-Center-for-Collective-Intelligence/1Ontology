@@ -68,7 +68,10 @@ export type User = {
   email: string;
   claims: any;
   rightPanel: boolean;
-  currentNode: string;
+  currentNode: {
+    id: string;
+    title: string;
+  };
   manageLock: boolean;
   copilot: boolean;
   admin: boolean;

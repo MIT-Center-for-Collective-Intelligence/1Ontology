@@ -76,7 +76,7 @@ type IDagGraphProps = {
   treeVisualization?: TreeVisual;
   setExpandedNodes: (state: Set<string>) => void;
   expandedNodes: Set<string>;
-  onOpenNodeDagre: (ontologyId: string) => void;
+  onOpenNodeDagre?: (ontologyId: string) => void;
   currentVisibleNode: any;
 };
 

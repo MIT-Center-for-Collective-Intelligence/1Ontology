@@ -55,11 +55,9 @@ interface NodeBodyProps {
   setCheckedItemsCopy?: any;
   checkedItemsCopy?: any;
   handleCloning?: any;
-  selectFromTree?: any;
   expandedNodes?: any;
   setExpandedNodes?: any;
   handleToggle?: any;
-  getPath?: any;
   handleSaveLinkChanges?: any;
   checkDuplicateTitle?: any;
   cloning?: any;
@@ -115,11 +113,9 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   setCheckedItemsCopy,
   checkedItemsCopy,
   handleCloning,
-  selectFromTree,
   expandedNodes,
   setExpandedNodes,
   handleToggle,
-  getPath,
   handleSaveLinkChanges,
   checkDuplicateTitle,
   cloning,
@@ -573,11 +569,9 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     checkedItemsCopy={checkedItemsCopy}
                     handleCloning={handleCloning}
                     user={user}
-                    selectFromTree={selectFromTree}
                     expandedNodes={expandedNodes}
                     setExpandedNodes={setExpandedNodes}
                     handleToggle={handleToggle}
-                    getPath={getPath}
                     handleSaveLinkChanges={handleSaveLinkChanges}
                     checkDuplicateTitle={checkDuplicateTitle}
                     cloning={cloning}

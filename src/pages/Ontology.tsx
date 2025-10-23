@@ -449,7 +449,7 @@ const Ontology = ({
       if (nodeFromHash) {
         initialNodeId = nodeFromHash;
       } else if (user?.currentNode) {
-        initialNodeId = user.currentNode;
+        initialNodeId = user.currentNode.id;
       } else {
         initialNodeId = rootNode || "hn9pGQNxmQe9Xod5MuKK";
       }
@@ -460,19 +460,24 @@ const Ontology = ({
     }
   }, [user?.currentNode, rootNode, setSelectedNodeId]);
 
-  // Function to update the user document with the current ontology path
-  const openedANode = async (currentNode: string) => {
+  // Function to update the user document with the current node
+  const openedANode = async (nodeId: string, nodeTitle: string) => {
     if (!user) return;
     const userRef = doc(collection(db, USERS), user.uname);
-    // Update the user document with the ontology path
 
-    await updateDoc(userRef, { currentNode });
+    // Update the user document with current node object
+    await updateDoc(userRef, {
+      currentNode: {
+        id: nodeId,
+        title: nodeTitle
+      }
+    });
 
-    // Record logs if ontology path is not empty
-    if (currentNode) {
+    // Record logs
+    if (nodeId) {
       recordLogs({
         action: "Opened a node",
-        node: currentNode,
+        node: nodeId,
       });
     }
   };
@@ -491,7 +496,7 @@ const Ontology = ({
       return;
     }
 
-    openedANode(currentVisibleNode?.id);
+    openedANode(currentVisibleNode?.id, currentVisibleNode.title);
 
     updateTheUrl([
       { id: currentVisibleNode?.id, title: currentVisibleNode.title },
@@ -1081,7 +1086,6 @@ const Ontology = ({
             toolbarRef={toolbarRef}
             user={user}
             openSearchedNode={openSearchedNode}
-            nodes={nodes}
             selectedDiffNode={selectedDiffNode}
             setSelectedDiffNode={setSelectedDiffNode}
             currentVisibleNode={currentVisibleNode}
@@ -1194,7 +1198,6 @@ const Ontology = ({
                       setSnackbarMessage={setSnackbarMessage}
                       treeRef={treeRef}
                       currentVisibleNode={currentVisibleNode}
-                      nodes={nodes}
                       onOpenNodesTree={onOpenNodesTree}
                       skillsFuture={skillsFuture}
                       specializationNumsUnder={specializationNumsUnder}
@@ -1388,14 +1391,12 @@ const Ontology = ({
                   setCurrentVisibleNode={setCurrentVisibleNode}
                   setSnackbarMessage={setSnackbarMessage}
                   user={user}
-                  nodes={nodes}
                   navigateToNode={navigateToNode}
                   locked={!!currentVisibleNode.locked && !user?.manageLock}
                   selectedDiffNode={selectedDiffNode}
                   displaySidebar={displaySidebar}
                   activeSidebar={activeSidebar}
                   currentImprovement={currentImprovement}
-                  setNodes={setNodes}
                   checkedItems={checkedItems}
                   setCheckedItems={setCheckedItems}
                   checkedItemsCopy={checkedItemsCopy}
@@ -1436,7 +1437,6 @@ const Ontology = ({
               toolbarRef={toolbarRef}
               user={user}
               openSearchedNode={openSearchedNode}
-              nodes={nodes}
               selectedDiffNode={selectedDiffNode}
               setSelectedDiffNode={setSelectedDiffNode}
               currentVisibleNode={currentVisibleNode}

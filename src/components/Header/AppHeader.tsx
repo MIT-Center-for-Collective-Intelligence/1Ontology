@@ -182,7 +182,7 @@ const AppHeader = forwardRef(
             const doc = change.doc;
             const userId = doc.id;
             const data = doc.data();
-            const currentNode = data.currentNode;
+            const currentNode = data.currentNode.id;
 
             if (
               (change.type === "added" || change.type === "modified") &&

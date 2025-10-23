@@ -1315,7 +1315,7 @@ const CollectionStructure = ({
                                             index={index}
                                             isDragDisabled={!enableEdit}
                                           >
-                                            {(provided) => (
+                                            {async (provided) => (
                                               <LinkNode
                                                 provided={provided}
                                                 navigateToNode={navigateToNode}
@@ -1331,7 +1331,7 @@ const CollectionStructure = ({
                                                 sx={{ pl: 1 }}
                                                 link={enhancedLink}
                                                 property={property}
-                                                title={getTitle(nodes, link.id, link)}
+                                                title={await getTitle(link.id)}
                                                 nodes={nodes}
                                                 linkIndex={index}
                                                 /* unlinkVisible={unlinkVisible(
@@ -1450,7 +1450,7 @@ const CollectionStructure = ({
                                                 info.inheritedFromTitle,
                                             }}
                                             property={property}
-                                            title={getTitle(nodes, nodeId, { id: nodeId })}
+                                            title={getTitle(nodes, nodeId)}
                                             nodes={nodes}
                                             linkIndex={-1} // -1 indicates inherited part
                                             linkLocked={false}
@@ -1534,7 +1534,7 @@ const CollectionStructure = ({
                                                 info.inheritedFromTitle,
                                             }}
                                             property={property}
-                                            title={getTitle(nodes, nodeId, { id: nodeId })}
+                                            title={getTitle(nodes, nodeId})}
                                             nodes={nodes}
                                             linkIndex={-1} // -1 indicates inherited part
                                             linkLocked={false}

@@ -167,7 +167,7 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
                             : "",
                     }}
                   >
-                    {node.title || getTitle(nodes, node.id)}
+                    {node.title || getTitle(node.id)}
                   </Typography>
 
                   {node.optional && (

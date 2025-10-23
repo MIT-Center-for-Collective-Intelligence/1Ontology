@@ -22,13 +22,11 @@ const NodeActivity = ({
   selectedDiffNode,
   displayDiff,
   activeUsers,
-  nodes,
 }: {
   selectedDiffNode: any;
   currentVisibleNode: any;
   displayDiff: any;
   activeUsers: any;
-  nodes: { [nodeId: string]: any };
 }) => {
   const db = getFirestore();
   const [logs, setLogs] = useState<(NodeChange & { id: string })[]>([]);
@@ -173,7 +171,6 @@ const NodeActivity = ({
               displayDiff={displayDiff}
               modifiedByDetails={activeUsers[log.modifiedBy]}
               selectedDiffNode={selectedDiffNode}
-              nodes={nodes}
             />
           ))}
 

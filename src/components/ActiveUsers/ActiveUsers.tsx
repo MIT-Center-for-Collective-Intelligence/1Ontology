@@ -13,7 +13,6 @@ import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 
 const ActiveUsers = ({
-  nodes,
   displayUserLogs,
   navigateToNode,
   handleExpand,
@@ -21,7 +20,6 @@ const ActiveUsers = ({
   activeUsers,
   currentUser,
 }: {
-  nodes: any;
   displayUserLogs: any;
   navigateToNode: any;
   handleExpand: any;

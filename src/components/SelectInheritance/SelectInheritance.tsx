@@ -40,7 +40,7 @@ const SelectInheritance = ({
       ),
     ].map((node: ILinkNode) => ({
       id: node.id,
-      title: getTitle(nodes, node.id),
+      title: getTitle(node.id),
     }));
 
     _generalizations = _generalizations.filter((g: any) => {
@@ -56,13 +56,13 @@ const SelectInheritance = ({
       const title =
         inheritanceRef === "inheritance-overridden"
           ? "Inheritance Overridden"
-          : getTitle(nodes, inheritanceRef);
+          : getTitle(inheritanceRef);
       _generalizations.push({
         id: inheritanceRef,
         title:
           inheritanceRef === "inheritance-overridden"
             ? "Inheritance Overridden"
-            : getTitle(nodes, inheritanceRef),
+            : getTitle(inheritanceRef),
         fullTitle: title,
       });
     }

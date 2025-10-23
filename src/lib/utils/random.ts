@@ -1,8 +1,16 @@
 import { INode } from "@components/types/INode";
-import { query, collection, where, getDocs } from "firebase/firestore";
+import { query, collection, where, getDocs, getFirestore } from "firebase/firestore";
 import { NODES } from "../firestoreClient/collections";
 
-export const handleDownload = async ({ nodes }: { nodes: any }) => {
+export const handleDownload = async () => {
+  const db = getFirestore();
+  const nodesSnapshot = await getDocs(collection(db, NODES));
+
+  const nodes: { [id: string]: INode } = {};
+  nodesSnapshot.docs.forEach((doc) => {
+    nodes[doc.id] = { id: doc.id, ...doc.data() } as INode;
+  });
+
   const spreadNodes: any = Object.values(nodes);
   const mainCategories = spreadNodes.filter(
     (node: INode) =>
@@ -39,12 +47,12 @@ export const handleDownload = async ({ nodes }: { nodes: any }) => {
       const nodeTitle = node.title.trim();
 
       const inheritancePartRef = node.inheritance["parts"].ref;
-      let parts = node.properties.parts;
+      let partsCollection = node.properties.parts;
       if (inheritancePartRef && nodes[inheritancePartRef]) {
-        parts = nodes[inheritancePartRef].properties["parts"];
+        partsCollection = nodes[inheritancePartRef].properties["parts"];
       }
-      parts = Array.isArray(parts)
-        ? parts
+      const parts = Array.isArray(partsCollection)
+        ? partsCollection
             .flatMap((c) => c.nodes)
             .filter((c) => !!nodes[c.id])
             .map((c) => nodes[c.id].title.trim())

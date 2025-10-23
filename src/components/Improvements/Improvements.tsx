@@ -64,7 +64,7 @@ type ImprovementsProps = {
   displayDiff: any;
   skillsFutureApp: string;
   skillsFuture: boolean;
-  nodesByTitle: any;
+  titleToIdMap: { [title: string]: string };
 };
 const Improvements = ({
   currentImprovement,
@@ -85,7 +85,7 @@ const Improvements = ({
   displayDiff,
   skillsFutureApp,
   skillsFuture,
-  nodesByTitle,
+  titleToIdMap,
 }: ImprovementsProps) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -739,7 +739,7 @@ const Improvements = ({
   const onAcceptChange = async (
     change: any,
     currentNode: any,
-    nodesByTitle: any,
+    titleToIdMap: { [title: string]: string },
   ) => {
     try {
       if (!user) {
@@ -886,7 +886,7 @@ const Improvements = ({
           newValue = change.detailsOfChange.newValue;
         }
         const elementsOrder = change.change.new_value.final_array.map(
-          (ct: string) => nodesByTitle[ct.toLowerCase()].id,
+          (ct: string) => titleToIdMap[ct.toLowerCase()],
         );
         await handleSaveLinkChanges(
           change.modifiedProperty,
@@ -994,7 +994,7 @@ const Improvements = ({
             currentIndex={currentIndex}
             setCurrentIndex={setCurrentIndex}
             currentVisibleNode={currentVisibleNode}
-            nodesByTitle={nodesByTitle}
+            titleToIdMap={titleToIdMap}
           />
           <Button
             variant="contained"

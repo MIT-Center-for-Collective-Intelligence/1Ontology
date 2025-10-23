@@ -1,5 +1,11 @@
 import { INode, INodeTypes } from "@components/types/INode";
-import { collection, doc, getDoc, Timestamp } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getFirestore,
+  Timestamp,
+} from "firebase/firestore";
 import { NODES } from "../firestoreClient/collections";
 import { Reaction } from "@components/types/IChat";
 
@@ -71,22 +77,31 @@ export function splitSentenceIntoChunks(
   return chunks;
 }
 
-export const getTitle = (nodes: { [id: string]: INode }, id: string) => {
-  let value = "";
-  if (nodes[id]) {
-    value = nodes[id].title;
-  }
+export const getTitle = async (id: string): Promise<string> => {
+  const db = getFirestore();
+  const nodeRef = doc(collection(db, NODES), id);
+  const snapshot = await getDoc(nodeRef);
+
+  if (!snapshot.exists()) return "";
+
+  const nodeData = snapshot.data() as INode;
+  let value = nodeData.title || "";
+
   if (
-    nodes[id] &&
-    nodes[id].nodeType === "context" &&
-    Array.isArray(nodes[id].properties.context)
+    nodeData.nodeType === "context" &&
+    Array.isArray(nodeData.properties?.context)
   ) {
-    const contextId = nodes[id].properties.context[0].nodes[0]?.id;
+    const contextId = nodeData.properties.context[0]?.nodes[0]?.id;
 
     if (contextId) {
-      value += " at " + nodes[contextId].title;
+      const contextRef = doc(collection(db, NODES), contextId);
+      const contextSnapshot = await getDoc(contextRef);
+      if (contextSnapshot.exists()) {
+        value += " at " + contextSnapshot.data().title;
+      }
     }
   }
+
   return value;
 };
 export const getTitleDeleted = async (

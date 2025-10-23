@@ -17,7 +17,7 @@ type IProposalSliderProps = {
   currentIndex: number;
   setCurrentIndex: any;
   currentVisibleNode: any;
-  nodesByTitle: any;
+  titleToIdMap: { [title: string]: string };
 };
 const ImprovementsSlider = ({
   proposals,
@@ -31,7 +31,7 @@ const ImprovementsSlider = ({
   currentIndex,
   setCurrentIndex,
   currentVisibleNode,
-  nodesByTitle,
+  titleToIdMap,
 }: IProposalSliderProps) => {
   const [implementingProposal, setImplementingProposal] =
     useState<boolean>(false);
@@ -98,7 +98,7 @@ const ImprovementsSlider = ({
       const diffChange = await handleAcceptChange(
         currentImprovement,
         currentVisibleNode,
-        nodesByTitle,
+        titleToIdMap,
       );
 
       setImprovements((prev: any) => {

@@ -17,7 +17,7 @@ import { getTitle } from "@components/lib/utils/string.utils";
 import { INode } from "@components/types/INode";
 import { AddReactionOutlined } from "@mui/icons-material";
 
-const MessageComponent = ({
+const MessageComponent = async ({
   message,
   user,
   editing,
@@ -35,7 +35,6 @@ const MessageComponent = ({
   navigateToNode,
   replies,
   chatType,
-  nodes,
   setOpenMedia,
 }: {
   message: any;
@@ -55,7 +54,6 @@ const MessageComponent = ({
   navigateToNode: any;
   replies: any;
   chatType: string;
-  nodes: { [nodeId: string]: INode };
   setOpenMedia: any;
 }) => {
   const boxRef = useRef<HTMLDivElement>(null);
@@ -180,7 +178,7 @@ const MessageComponent = ({
                 },
               }}
             >
-              {message.messageType === "node" && nodes[message.sharedNodeId] ? (
+              {message.messageType === "node" ? (
                 <Box
                   sx={{
                     display: "flex",
@@ -220,7 +218,7 @@ const MessageComponent = ({
                     <LinkIcon sx={{ color: DESIGN_SYSTEM_COLORS.gray25 }} />
                   </Box>
                   <Typography sx={{ fontWeight: "500" }}>
-                    {getTitle(nodes, message.sharedNodeId)?.substr(0, 40)}
+                    {(await getTitle(message.sharedNodeId))?.substr(0, 40)}
                   </Typography>
                 </Box>
               ) : (

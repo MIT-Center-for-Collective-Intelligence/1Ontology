@@ -115,7 +115,6 @@ type MainSidebarProps = {
   toolbarRef: any;
   user: User | null;
   openSearchedNode: Function;
-  nodes: { [nodeId: string]: any };
   selectedDiffNode: any;
   setSelectedDiffNode: any;
   currentVisibleNode: any;
@@ -146,7 +145,6 @@ const ToolbarSidebar = ({
   toolbarRef,
   user,
   openSearchedNode,
-  nodes,
   selectedDiffNode,
   setSelectedDiffNode,
   currentVisibleNode,
@@ -194,8 +192,8 @@ const ToolbarSidebar = ({
   const [previousNodeId, setPreviousNodeId] = useState("");
 
   const [isLoadingCopilot, setIsLoadingCopilot] = useState(false);
-  const [nodesByTitle, setNodesByTitle] = useState<{
-    [nodeTitle: string]: INode;
+  const [titleToIdMap, setTitleToIdMap] = useState<{
+    [nodeTitle: string]: string;
   }>({});
   const [improvements, setImprovements] = useState<any>([]);
   const [copilotMessage, setCopilotMessage] = useState("");
@@ -259,18 +257,38 @@ const ToolbarSidebar = ({
     }
   };
 
+  // Helper function to fetch a node by its title
+  const getNodeByTitle = useCallback(
+    async (title: string): Promise<INode | null> => {
+      const nodeId = titleToIdMap[title];
+      if (!nodeId) return null;
+
+      try {
+        const nodeRef = doc(collection(db, NODES), nodeId);
+        const nodeSnap = await getDoc(nodeRef);
+        if (nodeSnap.exists()) {
+          return { id: nodeSnap.id, ...nodeSnap.data() } as INode;
+        }
+      } catch (error) {
+        console.error(`Error fetching node by title "${title}":`, error);
+      }
+      return null;
+    },
+    [titleToIdMap, db]
+  );
+
   const onNavigateToNode = useCallback(
     (nodeTitle: string) => {
       if (!nodeTitle) {
         return;
       }
-      const nodeId = nodesByTitle[nodeTitle]?.id;
+      const nodeId = titleToIdMap[nodeTitle];
 
       if (nodeId) {
         navigateToNode(nodeId);
       }
     },
-    [nodesByTitle],
+    [titleToIdMap, navigateToNode],
   );
 
   const handleImageChange = useCallback(
@@ -692,8 +710,8 @@ const ToolbarSidebar = ({
           if (change.type === "added" || change.type === "modified") {
             updatedUsersData[userId] = {
               node: {
-                title: nodes[currentNode]?.title || "",
-                id: currentNode,
+                title: currentNode.title || "",
+                id: currentNode.id,
               },
               imageUrl: data.imageUrl,
               fName: data.fName,
@@ -713,7 +731,7 @@ const ToolbarSidebar = ({
     });
 
     return () => unsubscribe();
-  }, [nodes]);
+  }, []);
 
   const displayUserLogs = useCallback(
     (user: {
@@ -737,19 +755,13 @@ const ToolbarSidebar = ({
     if (data === null) {
       setCurrentImprovement(null);
       setSelectedDiffNode(null);
-      if (!nodes[currentVisibleNode?.id]) {
-        navigateToNode(previousNodeId);
-      } else {
-        navigateToNode(currentVisibleNode?.id);
-      }
+      navigateToNode(currentVisibleNode?.id);
       setPreviousNodeId("");
       return;
     }
 
     if (currentVisibleNode?.id !== data.nodeId) {
-      setCurrentVisibleNode(
-        nodes[data.nodeId] ? nodes[data.nodeId] : data.fullNode,
-      );
+      setCurrentVisibleNode(data.fullNode);
     }
     const modified_property_type = data.modifiedProperty
       ? data.fullNode?.propertyType[data.modifiedProperty]
@@ -834,29 +846,47 @@ const ToolbarSidebar = ({
   };
 
   useEffect(() => {
-    if (!!user?.admin) {
-      const nodesByT: { [nodeTitle: string]: INode } = {};
-      for (let nodeId in nodes) {
-        const nodeTitle = nodes[nodeId].title;
-        nodesByT[nodeTitle] = nodes[nodeId];
-      }
-      setNodesByTitle(nodesByT);
+    if (!user?.admin) {
+      setTitleToIdMap({});
+      return;
     }
-  }, [nodes, user]);
-  const getNewNodes = (newNodes: copilotNewNode[]): any => {
+
+    const unsubscribe = onSnapshot(
+      collection(db, NODES),
+      (snapshot) => {
+        const mapping: { [title: string]: string } = {};
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          if (data.title) {
+            mapping[data.title] = doc.id;
+          }
+        });
+        setTitleToIdMap(mapping);
+      },
+      (error) => {
+        console.error("Error fetching title-to-ID mapping:", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user?.admin, db]);
+
+  const getNewNodes = async (newNodes: copilotNewNode[]): Promise<any> => {
     try {
-      if (!user?.uname) return;
+      if (!user?.uname) return [];
       const _NODES = [];
 
       for (let node of newNodes) {
         const addedNonExistentElements: {
           [property: string]: { id: string; title: string }[];
         } = {};
-        if (!!nodesByTitle[node.title]) {
+
+        if (titleToIdMap[node.title]) {
           continue;
         }
+
         const first_generalization = node.generalizations[0];
-        const generalization = nodesByTitle[first_generalization];
+        const generalization = await getNodeByTitle(first_generalization);
         if (!generalization) continue;
 
         const newId = doc(collection(db, NODES)).id;
@@ -939,8 +969,9 @@ const ToolbarSidebar = ({
                   .toLowerCase()
                   .endsWith("(optional)");
                 const nodeTitle = nodeT.replace(/\(optional\)/i, "").trim();
-                if (nodesByTitle[nodeT]?.id) {
-                  value.push({ id: nodesByTitle[nodeT].id, optional });
+                const existingNodeId = titleToIdMap[nodeT];
+                if (existingNodeId) {
+                  value.push({ id: existingNodeId, optional });
                 } else {
                   const newId = doc(collection(db, "nodes")).id;
                   value.push({
@@ -1010,10 +1041,11 @@ const ToolbarSidebar = ({
   }[] => {
     const result = [];
     for (let { title, reasoning } of deletedNodes) {
-      if (!!nodesByTitle[title]) {
+      const nodeId = titleToIdMap[title];
+      if (nodeId) {
         result.push({
           title,
-          nodeId: nodesByTitle[title].id,
+          nodeId,
           deleteNode: true,
           reasoning: reasoning,
         });
@@ -1021,7 +1053,7 @@ const ToolbarSidebar = ({
     }
     return result;
   };
-  const compareThisImprovement = (improvement: any) => {
+  const compareThisImprovement = async (improvement: any) => {
     if (improvement?.diffChange) {
       displayDiff(improvement.diffChange);
     } else {
@@ -1033,14 +1065,24 @@ const ToolbarSidebar = ({
       setImprovements([]);
       return;
     }
-    const nodeId = nodesByTitle[improvement.title]?.id;
-    if (!nodes[nodeId]) {
+
+    const nodeId = titleToIdMap[improvement.title];
+    if (!nodeId) {
+      console.warn(`Node not found for title: ${improvement.title}`);
       return;
     }
-    if (nodes[nodeId]) {
-      setCurrentVisibleNode(nodes[nodeId]);
+
+    // Fetch the node if it's not already the current visible node
+    if (currentVisibleNode?.id !== nodeId) {
+      const node = await getNodeByTitle(improvement.title);
+      if (node) {
+        setCurrentVisibleNode(node);
+      }
     }
-    const result = compareImprovement(improvement, nodesByTitle, nodes);
+
+    // Pass empty objects for deprecated parameters 
+    // IMPORTANT: to be improved later
+    const result = compareImprovement(improvement, {}, {});
 
     setCurrentImprovement(result);
     setTimeout(() => {
@@ -1061,7 +1103,7 @@ const ToolbarSidebar = ({
     const options = (await selectIt(
       currentVisibleNode.title,
       currentVisibleNode.nodeType,
-      nodes,
+      {}, // nodes object deprecated - passing empty object for now
       currentVisibleNode?.id,
     )) as {
       model: string;
@@ -1185,7 +1227,7 @@ const ToolbarSidebar = ({
       }
 
       const improvements: Improvement[] =
-        filterProposals(newImprovements || [], nodesByTitle, nodes) || [];
+        filterProposals(newImprovements || [], {}, {}) || [];
 
       const newNodes: {
         title: string;
@@ -1193,7 +1235,7 @@ const ToolbarSidebar = ({
         first_generalization: string;
         reasoning: string;
         newNode: boolean;
-      }[] = getNewNodes(response?.new_nodes || []);
+      }[] = await getNewNodes(response?.new_nodes || []);
 
       const deletedNodes: {
         title: string;
@@ -1245,7 +1287,6 @@ const ToolbarSidebar = ({
             openLogsFor={openLogsFor}
             displayDiff={displayDiff}
             selectedDiffNode={selectedDiffNode}
-            nodes={nodes}
             appName={skillsFutureApp}
           />
         );
@@ -1269,7 +1310,6 @@ const ToolbarSidebar = ({
             ]}
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
-            nodes={nodes}
             skillsFuture={skillsFuture}
             skillsFutureApp={skillsFutureApp}
           />
@@ -1288,13 +1328,13 @@ const ToolbarSidebar = ({
             chatTabs={CHAT_DISCUSSION_TABS}
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
-            nodes={nodes}
             skillsFuture={skillsFuture}
             skillsFutureApp={skillsFutureApp}
           />
         );
       case "inheritanceSettings":
-        return <Inheritance selectedNode={currentVisibleNode} nodes={nodes} />;
+        // IMPORTANT: Improve later
+        // return <Inheritance selectedNode={currentVisibleNode} nodes={nodes} />;
       case "nodeHistory":
         return (
           <NodeActivity
@@ -1302,7 +1342,6 @@ const ToolbarSidebar = ({
             selectedDiffNode={selectedDiffNode}
             displayDiff={displayDiff}
             activeUsers={activeUsers}
-            nodes={nodes}
           />
         );
       case "improvements":
@@ -1311,7 +1350,7 @@ const ToolbarSidebar = ({
             currentImprovement={currentImprovement}
             setCurrentImprovement={setCurrentImprovement}
             currentVisibleNode={currentVisibleNode}
-            nodes={nodes}
+            nodes={{}} // placeholder - to be removed
             setCurrentVisibleNode={setCurrentVisibleNode}
             onNavigateToNode={onNavigateToNode}
             isLoadingCopilot={isLoadingCopilot}
@@ -1326,7 +1365,7 @@ const ToolbarSidebar = ({
             displayDiff={displayDiff}
             skillsFutureApp={skillsFutureApp}
             skillsFuture={skillsFuture}
-            nodesByTitle={nodesByTitle}
+            titleToIdMap={titleToIdMap}
           />
         );
       case "history":
@@ -1339,7 +1378,6 @@ const ToolbarSidebar = ({
             selectedUser={selectedUser}
             skillsFuture={skillsFuture}
             skillsFutureApp={skillsFutureApp}
-            nodes={nodes}
           />
         );
       default:
@@ -1560,13 +1598,18 @@ const ToolbarSidebar = ({
                     setOpenLogsFor(null);
                     setCurrentImprovement(null);
                     setSelectedDiffNode(null);
+                    // COMMENTED OUT AS PART OF DEPRECATING NODES OBJECT 
+                    // if (previousNodeId) {
+                    //   // Checks if the node is deleted (null or undefined)
+                    //   if (nodes[currentVisibleNode?.id] == null) {
+                    //     navigateToNode(previousNodeId);
+                    //   } else {
+                    //     navigateToNode(currentVisibleNode?.id);
+                    //   }
+                    //   setPreviousNodeId("");
+                    // }
                     if (previousNodeId) {
-                      // Checks if the node is deleted (null or undefined)
-                      if (nodes[currentVisibleNode?.id] == null) {
-                        navigateToNode(previousNodeId);
-                      } else {
-                        navigateToNode(currentVisibleNode?.id);
-                      }
+                      navigateToNode(currentVisibleNode?.id);
                       setPreviousNodeId("");
                     }
                   }}
@@ -1737,9 +1780,9 @@ const ToolbarSidebar = ({
             <SidebarButton
               id="toolbar-theme-button"
               icon={<DownloadIcon />}
-              onClick={() => {
+              onClick={async () => {
                 try {
-                  handleDownload({ nodes });
+                  await handleDownload();
                 } catch (error) {
                   confirmIt("There was an error downloading the JSON!");
                 }
@@ -1768,7 +1811,6 @@ const ToolbarSidebar = ({
           </Box>
 
           <ActiveUsers
-            nodes={nodes}
             navigateToNode={navigateToNode}
             displayUserLogs={displayUserLogs}
             handleExpand={handleExpandSidebar}

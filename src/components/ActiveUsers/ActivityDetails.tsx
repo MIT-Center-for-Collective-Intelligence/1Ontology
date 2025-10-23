@@ -6,19 +6,18 @@ import dayjs from "dayjs";
 import { useState } from "react";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import moment from "moment";
+import { getTitle } from "@components/lib/utils/string.utils";
 
 const ActivityDetails = ({
   activity,
   displayDiff,
   modifiedByDetails,
   selectedDiffNode,
-  nodes,
 }: {
   activity: NodeChange;
   displayDiff: Function;
   modifiedByDetails?: any;
   selectedDiffNode: any;
-  nodes: { [nodeId: string]: any };
 }) => {
   const [isSelected, setIsSelected] = useState(false);
   const getToolTip = () => {
@@ -232,7 +231,7 @@ const ActivityDetails = ({
               wordBreak: "break-word",
             }}
           >
-            {nodes[activity.nodeId]?.title || activity.fullNode?.title}
+            {getTitle(activity.nodeId) || activity.fullNode?.title}
           </Typography>
 
           {activity.reasoning && (

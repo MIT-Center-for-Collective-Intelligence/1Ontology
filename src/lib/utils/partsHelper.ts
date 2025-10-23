@@ -413,11 +413,11 @@ export const getGeneralizationParts = (
   // Add direct parts
   if (genParts) {
     genParts.forEach((collection: any) => {
-      collection.nodes.forEach((part: any) => {
+      collection.nodes.forEach(async (part: any) => {
         if (nodes[part.id]) {
           parts.push({
             id: part.id,
-            title: getTitle(nodes, part.id),
+            title: await getTitle(part.id),
             isInherited: false,
             optional: part.optional,
           });
@@ -434,7 +434,7 @@ export const getGeneralizationParts = (
         if (partInfo && nodes[partId]) {
           parts.push({
             id: partId,
-            title: getTitle(nodes, partId),
+            title: getTitle(partId),
             isInherited: true,
             // optional:partInfo.
           });
@@ -459,7 +459,7 @@ export const getAllGeneralizations = (
     .flatMap((collection: any) =>
       collection.nodes.map((node: any) => ({
         id: node.id,
-        title: getTitle(nodes, node.id),
+        title: getTitle(node.id),
       })),
     )
     .filter((gen: any) => nodes[gen.id]);
