@@ -41,7 +41,6 @@ A CSV file with the following columns:
 - MA: Main activity and reasoning
 - SA: Substantive activity and reasoning
 - SAClassification: Ontology node title + rationale
-- SAClassification_alone: Ontology node title only
 - tokens: Total GPT tokens used
 - cost: Estimated GPT API cost (USD)
 """
@@ -250,10 +249,9 @@ Return a single JSON object only (no prose), exactly with these keys and value t
             # Prepare simplified output fields
             most_appropriate_node = response["most_appropriate_node"]
             sa_classification = ""
-            sa_classification_alone = ""
+
             if most_appropriate_node:
                 sa_classification = f"{most_appropriate_node['title']}: \n{response['most_appropriate_node_rationale']}"
-                sa_classification_alone = most_appropriate_node["title"]
 
             return {
                 "MA": f"{response['does_it_perform_the_activity_or_help_a_human_perform_it']}: \n"
@@ -261,7 +259,6 @@ Return a single JSON object only (no prose), exactly with these keys and value t
                 "SA": f"{response['substantive_activity']}: \n"
                 f"{response['reasoning_substantive_activity']}",
                 "SAClassification": sa_classification,
-                "SAClassification_alone": sa_classification_alone,
                 "tokens": total_tokens["total"],
                 "cost": cost["totalCost"],
             }
@@ -286,7 +283,6 @@ with open(csv_file_path, newline="", encoding="utf-8") as csvfile, open(
         "MA",  # Main activity and reasoning
         "SA",  # Substantive activity and reasoning
         "SAClassification",  # Ontology node title + rationale
-        "SAClassification_alone",  # Ontology node title only
         "tokens",  # Total GPT tokens used
         "cost",  # Estimated GPT API cost
     ]
