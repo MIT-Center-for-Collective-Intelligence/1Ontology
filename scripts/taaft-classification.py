@@ -1,27 +1,79 @@
+"""
+Script Name: classify_ai_applications.py
+
+Purpose:
+---------
+This script reads a CSV file containing AI applications and automatically classifies
+each application using an ontology and GPT-5. The classification includes:
+  1. Identifying the main substantive activity (verb + object) of the application.
+  2. Determining whether the application performs the activity itself or assists a human.
+  3. Selecting the most appropriate ontology node for the main activity.
+The results, along with GPT token usage and estimated cost, are saved in an output CSV file.
+
+Workflow:
+---------
+1. Load the input CSV containing application Name, Tagline, and Description.
+2. For each application:
+   a. Call the ontology API to retrieve relevant ontology nodes.
+   b. Create a detailed GPT-5 prompt including the app info and ontology.
+   c. Send the prompt to GPT-5 and extract structured JSON response.
+   d. Validate the response and retry if necessary.
+   e. Record:
+      - Main activity and reasoning
+      - Substantive activity and reasoning
+      - Selected ontology node and rationale
+      - Token usage and estimated cost
+3. Save all results to the output CSV file.
+
+Requirements:
+-------------
+- Python 3.8+
+- Libraries: csv, time, json, requests, openai
+- OpenAI API key must be set in the environment as OPENAI_API_KEY
+- Access to ontology API endpoint: https://1ontology.com/api/load-sub-ontology
+
+Output:
+-------
+A CSV file with the following columns:
+- Name: Application name
+- Tagline: Application tagline
+- Description: Application description
+- MA: Main activity and reasoning
+- SA: Substantive activity and reasoning
+- SAClassification: Ontology node title + rationale
+- SAClassification_alone: Ontology node title only
+- tokens: Total GPT tokens used
+- cost: Estimated GPT API cost (USD)
+"""
+
 import csv
 import time
 import json
 import requests
-
 from openai import OpenAI
 
+# URL of the API used to load a sub-ontology for classification
 API_URL = "https://1ontology.com/api/load-sub-ontology"
 
-# Initialize the client (make sure OPENAI_API_KEY is set as an environment variable)
+# Initialize the OpenAI client
+# Make sure OPENAI_API_KEY is set in the environment
 client = OpenAI()
 
-# Path to your CSV file
+# Path to the input CSV file containing AI application info
 csv_file_path = "TAAFT_human_annotation_trial.csv"
+# Path to the output CSV file where classification results will be saved
 output_file_path = "output.csv"
 
-# Column name that contains the text prompt
+# Name of the column in CSV that contains the application prompt
 prompt_column = "prompt"
 
 
 def extract_object(s: str):
     """
     Extracts and parses the first valid JSON object found in a string.
-    Returns the parsed Python dict, or None if not found or invalid.
+    Returns a Python dict if successful, or None if no valid JSON is found.
+    This is useful because GPT responses may include additional text
+    around the JSON object.
     """
     if not s or "{" not in s:
         return None
@@ -35,6 +87,7 @@ def extract_object(s: str):
         elif s[i] == "}":
             brace_count -= 1
 
+        # When all braces are balanced, try parsing JSON
         if brace_count == 0:
             json_str = s[start : i + 1]
             try:
@@ -46,6 +99,15 @@ def extract_object(s: str):
 
 
 def send_request_to_gpt(model: str, prompt: str, reasoning_effort: str = "high"):
+    """
+    Sends a prompt to GPT-5 and returns structured response info.
+    It also calculates token usage and approximate cost.
+    Returns a dictionary containing:
+      - 'responseObject': parsed JSON object from GPT
+      - 'usedTokens': detailed token usage
+      - 'cost': estimated cost in USD
+      - 'executionTime': how long the call took
+    """
     try:
         start_time = time.time()
 
@@ -55,6 +117,7 @@ def send_request_to_gpt(model: str, prompt: str, reasoning_effort: str = "high")
             messages=[{"role": "user", "content": prompt}],
         )
 
+        # Extract token usage from response
         usage = getattr(completion, "usage", {})
         prompt_tokens = getattr(usage, "prompt_tokens", 0)
         completion_tokens = getattr(usage, "completion_tokens", 0)
@@ -67,10 +130,9 @@ def send_request_to_gpt(model: str, prompt: str, reasoning_effort: str = "high")
         )
         total_tokens = getattr(usage, "total_tokens", prompt_tokens + completion_tokens)
 
-        # Example pricing — adjust to match your model’s actual pricing
+        # Example pricing — adjust as needed for actual rates
         input_cost_per_1k = 0.00125
         output_cost_per_1k = 0.01
-
         input_cost = (prompt_tokens / 1000) * input_cost_per_1k
         output_cost = (
             (completion_tokens + reasoning_tokens) / 1000
@@ -80,6 +142,7 @@ def send_request_to_gpt(model: str, prompt: str, reasoning_effort: str = "high")
         end_time = time.time()
         execution_time_ms = int((end_time - start_time))
 
+        # Extract text content from GPT response
         text = (
             completion.choices[0].message.content.strip() if completion.choices else ""
         )
@@ -102,6 +165,7 @@ def send_request_to_gpt(model: str, prompt: str, reasoning_effort: str = "high")
         }
 
     except Exception as e:
+        # If GPT call fails, return default empty values
         print({"error": str(e)})
         return {
             "content": "",
@@ -119,7 +183,14 @@ def send_request_to_gpt(model: str, prompt: str, reasoning_effort: str = "high")
 def get_classification_of_taaft_row(
     app_title: str, tagline: str, description: str, ontology_object: str
 ):
-
+    """
+    Takes an application’s title, tagline, description, and an ontology object.
+    Sends a detailed prompt to GPT-5 asking it to:
+      - Identify the main substantive activity (verb + object)
+      - Determine if the app performs or assists in the activity
+      - Choose the most appropriate ontology node for classification
+    Returns a dictionary suitable for writing to the output CSV.
+    """
     try:
         prompt = f"""
 ## Role:
@@ -152,37 +223,17 @@ Return a single JSON object only (no prose), exactly with these keys and value t
   }},
   "most_appropriate_node_rationale": "your reasoning for choosing this ontology node"
 }}
-
-## Constraints:
-- Output must be valid JSON: double quotes around all strings, no trailing commas, no extra keys or text.
-- Always include one item in "substantive_activity".
-- Use base verb forms plus their direct object in "substantive_activity" (e.g., "write code", "conduct research", "summarize text").
-- Determine the most appropriate node from the ontology by applying the selection criteria below (coverage first, then specificity, then similarity). Choose the most specific node whose scope fully covers the common action represented by the phrase; if multiple nodes meet this, break ties by higher semantic similarity to the input phrase.
-
-### Selection Criteria:
-Use these criteria (in order):
-1. **Coverage**
-2. **Specificity**
-3. **Similarity**
-4. **Tie-breakers**
-
-## Procedure:
-1. Identify the main substantive activity ("verb + object").
-2. Specify if the app performs or helps perform it.
-3. Compare to each ontology node and select the best match.
-4. Produce valid JSON output exactly as specified.
-        """
+"""
         response = None
-        total_tokens = None
-        execution_time = 0
-        cost = None
 
+        # Retry loop until GPT returns valid structured JSON
         while not response:
             result = send_request_to_gpt(model="gpt-5", prompt=prompt)
             response = result["responseObject"]
             total_tokens = result["usedTokens"]
             cost = result["cost"]
 
+            # Ensure all required keys are present
             required_keys = [
                 "does_it_perform_the_activity_or_help_a_human_perform_it",
                 "reasoning_for_does_it_perform_the_activity_or_help_a_human_perform_it",
@@ -196,15 +247,14 @@ Use these criteria (in order):
                 print("Invalid response detected — retrying...")
                 response = None
 
-            """ total_tokens = response["totalTokens"] """
-            """ cost = response["cost"] """
+            # Prepare simplified output fields
             most_appropriate_node = response["most_appropriate_node"]
             sa_classification = ""
             sa_classification_alone = ""
             if most_appropriate_node:
                 sa_classification = f"{most_appropriate_node['title']}: \n{response['most_appropriate_node_rationale']}"
                 sa_classification_alone = most_appropriate_node["title"]
-            print(response)
+
             return {
                 "MA": f"{response['does_it_perform_the_activity_or_help_a_human_perform_it']}: \n"
                 f"{response['reasoning_for_does_it_perform_the_activity_or_help_a_human_perform_it']}",
@@ -221,48 +271,48 @@ Use these criteria (in order):
         return None
 
 
+# Open the input CSV and prepare output CSV
 with open(csv_file_path, newline="", encoding="utf-8") as csvfile, open(
     output_file_path, "w", newline="", encoding="utf-8"
 ) as outfile:
 
-    print("Opening CSV file and preparing output file...")
     reader = csv.DictReader(csvfile)
 
-    sample_row = reader.__next__()
-
+    # Define output CSV columns
     fieldnames = [
         "Name",
         "Tagline",
         "Description",
-        "MA",
-        "SA",
-        "SAClassification",
-        "SAClassification_alone",
-        "tokens",
-        "cost",
+        "MA",  # Main activity and reasoning
+        "SA",  # Substantive activity and reasoning
+        "SAClassification",  # Ontology node title + rationale
+        "SAClassification_alone",  # Ontology node title only
+        "tokens",  # Total GPT tokens used
+        "cost",  # Estimated GPT API cost
     ]
 
     writer = csv.DictWriter(outfile, fieldnames=fieldnames)
-    writer.writeheader()
-    print("Header written to output CSV. Starting processing of rows...")
+    writer.writeheader()  # Write CSV header
 
     csvfile.seek(0)
     reader = csv.DictReader(csvfile)
 
+    # Process each row in the input CSV
     for i, row in enumerate(reader, start=1):
         print(f"\nProcessing row {i}: {row['Name']}")
         searchQuery = f"{row['Tagline']} \n\n {row['Description']}"
         payload = {
-            "searchQuery": searchQuery,  # required must be a none empty string
-            "applicationName": "final-hierarchy-with-o*net",  # required must be a none empty string
-            "nodeType": "activity",  # Optional — can be None or omitted
-            "searchLimit": 10,  # Optional — defaults to 40 in API
+            "searchQuery": searchQuery,
+            "applicationName": "final-hierarchy-with-o*net",
+            "nodeType": "activity",
+            "searchLimit": 10,
         }
         headers = {
             "Content-Type": "application/json",
             "Authorization": "Bearer YOUR_API_KEY_IF_NEEDED",
         }
 
+        # Call API to get the sub-ontology relevant to this application
         print(f"Loading sub-ontology to API for '{row['Name']}'...")
         response = requests.post(API_URL, headers=headers, data=json.dumps(payload))
 
@@ -273,9 +323,10 @@ with open(csv_file_path, newline="", encoding="utf-8") as csvfile, open(
             print("Response is not valid JSON. Using empty data.")
             data = {}
 
-        ontology_object = data["ontology_object"]
-        searchResults = data["topResults"]
+        ontology_object = data.get("ontology_object", {})
+        searchResults = data.get("topResults", [])
 
+        # Classify the application using GPT-5
         print("Classifying current row...")
         classification_of_taaft_row = get_classification_of_taaft_row(
             app_title=row["Name"],
@@ -285,6 +336,7 @@ with open(csv_file_path, newline="", encoding="utf-8") as csvfile, open(
         )
         print(classification_of_taaft_row)
 
+        # Write classification results to output CSV
         if classification_of_taaft_row:
             row_to_write = {
                 "Name": row["Name"],
@@ -292,7 +344,6 @@ with open(csv_file_path, newline="", encoding="utf-8") as csvfile, open(
                 "Description": row["Description"],
                 **classification_of_taaft_row,
             }
-
             writer.writerow(row_to_write)
             outfile.flush()
             print(f"Row '{row['Name']}' processed and written to output CSV.")
