@@ -165,7 +165,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       nodeType,
       resultsLimit: searchLimit,
     });
-    if (!searchQuery) {
+    if (!searchQuery.trim()) {
       return res.status(400).json({ error: "missing " });
     }
     const apps = ONTOLOGY_APPS.map((app) => app.id);
