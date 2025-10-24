@@ -78,7 +78,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const results = await collection.query({
       queryEmbeddings: [queryEmbedding],
       include: [IncludeEnum.Embeddings, IncludeEnum.Metadatas],
-      nResults: resultsNum || 40,
+      nResults: 100,
       ...(nodeType
         ? {
             where: {
@@ -93,20 +93,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const topResults = [];
     for (let nodeIdx = 0; nodeIdx < metaDatas.length; nodeIdx++) {
-      if (metaDatas[nodeIdx]?.nodeType === "activity") {
-        const similarity = cosineSimilarity(
-          queryEmbedding,
-          (embeddings || [])[nodeIdx],
-        );
+      const similarity = cosineSimilarity(
+        queryEmbedding,
+        (embeddings || [])[nodeIdx],
+      );
 
-        topResults.push({
-          ...metaDatas[nodeIdx],
-          similarity,
-        });
-      }
+      topResults.push({
+        ...metaDatas[nodeIdx],
+        similarity,
+      });
     }
 
-    topResults.sort((a, b) => b.similarity - a.similarity);
+    topResults
+      .sort((a, b) => b.similarity - a.similarity)
+      .sort((a, b) => (a.title.toLowerCase() === query.toLowerCase() ? -1 : 1));
 
     const logData = {
       at: "searchChroma",

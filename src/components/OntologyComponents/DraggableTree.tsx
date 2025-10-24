@@ -980,7 +980,7 @@ function DraggableTree({
           display: "flex",
           alignItems: "center",
           flexWrap: "wrap",
-          zIndex: 20,
+          zIndex: 1,
           backgroundColor: (theme) =>
             theme.palette.mode === "dark" ? "#303134" : "#ffffff",
           pl: "5px",
@@ -1005,14 +1005,6 @@ function DraggableTree({
                 : "Expand All"}
           </Button>
         )}
-        {/* <Button
-          variant="outlined"
-          size="small"
-          onClick={handleCollapseAll}
-          sx={{ borderRadius: "20px", textTransform: "none" }}
-        >
-          Collapse All
-        </Button> */}
 
         {treeType !== "oNet" && user?.claims.editAccess && (
           <ToggleButton

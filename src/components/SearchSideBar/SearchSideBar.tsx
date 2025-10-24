@@ -1,4 +1,5 @@
 import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
+import HistoryIcon from "@mui/icons-material/History";
 import {
   Alert,
   Box,
@@ -55,34 +56,19 @@ const SearchSideBar = ({
     return searchWithFuse(query).slice(0, 30);
   };
 
-  // const searchResults = useMemo(() => {
-  //   /*  recordLogs({
-  //     action: "Searched",
-  //     query: searchValue,
-  //   }); */
-  //   if (!searchValue.trim()) {
-  //     return [];
-  //   }
-  //   return getSearchResults(searchValue);
-  // }, [searchValue, searchRefreshKey]);
-
   const handleFocus = () => {
     setIsFocused(true);
 
     if (searchValue.trim() !== "") {
-      // Force a fresh search to verify if the node still exists
       const freshResults = getSearchResults(searchValue.trim());
-
       if (freshResults.length === 0) {
         setSearchValue("");
         setIsListOpen(!!lastSearches.length);
       } else {
-        // Force a re-render to update the search results
         setSearchRefreshKey((prevKey) => prevKey + 1);
         setIsListOpen(true);
       }
     } else if (lastSearches.length > 0) {
-      // Display last searches if no current search value
       setIsListOpen(true);
     }
 
@@ -156,7 +142,6 @@ const SearchSideBar = ({
     } catch (error) {
       setSearchResults(fuseSearch);
       console.error(error);
-      // setErrorSearch(true);
     } finally {
       setLoadingSearchResult(false);
     }
@@ -167,7 +152,8 @@ const SearchSideBar = ({
       searchQuery();
     }
   };
-  const renderListItem = (node: any) => (
+
+  const renderListItem = (node: any, lastSearch: boolean = false) => (
     <ListItem
       key={node.id}
       onClick={() => handleNodeClick(node)}
@@ -188,12 +174,14 @@ const SearchSideBar = ({
         },
       }}
     >
+      {lastSearch && <HistoryIcon sx={{ fontSize: "20px", mr: "7px" }} />}
       <Typography>
         {node.title}
         {!!node.context?.title && ` at ${node.context.title}`}
       </Typography>
     </ListItem>
   );
+
   return (
     <Box
       ref={sidebarRef}
@@ -201,18 +189,18 @@ const SearchSideBar = ({
         overflow: "auto",
         height: isFocused ? "100vh" : "",
         position: "relative",
-        zIndex: isFocused ? 1000 : "",
+        overflowY: "auto",
+        ...SCROLL_BAR_STYLE,
         background: isFocused
           ? theme.palette.mode === "dark"
             ? "black"
-            : "#dcdcdc"
+            : "white"
           : "",
         borderRadius: "25px",
         ...SCROLL_BAR_STYLE,
         /*         border: isFocused ? "1px solid gray" : "", */
         mt: "5px",
-        /*         mx: "5px", */
-        /*         mb: "194px", */
+        zIndex: 2,
       }}
     >
       <GlobalStyles
@@ -229,6 +217,7 @@ const SearchSideBar = ({
           },
         }}
       />
+
       <TextField
         placeholder="Search..."
         value={searchValue}
@@ -283,12 +272,16 @@ const SearchSideBar = ({
         sx={{
           p: "8px",
           position: "sticky",
-          top: "0px",
-          zIndex: 1000,
+          top: 0,
+          zIndex: 10,
+          backgroundColor: (theme) =>
+            theme.palette.mode === "dark" ? "#000" : "#fff",
+          borderBottom: "1px solid rgba(255,255,255,0.1)",
         }}
       />
+
       {loadingSearchResult && isFocused && (
-        <List sx={{ zIndex: 10 }}>
+        <List sx={{ zIndex: 0 }}>
           {[...Array(15)].map((_, index) => (
             <Box key={index} sx={{ px: 4, mt: "0px" }}>
               <Skeleton variant="text" height={55} width="100%" sx={{ p: 0 }} />
@@ -298,14 +291,15 @@ const SearchSideBar = ({
       )}
 
       {isListOpen && !loadingSearchResult && !errorSearch && (
-        <List sx={{ zIndex: isListOpen ? 10 : 0 }}>
+        <List sx={{ zIndex: 0 }}>
           {searchResults.length > 0
-            ? searchResults.map(renderListItem)
+            ? searchResults.map((node) => renderListItem(node))
             : searchValue === "" &&
               lastSearches.length > 0 &&
-              lastSearches.map(renderListItem)}
+              lastSearches.map((node) => renderListItem(node, true))}
         </List>
       )}
+
       {errorSearch && isListOpen && (
         <Alert severity="error">
           There was an error searching through the ontology.
