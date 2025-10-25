@@ -1,13 +1,13 @@
 """
-Script Name: classify_ai_applications.py
+Script Name: matched-skills-classification.py
 
 Purpose:
 ---------
-This Python script automates the classification of AI-related applications or skills
-using an ontology service and GPT-5. It helps identify how a given application
-(or skill) aligns with an ontology of human/AI activities.
+This Python script automates the classification of skills
+using an ontology service and GPT-5. It helps identify how a given
+skill aligns with an ontology node.
 
-Specifically, for each AI application (or skill entry) in an input CSV file, the script:
+Specifically, for each skill in an input CSV file, the script:
   1. Retrieves ontology nodes relevant to the application's main activity using
      the ontology API (https://1ontology.com/api/load-sub-ontology).
   2. Generates a GPT-5 prompt to classify the application's activity into the
@@ -19,11 +19,8 @@ Specifically, for each AI application (or skill entry) in an input CSV file, the
 
 Key Classification Tasks:
 -------------------------
-For each application (or skill):
-  - Identify the **main substantive activity** (verb + object).
-  - Determine the **relationship** between the system and human performer
-    (i.e., does the AI perform or assist?).
-  - Select the **most appropriate ontology node** that generalizes the activity.
+For each skill:
+  - Identify the *closest_generalization_node**.
 
 Workflow:
 ---------
