@@ -9,6 +9,7 @@ Requirements:
 - Python 3.x
 - Libraries: csv, time, json, requests, ast, google.generativeai
 - Set GOOGLE_API_KEY in environment for API access
+    - Using `export GOOGLE_API_KEY="YOUR_API_KEY_HERE"`
 
 Dependencies:
 - google-generativeai
@@ -272,9 +273,7 @@ with open(csv_file_path, newline="", encoding="utf-8") as csvfile, open(
         raw_skills = ast.literal_eval(row["raw_skill"])
         for skill in raw_skills:
             progress += 1
-            print(
-                f"\nProcessing skill {progress} out of 578, row {i}: {skill['name']}"
-            )
+            print(f"\nProcessing skill {progress} out of 578, row {i}: {skill['name']}")
 
             # Construct search query to retrieve relevant sub-ontology
             searchQuery = f"{skill['name']} \n\n {skill['description']}"

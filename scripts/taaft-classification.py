@@ -30,6 +30,7 @@ Requirements:
 - Python 3.8+
 - Libraries: csv, time, json, requests, openai
 - OpenAI API key must be set in the environment as OPENAI_API_KEY
+    - Using `export OPENAI_API_KEY="YOUR_API_KEY_HERE"`
 - Access to ontology API endpoint: https://1ontology.com/api/load-sub-ontology
 
 Output:
