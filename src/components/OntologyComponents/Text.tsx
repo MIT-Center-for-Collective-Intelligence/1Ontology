@@ -380,7 +380,14 @@ const Text = ({
   ]);
 
   return (
-    <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={500}>
+    <Slide
+      direction="up"
+      in={true}
+      mountOnEnter
+      unmountOnExit
+      timeout={500}
+      style={{ pointerEvents: "auto" }}
+    >
       <Paper
         id={`property-${property}`}
         elevation={9}
@@ -669,7 +676,13 @@ const Text = ({
           selectedDiffNode?.modifiedProperty !== property &&
           property === "title") ? (
           <Typography
-            sx={{ fontSize: property === "title" ? "25px" : "19px", p: "19px" }}
+            sx={{
+              fontSize: property === "title" ? "25px" : "19px",
+              p: "19px",
+              userSelect: "text",
+              WebkitUserSelect: "text",
+              MozUserSelect: "text",
+            }}
           >
             {text}
           </Typography>
