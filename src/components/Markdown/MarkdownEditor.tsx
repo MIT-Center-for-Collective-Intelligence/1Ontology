@@ -99,7 +99,14 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   return (
     <Box sx={{ width: "100%" }}>
       {mode.isPreview && content.property !== "title" ? (
-        <Box sx={{ p: 3 }}>
+        <Box
+          sx={{
+            p: 3,
+            userSelect: "text",
+            WebkitUserSelect: "text",
+            MozUserSelect: "text",
+          }}
+        >
           <MarkdownRender text={content.text} />
         </Box>
       ) : (

@@ -675,22 +675,17 @@ const Text = ({
         ((currentVisibleNode.unclassified || !enableEdit) &&
           selectedDiffNode?.modifiedProperty !== property &&
           property === "title") ? (
-          <TextField
-            value={text}
-            variant="outlined"
-            fullWidth
-            multiline
-            disabled
-            InputProps={{
-              sx: {
-                fontSize: property === "title" ? "25px" : "19px",
-                p: "19px",
-                userSelect: "text",
-                WebkitUserSelect: "text",
-                MozUserSelect: "text",
-              },
+          <Typography
+            sx={{
+              fontSize: property === "title" ? "25px" : "19px",
+              p: "19px",
+              userSelect: "text",
+              WebkitUserSelect: "text",
+              MozUserSelect: "text",
             }}
-          />
+          >
+            {text}
+          </Typography>
         ) : (
           <>
             {currentImprovementChange && !currentImprovement.implemented ? (

@@ -27,5 +27,17 @@ gcloud run deploy $IMAGE_NAME \
    --region $REGION \
    --allow-unauthenticated \
    --timeout $TIMEOUT
-   
-gcloud artifacts docker images delete $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME:latest --quiet
+
+# Keep the latest image and delete older ones
+images=($(gcloud artifacts docker images list $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME \
+    --format="get(tags)" \
+    --sort-by=~UPDATE_TIME))
+
+# Keep the latest image
+latest_image=${images[0]}
+
+# Delete older images
+for img in "${images[@]:1}"; do
+    gcloud artifacts docker images delete \
+        "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME:$img" --quiet
+done
