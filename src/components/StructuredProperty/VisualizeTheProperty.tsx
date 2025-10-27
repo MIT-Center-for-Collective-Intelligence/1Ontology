@@ -15,14 +15,12 @@ type CollectionListProps = {
   currentImprovement: any;
   property: string;
   getTitle: any;
-  nodes: any;
 };
 
 const VisualizeTheProperty: React.FC<CollectionListProps> = ({
   currentImprovement,
   property,
   getTitle,
-  nodes,
 }) => {
   const renderValue = (value: ICollection[]) => {
     return (

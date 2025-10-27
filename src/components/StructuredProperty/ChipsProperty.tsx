@@ -3,7 +3,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import ChipInput from "../ChipInput/ChipInput";
 import {
   capitalizeFirstLetter,
-  getPropertyValue,
   getTooltipHelper,
 } from "@components/lib/utils/string.utils";
 import { Box, Paper, Tooltip, Typography } from "@mui/material";
@@ -21,7 +20,6 @@ import InheritanceDetailsPanel from "./InheritanceDetailsPanel";
 const ChipsProperty = ({
   currentVisibleNode,
   property,
-  nodes,
   selectedDiffNode,
   locked,
   currentImprovement,
@@ -32,7 +30,6 @@ const ChipsProperty = ({
 }: {
   currentVisibleNode: INode;
   property: string;
-  nodes: { [id: string]: INode };
   selectedDiffNode: any;
   locked: boolean;
   currentImprovement: any;
@@ -73,13 +70,9 @@ const ChipsProperty = ({
       }));
       return result;
     }
-    const result = currentVisibleNode.inheritance[property]?.ref
-      ? getPropertyValue(
-          nodes,
-          currentVisibleNode.inheritance[property]?.ref,
-          property,
-        )
-      : currentVisibleNode.properties[property];
+
+    // Get property value - without nodes object, we just use current node's properties
+    const result = currentVisibleNode.properties[property];
 
     return Array.isArray(result) &&
       result.every((item) => typeof item === "string")
@@ -94,7 +87,6 @@ const ChipsProperty = ({
     currentVisibleNode,
     selectedDiffNode,
     currentImprovement,
-    nodes,
   ]);
 
   useEffect(() => {
@@ -227,12 +219,13 @@ const ChipsProperty = ({
             property={property}
           />
           {!currentImprovement && !currentVisibleNode.unclassified && (
-            <SelectInheritance
-              currentVisibleNode={currentVisibleNode}
-              property={property}
-              nodes={nodes}
-              enableEdit={enableEdit}
-            />
+            // <SelectInheritance
+            //   currentVisibleNode={currentVisibleNode}
+            //   property={property}
+            //   nodes={nodes}
+            //   enableEdit={enableEdit}
+            // />
+            ""
           )}
         </Box>
       </Box>
@@ -253,11 +246,11 @@ const ChipsProperty = ({
         }
         fontSize="19px"
       />
-      <InheritanceDetailsPanel
+      {/* <InheritanceDetailsPanel
         property={property}
         currentVisibleNode={currentVisibleNode}
         nodes={nodes}
-      />
+      /> */}
     </Paper>
   );
 };

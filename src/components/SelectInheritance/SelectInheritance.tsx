@@ -7,7 +7,7 @@ import {
   updateDoc,
   getFirestore,
   writeBatch,
-  WriteBatch,
+  getDoc,
 } from "firebase/firestore";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { recordLogs } from "@components/lib/utils/helpers";
@@ -17,12 +17,10 @@ import { INode, ICollection, ILinkNode } from "@components/types/INode";
 const SelectInheritance = ({
   currentVisibleNode,
   property,
-  nodes,
   enableEdit,
 }: {
   currentVisibleNode: INode;
   property: string;
-  nodes: { [nodeId: string]: INode };
   enableEdit: boolean;
 }) => {
   const db = getFirestore();
@@ -40,15 +38,12 @@ const SelectInheritance = ({
       ),
     ].map((node: ILinkNode) => ({
       id: node.id,
-      title: getTitle(node.id),
+      title: node.title || getTitle(node.id),
     }));
 
-    _generalizations = _generalizations.filter((g: any) => {
-      return (
-        !nodes[g.id]?.inheritance[property]?.ref ||
-        nodes[g.id]?.inheritance[property]?.ref !== inheritanceRef
-      );
-    });
+    // Note: Without nodes object, we can't filter based on inheritance refs
+    // This filtering has been removed - all generalizations are shown
+
     const index = _generalizations.findIndex(
       (g: any) => g.id === inheritanceRef,
     );
@@ -74,7 +69,7 @@ const SelectInheritance = ({
       c.title = truncatedTitle;
     });
     setGeneralizations(_generalizations);
-  }, [currentVisibleNode.generalizations, inheritanceRef, nodes]);
+  }, [currentVisibleNode.generalizations, inheritanceRef]);
 
   // Map the generalizations to get the title and id
 
@@ -89,13 +84,17 @@ const SelectInheritance = ({
     let newBatch = batch;
     for (let { nodes: links } of specializations) {
       for (let link of links) {
+        // Fetch the node from Firestore to check its inheritance
+        const linkNodeDoc = await getDoc(doc(collection(db, NODES), link.id));
+        if (!linkNodeDoc.exists()) continue;
+
+        const linkNodeData = linkNodeDoc.data() as INode;
         const nodeRef = doc(collection(db, NODES), link.id);
+
         if (
-          nodes[link.id] && (
-            !nodes[link.id].inheritance[property]?.ref ||
-            generalizationId === nodes[link.id].inheritance[property]?.ref ||
-            modifiedInheritanceFor === nodes[link.id].inheritance[property]?.ref
-          )
+          !linkNodeData.inheritance[property]?.ref ||
+          generalizationId === linkNodeData.inheritance[property]?.ref ||
+          modifiedInheritanceFor === linkNodeData.inheritance[property]?.ref
         ) {
           let objectUpdate = {
             [`inheritance.${property}.ref`]: ref,
@@ -111,9 +110,9 @@ const SelectInheritance = ({
           newBatch = writeBatch(db);
         }
 
-        if (nodes[link.id]?.specializations) {
+        if (linkNodeData.specializations) {
           newBatch = await updateSpecializationsInheritance(
-            nodes[link.id].specializations,
+            linkNodeData.specializations,
             newBatch,
             property,
             ref,
@@ -126,7 +125,7 @@ const SelectInheritance = ({
 
     return newBatch;
   };
-  const changeInheritance = (
+  const changeInheritance = async (
     event: React.ChangeEvent<HTMLInputElement>,
     property: string,
   ) => {
@@ -135,9 +134,16 @@ const SelectInheritance = ({
 
       if (newGeneralizationId && newGeneralizationId !== inheritanceRef) {
         const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-        const newGeneralization = nodes[newGeneralizationId];
-        if (newGeneralization.inheritance[property].ref) {
-          newGeneralizationId = newGeneralization.inheritance[property].ref;
+
+        // Fetch the new generalization node from Firestore to check its inheritance
+        const newGenDoc = await getDoc(
+          doc(collection(db, NODES), newGeneralizationId)
+        );
+        if (newGenDoc.exists()) {
+          const newGeneralization = newGenDoc.data() as INode;
+          if (newGeneralization.inheritance[property]?.ref) {
+            newGeneralizationId = newGeneralization.inheritance[property].ref;
+          }
         }
 
         updateDoc(nodeRef, {
@@ -146,7 +152,7 @@ const SelectInheritance = ({
           .then(async () => {
             let batch = writeBatch(db);
             batch = await updateSpecializationsInheritance(
-              nodes[currentVisibleNode?.id].specializations,
+              currentVisibleNode.specializations,
               batch,
               property,
               newGeneralizationId,

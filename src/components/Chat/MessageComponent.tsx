@@ -218,7 +218,7 @@ const MessageComponent = async ({
                     <LinkIcon sx={{ color: DESIGN_SYSTEM_COLORS.gray25 }} />
                   </Box>
                   <Typography sx={{ fontWeight: "500" }}>
-                    {(await getTitle(message.sharedNodeId))?.substr(0, 40)}
+                    {(getTitle(message.sharedNodeId))?.substr(0, 40)}
                   </Typography>
                 </Box>
               ) : (

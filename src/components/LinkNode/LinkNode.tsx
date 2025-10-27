@@ -218,7 +218,7 @@ const LinkNode = ({
   // useEffect to handle async call to getTitle
   /*   useEffect(() => {
     const fetchTitle = async () => {
-      const title = await getTitleDeleted(nodes, link.id, true, db);
+      const title = getTitleDeleted(nodes, link.id, true, db);
       setRegionalTitle(title);
     };
     if (!title) {

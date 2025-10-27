@@ -27,6 +27,7 @@ import {
   capitalizeFirstLetter,
   getTooltipHelper,
   lowercaseFirstLetter,
+  getTitle,
 } from "@components/lib/utils/string.utils";
 import { DISPLAY } from "@components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
@@ -45,7 +46,6 @@ type INumericPropertyProps = {
   currentVisibleNode: INode;
   property: string;
   value: NumericPropertyValue | number | string;
-  nodes: any;
   locked: boolean;
   selectedDiffNode: any;
   currentImprovement: any;
@@ -61,7 +61,6 @@ const NumericProperty = ({
   currentVisibleNode,
   property,
   value,
-  nodes,
   locked,
   selectedDiffNode,
   currentImprovement,
@@ -477,7 +476,7 @@ const NumericProperty = ({
             {currentVisibleNode.inheritance[property]?.ref && (
               <Typography sx={{ fontSize: "14px", ml: "9px" }}>
                 {'(Inherited from "'}
-                {nodes[currentVisibleNode.inheritance[property].ref]?.title}
+                {getTitle(currentVisibleNode.inheritance[property].ref)}
                 {'")'}
               </Typography>
             )}
@@ -487,7 +486,6 @@ const NumericProperty = ({
                 <SelectInheritance
                   currentVisibleNode={currentVisibleNode}
                   property={property}
-                  nodes={nodes}
                   enableEdit={enableEdit}
                 />
               )}
@@ -588,7 +586,6 @@ const NumericProperty = ({
         <InheritanceDetailsPanel
           property={property}
           currentVisibleNode={currentVisibleNode}
-          nodes={nodes}
         />
       </Paper>
     </Slide>

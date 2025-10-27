@@ -189,6 +189,8 @@ const Ontology = ({
   useEffect(() => {
     if (fetchedNode) {
       setCurrentVisibleNode(fetchedNode);
+    } else {
+      setCurrentVisibleNode(null);
     }
   }, [fetchedNode]);
 
@@ -252,7 +254,7 @@ const Ontology = ({
   const [editableProperty, setEditableProperty] = useState<ICollection[]>([]);
   const [rootNode, setRootNode] = useState<string | null>(null);
   const treeRef = useRef<TreeApi<TreeData>>(null);
-
+  const [nodes, setNodes] = useState<{ [id: string]: INode }>({});
   const firstLoad = useRef(true);
 
   // Mobile state
@@ -831,7 +833,12 @@ const Ontology = ({
   //   setPartsInheritance(_inheritanceDetails);
   // }, [currentVisibleNode, nodes]);
 
-  if (nodeLoading) {
+  useEffect(() => {
+    console.log("fetchedNode", fetchedNode);
+    console.log("currentVisibleNode", currentVisibleNode);
+  }, [currentVisibleNode, fetchedNode]);
+
+  if (nodeLoading || !currentVisibleNode?.id) {
     return <FullPageLogoLoading />;
   }
 
@@ -1385,9 +1392,7 @@ const Ontology = ({
               )}
               {currentVisibleNode && user && !displayGuidelines && (
                 <Node
-                  currentVisibleNode={
-                    currentImprovement?.node || currentVisibleNode
-                  }
+                  currentVisibleNode={currentImprovement?.node || currentVisibleNode}
                   setCurrentVisibleNode={setCurrentVisibleNode}
                   setSnackbarMessage={setSnackbarMessage}
                   user={user}
@@ -1426,6 +1431,7 @@ const Ontology = ({
                   skillsFutureApp={appName ?? null}
                   editableProperty={editableProperty}
                   setEditableProperty={setEditableProperty}
+                  nodes={nodes}
                 />
               )}
             </Box>

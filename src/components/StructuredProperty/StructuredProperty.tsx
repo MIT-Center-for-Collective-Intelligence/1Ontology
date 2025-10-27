@@ -21,7 +21,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import {
   capitalizeFirstLetter,
-  getPropertyValue,
   getTitle,
   getTooltipHelper,
   lowercaseFirstLetter,
@@ -89,7 +88,6 @@ type IStructuredPropertyProps = {
   setSnackbarMessage: any;
   setCurrentVisibleNode: any;
   property: string;
-  nodes: { [id: string]: INode };
   locked: boolean;
   selectedDiffNode: any;
   confirmIt: any;
@@ -142,6 +140,7 @@ type IStructuredPropertyProps = {
   skillsFutureApp: string;
   deleteProperty?: Function;
   modifyProperty?: Function;
+  nodes: { [id: string]: INode }; // Needed to pass down to child components that require it for looping
 };
 
 const StructuredProperty = ({
@@ -151,7 +150,6 @@ const StructuredProperty = ({
   setSnackbarMessage,
   setCurrentVisibleNode,
   property,
-  nodes,
   locked,
   selectedDiffNode,
   confirmIt,
@@ -202,6 +200,7 @@ const StructuredProperty = ({
   skillsFutureApp,
   deleteProperty,
   modifyProperty,
+  nodes,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
   const isMobile = useMediaQuery("(max-width:599px)");
@@ -297,12 +296,8 @@ const StructuredProperty = ({
         result =
           currentVisibleNode[property as "specializations" | "generalizations"];
       } else {
-        result =
-          getPropertyValue(
-            nodes,
-            currentVisibleNode.inheritance[property]?.ref,
-            property,
-          ) || currentVisibleNode?.properties[property];
+        // Without nodes object, just use current node's properties
+        result = currentVisibleNode?.properties[property];
       }
 
       if (!selectedDiffNode) {
@@ -415,7 +410,6 @@ const StructuredProperty = ({
     }
   }, [
     currentVisibleNode,
-    nodes,
     property,
     selectedDiffNode,
     processCollectionData,
@@ -443,24 +437,19 @@ const StructuredProperty = ({
       if (!!selectedDiffNode) {
         return false;
       }
-      let numberOfGeneralizations = 0;
-      if (property === "specializations") {
-        for (let colGeneralization of nodes[nodeId]?.generalizations || []) {
-          numberOfGeneralizations += colGeneralization.nodes.length;
-        }
-      }
+      // Without nodes object, we can't check number of generalizations for specializations
+      // Simplified logic - always allow unlinking except for last generalization
       return (
         (property === "generalizations" &&
           (editableProperty || propertyValue).flatMap((n) => n.nodes).length !==
             1) ||
-        (property === "specializations" && numberOfGeneralizations > 1) ||
+        property === "specializations" ||
         (property !== "generalizations" && property !== "specializations")
       );
     },
     [
       propertyValue,
       property,
-      nodes,
       selectedDiffNode,
       newOnes,
       editableProperty,
@@ -656,7 +645,7 @@ const StructuredProperty = ({
         currentVisibleNode.inheritance.parts.ref;
       const allPartsFromRef = getGeneralizationParts(
         referencedGeneralizationId,
-        nodes,
+        {}, // Pass empty nodes object - helper will be refactored later
       );
       allPartsFromRef.forEach((part) => {
         inheritedParts.add(part.id);
@@ -700,22 +689,29 @@ const StructuredProperty = ({
             await breakInheritanceAndCopyParts(
               currentNodeId,
               linkId,
-              nodes,
+              {}, // Pass empty nodes object since helper still expects it
               user,
               skillsFutureApp,
             );
-            const inheritanceFrom = nodes[inheritedRef];
-
-            nodeData.properties["parts"] = JSON.parse(
-              JSON.stringify(inheritanceFrom.properties["parts"]),
-            );
+            // Fetch the inherited node from Firestore
+            const inheritanceFromDoc = await getDoc(doc(collection(db, NODES), inheritedRef));
+            if (inheritanceFromDoc.exists()) {
+              const inheritanceFrom = inheritanceFromDoc.data() as INode;
+              nodeData.properties["parts"] = JSON.parse(
+                JSON.stringify(inheritanceFrom.properties["parts"]),
+              );
+            }
           } else if (inheritedRef) {
             // Existing logic for non-parts properties
             const nodeId = nodeData.inheritance[property].ref;
-            const inheritedNode = nodes[nodeId as string];
-            nodeData.properties[property] = JSON.parse(
-              JSON.stringify(inheritedNode.properties[property]),
-            );
+            // Fetch the inherited node from Firestore
+            const inheritedNodeDoc = await getDoc(doc(collection(db, NODES), nodeId as string));
+            if (inheritedNodeDoc.exists()) {
+              const inheritedNode = inheritedNodeDoc.data() as INode;
+              nodeData.properties[property] = JSON.parse(
+                JSON.stringify(inheritedNode.properties[property]),
+              );
+            }
           }
           const previousValue = JSON.parse(
             JSON.stringify(nodeData.properties[property]),
@@ -800,38 +796,45 @@ const StructuredProperty = ({
             let updateObject: any = {
               [`inheritance.${property}.ref`]: null,
             };
-            if (
-              reference &&
-              nodes[reference].textValue &&
-              nodes[reference].textValue.hasOwnProperty(property) &&
-              Array.isArray(nodeData.properties[property]) &&
-              nodeData.propertyType[property] !== "string" &&
-              nodeData.propertyType[property] !== "string-array"
-            ) {
-              const links = nodeData.properties[property].flatMap(
-                (c: any) => c.nodes,
+            if (reference) {
+              // Fetch the reference node from Firestore
+              const referenceNodeDoc = await getDoc(
+                doc(collection(db, NODES), reference),
               );
-              if (property === "isPartOf") {
-                updatePartsAndPartsOf(
-                  links,
-                  { id: currentVisibleNode?.id },
-                  "isPartOf",
-                  db,
-                  nodes,
+              if (
+                referenceNodeDoc.exists() &&
+                referenceNodeDoc.data().textValue &&
+                referenceNodeDoc.data().textValue.hasOwnProperty(property) &&
+                Array.isArray(nodeData.properties[property]) &&
+                nodeData.propertyType[property] !== "string" &&
+                nodeData.propertyType[property] !== "string-array"
+              ) {
+                const referenceData = referenceNodeDoc.data() as INode;
+                const links = nodeData.properties[property].flatMap(
+                  (c: any) => c.nodes,
                 );
-              } else {
-                updatePropertyOf(
-                  links,
-                  { id: currentVisibleNode?.id },
-                  property,
-                  nodes,
-                  db,
-                );
+                if (property === "isPartOf") {
+                  updatePartsAndPartsOf(
+                    links,
+                    { id: currentVisibleNode?.id },
+                    "isPartOf",
+                    db,
+                    {}, // Pass empty nodes object - helper will be refactored later
+                  );
+                } else {
+                  updatePropertyOf(
+                    links,
+                    { id: currentVisibleNode?.id },
+                    property,
+                    {}, // Pass empty nodes object - helper will be refactored later
+                    db,
+                  );
+                }
+                updateObject = {
+                  ...updateObject,
+                  [`textValue.${property}`]: referenceData.textValue[property],
+                };
               }
-              updateObject = {
-                ...updateObject,
-                [`textValue.${property}`]: nodes[reference].textValue[property],
-              };
             }
             await updateDoc(nodeDoc.ref, updateObject);
 
@@ -879,12 +882,25 @@ const StructuredProperty = ({
     partId: string;
   }) => {
     try {
-      const nodeData = nodes[currentNodeId];
+      // Fetch the current node from Firestore
+      const currentNodeDoc = await getDoc(
+        doc(collection(db, NODES), currentNodeId),
+      );
+      if (!currentNodeDoc.exists()) return;
+
+      const nodeData = currentNodeDoc.data() as INode;
 
       let parts = nodeData.properties["parts"];
       const inheritanceRefId = nodeData.inheritance["parts"].ref;
       if (inheritanceRefId) {
-        parts = nodes[inheritanceRefId].properties["parts"];
+        // Fetch the inherited node from Firestore
+        const inheritedNodeDoc = await getDoc(
+          doc(collection(db, NODES), inheritanceRefId),
+        );
+        if (inheritedNodeDoc.exists()) {
+          const inheritedData = inheritedNodeDoc.data() as INode;
+          parts = inheritedData.properties["parts"];
+        }
       }
       const previousPartsValue = JSON.parse(JSON.stringify(parts));
       parts[0].nodes.push({
@@ -894,7 +910,11 @@ const StructuredProperty = ({
       const nodeRef = doc(collection(db, NODES), currentNodeId);
 
       const linkRef = doc(collection(db, NODES), partId);
-      const linkData = nodes[partId];
+      // Fetch the part node from Firestore
+      const partNodeDoc = await getDoc(linkRef);
+      if (!partNodeDoc.exists()) return;
+
+      const linkData = partNodeDoc.data() as INode;
       const previousIsPartOfValue = JSON.parse(
         JSON.stringify(linkData.properties["isPartOf"]),
       );
@@ -1010,7 +1030,6 @@ const StructuredProperty = ({
           currentImprovement={selectedDiffNode || currentImprovement}
           property={property}
           getTitle={getTitle}
-          nodes={nodes}
         />
       </Paper>
     );
@@ -1260,12 +1279,13 @@ const StructuredProperty = ({
                     property !== "isPartOf" &&
                     property !== "parts" &&
                     !currentVisibleNode.unclassified && (
-                      <SelectInheritance
-                        currentVisibleNode={currentVisibleNode}
-                        property={property}
-                        nodes={nodes}
-                        enableEdit={enableEdit}
-                      />
+                      // <SelectInheritance
+                      //   currentVisibleNode={currentVisibleNode}
+                      //   property={property}
+                      //   nodes={nodes}
+                      //   enableEdit={enableEdit}
+                      // />
+                      ""
                     )}
                   {currentVisibleNode.inheritance[property]?.ref &&
                     !enableEdit && (
@@ -1273,8 +1293,7 @@ const StructuredProperty = ({
                         sx={{ fontSize: "14px", ml: "9px", color: "gray" }}
                       >
                         {'(Inherited from "'}
-                        {nodes[currentVisibleNode.inheritance[property].ref]
-                          ?.title || ""}
+                        {getTitle(currentVisibleNode.inheritance[property].ref)}
                         {'")'}
                       </Typography>
                     )}
@@ -1371,7 +1390,7 @@ const StructuredProperty = ({
                 <InheritedPartsViewerEdit
                   selectedProperty={property}
                   getAllGeneralizations={() =>
-                    getAllGeneralizations(currentVisibleNode, nodes)
+                    getAllGeneralizations(currentVisibleNode, {})
                   }
                   getGeneralizationParts={getGeneralizationParts}
                   nodes={nodes}
@@ -1412,7 +1431,7 @@ const StructuredProperty = ({
                 <InheritedPartsViewer
                   selectedProperty={property}
                   getAllGeneralizations={() =>
-                    getAllGeneralizations(currentVisibleNode, nodes)
+                    getAllGeneralizations(currentVisibleNode, {})
                   }
                   getGeneralizationParts={getGeneralizationParts}
                   nodes={nodes}

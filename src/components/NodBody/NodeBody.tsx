@@ -6,6 +6,7 @@ import {
   collection,
   deleteField,
   doc,
+  getDoc,
   getFirestore,
   updateDoc,
   writeBatch,
@@ -33,7 +34,6 @@ interface NodeBodyProps {
   navigateToNode: Function;
   setSnackbarMessage: Function;
   setSelectedProperty: Function;
-  nodes: { [id: string]: INode };
   locked: boolean;
   selectedDiffNode: any;
   getTitleNode: any;
@@ -82,6 +82,7 @@ interface NodeBodyProps {
   enableEdit: boolean;
   skillsFutureApp: string;
   deleteProperty: Function;
+  nodes: { [id: string]: INode }; // Needed to pass down to StructuredProperty
 }
 
 const NodeBody: React.FC<NodeBodyProps> = ({
@@ -91,7 +92,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   navigateToNode,
   setSnackbarMessage,
   setSelectedProperty,
-  nodes,
   locked,
   selectedDiffNode,
   getTitleNode,
@@ -140,6 +140,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   enableEdit,
   skillsFutureApp,
   deleteProperty,
+  nodes,
 }) => {
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -215,14 +216,19 @@ const NodeBody: React.FC<NodeBodyProps> = ({
             newBatch = writeBatch(db);
           }
 
-          newBatch = await updateSpecializationsInheritance(
-            nodes[link.id].specializations,
-            newBatch,
-            property,
-            propertyValue,
-            ref,
-            propertyType,
-          );
+          // Fetch the node from Firestore to get its specializations
+          const linkNodeDoc = await getDoc(doc(collection(db, NODES), link.id));
+          if (linkNodeDoc.exists()) {
+            const linkNodeData = linkNodeDoc.data() as INode;
+            newBatch = await updateSpecializationsInheritance(
+              linkNodeData.specializations,
+              newBatch,
+              property,
+              propertyValue,
+              ref,
+              propertyType,
+            );
+          }
         }
       }
 
@@ -484,7 +490,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     confirmIt={confirmIt}
                     saveNewChangeLog={saveNewChangeLog}
                     selectedDiffNode={selectedDiffNode}
-                    nodes={nodes}
                     getTitleNode={getTitleNode}
                     enableEdit={enableEdit}
                   />
@@ -496,7 +501,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 ) : /*    <SelectProperty
                     currentVisibleNode={currentVisibleNode}
                     property={property}
-                    nodes={nodes}
                     selectedDiffNode={selectedDiffNode}
                     currentImprovement={currentImprovement}
                     user={user}
@@ -514,7 +518,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                   <ChipsProperty
                     currentVisibleNode={currentVisibleNode}
                     property={property}
-                    nodes={nodes}
                     locked={locked}
                     currentImprovement={currentImprovement}
                     selectedDiffNode={selectedDiffNode}
@@ -528,7 +531,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     currentVisibleNode={currentNode}
                     property={property}
                     value={onGetPropertyValue(property)}
-                    nodes={nodes}
                     locked={locked}
                     selectedDiffNode={selectedDiffNode}
                     currentImprovement={currentImprovement}
@@ -605,8 +607,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       currentVisibleNode={currentNode}
                       property={property}
                       setCurrentVisibleNode={setCurrentVisibleNode}
-                      nodes={nodes}
-                      locked={locked}
+                        locked={locked}
                       selectedDiffNode={selectedDiffNode}
                       getTitleNode={getTitleNode}
                       confirmIt={confirmIt}
@@ -641,7 +642,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 confirmIt={confirmIt}
                 saveNewChangeLog={saveNewChangeLog}
                 selectedDiffNode={selectedDiffNode}
-                nodes={nodes}
                 getTitleNode={getTitleNode}
                 enableEdit={enableEdit}
               />

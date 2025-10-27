@@ -417,7 +417,7 @@ export const getGeneralizationParts = (
         if (nodes[part.id]) {
           parts.push({
             id: part.id,
-            title: await getTitle(part.id),
+            title: getTitle(part.id),
             isInherited: false,
             optional: part.optional,
           });

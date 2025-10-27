@@ -69,7 +69,7 @@ const CollectionStructure = ({
   setSnackbarMessage,
   currentVisibleNode,
   setCurrentVisibleNode,
-  nodes,
+  nodes, // Still needed to pass down to child components (LinkNode, SelectModel, etc.)
   unlinkVisible,
   editStructuredProperty,
   confirmIt,
@@ -310,7 +310,7 @@ const CollectionStructure = ({
   };
 
   const handleCollectionSorting = useCallback(
-    (e: any) => {
+    async (e: any) => {
       try {
         const sourceIndex = e.source.index;
         const destinationIndex = e.destination.index;
@@ -339,11 +339,16 @@ const CollectionStructure = ({
           nodeData.inheritance[property]?.ref
         ) {
           const nodeId = nodeData.inheritance[property].ref;
-          const inheritedNode = nodes[nodeId as string];
-
-          nodeData.properties[property] = JSON.parse(
-            JSON.stringify(inheritedNode.properties[property]),
+          // Fetch the inherited node from Firestore
+          const inheritedNodeDoc = await getDoc(
+            doc(collection(db, NODES), nodeId as string),
           );
+          if (inheritedNodeDoc.exists()) {
+            const inheritedNode = inheritedNodeDoc.data() as INode;
+            nodeData.properties[property] = JSON.parse(
+              JSON.stringify(inheritedNode.properties[property]),
+            );
+          }
         }
 
         if (property === "specializations" || property === "generalizations") {
@@ -530,7 +535,7 @@ const CollectionStructure = ({
         });
       }
     },
-    [currentVisibleNode, db, nodes, recordLogs, property],
+    [currentVisibleNode, db, recordLogs, property],
   );
 
   const addCollection = useCallback(
@@ -1301,7 +1306,7 @@ const CollectionStructure = ({
                                           ? {
                                               ...link,
                                               inheritedFrom:
-                                                nodes[inheritanceRef]?.title,
+                                                getTitle(inheritanceRef),
                                             }
                                           : link;
 
@@ -1315,7 +1320,7 @@ const CollectionStructure = ({
                                             index={index}
                                             isDragDisabled={!enableEdit}
                                           >
-                                            {async (provided) => (
+                                            {(provided) => (
                                               <LinkNode
                                                 provided={provided}
                                                 navigateToNode={navigateToNode}
@@ -1331,7 +1336,7 @@ const CollectionStructure = ({
                                                 sx={{ pl: 1 }}
                                                 link={enhancedLink}
                                                 property={property}
-                                                title={await getTitle(link.id)}
+                                                title={link.title || "..."}
                                                 nodes={nodes}
                                                 linkIndex={index}
                                                 /* unlinkVisible={unlinkVisible(

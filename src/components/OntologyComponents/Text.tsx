@@ -68,7 +68,6 @@ type ITextProps = {
   property: string;
   text: string; // Real-time text from WebSocket
   confirmIt: any;
-  nodes: any;
   setSelectTitle?: any;
   selectTitle?: any;
   locked: boolean;
@@ -111,7 +110,6 @@ const Text = ({
   navigateToNode,
   displaySidebar,
   activeSidebar,
-  nodes,
   structured = false,
   currentImprovement,
   checkDuplicateTitle,
@@ -176,7 +174,7 @@ const Text = ({
     });
 
     return () => unsubscribe();
-  }, [nodes]);
+  }, [property, user?.uname, db]);
 
   // // Maintain focus after inheritance change
   // useEffect(() => {
@@ -226,33 +224,37 @@ const Text = ({
         setSwitchToWebSocket(false);
         const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
         if (structured) {
-          const referencedNode: any = nodes[reference];
-          await updateDoc(nodeRef, {
-            [`textValue.${property}`]: copyValue,
-            [`properties.${property}`]: referencedNode.properties[property],
-            [`inheritance.${property}.ref`]: null,
-          });
+          // Fetch the referenced node from Firestore
+          const refNodeDoc = await getDoc(doc(collection(db, NODES), reference));
+          if (refNodeDoc.exists()) {
+            const referencedNode = refNodeDoc.data() as INode;
+            await updateDoc(nodeRef, {
+              [`textValue.${property}`]: copyValue,
+              [`properties.${property}`]: referencedNode.properties[property],
+              [`inheritance.${property}.ref`]: null,
+            });
 
-          if (Array.isArray(referencedNode.properties[property])) {
-            const links = referencedNode.properties[property].flatMap(
-              (c) => c.nodes,
-            );
-            if (property === "parts" || property === "isPartOf") {
-              updatePartsAndPartsOf(
-                links,
-                { id: currentVisibleNode?.id },
-                property === "parts" ? "isPartOf" : "parts",
-                db,
-                nodes,
+            if (Array.isArray(referencedNode.properties[property])) {
+              const links = referencedNode.properties[property].flatMap(
+                (c: any) => c.nodes,
               );
-            } else {
-              updatePropertyOf(
-                links,
-                { id: currentVisibleNode?.id },
-                property,
-                nodes,
-                db,
-              );
+              if (property === "parts" || property === "isPartOf") {
+                updatePartsAndPartsOf(
+                  links,
+                  { id: currentVisibleNode?.id },
+                  property === "parts" ? "isPartOf" : "parts",
+                  db,
+                  {}, // Pass empty nodes object since helpers still expect it
+                );
+              } else {
+                updatePropertyOf(
+                  links,
+                  { id: currentVisibleNode?.id },
+                  property,
+                  {}, // Pass empty nodes object since helpers still expect it
+                  db,
+                );
+              }
             }
           }
         } else {
@@ -288,7 +290,7 @@ const Text = ({
         });
       }
     },
-    [user?.uname, currentVisibleNode?.id, reference, property, db, nodes],
+    [user?.uname, currentVisibleNode?.id, reference, property, db],
   );
 
   useEffect(() => {
@@ -557,11 +559,11 @@ const Text = ({
                 currentVisibleNode={currentVisibleNode}
                 property={property}
               />
-              {currentVisibleNode.inheritance[property]?.ref && (
+              {currentVisibleNode?.inheritance?.[property]?.ref && (
                 <Typography sx={{ fontSize: "14px", ml: "9px" }}>
                   {'(Inherited from "'}
                   {getTitleNode(
-                    currentVisibleNode.inheritance[property].ref || "",
+                    currentVisibleNode?.inheritance?.[property]?.ref || "",
                   )}
                   {'")'}
                 </Typography>
@@ -647,12 +649,12 @@ const Text = ({
                 !currentImprovement &&
                 !currentVisibleNode.unclassified &&
                 currentVisibleNode.inheritance[property] && (
-                  <SelectInheritance
-                    currentVisibleNode={currentVisibleNode}
-                    property={property}
-                    nodes={nodes}
-                    enableEdit={enableEdit}
-                  />
+                  // <SelectInheritance
+                  //   currentVisibleNode={currentVisibleNode}
+                  //   property={property}
+                  //   enableEdit={enableEdit}
+                  // />
+                  ""
                 )}
             </Box>
           </Box>
@@ -729,11 +731,10 @@ const Text = ({
             )}
           </>
         )}
-        <InheritanceDetailsPanel
+        {/* <InheritanceDetailsPanel
           property={property}
           currentVisibleNode={currentVisibleNode}
-          nodes={nodes}
-        />
+        /> */}
       </Paper>
     </Slide>
   );

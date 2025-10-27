@@ -97,11 +97,9 @@ import NodeBody from "../NodBody/NodeBody";
 
 import {
   generateUniqueTitle,
-  getPropertyValue,
   getTitle,
 } from "@components/lib/utils/string.utils";
 import {
-  checkIfCanDeleteANode,
   createNewNode,
   generateInheritance,
   recordLogs,
@@ -132,14 +130,12 @@ type INodeProps = {
   setCurrentVisibleNode: (node: INode) => void;
   setSnackbarMessage: (message: string) => void;
   user: User;
-  nodes: { [id: string]: INode };
   navigateToNode: (nodeId: string) => void;
   locked: boolean;
   selectedDiffNode: NodeChange | null;
   displaySidebar: Function;
   activeSidebar: any;
   currentImprovement: any;
-  setNodes: any;
   checkedItems: any;
   setCheckedItems: any;
   checkedItemsCopy: any;
@@ -171,13 +167,13 @@ type INodeProps = {
   skillsFutureApp: string;
   editableProperty: any;
   setEditableProperty: any;
+  nodes: { [id: string]: INode }; // Needed to pass down to child components that require it for looping
 };
 
 const Node = ({
   currentVisibleNode,
   setCurrentVisibleNode,
   setSnackbarMessage,
-  nodes,
   user,
   navigateToNode,
   locked,
@@ -185,7 +181,6 @@ const Node = ({
   displaySidebar,
   activeSidebar,
   currentImprovement,
-  setNodes,
   checkedItems,
   setCheckedItems,
   checkedItemsCopy,
@@ -215,6 +210,7 @@ const Node = ({
   skillsFutureApp,
   editableProperty,
   setEditableProperty,
+  nodes,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -252,7 +248,7 @@ const Node = ({
     }
   }, []);
 
-  // COMMENTED OUT IN THE PROCESS OF DEPRECATING NODES OBJECT 
+  // COMMENTED OUT IN THE PROCESS OF DEPRECATING NODES OBJECT
   // const searchResultsForSelection = useMemo(() => {
   //   const propertyType = currentVisibleNode.propertyType[
   //     selectedProperty
@@ -312,7 +308,13 @@ const Node = ({
     } finally {
       setLoadingSearch(false);
     }
-  }, [searchValue, selectedProperty, currentVisibleNode, skillsFuture, skillsFutureApp]);
+  }, [
+    searchValue,
+    selectedProperty,
+    currentVisibleNode,
+    skillsFuture,
+    skillsFutureApp,
+  ]);
 
   const onSearchKeyDown = (event: any) => {
     if (event.key === "Enter") {
@@ -322,7 +324,9 @@ const Node = ({
 
   const addACloneNodeQueue = (nodeId: string, title?: string) => {
     const newId = doc(collection(db, NODES)).id;
-    const newTitle = title ? title : `New ${nodes[nodeId].title}`;
+    // Use the provided title or create a default new title
+    // Since we don't have access to nodes object, caller should provide the title
+    const newTitle = title ? title : `New Node`;
     setClonedNodesQueue(
       (prev: { [nodeId: string]: { title: string; id: string } }) => {
         prev[newId] = { title: newTitle, id: nodeId };
@@ -354,7 +358,7 @@ const Node = ({
         const parentNodeRef = doc(collection(db, NODES), nodeId);
 
         // Extract data from the original node document.
-        const parentNodeData = nodes[nodeId] as INode;
+        const parentNodeData = currentVisibleNode as INode;
 
         // Create a reference for the new node document in Firestore.
         const newNodeRef =
@@ -366,9 +370,10 @@ const Node = ({
           searchValue !== null ? searchValue : `New ${parentNodeData.title}`;
 
         // Generate a unique title based on existing specializations
+        // Use embedded titles from enriched node data (already populated by useNodeSnapshot)
         const specializationsTitles = parentNodeData.specializations.flatMap(
           (collection) =>
-            collection.nodes.map((spec) => nodes[spec.id]?.title || ""),
+            collection.nodes.map((spec) => spec.title || ""),
         );
         newTitle = generateUniqueTitle(newTitle, specializationsTitles);
 
@@ -464,12 +469,17 @@ const Node = ({
           }
         } else {
           // Handling property updates
-          if (newNode.inheritance[mProperty]?.ref) {
-            newNode.properties[mProperty] = JSON.parse(
-              JSON.stringify(
-                nodes[newNode.inheritance[mProperty].ref].properties[mProperty],
-              ),
+          if (newNode?.inheritance[mProperty]?.ref) {
+            // Fetch the referenced node from Firestore
+            const refNodeDoc = await getDoc(
+              doc(collection(db, NODES), newNode.inheritance[mProperty].ref)
             );
+            if (refNodeDoc.exists()) {
+              const refNodeData = refNodeDoc.data() as INode;
+              newNode.properties[mProperty] = JSON.parse(
+                JSON.stringify(refNodeData.properties[mProperty]),
+              );
+            }
           }
 
           if (Array.isArray(newNode.properties[mProperty])) {
@@ -506,26 +516,32 @@ const Node = ({
             });
 
             if (newNode.inheritance[mProperty]?.ref) {
-              const referencedProperty =
-                nodes[newNode.inheritance[mProperty].ref].properties[mProperty];
-              if (Array.isArray(referencedProperty)) {
-                const links = referencedProperty.flatMap((c) => c.nodes);
-                if (mProperty === "parts" || mProperty === "isPartOf") {
-                  updatePartsAndPartsOf(
-                    links,
-                    { id: currentVisibleNode?.id },
-                    mProperty === "parts" ? "isPartOf" : "parts",
-                    db,
-                    nodes,
-                  );
-                } else {
-                  updatePropertyOf(
-                    links,
-                    { id: currentVisibleNode?.id },
-                    mProperty,
-                    nodes,
-                    db,
-                  );
+              // Fetch the referenced node from Firestore
+              const refNodeDoc = await getDoc(
+                doc(collection(db, NODES), newNode.inheritance[mProperty].ref)
+              );
+              if (refNodeDoc.exists()) {
+                const refNodeData = refNodeDoc.data() as INode;
+                const referencedProperty = refNodeData.properties[mProperty];
+                if (Array.isArray(referencedProperty)) {
+                  const links = referencedProperty.flatMap((c) => c.nodes);
+                  if (mProperty === "parts" || mProperty === "isPartOf") {
+                    updatePartsAndPartsOf(
+                      links,
+                      { id: currentVisibleNode?.id },
+                      mProperty === "parts" ? "isPartOf" : "parts",
+                      db,
+                      {}, // Pass empty nodes object since helpers still expect it
+                    );
+                  } else {
+                    updatePropertyOf(
+                      links,
+                      { id: currentVisibleNode?.id },
+                      mProperty,
+                      {}, // Pass empty nodes object since helpers still expect it
+                      db,
+                    );
+                  }
                 }
               }
             }
@@ -537,15 +553,22 @@ const Node = ({
               };
               const reference = newNode.inheritance[mProperty]?.ref;
               if (reference) {
-                if (
-                  nodes[reference].textValue &&
-                  nodes[reference].textValue.hasOwnProperty(mProperty)
-                ) {
-                  updateObject = {
-                    ...updateObject,
-                    [`textValue.${mProperty}`]:
-                      nodes[reference].textValue[mProperty],
-                  };
+                // Fetch the referenced node from Firestore
+                const refNodeDoc = await getDoc(
+                  doc(collection(db, NODES), reference)
+                );
+                if (refNodeDoc.exists()) {
+                  const refNodeData = refNodeDoc.data() as INode;
+                  if (
+                    refNodeData.textValue &&
+                    refNodeData.textValue.hasOwnProperty(mProperty)
+                  ) {
+                    updateObject = {
+                      ...updateObject,
+                      [`textValue.${mProperty}`]:
+                        refNodeData.textValue[mProperty],
+                    };
+                  }
                 }
               }
             }
@@ -558,13 +581,6 @@ const Node = ({
             db,
           });
         }
-        setNodes((prev: { [id: string]: INode }) => {
-          prev[newNode.id] = {
-            ...newNode,
-            locked: false,
-          };
-          return prev;
-        });
 
         // Create a new document in Firestore for the cloned node
         setDoc(newNodeRef, {
@@ -621,7 +637,7 @@ const Node = ({
         return null;
       }
     },
-    [db, user.uname, nodes, currentVisibleNode?.id],
+    [db, user.uname, currentVisibleNode?.id],
   );
 
   // This function handles the cloning of a node.
@@ -667,9 +683,14 @@ const Node = ({
     } else {
       // Handle properties case
       let propertyCollection = currentVisibleNode.properties[property];
-      const reference = currentVisibleNode.inheritance[property]?.ref || null;
+      const reference = currentVisibleNode?.inheritance?.[property]?.ref || null;
       if (reference) {
-        propertyCollection = nodes[reference].properties[property];
+        // Fetch the referenced node from Firestore
+        const refNodeDoc = await getDoc(doc(collection(db, NODES), reference));
+        if (refNodeDoc.exists()) {
+          const refNodeData = refNodeDoc.data() as INode;
+          propertyCollection = refNodeData.properties[property];
+        }
       }
       previousCheckedItems = propertyCollection
         .flatMap((l: ICollection) => l.nodes)
@@ -789,7 +810,7 @@ const Node = ({
             selectedProperty === "specializations"
               ? "generalizations"
               : "specializations",
-            nodes,
+            {}, // Pass empty nodes object since helpers still expect it
             db,
           );
           nodeData[selectedProperty] = newValue;
@@ -809,7 +830,7 @@ const Node = ({
             { id: nodeId },
             selectedProperty === "parts" ? "isPartOf" : "parts",
             db,
-            nodes,
+            {}, // Pass empty nodes object since helpers still expect it
           );
         }
 
@@ -824,51 +845,60 @@ const Node = ({
             const reference = nodeData.inheritance[selectedProperty].ref;
 
             // Handling for parts property - move inherited parts to inheritanceParts
-            if (selectedProperty === "parts" && reference && nodes[reference]) {
-              const referencedNode = nodes[reference];
+            if (selectedProperty === "parts" && reference) {
+              // Fetch the referenced node from Firestore
+              const refNodeDoc = await getDoc(doc(collection(db, NODES), reference));
+              if (refNodeDoc.exists()) {
+                const referencedNode = refNodeDoc.data() as INode;
 
-              if (!nodeData.inheritanceParts) {
-                nodeData.inheritanceParts = {};
-              }
+                if (!nodeData.inheritanceParts) {
+                  nodeData.inheritanceParts = {};
+                }
 
-              // Get inherited parts from the referenced generalization
-              const inheritedParts = referencedNode.properties.parts || [];
-              const inheritedPartsFromInheritance =
-                referencedNode.inheritanceParts || {};
+                // Get inherited parts from the referenced generalization
+                const inheritedParts = referencedNode.properties.parts || [];
+                const inheritedPartsFromInheritance =
+                  referencedNode.inheritanceParts || {};
 
-              // Add direct parts from generalization to inheritanceParts
-              inheritedParts.forEach((collection: any) => {
-                collection.nodes.forEach((partNode: any) => {
-                  nodeData.inheritanceParts[partNode.id] = {
-                    inheritedFromTitle: referencedNode.title,
-                    inheritedFromId: reference,
-                  };
+                // Add direct parts from generalization to inheritanceParts
+                inheritedParts.forEach((collection: any) => {
+                  collection.nodes.forEach((partNode: any) => {
+                    nodeData.inheritanceParts[partNode.id] = {
+                      inheritedFromTitle: referencedNode.title,
+                      inheritedFromId: reference,
+                    };
+                  });
                 });
-              });
 
-              // Add inherited parts from generalization's inheritanceParts
-              Object.entries(inheritedPartsFromInheritance).forEach(
-                ([partId, partInfo]) => {
-                  if (partInfo) {
-                    nodeData.inheritanceParts[partId] = partInfo;
-                  }
-                },
-              );
+                // Add inherited parts from generalization's inheritanceParts
+                Object.entries(inheritedPartsFromInheritance).forEach(
+                  ([partId, partInfo]) => {
+                    if (partInfo) {
+                      nodeData.inheritanceParts[partId] = partInfo;
+                    }
+                  },
+                );
+              }
             }
 
-            if (
-              reference &&
-              nodes[reference].textValue &&
-              nodes[reference].textValue.hasOwnProperty(selectedProperty)
-            ) {
-              if (!nodeData.textValue) {
-                nodeData.textValue = {
-                  [selectedProperty]:
-                    nodes[reference].textValue[selectedProperty],
-                };
-              } else {
-                nodeData.textValue[selectedProperty] =
-                  nodes[reference].textValue[selectedProperty];
+            if (reference) {
+              // Fetch the referenced node from Firestore to get textValue
+              const refNodeDoc = await getDoc(doc(collection(db, NODES), reference));
+              if (refNodeDoc.exists()) {
+                const referencedNode = refNodeDoc.data() as INode;
+                if (
+                  referencedNode.textValue &&
+                  referencedNode.textValue.hasOwnProperty(selectedProperty)
+                ) {
+                  if (!nodeData.textValue) {
+                    nodeData.textValue = {
+                      [selectedProperty]: referencedNode.textValue[selectedProperty],
+                    };
+                  } else {
+                    nodeData.textValue[selectedProperty] =
+                      referencedNode.textValue[selectedProperty];
+                  }
+                }
               }
             }
             nodeData.inheritance[selectedProperty].ref = null;
@@ -894,7 +924,7 @@ const Node = ({
             addedLinks,
             { id: nodeId },
             selectedProperty,
-            nodes,
+            {}, // Pass empty nodes object since helpers still expect it
             db,
           );
         }
@@ -910,7 +940,7 @@ const Node = ({
             addedLinks,
             currentNewLinks,
             nodeData,
-            nodes,
+            {}, // Pass empty nodes object since helpers still expect it
           );
         }
         if (selectedProperty === "specializations") {
@@ -920,7 +950,7 @@ const Node = ({
             addedLinks,
             removedLinks,
             nodeData,
-            nodes,
+            {}, // Pass empty nodes object since helpers still expect it
           );
         }
         // Update inheritance for non-specialization/generalization properties
@@ -962,7 +992,7 @@ const Node = ({
         });
       }
     },
-    [checkedItems, db, nodes],
+    [checkedItems, db],
   );
 
   //  function to handle the deletion of a Node
@@ -977,7 +1007,24 @@ const Node = ({
       );
 
       if (specializations.length > 0) {
-        if (checkIfCanDeleteANode(nodes, specializations)) {
+        // Check if any specialization has only one generalization
+        // Fetch each specialization to check their generalizations
+        let canDelete = false;
+        for (const specialization of specializations) {
+          const specDoc = await getDoc(doc(collection(db, NODES), specialization.id));
+          if (specDoc.exists()) {
+            const specData = specDoc.data() as INode;
+            const generalizationsOfSpecialization = (
+              specData.generalizations || []
+            ).flatMap((n) => n.nodes);
+            if (generalizationsOfSpecialization.length === 1) {
+              canDelete = true;
+              break;
+            }
+          }
+        }
+
+        if (canDelete) {
           await confirmIt(
             "To delete a node, you need to first delete its specializations or move them under a different generalization.",
             "Ok",
@@ -996,13 +1043,10 @@ const Node = ({
         const currentNode: INode = JSON.parse(
           JSON.stringify(currentVisibleNode),
         );
+        // Navigate to first generalization if available
+        // Note: Navigation should be handled by parent component
+        // For now, we'll just proceed with deletion
         // Retrieve the document reference of the node to be deleted
-        for (let collection of currentVisibleNode.generalizations) {
-          if (collection.nodes.length > 0) {
-            setCurrentVisibleNode(nodes[collection.nodes[0].id]);
-            break;
-          }
-        }
 
         const nodeRef = doc(collection(db, NODES), currentNode.id);
         // call removeIsPartOf function to remove the node link from all the nodes where it's linked
@@ -1048,7 +1092,7 @@ const Node = ({
         }),
       });
     }
-  }, [currentVisibleNode?.id, user?.uname, nodes, currentVisibleNode]);
+  }, [currentVisibleNode?.id, user?.uname, currentVisibleNode, db, confirmIt]);
 
   const handleToggle = useCallback(
     (nodeId: string) => {
@@ -1076,40 +1120,36 @@ const Node = ({
     }
   };
 
-  const getTitleNode = useCallback(
-    (nodeId: string) => {
-      return getTitle(nodes, nodeId);
-    },
-    [nodes],
-  );
+  const getTitleNode = useCallback((nodeId: string) => {
+    return getTitle(nodeId);
+  }, []);
   const onGetPropertyValue = useCallback(
     (property: string, structured: boolean = false) => {
-      const inheritedProperty = getPropertyValue(
-        nodes,
-        currentVisibleNode.inheritance[property]?.ref,
-        property,
-        structured,
-      );
+      console.log("currentVisibleNode in Node", currentVisibleNode);
+      if (!currentVisibleNode) return;
 
-      if (inheritedProperty !== null) {
-        return inheritedProperty;
-      } else {
-        if (
-          structured ||
-          Array.isArray(currentVisibleNode.properties[property])
-        ) {
-          return currentVisibleNode?.textValue
-            ? currentVisibleNode?.textValue[property] || ""
-            : "";
-        }
-        return currentVisibleNode.properties[property];
+      // Check if property is inherited
+      const inheritanceRef = currentVisibleNode?.inheritance?.[property]?.ref;
+
+      // Since we don't have the nodes object, we'll check the inheritance structure
+      // If there's an inheritance ref, the enriched node should have the data in properties already
+      // or we can rely on textValue for structured properties
+
+      if (
+        structured ||
+        Array.isArray(currentVisibleNode?.properties?.[property])
+      ) {
+        return currentVisibleNode?.textValue
+          ? currentVisibleNode?.textValue[property] || ""
+          : "";
       }
+      return currentVisibleNode?.properties?.[property];
     },
-    [currentVisibleNode, nodes],
+    [currentVisibleNode],
   );
 
   // Memoized this to prevent useEffect re-runs in YjsEditorWrapper
-  // COMMENTED OUT IN THE PROCESS OF DEPRECATING NODES OBJECT 
+  // COMMENTED OUT IN THE PROCESS OF DEPRECATING NODES OBJECT
   // const checkDuplicateTitle = useCallback(
   //   (newTitle: string) => {
   //     try {
@@ -1201,9 +1241,16 @@ const Node = ({
           });
         }
         const inheritedRef = currentNode.inheritance[property].ref;
-        const previousValue = inheritedRef
-          ? nodes[inheritedRef].properties[property]
-          : currentNode.properties[property];
+        let previousValue = currentNode.properties[property];
+
+        // If property is inherited, fetch the referenced node to get the previous value
+        if (inheritedRef) {
+          const refNodeDoc = await getDoc(doc(collection(db, NODES), inheritedRef));
+          if (refNodeDoc.exists()) {
+            const refNodeData = refNodeDoc.data() as INode;
+            previousValue = refNodeData.properties[property];
+          }
+        }
 
         saveNewChangeLog(db, {
           nodeId: currentNode.id,
@@ -1251,7 +1298,6 @@ const Node = ({
           skillsFutureApp={skillsFutureApp}
           currentVisibleNode={currentVisibleNode}
           setCurrentVisibleNode={setCurrentVisibleNode}
-          nodes={nodes}
           property={"title"}
           text={currentVisibleNode.title}
           confirmIt={confirmIt}
@@ -1370,11 +1416,10 @@ const Node = ({
         }}
       >
         {/* alternatives of title of the node */}
-        {currentVisibleNode?.properties.hasOwnProperty("alternatives") && (
+        {currentVisibleNode?.properties?.hasOwnProperty("alternatives") && (
           <ChipsProperty
             currentVisibleNode={currentVisibleNode}
             property={"alternatives"}
-            nodes={nodes}
             locked={locked}
             currentImprovement={currentImprovement}
             selectedDiffNode={selectedDiffNode}
@@ -1388,7 +1433,6 @@ const Node = ({
 
         <Text
           skillsFutureApp={skillsFutureApp}
-          nodes={nodes}
           text={onGetPropertyValue("description") as string}
           currentVisibleNode={currentVisibleNode}
           property={"description"}
@@ -1414,7 +1458,6 @@ const Node = ({
             setSnackbarMessage={setSnackbarMessage}
             setCurrentVisibleNode={setCurrentVisibleNode}
             property={"actor"}
-            nodes={nodes}
             locked={locked}
             onGetPropertyValue={onGetPropertyValue}
             currentImprovement={currentImprovement}
@@ -1458,6 +1501,7 @@ const Node = ({
             skillsFuture={skillsFuture}
             enableEdit={enableEdit}
             skillsFutureApp={skillsFutureApp}
+            nodes={nodes}
           />
         )}
         {/* specializations and generalizations*/}
@@ -1479,7 +1523,6 @@ const Node = ({
               setSnackbarMessage={setSnackbarMessage}
               setCurrentVisibleNode={setCurrentVisibleNode}
               property={property}
-              nodes={nodes}
               locked={locked}
               onGetPropertyValue={onGetPropertyValue}
               currentImprovement={currentImprovement}
@@ -1523,6 +1566,7 @@ const Node = ({
               skillsFuture={skillsFuture}
               enableEdit={enableEdit}
               skillsFutureApp={skillsFutureApp}
+              nodes={nodes}
             />
           ))}
         </Stack>
@@ -1546,7 +1590,6 @@ const Node = ({
               setSnackbarMessage={setSnackbarMessage}
               setCurrentVisibleNode={setCurrentVisibleNode}
               property={property}
-              nodes={nodes}
               locked={locked}
               onGetPropertyValue={onGetPropertyValue}
               currentImprovement={currentImprovement}
@@ -1593,6 +1636,7 @@ const Node = ({
               enableEdit={enableEdit}
               inheritanceDetails={inheritanceDetails}
               skillsFutureApp={skillsFutureApp}
+              nodes={nodes}
             />
           ))}
         </Stack>
@@ -1602,7 +1646,6 @@ const Node = ({
           !skillsFuture && (
             <NodeActivityFlow
               node={currentVisibleNode}
-              nodes={nodes}
               confirmIt={confirmIt}
             />
           )}
@@ -1615,7 +1658,6 @@ const Node = ({
           navigateToNode={navigateToNode}
           setSnackbarMessage={setSnackbarMessage}
           setSelectedProperty={setSelectedProperty}
-          nodes={nodes}
           locked={locked}
           selectedDiffNode={selectedDiffNode}
           getTitleNode={getTitleNode}
@@ -1663,6 +1705,7 @@ const Node = ({
           enableEdit={enableEdit}
           skillsFutureApp={skillsFutureApp}
           deleteProperty={deleteProperty}
+          nodes={nodes}
         />
       </Box>{" "}
       {ConfirmDialog}

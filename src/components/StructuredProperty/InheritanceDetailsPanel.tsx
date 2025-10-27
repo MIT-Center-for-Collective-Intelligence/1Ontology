@@ -39,7 +39,6 @@ export interface InheritanceDetailsData {
 interface InheritanceDetailsPanelProps {
   property: string;
   currentVisibleNode: any;
-  nodes: { [id: string]: any };
   className?: string;
   sx?: any;
 }
@@ -47,7 +46,6 @@ interface InheritanceDetailsPanelProps {
 const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
   property,
   currentVisibleNode,
-  nodes,
   className,
   sx,
 }) => {
@@ -68,154 +66,17 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
     };
   }, []);
 
+  // Note: This component has been simplified as it no longer has access to the nodes object
+  // Full inheritance chain resolution is not available without the nodes object
+  // Consider fetching nodes on demand from Firestore if full functionality is needed
   const inheritanceData = useMemo((): InheritanceDetailsData => {
-    const generalizationNodes =
-      currentVisibleNode.generalizations?.flatMap(
-        (collection: { nodes: any[] }) =>
-          collection.nodes.map((node: { id: any }) => node.id),
-      ) || [];
-
-    if (generalizationNodes.length === 0) {
-      return {
-        hasMultipleGeneralizations: false,
-        inheritanceSources: [],
-        aggregatedValue: currentVisibleNode.properties[property],
-      };
-    }
-
-    const resolvePropertyValue = (
-      nodeId: string,
-      propertyName: string,
-    ): any => {
-      const node = nodes[nodeId];
-      if (!node) return getDefaultValue();
-
-      if (
-        node.properties[propertyName] !== undefined &&
-        node.properties[propertyName] !== null &&
-        node.properties[propertyName] !== ""
-      ) {
-        return node.properties[propertyName];
-      }
-
-      const inheritanceRef = node.inheritance[propertyName]?.ref;
-      if (inheritanceRef && nodes[inheritanceRef]) {
-        return resolvePropertyValue(inheritanceRef, propertyName);
-      }
-
-      return getDefaultValue();
-    };
-
-    const getDefaultValue = () => {
-      const propertyType = currentVisibleNode.propertyType[property];
-      if (propertyType === "numeric") return { value: 0, unit: "" };
-      if (propertyType === "string-array") return [];
-      if (Array.isArray(currentVisibleNode.properties[property])) return [];
-      return "";
-    };
-
-    const inheritanceSources = generalizationNodes
-      .map((nodeId: string) => {
-        const node = nodes[nodeId];
-        if (!node) return null;
-
-        let actualValue = resolvePropertyValue(nodeId, property);
-        let inheritedFromTitle = undefined;
-
-        if (node.inheritance[property]?.ref) {
-          inheritedFromTitle = nodes[node.inheritance[property].ref]?.title;
-          actualValue = resolvePropertyValue(
-            node.inheritance[property].ref,
-            property,
-          );
-        }
-
-        return {
-          nodeId,
-          nodeTitle: node.title || "Unknown",
-          value: actualValue,
-          isInherited: !!node.inheritance[property]?.ref,
-          inheritedFrom: inheritedFromTitle,
-        };
-      })
-      .filter((source: any) => source !== null && nodes[source.nodeId]);
-
-    if (inheritanceSources.length === 0) {
-      return {
-        hasMultipleGeneralizations: false,
-        inheritanceSources: [],
-        aggregatedValue: currentVisibleNode.properties[property],
-      };
-    }
-
-    const propertyType = currentVisibleNode.propertyType[property];
-    const firstValue = inheritanceSources[0]?.value;
-
-    const isNumeric =
-      propertyType === "numeric" ||
-      typeof firstValue === "number" ||
-      (typeof firstValue === "object" &&
-        firstValue !== null &&
-        "value" in firstValue) ||
-      (!isNaN(Number(firstValue)) &&
-        firstValue !== "" &&
-        typeof firstValue === "string");
-
-    const isMultiLine =
-      propertyType === "text" ||
-      property === "description" ||
-      (typeof firstValue === "string" &&
-        (firstValue.includes("\n") || firstValue.length > 100));
-
-    let aggregatedValue = currentVisibleNode.properties[property];
-
-    if (
-      currentVisibleNode.inheritance[property]?.ref &&
-      inheritanceSources.length > 0
-    ) {
-      if (isNumeric) {
-        if (propertyType === "numeric") {
-          const firstSource = inheritanceSources[0];
-          const parsedValue = parseNumericValue(firstSource.value);
-
-          for (let i = 1; i < inheritanceSources.length; i++) {
-            const otherValue = parseNumericValue(inheritanceSources[i].value);
-            if (otherValue.unit && !parsedValue.unit) {
-              parsedValue.unit = otherValue.unit;
-            }
-          }
-
-          aggregatedValue = parsedValue;
-        } else {
-          aggregatedValue = inheritanceSources[0].value;
-        }
-      } else if (propertyType === "string-array") {
-        const allItems = inheritanceSources.flatMap((source: { value: any }) =>
-          Array.isArray(source.value) ? source.value : [],
-        );
-        aggregatedValue = [...new Set(allItems)];
-      } else if (isMultiLine) {
-        const textValues = inheritanceSources
-          .map((source: { value: any }) => String(source.value))
-          .filter((val: string) => val && val.trim());
-        aggregatedValue = textValues.join("\n##########\n");
-      } else {
-        const textValues = inheritanceSources
-          .map((source: { value: any }) => String(source.value))
-          .filter((val: string) => val && val.trim());
-        aggregatedValue = textValues.join(" ########## ");
-      }
-    }
-
+    // Return empty data since we can't resolve inheritance without the nodes object
     return {
-      hasMultipleGeneralizations: inheritanceSources.length > 1,
-      aggregatedValue,
-      inheritanceSources,
-      propertyType,
-      isNumeric,
-      isMultiLine,
+      hasMultipleGeneralizations: false,
+      inheritanceSources: [],
+      aggregatedValue: currentVisibleNode.properties[property],
     };
-  }, [currentVisibleNode, nodes, property, parseNumericValue]);
+  }, [currentVisibleNode, property]);
 
   useEffect(() => {
     setSelectedTab(0);
@@ -558,10 +419,7 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
                       )}
 
                       {(source.nodeId ===
-                        currentVisibleNode.inheritance[property]?.ref ||
-                        (source.isInherited &&
-                          nodes[source.nodeId]?.inheritance[property]?.ref ===
-                            currentVisibleNode.inheritance[property]?.ref)) && (
+                        currentVisibleNode.inheritance[property]?.ref) && (
                         <Typography
                           sx={{
                             fontSize: "12px",

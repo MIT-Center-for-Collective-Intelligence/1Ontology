@@ -29,6 +29,7 @@ import {
   arrayRemove,
   Timestamp,
   getFirestore,
+  getDoc,
 } from "firebase/firestore";
 import {
   deleteObject,
@@ -46,6 +47,8 @@ import useDialog from "@components/lib/hooks/useConfirmDialog";
 import { INode, NodeChange } from "@components/types/INode";
 import PropertyContributors from "../StructuredProperty/PropertyContributors";
 import { updateInheritance } from "@components/lib/utils/helpers";
+import { getTitle } from "@components/lib/utils/string.utils";
+import { NODES } from "@components/lib/firestoreClient/collections";
 
 type UploadUserInfo = {
   userId: string;
@@ -77,7 +80,6 @@ type NodeImageManagerProps = {
   confirmIt: any;
   saveNewChangeLog: Function;
   selectedDiffNode: NodeChange | null;
-  nodes: { [id: string]: INode };
   getTitleNode: any;
   enableEdit: any;
 };
@@ -92,7 +94,6 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
   confirmIt,
   saveNewChangeLog,
   selectedDiffNode,
-  nodes,
   getTitleNode,
   enableEdit,
 }) => {
@@ -169,9 +170,17 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
 
         // Remove from Node's Firestore
         const nodeRef = doc(collection(firestore, nodeCollection), nodeId);
-        const reference = nodes[nodeId]?.inheritance["images"]?.ref;
+        const reference = currentVisibleNode?.inheritance["images"]?.ref;
         if (reference) {
-          let previousImages = nodes[reference].properties.images || [];
+          // Fetch the referenced node from Firestore
+          const referenceNodeDoc = await getDoc(
+            doc(collection(db, NODES), reference),
+          );
+          let previousImages: NodeImage[] = [];
+          if (referenceNodeDoc.exists()) {
+            const referenceNode = referenceNodeDoc.data() as INode;
+            previousImages = referenceNode.properties.images || [];
+          }
           previousImages = previousImages.filter(
             (img: NodeImage) => img.url !== image.url,
           );
@@ -240,17 +249,27 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
 
   useEffect(() => {
     let _images = [];
-    const reference = nodes[nodeId]?.inheritance["images"]?.ref;
-    if (!nodes[nodeId]) {
+    const reference = currentVisibleNode?.inheritance["images"]?.ref;
+    if (!currentVisibleNode) {
       return;
     }
     if (reference) {
-      _images = nodes[reference].properties.images || [];
+      // When there's an inheritance reference, fetch from Firestore
+      const fetchImages = async () => {
+        const referenceNodeDoc = await getDoc(
+          doc(collection(db, NODES), reference),
+        );
+        if (referenceNodeDoc.exists()) {
+          const referenceNode = referenceNodeDoc.data() as INode;
+          setNodeImages(referenceNode.properties.images || []);
+        }
+      };
+      fetchImages();
     } else {
-      _images = nodes[nodeId].properties.images || [];
+      _images = currentVisibleNode.properties.images || [];
+      setNodeImages(_images || []);
     }
-    setNodeImages(_images || []);
-  }, [nodes, nodeId]);
+  }, [currentVisibleNode, db]);
 
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();
@@ -328,9 +347,17 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
         uploadedImages.push(newImage);
 
         const nodeRef = doc(collection(firestore, nodeCollection), nodeId);
-        const reference = nodes[nodeId]?.inheritance["images"]?.ref;
+        const reference = currentVisibleNode?.inheritance["images"]?.ref;
         if (reference) {
-          const previousImages = nodes[reference].properties.images || [];
+          // Fetch the referenced node from Firestore
+          const referenceNodeDoc = await getDoc(
+            doc(collection(db, NODES), reference),
+          );
+          let previousImages: NodeImage[] = [];
+          if (referenceNodeDoc.exists()) {
+            const referenceNode = referenceNodeDoc.data() as INode;
+            previousImages = referenceNode.properties.images || [];
+          }
           previousImages.push(newImage);
           await updateDoc(nodeRef, {
             "properties.images": previousImages,
