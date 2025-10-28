@@ -120,7 +120,6 @@ const SearchSideBar = ({
 
   const searchQuery = useCallback(async () => {
     const fuseSearch = searchWithFuse(searchValue).slice(0, 30);
-
     try {
       setErrorSearch(false);
       setLoadingSearchResult(true);
@@ -136,6 +135,11 @@ const SearchSideBar = ({
 
       if (results.length <= 0 && fuseSearch.length > 0) {
         results.push(...fuseSearch);
+      }
+
+      const exactResult = fuseSearch[0];
+      if (exactResult && !results.some((r: any) => r.id === exactResult.id)) {
+        results.unshift({ id: exactResult.id, title: exactResult.id });
       }
 
       setSearchResults(development ? fuseSearch : results);
