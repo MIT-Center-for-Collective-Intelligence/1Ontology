@@ -138,8 +138,12 @@ const SearchSideBar = ({
       }
 
       const exactResult = fuseSearch[0];
-      if (exactResult && !results.some((r: any) => r.id === exactResult.id)) {
-        results.unshift({ id: exactResult.id, title: exactResult.id });
+      if (
+        exactResult &&
+        exactResult.title.trim() === searchValue.toLowerCase().trim() &&
+        !results.some((r: any) => r.id === exactResult.id)
+      ) {
+        results.unshift({ id: exactResult.id, title: exactResult.title });
       }
 
       setSearchResults(development ? fuseSearch : results);
