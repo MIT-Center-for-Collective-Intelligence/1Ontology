@@ -78,6 +78,7 @@ import {
   Timestamp,
   collection,
   doc,
+  documentId,
   getDocs,
   getFirestore,
   limit,
@@ -165,6 +166,76 @@ const AddContext = (nodes: any, nodesObject: any): INode[] => {
   return nodes;
 };
 
+// Helper function to extract all related node IDs from a given node
+const extractRelatedNodeIds = (node: INode): string[] => {
+  const ids = new Set<string>();
+
+  // Add the node itself
+  ids.add(node.id);
+
+  // Add generalizations
+  node.generalizations?.forEach((collection) => {
+    collection.nodes?.forEach((n) => ids.add(n.id));
+  });
+
+  // Add specializations
+  node.specializations?.forEach((collection) => {
+    collection.nodes?.forEach((n) => ids.add(n.id));
+  });
+
+  // Add all properties that reference other nodes
+  Object.values(node.properties || {}).forEach((propValue) => {
+    if (Array.isArray(propValue)) {
+      propValue.forEach((collection) => {
+        collection.nodes?.forEach((n: any) => ids.add(n.id));
+      });
+    }
+  });
+
+  // Add inheritance references
+  Object.values(node.inheritance || {}).forEach((inh: any) => {
+    if (inh?.ref) ids.add(inh.ref);
+  });
+
+  return Array.from(ids);
+};
+
+// Helper function to split array into chunks (Firestore 'in' query has 30 item limit)
+const chunkArray = <T,>(array: T[], size: number): T[][] => {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+};
+
+// Helper function to fetch a single node from Firestore
+const fetchSingleNode = async (
+  db: any,
+  nodeId: string,
+): Promise<INode | null> => {
+  try {
+    const nodeRef = doc(db, NODES, nodeId);
+    const nodeSnap = await getDocs(query(collection(db, NODES), where(documentId(), "==", nodeId), limit(1)));
+
+    if (nodeSnap.docs.length > 0) {
+      const docSnap = nodeSnap.docs[0];
+      return { id: docSnap.id, ...docSnap.data() } as INode;
+    }
+    return null;
+  } catch (error: any) {
+    console.error("Error fetching single node:", error);
+    recordLogs({
+      type: "error",
+      error: JSON.stringify({
+        name: error.name,
+        message: error.message,
+      }),
+    });
+    return null;
+  }
+};
+
 const Ontology = ({
   skillsFuture = false,
   appName,
@@ -176,7 +247,7 @@ const Ontology = ({
   const [{ emailVerified, user }] = useAuth();
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:599px)");
-  const [nodes, setNodes] = useState<{ [id: string]: INode }>({});
+  const [relatedNodes, setRelatedNodes] = useState<{ [id: string]: INode }>({});
   const [currentVisibleNode, setCurrentVisibleNode] = useState<INode | null>(
     null,
   );
@@ -185,7 +256,7 @@ const Ontology = ({
   const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [viewValue, setViewValue] = useState<number>(0);
-  const fuse = new Fuse(AddContext(Object.values(nodes), nodes), {
+  const fuse = new Fuse(AddContext(Object.values(relatedNodes), relatedNodes), {
     keys: ["title", "context.title"],
   });
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
@@ -378,7 +449,7 @@ const Ontology = ({
       // If searchedNode is null, only filter valid searches from prevSearches
       if (!searchedNode) {
         const validSearches = prevSearches.filter((node) => {
-          const nodeInNodes = nodes[node.id];
+          const nodeInNodes = relatedNodes[node.id];
           return nodeInNodes && !nodeInNodes.deleted; // Keep only non-deleted nodes
         });
 
@@ -396,7 +467,7 @@ const Ontology = ({
       const updatedSearches = [searchedNode, ...filteredSearches];
 
       const validSearches = updatedSearches.filter((node) => {
-        const nodeInNodes = nodes[node.id];
+        const nodeInNodes = relatedNodes[node.id];
         return nodeInNodes && !nodeInNodes.deleted; // Keep only non-deleted nodes
       });
 
@@ -502,7 +573,7 @@ const Ontology = ({
             const specializationsData: INode[] = [];
 
             collection.nodes.forEach((n: ILinkNode) =>
-              specializationsData.push(nodes[n.id]),
+              specializationsData.push(relatedNodes[n.id]),
             );
 
             const subPath = [...path];
@@ -544,7 +615,7 @@ const Ontology = ({
         });
       }
     },
-    [nodes],
+    [relatedNodes],
   );
 
   // This function returns a map where each nodeId maps to an array of all possible paths to that node
@@ -594,7 +665,7 @@ const Ontology = ({
           node.specializations.forEach((collection) => {
             const specializationsData: INode[] = [];
             collection.nodes.forEach((n: ILinkNode) =>
-              specializationsData.push(nodes[n.id]),
+              specializationsData.push(relatedNodes[n.id]),
             );
 
             const subPath = [...newPath];
@@ -631,11 +702,11 @@ const Ontology = ({
         });
       }
     },
-    [nodes],
+    [relatedNodes],
   );
 
   useEffect(() => {
-    const mainNodes = Object.values(nodes).filter(
+    const mainNodes = Object.values(relatedNodes).filter(
       (node: any) =>
         node.category || (typeof node.root === "boolean" && !!node.root),
     );
@@ -658,7 +729,7 @@ const Ontology = ({
         setMultipleOntologyPaths(multipleOntologyPaths);
       }
     }
-  }, [nodes]);
+  }, [relatedNodes]);
 
   // Function to generate a tree structure of specializations based on main nodes
   const getSpecializationsTree = (
@@ -697,7 +768,7 @@ const Ontology = ({
         // Filter nodes based on the current collection
         const specializations: INode[] = [];
         collection.nodes.forEach((nodeLink: { id: string }) => {
-          specializations.push(nodes[nodeLink.id]);
+          specializations.push(relatedNodes[nodeLink.id]);
         });
 
         if (collection.collectionName === "main") {
@@ -749,74 +820,121 @@ const Ontology = ({
   };
 
   useEffect(() => {
-    // Create a query for the NODES collection where "deleted" is false
-    let nodesQuery = null;
-
-    if (skillsFuture && appName) {
-      getRootNode();
-      nodesQuery = query(
-        collection(db, NODES),
-        where("deleted", "==", false),
-        where("appName", "==", appName),
-      );
-    } else {
-      nodesQuery = query(
-        collection(db, NODES),
-        where("deleted", "==", false),
-        where("skillsFuture", "==", false),
-      );
-    }
-    setLoadingNodes(true);
-    // Set up a snapshot listener to track changes in the nodes collection
-    const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
-      // Get the changes (added, modified, removed) in the snapshot
-      const docChanges = snapshot.docChanges();
-
-      // Update the state based on the changes in the nodes collection
-      setNodes((prev: any) => {
-        const _prev = { ...prev };
-        let changed = false;
-
-        for (let change of docChanges) {
-          const nodeId = change.doc.id;
-          const data = { id: nodeId, ...change.doc.data() };
-
-          if (change.type === "removed") {
-            if (nodeId in _prev) {
-              delete _prev[nodeId];
-              changed = true;
-            }
-          } else {
-            const prevNode = _prev[nodeId];
-            const isDifferent =
-              JSON.stringify(prevNode) !== JSON.stringify(data);
-            if (isDifferent) {
-              _prev[nodeId] = data;
-              changed = true;
-            }
-          }
-        }
-
-        return _prev;
-      });
-    });
-    setTimeout(() => {
+    // Only fetch nodes if we have a current visible node
+    if (!currentVisibleNode) {
+      console.log("🔵 [NEW SNAPSHOT] No current visible node, clearing nodes");
+      setRelatedNodes({});
       setLoadingNodes(false);
-    }, 4000);
-    // Unsubscribe from the snapshot listener when the component is unmounted
-    return () => unsubscribeNodes();
-  }, [db, appName]);
+      return;
+    }
+
+    console.log("🟢 [NEW SNAPSHOT] Fetching related nodes for:", currentVisibleNode.title, `(${currentVisibleNode.id})`);
+    setLoadingNodes(true);
+
+    // Extract all related node IDs from the current visible node
+    const relatedIds = extractRelatedNodeIds(currentVisibleNode);
+    console.log(`🟢 [NEW SNAPSHOT] Found ${relatedIds.length} related node IDs`);
+
+    if (relatedIds.length === 0) {
+      setRelatedNodes({});
+      setLoadingNodes(false);
+      return;
+    }
+
+    // Firestore 'in' query has a limit of 30 items, so batch if needed
+    const batches = chunkArray(relatedIds, 30);
+    console.log(`🟢 [NEW SNAPSHOT] Creating ${batches.length} batch(es) for Firestore queries`);
+    const unsubscribers: (() => void)[] = [];
+
+    // Set up snapshot listeners for each batch
+    batches.forEach((batch) => {
+      let nodesQuery;
+
+      // Build query based on app configuration
+      if (skillsFuture && appName) {
+        nodesQuery = query(
+          collection(db, NODES),
+          where(documentId(), "in", batch),
+          where("deleted", "==", false),
+          where("appName", "==", appName),
+        );
+      } else {
+        nodesQuery = query(
+          collection(db, NODES),
+          where(documentId(), "in", batch),
+          where("deleted", "==", false),
+        );
+      }
+
+      const unsubscribe = onSnapshot(
+        nodesQuery,
+        (snapshot) => {
+          console.log(`🟢 [NEW SNAPSHOT] Received ${snapshot.docChanges().length} changes from Firestore`);
+
+          // Update nodes state with changes from this batch
+          setRelatedNodes((prev) => {
+            const updated = { ...prev };
+            let addedCount = 0;
+            let modifiedCount = 0;
+            let removedCount = 0;
+
+            snapshot.docChanges().forEach((change) => {
+              const nodeId = change.doc.id;
+              const data = { id: nodeId, ...change.doc.data() } as INode;
+
+              if (change.type === "removed") {
+                delete updated[nodeId];
+                removedCount++;
+              } else {
+                const prevNode = updated[nodeId];
+                const isDifferent =
+                  JSON.stringify(prevNode) !== JSON.stringify(data);
+                if (isDifferent) {
+                  updated[nodeId] = data;
+                  if (change.type === "added") addedCount++;
+                  else modifiedCount++;
+                }
+              }
+            });
+
+            console.log(`🟢 [NEW SNAPSHOT] Updated nodes: +${addedCount} added, ~${modifiedCount} modified, -${removedCount} removed. Total in cache: ${Object.keys(updated).length}`);
+            return updated;
+          });
+
+          setLoadingNodes(false);
+        },
+        (error) => {
+          console.error("Error fetching related nodes:", error);
+          recordLogs({
+            type: "error",
+            error: JSON.stringify({
+              name: error.name,
+              message: error.message,
+            }),
+          });
+          setLoadingNodes(false);
+        }
+      );
+
+      unsubscribers.push(unsubscribe);
+    });
+
+    // Cleanup: unsubscribe from all listeners
+    return () => {
+      unsubscribers.forEach((unsub) => unsub());
+    };
+  }, [currentVisibleNode?.id, db, appName]);
 
   useEffect(() => {
     if (currentVisibleNode?.id) {
       setCurrentVisibleNode((prev) => {
-        if (nodes[currentVisibleNode?.id]) {
-          return nodes[currentVisibleNode?.id];
+        if (relatedNodes[currentVisibleNode?.id]) {
+          return relatedNodes[currentVisibleNode?.id];
         }
         return prev;
       });
     }
-  }, [nodes, appName]);
+  }, [relatedNodes, appName]);
 
   const getTreeView = ({ mainCategories, visited, path }: any): any => {
     const newNodes = [];
@@ -846,8 +964,8 @@ const Ontology = ({
       for (let collection of specializations) {
         const children = [];
         for (let _node of collection.nodes) {
-          if (nodes[_node.id]) {
-            children.push(nodes[_node.id]);
+          if (relatedNodes[_node.id]) {
+            children.push(relatedNodes[_node.id]);
           }
         }
 
@@ -911,7 +1029,7 @@ const Ontology = ({
 
   useEffect(() => {
     // Filter nodes to get only those with a defined category
-    const spreadNodes = Object.values(nodes);
+    const spreadNodes = Object.values(relatedNodes);
     let mainCategories = spreadNodes.filter(
       (node: INode) =>
         node.category || (typeof node.root === "boolean" && !!node.root),
@@ -970,22 +1088,44 @@ const Ontology = ({
     setTreeViewData(_result);
     // Set the generated tree structure for visualization
     setTreeVisualization(treeOfSpecializations);
-  }, [nodes]);
+  }, [relatedNodes]);
 
   useEffect(() => {
     // if (currentVisibleNode) return;
-    if (firstLoad) {
-      const nodeFromHash = window.location.hash.split("#").reverse()[0];
-      if (nodeFromHash && nodes[nodeFromHash]) {
-        setCurrentVisibleNode(nodes[nodeFromHash]);
-      } else if (user?.currentNode && nodes[user.currentNode]) {
-        setCurrentVisibleNode(nodes[user.currentNode]);
-      } else {
-        setCurrentVisibleNode(nodes[rootNode || "hn9pGQNxmQe9Xod5MuKK"]!);
-      }
-      firstLoad.current = false;
+    if (firstLoad.current) {
+      const loadInitialNode = async () => {
+        console.log("🔵 [INITIAL LOAD] Starting initial node load...");
+        const nodeFromHash = window.location.hash.split("#").reverse()[0];
+        let initialNodeId: string | null = null;
+
+        if (nodeFromHash) {
+          initialNodeId = nodeFromHash;
+          console.log("🔵 [INITIAL LOAD] Loading node from URL hash:", nodeFromHash);
+        } else if (user?.currentNode) {
+          initialNodeId = user.currentNode;
+          console.log("🔵 [INITIAL LOAD] Loading user's last node:", user.currentNode);
+        } else {
+          initialNodeId = rootNode || "hn9pGQNxmQe9Xod5MuKK";
+          console.log("🔵 [INITIAL LOAD] Loading default root node:", initialNodeId);
+        }
+
+        if (initialNodeId) {
+          console.log("🔵 [INITIAL LOAD] Fetching node from Firestore:", initialNodeId);
+          const node = await fetchSingleNode(db, initialNodeId);
+          if (node) {
+            console.log("🔵 [INITIAL LOAD] ✅ Successfully loaded initial node:", node.title);
+            setCurrentVisibleNode(node);
+          } else {
+            console.log("🔵 [INITIAL LOAD] ❌ Failed to fetch initial node");
+          }
+        }
+
+        firstLoad.current = false;
+      };
+
+      loadInitialNode();
     }
-  }, [user?.currentNode, rootNode]);
+  }, [user?.currentNode, rootNode, db]);
 
   // Function to update the user document with the current ontology path
   const openedANode = async (currentNode: string) => {
@@ -1018,7 +1158,7 @@ const Ontology = ({
     }
     const newExpandedSet: Set<string> = new Set();
 
-    const node = nodes[ontologyPath[ontologyPath.length - 1].id];
+    const node = relatedNodes[ontologyPath[ontologyPath.length - 1].id];
     const nodeGeneralizations = node.generalizations[0].nodes;
 
     const generalizationSet: Set<string> = new Set(
@@ -1033,7 +1173,7 @@ const Ontology = ({
 
       expandedSet.add(id);
 
-      const currentNode = nodes[id];
+      const currentNode = relatedNodes[id];
 
       if (!currentNode) return;
 
@@ -1074,7 +1214,7 @@ const Ontology = ({
   };
 
   useEffect(() => {
-    if (!currentVisibleNode?.id || !nodes[currentVisibleNode?.id]) {
+    if (!currentVisibleNode?.id) {
       return;
     }
 
@@ -1103,20 +1243,26 @@ const Ontology = ({
       // Check if a user is logged in, if not, exit the function.
       if (!user) return;
 
-      // Check if the node with the specified ID exists and is not a main node (no category).
-      if (nodes[nodeId] && !nodes[nodeId].category) {
+      // Get the node from cache or fetch it
+      let node: INode | null = relatedNodes[nodeId] || null;
+      if (!node) {
+        node = await fetchSingleNode(db, nodeId);
+      }
+
+      // Check if the node exists and is not a main node (no category).
+      if (node && !node.category) {
         // Set the currentVisibleNode as the currently selected node.
-        setCurrentVisibleNode(nodes[nodeId]);
+        setCurrentVisibleNode(node);
 
         // Record logs for the action of opening the DAGRE view for the node.
         recordLogs({
           action: "opened dagre-view",
-          itemClicked: nodes[nodeId].id,
+          itemClicked: node.id,
         });
       }
     },
-    // Dependency array includes ontologies and user, ensuring the function re-renders when these values change.
-    [nodes, user],
+    // Dependency array includes nodes, db, and user
+    [relatedNodes, db, user],
   );
 
   // Function to handle opening node tree
@@ -1136,19 +1282,25 @@ const Ontology = ({
         return newExpanded;
       }); */
 
-      // Check if node exists and has a category
-      if (nodes[nodeId] && !nodes[nodeId].category) {
+      // Get the node from cache or fetch it
+      let node: INode | null = relatedNodes[nodeId] || null;
+      if (!node) {
+        node = await fetchSingleNode(db, nodeId);
+      }
+
+      // Check if node exists and is not a category
+      if (node && !node.category) {
         // Set the currently open node
-        setCurrentVisibleNode(nodes[nodeId]);
+        setCurrentVisibleNode(node);
 
         // Record logs for the action of clicking the tree-view
         recordLogs({
           action: "clicked tree-view",
-          itemClicked: nodes[nodeId].id,
+          itemClicked: node.id,
         });
       }
     },
-    [nodes, user],
+    [relatedNodes, db, user],
   );
 
   // Function to retrieve main specializations from tree visualization data
@@ -1164,8 +1316,8 @@ const Ontology = ({
     }
 
     for (let type in mainSpecializations) {
-      if (nodes[mainSpecializations[type].id]?.nodeType) {
-        mainSpecializations[nodes[mainSpecializations[type].id].nodeType] =
+      if (relatedNodes[mainSpecializations[type].id]?.nodeType) {
+        mainSpecializations[relatedNodes[mainSpecializations[type].id].nodeType] =
           mainSpecializations[type];
       }
       delete mainSpecializations[type];
@@ -1212,18 +1364,32 @@ const Ontology = ({
         }
       }
 
-      if (nodes[nodeId]) {
-        setCurrentVisibleNode(nodes[nodeId]);
+      // Get the node from cache or fetch it
+      console.log("🟡 [NAVIGATE] Navigating to node:", nodeId);
+      let node: INode | null = relatedNodes[nodeId] || null;
+      if (!node) {
+        console.log("🟡 [NAVIGATE] Node not in cache, fetching from Firestore...");
+        node = await fetchSingleNode(db, nodeId);
+      } else {
+        console.log("🟡 [NAVIGATE] Node found in cache:", node.title);
+      }
+
+      if (node) {
+        console.log("🟡 [NAVIGATE] ✅ Setting current visible node to:", node.title);
+        setCurrentVisibleNode(node);
         initializeExpanded(eachOntologyPath[nodeId]);
         setSelectedDiffNode(null);
         setScrollTrigger((prev) => !prev);
+      } else {
+        console.log("🟡 [NAVIGATE] ❌ Failed to load node");
       }
     },
     [
       selectedProperty,
       addedElements,
       removedElements,
-      nodes,
+      relatedNodes,
+      db,
       eachOntologyPath,
       currentImprovement,
     ],
@@ -1356,98 +1522,98 @@ const Ontology = ({
     );
   };
 
-  useEffect(() => {
-    if (!currentVisibleNode) return;
+  // useEffect(() => {
+  //   if (!currentVisibleNode) return;
 
-    const _inheritanceDetails: any = {};
+  //   const _inheritanceDetails: any = {};
 
-    const _currentVisibleNode = { ...currentVisibleNode };
+  //   const _currentVisibleNode = { ...currentVisibleNode };
 
-    let parts = _currentVisibleNode?.properties.parts || [];
-    const inheritanceRef = _currentVisibleNode.inheritance["parts"]?.ref;
-    if (inheritanceRef && nodes[inheritanceRef]) {
-      parts = nodes[inheritanceRef].properties["parts"];
-    }
+  //   let parts = _currentVisibleNode?.properties.parts || [];
+  //   const inheritanceRef = _currentVisibleNode.inheritance["parts"]?.ref;
+  //   if (inheritanceRef && nodes[inheritanceRef]) {
+  //     parts = nodes[inheritanceRef].properties["parts"];
+  //   }
 
-    const generalizations = (
-      _currentVisibleNode?.generalizations || []
-    ).flatMap((c) => c.nodes);
-    const checkGeneralizations = (
-      partId: string,
-    ): { genId: string; partOf: string | null }[] | null => {
-      let inheritanceDetails: { genId: string; partOf: string | null }[] = [];
+  //   const generalizations = (
+  //     _currentVisibleNode?.generalizations || []
+  //   ).flatMap((c) => c.nodes);
+  //   const checkGeneralizations = (
+  //     partId: string,
+  //   ): { genId: string; partOf: string | null }[] | null => {
+  //     let inheritanceDetails: { genId: string; partOf: string | null }[] = [];
 
-      for (let generalization of generalizations) {
-        if (!nodes[generalization.id]) {
-          continue;
-        }
-        const refPartsId = nodes[generalization.id].inheritance["parts"].ref;
-        let generalizationParts = nodes[generalization.id]?.properties.parts;
-        if (refPartsId && nodes[refPartsId]) {
-          generalizationParts = nodes[refPartsId]?.properties.parts;
-        }
+  //     for (let generalization of generalizations) {
+  //       if (!nodes[generalization.id]) {
+  //         continue;
+  //       }
+  //       const refPartsId = nodes[generalization.id].inheritance["parts"].ref;
+  //       let generalizationParts = nodes[generalization.id]?.properties.parts;
+  //       if (refPartsId && nodes[refPartsId]) {
+  //         generalizationParts = nodes[refPartsId]?.properties.parts;
+  //       }
 
-        const partIdex = generalizationParts[0].nodes.findIndex(
-          (c) => c.id === partId,
-        );
+  //       const partIdex = generalizationParts[0].nodes.findIndex(
+  //         (c) => c.id === partId,
+  //       );
 
-        let partOfIdx: any = -1;
+  //       let partOfIdx: any = -1;
 
-        if (partIdex === -1) {
-          for (let { id } of generalizationParts[0].nodes) {
-            const specializationPart = (
-              nodes[id]?.specializations || []
-            ).flatMap((c) => c.nodes);
-            partOfIdx = specializationPart.findIndex((c) => c.id === partId);
-            if (partOfIdx !== -1) {
-              inheritanceDetails.push({
-                genId: generalization.id,
-                partOf: id,
-              });
-            }
-          }
-        }
-        if (partIdex === -1) {
-          const ontologyPathForPart = eachOntologyPath[partId] ?? [];
+  //       if (partIdex === -1) {
+  //         for (let { id } of generalizationParts[0].nodes) {
+  //           const specializationPart = (
+  //             nodes[id]?.specializations || []
+  //           ).flatMap((c) => c.nodes);
+  //           partOfIdx = specializationPart.findIndex((c) => c.id === partId);
+  //           if (partOfIdx !== -1) {
+  //             inheritanceDetails.push({
+  //               genId: generalization.id,
+  //               partOf: id,
+  //             });
+  //           }
+  //         }
+  //       }
+  //       if (partIdex === -1) {
+  //         const ontologyPathForPart = eachOntologyPath[partId] ?? [];
 
-          const exacts = generalizationParts[0].nodes.filter((n) => {
-            const findIndex = ontologyPathForPart.findIndex(
-              (d) => d.id === n.id,
-            );
-            return findIndex !== -1;
-          });
-          if (exacts.length > 0) {
-            inheritanceDetails.push({
-              genId: generalization.id,
-              partOf: exacts[0].id,
-            });
-          }
-        }
+  //         const exacts = generalizationParts[0].nodes.filter((n) => {
+  //           const findIndex = ontologyPathForPart.findIndex(
+  //             (d) => d.id === n.id,
+  //           );
+  //           return findIndex !== -1;
+  //         });
+  //         if (exacts.length > 0) {
+  //           inheritanceDetails.push({
+  //             genId: generalization.id,
+  //             partOf: exacts[0].id,
+  //           });
+  //         }
+  //       }
 
-        if (partIdex !== -1) {
-          inheritanceDetails.push({
-            genId: generalization.id,
-            partOf: generalizationParts[0].nodes[partIdex].id,
-          });
-        }
-      }
-      if (inheritanceDetails.length > 0) {
-        return inheritanceDetails;
-      }
-      return null;
-    };
+  //       if (partIdex !== -1) {
+  //         inheritanceDetails.push({
+  //           genId: generalization.id,
+  //           partOf: generalizationParts[0].nodes[partIdex].id,
+  //         });
+  //       }
+  //     }
+  //     if (inheritanceDetails.length > 0) {
+  //       return inheritanceDetails;
+  //     }
+  //     return null;
+  //   };
 
-    if (parts) {
-      for (let node of parts[0].nodes) {
-        if (nodes[node.id]) {
-          _inheritanceDetails[node.id] = checkGeneralizations(node.id);
-        }
-      }
-    }
-    setPartsInheritance(_inheritanceDetails);
-  }, [currentVisibleNode, nodes]);
+  //   if (parts) {
+  //     for (let node of parts[0].nodes) {
+  //       if (nodes[node.id]) {
+  //         _inheritanceDetails[node.id] = checkGeneralizations(node.id);
+  //       }
+  //     }
+  //   }
+  //   setPartsInheritance(_inheritanceDetails);
+  // }, [currentVisibleNode, nodes]);
 
-  if (Object.keys(nodes).length <= 0) {
+  if (Object.keys(relatedNodes).length <= 0) {
     return <FullPageLogoLoading />;
   }
 
@@ -1636,7 +1802,7 @@ const Ontology = ({
                   labelId="mobile-property-type-label"
                   value={appName}
                   onChange={(event) => {
-                    setNodes({});
+                    setRelatedNodes({});
                     const app = event.target.value.replaceAll(" ", "_");
                     router.replace(`/${app}`);
                   }}
@@ -1662,7 +1828,7 @@ const Ontology = ({
               ...SCROLL_BAR_STYLE,
             }}
           >
-            <DraggableTree
+            {/* <DraggableTree
               treeViewData={treeViewData}
               setSnackbarMessage={setSnackbarMessage}
               treeRef={treeRef}
@@ -1677,7 +1843,7 @@ const Ontology = ({
               skillsFutureApp={appName}
               multipleOntologyPaths={multipleOntologyPaths}
               eachOntologyPath={eachOntologyPath}
-            />
+            /> */}
           </Box>
         </Box>
       )}
@@ -1708,7 +1874,7 @@ const Ontology = ({
             user={user}
             openSearchedNode={openSearchedNode}
             searchWithFuse={searchWithFuse}
-            nodes={nodes}
+            nodes={relatedNodes}
             selectedDiffNode={selectedDiffNode}
             setSelectedDiffNode={setSelectedDiffNode}
             currentVisibleNode={currentVisibleNode}
@@ -1817,7 +1983,7 @@ const Ontology = ({
                       minWidth: "100%",
                     }}
                   >
-                    <DraggableTree
+                    {/* <DraggableTree
                       treeViewData={treeViewData}
                       setSnackbarMessage={setSnackbarMessage}
                       treeRef={treeRef}
@@ -1829,7 +1995,7 @@ const Ontology = ({
                       skillsFutureApp={appName}
                       multipleOntologyPaths={multipleOntologyPaths}
                       eachOntologyPath={eachOntologyPath}
-                    />
+                    /> */}
                   </Box>
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
@@ -1868,7 +2034,7 @@ const Ontology = ({
                         labelId="property-type-label"
                         value={appName}
                         onChange={(event) => {
-                          setNodes({});
+                          setRelatedNodes({});
                           const app = event.target.value.replaceAll(" ", "_");
                           router.replace(`/${app}`);
                         }}
@@ -2022,7 +2188,7 @@ const Ontology = ({
                   setSnackbarMessage={setSnackbarMessage}
                   user={user}
                   mainSpecializations={mainSpecializations}
-                  nodes={nodes}
+                  nodes={relatedNodes}
                   navigateToNode={navigateToNode}
                   eachOntologyPath={eachOntologyPath}
                   searchWithFuse={searchWithFuse}
@@ -2031,7 +2197,7 @@ const Ontology = ({
                   displaySidebar={displaySidebar}
                   activeSidebar={activeSidebar}
                   currentImprovement={currentImprovement}
-                  setNodes={setNodes}
+                  setNodes={setRelatedNodes}
                   checkedItems={checkedItems}
                   setCheckedItems={setCheckedItems}
                   checkedItemsCopy={checkedItemsCopy}
@@ -2073,7 +2239,7 @@ const Ontology = ({
               toolbarRef={toolbarRef}
               user={user}
               openSearchedNode={openSearchedNode}
-              nodes={nodes}
+              nodes={relatedNodes}
               selectedDiffNode={selectedDiffNode}
               setSelectedDiffNode={setSelectedDiffNode}
               currentVisibleNode={currentVisibleNode}
