@@ -254,18 +254,20 @@ const SearchSideBar = ({
               <SearchIcon />
             </IconButton>
           ),
-          endAdornment: searchValue && (
+          endAdornment: (searchValue || isFocused) && (
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Tooltip title={"Search in the Ontology"}>
-                <IconButton
-                  sx={{ mr: "5px" }}
-                  onClick={searchQuery}
-                  color="primary"
-                  edge="end"
-                >
-                  <SearchIcon />
-                </IconButton>
-              </Tooltip>{" "}
+              {searchValue && (
+                <Tooltip title={"Search in the Ontology"}>
+                  <IconButton
+                    sx={{ mr: "5px" }}
+                    onClick={searchQuery}
+                    color="primary"
+                    edge="end"
+                  >
+                    <SearchIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
               <IconButton
                 sx={{ mr: "5px" }}
                 onClick={clearSearch}
