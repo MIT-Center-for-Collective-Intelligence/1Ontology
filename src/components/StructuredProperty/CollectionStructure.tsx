@@ -125,6 +125,7 @@ const CollectionStructure = ({
   skillsFutureApp,
   unlinkNodeRelation,
   linkNodeRelation,
+  fetchNode,
 }: {
   model?: boolean;
   locked: boolean;
@@ -196,6 +197,7 @@ const CollectionStructure = ({
   skillsFutureApp: string;
   unlinkNodeRelation: any;
   linkNodeRelation: any;
+  fetchNode: (nodeId: string) => Promise<INode | null>;
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -1328,7 +1330,8 @@ const CollectionStructure = ({
                                                 link={enhancedLink}
                                                 property={property}
                                                 title={getTitle(nodes, link.id)}
-                                                nodes={nodes}
+                                                relatedNodes={nodes}
+                                                fetchNode={fetchNode}
                                                 linkIndex={index}
                                                 /* unlinkVisible={unlinkVisible(
                                                   link.id,
@@ -1588,7 +1591,8 @@ const CollectionStructure = ({
                               <SelectModel
                                 onSave={onSave}
                                 currentVisibleNode={currentVisibleNode}
-                                nodes={nodes}
+                                relatedNodes={nodes}
+                                fetchNode={fetchNode}
                                 handleCloseAddLinksModel={
                                   handleCloseAddLinksModel
                                 }

@@ -89,7 +89,9 @@ type IStructuredPropertyProps = {
   setSnackbarMessage: any;
   setCurrentVisibleNode: any;
   property: string;
-  nodes: { [id: string]: INode };
+  relatedNodes: { [id: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
+  addNodesToCache?: (nodes: { [id: string]: INode }, parentNodeId?: string) => void;
   locked: boolean;
   selectedDiffNode: any;
   confirmIt: any;
@@ -149,7 +151,9 @@ const StructuredProperty = ({
   setSnackbarMessage,
   setCurrentVisibleNode,
   property,
-  nodes,
+  relatedNodes,
+  fetchNode,
+  addNodesToCache,
   locked,
   selectedDiffNode,
   confirmIt,
@@ -295,7 +299,7 @@ const StructuredProperty = ({
       } else {
         result =
           getPropertyValue(
-            nodes,
+            relatedNodes,
             currentVisibleNode.inheritance[property]?.ref,
             property,
           ) || currentVisibleNode?.properties[property];
@@ -344,9 +348,9 @@ const StructuredProperty = ({
         const previousValue = JSON.parse(
           JSON.stringify(selectedDiffNode.previousValue),
         );
-        previousValue[sourceCollectionIndex].nodes[source.index].change =
+        previousValue[sourceCollectionIndex].relatedNodes[source.index].change =
           "removed";
-        previousValue[sourceCollectionIndex].nodes[source.index].changeType =
+        previousValue[sourceCollectionIndex].relatedNodes[source.index].changeType =
           "sort";
         previousValue[destinationCollectionIndex].nodes.splice(
           destination.index,
@@ -411,7 +415,7 @@ const StructuredProperty = ({
     }
   }, [
     currentVisibleNode,
-    nodes,
+    relatedNodes,
     property,
     selectedDiffNode,
     processCollectionData,
@@ -441,7 +445,7 @@ const StructuredProperty = ({
       }
       let numberOfGeneralizations = 0;
       if (property === "specializations") {
-        for (let colGeneralization of nodes[nodeId]?.generalizations || []) {
+        for (let colGeneralization of relatedNodes[nodeId]?.generalizations || []) {
           numberOfGeneralizations += colGeneralization.nodes.length;
         }
       }
@@ -456,7 +460,7 @@ const StructuredProperty = ({
     [
       propertyValue,
       property,
-      nodes,
+      relatedNodes,
       selectedDiffNode,
       newOnes,
       editableProperty,
@@ -652,7 +656,7 @@ const StructuredProperty = ({
         currentVisibleNode.inheritance.parts.ref;
       const allPartsFromRef = getGeneralizationParts(
         referencedGeneralizationId,
-        nodes,
+        relatedNodes,
       );
       allPartsFromRef.forEach((part) => {
         inheritedParts.add(part.id);
@@ -696,11 +700,11 @@ const StructuredProperty = ({
             await breakInheritanceAndCopyParts(
               currentNodeId,
               linkId,
-              nodes,
+              relatedNodes,
               user,
               skillsFutureApp,
             );
-            const inheritanceFrom = nodes[inheritedRef];
+            const inheritanceFrom = relatedNodes[inheritedRef];
 
             nodeData.properties["parts"] = JSON.parse(
               JSON.stringify(inheritanceFrom.properties["parts"]),
@@ -708,7 +712,7 @@ const StructuredProperty = ({
           } else if (inheritedRef) {
             // Existing logic for non-parts properties
             const nodeId = nodeData.inheritance[property].ref;
-            const inheritedNode = nodes[nodeId as string];
+            const inheritedNode = relatedNodes[nodeId as string];
             nodeData.properties[property] = JSON.parse(
               JSON.stringify(inheritedNode.properties[property]),
             );
@@ -796,16 +800,27 @@ const StructuredProperty = ({
             let updateObject: any = {
               [`inheritance.${property}.ref`]: null,
             };
+            // Fetch reference node if missing
+            let referenceNode = null;
+            if (reference) {
+              referenceNode = relatedNodes[reference];
+              if (!referenceNode) {
+                referenceNode = await fetchNode(reference);
+                if (!referenceNode) {
+                }
+              }
+            }
+
             if (
-              reference &&
-              nodes[reference].textValue &&
-              nodes[reference].textValue.hasOwnProperty(property) &&
+              referenceNode &&
+              referenceNode.textValue &&
+              referenceNode.textValue.hasOwnProperty(property) &&
               Array.isArray(nodeData.properties[property]) &&
               nodeData.propertyType[property] !== "string" &&
               nodeData.propertyType[property] !== "string-array"
             ) {
               const links = nodeData.properties[property].flatMap(
-                (c: any) => c.nodes,
+                (c: any) => c.relatedNodes,
               );
               if (property === "isPartOf") {
                 updatePartsAndPartsOf(
@@ -813,20 +828,20 @@ const StructuredProperty = ({
                   { id: currentVisibleNode?.id },
                   "isPartOf",
                   db,
-                  nodes,
+                  relatedNodes,
                 );
               } else {
                 updatePropertyOf(
                   links,
                   { id: currentVisibleNode?.id },
                   property,
-                  nodes,
+                  relatedNodes,
                   db,
                 );
               }
               updateObject = {
                 ...updateObject,
-                [`textValue.${property}`]: nodes[reference].textValue[property],
+                [`textValue.${property}`]: referenceNode.textValue[property],
               };
             }
             await updateDoc(nodeDoc.ref, updateObject);
@@ -875,12 +890,22 @@ const StructuredProperty = ({
     partId: string;
   }) => {
     try {
-      const nodeData = nodes[currentNodeId];
+      const nodeData = relatedNodes[currentNodeId];
 
       let parts = nodeData.properties["parts"];
       const inheritanceRefId = nodeData.inheritance["parts"].ref;
+
+      // Fetch inheritance reference if missing
       if (inheritanceRefId) {
-        parts = nodes[inheritanceRefId].properties["parts"];
+        let inheritanceRefNode: INode | null = relatedNodes[inheritanceRefId] || null;
+        if (!inheritanceRefNode) {
+          const fetchedNode = await fetchNode(inheritanceRefId);
+          if (!fetchedNode) {
+            return;
+          }
+          inheritanceRefNode = fetchedNode;
+        }
+        parts = inheritanceRefNode.properties["parts"];
       }
       const previousPartsValue = JSON.parse(JSON.stringify(parts));
       parts[0].nodes.push({
@@ -890,7 +915,7 @@ const StructuredProperty = ({
       const nodeRef = doc(collection(db, NODES), currentNodeId);
 
       const linkRef = doc(collection(db, NODES), partId);
-      const linkData = nodes[partId];
+      const linkData = relatedNodes[partId];
       const previousIsPartOfValue = JSON.parse(
         JSON.stringify(linkData.properties["isPartOf"]),
       );
@@ -944,7 +969,22 @@ const StructuredProperty = ({
       try {
         scrollToElement(partId);
         if (property === "parts" && currentVisibleNode?.id) {
-          const _propertyValue = currentVisibleNode.properties["parts"];
+          const inheritanceRef = currentVisibleNode.inheritance?.parts?.ref;
+          let _propertyValue = currentVisibleNode.properties["parts"];
+
+          // If parts are inherited, break the inheritance first
+          // Prevents the code breaking for any node that inherits its parts from a parent node
+          if (inheritanceRef && relatedNodes[inheritanceRef]) {
+            const inheritedParts = relatedNodes[inheritanceRef].properties["parts"];
+            _propertyValue = JSON.parse(JSON.stringify(inheritedParts));
+          }
+
+          // Check if _propertyValue is valid
+          // Prevents failing when new node has not laded parts yet
+          if (!_propertyValue || !Array.isArray(_propertyValue) || !_propertyValue[0]?.nodes) {
+            return;
+          }
+
           const elementIdx = _propertyValue[0].nodes.findIndex(
             (n: { id: string }) => n.id === partId,
           );
@@ -952,10 +992,16 @@ const StructuredProperty = ({
             (n: { id: string }) => n.id === newPartId,
           );
 
+          // Check if element was found
+          // Prevents error when the part no longer exists due to another user's edits
+          if (elementIdx === -1) {
+            return;
+          }
+
           if (existIdx === -1) {
             _propertyValue[0].nodes[elementIdx].id = newPartId;
             const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-            updateDoc(nodeRef, {
+            await updateDoc(nodeRef, {
               "properties.parts": _propertyValue,
             });
           }
@@ -964,7 +1010,7 @@ const StructuredProperty = ({
         console.error(error);
       }
     },
-    [currentVisibleNode?.id, db, property],
+    [currentVisibleNode?.id, currentVisibleNode?.inheritance?.parts?.ref, db, property, relatedNodes],
   );
 
   if (
@@ -1006,7 +1052,7 @@ const StructuredProperty = ({
           currentImprovement={selectedDiffNode || currentImprovement}
           property={property}
           getTitle={getTitle}
-          nodes={nodes}
+          nodes={relatedNodes}
         />
       </Paper>
     );
@@ -1259,7 +1305,7 @@ const StructuredProperty = ({
                       <SelectInheritance
                         currentVisibleNode={currentVisibleNode}
                         property={property}
-                        nodes={nodes}
+                        nodes={relatedNodes}
                         enableEdit={enableEdit}
                       />
                     )}
@@ -1269,7 +1315,7 @@ const StructuredProperty = ({
                         sx={{ fontSize: "14px", ml: "9px", color: "gray" }}
                       >
                         {'(Inherited from "'}
-                        {nodes[currentVisibleNode.inheritance[property].ref]
+                        {relatedNodes[currentVisibleNode.inheritance[property].ref]
                           ?.title || ""}
                         {'")'}
                       </Typography>
@@ -1291,7 +1337,8 @@ const StructuredProperty = ({
                 setSnackbarMessage={setSnackbarMessage}
                 currentVisibleNode={currentVisibleNode}
                 setCurrentVisibleNode={setCurrentVisibleNode}
-                nodes={nodes}
+                nodes={relatedNodes}
+                fetchNode={fetchNode}
                 unlinkVisible={unlinkVisible}
                 editStructuredProperty={editStructuredProperty}
                 confirmIt={confirmIt}
@@ -1365,10 +1412,12 @@ const StructuredProperty = ({
                 <InheritedPartsViewerEdit
                   selectedProperty={property}
                   getAllGeneralizations={() =>
-                    getAllGeneralizations(currentVisibleNode, nodes)
+                    getAllGeneralizations(currentVisibleNode, relatedNodes)
                   }
                   getGeneralizationParts={getGeneralizationParts}
-                  nodes={nodes}
+                  nodes={relatedNodes}
+                  fetchNode={fetchNode}
+                  addNodesToCache={addNodesToCache}
                   readOnly={true}
                   inheritanceDetails={inheritanceDetails}
                   currentVisibleNode={currentVisibleNode}
@@ -1406,10 +1455,11 @@ const StructuredProperty = ({
                 <InheritedPartsViewer
                   selectedProperty={property}
                   getAllGeneralizations={() =>
-                    getAllGeneralizations(currentVisibleNode, nodes)
+                    getAllGeneralizations(currentVisibleNode, relatedNodes)
                   }
                   getGeneralizationParts={getGeneralizationParts}
-                  nodes={nodes}
+                  nodes={relatedNodes}
+                  fetchNode={fetchNode}
                   readOnly={true}
                   inheritanceDetails={inheritanceDetails}
                   currentVisibleNode={currentVisibleNode}
@@ -1475,7 +1525,8 @@ const StructuredProperty = ({
             <SelectModel
               onSave={onSave}
               currentVisibleNode={currentVisibleNode}
-              nodes={nodes}
+              relatedNodes={relatedNodes}
+              fetchNode={fetchNode}
               handleCloseAddLinksModel={handleCloseAddLinksModel}
               selectedProperty={selectedProperty}
               setSearchValue={setSearchValue}

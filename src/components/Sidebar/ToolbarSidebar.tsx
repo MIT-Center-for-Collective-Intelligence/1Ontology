@@ -116,7 +116,8 @@ type MainSidebarProps = {
   user: User | null;
   openSearchedNode: Function;
   searchWithFuse: Function;
-  nodes: { [nodeId: string]: any };
+  relatedNodes: { [nodeId: string]: any };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   selectedDiffNode: any;
   setSelectedDiffNode: any;
   currentVisibleNode: any;
@@ -148,7 +149,8 @@ const ToolbarSidebar = ({
   user,
   openSearchedNode,
   searchWithFuse,
-  nodes,
+  relatedNodes,
+  fetchNode,
   selectedDiffNode,
   setSelectedDiffNode,
   currentVisibleNode,
@@ -694,7 +696,7 @@ const ToolbarSidebar = ({
           if (change.type === "added" || change.type === "modified") {
             updatedUsersData[userId] = {
               node: {
-                title: nodes[currentNode]?.title || "",
+                title: relatedNodes[currentNode]?.title || "",
                 id: currentNode,
               },
               imageUrl: data.imageUrl,
@@ -715,7 +717,7 @@ const ToolbarSidebar = ({
     });
 
     return () => unsubscribe();
-  }, [nodes]);
+  }, [relatedNodes]);
 
   const displayUserLogs = useCallback(
     (user: {
@@ -739,7 +741,7 @@ const ToolbarSidebar = ({
     if (data === null) {
       setCurrentImprovement(null);
       setSelectedDiffNode(null);
-      if (!nodes[currentVisibleNode?.id]) {
+      if (!relatedNodes[currentVisibleNode?.id]) {
         navigateToNode(previousNodeId);
       } else {
         navigateToNode(currentVisibleNode?.id);
@@ -750,7 +752,7 @@ const ToolbarSidebar = ({
 
     if (currentVisibleNode?.id !== data.nodeId) {
       setCurrentVisibleNode(
-        nodes[data.nodeId] ? nodes[data.nodeId] : data.fullNode,
+        relatedNodes[data.nodeId] ? relatedNodes[data.nodeId] : data.fullNode,
       );
     }
     const modified_property_type = data.modifiedProperty
@@ -838,13 +840,13 @@ const ToolbarSidebar = ({
   useEffect(() => {
     if (!!user?.admin) {
       const nodesByT: { [nodeTitle: string]: INode } = {};
-      for (let nodeId in nodes) {
-        const nodeTitle = nodes[nodeId].title;
-        nodesByT[nodeTitle] = nodes[nodeId];
+      for (let nodeId in relatedNodes) {
+        const nodeTitle = relatedNodes[nodeId].title;
+        nodesByT[nodeTitle] = relatedNodes[nodeId];
       }
       setNodesByTitle(nodesByT);
     }
-  }, [nodes, user]);
+  }, [relatedNodes, user]);
   const getNewNodes = (newNodes: copilotNewNode[]): any => {
     try {
       if (!user?.uname) return;
@@ -1036,13 +1038,13 @@ const ToolbarSidebar = ({
       return;
     }
     const nodeId = nodesByTitle[improvement.title]?.id;
-    if (!nodes[nodeId]) {
+    if (!relatedNodes[nodeId]) {
       return;
     }
-    if (nodes[nodeId]) {
-      setCurrentVisibleNode(nodes[nodeId]);
+    if (relatedNodes[nodeId]) {
+      setCurrentVisibleNode(relatedNodes[nodeId]);
     }
-    const result = compareImprovement(improvement, nodesByTitle, nodes);
+    const result = compareImprovement(improvement, nodesByTitle, relatedNodes);
 
     setCurrentImprovement(result);
     setTimeout(() => {
@@ -1063,7 +1065,7 @@ const ToolbarSidebar = ({
     const options = (await selectIt(
       currentVisibleNode.title,
       currentVisibleNode.nodeType,
-      nodes,
+      relatedNodes,
       currentVisibleNode?.id,
     )) as {
       model: string;
@@ -1187,7 +1189,7 @@ const ToolbarSidebar = ({
       }
 
       const improvements: Improvement[] =
-        filterProposals(newImprovements || [], nodesByTitle, nodes) || [];
+        filterProposals(newImprovements || [], nodesByTitle, relatedNodes) || [];
 
       const newNodes: {
         title: string;
@@ -1248,7 +1250,7 @@ const ToolbarSidebar = ({
             openLogsFor={openLogsFor}
             displayDiff={displayDiff}
             selectedDiffNode={selectedDiffNode}
-            nodes={nodes}
+            nodes={relatedNodes}
             appName={skillsFutureApp}
           />
         );
@@ -1259,10 +1261,6 @@ const ToolbarSidebar = ({
             user={user}
             confirmIt={confirmIt}
             searchWithFuse={searchWithFuse}
-            treeVisualization={treeVisualization}
-            expandedNodes={expandedNodes}
-            setExpandedNodes={setExpandedNodes}
-            onOpenNodesTree={onOpenNodesTree}
             navigateToNode={navigateToNode}
             chatTabs={[
               {
@@ -1273,7 +1271,8 @@ const ToolbarSidebar = ({
             ]}
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
-            nodes={nodes}
+            nodes={relatedNodes}
+            fetchNode={fetchNode}
           />
         );
       case "chat-discussion":
@@ -1283,19 +1282,16 @@ const ToolbarSidebar = ({
             user={user}
             confirmIt={confirmIt}
             searchWithFuse={searchWithFuse}
-            treeVisualization={treeVisualization}
-            expandedNodes={expandedNodes}
-            setExpandedNodes={setExpandedNodes}
-            onOpenNodesTree={onOpenNodesTree}
             navigateToNode={navigateToNode}
             chatTabs={CHAT_DISCUSSION_TABS}
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
-            nodes={nodes}
+            nodes={relatedNodes}
+            fetchNode={fetchNode}
           />
         );
       case "inheritanceSettings":
-        return <Inheritance selectedNode={currentVisibleNode} nodes={nodes} />;
+        return <Inheritance selectedNode={currentVisibleNode} nodes={relatedNodes} fetchNode={fetchNode} />;
       case "nodeHistory":
         return (
           <NodeActivity
@@ -1303,7 +1299,7 @@ const ToolbarSidebar = ({
             selectedDiffNode={selectedDiffNode}
             displayDiff={displayDiff}
             activeUsers={activeUsers}
-            nodes={nodes}
+            nodes={relatedNodes}
           />
         );
       case "improvements":
@@ -1312,7 +1308,8 @@ const ToolbarSidebar = ({
             currentImprovement={currentImprovement}
             setCurrentImprovement={setCurrentImprovement}
             currentVisibleNode={currentVisibleNode}
-            nodes={nodes}
+            relatedNodes={relatedNodes}
+            fetchNode={fetchNode}
             setCurrentVisibleNode={setCurrentVisibleNode}
             onNavigateToNode={onNavigateToNode}
             isLoadingCopilot={isLoadingCopilot}
@@ -1340,7 +1337,7 @@ const ToolbarSidebar = ({
             selectedUser={selectedUser}
             skillsFuture={skillsFuture}
             skillsFutureApp={skillsFutureApp}
-            nodes={nodes}
+            nodes={relatedNodes}
           />
         );
       default:
@@ -1563,7 +1560,7 @@ const ToolbarSidebar = ({
                     setSelectedDiffNode(null);
                     if (previousNodeId) {
                       // Checks if the node is deleted (null or undefined)
-                      if (nodes[currentVisibleNode?.id] == null) {
+                      if (relatedNodes[currentVisibleNode?.id] == null) {
                         navigateToNode(previousNodeId);
                       } else {
                         navigateToNode(currentVisibleNode?.id);
@@ -1740,7 +1737,7 @@ const ToolbarSidebar = ({
               icon={<DownloadIcon />}
               onClick={() => {
                 try {
-                  handleDownload({ nodes });
+                  handleDownload({ nodes: relatedNodes });
                 } catch (error) {
                   confirmIt("There was an error downloading the JSON!");
                 }
@@ -1769,7 +1766,7 @@ const ToolbarSidebar = ({
           </Box>
 
           <ActiveUsers
-            nodes={nodes}
+            nodes={relatedNodes}
             navigateToNode={navigateToNode}
             displayUserLogs={displayUserLogs}
             handleExpand={handleExpandSidebar}

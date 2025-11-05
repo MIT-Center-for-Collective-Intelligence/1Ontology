@@ -347,6 +347,155 @@ const Ontology = ({
     getAuth().signOut();
   };
 
+  // Memoized fetchNode helper to fetch nodes not in cache
+  const fetchNode = useCallback(
+    async (nodeId: string): Promise<INode | null> => {
+      console.log("[FETCH  NODE] Fetching node not in cache:", nodeId);
+      return await fetchSingleNode(db, nodeId);
+    },
+    [db]
+  );
+
+  const dynamicUnsubscribersRef = useRef<Map<string, () => void>>(new Map()); // Stores unsubscribe functions for each dynamically added node
+  const dynamicNodeMappingRef = useRef<Map<string, Set<string>>>(new Map()); // Used to clean up child node snapshots when navigating away from parent
+
+  // Add nodes to cache with snapshot listeners (triggered by dropdown selections in @inheritedPartsViewerEdit)
+  const addNodesToCache = useCallback(
+    (newNodes: { [id: string]: INode }, parentNodeId?: string) => {
+      console.log(`[ADD TO CACHE] Adding ${Object.keys(newNodes).length} nodes to cache with snapshots`);
+
+      // Filter out nodes already being snapshotted
+      const nodesToAdd: { [id: string]: INode } = {};
+      const nodeIdsToSnapshot: string[] = [];
+      Object.entries(newNodes).forEach(([id, node]) => {
+        if (!dynamicUnsubscribersRef.current.has(id)) {
+          nodesToAdd[id] = node;
+          nodeIdsToSnapshot.push(id);
+        }
+      });
+
+      if (Object.keys(nodesToAdd).length === 0) {
+        console.log(`[ADD TO CACHE] No new nodes to add (all already being snapshotted)`);
+        return;
+      }
+
+      // Immediately add to relatedNodes state
+      setRelatedNodes(prev => {
+        const toAdd: { [id: string]: INode } = {};
+        Object.entries(nodesToAdd).forEach(([id, node]) => {
+          if (!prev[id]) {
+            toAdd[id] = node;
+          }
+        });
+        return Object.keys(toAdd).length > 0 ? { ...prev, ...toAdd } : prev;
+      });
+      console.log(`[ADD TO CACHE] Added ${Object.keys(nodesToAdd).length} nodes to cache`);
+
+      // Set up snapshot listeners for new nodes
+      const batches = chunkArray(nodeIdsToSnapshot, 30);
+      console.log(`[ADD TO CACHE] Setting up ${batches.length} snapshot batch(es) for new nodes`);
+
+      batches.forEach((batch) => {
+        let nodesQuery;
+        if (skillsFuture && appName) {
+          nodesQuery = query(
+            collection(db, NODES),
+            where(documentId(), "in", batch),
+            where("deleted", "==", false),
+            where("appName", "==", appName),
+          );
+        } else {
+          nodesQuery = query(
+            collection(db, NODES),
+            where(documentId(), "in", batch),
+            where("deleted", "==", false),
+          );
+        }
+
+        const unsubscribe = onSnapshot(
+          nodesQuery,
+          (snapshot) => {
+            console.log(`[ADD TO CACHE] Received updates for ${snapshot.docChanges().length} cached nodes`);
+            setRelatedNodes((prev) => {
+              const updated = { ...prev };
+              snapshot.docChanges().forEach((change) => {
+                const nodeId = change.doc.id;
+                const data = { id: nodeId, ...change.doc.data() } as INode;
+                if (change.type === "removed") {
+                  delete updated[nodeId];
+                } else {
+                  updated[nodeId] = data;
+                }
+              });
+              return updated;
+            });
+          },
+          (error) => {
+            console.error("[ADD TO CACHE] Error in cached node snapshot:", error);
+          }
+        );
+
+        // Store unsubscribe function to prevent duplicate listeners for the same nodes
+        batch.forEach(nodeId => {
+          if (!dynamicUnsubscribersRef.current.has(nodeId)) {
+            dynamicUnsubscribersRef.current.set(nodeId, unsubscribe);
+          }
+        });
+      });
+
+      // Track node relationship for cleanup
+      if (parentNodeId) {
+        if (!dynamicNodeMappingRef.current.has(parentNodeId)) {
+          dynamicNodeMappingRef.current.set(parentNodeId, new Set());
+        }
+        const childSet = dynamicNodeMappingRef.current.get(parentNodeId)!;
+        nodeIdsToSnapshot.forEach(nodeId => childSet.add(nodeId));
+        console.log(`[ADD TO CACHE] Tracked ${nodeIdsToSnapshot.length} nodes under parent: ${parentNodeId}`);
+      }
+    },
+    [db, appName, skillsFuture]
+  );
+
+  // Cleanup dynamic snapshots when navigating away from a node
+  const previousVisibleNodeIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const prevNodeId = previousVisibleNodeIdRef.current;
+    const currentNodeId = currentVisibleNode?.id || null;
+
+    if (prevNodeId && prevNodeId !== currentNodeId) {
+      const childNodes = dynamicNodeMappingRef.current.get(prevNodeId);
+
+      if (childNodes && childNodes.size > 0) {
+        console.log(`[CLEANUP] Navigating away from ${prevNodeId}, cleaning up ${childNodes.size} dynamic snapshots`);
+        childNodes.forEach(nodeId => {
+          const unsubscribe = dynamicUnsubscribersRef.current.get(nodeId);
+          if (unsubscribe) {
+            unsubscribe();
+            dynamicUnsubscribersRef.current.delete(nodeId);
+          }
+        });
+
+        // Remove the parent-child mapping
+        dynamicNodeMappingRef.current.delete(prevNodeId);
+        console.log(`[CLEANUP] Cleaned up dynamic snapshots for parent: ${prevNodeId}`);
+      }
+    }
+
+    // Update the previous node ID
+    previousVisibleNodeIdRef.current = currentNodeId;
+  }, [currentVisibleNode?.id]);
+
+  // Cleanup ALL dynamic snapshots on unmount
+  useEffect(() => {
+    return () => {
+      console.log(`[CLEANUP] Component unmounting, unsubscribing from ${dynamicUnsubscribersRef.current.size} dynamic snapshot listeners`);
+      dynamicUnsubscribersRef.current.forEach((unsub) => unsub());
+      dynamicUnsubscribersRef.current.clear();
+      dynamicNodeMappingRef.current.clear();
+    };
+  }, []);
+
   const handleCloseAddLinksModel = () => {
     setCurrentVisibleNode((prev: any) => {
       const _prev = { ...prev };
@@ -819,21 +968,23 @@ const Ontology = ({
     }
   };
 
+  // Main snapshot: Extract all directly related nodes from currentVisibleNode
+  // This includes the node itself, generalizations, specializations, all properties, and inheritance reference nodes
   useEffect(() => {
     // Only fetch nodes if we have a current visible node
     if (!currentVisibleNode) {
-      console.log("🔵 [NEW SNAPSHOT] No current visible node, clearing nodes");
+      console.log("🔵 [MAIN SNAPSHOT] No current visible node, clearing nodes");
       setRelatedNodes({});
       setLoadingNodes(false);
       return;
     }
 
-    console.log("🟢 [NEW SNAPSHOT] Fetching related nodes for:", currentVisibleNode.title, `(${currentVisibleNode.id})`);
+    console.log("🟢 [MAIN SNAPSHOT] Fetching related nodes for:", currentVisibleNode.title, `(${currentVisibleNode.id})`);
     setLoadingNodes(true);
 
     // Extract all related node IDs from the current visible node
     const relatedIds = extractRelatedNodeIds(currentVisibleNode);
-    console.log(`🟢 [NEW SNAPSHOT] Found ${relatedIds.length} related node IDs`);
+    console.log(`🟢 [MAIN SNAPSHOT] Found ${relatedIds.length} related node IDs`);
 
     if (relatedIds.length === 0) {
       setRelatedNodes({});
@@ -841,9 +992,9 @@ const Ontology = ({
       return;
     }
 
-    // Firestore 'in' query has a limit of 30 items, so batch if needed
+    // Firestore query has a limit of 30 items, so batch if needed
     const batches = chunkArray(relatedIds, 30);
-    console.log(`🟢 [NEW SNAPSHOT] Creating ${batches.length} batch(es) for Firestore queries`);
+    console.log(`🟢 [MAIN SNAPSHOT] Creating ${batches.length} batch(es) for Firestore queries`);
     const unsubscribers: (() => void)[] = [];
 
     // Set up snapshot listeners for each batch
@@ -869,7 +1020,7 @@ const Ontology = ({
       const unsubscribe = onSnapshot(
         nodesQuery,
         (snapshot) => {
-          console.log(`🟢 [NEW SNAPSHOT] Received ${snapshot.docChanges().length} changes from Firestore`);
+          console.log(`🟢 [MAIN SNAPSHOT] Received ${snapshot.docChanges().length} changes from Firestore`);
 
           // Update nodes state with changes from this batch
           setRelatedNodes((prev) => {
@@ -897,7 +1048,7 @@ const Ontology = ({
               }
             });
 
-            console.log(`🟢 [NEW SNAPSHOT] Updated nodes: +${addedCount} added, ~${modifiedCount} modified, -${removedCount} removed. Total in cache: ${Object.keys(updated).length}`);
+            console.log(`🟢 [MAIN SNAPSHOT] Updated nodes: +${addedCount} added, ~${modifiedCount} modified, -${removedCount} removed. Total in cache: ${Object.keys(updated).length}`);
             return updated;
           });
 
@@ -924,6 +1075,93 @@ const Ontology = ({
       unsubscribers.forEach((unsub) => unsub());
     };
   }, [currentVisibleNode?.id, db, appName]);
+
+  // Secondary extraction: When inheritance reference nodes are loaded, extract their parts
+  // This is necessary for pre-loading part node data because inherited part IDs are stored 
+  // in the reference node, not the current node. 
+  // After INode is redesigned to include inheritedParts directly on each node, this extraction will be removed.
+  useEffect(() => {
+    if (!currentVisibleNode) return;
+
+    // Check if this node has inherited parts
+    const inheritedPartsRef = currentVisibleNode.inheritance?.parts?.ref;
+    if (!inheritedPartsRef) return;
+
+    // Check if the inheritance reference node is now in the cache
+    const inheritanceRefNode = relatedNodes[inheritedPartsRef];
+    if (!inheritanceRefNode) return;
+
+    // Extract part node IDs from the inheritance reference's parts property
+    const partsProperty = inheritanceRefNode.properties?.parts;
+    if (!Array.isArray(partsProperty)) return;
+
+    const partIds: string[] = [];
+    partsProperty.forEach((collection) => {
+      collection.nodes?.forEach((n: any) => {
+        if (n.id && !relatedNodes[n.id]) {
+          partIds.push(n.id);
+        }
+      });
+    });
+
+    if (partIds.length === 0) return;
+
+    console.log(`🟢 [SECONDARY EXTRACTION] Found ${partIds.length} inherited part node IDs to fetch`);
+
+    const batches = chunkArray(partIds, 30);
+    const unsubscribers: (() => void)[] = [];
+
+    batches.forEach((batch) => {
+      let nodesQuery;
+
+      if (skillsFuture && appName) {
+        nodesQuery = query(
+          collection(db, NODES),
+          where(documentId(), "in", batch),
+          where("deleted", "==", false),
+          where("appName", "==", appName),
+        );
+      } else {
+        nodesQuery = query(
+          collection(db, NODES),
+          where(documentId(), "in", batch),
+          where("deleted", "==", false),
+        );
+      }
+
+      const unsubscribe = onSnapshot(
+        nodesQuery,
+        (snapshot) => {
+          console.log(`🟢 [SECONDARY EXTRACTION] Received ${snapshot.docChanges().length} part nodes from Firestore`);
+
+          setRelatedNodes((prev) => {
+            const updated = { ...prev };
+            snapshot.docChanges().forEach((change) => {
+              const nodeId = change.doc.id;
+              const data = { id: nodeId, ...change.doc.data() } as INode;
+
+              if (change.type === "removed") {
+                delete updated[nodeId];
+              } else {
+                updated[nodeId] = data;
+              }
+            });
+            return updated;
+          });
+        },
+        (error) => {
+          console.error("Error fetching inherited part nodes:", error);
+        }
+      );
+
+      unsubscribers.push(unsubscribe);
+    });
+
+    // Cleanup 
+    return () => {
+      unsubscribers.forEach((unsub) => unsub());
+    };
+  }, [currentVisibleNode?.id, currentVisibleNode?.inheritance?.parts?.ref, relatedNodes[currentVisibleNode?.inheritance?.parts?.ref || ""], db, appName, skillsFuture]);
 
   useEffect(() => {
     if (currentVisibleNode?.id) {
@@ -1522,96 +1760,100 @@ const Ontology = ({
     );
   };
 
-  // useEffect(() => {
-  //   if (!currentVisibleNode) return;
+  useEffect(() => {
+    if (!currentVisibleNode) return;
 
-  //   const _inheritanceDetails: any = {};
+    const _inheritanceDetails: any = {};
 
-  //   const _currentVisibleNode = { ...currentVisibleNode };
+    const _currentVisibleNode = { ...currentVisibleNode };
 
-  //   let parts = _currentVisibleNode?.properties.parts || [];
-  //   const inheritanceRef = _currentVisibleNode.inheritance["parts"]?.ref;
-  //   if (inheritanceRef && nodes[inheritanceRef]) {
-  //     parts = nodes[inheritanceRef].properties["parts"];
-  //   }
+    let parts = _currentVisibleNode?.properties?.parts || [];
+    const inheritanceRef = _currentVisibleNode?.inheritance?.["parts"]?.ref;
+    if (inheritanceRef && relatedNodes[inheritanceRef]?.properties?.parts) {
+      parts = relatedNodes[inheritanceRef].properties.parts;
+    }
 
-  //   const generalizations = (
-  //     _currentVisibleNode?.generalizations || []
-  //   ).flatMap((c) => c.nodes);
-  //   const checkGeneralizations = (
-  //     partId: string,
-  //   ): { genId: string; partOf: string | null }[] | null => {
-  //     let inheritanceDetails: { genId: string; partOf: string | null }[] = [];
+    const generalizations = (
+      _currentVisibleNode?.generalizations || []
+    ).flatMap((c) => c.nodes);
+    const checkGeneralizations = (
+      partId: string,
+    ): { genId: string; partOf: string | null }[] | null => {
+      let inheritanceDetails: { genId: string; partOf: string | null }[] = [];
 
-  //     for (let generalization of generalizations) {
-  //       if (!nodes[generalization.id]) {
-  //         continue;
-  //       }
-  //       const refPartsId = nodes[generalization.id].inheritance["parts"].ref;
-  //       let generalizationParts = nodes[generalization.id]?.properties.parts;
-  //       if (refPartsId && nodes[refPartsId]) {
-  //         generalizationParts = nodes[refPartsId]?.properties.parts;
-  //       }
+      for (let generalization of generalizations) {
+        if (!relatedNodes[generalization.id]) {
+          continue;
+        }
+        const refPartsId = relatedNodes[generalization.id]?.inheritance?.["parts"]?.ref;
+        let generalizationParts = relatedNodes[generalization.id]?.properties?.parts;
+        if (refPartsId && relatedNodes[refPartsId]?.properties?.parts) {
+          generalizationParts = relatedNodes[refPartsId].properties.parts;
+        }
 
-  //       const partIdex = generalizationParts[0].nodes.findIndex(
-  //         (c) => c.id === partId,
-  //       );
+        if (!generalizationParts || !generalizationParts[0]) {
+          continue;
+        }
 
-  //       let partOfIdx: any = -1;
+        const partIdex = generalizationParts[0].nodes.findIndex(
+          (c) => c.id === partId,
+        );
 
-  //       if (partIdex === -1) {
-  //         for (let { id } of generalizationParts[0].nodes) {
-  //           const specializationPart = (
-  //             nodes[id]?.specializations || []
-  //           ).flatMap((c) => c.nodes);
-  //           partOfIdx = specializationPart.findIndex((c) => c.id === partId);
-  //           if (partOfIdx !== -1) {
-  //             inheritanceDetails.push({
-  //               genId: generalization.id,
-  //               partOf: id,
-  //             });
-  //           }
-  //         }
-  //       }
-  //       if (partIdex === -1) {
-  //         const ontologyPathForPart = eachOntologyPath[partId] ?? [];
+        let partOfIdx: any = -1;
 
-  //         const exacts = generalizationParts[0].nodes.filter((n) => {
-  //           const findIndex = ontologyPathForPart.findIndex(
-  //             (d) => d.id === n.id,
-  //           );
-  //           return findIndex !== -1;
-  //         });
-  //         if (exacts.length > 0) {
-  //           inheritanceDetails.push({
-  //             genId: generalization.id,
-  //             partOf: exacts[0].id,
-  //           });
-  //         }
-  //       }
+        if (partIdex === -1) {
+          for (let { id } of generalizationParts[0].nodes) {
+            const specializationPart = (
+              relatedNodes[id]?.specializations || []
+            ).flatMap((c) => c.nodes);
+            partOfIdx = specializationPart.findIndex((c) => c.id === partId);
+            if (partOfIdx !== -1) {
+              inheritanceDetails.push({
+                genId: generalization.id,
+                partOf: id,
+              });
+            }
+          }
+        }
+        if (partIdex === -1) {
+          const ontologyPathForPart = eachOntologyPath[partId] ?? [];
 
-  //       if (partIdex !== -1) {
-  //         inheritanceDetails.push({
-  //           genId: generalization.id,
-  //           partOf: generalizationParts[0].nodes[partIdex].id,
-  //         });
-  //       }
-  //     }
-  //     if (inheritanceDetails.length > 0) {
-  //       return inheritanceDetails;
-  //     }
-  //     return null;
-  //   };
+          const exacts = generalizationParts[0].nodes.filter((n) => {
+            const findIndex = ontologyPathForPart.findIndex(
+              (d) => d.id === n.id,
+            );
+            return findIndex !== -1;
+          });
+          if (exacts.length > 0) {
+            inheritanceDetails.push({
+              genId: generalization.id,
+              partOf: exacts[0].id,
+            });
+          }
+        }
 
-  //   if (parts) {
-  //     for (let node of parts[0].nodes) {
-  //       if (nodes[node.id]) {
-  //         _inheritanceDetails[node.id] = checkGeneralizations(node.id);
-  //       }
-  //     }
-  //   }
-  //   setPartsInheritance(_inheritanceDetails);
-  // }, [currentVisibleNode, nodes]);
+        if (partIdex !== -1) {
+          inheritanceDetails.push({
+            genId: generalization.id,
+            partOf: generalizationParts[0].nodes[partIdex].id,
+          });
+        }
+      }
+      if (inheritanceDetails.length > 0) {
+        return inheritanceDetails;
+      }
+      return null;
+    };
+
+    if (parts && parts[0]) {
+      for (let node of parts[0].nodes) {
+        if (relatedNodes[node.id]) {
+          _inheritanceDetails[node.id] = checkGeneralizations(node.id);
+        }
+      }
+    }
+    setPartsInheritance(_inheritanceDetails);
+  }, [currentVisibleNode, relatedNodes, eachOntologyPath]);
 
   if (Object.keys(relatedNodes).length <= 0) {
     return <FullPageLogoLoading />;
@@ -1874,7 +2116,8 @@ const Ontology = ({
             user={user}
             openSearchedNode={openSearchedNode}
             searchWithFuse={searchWithFuse}
-            nodes={relatedNodes}
+            relatedNodes={relatedNodes}
+            fetchNode={fetchNode}
             selectedDiffNode={selectedDiffNode}
             setSelectedDiffNode={setSelectedDiffNode}
             currentVisibleNode={currentVisibleNode}
@@ -2188,7 +2431,9 @@ const Ontology = ({
                   setSnackbarMessage={setSnackbarMessage}
                   user={user}
                   mainSpecializations={mainSpecializations}
-                  nodes={relatedNodes}
+                  relatedNodes={relatedNodes}
+                  fetchNode={fetchNode}
+                  addNodesToCache={addNodesToCache}
                   navigateToNode={navigateToNode}
                   eachOntologyPath={eachOntologyPath}
                   searchWithFuse={searchWithFuse}
@@ -2197,7 +2442,7 @@ const Ontology = ({
                   displaySidebar={displaySidebar}
                   activeSidebar={activeSidebar}
                   currentImprovement={currentImprovement}
-                  setNodes={setRelatedNodes}
+                  setRelatedNodes={setRelatedNodes}
                   checkedItems={checkedItems}
                   setCheckedItems={setCheckedItems}
                   checkedItemsCopy={checkedItemsCopy}
@@ -2239,7 +2484,8 @@ const Ontology = ({
               toolbarRef={toolbarRef}
               user={user}
               openSearchedNode={openSearchedNode}
-              nodes={relatedNodes}
+              relatedNodes={relatedNodes}
+              fetchNode={fetchNode}
               selectedDiffNode={selectedDiffNode}
               setSelectedDiffNode={setSelectedDiffNode}
               currentVisibleNode={currentVisibleNode}

@@ -39,7 +39,8 @@ export interface InheritanceDetailsData {
 interface InheritanceDetailsPanelProps {
   property: string;
   currentVisibleNode: any;
-  nodes: { [id: string]: any };
+  relatedNodes: { [id: string]: any };
+  fetchNode: (nodeId: string) => Promise<any | null>;
   className?: string;
   sx?: any;
 }
@@ -47,7 +48,8 @@ interface InheritanceDetailsPanelProps {
 const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
   property,
   currentVisibleNode,
-  nodes,
+  relatedNodes,
+  fetchNode,
   className,
   sx,
 }) => {
@@ -75,6 +77,15 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
           collection.nodes.map((node: { id: any }) => node.id),
       ) || [];
 
+    // Check if relatedNodes exists
+    if (!relatedNodes || Object.keys(relatedNodes).length === 0) {
+      return {
+        hasMultipleGeneralizations: false,
+        inheritanceSources: [],
+        aggregatedValue: currentVisibleNode.properties[property],
+      };
+    }
+
     if (generalizationNodes.length === 0) {
       return {
         hasMultipleGeneralizations: false,
@@ -87,7 +98,7 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
       nodeId: string,
       propertyName: string,
     ): any => {
-      const node = nodes[nodeId];
+      const node = relatedNodes[nodeId];
       if (!node) return getDefaultValue();
 
       if (
@@ -99,7 +110,7 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
       }
 
       const inheritanceRef = node.inheritance[propertyName]?.ref;
-      if (inheritanceRef && nodes[inheritanceRef]) {
+      if (inheritanceRef && relatedNodes[inheritanceRef]) {
         return resolvePropertyValue(inheritanceRef, propertyName);
       }
 
@@ -116,14 +127,14 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
 
     const inheritanceSources = generalizationNodes
       .map((nodeId: string) => {
-        const node = nodes[nodeId];
+        const node = relatedNodes[nodeId];
         if (!node) return null;
 
         let actualValue = resolvePropertyValue(nodeId, property);
         let inheritedFromTitle = undefined;
 
         if (node.inheritance[property]?.ref) {
-          inheritedFromTitle = nodes[node.inheritance[property].ref]?.title;
+          inheritedFromTitle = relatedNodes[node.inheritance[property].ref]?.title;
           actualValue = resolvePropertyValue(
             node.inheritance[property].ref,
             property,
@@ -138,7 +149,7 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
           inheritedFrom: inheritedFromTitle,
         };
       })
-      .filter((source: any) => source !== null && nodes[source.nodeId]);
+      .filter((source: any) => source !== null && relatedNodes[source.nodeId]);
 
     if (inheritanceSources.length === 0) {
       return {
@@ -215,7 +226,7 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
       isNumeric,
       isMultiLine,
     };
-  }, [currentVisibleNode, nodes, property, parseNumericValue]);
+  }, [currentVisibleNode, relatedNodes, property, parseNumericValue]);
 
   useEffect(() => {
     setSelectedTab(0);
@@ -560,7 +571,7 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
                       {(source.nodeId ===
                         currentVisibleNode.inheritance[property]?.ref ||
                         (source.isInherited &&
-                          nodes[source.nodeId]?.inheritance[property]?.ref ===
+                          relatedNodes[source.nodeId]?.inheritance[property]?.ref ===
                             currentVisibleNode.inheritance[property]?.ref)) && (
                         <Typography
                           sx={{
