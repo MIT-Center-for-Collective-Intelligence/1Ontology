@@ -108,6 +108,7 @@ import {
 } from "@components/lib/utils/copilotPrompts";
 import OntologyHistory from "../ActiveUsers/OntologyHistory";
 import { handleDownload } from "@components/lib/utils/random";
+import { getIdToken } from "@components/lib/firestoreClient/auth";
 
 type CustomSmallBadgeProps = { value: number };
 
@@ -198,6 +199,7 @@ const ToolbarSidebar = ({
   const [previousNodeId, setPreviousNodeId] = useState("");
 
   const [isLoadingCopilot, setIsLoadingCopilot] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [nodesByTitle, setNodesByTitle] = useState<{
     [nodeTitle: string]: INode;
   }>({});
@@ -1734,16 +1736,51 @@ const ToolbarSidebar = ({
             />
             <SidebarButton
               id="toolbar-theme-button"
-              icon={<DownloadIcon />}
-              onClick={() => {
+              icon={
+                isDownloading ? (
+                  <CircularProgress size={20} sx={{ color: "inherit" }} />
+                ) : (
+                  <DownloadIcon />
+                )
+              }
+              onClick={async () => {
+                if (isDownloading) return;
+                setIsDownloading(true);
                 try {
-                  handleDownload({ nodes: relatedNodes });
+                  const token = await getIdToken();
+                  const response = await fetch(
+                    `/api/download-ontology?appName=${encodeURIComponent(skillsFutureApp)}`,
+                    {
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                      },
+                    }
+                  );
+
+                  if (!response.ok) {
+                    throw new Error("Failed to download ontology");
+                  }
+
+                  const { tree } = await response.json();
+                  const blob = new Blob([JSON.stringify(tree, null, 2)], { type: "application/json" });
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement("a");
+                  link.href = url;
+                  link.download = "nodes-data.json";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  URL.revokeObjectURL(url);
                 } catch (error) {
+                  console.error("Download error:", error);
                   confirmIt("There was an error downloading the JSON!");
+                } finally {
+                  setIsDownloading(false);
                 }
               }}
               text={"Download JSON"}
               toolbarIsOpen={hovered}
+              disabled={isDownloading}
             />
 
             <SidebarButton
