@@ -268,7 +268,7 @@ const ToolbarSidebar = ({
 
   useEffect(() => {
     if (!user) return;
-    setIsExperimentalSearch(user.searchIsExperimental);
+    setIsExperimentalSearch(!!user?.searchIsExperimental);
   }, [user]);
 
   const updateUserImage = async (imageUrl: string) => {

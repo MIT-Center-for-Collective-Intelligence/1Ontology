@@ -72,6 +72,7 @@ export type User = {
   manageLock: boolean;
   copilot: boolean;
   admin: boolean;
+  searchIsExperimental?: boolean;
 };
 
 export type UserSettings = {
