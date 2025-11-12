@@ -33,6 +33,7 @@ const SearchSideBar = ({
   updateLastSearches,
   skillsFuture,
   skillsFutureApp,
+  isExperimentalSearch,
 }: {
   openSearchedNode: any;
   searchWithFuse: any;
@@ -40,11 +41,12 @@ const SearchSideBar = ({
   updateLastSearches: Function;
   skillsFuture: boolean;
   skillsFutureApp: string;
+  isExperimentalSearch: boolean;
 }) => {
   const [searchValue, setSearchValue] = useState("");
   const [isListOpen, setIsListOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<any>([]);
   const [loadingSearchResult, setLoadingSearchResult] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [searchRefreshKey, setSearchRefreshKey] = useState(0);
@@ -131,29 +133,55 @@ const SearchSideBar = ({
           })
         : { results: [] };
 
-      const results: any = [...(response.results || [])];
+      const chromaResults: any[] = [...(response.results || [])];
+      let combinedResults: any[] = [];
 
-      if (results.length <= 0 && fuseSearch.length > 0) {
-        results.push(...fuseSearch);
+      // if no API results but Fuse has matches, fallback
+      if (chromaResults.length <= 0 && fuseSearch.length > 0) {
+        chromaResults.push(...fuseSearch);
       }
 
+      // Handle exact match
       const exactResult = fuseSearch[0];
       if (
         exactResult &&
         exactResult.title.trim() === searchValue.toLowerCase().trim() &&
-        !results.some((r: any) => r.id === exactResult.id)
+        !chromaResults.some((r: any) => r.id === exactResult.id)
       ) {
-        results.unshift({ id: exactResult.id, title: exactResult.title });
+        chromaResults.unshift({ id: exactResult.id, title: exactResult.title });
       }
 
-      setSearchResults(development ? fuseSearch : results);
+      if (isExperimentalSearch) {
+        // Alternate between fuseSearch and chromaResults, avoiding duplicates
+        const seen = new Set<string>();
+        const maxLength = Math.max(fuseSearch.length, chromaResults.length);
+
+        for (let i = 0; i < maxLength; i++) {
+          const fuseItem = fuseSearch[i];
+          const chromaItem = chromaResults[i];
+
+          if (fuseItem && !seen.has(fuseItem.id)) {
+            combinedResults.push(fuseItem);
+            seen.add(fuseItem.id);
+          }
+
+          if (chromaItem && !seen.has(chromaItem.id)) {
+            combinedResults.push(chromaItem);
+            seen.add(chromaItem.id);
+          }
+        }
+      } else {
+        combinedResults = development ? fuseSearch : chromaResults;
+      }
+
+      setSearchResults(combinedResults);
     } catch (error) {
       setSearchResults(fuseSearch);
       console.error(error);
     } finally {
       setLoadingSearchResult(false);
     }
-  }, [searchValue, skillsFuture, skillsFutureApp]);
+  }, [searchValue, skillsFuture, skillsFutureApp, isExperimentalSearch]);
 
   const onKeyDown = (event: any) => {
     if (event.key === "Enter") {
@@ -301,7 +329,7 @@ const SearchSideBar = ({
       {isListOpen && !loadingSearchResult && !errorSearch && (
         <List sx={{ zIndex: 0 }}>
           {searchResults.length > 0
-            ? searchResults.map((node) => renderListItem(node))
+            ? searchResults.map((node: any) => renderListItem(node))
             : searchValue === "" &&
               lastSearches.length > 0 &&
               lastSearches.map((node) => renderListItem(node, true))}
