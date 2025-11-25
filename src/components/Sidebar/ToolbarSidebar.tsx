@@ -266,10 +266,10 @@ const ToolbarSidebar = ({
     });
   }, [db, user?.uname]);
 
-  useEffect(() => {
-    if (!user) return;
-    setIsExperimentalSearch(!!user?.searchIsExperimental);
-  }, [user]);
+  // useEffect(() => {
+  //   if (!user) return;
+  //   setIsExperimentalSearch(!!user?.searchIsExperimental);
+  // }, [user]);
 
   const updateUserImage = async (imageUrl: string) => {
     const userDoc = doc(collection(db, USERS), user?.uname);
@@ -659,7 +659,7 @@ const ToolbarSidebar = ({
                 label={
                   <Typography sx={{ fontSize: "1rem", fontWeight: 500 }}>
                     {isExperimentalSearch
-                      ? "Experimental Search"
+                      ? "Advanced Search"
                       : "Classic Search"}
                   </Typography>
                 }

@@ -247,7 +247,7 @@ const Ontology = ({
   const [specializationNumsUnder, setSpecializationNumsUnder] = useState({});
   const [editableProperty, setEditableProperty] = useState<ICollection[]>([]);
   const [rootNode, setRootNode] = useState<string | null>(null);
-  const [isExperimentalSearch, setIsExperimentalSearch] = useState(false);
+  const [isExperimentalSearch, setIsExperimentalSearch] = useState(true);
   const treeRef = useRef<TreeApi<TreeData>>(null);
 
   const firstLoad = useRef(true);
