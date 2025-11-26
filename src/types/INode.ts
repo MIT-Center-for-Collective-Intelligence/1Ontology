@@ -116,6 +116,7 @@ export type INode = {
     id: string;
     title: string;
   };
+  nodeTreeData?: NodeTreeData;
 };
 
 export type TreeVisual = {
@@ -231,6 +232,25 @@ export type TreeData = {
   comments?: boolean;
   unclassified?: boolean;
 };
+
+export interface TreeViewNode {
+  id: string;
+  nodeId: string;
+  name: string;
+  category: boolean;
+  nodeType?: string;
+  unclassified?: boolean;
+  childIds: string[];
+}
+
+export interface NodeTreeData {
+  version: string;
+  lastUpdated: number;
+  rootIds: string[];
+  nodes: { [id: string]: TreeViewNode };
+  affectedNodeIds?: string[] | null;
+  isHighImpact?: boolean;
+}
 
 /**
  * Temporary types for activity flow implementation
