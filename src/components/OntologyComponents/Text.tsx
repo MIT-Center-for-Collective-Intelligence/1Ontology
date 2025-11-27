@@ -60,6 +60,8 @@ import MarkdownEditor from "../Markdown/MarkdownEditor";
 import EditProperty from "../AddPropertyForm/EditProprety";
 import { Post } from "@components/lib/utils/Post";
 import InheritanceDetailsPanel from "../StructuredProperty/InheritanceDetailsPanel";
+import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
+import { updateNodeInTree } from "@components/lib/utils/instantTreeUpdate";
 // import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ITextProps = {
@@ -93,6 +95,7 @@ type ITextProps = {
   modifyProperty?: Function;
   deleteProperty?: Function;
   handleCloseAddLinksModel?: any;
+  onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
 };
 
 const Text = ({
@@ -125,6 +128,7 @@ const Text = ({
   modifyProperty,
   deleteProperty,
   handleCloseAddLinksModel,
+  onInstantTreeUpdate,
 }: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -213,8 +217,17 @@ const Text = ({
           update: true,
         });
       }
+
+      // Queue tree update after text change (especially important for title changes)
+      if (property === "title" && nodeId) {
+        // Instant update: Update node title in tree immediately
+        if (onInstantTreeUpdate) {
+          onInstantTreeUpdate((tree) => updateNodeInTree(tree, nodeId, { name: newValue }));
+        }
+        await queueTreeUpdate(nodeId, skillsFutureApp);
+      }
     },
-    [db, property, user],
+    [db, property, user, skillsFutureApp, onInstantTreeUpdate],
   );
 
   const onSaveTextChange = useCallback(

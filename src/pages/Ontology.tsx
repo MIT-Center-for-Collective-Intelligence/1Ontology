@@ -309,9 +309,9 @@ const Ontology = ({
     new Set(),
   );
   const [addedElements, setAddedElements] = useState<Set<string>>(new Set());
-  const [treeViewData, setTreeViewData] = useState([]);
   const [loadingNodes, setLoadingNodes] = useState(false);
   const [partsInheritance, setPartsInheritance] = useState<any>({});
+  const [currentNodeTreeData, setCurrentNodeTreeData] = useState<TreeData[]>([]);
 
   const [scrollTrigger, setScrollTrigger] = useState(false);
   const [enableEdit, setEnableEdit] = useState(false);
@@ -327,6 +327,29 @@ const Ontology = ({
   const [mobileTreeOpen, setMobileTreeOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  // Track instant updates to prevent overwriting with stale data
+  const [hasInstantUpdate, setHasInstantUpdate] = useState(false);
+  const instantUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Instant tree update callback for instant UI feedback
+  const handleInstantTreeUpdate = useCallback((
+    updateFn: (treeData: TreeData[]) => TreeData[]
+  ) => {
+    setHasInstantUpdate(true);
+    if (instantUpdateTimeoutRef.current) {
+      clearTimeout(instantUpdateTimeoutRef.current);
+    }
+    instantUpdateTimeoutRef.current = setTimeout(() => {
+      console.log("[INSTANT UPDATE] Timeout - clearing instant update flag");
+      setHasInstantUpdate(false);
+    }, 30000);
+
+    setCurrentNodeTreeData(prevTree => {
+      const newTree = updateFn(prevTree);
+      console.log("[INSTANT UPDATE] Tree updated locally");
+      return newTree;
+    });
+  }, []);
   // Auto-focus search input on mobile search open
   useEffect(() => {
     if (mobileSearchOpen && isMobile) {
@@ -418,15 +441,17 @@ const Ontology = ({
             console.log(`[ADD TO CACHE] Received updates for ${snapshot.docChanges().length} cached nodes`);
             setRelatedNodes((prev) => {
               const updated = { ...prev };
+
               snapshot.docChanges().forEach((change) => {
                 const nodeId = change.doc.id;
-                const data = { id: nodeId, ...change.doc.data() } as INode;
+
                 if (change.type === "removed") {
                   delete updated[nodeId];
                 } else {
-                  updated[nodeId] = data;
+                  updated[nodeId] = { id: nodeId, ...change.doc.data() } as INode;
                 }
               });
+
               return updated;
             });
           },
@@ -493,6 +518,11 @@ const Ontology = ({
       dynamicUnsubscribersRef.current.forEach((unsub) => unsub());
       dynamicUnsubscribersRef.current.clear();
       dynamicNodeMappingRef.current.clear();
+
+      // Cleanup instant update timeout
+      if (instantUpdateTimeoutRef.current) {
+        clearTimeout(instantUpdateTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -1022,7 +1052,6 @@ const Ontology = ({
         (snapshot) => {
           console.log(`🟢 [MAIN SNAPSHOT] Received ${snapshot.docChanges().length} changes from Firestore`);
 
-          // Update nodes state with changes from this batch
           setRelatedNodes((prev) => {
             const updated = { ...prev };
             let addedCount = 0;
@@ -1031,20 +1060,14 @@ const Ontology = ({
 
             snapshot.docChanges().forEach((change) => {
               const nodeId = change.doc.id;
-              const data = { id: nodeId, ...change.doc.data() } as INode;
 
               if (change.type === "removed") {
                 delete updated[nodeId];
                 removedCount++;
               } else {
-                const prevNode = updated[nodeId];
-                const isDifferent =
-                  JSON.stringify(prevNode) !== JSON.stringify(data);
-                if (isDifferent) {
-                  updated[nodeId] = data;
-                  if (change.type === "added") addedCount++;
-                  else modifiedCount++;
-                }
+                updated[nodeId] = { id: nodeId, ...change.doc.data() } as INode;
+                if (change.type === "added") addedCount++;
+                else modifiedCount++;
               }
             });
 
@@ -1077,8 +1100,8 @@ const Ontology = ({
   }, [currentVisibleNode?.id, db, appName]);
 
   // Secondary extraction: When inheritance reference nodes are loaded, extract their parts
-  // This is necessary for pre-loading part node data because inherited part IDs are stored 
-  // in the reference node, not the current node. 
+  // This is necessary for pre-loading part node data because inherited part IDs are stored
+  // in the reference node, not the current node.
   // After INode is redesigned to include inheritedParts directly on each node, this extraction will be removed.
   useEffect(() => {
     if (!currentVisibleNode) return;
@@ -1136,16 +1159,17 @@ const Ontology = ({
 
           setRelatedNodes((prev) => {
             const updated = { ...prev };
+
             snapshot.docChanges().forEach((change) => {
               const nodeId = change.doc.id;
-              const data = { id: nodeId, ...change.doc.data() } as INode;
 
               if (change.type === "removed") {
                 delete updated[nodeId];
               } else {
-                updated[nodeId] = data;
+                updated[nodeId] = { id: nodeId, ...change.doc.data() } as INode;
               }
             });
+
             return updated;
           });
         },
@@ -1157,7 +1181,7 @@ const Ontology = ({
       unsubscribers.push(unsubscribe);
     });
 
-    // Cleanup 
+    // Cleanup
     return () => {
       unsubscribers.forEach((unsub) => unsub());
     };
@@ -1317,13 +1341,6 @@ const Ontology = ({
       setSpecializationNumsUnder(specNums);
     }
 
-    const _result = getTreeView({
-      mainCategories,
-      visited: new Map(),
-      path: [],
-    });
-
-    setTreeViewData(_result);
     // Set the generated tree structure for visualization
     setTreeVisualization(treeOfSpecializations);
   }, [relatedNodes]);
@@ -1459,10 +1476,8 @@ const Ontology = ({
     openedANode(currentVisibleNode?.id);
 
     // Check if this is a root node - if so, skip initializeExpanded to prevent scrolling
-    const isRootNode =
-      eachOntologyPath[currentVisibleNode?.id] &&
-      eachOntologyPath[currentVisibleNode?.id].length === 1;
-
+    const isRootNode = currentVisibleNode.category || (typeof currentVisibleNode.root === "boolean" && !!currentVisibleNode.root);
+    console.log(`${currentVisibleNode.title}, isRootNode - ${isRootNode}`)
     if (expandedNodes.size === 0 && !isRootNode) {
       initializeExpanded(eachOntologyPath[currentVisibleNode?.id]);
     }
@@ -1759,6 +1774,71 @@ const Ontology = ({
       tokens2.every((token) => tokens1.includes(token))
     );
   };
+
+  // Extract current node's tree data from nodeTreeData field
+  useEffect(() => {
+    console.log("[LOCAL TREE] Current node:", currentVisibleNode?.title);
+    console.log("[LOCAL TREE] Has nodeTreeData:", !!currentVisibleNode?.nodeTreeData);
+    console.log("[LOCAL TREE] Has instant update:", hasInstantUpdate);
+
+    // Skip rebuilding if we have instant updates pending
+    if (hasInstantUpdate) {
+      console.log("[LOCAL TREE] Skipping rebuild - has instant updates");
+      const backendTimestamp = currentVisibleNode?.nodeTreeData?.lastUpdated;
+      if (backendTimestamp) {
+        const timeSinceUpdate = Date.now() - backendTimestamp;
+        if (timeSinceUpdate < 5000) {
+          console.log("[LOCAL TREE] Backend data is fresh - clearing instant update flag");
+          setHasInstantUpdate(false);
+          if (instantUpdateTimeoutRef.current) {
+            clearTimeout(instantUpdateTimeoutRef.current);
+            instantUpdateTimeoutRef.current = null;
+          }
+        } else {
+          return; // Keep instant updates
+        }
+      } else {
+        return; // Keep instant updates
+      }
+    }
+
+    if (!currentVisibleNode?.nodeTreeData) {
+      setCurrentNodeTreeData([]);
+      return;
+    }
+
+    const nodeTreeData = currentVisibleNode.nodeTreeData;
+
+    // Log all node titles in nodeTreeData - TO BE REMOVED
+    const allNodeTitles = Object.values(nodeTreeData.nodes || {}).map(node => node.name);
+    console.log("[LOCAL TREE] All node titles in tree:", allNodeTitles);
+    console.log("[LOCAL TREE] Building local tree with data:", {
+      rootCount: nodeTreeData.rootIds?.length,
+      nodeCount: Object.keys(nodeTreeData.nodes || {}).length,
+    });
+
+    // Reconstruct hierarchical tree from flat structure (same as global tree)
+    const reconstructTree = (nodeIds: string[]): TreeData[] => {
+      return nodeIds.map(nodeId => {
+        const node = nodeTreeData.nodes[nodeId];
+        if (!node) return null;
+
+        return {
+          id: node.id,
+          nodeId: node.nodeId,
+          name: node.name,
+          nodeType: node.nodeType,
+          category: node.category,
+          unclassified: node.unclassified,
+          children: node.childIds ? reconstructTree(node.childIds) : [],
+        };
+      }).filter(Boolean) as TreeData[];
+    };
+
+    const hierarchicalTree = reconstructTree(nodeTreeData.rootIds || []);
+    console.log("[LOCAL TREE] Built tree with", hierarchicalTree.length, "root nodes");
+    setCurrentNodeTreeData(hierarchicalTree);
+  }, [currentVisibleNode?.id, currentVisibleNode?.nodeTreeData, hasInstantUpdate]);
 
   useEffect(() => {
     if (!currentVisibleNode) return;
@@ -2226,19 +2306,18 @@ const Ontology = ({
                       minWidth: "100%",
                     }}
                   >
-                    {/* <DraggableTree
-                      treeViewData={treeViewData}
+                    <DraggableTree
+                      treeViewData={currentNodeTreeData}
                       setSnackbarMessage={setSnackbarMessage}
                       treeRef={treeRef}
                       currentVisibleNode={currentVisibleNode}
-                      nodes={nodes}
+                      nodes={relatedNodes}
                       onOpenNodesTree={onOpenNodesTree}
                       skillsFuture={skillsFuture}
                       specializationNumsUnder={specializationNumsUnder}
                       skillsFutureApp={appName}
-                      multipleOntologyPaths={multipleOntologyPaths}
-                      eachOntologyPath={eachOntologyPath}
-                    /> */}
+                      onInstantTreeUpdate={handleInstantTreeUpdate}
+                    />
                   </Box>
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
@@ -2472,6 +2551,7 @@ const Ontology = ({
                   skillsFutureApp={appName ?? null}
                   editableProperty={editableProperty}
                   setEditableProperty={setEditableProperty}
+                  onInstantTreeUpdate={handleInstantTreeUpdate}
                 />
               )}
             </Box>

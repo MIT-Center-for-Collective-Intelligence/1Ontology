@@ -49,6 +49,7 @@ import {
 } from "@hello-pangea/dnd";
 import { LoadingButton } from "@mui/lab";
 import SelectModel from "../Models/SelectModel";
+import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
 
 interface LoadMoreNode extends ILinkNode {
   id: string;
@@ -126,6 +127,7 @@ const CollectionStructure = ({
   unlinkNodeRelation,
   linkNodeRelation,
   fetchNode,
+  onInstantTreeUpdate,
 }: {
   model?: boolean;
   locked: boolean;
@@ -198,6 +200,7 @@ const CollectionStructure = ({
   unlinkNodeRelation: any;
   linkNodeRelation: any;
   fetchNode: (nodeId: string) => Promise<INode | null>;
+  onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
 }) => {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -506,6 +509,123 @@ const CollectionStructure = ({
             ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
 
+          // Queue tree update after sorting elements
+          if (currentVisibleNode?.id) {
+            // Instant update: Reorder children in tree to reflect collection changes
+            if (onInstantTreeUpdate) {
+              onInstantTreeUpdate((tree) => {
+                // Helper to find and update the current node's children in the tree
+                const updateTreeNode = (nodes: any[]): any[] => {
+                  return nodes.map(node => {
+                    // Find the current visible node in the tree
+                    if (node.nodeId === currentVisibleNode.id) {
+                      if (!node.children) return node;
+
+                      // Get source and destination collection names
+                      const sourceCollName = propertyValue[sourceCollectionIndex]?.collectionName;
+                      const destCollName = propertyValue[destinationCollectionIndex]?.collectionName;
+
+                      if (!sourceCollName || !destCollName) return node;
+
+                      // Case 1: Same collection - just reorder
+                      if (sourceCollectionIndex === destinationCollectionIndex) {
+                        // Find the collection in the tree
+                        if (sourceCollName === "main") {
+                          // Main collection children are direct children
+                          const childIndex = node.children.findIndex((c: any) => c.nodeId === draggableId);
+                          if (childIndex !== -1) {
+                            const newChildren = [...node.children];
+                            const [movedChild] = newChildren.splice(childIndex, 1);
+                            newChildren.splice(destination.index, 0, movedChild);
+                            return { ...node, children: newChildren };
+                          }
+                        } else {
+                          // Find collection node like "[collectionName]"
+                          const collectionNode = node.children.find((c: any) => c.name === `[${sourceCollName}]`);
+                          if (collectionNode && collectionNode.children) {
+                            const childIndex = collectionNode.children.findIndex((c: any) => c.nodeId === draggableId);
+                            if (childIndex !== -1) {
+                              const newCollChildren = [...collectionNode.children];
+                              const [movedChild] = newCollChildren.splice(childIndex, 1);
+                              newCollChildren.splice(destination.index, 0, movedChild);
+                              const updatedCollNode = { ...collectionNode, children: newCollChildren };
+                              const newChildren = node.children.map((c: any) =>
+                                c.name === `[${sourceCollName}]` ? updatedCollNode : c
+                              );
+                              return { ...node, children: newChildren };
+                            }
+                          }
+                        }
+                      } else {
+                        // Case 2: Different collections - move between them
+                        let movedChild: any = null;
+                        let newChildren = [...node.children];
+
+                        // Remove from source
+                        if (sourceCollName === "main") {
+                          const childIndex = newChildren.findIndex((c: any) => c.nodeId === draggableId);
+                          if (childIndex !== -1) {
+                            [movedChild] = newChildren.splice(childIndex, 1);
+                          }
+                        } else {
+                          const sourceCollNode = newChildren.find((c: any) => c.name === `[${sourceCollName}]`);
+                          if (sourceCollNode && sourceCollNode.children) {
+                            const childIndex = sourceCollNode.children.findIndex((c: any) => c.nodeId === draggableId);
+                            if (childIndex !== -1) {
+                              [movedChild] = sourceCollNode.children.splice(childIndex, 1);
+                              newChildren = newChildren.map((c: any) =>
+                                c.name === `[${sourceCollName}]` ? { ...sourceCollNode } : c
+                              );
+                            }
+                          }
+                        }
+
+                        // Add to destination
+                        if (movedChild) {
+                          if (destCollName === "main") {
+                            newChildren.splice(destination.index, 0, movedChild);
+                          } else {
+                            let destCollNode = newChildren.find((c: any) => c.name === `[${destCollName}]`);
+                            if (!destCollNode) {
+                              // Create collection node if it doesn't exist
+                              destCollNode = {
+                                id: `${node.id}-${destCollName}`,
+                                nodeId: node.nodeId,
+                                name: `[${destCollName}]`,
+                                category: true,
+                                children: []
+                              };
+                              newChildren.push(destCollNode);
+                            }
+                            const destChildren = [...(destCollNode.children || [])];
+                            destChildren.splice(destination.index, 0, movedChild);
+                            newChildren = newChildren.map((c: any) =>
+                              c.name === `[${destCollName}]` ? { ...c, children: destChildren } : c
+                            );
+                          }
+                        }
+
+                        return { ...node, children: newChildren };
+                      }
+                    }
+
+                    // Recursively process children
+                    if (node.children) {
+                      return { ...node, children: updateTreeNode(node.children) };
+                    }
+                    return node;
+                  });
+                };
+
+                const updatedTree = updateTreeNode(tree);
+                console.log("[INSTANT UPDATE] Reordered children in tree after collection sorting");
+                return updatedTree;
+              });
+            }
+
+            await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
+          }
+
           // Record a log of the sorting action
           recordLogs({
             action: "sort elements",
@@ -627,6 +747,40 @@ const CollectionStructure = ({
           skillsFuture,
           ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
+
+        // Queue tree update after adding collection
+        if (currentVisibleNode?.id && newCollection) {
+          // Instant update: Add new collection node to tree
+          if (onInstantTreeUpdate) {
+            onInstantTreeUpdate((tree) => {
+              const updateTreeNode = (nodes: any[]): any[] => {
+                return nodes.map(node => {
+                  if (node.nodeId === currentVisibleNode.id) {
+                    // Add new collection node (empty) to children
+                    const newCollectionNode = {
+                      id: `${node.id}-${newCollection}`,
+                      nodeId: node.nodeId,
+                      name: `[${newCollection}]`,
+                      category: true,
+                      children: []
+                    };
+                    const newChildren = [newCollectionNode, ...(node.children || [])];
+                    return { ...node, children: newChildren };
+                  }
+                  if (node.children) {
+                    return { ...node, children: updateTreeNode(node.children) };
+                  }
+                  return node;
+                });
+              };
+              const updatedTree = updateTreeNode(tree);
+              console.log("[INSTANT UPDATE] Added new collection to tree");
+              return updatedTree;
+            });
+          }
+
+          await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
+        }
       } catch (error: any) {
         console.error(error);
         recordLogs({
@@ -805,6 +959,42 @@ const CollectionStructure = ({
           skillsFuture,
           ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
+
+        // Queue tree update after editing collection name
+        if (currentVisibleNode?.id) {
+          // Instant update: Rename collection node in tree
+          if (onInstantTreeUpdate && editCollection && newCollection) {
+            onInstantTreeUpdate((tree) => {
+              const updateTreeNode = (nodes: any[]): any[] => {
+                return nodes.map(node => {
+                  if (node.nodeId === currentVisibleNode.id && node.children) {
+                    // Find and rename the collection node
+                    const newChildren = node.children.map((child: any) => {
+                      if (child.name === `[${editCollection}]`) {
+                        return {
+                          ...child,
+                          name: `[${newCollection}]`,
+                          id: child.id.replace(`-${editCollection}`, `-${newCollection}`)
+                        };
+                      }
+                      return child;
+                    });
+                    return { ...node, children: newChildren };
+                  }
+                  if (node.children) {
+                    return { ...node, children: updateTreeNode(node.children) };
+                  }
+                  return node;
+                });
+              };
+              const updatedTree = updateTreeNode(tree);
+              console.log("[INSTANT UPDATE] Renamed collection in tree");
+              return updatedTree;
+            });
+          }
+
+          await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
+        }
       } catch (error: any) {
         console.error(error);
         recordLogs({
@@ -926,6 +1116,40 @@ const CollectionStructure = ({
               skillsFuture,
               ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
             });
+
+            // Queue tree update after deleting collection
+            if (currentVisibleNode?.id) {
+              // Instant update: Remove collection node and merge children to main
+              if (onInstantTreeUpdate && collectionName) {
+                onInstantTreeUpdate((tree) => {
+                  const updateTreeNode = (nodes: any[]): any[] => {
+                    return nodes.map(node => {
+                      if (node.nodeId === currentVisibleNode.id && node.children) {
+                        // Find the collection node being deleted
+                        const deletedCollNode = node.children.find((c: any) => c.name === `[${collectionName}]`);
+                        if (deletedCollNode) {
+                          // Remove the collection node and move its children to main (direct children)
+                          const childrenToMove = deletedCollNode.children || [];
+                          const newChildren = node.children
+                            .filter((c: any) => c.name !== `[${collectionName}]`)
+                            .concat(childrenToMove);
+                          return { ...node, children: newChildren };
+                        }
+                      }
+                      if (node.children) {
+                        return { ...node, children: updateTreeNode(node.children) };
+                      }
+                      return node;
+                    });
+                  };
+                  const updatedTree = updateTreeNode(tree);
+                  console.log("[INSTANT UPDATE] Deleted collection from tree");
+                  return updatedTree;
+                });
+              }
+
+              await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
+            }
           }
         } catch (error: any) {
           console.error("error", error);

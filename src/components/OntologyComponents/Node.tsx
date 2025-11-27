@@ -126,6 +126,7 @@ import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 import { development } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
+import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -176,6 +177,7 @@ type INodeProps = {
   skillsFutureApp: string;
   editableProperty: any;
   setEditableProperty: any;
+  onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
 };
 
 const Node = ({
@@ -225,6 +227,7 @@ const Node = ({
   skillsFutureApp,
   editableProperty,
   setEditableProperty,
+  onInstantTreeUpdate,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -967,6 +970,8 @@ const Node = ({
           skillsFuture,
           ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
+
+        await queueTreeUpdate(nodeId, skillsFutureApp);
       } catch (error: any) {
         // Handle any errors that occur during the process
         console.error(error);
@@ -981,7 +986,7 @@ const Node = ({
         });
       }
     },
-    [checkedItems, db, relatedNodes],
+    [checkedItems, db, relatedNodes, skillsFutureApp],
   );
 
   //  function to handle the deletion of a Node
@@ -1288,6 +1293,7 @@ const Node = ({
           enableEdit={enableEdit}
           setEnableEdit={setEnableEdit}
           handleCloseAddLinksModel={handleCloseAddLinksModel}
+          onInstantTreeUpdate={onInstantTreeUpdate}
         />
 
         {/* {currentVisibleNode.nodeType === "context" && (
@@ -1418,6 +1424,7 @@ const Node = ({
           currentImprovement={currentImprovement}
           skillsFuture={skillsFuture}
           enableEdit={enableEdit}
+          onInstantTreeUpdate={onInstantTreeUpdate}
         />
 
         {/* actors of the node if it's exist */}
@@ -1476,6 +1483,7 @@ const Node = ({
             skillsFuture={skillsFuture}
             enableEdit={enableEdit}
             skillsFutureApp={skillsFutureApp}
+            onInstantTreeUpdate={onInstantTreeUpdate}
           />
         )}
         {/* specializations and generalizations*/}
@@ -1541,6 +1549,7 @@ const Node = ({
               skillsFuture={skillsFuture}
               enableEdit={enableEdit}
               skillsFutureApp={skillsFutureApp}
+              onInstantTreeUpdate={onInstantTreeUpdate}
             />
           ))}
         </Stack>
@@ -1611,6 +1620,7 @@ const Node = ({
               enableEdit={enableEdit}
               inheritanceDetails={inheritanceDetails}
               skillsFutureApp={skillsFutureApp}
+              onInstantTreeUpdate={onInstantTreeUpdate}
             />
           ))}
         </Stack>

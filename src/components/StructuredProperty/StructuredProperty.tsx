@@ -64,6 +64,7 @@ import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import { Post } from "@components/lib/utils/Post";
 import EditProperty from "../AddPropertyForm/EditProprety";
 import InheritedPartsViewerEdit from "./InheritedPartsViewerEdit";
+import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
 
 const INITIAL_LOAD_COUNT = 20;
 const LOAD_MORE_COUNT = 20;
@@ -142,6 +143,7 @@ type IStructuredPropertyProps = {
   skillsFutureApp: string;
   deleteProperty?: Function;
   modifyProperty?: Function;
+  onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
 };
 
 const StructuredProperty = ({
@@ -202,6 +204,7 @@ const StructuredProperty = ({
   skillsFutureApp,
   deleteProperty,
   modifyProperty,
+  onInstantTreeUpdate,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
   const isMobile = useMediaQuery("(max-width:599px)");
@@ -870,6 +873,17 @@ const StructuredProperty = ({
             unlinked: linkId,
             node: nodeDoc.id,
           });
+
+          // Queue tree update after successful change
+          if (currentVisibleNode?.id) {
+            // Optimistic update: Property links don't affect tree structure
+            // but trigger a refresh for consistency
+            if (onInstantTreeUpdate) {
+              onInstantTreeUpdate((tree) => [...tree]);
+            }
+
+            await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
+          }
         }
       }
     } catch (error) {
@@ -960,6 +974,12 @@ const StructuredProperty = ({
         updatedProperties: ["parts"],
         db,
       });
+
+      if (onInstantTreeUpdate) {
+        onInstantTreeUpdate((tree) => [...tree]);
+      }
+
+      await queueTreeUpdate(currentNodeId, skillsFutureApp);
     } catch (error) {
       console.error(error);
     }
@@ -1004,13 +1024,22 @@ const StructuredProperty = ({
             await updateDoc(nodeRef, {
               "properties.parts": _propertyValue,
             });
+
+            // Queue tree update after successful change
+            if (currentVisibleNode?.id) {
+              if (onInstantTreeUpdate) {
+                onInstantTreeUpdate((tree) => [...tree]);
+              }
+
+              await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
+            }
           }
         }
       } catch (error) {
         console.error(error);
       }
     },
-    [currentVisibleNode?.id, currentVisibleNode?.inheritance?.parts?.ref, db, property, relatedNodes],
+    [currentVisibleNode?.id, currentVisibleNode?.inheritance?.parts?.ref, db, property, relatedNodes, skillsFutureApp],
   );
 
   if (
@@ -1399,6 +1428,7 @@ const StructuredProperty = ({
                 skillsFutureApp={skillsFutureApp}
                 unlinkNodeRelation={unlinkNodeRelation}
                 linkNodeRelation={linkNodeRelation}
+                onInstantTreeUpdate={onInstantTreeUpdate}
               />
             )}{" "}
           {property === "parts" && displayOptional && !enableEdit && (
