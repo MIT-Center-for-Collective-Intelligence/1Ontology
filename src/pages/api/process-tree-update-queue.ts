@@ -12,6 +12,15 @@ interface QueueItem {
   processed: boolean;
 }
 
+interface ProcessingState {
+  isProcessing: boolean;
+  processingStartedAt: number | null;
+  processedItemsCount: number;
+  lastProcessedAt: number | null;
+}
+
+const PROCESSING_STATE_DOC = "processingState";
+
 // Helper functions for building tree and finding affected nodes
 
 function findPathsToNode(
@@ -283,14 +292,37 @@ function buildTreeWithSiblings(
           }
 
           if (!flatNodes[childPathBasedId]) {
+            // Collect direct child IDs and create grandchild nodes (one level deeper)
             const directChildIds: string[] = [];
             for (const childCollection of childNode.specializations || []) {
               for (const grandchildLink of childCollection.nodes || []) {
+                const grandchildNode = allNodes[grandchildLink.id];
+                if (!grandchildNode) continue;
+
                 const grandchildPath = [...childPath, grandchildLink.id];
                 const grandchildPathBasedId = grandchildPath.join("-");
 
                 if (childCollection.collectionName !== "main") {
                   const childCollectionId = [...childPath, childCollection.collectionName].join("-");
+
+                  // Create collection wrapper for grandchildren
+                  if (!flatNodes[childCollectionId]) {
+                    flatNodes[childCollectionId] = {
+                      id: childCollectionId,
+                      nodeId: childNode.id,
+                      name: `[${childCollection.collectionName}]`,
+                      category: true,
+                      nodeType: childNode.nodeType,
+                      unclassified: !!childNode.unclassified,
+                      childIds: []
+                    };
+                  }
+
+                  // Add grandchild to collection wrapper
+                  if (!flatNodes[childCollectionId].childIds.includes(grandchildPathBasedId)) {
+                    flatNodes[childCollectionId].childIds.push(grandchildPathBasedId);
+                  }
+
                   if (!directChildIds.includes(childCollectionId)) {
                     directChildIds.push(childCollectionId);
                   }
@@ -298,6 +330,19 @@ function buildTreeWithSiblings(
                   if (!directChildIds.includes(grandchildPathBasedId)) {
                     directChildIds.push(grandchildPathBasedId);
                   }
+                }
+
+                // Create the grandchild node itself (with empty childIds - don't go deeper)
+                if (!flatNodes[grandchildPathBasedId]) {
+                  flatNodes[grandchildPathBasedId] = {
+                    id: grandchildPathBasedId,
+                    nodeId: grandchildLink.id,
+                    name: grandchildNode.title,
+                    category: !!grandchildNode.category,
+                    nodeType: grandchildNode.nodeType,
+                    unclassified: !!grandchildNode.unclassified,
+                    childIds: [] // Don't populate children of grandchildren
+                  };
                 }
               }
             }
@@ -461,14 +506,38 @@ export default async function handler(
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const stateRef = db.collection(TREE_QUEUES).doc(PROCESSING_STATE_DOC);
+  const now = Date.now();
+
   try {
-    console.log("[QUEUE] Starting queue processing...");
+    console.log("[QUEUE] Tree queue processor started");
+
+    // Check if already processing
+    const stateDoc = await stateRef.get();
+    const state = stateDoc.exists ? stateDoc.data() as ProcessingState : null;
+
+    if (state?.isProcessing) {
+      const processingDuration = state.processingStartedAt
+        ? Math.round((now - state.processingStartedAt) / 1000)
+        : 0;
+
+      console.log(`[QUEUE] Processing already ongoing (${processingDuration}s elapsed)`);
+
+      // Return 200 so scheduler doesn't retry
+      return res.status(200).json({
+        success: true,
+        message: "Processing is already ongoing",
+        skipped: true,
+        isProcessing: true,
+        processingDurationSeconds: processingDuration
+      });
+    }
 
     // Read pending queue items
     const queueSnapshot = await db.collection(TREE_QUEUES)
       .where('processed', '==', false)
       .orderBy('timestamp', 'asc')
-      .limit(50) // Avoid timeout
+      .limit(50)
       .get();
 
     if (queueSnapshot.empty) {
@@ -480,12 +549,22 @@ export default async function handler(
       });
     }
 
+    console.log(`[QUEUE] Found ${queueSnapshot.size} pending items`);
+
+    // Set processing lock
+    await stateRef.set({
+      isProcessing: true,
+      processingStartedAt: now,
+      processedItemsCount: 0,
+      lastProcessedAt: state?.lastProcessedAt || null
+    });
+
+    console.log("[QUEUE] Processing lock acquired");
+
     const queueItems: QueueItem[] = [];
     queueSnapshot.forEach(doc => {
       queueItems.push({ id: doc.id, ...doc.data() } as QueueItem);
     });
-
-    console.log(`[QUEUE] Found ${queueItems.length} pending items`);
 
     // Group by appName and deduplicate changedNodeIds
     const appGroups: { [appName: string]: Set<string> } = {};
@@ -558,7 +637,7 @@ export default async function handler(
         }
       }
 
-      //  Write updates (tree data is too large for batching and may timeout)
+      // Write updates (tree data is too large for batching and may timeout)
       const updateEntries = Object.entries(updates);
       let writeCount = 0;
 
@@ -607,6 +686,16 @@ export default async function handler(
 
     console.log("[QUEUE] Processing complete!");
 
+    // Release processing lock and update final count
+    await stateRef.set({
+      isProcessing: false,
+      processingStartedAt: null,
+      processedItemsCount: queueItems.length,
+      lastProcessedAt: Date.now()
+    });
+
+    console.log("[QUEUE] Released processing lock");
+
     return res.status(200).json({
       success: true,
       message: "Queue processed successfully",
@@ -618,6 +707,20 @@ export default async function handler(
 
   } catch (error: any) {
     console.error("[QUEUE] Error processing queue:", error);
+
+    // Release processing lock on error
+    try {
+      await stateRef.set({
+        isProcessing: false,
+        processingStartedAt: null,
+        processedItemsCount: 0,
+        lastProcessedAt: Date.now()
+      });
+      console.log("[QUEUE] Released processing lock after error");
+    } catch (cleanupError: any) {
+      console.error("[QUEUE] Failed to release processing lock:", cleanupError.message);
+    }
+
     return res.status(500).json({
       error: "Internal server error",
       details: error.message
