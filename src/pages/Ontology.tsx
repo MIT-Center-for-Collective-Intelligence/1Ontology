@@ -102,7 +102,9 @@ import {
   INodePath,
   INodeTypes,
   MainSpecializations,
+  NodeTreeData,
   TreeData,
+  TreeViewNode,
   TreeVisual,
 } from "@components/types/INode";
 import { TabPanel, a11yProps } from "@components/lib/utils/TabPanel";
@@ -132,6 +134,7 @@ import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
 import ROUTES from "@components/lib/utils/routes";
 import { getAuth } from "firebase/auth";
 import FullPageLogoLoading from "@components/components/layouts/FullPageLogoLoading";
+
 const stem = require("wink-porter2-stemmer");
 const tokenizer = require("wink-tokenizer");
 
@@ -347,9 +350,24 @@ const Ontology = ({
     setCurrentNodeTreeData(prevTree => {
       const newTree = updateFn(prevTree);
       console.log("[INSTANT UPDATE] Tree updated locally");
+
+      // Write to Database for sync with other clients (only for the currentVisibleNode)
+      const nodeId = currentVisibleNode?.id;
+      if (nodeId && newTree.length > 0) {
+        const nodeTreeData = treeDataToNodeTreeData(newTree, currentVisibleNode?.nodeTreeData);
+        const nodeRef = doc(db, NODES, nodeId);
+        updateDoc(nodeRef, { nodeTreeData })
+          .then(() => {
+            console.log("[INSTANT UPDATE] Tree updated to Firestore:", nodeId);
+          })
+          .catch((error) => {
+            console.error("[INSTANT UPDATE] Failed to updated tree:", error);
+          });
+      }
+
       return newTree;
     });
-  }, []);
+  }, [currentVisibleNode?.id, currentVisibleNode?.nodeTreeData, db]);
   // Auto-focus search input on mobile search open
   useEffect(() => {
     if (mobileSearchOpen && isMobile) {
@@ -1839,6 +1857,61 @@ const Ontology = ({
     console.log("[LOCAL TREE] Built tree with", hierarchicalTree.length, "root nodes");
     setCurrentNodeTreeData(hierarchicalTree);
   }, [currentVisibleNode?.id, currentVisibleNode?.nodeTreeData, hasInstantUpdate]);
+
+
+  // Converts hierarchical TreeData[] back to flat NodeTreeData format for Firestore storage
+  const treeDataToNodeTreeData = (
+    treeData: TreeData[],
+    existingNodeTreeData?: NodeTreeData
+  ): NodeTreeData => {
+    const nodes: { [id: string]: TreeViewNode } = {};
+    const rootIds: string[] = [];
+
+    const processNode = (node: TreeData): void => {
+      // Collect child IDs
+      const childIds: string[] = [];
+      if (node.children && node.children.length > 0) {
+        for (const child of node.children) {
+          childIds.push(child.id);
+          processNode(child);
+        }
+      }
+
+      // Create the flat node entry
+      nodes[node.id] = {
+        id: node.id,
+        nodeId: node.nodeId || node.id,
+        name: node.name,
+        category: !!node.category,
+        nodeType: node.nodeType,
+        unclassified: node.unclassified,
+        childIds,
+      };
+    };
+
+    // Process all root nodes
+    for (const rootNode of treeData) {
+      rootIds.push(rootNode.id);
+      processNode(rootNode);
+    }
+
+    const result: NodeTreeData = {
+      version: "nodeTree",
+      lastUpdated: Date.now(),
+      rootIds,
+      nodes,
+    };
+
+    // Only include optional fields if they have defined values
+    if (existingNodeTreeData?.affectedNodeIds !== undefined) {
+      result.affectedNodeIds = existingNodeTreeData.affectedNodeIds;
+    }
+    if (existingNodeTreeData?.isHighImpact !== undefined) {
+      result.isHighImpact = existingNodeTreeData.isHighImpact;
+    }
+
+    return result;
+  };
 
   useEffect(() => {
     if (!currentVisibleNode) return;
