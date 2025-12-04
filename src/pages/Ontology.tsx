@@ -263,7 +263,7 @@ const Ontology = ({
     keys: ["title", "context.title"],
   });
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-  const [eachOntologyPath, setEachOntologyPath] = useState<{
+  const [eachNodePath, setEachNodePath] = useState<{
     [key: string]: INodePath[];
   }>({});
   const [multipleOntologyPaths, setMultipleOntologyPaths] = useState<any>({});
@@ -321,6 +321,7 @@ const Ontology = ({
   const [specializationNumsUnder, setSpecializationNumsUnder] = useState({});
   const [editableProperty, setEditableProperty] = useState<ICollection[]>([]);
   const [rootNode, setRootNode] = useState<string | null>(null);
+  const [isExperimentalSearch, setIsExperimentalSearch] = useState(true);
   const treeRef = useRef<TreeApi<TreeData>>(null);
 
   const firstLoad = useRef(true);
@@ -638,7 +639,7 @@ const Ontology = ({
     return () => {
       window.removeEventListener("hashchange", handleHashChange);
     };
-  }, [eachOntologyPath]);
+  }, [eachNodePath]);
 
   // Function to update last searches
   const updateLastSearches = (searchedNode: any) => {
@@ -914,7 +915,7 @@ const Ontology = ({
         eachOntologyPath: {},
       });
       if (eachOntologyPath) {
-        setEachOntologyPath(eachOntologyPath);
+        setEachNodePath(eachOntologyPath);
       }
 
       let multipleOntologyPaths = findMultipleOntologyPaths({
@@ -1497,14 +1498,14 @@ const Ontology = ({
     const isRootNode = currentVisibleNode.category || (typeof currentVisibleNode.root === "boolean" && !!currentVisibleNode.root);
     console.log(`${currentVisibleNode.title}, isRootNode - ${isRootNode}`)
     if (expandedNodes.size === 0 && !isRootNode) {
-      initializeExpanded(eachOntologyPath[currentVisibleNode?.id]);
+      initializeExpanded(eachNodePath[currentVisibleNode?.id]);
     }
     // setOntologyPath(eachOntologyPath[currentVisibleNode?.id]);
 
     updateTheUrl([
       { id: currentVisibleNode?.id, title: currentVisibleNode.title },
     ]);
-  }, [currentVisibleNode?.id, eachOntologyPath]);
+  }, [currentVisibleNode?.id, eachNodePath]);
 
   // Callback function to add a new node to the database
 
@@ -1648,7 +1649,7 @@ const Ontology = ({
       if (node) {
         console.log("🟡 [NAVIGATE] ✅ Setting current visible node to:", node.title);
         setCurrentVisibleNode(node);
-        initializeExpanded(eachOntologyPath[nodeId]);
+        initializeExpanded(eachNodePath[nodeId]);
         setSelectedDiffNode(null);
         setScrollTrigger((prev) => !prev);
       } else {
@@ -1661,7 +1662,7 @@ const Ontology = ({
       removedElements,
       relatedNodes,
       db,
-      eachOntologyPath,
+      eachNodePath,
       currentImprovement,
     ],
   );
@@ -1969,7 +1970,7 @@ const Ontology = ({
           }
         }
         if (partIdex === -1) {
-          const ontologyPathForPart = eachOntologyPath[partId] ?? [];
+          const ontologyPathForPart = eachNodePath[partId] ?? [];
 
           const exacts = generalizationParts[0].nodes.filter((n) => {
             const findIndex = ontologyPathForPart.findIndex(
@@ -2006,7 +2007,7 @@ const Ontology = ({
       }
     }
     setPartsInheritance(_inheritanceDetails);
-  }, [currentVisibleNode, relatedNodes, eachOntologyPath]);
+  }, [currentVisibleNode, relatedNodes, eachNodePath]);
 
   if (Object.keys(relatedNodes).length <= 0) {
     return <FullPageLogoLoading />;
@@ -2147,6 +2148,7 @@ const Ontology = ({
               updateLastSearches={updateLastSearches}
               skillsFuture={skillsFuture}
               skillsFutureApp={appName}
+              isExperimentalSearch={isExperimentalSearch}
             />
           </Box>
         </Box>
@@ -2237,7 +2239,7 @@ const Ontology = ({
               specializationNumsUnder={specializationNumsUnder}
               skillsFutureApp={appName}
               multipleOntologyPaths={multipleOntologyPaths}
-              eachOntologyPath={eachOntologyPath}
+              eachOntologyPath={eachNodePath}
             /> */}
           </Box>
         </Box>
@@ -2295,6 +2297,8 @@ const Ontology = ({
             signOut={signOut}
             skillsFuture={skillsFuture}
             skillsFutureApp={appName}
+            isExperimentalSearch={isExperimentalSearch}
+            setIsExperimentalSearch={setIsExperimentalSearch}
           />
         </Box>
       )}
@@ -2489,6 +2493,7 @@ const Ontology = ({
                   updateLastSearches={updateLastSearches}
                   skillsFuture={skillsFuture}
                   skillsFutureApp={appName}
+                  isExperimentalSearch={isExperimentalSearch}
                 />{" "}
                 <Divider sx={{ borderBottomWidth: 1.5, borderColor: "gray" }} />
                 <Tabs
@@ -2587,7 +2592,7 @@ const Ontology = ({
                   fetchNode={fetchNode}
                   addNodesToCache={addNodesToCache}
                   navigateToNode={navigateToNode}
-                  eachOntologyPath={eachOntologyPath}
+                  eachOntologyPath={eachNodePath}
                   searchWithFuse={searchWithFuse}
                   locked={!!currentVisibleNode.locked && !user?.manageLock}
                   selectedDiffNode={selectedDiffNode}
@@ -2663,6 +2668,8 @@ const Ontology = ({
               signOut={signOut}
               skillsFuture={skillsFuture}
               skillsFutureApp={appName ?? null}
+              isExperimentalSearch={isExperimentalSearch}
+              setIsExperimentalSearch={setIsExperimentalSearch}
             />
           )}
         </Container>

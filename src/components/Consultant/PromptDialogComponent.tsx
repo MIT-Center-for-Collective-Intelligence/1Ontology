@@ -147,7 +147,7 @@ const PromptDialogComponent = ({
   };
 
   const handleUserInputChange = (event: any) => {
-    setCaseDescription("");
+    setCaseDescription(event.target.value);
     localStorage.setItem(`caseDescription-${!!ignoreCLD}`, event.target.value);
   };
 

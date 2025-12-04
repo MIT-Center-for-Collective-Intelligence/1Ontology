@@ -1,0 +1,96 @@
+steps:
+  # Build the container image for NextJS app
+  - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args: [
+        "-c",
+        'docker build -t us-central1-docker.pkg.dev/visualexp-a7d2c/knowledge/knowledge
+        --build-arg=PROD_ONTOLOGY_CRED_TYPE="$${PROD_ONTOLOGY_CRED_TYPE}"
+        --build-arg=PROD_ONTOLOGY_CRED_PROJECT_ID="$${PROD_ONTOLOGY_CRED_PROJECT_ID}"
+        --build-arg=PROD_ONTOLOGY_CRED_PRIVATE_KEY_ID="$${PROD_ONTOLOGY_CRED_PRIVATE_KEY_ID}"
+        --build-arg=PROD_ONTOLOGY_CRED_PRIVATE_KEY="$${PROD_ONTOLOGY_CRED_PRIVATE_KEY}"
+        --build-arg=PROD_ONTOLOGY_CRED_CLIENT_EMAIL="$${PROD_ONTOLOGY_CRED_CLIENT_EMAIL}"
+        --build-arg=PROD_ONTOLOGY_CRED_CLIENT_ID="$${PROD_ONTOLOGY_CRED_CLIENT_ID}"
+        --build-arg=PROD_ONTOLOGY_CRED_AUTH_URI="$${PROD_ONTOLOGY_CRED_AUTH_URI}"
+        --build-arg=PROD_ONTOLOGY_CRED_TOKEN_URI="$${PROD_ONTOLOGY_CRED_TOKEN_URI}"
+        --build-arg=PROD_ONTOLOGY_CRED_AUTH_PROVIDER_X509_CERT_URL="$${PROD_ONTOLOGY_CRED_AUTH_PROVIDER_X509_CERT_URL}"
+        --build-arg=PROD_ONTOLOGY_CRED_CLIENT_X509_CERT_URL="$${PROD_ONTOLOGY_CRED_CLIENT_X509_CERT_URL}"
+        --build-arg=PROD_ONTOLOGY_STORAGE_BUCKET="$${PROD_ONTOLOGY_STORAGE_BUCKET}"
+        --build-arg=NEXT_PUBLIC_API_KEY="$${NEXT_PUBLIC_API_KEY}"
+        --build-arg=NEXT_PUBLIC_AUTH_DOMAIN="$${NEXT_PUBLIC_AUTH_DOMAIN}"
+        --build-arg=NEXT_PUBLIC_PROJECT_ID="$${NEXT_PUBLIC_PROJECT_ID}"
+        --build-arg=NEXT_PUBLIC_STORAGE_BUCKET="$${NEXT_PUBLIC_STORAGE_BUCKET}"
+        --build-arg=NEXT_PUBLIC_MESSAGING_SENDER_ID="$${NEXT_PUBLIC_MESSAGING_SENDER_ID}"
+        --build-arg=NEXT_PUBLIC_APP_ID="$${NEXT_PUBLIC_APP_ID}"
+        --build-arg=NEXT_PUBLIC_DATABASE_URL="$${NEXT_PUBLIC_DATABASE_URL}"
+        .',
+      ]
+    env:
+      - "NEXT_PUBLIC_API_KEY=${NEXT_PUBLIC_API_KEY}"
+      - "NEXT_PUBLIC_AUTH_DOMAIN=${NEXT_PUBLIC_AUTH_DOMAIN}"
+      - "NEXT_PUBLIC_PROJECT_ID=${NEXT_PUBLIC_PROJECT_ID}"
+      - "NEXT_PUBLIC_STORAGE_BUCKET=${NEXT_PUBLIC_STORAGE_BUCKET}"
+      - "NEXT_PUBLIC_MESSAGING_SENDER_ID=${NEXT_PUBLIC_MESSAGING_SENDER_ID}"
+      - "NEXT_PUBLIC_APP_ID=${NEXT_PUBLIC_APP_ID}"
+      - "NEXT_PUBLIC_DATABASE_URL=${NEXT_PUBLIC_DATABASE_URL}"
+    secretEnv:
+      [
+        "PROD_ONTOLOGY_CRED_TYPE",
+        "PROD_ONTOLOGY_CRED_PROJECT_ID",
+        "PROD_ONTOLOGY_CRED_PRIVATE_KEY_ID",
+        "PROD_ONTOLOGY_CRED_PRIVATE_KEY",
+        "PROD_ONTOLOGY_CRED_CLIENT_EMAIL",
+        "PROD_ONTOLOGY_CRED_CLIENT_ID",
+        "PROD_ONTOLOGY_CRED_AUTH_URI",
+        "PROD_ONTOLOGY_CRED_TOKEN_URI",
+        "PROD_ONTOLOGY_CRED_AUTH_PROVIDER_X509_CERT_URL",
+        "PROD_ONTOLOGY_CRED_CLIENT_X509_CERT_URL",
+        "PROD_ONTOLOGY_STORAGE_BUCKET",
+      ]
+  # Push the NextJS container image to Container Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "us-central1-docker.pkg.dev/ontology-41607/ontology-app"]
+  # Deploy the NextJS container image to Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      [
+        "run",
+        "deploy",
+        "knowledge",
+        "--image",
+        "us-central1-docker.pkg.dev/ontology-41607/ontology-app",
+        "--region",
+        "us-central1",
+        "--project",
+        "visualexp-a7d2c",
+      ]
+
+images:
+  - us-central1-docker.pkg.dev/ontology-41607/ontology-app
+availableSecrets:
+  secretManager:
+    - versionName: projects/163479774214/secrets/PROD_ONTOLOGY_CRED_TYPE/versions/1
+      env: "PROD_ONTOLOGY_CRED_TYPE"
+    - versionName: projects/163479774214/secrets/PROD_ONTOLOGY_CRED_PROJECT_ID/versions/1
+      env: "PROD_ONTOLOGY_CRED_PROJECT_ID"
+    - versionName: projects/163479774214/secrets/PROD_ONTOLOGY_CRED_PRIVATE_KEY_ID/versions/1
+      env: "PROD_ONTOLOGY_CRED_PRIVATE_KEY_ID"
+    - versionName: projects/163479774214/secrets/PROD_ONTOLOGY_CRED_PRIVATE_KEY/versions/1
+      env: "PROD_ONTOLOGY_CRED_PRIVATE_KEY"
+    - versionName: projects/163479774214/secrets/PROD_ONTOLOGY_CRED_CLIENT_EMAIL/versions/1
+      env: "PROD_ONTOLOGY_CRED_CLIENT_EMAIL"
+    - versionName: projects/163479774214/secrets/PROD_ONTOLOGY_CRED_CLIENT_ID/versions/1
+      env: "PROD_ONTOLOGY_CRED_CLIENT_ID"
+    - versionName: projects/163479774214/secrets/PROD_ONTOLOGY_CRED_AUTH_URI/versions/1
+      env: "PROD_ONTOLOGY_CRED_AUTH_URI"
+    - versionName: projects/163479774214/secrets/PROD_ONTOLOGY_CRED_TOKEN_URI/versions/1
+      env: "PROD_ONTOLOGY_CRED_TOKEN_URI"
+    - versionName: projects/163479774214/secrets/PROD_ONTOLOGY_CRED_AUTH_PROVIDER_X509_CERT_URL/versions/1
+      env: "PROD_ONTOLOGY_CRED_AUTH_PROVIDER_X509_CERT_URL"
+    - versionName: projects/163479774214/secrets/PROD_ONTOLOGY_CRED_CLIENT_X509_CERT_URL/versions/1
+      env: "PROD_ONTOLOGY_CRED_CLIENT_X509_CERT_URL"
+    - versionName: projects/163479774214/secrets/PROD_ONTOLOGY_STORAGE_BUCKET/versions/1
+      env: "PROD_ONTOLOGY_STORAGE_BUCKET"
+
+timeout: 2000s

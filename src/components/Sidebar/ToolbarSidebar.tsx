@@ -29,6 +29,14 @@ import {
   Typography,
   useTheme,
   useMediaQuery,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  Switch,
+  Paper,
+  styled,
 } from "@mui/material";
 
 import mitLogoLight from "../../../public/MIT-Logo-Small-Light.png";
@@ -143,6 +151,8 @@ type MainSidebarProps = {
   signOut: any;
   skillsFuture: boolean;
   skillsFutureApp: string;
+  isExperimentalSearch: any;
+  setIsExperimentalSearch: any;
 };
 
 const ToolbarSidebar = ({
@@ -176,6 +186,8 @@ const ToolbarSidebar = ({
   signOut,
   skillsFuture,
   skillsFutureApp,
+  isExperimentalSearch,
+  setIsExperimentalSearch,
 }: MainSidebarProps) => {
   const theme = useTheme();
   const isMobile = useMediaQuery("(max-width:599px)");
@@ -208,6 +220,11 @@ const ToolbarSidebar = ({
   const { selectIt, dropdownDialog } = useSelectDropdown();
   const [oNetProgress, setONetProgress] = useState({ added: 0, remaining: 0 });
 
+  const [openDialog, setOpenDialog] = useState(false);
+
+  const handleDialogOpen = () => setOpenDialog(true);
+  const handleDialogClose = () => setOpenDialog(false);
+
   const handleProfileMenuOpen = (event: any) => {
     if (user?.uname === "1man" || user?.uname === "ouhrac") {
       loadProgress();
@@ -216,12 +233,47 @@ const ToolbarSidebar = ({
   };
   const [selectedUser, setSelectedUser] = useState("All");
 
+  const StyledDialogPaper = styled(Paper)(({ theme }) => ({
+    borderRadius: "20px",
+    padding: theme.spacing(2),
+    backgroundColor:
+      theme.palette.mode === "light"
+        ? "#fafafa"
+        : theme.palette.background.paper,
+    boxShadow:
+      theme.palette.mode === "light"
+        ? "0px 8px 24px rgba(0,0,0,0.15)"
+        : "0px 8px 24px rgba(0,0,0,0.35)",
+  }));
+
   const inputEl = useRef<HTMLInputElement>(null);
 
   const handleProfileMenuClose = () => {
     setProfileMenuOpen(null);
   };
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const handleToggle = useCallback(() => {
+    if (!user?.uname) return;
+
+    setIsExperimentalSearch((prev: any) => {
+      const nextValue = !prev;
+
+      const userRef = doc(collection(db, "users"), user.uname);
+      updateDoc(userRef, {
+        searchIsExperimental: nextValue,
+      }).catch((error) => {
+        console.error("Error updating search mode:", error);
+      });
+
+      return nextValue;
+    });
+  }, [db, user?.uname]);
+
+  // useEffect(() => {
+  //   if (!user) return;
+  //   setIsExperimentalSearch(!!user?.searchIsExperimental);
+  // }, [user]);
 
   const updateUserImage = async (imageUrl: string) => {
     const userDoc = doc(collection(db, USERS), user?.uname);
@@ -552,7 +604,94 @@ const ToolbarSidebar = ({
           <Typography variant="h5" sx={{ fontWeight: 500 }}>
             Hi, {user?.fName}!
           </Typography>
-          {(user.uname === "1man" || user.uname === "ouhrac") && (
+          <Button
+            variant="outlined"
+            onClick={handleDialogOpen}
+            sx={{
+              mt: "15px",
+              borderRadius: "25px",
+              "&:hover": {
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255, 255, 255, 0.08)"
+                    : "rgba(0, 0, 0, 0.04)",
+              },
+            }}
+          >
+            Advanced
+          </Button>
+          <Dialog
+            open={openDialog}
+            onClose={handleDialogClose}
+            PaperComponent={StyledDialogPaper}
+            maxWidth="xs"
+            fullWidth
+          >
+            <DialogTitle
+              sx={{
+                textAlign: "center",
+                fontWeight: 600,
+                fontSize: "1.4rem",
+                letterSpacing: "0.3px",
+              }}
+            >
+              Search Mode Settings
+            </DialogTitle>
+
+            <Divider sx={{ mb: 2 }} />
+
+            <DialogContent
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+                pb: 2,
+              }}
+            >
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={isExperimentalSearch}
+                    onChange={handleToggle}
+                    color="primary"
+                    sx={{
+                      transform: "scale(1.2)",
+                    }}
+                  />
+                }
+                label={
+                  <Typography sx={{ fontSize: "1rem", fontWeight: 500 }}>
+                    {isExperimentalSearch
+                      ? "Advanced Search"
+                      : "Classic Search"}
+                  </Typography>
+                }
+              />
+            </DialogContent>
+
+            <DialogActions
+              sx={{
+                justifyContent: "center",
+                pb: 2,
+              }}
+            >
+              <Button
+                onClick={handleDialogClose}
+                variant="contained"
+                sx={{
+                  borderRadius: "25px",
+                  textTransform: "none",
+                  px: 4,
+                  py: 1,
+                  fontWeight: 500,
+                }}
+              >
+                Done
+              </Button>
+            </DialogActions>
+          </Dialog>
+          {/* {(user.uname === "1man" || user.uname === "ouhrac") && (
             <Box
               sx={{
                 border: "1px solid gray",
@@ -587,7 +726,7 @@ const ToolbarSidebar = ({
                 remaining
               </Typography>
             </Box>
-          )}
+          )} */}
         </Box>
       )}
       {isAuthenticated && user && (
@@ -1244,6 +1383,7 @@ const ToolbarSidebar = ({
             updateLastSearches={updateLastSearches}
             skillsFuture={skillsFuture}
             skillsFutureApp={skillsFutureApp}
+            isExperimentalSearch={isExperimentalSearch}
           />
         );
       case "userActivity":
@@ -1420,12 +1560,12 @@ const ToolbarSidebar = ({
     <Box
       ref={toolbarRef}
       sx={{
-        width: !!activeSidebar 
-          ? isMobile 
-            ? "100%" 
-            : "450px" 
-          : hovered 
-            ? "190px" 
+        width: !!activeSidebar
+          ? isMobile
+            ? "100%"
+            : "450px"
+          : hovered
+            ? "190px"
             : "70px",
         // transition: "width 0.1s ease",
         height: "100vh",

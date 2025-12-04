@@ -73,6 +73,8 @@ Notes:
 - Cost and token usage are estimated for tracking and transparency.
 """
 
+
+
 import csv
 import time
 import json
@@ -87,7 +89,7 @@ API_URL = "https://1ontology.com/api/load-sub-ontology"
 
 # Define input and output CSV paths
 csv_file_path = "linkedin_entrylevel_finance_healthcare_MAGA.csv"
-output_file_path = "output_gpt5_linkedin_entrylevel_finance_healthcare_MAGA.csv.csv"
+output_file_path = "output_gpt5_linkedin_entrylevel_finance_healthcare_MAGA.csv"
 
 # Column in CSV that may contain text prompts (not used directly in this version)
 prompt_column = "prompt"
@@ -251,27 +253,50 @@ def get_generalization_for_skill(
     try:
         # Build detailed GPT-5 classification prompt
         prompt = f"""
-        ## Role:
-        You are an analyst that classifies an activity, specifying which of the nodes in the ontology (provided as a JSON structure in the input) is the best generalization for the given activity. Work only with the supplied nodes and their fields; do not infer or invent nodes or properties. 
-        
-        ## Ontology Definition:
-        Each node in our ontology represents a type of action and has these properties:
-        - **title** (String) – a unique, concise title.
-        - **description** (String) – a detailed explanation of the node, its purpose, scope, and context.
-        - **specializations** *(Array of Objects)* – Groups of more specific types of this node. Each object in the array represents a collection of specializations along a common dimension.
+## Role:
+You are an analyst that classifies a given skill according to which of the nodes in the ontology (provided as a JSON structure in the input) is the best classification for that skill. Work only with the supplied nodes and their fields; do not infer or invent nodes or properties. 
 
-        ## Input:
-        - Activity Title: "{skill_name}"
-        - Activity description: "{description}"
-        - Ontology Nodes: {ontology_object}
-        
-        ## Output:
-        Return a single JSON object only (no prose), exactly with these keys and value types:
-        {{
-          "closest_generalization_node": "the ontology node title that is the closest generalization of this activity, it should be a string",
-          "closest_generalization_node_rationale": "your reasoning for choosing this ontology node",
-        }}
-        """
+## Ontology Definition:
+Each node in our ontology represents a type of action and has these properties:
+- **title** (String) – a unique, concise title.
+- **description** (String) – a detailed explanation of the node, its purpose, scope, and context.
+- **specializations** (Array of Objects) – collections of more specific types of this node, organized along common dimensions. Each collection contains:
+  - **collectionName** (String) – the dimension along which specializations vary.
+  - **nodes** (Array of String) – titles of nodes that are specializations along this dimension.
+
+## Input:
+- Skill: "{skill_name}"
+- Skill Description: '''{description}'''
+- Ontology Nodes: {ontology_object}
+
+## Output:
+Return a single JSON object only (no prose), exactly with these keys and value types:
+{{
+  "most_appropriate_node": {{
+    "title": "title of the ontology node that best classifies the skill",
+    "description": "description of the ontology node"
+  }},
+  "paths_to_most_appropriate_node": [an array of strings, each representing a path from the root node "Act" to the title of the mode appropriate node in the ontology. For example, if the most appropriate node was "Express information", this array would have these two strings: "Act > Act on what? > Act on information (“Think”) > Create information > Express information", "Act > Act how? > Create > Create information > Express information"],
+  "most_appropriate_node_rationale": "Explain your reasoning for choosing this ontology node"
+}}
+
+## Constraints:
+- Output must be valid JSON: double quotes around all strings, no trailing commas, no extra keys or text.
+- Determine the most appropriate node from the ontology by applying the selection criteria below (coverage first, then specificity, then similarity). Choose the most specific node whose scope fully covers the Skill; if multiple nodes meet this, break ties by higher semantic similarity to the Skill.
+
+### Selection Criteria:
+Use these criteria (in order):
+1. **Coverage**: the node's description fully covers the essence of the action represented by the Skill.
+2. **Specificity**: among nodes that cover the Skill, prefer the narrowest scope that still fully covers it.
+3. **Similarity**: prefer nodes whose title + description align with the Skill.
+4. **Tie-breakers**: if still tied, prefer the node most proximal to the Skill; if still tied, choose the one with clearer alignment to the Skill.
+
+## Procedure:
+Internally follow this process:
+1. Internally, analyze the Skill and compare it to every node in the ontology. For each node, consider all its information.
+2. Select the candidate that passes coverage with the highest overall alignment, breaking ties using the rubric above.
+3. Produce the output JSON exactly as specified.
+"""
 
         response = None
         retries = 3
@@ -284,18 +309,20 @@ def get_generalization_for_skill(
             cost = result.get("cost", {})
 
             required_keys = [
-                "closest_generalization_node",
-                "closest_generalization_node_rationale",
+                "most_appropriate_node",
+                "paths_to_most_appropriate_node",
+                "most_appropriate_node_rationale",
             ]
             # Validate presence of all required JSON fields
             if response and all(key in response for key in required_keys):
                 return {
-                    "closest_generalization_node": response[
-                        "closest_generalization_node"
+                    "closest_generalization_node": response["most_appropriate_node"][
+                        "title"
                     ],
                     "closest_generalization_node_rationale": response[
-                        "closest_generalization_node_rationale"
+                        "most_appropriate_node_rationale"
                     ],
+                    "paths": "\n".join(response["paths_to_most_appropriate_node"]),
                     "tokens": f"- input: {usedTokens['input']}\n- thinking: {usedTokens['thinking']}\n- output: {usedTokens['output']}",
                     "cost": cost["totalCost"],
                 }
@@ -326,6 +353,7 @@ with open(csv_file_path, newline="", encoding="utf-8") as csvfile, open(
         "Skill Description",
         "Generalization (the appropriate node of the ontology)",
         "Rationale (generated by gpt-5)",
+        "Paths",
         "Tokens",
         "Cost",
     ]
@@ -393,6 +421,7 @@ with open(csv_file_path, newline="", encoding="utf-8") as csvfile, open(
                     "Rationale (generated by gpt-5)": generalization_of_skill[
                         "closest_generalization_node_rationale"
                     ],
+                    "Paths": generalization_of_skill["paths"],
                     "Tokens": generalization_of_skill["tokens"],
                     "Cost": generalization_of_skill["cost"],
                 }
