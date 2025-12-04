@@ -25,9 +25,10 @@ import { useAuth } from "../context/AuthContext";
 type InheritanceProps = {
   selectedNode: INode;
   nodes: { [id: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
 };
 
-const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
+const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes, fetchNode }) => {
   const [inheritanceState, setInheritanceState] = useState<{
     [key: string]: InheritanceType;
   }>(
@@ -60,7 +61,17 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
     try {
       let newBatch = batch;
       for (let specialization of specializations) {
-        const specializationData = nodes[specialization.id];
+        // lookup specialization data
+        let specializationData: INode | null = nodes[specialization.id] || null;
+        if (!specializationData) {
+          console.log("[INHERITANCE] Fetching specialization not in cache:", specialization.id);
+          specializationData = await fetchNode(specialization.id);
+          if (!specializationData) {
+            console.warn("[INHERITANCE] Could not fetch specialization:", specialization.id);
+            continue;
+          }
+        }
+
         const nodeRef = doc(collection(db, NODES), specialization.id);
         let objectUpdate: any = {
           [`inheritance.${property}.inheritanceType`]: newValue,
@@ -72,12 +83,21 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
             [`inheritance.${property}.ref`]: null,
           };
           if (referenceId && referenceId !== null) {
-            const referenceValue = nodes[referenceId].properties[property];
-            objectUpdate = {
-              ...objectUpdate,
-              [`properties.${property}`]: referenceValue,
-              [`inheritance.${property}.ref`]: null,
-            };
+            // lookup reference value
+            let referenceNode: INode | null = nodes[referenceId] || null;
+            if (!referenceNode) {
+              console.log("[INHERITANCE] Fetching reference node not in cache:", referenceId);
+              referenceNode = await fetchNode(referenceId);
+            }
+
+            if (referenceNode) {
+              const referenceValue = referenceNode.properties[property];
+              objectUpdate = {
+                ...objectUpdate,
+                [`properties.${property}`]: referenceValue,
+                [`inheritance.${property}.ref`]: null,
+              };
+            }
           }
         } else {
           objectUpdate = {
@@ -96,13 +116,22 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes }) => {
           newBatch = writeBatch(db);
         }
 
-        newBatch = await updateSpecializationsInheritance(
-          nodes[specialization.id].specializations.flatMap((n) => n.nodes),
-          newBatch,
-          property,
-          newValue,
-          ref
-        );
+        // lookup for specializations
+        let specializationNodeData: INode | null = nodes[specialization.id] || null;
+        if (!specializationNodeData) {
+          console.log("[INHERITANCE] Fetching specialization (for recursive call) not in cache:", specialization.id);
+          specializationNodeData = await fetchNode(specialization.id);
+        }
+
+        if (specializationNodeData) {
+          newBatch = await updateSpecializationsInheritance(
+            specializationNodeData.specializations.flatMap((n) => n.nodes),
+            newBatch,
+            property,
+            newValue,
+            ref
+          );
+        }
       }
       return newBatch;
     } catch (error) {
