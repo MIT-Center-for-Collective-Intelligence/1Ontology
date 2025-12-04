@@ -183,7 +183,10 @@ const extractRelatedNodeIds = (node: INode): string[] => {
 
   // Add specializations
   node.specializations?.forEach((collection) => {
-    collection.nodes?.forEach((n) => ids.add(n.id));
+    // For unclassified nodes, avoid loading snapshots for specializations
+    if (!node.unclassified) {
+      collection.nodes?.forEach((n) => ids.add(n.id));
+    }
   });
 
   // Add all properties that reference other nodes
