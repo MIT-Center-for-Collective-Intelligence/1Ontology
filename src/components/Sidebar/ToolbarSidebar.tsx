@@ -832,13 +832,14 @@ const ToolbarSidebar = ({
           const doc = change.doc;
           const userId = doc.id;
           const data = doc.data();
-          const currentNode = data.currentNode;
+          const currentNodeInfo = data.currentNode?.[skillsFutureApp];
+          const currentNodeId = currentNodeInfo?.id;
 
           if (change.type === "added" || change.type === "modified") {
             updatedUsersData[userId] = {
               node: {
-                title: relatedNodes[currentNode]?.title || "",
-                id: currentNode,
+                title: currentNodeInfo?.title || relatedNodes[currentNodeId]?.title || "",
+                id: currentNodeId,
               },
               imageUrl: data.imageUrl,
               fName: data.fName,

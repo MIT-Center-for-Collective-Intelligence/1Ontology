@@ -216,18 +216,27 @@ const chunkArray = <T,>(array: T[], size: number): T[][] => {
 };
 
 // Helper function to fetch a single node from Firestore
+// When appName is provided, validates if the node belongs to that app after fetching
 const fetchSingleNode = async (
   db: any,
   nodeId: string,
+  appName?: string,
 ): Promise<INode | null> => {
   try {
-    const nodeRef = doc(db, NODES, nodeId);
-    const nodeSnap = await getDocs(query(collection(db, NODES), where(documentId(), "==", nodeId), limit(1)));
+    const nodeSnap = await getDocs(query(collection(db, NODES), where(documentId(), "==", nodeId), where("deleted", "==", false), limit(1)));
 
     if (nodeSnap.docs.length > 0) {
       const docSnap = nodeSnap.docs[0];
-      return { id: docSnap.id, ...docSnap.data() } as INode;
+      const node = { id: docSnap.id, ...docSnap.data() } as INode;
+
+      if (appName && node.appName !== appName) {
+        console.log(`[FETCH] Node ${nodeId} belongs to different app (${node.appName}), not ${appName}`);
+        return null;
+      }
+
+      return node;
     }
+
     return null;
   } catch (error: any) {
     console.error("Error fetching single node:", error);
@@ -238,6 +247,24 @@ const fetchSingleNode = async (
         message: error.message,
       }),
     });
+    return null;
+  }
+};
+
+// Helper function to fetch the root node for an app
+const fetchRootNode = async (
+  db: any,
+  appName: string,
+): Promise<INode | null> => {
+  try {
+    const rootSnap = await getDocs(query(collection(db, NODES), where("root", "==", true), where("appName", "==", appName), where("deleted", "==", false), limit(1)));
+    if (rootSnap.docs.length > 0) {
+      const rootDoc = rootSnap.docs[0];
+      return { id: rootDoc.id, ...rootDoc.data() } as INode;
+    }
+    return null;
+  } catch (error: any) {
+    console.error("Error fetching root node:", error);
     return null;
   }
 };
@@ -1372,29 +1399,33 @@ const Ontology = ({
     if (firstLoad.current) {
       const loadInitialNode = async () => {
         console.log("🔵 [INITIAL LOAD] Starting initial node load...");
-        const nodeFromHash = window.location.hash.split("#").reverse()[0];
-        let initialNodeId: string | null = null;
+        const hashId = window.location.hash.split("#").reverse()[0];
+        const userCurrentNodeId = user?.currentNode?.[appName]?.id;
+        let node: INode | null = null;
 
-        if (nodeFromHash) {
-          initialNodeId = nodeFromHash;
-          console.log("🔵 [INITIAL LOAD] Loading node from URL hash:", nodeFromHash);
-        } else if (user?.currentNode) {
-          initialNodeId = user.currentNode;
-          console.log("🔵 [INITIAL LOAD] Loading user's last node:", user.currentNode);
-        } else {
-          initialNodeId = rootNode || "hn9pGQNxmQe9Xod5MuKK";
-          console.log("🔵 [INITIAL LOAD] Loading default root node:", initialNodeId);
+        if (hashId) {
+          console.log("🔵 [INITIAL LOAD] Trying node from URL hash:", hashId);
+          node = await fetchSingleNode(db, hashId, appName);
         }
 
-        if (initialNodeId) {
-          console.log("🔵 [INITIAL LOAD] Fetching node from Firestore:", initialNodeId);
-          const node = await fetchSingleNode(db, initialNodeId);
-          if (node) {
-            console.log("🔵 [INITIAL LOAD] ✅ Successfully loaded initial node:", node.title);
-            setCurrentVisibleNode(node);
-          } else {
-            console.log("🔵 [INITIAL LOAD] ❌ Failed to fetch initial node");
-          }
+        // If not found, try user's currentNode for this app
+        if (!node && userCurrentNodeId) {
+          console.log("🔵 [INITIAL LOAD] Hash node not found in app, trying user's currentNode:", userCurrentNodeId);
+          node = await fetchSingleNode(db, userCurrentNodeId, appName);
+        }
+
+        // If still not found, fallback to root node for this app
+        if (!node) {
+          console.log("🔵 [INITIAL LOAD] Falling back to root node for app:", appName);
+          node = await fetchRootNode(db, appName);
+        }
+
+        if (node) {
+          console.log("🔵 [INITIAL LOAD] Successfully loaded initial node:", node.title);
+          window.location.hash = node.id;
+          setCurrentVisibleNode(node);
+        } else {
+          console.log("🔵 [INITIAL LOAD] Failed to fetch any node for app:", appName);
         }
 
         firstLoad.current = false;
@@ -1402,21 +1433,25 @@ const Ontology = ({
 
       loadInitialNode();
     }
-  }, [user?.currentNode, rootNode, db]);
+  }, [user?.currentNode?.[appName]?.id, db, appName]);
 
   // Function to update the user document with the current ontology path
-  const openedANode = async (currentNode: string) => {
+  const openedANode = async (nodeId: string, nodeTitle?: string) => {
     if (!user) return;
     const userRef = doc(collection(db, USERS), user.uname);
     // Update the user document with the ontology path
 
-    await updateDoc(userRef, { currentNode });
+    await updateDoc(userRef, {
+      [`currentNode.${appName}`]: {
+        id: nodeId,
+        title: nodeTitle || "",
+      },    });
 
     // Record logs if ontology path is not empty
-    if (currentNode) {
+    if (nodeId) {
       recordLogs({
         action: "Opened a node",
-        node: currentNode,
+        node: nodeId,
       });
     }
   };
@@ -1495,7 +1530,7 @@ const Ontology = ({
       return;
     }
 
-    openedANode(currentVisibleNode?.id);
+    openedANode(currentVisibleNode?.id, currentVisibleNode?.title);
 
     // Check if this is a root node - if so, skip initializeExpanded to prevent scrolling
     const isRootNode = currentVisibleNode.category || (typeof currentVisibleNode.root === "boolean" && !!currentVisibleNode.root);
@@ -1644,9 +1679,15 @@ const Ontology = ({
       let node: INode | null = relatedNodes[nodeId] || null;
       if (!node) {
         console.log("🟡 [NAVIGATE] Node not in cache, fetching from Firestore...");
-        node = await fetchSingleNode(db, nodeId);
+        node = await fetchSingleNode(db, nodeId, appName);
       } else {
-        console.log("🟡 [NAVIGATE] Node found in cache:", node.title);
+        // Validate if cached node belongs to this app
+        if (node.appName !== appName) {
+          console.log("🟡 [NAVIGATE] Cached node belongs to different app, ignoring");
+          node = null;
+        } else {
+          console.log("🟡 [NAVIGATE] Node found in cache:", node.title);
+        }
       }
 
       if (node) {
@@ -1656,7 +1697,11 @@ const Ontology = ({
         setSelectedDiffNode(null);
         setScrollTrigger((prev) => !prev);
       } else {
-        console.log("🟡 [NAVIGATE] ❌ Failed to load node");
+        console.log("🟡 [NAVIGATE] ❌ Node not found in this app, reverting hash");
+        // Revert URL hash to current node
+        if (currentVisibleNode) {
+          window.location.hash = currentVisibleNode.id;
+        }
       }
     },
     [
@@ -1667,6 +1712,8 @@ const Ontology = ({
       db,
       eachNodePath,
       currentImprovement,
+      appName,
+      currentVisibleNode,
     ],
   );
 
