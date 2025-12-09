@@ -202,49 +202,87 @@ const SelectModel = ({
     }
   }, [fetchNode, relatedNodes]);
 
+  // Fetch child nodes for fuse search results
+  // Since handleChromaSearch is triggered only by clicking search, useEffect is used here to display child results for fuse searches
+  useEffect(() => {
+    if (searchValue && searchResultsForSelection.length > 0 && !useChromaResults) {
+      fetchChildNodesForSearchResults(searchResultsForSelection);
+    }
+  }, [searchResultsForSelection, searchValue, useChromaResults, fetchChildNodesForSearchResults]);
+
   // Handle Chroma search with child node fetching
   const handleChromaSearch = useCallback(async () => {
-    if (!searchValue || searchValue.trim().length < 3) {
+    const query = searchValue?.trim();
+
+    if (!query || query.length < 3) {
+      setUseChromaResults(false);
+      setChromaSearchResults([]);
       return;
     }
-    const fuseSearch = searchResultsForSelection;
+
+    const fuseResults = searchResultsForSelection;
+
+    // skip chroma in development
+    if (development) {
+      setUseChromaResults(false);
+      setChromaSearchResults(fuseResults);
+      return;
+    }
+
     try {
       setLoadingChromaSearch(true);
       setUseChromaResults(true);
 
       const response: any = await Post("/searchChroma", {
-            query: searchValue,
-            skillsFuture,
-            appName: skillsFuture ? skillsFutureApp : null,
-          })
+        query: query,
+        skillsFuture,
+        appName: skillsFuture ? skillsFutureApp : null,
+      });
 
-      const results: any = [...(response.results || [])];
+      let results: any[] = [...(response?.results || [])];
 
       // Fallback to fuse if no chroma results
-      if (results.length <= 0 && fuseSearch.length > 0) {
-        results.push(...fuseSearch);
+      if (results.length === 0 && fuseResults?.length > 0) {
+        results = fuseResults.slice();
+        setUseChromaResults(false);
       }
 
       // Ensure exact match is at the top
-      const exactResult = fuseSearch[0];
+      const exactResult = fuseResults?.[0];
       if (
         exactResult &&
-        exactResult.title.trim() === searchValue.toLowerCase().trim() &&
-        !results.some((r: any) => r.id === exactResult.id)
+        exactResult.title?.trim()?.toLowerCase() === query.toLowerCase() &&
+        !results.some((r) => r.id === exactResult.id)
       ) {
         results.unshift({ id: exactResult.id, title: exactResult.title });
       }
 
-      setChromaSearchResults(development ? fuseSearch : results);
+      setChromaSearchResults(results);
 
-      // Fetch child nodes for all search results
-      await fetchChildNodesForSearchResults(development ? fuseSearch : results);
-    } catch (error) {
-      setChromaSearchResults(fuseSearch);
+      if (results.length > 0) {
+        await fetchChildNodesForSearchResults(results);
+      }
+
+    } catch (err) {
+      // Fallback to Fuse only
+      setUseChromaResults(false);
+      setChromaSearchResults(fuseResults);
+
+      if (fuseResults.length > 0) {
+        await fetchChildNodesForSearchResults(fuseResults);
+      }
+
     } finally {
       setLoadingChromaSearch(false);
     }
-  }, [searchValue, skillsFuture, skillsFutureApp, searchResultsForSelection, fetchChildNodesForSearchResults]);
+  }, [
+    searchValue,
+    development,
+    skillsFuture,
+    skillsFutureApp,
+    searchResultsForSelection,
+    fetchChildNodesForSearchResults
+  ]);
 
   const refreshEditableProperty = useCallback(() => {
     let freshData: ICollection[] = [];

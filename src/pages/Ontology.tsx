@@ -419,13 +419,24 @@ const Ontology = ({
     getAuth().signOut();
   };
 
-  // Memoized fetchNode helper to fetch nodes not in cache
+  // Memoized fetchNode helper to fetch nodes not in cache and add to relatedNodes
   const fetchNode = useCallback(
     async (nodeId: string): Promise<INode | null> => {
-      console.log("[FETCH  NODE] Fetching node not in cache:", nodeId);
-      return await fetchSingleNode(db, nodeId);
+      // Skip if already in cache
+      if (relatedNodes[nodeId]) {
+        return relatedNodes[nodeId];
+      }
+      console.log("[FETCH NODE] Fetching node not in cache:", nodeId);
+      const node = await fetchSingleNode(db, nodeId);
+      if (node) {
+        setRelatedNodes(prev => {
+          if (prev[nodeId]) return prev;
+          return { ...prev, [nodeId]: node };
+        });
+      }
+      return node;
     },
-    [db]
+    [db, relatedNodes]
   );
 
   const dynamicUnsubscribersRef = useRef<Map<string, () => void>>(new Map()); // Stores unsubscribe functions for each dynamically added node
