@@ -445,8 +445,9 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
           <Tabs
             value={selectedTab}
             onChange={handleTabChange}
-            variant="scrollable"
-            scrollButtons="auto"
+            // disabled scrollable to avoid react 18 scrollOffsetHeight errors
+            // variant="scrollable"
+            // scrollButtons="false"
             sx={{
               minHeight: 36,
               mb: 2,
