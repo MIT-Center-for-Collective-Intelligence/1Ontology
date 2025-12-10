@@ -45,7 +45,8 @@ type INumericPropertyProps = {
   currentVisibleNode: INode;
   property: string;
   value: NumericPropertyValue | number | string;
-  nodes: any;
+  relatedNodes: { [id: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   locked: boolean;
   selectedDiffNode: any;
   currentImprovement: any;
@@ -61,7 +62,8 @@ const NumericProperty = ({
   currentVisibleNode,
   property,
   value,
-  nodes,
+  relatedNodes,
+  fetchNode,
   locked,
   selectedDiffNode,
   currentImprovement,
@@ -477,7 +479,7 @@ const NumericProperty = ({
             {currentVisibleNode.inheritance[property]?.ref && (
               <Typography sx={{ fontSize: "14px", ml: "9px" }}>
                 {'(Inherited from "'}
-                {nodes[currentVisibleNode.inheritance[property].ref]?.title}
+                {relatedNodes[currentVisibleNode.inheritance[property].ref]?.title}
                 {'")'}
               </Typography>
             )}
@@ -487,7 +489,7 @@ const NumericProperty = ({
                 <SelectInheritance
                   currentVisibleNode={currentVisibleNode}
                   property={property}
-                  nodes={nodes}
+                  nodes={relatedNodes}
                   enableEdit={enableEdit}
                 />
               )}
@@ -588,7 +590,8 @@ const NumericProperty = ({
         <InheritanceDetailsPanel
           property={property}
           currentVisibleNode={currentVisibleNode}
-          nodes={nodes}
+          relatedNodes={relatedNodes}
+          fetchNode={fetchNode}
         />
       </Paper>
     </Slide>

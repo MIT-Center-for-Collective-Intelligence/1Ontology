@@ -14,6 +14,7 @@ import {
   Tabs,
   Tab,
   Popover,
+  CircularProgress,
 } from "@mui/material";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import {
@@ -68,6 +69,8 @@ interface InheritedPartsViewerProps {
     nodes: { [nodeId: string]: INode },
   ) => PartNode[];
   nodes: { [id: string]: any };
+  fetchNode?: (nodeId: string) => Promise<INode | null>;
+  addNodesToCache?: (nodes: { [id: string]: INode }, parentNodeId?: string) => void;
   readOnly?: boolean;
   inheritanceDetails: any;
   currentVisibleNode: any;
@@ -87,6 +90,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   getAllGeneralizations,
   getGeneralizationParts,
   nodes,
+  fetchNode,
+  addNodesToCache,
   readOnly = false,
   inheritanceDetails,
   enableEdit,
@@ -109,6 +114,11 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const [pickingFor, setPickingFor] = useState<string>("");
   const [anchorEl, setAnchorEl] = useState(null);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const [loadingSpecializations, setLoadingSpecializations] = useState<Set<string>>(new Set());
+  const [fetchedNodes, setFetchedNodes] = useState<{ [id: string]: INode }>({});
+
+  // Merge nodes from props with locally fetched nodes
+  const allNodes = { ...nodes, ...fetchedNodes };
 
   const handleClose = () => {
     setAnchorEl(null);
@@ -154,6 +164,19 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     }
   }, [generalizations, activeTab]);
 
+  // Fetch missing inheritance reference for parts
+  useEffect(() => {
+    const fetchMissingInheritanceRef = async () => {
+      if (!fetchNode || !currentVisibleNode.inheritance?.parts?.ref) return;
+      const inheritanceRef = currentVisibleNode.inheritance.parts.ref;
+      if (!allNodes[inheritanceRef]) {
+        await fetchNode(inheritanceRef);
+      }
+    };
+
+    fetchMissingInheritanceRef();
+  }, [currentVisibleNode.inheritance?.parts?.ref, allNodes, fetchNode]);
+
   const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue);
   };
@@ -163,7 +186,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   }
 
   const getPartOptionalStatus = (partId: string, nodeId: string): boolean => {
-    const node = nodes[nodeId];
+    const node = allNodes[nodeId];
     if (!node?.properties?.parts) return false;
 
     for (const collection of node.properties.parts) {
@@ -174,11 +197,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const getCurrentPartOptionalStatus = (partId: string): boolean => {
-    const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
+    const currentNodeInCache = allNodes[currentVisibleNode.id] || currentVisibleNode;
+    const inheritanceRef = currentNodeInCache.inheritance?.["parts"]?.ref;
     const currentNodeParts =
-      inheritanceRef && nodes[inheritanceRef]
-        ? nodes[inheritanceRef].properties["parts"]
-        : currentVisibleNode.properties["parts"];
+      inheritanceRef && allNodes[inheritanceRef]
+        ? allNodes[inheritanceRef].properties["parts"]
+        : currentNodeInCache.properties?.["parts"];
 
     if (!currentNodeParts) return false;
 
@@ -209,9 +233,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       hops?: number;
     }[] = [];
 
-    const matchedParts = new Set();
-    const usedKeys = new Set();
-    const usedGeneralizationParts = new Set();
+    const matchedParts = new Set<string>();
+    const usedKeys = new Set<string>();
+    const usedGeneralizationParts = new Set<string>();
 
     const findHierarchicalDistance = (
       fromPartId: string,
@@ -223,7 +247,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
       visited.add(fromPartId);
 
-      const fromNode = nodes[fromPartId];
+      const fromNode = allNodes[fromPartId];
       if (!fromNode) return -1;
 
       let minDistance = -1;
@@ -351,11 +375,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       {} as Record<string, typeof result>,
     );
 
-    const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
+    const currentNodeInCache = allNodes[currentVisibleNode.id] || currentVisibleNode;
+    const inheritanceRef = currentNodeInCache.inheritance?.["parts"]?.ref;
     const currentNodeParts =
-      inheritanceRef && nodes[inheritanceRef]
-        ? nodes[inheritanceRef].properties["parts"]
-        : currentVisibleNode.properties["parts"];
+      inheritanceRef && allNodes[inheritanceRef]
+        ? allNodes[inheritanceRef].properties["parts"]
+        : currentNodeInCache.properties?.["parts"];
     const currentPartsOrder =
       currentNodeParts?.[0]?.nodes?.map((c: any) => c.id) || [];
 
@@ -454,6 +479,24 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       }
     }
 
+    for (const currentPart of currentParts) {
+      const existIdx = finalResult.findIndex((c) => c.to === currentPart);
+      if (existIdx === -1) {
+        // Skip if it's from the generalization as it should've been already matched
+        if (!generalizationParts.includes(currentPart)) {
+          finalResult.push({
+            from: "",
+            to: currentPart,
+            symbol: "+",
+            fromOptional: false,
+            toOptional: getCurrentPartOptionalStatus(currentPart),
+            optionalChange: "none",
+            hops: 0,
+          });
+        }
+      }
+    }
+
     const seen = new Set();
     const uniqueResult = finalResult.filter((entry) => {
       const key = `${entry.from}|${entry.to}`;
@@ -480,7 +523,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     isOptional: boolean,
     optionalChange?: "added" | "removed" | "none",
   ) => {
-    const title = nodes[partId]?.title || "";
+    const title = allNodes[partId]?.title || "";
 
     if (optionalChange === "added") {
       return (
@@ -521,12 +564,88 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     return title;
   };
 
+  // Handler to fetch missing specializations when dropdown opens
+  const handleDropdownOpen = async (partNodeId: string) => {
+    if (!fetchNode) return;
+
+    const partNode = allNodes[partNodeId];
+    if (!partNode) return;
+
+    // Extract specialization IDs that aren't in cache yet
+    const missingSpecIds: string[] = [];
+    if (partNode.specializations) {
+      partNode.specializations.forEach((collection: { nodes: { id: string }[] }) => {
+        collection.nodes.forEach((n: { id: string }) => {
+          if (!allNodes[n.id]) {
+            missingSpecIds.push(n.id);
+          }
+        });
+      });
+    }
+
+    // Check for missing generalizations as well
+    const missingGenIds: string[] = [];
+    if (partNode.generalizations) {
+      partNode.generalizations.forEach((collection: { nodes: { id: string }[] }) => {
+        collection.nodes.forEach((n: { id: string }) => {
+          if (!allNodes[n.id]) {
+            missingGenIds.push(n.id);
+          }
+        });
+      });
+    }
+
+    const allMissingIds = [...missingSpecIds, ...missingGenIds];
+
+    if (allMissingIds.length > 0) {
+      setLoadingSpecializations(prev => new Set([...prev, partNodeId]));
+
+      try {
+        // Fetch all missing nodes in parallel
+        const fetchedNodesArray = await Promise.all(
+          allMissingIds.map(async (id) => {
+            const node = await fetchNode(id);
+            return node ? { id, node } : null;
+          })
+        );
+
+        // Add fetched nodes to local state
+        const newFetchedNodes: { [id: string]: INode } = {};
+        fetchedNodesArray.forEach((result) => {
+          if (result) {
+            newFetchedNodes[result.id] = result.node;
+          }
+        });
+
+        setFetchedNodes(prev => ({ ...prev, ...newFetchedNodes }));
+
+        // Register these nodes with parent for snapshot listeners
+        if (addNodesToCache && Object.keys(newFetchedNodes).length > 0) {
+          addNodesToCache(newFetchedNodes, currentVisibleNode.id);
+        }
+      } catch (error) {
+        console.error("Error loading parts", error);
+      } finally {
+        setLoadingSpecializations(prev => {
+          const updated = new Set(prev);
+          updated.delete(partNodeId);
+          return updated;
+        });
+      }
+    }
+  };
+
   const getSpecializations = (nodeId: string) => {
-    const value = nodes[nodeId].specializations
+    const node = allNodes[nodeId];
+    if (!node || !node.specializations) {
+      return [];
+    }
+
+    const value = node.specializations
       .flatMap((s: { nodes: { id: string }[] }) => s.nodes)
       .map((n: { id: string }) => {
         return {
-          title: nodes[n.id]?.title,
+          title: allNodes[n.id]?.title,
           id: n.id,
         };
       });
@@ -534,11 +653,16 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     return value;
   };
   const getGeneralizations = (nodeId: string) => {
-    const value = nodes[nodeId].generalizations
+    const node = allNodes[nodeId];
+    if (!node || !node.generalizations) {
+      return [];
+    }
+
+    const value = node.generalizations
       .flatMap((s: { nodes: { id: string }[] }) => s.nodes)
       .map((n: { id: string }) => {
         return {
-          title: nodes[n.id]?.title,
+          title: allNodes[n.id]?.title,
           id: n.id,
         };
       });
@@ -564,14 +688,53 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const getTabContent = (generalizationId: string): JSX.Element => {
     const generalizationParts = getGeneralizationParts(
       generalizationId,
-      nodes,
+      allNodes,
     ).map((c) => c.id);
 
-    const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
+    const currentNodeInCache = allNodes[currentVisibleNode.id] || currentVisibleNode;
+    const inheritanceRef = currentNodeInCache.inheritance?.["parts"]?.ref;
+    const isWaitingForInheritanceRef = inheritanceRef && !allNodes[inheritanceRef];
+
     const currentNodeParts =
-      inheritanceRef && nodes[inheritanceRef]
-        ? nodes[inheritanceRef].properties["parts"]
-        : currentVisibleNode.properties["parts"];
+      inheritanceRef && allNodes[inheritanceRef]
+        ? allNodes[inheritanceRef].properties["parts"]
+        : currentNodeInCache.properties?.["parts"];
+
+    if (!currentNodeParts || !Array.isArray(currentNodeParts) || !currentNodeParts[0]) {
+      if (isWaitingForInheritanceRef) {
+        return (
+          <Typography
+            variant="body2"
+            sx={{
+              color: (theme) =>
+                theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
+              fontStyle: "italic",
+              textAlign: "center",
+              py: 2,
+              fontSize: "0.75rem",
+            }}
+          >
+            Loading parts...
+          </Typography>
+        );
+      }
+      return (
+        <Typography
+          variant="body2"
+          sx={{
+            color: (theme) =>
+              theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
+            fontStyle: "italic",
+            textAlign: "center",
+            py: 2,
+            fontSize: "0.75rem",
+          }}
+        >
+          No parts available
+        </Typography>
+      );
+    }
+
     const currentParts = currentNodeParts[0].nodes.map(
       (c: { id: string }) => c.id,
     );
@@ -583,7 +746,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       currentParts,
     );
 
-    if (Object.keys(inheritanceDetails).length === 0) {
+    // Only show "No parts available" if both generalization and current parts are empty and not waitng for any data to load
+    if (!isWaitingForInheritanceRef &&
+        generalizationParts.length === 0 &&
+        currentParts.length === 0) {
       return (
         <Typography
           variant="body2"
@@ -659,7 +825,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 onClick={() =>
                                   triggerSearch({
                                     id: entry.from,
-                                    title: nodes[entry.from].title,
+                                    title: allNodes[entry.from]?.title,
                                   })
                                 }
                               >
@@ -788,7 +954,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                         primary={
                           entry.to ? (
                             <Tooltip
-                              title={!isSelectOpen ? nodes[entry.to].title : ""}
+                              title={!isSelectOpen ? allNodes[entry.to].title : ""}
                               placement="top"
                               disableHoverListener={isSelectOpen}
                             >
@@ -798,7 +964,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                   const newPartId = e.target.value;
                                   replaceWith(entry.to, newPartId);
                                 }}
-                                onOpen={() => setIsSelectOpen(true)}
+                                onOpen={() => {
+                                  setIsSelectOpen(true);
+                                  handleDropdownOpen(entry.to);
+                                }}
                                 onClose={() => setIsSelectOpen(false)}
                                 size="small"
                                 renderValue={() => (
@@ -810,7 +979,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       display: "block",
                                     }}
                                   >
-                                    {nodes[entry.to].title}
+                                    {allNodes[entry.to]?.title}
                                   </Box>
                                 )}
                                 sx={{
@@ -846,6 +1015,22 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                   },
                                 }}
                               >
+                                {loadingSpecializations.has(entry.to) && (
+                                  <MenuItem disabled>
+                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                      <CircularProgress size={16} />
+                                      <Typography
+                                        sx={{
+                                          fontStyle: "italic",
+                                          color: "gray",
+                                          fontSize: "0.9rem",
+                                        }}
+                                      >
+                                        Loading specializations...
+                                      </Typography>
+                                    </Box>
+                                  </MenuItem>
+                                )}
                                 {getSpecializations(entry.to).length > 0 && (
                                   <ListSubheader
                                     sx={{
@@ -979,7 +1164,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
               >
                 <SwapHorizIcon />
                 <ListItemText
-                  primary={nodes[option].title}
+                  primary={allNodes[option]?.title}
                   onClick={() => handleSelect(option)}
                 />
               </ListItem>
@@ -1064,8 +1249,14 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       /* these have index 0 by default since parts don't have collections but that may change in the future */
       const sourceCollectionIndex = 0;
       const destinationCollectionIndex = 0;
-      const propertyValue: ICollection[] =
-        nodes[currentVisibleNode.id].properties["parts"];
+
+      // Check if currentVisibleNode exists in cache
+      const currentNode = allNodes[currentVisibleNode.id];
+      if (!currentNode || !currentNode.properties?.parts) {
+        return;
+      }
+
+      const propertyValue: ICollection[] = currentNode.properties["parts"];
 
       // Ensure defined source and destination categories
       if (propertyValue) {
@@ -1100,7 +1291,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         updateDoc(nodeRef, {
           [`properties.${property}`]: propertyValue,
           [`inheritance.${property}.ref`]: null,
-        });
+          });
 
         saveNewChangeLog(db, {
           nodeId: currentVisibleNode?.id,

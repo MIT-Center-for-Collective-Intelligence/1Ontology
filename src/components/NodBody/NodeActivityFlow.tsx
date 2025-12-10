@@ -360,7 +360,8 @@ const sampleAlgorithmsData = {
 interface NodeActivityFlowProps {
   node: INode;
   confirmIt: any;
-  nodes: { [id: string]: INode };
+  relatedNodes: { [id: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   onNodeAdd?: (parentId: string, newNodeData: Partial<INode>) => void;
 }
 

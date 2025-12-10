@@ -62,6 +62,7 @@ interface InheritedPartsViewerProps {
     nodes: { [nodeId: string]: INode },
   ) => PartNode[];
   nodes: { [id: string]: any };
+  fetchNode?: (nodeId: string) => Promise<INode | null>;
   readOnly?: boolean;
   setDisplayDetails: any;
   displayDetails: boolean;
@@ -78,6 +79,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   getAllGeneralizations,
   getGeneralizationParts,
   nodes,
+  fetchNode,
   readOnly = false,
   setDisplayDetails,
   displayDetails,
@@ -147,6 +149,21 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     }
   }, [generalizations, activeTab]);
 
+  // Fetch missing inheritance reference for parts
+  useEffect(() => {
+    const fetchMissingInheritanceRef = async () => {
+      if (!fetchNode || !currentVisibleNode.inheritance?.parts?.ref) return;
+      const inheritanceRef = currentVisibleNode.inheritance.parts.ref;
+
+      // Check if inheritance reference is missing from cache
+      if (!nodes[inheritanceRef]) {
+        await fetchNode(inheritanceRef);
+      }
+    };
+
+    fetchMissingInheritanceRef();
+  }, [currentVisibleNode.inheritance?.parts?.ref, fetchNode]);
+
   const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue);
   };
@@ -203,9 +220,9 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       hops?: number;
     }[] = [];
 
-    const matchedParts = new Set();
-    const usedKeys = new Set();
-    const usedGeneralizationParts = new Set();
+    const matchedParts = new Set<string>();   // Track generalization parts found in current node 
+    const usedKeys = new Set<string>();  // Track current node part IDs that have been matched to a generalization part
+    const usedGeneralizationParts = new Set<string>(); // Track generalization parts that are unchanged (same ID)
 
     const findHierarchicalDistance = (
       fromPartId: string,
@@ -459,6 +476,25 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       }
     }
 
+    // Add parts that exist in current node but have no inheritance tracking entry
+    // (This can happen if the part node isn't loaded in relatedNodes yet)
+    for (const currentPart of currentParts) {
+      const existIdx = finalResult.findIndex((c) => c.to === currentPart);
+      if (existIdx === -1) {
+        if (!generalizationParts.includes(currentPart)) {
+          finalResult.push({
+            from: "",
+            to: currentPart,
+            symbol: "+",
+            fromOptional: false,
+            toOptional: getCurrentPartOptionalStatus(currentPart),
+            optionalChange: "none",
+            hops: 0,
+          });
+        }
+      }
+    }
+
     const seen = new Set();
     const uniqueResult = finalResult.filter((entry) => {
       const key = `${entry.from}|${entry.to}`;
@@ -532,11 +568,51 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       nodes,
     ).map((c) => c.id);
 
-    const inheritanceRef = currentVisibleNode.inheritance["parts"].ref;
+    const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
+
+    // Check if inheritance ref is loading
+    const isWaitingForInheritanceRef = inheritanceRef && !nodes[inheritanceRef];
+
     const currentNodeParts =
       inheritanceRef && nodes[inheritanceRef]
         ? nodes[inheritanceRef].properties["parts"]
         : currentVisibleNode.properties["parts"];
+
+    if (!currentNodeParts || !Array.isArray(currentNodeParts) || !currentNodeParts[0]) {
+      if (isWaitingForInheritanceRef) {
+        return (
+          <Typography
+            variant="body2"
+            sx={{
+              color: (theme) =>
+                theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
+              fontStyle: "italic",
+              textAlign: "center",
+              py: 2,
+              fontSize: "0.75rem",
+            }}
+          >
+            Loading parts...
+          </Typography>
+        );
+      }
+      return (
+        <Typography
+          variant="body2"
+          sx={{
+            color: (theme) =>
+              theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
+            fontStyle: "italic",
+            textAlign: "center",
+            py: 2,
+            fontSize: "0.75rem",
+          }}
+        >
+          No parts available
+        </Typography>
+      );
+    }
+
     const currentParts = currentNodeParts[0].nodes.map(
       (c: { id: string }) => c.id,
     );
@@ -547,7 +623,10 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       generalizationId,
       currentParts,
     );
-    if (Object.keys(inheritanceDetails).length === 0) {
+    // Only show "No parts available" if both generalization and current parts are empty and not waitng for any data to load
+    if (!isWaitingForInheritanceRef &&
+        generalizationParts.length === 0 &&
+        currentParts.length === 0) {
       return (
         <Typography
           variant="body2"
@@ -659,7 +738,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                         onClick={() =>
                           triggerSearch({
                             id: entry.from,
-                            title: nodes[entry.from].title,
+                            title: nodes[entry.from]?.title || "Unknown",
                           })
                         }
                       >
@@ -793,7 +872,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               >
                 <SwapHorizIcon />
                 <ListItemText
-                  primary={nodes[option].title}
+                  primary={nodes[option]?.title || "Unknown"}
                   onClick={() => handleSelect(option)}
                 />
               </ListItem>

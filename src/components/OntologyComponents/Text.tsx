@@ -60,6 +60,8 @@ import MarkdownEditor from "../Markdown/MarkdownEditor";
 import EditProperty from "../AddPropertyForm/EditProprety";
 import { Post } from "@components/lib/utils/Post";
 import InheritanceDetailsPanel from "../StructuredProperty/InheritanceDetailsPanel";
+import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
+import { updateNodeInTree } from "@components/lib/utils/instantTreeUpdate";
 // import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ITextProps = {
@@ -68,7 +70,8 @@ type ITextProps = {
   property: string;
   text: string; // Real-time text from WebSocket
   confirmIt: any;
-  nodes: any;
+  relatedNodes: { [id: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   setSelectTitle?: any;
   selectTitle?: any;
   locked: boolean;
@@ -92,6 +95,7 @@ type ITextProps = {
   modifyProperty?: Function;
   deleteProperty?: Function;
   handleCloseAddLinksModel?: any;
+  onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
 };
 
 const Text = ({
@@ -111,7 +115,8 @@ const Text = ({
   navigateToNode,
   displaySidebar,
   activeSidebar,
-  nodes,
+  relatedNodes,
+  fetchNode,
   structured = false,
   currentImprovement,
   checkDuplicateTitle,
@@ -123,6 +128,7 @@ const Text = ({
   modifyProperty,
   deleteProperty,
   handleCloseAddLinksModel,
+  onInstantTreeUpdate,
 }: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -176,7 +182,7 @@ const Text = ({
     });
 
     return () => unsubscribe();
-  }, [nodes]);
+  }, [relatedNodes]);
 
   // // Maintain focus after inheritance change
   // useEffect(() => {
@@ -211,8 +217,17 @@ const Text = ({
           update: true,
         });
       }
+
+      // Queue tree update after text change (especially important for title changes)
+      if (property === "title" && nodeId) {
+        // Instant update: Update node title in tree immediately
+        if (onInstantTreeUpdate) {
+          onInstantTreeUpdate((tree) => updateNodeInTree(tree, nodeId, { name: newValue }));
+        }
+        await queueTreeUpdate(nodeId, skillsFutureApp);
+      }
     },
-    [db, property, user],
+    [db, property, user, skillsFutureApp, onInstantTreeUpdate],
   );
 
   const onSaveTextChange = useCallback(
@@ -226,7 +241,7 @@ const Text = ({
         setSwitchToWebSocket(false);
         const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
         if (structured) {
-          const referencedNode: any = nodes[reference];
+          const referencedNode: any = relatedNodes[reference];
           await updateDoc(nodeRef, {
             [`textValue.${property}`]: copyValue,
             [`properties.${property}`]: referencedNode.properties[property],
@@ -243,14 +258,14 @@ const Text = ({
                 { id: currentVisibleNode?.id },
                 property === "parts" ? "isPartOf" : "parts",
                 db,
-                nodes,
+                relatedNodes,
               );
             } else {
               updatePropertyOf(
                 links,
                 { id: currentVisibleNode?.id },
                 property,
-                nodes,
+                relatedNodes,
                 db,
               );
             }
@@ -288,7 +303,7 @@ const Text = ({
         });
       }
     },
-    [user?.uname, currentVisibleNode?.id, reference, property, db, nodes],
+    [user?.uname, currentVisibleNode?.id, reference, property, db, relatedNodes],
   );
 
   useEffect(() => {
@@ -657,7 +672,7 @@ const Text = ({
                   <SelectInheritance
                     currentVisibleNode={currentVisibleNode}
                     property={property}
-                    nodes={nodes}
+                    nodes={relatedNodes}
                     enableEdit={enableEdit}
                   />
                 )}
@@ -745,7 +760,8 @@ const Text = ({
         <InheritanceDetailsPanel
           property={property}
           currentVisibleNode={currentVisibleNode}
-          nodes={nodes}
+          relatedNodes={relatedNodes}
+          fetchNode={fetchNode}
         />
       </Paper>
     </Slide>
