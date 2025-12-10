@@ -109,7 +109,7 @@ const ExpandSearchResult = ({
               },
             },
             [`& .${treeItemClasses.group}`]: {
-              marginLeft: "6px",
+              marginLeft: "16px",
               paddingLeft: "6px",
               position: "relative",
               "&::before": {
@@ -117,7 +117,7 @@ const ExpandSearchResult = ({
                 position: "absolute",
                 top: "-12px",
                 bottom: 0,
-                left: 0,
+                left: "10px",
                 borderLeft: (theme) => `2px solid #797575`,
               },
             },
