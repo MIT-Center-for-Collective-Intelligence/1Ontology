@@ -31,7 +31,7 @@ const Footer: React.FC<FooterProps> = ({ isDark }) => {
           alignItems={{ xs: "flex-start", md: "center" }}
         >
           {/* Logo & Title */}
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Box
               sx={{
                 display: "flex",
@@ -70,7 +70,7 @@ const Footer: React.FC<FooterProps> = ({ isDark }) => {
           </Grid>
 
           {/* Navigation Links */}
-          <Grid item xs={6} md={3}>
+          <Grid size={{ xs: 6, md: 3 }}>
             <Box
               sx={{
                 display: "flex",
@@ -113,7 +113,7 @@ const Footer: React.FC<FooterProps> = ({ isDark }) => {
           />
 
           {/* Related Project Links */}
-          <Grid item xs={6} md={3}>
+          <Grid size={{ xs: 6, md: 3 }}>
             <Box
               sx={{
                 display: "flex",
@@ -168,7 +168,7 @@ const Footer: React.FC<FooterProps> = ({ isDark }) => {
           />
 
           {/* Accessibility Info */}
-          <Grid item xs={12} md={2}>
+          <Grid size={{ xs: 12, md: 2 }}>
             <Box
               sx={{
                 display: "flex",

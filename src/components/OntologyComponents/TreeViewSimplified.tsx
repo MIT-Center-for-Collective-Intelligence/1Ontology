@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { TreeView, TreeItem, treeItemClasses, LoadingButton } from "@mui/lab";
+import { SimpleTreeView, TreeItem } from "@mui/x-tree-view";
+import { LoadingButton } from "@mui/lab";
 import {
   Box,
   Typography,
@@ -89,11 +90,10 @@ const TreeViewSimplified = ({
   }, [expandedNodes]);
 
   return (
-    <TreeView
-      defaultCollapseIcon={<ExpandMoreIcon />}
-      defaultExpandIcon={<ChevronRightIcon />}
-      expanded={expanded}
-      onNodeToggle={(event, nodeIds) => {
+    <SimpleTreeView
+      slots={{ collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon }}
+      expandedItems={expanded}
+      onExpandedItemsChange={(event, nodeIds) => {
         setExpanded(nodeIds);
         setExpandedNodes(new Set(nodeIds));
       }}
@@ -102,7 +102,7 @@ const TreeViewSimplified = ({
       {sortedKeys.map((nodeId) => (
         <TreeItem
           key={treeVisualization[nodeId]?.id || nodeId}
-          nodeId={treeVisualization[nodeId]?.id || nodeId}
+          itemId={treeVisualization[nodeId]?.id || nodeId}
           className={`node-${nodeId}`}
           label={
             <NodeLabel
@@ -134,7 +134,7 @@ const TreeViewSimplified = ({
                 backgroundColor: "transparent !important",
               },
             },
-            [`& .${treeItemClasses.group}`]: {
+            [`& .MuiTreeItem-group`]: {
               marginLeft: "6px",
               paddingLeft: "6px",
               position: "relative",
@@ -185,7 +185,7 @@ const TreeViewSimplified = ({
             )}
         </TreeItem>
       ))}
-    </TreeView>
+    </SimpleTreeView>
   );
 };
 

@@ -356,8 +356,7 @@ const PromptDialogComponent = ({
         </Box>
         <Grid container spacing={2} sx={{ flexGrow: 1, overflow: "hidden" }}>
           <Grid
-            item
-            xs={admin && !ignoreCLD ? 6 : 12}
+            size={admin && !ignoreCLD ? 6 : 12}
             sx={{ display: "flex", flexDirection: "column", gap: 2 }}
           >
             <TextField
@@ -425,8 +424,7 @@ const PromptDialogComponent = ({
 
           {admin && !ignoreCLD && (
             <Grid
-              item
-              xs={6}
+              size={6}
               sx={{ display: "flex", flexDirection: "column", gap: 2 }}
             >
               <Typography

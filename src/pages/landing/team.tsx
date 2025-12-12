@@ -325,7 +325,14 @@ const TeamPage = () => {
   );
 
   // Define role order for consistent display
-  const roleOrder = ["Faculty Members", "Researchers", "Developers", "Interns", "MIT Undergraduates", "Alumni"];
+  const roleOrder = [
+    "Faculty Members",
+    "Researchers",
+    "Developers",
+    "Interns",
+    "MIT Undergraduates",
+    "Alumni",
+  ];
   const sortedRoles = roleOrder.filter((role) => sortedMembersByRole[role]);
   // Add any additional roles not in the predefined order
   const otherRoles = Object.keys(sortedMembersByRole).filter(
@@ -450,11 +457,7 @@ const TeamPage = () => {
                     <Grid container spacing={3} justifyContent="center">
                       {members.map((member, memberIndex) => (
                         <Grid
-                          item
-                          xs={6}
-                          sm={4}
-                          md={3}
-                          lg={2.4}
+                          size={{ xs: 6, sm: 4, md: 3, lg: 2.4 }}
                           key={`${role}-${memberIndex}`}
                           sx={{ display: "flex", justifyContent: "center" }}
                         >
