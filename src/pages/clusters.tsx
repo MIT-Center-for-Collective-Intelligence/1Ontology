@@ -400,7 +400,7 @@ function OntTree() {
       }}
     >
       <Box sx={{ display: "flex" }}>
-        <Box sx={{ width: /* isExpanded ? "80%" : "98%" */ "100%" }}>
+        {/* <Box sx={{ width: "100%" }}>
           <DraggableTree
             treeViewData={treeData}
             setSnackbarMessage={() => {}}
@@ -414,7 +414,7 @@ function OntTree() {
             eachOntologyPath={{}}
             multipleOntologyPaths={{}}
           />
-        </Box>
+        </Box> */}
         {/*  <Box
           sx={{
             width: isExpanded ? "20%" : "2%",
