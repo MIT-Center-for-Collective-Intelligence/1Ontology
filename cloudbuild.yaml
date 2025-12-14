@@ -7,7 +7,7 @@ steps:
     entrypoint: "bash"
     args: [
         "-c",
-        'docker build -t us-central1-docker.pkg.dev/visualexp-a7d2c/knowledge/knowledge
+        'docker build -t us-central1-docker.pkg.dev/ontology-41607/ontology-repo/ontology
         --build-arg=PROD_ONTOLOGY_CRED_TYPE="$${PROD_ONTOLOGY_CRED_TYPE}"
         --build-arg=PROD_ONTOLOGY_CRED_PROJECT_ID="$${PROD_ONTOLOGY_CRED_PROJECT_ID}"
         --build-arg=PROD_ONTOLOGY_CRED_PRIVATE_KEY_ID="$${PROD_ONTOLOGY_CRED_PRIVATE_KEY_ID}"
@@ -28,6 +28,14 @@ steps:
         --build-arg=NEXT_PUBLIC_DATABASE_URL="$${NEXT_PUBLIC_DATABASE_URL}"
         .',
       ]
+    env:
+      - "NEXT_PUBLIC_API_KEY=${_NEXT_PUBLIC_API_KEY}"
+      - "NEXT_PUBLIC_AUTH_DOMAIN=${_NEXT_PUBLIC_AUTH_DOMAIN}"
+      - "NEXT_PUBLIC_PROJECT_ID=${_NEXT_PUBLIC_PROJECT_ID}"
+      - "NEXT_PUBLIC_STORAGE_BUCKET=${_NEXT_PUBLIC_STORAGE_BUCKET}"
+      - "NEXT_PUBLIC_MESSAGING_SENDER_ID=${_NEXT_PUBLIC_MESSAGING_SENDER_ID}"
+      - "NEXT_PUBLIC_APP_ID=${_NEXT_PUBLIC_APP_ID}"
+      - "NEXT_PUBLIC_DATABASE_URL=${_NEXT_PUBLIC_DATABASE_URL}"
     secretEnv:
       [
         "PROD_ONTOLOGY_CRED_TYPE",
@@ -41,17 +49,14 @@ steps:
         "PROD_ONTOLOGY_CRED_AUTH_PROVIDER_X509_CERT_URL",
         "PROD_ONTOLOGY_CRED_CLIENT_X509_CERT_URL",
         "PROD_ONTOLOGY_STORAGE_BUCKET",
-        "NEXT_PUBLIC_API_KEY",  
-        "NEXT_PUBLIC_AUTH_DOMAIN",  
-        "NEXT_PUBLIC_PROJECT_ID",   
-        "NEXT_PUBLIC_STORAGE_BUCKET",   
-        "NEXT_PUBLIC_MESSAGING_SENDER_ID",  
-        "NEXT_PUBLIC_APP_ID",   
-        "NEXT_PUBLIC_DATABASE_URL",   
       ]
   # Push the NextJS container image to Container Registry
   - name: "gcr.io/cloud-builders/docker"
-    args: ["push", "us-central1-docker.pkg.dev/ontology-41607/ontology-app"]
+    args:
+      [
+        "push",
+        "us-central1-docker.pkg.dev/ontology-41607/ontology-repo/ontology",
+      ]
   # Deploy the NextJS container image to Cloud Run
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: gcloud
@@ -59,17 +64,18 @@ steps:
       [
         "run",
         "deploy",
-        "knowledge",
+        "ontology",
         "--image",
-        "us-central1-docker.pkg.dev/ontology-41607/ontology-app",
+        "us-central1-docker.pkg.dev/ontology-41607/ontology-repo/ontology",
         "--region",
         "us-central1",
         "--project",
         "ontology-41607",
+        "--allow-unauthenticated",
       ]
 
 images:
-  - us-central1-docker.pkg.dev/ontology-41607/ontology-app
+  - us-central1-docker.pkg.dev/ontology-41607/ontology-repo/ontology
 availableSecrets:
   secretManager:
     - versionName: projects/163479774214/secrets/PROD_ONTOLOGY_CRED_TYPE/versions/1
@@ -94,19 +100,5 @@ availableSecrets:
       env: "PROD_ONTOLOGY_CRED_CLIENT_X509_CERT_URL"
     - versionName: projects/163479774214/secrets/PROD_ONTOLOGY_STORAGE_BUCKET/versions/1
       env: "PROD_ONTOLOGY_STORAGE_BUCKET"
-    - versionName: projects/163479774214/secrets/NEXT_PUBLIC_API_KEY/versions/1
-      env: "NEXT_PUBLIC_API_KEY"
-    - versionName: projects/163479774214/secrets/NEXT_PUBLIC_AUTH_DOMAIN/versions/1
-      env: "NEXT_PUBLIC_AUTH_DOMAIN"
-    - versionName: projects/163479774214/secrets/NEXT_PUBLIC_PROJECT_ID/versions/1
-      env: "NEXT_PUBLIC_PROJECT_ID"
-    - versionName: projects/163479774214/secrets/NEXT_PUBLIC_STORAGE_BUCKET/versions/1
-      env: "NEXT_PUBLIC_STORAGE_BUCKET"
-    - versionName: projects/163479774214/secrets/NEXT_PUBLIC_MESSAGING_SENDER_ID/versions/1
-      env: "NEXT_PUBLIC_MESSAGING_SENDER_ID"
-    - versionName: projects/163479774214/secrets/NEXT_PUBLIC_APP_ID/versions/1
-      env: "NEXT_PUBLIC_APP_ID"
-    - versionName: projects/163479774214/secrets/NEXT_PUBLIC_DATABASE_URL/versions/1
-      env: "NEXT_PUBLIC_DATABASE_URL"
 
 timeout: 2000s
