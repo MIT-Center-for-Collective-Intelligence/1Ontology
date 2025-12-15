@@ -58,6 +58,7 @@ function DraggableTree({
   specializationNumsUnder,
   skillsFutureApp,
   onInstantTreeUpdate,
+  onExpandEllipsis,
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -70,6 +71,7 @@ function DraggableTree({
   specializationNumsUnder: { [key: string]: number };
   skillsFutureApp: string;
   onInstantTreeUpdate?: (updateFn: (treeData: TreeData[]) => TreeData[]) => void;
+  onExpandEllipsis?: (ellipsisNodeId: string) => void;
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -243,7 +245,20 @@ function DraggableTree({
         treeData,
         loadMoreNodeId,
       ) as PaginatedTreeData;
-      if (!loadMoreNode || !loadMoreNode.parentId) return;
+      if (!loadMoreNode) return;
+
+      // Check if this is a filtered ellipsis node
+      const isFilteredEllipsis = loadMoreNode.isLoadMore &&
+                                 (loadMoreNode as any).hiddenNodesCount !== undefined &&
+                                 !loadMoreNode.parentId;
+
+      if (isFilteredEllipsis && onExpandEllipsis) {
+        onExpandEllipsis(loadMoreNodeId);
+        return;
+      }
+
+      // Pagination logic for normal load-more nodes (for unclassified nodes)
+      if (!loadMoreNode.parentId) return;
 
       setLoadingStates((prev) => new Set(prev).add(loadMoreNodeId));
 
@@ -314,7 +329,7 @@ function DraggableTree({
         });
       }, 300);
     },
-    [treeData],
+    [treeData, onExpandEllipsis],
   );
 
   useEffect(() => {
@@ -1073,7 +1088,8 @@ function DraggableTree({
           gap: 1,
         }}
       >
-        {!treeType && (
+        {/* Removed the Expand/Collapse button with the subcollection tree changes */}
+        {/* {!treeType && (
           <Button
             variant={expanded ? "contained" : "outlined"}
             size="small"
@@ -1089,7 +1105,7 @@ function DraggableTree({
                 ? "Collapse All"
                 : "Expand All"}
           </Button>
-        )}
+        )} */}
 
         {treeType !== "oNet" && user?.claims.editAccess && (
           <ToggleButton

@@ -134,6 +134,8 @@ import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
 import ROUTES from "@components/lib/utils/routes";
 import { getAuth } from "firebase/auth";
 import FullPageLogoLoading from "@components/components/layouts/FullPageLogoLoading";
+import { loadTreeFromSubcollection } from "@components/lib/utils/loadTreeFromSubcollection";
+import { filterTreeForTargetNode, expandEllipsisNode } from "@components/lib/utils/treeFiltering";
 
 const stem = require("wink-porter2-stemmer");
 const tokenizer = require("wink-tokenizer");
@@ -1450,13 +1452,19 @@ const Ontology = ({
   const openedANode = async (nodeId: string, nodeTitle?: string) => {
     if (!user) return;
     const userRef = doc(collection(db, USERS), user.uname);
-    // Update the user document with the ontology path
-
-    await updateDoc(userRef, {
-      [`currentNode.${appName}`]: {
-        id: nodeId,
-        title: nodeTitle || "",
-      },    });
+    
+    await setDoc(
+      userRef,
+      {
+        currentNode: {
+          [appName]: {
+            id: nodeId,
+            title: nodeTitle || "",
+          },
+        },
+      },
+      { merge: true }
+    );
 
     // Record logs if ontology path is not empty
     if (nodeId) {
@@ -1855,71 +1863,45 @@ const Ontology = ({
     );
   };
 
-  // Extract current node's tree data from nodeTreeData field
+  // Load tree data from subcollection
   useEffect(() => {
     console.log("[LOCAL TREE] Current node:", currentVisibleNode?.title);
-    console.log("[LOCAL TREE] Has nodeTreeData:", !!currentVisibleNode?.nodeTreeData);
     console.log("[LOCAL TREE] Has instant update:", hasInstantUpdate);
 
     // Skip rebuilding if we have instant updates pending
     if (hasInstantUpdate) {
       console.log("[LOCAL TREE] Skipping rebuild - has instant updates");
-      const backendTimestamp = currentVisibleNode?.nodeTreeData?.lastUpdated;
-      if (backendTimestamp) {
-        const timeSinceUpdate = Date.now() - backendTimestamp;
-        if (timeSinceUpdate < 5000) {
-          console.log("[LOCAL TREE] Backend data is fresh - clearing instant update flag");
-          setHasInstantUpdate(false);
-          if (instantUpdateTimeoutRef.current) {
-            clearTimeout(instantUpdateTimeoutRef.current);
-            instantUpdateTimeoutRef.current = null;
-          }
-        } else {
-          return; // Keep instant updates
-        }
-      } else {
-        return; // Keep instant updates
-      }
+      return;
     }
 
-    if (!currentVisibleNode?.nodeTreeData) {
+    if (!currentVisibleNode?.id) {
       setCurrentNodeTreeData([]);
       return;
     }
 
-    const nodeTreeData = currentVisibleNode.nodeTreeData;
+    // Load tree from subcollection
+    const loadTree = async () => {
+      try {
+        const hierarchicalTree = await loadTreeFromSubcollection(currentVisibleNode.id);
 
-    // Log all node titles in nodeTreeData - TO BE REMOVED
-    const allNodeTitles = Object.values(nodeTreeData.nodes || {}).map(node => node.name);
-    console.log("[LOCAL TREE] All node titles in tree:", allNodeTitles);
-    console.log("[LOCAL TREE] Building local tree with data:", {
-      rootCount: nodeTreeData.rootIds?.length,
-      nodeCount: Object.keys(nodeTreeData.nodes || {}).length,
-    });
-
-    // Reconstruct hierarchical tree from flat structure (same as global tree)
-    const reconstructTree = (nodeIds: string[]): TreeData[] => {
-      return nodeIds.map(nodeId => {
-        const node = nodeTreeData.nodes[nodeId];
-        if (!node) return null;
-
-        return {
-          id: node.id,
-          nodeId: node.nodeId,
-          name: node.name,
-          nodeType: node.nodeType,
-          category: node.category,
-          unclassified: node.unclassified,
-          children: node.childIds ? reconstructTree(node.childIds) : [],
-        };
-      }).filter(Boolean) as TreeData[];
+        // Apply filtering based on target node occurrences
+        const filteredTree = filterTreeForTargetNode(hierarchicalTree, currentVisibleNode.id);
+        setCurrentNodeTreeData(filteredTree);
+      } catch (error) {
+        setCurrentNodeTreeData([]);
+      }
     };
 
-    const hierarchicalTree = reconstructTree(nodeTreeData.rootIds || []);
-    console.log("[LOCAL TREE] Built tree with", hierarchicalTree.length, "root nodes");
-    setCurrentNodeTreeData(hierarchicalTree);
-  }, [currentVisibleNode?.id, currentVisibleNode?.nodeTreeData, hasInstantUpdate]);
+    loadTree();
+  }, [currentVisibleNode?.id, hasInstantUpdate]);
 
+  // Handler for expanding ellipsis nodes
+  const handleExpandEllipsis = useCallback((ellipsisNodeId: string) => {
+    setCurrentNodeTreeData(prevTree => {
+      const expandedTree = expandEllipsisNode(prevTree, ellipsisNodeId);
+      return expandedTree;
+    });
+  }, []);
 
   // Converts hierarchical TreeData[] back to flat NodeTreeData format for Firestore storage
   const treeDataToNodeTreeData = (
@@ -2455,6 +2437,7 @@ const Ontology = ({
                       specializationNumsUnder={specializationNumsUnder}
                       skillsFutureApp={appName}
                       onInstantTreeUpdate={handleInstantTreeUpdate}
+                      onExpandEllipsis={handleExpandEllipsis}
                     />
                   </Box>
                 </TabPanel>
