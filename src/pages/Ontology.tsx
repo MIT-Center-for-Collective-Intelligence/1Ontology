@@ -1428,6 +1428,12 @@ const Ontology = ({
       return;
     }
 
+    // Set flag when switching apps
+    // To work for user changing app name in url
+    if (isAppSwitch) {
+      isSwitchingAppRef.current = true;
+    }
+
     const loadNode = async () => {
       const hashId = window.location.hash.split("#").reverse()[0];
       const userCurrentNodeId = user?.currentNode?.[appName]?.id;
@@ -1458,8 +1464,10 @@ const Ontology = ({
       }
       if (isAppSwitch) {
         prevAppNameRef.current = appName;
-        // Clear flag after switch completes
-        isSwitchingAppRef.current = false;
+        // Delay clearing the flag to ensure updateTheUrl can check it
+        setTimeout(() => {
+          isSwitchingAppRef.current = false;
+        }, 100);
       }
     };
 
