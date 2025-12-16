@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy package.json and install dependencies
 COPY package.json package-lock.json* ./
 
-RUN apk add python3
+RUN apk add --no-cache python3
 
 RUN npm ci --legacy-peer-deps
 
@@ -71,32 +71,27 @@ ENV NEXT_PUBLIC_DEV_APP_ID=${NEXT_PUBLIC_DEV_APP_ID}
 
 ENV NODE_ENV=production
 
+# Restore cache from previous build
+COPY .next_cache ./.next/cache
+
 RUN npm run build
 
 # Step 2. Production image, copy all the files and run next
-FROM ubuntu:24.04
-ENV DEBIAN_FRONTEND="noninteractive"
-
-# Install base dependencies
-RUN apt update && \
-    apt install -y curl wget gnupg software-properties-common apt-transport-https
-
-# Install Node.js
-RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
-    apt install -y nodejs 
-    
-RUN apt update && \
-    apt install nodejs python3 wget libegl1 libopengl0 libxcb-cursor0 libfreetype6 xz-utils xdg-utils qt5dxcb-plugin libnss3 libreoffice libreoffice-java-common fonts-dejavu -y && \
-    wget --no-check-certificate -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sh /dev/stdin
-
-RUN calibre --version
-RUN libreoffice --version
-
+FROM node:18-alpine AS runner
 WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+RUN apk add --no-cache libc6-compat
 
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 --home /home/nextjs nextjs
+RUN adduser --system --uid 1001 nextjs
+
+
 USER nextjs
 
 COPY --from=builder /app/public ./public
@@ -148,4 +143,5 @@ ENV NEXT_PUBLIC_MESSAGING_SENDER_ID=${NEXT_PUBLIC_MESSAGING_SENDER_ID}
 ENV NEXT_PUBLIC_APP_ID=${NEXT_PUBLIC_APP_ID}
 ENV NEXT_PUBLIC_DATABASE_URL=${NEXT_PUBLIC_DATABASE_URL}
 
-CMD node server.js
+EXPOSE 3000
+CMD ["node", "server.js"]
