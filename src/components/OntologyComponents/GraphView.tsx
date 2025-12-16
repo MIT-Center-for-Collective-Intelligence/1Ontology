@@ -98,6 +98,7 @@ const GraphView = ({
     translateY: 0,
     scale: 0,
   });
+  const isAutoNavigatingRef = useRef(false);
 
   const handleNodeClick = (nodeId: string) => {
     onOpenNodeDagre(nodeId);
@@ -273,8 +274,10 @@ const GraphView = ({
     const translateX = (svgWidth - graphWidth * zoomScale) / 20;
     const translateY = 150;
 
-    // Restore zoom state if it exists
-    if (zoomState) {
+    if (isAutoNavigatingRef.current) {
+      // Auto-navigation will handle zoom
+    } else if (zoomState.scale !== 0) {
+      // Restore zoom state if it exists and has been set
       svg.call(
         zoom.transform,
         d3.zoomIdentity
@@ -302,6 +305,8 @@ const GraphView = ({
       const nodeId = currentVisibleNode?.id;
 
       if (graph.node(nodeId)) {
+        // Set flag to prevent zoom state restoration during auto-navigation
+        isAutoNavigatingRef.current = true;
         const nodePosition = graph.node(nodeId);
         const svg = d3.select<SVGSVGElement, unknown>(svgRef.current!);
         const svgGroup = svg.select("g");
@@ -336,7 +341,9 @@ const GraphView = ({
             translateY: translateY,
             scale: scale,
           });
-        }, 500);
+          // Clear flag after navigation completes
+          isAutoNavigatingRef.current = false;
+        }, 1100);
       }
     }
   }, [currentVisibleNode?.id, graph]);

@@ -279,7 +279,7 @@ const Ontology = ({
   appName: string;
 }) => {
   const db = getFirestore();
-  const [{ emailVerified, user }] = useAuth();
+  const [{ emailVerified, user, isAuthInitialized }] = useAuth();
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:599px)");
   const [relatedNodes, setRelatedNodes] = useState<{ [id: string]: INode }>({});
@@ -357,6 +357,8 @@ const Ontology = ({
   const treeRef = useRef<TreeApi<TreeData>>(null);
 
   const firstLoad = useRef(true);
+  const prevAppNameRef = useRef<string>(appName);
+  const isSwitchingAppRef = useRef(false);
 
   // Mobile state
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -656,6 +658,11 @@ const Ontology = ({
   useEffect(() => {
     // Function to handle changes in the URL hash
     const handleHashChange = async () => {
+      // Skip hash change handling during app switch
+      if (isSwitchingAppRef.current) {
+        return;
+      }
+
       // Check if there is a hash in the URL
       if (window.location.hash) {
         // Call updateUserDoc with the hash split into an array
@@ -1407,52 +1414,62 @@ const Ontology = ({
     setTreeVisualization(treeOfSpecializations);
   }, [relatedNodes]);
 
+  // Load initial node on mount and when switching apps
   useEffect(() => {
-    // if (currentVisibleNode) return;
-    if (firstLoad.current) {
-      const loadInitialNode = async () => {
-        console.log("🔵 [INITIAL LOAD] Starting initial node load...");
-        const hashId = window.location.hash.split("#").reverse()[0];
-        const userCurrentNodeId = user?.currentNode?.[appName]?.id;
-        let node: INode | null = null;
-
-        if (hashId) {
-          console.log("🔵 [INITIAL LOAD] Trying node from URL hash:", hashId);
-          node = await fetchSingleNode(db, hashId, appName);
-        }
-
-        // If not found, try user's currentNode for this app
-        if (!node && userCurrentNodeId) {
-          console.log("🔵 [INITIAL LOAD] Hash node not found in app, trying user's currentNode:", userCurrentNodeId);
-          node = await fetchSingleNode(db, userCurrentNodeId, appName);
-        }
-
-        // If still not found, fallback to root node for this app
-        if (!node) {
-          console.log("🔵 [INITIAL LOAD] Falling back to root node for app:", appName);
-          node = await fetchRootNode(db, appName);
-        }
-
-        if (node) {
-          console.log("🔵 [INITIAL LOAD] Successfully loaded initial node:", node.title);
-          window.location.hash = node.id;
-          setCurrentVisibleNode(node);
-        } else {
-          console.log("🔵 [INITIAL LOAD] Failed to fetch any node for app:", appName);
-        }
-
-        firstLoad.current = false;
-      };
-
-      loadInitialNode();
+    if (!isAuthInitialized) {
+      return;
     }
-  }, [user?.currentNode?.[appName]?.id, db, appName]);
+
+    const isInitialLoad = firstLoad.current;
+    const isAppSwitch = !firstLoad.current && prevAppNameRef.current !== appName;
+
+    // Only load on initial mount or app switch
+    if (!isInitialLoad && !isAppSwitch) {
+      return;
+    }
+
+    const loadNode = async () => {
+      const hashId = window.location.hash.split("#").reverse()[0];
+      const userCurrentNodeId = user?.currentNode?.[appName]?.id;
+      let node: INode | null = null;
+
+      if (hashId) {
+        node = await fetchSingleNode(db, hashId, appName);
+      }
+
+      // If not found, try user's currentNode for this app
+      if (!node && userCurrentNodeId) {
+        node = await fetchSingleNode(db, userCurrentNodeId, appName);
+      }
+
+      // If still not found, fallback to root node for this app
+      if (!node) {
+        node = await fetchRootNode(db, appName);
+      }
+
+      if (node) {
+        window.location.hash = node.id;
+        setCurrentVisibleNode(node);
+      }
+
+      // Update refs
+      if (isInitialLoad) {
+        firstLoad.current = false;
+      }
+      if (isAppSwitch) {
+        prevAppNameRef.current = appName;
+        // Clear flag after switch completes
+        isSwitchingAppRef.current = false;
+      }
+    };
+
+    loadNode();
+  }, [isAuthInitialized, appName, user?.currentNode?.[appName]?.id, db]);
 
   // Function to update the user document with the current ontology path
   const openedANode = async (nodeId: string, nodeTitle?: string) => {
     if (!user) return;
     const userRef = doc(collection(db, USERS), user.uname);
-    
     await setDoc(
       userRef,
       {
@@ -1477,6 +1494,10 @@ const Ontology = ({
 
   const updateTheUrl = (path: INodePath[]) => {
     if (!path) {
+      return;
+    }
+    // Skip hash change handling during app switch
+    if (isSwitchingAppRef.current) {
       return;
     }
     let newHash = "";
@@ -1549,7 +1570,10 @@ const Ontology = ({
       return;
     }
 
-    openedANode(currentVisibleNode?.id, currentVisibleNode?.title);
+    // Only save currentNode if it belongs to the current app
+    if (currentVisibleNode.appName === appName) {
+      openedANode(currentVisibleNode?.id, currentVisibleNode?.title);
+    }
 
     // Check if this is a root node - if so, skip initializeExpanded to prevent scrolling
     const isRootNode = currentVisibleNode.category || (typeof currentVisibleNode.root === "boolean" && !!currentVisibleNode.root);
@@ -2243,6 +2267,7 @@ const Ontology = ({
                   value={appName}
                   onChange={(event) => {
                     setRelatedNodes({});
+                    isSwitchingAppRef.current = true;
                     const app = event.target.value.replaceAll(" ", "_");
                     router.replace(`/${app}`);
                   }}
@@ -2478,6 +2503,7 @@ const Ontology = ({
                         value={appName}
                         onChange={(event) => {
                           setRelatedNodes({});
+                          isSwitchingAppRef.current = true;
                           const app = event.target.value.replaceAll(" ", "_");
                           router.replace(`/${app}`);
                         }}
