@@ -6,6 +6,7 @@ interface TreeNodeDocument {
   title: string;
   nodeType: string;
   unclassified?: boolean;
+  root?: boolean;
   specializations: ICollection[];
 }
 
@@ -156,7 +157,7 @@ function collectTreeNodeIds(
 function buildTreeNodes(
   paths: string[][],
   allNodes: { [id: string]: INode }
-): { nodes: { [nodeId: string]: TreeNodeDocument }, rootIds: string[] } {
+): { [nodeId: string]: TreeNodeDocument } {
   const treeNodes: { [nodeId: string]: TreeNodeDocument } = {};
   const nodeIdsInTree = collectTreeNodeIds(paths, allNodes);
 
@@ -185,19 +186,12 @@ function buildTreeNodes(
       title: node.title,
       nodeType: node.nodeType,
       ...(node.unclassified && { unclassified: true }),
+      ...(node.root && { root: true }),
       specializations: filteredSpecializations
     };
   }
 
-  // Find root nodes (from paths)
-  const rootIds: string[] = [];
-  for (const path of paths) {
-    if (path.length > 0 && !rootIds.includes(path[0])) {
-      rootIds.push(path[0]);
-    }
-  }
-
-  return { nodes: treeNodes, rootIds };
+  return treeNodes;
 }
 
 // Save tree to subcollection for a single node
@@ -219,7 +213,7 @@ async function saveTreeToSubcollection(
     }
 
     // Build tree nodes
-    const { nodes } = buildTreeNodes(paths, allNodes);
+    const nodes = buildTreeNodes(paths, allNodes);
 
     // Save each node to subcollection using nodeId as document ID
     const batch = db.batch();

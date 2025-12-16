@@ -6,6 +6,7 @@ interface TreeNodeDocument {
   title: string;
   nodeType: string;
   unclassified?: boolean;
+  root?: boolean;
   specializations: ICollection[];
 }
 
@@ -37,18 +38,9 @@ export async function loadTreeFromSubcollection(
   });
 
   // Find root nodes
-  const childNodeIds = new Set<string>();
-  for (const node of Object.values(nodesMap)) {
-    for (const collection of node.specializations) {
-      for (const child of collection.nodes || []) {
-        childNodeIds.add(child.id);
-      }
-    }
-  }
-
   const rootNodeIds: string[] = [];
-  for (const nodeId of Object.keys(nodesMap)) {
-    if (!childNodeIds.has(nodeId)) {
+  for (const [nodeId, node] of Object.entries(nodesMap)) {
+    if (node.root === true) {
       rootNodeIds.push(nodeId);
     }
   }
