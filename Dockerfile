@@ -71,9 +71,6 @@ ENV NEXT_PUBLIC_DEV_APP_ID=${NEXT_PUBLIC_DEV_APP_ID}
 
 ENV NODE_ENV=production
 
-# Restore cache from previous build
-COPY .next_cache ./.next/cache
-
 RUN npm run build
 
 # Step 2. Production image, copy all the files and run next

@@ -11,7 +11,6 @@ import {
 import React, { useEffect, useState, useCallback } from "react";
 
 import { Box, Paper } from "@mui/material";
-import { debounce } from "lodash";
 import CircularProgress from "@mui/material/CircularProgress";
 import {
   collection,
@@ -90,7 +89,7 @@ const PromptDialogComponent = ({
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSavePrompt = useCallback(
-    debounce(async (promptToSave) => {
+    async (promptToSave: any) => {
       const promptDocs = await getDocs(
         query(
           collection(db, "diagramPrompts"),
@@ -113,7 +112,7 @@ const PromptDialogComponent = ({
           consultant: true,
         });
       }
-    }, 1000),
+    },
     [db, confirmation],
   );
 
@@ -167,8 +166,6 @@ const PromptDialogComponent = ({
   };
 
   const savePrompt = async () => {
-    debouncedSavePrompt.cancel();
-
     const promptDocs = await getDocs(
       query(
         collection(db, "diagramPrompts"),
@@ -194,12 +191,6 @@ const PromptDialogComponent = ({
     }
   };
 
-  // Clean up debounce on unmount
-  useEffect(() => {
-    return () => {
-      debouncedSavePrompt.cancel();
-    };
-  }, [debouncedSavePrompt]);
   if (loadingResponse === "generate") {
     return <FullPageLogoLoading />;
   }

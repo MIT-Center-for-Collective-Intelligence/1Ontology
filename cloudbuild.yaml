@@ -1,5 +1,5 @@
 options:
-  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
+  logging: CLOUD_LOGGING_ONLY
   machineType: "E2_HIGHCPU_32"
 
 steps:
@@ -10,15 +10,6 @@ steps:
         "-c",
         "docker pull us-central1-docker.pkg.dev/ontology-41607/ontology-repo/ontology || exit 0",
       ]
-
-  # Restore Next.js build cache from GCS
-  - name: "gcr.io/cloud-builders/gsutil"
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |
-        gsutil cp gs://${PROJECT_ID}_cloudbuild/cache/next-cache.tar.gz next-cache.tar.gz && \
-        tar -xzf next-cache.tar.gz || echo "No cache found, creating empty directory." && mkdir -p .next_cache
 
   - name: "gcr.io/cloud-builders/docker"
     entrypoint: "bash"
@@ -81,23 +72,6 @@ steps:
         "PROD_ONTOLOGY_STORAGE_BUCKET",
       ]
 
-  # Extract Next.js build cache from the image and save to GCS
-  - name: "gcr.io/cloud-builders/docker"
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |
-        id=$(docker create us-central1-docker.pkg.dev/ontology-41607/ontology-repo/ontology) && \
-        docker cp $id:/app/.next/cache .next_cache && \
-        docker rm -v $id && \
-        tar -czf next-cache.tar.gz .next_cache
-  - name: "gcr.io/cloud-builders/gsutil"
-    args:
-      [
-        "cp",
-        "next-cache.tar.gz",
-        "gs://${PROJECT_ID}_cloudbuild/cache/next-cache.tar.gz",
-      ]
   # Push the NextJS container image to Container Registry
   - name: "gcr.io/cloud-builders/docker"
     args:
