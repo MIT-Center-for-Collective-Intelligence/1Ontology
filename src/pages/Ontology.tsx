@@ -2476,12 +2476,11 @@ const Ontology = ({
                 </TabPanel>
                 <TabPanel value={viewValue} index={1}>
                   <GraphView
-                    treeVisualization={treeVisualization}
+                    treeData={currentNodeTreeData}
                     setExpandedNodes={setExpandedNodes}
                     expandedNodes={expandedNodes}
                     onOpenNodeDagre={onOpenNodeDagre}
                     currentVisibleNode={currentVisibleNode}
-                    // nodes={nodes}
                   />
                 </TabPanel>
               </Box>
