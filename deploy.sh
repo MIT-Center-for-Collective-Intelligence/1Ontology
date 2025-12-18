@@ -2,9 +2,9 @@
 
 # Set variables for project ID, app name, and repository
 PROJECT_ID="ontology-41607"
-IMAGE_NAME="ontology-app"
+IMAGE_NAME="ontology"
 REGION="us-central1"
-REPO_NAME="ontology"
+REPO_NAME="ontology-repo"
 TIMEOUT="2000s"
 
 # Authenticate with Google Cloud

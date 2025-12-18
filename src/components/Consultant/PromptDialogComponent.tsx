@@ -11,7 +11,6 @@ import {
 import React, { useEffect, useState, useCallback } from "react";
 
 import { Box, Paper } from "@mui/material";
-import { debounce } from "lodash";
 import CircularProgress from "@mui/material/CircularProgress";
 import {
   collection,
@@ -90,7 +89,7 @@ const PromptDialogComponent = ({
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSavePrompt = useCallback(
-    debounce(async (promptToSave) => {
+    async (promptToSave: any) => {
       const promptDocs = await getDocs(
         query(
           collection(db, "diagramPrompts"),
@@ -113,7 +112,7 @@ const PromptDialogComponent = ({
           consultant: true,
         });
       }
-    }, 1000),
+    },
     [db, confirmation],
   );
 
@@ -167,8 +166,6 @@ const PromptDialogComponent = ({
   };
 
   const savePrompt = async () => {
-    debouncedSavePrompt.cancel();
-
     const promptDocs = await getDocs(
       query(
         collection(db, "diagramPrompts"),
@@ -194,12 +191,6 @@ const PromptDialogComponent = ({
     }
   };
 
-  // Clean up debounce on unmount
-  useEffect(() => {
-    return () => {
-      debouncedSavePrompt.cancel();
-    };
-  }, [debouncedSavePrompt]);
   if (loadingResponse === "generate") {
     return <FullPageLogoLoading />;
   }
@@ -356,8 +347,7 @@ const PromptDialogComponent = ({
         </Box>
         <Grid container spacing={2} sx={{ flexGrow: 1, overflow: "hidden" }}>
           <Grid
-            item
-            xs={admin && !ignoreCLD ? 6 : 12}
+            size={admin && !ignoreCLD ? 6 : 12}
             sx={{ display: "flex", flexDirection: "column", gap: 2 }}
           >
             <TextField
@@ -425,8 +415,7 @@ const PromptDialogComponent = ({
 
           {admin && !ignoreCLD && (
             <Grid
-              item
-              xs={6}
+              size={6}
               sx={{ display: "flex", flexDirection: "column", gap: 2 }}
             >
               <Typography

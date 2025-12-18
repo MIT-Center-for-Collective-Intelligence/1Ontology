@@ -37,7 +37,6 @@ import {
   breakInheritanceAndCopyParts,
 } from "@components/lib/utils/partsHelper";
 import { SearchBox } from "../SearchBox/SearchBox";
-import { property } from "lodash";
 
 const SelectModel = ({
   handleCloseAddLinksModel,

@@ -91,11 +91,11 @@ const SelectInheritance = ({
       for (let link of links) {
         const nodeRef = doc(collection(db, NODES), link.id);
         if (
-          nodes[link.id] && (
-            !nodes[link.id].inheritance[property]?.ref ||
+          nodes[link.id] &&
+          (!nodes[link.id].inheritance[property]?.ref ||
             generalizationId === nodes[link.id].inheritance[property]?.ref ||
-            modifiedInheritanceFor === nodes[link.id].inheritance[property]?.ref
-          )
+            modifiedInheritanceFor ===
+              nodes[link.id].inheritance[property]?.ref)
         ) {
           let objectUpdate = {
             [`inheritance.${property}.ref`]: ref,
@@ -188,15 +188,17 @@ const SelectInheritance = ({
           minWidth: "200px",
           display: !enableEdit ? "none" : "flex",
         }}
-        InputProps={{
-          sx: {
-            height: "40px",
-            borderRadius: "18px",
-            color: inheritanceRef === "inheritance-overridden" ? "gray" : "",
+        slotProps={{
+          input: {
+            sx: {
+              height: "40px",
+              borderRadius: "18px",
+              color: inheritanceRef === "inheritance-overridden" ? "gray" : "",
+            },
           },
-        }}
-        InputLabelProps={{
-          style: { color: "grey" },
+          inputLabel: {
+            style: { color: "grey" },
+          },
         }}
       >
         <MenuItem
@@ -205,6 +207,7 @@ const SelectInheritance = ({
           sx={{
             backgroundColor: (theme) =>
               theme.palette.mode === "dark" ? "" : "white",
+            mx: "13px",
           }}
         >
           Select Inheritance
@@ -214,8 +217,16 @@ const SelectInheritance = ({
             key={generalization.id}
             value={generalization.id}
             sx={{
+              borderRadius: "25px",
+              mt: "3px",
+              border: "1px solid gray",
+              background:
+                "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
+              fontSize: "15px",
+              fontWeight: "400",
               color:
                 generalization.id === "inheritance-overridden" ? "orange" : "",
+              mx: "6px",
             }}
           >
             {generalization.title}

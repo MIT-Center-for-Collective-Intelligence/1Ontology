@@ -20,7 +20,6 @@ import {
   Button,
   useTheme,
 } from "@mui/material";
-import { property } from "lodash";
 import theme from "quill/core/theme";
 import React, { useCallback, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";

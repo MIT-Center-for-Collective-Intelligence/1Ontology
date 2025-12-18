@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { TreeView, TreeItem, treeItemClasses } from "@mui/lab";
+import { SimpleTreeView, TreeItem } from "@mui/x-tree-view";
 import {
   ListItem,
   Typography,
@@ -14,6 +13,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import { INode } from "@components/types/INode";
 import InsertLinkIcon from "@mui/icons-material/InsertLink";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
+import React, { useState } from "react";
 
 const ExpandSearchResult = ({
   searchResultsForSelection,
@@ -46,14 +46,17 @@ const ExpandSearchResult = ({
 }) => {
   const [expanded, setExpanded] = useState<string[]>([]);
 
-  const handleNodeToggle = (event: React.SyntheticEvent, nodeIds: string[]) => {
+  const handleNodeToggle = (
+    event: React.SyntheticEvent | null,
+    nodeIds: string[],
+  ) => {
     setExpanded(nodeIds);
   };
 
   const renderSubNodes = (subNode: any, index: number) => (
     <TreeItem
       key={`${subNode.id}-${index}`}
-      nodeId={`${subNode.id}-${index}`}
+      itemId={`${subNode.id}-${index}`}
       label={
         <NodeLabel
           node={{ id: subNode.id, title: nodes[subNode.id]?.title }}
@@ -74,17 +77,16 @@ const ExpandSearchResult = ({
   );
 
   return (
-    <TreeView
-      defaultCollapseIcon={<ExpandMoreIcon />}
-      defaultExpandIcon={<ChevronRightIcon />}
-      onNodeToggle={handleNodeToggle}
-      expanded={expanded}
+    <SimpleTreeView
+      slots={{ collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon }}
+      onExpandedItemsChange={handleNodeToggle}
+      expandedItems={expanded}
       sx={{ flexGrow: 1 }}
     >
       {searchResultsForSelection.map((node: INode, index: number) => (
         <TreeItem
           key={`${node.id}-${index}`}
-          nodeId={`${node.id}-${index}`}
+          itemId={`${node.id}-${index}`}
           label={
             <NodeLabel
               node={node}
@@ -108,8 +110,8 @@ const ExpandSearchResult = ({
                 backgroundColor: "transparent !important",
               },
             },
-            [`& .${treeItemClasses.group}`]: {
-              marginLeft: "16px",
+            [`& .MuiTreeItem-group`]: {
+              marginLeft: "6px",
               paddingLeft: "6px",
               position: "relative",
               "&::before": {
@@ -117,8 +119,8 @@ const ExpandSearchResult = ({
                 position: "absolute",
                 top: "-12px",
                 bottom: 0,
-                left: "10px",
-                borderLeft: (theme) => `2px solid #797575`,
+                left: 0,
+                borderLeft: `2px solid #797575`,
               },
             },
             "& .MuiTreeItem-content.Mui-focused": {
@@ -135,7 +137,7 @@ const ExpandSearchResult = ({
           {(node.specializations[0]?.nodes || []).map(renderSubNodes)}
         </TreeItem>
       ))}
-    </TreeView>
+    </SimpleTreeView>
   );
 };
 

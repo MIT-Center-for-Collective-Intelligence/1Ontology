@@ -102,7 +102,7 @@ const AuthProvider: FC<Props> = ({ children, store }) => {
       try {
         const { user, theme } = await retrieveAuthenticatedUser(userId, claims);
         if (!user) {
-          handleError({ error: "Cant find user" });
+          handleError({ error: "Can't find user" });
           return;
         }
         if (user) {

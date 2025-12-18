@@ -290,7 +290,7 @@ const OntologyExplorer = () => {
               <Box sx={{ maxWidth: "1200px", mx: "auto", mb: 4 }}>
                 <Grid container spacing={12} sx={{ position: "relative" }}>
                   {/* Motivation Section */}
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Box sx={{ pr: { xs: 0, md: 3 } }}>
                       <Typography
                         variant="h5"
@@ -396,7 +396,7 @@ const OntologyExplorer = () => {
                   </Grid>
 
                   {/* Methodology Section */}
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Box sx={{ pl: { xs: 0, md: 3 } }}>
                       <Typography
                         variant="h5"
@@ -556,7 +556,7 @@ const OntologyExplorer = () => {
               {/* Helper Content */}
               <Box sx={{ maxWidth: "900px", mx: "auto", mt: 10, mb: 8 }}>
                 <Grid container spacing={8}>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <Box>
                       <Typography
                         variant="h6"
@@ -589,7 +589,7 @@ const OntologyExplorer = () => {
                     </Box>
                   </Grid>
 
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <Box>
                       <Typography
                         variant="h6"
@@ -624,7 +624,7 @@ const OntologyExplorer = () => {
                     </Box>
                   </Grid>
 
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <Box>
                       <Typography
                         variant="h6"
@@ -681,7 +681,7 @@ const OntologyExplorer = () => {
                 >
                   <Grid container spacing={3}>
                     {/* DAG View Legend */}
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Typography
                         variant="subtitle2"
                         sx={{
@@ -808,7 +808,7 @@ const OntologyExplorer = () => {
                     </Grid>
 
                     {/* Sunburst View Legend */}
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Typography
                         variant="subtitle2"
                         sx={{

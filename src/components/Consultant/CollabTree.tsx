@@ -8,7 +8,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import { useEffect, useState } from "react";
 import Checkbox from "@mui/material/Checkbox"; // Fixed import name - was CheckBox
-import { isBoolean } from "lodash";
 
 const CollabTree = ({
   data,
