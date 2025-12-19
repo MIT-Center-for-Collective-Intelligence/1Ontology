@@ -954,7 +954,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                         primary={
                           entry.to ? (
                             <Tooltip
-                              title={!isSelectOpen ? allNodes[entry.to].title : ""}
+                              title={!isSelectOpen ? (allNodes[entry.to]?.title || "") : ""}
                               placement="top"
                               disableHoverListener={isSelectOpen}
                             >
@@ -1378,13 +1378,13 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         </Box>
       </Box>
 
-      {generalizations.length > 1 && (
+      {/* {generalizations.length > 1 && (
         <Tabs
           value={activeTab}
           onChange={handleTabChange}
           aria-label="Generalization selection tabs"
-          variant="scrollable"
-          scrollButtons="auto"
+          // variant="scrollable"
+          // scrollButtons="auto"
           sx={{ mt: 2.5, border: "1px solid gray", borderRadius: "25px" }}
         >
           {generalizations.map((generalization) => (
@@ -1405,7 +1405,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             />
           ))}
         </Tabs>
-      )}
+      )} */}
 
       {activeGeneralization && (
         <Box key={activeGeneralization.id}>
