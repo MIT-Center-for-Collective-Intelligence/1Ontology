@@ -76,7 +76,7 @@ type IDagGraphProps = {
   treeData: TreeData[];
   setExpandedNodes: (state: Set<string>) => void;
   expandedNodes: Set<string>;
-  onOpenNodeDagre: (ontologyId: string) => void;
+  onOpenNodeDagre: (ontologyId: string, nodeTitle?: string) => void;
   currentVisibleNode: any;
 };
 
@@ -133,6 +133,21 @@ const GraphView = ({
     return false;
   };
 
+  // Helper to find node by ID in tree
+  const findNodeById = (nodes: TreeData[], targetId: string): TreeData | null => {
+    for (const node of nodes) {
+      const currentNodeId = node.category ? node.id : (node.nodeId || node.id);
+      if (currentNodeId === targetId) {
+        return node;
+      }
+      if (node.children && node.children.length > 0) {
+        const found = findNodeById(node.children, targetId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
   // Auto-expand when currentVisibleNode changes (but don't reset initialization)
   if (currentVisibleNode?.id !== lastVisibleNodeIdRef.current) {
     lastVisibleNodeIdRef.current = currentVisibleNode?.id || null;
@@ -148,18 +163,23 @@ const GraphView = ({
   }
 
   const handleNodeClick = (nodeId: string) => {
+    // Find the node to get its name
+    const clickedNode = findNodeById(treeData, nodeId);
+    const nodeName = clickedNode?.name || "";
+
     // Category nodes should only expand/collapse
     if (!isCategoryNodeId(nodeId, treeData)) {
-      onOpenNodeDagre(nodeId);
+      onOpenNodeDagre(nodeId, nodeName);
     }
 
     // Toggle expansion state
-    if (expandedNodes.has(nodeId)) {
-      expandedNodes.delete(nodeId);
+    const newExpandedNodes = new Set(expandedNodes);
+    if (newExpandedNodes.has(nodeId)) {
+      newExpandedNodes.delete(nodeId);
     } else {
-      expandedNodes.add(nodeId);
+      newExpandedNodes.add(nodeId);
     }
-    setExpandedNodes(new Set(expandedNodes));
+    setExpandedNodes(newExpandedNodes);
   };
 
   // This function is responsible for drawing nodes on a graph based on the provided node data.

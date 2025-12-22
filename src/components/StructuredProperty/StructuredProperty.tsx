@@ -1088,33 +1088,33 @@ const StructuredProperty = ({
   }
 
   return (
-    <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={500}>
-      <Paper
-        id={`property-${property}`}
-        elevation={9}
-        sx={{
-          borderRadius: property !== "context" ? "30px" : "",
-          borderBottomRightRadius: "18px",
-          borderBottomLeftRadius: "18px",
-          minWidth: isMobile ? "100%" : "500px",
-          width: "100%",
-          minHeight: "150px",
-          maxHeight: "100%",
-          overflow: "hidden",
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-          overflowX: "hidden",
-          overflowY: "hidden",
-          "&::-webkit-scrollbar": {
-            display: "none",
-          },
-          border:
-            selectedProperty === property && !selectedCollection
-              ? "2px solid green"
-              : "",
-        }}
-      >
+    // <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={500}></Slide>
+    <Paper
+      id={`property-${property}`}
+      elevation={9}
+      sx={{
+        borderRadius: property !== "context" ? "30px" : "",
+        borderBottomRightRadius: "18px",
+        borderBottomLeftRadius: "18px",
+        minWidth: isMobile ? "100%" : "500px",
+        width: "100%",
+        minHeight: "150px",
+        maxHeight: "100%",
+        overflow: "hidden",
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        overflowX: "hidden",
+        overflowY: "hidden",
+        "&::-webkit-scrollbar": {
+          display: "none",
+        },
+        border:
+          selectedProperty === property && !selectedCollection
+            ? "2px solid green"
+            : "",
+      }}
+    >
         <Box>
           <Box
             sx={{
@@ -1617,8 +1617,8 @@ const StructuredProperty = ({
           setShowComments={setShowComments}
         />
       )} */}
-      </Paper>
-    </Slide>
+    </Paper>
+    // </Slide>
   );
 };
 

@@ -395,34 +395,34 @@ const Text = ({
   ]);
 
   return (
-    <Slide
-      direction="up"
-      in={true}
-      mountOnEnter
-      unmountOnExit
-      timeout={500}
-      style={{ pointerEvents: "auto" }}
-    >
-      <Paper
-        id={`property-${property}`}
-        elevation={9}
-        sx={{
-          borderRadius: "20px",
-          /*         minWidth: "500px", */
-          width: "100%",
-          /*         border: structured ? "1px solid white" : "", */
-          border:
-            selectedDiffNode?.changeDetails?.addedProperty === property
-              ? selectedDiffNode?.changeType === "add property"
-                ? "3px solid #4ccf37"
-                : selectedDiffNode?.changeType === "remove property"
-                  ? "3px solid rgb(224, 8, 11)"
-                  : ""
-              : "",
+    // <Slide
+    //   direction="up"
+    //   in={true}
+    //   mountOnEnter
+    //   unmountOnExit
+    //   timeout={500}
+    //   style={{ pointerEvents: "auto" }}
+    // >
+    <Paper
+      id={`property-${property}`}
+      elevation={9}
+      sx={{
+        borderRadius: "20px",
+        /*         minWidth: "500px", */
+        width: "100%",
+        /*         border: structured ? "1px solid white" : "", */
+        border:
+          selectedDiffNode?.changeDetails?.addedProperty === property
+            ? selectedDiffNode?.changeType === "add property"
+              ? "3px solid #4ccf37"
+              : selectedDiffNode?.changeType === "remove property"
+                ? "3px solid rgb(224, 8, 11)"
+                : ""
+            : "",
 
-          ...sx,
-        }}
-      >
+        ...sx,
+      }}
+    >
         {!structured && (
           <Box
             sx={{
@@ -764,7 +764,7 @@ const Text = ({
           fetchNode={fetchNode}
         />
       </Paper>
-    </Slide>
+    // </Slide>
   );
 };
 

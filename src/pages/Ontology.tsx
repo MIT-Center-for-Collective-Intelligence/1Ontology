@@ -347,6 +347,7 @@ const Ontology = ({
   const [loadingNodes, setLoadingNodes] = useState(false);
   const [partsInheritance, setPartsInheritance] = useState<any>({});
   const [currentNodeTreeData, setCurrentNodeTreeData] = useState<TreeData[]>([]);
+  const [isLoadingNodeDetails, setIsLoadingNodeDetails] = useState(false);
 
   const [scrollTrigger, setScrollTrigger] = useState(false);
   const [enableEdit, setEnableEdit] = useState(false);
@@ -1600,37 +1601,49 @@ const Ontology = ({
 
   // Define a callback function to handle the opening of the ontology DAGRE view.
   const onOpenNodeDagre = useCallback(
-    async (nodeId: string) => {
+    async (nodeId: string, nodeTitle?: string) => {
       // Check if a user is logged in, if not, exit the function.
       if (!user) return;
 
       // Get the node from cache or fetch it
       let node: INode | null = relatedNodes[nodeId] || null;
+      const needsFetch = !node;
+
       if (!node) {
-        node = await fetchSingleNode(db, nodeId);
+        // Create minimal node with just id and title for instant highlighting
+        node = { id: nodeId, title: nodeTitle || "" } as any;
+        setIsLoadingNodeDetails(true);
+      } else {
+        setIsLoadingNodeDetails(false);
       }
 
-      // Check if the node exists and is not a main node (no category).
       if (node && !node.category) {
-        // Set the currentVisibleNode as the currently selected node.
         setCurrentVisibleNode(node);
 
-        // Record logs for the action of opening the DAGRE view for the node.
         recordLogs({
           action: "opened dagre-view",
           itemClicked: node.id,
         });
       }
+
+      // If node wasn't in cache, fetch it in background
+      if (needsFetch) {
+        try {
+          const fullNode = await fetchSingleNode(db, nodeId);
+          if (fullNode && !fullNode.category) {
+            setCurrentVisibleNode(fullNode);
+          }
+        } finally {
+          setIsLoadingNodeDetails(false);
+        }
+      }
     },
-    // Dependency array includes nodes, db, and user
     [relatedNodes, db, user],
   );
 
   // Function to handle opening node tree
   const onOpenNodesTree = useCallback(
-    async (nodeId: string) => {
-      // Check if user is logged in
-
+    async (nodeId: string, nodeTitle?: string) => {
       if (!user) return;
       //update the expanded state
       /*    setExpandedNodes((prevExpanded: Set<string>) => {
@@ -1645,13 +1658,18 @@ const Ontology = ({
 
       // Get the node from cache or fetch it
       let node: INode | null = relatedNodes[nodeId] || null;
+      const needsFetch = !node;
+
       if (!node) {
-        node = await fetchSingleNode(db, nodeId);
+        // Create minimal node with just id and title for instant highlighting
+        node = { id: nodeId, title: nodeTitle || "" } as any;
+        setIsLoadingNodeDetails(true);
+      } else {
+        setIsLoadingNodeDetails(false);
       }
 
-      // Check if node exists and is not a category
+
       if (node && !node.category) {
-        // Set the currently open node
         setCurrentVisibleNode(node);
 
         // Record logs for the action of clicking the tree-view
@@ -1659,6 +1677,18 @@ const Ontology = ({
           action: "clicked tree-view",
           itemClicked: node.id,
         });
+      }
+
+      // If node wasn't in cache, fetch it in background
+      if (needsFetch) {
+        try {
+          const fullNode = await fetchSingleNode(db, nodeId);
+          if (fullNode && !fullNode.category) {
+            setCurrentVisibleNode(fullNode);
+          }
+        } finally {
+          setIsLoadingNodeDetails(false);
+        }
       }
     },
     [relatedNodes, db, user],
@@ -2672,6 +2702,7 @@ const Ontology = ({
                   eachOntologyPath={eachNodePath}
                   searchWithFuse={searchWithFuse}
                   locked={!!currentVisibleNode.locked && !user?.manageLock}
+                  isLoadingNodeDetails={isLoadingNodeDetails}
                   selectedDiffNode={selectedDiffNode}
                   displaySidebar={displaySidebar}
                   activeSidebar={activeSidebar}

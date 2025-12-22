@@ -414,19 +414,19 @@ function DraggableTree({
         // Expand ancestors progressively
         for (const ancestor of ancestorsToExpand) {
           ancestor.open();
-          await new Promise((resolve) => setTimeout(resolve, 50));
+          await new Promise((resolve) => setTimeout(resolve, 20));
           if (ancestor.children) {
             for (const child of ancestor.children) {
               if (child.data.category && !child.isOpen) {
                 child.open();
-                await new Promise((resolve) => setTimeout(resolve, 25));
+                await new Promise((resolve) => setTimeout(resolve, 10));
               }
             }
           }
         }
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       // scroll to first node
       const firstTargetNode = targetNodes[0];
@@ -443,26 +443,23 @@ function DraggableTree({
 
     if (!tree || !currentVisibleNode?.id) return;
 
-    const timeout = setTimeout(async () => {
+    const handleNavigation = async () => {
       const targetNodeId = currentVisibleNode.id;
-      const isFromTreeClick = isTreeClickRef.current;
 
       // Always expand all occurrences, regardless of how navigation happened
       await expandNodeById(targetNodeId);
 
-      setTimeout(() => {
-        // Find the node in tree and select it
-        const targetNodes = findNodesByNodeId(tree, targetNodeId);
-        if (targetNodes.length > 0) {
-          targetNodes[0].select();
-        }
-      }, 500);
+      // Find the node in tree and select it
+      const targetNodes = findNodesByNodeId(tree, targetNodeId);
+      if (targetNodes.length > 0) {
+        targetNodes[0].select();
+      }
 
       isTreeClickRef.current = false;
       setFirstLoad(false);
-    }, 500);
+    };
 
-    return () => clearTimeout(timeout);
+    handleNavigation();
   }, [
     treeRef,
     currentVisibleNode?.id,
@@ -1176,7 +1173,7 @@ function DraggableTree({
                     return;
                   }
                   isTreeClickRef.current = true;
-                  onOpenNodesTree(node.data.nodeId);
+                  onOpenNodesTree(node.data.nodeId, node.data.name);
                 }}
                 onFocus={(node) => setFocused(node.data)}
                 onToggle={() => {

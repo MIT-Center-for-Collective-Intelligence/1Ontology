@@ -73,7 +73,7 @@ The `Node` component is intended to be used within an application that requires 
 - The component is designed to work with a specific data structure and may require adaptation for different use cases.
 
 This documentation provides a high-level overview of the `Node` component and its capabilities. For detailed implementation and integration, refer to the source code and the specific application context in which the component is used.*/
-import { Link, Paper, Stack, Typography, useMediaQuery } from "@mui/material";
+import { Link, Paper, Stack, Typography, useMediaQuery, Skeleton } from "@mui/material";
 import { Box } from "@mui/system";
 import {
   collection,
@@ -178,6 +178,189 @@ type INodeProps = {
   editableProperty: any;
   setEditableProperty: any;
   onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
+  isLoadingNodeDetails?: boolean;
+};
+
+// Skeleton loader component for node content
+const NodeLoadingSkeleton = ({ width }: { width: number }) => {
+  return (
+    <Box sx={{ width: "100%", mb: "90px" }}>
+      {/* Title Skeleton */}
+      <Paper
+        elevation={9}
+        sx={{
+          borderTopLeftRadius: 0,
+          borderTopRightRadius: 0,
+          borderBottomLeftRadius: "20px",
+          borderBottomRightRadius: "20px",
+          width: "100%",
+          mb: "15px",
+        }}
+      >
+        <Box
+          sx={{
+            p: 3,
+            pb: 1.5,
+          }}
+        >
+          <Skeleton variant="text" width="50%" height={50} />
+        </Box>
+        <Box sx={{ p: 3, pt: 0 }}>
+          <Skeleton variant="rectangular" width="100%" height={40} sx={{ borderRadius: "8px" }} />
+        </Box>
+      </Paper>
+
+      {/* Description Skeleton */}
+      <Paper
+        elevation={9}
+        sx={{
+          borderRadius: "20px",
+          width: "100%",
+          mb: 2,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            background: (theme) =>
+              theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+            p: 3,
+            pb: 1.5,
+            borderTopRightRadius: "18px",
+            borderTopLeftRadius: "18px",
+          }}
+        >
+          <Skeleton variant="text" width="150px" height={30} />
+        </Box>
+        <Box sx={{ p: 3 }}>
+          <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: "8px" }} />
+        </Box>
+      </Paper>
+
+      {/* Generalizations & Specializations Skeletons */}
+      <Stack direction={width < 1050 ? "column" : "row"} spacing={3} sx={{ mb: 2 }}>
+        {/* Generalizations Skeleton */}
+        <Paper
+          elevation={9}
+          sx={{
+            borderRadius: "30px",
+            borderBottomRightRadius: "18px",
+            borderBottomLeftRadius: "18px",
+            minWidth: "500px",
+            width: "100%",
+            minHeight: "150px",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+              p: 2,
+            }}
+          >
+            <Skeleton variant="text" width="150px" height={30} />
+          </Box>
+          <Box sx={{ p: 2 }}>
+            <Skeleton variant="rectangular" width="100%" height={80} sx={{ borderRadius: "8px", mb: 1 }} />
+            <Skeleton variant="rectangular" width="80%" height={40} sx={{ borderRadius: "8px" }} />
+          </Box>
+        </Paper>
+
+        {/* Specializations Skeleton */}
+        <Paper
+          elevation={9}
+          sx={{
+            borderRadius: "30px",
+            borderBottomRightRadius: "18px",
+            borderBottomLeftRadius: "18px",
+            minWidth: "500px",
+            width: "100%",
+            minHeight: "150px",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+              p: 2,
+            }}
+          >
+            <Skeleton variant="text" width="150px" height={30} />
+          </Box>
+          <Box sx={{ p: 2 }}>
+            <Skeleton variant="rectangular" width="100%" height={80} sx={{ borderRadius: "8px", mb: 1 }} />
+            <Skeleton variant="rectangular" width="60%" height={40} sx={{ borderRadius: "8px" }} />
+          </Box>
+        </Paper>
+      </Stack>
+
+      {/* IsPartOf & Parts Skeletons */}
+      <Stack direction={width < 1050 ? "column" : "row"} spacing={3}>
+        {/* IsPartOf Skeleton */}
+        <Paper
+          elevation={9}
+          sx={{
+            borderRadius: "30px",
+            borderBottomRightRadius: "18px",
+            borderBottomLeftRadius: "18px",
+            minWidth: "500px",
+            width: "100%",
+            minHeight: "150px",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+              p: 2,
+            }}
+          >
+            <Skeleton variant="text" width="120px" height={30} />
+          </Box>
+          <Box sx={{ p: 2 }}>
+            <Skeleton variant="rectangular" width="100%" height={80} sx={{ borderRadius: "8px", mb: 1 }} />
+            <Skeleton variant="rectangular" width="70%" height={40} sx={{ borderRadius: "8px" }} />
+          </Box>
+        </Paper>
+
+        {/* Parts Skeleton */}
+        <Paper
+          elevation={9}
+          sx={{
+            borderRadius: "30px",
+            borderBottomRightRadius: "18px",
+            borderBottomLeftRadius: "18px",
+            minWidth: "500px",
+            width: "100%",
+            minHeight: "150px",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+              p: 2,
+            }}
+          >
+            <Skeleton variant="text" width="100px" height={30} />
+          </Box>
+          <Box sx={{ p: 2 }}>
+            <Skeleton variant="rectangular" width="100%" height={80} sx={{ borderRadius: "8px", mb: 1 }} />
+            <Skeleton variant="rectangular" width="90%" height={40} sx={{ borderRadius: "8px" }} />
+          </Box>
+        </Paper>
+      </Stack>
+    </Box>
+  );
 };
 
 const Node = ({
@@ -228,6 +411,7 @@ const Node = ({
   editableProperty,
   setEditableProperty,
   onInstantTreeUpdate,
+  isLoadingNodeDetails = false,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -1256,19 +1440,23 @@ const Node = ({
         mb: "90px",
       }}
     >
-      <Box
-        sx={{
-          position: "sticky",
-          top: 0,
-          mb: "15px",
-          zIndex: 100,
-          // display: "flex",
-          gap: "5px",
-        }}
-      >
-        <Text
-          skillsFutureApp={skillsFutureApp}
-          currentVisibleNode={currentVisibleNode}
+      {isLoadingNodeDetails ? (
+        <NodeLoadingSkeleton width={width} />
+      ) : (
+        <>
+          <Box
+            sx={{
+              position: "sticky",
+              top: 0,
+              mb: "15px",
+              zIndex: 100,
+              // display: "flex",
+              gap: "5px",
+            }}
+          >
+            <Text
+              skillsFutureApp={skillsFutureApp}
+              currentVisibleNode={currentVisibleNode}
           setCurrentVisibleNode={setCurrentVisibleNode}
           relatedNodes={relatedNodes}
           fetchNode={fetchNode}
@@ -1693,6 +1881,8 @@ const Node = ({
           deleteProperty={deleteProperty}
         />
       </Box>{" "}
+        </>
+      )}
       {ConfirmDialog}
     </Box>
   );
