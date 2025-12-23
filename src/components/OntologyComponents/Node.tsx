@@ -73,7 +73,7 @@ The `Node` component is intended to be used within an application that requires 
 - The component is designed to work with a specific data structure and may require adaptation for different use cases.
 
 This documentation provides a high-level overview of the `Node` component and its capabilities. For detailed implementation and integration, refer to the source code and the specific application context in which the component is used.*/
-import { Link, Paper, Stack, Typography, useMediaQuery } from "@mui/material";
+import { Link, Paper, Stack, Typography, useMediaQuery, Skeleton } from "@mui/material";
 import { Box } from "@mui/system";
 import {
   collection,
@@ -126,6 +126,7 @@ import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 import { development } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
+import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -133,7 +134,9 @@ type INodeProps = {
   setSnackbarMessage: (message: string) => void;
   user: User;
   mainSpecializations: MainSpecializations;
-  nodes: { [id: string]: INode };
+  relatedNodes: { [id: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
+  addNodesToCache: (nodes: { [id: string]: INode }, parentNodeId?: string) => void;
   navigateToNode: (nodeId: string) => void;
   eachOntologyPath: { [key: string]: any };
   searchWithFuse: (query: string, nodeType?: INodeTypes) => INode[];
@@ -142,7 +145,7 @@ type INodeProps = {
   displaySidebar: Function;
   activeSidebar: any;
   currentImprovement: any;
-  setNodes: any;
+  setRelatedNodes: any;
   checkedItems: any;
   setCheckedItems: any;
   checkedItemsCopy: any;
@@ -174,6 +177,221 @@ type INodeProps = {
   skillsFutureApp: string;
   editableProperty: any;
   setEditableProperty: any;
+  onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
+  isLoadingNodeDetails?: boolean;
+};
+
+// Skeleton loader component for node content
+const NodeLoadingSkeleton = ({ width }: { width: number }) => {
+  return (
+    <Box sx={{ width: "100%", mb: "90px" }}>
+      {/* Title Skeleton */}
+      <Paper
+        elevation={9}
+        sx={{
+          borderTopLeftRadius: 0,
+          borderTopRightRadius: 0,
+          borderBottomLeftRadius: "20px",
+          borderBottomRightRadius: "20px",
+          width: "100%",
+          mb: "15px",
+        }}
+      >
+        <Box
+          sx={{
+            p: 3,
+            pb: 1.5,
+          }}
+        >
+          <Skeleton variant="text" width="50%" height={50} />
+        </Box>
+        <Box sx={{ p: 3, pt: 0 }}>
+          <Skeleton variant="rectangular" width="100%" height={40} sx={{ borderRadius: "8px" }} />
+        </Box>
+      </Paper>
+
+      {/* Description Skeleton */}
+      <Paper
+        elevation={9}
+        sx={{
+          borderRadius: "20px",
+          width: "100%",
+          mb: 2,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            background: (theme) =>
+              theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+            p: 3,
+            pb: 1.5,
+            borderTopRightRadius: "18px",
+            borderTopLeftRadius: "18px",
+          }}
+        >
+          <Skeleton variant="text" width="150px" height={30} />
+        </Box>
+        <Box sx={{ p: 3 }}>
+          <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: "8px" }} />
+        </Box>
+      </Paper>
+
+      {/* Generalizations & Specializations Skeletons */}
+      <Stack direction={width < 1050 ? "column" : "row"} spacing={3} sx={{ mb: 2 }}>
+        {/* Generalizations Skeleton */}
+        <Paper
+          elevation={9}
+          sx={{
+            borderRadius: "30px",
+            borderBottomRightRadius: "18px",
+            borderBottomLeftRadius: "18px",
+            minWidth: "500px",
+            width: "100%",
+            minHeight: "150px",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+              p: 2,
+            }}
+          >
+            <Skeleton variant="text" width="150px" height={30} />
+          </Box>
+          <Box sx={{ p: 2 }}>
+            <Skeleton variant="rectangular" width="100%" height={80} sx={{ borderRadius: "8px", mb: 1 }} />
+            <Skeleton variant="rectangular" width="80%" height={40} sx={{ borderRadius: "8px" }} />
+          </Box>
+        </Paper>
+
+        {/* Specializations Skeleton */}
+        <Paper
+          elevation={9}
+          sx={{
+            borderRadius: "30px",
+            borderBottomRightRadius: "18px",
+            borderBottomLeftRadius: "18px",
+            minWidth: "500px",
+            width: "100%",
+            minHeight: "150px",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+              p: 2,
+            }}
+          >
+            <Skeleton variant="text" width="150px" height={30} />
+          </Box>
+          <Box sx={{ p: 2 }}>
+            <Skeleton variant="rectangular" width="100%" height={80} sx={{ borderRadius: "8px", mb: 1 }} />
+            <Skeleton variant="rectangular" width="60%" height={40} sx={{ borderRadius: "8px" }} />
+          </Box>
+        </Paper>
+      </Stack>
+
+      {/* IsPartOf & Parts Skeletons */}
+      <Stack direction={width < 1050 ? "column" : "row"} spacing={3} sx={{ mb: 2 }}>
+        {/* IsPartOf Skeleton */}
+        <Paper
+          elevation={9}
+          sx={{
+            borderRadius: "30px",
+            borderBottomRightRadius: "18px",
+            borderBottomLeftRadius: "18px",
+            minWidth: "500px",
+            width: "100%",
+            minHeight: "150px",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+              p: 2,
+            }}
+          >
+            <Skeleton variant="text" width="120px" height={30} />
+          </Box>
+          <Box sx={{ p: 2 }}>
+            <Skeleton variant="rectangular" width="100%" height={80} sx={{ borderRadius: "8px", mb: 1 }} />
+            <Skeleton variant="rectangular" width="70%" height={40} sx={{ borderRadius: "8px" }} />
+          </Box>
+        </Paper>
+
+        {/* Parts Skeleton */}
+        <Paper
+          elevation={9}
+          sx={{
+            borderRadius: "30px",
+            borderBottomRightRadius: "18px",
+            borderBottomLeftRadius: "18px",
+            minWidth: "500px",
+            width: "100%",
+            minHeight: "150px",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+              p: 2,
+            }}
+          >
+            <Skeleton variant="text" width="100px" height={30} />
+          </Box>
+          <Box sx={{ p: 2 }}>
+            <Skeleton variant="rectangular" width="100%" height={80} sx={{ borderRadius: "8px", mb: 1 }} />
+            <Skeleton variant="rectangular" width="90%" height={40} sx={{ borderRadius: "8px" }} />
+          </Box>
+        </Paper>
+      </Stack>
+
+      {/* Additional Generic Property Skeletons */}
+      {Array.from({ length: 2 }).map((_, index) => (
+        <Paper
+          key={`generic-property-skeleton-${index}`}
+          elevation={9}
+          sx={{
+            borderRadius: "20px",
+            width: "100%",
+            mb: 2,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+              p: 3,
+              pb: 1.5,
+              borderTopRightRadius: "18px",
+              borderTopLeftRadius: "18px",
+            }}
+          >
+            <Skeleton variant="text" width="150px" height={30} />
+          </Box>
+          <Box sx={{ p: 3 }}>
+            <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: "8px" }} />
+          </Box>
+        </Paper>
+      ))}
+    </Box>
+  );
 };
 
 const Node = ({
@@ -181,7 +399,9 @@ const Node = ({
   setCurrentVisibleNode,
   setSnackbarMessage,
   mainSpecializations,
-  nodes,
+  relatedNodes,
+  fetchNode,
+  addNodesToCache,
   user,
   navigateToNode,
   searchWithFuse,
@@ -191,7 +411,7 @@ const Node = ({
   activeSidebar,
   currentImprovement,
   eachOntologyPath,
-  setNodes,
+  setRelatedNodes,
   checkedItems,
   setCheckedItems,
   checkedItemsCopy,
@@ -221,6 +441,8 @@ const Node = ({
   skillsFutureApp,
   editableProperty,
   setEditableProperty,
+  onInstantTreeUpdate,
+  isLoadingNodeDetails = false,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -273,9 +495,18 @@ const Node = ({
     return [];
   }, [searchValue, selectedProperty]);
 
-  const addACloneNodeQueue = (nodeId: string, title?: string) => {
+  const addACloneNodeQueue = async (nodeId: string, title?: string) => {
+    let node: INode | null = relatedNodes[nodeId] || null;
+    if (!node) {
+      const fetchedNode = await fetchNode(nodeId);
+      if (!fetchedNode) {
+        return null;
+      }
+      node = fetchedNode;
+    }
+
     const newId = doc(collection(db, NODES)).id;
-    const newTitle = title ? title : `New ${nodes[nodeId].title}`;
+    const newTitle = title ? title : `New ${node.title}`;
     setClonedNodesQueue(
       (prev: { [nodeId: string]: { title: string; id: string } }) => {
         prev[newId] = { title: newTitle, id: nodeId };
@@ -307,7 +538,15 @@ const Node = ({
         const parentNodeRef = doc(collection(db, NODES), nodeId);
 
         // Extract data from the original node document.
-        const parentNodeData = nodes[nodeId] as INode;
+        let parentNodeData: INode | null = relatedNodes[nodeId] || null;
+        if (!parentNodeData) {
+          const fetchedNode = await fetchNode(nodeId);
+          if (!fetchedNode) {
+            setCloning("");
+            return null;
+          }
+          parentNodeData = fetchedNode;
+        }
 
         // Create a reference for the new node document in Firestore.
         const newNodeRef =
@@ -321,7 +560,7 @@ const Node = ({
         // Generate a unique title based on existing specializations
         const specializationsTitles = parentNodeData.specializations.flatMap(
           (collection) =>
-            collection.nodes.map((spec) => nodes[spec.id]?.title || ""),
+            collection.nodes.map((spec) => relatedNodes[spec.id]?.title || ""),
         );
         newTitle = generateUniqueTitle(newTitle, specializationsTitles);
 
@@ -418,10 +657,20 @@ const Node = ({
         } else {
           // Handling property updates
           if (newNode.inheritance[mProperty]?.ref) {
+            // Fetch inheritance reference if missing
+            const inheritanceRefId = newNode.inheritance[mProperty].ref;
+            let inheritanceRefNode: INode | null = relatedNodes[inheritanceRefId] || null;
+            if (!inheritanceRefNode) {
+              const fetchedNode = await fetchNode(inheritanceRefId);
+              if (!fetchedNode) {
+                setCloning("");
+                return null;
+              }
+              inheritanceRefNode = fetchedNode;
+            }
+
             newNode.properties[mProperty] = JSON.parse(
-              JSON.stringify(
-                nodes[newNode.inheritance[mProperty].ref].properties[mProperty],
-              ),
+              JSON.stringify(inheritanceRefNode.properties[mProperty]),
             );
           }
 
@@ -459,8 +708,19 @@ const Node = ({
             });
 
             if (newNode.inheritance[mProperty]?.ref) {
-              const referencedProperty =
-                nodes[newNode.inheritance[mProperty].ref].properties[mProperty];
+              // Fetch inheritance reference if missing
+              const inheritanceRefId = newNode.inheritance[mProperty].ref;
+              let inheritedFromNode: INode | null = relatedNodes[inheritanceRefId] || null;
+              if (!inheritedFromNode) {
+                const fetchedNode = await fetchNode(inheritanceRefId);
+                if (!fetchedNode) {
+                  setCloning("");
+                  return null;
+                }
+                inheritedFromNode = fetchedNode;
+              }
+
+              const referencedProperty = inheritedFromNode.properties[mProperty];
               if (Array.isArray(referencedProperty)) {
                 const links = referencedProperty.flatMap((c) => c.nodes);
                 if (mProperty === "parts" || mProperty === "isPartOf") {
@@ -469,14 +729,14 @@ const Node = ({
                     { id: currentVisibleNode?.id },
                     mProperty === "parts" ? "isPartOf" : "parts",
                     db,
-                    nodes,
+                    relatedNodes,
                   );
                 } else {
                   updatePropertyOf(
                     links,
                     { id: currentVisibleNode?.id },
                     mProperty,
-                    nodes,
+                    relatedNodes,
                     db,
                   );
                 }
@@ -491,13 +751,13 @@ const Node = ({
               const reference = newNode.inheritance[mProperty]?.ref;
               if (reference) {
                 if (
-                  nodes[reference].textValue &&
-                  nodes[reference].textValue.hasOwnProperty(mProperty)
+                  relatedNodes[reference].textValue &&
+                  relatedNodes[reference].textValue.hasOwnProperty(mProperty)
                 ) {
                   updateObject = {
                     ...updateObject,
                     [`textValue.${mProperty}`]:
-                      nodes[reference].textValue[mProperty],
+                      relatedNodes[reference].textValue[mProperty],
                   };
                 }
               }
@@ -511,10 +771,10 @@ const Node = ({
             db,
           });
         }
-        setNodes((prev: { [id: string]: INode }) => {
+        setRelatedNodes((prev: { [id: string]: INode }) => {
           prev[newNode.id] = {
-            ...newNode,
-            locked: false,
+              ...newNode,
+              locked: false,
           };
           return prev;
         });
@@ -574,7 +834,7 @@ const Node = ({
         return null;
       }
     },
-    [db, user.uname, nodes, currentVisibleNode?.id],
+    [db, user.uname, relatedNodes, currentVisibleNode?.id],
   );
 
   // This function handles the cloning of a node.
@@ -622,7 +882,15 @@ const Node = ({
       let propertyCollection = currentVisibleNode.properties[property];
       const reference = currentVisibleNode.inheritance[property]?.ref || null;
       if (reference) {
-        propertyCollection = nodes[reference].properties[property];
+        let referenceNode: INode | null = relatedNodes[reference] || null;
+        if (!referenceNode) {
+          const fetchedNode = await fetchNode(reference);
+          if (!fetchedNode) {
+            return;
+          }
+          referenceNode = fetchedNode;
+        }
+        propertyCollection = referenceNode.properties[property];
       }
       previousCheckedItems = propertyCollection
         .flatMap((l: ICollection) => l.nodes)
@@ -758,7 +1026,7 @@ const Node = ({
             selectedProperty === "specializations"
               ? "generalizations"
               : "specializations",
-            nodes,
+            relatedNodes,
             db,
           );
           nodeData[selectedProperty] = newValue;
@@ -778,7 +1046,7 @@ const Node = ({
             { id: nodeId },
             selectedProperty === "parts" ? "isPartOf" : "parts",
             db,
-            nodes,
+            relatedNodes,
           );
         }
 
@@ -793,8 +1061,8 @@ const Node = ({
             const reference = nodeData.inheritance[selectedProperty].ref;
 
             // Handling for parts property - move inherited parts to inheritanceParts
-            if (selectedProperty === "parts" && reference && nodes[reference]) {
-              const referencedNode = nodes[reference];
+            if (selectedProperty === "parts" && reference && relatedNodes[reference]) {
+              const referencedNode = relatedNodes[reference];
 
               if (!nodeData.inheritanceParts) {
                 nodeData.inheritanceParts = {};
@@ -827,17 +1095,17 @@ const Node = ({
 
             if (
               reference &&
-              nodes[reference].textValue &&
-              nodes[reference].textValue.hasOwnProperty(selectedProperty)
+              relatedNodes[reference].textValue &&
+              relatedNodes[reference].textValue.hasOwnProperty(selectedProperty)
             ) {
               if (!nodeData.textValue) {
                 nodeData.textValue = {
                   [selectedProperty]:
-                    nodes[reference].textValue[selectedProperty],
+                    relatedNodes[reference].textValue[selectedProperty],
                 };
               } else {
                 nodeData.textValue[selectedProperty] =
-                  nodes[reference].textValue[selectedProperty];
+                  relatedNodes[reference].textValue[selectedProperty];
               }
             }
             nodeData.inheritance[selectedProperty].ref = null;
@@ -863,7 +1131,7 @@ const Node = ({
             addedLinks,
             { id: nodeId },
             selectedProperty,
-            nodes,
+            relatedNodes,
             db,
           );
         }
@@ -879,7 +1147,7 @@ const Node = ({
             addedLinks,
             currentNewLinks,
             nodeData,
-            nodes,
+            relatedNodes,
           );
         }
         if (selectedProperty === "specializations") {
@@ -889,7 +1157,7 @@ const Node = ({
             addedLinks,
             removedLinks,
             nodeData,
-            nodes,
+            relatedNodes,
           );
         }
         // Update inheritance for non-specialization/generalization properties
@@ -917,6 +1185,8 @@ const Node = ({
           skillsFuture,
           ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
+
+        await queueTreeUpdate(nodeId, skillsFutureApp);
       } catch (error: any) {
         // Handle any errors that occur during the process
         console.error(error);
@@ -931,7 +1201,7 @@ const Node = ({
         });
       }
     },
-    [checkedItems, db, nodes],
+    [checkedItems, db, relatedNodes, skillsFutureApp],
   );
 
   //  function to handle the deletion of a Node
@@ -946,7 +1216,7 @@ const Node = ({
       );
 
       if (specializations.length > 0) {
-        if (checkIfCanDeleteANode(nodes, specializations)) {
+        if (checkIfCanDeleteANode(relatedNodes, specializations)) {
           await confirmIt(
             "To delete a node, you need to first delete its specializations or move them under a different generalization.",
             "Ok",
@@ -968,7 +1238,7 @@ const Node = ({
         // Retrieve the document reference of the node to be deleted
         for (let collection of currentVisibleNode.generalizations) {
           if (collection.nodes.length > 0) {
-            setCurrentVisibleNode(nodes[collection.nodes[0].id]);
+            setCurrentVisibleNode(relatedNodes[collection.nodes[0].id]);
             break;
           }
         }
@@ -1017,7 +1287,7 @@ const Node = ({
         }),
       });
     }
-  }, [currentVisibleNode?.id, user?.uname, nodes, currentVisibleNode]);
+  }, [currentVisibleNode?.id, user?.uname, relatedNodes, currentVisibleNode]);
 
   const handleToggle = useCallback(
     (nodeId: string) => {
@@ -1047,14 +1317,14 @@ const Node = ({
 
   const getTitleNode = useCallback(
     (nodeId: string) => {
-      return getTitle(nodes, nodeId);
+      return getTitle(relatedNodes, nodeId);
     },
-    [nodes],
+    [relatedNodes],
   );
   const onGetPropertyValue = useCallback(
     (property: string, structured: boolean = false) => {
       const inheritedProperty = getPropertyValue(
-        nodes,
+        relatedNodes,
         currentVisibleNode.inheritance[property]?.ref,
         property,
         structured,
@@ -1074,7 +1344,7 @@ const Node = ({
         return currentVisibleNode.properties[property];
       }
     },
-    [currentVisibleNode, nodes],
+    [currentVisibleNode, relatedNodes],
   );
 
   // Memoized this to prevent useEffect re-runs in YjsEditorWrapper
@@ -1155,9 +1425,19 @@ const Node = ({
           });
         }
         const inheritedRef = currentNode.inheritance[property].ref;
-        const previousValue = inheritedRef
-          ? nodes[inheritedRef].properties[property]
-          : currentNode.properties[property];
+
+        // Fetch inheritedRef if missing
+        let previousValue = currentNode.properties[property];
+        if (inheritedRef) {
+          let inheritedRefNode: INode | null = relatedNodes[inheritedRef] || null;
+          if (!inheritedRefNode) {
+            const fetchedNode = await fetchNode(inheritedRef);
+            if (fetchedNode) {
+              inheritedRefNode = fetchedNode;
+            }
+          }
+          previousValue = inheritedRefNode ? inheritedRefNode.properties[property] : currentNode.properties[property];
+        }
 
         saveNewChangeLog(db, {
           nodeId: currentNode.id,
@@ -1191,21 +1471,26 @@ const Node = ({
         mb: "90px",
       }}
     >
-      <Box
-        sx={{
-          position: "sticky",
-          top: 0,
-          mb: "15px",
-          zIndex: 100,
-          // display: "flex",
-          gap: "5px",
-        }}
-      >
-        <Text
-          skillsFutureApp={skillsFutureApp}
-          currentVisibleNode={currentVisibleNode}
+      {isLoadingNodeDetails ? (
+        <NodeLoadingSkeleton width={width} />
+      ) : (
+        <>
+          <Box
+            sx={{
+              position: "sticky",
+              top: 0,
+              mb: "15px",
+              zIndex: 100,
+              // display: "flex",
+              gap: "5px",
+            }}
+          >
+            <Text
+              skillsFutureApp={skillsFutureApp}
+              currentVisibleNode={currentVisibleNode}
           setCurrentVisibleNode={setCurrentVisibleNode}
-          nodes={nodes}
+          relatedNodes={relatedNodes}
+          fetchNode={fetchNode}
           property={"title"}
           text={currentVisibleNode.title}
           confirmIt={confirmIt}
@@ -1227,6 +1512,7 @@ const Node = ({
           enableEdit={enableEdit}
           setEnableEdit={setEnableEdit}
           handleCloseAddLinksModel={handleCloseAddLinksModel}
+          onInstantTreeUpdate={onInstantTreeUpdate}
         />
 
         {/* {currentVisibleNode.nodeType === "context" && (
@@ -1240,7 +1526,8 @@ const Node = ({
             setSnackbarMessage={setSnackbarMessage}
             setCurrentVisibleNode={setCurrentVisibleNode}
             property={"context"}
-            nodes={nodes}
+            relatedNodes={relatedNodes}
+            fetchNode={fetchNode}
             locked={locked}
             onGetPropertyValue={onGetPropertyValue}
             currentImprovement={currentImprovement}
@@ -1328,7 +1615,8 @@ const Node = ({
           <ChipsProperty
             currentVisibleNode={currentVisibleNode}
             property={"alternatives"}
-            nodes={nodes}
+            relatedNodes={relatedNodes}
+            fetchNode={fetchNode}
             locked={locked}
             currentImprovement={currentImprovement}
             selectedDiffNode={selectedDiffNode}
@@ -1342,7 +1630,8 @@ const Node = ({
 
         <Text
           skillsFutureApp={skillsFutureApp}
-          nodes={nodes}
+          relatedNodes={relatedNodes}
+          fetchNode={fetchNode}
           text={onGetPropertyValue("description") as string}
           currentVisibleNode={currentVisibleNode}
           property={"description"}
@@ -1354,6 +1643,7 @@ const Node = ({
           currentImprovement={currentImprovement}
           skillsFuture={skillsFuture}
           enableEdit={enableEdit}
+          onInstantTreeUpdate={onInstantTreeUpdate}
         />
 
         {/* actors of the node if it's exist */}
@@ -1368,7 +1658,9 @@ const Node = ({
             setSnackbarMessage={setSnackbarMessage}
             setCurrentVisibleNode={setCurrentVisibleNode}
             property={"actor"}
-            nodes={nodes}
+            relatedNodes={relatedNodes}
+            fetchNode={fetchNode}
+            addNodesToCache={addNodesToCache}
             locked={locked}
             onGetPropertyValue={onGetPropertyValue}
             currentImprovement={currentImprovement}
@@ -1410,6 +1702,7 @@ const Node = ({
             skillsFuture={skillsFuture}
             enableEdit={enableEdit}
             skillsFutureApp={skillsFutureApp}
+            onInstantTreeUpdate={onInstantTreeUpdate}
           />
         )}
         {/* specializations and generalizations*/}
@@ -1431,7 +1724,9 @@ const Node = ({
               setSnackbarMessage={setSnackbarMessage}
               setCurrentVisibleNode={setCurrentVisibleNode}
               property={property}
-              nodes={nodes}
+              relatedNodes={relatedNodes}
+              fetchNode={fetchNode}
+              addNodesToCache={addNodesToCache}
               locked={locked}
               onGetPropertyValue={onGetPropertyValue}
               currentImprovement={currentImprovement}
@@ -1473,6 +1768,7 @@ const Node = ({
               skillsFuture={skillsFuture}
               enableEdit={enableEdit}
               skillsFutureApp={skillsFutureApp}
+              onInstantTreeUpdate={onInstantTreeUpdate}
             />
           ))}
         </Stack>
@@ -1496,7 +1792,9 @@ const Node = ({
               setSnackbarMessage={setSnackbarMessage}
               setCurrentVisibleNode={setCurrentVisibleNode}
               property={property}
-              nodes={nodes}
+              relatedNodes={relatedNodes}
+              fetchNode={fetchNode}
+              addNodesToCache={addNodesToCache}
               locked={locked}
               onGetPropertyValue={onGetPropertyValue}
               currentImprovement={currentImprovement}
@@ -1541,6 +1839,7 @@ const Node = ({
               enableEdit={enableEdit}
               inheritanceDetails={inheritanceDetails}
               skillsFutureApp={skillsFutureApp}
+              onInstantTreeUpdate={onInstantTreeUpdate}
             />
           ))}
         </Stack>
@@ -1550,7 +1849,8 @@ const Node = ({
           !skillsFuture && (
             <NodeActivityFlow
               node={currentVisibleNode}
-              nodes={nodes}
+              relatedNodes={relatedNodes}
+              fetchNode={fetchNode}
               confirmIt={confirmIt}
             />
           )}
@@ -1563,7 +1863,8 @@ const Node = ({
           navigateToNode={navigateToNode}
           setSnackbarMessage={setSnackbarMessage}
           setSelectedProperty={setSelectedProperty}
-          nodes={nodes}
+          relatedNodes={relatedNodes}
+          fetchNode={fetchNode}
           locked={locked}
           selectedDiffNode={selectedDiffNode}
           getTitleNode={getTitleNode}
@@ -1611,6 +1912,8 @@ const Node = ({
           deleteProperty={deleteProperty}
         />
       </Box>{" "}
+        </>
+      )}
       {ConfirmDialog}
     </Box>
   );

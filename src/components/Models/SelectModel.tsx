@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import {
   Box,
   Button,
@@ -10,14 +10,15 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 
 import ExpandSearchResult from "../OntologyComponents/ExpandSearchResult";
-import TreeViewSimplified from "../OntologyComponents/TreeViewSimplified";
 import Text from "../OntologyComponents/Text";
 import {
   SCROLL_BAR_STYLE,
   DISPLAY,
   UNCLASSIFIED,
+  development,
 } from "@components/lib/CONSTANTS";
 import { capitalizeFirstLetter } from "@components/lib/utils/string.utils";
+import { Post } from "@components/lib/utils/Post";
 import { ICollection, ILinkNode, INodeTypes } from "@components/types/INode";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import {
@@ -51,7 +52,6 @@ const SelectModel = ({
   checkedItemsCopy,
   handleCloning,
   user,
-  nodes,
   selectFromTree,
   expandedNodes,
   setExpandedNodes,
@@ -83,6 +83,8 @@ const SelectModel = ({
   skillsFutureApp,
   linkNodeRelation,
   unlinkNodeRelation,
+  relatedNodes,
+  fetchNode,
 }: {
   onSave: any;
   handleCloseAddLinksModel: any;
@@ -97,7 +99,6 @@ const SelectModel = ({
   checkedItems: any;
   handleCloning: any;
   user: any;
-  nodes: any;
   selectFromTree: any;
   expandedNodes: any;
   setExpandedNodes: any;
@@ -134,12 +135,153 @@ const SelectModel = ({
   skillsFutureApp: string;
   linkNodeRelation: any;
   unlinkNodeRelation: any;
+  relatedNodes: { [id: string]: any };
+  fetchNode: (nodeId: string) => Promise<any | null>;
 }) => {
   const [disabledButton, setDisabledButton] = useState(false);
   const [isUpdatingInheritance, setIsUpdatingInheritance] = useState(false);
   const [glowSearchBox, setGlowSearchBox] = useState(false);
+  const [chromaSearchResults, setChromaSearchResults] = useState<any[]>([]);
+  const [loadingChromaSearch, setLoadingChromaSearch] = useState(false);
+  const [useChromaResults, setUseChromaResults] = useState(false);
+  const previousSearchValue = useRef(searchValue);
 
   const db = getFirestore();
+
+  // Reset to fuse search when user types
+  // Will be removed when fuse search is removed
+  useEffect(() => {
+    if (searchValue !== previousSearchValue.current && useChromaResults) {
+      setUseChromaResults(false);
+      setChromaSearchResults([]);
+    }
+    previousSearchValue.current = searchValue;
+  }, [searchValue, useChromaResults]);
+
+  // Fetch all child nodes from search results
+  const fetchChildNodesForSearchResults = useCallback(async (searchResults: any[]) => {
+    if (!fetchNode || searchResults.length === 0) return;
+
+    const childIds = new Set<string>();
+
+    searchResults.forEach(result => {
+      // Get specializations
+      result.specializations?.forEach((collection: any) => {
+        collection.nodes?.forEach((node: any) => {
+          if (!relatedNodes[node.id]) {
+            childIds.add(node.id);
+          }
+        });
+      });
+
+      // Get generalizations
+      result.generalizations?.forEach((collection: any) => {
+        collection.nodes?.forEach((node: any) => {
+          if (!relatedNodes[node.id]) {
+            childIds.add(node.id);
+          }
+        });
+      });
+
+      // Get parts if applicable
+      if (result.properties?.parts) {
+        result.properties.parts.forEach((collection: any) => {
+          collection.nodes?.forEach((node: any) => {
+            if (!relatedNodes[node.id]) {
+              childIds.add(node.id);
+            }
+          });
+        });
+      }
+    });
+
+    // Fetch all missing child nodes in parallel
+    if (childIds.size > 0) {
+      await Promise.all(Array.from(childIds).map(id => fetchNode(id)));
+    }
+  }, [fetchNode, relatedNodes]);
+
+  // Fetch child nodes for fuse search results
+  // Since handleChromaSearch is triggered only by clicking search, useEffect is used here to display child results for fuse searches
+  useEffect(() => {
+    if (searchValue && searchResultsForSelection.length > 0 && !useChromaResults) {
+      fetchChildNodesForSearchResults(searchResultsForSelection);
+    }
+  }, [searchResultsForSelection, searchValue, useChromaResults, fetchChildNodesForSearchResults]);
+
+  // Handle Chroma search with child node fetching
+  const handleChromaSearch = useCallback(async () => {
+    const query = searchValue?.trim();
+
+    if (!query || query.length < 3) {
+      setUseChromaResults(false);
+      setChromaSearchResults([]);
+      return;
+    }
+
+    const fuseResults = searchResultsForSelection;
+
+    // skip chroma in development
+    if (development) {
+      setUseChromaResults(false);
+      setChromaSearchResults(fuseResults);
+      return;
+    }
+
+    try {
+      setLoadingChromaSearch(true);
+      setUseChromaResults(true);
+
+      const response: any = await Post("/searchChroma", {
+        query: query,
+        skillsFuture,
+        appName: skillsFuture ? skillsFutureApp : null,
+      });
+
+      let results: any[] = [...(response?.results || [])];
+
+      // Fallback to fuse if no chroma results
+      if (results.length === 0 && fuseResults?.length > 0) {
+        results = fuseResults.slice();
+        setUseChromaResults(false);
+      }
+
+      // Ensure exact match is at the top
+      const exactResult = fuseResults?.[0];
+      if (
+        exactResult &&
+        exactResult.title?.trim()?.toLowerCase() === query.toLowerCase() &&
+        !results.some((r) => r.id === exactResult.id)
+      ) {
+        results.unshift({ id: exactResult.id, title: exactResult.title });
+      }
+
+      setChromaSearchResults(results);
+
+      if (results.length > 0) {
+        await fetchChildNodesForSearchResults(results);
+      }
+
+    } catch (err) {
+      // Fallback to Fuse only
+      setUseChromaResults(false);
+      setChromaSearchResults(fuseResults);
+
+      if (fuseResults.length > 0) {
+        await fetchChildNodesForSearchResults(fuseResults);
+      }
+
+    } finally {
+      setLoadingChromaSearch(false);
+    }
+  }, [
+    searchValue,
+    development,
+    skillsFuture,
+    skillsFutureApp,
+    searchResultsForSelection,
+    fetchChildNodesForSearchResults
+  ]);
 
   const refreshEditableProperty = useCallback(() => {
     let freshData: ICollection[] = [];
@@ -155,7 +297,7 @@ const SelectModel = ({
     } else {
       freshData =
         onGetPropertyValue(
-          nodes,
+          relatedNodes,
           currentVisibleNode.inheritance[selectedProperty]?.ref,
           selectedProperty,
         ) ||
@@ -164,7 +306,7 @@ const SelectModel = ({
     }
 
     setEditableProperty([...freshData]);
-  }, [selectedProperty, currentVisibleNode, nodes, setEditableProperty]);
+  }, [selectedProperty, currentVisibleNode, relatedNodes, setEditableProperty]);
 
   // Initialize checkedItems with parts that are already inherited
   useEffect(() => {
@@ -188,7 +330,7 @@ const SelectModel = ({
           currentVisibleNode.inheritance.parts.ref;
         const allPartsFromRef = getGeneralizationParts(
           referencedGeneralizationId,
-          nodes,
+          relatedNodes,
         );
         allPartsFromRef.forEach((part) => {
           partsToCheck.add(part.id);
@@ -214,7 +356,7 @@ const SelectModel = ({
         prevCheckedItems.forEach((itemId) => {
           if (!partsToCheck.has(itemId)) {
             // Check if this item is still valid (exists in nodes)
-            if (nodes[itemId]) {
+            if (relatedNodes[itemId]) {
               newCheckedItems.add(itemId);
             }
           }
@@ -230,7 +372,7 @@ const SelectModel = ({
     currentVisibleNode?.inheritance?.parts?.ref,
     currentVisibleNode?.properties?.parts,
     setCheckedItems,
-    nodes,
+    relatedNodes,
     isUpdatingInheritance,
   ]);
 
@@ -300,10 +442,10 @@ const SelectModel = ({
   ]);
 
   const getNumOfGeneralizations = (id: string) => {
-    if (!nodes[id] || newOnes.has(id)) {
+    if (!relatedNodes[id] || newOnes.has(id)) {
       return false;
     }
-    const generalizations = nodes[id].generalizations
+    const generalizations = relatedNodes[id].generalizations
       .flatMap((c: any) => c.nodes)
       .filter((n: { id: string }) => n.id !== currentVisibleNode?.id);
 
@@ -341,10 +483,10 @@ const SelectModel = ({
 
         // Check if this part is inherited or direct from the generalization
         const generalizationNode =
-          nodes[fromGeneralizationDropdown.generalizationId];
+          relatedNodes[fromGeneralizationDropdown.generalizationId];
         const partInGeneralization = getGeneralizationParts(
           fromGeneralizationDropdown.generalizationId,
-          nodes,
+          relatedNodes,
         ).find((p) => p.id === checkedId);
 
         let inheritedFromId = fromGeneralizationDropdown.generalizationId;
@@ -367,18 +509,18 @@ const SelectModel = ({
             await breakInheritanceAndCopyParts(
               currentVisibleNode?.id,
               checkedId,
-              nodes,
+              relatedNodes,
               user,
               skillsFutureApp,
             );
           } else {
             const inheritanceRef = currentVisibleNode.inheritance.parts.ref;
-            const referencedNode = nodes[inheritanceRef];
+            const referencedNode = relatedNodes[inheritanceRef];
 
             if (referencedNode) {
               const allPartsFromRef = getGeneralizationParts(
                 inheritanceRef,
-                nodes,
+                relatedNodes,
               );
 
               const nodeDoc = await getDoc(
@@ -686,15 +828,19 @@ const SelectModel = ({
       setGlowSearchBox(false);
     }, 1000);
   };
-  const renderSearchOrTree = () =>
-    searchValue ? (
+  const renderSearchOrTree = () => {
+    const resultsToDisplay = useChromaResults
+      ? chromaSearchResults
+      : searchResultsForSelection;
+
+    return searchValue && (
       <ExpandSearchResult
-        searchResultsForSelection={searchResultsForSelection.slice(0, 10)}
+        searchResultsForSelection={resultsToDisplay.slice(0, 10)}
         markItemAsChecked={markItemAsChecked}
         handleCloning={handleCloning}
         checkedItems={checkedItems}
         user={user}
-        nodes={nodes}
+        nodes={relatedNodes}
         cloning={cloning}
         addACloneNodeQueue={_add}
         isSaving={isSaving}
@@ -705,35 +851,8 @@ const SelectModel = ({
         selectedProperty={selectedProperty}
         currentVisibleNode={currentVisibleNode}
       />
-    ) : (
-      <TreeViewSimplified
-        treeVisualization={selectFromTree()}
-        expandedNodes={expandedNodes}
-        setExpandedNodes={setExpandedNodes}
-        onOpenNodesTree={handleToggle}
-        markItemAsChecked={(id: string) =>
-          markItemAsChecked(id, selectedProperty === "context")
-        }
-        checkedItems={checkedItems}
-        handleCloning={handleCloning}
-        clone
-        stopPropagation={
-          selectedProperty === "generalizations" ? currentVisibleNode?.id : ""
-        }
-        preventLoops={getPath(currentVisibleNode?.id, selectedProperty)}
-        manageLock={user?.manageLock}
-        cloning={cloning}
-        addACloneNodeQueue={_add}
-        isSaving={isSaving}
-        disabledAddButton={
-          checkedItems.size === 1 && selectedProperty === "generalizations"
-        }
-        selectedProperty={selectedProperty}
-        getNumOfGeneralizations={getNumOfGeneralizations}
-        currentVisibleNode={currentVisibleNode}
-        loadingIds={loadingIds}
-      />
     );
+  };
   return (
     <Paper
       sx={{
@@ -804,6 +923,8 @@ const SelectModel = ({
               search={searchValue}
               glowSearchBox={glowSearchBox}
               label="Search ..."
+              onSearch={handleChromaSearch}
+              loading={loadingChromaSearch}
             />
             <Tooltip
               title={`Create as a new Specialization 
@@ -942,7 +1063,8 @@ const SelectModel = ({
               currentVisibleNode={currentVisibleNode}
               property={selectedProperty}
               setCurrentVisibleNode={setCurrentVisibleNode}
-              nodes={nodes}
+              relatedNodes={relatedNodes}
+              fetchNode={fetchNode}
               locked={locked}
               selectedDiffNode={selectedDiffNode}
               confirmIt={confirmIt}
