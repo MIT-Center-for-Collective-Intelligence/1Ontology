@@ -300,7 +300,7 @@ const NodeLoadingSkeleton = ({ width }: { width: number }) => {
       </Stack>
 
       {/* IsPartOf & Parts Skeletons */}
-      <Stack direction={width < 1050 ? "column" : "row"} spacing={3}>
+      <Stack direction={width < 1050 ? "column" : "row"} spacing={3} sx={{ mb: 2 }}>
         {/* IsPartOf Skeleton */}
         <Paper
           elevation={9}
@@ -359,6 +359,37 @@ const NodeLoadingSkeleton = ({ width }: { width: number }) => {
           </Box>
         </Paper>
       </Stack>
+
+      {/* Additional Generic Property Skeletons */}
+      {Array.from({ length: 2 }).map((_, index) => (
+        <Paper
+          key={`generic-property-skeleton-${index}`}
+          elevation={9}
+          sx={{
+            borderRadius: "20px",
+            width: "100%",
+            mb: 2,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: (theme) =>
+                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+              p: 3,
+              pb: 1.5,
+              borderTopRightRadius: "18px",
+              borderTopLeftRadius: "18px",
+            }}
+          >
+            <Skeleton variant="text" width="150px" height={30} />
+          </Box>
+          <Box sx={{ p: 3 }}>
+            <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: "8px" }} />
+          </Box>
+        </Paper>
+      ))}
     </Box>
   );
 };
