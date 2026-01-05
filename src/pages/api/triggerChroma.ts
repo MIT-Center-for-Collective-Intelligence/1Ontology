@@ -9,8 +9,6 @@ import { development } from "@components/lib/CONSTANTS";
 import Cors from "cors";
 import { openai } from "./helpers";
 
-const EMBEDDING_MODEL = "gemini-embedding-exp-03-07";
-
 const url = `${process.env.CHROMA_PROTOCOL}://${process.env.CHROMA_HOST}:${process.env.CHROMA_PORT}`;
 
 const getFullNodeStructure = (
