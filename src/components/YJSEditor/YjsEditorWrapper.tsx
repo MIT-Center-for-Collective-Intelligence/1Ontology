@@ -105,7 +105,7 @@ const YjsEditorWrapper = ({
     if (!property || !fullname || !nodeId) return;
     // Create Yjs document and WebSocket provider
     const ydoc = new Y.Doc();
-
+    console.log("WS_URL", WS_URL);
     const provider = new WebsocketProvider(
       WS_URL,
       `${nodeId}-${property}`,
