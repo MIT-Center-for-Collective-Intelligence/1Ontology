@@ -32,7 +32,7 @@ import { updateNodeInTree, reorderChildrenInTree, moveNodeInTree } from "@compon
 import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
 
 const INDENT_STEP = 15;
-const INITIAL_LOAD_COUNT = 6;
+const INITIAL_LOAD_COUNT = 20;
 const LOAD_MORE_COUNT = 20;
 
 interface PaginatedTreeData extends TreeData {
@@ -125,8 +125,7 @@ function DraggableTree({
 
         if (
           node.children &&
-          node.children.length > INITIAL_LOAD_COUNT &&
-          node.unclassified
+          node.children.length > INITIAL_LOAD_COUNT
         ) {
           const hasCurrentVisibleNode =
             currentVisibleNode?.id &&
