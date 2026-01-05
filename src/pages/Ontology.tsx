@@ -87,6 +87,7 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -102,7 +103,6 @@ import {
   INodePath,
   INodeTypes,
   MainSpecializations,
-  NodeTreeData,
   TreeData,
   TreeViewNode,
   TreeVisual,
@@ -387,23 +387,9 @@ const Ontology = ({
       const newTree = updateFn(prevTree);
       console.log("[INSTANT UPDATE] Tree updated locally");
 
-      // Write to Database for sync with other clients (only for the currentVisibleNode)
-      const nodeId = currentVisibleNode?.id;
-      if (nodeId && newTree.length > 0) {
-        const nodeTreeData = treeDataToNodeTreeData(newTree, currentVisibleNode?.nodeTreeData);
-        const nodeRef = doc(db, NODES, nodeId);
-        updateDoc(nodeRef, { nodeTreeData })
-          .then(() => {
-            console.log("[INSTANT UPDATE] Tree updated to Firestore:", nodeId);
-          })
-          .catch((error) => {
-            console.error("[INSTANT UPDATE] Failed to updated tree:", error);
-          });
-      }
-
       return newTree;
     });
-  }, [currentVisibleNode?.id, currentVisibleNode?.nodeTreeData, db]);
+  }, [currentVisibleNode?.id, currentVisibleNode, db]);
   // Auto-focus search input on mobile search open
   useEffect(() => {
     if (mobileSearchOpen && isMobile) {
@@ -1964,60 +1950,6 @@ const Ontology = ({
       return expandedTree;
     });
   }, []);
-
-  // Converts hierarchical TreeData[] back to flat NodeTreeData format for Firestore storage
-  const treeDataToNodeTreeData = (
-    treeData: TreeData[],
-    existingNodeTreeData?: NodeTreeData
-  ): NodeTreeData => {
-    const nodes: { [id: string]: TreeViewNode } = {};
-    const rootIds: string[] = [];
-
-    const processNode = (node: TreeData): void => {
-      // Collect child IDs
-      const childIds: string[] = [];
-      if (node.children && node.children.length > 0) {
-        for (const child of node.children) {
-          childIds.push(child.id);
-          processNode(child);
-        }
-      }
-
-      // Create the flat node entry
-      nodes[node.id] = {
-        id: node.id,
-        nodeId: node.nodeId || node.id,
-        name: node.name,
-        category: !!node.category,
-        nodeType: node.nodeType,
-        unclassified: node.unclassified,
-        childIds,
-      };
-    };
-
-    // Process all root nodes
-    for (const rootNode of treeData) {
-      rootIds.push(rootNode.id);
-      processNode(rootNode);
-    }
-
-    const result: NodeTreeData = {
-      version: "nodeTree",
-      lastUpdated: Date.now(),
-      rootIds,
-      nodes,
-    };
-
-    // Only include optional fields if they have defined values
-    if (existingNodeTreeData?.affectedNodeIds !== undefined) {
-      result.affectedNodeIds = existingNodeTreeData.affectedNodeIds;
-    }
-    if (existingNodeTreeData?.isHighImpact !== undefined) {
-      result.isHighImpact = existingNodeTreeData.isHighImpact;
-    }
-
-    return result;
-  };
 
   useEffect(() => {
     if (!currentVisibleNode) return;

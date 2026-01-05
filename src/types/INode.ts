@@ -116,7 +116,6 @@ export type INode = {
     id: string;
     title: string;
   };
-  nodeTreeData?: NodeTreeData;
 };
 
 export type TreeVisual = {
@@ -241,15 +240,6 @@ export interface TreeViewNode {
   nodeType?: string;
   unclassified?: boolean;
   childIds: string[];
-}
-
-export interface NodeTreeData {
-  version: string;
-  lastUpdated: number;
-  rootIds: string[];
-  nodes: { [id: string]: TreeViewNode };
-  affectedNodeIds?: string[] | null;
-  isHighImpact?: boolean;
 }
 
 /**
