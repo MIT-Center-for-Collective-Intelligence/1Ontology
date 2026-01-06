@@ -45,6 +45,7 @@ const YjsEditorWrapper = ({
   onEditorReady,
   setEditorContent,
   fallbackContent,
+  placeholder,
 }: {
   fullname: string;
   property: string;
@@ -58,6 +59,7 @@ const YjsEditorWrapper = ({
   onEditorReady?: (editor: Quill) => void;
   setEditorContent: any;
   fallbackContent?: string;
+  placeholder?: string;
 }) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
@@ -156,9 +158,12 @@ const YjsEditorWrapper = ({
             ],
           },
         },
-        placeholder: `${capitalizeFirstLetter(
-          DISPLAY[property] ? DISPLAY[property] : property,
-        )}...`,
+        placeholder: `${
+          placeholder ||
+          capitalizeFirstLetter(
+            DISPLAY[property] ? DISPLAY[property] : property,
+          )
+        }...`,
         theme: "snow",
         formats: [],
       });

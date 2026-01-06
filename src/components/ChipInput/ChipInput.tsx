@@ -177,56 +177,58 @@ const ChipInput = ({
                 <TextField
                   label={label || ""}
                   className={classes.inputChip}
-                  InputProps={{
-                    startAdornment: tags.map((item: TagType, idx: number) => {
-                      const color = item.added
-                        ? "#115f07"
-                        : item.removed
-                          ? "red"
-                          : "";
-                      return (
-                        <Fragment key={idx}>
-                          {readOnly ? (
-                            <Chip
-                              sx={{
-                                fontSize: fontSize || "20px",
-                                my: "3px",
-                                mx: "3px",
-                              }}
-                              key={item.title}
-                              tabIndex={-1}
-                              label={item.title}
-                              className={classes.innerChip}
-                              clickable={clickable}
-                            />
-                          ) : (
-                            <Chip
-                              sx={{
-                                background: `${color}`,
-                                fontSize: fontSize || "20px",
-                                my: "3px",
-                                mx: "3px",
-                              }}
-                              key={item.title}
-                              tabIndex={-1}
-                              label={item.title}
-                              disabled={readOnly}
-                              className={classes.innerChip}
-                              onDelete={handleDelete(item)}
-                              deleteIcon={
-                                <Tooltip title="Remove" placement="top">
-                                  <CancelIcon />
-                                </Tooltip>
-                              }
-                            />
-                          )}
-                        </Fragment>
-                      );
-                    }),
-                    onBlur,
-                    onChange: (event) => {
-                      handleInputChange(event);
-                      onChange(event);
+                  slotProps={{
+                    input: {
+                      startAdornment: tags.map((item: TagType, idx: number) => {
+                        const color = item.added
+                          ? "#115f07"
+                          : item.removed
+                            ? "red"
+                            : "";
+                        return (
+                          <Fragment key={idx}>
+                            {readOnly ? (
+                              <Chip
+                                sx={{
+                                  fontSize: fontSize || "20px",
+                                  my: "3px",
+                                  mx: "3px",
+                                }}
+                                key={item.title}
+                                tabIndex={-1}
+                                label={item.title}
+                                className={classes.innerChip}
+                                clickable={clickable}
+                              />
+                            ) : (
+                              <Chip
+                                sx={{
+                                  background: `${color}`,
+                                  fontSize: fontSize || "20px",
+                                  my: "3px",
+                                  mx: "3px",
+                                }}
+                                key={item.title}
+                                tabIndex={-1}
+                                label={item.title}
+                                disabled={readOnly}
+                                className={classes.innerChip}
+                                onDelete={handleDelete(item)}
+                                deleteIcon={
+                                  <Tooltip title="Remove" placement="top">
+                                    <CancelIcon />
+                                  </Tooltip>
+                                }
+                              />
+                            )}
+                          </Fragment>
+                        );
+                      }),
+                      onBlur,
+                      onChange: (event) => {
+                        handleInputChange(event);
+                        onChange(event);
+                      },
                     },
                   }}
                   fullWidth

@@ -838,7 +838,10 @@ const ToolbarSidebar = ({
           if (change.type === "added" || change.type === "modified") {
             updatedUsersData[userId] = {
               node: {
-                title: currentNodeInfo?.title || relatedNodes[currentNodeId]?.title || "",
+                title:
+                  currentNodeInfo?.title ||
+                  relatedNodes[currentNodeId]?.title ||
+                  "",
                 id: currentNodeId,
               },
               imageUrl: data.imageUrl,
@@ -1331,7 +1334,8 @@ const ToolbarSidebar = ({
       }
 
       const improvements: Improvement[] =
-        filterProposals(newImprovements || [], nodesByTitle, relatedNodes) || [];
+        filterProposals(newImprovements || [], nodesByTitle, relatedNodes) ||
+        [];
 
       const newNodes: {
         title: string;
@@ -1434,7 +1438,13 @@ const ToolbarSidebar = ({
           />
         );
       case "inheritanceSettings":
-        return <Inheritance selectedNode={currentVisibleNode} nodes={relatedNodes} fetchNode={fetchNode} />;
+        return (
+          <Inheritance
+            selectedNode={currentVisibleNode}
+            nodes={relatedNodes}
+            fetchNode={fetchNode}
+          />
+        );
       case "nodeHistory":
         return (
           <NodeActivity
@@ -1657,14 +1667,16 @@ const ToolbarSidebar = ({
                     select
                     label="Select User"
                     sx={{ ml: "15px", minWidth: "100px" }}
-                    InputProps={{
-                      sx: {
-                        height: "40px",
-                        borderRadius: "18px",
+                    slotProps={{
+                      input: {
+                        sx: {
+                          height: "40px",
+                          borderRadius: "18px",
+                        },
                       },
-                    }}
-                    InputLabelProps={{
-                      style: { color: "grey" },
+                      inputLabel: {
+                        style: { color: "grey" },
+                      },
                     }}
                   >
                     <MenuItem
@@ -1895,7 +1907,7 @@ const ToolbarSidebar = ({
                       headers: {
                         Authorization: `Bearer ${token}`,
                       },
-                    }
+                    },
                   );
 
                   if (!response.ok) {
@@ -1903,7 +1915,9 @@ const ToolbarSidebar = ({
                   }
 
                   const { tree } = await response.json();
-                  const blob = new Blob([JSON.stringify(tree, null, 2)], { type: "application/json" });
+                  const blob = new Blob([JSON.stringify(tree, null, 2)], {
+                    type: "application/json",
+                  });
                   const url = URL.createObjectURL(blob);
                   const link = document.createElement("a");
                   link.href = url;

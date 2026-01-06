@@ -177,7 +177,6 @@ const ChipsProperty = ({
         borderRadius: property !== "context" ? "30px" : "",
         borderBottomRightRadius: "18px",
         borderBottomLeftRadius: "18px",
-        minWidth: "500px",
         width: "100%",
         maxHeight: "100%",
         overflow: "auto",

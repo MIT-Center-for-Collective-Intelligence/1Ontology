@@ -688,7 +688,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               }}
             >
               {!readOnly && entry.symbol === "x" && !!addPart && (
-                <Tooltip title={"Add part"} placement="top">
+                <Tooltip title={"Add Part"} placement="top">
                   <IconButton
                     sx={{ p: 0.5 }}
                     onClick={() => {

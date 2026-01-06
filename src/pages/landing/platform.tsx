@@ -719,12 +719,16 @@ const PlatformDetailsPage = () => {
                               placeholder="Semantic search..."
                               size="small"
                               disabled
-                              InputProps={{
-                                startAdornment: (
-                                  <InputAdornment position="start">
-                                    <Search sx={{ color: "text.secondary" }} />
-                                  </InputAdornment>
-                                ),
+                              slotProps={{
+                                input: {
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <Search
+                                        sx={{ color: "text.secondary" }}
+                                      />
+                                    </InputAdornment>
+                                  ),
+                                },
                               }}
                               sx={{
                                 "& .MuiOutlinedInput-root": {

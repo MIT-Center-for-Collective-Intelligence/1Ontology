@@ -51,7 +51,16 @@ const ActiveUsers = ({
           new Date(a.lasChangeMadeAt.toDate()).getTime()
         );
       })
-      .filter((c: any) => c.uname !== "gemini" && c.uname !== "gpt4o");
+      .filter((c: any) => c.uname !== "gemini" && c.uname !== "gpt4o")
+      .map((u: any) => {
+        const isCurrent =
+          currentUser?.uname && u.uname && currentUser.uname === u.uname;
+        const online = isCurrent || isOnline(u.lastInteracted);
+        return {
+          ...u,
+          online,
+        };
+      });
   }, [activeUsers]);
 
   return (
@@ -74,36 +83,138 @@ const ActiveUsers = ({
         <Tooltip
           key={`${u.uname}`}
           placement="left"
+          slotProps={{
+            tooltip: {
+              sx: {
+                maxWidth: "none",
+                bgcolor: "background.paper",
+                color: "text.primary",
+                boxShadow: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "0 8px 32px rgba(0,0,0,0.5)"
+                    : "0 8px 32px rgba(0,0,0,0.12)",
+                border: (theme) =>
+                  `1px solid ${
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.06)"
+                  }`,
+                borderRadius: "16px",
+                p: 0,
+              },
+            },
+          }}
           title={
             <Box
               sx={{
+                p: 2,
+                minWidth: "240px",
                 display: "flex",
-                flexWrap: "wrap",
-                whiteSpace: "normal",
-                p: 1,
+                flexDirection: "column",
+                gap: 1.5,
               }}
             >
-              <strong
-                style={{ marginRight: "4px" }}
-              >{`${u.fName} ${u.lName}`}</strong>
-              {u.node.id && u.node.title && (
-                <div> {"last interacted with"}</div>
-              )}
-              {u.node.id && u.node.title && (
-                <Link
-                  underline="hover"
-                  onClick={() => navigateToNode(u.node.id)}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <OptimizedAvatar
+                  alt={`${u.fName} ${u.lName}`}
+                  imageUrl={u.imageUrl || ""}
+                  size={44}
                   sx={{
-                    cursor: "pointer",
-                    mx: "5px",
+                    borderRadius: "12px",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  }}
+                />
+                <Box sx={{ display: "flex", flexDirection: "column" }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: "16px",
+                      lineHeight: 1.2,
+                    }}
+                  >{`${u.fName} ${u.lName}`}</Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Box
+                      sx={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        bgcolor: u.online ? "#4caf50" : "#bdbdbd",
+                        boxShadow: u.online
+                          ? "0 0 8px rgba(76, 175, 80, 0.5)"
+                          : "none",
+                      }}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "text.secondary", fontWeight: 500 }}
+                    >
+                      {u.online ? "Online" : "Away"}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              {u.node.id && u.node.title && (
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.03)"
+                        : "rgba(0,0,0,0.02)",
+                    borderRadius: "12px",
+                    display: "flex",
+                    gap: 2,
+                    alignItems: "center",
+                    border: (theme) =>
+                      `1px solid ${
+                        theme.palette.mode === "dark"
+                          ? "rgba(255,255,255,0.05)"
+                          : "rgba(0,0,0,0.04)"
+                      }`,
                   }}
                 >
-                  {" "}
-                  {u.node.title}
-                </Link>
-              )}
-              {u.node.id && u.lastInteracted && u.node.title && (
-                <div>{timeAgo(u.lastInteracted)}</div>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      letterSpacing: "0.5px",
+                      fontSize: "15px",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Last interacted with
+                  </Typography>
+                  <Link
+                    underline="none"
+                    onClick={() => navigateToNode(u.node.id)}
+                    sx={{
+                      cursor: "pointer",
+                      color: "primary.main",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      display: "block",
+                      maxWidth: "280px",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      "&:hover": {
+                        color: "primary.dark",
+                      },
+                    }}
+                  >
+                    {u.node.title}
+                  </Link>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: "11px",
+                    }}
+                  >
+                    {timeAgo(u.lastInteracted)}
+                  </Typography>
+                </Box>
               )}
             </Box>
           }
@@ -147,12 +258,7 @@ const ActiveUsers = ({
                     borderRadius: "50%",
                     objectFit: "cover",
                   }}
-                  online={
-                    (currentUser?.uname &&
-                      u.uname &&
-                      currentUser.uname === u.uname) ||
-                    isOnline(u.lastInteracted)
-                  }
+                  online={u.online}
                 />
               </Badge>
             </Box>

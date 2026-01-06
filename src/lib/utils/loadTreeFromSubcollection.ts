@@ -11,29 +11,31 @@ interface TreeNodeDocument {
 }
 
 /**
- * Load tree nodes from subcollection and reconstruct hierarchical tree
+ * Load tree nodes from subCollection and reconstruct hierarchical tree
  */
-export async function loadTreeFromSubcollection(
-  nodeId: string
+export async function loadTreeFromSubCollection(
+  nodeId: string,
 ): Promise<TreeData[]> {
   const db = getFirestore();
 
   console.log(`[LOAD-SUBCOL-TREE] Loading tree for node: ${nodeId}`);
 
-  // Fetch all tree nodes from subcollection
+  // Fetch all tree nodes from subCollection
   const treeNodesRef = collection(db, NODES, nodeId, "treeNodes");
   const snapshot = await getDocs(treeNodesRef);
 
   if (snapshot.empty) {
-    console.log(`[LOAD-SUBCOL-TREE] No tree data found in subcollection`);
+    console.log(`[LOAD-SUBCOL-TREE] No tree data found in subCollection`);
     return [];
   }
 
-  console.log(`[LOAD-SUBCOL-TREE] Loaded ${snapshot.size} nodes from subcollection`);
+  console.log(
+    `[LOAD-SUBCOL-TREE] Loaded ${snapshot.size} nodes from subCollection`,
+  );
 
   // Build a map of all nodes by their nodeId (document ID)
   const nodesMap: { [nodeId: string]: TreeNodeDocument } = {};
-  snapshot.forEach(doc => {
+  snapshot.forEach((doc) => {
     nodesMap[doc.id] = doc.data() as TreeNodeDocument;
   });
 
@@ -57,7 +59,7 @@ export async function loadTreeFromSubcollection(
         nodeId: nodeId,
         name: "Unknown",
         nodeType: "activity",
-        children: []
+        children: [],
       };
     }
 
@@ -72,14 +74,18 @@ export async function loadTreeFromSubcollection(
         name: node.title,
         nodeType: node.nodeType,
         ...(node.unclassified && { unclassified: true }),
-        children: []
+        children: [],
       };
     }
 
     const childrenInOrder: TreeData[] = [];
 
     // Process each collection in order
-    for (let collectionIndex = 0; collectionIndex < node.specializations.length; collectionIndex++) {
+    for (
+      let collectionIndex = 0;
+      collectionIndex < node.specializations.length;
+      collectionIndex++
+    ) {
       const collection = node.specializations[collectionIndex];
 
       if (collection.collectionName === "main") {
@@ -89,7 +95,7 @@ export async function loadTreeFromSubcollection(
           childrenInOrder.push({
             ...childTree,
             isMainItem: true,
-            originalCollectionIndex: collectionIndex
+            originalCollectionIndex: collectionIndex,
           } as any);
         }
       } else {
@@ -110,7 +116,7 @@ export async function loadTreeFromSubcollection(
             category: true,
             children: collectionChildren,
             ...(node.unclassified && { unclassified: true }),
-            originalCollectionIndex: collectionIndex
+            originalCollectionIndex: collectionIndex,
           } as any);
         }
       }
@@ -123,13 +129,17 @@ export async function loadTreeFromSubcollection(
       nodeType: node.nodeType,
       ...(node.unclassified && { unclassified: true }),
       category: false,
-      children: childrenInOrder.length > 0 ? childrenInOrder : undefined
+      children: childrenInOrder.length > 0 ? childrenInOrder : undefined,
     };
   };
 
   // Build hierarchical tree from roots
-  const hierarchicalTree: TreeData[] = rootNodeIds.map(rootId => buildTree(rootId));
+  const hierarchicalTree: TreeData[] = rootNodeIds.map((rootId) =>
+    buildTree(rootId),
+  );
 
-  console.log(`[LOAD-SUBCOL-TREE] Built tree with ${hierarchicalTree.length} root node(s)`);
+  console.log(
+    `[LOAD-SUBCOL-TREE] Built tree with ${hierarchicalTree.length} root node(s)`,
+  );
   return hierarchicalTree;
 }

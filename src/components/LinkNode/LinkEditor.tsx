@@ -51,7 +51,7 @@ const LinkEditor: React.FC<LinkEditorProps> = ({
       (prev: { [nodeId: string]: { title: string; id: string } }) => {
         prev[reviewId].title = e.target.value;
         return prev;
-      }
+      },
     );
   };
   useEffect(() => {
@@ -123,10 +123,10 @@ const LinkEditor: React.FC<LinkEditorProps> = ({
             saveNodeTitle();
           }
         }}
-        InputProps={{
-          inputProps: {
-            style: {
-              padding: 10,
+        slotProps={{
+          input: {
+            sx: {
+              p: 0,
             },
           },
         }}

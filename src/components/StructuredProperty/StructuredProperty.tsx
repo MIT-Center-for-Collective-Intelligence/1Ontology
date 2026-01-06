@@ -9,16 +9,9 @@ import {
   useTheme,
   useMediaQuery,
   IconButton,
-  Card,
-  CardContent,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Slide,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import {
   capitalizeFirstLetter,
   getPropertyValue,
@@ -33,7 +26,6 @@ import {
 } from "@components/lib/utils/partsHelper";
 import { ICollection, ILinkNode, INode } from "@components/types/INode";
 import { DISPLAY } from "@components/lib/CONSTANTS";
-import { useAuth } from "../context/AuthContext";
 import {
   collection,
   doc,
@@ -51,18 +43,14 @@ import {
   updatePropertyOf,
 } from "@components/lib/utils/helpers";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
-import MarkdownRender from "../Markdown/MarkdownRender";
 import VisualizeTheProperty from "./VisualizeTheProperty";
 import CollectionStructure from "./CollectionStructure";
 import SelectModel from "../Models/SelectModel";
-import { LoadingButton } from "@mui/lab";
 import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
-import CommentsSection from "./CommentsSection";
 import InheritedPartsViewer from "./InheritedPartsViewer";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
-import { Post } from "@components/lib/utils/Post";
-import EditProperty from "../AddPropertyForm/EditProprety";
+import EditProperty from "../AddPropertyForm/EditProperty";
 import InheritedPartsViewerEdit from "./InheritedPartsViewerEdit";
 import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
 
@@ -92,7 +80,10 @@ type IStructuredPropertyProps = {
   property: string;
   relatedNodes: { [id: string]: INode };
   fetchNode: (nodeId: string) => Promise<INode | null>;
-  addNodesToCache?: (nodes: { [id: string]: INode }, parentNodeId?: string) => void;
+  addNodesToCache?: (
+    nodes: { [id: string]: INode },
+    parentNodeId?: string,
+  ) => void;
   locked: boolean;
   selectedDiffNode: any;
   confirmIt: any;
@@ -353,8 +344,9 @@ const StructuredProperty = ({
         );
         previousValue[sourceCollectionIndex].relatedNodes[source.index].change =
           "removed";
-        previousValue[sourceCollectionIndex].relatedNodes[source.index].changeType =
-          "sort";
+        previousValue[sourceCollectionIndex].relatedNodes[
+          source.index
+        ].changeType = "sort";
         previousValue[destinationCollectionIndex].nodes.splice(
           destination.index,
           0,
@@ -448,7 +440,8 @@ const StructuredProperty = ({
       }
       let numberOfGeneralizations = 0;
       if (property === "specializations") {
-        for (let colGeneralization of relatedNodes[nodeId]?.generalizations || []) {
+        for (let colGeneralization of relatedNodes[nodeId]?.generalizations ||
+          []) {
           numberOfGeneralizations += colGeneralization.nodes.length;
         }
       }
@@ -911,7 +904,8 @@ const StructuredProperty = ({
 
       // Fetch inheritance reference if missing
       if (inheritanceRefId) {
-        let inheritanceRefNode: INode | null = relatedNodes[inheritanceRefId] || null;
+        let inheritanceRefNode: INode | null =
+          relatedNodes[inheritanceRefId] || null;
         if (!inheritanceRefNode) {
           const fetchedNode = await fetchNode(inheritanceRefId);
           if (!fetchedNode) {
@@ -995,13 +989,18 @@ const StructuredProperty = ({
           // If parts are inherited, break the inheritance first
           // Prevents the code breaking for any node that inherits its parts from a parent node
           if (inheritanceRef && relatedNodes[inheritanceRef]) {
-            const inheritedParts = relatedNodes[inheritanceRef].properties["parts"];
+            const inheritedParts =
+              relatedNodes[inheritanceRef].properties["parts"];
             _propertyValue = JSON.parse(JSON.stringify(inheritedParts));
           }
 
           // Check if _propertyValue is valid
           // Prevents failing when new node has not laded parts yet
-          if (!_propertyValue || !Array.isArray(_propertyValue) || !_propertyValue[0]?.nodes) {
+          if (
+            !_propertyValue ||
+            !Array.isArray(_propertyValue) ||
+            !_propertyValue[0]?.nodes
+          ) {
             return;
           }
 
@@ -1039,7 +1038,14 @@ const StructuredProperty = ({
         console.error(error);
       }
     },
-    [currentVisibleNode?.id, currentVisibleNode?.inheritance?.parts?.ref, db, property, relatedNodes, skillsFutureApp],
+    [
+      currentVisibleNode?.id,
+      currentVisibleNode?.inheritance?.parts?.ref,
+      db,
+      property,
+      relatedNodes,
+      skillsFutureApp,
+    ],
   );
 
   if (
@@ -1058,7 +1064,6 @@ const StructuredProperty = ({
           borderRadius: property !== "context" ? "30px" : "",
           borderBottomRightRadius: "18px",
           borderBottomLeftRadius: "18px",
-          minWidth: isMobile ? "100%" : "500px",
           width: "100%",
           minHeight: "150px",
           maxHeight: "100%",
@@ -1115,135 +1120,133 @@ const StructuredProperty = ({
             : "",
       }}
     >
-        <Box>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              background: (theme: any) =>
-                theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-              p: 3,
+      <Box>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            background: (theme: any) =>
+              theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
+            p: 3,
 
-              backgroundColor:
-                selectedDiffNode &&
-                selectedDiffNode.changeType === "add property" &&
-                selectedDiffNode.changeDetails.addedProperty === property
-                  ? "green"
-                  : "",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              {editProperty === property && modifyProperty ? (
-                <EditProperty
-                  value={newPropertyValue}
-                  onChange={setNewPropertyValue}
-                  onSave={() => {
-                    modifyProperty({
-                      newValue: newPropertyValue,
-                      previousValue: property,
-                    });
-                    setEditProperty("");
-                    setNewPropertyValue("");
-                  }}
-                  onCancel={() => {
-                    setEditProperty("");
-                    setNewPropertyValue("");
-                  }}
-                  property={property}
-                />
-              ) : (
-                <Tooltip
-                  title={getTooltipHelper(lowercaseFirstLetter(property))}
-                >
-                  <Box
-                    sx={{
-                      position: "relative",
-                      display: "inline-block",
-                      pl: "1px",
-                      "&:hover":
-                        enableEdit && modifyProperty
-                          ? {
-                              border: "2px solid orange",
-                              borderRadius: "15px",
-                              pr: "15px",
-                              cursor: "pointer",
-                              backgroundColor: "gray",
-                            }
-                          : {},
-                      "&:hover .edit-icon":
-                        enableEdit && modifyProperty
-                          ? {
-                              display: "block",
-                            }
-                          : {},
-                    }}
-                    onClick={() => {
-                      if (enableEdit && modifyProperty) {
-                        setEditProperty(property);
-                        setNewPropertyValue(property);
-                      }
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: "20px",
-                        fontWeight: 500,
-                        fontFamily: "Roboto, sans-serif",
-                        padding: "4px",
-                      }}
-                    >
-                      {capitalizeFirstLetter(
-                        DISPLAY[property] ? DISPLAY[property] : property,
-                      )}
-                    </Typography>
-                    <EditIcon
-                      className="edit-icon"
-                      sx={{
-                        position: "absolute",
-                        top: "-8px",
-                        right: "-8px",
-                        color: "orange",
-                        backgroundColor: "white",
-                        borderRadius: "50%",
-                        fontSize: "16px",
-                        display: "none",
-                      }}
-                    />
-                  </Box>
-                </Tooltip>
-              )}
-              {(property === "generalizations" ||
-                property === "specializations" ||
-                property === "isPartOf" ||
-                property === "parts") && (
-                <PropertyContributors
-                  currentVisibleNode={currentVisibleNode}
-                  property={property}
-                  sx={{ pl: "5px" }}
-                />
-              )}
-            </Box>
-
-            {selectedProperty === property &&
-              !selectedCollection &&
-              property !== "parts" && (
+            backgroundColor:
+              selectedDiffNode &&
+              selectedDiffNode.changeType === "add property" &&
+              selectedDiffNode.changeDetails.addedProperty === property
+                ? "green"
+                : "",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            {editProperty === property && modifyProperty ? (
+              <EditProperty
+                value={newPropertyValue}
+                onChange={setNewPropertyValue}
+                onSave={() => {
+                  modifyProperty({
+                    newValue: newPropertyValue,
+                    previousValue: property,
+                  });
+                  setEditProperty("");
+                  setNewPropertyValue("");
+                }}
+                onCancel={() => {
+                  setEditProperty("");
+                  setNewPropertyValue("");
+                }}
+                property={property}
+              />
+            ) : (
+              <Tooltip title={getTooltipHelper(lowercaseFirstLetter(property))}>
                 <Box
                   sx={{
-                    display: "flex",
-                    pt: 0,
-                    ml: "auto",
-                    gap: "14px",
+                    position: "relative",
+                    display: "inline-block",
+                    pl: "1px",
+                    "&:hover":
+                      enableEdit && modifyProperty
+                        ? {
+                            border: "2px solid orange",
+                            borderRadius: "15px",
+                            pr: "15px",
+                            cursor: "pointer",
+                            backgroundColor: "gray",
+                          }
+                        : {},
+                    "&:hover .edit-icon":
+                      enableEdit && modifyProperty
+                        ? {
+                            display: "block",
+                          }
+                        : {},
+                  }}
+                  onClick={() => {
+                    if (enableEdit && modifyProperty) {
+                      setEditProperty(property);
+                      setNewPropertyValue(property);
+                    }
                   }}
                 >
-                  <Tooltip title={"Close Editing"}>
-                    <IconButton
-                      onClick={handleCloseAddLinksModel}
-                      sx={{ borderRadius: "25px", backgroundColor: "red" }}
-                    >
-                      <CloseIcon sx={{ color: "white" }} />
-                    </IconButton>
-                  </Tooltip>
-                  {/*  <LoadingButton
+                  <Typography
+                    sx={{
+                      fontSize: "20px",
+                      fontWeight: 500,
+                      fontFamily: "Roboto, sans-serif",
+                      padding: "4px",
+                    }}
+                  >
+                    {capitalizeFirstLetter(
+                      DISPLAY[property] ? DISPLAY[property] : property,
+                    )}
+                  </Typography>
+                  <EditIcon
+                    className="edit-icon"
+                    sx={{
+                      position: "absolute",
+                      top: "-8px",
+                      right: "-8px",
+                      color: "orange",
+                      backgroundColor: "white",
+                      borderRadius: "50%",
+                      fontSize: "16px",
+                      display: "none",
+                    }}
+                  />
+                </Box>
+              </Tooltip>
+            )}
+            {(property === "generalizations" ||
+              property === "specializations" ||
+              property === "isPartOf" ||
+              property === "parts") && (
+              <PropertyContributors
+                currentVisibleNode={currentVisibleNode}
+                property={property}
+                sx={{ pl: "5px" }}
+              />
+            )}
+          </Box>
+
+          {selectedProperty === property &&
+            !selectedCollection &&
+            property !== "parts" && (
+              <Box
+                sx={{
+                  display: "flex",
+                  pt: 0,
+                  ml: "auto",
+                  gap: "14px",
+                }}
+              >
+                <Tooltip title={"Close Editing"}>
+                  <IconButton
+                    onClick={handleCloseAddLinksModel}
+                    sx={{ borderRadius: "25px", backgroundColor: "red" }}
+                  >
+                    <CloseIcon sx={{ color: "white" }} />
+                  </IconButton>
+                </Tooltip>
+                {/*  <LoadingButton
                 size="small"
                 onClick={onSave}
                 loading={isSaving}
@@ -1256,309 +1259,139 @@ const StructuredProperty = ({
               >
                 Save
               </LoadingButton> */}
-                </Box>
-              )}
-            {(!currentVisibleNode.unclassified ||
-              property === "specializations") &&
-              selectedProperty !== property &&
-              !selectedDiffNode &&
-              !currentImprovement &&
-              property !== "isPartOf" && (
-                <Box sx={{ ml: "auto", display: "flex", gap: "14px" }}>
-                  {property !== "generalizations" &&
-                    property !== "specializations" &&
-                    property !== "isPartOf" &&
-                    property !== "parts" && (
-                      <PropertyContributors
-                        currentVisibleNode={currentVisibleNode}
-                        property={property}
-                      />
-                    )}
-                  {property === "specializations" && !locked && (
-                    <Button
-                      onClick={() => {
-                        setOpenAddCollection(true);
-                      }}
-                      sx={{
-                        borderRadius: "18px",
-                        backgroundColor: BUTTON_COLOR,
-                        display: !enableEdit ? "none" : "block",
-                      }}
-                      variant="outlined"
-                    >
-                      Add Collection
-                    </Button>
+              </Box>
+            )}
+          {(!currentVisibleNode.unclassified ||
+            property === "specializations") &&
+            selectedProperty !== property &&
+            !selectedDiffNode &&
+            !currentImprovement &&
+            property !== "isPartOf" && (
+              <Box sx={{ ml: "auto", display: "flex", gap: "14px" }}>
+                {property !== "generalizations" &&
+                  property !== "specializations" &&
+                  property !== "isPartOf" &&
+                  property !== "parts" && (
+                    <PropertyContributors
+                      currentVisibleNode={currentVisibleNode}
+                      property={property}
+                    />
                   )}
-                  {property !== "isPartOf" &&
-                    property !== "parts" &&
-                    property !== "specializations" &&
-                    property !== "generalizations" &&
-                    deleteProperty && (
-                      <Tooltip title={"Delete property"} placement="top">
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          sx={{ borderRadius: "25px" }}
-                          onClick={() => {
-                            deleteProperty(property);
-                          }}
-                        >
-                          Delete Property
-                        </Button>
-                      </Tooltip>
-                    )}
-                  {property !== "specializations" && property !== "parts" && (
-                    <Button
-                      onClick={() => editStructuredProperty(property)}
-                      sx={{
-                        borderRadius: "18px",
-                        backgroundColor: BUTTON_COLOR,
-                        ":hover": {
-                          backgroundColor:
-                            theme.palette.mode === "light" ? "#f0f0f0" : "",
-                        },
-                        display: !enableEdit ? "none" : "block",
-                      }}
-                      variant="outlined"
-                    >
-                      {`Edit ${capitalizeFirstLetter(
-                        DISPLAY[property] || property,
-                      )}`}{" "}
-                    </Button>
-                  )}
-                  {property !== "generalizations" &&
-                    property !== "specializations" &&
-                    property !== "isPartOf" &&
-                    property !== "parts" &&
-                    !currentVisibleNode.unclassified && (
-                      <SelectInheritance
-                        currentVisibleNode={currentVisibleNode}
-                        property={property}
-                        nodes={relatedNodes}
-                        enableEdit={enableEdit}
-                      />
-                    )}
-                  {currentVisibleNode.inheritance[property]?.ref &&
-                    !enableEdit && (
-                      <Typography
-                        sx={{ fontSize: "14px", ml: "9px", color: "gray" }}
+                {property === "specializations" && !locked && (
+                  <Button
+                    onClick={() => {
+                      setOpenAddCollection(true);
+                    }}
+                    sx={{
+                      borderRadius: "18px",
+                      backgroundColor: BUTTON_COLOR,
+                      display: !enableEdit ? "none" : "block",
+                    }}
+                    variant="outlined"
+                  >
+                    Add Collection
+                  </Button>
+                )}
+                {property !== "isPartOf" &&
+                  property !== "parts" &&
+                  property !== "specializations" &&
+                  property !== "generalizations" &&
+                  deleteProperty && (
+                    <Tooltip title={"Delete property"} placement="top">
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        sx={{ borderRadius: "25px" }}
+                        onClick={() => {
+                          deleteProperty(property);
+                        }}
                       >
-                        {'(Inherited from "'}
-                        {relatedNodes[currentVisibleNode.inheritance[property].ref]
-                          ?.title || ""}
-                        {'")'}
-                      </Typography>
-                    )}
-                </Box>
-              )}
-          </Box>
-          {(property !== "parts" || !enableEdit) &&
-            currentVisibleNode.propertyType[property] !== "string-array" && (
-              <CollectionStructure
-                locked={locked}
-                selectedDiffNode={selectedDiffNode}
-                currentImprovement={currentImprovement}
-                property={property}
-                propertyValue={propertyValue ?? []}
-                setEditableProperty={setEditableProperty}
-                getCategoryStyle={getCategoryStyle}
-                navigateToNode={navigateToNode}
-                setSnackbarMessage={setSnackbarMessage}
-                currentVisibleNode={currentVisibleNode}
-                setCurrentVisibleNode={setCurrentVisibleNode}
-                nodes={relatedNodes}
-                fetchNode={fetchNode}
-                unlinkVisible={unlinkVisible}
-                editStructuredProperty={editStructuredProperty}
-                confirmIt={confirmIt}
-                logChange={logChange}
-                cloneNode={cloneNode}
-                openAddCollection={openAddCollection}
-                setOpenAddCollection={setOpenAddCollection}
-                unlinkElement={unlinkElement}
-                selectedProperty={selectedProperty}
-                clonedNodesQueue={clonedNodesQueue}
-                model={!!selectedProperty}
-                setModifiedOrder={setModifiedOrder}
-                glowIds={glowIds}
-                scrollToElement={scrollToElement}
-                selectedCollection={selectedCollection}
-                handleCloseAddLinksModel={handleCloseAddLinksModel}
-                onSave={onSave}
-                isSaving={isSaving}
-                addedElements={addedElements}
-                removedElements={removedElements}
-                setSearchValue={setSearchValue}
-                searchValue={searchValue}
-                searchResultsForSelection={searchResultsForSelection}
-                checkedItems={
-                  new Set(
-                    propertyValue.flatMap((c) => c.nodes).map((c) => c.id),
-                  )
-                }
-                setCheckedItems={setCheckedItems}
-                setCheckedItemsCopy={setCheckedItemsCopy}
-                checkedItemsCopy={checkedItemsCopy}
-                handleCloning={handleCloning}
-                user={user}
-                selectFromTree={selectFromTree}
-                expandedNodes={expandedNodes}
-                setExpandedNodes={setExpandedNodes}
-                handleToggle={handleToggle}
-                getPath={getPath}
-                handleSaveLinkChanges={handleSaveLinkChanges}
-                checkDuplicateTitle={checkDuplicateTitle}
-                cloning={cloning}
-                setClonedNodesQueue={setClonedNodesQueue}
-                newOnes={newOnes}
-                setNewOnes={setNewOnes}
-                loadingIds={loadingIds}
-                saveNewSpecialization={saveNewSpecialization}
-                setLoadingIds={setLoadingIds}
-                editableProperty={editableProperty}
-                onGetPropertyValue={onGetPropertyValue}
-                setRemovedElements={setRemovedElements}
-                setAddedElements={setAddedElements}
-                addACloneNodeQueue={addACloneNodeQueue}
-                skillsFuture={skillsFuture}
-                partsInheritance={partsInheritance ?? {}}
-                enableEdit={enableEdit}
-                handleLoadMore={handleLoadMore}
-                loadingStates={loadingStates}
-                skillsFutureApp={skillsFutureApp}
-                unlinkNodeRelation={unlinkNodeRelation}
-                linkNodeRelation={linkNodeRelation}
-                onInstantTreeUpdate={onInstantTreeUpdate}
-              />
-            )}{" "}
-          {property === "parts" && displayOptional && !enableEdit && (
-            <InheritedPartsLegend
-              legendItems={[{ symbol: "(o)", description: "Optional" }]}
-            />
-          )}
-          {property === "parts" && !selectedDiffNode && !currentImprovement && (
-            <>
-              {enableEdit ? (
-                <InheritedPartsViewerEdit
-                  selectedProperty={property}
-                  getAllGeneralizations={() =>
-                    getAllGeneralizations(currentVisibleNode, relatedNodes)
-                  }
-                  getGeneralizationParts={getGeneralizationParts}
-                  nodes={relatedNodes}
-                  fetchNode={fetchNode}
-                  addNodesToCache={addNodesToCache}
-                  readOnly={true}
-                  inheritanceDetails={inheritanceDetails}
-                  currentVisibleNode={currentVisibleNode}
-                  setDisplayDetails={setDisplayDetails}
-                  enableEdit={enableEdit}
-                  addPart={
-                    enableEdit
-                      ? (partId: string) => {
-                          linkNodeRelation({
-                            currentNodeId: currentVisibleNode.id,
-                            partId,
-                          });
-                        }
-                      : null
-                  }
-                  removePart={
-                    enableEdit
-                      ? (partId: any) => {
-                          unlinkNodeRelation(
-                            currentVisibleNode.id,
-                            partId,
-                            -1,
-                            0,
-                            true,
-                          );
-                        }
-                      : null
-                  }
-                  user={user}
-                  navigateToNode={navigateToNode}
-                  replaceWith={replaceWith}
-                  skillsFutureApp={skillsFutureApp}
-                />
-              ) : (
-                <InheritedPartsViewer
-                  selectedProperty={property}
-                  getAllGeneralizations={() =>
-                    getAllGeneralizations(currentVisibleNode, relatedNodes)
-                  }
-                  getGeneralizationParts={getGeneralizationParts}
-                  nodes={relatedNodes}
-                  fetchNode={fetchNode}
-                  readOnly={true}
-                  inheritanceDetails={inheritanceDetails}
-                  currentVisibleNode={currentVisibleNode}
-                  setDisplayDetails={setDisplayDetails}
-                  addPart={
-                    enableEdit
-                      ? (partId: string) => {
-                          linkNodeRelation({
-                            currentNodeId: currentVisibleNode.id,
-                            partId,
-                          });
-                        }
-                      : null
-                  }
-                  removePart={
-                    enableEdit
-                      ? (partId: any) => {
-                          unlinkNodeRelation(
-                            currentVisibleNode.id,
-                            partId,
-                            -1,
-                            0,
-                            true,
-                          );
-                        }
-                      : null
-                  }
-                  navigateToNode={navigateToNode}
-                  displayDetails={displayDetails}
-                />
-              )}
-            </>
-          )}
+                        Delete Property
+                      </Button>
+                    </Tooltip>
+                  )}
+                {property !== "specializations" && property !== "parts" && (
+                  <Button
+                    onClick={() => editStructuredProperty(property)}
+                    sx={{
+                      borderRadius: "18px",
+                      backgroundColor: BUTTON_COLOR,
+                      ":hover": {
+                        backgroundColor:
+                          theme.palette.mode === "light" ? "#f0f0f0" : "",
+                      },
+                      display: !enableEdit ? "none" : "block",
+                    }}
+                    variant="outlined"
+                  >
+                    {`Edit ${capitalizeFirstLetter(
+                      DISPLAY[property] || property,
+                    )}`}{" "}
+                  </Button>
+                )}
+                {property !== "generalizations" &&
+                  property !== "specializations" &&
+                  property !== "isPartOf" &&
+                  property !== "parts" &&
+                  !currentVisibleNode.unclassified && (
+                    <SelectInheritance
+                      currentVisibleNode={currentVisibleNode}
+                      property={property}
+                      nodes={relatedNodes}
+                      enableEdit={enableEdit}
+                    />
+                  )}
+                {currentVisibleNode.inheritance[property]?.ref &&
+                  !enableEdit && (
+                    <Typography
+                      sx={{ fontSize: "14px", ml: "9px", color: "gray" }}
+                    >
+                      {'(Inherited from "'}
+                      {relatedNodes[
+                        currentVisibleNode.inheritance[property].ref
+                      ]?.title || ""}
+                      {'")'}
+                    </Typography>
+                  )}
+              </Box>
+            )}
         </Box>
-        {property === "parts" &&
-          enableEdit &&
-          selectedProperty !== property && (
-            <Button
-              sx={{
-                borderRadius: "25px",
-                border: "1px solid",
-                m: "0px 5px 5px 5px",
-                mt: "auto",
-              }}
-              onClick={() => {
-                editStructuredProperty(property);
-              }}
-            >
-              {" "}
-              <AddIcon
-                sx={{
-                  borderRadius: "50%",
-                  border: "1px solid orange",
-                  mr: "5px",
-                }}
-              />
-              Add new Part
-            </Button>
-          )}
-        {handleCloseAddLinksModel &&
-          selectedProperty === property &&
-          !selectedCollection && (
-            <SelectModel
-              onSave={onSave}
+        {(property !== "parts" || !enableEdit) &&
+          currentVisibleNode.propertyType[property] !== "string-array" && (
+            <CollectionStructure
+              locked={locked}
+              selectedDiffNode={selectedDiffNode}
+              currentImprovement={currentImprovement}
+              property={property}
+              propertyValue={propertyValue ?? []}
+              setEditableProperty={setEditableProperty}
+              getCategoryStyle={getCategoryStyle}
+              navigateToNode={navigateToNode}
+              setSnackbarMessage={setSnackbarMessage}
               currentVisibleNode={currentVisibleNode}
-              relatedNodes={relatedNodes}
+              setCurrentVisibleNode={setCurrentVisibleNode}
+              nodes={relatedNodes}
               fetchNode={fetchNode}
-              handleCloseAddLinksModel={handleCloseAddLinksModel}
+              unlinkVisible={unlinkVisible}
+              editStructuredProperty={editStructuredProperty}
+              confirmIt={confirmIt}
+              logChange={logChange}
+              cloneNode={cloneNode}
+              openAddCollection={openAddCollection}
+              setOpenAddCollection={setOpenAddCollection}
+              unlinkElement={unlinkElement}
               selectedProperty={selectedProperty}
+              clonedNodesQueue={clonedNodesQueue}
+              model={!!selectedProperty}
+              setModifiedOrder={setModifiedOrder}
+              glowIds={glowIds}
+              scrollToElement={scrollToElement}
+              selectedCollection={selectedCollection}
+              handleCloseAddLinksModel={handleCloseAddLinksModel}
+              onSave={onSave}
+              isSaving={isSaving}
+              addedElements={addedElements}
+              removedElements={removedElements}
               setSearchValue={setSearchValue}
               searchValue={searchValue}
               searchResultsForSelection={searchResultsForSelection}
@@ -1578,37 +1411,202 @@ const StructuredProperty = ({
               handleSaveLinkChanges={handleSaveLinkChanges}
               checkDuplicateTitle={checkDuplicateTitle}
               cloning={cloning}
-              addACloneNodeQueue={addACloneNodeQueue}
               setClonedNodesQueue={setClonedNodesQueue}
-              clonedNodesQueue={clonedNodesQueue}
               newOnes={newOnes}
               setNewOnes={setNewOnes}
               loadingIds={loadingIds}
               saveNewSpecialization={saveNewSpecialization}
               setLoadingIds={setLoadingIds}
               editableProperty={editableProperty}
-              setEditableProperty={setEditableProperty}
-              locked={locked}
-              selectedDiffNode={selectedDiffNode}
-              confirmIt={confirmIt}
-              currentImprovement={currentImprovement}
               onGetPropertyValue={onGetPropertyValue}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              removedElements={removedElements}
-              addedElements={addedElements}
               setRemovedElements={setRemovedElements}
               setAddedElements={setAddedElements}
-              isSaving={isSaving}
-              scrollToElement={scrollToElement}
-              selectedCollection={selectedCollection}
+              addACloneNodeQueue={addACloneNodeQueue}
               skillsFuture={skillsFuture}
-              inheritanceDetails={inheritanceDetails}
+              partsInheritance={partsInheritance ?? {}}
+              enableEdit={enableEdit}
+              handleLoadMore={handleLoadMore}
+              loadingStates={loadingStates}
               skillsFutureApp={skillsFutureApp}
-              linkNodeRelation={linkNodeRelation}
               unlinkNodeRelation={unlinkNodeRelation}
+              linkNodeRelation={linkNodeRelation}
+              onInstantTreeUpdate={onInstantTreeUpdate}
             />
-          )}
-        {/* {selectedProperty !== property && (
+          )}{" "}
+        {property === "parts" && displayOptional && !enableEdit && (
+          <InheritedPartsLegend
+            legendItems={[{ symbol: "(o)", description: "Optional" }]}
+          />
+        )}
+        {property === "parts" && !selectedDiffNode && !currentImprovement && (
+          <>
+            {enableEdit ? (
+              <InheritedPartsViewerEdit
+                selectedProperty={property}
+                getAllGeneralizations={() =>
+                  getAllGeneralizations(currentVisibleNode, relatedNodes)
+                }
+                getGeneralizationParts={getGeneralizationParts}
+                nodes={relatedNodes}
+                fetchNode={fetchNode}
+                addNodesToCache={addNodesToCache}
+                readOnly={true}
+                inheritanceDetails={inheritanceDetails}
+                currentVisibleNode={currentVisibleNode}
+                setDisplayDetails={setDisplayDetails}
+                enableEdit={enableEdit}
+                addPart={
+                  enableEdit
+                    ? (partId: string) => {
+                        linkNodeRelation({
+                          currentNodeId: currentVisibleNode.id,
+                          partId,
+                        });
+                      }
+                    : null
+                }
+                removePart={
+                  enableEdit
+                    ? (partId: any) => {
+                        unlinkNodeRelation(
+                          currentVisibleNode.id,
+                          partId,
+                          -1,
+                          0,
+                          true,
+                        );
+                      }
+                    : null
+                }
+                user={user}
+                navigateToNode={navigateToNode}
+                replaceWith={replaceWith}
+                skillsFutureApp={skillsFutureApp}
+              />
+            ) : (
+              <InheritedPartsViewer
+                selectedProperty={property}
+                getAllGeneralizations={() =>
+                  getAllGeneralizations(currentVisibleNode, relatedNodes)
+                }
+                getGeneralizationParts={getGeneralizationParts}
+                nodes={relatedNodes}
+                fetchNode={fetchNode}
+                readOnly={true}
+                inheritanceDetails={inheritanceDetails}
+                currentVisibleNode={currentVisibleNode}
+                setDisplayDetails={setDisplayDetails}
+                addPart={
+                  enableEdit
+                    ? (partId: string) => {
+                        linkNodeRelation({
+                          currentNodeId: currentVisibleNode.id,
+                          partId,
+                        });
+                      }
+                    : null
+                }
+                removePart={
+                  enableEdit
+                    ? (partId: any) => {
+                        unlinkNodeRelation(
+                          currentVisibleNode.id,
+                          partId,
+                          -1,
+                          0,
+                          true,
+                        );
+                      }
+                    : null
+                }
+                navigateToNode={navigateToNode}
+                displayDetails={displayDetails}
+              />
+            )}
+          </>
+        )}
+      </Box>
+      {property === "parts" && enableEdit && selectedProperty !== property && (
+        <Button
+          sx={{
+            borderRadius: "25px",
+            border: "1px solid",
+            m: "0px 5px 5px 5px",
+            mt: "auto",
+          }}
+          onClick={() => {
+            editStructuredProperty(property);
+          }}
+        >
+          {" "}
+          <AddIcon
+            sx={{
+              mr: "5px",
+            }}
+          />
+          Add new Part
+        </Button>
+      )}
+      {handleCloseAddLinksModel &&
+        selectedProperty === property &&
+        !selectedCollection && (
+          <SelectModel
+            onSave={onSave}
+            currentVisibleNode={currentVisibleNode}
+            relatedNodes={relatedNodes}
+            fetchNode={fetchNode}
+            handleCloseAddLinksModel={handleCloseAddLinksModel}
+            selectedProperty={selectedProperty}
+            setSearchValue={setSearchValue}
+            searchValue={searchValue}
+            searchResultsForSelection={searchResultsForSelection}
+            checkedItems={
+              new Set(propertyValue.flatMap((c) => c.nodes).map((c) => c.id))
+            }
+            setCheckedItems={setCheckedItems}
+            setCheckedItemsCopy={setCheckedItemsCopy}
+            checkedItemsCopy={checkedItemsCopy}
+            handleCloning={handleCloning}
+            user={user}
+            selectFromTree={selectFromTree}
+            expandedNodes={expandedNodes}
+            setExpandedNodes={setExpandedNodes}
+            handleToggle={handleToggle}
+            getPath={getPath}
+            handleSaveLinkChanges={handleSaveLinkChanges}
+            checkDuplicateTitle={checkDuplicateTitle}
+            cloning={cloning}
+            addACloneNodeQueue={addACloneNodeQueue}
+            setClonedNodesQueue={setClonedNodesQueue}
+            clonedNodesQueue={clonedNodesQueue}
+            newOnes={newOnes}
+            setNewOnes={setNewOnes}
+            loadingIds={loadingIds}
+            saveNewSpecialization={saveNewSpecialization}
+            setLoadingIds={setLoadingIds}
+            editableProperty={editableProperty}
+            setEditableProperty={setEditableProperty}
+            locked={locked}
+            selectedDiffNode={selectedDiffNode}
+            confirmIt={confirmIt}
+            currentImprovement={currentImprovement}
+            onGetPropertyValue={onGetPropertyValue}
+            setCurrentVisibleNode={setCurrentVisibleNode}
+            removedElements={removedElements}
+            addedElements={addedElements}
+            setRemovedElements={setRemovedElements}
+            setAddedElements={setAddedElements}
+            isSaving={isSaving}
+            scrollToElement={scrollToElement}
+            selectedCollection={selectedCollection}
+            skillsFuture={skillsFuture}
+            inheritanceDetails={inheritanceDetails}
+            skillsFutureApp={skillsFutureApp}
+            linkNodeRelation={linkNodeRelation}
+            unlinkNodeRelation={unlinkNodeRelation}
+          />
+        )}
+      {/* {selectedProperty !== property && (
         <CommentsSection
           handleCloseAddLinksModel={handleCloseAddLinksModel}
           property={property}

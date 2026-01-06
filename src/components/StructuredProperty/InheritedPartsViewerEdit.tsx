@@ -858,7 +858,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                           <Tooltip
                             title={
                               (nonPickedOnes[entry.from] || []).length > 0
-                                ? "Switch to"
+                                ? "Switch To"
                                 : ""
                             }
                           >
@@ -931,7 +931,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                       )}
 
                       {entry.symbol === "x" && !!addPart && (
-                        <Tooltip title={"Add part"} placement="top">
+                        <Tooltip title={"Add Part"} placement="top">
                           <IconButton
                             sx={{ p: 0.5 }}
                             onClick={() => {
@@ -1204,7 +1204,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                 </ListItemIcon>
 
                 {!!addPart && (
-                  <Tooltip title={"Add part"} placement="top">
+                  <Tooltip title={"Add Part"} placement="top">
                     <IconButton
                       sx={{ p: 0.5 }}
                       onClick={() => {

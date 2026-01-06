@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { db } from "@components/lib/firestoreServer/admin";
 import { NODES } from "@components/lib/firestoreClient/collections";
-import { INode, TreeViewNode, NodeTreeData } from "@components/types/INode";
+import { INode, TreeViewNode,  } from "@components/types/INode";
 import { TREE_QUEUES } from "@components/lib/firestoreClient/collections";
 
 interface QueueItem {

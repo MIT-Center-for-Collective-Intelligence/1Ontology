@@ -46,7 +46,6 @@ import {
   Droppable,
   DropResult,
 } from "@hello-pangea/dnd";
-import { LoadingButton } from "@mui/lab";
 import SelectModel from "../Models/SelectModel";
 import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
 
@@ -396,6 +395,7 @@ const CollectionStructure = ({
     },
     [property, currentVisibleNode],
   );
+  console.log("editableProperty ==>", editableProperty);
 
   const handleSorting = useCallback(
     async (
@@ -405,7 +405,7 @@ const CollectionStructure = ({
     ) => {
       try {
         // Destructure properties from the result object
-        const { source, destination, draggableId, type } = result;
+        const { source, destination, draggableId, type }: any = result;
 
         // If there is no destination, no sorting needed
 
@@ -418,7 +418,7 @@ const CollectionStructure = ({
         const { droppableId: destinationCollection } = destination; // The destination collection
         const sourceCollectionIndex = Number(sourceCollection);
         const destinationCollectionIndex = Number(destinationCollection);
-
+        console.log({ sourceCollection, destinationCollection, propertyValue });
         setEditableProperty((prev: ICollection[]) => {
           if (prev.length > 0) {
             const nodeIdx = prev[sourceCollectionIndex].nodes.findIndex(
@@ -492,7 +492,7 @@ const CollectionStructure = ({
 
           saveNewChangeLog(db, {
             nodeId: currentVisibleNode?.id,
-            modifiedBy: user?.uname,
+            modifiedBy: user?.uname || "",
             modifiedProperty: property,
             previousValue,
             newValue: propertyValue,
@@ -512,114 +512,170 @@ const CollectionStructure = ({
           if (currentVisibleNode?.id) {
             // Instant update: Reorder children in tree to reflect collection changes
             if (onInstantTreeUpdate) {
-              onInstantTreeUpdate((tree) => {
-                // Helper to find and update the current node's children in the tree
-                const updateTreeNode = (nodes: any[]): any[] => {
-                  return nodes.map(node => {
-                    // Find the current visible node in the tree
-                    if (node.nodeId === currentVisibleNode.id) {
-                      if (!node.children) return node;
-
-                      // Get source and destination collection names
-                      const sourceCollName = propertyValue[sourceCollectionIndex]?.collectionName;
-                      const destCollName = propertyValue[destinationCollectionIndex]?.collectionName;
-
-                      if (!sourceCollName || !destCollName) return node;
-
-                      // Case 1: Same collection - just reorder
-                      if (sourceCollectionIndex === destinationCollectionIndex) {
-                        // Find the collection in the tree
-                        if (sourceCollName === "main") {
-                          // Main collection children are direct children
-                          const childIndex = node.children.findIndex((c: any) => c.nodeId === draggableId);
-                          if (childIndex !== -1) {
-                            const newChildren = [...node.children];
-                            const [movedChild] = newChildren.splice(childIndex, 1);
-                            newChildren.splice(destination.index, 0, movedChild);
-                            return { ...node, children: newChildren };
-                          }
-                        } else {
-                          // Find collection node like "[collectionName]"
-                          const collectionNode = node.children.find((c: any) => c.name === `[${sourceCollName}]`);
-                          if (collectionNode && collectionNode.children) {
-                            const childIndex = collectionNode.children.findIndex((c: any) => c.nodeId === draggableId);
-                            if (childIndex !== -1) {
-                              const newCollChildren = [...collectionNode.children];
-                              const [movedChild] = newCollChildren.splice(childIndex, 1);
-                              newCollChildren.splice(destination.index, 0, movedChild);
-                              const updatedCollNode = { ...collectionNode, children: newCollChildren };
-                              const newChildren = node.children.map((c: any) =>
-                                c.name === `[${sourceCollName}]` ? updatedCollNode : c
-                              );
-                              return { ...node, children: newChildren };
-                            }
-                          }
-                        }
-                      } else {
-                        // Case 2: Different collections - move between them
-                        let movedChild: any = null;
-                        let newChildren = [...node.children];
-
-                        // Remove from source
-                        if (sourceCollName === "main") {
-                          const childIndex = newChildren.findIndex((c: any) => c.nodeId === draggableId);
-                          if (childIndex !== -1) {
-                            [movedChild] = newChildren.splice(childIndex, 1);
-                          }
-                        } else {
-                          const sourceCollNode = newChildren.find((c: any) => c.name === `[${sourceCollName}]`);
-                          if (sourceCollNode && sourceCollNode.children) {
-                            const childIndex = sourceCollNode.children.findIndex((c: any) => c.nodeId === draggableId);
-                            if (childIndex !== -1) {
-                              [movedChild] = sourceCollNode.children.splice(childIndex, 1);
-                              newChildren = newChildren.map((c: any) =>
-                                c.name === `[${sourceCollName}]` ? { ...sourceCollNode } : c
-                              );
-                            }
-                          }
-                        }
-
-                        // Add to destination
-                        if (movedChild) {
-                          if (destCollName === "main") {
-                            newChildren.splice(destination.index, 0, movedChild);
-                          } else {
-                            let destCollNode = newChildren.find((c: any) => c.name === `[${destCollName}]`);
-                            if (!destCollNode) {
-                              // Create collection node if it doesn't exist
-                              destCollNode = {
-                                id: `${node.id}-${destCollName}`,
-                                nodeId: node.nodeId,
-                                name: `[${destCollName}]`,
-                                category: true,
-                                children: []
-                              };
-                              newChildren.push(destCollNode);
-                            }
-                            const destChildren = [...(destCollNode.children || [])];
-                            destChildren.splice(destination.index, 0, movedChild);
-                            newChildren = newChildren.map((c: any) =>
-                              c.name === `[${destCollName}]` ? { ...c, children: destChildren } : c
-                            );
-                          }
-                        }
-
-                        return { ...node, children: newChildren };
-                      }
-                    }
-
-                    // Recursively process children
-                    if (node.children) {
-                      return { ...node, children: updateTreeNode(node.children) };
-                    }
-                    return node;
-                  });
-                };
-
-                const updatedTree = updateTreeNode(tree);
-                console.log("[INSTANT UPDATE] Reordered children in tree after collection sorting");
-                return updatedTree;
-              });
+              // onInstantTreeUpdate((tree) => {
+              //   // Helper to find and update the current node's children in the tree
+              //   const updateTreeNode = (nodes: any[]): any[] => {
+              //     return nodes.map((node) => {
+              //       // Find the current visible node in the tree
+              //       if (node.nodeId === currentVisibleNode.id) {
+              //         if (!node.children) return node;
+              //         // Get source and destination collection names
+              //         const sourceCollName =
+              //           propertyValue[sourceCollectionIndex]?.collectionName;
+              //         const destCollName =
+              //           propertyValue[destinationCollectionIndex]
+              //             ?.collectionName;
+              //         if (!sourceCollName || !destCollName) return node;
+              //         // Case 1: Same collection - just reorder
+              //         if (
+              //           sourceCollectionIndex === destinationCollectionIndex
+              //         ) {
+              //           // Find the collection in the tree
+              //           if (sourceCollName === "main") {
+              //             // Main collection children are direct children
+              //             const childIndex = node.children.findIndex(
+              //               (c: any) => c.nodeId === draggableId,
+              //             );
+              //             if (childIndex !== -1) {
+              //               const newChildren = [...node.children];
+              //               const [movedChild] = newChildren.splice(
+              //                 childIndex,
+              //                 1,
+              //               );
+              //               newChildren.splice(
+              //                 destination.index,
+              //                 0,
+              //                 movedChild,
+              //               );
+              //               return { ...node, children: newChildren };
+              //             }
+              //           } else {
+              //             // Find collection node like "[collectionName]"
+              //             const collectionNode = node.children.find(
+              //               (c: any) => c.name === `[${sourceCollName}]`,
+              //             );
+              //             if (collectionNode && collectionNode.children) {
+              //               const childIndex =
+              //                 collectionNode.children.findIndex(
+              //                   (c: any) => c.nodeId === draggableId,
+              //                 );
+              //               if (childIndex !== -1) {
+              //                 const newCollChildren = [
+              //                   ...collectionNode.children,
+              //                 ];
+              //                 const [movedChild] = newCollChildren.splice(
+              //                   childIndex,
+              //                   1,
+              //                 );
+              //                 newCollChildren.splice(
+              //                   destination.index,
+              //                   0,
+              //                   movedChild,
+              //                 );
+              //                 const updatedCollNode = {
+              //                   ...collectionNode,
+              //                   children: newCollChildren,
+              //                 };
+              //                 const newChildren = node.children.map((c: any) =>
+              //                   c.name === `[${sourceCollName}]`
+              //                     ? updatedCollNode
+              //                     : c,
+              //                 );
+              //                 return { ...node, children: newChildren };
+              //               }
+              //             }
+              //           }
+              //         } else {
+              //           // Case 2: Different collections - move between them
+              //           let movedChild: any = null;
+              //           let newChildren = [...node.children];
+              //           // Remove from source
+              //           if (sourceCollName === "main") {
+              //             const childIndex = newChildren.findIndex(
+              //               (c: any) => c.nodeId === draggableId,
+              //             );
+              //             if (childIndex !== -1) {
+              //               [movedChild] = newChildren.splice(childIndex, 1);
+              //             }
+              //           } else {
+              //             const sourceCollNode = newChildren.find(
+              //               (c: any) => c.name === `[${sourceCollName}]`,
+              //             );
+              //             if (sourceCollNode && sourceCollNode.children) {
+              //               const childIndex =
+              //                 sourceCollNode.children.findIndex(
+              //                   (c: any) => c.nodeId === draggableId,
+              //                 );
+              //               if (childIndex !== -1) {
+              //                 [movedChild] = sourceCollNode.children.splice(
+              //                   childIndex,
+              //                   1,
+              //                 );
+              //                 newChildren = newChildren.map((c: any) =>
+              //                   c.name === `[${sourceCollName}]`
+              //                     ? { ...sourceCollNode }
+              //                     : c,
+              //                 );
+              //               }
+              //             }
+              //           }
+              //           // Add to destination
+              //           if (movedChild) {
+              //             if (destCollName === "main") {
+              //               newChildren.splice(
+              //                 destination.index,
+              //                 0,
+              //                 movedChild,
+              //               );
+              //             } else {
+              //               let destCollNode = newChildren.find(
+              //                 (c: any) => c.name === `[${destCollName}]`,
+              //               );
+              //               if (!destCollNode) {
+              //                 // Create collection node if it doesn't exist
+              //                 destCollNode = {
+              //                   id: `${node.id}-${destCollName}`,
+              //                   nodeId: node.nodeId,
+              //                   name: `[${destCollName}]`,
+              //                   category: true,
+              //                   children: [],
+              //                 };
+              //                 newChildren.push(destCollNode);
+              //               }
+              //               const destChildren = [
+              //                 ...(destCollNode.children || []),
+              //               ];
+              //               destChildren.splice(
+              //                 destination.index,
+              //                 0,
+              //                 movedChild,
+              //               );
+              //               newChildren = newChildren.map((c: any) =>
+              //                 c.name === `[${destCollName}]`
+              //                   ? { ...c, children: destChildren }
+              //                   : c,
+              //               );
+              //             }
+              //           }
+              //           return { ...node, children: newChildren };
+              //         }
+              //       }
+              //       // Recursively process children
+              //       if (node.children) {
+              //         return {
+              //           ...node,
+              //           children: updateTreeNode(node.children),
+              //         };
+              //       }
+              //       return node;
+              //     });
+              //   };
+              //   const updatedTree = updateTreeNode(tree);
+              //   console.log(
+              //     "[INSTANT UPDATE] Reordered children in tree after collection sorting",
+              //   );
+              //   return updatedTree;
+              // });
             }
 
             await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
@@ -655,12 +711,14 @@ const CollectionStructure = ({
       try {
         if (
           newCollection.toLowerCase() === "main" ||
-          newCollection.toLowerCase() === "default"
+          newCollection.toLowerCase() === "default" ||
+          !newCollection ||
+          !user?.uname
         ) {
           return;
         }
+
         setOpenAddCollection(false);
-        if (!newCollection || !user?.uname) return;
 
         const nodeDoc = await getDoc(
           doc(collection(db, NODES), currentVisibleNode?.id),
@@ -680,11 +738,7 @@ const CollectionStructure = ({
         );
         // Check if the collection already exists
         if (existIndex !== -1) {
-          confirmIt(
-            `This category already exists under the property ${property}`,
-            "Ok",
-            "",
-          );
+          confirmIt(`This collection already exists!`, "Ok", "");
           return;
         }
 
@@ -709,7 +763,7 @@ const CollectionStructure = ({
             nodes: [],
           });
         }
-
+        debugger;
         // Log the new collection addition
         logChange("add collection", null, newCollection, nodeDoc, property);
 
@@ -753,7 +807,7 @@ const CollectionStructure = ({
           if (onInstantTreeUpdate) {
             onInstantTreeUpdate((tree) => {
               const updateTreeNode = (nodes: any[]): any[] => {
-                return nodes.map(node => {
+                return nodes.map((node) => {
                   if (node.nodeId === currentVisibleNode.id) {
                     // Add new collection node (empty) to children
                     const newCollectionNode = {
@@ -761,9 +815,12 @@ const CollectionStructure = ({
                       nodeId: node.nodeId,
                       name: `[${newCollection}]`,
                       category: true,
-                      children: []
+                      children: [],
                     };
-                    const newChildren = [newCollectionNode, ...(node.children || [])];
+                    const newChildren = [
+                      newCollectionNode,
+                      ...(node.children || []),
+                    ];
                     return { ...node, children: newChildren };
                   }
                   if (node.children) {
@@ -781,8 +838,7 @@ const CollectionStructure = ({
           await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
         }
       } catch (error: any) {
-        console.error(error);
-        recordLogs({
+        console.error({
           type: "error",
           error: JSON.stringify({
             name: error.name,
@@ -791,6 +847,15 @@ const CollectionStructure = ({
           }),
           at: "addCollection",
         });
+        // recordLogs({
+        //   type: "error",
+        //   error: JSON.stringify({
+        //     name: error.name,
+        //     message: error.message,
+        //     stack: error.stack,
+        //   }),
+        //   at: "addCollection",
+        // });
       }
     },
     [user?.uname, db, currentVisibleNode?.id, property],
@@ -965,7 +1030,7 @@ const CollectionStructure = ({
           if (onInstantTreeUpdate && editCollection && newCollection) {
             onInstantTreeUpdate((tree) => {
               const updateTreeNode = (nodes: any[]): any[] => {
-                return nodes.map(node => {
+                return nodes.map((node) => {
                   if (node.nodeId === currentVisibleNode.id && node.children) {
                     // Find and rename the collection node
                     const newChildren = node.children.map((child: any) => {
@@ -973,7 +1038,10 @@ const CollectionStructure = ({
                         return {
                           ...child,
                           name: `[${newCollection}]`,
-                          id: child.id.replace(`-${editCollection}`, `-${newCollection}`)
+                          id: child.id.replace(
+                            `-${editCollection}`,
+                            `-${newCollection}`,
+                          ),
                         };
                       }
                       return child;
@@ -1015,7 +1083,17 @@ const CollectionStructure = ({
       if (
         user?.uname &&
         (await confirmIt(
-          `Are you sure you want to delete the collection ${collectionName}?`,
+          <Box sx={{ display: "flex" }}>
+            <Typography>
+              Are you sure you want to delete the collection:
+            </Typography>
+            <Typography sx={{ color: "orange", fontWeight: "bold", mx: "3px" }}>
+              {`"`}
+              {collectionName}
+              {`"`}
+            </Typography>
+            ?
+          </Box>,
           "Delete Collection",
           "Keep Collection",
         ))
@@ -1122,21 +1200,31 @@ const CollectionStructure = ({
               if (onInstantTreeUpdate && collectionName) {
                 onInstantTreeUpdate((tree) => {
                   const updateTreeNode = (nodes: any[]): any[] => {
-                    return nodes.map(node => {
-                      if (node.nodeId === currentVisibleNode.id && node.children) {
+                    return nodes.map((node) => {
+                      if (
+                        node.nodeId === currentVisibleNode.id &&
+                        node.children
+                      ) {
                         // Find the collection node being deleted
-                        const deletedCollNode = node.children.find((c: any) => c.name === `[${collectionName}]`);
+                        const deletedCollNode = node.children.find(
+                          (c: any) => c.name === `[${collectionName}]`,
+                        );
                         if (deletedCollNode) {
                           // Remove the collection node and move its children to main (direct children)
                           const childrenToMove = deletedCollNode.children || [];
                           const newChildren = node.children
-                            .filter((c: any) => c.name !== `[${collectionName}]`)
+                            .filter(
+                              (c: any) => c.name !== `[${collectionName}]`,
+                            )
                             .concat(childrenToMove);
                           return { ...node, children: newChildren };
                         }
                       }
                       if (node.children) {
-                        return { ...node, children: updateTreeNode(node.children) };
+                        return {
+                          ...node,
+                          children: updateTreeNode(node.children),
+                        };
                       }
                       return node;
                     });
@@ -1209,7 +1297,9 @@ const CollectionStructure = ({
                       draggableId={`${collectionIndex}`}
                       index={collectionIndex}
                       isDragDisabled={
-                        property !== "specializations" || !enableEdit
+                        property !== "specializations" ||
+                        !enableEdit ||
+                        propertyValue.length <= 1
                       }
                     >
                       {(provided) => (
@@ -1404,7 +1494,12 @@ const CollectionStructure = ({
                                   }}
                                 >
                                   <TextField
-                                    sx={{ p: 0 }}
+                                    sx={{
+                                      p: 0,
+                                      "& .MuiOutlinedInput-root": {
+                                        borderRadius: "25px",
+                                      },
+                                    }}
                                     fullWidth
                                     placeholder="Edit collection..."
                                     onChange={(e) =>
@@ -1438,7 +1533,15 @@ const CollectionStructure = ({
                                         collection.collectionName ===
                                           newEditCollection
                                       }
-                                      sx={{ ml: "5px" }}
+                                      sx={{
+                                        ml: "5px",
+                                        border:
+                                          !newEditCollection ||
+                                          collection.collectionName ===
+                                            newEditCollection
+                                            ? "1px solid gray"
+                                            : "1px solid green",
+                                      }}
                                     >
                                       <DoneIcon
                                         sx={{
@@ -1458,7 +1561,10 @@ const CollectionStructure = ({
                                         setEditCollection(null);
                                         setNewEditCollection("");
                                       }}
-                                      sx={{ ml: "5px" }}
+                                      sx={{
+                                        ml: "5px",
+                                        border: "1px solid red",
+                                      }}
                                     >
                                       <CloseIcon sx={{ color: "red" }} />
                                     </IconButton>
@@ -1552,7 +1658,10 @@ const CollectionStructure = ({
                                                 sx={{ pl: 1 }}
                                                 link={enhancedLink}
                                                 property={property}
-                                                title={link.title || getTitle(nodes, link.id)}
+                                                title={
+                                                  link.title ||
+                                                  getTitle(nodes, link.id)
+                                                }
                                                 relatedNodes={nodes}
                                                 fetchNode={fetchNode}
                                                 linkIndex={index}
@@ -1894,8 +2003,6 @@ const CollectionStructure = ({
                               >
                                 <AddIcon
                                   sx={{
-                                    borderRadius: "50%",
-                                    border: "1px solid orange",
                                     mr: "5px",
                                   }}
                                 />

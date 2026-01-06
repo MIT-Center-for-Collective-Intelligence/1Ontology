@@ -435,7 +435,6 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
         borderRadius: "30px",
         borderBottomRightRadius: "18px",
         borderBottomLeftRadius: "18px",
-        minWidth: "500px",
         width: "100%",
         minHeight: "500px",
         overflow: "auto",

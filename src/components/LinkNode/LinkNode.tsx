@@ -121,6 +121,7 @@ import LinkOffIcon from "@mui/icons-material/LinkOff";
 import { UNCLASSIFIED } from "@components/lib/CONSTANTS";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import LinkEditor from "./LinkEditor";
+import LinkNodeTitle from "./LinkNodeTitle";
 import { Post } from "@components/lib/utils/Post";
 import { LoadingButton } from "@mui/lab";
 
@@ -437,11 +438,7 @@ const LinkNode = ({
               linkId,
             );
           }
-          if (
-            shouldBeRemovedFromParent &&
-            linkNode &&
-            !linkNode.nodeType
-          ) {
+          if (shouldBeRemovedFromParent && linkNode && !linkNode.nodeType) {
             const nodeType = linkNode.nodeType;
             const unclassifiedNodeDocs = await getDocs(
               query(
@@ -453,7 +450,8 @@ const LinkNode = ({
 
             if (unclassifiedNodeDocs.docs.length > 0 && previousValue) {
               const unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
-              let unclassifiedNode: INode | null = relatedNodes[unclassifiedNodeDoc.id] || null;
+              let unclassifiedNode: INode | null =
+                relatedNodes[unclassifiedNodeDoc.id] || null;
               if (!unclassifiedNode) {
                 const fetchedNode = await fetchNode(unclassifiedNodeDoc.id);
                 if (!fetchedNode) {
@@ -681,110 +679,16 @@ const LinkNode = ({
             setClonedNodesQueue={setClonedNodesQueue}
           />
         ) : (
-          <Tooltip
-            title={
-              partsInheritance[link.id] ? (
-                <>
-                  <span
-                    style={{
-                      display: "flex",
-                      gap: "4px",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {partsInheritance[link.id][0].genId &&
-                      relatedNodes[partsInheritance[link.id][0].genId] && (
-                        <>
-                          Inherited from{" "}
-                          <strong style={{ fontSize: "12px" }}>
-                            {'"'}
-                            {relatedNodes[partsInheritance[link.id][0].genId].title}
-                            {'"'},
-                          </strong>
-                        </>
-                      )}
-                    {partsInheritance[link.id][0]?.partOf && (
-                      <>
-                        Part{" "}
-                        <strong style={{ fontSize: "12px", color: "orange" }}>
-                          {relatedNodes[partsInheritance[link.id][0].partOf]?.title}
-                        </strong>
-                      </>
-                    )}
-                  </span>
-                  {link.optional && (
-                    <span style={{ marginLeft: "2px" }}>{"(Optional)"}</span>
-                  )}
-                </>
-              ) : link.optional ? (
-                <span style={{ marginLeft: "2px" }}>{"(Optional)"}</span>
-              ) : (
-                ""
-              )
-            }
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 8],
-                  },
-                },
-              ],
-              sx: {
-                maxWidth: "none",
-              },
-            }}
-            componentsProps={{
-              tooltip: {
-                sx: {
-                  maxWidth: "none",
-                  whiteSpace: "nowrap",
-                  padding: 1,
-                },
-              },
-            }}
-            placement="top"
-          >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Link
-                underline="hover"
-                onClick={handleNavigateToNode}
-                sx={{
-                  cursor: "pointer",
-                  color: getLinkColor(link.change),
-                  textDecoration:
-                    link.change === "removed" ? "line-through" : "none",
-                }}
-              >
-                {/* link.title || */ title || regionalTitle}{" "}
-                {link.optional && selectedProperty !== property && (
-                  <span
-                    style={{ color: "orange", marginLeft: "2px" }}
-                  >{`(O)`}</span>
-                )}
-              </Link>
-
-              {/* {partsInheritance[link.id] && (
-                <Box
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    borderRadius: "50%",
-                    background: `${
-                      partsInheritance[link.id]
-                        ? partsInheritance[link.id].partInheritance
-                          ? "orange"
-                          : "green"
-                        : ""
-                    }`,
-                    marginLeft: "8px",
-                    boxShadow: "0 0 3px rgba(0, 0, 0, 0.3) inset",
-                  }}
-                ></Box>
-              )} */}
-            </Box>
-          </Tooltip>
+          <LinkNodeTitle
+            title={title || regionalTitle}
+            link={link}
+            partsInheritance={partsInheritance}
+            relatedNodes={relatedNodes}
+            property={property}
+            selectedProperty={selectedProperty}
+            onNavigate={handleNavigateToNode}
+            linkColor={getLinkColor(link.change)}
+          />
         )}
 
         <Box sx={{ display: "flex", alignItems: "center", ml: "auto" }}>
@@ -992,10 +896,10 @@ const LinkNode = ({
               }}
               placeholder="Node title..."
               fullWidth
-              InputProps={{
-                inputProps: {
-                  style: {
-                    padding: 10,
+              slotProps={{
+                input: {
+                  sx: {
+                    p: 10,
                     borderRadius: "25px",
                   },
                 },

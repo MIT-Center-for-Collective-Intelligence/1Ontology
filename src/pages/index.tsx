@@ -3,7 +3,10 @@ import { useAuth } from "@components/components/context/AuthContext";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 
-const DEFAULT_APP_ID = ONTOLOGY_APPS[3].id.replaceAll(" ", "_");
+const DEFAULT_APP_ID = (ONTOLOGY_APPS[3] || ONTOLOGY_APPS[0]).id.replaceAll(
+  " ",
+  "_",
+);
 
 const SkillsFutureDefault = () => {
   const router = useRouter();

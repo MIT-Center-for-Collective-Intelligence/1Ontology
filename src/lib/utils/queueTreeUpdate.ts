@@ -7,9 +7,10 @@ import { TREE_QUEUES } from "../firestoreClient/collections";
 // which will be processed by the backend scheduler.
 export const queueTreeUpdate = async (
   nodeId: string,
-  appName: string
+  appName: string,
 ): Promise<void> => {
   try {
+    
     const auth = getAuth();
     const user = auth.currentUser;
 
@@ -24,11 +25,14 @@ export const queueTreeUpdate = async (
     await addDoc(queueCollection, {
       changedNodeId: nodeId,
       appName: appName,
-      timestamp: Date.now(),
+      timestamp: new Date(),
       processed: false,
     });
 
-    console.log("[QUEUE] Tree update queued successfully:", { nodeId, appName });
+    console.log("[QUEUE] Tree update queued successfully:", {
+      nodeId,
+      appName,
+    });
   } catch (error) {
     console.error("[QUEUE] Error queuing tree update:", error);
     throw error;

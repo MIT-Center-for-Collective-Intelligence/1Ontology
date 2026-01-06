@@ -32,7 +32,7 @@ import { DISPLAY } from "@components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
 import PropertyContributors from "../StructuredProperty/PropertyContributors";
 import EditIcon from "@mui/icons-material/Edit";
-import EditProperty from "../AddPropertyForm/EditProprety";
+import EditProperty from "../AddPropertyForm/EditProperty";
 import InheritanceDetailsPanel from "./InheritanceDetailsPanel";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
 
@@ -479,7 +479,10 @@ const NumericProperty = ({
             {currentVisibleNode.inheritance[property]?.ref && (
               <Typography sx={{ fontSize: "14px", ml: "9px" }}>
                 {'(Inherited from "'}
-                {relatedNodes[currentVisibleNode.inheritance[property].ref]?.title}
+                {
+                  relatedNodes[currentVisibleNode.inheritance[property].ref]
+                    ?.title
+                }
                 {'")'}
               </Typography>
             )}
@@ -550,10 +553,12 @@ const NumericProperty = ({
                         borderRadius: "12px",
                       },
                     }}
-                    InputProps={{
-                      sx: {
-                        fontSize: "16px",
-                        borderRadius: "12px",
+                    slotProps={{
+                      input: {
+                        sx: {
+                          fontSize: "16px",
+                          borderRadius: "12px",
+                        },
                       },
                     }}
                   />
@@ -573,10 +578,12 @@ const NumericProperty = ({
                         borderRadius: "12px",
                       },
                     }}
-                    InputProps={{
-                      sx: {
-                        fontSize: "16px",
-                        borderRadius: "12px",
+                    slotProps={{
+                      input: {
+                        sx: {
+                          fontSize: "16px",
+                          borderRadius: "12px",
+                        },
                       },
                     }}
                   />
