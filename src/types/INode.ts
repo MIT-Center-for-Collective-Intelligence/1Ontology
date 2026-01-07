@@ -232,6 +232,16 @@ export type TreeData = {
   unclassified?: boolean;
 };
 
+export interface TreeViewNode {
+  id: string;
+  nodeId: string;
+  name: string;
+  category: boolean;
+  nodeType?: string;
+  unclassified?: boolean;
+  childIds: string[];
+}
+
 /**
  * Temporary types for activity flow implementation
  */

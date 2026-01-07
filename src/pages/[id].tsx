@@ -14,7 +14,9 @@ const SkillsFuture = () => {
     const id = ((router.query?.id || "") as string).replaceAll("_", " ");
     const findId = ONTOLOGY_APPS.find((c) => c.id === id);
     if (!findId) {
-      const DEFAULT_APP_ID = ONTOLOGY_APPS[3].id.replaceAll(" ", "_");
+      const DEFAULT_APP_ID = (
+        ONTOLOGY_APPS[3] || ONTOLOGY_APPS[0]
+      ).id.replaceAll(" ", "_");
       router.replace(`/SkillsFuture/${DEFAULT_APP_ID}`);
     } else {
       setAppName(id);

@@ -50,7 +50,8 @@ type ImprovementsProps = {
   setCurrentImprovement: any;
   currentVisibleNode: any;
   setCurrentVisibleNode: any;
-  nodes: Record<string, INode>;
+  relatedNodes: Record<string, INode>;
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   onNavigateToNode: any;
   isLoadingCopilot: boolean;
   improvements: any;
@@ -71,7 +72,8 @@ const Improvements = ({
   setCurrentImprovement,
   currentVisibleNode,
   setCurrentVisibleNode,
-  nodes,
+  relatedNodes,
+  fetchNode,
   onNavigateToNode,
   isLoadingCopilot,
   improvements,
@@ -129,7 +131,7 @@ const Improvements = ({
             property === "specializations"
               ? "generalizations"
               : "specializations",
-            nodes,
+            relatedNodes,
             db,
           );
         }
@@ -141,7 +143,7 @@ const Improvements = ({
             { id: currentVisibleNode?.id },
             property === "parts" ? "isPartOf" : "parts",
             db,
-            nodes,
+            relatedNodes,
           );
         }
 
@@ -154,18 +156,25 @@ const Improvements = ({
         ) {
           if (nodeData.inheritance[property]) {
             const reference = nodeData.inheritance[property].ref;
-            if (
-              reference &&
-              nodes[reference].textValue &&
-              nodes[reference].textValue.hasOwnProperty(property)
-            ) {
-              if (!nodeData.textValue) {
-                nodeData.textValue = {
-                  [property]: nodes[reference].textValue[property],
-                };
-              } else {
-                nodeData.textValue[property] =
-                  nodes[reference].textValue[property];
+            if (reference) {
+              let referenceNode: INode | null = relatedNodes[reference];
+              if (!referenceNode) {
+                referenceNode = await fetchNode(reference);
+              }
+
+              if (
+                referenceNode &&
+                referenceNode.textValue &&
+                referenceNode.textValue.hasOwnProperty(property)
+              ) {
+                if (!nodeData.textValue) {
+                  nodeData.textValue = {
+                    [property]: referenceNode.textValue[property],
+                  };
+                } else {
+                  nodeData.textValue[property] =
+                    referenceNode.textValue[property];
+                }
               }
             }
             nodeData.inheritance[property].ref = null;
@@ -182,7 +191,7 @@ const Improvements = ({
             newLinks,
             { id: currentVisibleNode?.id },
             property,
-            nodes,
+            relatedNodes,
             db,
           );
         }
@@ -230,7 +239,7 @@ const Improvements = ({
             _addedLinks,
             current,
             currentVisibleNode,
-            nodes,
+            relatedNodes,
           );
         }
         if (property === "specializations") {
@@ -240,7 +249,7 @@ const Improvements = ({
             _addedLinks,
             _removedLinks,
             currentVisibleNode,
-            nodes,
+            relatedNodes,
           );
         }
         // Update inheritance for non-specialization/generalization properties
@@ -267,7 +276,7 @@ const Improvements = ({
         });
       }
     },
-    [currentVisibleNode?.id, currentVisibleNode.title, db, nodes, user],
+    [currentVisibleNode?.id, currentVisibleNode.title, db, relatedNodes, user],
   );
 
   const updateStringProperty = async (
@@ -277,7 +286,7 @@ const Improvements = ({
   ) => {
     try {
       const nodeRef = doc(collection(db, NODES), nodeId);
-      const nodeData = nodes[nodeId];
+      const nodeData = relatedNodes[nodeId];
       if (property === "title") {
         await updateDoc(nodeRef, {
           [`${property}`]: newValue,
@@ -385,7 +394,7 @@ const Improvements = ({
         console.error(error);
       }
     },
-    [nodes, user?.uname],
+    [relatedNodes, user?.uname],
   );
 
   // Function to add a new specialization to a node
@@ -409,7 +418,7 @@ const Improvements = ({
         const nodeParentRef = doc(collection(db, NODES), parentId);
 
         // Retrieve the parent node data
-        const nodeParentData = nodes[parentId];
+        const nodeParentData = relatedNodes[parentId];
         const previousParentValue = JSON.parse(
           JSON.stringify(nodeParentData.specializations),
         );
@@ -568,7 +577,7 @@ const Improvements = ({
   const deleteNode = useCallback(
     async (nodeId: string) => {
       try {
-        const nodeValue = nodes[nodeId];
+        const nodeValue = relatedNodes[nodeId];
         // Confirm deletion with the user using a custom confirmation dialog
 
         if (!user?.uname) return;
@@ -578,7 +587,7 @@ const Improvements = ({
         );
 
         if (specializations.length > 0) {
-          if (checkIfCanDeleteANode(nodes, specializations)) {
+          if (checkIfCanDeleteANode(relatedNodes, specializations)) {
             await confirmIt(
               "To delete a node, you need to first delete its specializations or move them under a different generalization.",
               "Ok",
@@ -598,7 +607,7 @@ const Improvements = ({
           // Retrieve the document reference of the node to be deleted
           for (let collection of nodeValue.generalizations) {
             if (collection.nodes.length > 0) {
-              setCurrentVisibleNode(nodes[collection.nodes[0].id]);
+              setCurrentVisibleNode(relatedNodes[collection.nodes[0].id]);
               break;
             }
           }
@@ -641,7 +650,7 @@ const Improvements = ({
         });
       }
     },
-    [user?.uname, nodes],
+    [user?.uname, relatedNodes],
   );
   const createNewNodes = async (
     addedNonExistentElements: {
@@ -821,7 +830,7 @@ const Improvements = ({
       }
       let changeType: any = null;
       let detailsChange = null;
-      const nodeData = nodes[change.nodeId];
+      const nodeData = relatedNodes[change.nodeId];
       const propertyType = nodeData.propertyType[change.modifiedProperty];
       if (
         change.modifiedProperty === "specializations" ||
@@ -835,7 +844,7 @@ const Improvements = ({
           for (let node of collection.nodes) {
             if (node.change === "added") {
               addedLinks.push(node.id);
-              if (optionalPartsTitles.includes(nodes[node.id]?.title || "")) {
+              if (optionalPartsTitles.includes(relatedNodes[node.id]?.title || "")) {
                 optionalPartsIds.push(node.id);
               }
             }
@@ -856,7 +865,7 @@ const Improvements = ({
 
           if (inheritanceRef) {
             newValue =
-              nodes[inheritanceRef].properties[change.modifiedProperty];
+              relatedNodes[inheritanceRef].properties[change.modifiedProperty];
           } else {
             newValue = nodeData.properties[change.modifiedProperty];
           }

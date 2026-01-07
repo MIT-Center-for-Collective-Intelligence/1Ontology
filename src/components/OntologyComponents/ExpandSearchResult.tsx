@@ -76,6 +76,14 @@ const ExpandSearchResult = ({
     />
   );
 
+  if (!searchResultsForSelection || searchResultsForSelection.length === 0) {
+    return (
+      <Typography sx={{ p: 2, textAlign: "center", color: "white" }}>
+        No results found
+      </Typography>
+    );
+  }
+
   return (
     <SimpleTreeView
       slots={{ collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon }}
