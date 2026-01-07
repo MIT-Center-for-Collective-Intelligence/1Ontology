@@ -46,7 +46,7 @@ import {
 } from "@components/lib/utils/partsHelper";
 import { SearchBox } from "../SearchBox/SearchBox";
 
-const SelectModel = ({
+const StructuredPropertySelector = ({
   handleCloseAddLinksModel,
   onSave,
   selectedProperty,
@@ -1119,11 +1119,13 @@ const SelectModel = ({
                 maxHeight: "500px",
                 overflowY: "auto",
                 px: "16px",
-                backgroundColor: (theme: any) =>
-                  theme.palette.mode === "dark" ? "#1a1a1a" : "#f8f9fa",
                 py: "20px",
                 ...SCROLL_BAR_STYLE,
                 mt: "12px",
+                background: (theme: any) =>
+                  theme.palette.mode === "dark"
+                    ? "linear-gradient(180deg, #0f0f0f 0%, #1f1f1f 100%)"
+                    : "linear-gradient(180deg, #ffffff 0%, #f3f6ff 100%)",
                 borderTop: (theme: any) =>
                   `1px solid ${theme.palette.mode === "light" ? "#e9ecef" : "#2d2d2d"}`,
                 borderBottom: (theme: any) =>
@@ -1210,4 +1212,4 @@ const SelectModel = ({
   );
 };
 
-export default SelectModel;
+export default StructuredPropertySelector;

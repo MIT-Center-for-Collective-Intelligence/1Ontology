@@ -46,8 +46,9 @@ import {
   Droppable,
   DropResult,
 } from "@hello-pangea/dnd";
-import SelectModel from "../Models/SelectModel";
+
 import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
+import StructuredPropertySelector from "./StructuredPropertySelector";
 
 interface LoadMoreNode extends ILinkNode {
   id: string;
@@ -1920,7 +1921,7 @@ const CollectionStructure = ({
                             !!selectedProperty &&
                             selectedCollection ===
                               collection.collectionName && (
-                              <SelectModel
+                              <StructuredPropertySelector
                                 onSave={onSave}
                                 currentVisibleNode={currentVisibleNode}
                                 relatedNodes={nodes}

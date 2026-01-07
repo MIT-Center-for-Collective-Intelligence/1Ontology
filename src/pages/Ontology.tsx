@@ -454,7 +454,7 @@ const Ontology = ({
     [db, relatedNodes],
   );
 
-  const dynamicUnsubscribersRef = useRef<Map<string, () => void>>(new Map()); // Stores unsubscribe functions for each dynamically added node
+  const dynamicUnsubscribeRef = useRef<Map<string, () => void>>(new Map()); // Stores unsubscribe functions for each dynamically added node
   const dynamicNodeMappingRef = useRef<Map<string, Set<string>>>(new Map()); // Used to clean up child node snapshots when navigating away from parent
 
   // Add nodes to cache wit listeners (triggered by dropdown selections in @inheritedPartsViewerEdit)
@@ -468,7 +468,7 @@ const Ontology = ({
       const nodesToAdd: { [id: string]: INode } = {};
       const nodeIdsToSnapshot: string[] = [];
       Object.entries(newNodes).forEach(([id, node]) => {
-        if (!dynamicUnsubscribersRef.current.has(id)) {
+        if (!dynamicUnsubscribeRef.current.has(id)) {
           nodesToAdd[id] = node;
           nodeIdsToSnapshot.push(id);
         }
@@ -539,7 +539,6 @@ const Ontology = ({
                   } as INode;
                 }
               });
-
               return updated;
             });
           },
@@ -553,8 +552,8 @@ const Ontology = ({
 
         // Store unsubscribe function to prevent duplicate listeners for the same nodes
         batch.forEach((nodeId) => {
-          if (!dynamicUnsubscribersRef.current.has(nodeId)) {
-            dynamicUnsubscribersRef.current.set(nodeId, unsubscribe);
+          if (!dynamicUnsubscribeRef.current.has(nodeId)) {
+            dynamicUnsubscribeRef.current.set(nodeId, unsubscribe);
           }
         });
       });
@@ -589,10 +588,10 @@ const Ontology = ({
           `[CLEANUP] Navigating away from ${prevNodeId}, cleaning up ${childNodes.size} dynamic snapshots`,
         );
         childNodes.forEach((nodeId) => {
-          const unsubscribe = dynamicUnsubscribersRef.current.get(nodeId);
+          const unsubscribe = dynamicUnsubscribeRef.current.get(nodeId);
           if (unsubscribe) {
             unsubscribe();
-            dynamicUnsubscribersRef.current.delete(nodeId);
+            dynamicUnsubscribeRef.current.delete(nodeId);
           }
         });
 
@@ -612,10 +611,10 @@ const Ontology = ({
   useEffect(() => {
     return () => {
       console.log(
-        `[CLEANUP] Component unmounting, unsubscribing from ${dynamicUnsubscribersRef.current.size} dynamic snapshot listeners`,
+        `[CLEANUP] Component unmounting, unsubscribing from ${dynamicUnsubscribeRef.current.size} dynamic snapshot listeners`,
       );
-      dynamicUnsubscribersRef.current.forEach((unsub) => unsub());
-      dynamicUnsubscribersRef.current.clear();
+      dynamicUnsubscribeRef.current.forEach((unsub) => unsub());
+      dynamicUnsubscribeRef.current.clear();
       dynamicNodeMappingRef.current.clear();
 
       // Cleanup instant update timeout

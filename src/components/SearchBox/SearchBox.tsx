@@ -153,15 +153,17 @@ export const SearchBox = ({
                     </IconButton>
                   </Tooltip>
                 )}
-                <IconButton
-                  onClick={() => {
-                    setSearch("");
-                  }}
-                  edge="end"
-                  sx={{ color: "white", ml: "13px" }}
-                >
-                  <CloseIcon />
-                </IconButton>
+                <Tooltip title={"Clear"}>
+                  <IconButton
+                    onClick={() => {
+                      setSearch("");
+                    }}
+                    edge="end"
+                    sx={{ color: "white", ml: "13px" }}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </Tooltip>
               </Box>
             </InputAdornment>
           )

@@ -45,7 +45,6 @@ import {
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
 import VisualizeTheProperty from "./VisualizeTheProperty";
 import CollectionStructure from "./CollectionStructure";
-import SelectModel from "../Models/SelectModel";
 import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import InheritedPartsViewer from "./InheritedPartsViewer";
@@ -53,6 +52,7 @@ import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import EditProperty from "../AddPropertyForm/EditProperty";
 import InheritedPartsViewerEdit from "./InheritedPartsViewerEdit";
 import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
+import StructuredPropertySelector from "./StructuredPropertySelector";
 
 const INITIAL_LOAD_COUNT = 20;
 const LOAD_MORE_COUNT = 20;
@@ -1550,7 +1550,7 @@ const StructuredProperty = ({
       {handleCloseAddLinksModel &&
         selectedProperty === property &&
         !selectedCollection && (
-          <SelectModel
+          <StructuredPropertySelector
             onSave={onSave}
             currentVisibleNode={currentVisibleNode}
             relatedNodes={relatedNodes}
