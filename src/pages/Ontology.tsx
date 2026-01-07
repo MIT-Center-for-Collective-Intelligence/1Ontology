@@ -382,6 +382,7 @@ const Ontology = ({
   const firstLoad = useRef(true);
   const prevAppNameRef = useRef<string>(appName);
   const isSwitchingAppRef = useRef(false);
+  const lastHashSetRef = useRef<string>("");
 
   // Mobile state
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -699,15 +700,21 @@ const Ontology = ({
 
       // Check if there is a hash in the URL
       if (window.location.hash) {
-        // Call updateUserDoc with the hash split into an array
-        const visibleNodeId = window.location.hash.split("#")[0];
+        const currentHash = window.location.hash;
+        const visibleNodeId = currentHash.split("#").reverse()[0];
 
-        if (visibleNodeId !== prevHash.current) {
-          navigateToNode(visibleNodeId);
-          prevHash.current = visibleNodeId;
+        // Skip if this is the hash set by user through navigating
+        if (currentHash === lastHashSetRef.current) {
+          return;
         }
 
-        // Update the previous hash
+        // Skip if already processed
+        if (visibleNodeId === prevHash.current) {
+          return;
+        }
+
+        prevHash.current = visibleNodeId;
+        navigateToNode(visibleNodeId);
       }
     };
 
@@ -1568,6 +1575,10 @@ const Ontology = ({
     }
     let newHash = "";
     path.forEach((p: any) => (newHash = newHash + `#${p.id.trim()}`));
+
+    // Track the hash set by this function to prevent handling of users' own hash change
+    lastHashSetRef.current = newHash;
+
     window.location.hash = newHash;
   };
   const initializeExpanded = (ontologyPath: INodePath[]) => {
