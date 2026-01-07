@@ -93,6 +93,8 @@ function DraggableTree({
   >(new Map());
   const collapsingLoader = useRef<boolean>(false);
   const isTreeClickRef = useRef(false);
+  const hasExpandedSuccessfully = useRef<boolean>(false);
+  const pendingExpansionNodeId = useRef<string | null>(null);
 
   const getFocusedNodeWindow = useCallback(
     (children: TreeData[], focusedNodeId: string): TreeData[] => {
@@ -373,9 +375,14 @@ function DraggableTree({
 
   const expandNodeById = useCallback(
     async (targetNodeId: string) => {
+      if (!targetNodeId) return;
+
       const tree = treeRef.current;
 
-      if (!tree || !targetNodeId) return;
+      if (!tree) {
+        pendingExpansionNodeId.current = targetNodeId;
+        return;
+      }
 
       console.log(`[EXPAND] Searching for node: ${targetNodeId}`);
 
@@ -383,7 +390,7 @@ function DraggableTree({
       const targetNodes = findNodesByNodeId(tree, targetNodeId);
 
       if (targetNodes.length === 0) {
-        console.warn(`[EXPAND] Node ${targetNodeId} not found in tree`);
+        pendingExpansionNodeId.current = targetNodeId;
         return;
       }
 
@@ -433,6 +440,10 @@ function DraggableTree({
         console.log(`[EXPAND] Scrolling to first occurrence: ${firstTargetNode.id}`);
         await tree.scrollTo(firstTargetNode.id);
       }
+
+      // Mark expansion as completed
+      hasExpandedSuccessfully.current = true;
+      pendingExpansionNodeId.current = null;
     },
     [treeRef, findNodesByNodeId],
   );
@@ -440,10 +451,16 @@ function DraggableTree({
   useEffect(() => {
     const tree = treeRef.current;
 
-    if (!tree || !currentVisibleNode?.id) return;
+    if (!tree || !currentVisibleNode?.id) {
+      return;
+    }
 
     const handleNavigation = async () => {
       const targetNodeId = currentVisibleNode.id;
+
+      // Reset expansion tracking for this new navigation
+      hasExpandedSuccessfully.current = false;
+      pendingExpansionNodeId.current = null;
 
       // Always expand all occurrences, regardless of how navigation happened
       await expandNodeById(targetNodeId);
@@ -466,6 +483,48 @@ function DraggableTree({
     expandNodeById,
     findNodesByNodeId,
   ]);
+
+  // Retry expansion when tab becomes visible or window gains focus
+  useEffect(() => {
+    const retryExpansion = async () => {
+      // If expansion hasn't succeeded yet, retry it
+      if (!hasExpandedSuccessfully.current && currentVisibleNode?.id) {
+        const nodeToExpand = pendingExpansionNodeId.current || currentVisibleNode.id;
+
+        // Small delay to ensure tree is rendered
+        await new Promise((resolve) => setTimeout(resolve, 150));
+
+        await expandNodeById(nodeToExpand);
+
+        // Try to select the node
+        const tree = treeRef.current;
+        if (tree && currentVisibleNode?.id) {
+          const targetNodes = findNodesByNodeId(tree, currentVisibleNode.id);
+          if (targetNodes.length > 0) {
+            targetNodes[0].select();
+          }
+        }
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        retryExpansion();
+      }
+    };
+
+    const handleWindowFocus = () => {
+      retryExpansion();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, [expandNodeById, findNodesByNodeId, currentVisibleNode?.id]);
 
   useEffect(() => {
     const tree = treeRef.current;
