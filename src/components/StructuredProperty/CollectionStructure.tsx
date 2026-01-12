@@ -201,6 +201,7 @@ const CollectionStructure = ({
   fetchNode: (nodeId: string) => Promise<INode | null>;
   onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
 }) => {
+  console.log(editableProperty, "editableProperty -->");
   const db = getFirestore();
   const [{ user }] = useAuth();
 
@@ -1263,7 +1264,7 @@ const CollectionStructure = ({
   return (
     <Box
       sx={{
-        p: "15px",
+        p: "12px",
         pt: 0,
       }}
     >
@@ -1279,15 +1280,15 @@ const CollectionStructure = ({
       <DragDropContext
         onDragEnd={(e) => {
           if (locked || !!selectedDiffNode || !!currentImprovement) return;
-          if (e.type === "CATEGORY") {
+          if (e.type === "COLLECTION") {
             handleCollectionSorting(e);
           } else {
             handleSorting(e, property, propertyValue);
           }
         }}
       >
-        {/* Droppable for categories */}
-        <Droppable droppableId="categories" type="CATEGORY">
+        {/* Droppable for collections */}
+        <Droppable droppableId="collections" type="COLLECTION">
           {(provided) => (
             <Box ref={provided.innerRef} {...provided.droppableProps}>
               {(propertyValue || []).map(
@@ -1577,7 +1578,7 @@ const CollectionStructure = ({
                             </Box>
                           )}
 
-                          <List sx={{ p: 1 }}>
+                          <List sx={{ p: 1, mx: "20px" }}>
                             <Droppable
                               droppableId={`${collectionIndex}`}
                               type="LINK"

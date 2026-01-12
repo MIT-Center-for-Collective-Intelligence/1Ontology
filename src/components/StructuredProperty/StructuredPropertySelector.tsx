@@ -946,6 +946,7 @@ const StructuredPropertySelector = ({
             theme.palette.mode === "light"
               ? "0 4px 20px rgba(0,0,0,0.05)"
               : "0 4px 20px rgba(0,0,0,0.3)",
+          ...SCROLL_BAR_STYLE,
         }}
         elevation={0}
       >
@@ -1116,11 +1117,10 @@ const StructuredPropertySelector = ({
             <Box
               sx={{
                 flexGrow: 1,
-                maxHeight: "500px",
-                overflowY: "auto",
-                px: "16px",
-                py: "20px",
-                ...SCROLL_BAR_STYLE,
+
+                pr: "3px",
+   
+
                 mt: "12px",
                 background: (theme: any) =>
                   theme.palette.mode === "dark"
@@ -1130,9 +1130,22 @@ const StructuredPropertySelector = ({
                   `1px solid ${theme.palette.mode === "light" ? "#e9ecef" : "#2d2d2d"}`,
                 borderBottom: (theme: any) =>
                   `1px solid ${theme.palette.mode === "light" ? "#e9ecef" : "#2d2d2d"}`,
+                borderRadius: "10px",
+                mx: "6px",
+                mb: "10px",
               }}
             >
-              {renderSearchOrTree()}
+              <Box
+                sx={{
+                  maxHeight: "500px",
+                  overflowY: "auto",
+                  ...SCROLL_BAR_STYLE,
+                  py: "10px",
+                  px: "6px",
+                }}
+              >
+                {renderSearchOrTree()}
+              </Box>
             </Box>
           ) : (
             <></>

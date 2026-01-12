@@ -34,97 +34,111 @@ export async function loadTreeFromSubCollection(
   );
 
   // Build a map of all nodes by their nodeId (document ID)
-  const nodesMap: { [nodeId: string]: TreeNodeDocument } = {};
-  snapshot.forEach((doc) => {
-    nodesMap[doc.id] = doc.data() as TreeNodeDocument;
-  });
-
-  // Find root nodes
   const rootNodeIds: string[] = [];
-  for (const [nodeId, node] of Object.entries(nodesMap)) {
-    if (node.root === true) {
-      rootNodeIds.push(nodeId);
+  const nodesMap: { [nodeId: string]: TreeNodeDocument } = {};
+
+  // Optimization: Single pass to extract data and identify roots
+  snapshot.forEach((doc) => {
+    const data = doc.data() as TreeNodeDocument; // Optimization: Call .data() once
+    nodesMap[doc.id] = data;
+    if (data.root === true) {
+      rootNodeIds.push(doc.id);
     }
-  }
+  });
 
   console.log(`[LOAD-SUBCOL-TREE] Found ${rootNodeIds.length} root node(s)`);
 
   // Reconstruct hierarchical tree from specializations
-  const buildTree = (nodeId: string, path: string[] = []): TreeData => {
-    const node = nodesMap[nodeId];
+  // Optimization: Pass mutable visited Set and path string to reduce allocations
+  const buildTree = (
+    currentNodeId: string,
+    visited: Set<string>,
+    parentPathId?: string,
+  ): TreeData => {
+    const node = nodesMap[currentNodeId];
     if (!node) {
-      console.warn(`[LOAD-SUBCOL-TREE] Node ${nodeId} not found in map`);
+      console.warn(`[LOAD-SUBCOL-TREE] Node ${currentNodeId} not found in map`);
       return {
-        id: nodeId,
-        nodeId: nodeId,
+        id: currentNodeId,
+        nodeId: currentNodeId,
         name: "Unknown",
         nodeType: "activity",
         children: [],
       };
     }
 
-    const currentPath = [...path, nodeId];
-    const pathBasedId = currentPath.join("-");
+    // Optimization: Construct ID string directly without array joining
+    const pathBasedId = parentPathId
+      ? `${parentPathId}-${currentNodeId}`
+      : currentNodeId;
 
     // Prevent circular references
-    if (path.includes(nodeId)) {
+    if (visited.has(currentNodeId)) {
       return {
         id: pathBasedId,
-        nodeId: nodeId,
+        nodeId: currentNodeId,
         name: node.title,
         nodeType: node.nodeType,
         ...(node.unclassified && { unclassified: true }),
         children: [],
       };
     }
+    visited.add(currentNodeId);
 
     const childrenInOrder: TreeData[] = [];
 
     // Process each collection in order
-    for (
-      let collectionIndex = 0;
-      collectionIndex < node.specializations.length;
-      collectionIndex++
-    ) {
-      const collection = node.specializations[collectionIndex];
+    if (node.specializations) {
+      for (
+        let collectionIndex = 0;
+        collectionIndex < node.specializations.length;
+        collectionIndex++
+      ) {
+        const collection = node.specializations[collectionIndex];
 
-      if (collection.collectionName === "main") {
-        // Main collection: add children directly with their path
-        for (const child of collection.nodes || []) {
-          const childTree = buildTree(child.id, currentPath);
-          childrenInOrder.push({
-            ...childTree,
-            isMainItem: true,
-            originalCollectionIndex: collectionIndex,
-          } as any);
-        }
-      } else {
-        // Non-main collection: create a category wrapper
-        const collectionChildren: TreeData[] = [];
-        const collectionPath = [...currentPath, collection.collectionName];
+        if (collection.collectionName === "main") {
+          // Main collection: add children directly with their path
+          for (const child of collection.nodes || []) {
+            childrenInOrder.push({
+              ...buildTree(child.id, visited, pathBasedId),
+              isMainItem: true,
+              originalCollectionIndex: collectionIndex,
+            } as any);
+          }
+        } else {
+          // Non-main collection: create a category wrapper
+          const collectionChildren: TreeData[] = [];
+          // Optimization: Construct collection path string
+          const collectionPathId = `${pathBasedId}-${collection.collectionName}`;
 
-        for (const child of collection.nodes || []) {
-          collectionChildren.push(buildTree(child.id, collectionPath));
-        }
+          for (const child of collection.nodes || []) {
+            collectionChildren.push(
+              buildTree(child.id, visited, collectionPathId),
+            );
+          }
 
-        if (collectionChildren.length > 0) {
-          childrenInOrder.push({
-            id: `${pathBasedId}-${collection.collectionName}`,
-            nodeId: nodeId,
-            name: `[${collection.collectionName}]`,
-            nodeType: node.nodeType,
-            category: true,
-            children: collectionChildren,
-            ...(node.unclassified && { unclassified: true }),
-            originalCollectionIndex: collectionIndex,
-          } as any);
+          if (collectionChildren.length > 0) {
+            childrenInOrder.push({
+              id: collectionPathId,
+              nodeId: currentNodeId,
+              name: `[${collection.collectionName}]`,
+              nodeType: node.nodeType,
+              category: true,
+              children: collectionChildren,
+              ...(node.unclassified && { unclassified: true }),
+              originalCollectionIndex: collectionIndex,
+            } as any);
+          }
         }
       }
     }
 
+    // Backtrack
+    visited.delete(currentNodeId);
+
     return {
       id: pathBasedId,
-      nodeId: nodeId,
+      nodeId: currentNodeId,
       name: node.title,
       nodeType: node.nodeType,
       ...(node.unclassified && { unclassified: true }),
@@ -135,7 +149,7 @@ export async function loadTreeFromSubCollection(
 
   // Build hierarchical tree from roots
   const hierarchicalTree: TreeData[] = rootNodeIds.map((rootId) =>
-    buildTree(rootId),
+    buildTree(rootId, new Set<string>()),
   );
 
   console.log(
