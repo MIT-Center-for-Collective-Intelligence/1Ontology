@@ -24,7 +24,7 @@ import {
   getAllGeneralizations,
   breakInheritanceAndCopyParts,
 } from "@components/lib/utils/partsHelper";
-import { ICollection, ILinkNode, INode } from "@components/types/INode";
+import { ICollection, ILinkNode, InheritedPartsDetail, INode } from "@components/types/INode";
 import { DISPLAY } from "@components/lib/CONSTANTS";
 import {
   collection,
@@ -131,6 +131,7 @@ type IStructuredPropertyProps = {
   };
   enableEdit: boolean;
   inheritanceDetails?: any;
+  inheritedPartsDetails?: InheritedPartsDetail[] | null;
   skillsFutureApp: string;
   deleteProperty?: Function;
   modifyProperty?: Function;
@@ -192,6 +193,7 @@ const StructuredProperty = ({
   partsInheritance,
   enableEdit,
   inheritanceDetails,
+  inheritedPartsDetails,
   skillsFutureApp,
   deleteProperty,
   modifyProperty,
@@ -1482,6 +1484,7 @@ const StructuredProperty = ({
                 navigateToNode={navigateToNode}
                 replaceWith={replaceWith}
                 skillsFutureApp={skillsFutureApp}
+                inheritedPartsDetails={inheritedPartsDetails}
               />
             ) : (
               <InheritedPartsViewer
@@ -1521,6 +1524,7 @@ const StructuredProperty = ({
                 }
                 navigateToNode={navigateToNode}
                 displayDetails={displayDetails}
+                inheritedPartsDetails={inheritedPartsDetails}
               />
             )}
           </>

@@ -95,6 +95,7 @@ import Text from "./Text";
 import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import {
   ICollection,
+  InheritedPartsDetail,
   INode,
   INodeTypes,
   MainSpecializations,
@@ -184,6 +185,7 @@ type INodeProps = {
   enableEdit: any;
   setEnableEdit: any;
   inheritanceDetails: any;
+  inheritedPartsDetails?: InheritedPartsDetail[] | null;
   skillsFutureApp: string;
   editableProperty: any;
   setEditableProperty: any;
@@ -494,6 +496,7 @@ const Node = ({
   enableEdit,
   setEnableEdit,
   inheritanceDetails,
+  inheritedPartsDetails,
   skillsFutureApp,
   editableProperty,
   setEditableProperty,
@@ -1911,6 +1914,7 @@ const Node = ({
                   partsInheritance={partsInheritance}
                   enableEdit={enableEdit}
                   inheritanceDetails={inheritanceDetails}
+                  inheritedPartsDetails={inheritedPartsDetails}
                   skillsFutureApp={skillsFutureApp}
                   onInstantTreeUpdate={onInstantTreeUpdate}
                 />

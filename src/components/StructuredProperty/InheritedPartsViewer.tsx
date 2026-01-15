@@ -15,6 +15,7 @@ import {
   Tabs,
   Tab,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
@@ -30,6 +31,7 @@ import {
   ICollection,
   INode,
   TransferInheritance,
+  InheritedPartsDetail,
 } from "@components/types/INode";
 import {
   query,
@@ -67,6 +69,7 @@ interface InheritedPartsViewerProps {
   setDisplayDetails: any;
   displayDetails: boolean;
   inheritanceDetails: any;
+  inheritedPartsDetails?: InheritedPartsDetail[] | null;
   currentVisibleNode: any;
   navigateToNode?: any;
   triggerSearch?: any;
@@ -84,6 +87,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   setDisplayDetails,
   displayDetails,
   inheritanceDetails,
+  inheritedPartsDetails,
   currentVisibleNode,
   triggerSearch,
   addPart,
@@ -177,352 +181,11 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     setSelectedGeneralizationIndex(newValue);
   };
 
-  const getPartOptionalStatus = (partId: string, nodeId: string): boolean => {
-    const node = nodes[nodeId];
-    if (!node?.properties?.parts) return false;
-
-    for (const collection of node.properties.parts) {
-      const part = collection.nodes.find((n: any) => n.id === partId);
-      if (part) return !!part.optional;
-    }
-    return false;
-  };
-
-  const getCurrentPartOptionalStatus = (partId: string): boolean => {
-    const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
-    const currentNodeParts =
-      inheritanceRef && nodes[inheritanceRef]
-        ? nodes[inheritanceRef].properties["parts"]
-        : currentVisibleNode.properties["parts"];
-
-    if (!currentNodeParts) return false;
-
-    for (const collection of currentNodeParts) {
-      const part = collection.nodes.find((n: any) => n.id === partId);
-      if (part) return !!part.optional;
-    }
-    return false;
-  };
-
-  const analyzeInheritance = (
-    inheritance: any,
-    generalizationParts: string[],
-    generalizationId: string,
-    currentParts: string[],
-  ) => {
-    const result: {
-      from: string;
-      to: string;
-      symbol: ">" | "x" | "=" | "+";
-      fromOptional?: boolean;
-      toOptional?: boolean;
-      optionalChange?: "added" | "removed" | "none";
-      hops?: number;
-    }[] = [];
-
-    const matchedParts = new Set<string>();   // Track generalization parts found in current node 
-    const usedKeys = new Set<string>();  // Track current node part IDs that have been matched to a generalization part
-    const usedGeneralizationParts = new Set<string>(); // Track generalization parts that are unchanged (same ID)
-
-    const findHierarchicalDistance = (
-      fromPartId: string,
-      toPartId: string,
-      visited = new Set<string>(),
-    ): number => {
-      if (visited.has(fromPartId)) return -1;
-      if (fromPartId === toPartId) return 0;
-
-      visited.add(fromPartId);
-
-      const fromNode = nodes[fromPartId];
-      if (!fromNode) return -1;
-
-      let minDistance = -1;
-
-      for (const collection of fromNode.properties.parts) {
-        for (const part of collection.nodes) {
-          if (part.id === toPartId) {
-            return 1;
-          }
-        }
-      }
-      for (let specializationNode of fromNode.specializations.flatMap(
-        (c: ICollection) => c.nodes,
-      )) {
-        const deeperDistance = findHierarchicalDistance(
-          specializationNode.id,
-          toPartId,
-          new Set(visited),
-        );
-
-        if (deeperDistance !== -1) {
-          const totalDistance = 1 + deeperDistance;
-          minDistance =
-            minDistance === -1
-              ? totalDistance
-              : Math.min(minDistance, totalDistance);
-        }
-      }
-
-      return minDistance;
-    };
-
-    for (const [key, entries] of Object.entries(inheritance)) {
-      if (entries === null) continue;
-
-      for (const entry of entries as any) {
-        if (entry.genId !== generalizationId) {
-          continue;
-        }
-        const part = entry.partOf;
-
-        if (generalizationParts.includes(part)) {
-          matchedParts.add(part);
-          usedKeys.add(key);
-
-          const fromOptional = getPartOptionalStatus(part, generalizationId);
-          const toOptional = getCurrentPartOptionalStatus(key);
-
-          let optionalChange: "added" | "removed" | "none" = "none";
-          if (fromOptional !== toOptional) {
-            optionalChange = toOptional ? "added" : "removed";
-          }
-
-          if (key === part) {
-            result.push({
-              from: part,
-              to: key,
-              symbol: "=",
-              fromOptional,
-              toOptional,
-              optionalChange,
-              hops: 0,
-            });
-            usedGeneralizationParts.add(part);
-          } else {
-            const hops = findHierarchicalDistance(part, key);
-            result.push({
-              from: part,
-              to: key,
-              symbol: ">",
-              fromOptional,
-              toOptional,
-              optionalChange,
-              hops,
-            });
-          }
-        }
-      }
-    }
-
-    for (const generalizationPart of generalizationParts) {
-      if (!matchedParts.has(generalizationPart)) {
-        for (const currentPart of currentParts) {
-          const hops = findHierarchicalDistance(
-            generalizationPart,
-            currentPart,
-          );
-          if (hops !== -1) {
-            const fromOptional = getPartOptionalStatus(
-              generalizationPart,
-              generalizationId,
-            );
-            const toOptional = getCurrentPartOptionalStatus(currentPart);
-
-            let optionalChange: "added" | "removed" | "none" = "none";
-            if (fromOptional !== toOptional) {
-              optionalChange = toOptional ? "added" : "removed";
-            }
-
-            result.push({
-              from: generalizationPart,
-              to: currentPart,
-              symbol: ">",
-              fromOptional,
-              toOptional,
-              optionalChange,
-              hops,
-            });
-            matchedParts.add(generalizationPart);
-            break;
-          }
-        }
-      }
-    }
-
-    const groupedByGeneralization = result.reduce(
-      (acc, entry) => {
-        if (entry.symbol === ">") {
-          if (!acc[entry.from]) acc[entry.from] = [];
-          acc[entry.from].push(entry);
-        }
-
-        return acc;
-      },
-      {} as Record<string, typeof result>,
-    );
-
-    const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
-    const currentNodeParts =
-      inheritanceRef && nodes[inheritanceRef]
-        ? nodes[inheritanceRef].properties["parts"]
-        : currentVisibleNode.properties["parts"];
-    const currentPartsOrder =
-      currentNodeParts?.[0]?.nodes?.map((c: any) => c.id) || [];
-
-    const hasSeenTo = new Set();
-    const filteredSpecializations: TransferInheritance[] = Object.entries(
-      groupedByGeneralization,
-    ).reduce((acc, [from, entries]) => {
-      const picked =
-        entries.length === 1
-          ? entries[0]
-          : entries.reduce((a, b) => {
-              const aHops = a.hops ?? -1;
-              const bHops = b.hops ?? -1;
-              if (
-                inheritanceForParts[from] &&
-                inheritanceForParts[from] === b.to
-              ) {
-                return b;
-              }
-              if (aHops === -1 && bHops === -1) {
-                return currentPartsOrder.indexOf(a.to) <=
-                  currentPartsOrder.indexOf(b.to)
-                  ? a
-                  : b;
-              }
-              if (aHops === -1) return b;
-              if (bHops === -1) return a;
-
-              if (aHops !== bHops) return aHops < bHops ? a : b;
-
-              return currentPartsOrder.indexOf(a.to) <=
-                currentPartsOrder.indexOf(b.to)
-                ? a
-                : b;
-            });
-
-      if (!hasSeenTo.has(picked.to)) {
-        hasSeenTo.add(picked.to);
-        acc.push(picked);
-      }
-
-      return acc;
-    }, [] as any);
-
-    const nonPickedOnes: any = {};
-
-    for (let key in groupedByGeneralization) {
-      const exist = filteredSpecializations.findIndex((c) => c.from === key);
-      if (exist === -1) {
-        filteredSpecializations.push({
-          from: key,
-          to: "",
-          symbol: "x",
-          fromOptional: false,
-          toOptional: false,
-          optionalChange: "none",
-          hops: 0,
-        });
-      }
-      nonPickedOnes[key] = new Array(
-        ...new Set(
-          groupedByGeneralization[key]
-            .filter((c) => {
-              const index = filteredSpecializations.findIndex(
-                (l) => l.to === c.to && l.from === c.from,
-              );
-              return index === -1;
-            })
-            .map((c) => c.to),
-        ),
-      );
-    }
-
-    const directMatches = result.filter((entry) => entry.symbol === "=");
-    const finalSpecializations = filteredSpecializations.filter(
-      (entry) => !usedGeneralizationParts.has(entry.from),
-    );
-
-    const finalResult = [...directMatches, ...finalSpecializations];
-
-    for (const part of generalizationParts) {
-      if (!matchedParts.has(part) && !usedGeneralizationParts.has(part)) {
-        finalResult.push({
-          from: part,
-          to: "",
-          symbol: "x",
-          fromOptional: getPartOptionalStatus(part, generalizationId),
-          toOptional: false,
-          optionalChange: "none",
-          hops: -1,
-        });
-      }
-    }
-
-    for (const [key, value] of Object.entries(inheritance)) {
-      const existIdx = finalResult.findIndex((c) => c.to === key);
-      if (existIdx === -1) {
-        finalResult.push({
-          from: "",
-          to: key,
-          symbol: "+",
-          fromOptional: false,
-          toOptional: getCurrentPartOptionalStatus(key),
-          optionalChange: "none",
-          hops: 0,
-        });
-      }
-    }
-
-    // Add parts that exist in current node but have no inheritance tracking entry
-    // (This can happen if the part node isn't loaded in relatedNodes yet)
-    for (const currentPart of currentParts) {
-      const existIdx = finalResult.findIndex((c) => c.to === currentPart);
-      if (existIdx === -1) {
-        if (!generalizationParts.includes(currentPart)) {
-          finalResult.push({
-            from: "",
-            to: currentPart,
-            symbol: "+",
-            fromOptional: false,
-            toOptional: getCurrentPartOptionalStatus(currentPart),
-            optionalChange: "none",
-            hops: 0,
-          });
-        }
-      }
-    }
-
-    const seen = new Set();
-    const uniqueResult = finalResult.filter((entry) => {
-      const key = `${entry.from}|${entry.to}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-
-    uniqueResult.sort((a, b) => {
-      const indexA = currentPartsOrder.indexOf(a.to);
-      const indexB = currentPartsOrder.indexOf(b.to);
-
-      return (
-        (indexA === -1 ? Infinity : indexA) -
-        (indexB === -1 ? Infinity : indexB)
-      );
-    });
-
-    return { details: uniqueResult, nonPickedOnes };
-  };
-
   const formatPartTitle = (
-    partId: string,
+    title: string,
     isOptional: boolean,
     optionalChange?: "added" | "removed" | "none",
   ) => {
-    const title = nodes[partId]?.title || "";
-
     if (optionalChange === "added") {
       return (
         <Box component="span" sx={{ display: "inline" }}>
@@ -563,86 +226,49 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
-    const generalizationParts = getGeneralizationParts(
-      generalizationId,
-      nodes,
-    ).map((c) => c.id);
+    // Check if there is cached data for this generalization
+    const cachedGeneralizationData = inheritedPartsDetails?.find(
+      (calc) => calc.generalizationId === generalizationId
+    );
 
-    const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
-
-    // Check if inheritance ref is loading
-    const isWaitingForInheritanceRef = inheritanceRef && !nodes[inheritanceRef];
-
-    const currentNodeParts =
-      inheritanceRef && nodes[inheritanceRef]
-        ? nodes[inheritanceRef].properties["parts"]
-        : currentVisibleNode.properties["parts"];
-
-    if (!currentNodeParts || !Array.isArray(currentNodeParts) || !currentNodeParts[0]) {
-      if (isWaitingForInheritanceRef) {
-        return (
+    if (!cachedGeneralizationData) {
+      return (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            py: 2,
+          }}
+        >
+          <CircularProgress size={16} />
           <Typography
             variant="body2"
             sx={{
               color: (theme) =>
                 theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
               fontStyle: "italic",
-              textAlign: "center",
-              py: 2,
               fontSize: "0.75rem",
             }}
           >
-            Loading parts...
+            Loading...
           </Typography>
-        );
-      }
-      return (
-        <Typography
-          variant="body2"
-          sx={{
-            color: (theme) =>
-              theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
-            fontStyle: "italic",
-            textAlign: "center",
-            py: 2,
-            fontSize: "0.75rem",
-          }}
-        >
-          No parts available
-        </Typography>
+        </Box>
       );
     }
 
-    const currentParts = currentNodeParts[0].nodes.map(
-      (c: { id: string }) => c.id,
-    );
+    // Use cached data
+    const details = cachedGeneralizationData.details;
 
-    const { details, nonPickedOnes } = analyzeInheritance(
-      inheritanceDetails,
-      generalizationParts,
-      generalizationId,
-      currentParts,
+    // Convert nonPickedOnes from {[key]: [{id, title}]} to {[key]: [id]}
+    const nonPickedOnes = Object.entries(cachedGeneralizationData.nonPickedOnes).reduce(
+      (acc, [key, value]) => {
+        acc[key] = value.map(item => item.id);
+        return acc;
+      },
+      {} as { [key: string]: string[] }
     );
-    // Only show "No parts available" if both generalization and current parts are empty and not waitng for any data to load
-    if (!isWaitingForInheritanceRef &&
-        generalizationParts.length === 0 &&
-        currentParts.length === 0) {
-      return (
-        <Typography
-          variant="body2"
-          sx={{
-            color: (theme) =>
-              theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
-            fontStyle: "italic",
-            textAlign: "center",
-            py: 2,
-            fontSize: "0.75rem",
-          }}
-        >
-          No parts available
-        </Typography>
-      );
-    }
 
     const handleSelect = (option: string) => {
       const _previous = { ...inheritanceForParts };
@@ -664,7 +290,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
         <List
           sx={{
             py: 1,
-            border: generalizationParts.length > 0 ? "1px dashed gray" : "",
+            border: details.length > 0 ? "1px dashed gray" : "",
             px: 1.8,
             borderRadius: "20px",
           }}
@@ -770,7 +396,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                         fontSize: "0.9rem",
                       }}
                     >
-                      {formatPartTitle(entry.from, entry.fromOptional || false)}
+                      {formatPartTitle(entry.fromTitle, entry.fromOptional || false)}
                     </Link>
                   ) : null
                 }
@@ -819,7 +445,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                       }}
                     >
                       {formatPartTitle(
-                        entry.to,
+                        entry.toTitle,
                         entry.toOptional || false,
                         entry.optionalChange,
                       )}
@@ -882,12 +508,14 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       </>
     );
   };
-  const activeGeneralization = generalizations.find((g) => g.id === activeTab);
+  const activeGenDetail = inheritedPartsDetails?.find((detail) => detail.generalizationId === activeTab);
+  const activeGenId = activeGenDetail?.generalizationId;
+  const activeGenTitle = activeGenDetail?.generalizationTitle;
 
   if (generalizations.length <= 0) {
     return null;
   }
-
+  
   return (
     <Box>
       {!displayDetails && (
@@ -953,7 +581,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             </Box>
           </Box>
 
-          {generalizations.length > 1 && (
+          {inheritedPartsDetails && inheritedPartsDetails.length > 1 && (
             <Tabs
               value={activeTab}
               onChange={handleTabChange}
@@ -962,16 +590,16 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               scrollButtons="auto"
               sx={{ mt: 2.5, border: "1px solid gray", borderRadius: "25px" }}
             >
-              {generalizations.map((generalization) => (
+              {inheritedPartsDetails.map((detail) => (
                 <Tab
-                  key={generalization.id}
-                  label={generalization.title}
-                  value={generalization.id}
+                  key={detail.generalizationId}
+                  label={detail.generalizationTitle}
+                  value={detail.generalizationId}
                   sx={{
                     textTransform: "none",
-                    fontWeight: activeTab === generalization.id ? 900 : 500,
+                    fontWeight: activeTab === detail.generalizationId ? 900 : 500,
                     bgcolor:
-                      activeTab === generalization.id
+                      activeTab === detail.generalizationId
                         ? (theme) =>
                             theme.palette.mode === "light"
                               ? "#bfbfbf"
@@ -984,8 +612,31 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             </Tabs>
           )}
 
-          {activeGeneralization && (
-            <Box key={activeGeneralization.id}>
+          {!activeGenDetail || !activeGenId || !activeGenTitle ? (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+                py: 2,
+              }}
+            >
+              <CircularProgress size={16} />
+              <Typography
+                variant="body2"
+                sx={{
+                  color: (theme) =>
+                    theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
+                  fontStyle: "italic",
+                  fontSize: "0.75rem",
+                }}
+              >
+                Loading...
+              </Typography>
+            </Box>
+          ) : (
+            <Box key={activeGenId}>
               <Box
                 sx={{
                   display: "flex",
@@ -1003,7 +654,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                     pr: "30px", // space to avoid overlap with center icon
                   }}
                 >
-                  <Tooltip title={activeGeneralization.title}>
+                  <Tooltip title={activeGenTitle}>
                     <Typography
                       sx={{
                         color: "orange",
@@ -1013,7 +664,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {activeGeneralization.title}
+                      {activeGenTitle}
                     </Typography>
                   </Tooltip>
                 </Box>
@@ -1056,7 +707,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                 </Box>
               </Box>
 
-              {getTabContent(activeGeneralization.id)}
+              {getTabContent(activeGenId)}
             </Box>
           )}
 

@@ -102,6 +102,7 @@ import {
   INode,
   INodePath,
   INodeTypes,
+  InheritedPartsDetail,
   MainSpecializations,
   TreeData,
   TreeViewNode,
@@ -123,6 +124,7 @@ import { NODES, USERS } from "@components/lib/firestoreClient/collections";
 
 import { recordLogs } from "@components/lib/utils/helpers";
 import { useHover } from "@components/lib/hooks/useHover";
+import { useInheritedPartsDetails } from "@components/lib/hooks/useInheritedPartsDetails";
 import { MemoizedToolbarSidebar } from "@components/components/Sidebar/ToolbarSidebar";
 import { NodeChange } from "@components/types/INode";
 import GuidLines from "@components/components/Guidelines/GuideLines";
@@ -378,6 +380,8 @@ const Ontology = ({
   const [rootNode, setRootNode] = useState<string | null>(null);
   const [isExperimentalSearch, setIsExperimentalSearch] = useState(true);
   const treeRef = useRef<TreeApi<TreeData>>(null);
+
+  const { data: inheritedPartsDetails } = useInheritedPartsDetails(currentVisibleNode);
 
   const firstLoad = useRef(true);
   const prevAppNameRef = useRef<string>(appName);
@@ -1314,106 +1318,6 @@ const Ontology = ({
     currentVisibleNode?.id,
     currentVisibleNode?.inheritance?.parts?.ref,
     relatedNodes[currentVisibleNode?.inheritance?.parts?.ref || ""],
-    db,
-    appName,
-    skillsFuture,
-  ]);
-
-  // Third extraction: Load all related nodes for generalizations and their inheritance refs
-  // This ensures InheritedPartsViewer has complete data to trace the inheritance chain
-  useEffect(() => {
-    if (!currentVisibleNode) return;
-    console.log('runnig')
-    const relatedIds = new Set<string>();
-
-    // For each generalization
-    currentVisibleNode.generalizations?.forEach((collection) => {
-      collection.nodes?.forEach((genNodeRef) => {
-        const genNode = relatedNodes[genNodeRef.id];
-        if (!genNode) return;
-
-        // Extract all related nodes from the generalization
-        const genRelatedIds = extractRelatedNodeIds(genNode);
-        genRelatedIds.forEach(id => {
-          if (!relatedNodes[id]) {
-            relatedIds.add(id);
-          }
-        });
-
-        // If this generalization has inherited parts, also extract related nodes from the inheritance ref
-        const inheritedPartsRef = genNode.inheritance?.parts?.ref;
-        if (inheritedPartsRef) {
-          const inheritanceRefNode = relatedNodes[inheritedPartsRef];
-          if (inheritanceRefNode) {
-            const refRelatedIds = extractRelatedNodeIds(inheritanceRefNode);
-            refRelatedIds.forEach(id => {
-              if (!relatedNodes[id]) {
-                relatedIds.add(id);
-              }
-            });
-          }
-        }
-      });
-    });
-
-    const nodeIdsToFetch = Array.from(relatedIds);
-    if (nodeIdsToFetch.length === 0) return;
-
-    const batches = chunkArray(nodeIdsToFetch, 30);
-    const unsubscribers: (() => void)[] = [];
-
-    batches.forEach((batch) => {
-      let nodesQuery;
-
-      if (skillsFuture && appName) {
-        nodesQuery = query(
-          collection(db, NODES),
-          where(documentId(), "in", batch),
-          where("deleted", "==", false),
-          where("appName", "==", appName),
-        );
-      } else {
-        nodesQuery = query(
-          collection(db, NODES),
-          where(documentId(), "in", batch),
-          where("deleted", "==", false),
-        );
-      }
-
-      const unsubscribe = onSnapshot(
-        nodesQuery,
-        (snapshot) => {
-          setRelatedNodes((prev) => {
-            const updated = { ...prev };
-
-            snapshot.docChanges().forEach((change) => {
-              const nodeId = change.doc.id;
-
-              if (change.type === "removed") {
-                delete updated[nodeId];
-              } else {
-                updated[nodeId] = { id: nodeId, ...change.doc.data() } as INode;
-              }
-            });
-
-            return updated;
-          });
-        },
-        (error) => {
-          console.error("Error fetching generalization related nodes:", error);
-        },
-      );
-
-      unsubscribers.push(unsubscribe);
-    });
-
-    // Cleanup
-    return () => {
-      unsubscribers.forEach((unsub) => unsub());
-    };
-  }, [
-    currentVisibleNode?.id,
-    relatedNodes,
     db,
     appName,
     skillsFuture,
@@ -2866,6 +2770,7 @@ const Ontology = ({
                   enableEdit={enableEdit}
                   setEnableEdit={setEnableEdit}
                   inheritanceDetails={partsInheritance}
+                  inheritedPartsDetails={inheritedPartsDetails}
                   skillsFutureApp={appName ?? null}
                   editableProperty={editableProperty}
                   setEditableProperty={setEditableProperty}
