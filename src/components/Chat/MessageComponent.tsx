@@ -1,5 +1,5 @@
-import React, { useState, useRef } from "react";
-import { Box, Typography, Button, IconButton } from "@mui/material";
+import React, { useState, useRef, useEffect } from "react";
+import { Box, Typography, Button, IconButton, CircularProgress } from "@mui/material";
 import { CSSTransition } from "react-transition-group";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
@@ -35,7 +35,8 @@ const MessageComponent = ({
   navigateToNode,
   replies,
   chatType,
-  nodes,
+  relatedNodes,
+  fetchNode,
   setOpenMedia,
 }: {
   message: any;
@@ -55,11 +56,32 @@ const MessageComponent = ({
   navigateToNode: any;
   replies: any;
   chatType: string;
-  nodes: { [nodeId: string]: INode };
+  relatedNodes: { [nodeId: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   setOpenMedia: any;
 }) => {
   const boxRef = useRef<HTMLDivElement>(null);
   const scrolling = useRef<HTMLDivElement>(null);
+  const [sharedNode, setSharedNode] = useState<INode | null>(null);
+  const [loadingSharedNode, setLoadingSharedNode] = useState(false);
+
+  // Fetch shared node if not in cache
+  useEffect(() => {
+    if (message.messageType === "node" && message.sharedNodeId) {
+      const cachedNode = relatedNodes[message.sharedNodeId];
+      if (cachedNode) {
+        setSharedNode(cachedNode);
+        setLoadingSharedNode(false);
+      } else {
+        setLoadingSharedNode(true);
+        fetchNode(message.sharedNodeId).then((fetchedNode) => {
+          setSharedNode(fetchedNode);
+          setLoadingSharedNode(false);
+        });
+      }
+    }
+  }, [message.messageType, message.sharedNodeId, relatedNodes, fetchNode]);
+
   const handleDeleteMessage = async () => {
     if (
       await confirmIt(
@@ -180,7 +202,7 @@ const MessageComponent = ({
                 },
               }}
             >
-              {message.messageType === "node" && nodes[message.sharedNodeId] ? (
+              {message.messageType === "node" && sharedNode ? (
                 <Box
                   sx={{
                     display: "flex",
@@ -220,7 +242,21 @@ const MessageComponent = ({
                     <LinkIcon sx={{ color: DESIGN_SYSTEM_COLORS.gray25 }} />
                   </Box>
                   <Typography sx={{ fontWeight: "500" }}>
-                    {getTitle(nodes, message.sharedNodeId)?.substr(0, 40)}
+                    {sharedNode.title?.substr(0, 40)}
+                  </Typography>
+                </Box>
+              ) : message.messageType === "node" && loadingSharedNode ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    p: "10px",
+                  }}
+                >
+                  <CircularProgress size={20} />
+                  <Typography sx={{ fontWeight: "400", fontStyle: "italic" }}>
+                    Loading shared node...
                   </Typography>
                 </Box>
               ) : (

@@ -166,35 +166,46 @@ export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
 export const MODEL = "o3";
 export const GEMINI_MODEL = "gemini-2.5-pro";
 
-export const ONTOLOGY_APPS = [
-  {
-    id: "full-wordnet-o*net-verb-hierarchy-toms-version",
-    name: "Full WordNet O*Net Verb Hierarchy - Tom's Version",
-  },
-  {
-    id: "full-wordnet-o*net-verb-hierarchy-manual-gpt-upper",
-    name: "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
-  },
-  { id: "ontology-demo-version", name: "Ontology - Demo Version" },
-  {
-    id: "ontology-development-version",
-    name: "Ontology - Development Version",
-  },
-  { id: "old-ai-peer-ontology", name: "Old AI Peer Ontology" },
-  { id: "ai-peer-ontology", name: "AI Peer Ontology" },
-  {
-    id: "top-down-ai-peer-ontology",
-    name: "Top Down AI Peer Ontology",
-  },
-  {
-    id: "final-hierarchy-with-o*net",
-    name: "Final Hierarchy with O*Net",
-  },
-  {
-    id: "only-specifications-ai-peer",
-    name: "Only Specifications AI Peer Ontology",
-  },
-];
+export const ONTOLOGY_APPS = development
+  ? [
+    {
+      id: "final-hierarchy-with-o*net",
+      name: "Final Hierarchy with O*Net",
+    },
+    {
+      id: "ontology-development-version",
+      name: "Ontology - Development Version",
+    },
+  ]
+  : [
+    {
+      id: "full-wordnet-o*net-verb-hierarchy-toms-version",
+      name: "Full WordNet O*Net Verb Hierarchy - Tom's Version",
+    },
+    {
+      id: "full-wordnet-o*net-verb-hierarchy-manual-gpt-upper",
+      name: "Full WordNet O*Net Verb Hierarchy Manual GPT Upper",
+    },
+    { id: "ontology-demo-version", name: "Ontology - Demo Version" },
+    {
+      id: "ontology-development-version",
+      name: "Ontology - Development Version",
+    },
+    { id: "old-ai-peer-ontology", name: "Old AI Peer Ontology" },
+    { id: "ai-peer-ontology", name: "AI Peer Ontology" },
+    {
+      id: "top-down-ai-peer-ontology",
+      name: "Top Down AI Peer Ontology",
+    },
+    {
+      id: "final-hierarchy-with-o*net",
+      name: "Final Hierarchy with O*Net",
+    },
+    {
+      id: "only-specifications-ai-peer",
+      name: "Only Specifications AI Peer Ontology",
+    },
+  ];
 
 export const performerColors: Record<string, string> = {
   "A single human": "#1976d2",
