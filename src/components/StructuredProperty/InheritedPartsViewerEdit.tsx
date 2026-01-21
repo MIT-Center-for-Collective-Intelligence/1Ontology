@@ -390,6 +390,36 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
+    // Check if node has any parts at all
+    const hasParts = currentVisibleNode.properties?.parts?.[0]?.nodes?.length > 0;
+    const hasInheritanceRef = !!currentVisibleNode.inheritance?.parts?.ref;
+
+    if (!hasParts && !hasInheritanceRef) {
+      return (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            py: 2,
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              color: (theme) =>
+                theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
+              fontStyle: "italic",
+              fontSize: "0.75rem",
+            }}
+          >
+            No parts available
+          </Typography>
+        </Box>
+      );
+    }
+
     const cachedGeneralizationData = inheritedPartsDetails?.find(
       (calc) => calc.generalizationId === generalizationId
     );
@@ -896,9 +926,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const activeGeneralization = generalizations.find((g) => g.id === activeTab);
-  const activeGenDetail = inheritedPartsDetails?.find((d) => d.generalizationId === activeTab);
-  const activeGenId = activeGenDetail?.generalizationId;
-  const activeGenTitle = activeGenDetail?.generalizationTitle;
+  const activeGenId = activeGeneralization?.id;
+  const activeGenTitle = activeGeneralization?.title;
   const handleSorting = (e: any) => {
     const draggedId = e.draggableId.split("-")[1];
 
@@ -1044,7 +1073,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         </Box>
       </Box>
 
-      {inheritedPartsDetails && inheritedPartsDetails.length > 1 && (
+      {generalizations.length > 1 && (
         <Tabs
           value={activeTab}
           onChange={handleTabChange}
@@ -1053,16 +1082,16 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           scrollButtons="auto"
           sx={{ mt: 2.5, border: "1px solid gray", borderRadius: "25px" }}
         >
-          {inheritedPartsDetails.map((detail) => (
+          {generalizations.map((gen) => (
             <Tab
-              key={detail.generalizationId}
-              label={detail.generalizationTitle}
-              value={detail.generalizationId}
+              key={gen.id}
+              label={gen.title}
+              value={gen.id}
               sx={{
                 textTransform: "none",
-                fontWeight: activeTab === detail.generalizationId ? 900 : 500,
+                fontWeight: activeTab === gen.id ? 900 : 500,
                 bgcolor:
-                  activeTab === detail.generalizationId
+                  activeTab === gen.id
                     ? (theme) =>
                         theme.palette.mode === "light" ? "#bfbfbf" : "#4c4c4c"
                     : "transparent",

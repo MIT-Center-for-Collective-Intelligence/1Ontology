@@ -151,7 +151,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       // Clear active tab if there are no generalizations
       setActiveTab(null);
     }
-  }, [generalizations, activeTab]);
+  }, [currentVisibleNode.id]); // Use node ID to avoid infinite loop
 
   // Fetch missing inheritance reference for parts
   useEffect(() => {
@@ -226,6 +226,36 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
+    // Check if node has any parts at all
+    const hasParts = currentVisibleNode.properties?.parts?.[0]?.nodes?.length > 0;
+    const hasInheritanceRef = !!currentVisibleNode.inheritance?.parts?.ref;
+
+    if (!hasParts && !hasInheritanceRef) {
+      return (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            py: 2,
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              color: (theme) =>
+                theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
+              fontStyle: "italic",
+              fontSize: "0.75rem",
+            }}
+          >
+            No parts available
+          </Typography>
+        </Box>
+      );
+    }
+
     // Check if there is cached data for this generalization
     const cachedGeneralizationData = inheritedPartsDetails?.find(
       (calc) => calc.generalizationId === generalizationId
@@ -508,9 +538,10 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       </>
     );
   };
-  const activeGenDetail = inheritedPartsDetails?.find((detail) => detail.generalizationId === activeTab);
-  const activeGenId = activeGenDetail?.generalizationId;
-  const activeGenTitle = activeGenDetail?.generalizationTitle;
+  // Get active generalization directly from generalizations array
+  const activeGeneralization = generalizations.find((g) => g.id === activeTab);
+  const activeGenId = activeGeneralization?.id;
+  const activeGenTitle = activeGeneralization?.title;
 
   if (generalizations.length <= 0) {
     return null;
@@ -581,7 +612,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             </Box>
           </Box>
 
-          {inheritedPartsDetails && inheritedPartsDetails.length > 1 && (
+          {generalizations.length > 1 && (
             <Tabs
               value={activeTab}
               onChange={handleTabChange}
@@ -590,16 +621,16 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
               scrollButtons="auto"
               sx={{ mt: 2.5, border: "1px solid gray", borderRadius: "25px" }}
             >
-              {inheritedPartsDetails.map((detail) => (
+              {generalizations.map((gen) => (
                 <Tab
-                  key={detail.generalizationId}
-                  label={detail.generalizationTitle}
-                  value={detail.generalizationId}
+                  key={gen.id}
+                  label={gen.title}
+                  value={gen.id}
                   sx={{
                     textTransform: "none",
-                    fontWeight: activeTab === detail.generalizationId ? 900 : 500,
+                    fontWeight: activeTab === gen.id ? 900 : 500,
                     bgcolor:
-                      activeTab === detail.generalizationId
+                      activeTab === gen.id
                         ? (theme) =>
                             theme.palette.mode === "light"
                               ? "#bfbfbf"
@@ -612,30 +643,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             </Tabs>
           )}
 
-          {!activeGenDetail || !activeGenId || !activeGenTitle ? (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 1,
-                py: 2,
-              }}
-            >
-              <CircularProgress size={16} />
-              <Typography
-                variant="body2"
-                sx={{
-                  color: (theme) =>
-                    theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
-                  fontStyle: "italic",
-                  fontSize: "0.75rem",
-                }}
-              >
-                Loading...
-              </Typography>
-            </Box>
-          ) : (
+          {activeGenId && activeGenTitle && (
             <Box key={activeGenId}>
               <Box
                 sx={{
