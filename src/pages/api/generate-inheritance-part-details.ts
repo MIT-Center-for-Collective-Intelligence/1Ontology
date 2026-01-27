@@ -586,6 +586,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         const refDoc = await db.collection(NODES).doc(genRef).get();
         if (refDoc.exists) {
           const refData = refDoc.data();
+          // Add the ref node to relatedNodes so it can be accessed later
+          relatedNodes[genRef] = { id: refDoc.id, ...refData } as INode;
+
           if (refData?.properties?.parts) {
             refData.properties.parts.forEach((collection: ICollection) => {
               collection.nodes?.forEach((n: any) =>

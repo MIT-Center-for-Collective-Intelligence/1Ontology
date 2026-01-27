@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { getIdToken } from '@components/lib/firestoreClient/auth';
-import { InheritedPartsDetail, INode } from '@components/types/INode';
+import { useState, useEffect } from "react";
+import { InheritedPartsDetail, INode } from "@components/types/INode";
+import { Post } from "@components/lib/utils/Post";
 
 interface UseInheritedPartsDetailsReturn {
   data: InheritedPartsDetail[] | null;
@@ -9,7 +9,7 @@ interface UseInheritedPartsDetailsReturn {
 }
 
 export const useInheritedPartsDetails = (
-  currentVisibleNode?: INode | null
+  currentVisibleNode?: INode | null,
 ): UseInheritedPartsDetailsReturn => {
   const [data, setData] = useState<InheritedPartsDetail[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -19,7 +19,10 @@ export const useInheritedPartsDetails = (
     const fetchInheritedPartsDetails = async () => {
       setData(null);
 
-      if (!currentVisibleNode?.id || !currentVisibleNode.generalizations?.length) {
+      if (
+        !currentVisibleNode?.id ||
+        !currentVisibleNode.generalizations?.length
+      ) {
         return;
       }
 
@@ -33,15 +36,30 @@ export const useInheritedPartsDetails = (
         // Check if data is fresh (less than 15 minutes old)
         const FIFTEEN_MINUTES = 15 * 60 * 1000;
 
-        // Check if any inheritance details is stale
-        const isCacheFresh =
+        // Get current generalization IDs
+        const currentGenIds = currentVisibleNode.generalizations
+          .flatMap((c) => c.nodes)
+          .map((n) => n.id);
+
+        // Check if cached data matches current generalizations
+        const cachedGenIds =
+          cachedData && Array.isArray(cachedData)
+            ? cachedData.map((calc: any) => calc.generalizationId)
+            : [];
+        const generalizationsMatch =
           cachedData &&
           Array.isArray(cachedData) &&
           cachedData.length > 0 &&
+          currentGenIds.length === cachedGenIds.length &&
+          currentGenIds.every((id) => cachedGenIds.includes(id));
+
+        // Check if any inheritance details is stale
+        const isCacheFresh =
+          generalizationsMatch &&
           cachedData.every(
             (calc: any) =>
               calc.createdAt &&
-              Date.now() - calc.createdAt.toMillis() < FIFTEEN_MINUTES
+              Date.now() - calc.createdAt.toMillis() < FIFTEEN_MINUTES,
           );
 
         if (isCacheFresh) {
@@ -51,24 +69,13 @@ export const useInheritedPartsDetails = (
         }
 
         // Cache is stale or doesn't exist, call API
-        const token = await getIdToken();
-        const response = await fetch("/api/generate-inheritance-part-details", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            nodeId: currentVisibleNode.id,
-            appName: currentVisibleNode.appName,
-          }),
+        const result = await Post<{
+          success: boolean;
+          data: InheritedPartsDetail[];
+        }>("/generate-inheritance-part-details", {
+          nodeId: currentVisibleNode.id,
+          appName: currentVisibleNode.appName,
         });
-
-        if (!response.ok) {
-          throw new Error("Failed to calculate inherited parts");
-        }
-
-        const result = await response.json();
 
         if (result.success && result.data) {
           console.log("Successfully fetched fresh data from API");
