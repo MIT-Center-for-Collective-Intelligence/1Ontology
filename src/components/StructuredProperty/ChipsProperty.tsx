@@ -21,7 +21,8 @@ import InheritanceDetailsPanel from "./InheritanceDetailsPanel";
 const ChipsProperty = ({
   currentVisibleNode,
   property,
-  nodes,
+  relatedNodes,
+  fetchNode,
   selectedDiffNode,
   locked,
   currentImprovement,
@@ -32,7 +33,8 @@ const ChipsProperty = ({
 }: {
   currentVisibleNode: INode;
   property: string;
-  nodes: { [id: string]: INode };
+  relatedNodes: { [id: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   selectedDiffNode: any;
   locked: boolean;
   currentImprovement: any;
@@ -75,7 +77,7 @@ const ChipsProperty = ({
     }
     const result = currentVisibleNode.inheritance[property]?.ref
       ? getPropertyValue(
-          nodes,
+          relatedNodes,
           currentVisibleNode.inheritance[property]?.ref,
           property,
         )
@@ -94,7 +96,7 @@ const ChipsProperty = ({
     currentVisibleNode,
     selectedDiffNode,
     currentImprovement,
-    nodes,
+    relatedNodes,
   ]);
 
   useEffect(() => {
@@ -175,7 +177,6 @@ const ChipsProperty = ({
         borderRadius: property !== "context" ? "30px" : "",
         borderBottomRightRadius: "18px",
         borderBottomLeftRadius: "18px",
-        minWidth: "500px",
         width: "100%",
         maxHeight: "100%",
         overflow: "auto",
@@ -230,7 +231,7 @@ const ChipsProperty = ({
             <SelectInheritance
               currentVisibleNode={currentVisibleNode}
               property={property}
-              nodes={nodes}
+              nodes={relatedNodes}
               enableEdit={enableEdit}
             />
           )}
@@ -256,7 +257,8 @@ const ChipsProperty = ({
       <InheritanceDetailsPanel
         property={property}
         currentVisibleNode={currentVisibleNode}
-        nodes={nodes}
+        relatedNodes={relatedNodes}
+        fetchNode={fetchNode}
       />
     </Paper>
   );

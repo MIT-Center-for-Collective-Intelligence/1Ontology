@@ -6,11 +6,8 @@ import {
   Box,
   Tabs,
   Tab,
-  Button,
-  ListItem,
   Modal,
   Paper,
-  Typography,
   IconButton,
 } from "@mui/material";
 import {
@@ -28,9 +25,9 @@ import React, {
   useState,
 } from "react";
 import Chat from "../Chat/Chat";
-import { SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
-import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
-import TreeViewSimplified from "../OntologyComponents/TreeViewSimplified";
+import { SCROLL_BAR_STYLE, development } from "@components/lib/CONSTANTS";
+import { Post } from "@components/lib/utils/Post";
+import ExpandSearchResult from "../OntologyComponents/ExpandSearchResult";
 import { SearchBox } from "../SearchBox/SearchBox";
 import { INode } from "@components/types/INode";
 
@@ -39,29 +36,27 @@ const ChatSideBar = ({
   user,
   confirmIt,
   searchWithFuse,
-  treeVisualization,
-  expandedNodes,
-  setExpandedNodes,
-  onOpenNodesTree,
   navigateToNode,
   chatTabs,
   selectedChatTab,
   setSelectedChatTab,
   nodes,
+  fetchNode,
+  skillsFuture = false,
+  skillsFutureApp = "",
 }: {
   currentVisibleNode: any;
   user: any;
   confirmIt: any;
   searchWithFuse: any;
-  treeVisualization: any;
-  expandedNodes: any;
-  setExpandedNodes: any;
-  onOpenNodesTree: any;
   navigateToNode: any;
   chatTabs: { title: string; id: string; placeholder: string }[];
   selectedChatTab: number;
   setSelectedChatTab: Function;
   nodes: { [nodeId: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
+  skillsFuture?: boolean;
+  skillsFutureApp?: string;
 }) => {
   const db = getFirestore();
   const [users, setUsers] = useState<
@@ -75,6 +70,10 @@ const ChatSideBar = ({
   >([]);
   const [openModel, setOpenModel] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [chromaSearchResults, setChromaSearchResults] = useState<any[]>([]);
+  const [loadingChromaSearch, setLoadingChromaSearch] = useState(false);
+  const [useChromaResults, setUseChromaResults] = useState(false);
+  const previousSearchValue = useRef(searchValue);
   const scrollingRef = useRef<any>();
 
   const handleChatTabsChange = (event: any, newValue: number) => {
@@ -85,13 +84,164 @@ const ChatSideBar = ({
     // });
   };
 
+  // Reset to fuse search when user types
+  // This will be removed after fuse search is removed entirely
+  useEffect(() => {
+    if (searchValue !== previousSearchValue.current && useChromaResults) {
+      setUseChromaResults(false);
+      setChromaSearchResults([]);
+    }
+    previousSearchValue.current = searchValue;
+  }, [searchValue, useChromaResults]);
+
+  // Fetch all child nodes from search results
+  const fetchChildNodesForSearchResults = useCallback(
+    async (searchResults: any[]) => {
+      if (!fetchNode || searchResults.length === 0) return;
+
+      const childIds = new Set<string>();
+
+      searchResults.forEach((result) => {
+        // Get specializations
+        result.specializations?.forEach((collection: any) => {
+          collection.nodes?.forEach((node: any) => {
+            if (!nodes[node.id]) {
+              childIds.add(node.id);
+            }
+          });
+        });
+
+        // Get generalizations
+        result.generalizations?.forEach((collection: any) => {
+          collection.nodes?.forEach((node: any) => {
+            if (!nodes[node.id]) {
+              childIds.add(node.id);
+            }
+          });
+        });
+
+        // Get parts if applicable
+        if (result.properties?.parts) {
+          result.properties.parts.forEach((collection: any) => {
+            collection.nodes?.forEach((node: any) => {
+              if (!nodes[node.id]) {
+                childIds.add(node.id);
+              }
+            });
+          });
+        }
+      });
+
+      // Fetch all missing child nodes in parallel
+      if (childIds.size > 0) {
+        console.log(
+          `[CHAT SIDEBAR] Fetching ${childIds.size} child nodes for search results`
+        );
+        await Promise.all(Array.from(childIds).map((id) => fetchNode(id)));
+        console.log(
+          `[CHAT SIDEBAR] Successfully fetched ${childIds.size} child nodes`
+        );
+      }
+    },
+    [fetchNode, nodes]
+  );
+
+  // Handle Chroma search with child node fetching
+  const handleChromaSearch = useCallback(async () => {
+    console.log(
+      "[CHAT SIDEBAR] handleChromaSearch called with searchValue:",
+      searchValue
+    );
+
+    if (!searchValue || searchValue.trim().length < 3) {
+      console.log("[CHAT SIDEBAR] Search value too short or empty, returning");
+      return;
+    }
+
+    const fuseSearch = searchWithFuse(searchValue);
+    console.log(
+      "[CHAT SIDEBAR] Starting Chroma search with fuse fallback:",
+      fuseSearch.length,
+      "results"
+    );
+
+    try {
+      setLoadingChromaSearch(true);
+      setUseChromaResults(true);
+      console.log("[CHAT SIDEBAR] Set loading state and useChromaResults flag");
+
+      const response: any = await Post("/searchChroma", {
+        query: searchValue,
+        skillsFuture,
+        appName: skillsFuture ? skillsFutureApp : null,
+      });
+
+      const results: any = [...(response.results || [])];
+
+      // Fallback to fuse if no chroma results
+      if (results.length <= 0 && fuseSearch.length > 0) {
+        results.push(...fuseSearch);
+      }
+      const exactResult = fuseSearch[0];
+      if (
+        exactResult &&
+        exactResult.title.trim() === searchValue.toLowerCase().trim() &&
+        !results.some((r: any) => r.id === exactResult.id)
+      ) {
+        results.unshift({ id: exactResult.id, title: exactResult.title });
+      }
+
+      setChromaSearchResults(development ? fuseSearch : results);
+
+      // Fetch child nodes for all search results
+      await fetchChildNodesForSearchResults(development ? fuseSearch : results);
+
+      console.log(
+        `[CHAT SIDEBAR] Chroma search complete with ${results.length} results`
+      );
+    } catch (error) {
+      console.error("[CHAT SIDEBAR] Error in chroma search:", error);
+      setChromaSearchResults(fuseSearch);
+    } finally {
+      setLoadingChromaSearch(false);
+    }
+  }, [
+    searchValue,
+    skillsFuture,
+    skillsFutureApp,
+    searchWithFuse,
+    fetchChildNodesForSearchResults,
+  ]);
+
   const searchResults = useMemo(() => {
     /*  recordLogs({
       action: "Searched",
       query: searchValue,
     }); */
     return searchWithFuse(searchValue);
-  }, [searchValue]);
+  }, [searchValue, searchWithFuse]);
+
+  // Always show currentVisibleNode at the top, with search results below if present
+  const displayResults = useMemo(() => {
+    if (!currentVisibleNode) return [];
+
+    const results: INode[] = [];
+    results.push(currentVisibleNode);
+
+    // Determine which search results to use
+    const resultsToUse = useChromaResults ? chromaSearchResults : searchResults;
+
+    // Add search results if searchValue exists
+    if (searchValue && resultsToUse.length > 0) {
+      // Filter out currentVisibleNode from search results to avoid duplicates
+      const filteredResults = resultsToUse.filter(
+        (node: INode) => node.id !== currentVisibleNode.id
+      );
+      results.push(...filteredResults);
+    }
+
+    return results;
+  }, [currentVisibleNode, searchValue, searchResults, useChromaResults, chromaSearchResults]);
 
   useEffect(() => {
     (async () => {
@@ -259,7 +409,8 @@ const ChatSideBar = ({
               confirmIt={confirmIt}
               setOpenSelectModel={setOpenModel}
               navigateToNode={navigateToNode}
-              nodes={nodes}
+              relatedNodes={nodes}
+              fetchNode={fetchNode}
               scrollingRef={scrollingRef}
               placeholder={tab.placeholder}
             />
@@ -296,6 +447,8 @@ const ChatSideBar = ({
                 setSearch={setSearchValue}
                 search={searchValue}
                 label={"Search ..."}
+                onSearch={handleChromaSearch}
+                loading={loadingChromaSearch}
               />
               <IconButton
                 onClick={() => {
@@ -307,53 +460,26 @@ const ChatSideBar = ({
             </Box>
           </Paper>
           <Paper>
-            {searchValue ? (
-              <Box>
-                {" "}
-                {searchResults.map((node: any) => (
-                  <ListItem
-                    key={node.id}
-                    onClick={() => {}}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      color: "white",
-                      cursor: "pointer",
-                      borderRadius: "4px",
-                      padding: "8px",
-                      transition: "background-color 0.3s",
-                      // border: "1px solid #ccc",
-                      mt: "5px",
-                      "&:hover": {
-                        backgroundColor: (theme) =>
-                          theme.palette.mode === "dark"
-                            ? DESIGN_SYSTEM_COLORS.notebookG450
-                            : DESIGN_SYSTEM_COLORS.gray200,
-                      },
-                    }}
-                  >
-                    {" "}
-                    <Typography>{node.title}</Typography>
-                    <Button
-                      variant="outlined"
-                      onClick={() => sendNode(node.id, node.title)}
-                    >
-                      Send
-                    </Button>
-                  </ListItem>
-                ))}
-              </Box>
-            ) : (
-              <TreeViewSimplified
-                treeVisualization={treeVisualization}
-                expandedNodes={expandedNodes}
-                setExpandedNodes={setExpandedNodes}
-                onOpenNodesTree={onOpenNodesTree}
-                sendNode={sendNode}
-                currentVisibleNode={currentVisibleNode}
-                loadingIds={new Set()}
-              />
-            )}
+            <ExpandSearchResult
+              searchResultsForSelection={displayResults}
+              markItemAsChecked={(nodeId: string) => {
+                const node = displayResults.find((n) => n.id === nodeId);
+                if (node) {
+                  sendNode(node.id, node.title);
+                }
+              }}
+              handleCloning={null}
+              checkedItems={new Set()}
+              user={user}
+              nodes={nodes}
+              cloning={false}
+              isSaving={false}
+              disabledAddButton={false}
+              getNumOfGeneralizations={() => false}
+              selectedProperty=""
+              addACloneNodeQueue={() => {}}
+              currentVisibleNode={currentVisibleNode}
+            />
           </Paper>
         </Box>
       </Modal>

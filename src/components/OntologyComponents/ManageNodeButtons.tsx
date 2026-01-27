@@ -8,10 +8,17 @@ import {
   ToggleButton,
   Tooltip,
   Typography,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import EditOffIcon from "@mui/icons-material/EditOff";
-import React from "react";
+import React, { useState } from "react";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import ChatIcon from "@mui/icons-material/Chat";
@@ -67,11 +74,154 @@ const ManageNodeButtons = ({
     const userRef = doc(collection(db, "aiPeerLogs"), "1man");
     updateDoc(userRef, { waitingAIPeer: false });
   };
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const openMenu = Boolean(anchorEl);
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const renderSecondaryActions = () => {
+    if (isMobile) {
+      return (
+        <>
+          <IconButton onClick={handleMenuClick}>
+            <MoreVertIcon />
+          </IconButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={openMenu}
+            onClose={handleMenuClose}
+            onClick={handleMenuClose}
+            PaperProps={{
+              elevation: 0,
+              sx: {
+                overflow: "visible",
+                filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
+                mt: 1.5,
+                "& .MuiAvatar-root": {
+                  width: 32,
+                  height: 32,
+                  ml: -0.5,
+                  mr: 1,
+                },
+                "&:before": {
+                  content: '""',
+                  display: "block",
+                  position: "absolute",
+                  top: 0,
+                  right: 14,
+                  width: 10,
+                  height: 10,
+                  bgcolor: "background.paper",
+                  transform: "translateY(-50%) rotate(45deg)",
+                  zIndex: 0,
+                },
+              },
+            }}
+            transformOrigin={{ horizontal: "right", vertical: "top" }}
+            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+          >
+            {!locked && (
+              <MenuItem onClick={displayInheritanceSettings}>
+                <ListItemIcon>
+                  <AccountTreeIcon
+                    fontSize="small"
+                    color={
+                      activeSidebar === "inheritanceSettings"
+                        ? "primary"
+                        : "inherit"
+                    }
+                  />
+                </ListItemIcon>
+                <ListItemText>Manage Inheritance</ListItemText>
+              </MenuItem>
+            )}
+            <MenuItem onClick={displayNodeChat}>
+              <ListItemIcon>
+                <ChatIcon
+                  fontSize="small"
+                  color={activeSidebar === "chat" ? "primary" : "inherit"}
+                />
+              </ListItemIcon>
+              <ListItemText>Node Comments</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={displayNodeHistory}>
+              <ListItemIcon>
+                <HistoryIcon
+                  fontSize="small"
+                  color={
+                    activeSidebar === "nodeHistory" ? "primary" : "inherit"
+                  }
+                />
+              </ListItemIcon>
+              <ListItemText>Node History</ListItemText>
+            </MenuItem>
+            {!locked && !unclassified && (
+              <MenuItem onClick={() => deleteNode()}>
+                <ListItemIcon>
+                  <DeleteIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Delete Node</ListItemText>
+              </MenuItem>
+            )}
+          </Menu>
+        </>
+      );
+    }
+
+    return (
+      <>
+        {!locked && (
+          <Tooltip title="Manage Inheritance">
+            <IconButton onClick={displayInheritanceSettings}>
+              <AccountTreeIcon
+                color={
+                  activeSidebar === "inheritanceSettings"
+                    ? "primary"
+                    : "inherit"
+                }
+              />
+            </IconButton>
+          </Tooltip>
+        )}
+        <Tooltip title="Open Node Comments">
+          <IconButton onClick={displayNodeChat}>
+            <ChatIcon
+              color={activeSidebar === "chat" ? "primary" : "inherit"}
+            />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="View Node's History">
+          <IconButton onClick={displayNodeHistory}>
+            <HistoryIcon
+              color={activeSidebar === "nodeHistory" ? "primary" : "inherit"}
+            />
+          </IconButton>
+        </Tooltip>
+        {!locked && !unclassified && (
+          <Tooltip title="Delete Node">
+            <IconButton onClick={() => deleteNode()}>
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+      </>
+    );
+  };
   return (
     <Box>
       <Box
         sx={{
           display: "flex",
+          flexWrap: "wrap",
           alignItems: "center",
           gap: "5px",
         }}
@@ -225,40 +375,7 @@ const ManageNodeButtons = ({
             )}
           </Tooltip>
         )}
-        {!locked && (
-          <Tooltip title="Manage Inheritance">
-            <IconButton onClick={displayInheritanceSettings}>
-              <AccountTreeIcon
-                color={
-                  activeSidebar === "inheritanceSettings"
-                    ? "primary"
-                    : "inherit"
-                }
-              />
-            </IconButton>
-          </Tooltip>
-        )}
-        <Tooltip title="Open Node Comments">
-          <IconButton onClick={displayNodeChat}>
-            <ChatIcon
-              color={activeSidebar === "chat" ? "primary" : "inherit"}
-            />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="View Node's History">
-          <IconButton onClick={displayNodeHistory}>
-            <HistoryIcon
-              color={activeSidebar === "nodeHistory" ? "primary" : "inherit"}
-            />
-          </IconButton>
-        </Tooltip>
-        {!locked && !unclassified && (
-          <Tooltip title="Delete Node">
-            <IconButton onClick={() => deleteNode()}>
-              <DeleteIcon />
-            </IconButton>
-          </Tooltip>
-        )}
+        {renderSecondaryActions()}
       </Box>
     </Box>
   );
