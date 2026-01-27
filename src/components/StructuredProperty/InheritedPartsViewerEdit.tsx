@@ -153,20 +153,19 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
   React.useEffect(() => {
     // Set the first generalization as the active tab initially
-    if (inheritedPartsDetails && inheritedPartsDetails.length > 0 && !activeTab) {
-      setActiveTab(inheritedPartsDetails[0].generalizationId);
+    if (generalizations.length > 0 && !activeTab) {
+      setActiveTab(generalizations[0].id);
     } else if (
-      inheritedPartsDetails &&
-      inheritedPartsDetails.length > 0 &&
-      !inheritedPartsDetails.find((g) => g.generalizationId === activeTab)
+      generalizations.length > 0 &&
+      !generalizations.find((g) => g.id === activeTab)
     ) {
       // If the active tab is no longer in the list, reset to the first one
-      setActiveTab(inheritedPartsDetails[0].generalizationId);
-    } else if (!inheritedPartsDetails || inheritedPartsDetails.length === 0) {
+      setActiveTab(generalizations[0].id);
+    } else if (generalizations.length === 0) {
       // Clear active tab if there are no generalizations
       setActiveTab(null);
     }
-  }, [inheritedPartsDetails, activeTab]);
+  }, [currentVisibleNode.id]); 
 
   // Fetch missing inheritance reference for parts
   useEffect(() => {
