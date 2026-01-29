@@ -232,8 +232,14 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
     const { propertyType, isNumeric } = inheritanceData;
     if (propertyType) return propertyType;
     if (isNumeric) return "numeric";
-    if (Array.isArray(inheritanceData.inheritanceSources[0]?.value))
+    if (Array.isArray(inheritanceData.inheritanceSources[0]?.value)) {
+      // Check if it's a collection to prevent type mismatch error
+      const firstItem = inheritanceData.inheritanceSources[0]?.value?.[0];
+      if (firstItem?.nodes !== undefined || firstItem?.collectionName !== undefined) {
+        return "collection";
+      }
       return "string-array";
+    }
     return "string";
   }, [inheritanceData]);
 
@@ -354,7 +360,8 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
 
   if (
     !inheritanceData.hasMultipleGeneralizations ||
-    !currentVisibleNode.inheritance[property]?.ref
+    !currentVisibleNode.inheritance[property]?.ref ||
+    property === "parts"
   ) {
     return null;
   }
