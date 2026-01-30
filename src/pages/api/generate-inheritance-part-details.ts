@@ -14,9 +14,16 @@ const getPartOptionalStatus = (
   nodes: { [id: string]: INode },
 ): boolean => {
   const node = nodes[nodeId];
-  if (!node?.properties?.parts) return false;
+  if (!node) return false;
+  const inheritanceRef = node.inheritance?.["parts"]?.ref;
+  const nodeParts =
+    inheritanceRef && nodes[inheritanceRef]
+      ? nodes[inheritanceRef].properties["parts"]
+      : node.properties["parts"];
 
-  for (const collection of node.properties.parts) {
+  if (!nodeParts) return false;
+
+  for (const collection of nodeParts) {
     const part = collection.nodes.find((n: any) => n.id === partId);
     if (part) return !!part.optional;
   }
