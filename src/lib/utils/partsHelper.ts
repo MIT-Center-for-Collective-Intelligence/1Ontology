@@ -459,10 +459,9 @@ export const getAllGeneralizations = (
     .flatMap((collection: any) =>
       collection.nodes.map((node: any) => ({
         id: node.id,
-        title: getTitle(nodes, node.id),
+        title: node.title || getTitle(nodes, node.id) || "Unknown",
       })),
-    )
-    .filter((gen: any) => nodes[gen.id]);
+    );
 };
 
 // /**

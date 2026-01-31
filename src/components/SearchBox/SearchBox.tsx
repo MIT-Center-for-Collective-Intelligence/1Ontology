@@ -1,10 +1,13 @@
 import {
+  Box,
+  CircularProgress,
   FormControl,
   IconButton,
   InputAdornment,
   OutlinedInput,
+  Tooltip,
 } from "@mui/material";
-import React, { useState } from "react";
+import React from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -14,6 +17,8 @@ type IProps = {
   label: string;
   glowSearchBox?: boolean;
   sx?: any;
+  onSearch?: () => void;
+  loading?: boolean;
 };
 
 export const SearchBox = ({
@@ -22,8 +27,33 @@ export const SearchBox = ({
   label,
   glowSearchBox,
   sx,
+  onSearch,
+  loading = false,
 }: IProps) => {
-  const [inputValue, setInputValue] = useState("");
+  const handleSidebarClose = () => {
+    const element = document.getElementById(
+      "notebook-sidebar-view",
+    ) as HTMLElement;
+    if (element) {
+      element.style.left = "-1000px";
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    console.log("[SEARCH BOX] Key pressed:", e.key, "search value:", search);
+    if (e.key === "Enter") {
+      if (onSearch && search.trim().length >= 3) {
+        console.log("[SEARCH BOX] Calling onSearch callback");
+        onSearch();
+      } else {
+        console.log("[SEARCH BOX] Enter pressed but conditions not met:", {
+          hasOnSearch: !!onSearch,
+          searchLength: search.trim().length,
+        });
+      }
+      handleSidebarClose();
+    }
+  };
 
   const inputStyles = {
     borderRadius: "30px",
@@ -56,76 +86,89 @@ export const SearchBox = ({
       }}
       fullWidth
     >
-      {window.innerWidth > 800 ? (
-        <OutlinedInput
-          placeholder={label}
-          sx={inputStyles}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          startAdornment={
-            <InputAdornment position="start">
-              <SearchIcon
-                sx={{
-                  color: (theme) =>
-                    glowSearchBox
-                      ? "rgba(0, 255, 0, 0.6)"
-                      : theme.palette.mode === "dark"
-                        ? "white!important"
-                        : "gray",
-                }}
-              />
+      <OutlinedInput
+        placeholder={label}
+        sx={inputStyles}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        onKeyDown={handleKeyDown}
+        startAdornment={
+          <InputAdornment position="start">
+            <SearchIcon
+              sx={{
+                color: (theme) =>
+                  glowSearchBox
+                    ? "rgba(0, 255, 0, 0.6)"
+                    : theme.palette.mode === "dark"
+                      ? "white!important"
+                      : "gray",
+              }}
+            />
+          </InputAdornment>
+        }
+        endAdornment={
+          search && (
+            <InputAdornment position="end" sx={{ p: "10px" }}>
+              <Box sx={{ display: "flex", alignItems: "center", p: 1 }}>
+                {onSearch && (
+                  <Tooltip title={loading ? "" : "Search in the Ontology"}>
+                    <IconButton
+                      onClick={() => {
+                        console.log(
+                          "[SEARCH BOX] Search button clicked, search value:",
+                          search,
+                        );
+                        if (search.trim().length >= 3) {
+                          console.log(
+                            "[SEARCH BOX] Calling onSearch callback from button",
+                          );
+                          onSearch();
+                          handleSidebarClose();
+                        } else {
+                          console.log(
+                            "[SEARCH BOX] Search value too short:",
+                            search.trim().length,
+                          );
+                        }
+                      }}
+                      color="primary"
+                      edge="end"
+                      disabled={loading || search.trim().length < 3}
+                    >
+                      {loading ? (
+                        <CircularProgress
+                          size={20}
+                          sx={{
+                            color: (theme) =>
+                              glowSearchBox
+                                ? "rgba(0, 255, 0, 0.6)"
+                                : theme.palette.mode === "dark"
+                                  ? "white!important"
+                                  : "gray",
+                          }}
+                        />
+                      ) : (
+                        <SearchIcon />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                )}
+                <Tooltip title={"Clear"}>
+                  <IconButton
+                    onClick={() => {
+                      setSearch("");
+                    }}
+                    edge="end"
+                    sx={{ color: "white", ml: "13px" }}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </InputAdornment>
-          }
-          endAdornment={
-            search && (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={() => {
-                    setSearch("");
-                  }}
-                  color="primary"
-                  edge="end"
-                >
-                  <CloseIcon />
-                </IconButton>
-              </InputAdornment>
-            )
-          }
-        />
-      ) : (
-        <OutlinedInput
-          placeholder={label}
-          sx={inputStyles}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          endAdornment={
-            <InputAdornment position="end">
-              <IconButton
-                color="primary"
-                onClick={() => {
-                  setSearch(inputValue);
-                  setInputValue("");
-                  const element = document.getElementById(
-                    "notebook-sidebar-view",
-                  ) as HTMLElement;
-                  if (element) {
-                    element.style.left = "-1000px";
-                  }
-                }}
-              >
-                <SearchIcon
-                  sx={{
-                    color: (theme) =>
-                      theme.palette.mode === "dark"
-                        ? "white!important"
-                        : "gray",
-                  }}
-                />
-              </IconButton>
-            </InputAdornment>
-          }
-        />
-      )}
+          )
+        }
+      />
     </FormControl>
   );
 };

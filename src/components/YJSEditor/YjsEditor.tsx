@@ -18,6 +18,7 @@ const YjsEditor = ({
   onEditorReady,
   setEditorContent,
   fallbackContent,
+  placeholder,
 }: {
   fullname: string;
   property: string;
@@ -31,6 +32,7 @@ const YjsEditor = ({
   onEditorReady?: (editor: any) => void;
   setEditorContent: any;
   fallbackContent?: string;
+  placeholder?: string;
 }) => {
   return (
     <YjsEditorWrapper
@@ -46,6 +48,7 @@ const YjsEditor = ({
       onEditorReady={onEditorReady}
       setEditorContent={setEditorContent}
       fallbackContent={fallbackContent}
+      placeholder={placeholder}
     />
   );
 };
