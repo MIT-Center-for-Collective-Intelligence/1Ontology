@@ -75,6 +75,7 @@ The `Node` component is intended to be used within an application that requires 
 This documentation provides a high-level overview of the `Node` component and its capabilities. For detailed implementation and integration, refer to the source code and the specific application context in which the component is used.*/
 import { Link, Paper, Stack, Typography, useMediaQuery } from "@mui/material";
 import { Box } from "@mui/system";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import {
   collection,
   doc,
@@ -948,7 +949,13 @@ const Node = ({
       if (specializations.length > 0) {
         if (checkIfCanDeleteANode(nodes, specializations)) {
           await confirmIt(
-            "To delete a node, you need to first delete its specializations or move them under a different generalization.",
+            <Box>
+              <DeleteForeverIcon sx={{ color: "orange" }} />
+              <Typography sx={{ mt: 2 }}>
+                To delete a node, you need to first delete its specializations
+                or move them under a different generalization.
+              </Typography>
+            </Box>,
             "Ok",
             "",
           );
@@ -957,7 +964,12 @@ const Node = ({
       }
       if (
         await confirmIt(
-          `Are you sure you want to delete this Node?`,
+          <Box>
+            <DeleteForeverIcon sx={{ color: "orange" }} />
+            <Typography sx={{ mt: 2, fontWeight: "bold" }}>
+              Are you sure you want to delete this Node?
+            </Typography>
+          </Box>,
           "Delete Node",
           "Keep Node",
         )

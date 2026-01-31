@@ -31,26 +31,34 @@ import {
   DialogContent,
   DialogContentText,
   TextField,
+  Typography,
 } from "@mui/material";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { DESIGN_SYSTEM_COLORS } from "../theme/colors";
 
 const useDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [dialogMessage, setDialogMessage] = useState("");
+  const [dialogMessage, setDialogMessage] = useState<string | React.ReactNode>(
+    "",
+  );
   const [isPrompt, setIsPrompt] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const resolveRef = React.useRef<any>(null);
+  const resolveRef = useRef<any>(null);
   const [confirmation, setConfirmation] = useState("");
   const [cancel, setCancel] = useState("");
 
   const showDialog = useCallback(
-    (message: string, prompt = false, confirmation: string, cancel: string) => {
+    (
+      message: string | React.ReactNode,
+      prompt = false,
+      confirmation = "Ok",
+      cancel = "",
+    ) => {
       setDialogMessage(message);
-      setIsOpen(true);
       setIsPrompt(prompt);
       setConfirmation(confirmation);
       setCancel(cancel);
+      setIsOpen(true);
 
       return new Promise((resolve) => {
         resolveRef.current = resolve;
@@ -60,78 +68,117 @@ const useDialog = () => {
   );
 
   const closeDialog = useCallback(
-    (confirmed: any) => {
+    (confirmed: boolean) => {
       setIsOpen(false);
-      setDialogMessage("");
-      setInputValue("");
 
       if (resolveRef.current) {
         resolveRef.current(isPrompt ? inputValue : confirmed);
       }
+
+      setDialogMessage("");
+      setInputValue("");
     },
-    [isPrompt, inputValue],
+    [inputValue, isPrompt],
   );
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(event.target.value);
-  };
-
   const ConfirmDialog = (
-    <Dialog open={isOpen} onClose={() => closeDialog(false)}>
-      <DialogContent>
-        <DialogContentText>{dialogMessage}</DialogContentText>
+    <Dialog
+      open={isOpen}
+      onClose={() => closeDialog(false)}
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 4,
+            px: 1,
+            boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+            minWidth: 420,
+            border: "1px solid gold",
+          },
+        },
+      }}
+    >
+      <DialogContent sx={{ textAlign: "center", pt: 4 }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 600,
+            mb: 1,
+          }}
+        >
+          {dialogMessage}
+        </Typography>
+
         {isPrompt && (
           <TextField
             autoFocus
-            margin="dense"
-            id="prompt-input"
-            type="text"
-            value={inputValue}
-            placeholder="Full name"
-            onChange={handleInputChange}
             fullWidth
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Full name"
             sx={{
               mt: 3,
+              maxWidth: 320,
               mx: "auto",
-              display: "block",
-              textAlign: "center",
-              width: "60%",
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "14px",
+              },
             }}
           />
         )}
       </DialogContent>
-      <DialogActions sx={{ justifyContent: "center", mb: "5px" }}>
-        <Button
-          onClick={() => closeDialog(true)}
-          variant="contained"
-          sx={{
-            borderRadius: "26px",
-            backgroundColor: DESIGN_SYSTEM_COLORS.primary800,
-          }}
-        >
-          {confirmation || "Ok"}
-        </Button>
-        {!isPrompt && cancel && (
+
+      <DialogActions
+        sx={{
+          justifyContent: "center",
+          gap: 1.5,
+          pb: 3,
+        }}
+      >
+        {cancel && !isPrompt && (
           <Button
             onClick={() => closeDialog(false)}
-            color="primary"
-            variant="outlined"
-            sx={{ borderRadius: "26px" }}
+            variant="text"
+            sx={{
+              color: "text.secondary",
+              px: 3,
+              border: "1.4px dashed #ccc",
+              borderRadius: "25px",
+            }}
           >
             {cancel}
           </Button>
         )}
+
+        <Button
+          onClick={() => closeDialog(true)}
+          variant="contained"
+          sx={{
+            px: 4,
+            py: 1,
+            borderRadius: "999px",
+            textTransform: "none",
+            fontWeight: 600,
+            backgroundColor: DESIGN_SYSTEM_COLORS.primary800,
+            boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
+            "&:hover": {
+              backgroundColor: DESIGN_SYSTEM_COLORS.primary700,
+            },
+          }}
+        >
+          {confirmation}
+        </Button>
       </DialogActions>
     </Dialog>
   );
 
   const promptIt = useCallback(
-    (message: string, confirmation: string, cancel: string) =>
+    (message: string, confirmation = "Confirm", cancel = "Cancel") =>
       showDialog(message, true, confirmation, cancel),
     [showDialog],
   );
+
   const confirmIt = useCallback(
-    (message: any, confirmation: string, cancel: string) =>
+    (message: string | React.ReactNode, confirmation = "Yes", cancel = "No") =>
       showDialog(message, false, confirmation, cancel),
     [showDialog],
   );

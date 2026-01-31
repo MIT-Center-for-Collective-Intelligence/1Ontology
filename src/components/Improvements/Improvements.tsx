@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import {
   Button,
   CircularProgress,
@@ -580,7 +581,13 @@ const Improvements = ({
         if (specializations.length > 0) {
           if (checkIfCanDeleteANode(nodes, specializations)) {
             await confirmIt(
-              "To delete a node, you need to first delete its specializations or move them under a different generalization.",
+              <Box>
+                <DeleteForeverIcon sx={{ color: "orange" }} />
+                <Typography>
+                  To delete a node, you need to first delete its specializations
+                  or move them under a different generalization.
+                </Typography>
+              </Box>,
               "Ok",
               "",
             );
@@ -589,7 +596,12 @@ const Improvements = ({
         }
         if (
           await confirmIt(
-            `Are you sure you want to delete this Node?`,
+            <Box>
+              <DeleteForeverIcon sx={{ color: "orange" }} />
+              <Typography sx={{ mt: 2, fontWeight: "bold" }}>
+                Are you sure you want to delete this Node?`
+              </Typography>
+            </Box>,
             "Delete Node",
             "Keep Node",
           )
