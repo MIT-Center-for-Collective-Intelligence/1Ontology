@@ -131,6 +131,10 @@ const ExpandSearchResult = ({
                 borderLeft: `2px solid #797575`,
               },
             },
+            [`& .MuiTreeItem-groupTransition`]: {
+              marginLeft: "10px",
+              paddingLeft: "10px",
+            },
             "& .MuiTreeItem-content.Mui-focused": {
               backgroundColor: "transparent !important",
             },
