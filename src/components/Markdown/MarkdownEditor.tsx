@@ -31,6 +31,7 @@ interface MarkdownEditorProps {
     randomProminentColor: string;
   };
   setEditorContent: any;
+  placeholder?: string;
 }
 
 const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
@@ -39,6 +40,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   editor,
   collaborationData,
   setEditorContent,
+  placeholder,
 }) => {
   const theme = useTheme();
   const editorRef = useRef<Quill | null>(null);
@@ -138,6 +140,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                 onEditorReady={handleEditorReady}
                 setEditorContent={setEditorContent}
                 fallbackContent={content.text}
+                placeholder={placeholder}
               />
             ) : (
               <SimpleEditor

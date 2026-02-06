@@ -187,6 +187,9 @@ const SearchSideBar = ({
     if (event.key === "Enter") {
       searchQuery();
     }
+    if (event.key === "Escape") {
+      setSearchValue("");
+    }
   };
 
   const renderListItem = (node: any, lastSearch: boolean = false) => (
@@ -232,7 +235,7 @@ const SearchSideBar = ({
             ? "black"
             : "white"
           : "",
-        borderRadius: "25px",
+        borderRadius: "50px",
         ...SCROLL_BAR_STYLE,
         /*         border: isFocused ? "1px solid gray" : "", */
         mt: "5px",
@@ -261,69 +264,141 @@ const SearchSideBar = ({
         onFocus={handleFocus}
         onKeyDown={onKeyDown}
         fullWidth
-        InputProps={{
-          sx: {
-            fontSize: "19px",
-            borderRadius: "45px",
-            padding: "2px 2px",
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderRadius: "45px",
+        slotProps={{
+          input: {
+            sx: {
+              border: "1px solid gray",
+              fontSize: "16px",
+              borderRadius: "24px",
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "rgba(20, 20, 20, 0.6)"
+                  : "rgba(255, 255, 255, 0.6)",
+              padding: "12px 18px",
+              transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+              backdropFilter: "blur(8px)",
+              "&:hover": {
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgba(255, 255, 255, 0.08)"
+                    : "rgba(255, 255, 255, 0.8)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                transform: "translateY(-1px)",
+              },
+              "&.Mui-focused": {
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgba(0, 0, 0, 0.8)"
+                    : "rgba(255, 255, 255, 0.95)",
+                boxShadow: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? `0 0 0 2px ${theme.palette.primary.dark}, 0 8px 30px rgba(0,0,0,0.5)`
+                    : `0 0 0 2px ${theme.palette.primary.light}, 0 8px 30px rgba(0,0,0,0.1)`,
+                borderColor: "transparent",
+                transform: "translateY(-2px)",
+              },
+              "& .MuiOutlinedInput-notchedOutline": {
+                border: "none",
+              },
+              "& input": {
+                padding: "0",
+                color: (theme) => theme.palette.text.primary,
+                fontWeight: 500,
+                "&::placeholder": {
+                  color: (theme) => theme.palette.text.disabled,
+                  opacity: 0.8,
+                },
+              },
             },
-            "& input": {
-              padding: "0px 0",
-            },
-          },
-          startAdornment: (
-            <IconButton
-              sx={{ mr: "5px", cursor: "auto" }}
-              color="primary"
-              edge="end"
-            >
-              <SearchIcon />
-            </IconButton>
-          ),
-          endAdornment: (searchValue || isFocused) && (
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              {searchValue && (
-                <Tooltip title={"Search in the Ontology"}>
-                  <IconButton
-                    sx={{ mr: "5px" }}
-                    onClick={searchQuery}
-                    color="primary"
-                    edge="end"
-                  >
-                    <SearchIcon />
-                  </IconButton>
-                </Tooltip>
-              )}
+            startAdornment: (
               <IconButton
-                sx={{ mr: "5px" }}
-                onClick={clearSearch}
-                color="primary"
-                edge="end"
+                sx={{
+                  mr: 1.5,
+                  p: 0,
+                  cursor: "default",
+                  color: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.4)"
+                      : "rgba(0,0,0,0.4)",
+                }}
+                disableRipple
               >
-                <CloseIcon />
+                <SearchIcon />
               </IconButton>
-            </Box>
-          ),
+            ),
+            endAdornment: (searchValue || isFocused) && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {searchValue && (
+                  <Tooltip title="Search">
+                    <IconButton
+                      size="small"
+                      onClick={searchQuery}
+                      sx={{
+                        backgroundColor: (theme) => theme.palette.primary.main,
+                        color: "white",
+                        width: 28,
+                        height: 28,
+                        "&:hover": {
+                          backgroundColor: (theme) =>
+                            theme.palette.primary.dark,
+                        },
+                      }}
+                    >
+                      <SearchIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  </Tooltip>
+                )}
+                {searchValue && (
+                  <Tooltip title="Clear">
+                    <IconButton
+                      size="small"
+                      onClick={clearSearch}
+                      sx={{
+                        color: (theme) => theme.palette.text.secondary,
+                        width: 28,
+                        height: 28,
+                        "&:hover": {
+                          color: (theme) => theme.palette.error.main,
+                          backgroundColor: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "rgba(255,0,0,0.15)"
+                              : "rgba(255,0,0,0.08)",
+                        },
+                      }}
+                    >
+                      <CloseIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
+            ),
+          },
         }}
         sx={{
-          p: "8px",
+          p: 2,
           position: "sticky",
           top: 0,
-          zIndex: 10,
-          backgroundColor: (theme) =>
-            theme.palette.mode === "dark" ? "#000" : "#fff",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
+          zIndex: 100,
+          backdropFilter: "blur(20px) saturate(180%)",
+          borderBottom: "none",
+          transition: "background-color 0.3s ease, border-bottom 0.3s ease",
         }}
       />
 
       {loadingSearchResult && isFocused && (
-        <List sx={{ zIndex: 0 }}>
-          {[...Array(15)].map((_, index) => (
-            <Box key={index} sx={{ px: 4, mt: "0px" }}>
-              <Skeleton variant="text" height={55} width="100%" sx={{ p: 0 }} />
-            </Box>
+        <List sx={{ zIndex: 0, pl: "4px" }}>
+          {[...Array(100)].map((_, index) => (
+            <ListItem
+              key={index}
+              sx={{ display: "flex", alignItems: "center" }}
+            >
+              <Skeleton
+                variant="rounded"
+                height={25}
+                width={`${40 + ((index * 13) % 50)}%`}
+                sx={{ borderRadius: "14px" }}
+              />
+            </ListItem>
           ))}
         </List>
       )}

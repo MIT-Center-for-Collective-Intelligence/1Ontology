@@ -143,12 +143,14 @@ const SignInPage: NextPageWithLayout = () => {
             helperText={formik.touched.email && formik.errors.email}
             fullWidth
             sx={{ mb: 3 }}
-            InputProps={{
-              sx: {
-                fontSize: "19px",
-                borderRadius: "20px",
-                "& .MuiOutlinedInput-notchedOutline": {
+            slotProps={{
+              input: {
+                sx: {
+                  fontSize: "19px",
                   borderRadius: "20px",
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderRadius: "20px",
+                  },
                 },
               },
             }}
@@ -167,12 +169,14 @@ const SignInPage: NextPageWithLayout = () => {
             helperText={formik.touched.password && formik.errors.password}
             fullWidth
             sx={{ mb: 4 }}
-            InputProps={{
-              sx: {
-                fontSize: "19px",
-                borderRadius: "20px",
-                "& .MuiOutlinedInput-notchedOutline": {
+            slotProps={{
+              input: {
+                sx: {
+                  fontSize: "19px",
                   borderRadius: "20px",
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderRadius: "20px",
+                  },
                 },
               },
             }}

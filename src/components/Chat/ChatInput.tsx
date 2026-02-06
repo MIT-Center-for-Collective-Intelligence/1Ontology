@@ -264,15 +264,17 @@ const ChatInput = ({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={onKeyDown}
-          InputProps={{
-            disableUnderline: true,
-            style: {
-              fontSize: 16,
-              padding: "15px",
-              paddingBottom: "0px",
-              fontFamily: "system-ui",
-              color: theme.palette.mode === "dark" ? "white" : "black",
-              ...SCROLL_BAR_STYLE,
+          slotProps={{
+            input: {
+              disableUnderline: true,
+              style: {
+                fontSize: 16,
+                padding: "15px",
+                paddingBottom: "0px",
+                fontFamily: "system-ui",
+                color: theme.palette.mode === "dark" ? "white" : "black",
+                ...SCROLL_BAR_STYLE,
+              },
             },
           }}
         />

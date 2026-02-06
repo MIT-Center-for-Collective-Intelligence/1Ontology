@@ -379,7 +379,6 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
         borderRadius: "30px",
         borderBottomRightRadius: "18px",
         borderBottomLeftRadius: "18px",
-        minWidth: "500px",
         width: "100%",
         minHeight: "150px",
         maxHeight: "100%",

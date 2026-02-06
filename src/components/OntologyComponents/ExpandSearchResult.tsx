@@ -76,6 +76,14 @@ const ExpandSearchResult = ({
     />
   );
 
+  if (!searchResultsForSelection || searchResultsForSelection.length === 0) {
+    return (
+      <Typography sx={{ p: 2, textAlign: "center", color: "white" }}>
+        No results found
+      </Typography>
+    );
+  }
+
   return (
     <SimpleTreeView
       slots={{ collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon }}
@@ -122,6 +130,10 @@ const ExpandSearchResult = ({
                 left: 0,
                 borderLeft: `2px solid #797575`,
               },
+            },
+            [`& .MuiTreeItem-groupTransition`]: {
+              marginLeft: "10px",
+              paddingLeft: "10px",
             },
             "& .MuiTreeItem-content.Mui-focused": {
               backgroundColor: "transparent !important",

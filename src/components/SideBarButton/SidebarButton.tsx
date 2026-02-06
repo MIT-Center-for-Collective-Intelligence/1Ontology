@@ -14,6 +14,7 @@ type SidebarButtonsProps = {
   variant?: "fill" | "text";
   rightOption?: ReactNode;
   rightFloatingOption?: ReactNode;
+  disabled?: boolean;
 };
 
 export const SidebarButton = ({
@@ -25,12 +26,14 @@ export const SidebarButton = ({
   variant = "text",
   rightOption = null,
   rightFloatingOption = null,
+  disabled = false,
 }: SidebarButtonsProps) => {
   return (
     <Tooltip title={text} placement="left">
       <Button
         id={id}
         onClick={onClick}
+        disabled={disabled}
         sx={{
           minWidth: "52px",
           width: "100%",

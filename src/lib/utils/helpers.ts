@@ -52,7 +52,6 @@ export const recordLogs = async (logs: { [key: string]: any }) => {
     const db = getFirestore();
     const auth = getAuth();
     const logRef = doc(collection(db, LOGS));
-
     const uname = auth.currentUser?.displayName;
     if (uname === "ouhrac") return;
     const doerCreate = getDoerCreate(uname || "");
@@ -67,15 +66,6 @@ export const recordLogs = async (logs: { [key: string]: any }) => {
     });
   } catch (error: any) {
     console.error(error);
-    recordLogs({
-      type: "error",
-      error: JSON.stringify({
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      }),
-      at: "recordLogs",
-    });
   }
 };
 
@@ -1759,4 +1749,8 @@ export const getDefaultValueForProperty = (propertyType: string): any => {
     default:
       return "";
   }
+};
+
+export const sanitizeFirestoreKey = (key: string): string => {
+  return key.replace(/[\~\*\/\[\]]/g, "_");
 };

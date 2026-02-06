@@ -172,44 +172,48 @@ const AppHeader = forwardRef(
       await updateDoc(userDoc, { imageUrl });
     };
 
-    useEffect(() => {
-      const usersQuery = query(collection(db, "users"));
-      const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
-        setUsersNodesViews((prevUsersNodesViews: any) => {
-          const updatedUsersData = { ...prevUsersNodesViews };
+    // Commented out since there is also same functionality in  ToolbarSidebar.tsx
+    // useEffect(() => {
+    //   const usersQuery = query(collection(db, "users"));
+    //   const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+    //     setUsersNodesViews((prevUsersNodesViews: any) => {
+    //       const updatedUsersData = { ...prevUsersNodesViews };
 
-          snapshot.docChanges().forEach((change) => {
-            const doc = change.doc;
-            const userId = doc.id;
-            const data = doc.data();
-            const currentNode = data.currentNode;
+    //       snapshot.docChanges().forEach((change) => {
+    //         const doc = change.doc;
+    //         const userId = doc.id;
+    //         const data = doc.data();
+    //         // currentNode is now an object keyed by appName, get the first available one
+    //         const currentNodeObj = data.currentNode;
+    //         const firstAppNode = currentNodeObj ? Object.values(currentNodeObj)[0] as { id?: string; title?: string } | undefined : undefined;
+    //         const currentNodeId = firstAppNode?.id;
 
-            if (
-              (change.type === "added" || change.type === "modified") &&
-              currentNode
-            ) {
-              updatedUsersData[userId] = {
-                node: {
-                  title: nodes[currentNode]?.title || "",
-                  id: currentNode,
-                },
-                imageUrl: data.imageUrl,
-                fName: data.fName,
-                lName: data.lName,
-                lastInteracted: data.lastInteracted,
-                uname: userId,
-              };
-            } else if (change.type === "removed") {
-              delete updatedUsersData[userId];
-            }
-          });
+    //         if (
+    //           (change.type === "added" || change.type === "modified") &&
+    //           currentNodeId
+    //         ) {
+    //           updatedUsersData[userId] = {
+    //             node: {
+    //               title: firstAppNode?.title || nodes[currentNodeId]?.title || "",
+    //               id: currentNodeId,
+    //             },
+    //             imageUrl: data.imageUrl,
+    //             fName: data.fName,
+    //             lName: data.lName,
+    //             lastInteracted: data.lastInteracted,
+    //             uname: userId,
+    //           };
+    //         } else if (change.type === "removed") {
+    //           delete updatedUsersData[userId];
+    //         }
+    //       });
 
-          return updatedUsersData;
-        });
-      });
+    //       return updatedUsersData;
+    //     });
+    //   });
 
-      return () => unsubscribe();
-    }, [nodes]);
+    //   return () => unsubscribe();
+    // }, [nodes]);
 
     const handleImageChange = useCallback(
       async (event: any) => {

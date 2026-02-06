@@ -360,7 +360,8 @@ const sampleAlgorithmsData = {
 interface NodeActivityFlowProps {
   node: INode;
   confirmIt: any;
-  nodes: { [id: string]: INode };
+  relatedNodes: { [id: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   onNodeAdd?: (parentId: string, newNodeData: Partial<INode>) => void;
 }
 
@@ -434,7 +435,6 @@ const NodeActivityFlow: React.FC<NodeActivityFlowProps> = ({
         borderRadius: "30px",
         borderBottomRightRadius: "18px",
         borderBottomLeftRadius: "18px",
-        minWidth: "500px",
         width: "100%",
         minHeight: "500px",
         overflow: "auto",

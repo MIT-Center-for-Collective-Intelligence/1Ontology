@@ -76,6 +76,7 @@ export type INode = {
       inheritedFromId: string;
     } | null;
   };
+  inheritedPartsDetails: InheritedPartsDetail;
   specializations: ICollection[];
   generalizations: ICollection[];
   root: string;
@@ -232,6 +233,16 @@ export type TreeData = {
   unclassified?: boolean;
 };
 
+export interface TreeViewNode {
+  id: string;
+  nodeId: string;
+  name: string;
+  category: boolean;
+  nodeType?: string;
+  unclassified?: boolean;
+  childIds: string[];
+}
+
 /**
  * Temporary types for activity flow implementation
  */
@@ -329,4 +340,27 @@ export type TransferInheritance = {
   toOptional: boolean;
   optionalChange: "added" | "removed" | "none";
   hops: number;
+};
+
+export type InheritedPartsDetail = {
+  generalizationId: string;
+  generalizationTitle: string;
+  createdAt: any; // Can be either firebase/firestore or firebase-admin/firestore Timestamp
+  details: {
+    from: string;
+    to: string;
+    symbol: ">" | "x" | "=" | "+";
+    fromTitle: string;
+    toTitle: string;
+    fromOptional: boolean;
+    toOptional: boolean;
+    optionalChange: "added" | "removed" | "none";
+    hops: number;
+  }[];
+  nonPickedOnes: {
+    [fromId: string]: {
+      id: string;
+      title: string;
+    }[];
+  };
 };

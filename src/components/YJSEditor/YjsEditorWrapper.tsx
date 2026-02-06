@@ -45,6 +45,7 @@ const YjsEditorWrapper = ({
   onEditorReady,
   setEditorContent,
   fallbackContent,
+  placeholder,
 }: {
   fullname: string;
   property: string;
@@ -58,6 +59,7 @@ const YjsEditorWrapper = ({
   onEditorReady?: (editor: Quill) => void;
   setEditorContent: any;
   fallbackContent?: string;
+  placeholder?: string;
 }) => {
   const editorContainerRef = useRef(null);
   const editorRef = useRef<Quill | null>(null);
@@ -105,7 +107,7 @@ const YjsEditorWrapper = ({
     if (!property || !fullname || !nodeId) return;
     // Create Yjs document and WebSocket provider
     const ydoc = new Y.Doc();
-
+    console.log("WS_URL", WS_URL);
     const provider = new WebsocketProvider(
       WS_URL,
       `${nodeId}-${property}`,
@@ -156,9 +158,12 @@ const YjsEditorWrapper = ({
             ],
           },
         },
-        placeholder: `${capitalizeFirstLetter(
-          DISPLAY[property] ? DISPLAY[property] : property,
-        )}...`,
+        placeholder: `${
+          placeholder ||
+          capitalizeFirstLetter(
+            DISPLAY[property] ? DISPLAY[property] : property,
+          )
+        }...`,
         theme: "snow",
         formats: [],
       });

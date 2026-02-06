@@ -121,6 +121,7 @@ import LinkOffIcon from "@mui/icons-material/LinkOff";
 import { UNCLASSIFIED } from "@components/lib/CONSTANTS";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import LinkEditor from "./LinkEditor";
+import LinkNodeTitle from "./LinkNodeTitle";
 import { Post } from "@components/lib/utils/Post";
 import { LoadingButton } from "@mui/lab";
 
@@ -145,7 +146,8 @@ type ILinkNodeProps = {
   setSnackbarMessage: (message: any) => void;
   navigateToNode: (nodeID: string) => void;
   title: string;
-  nodes: { [nodeId: string]: INode };
+  relatedNodes: { [nodeId: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   linkLocked: any;
   locked: boolean;
   user: any;
@@ -180,7 +182,8 @@ const LinkNode = ({
   setCurrentVisibleNode,
   navigateToNode,
   title,
-  nodes,
+  relatedNodes,
+  fetchNode,
   linkIndex: linkIndex,
   linkLocked,
   locked,
@@ -266,11 +269,24 @@ const LinkNode = ({
     }
   };
 
-  const makeLinkOptional = useCallback(() => {
+  const makeLinkOptional = useCallback(async () => {
     const nodeCopy = { ...currentVisibleNode };
     const partInheredRef = nodeCopy.inheritance["parts"].ref;
-    const partsNodes = partInheredRef
-      ? nodes[partInheredRef].properties["parts"][0].nodes
+
+    // Fetch inheritance reference if missing
+    let inheritedRefNode = null;
+    if (partInheredRef) {
+      inheritedRefNode = relatedNodes[partInheredRef];
+      if (!inheritedRefNode) {
+        inheritedRefNode = await fetchNode(partInheredRef);
+        if (!inheritedRefNode) {
+          return;
+        }
+      }
+    }
+
+    const partsNodes = inheritedRefNode
+      ? inheritedRefNode.properties["parts"][0].nodes
       : nodeCopy.properties["parts"][0].nodes;
     const currentPartIndx = partsNodes.findIndex((c) => c.id === link.id);
 
@@ -300,7 +316,7 @@ const LinkNode = ({
         "inheritance.parts.ref": null,
       });
     }
-  }, [currentVisibleNode]);
+  }, [currentVisibleNode, relatedNodes, fetchNode]);
 
   const unlinkSpecializationOrGeneralization = async (
     currentNodeId: string,
@@ -308,17 +324,26 @@ const LinkNode = ({
     fromModel: boolean = false,
   ) => {
     try {
+      // Fetch linkId if missing
+      let linkNode: INode | null | undefined = relatedNodes[linkId];
+      if (!linkNode) {
+        linkNode = await fetchNode(linkId);
+        if (!linkNode) {
+          return;
+        }
+      }
+
       const nodeD =
-        property === "generalizations" ? nodes[currentNodeId] : nodes[linkId];
+        property === "generalizations" ? relatedNodes[currentNodeId] : linkNode;
       const linksLength = nodeD.generalizations.flatMap((c) => c.nodes).length;
       const firstGen = nodeD.generalizations[0]?.nodes[0]?.id || "";
       if (
         linksLength <= 1 &&
         ((property === "specializations" &&
-          nodes[currentNodeId]?.title.trim().toLowerCase() ===
+          relatedNodes[currentNodeId]?.title.trim().toLowerCase() ===
             "unclassified") ||
           (property === "generalizations" &&
-            nodes[firstGen]?.title === "unclassified"))
+            relatedNodes[firstGen]?.title === "unclassified"))
       ) {
         await confirmIt(
           <Box>
@@ -337,8 +362,8 @@ const LinkNode = ({
             </Typography>
             {linksLength <= 1 ? (
               <Typography sx={{ mt: "15px" }}>
-                {`There's no other generalization linked to this node. Other than 
-              ${UNCLASSIFIED[nodes[linkId].nodeType]}`}
+                {`There's no other generalization linked to this node. Other than
+              ${UNCLASSIFIED[linkNode.nodeType]}`}
                 .
               </Typography>
             ) : (
@@ -371,7 +396,7 @@ const LinkNode = ({
               <Typography sx={{ mt: "15px" }}>
                 {`There's no other generalization linked to this node. Are you
                 sure you want to unlink it and move it as a specialization under
-              ${UNCLASSIFIED[nodes[linkId].nodeType]}`}
+              ${UNCLASSIFIED[linkNode.nodeType]}`}
                 ?
               </Typography>
             ) : (
@@ -413,12 +438,8 @@ const LinkNode = ({
               linkId,
             );
           }
-          if (
-            shouldBeRemovedFromParent &&
-            nodes[linkId] &&
-            !nodes[linkId].nodeType
-          ) {
-            const nodeType = nodes[linkId].nodeType;
+          if (shouldBeRemovedFromParent && linkNode && !linkNode.nodeType) {
+            const nodeType = linkNode.nodeType;
             const unclassifiedNodeDocs = await getDocs(
               query(
                 collection(db, NODES),
@@ -429,9 +450,19 @@ const LinkNode = ({
 
             if (unclassifiedNodeDocs.docs.length > 0 && previousValue) {
               const unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
+              let unclassifiedNode: INode | null =
+                relatedNodes[unclassifiedNodeDoc.id] || null;
+              if (!unclassifiedNode) {
+                const fetchedNode = await fetchNode(unclassifiedNodeDoc.id);
+                if (!fetchedNode) {
+                  return;
+                }
+                unclassifiedNode = fetchedNode;
+              }
+
               if (property === "specializations") {
                 const nodeRef = doc(collection(db, NODES), linkId);
-                const generalizations = nodes[linkId].generalizations;
+                const generalizations = linkNode.generalizations;
                 const generalizationsLength = generalizations.flatMap(
                   (c) => c.nodes,
                 ).length;
@@ -461,8 +492,7 @@ const LinkNode = ({
                   });
                 }
                 if (generalizationsLength === 1) {
-                  const specializations =
-                    nodes[unclassifiedNodeDoc.id].specializations;
+                  const specializations = unclassifiedNode.specializations;
 
                   const mainCollectionIdx = specializations.findIndex(
                     (c) => c.collectionName === "main",
@@ -487,8 +517,7 @@ const LinkNode = ({
                 if (nodesLength === 1) {
                   generalizations[0].nodes.push({ id: unclassifiedNodeDoc.id });
 
-                  const specializations =
-                    nodes[unclassifiedNodeDoc.id].specializations;
+                  const specializations = unclassifiedNode.specializations;
 
                   const mainCollectionIdx = specializations.findIndex(
                     (c) => c.collectionName === "main",
@@ -527,7 +556,7 @@ const LinkNode = ({
               [],
               currentNewLinks,
               nodeData,
-              nodes,
+              relatedNodes,
             );
           }
           if (property === "specializations") {
@@ -537,7 +566,7 @@ const LinkNode = ({
               [],
               [{ id: linkId }],
               nodeData,
-              nodes,
+              relatedNodes,
             );
           }
         }
@@ -588,9 +617,12 @@ const LinkNode = ({
   };
 
   const getSpecializations = (nodeId: string) => {
-    return nodes[nodeId].specializations
+    if (!relatedNodes[nodeId]) {
+      return [];
+    }
+    return relatedNodes[nodeId].specializations
       .flatMap((s) => s.nodes)
-      .filter((n) => !!nodes[n.id]?.title);
+      .filter((n) => !!relatedNodes[n.id]?.title);
   };
 
   return (
@@ -647,110 +679,16 @@ const LinkNode = ({
             setClonedNodesQueue={setClonedNodesQueue}
           />
         ) : (
-          <Tooltip
-            title={
-              partsInheritance[link.id] ? (
-                <>
-                  <span
-                    style={{
-                      display: "flex",
-                      gap: "4px",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {partsInheritance[link.id][0].genId &&
-                      nodes[partsInheritance[link.id][0].genId] && (
-                        <>
-                          Inherited from{" "}
-                          <strong style={{ fontSize: "12px" }}>
-                            {'"'}
-                            {nodes[partsInheritance[link.id][0].genId].title}
-                            {'"'},
-                          </strong>
-                        </>
-                      )}
-                    {partsInheritance[link.id][0]?.partOf && (
-                      <>
-                        Part{" "}
-                        <strong style={{ fontSize: "12px", color: "orange" }}>
-                          {nodes[partsInheritance[link.id][0].partOf]?.title}
-                        </strong>
-                      </>
-                    )}
-                  </span>
-                  {link.optional && (
-                    <span style={{ marginLeft: "2px" }}>{"(Optional)"}</span>
-                  )}
-                </>
-              ) : link.optional ? (
-                <span style={{ marginLeft: "2px" }}>{"(Optional)"}</span>
-              ) : (
-                ""
-              )
-            }
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 8],
-                  },
-                },
-              ],
-              sx: {
-                maxWidth: "none",
-              },
-            }}
-            componentsProps={{
-              tooltip: {
-                sx: {
-                  maxWidth: "none",
-                  whiteSpace: "nowrap",
-                  padding: 1,
-                },
-              },
-            }}
-            placement="top"
-          >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Link
-                underline="hover"
-                onClick={handleNavigateToNode}
-                sx={{
-                  cursor: "pointer",
-                  color: getLinkColor(link.change),
-                  textDecoration:
-                    link.change === "removed" ? "line-through" : "none",
-                }}
-              >
-                {/* link.title || */ title || regionalTitle}{" "}
-                {link.optional && selectedProperty !== property && (
-                  <span
-                    style={{ color: "orange", marginLeft: "2px" }}
-                  >{`(O)`}</span>
-                )}
-              </Link>
-
-              {/* {partsInheritance[link.id] && (
-                <Box
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    borderRadius: "50%",
-                    background: `${
-                      partsInheritance[link.id]
-                        ? partsInheritance[link.id].partInheritance
-                          ? "orange"
-                          : "green"
-                        : ""
-                    }`,
-                    marginLeft: "8px",
-                    boxShadow: "0 0 3px rgba(0, 0, 0, 0.3) inset",
-                  }}
-                ></Box>
-              )} */}
-            </Box>
-          </Tooltip>
+          <LinkNodeTitle
+            title={title || regionalTitle}
+            link={link}
+            partsInheritance={partsInheritance}
+            relatedNodes={relatedNodes}
+            property={property}
+            selectedProperty={selectedProperty}
+            onNavigate={handleNavigateToNode}
+            linkColor={getLinkColor(link.change)}
+          />
         )}
 
         <Box sx={{ display: "flex", alignItems: "center", ml: "auto" }}>
@@ -895,7 +833,7 @@ const LinkNode = ({
                   <SwapHorizIcon />
                 </IconButton>
 
-                <Typography>{nodes[n.id]?.title}</Typography>
+                <Typography>{relatedNodes[n.id]?.title}</Typography>
               </Box>
             </Tooltip>
           ))}{" "}
@@ -958,10 +896,10 @@ const LinkNode = ({
               }}
               placeholder="Node title..."
               fullWidth
-              InputProps={{
-                inputProps: {
-                  style: {
-                    padding: 10,
+              slotProps={{
+                input: {
+                  sx: {
+                    p: 10,
                     borderRadius: "25px",
                   },
                 },
