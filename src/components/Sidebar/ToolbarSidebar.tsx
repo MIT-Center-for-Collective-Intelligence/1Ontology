@@ -837,6 +837,8 @@ const ToolbarSidebar = ({
 
           if (change.type === "added" || change.type === "modified") {
             updatedUsersData[userId] = {
+              // Preserve existing data to prevent data mismatch
+              ...updatedUsersData[userId],
               node: {
                 title:
                   currentNodeInfo?.title ||

@@ -94,6 +94,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // import markdownContent from "../components/OntologyComponents/Markdown-Here-Cheatsheet.md";
 import SneakMessage from "@components/components/OntologyComponents/SneakMessage";
 import Node from "@components/components/OntologyComponents/Node";
+import NavigationError from "@components/components/OntologyComponents/NavigationError";
 import TreeViewSimplified from "@components/components/OntologyComponents/TreeViewSimplified";
 import {
   ICollection,
@@ -372,6 +373,9 @@ const Ontology = ({
     [],
   );
   const [isLoadingNodeDetails, setIsLoadingNodeDetails] = useState(false);
+  const [navigationError, setNavigationError] = useState<{
+    type: "not-found" | "wrong-app";
+  } | null>(null);
 
   const [scrollTrigger, setScrollTrigger] = useState(false);
   const [enableEdit, setEnableEdit] = useState(false);
@@ -1579,6 +1583,12 @@ const Ontology = ({
     let newHash = "";
     path.forEach((p: any) => (newHash = newHash + `#${p.id.trim()}`));
 
+    // Don't update if hash is already correct to prevent duplicate history entries
+    if (window.location.hash === newHash) {
+      lastHashSetRef.current = newHash;
+      return;
+    }
+
     // Track the hash set by this function to prevent handling of users' own hash change
     lastHashSetRef.current = newHash;
 
@@ -1669,7 +1679,7 @@ const Ontology = ({
     updateTheUrl([
       { id: currentVisibleNode?.id, title: currentVisibleNode.title },
     ]);
-  }, [currentVisibleNode?.id, eachNodePath]);
+  }, [currentVisibleNode?.id]);
 
   // Callback function to add a new node to the database
 
@@ -1692,6 +1702,7 @@ const Ontology = ({
       }
 
       if (node && !node.category) {
+        setNavigationError(null); // Clear any error when navigating via graph
         setCurrentVisibleNode(node);
 
         recordLogs({
@@ -1743,6 +1754,7 @@ const Ontology = ({
       }
 
       if (node && !node.category) {
+        setNavigationError(null); // Clear any error when navigating via tree
         setCurrentVisibleNode(node);
 
         // Record logs for the action of clicking the tree-view
@@ -1832,17 +1844,21 @@ const Ontology = ({
       // Get the node from cache or fetch it
       console.log("🟡 [NAVIGATE] Navigating to node:", nodeId);
       let node: INode | null = relatedNodes[nodeId] || null;
+      let errorType: "not-found" | "wrong-app" | null = null;
+
       if (!node) {
         console.log(
           "🟡 [NAVIGATE] Node not in cache, fetching from Firestore...",
         );
         node = await fetchSingleNode(db, nodeId, appName);
+        errorType = "not-found"; // set error type
       } else {
         // Validate if cached node belongs to this app
         if (node.appName !== appName) {
           console.log(
             "🟡 [NAVIGATE] Cached node belongs to different app, ignoring",
           );
+          errorType = "wrong-app"; // set error type
           node = null;
         } else {
           console.log("🟡 [NAVIGATE] Node found in cache:", node.title);
@@ -1854,18 +1870,20 @@ const Ontology = ({
           "🟡 [NAVIGATE] ✅ Setting current visible node to:",
           node.title,
         );
+        setNavigationError(null);
         setCurrentVisibleNode(node);
         initializeExpanded(eachNodePath[nodeId]);
         setSelectedDiffNode(null);
         setScrollTrigger((prev) => !prev);
       } else {
         console.log(
-          "🟡 [NAVIGATE] ❌ Node not found in this app, reverting hash",
+          "🟡 [NAVIGATE] ❌ Node not found in this app, display error component",
         );
-        // Revert URL hash to current node
-        if (currentVisibleNode) {
-          window.location.hash = currentVisibleNode.id;
-        }
+        // Update lastHashSetRef to keep it in sync with current hash
+        lastHashSetRef.current = window.location.hash;
+        setNavigationError({
+          type: errorType || "not-found",
+        });
       }
     },
     [
@@ -2722,7 +2740,16 @@ const Ontology = ({
               {displayGuidelines && (
                 <GuidLines setDisplayGuidelines={setDisplayGuidelines} />
               )}
-              {currentVisibleNode && user && !displayGuidelines && (
+              {navigationError && (
+                <NavigationError
+                  type={navigationError.type}
+                  onGoBack={() => {
+                    setNavigationError(null);
+                    window.history.back();
+                  }}
+                />
+              )}
+              {currentVisibleNode && user && !displayGuidelines && !navigationError && (
                 <Node
                   currentVisibleNode={
                     currentImprovement?.node || currentVisibleNode
