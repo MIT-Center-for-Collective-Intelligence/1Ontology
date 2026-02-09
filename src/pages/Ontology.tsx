@@ -173,7 +173,8 @@ const Ontology = ({
   appName: string;
 }) => {
   const db = getFirestore();
-  const dbSingapore = appName === "final-hierarchy-with-o*net" ? getFirestore("singapore-db") : db;
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const dbSingapore = timezone === "Asia/Singapore" && appName === "final-hierarchy-with-o*net" ? getFirestore("singapore-db") : db;
   const [{ emailVerified, user }] = useAuth();
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:599px)");
