@@ -173,6 +173,7 @@ const Ontology = ({
   appName: string;
 }) => {
   const db = getFirestore();
+  const dbSingapore = appName === "final-hierarchy-with-o*net" ? getFirestore("singapore-db") : db;
   const [{ emailVerified, user }] = useAuth();
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:599px)");
@@ -736,7 +737,7 @@ const Ontology = ({
   };
   const getRootNode = async () => {
     const rootQuery = query(
-      collection(db, NODES),
+      collection(dbSingapore, NODES),
       where("deleted", "==", false),
       where("root", "==", true),
       where("appName", "==", appName),
@@ -756,13 +757,13 @@ const Ontology = ({
     if (skillsFuture && appName) {
       getRootNode();
       nodesQuery = query(
-        collection(db, NODES),
+        collection(dbSingapore, NODES),
         where("deleted", "==", false),
         where("appName", "==", appName),
       );
     } else {
       nodesQuery = query(
-        collection(db, NODES),
+        collection(dbSingapore, NODES),
         where("deleted", "==", false),
         where("skillsFuture", "==", false),
       );
@@ -806,7 +807,7 @@ const Ontology = ({
     }, 4000);
     // Unsubscribe from the snapshot listener when the component is unmounted
     return () => unsubscribeNodes();
-  }, [db, appName]);
+  }, [dbSingapore, appName]);
 
   useEffect(() => {
     if (currentVisibleNode?.id) {
