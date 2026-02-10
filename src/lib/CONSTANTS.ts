@@ -180,20 +180,20 @@ export const ONTOLOGY_APPS = [
     id: "ontology-development-version",
     name: "Ontology - Development Version",
   },
-  { id: "old-ai-peer-ontology", name: "Old AI Peer Ontology" },
-  { id: "ai-peer-ontology", name: "AI Peer Ontology" },
-  {
-    id: "top-down-ai-peer-ontology",
-    name: "Top Down AI Peer Ontology",
-  },
+  // { id: "old-ai-peer-ontology", name: "Old AI Peer Ontology" },
+  // { id: "ai-peer-ontology", name: "AI Peer Ontology" },
+  // {
+  //   id: "top-down-ai-peer-ontology",
+  //   name: "Top Down AI Peer Ontology",
+  // },
   {
     id: "final-hierarchy-with-o*net",
     name: "Final Hierarchy with O*Net",
   },
-  {
-    id: "only-specifications-ai-peer",
-    name: "Only Specifications AI Peer Ontology",
-  },
+  // {
+  //   id: "only-specifications-ai-peer",
+  //   name: "Only Specifications AI Peer Ontology",
+  // },
 ];
 
 export const performerColors: Record<string, string> = {
