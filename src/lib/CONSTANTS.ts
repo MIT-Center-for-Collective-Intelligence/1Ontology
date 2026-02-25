@@ -190,6 +190,10 @@ export const ONTOLOGY_APPS = [
     id: "final-hierarchy-with-o*net",
     name: "Final Hierarchy with O*Net",
   },
+  {
+    id: "final-hierarchy-with-o*net-parts",
+    name: "Final Hierarchy with O*Net Parts",
+  },
   // {
   //   id: "only-specifications-ai-peer",
   //   name: "Only Specifications AI Peer Ontology",
