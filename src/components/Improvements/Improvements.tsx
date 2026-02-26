@@ -1008,7 +1008,7 @@ const Improvements = ({
             currentVisibleNode={currentVisibleNode}
             nodesByTitle={nodesByTitle}
           />
-          <Button
+          {/* <Button
             variant="contained"
             onClick={handleImproveClick}
             sx={{ mt: "24px" }}
@@ -1016,7 +1016,7 @@ const Improvements = ({
           >
             <ReplayIcon sx={{ pr: "5px" }} />
             Re-Analyze
-          </Button>
+          </Button> */}
         </Box>
       ) : (
         <Button variant="contained" onClick={handleImproveClick}>

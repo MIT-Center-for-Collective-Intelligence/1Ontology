@@ -1270,58 +1270,136 @@ const ToolbarSidebar = ({
 
       setCopilotMessage(response.message);
       const newImprovements: Improvement[] = [];
+      const rawImprovements = response?.improvements || [];
 
-      for (let improvement of response?.improvements) {
-        const change = improvement.change;
-        if (change.modified_property) {
-          if (change.modified_property === "parts") {
-            const optionalParts = [];
-            for (
-              let partIdx = 0;
-              partIdx < change.new_value.final_array.length;
-              partIdx++
+      for (const improvement of rawImprovements) {
+        const nodeTitle = improvement.title;
+        const changes = improvement?.changes || [];
+        for (const change of changes) {
+          const reasoning = change.reasoning ?? "";
+
+          if (change?.modified_property && change?.new_value !== undefined) {
+            const normalized = { ...change } as any;
+            if (
+              normalized.modified_property === "parts" &&
+              normalized.new_value?.final_array
             ) {
-              const partTitle = change.new_value.final_array[partIdx];
-              const optional = partTitle
-                .trim()
-                .toLowerCase()
-                .endsWith("(optional)");
-              if (optional) {
-                change.new_value.final_array[partIdx] = partTitle
-                  .replace(/\(optional\)/i, "")
-                  .trim();
-                optionalParts.push(change.new_value.final_array[partIdx]);
+              const optionalParts: string[] = [];
+              for (
+                let i = 0;
+                i < normalized.new_value.final_array.length;
+                i++
+              ) {
+                const partTitle = normalized.new_value.final_array[i];
+                const optional =
+                  typeof partTitle === "string" &&
+                  partTitle.trim().toLowerCase().endsWith("(optional)");
+                if (optional) {
+                  const cleaned = (partTitle as string)
+                    .replace(/\(optional\)/i, "")
+                    .trim();
+                  normalized.new_value.final_array[i] = cleaned;
+                  optionalParts.push(cleaned);
+                }
               }
+              normalized.optionalParts = optionalParts;
             }
-
-            change.optionalParts = optionalParts;
+            newImprovements.push({ title: nodeTitle, change: normalized });
+            continue;
           }
-          newImprovements.push({
-            title: improvement.title,
-            change,
-          });
-        } else if (change.hasOwnProperty("specializations")) {
-          let reasoning = "";
 
-          for (let _change of change["specializations"]) {
-            reasoning = reasoning + "\n\n" + _change.reasoning;
-          }
-          newImprovements.push({
-            title: improvement.title,
-
-            change: {
-              reasoning,
-              modified_property: "specializations",
-              new_value: change["specializations"],
-            },
-            changes: [
-              {
+          if (typeof change.title === "string") {
+            newImprovements.push({
+              title: nodeTitle,
+              change: {
+                modified_property: "title",
+                new_value: change.title,
                 reasoning,
-                modified_property: "specializations",
-                new_value: change["specializations"],
               },
-            ],
-          });
+            });
+            continue;
+          }
+
+          if (typeof change.description === "string") {
+            newImprovements.push({
+              title: nodeTitle,
+              change: {
+                modified_property: "description",
+                new_value: change.description,
+                reasoning,
+              },
+            });
+            continue;
+          }
+
+          if (Array.isArray(change.generalizations)) {
+            const arr = change.generalizations;
+            newImprovements.push({
+              title: nodeTitle,
+              change: {
+                modified_property: "generalizations",
+                new_value: {
+                  final_array: arr,
+                  nodes_to_add: arr,
+                  nodes_to_delete: [],
+                },
+                reasoning,
+              },
+            });
+            continue;
+          }
+
+          if (Array.isArray(change.parts)) {
+            const optionalParts: string[] = [];
+            const final_array: string[] = [];
+            for (const p of change.parts) {
+              const title = typeof p === "string" ? p : (p?.title ?? "");
+              const optional =
+                typeof p === "object" && (p as any).optional === "true";
+              const cleaned = title.replace(/\(optional\)/i, "").trim();
+              final_array.push(cleaned);
+              if (optional) optionalParts.push(cleaned);
+            }
+            newImprovements.push({
+              title: nodeTitle,
+              change: {
+                modified_property: "parts",
+                new_value: {
+                  final_array,
+                  nodes_to_add: final_array,
+                  nodes_to_delete: [],
+                },
+                optionalParts,
+                reasoning,
+              } as any,
+            });
+            continue;
+          }
+
+          if (Array.isArray(change.specializations)) {
+            const reasoningLines = (change.specializations as any[])
+              .map((s) => s.reasoning)
+              .filter(Boolean);
+            const combinedReasoning = reasoningLines.length
+              ? reasoningLines.join("\n\n")
+              : reasoning;
+            const new_value = (change.specializations as any[]).map((s) => ({
+              collectionName: s.collectionName || "main",
+              changes: {
+                final_array: Array.isArray(s.nodes) ? s.nodes : [],
+                nodes_to_add: Array.isArray(s.nodes) ? s.nodes : [],
+                nodes_to_delete: [] as string[],
+              },
+            })) as any;
+            newImprovements.push({
+              title: nodeTitle,
+              change: {
+                modified_property: "specializations",
+                new_value,
+                reasoning: combinedReasoning,
+              },
+            });
+          }
         }
       }
 
@@ -1336,12 +1414,26 @@ const ToolbarSidebar = ({
         newNode: boolean;
       }[] = getNewNodes(response?.new_nodes || []);
 
+      const deletedNodesRaw =
+        response?.deleted_nodes ?? response?.delete_nodes ?? [];
       const deletedNodes: {
         title: string;
         nodeId: string;
         reasoning: string;
         deleteNode: boolean;
-      }[] = getDeletedNode(response?.deleted_nodes || []);
+      }[] = getDeletedNode(
+        Array.isArray(deletedNodesRaw)
+          ? deletedNodesRaw.map((d: any) =>
+              typeof d === "string"
+                ? { title: d, reasoning: "" }
+                : {
+                    title: d.title ?? d.nodeId ?? "",
+                    reasoning: d.reasoning ?? "",
+                  },
+            )
+          : [],
+      );
+
       if (
         improvements.length > 0 ||
         newNodes.length > 0 ||
@@ -1821,7 +1913,7 @@ const ToolbarSidebar = ({
             {!!user?.admin &&
               (window.location.origin.startsWith("http://localhost") ||
                 window.location.origin ===
-                  "https://ontology-app-163479774214.us-central1.run.app") && (
+                  "https://ontology-163479774214.us-central1.run.app") && (
                 <SidebarButton
                   id="toolbar-theme-button"
                   icon={

@@ -187,7 +187,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       embeddingFunction,
     });
 
-    console.log("searching");
     const embeddingResponse = await openai.embeddings.create({
       model: "text-embedding-3-large",
       input: searchQuery,
@@ -271,8 +270,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       appName: applicationName,
       withDescription: true,
     });
-
-    console.log(JSON.stringify(topResults, null, 2), "topResults final");
 
     const logRef = db.collection(LOGS).doc();
     const uname = "ai-peer-extension";

@@ -72,9 +72,9 @@ export const getChangeComparison = ({
           final_nodes.push({ id: nodeId });
         }
 
-        const final_array_ids = collection.changes.final_array.map(
-          (c: string) => nodesByTitle[c].id,
-        );
+        const final_array_ids = collection.changes.final_array
+          .map((c: string) => nodesByTitle[c].id)
+          .filter(Boolean);
         for (let linkId of previousState) {
           if (!final_array_ids.includes(linkId) && !!ontologyNodes[linkId]) {
             nodes.push({ id: linkId, change: "removed" });
@@ -166,7 +166,9 @@ export const getChangeComparison = ({
           optional: (change.optionalParts || []).includes(title),
         });
       }
-      const final_array_ids = final_nodes.map((c: { id: string }) => c.id);
+      const final_array_ids = final_nodes
+        .map((c: { id: string }) => c.id)
+        .filter(Boolean);
       for (let linkId of previousState) {
         if (!final_array_ids.includes(linkId) && !!ontologyNodes[linkId]) {
           modified = true;

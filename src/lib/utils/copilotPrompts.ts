@@ -13,6 +13,7 @@ export const sendLLMRequest = async (
   skillsFutureApp: string,
 ) => {
   try {
+
     const response = await Post("/copilot", {
       userMessage,
       model,
@@ -130,22 +131,26 @@ export type Improvement = {
 };
 
 export const MODELS_OPTIONS = [
-  { id: "o3", title: "O3" },
-  { id: "o1", title: "O1" },
-  { id: "chatgpt-4o-latest", title: "GPT-4o latest" },
-  { id: "gemini-2.0-flash-exp", title: "GEMINI-2.0 FLASH EXP" },
-  { id: "o1-mini", title: "O1 mini" },
+  // { id: "o3", title: "O3" },
+  // { id: "o1", title: "O1" },
+  // { id: "chatgpt-4o-latest", title: "GPT-4o latest" },
+  // { id: "gemini-2.0-flash-exp", title: "GEMINI-2.0 FLASH EXP" },
+  // { id: "o1-mini", title: "O1 mini" },
+  // {
+  //   id: "gemini-2.0-flash-thinking-exp",
+  //   title: "GEMINI-2.0 FLASH THINKING EXP",
+  // },
+  // {
+  //   id: "gemini-exp-1206",
+  //   title: "Gemini Exp 1206",
+  // },
+  // {
+  //   id: "gemini-2.5-pro-exp-03-25",
+  //   title: "Gemini-2.5 PRO EXP 03-25",
+  // },
   {
-    id: "gemini-2.0-flash-thinking-exp",
-    title: "GEMINI-2.0 FLASH THINKING EXP",
-  },
-  {
-    id: "gemini-exp-1206",
-    title: "Gemini Exp 1206",
-  },
-  {
-    id: "gemini-2.5-pro-exp-03-25",
-    title: "Gemini-2.5 PRO EXP 03-25",
+    id: "gemini-3-pro-preview",
+    title: "Gemini-3 PRO PREVIEW",
   },
 ];
 const properties = {
@@ -592,7 +597,7 @@ export const getDeleteNodesPrompt = (proposeDeleteNode: boolean) => {
 };
 export const getNotesPrompt = () => {
   return `
-- Do not create a 'Main' collection if it doesn't exist.
+- Do not create a 'default' collection if it doesn't exist.
 - Take ample time to generate high-quality improvements and additions.
 - A panel of experts will review your proposals and for every satisfactory proposal, you will be rewarded $100. For every unsatisfactory proposal, you will lose $100.
 - In the title of the parts, do not mention that they are inherited from another node. We do not need any comments about whether and where each part is inherited from.`;

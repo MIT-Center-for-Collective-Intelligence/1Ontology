@@ -114,7 +114,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (development) {
       res.status(200).json({});
     }
-    console.log(nodeId, "nodeId");
 
     const nodeDoc = await db.collection("nodes").doc(nodeId).get();
 

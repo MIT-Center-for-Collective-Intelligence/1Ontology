@@ -141,11 +141,11 @@ export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
   ],
   actor: ["abilities", "typeOfActor"],
   activity: [
-    "actor",
-    "objectsActedOn",
-    "evaluationDimension",
-    "PreConditions",
-    "postConditions",
+    // "actor",
+    // "objectsActedOn",
+    // "evaluationDimension",
+    // "PreConditions",
+    // "postConditions",
   ],
   object: ["lifeSpan", "modifiability", "perceivableProperties"],
   evaluationDEmention: [
