@@ -1001,6 +1001,7 @@ const Ontology = ({
       recordLogs({
         action: "Opened a node",
         node: currentNode,
+        user: user.uname,
       });
     }
   };
@@ -1737,6 +1738,7 @@ const Ontology = ({
             skillsFutureApp={appName}
             isExperimentalSearch={isExperimentalSearch}
             setIsExperimentalSearch={setIsExperimentalSearch}
+            appName={appName}
           />
         </Box>
       )}
@@ -2105,6 +2107,7 @@ const Ontology = ({
               skillsFutureApp={appName ?? null}
               isExperimentalSearch={isExperimentalSearch}
               setIsExperimentalSearch={setIsExperimentalSearch}
+              appName={appName}
             />
           )}
         </Container>

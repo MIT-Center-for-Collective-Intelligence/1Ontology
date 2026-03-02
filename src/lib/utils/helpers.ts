@@ -47,15 +47,20 @@ export const getDoerCreate = (uname: string) => {
   return `${uname}-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
 };
 
-export const recordLogs = async (logs: { [key: string]: any }) => {
+export const recordLogs = async (
+  logs: { [key: string]: any },
+  userName?: string,
+) => {
   try {
     const db = getFirestore();
     const auth = getAuth();
     const logRef = doc(collection(db, LOGS));
 
-    const uname = auth.currentUser?.displayName;
-    if (uname === "ouhrac") return;
-    const doerCreate = getDoerCreate(uname || "");
+    const uname = auth.currentUser?.displayName || userName || "unknown";
+    if (uname === "ouhrac" || uname === "unknown") {
+      return;
+    }
+    const doerCreate = getDoerCreate(uname);
     await setDoc(logRef, {
       type: "info",
       ...logs,

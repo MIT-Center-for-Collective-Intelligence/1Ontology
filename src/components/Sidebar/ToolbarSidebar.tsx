@@ -151,6 +151,7 @@ type MainSidebarProps = {
   skillsFutureApp: string;
   isExperimentalSearch: any;
   setIsExperimentalSearch: any;
+  appName: string;
 };
 
 const ToolbarSidebar = ({
@@ -185,6 +186,7 @@ const ToolbarSidebar = ({
   skillsFutureApp,
   isExperimentalSearch,
   setIsExperimentalSearch,
+  appName,
 }: MainSidebarProps) => {
   const theme = useTheme();
   const isMobile = useMediaQuery("(max-width:599px)");
@@ -1811,9 +1813,10 @@ const ToolbarSidebar = ({
                     backgroundColor: "gray",
                     width: "26px",
                     height: "26px",
+                    p: 3,
                   }}
                 >
-                  <ClearIcon />
+                  <ClearIcon sx={{ fontSize: "18px" }} />
                 </IconButton>
               </Tooltip>
             )}
@@ -1972,7 +1975,7 @@ const ToolbarSidebar = ({
               icon={<DownloadIcon />}
               onClick={() => {
                 try {
-                  handleDownload({ nodes });
+                  handleDownload({ nodes, appName });
                 } catch (error) {
                   confirmIt("There was an error downloading the JSON!");
                 }
