@@ -198,6 +198,19 @@ export const ONTOLOGY_APPS = [
     id: "final-hierarchy-with-o*net-parts-inheritance",
     name: "Final Hierarchy with O*Net Parts with inheritance",
   },
+
+  {
+    id: "xinru",
+    name: "Xinru",
+  },
+  {
+    id: "shuo",
+    name: "Shuo",
+  },
+  {
+    id: "vicky",
+    name: "Vicky",
+  },
   // {
   //   id: "only-specifications-ai-peer",
   //   name: "Only Specifications AI Peer Ontology",
