@@ -198,7 +198,7 @@ export const ONTOLOGY_APPS = [
     id: "final-hierarchy-with-o*net-parts-inheritance",
     name: "Final Hierarchy with O*Net Parts with inheritance",
   },
-
+  { id: "noun-ontology", name: "Noun Ontology" },
   {
     id: "xinru",
     name: "Xinru",
