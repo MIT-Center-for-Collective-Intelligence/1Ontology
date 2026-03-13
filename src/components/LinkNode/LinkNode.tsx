@@ -124,6 +124,8 @@ import LinkEditor from "./LinkEditor";
 import LinkNodeTitle from "./LinkNodeTitle";
 import { Post } from "@components/lib/utils/Post";
 import { LoadingButton } from "@mui/lab";
+import { removeLinkFromNode } from "@components/lib/utils/instantTreeUpdate";
+import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
 
 const glowGreen = keyframes`
   0% {
@@ -171,6 +173,7 @@ type ILinkNodeProps = {
   enableEdit: boolean;
   setEditableProperty: any;
   unlinkNodeRelation: any;
+  onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
 };
 
 const LinkNode = ({
@@ -207,6 +210,7 @@ const LinkNode = ({
   enableEdit,
   setEditableProperty,
   unlinkNodeRelation,
+  onInstantTreeUpdate,
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -548,6 +552,27 @@ const LinkNode = ({
             skillsFuture,
             ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
+
+          // Instant tree update for local user
+          if (onInstantTreeUpdate) {
+            onInstantTreeUpdate((tree) => {
+              return removeLinkFromNode(
+                tree,
+                currentVisibleNode?.id,
+                linkId,
+                property,
+                collectionIndex
+              );
+            });
+          }
+
+          await savePendingNodeState(currentVisibleNode.id, nodeData, skillsFutureApp, db);
+
+          if (shouldBeRemovedFromParent) {
+            // If other node (parent or child) was updated, save its state too
+            await savePendingNodeState(linkId, null, skillsFutureApp, db);
+          }
+
           if (property === "generalizations") {
             const currentNewLinks = nodeData["generalizations"][0].nodes;
             updateLinksForInheritance(

@@ -28,8 +28,8 @@ import { ICollection, TreeData } from "@components/types/INode";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
 import { FillFlexParent } from "./fill-flex-parent";
-import { updateNodeInTree, reorderChildrenInTree, moveNodeInTree } from "@components/lib/utils/instantTreeUpdate";
 import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
+import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
 
 const INDENT_STEP = 15;
 const INITIAL_LOAD_COUNT = 20;
@@ -335,7 +335,6 @@ function DraggableTree({
 
   useEffect(() => {
     // Use tree data from current node's nodeTreeData field
-    console.log("[DRAGGABLE TREE] Source data length:", treeViewData?.length);
     setTreeData(processTreeData(treeViewData));
   }, [treeViewData, processTreeData]);
 
@@ -384,8 +383,6 @@ function DraggableTree({
         return;
       }
 
-      console.log(`[EXPAND] Searching for node: ${targetNodeId}`);
-
       // Find all instances of this node in the tree
       const targetNodes = findNodesByNodeId(tree, targetNodeId);
 
@@ -394,13 +391,9 @@ function DraggableTree({
         return;
       }
 
-      console.log(`[EXPAND] Found ${targetNodes.length} instance(s) of node ${targetNodeId}`);
-
       // Expand ALL occurrences of the node
       for (let i = 0; i < targetNodes.length; i++) {
         const targetNode = targetNodes[i];
-
-        console.log(`[EXPAND] Expanding occurrence ${i + 1}/${targetNodes.length} at path: ${targetNode.id}`);
 
         // Expand all ancestors by walking up the parent chain
         let current = targetNode.parent;
@@ -414,8 +407,6 @@ function DraggableTree({
         }
 
         ancestorsToExpand.reverse();
-
-        console.log(`[EXPAND] Expanding ${ancestorsToExpand.length} ancestor(s) for occurrence ${i + 1}`);
 
         // Expand ancestors progressively
         for (const ancestor of ancestorsToExpand) {
@@ -437,7 +428,6 @@ function DraggableTree({
       // scroll to first node
       const firstTargetNode = targetNodes[0];
       if (!isNodeVisible(firstTargetNode.id)) {
-        console.log(`[EXPAND] Scrolling to first occurrence: ${firstTargetNode.id}`);
         await tree.scrollTo(firstTargetNode.id);
       }
 
@@ -609,18 +599,64 @@ function DraggableTree({
         return;
       }
 
+      // Local update for immediate visual feedback
       const newData = [...treeData];
+
+      // Find dragged node's current visual position before removing it
+      let draggedNodeVisualIndex = -1;
+      if (args.parentNode?.children && args.dragNodes[0]) {
+        for (let i = 0; i < args.parentNode.children.length; i++) {
+          if (args.parentNode.children[i].data.nodeId === args.dragNodes[0].data.nodeId) {
+            draggedNodeVisualIndex = i;
+            break;
+          }
+        }
+      }
+
+      // Remove node
       args.dragNodes.forEach((node) => {
         removeNode(newData, node.data.id);
       });
 
+      // Calculate correct index for local update
+      let localTargetIndex = args.index;
+      if (args.parentNode?.children) {
+
+        localTargetIndex = args.index;
+
+        // When dragging down: removal shifts positions after the dragged node
+        // When dragging up: removal doesn't affect positions before the dragged node
+        if (draggedNodeVisualIndex >= 0 && draggedNodeVisualIndex < args.index) {
+          localTargetIndex--; // adjust shift
+        }
+      }
+
       const targetParent = args.parentId
         ? findNode(newData, args.parentId)
         : { children: newData };
+
       args.dragNodes.forEach((node) => {
-        targetParent?.children?.splice(args.index, 0, node.data);
+        targetParent?.children?.splice(localTargetIndex, 0, node.data);
       });
       setTreeData(newData);
+
+      // Update shared tree state with local update to prevent glitch when treeViewData updates
+      if (onInstantTreeUpdate) {
+        // Clean the newData to remove pagination properties
+        const cleanTreeData = (data: PaginatedTreeData[]): TreeData[] => {
+          return data.filter(node => !node.isLoadMore).map(node => ({
+            id: node.id,
+            nodeId: node.nodeId,
+            name: node.name,
+            nodeType: node.nodeType,
+            category: node.category,
+            unclassified: node.unclassified,
+            children: node.children ? cleanTreeData(node.children) : undefined,
+          }));
+        };
+
+        onInstantTreeUpdate(() => cleanTreeData(newData));
+      }
 
       if (draggedNodes[0].category) {
         const parentId = args.parentId;
@@ -655,22 +691,10 @@ function DraggableTree({
             ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
 
-          // Instant update: Reorder collections in tree display
-          if (onInstantTreeUpdate) {
-            // Clean the newData to remove pagination-specific properties
-            const cleanTreeData = (data: PaginatedTreeData[]): TreeData[] => {
-              return data.filter(node => !node.isLoadMore).map(node => ({
-                id: node.id,
-                nodeId: node.nodeId,
-                name: node.name,
-                nodeType: node.nodeType,
-                category: node.category,
-                unclassified: node.unclassified,
-                children: node.children ? cleanTreeData(node.children) : undefined,
-              }));
-            };
-
-            onInstantTreeUpdate(() => cleanTreeData(newData));
+          // Save pending node state for real-time sync
+          if (skillsFutureApp) {
+            const updatedNode = { ...nodeData, specializations: newSpecializations };
+            await savePendingNodeState(parentId, updatedNode, skillsFutureApp, db);
           }
 
           await queueTreeUpdate(parentId, skillsFutureApp);
@@ -681,74 +705,157 @@ function DraggableTree({
       if (toParent.nodeId === fromParents[0].nodeId) {
         const nodeRef = doc(collection(db, NODES), toParent.nodeId);
         const nodeData = nodes[toParent.nodeId];
+
+        // Determine source and target collection names
         let from = "main";
         if (fromParents[0].category) {
-          from = fromParents[0].name;
+          from = fromParents[0].name.replace(/^\[|\]$/g, '');
         }
         let to = "main";
         if (toParent.category) {
-          to = toParent.name;
+          to = toParent.name.replace(/^\[|\]$/g, '');
         }
-        if (toParent.name === from) {
-          return;
-        }
+
         const specializations = nodeData.specializations;
         const previousValue = JSON.parse(JSON.stringify(specializations));
 
+        // Find collection indices
         const fromCollectionIdx = specializations.findIndex(
           (s: ICollection) => s.collectionName === from,
         );
-        if (fromCollectionIdx !== -1) {
-          specializations[fromCollectionIdx].nodes = specializations[
-            fromCollectionIdx
-          ].nodes.filter(
-            (n: { id: string }) => n.id !== draggedNodes[0].nodeId,
-          );
-        }
-
         const toCollectionIdx = specializations.findIndex(
           (s: ICollection) => s.collectionName === to,
         );
-        specializations[toCollectionIdx].nodes.splice(args.index, 0, {
-          id: draggedNodes[0].nodeId,
-        });
 
-        await updateDoc(nodeRef, {
-          specializations,
-        });
-        saveNewChangeLog(db, {
-          nodeId: toParent.nodeId,
-          modifiedBy: user?.uname,
-          modifiedProperty: "specializations",
-          previousValue,
-          newValue: specializations,
-          modifiedAt: new Date(),
-          changeType: "sort elements",
-          fullNode: nodes[toParent.nodeId],
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
-        });
-
-        // Instant update: Reorder children in tree display
-        if (onInstantTreeUpdate) {
-          // Clean the newData to remove pagination-specific properties
-          const cleanTreeData = (data: PaginatedTreeData[]): TreeData[] => {
-            return data.filter(node => !node.isLoadMore).map(node => ({
-              id: node.id,
-              nodeId: node.nodeId,
-              name: node.name,
-              nodeType: node.nodeType,
-              category: node.category,
-              unclassified: node.unclassified,
-              children: node.children ? cleanTreeData(node.children) : undefined,
-            }));
-          };
-
-          onInstantTreeUpdate(() => cleanTreeData(newData));
+        if (fromCollectionIdx === -1 || toCollectionIdx === -1) {
+          return;
         }
 
-        await queueTreeUpdate(toParent.nodeId, skillsFutureApp);
-        return;
+        if (from === to) {
+          // SAME COLLECTION REORDERING
+          const currentIndex = specializations[fromCollectionIdx].nodes.findIndex(
+            (n: { id: string }) => n.id === draggedNodes[0].nodeId
+          );
+
+          if (currentIndex === -1) {
+            console.error('[HANDLE MOVE] Node not found in collection:', draggedNodes[0].nodeId);
+            return;
+          }
+
+          const [movedNode] = specializations[fromCollectionIdx].nodes.splice(currentIndex, 1);
+
+          // Find dragged node's position for adjustment
+          let draggedNodeVisualIndex = -1;
+          if (args.parentNode?.children) {
+            for (let i = 0; i < args.parentNode.children.length; i++) {
+              if (args.parentNode.children[i].data.nodeId === draggedNodes[0].nodeId) {
+                draggedNodeVisualIndex = i;
+                break;
+              }
+            }
+          }
+
+          // Count category/load-more nodes before args.index
+          let categoryCount = 0;
+          if (args.parentNode?.children) {
+            for (let i = 0; i < args.index && i < args.parentNode.children.length; i++) {
+              const child = args.parentNode.children[i];
+              if (child.data.category || child.data.isLoadMore) {
+                categoryCount++;
+              }
+            }
+          }
+
+          // Calculate target index for Firestore array
+          let firestoreTargetIndex = args.index - categoryCount;
+
+          // Dragging down operation needs to be adjusted
+          let firestoreSpliceIndex = firestoreTargetIndex;
+          if (draggedNodeVisualIndex >= 0 && draggedNodeVisualIndex < args.index) {
+            firestoreSpliceIndex--;  // Dragging down - adjust for shifted array
+          }
+
+          // Insert at calculated position
+          specializations[fromCollectionIdx].nodes.splice(firestoreSpliceIndex, 0, movedNode);
+
+          await updateDoc(nodeRef, { specializations });
+
+          saveNewChangeLog(db, {
+            nodeId: toParent.nodeId,
+            modifiedBy: user?.uname,
+            modifiedProperty: "specializations",
+            previousValue,
+            newValue: specializations,
+            modifiedAt: new Date(),
+            changeType: "sort elements",
+            fullNode: nodes[toParent.nodeId],
+            skillsFuture,
+            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          });
+
+          // Save pending node state for real-time sync
+          if (skillsFutureApp) {
+            const updatedNode = { ...nodeData, specializations };
+            await savePendingNodeState(toParent.nodeId, updatedNode, skillsFutureApp, db);
+          }
+          return;
+        } else {
+          // CROSS COLLECTION MOVE
+
+          // Find current index in SOURCE collection
+          let originalFromIndex = 0;
+          if (fromCollectionIdx !== -1) {
+            originalFromIndex = specializations[fromCollectionIdx].nodes.findIndex(
+              (n: { id: string }) => n.id === draggedNodes[0].nodeId
+            );
+
+            // Remove from source collection
+            specializations[fromCollectionIdx].nodes = specializations[fromCollectionIdx].nodes.filter(
+              (n: { id: string }) => n.id !== draggedNodes[0].nodeId
+            );
+          }
+
+          // Count category/load-more nodes before args.index in target collection
+          let categoryCount = 0;
+          if (args.parentNode?.children) {
+            for (let i = 0; i < args.index && i < args.parentNode.children.length; i++) {
+              const child = args.parentNode.children[i];
+              if (child.data.category || child.data.isLoadMore) {
+                categoryCount++;
+              }
+            }
+          }
+
+          // Calculate target index
+          let toFirestoreIndex = args.index - categoryCount;
+
+          // Insert into target collection
+          specializations[toCollectionIdx].nodes.splice(toFirestoreIndex, 0, {
+            id: draggedNodes[0].nodeId,
+          });
+
+          await updateDoc(nodeRef, { specializations });
+
+          saveNewChangeLog(db, {
+            nodeId: toParent.nodeId,
+            modifiedBy: user?.uname,
+            modifiedProperty: "specializations",
+            previousValue,
+            newValue: specializations,
+            modifiedAt: new Date(),
+            changeType: "sort elements",
+            fullNode: nodes[toParent.nodeId],
+            skillsFuture,
+            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          });
+
+          // Save pending node state for real-time sync
+          if (skillsFutureApp) {
+            const updatedNode = { ...nodeData, specializations };
+            await savePendingNodeState(toParent.nodeId, updatedNode, skillsFutureApp, db);
+          }
+          return;
+        }
       }
 
       setSnackbarMessage(
@@ -858,19 +965,13 @@ function DraggableTree({
         ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
       });
 
-      // Instant update: Move node in tree display
-      if (onInstantTreeUpdate) {
-        onInstantTreeUpdate((tree) => {
-          // Use moveNodeInTree helper to update the tree structure
-          return moveNodeInTree(
-            tree,
-            draggedNodes[0].nodeId,
-            generalizationId,
-            toParent.nodeId,
-            args.index
-          );
-        });
-      }
+      // Save state for the moved node (updated generalizations)
+      const updatedSpecialization = { ...specializationData, generalizations: newGeneralizations };
+      await savePendingNodeState(specializationId, updatedSpecialization, skillsFutureApp, db);
+
+      // Save state for the new parent (updated specializations)
+      const updatedGeneralization = { ...newGeneralizationData, specializations };
+      await savePendingNodeState(toParent.nodeId, updatedGeneralization, skillsFutureApp, db)
 
       await queueTreeUpdate(generalizationId, skillsFutureApp);
       await queueTreeUpdate(toParent.nodeId, skillsFutureApp);

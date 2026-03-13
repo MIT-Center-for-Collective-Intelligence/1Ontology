@@ -11,6 +11,7 @@ export const COPILOT_PROMPTS = "copilotPrompts";
 export const NODES_ONET = "oNetNodes";
 export const ALGORITHMS = "algorithms";
 export const TREE_QUEUES = "treeUpdateQueue"
+export const TREE_PENDING_CHANGES = "treePendingChanges"
 
 /* consultant */
 export const GROUPS = "groups";

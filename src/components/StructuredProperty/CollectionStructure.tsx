@@ -49,6 +49,8 @@ import {
 
 import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
 import StructuredPropertySelector from "./StructuredPropertySelector";
+import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
+import { reorderChildInTree, reorderCollectionInTree } from "@components/lib/utils/instantTreeUpdate";
 
 interface LoadMoreNode extends ILinkNode {
   id: string;
@@ -311,7 +313,7 @@ const CollectionStructure = ({
   };
 
   const handleCollectionSorting = useCallback(
-    (e: any) => {
+    async (e: any) => {
       try {
         const sourceIndex = e.source.index;
         const destinationIndex = e.destination.index;
@@ -363,9 +365,33 @@ const CollectionStructure = ({
             property === "specializations" ||
             property === "generalizations"
           ) {
+            if (property === "specializations" && onInstantTreeUpdate) {
+              const fromCollectionName = propertyValue[sourceIndex]?.collectionName;
+              const toCollectionName = propertyValue[destinationIndex]?.collectionName;
+
+              onInstantTreeUpdate((tree) => {
+                const updatedTree = reorderCollectionInTree(
+                  tree,
+                  currentVisibleNode.id,
+                  sourceIndex,
+                  destinationIndex,
+                  fromCollectionName,
+                  toCollectionName,
+                  newArray
+                );
+                return updatedTree;
+              });
+            }
+
             updateDoc(nodeRef, {
               [property]: newArray,
             });
+
+            // Save pending node state for real-time sync to other users
+            if (property === "specializations") {
+              const updatedNodeData = { ...nodeData, specializations: newArray };
+              await savePendingNodeState(currentVisibleNode.id, updatedNodeData, skillsFutureApp, db);
+            }
           } else {
             if (nodeData.inheritance) {
               nodeData.inheritance[property].ref = null;
@@ -397,7 +423,7 @@ const CollectionStructure = ({
     },
     [property, currentVisibleNode],
   );
-  console.log("editableProperty ==>", editableProperty);
+  // console.log("editableProperty ==>", editableProperty);
 
   const handleSorting = useCallback(
     async (
@@ -509,6 +535,33 @@ const CollectionStructure = ({
             skillsFuture,
             ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
+
+          if (property === "specializations" && onInstantTreeUpdate) {
+
+            // Get collection names from propertyValue array
+            const fromCollectionName = propertyValue[sourceCollectionIndex]?.collectionName;
+            const toCollectionName = propertyValue[destinationCollectionIndex]?.collectionName;
+
+            onInstantTreeUpdate((tree) => {
+              return reorderChildInTree(
+                tree,
+                currentVisibleNode.id,
+                draggableId,
+                sourceCollectionIndex,
+                destinationCollectionIndex,
+                source.index,
+                destination.index,
+                fromCollectionName,
+                toCollectionName
+              );
+            });
+          }
+
+          // Save pending node state for real-time sync to other users
+          if (property === "specializations") {
+            const updatedNode = { ...currentVisibleNode, specializations: propertyValue };
+            await savePendingNodeState(currentVisibleNode.id, updatedNode, skillsFutureApp, db);
+          }
 
           // Queue tree update after sorting elements
           if (currentVisibleNode?.id) {
@@ -811,6 +864,15 @@ const CollectionStructure = ({
               const updateTreeNode = (nodes: any[]): any[] => {
                 return nodes.map((node) => {
                   if (node.nodeId === currentVisibleNode.id) {
+                    // Check if collection already exists
+                    const collectionExists = node.children?.some(
+                      (child: any) => child.name === `[${newCollection}]` && child.category
+                    );
+
+                    if (collectionExists) {
+                      return node;
+                    }
+
                     // Add new collection node (empty) to children
                     const newCollectionNode = {
                       id: `${node.id}-${newCollection}`,
@@ -835,6 +897,11 @@ const CollectionStructure = ({
               console.log("[INSTANT UPDATE] Added new collection to tree");
               return updatedTree;
             });
+          }
+
+          // Save pending node state for real-time sync to other users
+          if (property === 'specializations') {
+            await savePendingNodeState(currentVisibleNode.id, nodeData as INode, skillsFutureApp, db);
           }
 
           await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
@@ -1062,6 +1129,11 @@ const CollectionStructure = ({
             });
           }
 
+          // Save pending node state for real-time sync
+          if (property === 'specializations' && editCollection) {
+            await savePendingNodeState(currentVisibleNode.id, nodeData as INode, skillsFutureApp, db);
+          }
+
           await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
         }
       } catch (error: any) {
@@ -1235,6 +1307,11 @@ const CollectionStructure = ({
                   console.log("[INSTANT UPDATE] Deleted collection from tree");
                   return updatedTree;
                 });
+              }
+
+              // Save pending node state for real-time sync to other users
+              if (property === 'specializations') {
+                await savePendingNodeState(currentVisibleNode.id, nodeData as INode, skillsFutureApp, db);
               }
 
               await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
@@ -1721,6 +1798,9 @@ const CollectionStructure = ({
                                                 unlinkNodeRelation={
                                                   unlinkNodeRelation
                                                 }
+                                                onInstantTreeUpdate={
+                                                  onInstantTreeUpdate
+                                                }
                                               />
                                             )}
                                           </Draggable>
@@ -1823,6 +1903,9 @@ const CollectionStructure = ({
                                             unlinkNodeRelation={
                                               unlinkNodeRelation
                                             }
+                                            onInstantTreeUpdate={
+                                              onInstantTreeUpdate
+                                            }
                                           />
                                         );
                                       },
@@ -1906,6 +1989,9 @@ const CollectionStructure = ({
                                             }
                                             unlinkNodeRelation={
                                               unlinkNodeRelation
+                                            }
+                                            onInstantTreeUpdate={
+                                              onInstantTreeUpdate
                                             }
                                           />
                                         );

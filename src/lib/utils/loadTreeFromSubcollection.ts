@@ -1,5 +1,5 @@
-import { collection, getDocs, getFirestore } from "firebase/firestore";
-import { NODES } from "@components/lib/firestoreClient/collections";
+import { collection, getDocs, getFirestore, query, where } from "firebase/firestore";
+import { NODES, TREE_PENDING_CHANGES } from "@components/lib/firestoreClient/collections";
 import { TreeData, ICollection } from "@components/types/INode";
 
 interface TreeNodeDocument {
@@ -15,23 +15,17 @@ interface TreeNodeDocument {
  */
 export async function loadTreeFromSubCollection(
   nodeId: string,
+  appName?: string
 ): Promise<TreeData[]> {
   const db = getFirestore();
-
-  console.log(`[LOAD-SUBCOL-TREE] Loading tree for node: ${nodeId}`);
 
   // Fetch all tree nodes from subCollection
   const treeNodesRef = collection(db, NODES, nodeId, "treeNodes");
   const snapshot = await getDocs(treeNodesRef);
 
   if (snapshot.empty) {
-    console.log(`[LOAD-SUBCOL-TREE] No tree data found in subCollection`);
     return [];
   }
-
-  console.log(
-    `[LOAD-SUBCOL-TREE] Loaded ${snapshot.size} nodes from subCollection`,
-  );
 
   // Build a map of all nodes by their nodeId (document ID)
   const rootNodeIds: string[] = [];
@@ -46,7 +40,47 @@ export async function loadTreeFromSubCollection(
     }
   });
 
-  console.log(`[LOAD-SUBCOL-TREE] Found ${rootNodeIds.length} root node(s)`);
+
+  // Overlay pending changes on top of subcollection data
+  if (appName) {
+    try {
+      const pendingChangesQuery = query(
+        collection(db, TREE_PENDING_CHANGES),
+        where('appName', '==', appName)
+      );
+
+      const pendingSnapshot = await getDocs(pendingChangesQuery);
+
+      if (!pendingSnapshot.empty) {
+        pendingSnapshot.forEach((doc) => {
+          const pendingData = doc.data();
+          const pendingNodeId = doc.id;
+
+          // Replace subcollection data with pending change data, OR add new node if it doesn't exist
+          if (nodesMap[pendingNodeId]) {
+            nodesMap[pendingNodeId] = {
+              title: pendingData.title,
+              nodeType: pendingData.nodeType,
+              specializations: pendingData.specializations || [],
+              unclassified: nodesMap[pendingNodeId].unclassified,
+              root: nodesMap[pendingNodeId].root
+            };
+          } else {
+            // Node doesn't exist in subcollection yet, add it from pending changes
+            nodesMap[pendingNodeId] = {
+              title: pendingData.title,
+              nodeType: pendingData.nodeType,
+              specializations: pendingData.specializations || [],
+              unclassified: pendingData.unclassified,
+              root: pendingData.root
+            };
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error loading pending changes:', error);
+    }
+  }
 
   // Reconstruct hierarchical tree from specializations
   // Optimization: Pass mutable visited Set and path string to reduce allocations
@@ -117,18 +151,16 @@ export async function loadTreeFromSubCollection(
             );
           }
 
-          if (collectionChildren.length > 0) {
-            childrenInOrder.push({
-              id: collectionPathId,
-              nodeId: currentNodeId,
-              name: `[${collection.collectionName}]`,
-              nodeType: node.nodeType,
-              category: true,
-              children: collectionChildren,
-              ...(node.unclassified && { unclassified: true }),
-              originalCollectionIndex: collectionIndex,
-            } as any);
-          }
+          childrenInOrder.push({
+            id: collectionPathId,
+            nodeId: currentNodeId,
+            name: `[${collection.collectionName}]`,
+            nodeType: node.nodeType,
+            category: true,
+            children: collectionChildren,
+            ...(node.unclassified && { unclassified: true }),
+            originalCollectionIndex: collectionIndex,
+          } as any);
         }
       }
     }

@@ -135,6 +135,8 @@ import { development } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
 import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
+import { addLinkToNode, removeLinkFromNode } from "@components/lib/utils/instantTreeUpdate";
+import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -843,7 +845,7 @@ const Node = ({
         });
 
         // Create a new document in Firestore for the cloned node
-        setDoc(newNodeRef, {
+        await setDoc(newNodeRef, {
           ...newNode,
           locked: false,
           createdAt: new Date(),
@@ -868,13 +870,36 @@ const Node = ({
 
         setCloning(null);
         // Update the parent node's specializations
-        updateSpecializations(parentNodeData, newNodeRef.id, collectionName);
+        await updateSpecializations(parentNodeData, newNodeRef.id, collectionName);
 
         // Update the original parent node
         await updateDoc(parentNodeRef, {
           ...parentNodeData,
           updatedAt: new Date(),
         });
+
+        // Instant tree update for local user
+        if (onInstantTreeUpdate) {
+          onInstantTreeUpdate((tree) => {
+            return addLinkToNode(
+              tree,
+              nodeId,
+              newNodeRef.id,
+              mProperty,
+              collectionName,
+              relatedNodes,
+              newNode.title,
+              newNode.nodeType
+            );
+          });
+        }
+
+        // Save pending node states for real-time tree sync
+        // Save state for new node
+        await savePendingNodeState(newNodeRef.id, newNode, skillsFutureApp, db);
+
+        // Save state for parent node (updated specializations/generalizations)
+        await savePendingNodeState(nodeId, null, skillsFutureApp, db);
 
         // Return the newly created node
         return newNode;
@@ -1259,6 +1284,51 @@ const Node = ({
           ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
 
+        // Instant tree update for local user
+        if (onInstantTreeUpdate) {
+          onInstantTreeUpdate((tree) => {
+            let updatedTree = tree;
+
+            // Remove links
+            for (const removedId of removedElements) {
+              updatedTree = removeLinkFromNode(
+                updatedTree,
+                nodeId,
+                removedId,
+                selectedProperty,
+                collectionIdx
+              );
+            }
+
+            // Add links
+            for (const addedId of addedElements) {
+              updatedTree = addLinkToNode(
+                updatedTree,
+                nodeId,
+                addedId,
+                selectedProperty,
+                selectedCollection || 'main',
+                relatedNodes
+              );
+            }
+
+            return updatedTree;
+          });
+        }
+        
+        await savePendingNodeState(nodeId, nodeData, skillsFutureApp, db);
+        // Save the state of linked/unlinked nodes
+        if (selectedProperty === "specializations" || selectedProperty === "generalizations") {
+          // Save state for all added nodes
+          for (const addedId of addedElements) {
+            await savePendingNodeState(addedId, null, skillsFutureApp, db);
+          }
+          // Save state for all removed nodes
+          for (const removedId of removedElements) {
+            await savePendingNodeState(removedId, null, skillsFutureApp, db);
+          }
+        }
+
         await queueTreeUpdate(nodeId, skillsFutureApp);
       } catch (error: any) {
         // Handle any errors that occur during the process
@@ -1274,7 +1344,7 @@ const Node = ({
         });
       }
     },
-    [checkedItems, db, relatedNodes, skillsFutureApp],
+    [checkedItems, db, relatedNodes, skillsFutureApp, onInstantTreeUpdate, user?.uname],
   );
 
   //  function to handle the deletion of a Node

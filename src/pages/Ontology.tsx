@@ -121,7 +121,7 @@ import {
   SCROLL_BAR_STYLE,
   ONTOLOGY_APPS,
 } from "@components/lib/CONSTANTS";
-import { NODES, USERS } from "@components/lib/firestoreClient/collections";
+import { NODES, TREE_PENDING_CHANGES, USERS } from "@components/lib/firestoreClient/collections";
 
 import { recordLogs } from "@components/lib/utils/helpers";
 import { useHover } from "@components/lib/hooks/useHover";
@@ -399,18 +399,25 @@ const Ontology = ({
 
   // Track instant updates to prevent overwriting with stale data
   const [hasInstantUpdate, setHasInstantUpdate] = useState(false);
+  const hasInstantUpdateRef = useRef(false);
   const instantUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    hasInstantUpdateRef.current = hasInstantUpdate;
+  }, [hasInstantUpdate]);
 
   // Instant tree update callback for instant UI feedback
   const handleInstantTreeUpdate = useCallback(
     (updateFn: (treeData: TreeData[]) => TreeData[]) => {
       setHasInstantUpdate(true);
+      hasInstantUpdateRef.current = true;
       if (instantUpdateTimeoutRef.current) {
         clearTimeout(instantUpdateTimeoutRef.current);
       }
       instantUpdateTimeoutRef.current = setTimeout(() => {
         console.log("[INSTANT UPDATE] Timeout - clearing instant update flag");
         setHasInstantUpdate(false);
+        hasInstantUpdateRef.current = false;
       }, 30000);
 
       setCurrentNodeTreeData((prevTree) => {
@@ -1338,6 +1345,47 @@ const Ontology = ({
     }
   }, [relatedNodes, appName]);
 
+  // Subscribe to pending node states and trigger tree reload
+  useEffect(() => {
+    if (!appName || !user || !currentVisibleNode?.id) return;
+
+    const changesQuery = query(
+      collection(db, TREE_PENDING_CHANGES),
+      where('appName', '==', appName)
+    );
+
+    const unsubscribe = onSnapshot(
+      changesQuery,
+      (snapshot) => {
+        // Skip initial snapshot (tree already loaded with pending changes)
+        const hasRelevantChanges = snapshot.docChanges().some((change) => {
+          return change.type === 'added' || change.type === 'modified';
+        });
+
+        if (hasRelevantChanges) {
+          // Skip reload if instant update is in progress
+          if (hasInstantUpdateRef.current) {
+            return;
+          }
+
+          // Reload tree with pending changes
+          loadTreeFromSubCollection(currentVisibleNode.id, appName).then(hierarchicalTree => {
+            const filteredTree = filterTreeForTargetNode(
+              hierarchicalTree,
+              currentVisibleNode.id,
+            );
+            setCurrentNodeTreeData(filteredTree);
+          });
+        }
+      },
+      (error) => {
+        console.error('Error:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [appName, user?.uname, db, currentVisibleNode?.id]);
+
   const getTreeView = ({ mainCategories, visited, path }: any): any => {
     const newNodes = [];
 
@@ -1909,14 +1957,15 @@ const Ontology = ({
         navigateToNode(node.id);
 
         setTimeout(() => {
-          const elements = document.getElementsByClassName("node-" + node?.id);
-          const firstElement = elements.length > 0 ? elements[0] : null;
-
-          if (firstElement) {
+          const elements : any = document.querySelector(`[node-id="${node?.id}"]`);
+          if (elements) {
+            const firstElement = elements.length > 0 ? elements[0] : elements;
+            if (firstElement) {
             firstElement.scrollIntoView({
               behavior: "smooth",
               block: "center",
             });
+          }
           }
         }, 500);
         // initializeExpanded(eachOntologyPath[node.id]);
@@ -2028,12 +2077,9 @@ const Ontology = ({
 
   // Load tree data from subCollection
   useEffect(() => {
-    console.log("[LOCAL TREE] Current node:", currentVisibleNode?.title);
-    console.log("[LOCAL TREE] Has instant update:", hasInstantUpdate);
 
     // Skip rebuilding if we have instant updates pending
-    if (hasInstantUpdate) {
-      console.log("[LOCAL TREE] Skipping rebuild - has instant updates");
+    if (hasInstantUpdateRef.current) {
       return;
     }
 
@@ -2047,6 +2093,7 @@ const Ontology = ({
       try {
         const hierarchicalTree = await loadTreeFromSubCollection(
           currentVisibleNode.id,
+          appName
         );
 
         // Apply filtering based on target node occurrences
@@ -2061,7 +2108,7 @@ const Ontology = ({
     };
 
     loadTree();
-  }, [currentVisibleNode?.id, hasInstantUpdate]);
+  }, [currentVisibleNode?.id]);
 
   // Handler for expanding ellipsis nodes
   const handleExpandEllipsis = useCallback((ellipsisNodeId: string) => {
