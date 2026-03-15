@@ -7,11 +7,6 @@
  * https://ai.google.dev/gemini-api/docs/get-started/node
  */
 
-export const openai = new OpenAI({
-  apiKey: process.env.MIT_CCI_API_KEY,
-  organization: process.env.MIT_CCI_API_ORG_ID,
-});
-
 import { dbCausal } from "@components/lib/firestoreServer/admin";
 import { delay } from "@components/lib/utils/utils";
 import {
@@ -25,6 +20,7 @@ import {
 import OpenAI from "openai";
 import { ChromaClient, IncludeEnum, OpenAIEmbeddingFunction } from "chromadb";
 import { getNodesByIds } from "./copilot";
+import { embeddingFunctionDefault, openai } from "./openaiClient";
 
 const key = process.env.MIT_CCI_GEMINI_API_KEY || "";
 
@@ -143,11 +139,6 @@ const sanitizeCollectionName = (title: string) => {
   );
 };
 
-const chromaEmbeddingFunction = new OpenAIEmbeddingFunction({
-  openai_api_key: process.env.MIT_CCI_API_KEY,
-  openai_model: "text-embedding-3-large",
-});
-
 const cosineSimilarity = (vecA: any[], vecB: any[]) => {
   if (vecA.length !== vecB.length) {
     throw new Error("Embedding vectors must have the same length.");
@@ -195,7 +186,7 @@ export const searchChromaCore = async ({
 
   const collection = await chromaClient.getOrCreateCollection({
     name: collectionName,
-    embeddingFunction: chromaEmbeddingFunction,
+    embeddingFunction: embeddingFunctionDefault,
   });
 
   const results = await collection.query({

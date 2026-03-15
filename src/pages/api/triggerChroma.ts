@@ -7,7 +7,8 @@ import { ChromaClient, Embedding, OpenAIEmbeddingFunction } from "chromadb";
 import fbAuth from "@components/middlewares/fbAuth";
 import { development } from "@components/lib/CONSTANTS";
 import Cors from "cors";
-import { openai } from "./helpers";
+
+import { embeddingFunctionDefault, openai } from "./openaiClient";
 
 const url = `${process.env.CHROMA_PROTOCOL}://${process.env.CHROMA_HOST}:${process.env.CHROMA_PORT}`;
 
@@ -87,10 +88,6 @@ const sanitizeCollectionName = (title: string) => {
       .slice(0, 512) || "default_collection"
   );
 };
-const embeddingFunction = new OpenAIEmbeddingFunction({
-  openai_api_key: process.env.MIT_CCI_API_KEY,
-  openai_model: "text-embedding-3-large",
-});
 const cors = Cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -134,7 +131,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     let collection = await client.getOrCreateCollection({
       name: collectionName,
-      embeddingFunction: embeddingFunction,
+      embeddingFunction: embeddingFunctionDefault,
     });
 
     if (update) {
