@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { ChromaClient, IncludeEnum, OpenAIEmbeddingFunction } from "chromadb";
 import Cors from "cors";
-import { openai } from "./helpers";
+import { openai } from "./openaiClient";
 import { db } from "@components/lib/firestoreServer/admin";
 import { LOGS } from "@components/lib/firestoreClient/collections";
 import { getDoerCreate } from "@components/lib/utils/helpers";
