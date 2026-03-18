@@ -116,7 +116,8 @@ import {
   SCROLL_BAR_STYLE,
   ONTOLOGY_APPS,
 } from "@components/lib/CONSTANTS";
-import { NODES, USERS } from "@components/lib/firestoreClient/collections";
+import { NODES, USERS, UNREAD_COMMENTS } from "@components/lib/firestoreClient/collections";
+import { getDatabase, onValue, ref } from "firebase/database";
 
 import { recordLogs } from "@components/lib/utils/helpers";
 import { useHover } from "@components/lib/hooks/useHover";
@@ -173,6 +174,7 @@ const Ontology = ({
   appName: string;
 }) => {
   const db = getFirestore();
+  const rtdb = getDatabase();
   const [{ emailVerified, user }] = useAuth();
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:599px)");
@@ -249,6 +251,9 @@ const Ontology = ({
   const [rootNode, setRootNode] = useState<string | null>(null);
   const [isExperimentalSearch, setIsExperimentalSearch] = useState(true);
   const treeRef = useRef<TreeApi<TreeData>>(null);
+  const [nodesWithComments, setNodesWithComments] = useState<Set<string>>(
+    new Set(),
+  );
 
   const firstLoad = useRef(true);
 
@@ -807,6 +812,16 @@ const Ontology = ({
     // Unsubscribe from the snapshot listener when the component is unmounted
     return () => unsubscribeNodes();
   }, [db, appName]);
+
+  useEffect(() => {
+    if (!user?.uname) return;
+    const unreadRef = ref(rtdb, `/${UNREAD_COMMENTS}/${user.uname}`);
+    const unsubscribe = onValue(unreadRef, (snapshot) => {
+      const data = snapshot.val();
+      setNodesWithComments(new Set<string>(data ? Object.keys(data) : []));
+    });
+    return () => unsubscribe();
+  }, [user?.uname]);
 
   useEffect(() => {
     if (currentVisibleNode?.id) {
@@ -1680,6 +1695,7 @@ const Ontology = ({
               skillsFutureApp={appName}
               multipleOntologyPaths={multipleOntologyPaths}
               eachOntologyPath={eachNodePath}
+              nodesWithComments={nodesWithComments}
             />
           </Box>
         </Box>
@@ -1835,6 +1851,7 @@ const Ontology = ({
                       skillsFutureApp={appName}
                       multipleOntologyPaths={multipleOntologyPaths}
                       eachOntologyPath={eachNodePath}
+                      nodesWithComments={nodesWithComments}
                     />
                   </Box>
                 </TabPanel>
@@ -2068,6 +2085,7 @@ const Ontology = ({
                   skillsFutureApp={appName ?? null}
                   editableProperty={editableProperty}
                   setEditableProperty={setEditableProperty}
+                  nodesWithComments={nodesWithComments}
                 />
               )}
             </Box>

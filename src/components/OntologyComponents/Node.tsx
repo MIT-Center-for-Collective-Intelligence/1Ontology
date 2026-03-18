@@ -175,6 +175,7 @@ type INodeProps = {
   skillsFutureApp: string;
   editableProperty: any;
   setEditableProperty: any;
+  nodesWithComments: Set<string>;
 };
 
 const Node = ({
@@ -222,6 +223,7 @@ const Node = ({
   skillsFutureApp,
   editableProperty,
   setEditableProperty,
+  nodesWithComments,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -1239,6 +1241,7 @@ const Node = ({
           enableEdit={enableEdit}
           setEnableEdit={setEnableEdit}
           handleCloseAddLinksModel={handleCloseAddLinksModel}
+          hasComments={nodesWithComments.has(currentVisibleNode.id)}
         />
 
         {/* {currentVisibleNode.nodeType === "context" && (
