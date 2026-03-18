@@ -26,6 +26,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
+import { getDatabase, ref, remove, update } from "firebase/database";
 import dynamic from "next/dynamic";
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { TransitionGroup } from "react-transition-group";
@@ -33,7 +34,7 @@ import { TransitionGroup } from "react-transition-group";
 import { IChatMessage, Reaction } from "@components/types/IChat";
 
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
-import { MESSAGES, NODES } from "@components/lib/firestoreClient/collections";
+import { MESSAGES, NODES, UNREAD_COMMENTS } from "@components/lib/firestoreClient/collections";
 import {
   chatChange,
   getMessagesSnapshot,
@@ -76,6 +77,7 @@ const Chat = ({
   placeholder,
 }: ChatProps) => {
   const db = getFirestore();
+  const rtdb = getDatabase();
   const [showReplies, setShowReplies] = useState<string | null>(null);
   const [editing, setEditing] = useState<any | null>(null);
   const [replies, setReplies] = useState<any[]>([]);
@@ -94,6 +96,13 @@ const Chat = ({
   const [openMedia, setOpenMedia] = useState<any>("");
 
   const scrolled = useRef(false);
+
+  // Mark this node's comments as read when the user opens the chat panel
+  useEffect(() => {
+    if (chatType !== "node" || !nodeId || !user?.uname) return;
+    remove(ref(rtdb, `/${UNREAD_COMMENTS}/${user.uname}/${nodeId}`));
+  }, [nodeId, chatType, user?.uname]);
+
   useEffect(() => {
     setMessages([]);
     if (!user) return;
@@ -411,6 +420,16 @@ const Chat = ({
       (nodeData?.contributors || []).forEach((contributor: string) => {
         taggedUsers.add(contributor);
       });
+
+      // Mark this node as having unread comments for all other users
+      const updates: { [key: string]: boolean } = {};
+      for (const userData of users) {
+        if (userData.uname === user.uname) continue;
+        updates[`/${UNREAD_COMMENTS}/${userData.uname}/${nodeId}`] = true;
+      }
+      if (Object.keys(updates).length > 0) {
+        update(ref(rtdb), updates);
+      }
     }
 
     createNotifications(

@@ -92,6 +92,7 @@ type ITextProps = {
   modifyProperty?: Function;
   deleteProperty?: Function;
   handleCloseAddLinksModel?: any;
+  hasComments?: boolean;
 };
 
 const Text = ({
@@ -123,6 +124,7 @@ const Text = ({
   modifyProperty,
   deleteProperty,
   handleCloseAddLinksModel,
+  hasComments = false,
 }: ITextProps) => {
   const db = getFirestore();
   const theme: any = useTheme();
@@ -594,6 +596,7 @@ const Text = ({
                     handleCloseAddLinksModel={handleCloseAddLinksModel}
                     user={user}
                     aiPeer={aiPeer}
+                    hasComments={hasComments}
                   />
                 )}{" "}
               {enableEdit &&

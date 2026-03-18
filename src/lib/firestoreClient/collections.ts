@@ -11,6 +11,9 @@ export const COPILOT_PROMPTS = "copilotPrompts";
 export const NODES_ONET = "oNetNodes";
 export const ALGORITHMS = "algorithms";
 
+/* realtime database */
+export const UNREAD_COMMENTS = "unreadComments";
+
 /* consultant */
 export const GROUPS = "groups";
 export const LINKS = "links";
