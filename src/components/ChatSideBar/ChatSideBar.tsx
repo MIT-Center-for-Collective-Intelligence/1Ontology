@@ -48,6 +48,7 @@ const ChatSideBar = ({
   selectedChatTab,
   setSelectedChatTab,
   nodes,
+  appName,
 }: {
   currentVisibleNode: any;
   user: any;
@@ -62,6 +63,7 @@ const ChatSideBar = ({
   selectedChatTab: number;
   setSelectedChatTab: Function;
   nodes: { [nodeId: string]: INode };
+  appName: string;
 }) => {
   const db = getFirestore();
   const [users, setUsers] = useState<
@@ -262,6 +264,7 @@ const ChatSideBar = ({
               nodes={nodes}
               scrollingRef={scrollingRef}
               placeholder={tab.placeholder}
+              appName={appName}
             />
           </TabPanel>
         ))}

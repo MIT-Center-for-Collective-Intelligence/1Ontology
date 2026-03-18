@@ -815,13 +815,13 @@ const Ontology = ({
 
   useEffect(() => {
     if (!user?.uname) return;
-    const unreadRef = ref(rtdb, `/${UNREAD_COMMENTS}/${user.uname}`);
+    const unreadRef = ref(rtdb, `/${UNREAD_COMMENTS}/${appName}/${user.uname}`);
     const unsubscribe = onValue(unreadRef, (snapshot) => {
       const data = snapshot.val();
       setNodesWithComments(new Set<string>(data ? Object.keys(data) : []));
     });
     return () => unsubscribe();
-  }, [user?.uname]);
+  }, [user?.uname, appName]);
 
   useEffect(() => {
     if (currentVisibleNode?.id) {

@@ -62,6 +62,7 @@ type ChatProps = {
   nodes: { [nodeId: string]: INode };
   scrollingRef: any;
   placeholder: string;
+  appName: string;
 };
 
 const Chat = ({
@@ -75,6 +76,7 @@ const Chat = ({
   nodes,
   scrollingRef,
   placeholder,
+  appName,
 }: ChatProps) => {
   const db = getFirestore();
   const rtdb = getDatabase();
@@ -100,7 +102,7 @@ const Chat = ({
   // Mark this node's comments as read when the user opens the chat panel
   useEffect(() => {
     if (chatType !== "node" || !nodeId || !user?.uname) return;
-    remove(ref(rtdb, `/${UNREAD_COMMENTS}/${user.uname}/${nodeId}`));
+    remove(ref(rtdb, `/${UNREAD_COMMENTS}/${appName}/${user.uname}/${nodeId}`));
   }, [nodeId, chatType, user?.uname]);
 
   useEffect(() => {
@@ -425,7 +427,7 @@ const Chat = ({
       const updates: { [key: string]: boolean } = {};
       for (const userData of users) {
         if (userData.uname === user.uname) continue;
-        updates[`/${UNREAD_COMMENTS}/${userData.uname}/${nodeId}`] = true;
+        updates[`/${UNREAD_COMMENTS}/${appName}/${userData.uname}/${nodeId}`] = true;
       }
       if (Object.keys(updates).length > 0) {
         update(ref(rtdb), updates);
