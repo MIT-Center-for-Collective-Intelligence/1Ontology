@@ -26,7 +26,7 @@ import { ICollection, INode } from "@components/types/INode";
 
 import {
   checkIfCanDeleteANode,
-  clearNotifications,
+  clearNodeNotifications,
   createNewNode,
   generateInheritance,
   recordLogs,
@@ -634,7 +634,7 @@ const Improvements = ({
             ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
           // Record a log entry for the deletion action
-          clearNotifications(nodeRef.id);
+          clearNodeNotifications(nodeRef.id);
           recordLogs({
             action: "Deleted Node",
             node: nodeValue.id,

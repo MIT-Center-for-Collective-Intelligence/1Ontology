@@ -63,7 +63,7 @@ const MessageComponent = ({
   const handleDeleteMessage = async () => {
     if (
       await confirmIt(
-        "Are you sure you want to delete this message?",
+        "Are you sure you want to delete this comment?",
         "Delete",
         "Keep",
       )

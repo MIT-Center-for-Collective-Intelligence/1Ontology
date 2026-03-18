@@ -23,7 +23,13 @@ import {
   query,
   FieldValue,
 } from "firebase/firestore";
-import { LOGS, NODES, NODES_LOGS, USERS } from "../firestoreClient/collections";
+import {
+  LOGS,
+  NODES,
+  NODES_LOGS,
+  NOTIFICATIONS,
+  USERS,
+} from "../firestoreClient/collections";
 import { NodeChange } from "@components/types/INode";
 import moment from "moment";
 import { capitalizeFirstLetter } from "./string.utils";
@@ -1514,16 +1520,28 @@ export const updateLinks = async (
 //   }
 // };
 
-export const clearNotifications = async (nodeId: string) => {
+export const clearNodeNotifications = async (nodeId: string) => {
   const db = getFirestore();
   if (!nodeId) return;
-  const batch = writeBatch(db);
+  let batch = writeBatch(db);
+  let writeCount = 0;
   const notificationDocs = await getDocs(
-    query(collection(db, "notifications"), where("nodeId", "==", nodeId)),
+    query(
+      collection(db, NOTIFICATIONS),
+      where("nodeId", "==", nodeId),
+      where("deleted", "==", false),
+    ),
   );
   for (let notDoc of notificationDocs.docs) {
-    batch.update(notDoc.ref, { seen: true });
+    batch.update(notDoc.ref, { deleted: true });
+    if (writeCount > 498) {
+      await batch.commit();
+      batch = writeBatch(db);
+      writeCount = 0;
+    }
+    writeCount++;
   }
+  await batch.commit();
 };
 
 export const extractJSON = (text: string) => {

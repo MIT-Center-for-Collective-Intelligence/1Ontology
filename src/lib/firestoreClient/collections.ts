@@ -1,4 +1,5 @@
 export const NODES = "nodes";
+export const NOTIFICATIONS = "notifications";
 export const LOGS = "logs";
 export const CLIENT_ERRORS = "clientErrors";
 export const USERS = "users";

@@ -192,7 +192,7 @@ export const ONTOLOGY_APPS = [
   },
   {
     id: "final-hierarchy-with-o*net-parts",
-    name: "Final Hierarchy with O*Net Parts",
+    name: "Final Hierarchy with Parts",
   },
   // {
   //   id: "final-hierarchy-with-o*net-parts-inheritance",

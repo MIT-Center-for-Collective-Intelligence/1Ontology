@@ -116,7 +116,7 @@ import {
   updateSpecializations,
   updateLinksForInheritanceSpecializations,
   updateLinks,
-  clearNotifications,
+  clearNodeNotifications,
 } from "@components/lib/utils/helpers";
 
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
@@ -1013,7 +1013,7 @@ const Node = ({
           ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
         // Record a log entry for the deletion action
-        clearNotifications(nodeRef.id);
+        clearNodeNotifications(nodeRef.id);
         recordLogs({
           action: "Deleted Node",
           node: currentVisibleNode?.id,
