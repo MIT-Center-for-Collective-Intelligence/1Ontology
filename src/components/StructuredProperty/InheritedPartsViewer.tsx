@@ -172,7 +172,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const getCurrentPartOptionalStatus = (partId: string): boolean => {
-    const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
+    const inheritanceRef = currentVisibleNode.inheritance?.["parts"]?.ref;
     const currentNodeParts =
       inheritanceRef && nodes[inheritanceRef]
         ? nodes[inheritanceRef].properties["parts"]
@@ -345,7 +345,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       {} as Record<string, typeof result>,
     );
 
-    const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
+    const inheritanceRef = currentVisibleNode.inheritance?.["parts"]?.ref;
     const currentNodeParts =
       inheritanceRef && nodes[inheritanceRef]
         ? nodes[inheritanceRef].properties["parts"]
@@ -532,12 +532,12 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       nodes,
     ).map((c) => c.id);
 
-    const inheritanceRef = currentVisibleNode.inheritance["parts"].ref;
+    const inheritanceRef = currentVisibleNode.inheritance?.["parts"]?.ref;
     const currentNodeParts =
       inheritanceRef && nodes[inheritanceRef]
-        ? nodes[inheritanceRef].properties["parts"]
-        : currentVisibleNode.properties["parts"];
-    const currentParts = currentNodeParts[0].nodes.map(
+        ? nodes[inheritanceRef].properties?.["parts"]
+        : currentVisibleNode.properties?.["parts"];
+    const currentParts = (currentNodeParts?.[0]?.nodes ?? []).map(
       (c: { id: string }) => c.id,
     );
 
@@ -547,7 +547,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       generalizationId,
       currentParts,
     );
-    if (Object.keys(inheritanceDetails).length === 0) {
+    if (Object.keys(inheritanceDetails).length === 0 && details.length === 0) {
       return (
         <Typography
           variant="body2"
@@ -806,7 +806,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   const activeGeneralization = generalizations.find((g) => g.id === activeTab);
 
   if (generalizations.length <= 0) {
-    return null;
+    return null; // No generalizations and no own parts (root without parts)
   }
 
   return (
