@@ -427,7 +427,7 @@ const Chat = ({
       const updates: { [key: string]: boolean } = {};
       for (const userData of users) {
         if (userData.uname === user.uname) continue;
-        updates[`/${UNREAD_COMMENTS}/${appName}/${userData.uname}/${nodeId}`] = true;
+        updates[`/${UNREAD_COMMENTS}/${appName}/${userData.uname}/${nodeId}/${docRef.id}`] = true;
       }
       if (Object.keys(updates).length > 0) {
         update(ref(rtdb), updates);
@@ -511,9 +511,17 @@ const Chat = ({
     try {
       if (!messageId) return;
       const commentRef = getMessageDocRef(messageId);
-      await updateDoc(commentRef, {
-        deleted: true,
-      });
+      await updateDoc(commentRef, { deleted: true });
+
+      if (chatType === "node" && nodeId) {
+        const updates: { [path: string]: null } = {};
+        for (const userData of users) {
+          updates[`/${UNREAD_COMMENTS}/${appName}/${userData.uname}/${nodeId}/${messageId}`] = null;
+        }
+        if (Object.keys(updates).length > 0) {
+          update(ref(rtdb), updates);
+        }
+      }
 
       recordLogs({
         action: "Deleted a message",
