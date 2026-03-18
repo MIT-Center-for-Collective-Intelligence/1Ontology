@@ -1508,6 +1508,7 @@ const ToolbarSidebar = ({
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
             nodes={nodes}
+            appName={appName}
           />
         );
       case "chat-discussion":
@@ -1526,6 +1527,7 @@ const ToolbarSidebar = ({
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
             nodes={nodes}
+            appName={appName}
           />
         );
       case "inheritanceSettings":
