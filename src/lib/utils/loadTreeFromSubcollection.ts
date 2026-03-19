@@ -175,7 +175,7 @@ export async function loadTreeFromSubCollection(
       nodeType: node.nodeType,
       ...(node.unclassified && { unclassified: true }),
       category: false,
-      children: childrenInOrder.length > 0 ? childrenInOrder : undefined,
+      children: childrenInOrder,
     };
   };
 
