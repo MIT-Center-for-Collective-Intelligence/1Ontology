@@ -1469,7 +1469,15 @@ const Ontology = ({
   }
 
   return (
-    <>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background:
+          theme.palette.mode === "dark"
+            ? "linear-gradient(135deg, #1b1a1a 0%, #242428 50%, #191c21 100%)"
+            : "linear-gradient(135deg, #f8f9fa 0%, #e8ecf0 50%, #f0f4f8 100%)",
+      }}
+    >
       <Head>
         <title>
           {currentVisibleNode ? currentVisibleNode.title : "1ontology"}
@@ -2015,10 +2023,10 @@ const Ontology = ({
             <Box
               id="node-section"
               sx={{
-                backgroundColor: (theme) =>
+                background:
                   theme.palette.mode === "dark"
-                    ? theme.palette.common.notebookMainBlack
-                    : theme.palette.common.gray50,
+                    ? "linear-gradient(150deg, #060608 0%, #14141c 30%, #3a3a48 60%, #101014 100%)"
+                    : "linear-gradient(150deg, #ffffff 0%, #8fa0b8 40%, #c8d6e8 70%, #eef4fc 100%)",
                 p: "20px",
                 pt: 0,
                 overflow: "auto",
@@ -2135,7 +2143,7 @@ const Ontology = ({
           setNewMessage={setSnackbarMessage}
         />
       </Box>
-    </>
+    </Box>
   );
 };
 export default Ontology;
