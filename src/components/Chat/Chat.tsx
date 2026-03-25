@@ -17,6 +17,7 @@ import {
   doc,
   FieldValue,
   getDoc,
+  getDocs,
   getFirestore,
   increment,
   onSnapshot,
@@ -26,6 +27,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
+import { getDatabase, ref, remove, update } from "firebase/database";
 import dynamic from "next/dynamic";
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { TransitionGroup } from "react-transition-group";
@@ -33,7 +35,12 @@ import { TransitionGroup } from "react-transition-group";
 import { IChatMessage, Reaction } from "@components/types/IChat";
 
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
-import { MESSAGES, NODES } from "@components/lib/firestoreClient/collections";
+import {
+  MESSAGES,
+  NODES,
+  NOTIFICATIONS,
+  UNREAD_COMMENTS,
+} from "@components/lib/firestoreClient/collections";
 import {
   chatChange,
   getMessagesSnapshot,
@@ -62,6 +69,7 @@ type ChatProps = {
   fetchNode: (nodeId: string) => Promise<INode | null>;
   scrollingRef: any;
   placeholder: string;
+  appName: string;
 };
 
 const Chat = ({
@@ -76,8 +84,10 @@ const Chat = ({
   fetchNode,
   scrollingRef,
   placeholder,
+  appName,
 }: ChatProps) => {
   const db = getFirestore();
+  const rtdb = getDatabase();
   const [showReplies, setShowReplies] = useState<string | null>(null);
   const [editing, setEditing] = useState<any | null>(null);
   const [replies, setReplies] = useState<any[]>([]);
@@ -96,6 +106,13 @@ const Chat = ({
   const [openMedia, setOpenMedia] = useState<any>("");
 
   const scrolled = useRef(false);
+
+  // Mark this node's comments as read when the user opens the chat panel
+  useEffect(() => {
+    if (chatType !== "node" || !nodeId || !user?.uname) return;
+    remove(ref(rtdb, `/${UNREAD_COMMENTS}/${appName}/${user.uname}/${nodeId}`));
+  }, [nodeId, chatType, user?.uname]);
+
   useEffect(() => {
     setMessages([]);
     if (!user) return;
@@ -376,8 +393,9 @@ const Chat = ({
         seen: false,
         type: chatType,
         createdAt: new Date(),
+        deleted: false,
       };
-      const notificationRef = doc(collection(db, "notifications"));
+      const notificationRef = doc(collection(db, NOTIFICATIONS));
       batch.set(notificationRef, notificationData);
     }
     await batch.commit();
@@ -413,10 +431,22 @@ const Chat = ({
       (nodeData?.contributors || []).forEach((contributor: string) => {
         taggedUsers.add(contributor);
       });
+
+      // Mark this node as having unread comments for all other users
+      const updates: { [key: string]: boolean } = {};
+      for (const userData of users) {
+        if (userData.uname === user.uname) continue;
+        updates[
+          `/${UNREAD_COMMENTS}/${appName}/${userData.uname}/${nodeId}/${docRef.id}`
+        ] = true;
+      }
+      if (Object.keys(updates).length > 0) {
+        update(ref(rtdb), updates);
+      }
     }
 
     createNotifications(
-      `New Message from ${user.fName + " " + user.lName}`,
+      `New Comment from ${user.fName + " " + user.lName}`,
       text,
       docRef.id,
       taggedUsers,
@@ -487,15 +517,51 @@ const Chat = ({
       editedAt: new Date(),
     });
   };
+  const clearCommentNotifications = async (entityId: string) => {
+    const db = getFirestore();
+    if (!nodeId) return;
+    let batch = writeBatch(db);
+    const notificationDocs = await getDocs(
+      query(
+        collection(db, NOTIFICATIONS),
+        where("entityId", "==", entityId),
+        where("deleted", "==", false),
+      ),
+    );
+    let writeCount = 0;
+    for (let notDoc of notificationDocs.docs) {
+      batch.update(notDoc.ref, { deleted: true });
+      if (writeCount++ > 498) {
+        await batch.commit();
+        batch = writeBatch(db);
+        writeCount = 0;
+      }
+    }
+    await batch.commit();
+  };
 
   const deleteMessage = async (messageId: string) => {
     try {
       if (!messageId) return;
       const commentRef = getMessageDocRef(messageId);
+      await updateDoc(commentRef, { deleted: true });
+
+      if (chatType === "node" && nodeId) {
+        const updates: { [path: string]: null } = {};
+        for (const userData of users) {
+          updates[
+            `/${UNREAD_COMMENTS}/${appName}/${userData.uname}/${nodeId}/${messageId}`
+          ] = null;
+        }
+        if (Object.keys(updates).length > 0) {
+          update(ref(rtdb), updates);
+        }
+      }
+
       await updateDoc(commentRef, {
         deleted: true,
       });
-
+      await clearCommentNotifications(messageId);
       recordLogs({
         action: "Deleted a message",
         messageId: messageId,
@@ -549,6 +615,7 @@ const Chat = ({
       await updateDoc(replyRef, {
         deleted: true,
       });
+      await clearCommentNotifications(replyId);
       await updateDoc(commentRef, {
         totalReplies: increment(-1),
       });

@@ -1,11 +1,11 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { ChromaClient, IncludeEnum, OpenAIEmbeddingFunction } from "chromadb";
 import Cors from "cors";
-import { openai } from "./helpers";
 import { db } from "@components/lib/firestoreServer/admin";
 import { LOGS } from "@components/lib/firestoreClient/collections";
 import { getDoerCreate } from "@components/lib/utils/helpers";
 import { ONTOLOGY_APPS } from "@components/lib/CONSTANTS";
+import { embeddingFunctionDefault, openai } from "./openaiClient";
 
 const url = `${process.env.CHROMA_PROTOCOL}://${process.env.CHROMA_HOST}:${process.env.CHROMA_PORT}`;
 
@@ -20,10 +20,7 @@ const sanitizeCollectionName = (title: string) => {
       .slice(0, 512) || "default_collection"
   );
 };
-const embeddingFunction = new OpenAIEmbeddingFunction({
-  openai_api_key: process.env.MIT_CCI_API_KEY,
-  openai_model: "text-embedding-3-large",
-});
+
 const cors = Cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -184,10 +181,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const collection = await client.getOrCreateCollection({
       name: collectionName,
-      embeddingFunction,
+      embeddingFunction: embeddingFunctionDefault,
     });
 
-    console.log("searching");
     const embeddingResponse = await openai.embeddings.create({
       model: "text-embedding-3-large",
       input: searchQuery,
@@ -271,8 +267,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       appName: applicationName,
       withDescription: true,
     });
-
-    console.log(JSON.stringify(topResults, null, 2), "topResults final");
 
     const logRef = db.collection(LOGS).doc();
     const uname = "ai-peer-extension";

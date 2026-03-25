@@ -44,6 +44,7 @@ const ChatSideBar = ({
   fetchNode,
   skillsFuture = false,
   skillsFutureApp = "",
+  appName,
 }: {
   currentVisibleNode: any;
   user: any;
@@ -57,6 +58,7 @@ const ChatSideBar = ({
   fetchNode: (nodeId: string) => Promise<INode | null>;
   skillsFuture?: boolean;
   skillsFutureApp?: string;
+  appName: string;
 }) => {
   const db = getFirestore();
   const [users, setUsers] = useState<
@@ -413,6 +415,7 @@ const ChatSideBar = ({
               fetchNode={fetchNode}
               scrollingRef={scrollingRef}
               placeholder={tab.placeholder}
+              appName={appName}
             />
           </TabPanel>
         ))}

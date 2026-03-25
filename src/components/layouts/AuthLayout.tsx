@@ -157,6 +157,7 @@ const AuthLayout: FC<Props> = ({ children }) => {
                 ? theme.palette.common.darkGrayBackground
                 : theme.palette.common.white,
             borderRadius: "25px",
+            border: "1px solid gray",
           }}
         >
           {isEqualOrBiggerThanMedium && (

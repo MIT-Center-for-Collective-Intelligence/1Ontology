@@ -1,3 +1,4 @@
+import { NOTIFICATIONS } from "@components/lib/firestoreClient/collections";
 import { IChatMessage } from "@components/types/IChat";
 import {
   collection,
@@ -25,17 +26,18 @@ export const getNotificationsSnapshot = (
     uname: string;
     seen?: boolean;
   },
-  callback: (changes: notificationChange[]) => void
+  callback: (changes: notificationChange[]) => void,
 ): Unsubscribe => {
   const { uname, seen } = data;
   //const pageSize = 15;
 
-  const messagesRef = collection(db, "notifications");
+  const notificationRef = collection(db, NOTIFICATIONS);
 
   const q = query(
-    messagesRef,
+    notificationRef,
     where("user", "==", uname),
-    where("seen", "==", !!seen)
+    where("seen", "==", !!seen),
+    where("deleted", "==", false),
   );
 
   //   if (lastVisible) {
@@ -60,7 +62,7 @@ export const getNotificationsSnapshot = (
           data: { ...document, id: change.doc.id },
           doc: change.doc,
         };
-      }
+      },
     );
     callback(actionTrackDocuments);
   });

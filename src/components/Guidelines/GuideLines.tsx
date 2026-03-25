@@ -37,9 +37,9 @@ const GuidLines = ({
   );
 
   useEffect(() => {
-    const nodesQuery = query(collection(db, GUIDELINES));
+    const guidelinesQuery = query(collection(db, GUIDELINES));
 
-    const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
+    const unsubscribeNodes = onSnapshot(guidelinesQuery, (snapshot) => {
       const docChanges = snapshot.docChanges();
       setGuidelines((prev) => {
         const updatedGuidelines = { ...prev };
@@ -86,6 +86,7 @@ const GuidLines = ({
     gData.guidelines[gIdx] = newValue;
     updateDoc(gRef, gData);
   };
+
 
   return (
     <Box sx={{ mb: "25px" }}>

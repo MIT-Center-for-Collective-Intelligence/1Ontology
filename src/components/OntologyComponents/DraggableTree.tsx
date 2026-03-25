@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import EditOffIcon from "@mui/icons-material/EditOff";
+import ChatIcon from "@mui/icons-material/Chat";
 
 import {
   saveNewChangeLog,
@@ -59,6 +60,7 @@ function DraggableTree({
   skillsFutureApp,
   onInstantTreeUpdate,
   onExpandEllipsis,
+  nodesWithComments = new Set(),
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -72,6 +74,7 @@ function DraggableTree({
   skillsFutureApp: string;
   onInstantTreeUpdate?: (updateFn: (treeData: TreeData[]) => TreeData[]) => void;
   onExpandEllipsis?: (ellipsisNodeId: string) => void;
+  nodesWithComments?: Set<string>;
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
@@ -1174,9 +1177,20 @@ function DraggableTree({
                       : node.data.category
                         ? "orange"
                         : "",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
                 }}
               >
                 {node.data.name}
+                {!node.data.category &&
+                  nodesWithComments.has(node.data.nodeId) && (
+                    <Tooltip title="You have unread comments">
+                      <ChatIcon
+                        sx={{ fontSize: "16px", color: "orange", flexShrink: 0 }}
+                      />
+                    </Tooltip>
+                  )}
                 {specializationNumsUnder[node.data.id] > 0 && (
                   <Tooltip
                     title={`Total number of ${node.data.name.toLowerCase() === "act" ? "activities" : "entities"} under this sub-ontology`}

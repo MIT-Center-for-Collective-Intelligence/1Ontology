@@ -1,4 +1,5 @@
 export const NODES = "nodes";
+export const NOTIFICATIONS = "notifications";
 export const LOGS = "logs";
 export const CLIENT_ERRORS = "clientErrors";
 export const USERS = "users";
@@ -12,6 +13,9 @@ export const NODES_ONET = "oNetNodes";
 export const ALGORITHMS = "algorithms";
 export const TREE_QUEUES = "treeUpdateQueue"
 export const TREE_PENDING_CHANGES = "treePendingChanges"
+
+/* realtime database */
+export const UNREAD_COMMENTS = "unreadComments";
 
 /* consultant */
 export const GROUPS = "groups";

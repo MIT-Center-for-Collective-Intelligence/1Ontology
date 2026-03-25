@@ -405,7 +405,7 @@ export const getGeneralizationParts = (
   }[] = [];
 
   let genParts = generalizationNode.properties?.parts;
-  const partInheritanceRef = generalizationNode.inheritance["parts"].ref;
+  const partInheritanceRef = generalizationNode.inheritance?.["parts"]?.ref;
   if (partInheritanceRef) {
     genParts = nodes[partInheritanceRef]?.properties["parts"] || [];
   }
@@ -462,6 +462,30 @@ export const getAllGeneralizations = (
         title: node.title || getTitle(nodes, node.id) || "Unknown",
       })),
     );
+};
+
+export const getEffectiveGeneralizations = (
+  currentVisibleNode: INode,
+  nodes: { [nodeId: string]: INode },
+): { id: string; title: string }[] => {
+  const generalizations = getAllGeneralizations(currentVisibleNode, nodes);
+  if (generalizations.length > 0) return generalizations;
+
+  const inheritanceRef = currentVisibleNode.inheritance?.["parts"]?.ref;
+  const parts =
+    inheritanceRef && nodes[inheritanceRef]
+      ? nodes[inheritanceRef].properties?.parts
+      : currentVisibleNode.properties?.parts;
+  const hasParts = (parts?.[0]?.nodes?.length ?? 0) > 0;
+  if (hasParts) {
+    return [
+      {
+        id: currentVisibleNode.id,
+        title: getTitle(nodes, currentVisibleNode.id),
+      },
+    ];
+  }
+  return [];
 };
 
 // /**

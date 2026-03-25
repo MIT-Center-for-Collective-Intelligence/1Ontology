@@ -82,6 +82,7 @@ import {
   Skeleton,
 } from "@mui/material";
 import { Box } from "@mui/system";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import {
   collection,
   doc,
@@ -123,7 +124,7 @@ import {
   updateSpecializations,
   updateLinksForInheritanceSpecializations,
   updateLinks,
-  clearNotifications,
+  clearNodeNotifications,
 } from "@components/lib/utils/helpers";
 
 import StructuredProperty from "../StructuredProperty/StructuredProperty";
@@ -191,6 +192,7 @@ type INodeProps = {
   skillsFutureApp: string;
   editableProperty: any;
   setEditableProperty: any;
+  nodesWithComments: Set<string>;
   onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
   isLoadingNodeDetails?: boolean;
 };
@@ -504,6 +506,7 @@ const Node = ({
   setEditableProperty,
   onInstantTreeUpdate,
   isLoadingNodeDetails = false,
+  nodesWithComments,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -1361,7 +1364,13 @@ const Node = ({
       if (specializations.length > 0) {
         if (checkIfCanDeleteANode(relatedNodes, specializations)) {
           await confirmIt(
-            "To delete a node, you need to first delete its specializations or move them under a different generalization.",
+            <Box>
+              <DeleteForeverIcon sx={{ color: "orange" }} />
+              <Typography sx={{ mt: 2 }}>
+                To delete a node, you need to first delete its specializations
+                or move them under a different generalization.
+              </Typography>
+            </Box>,
             "Ok",
             "",
           );
@@ -1370,7 +1379,12 @@ const Node = ({
       }
       if (
         await confirmIt(
-          `Are you sure you want to delete this Node?`,
+          <Box>
+            <DeleteForeverIcon sx={{ color: "orange" }} />
+            <Typography sx={{ mt: 2, fontWeight: "bold" }}>
+              Are you sure you want to delete this Node?
+            </Typography>
+          </Box>,
           "Delete Node",
           "Keep Node",
         )
@@ -1412,7 +1426,7 @@ const Node = ({
           ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
         // Record a log entry for the deletion action
-        clearNotifications(nodeRef.id);
+        clearNodeNotifications(nodeRef.id);
         recordLogs({
           action: "Deleted Node",
           node: currentVisibleNode?.id,
@@ -1660,6 +1674,7 @@ const Node = ({
               setEnableEdit={setEnableEdit}
               handleCloseAddLinksModel={handleCloseAddLinksModel}
               onInstantTreeUpdate={onInstantTreeUpdate}
+              hasComments={nodesWithComments.has(currentVisibleNode.id)}
             />
 
             {/* {currentVisibleNode.nodeType === "context" && (

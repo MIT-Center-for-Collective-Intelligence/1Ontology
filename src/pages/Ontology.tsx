@@ -121,7 +121,8 @@ import {
   SCROLL_BAR_STYLE,
   ONTOLOGY_APPS,
 } from "@components/lib/CONSTANTS";
-import { NODES, TREE_PENDING_CHANGES, USERS } from "@components/lib/firestoreClient/collections";
+import { NODES, TREE_PENDING_CHANGES, USERS, UNREAD_COMMENTS } from "@components/lib/firestoreClient/collections";
+import { getDatabase, onValue, ref } from "firebase/database";
 
 import { recordLogs } from "@components/lib/utils/helpers";
 import { useHover } from "@components/lib/hooks/useHover";
@@ -302,6 +303,7 @@ const Ontology = ({
   appName: string;
 }) => {
   const db = getFirestore();
+  const rtdb = getDatabase();
   const [{ emailVerified, user, isAuthInitialized }] = useAuth();
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:599px)");
@@ -386,6 +388,9 @@ const Ontology = ({
   const treeRef = useRef<TreeApi<TreeData>>(null);
 
   const { data: inheritedPartsDetails } = useInheritedPartsDetails(currentVisibleNode);
+  const [nodesWithComments, setNodesWithComments] = useState<Set<string>>(
+    new Set(),
+  );
 
   const firstLoad = useRef(true);
   const prevAppNameRef = useRef<string>(appName);
@@ -1335,6 +1340,16 @@ const Ontology = ({
   ]);
 
   useEffect(() => {
+    if (!user?.uname) return;
+    const unreadRef = ref(rtdb, `/${UNREAD_COMMENTS}/${appName}/${user.uname}`);
+    const unsubscribe = onValue(unreadRef, (snapshot) => {
+      const data = snapshot.val();
+      setNodesWithComments(new Set<string>(data ? Object.keys(data) : []));
+    });
+    return () => unsubscribe();
+  }, [user?.uname, appName]);
+
+  useEffect(() => {
     if (currentVisibleNode?.id) {
       setCurrentVisibleNode((prev) => {
         if (relatedNodes[currentVisibleNode?.id]) {
@@ -1616,6 +1631,7 @@ const Ontology = ({
       recordLogs({
         action: "Opened a node",
         node: nodeId,
+        user: user.uname,
       });
     }
   };
@@ -2220,7 +2236,15 @@ const Ontology = ({
   }
 
   return (
-    <>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background:
+          theme.palette.mode === "dark"
+            ? "linear-gradient(135deg, #1b1a1a 0%, #242428 50%, #191c21 100%)"
+            : "linear-gradient(135deg, #f8f9fa 0%, #e8ecf0 50%, #f0f4f8 100%)",
+      }}
+    >
       <Head>
         <title>
           {currentVisibleNode ? currentVisibleNode.title : "1ontology"}
@@ -2432,12 +2456,12 @@ const Ontology = ({
               ...SCROLL_BAR_STYLE,
             }}
           >
-            {/* <DraggableTree
-              treeViewData={treeViewData}
+            <DraggableTree
+              treeViewData={currentNodeTreeData}
               setSnackbarMessage={setSnackbarMessage}
               treeRef={treeRef}
               currentVisibleNode={currentVisibleNode}
-              nodes={nodes}
+              nodes={relatedNodes}
               onOpenNodesTree={(nodeId: string) => {
                 onOpenNodesTree(nodeId);
                 // Don't close tree on node selection to allow parallel browsing
@@ -2445,9 +2469,8 @@ const Ontology = ({
               skillsFuture={skillsFuture}
               specializationNumsUnder={specializationNumsUnder}
               skillsFutureApp={appName}
-              multipleOntologyPaths={multipleOntologyPaths}
-              eachOntologyPath={eachNodePath}
-            /> */}
+              nodesWithComments={nodesWithComments}
+            />
           </Box>
         </Box>
       )}
@@ -2506,6 +2529,7 @@ const Ontology = ({
             skillsFutureApp={appName}
             isExperimentalSearch={isExperimentalSearch}
             setIsExperimentalSearch={setIsExperimentalSearch}
+            appName={appName}
           />
         </Box>
       )}
@@ -2602,6 +2626,7 @@ const Ontology = ({
                       skillsFutureApp={appName}
                       onInstantTreeUpdate={handleInstantTreeUpdate}
                       onExpandEllipsis={handleExpandEllipsis}
+                      nodesWithComments={nodesWithComments}
                     />
                   </Box>
                 </TabPanel>
@@ -2765,10 +2790,10 @@ const Ontology = ({
             <Box
               id="node-section"
               sx={{
-                backgroundColor: (theme) =>
+                background:
                   theme.palette.mode === "dark"
-                    ? theme.palette.common.notebookMainBlack
-                    : theme.palette.common.gray50,
+                    ? "linear-gradient(150deg, #060608 0%, #14141c 30%, #3a3a48 60%, #101014 100%)"
+                    : "linear-gradient(150deg, #ffffff 0%, #8fa0b8 40%, #c8d6e8 70%, #eef4fc 100%)",
                 p: "20px",
                 pt: 0,
                 overflow: "auto",
@@ -2849,6 +2874,7 @@ const Ontology = ({
                   editableProperty={editableProperty}
                   setEditableProperty={setEditableProperty}
                   onInstantTreeUpdate={handleInstantTreeUpdate}
+                  nodesWithComments={nodesWithComments}
                 />
               )}
             </Box>
@@ -2888,6 +2914,7 @@ const Ontology = ({
               skillsFutureApp={appName ?? null}
               isExperimentalSearch={isExperimentalSearch}
               setIsExperimentalSearch={setIsExperimentalSearch}
+              appName={appName}
             />
           </Box>
         </Container>
@@ -2897,7 +2924,7 @@ const Ontology = ({
           setNewMessage={setSnackbarMessage}
         />
       </Box>
-    </>
+    </Box>
   );
 };
 export default Ontology;

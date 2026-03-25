@@ -23,7 +23,13 @@ import {
   query,
   FieldValue,
 } from "firebase/firestore";
-import { LOGS, NODES, NODES_LOGS, USERS } from "../firestoreClient/collections";
+import {
+  LOGS,
+  NODES,
+  NODES_LOGS,
+  NOTIFICATIONS,
+  USERS,
+} from "../firestoreClient/collections";
 import { NodeChange } from "@components/types/INode";
 import moment from "moment";
 import { capitalizeFirstLetter } from "./string.utils";
@@ -47,14 +53,20 @@ export const getDoerCreate = (uname: string) => {
   return `${uname}-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
 };
 
-export const recordLogs = async (logs: { [key: string]: any }) => {
+export const recordLogs = async (
+  logs: { [key: string]: any },
+  userName?: string,
+) => {
   try {
     const db = getFirestore();
     const auth = getAuth();
     const logRef = doc(collection(db, LOGS));
-    const uname = auth.currentUser?.displayName;
-    if (uname === "ouhrac") return;
-    const doerCreate = getDoerCreate(uname || "");
+
+    const uname = auth.currentUser?.displayName || userName || "unknown";
+    if (uname === "ouhrac" || uname === "unknown") {
+      return;
+    }
+    const doerCreate = getDoerCreate(uname);
     await setDoc(logRef, {
       type: "info",
       ...logs,
@@ -1499,16 +1511,28 @@ export const updateLinks = async (
 //   }
 // };
 
-export const clearNotifications = async (nodeId: string) => {
+export const clearNodeNotifications = async (nodeId: string) => {
   const db = getFirestore();
   if (!nodeId) return;
-  const batch = writeBatch(db);
+  let batch = writeBatch(db);
+  let writeCount = 0;
   const notificationDocs = await getDocs(
-    query(collection(db, "notifications"), where("nodeId", "==", nodeId)),
+    query(
+      collection(db, NOTIFICATIONS),
+      where("nodeId", "==", nodeId),
+      where("deleted", "==", false),
+    ),
   );
   for (let notDoc of notificationDocs.docs) {
-    batch.update(notDoc.ref, { seen: true });
+    batch.update(notDoc.ref, { deleted: true });
+    if (writeCount > 498) {
+      await batch.commit();
+      batch = writeBatch(db);
+      writeCount = 0;
+    }
+    writeCount++;
   }
+  await batch.commit();
 };
 
 export const extractJSON = (text: string) => {

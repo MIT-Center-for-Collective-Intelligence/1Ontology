@@ -141,11 +141,11 @@ export const PROPERTIES_TO_IMPROVE: { [nodeType: string]: string[] } | any = {
   ],
   actor: ["abilities", "typeOfActor"],
   activity: [
-    "actor",
-    "objectsActedOn",
-    "evaluationDimension",
-    "PreConditions",
-    "postConditions",
+    // "actor",
+    // "objectsActedOn",
+    // "evaluationDimension",
+    // "PreConditions",
+    // "postConditions",
   ],
   object: ["lifeSpan", "modifiability", "perceivableProperties"],
   evaluationDEmention: [
@@ -191,20 +191,41 @@ export const ONTOLOGY_APPS = development
       id: "ontology-development-version",
       name: "Ontology - Development Version",
     },
-    { id: "old-ai-peer-ontology", name: "Old AI Peer Ontology" },
-    { id: "ai-peer-ontology", name: "AI Peer Ontology" },
-    {
-      id: "top-down-ai-peer-ontology",
-      name: "Top Down AI Peer Ontology",
-    },
+    // { id: "old-ai-peer-ontology", name: "Old AI Peer Ontology" },
+    // { id: "ai-peer-ontology", name: "AI Peer Ontology" },
+    // {
+    //   id: "top-down-ai-peer-ontology",
+    //   name: "Top Down AI Peer Ontology",
+    // },
     {
       id: "final-hierarchy-with-o*net",
       name: "Final Hierarchy with O*Net",
     },
     {
-      id: "only-specifications-ai-peer",
-      name: "Only Specifications AI Peer Ontology",
-    },
+      id: "final-hierarchy-with-o*net-parts",
+    name: "Final Hierarchy with Parts",
+  },
+  // {
+  //   id: "final-hierarchy-with-o*net-parts-inheritance",
+  //   name: "Final Hierarchy with O*Net Parts with inheritance",
+  // },
+  { id: "noun-ontology", name: "Noun Ontology" },
+  {
+    id: "xinru",
+    name: "Xinru",
+  },
+  {
+    id: "shuo",
+    name: "Shuo",
+  },
+  {
+    id: "vicky",
+    name: "Vicky",
+  },
+  // {
+  //   id: "only-specifications-ai-peer",
+    //   name: "Only Specifications AI Peer Ontology",
+    // },
   ];
 
 export const performerColors: Record<string, string> = {

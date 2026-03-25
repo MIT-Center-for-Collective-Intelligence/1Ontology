@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { ChromaClient, IncludeEnum, OpenAIEmbeddingFunction } from "chromadb";
 import Cors from "cors";
-import { openai } from "./helpers";
+import { embeddingFunctionDefault, openai } from "./openaiClient";
 import { db } from "@components/lib/firestoreServer/admin";
 import { LOGS } from "@components/lib/firestoreClient/collections";
 import { getDoerCreate } from "@components/lib/utils/helpers";
@@ -19,10 +19,7 @@ const sanitizeCollectionName = (title: string) => {
       .slice(0, 512) || "default_collection"
   );
 };
-const embeddingFunction = new OpenAIEmbeddingFunction({
-  openai_api_key: process.env.MIT_CCI_API_KEY,
-  openai_model: "text-embedding-3-large",
-});
+
 const cors = Cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -65,6 +62,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       nodeType,
       resultsNum,
       searchAll,
+      oNetTask,
     } = req.body;
 
     searchAll = false;
@@ -81,7 +79,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const collection = await client.getOrCreateCollection({
       name: collectionName,
-      embeddingFunction,
+      embeddingFunction: embeddingFunctionDefault,
     });
     /*    if (searchAll) {
       const allData = await collection.get({
@@ -139,25 +137,28 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
       return res.status(200).json({ results: topResults });
     } */
-    console.log("searching");
+    console.log("query", query);
     const embeddingResponse = await openai.embeddings.create({
       model: "text-embedding-3-large", // must match your stored embeddings
       input: query,
     });
 
     const queryEmbedding = embeddingResponse.data[0].embedding;
+    const whereFilter: Record<string, any> = {};
+
+    if (nodeType) {
+      whereFilter["nodeType"] = nodeType;
+    }
+
+    if (oNetTask !== undefined) {
+      whereFilter["oNetTask"] = !!oNetTask;
+    }
 
     const results = await collection.query({
       queryEmbeddings: [queryEmbedding],
       include: [IncludeEnum.Embeddings, IncludeEnum.Metadatas],
       nResults: resultsNum || 40,
-      ...(nodeType
-        ? {
-            where: {
-              nodeType,
-            },
-          }
-        : {}),
+      where: Object.keys(whereFilter).length > 0 ? whereFilter : undefined,
     });
 
     const metaDatas: any = results.metadatas[0];
@@ -196,6 +197,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       doer: uname,
       doerCreate,
     });
+    console.log("results sent");
     return res.status(200).json({ results: topResults });
   } catch (error) {
     console.error(error);

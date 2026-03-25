@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import {
   Button,
   CircularProgress,
@@ -25,7 +26,7 @@ import { ICollection, INode } from "@components/types/INode";
 
 import {
   checkIfCanDeleteANode,
-  clearNotifications,
+  clearNodeNotifications,
   createNewNode,
   generateInheritance,
   recordLogs,
@@ -589,7 +590,13 @@ const Improvements = ({
         if (specializations.length > 0) {
           if (checkIfCanDeleteANode(relatedNodes, specializations)) {
             await confirmIt(
-              "To delete a node, you need to first delete its specializations or move them under a different generalization.",
+              <Box>
+                <DeleteForeverIcon sx={{ color: "orange" }} />
+                <Typography>
+                  To delete a node, you need to first delete its specializations
+                  or move them under a different generalization.
+                </Typography>
+              </Box>,
               "Ok",
               "",
             );
@@ -598,7 +605,12 @@ const Improvements = ({
         }
         if (
           await confirmIt(
-            `Are you sure you want to delete this Node?`,
+            <Box>
+              <DeleteForeverIcon sx={{ color: "orange" }} />
+              <Typography sx={{ mt: 2, fontWeight: "bold" }}>
+                Are you sure you want to delete this Node?`
+              </Typography>
+            </Box>,
             "Delete Node",
             "Keep Node",
           )
@@ -631,7 +643,7 @@ const Improvements = ({
             ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
           // Record a log entry for the deletion action
-          clearNotifications(nodeRef.id);
+          clearNodeNotifications(nodeRef.id);
           recordLogs({
             action: "Deleted Node",
             node: nodeValue.id,
@@ -1005,7 +1017,7 @@ const Improvements = ({
             currentVisibleNode={currentVisibleNode}
             nodesByTitle={nodesByTitle}
           />
-          <Button
+          {/* <Button
             variant="contained"
             onClick={handleImproveClick}
             sx={{ mt: "24px" }}
@@ -1013,7 +1025,7 @@ const Improvements = ({
           >
             <ReplayIcon sx={{ pr: "5px" }} />
             Re-Analyze
-          </Button>
+          </Button> */}
         </Box>
       ) : (
         <Button variant="contained" onClick={handleImproveClick}>

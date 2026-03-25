@@ -1,4 +1,5 @@
 import {
+  Badge,
   Box,
   Button,
   IconButton,
@@ -46,6 +47,7 @@ const ManageNodeButtons = ({
   user,
   handleCloseAddLinksModel,
   aiPeer,
+  hasComments,
 }: {
   locked: boolean;
   lockedInductor: boolean;
@@ -63,6 +65,7 @@ const ManageNodeButtons = ({
   user: any;
   handleCloseAddLinksModel: any;
   aiPeer: { on: boolean; waiting: boolean };
+  hasComments: boolean;
 }) => {
   const db = getFirestore();
   const displayNodeChat = () => displaySidebar("chat");
@@ -194,9 +197,19 @@ const ManageNodeButtons = ({
         )}
         <Tooltip title="Open Node Comments">
           <IconButton onClick={displayNodeChat}>
-            <ChatIcon
-              color={activeSidebar === "chat" ? "primary" : "inherit"}
-            />
+            <Badge
+              variant="dot"
+              invisible={!hasComments}
+              sx={{
+                "& .MuiBadge-dot": {
+                  backgroundColor: "#E34848",
+                },
+              }}
+            >
+              <ChatIcon
+                color={activeSidebar === "chat" ? "primary" : "inherit"}
+              />
+            </Badge>
           </IconButton>
         </Tooltip>
         <Tooltip title="View Node's History">

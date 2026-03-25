@@ -22,6 +22,7 @@ import {
 import {
   getGeneralizationParts,
   getAllGeneralizations,
+  getEffectiveGeneralizations,
   breakInheritanceAndCopyParts,
 } from "@components/lib/utils/partsHelper";
 import { ICollection, ILinkNode, InheritedPartsDetail, INode } from "@components/types/INode";

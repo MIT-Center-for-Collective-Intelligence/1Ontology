@@ -72,6 +72,8 @@ import {
   getNotesPrompt,
 } from "@components/lib/utils/copilotPrompts";
 import GuidLines from "../Guidelines/GuideLines";
+import MarkdownRender from "../Markdown/MarkdownRender";
+import { getSystemPrompt } from "@components/lib/aiAssitantConstants";
 
 interface EditableSchemaProps {
   setGenerateNewNodes: React.Dispatch<React.SetStateAction<boolean>>;
@@ -79,8 +81,8 @@ interface EditableSchemaProps {
   proposeDeleteNode: boolean;
   setProposeDeleteNodes: React.Dispatch<React.SetStateAction<boolean>>;
   nodeType: string;
-  selectedProperties: Set<string>;
-  setSelectedProperties: React.Dispatch<React.SetStateAction<Set<string>>>;
+  improveProperties: Set<string>;
+  setImproveProperties: React.Dispatch<React.SetStateAction<Set<string>>>;
   inputProperties: Set<string>;
   setInputProperties: React.Dispatch<React.SetStateAction<Set<string>>>;
   nodes: any;
@@ -97,8 +99,8 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
   proposeDeleteNode,
   setProposeDeleteNodes,
   nodeType,
-  selectedProperties,
-  setSelectedProperties,
+  improveProperties,
+  setImproveProperties,
   inputProperties,
   setInputProperties,
   nodes,
@@ -143,18 +145,17 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
   const [expandedSystemPrompt, setExpandedSystemPrompt] = useState(false);
 
   const improvementsStructurePrompt = useMemo(() => {
-    return getImprovementsStructurePrompt(selectedProperties);
-  }, [selectedProperties]);
+    return getImprovementsStructurePrompt(improveProperties);
+  }, [improveProperties]);
 
   const editPrompt = user?.uname === "ouhrac" || user?.uname === "1man"; // Consider a more robust role/permission system
 
   // Fetch System Prompt
   useEffect(() => {
     if (!user?.uname) return;
-
     const promptsQuery = query(
       collection(db, COPILOT_PROMPTS),
-      where("editor", "==", user.uname), // Should this be tied to the user or global?
+      where("editor", "==", user.uname),
       limit(1),
     );
     const unsubscribePrompt = onSnapshot(
@@ -521,6 +522,156 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
 
   const displayPrompt = previousVersion || systemPrompt;
 
+  // return (
+  //   <Box>
+  //     <Box
+  //       sx={{
+  //         border: "1px dashed #bababaff",
+  //         p: 3,
+  //         borderRadius: theme.shape.borderRadius,
+  //         mb: "15px",
+  //       }}
+  //     >
+  //       <MarkdownRender text={getSystemPrompt(nodeTitle, [], {})} />
+  //     </Box>
+  //     <Box
+  //       sx={{
+  //         border: "1px dashed #bababaff",
+  //         p: 3,
+  //         borderRadius: theme.shape.borderRadius,
+  //       }}
+  //     >
+  //       <Box
+  //         sx={{
+  //           display: "flex",
+  //           alignItems: "center",
+  //           mb: 2,
+  //         }}
+  //       >
+  //         <InputIcon sx={{ mr: 1, color: "text.secondary" }} />
+  //         <Typography
+  //           variant="subtitle1"
+  //           fontWeight="medium"
+  //           sx={{
+  //             fontWeight: "bold",
+  //             fontSize: "15px",
+  //           }}
+  //         >
+  //           Input Configuration
+  //         </Typography>
+  //       </Box>
+  //       <TextField
+  //         margin="dense"
+  //         id="number-input"
+  //         type="number"
+  //         label={
+  //           <Box component="span">
+  //             Exploration Depth from node{" "}
+  //             <Typography component="strong" color="primary">
+  //               {nodeTitle}
+  //             </Typography>
+  //           </Box>
+  //         }
+  //         value={numberValue || ""}
+  //         onChange={handleNumberChange}
+  //         inputProps={{ min: 0, step: 1 }}
+  //         fullWidth
+  //         size="small"
+  //         sx={{
+  //           width: "500px",
+  //         }}
+  //       />
+  //       <Stack spacing={2}>
+  //         <Box>
+  //           <Typography variant="body2" gutterBottom color="text.secondary">
+  //             Select Properties to Include in Context:
+  //           </Typography>
+  //           <Stack direction="row" flexWrap="wrap" spacing={1} sx={{ pl: 1 }}>
+  //             {[
+  //               ...PROPERTIES_TO_IMPROVE.allTypes,
+  //               ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+  //             ]
+  //               .filter((prop) => prop !== "nodeId")
+  //               .map((property: string) => (
+  //                 <Chip
+  //                   key={property}
+  //                   label={capitalizeFirstLetter(DISPLAY[property] || property)}
+  //                   onClick={() => {
+  //                     setInputProperties((prev: Set<string>) => {
+  //                       const _prev = new Set(prev);
+  //                       if (_prev.has(property)) _prev.delete(property);
+  //                       else _prev.add(property);
+  //                       return _prev;
+  //                     });
+  //                   }}
+  //                   variant={
+  //                     inputProperties.has(property) ? "filled" : "outlined"
+  //                   }
+  //                   color={
+  //                     inputProperties.has(property) ? "primary" : "default"
+  //                   }
+  //                   size="small"
+  //                   disabled={property === "title"}
+  //                   clickable
+  //                   sx={{ mb: 1 }}
+  //                 />
+  //               ))}
+  //           </Stack>
+  //         </Box>
+
+  //         <Paper
+  //           sx={{
+  //             bgcolor: alpha(theme.palette.background.default, 0.7),
+  //             borderRadius: theme.shape.borderRadius,
+  //             p: 3,
+  //           }}
+  //         >
+  //           <Typography
+  //             sx={{
+  //               display: "flex",
+  //               alignItems: "center",
+  //               mb: "15px",
+  //               fontWeight: "bold",
+  //               fontSize: "14px",
+  //             }}
+  //           >
+  //             <Chip
+  //               label={nodes.length}
+  //               size="small"
+  //               color="secondary"
+  //               sx={{ mr: 1 }}
+  //             />
+  //             Nodes in Context
+  //           </Typography>
+
+  //           <Box
+  //             sx={{
+  //               mt: 1,
+  //               maxHeight: 300,
+  //               overflowY: "auto",
+  //               borderRadius: theme.shape.borderRadius,
+  //             }}
+  //           >
+  //             <pre
+  //               style={{
+  //                 whiteSpace: "pre-wrap",
+  //                 wordBreak: "break-all",
+  //                 fontSize: "0.75rem",
+  //                 background: alpha(theme.palette.text.primary, 0.05),
+  //                 padding: theme.spacing(1),
+  //                 borderRadius: theme.shape.borderRadius,
+  //                 margin: 0,
+  //               }}
+  //             >
+  //               {JSON.stringify(nodes, null, 2)}
+  //             </pre>
+  //           </Box>
+  //         </Paper>
+  //       </Stack>
+  //     </Box>
+  //   </Box>
+  // );
+
   return (
     <Box sx={{ mb: 4 }}>
       <Drawer
@@ -533,7 +684,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
       </Drawer>
 
       {!generateNewNodes &&
-        selectedProperties.size === 0 &&
+        improveProperties.size === 0 &&
         !proposeDeleteNode &&
         editPrompt && (
           <Typography
@@ -570,8 +721,8 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
           onChange={() => setExpandedSystemPrompt((prev) => !prev)}
           sx={{
             "&:before": { display: "none" },
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: "25px",
+            // border: `1px solid ${theme.palette.divider}`,
+            borderRadius: "50px",
           }}
         >
           <AccordionSummary
@@ -726,7 +877,8 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                     }}
                   >
                     <Typography component="div" sx={{ lineHeight: 1.6 }}>
-                      {p.value || ""}
+                      <MarkdownRender text={p.value || ""} />
+
                       {p.hasOwnProperty("editablePart") && (
                         <Box sx={{ mt: 1, position: "relative" }}>
                           {diffChanges && diffChanges[p.id] && (
@@ -852,12 +1004,24 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                               DISPLAY[property] || property,
                             )}
                             onClick={() => {
-                              setInputProperties((prev: Set<string>) => {
-                                const _prev = new Set(prev);
-                                if (_prev.has(property)) _prev.delete(property);
-                                else _prev.add(property);
-                                return _prev;
-                              });
+                              if (inputProperties.has(property)) {
+                                setInputProperties((prev: Set<string>) => {
+                                  const _prev = new Set(prev);
+                                  _prev.delete(property);
+                                  return _prev;
+                                });
+                                setImproveProperties((prev: Set<string>) => {
+                                  const _prev = new Set(prev);
+                                  _prev.delete(property);
+                                  return _prev;
+                                });
+                              } else {
+                                setInputProperties((prev: Set<string>) => {
+                                  const _prev = new Set(prev);
+                                  _prev.add(property);
+                                  return _prev;
+                                });
+                              }
                             }}
                             variant={
                               inputProperties.has(property)
@@ -877,7 +1041,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                         ))}
                     </Stack>
                   </Box>
-
+                  {/* 
                   <TextField
                     margin="dense"
                     id="number-input"
@@ -897,8 +1061,8 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                     }}
                     fullWidth
                     size="small"
-                  />
-                  <Accordion
+                  /> */}
+                  {/* <Accordion
                     sx={{
                       bgcolor: alpha(theme.palette.background.default, 0.7),
                     }}
@@ -906,7 +1070,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography>
                         <Chip
-                          label={nodes.length}
+                          label={(nodes || []).length}
                           size="small"
                           color="secondary"
                           sx={{ mr: 1 }}
@@ -930,7 +1094,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                         {JSON.stringify(nodes, null, 2)}
                       </pre>
                     </AccordionDetails>
-                  </Accordion>
+                  </Accordion> */}
                 </Stack>
               </AccordionDetails>
             </Accordion>
@@ -974,91 +1138,123 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                     <Typography>Propose New Nodes</Typography>
                   </Box>
 
-                  <Accordion
+                  <Box
                     sx={{
                       bgcolor: alpha(theme.palette.background.default, 0.7),
-                      "&:before": { display: "none" },
+                      p: 2,
                     }}
                   >
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={1}
+                      mb={1}
+                    >
                       <Checkbox
-                        checked={selectedProperties.size > 0}
-                        indeterminate={
-                          selectedProperties.size > 0 &&
-                          selectedProperties.size <
-                            [
-                              ...PROPERTIES_TO_IMPROVE.allTypes,
-                              ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
-                            ].length
-                        }
+                        checked={(() => {
+                          const eligible = [
+                            ...PROPERTIES_TO_IMPROVE.allTypes,
+                            ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+                          ].filter((p) => inputProperties.has(p));
+                          return (
+                            eligible.length > 0 &&
+                            eligible.every((p) => improveProperties.has(p))
+                          );
+                        })()}
+                        indeterminate={(() => {
+                          const eligible = [
+                            ...PROPERTIES_TO_IMPROVE.allTypes,
+                            ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+                          ].filter((p) => inputProperties.has(p));
+                          const selectedCount = eligible.filter((p) =>
+                            improveProperties.has(p),
+                          ).length;
+                          return (
+                            selectedCount > 0 && selectedCount < eligible.length
+                          );
+                        })()}
                         size="small"
                         sx={{ p: 0, mr: 1.5 }}
                         onClick={(event) => {
                           event.stopPropagation();
-                          setSelectedProperties((prev: Set<string>) => {
-                            if (prev.size > 0) return new Set();
-                            return new Set([
+                          setImproveProperties((prev: Set<string>) => {
+                            const eligible = [
                               ...PROPERTIES_TO_IMPROVE.allTypes,
                               ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
-                            ]);
+                            ].filter((p) => inputProperties.has(p));
+                            if (
+                              eligible.length > 0 &&
+                              eligible.every((p) => prev.has(p))
+                            ) {
+                              return new Set();
+                            }
+                            return new Set(eligible);
                           });
                         }}
                       />
-                      <AutoFixHighIcon
-                        sx={{
-                          mr: 1,
-                          color:
-                            selectedProperties.size > 0
-                              ? "primary.main"
-                              : "text.secondary",
-                        }}
-                      />
+
                       <Typography>
                         Propose Improvements to Existing Nodes
                       </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Stack
-                        direction="row"
-                        flexWrap="wrap"
-                        spacing={1}
-                        sx={{ pl: 1 }}
-                      >
-                        {[
-                          ...PROPERTIES_TO_IMPROVE.allTypes,
-                          ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
-                        ].map((property: string) => (
-                          <Chip
-                            key={property}
-                            label={capitalizeFirstLetter(
-                              DISPLAY[property] || property,
-                            )}
-                            onClick={() => {
-                              setSelectedProperties((prev: Set<string>) => {
+                      <AutoFixHighIcon
+                        sx={{
+                          mr: 1,
+                        }}
+                      />
+                    </Stack>
+
+                    <Stack
+                      direction="row"
+                      flexWrap="wrap"
+                      spacing={1}
+                      sx={{ pl: 1 }}
+                    >
+                      {[
+                        ...PROPERTIES_TO_IMPROVE.allTypes,
+                        ...(PROPERTIES_TO_IMPROVE[nodeType] || []),
+                      ].map((property: string) => (
+                        <Chip
+                          key={property}
+                          label={capitalizeFirstLetter(
+                            DISPLAY[property] || property,
+                          )}
+                          onClick={() => {
+                            if (improveProperties.has(property)) {
+                              setImproveProperties((prev: Set<string>) => {
                                 const _prev = new Set(prev);
-                                if (_prev.has(property)) _prev.delete(property);
-                                else _prev.add(property);
+                                _prev.delete(property);
                                 return _prev;
                               });
-                            }}
-                            variant={
-                              selectedProperties.has(property)
-                                ? "filled"
-                                : "outlined"
+                            } else {;
+                              setInputProperties((prev: Set<string>) => {
+                                const _prev = new Set(prev);
+                                _prev.add(property);
+                                return _prev;
+                              });
+                              setImproveProperties((prev: Set<string>) => {
+                                const _prev = new Set(prev);
+                                _prev.add(property);
+                                return _prev;
+                              });
                             }
-                            color={
-                              selectedProperties.has(property)
-                                ? "primary"
-                                : "default"
-                            }
-                            size="small"
-                            clickable
-                            sx={{ mb: 1 }}
-                          />
-                        ))}
-                      </Stack>
-                    </AccordionDetails>
-                  </Accordion>
+                          }}
+                          variant={
+                            improveProperties.has(property)
+                              ? "filled"
+                              : "outlined"
+                          }
+                          color={
+                            improveProperties.has(property)
+                              ? "primary"
+                              : "default"
+                          }
+                          size="small"
+                          clickable
+                          sx={{ mb: 1 }}
+                        />
+                      ))}
+                    </Stack>
+                  </Box>
 
                   <Box
                     sx={{
@@ -1108,11 +1304,11 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                     }}
                   >
                     {getResponseStructure(
-                      selectedProperties.size > 0,
+                      improveProperties.size > 0,
                       proposeDeleteNode,
                     )}
                   </pre>
-                  {selectedProperties.size > 0 && (
+                  {improveProperties.size > 0 && (
                     <Accordion
                       sx={{
                         bgcolor: alpha(theme.palette.background.default, 0.7),
@@ -1232,7 +1428,7 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
           defaultExpanded
           sx={{
             "&:before": { display: "none" },
-            border: `1px solid ${theme.palette.divider}`,
+            // border: `1px solid ${theme.palette.divider}`,
           }}
         >
           <AccordionSummary
