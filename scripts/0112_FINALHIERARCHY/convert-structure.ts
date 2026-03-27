@@ -327,6 +327,12 @@ function buildStructureSignature(value: JsonValue): string {
 
 function collectChildStructureSignatures(obj: JsonValue): string[] {
   const signatures: string[] = [];
+
+  if (Array.isArray(obj)) {
+    signatures.push(`list::${buildStructureSignature(obj)}`);
+    signatures.sort();
+    return signatures;
+  }
   if (obj && typeof obj === "object" && !Array.isArray(obj)) {
     const o = obj as JsonObject;
     for (const key of Object.keys(o)) {

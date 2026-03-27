@@ -12,6 +12,7 @@ Ignored differences:
 - "(Atomic Tasks)" intermediary nodes
 - "[Verb -- miscellaneous]" intermediary nodes
 - Non-structural properties in edited format (title/description/parts/etc.)
+- Trailing `(1)`, `(2)`, … suffixes used to disambiguate duplicate titles (1–3 digits)
 """
 
 from __future__ import annotations
@@ -27,6 +28,8 @@ IGNORE_LABELS = {"(Specializations)", "(Atomic Tasks)"}
 ONET_RE = re.compile(r"^\(O\*Net\)\s+(.+?)\s+-\s+")
 PAREN_RE = re.compile(r"\s*\(([^()]*)\)")
 VERB_SENSE_RE = re.compile(r"\b[^\s,()]+\.v\.\d+[A-Za-z0-9]*\b")
+# Duplicate-title disambiguation: "Foo (1)" vs "Foo". Use 1–3 digits so "(2024)" is not stripped.
+DUP_TITLE_SUFFIX_RE = re.compile(r"\s*\(\d{1,3}\)\s*$")
 
 
 def normalize_whitespace(text: str) -> str:
@@ -61,8 +64,24 @@ def strip_non_substantive_parenthetical(label: str) -> str:
     return PAREN_RE.sub(replace, label)
 
 
+def strip_duplicate_title_suffixes(label: str) -> str:
+    """
+    Remove trailing (n) suffixes added to differentiate duplicate node titles,
+    e.g. "Some concept (1)" -> "Some concept". Applied after synonym/verb-sense stripping.
+    Only 1–3 digit indices (avoids treating years like (2024) as duplicate tags).
+    """
+    s = label.strip()
+    while True:
+        m = DUP_TITLE_SUFFIX_RE.search(s)
+        if not m:
+            break
+        s = s[: m.start()].rstrip()
+    return s
+
+
 def normalize_label(label: str) -> str:
     label = strip_non_substantive_parenthetical(label)
+    label = strip_duplicate_title_suffixes(label)
     label = normalize_whitespace(label.strip())
     return label
 
@@ -309,6 +328,9 @@ def write_report(
     lines.append("- Ignored title/description/parts/other non-structural properties in edited format.")
     lines.append("- Ignored `(Synonyms: ...)` and verb-sense parentheticals like `(Verb.v.0n)` in labels.")
     lines.append("- Ignored intermediary labels `(Specializations)`, `(Atomic Tasks)`, and `[Verb -- miscellaneous]`.")
+    lines.append(
+        "- Stripped trailing duplicate-title suffixes `(n)` with 1–3 digits (e.g. `(1)`, `(2)`) so renamed duplicates are not counted as path shifts."
+    )
     lines.append("- Location comparison for O*Net tasks uses parent concept path after normalization.")
     lines.append("")
     lines.append("## Headline counts")

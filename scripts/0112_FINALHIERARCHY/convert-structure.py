@@ -299,6 +299,11 @@ def build_structure_signature(value: JsonValue) -> str:
 
 def collect_child_structure_signatures(obj: JsonValue) -> List[str]:
     signatures: List[str] = []
+
+    if isinstance(obj, list):
+        signatures.append(f"list::{build_structure_signature(obj)}")
+        signatures.sort()
+        return signatures
     if obj is not None and isinstance(obj, dict) and not isinstance(obj, list):
         for key in obj:
             if is_collection_key(key):
