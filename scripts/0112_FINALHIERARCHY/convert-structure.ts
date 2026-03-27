@@ -19,7 +19,7 @@
  * - Non-structural properties in the edited format (title/description/parts/etc.)
  *
  * This file performs the transform and write only; it does not diff two inputs. For
- * side-by-side comparison logic, see `compare-ontology/compare-ontology-jsons.ts`.
+ * side-by-side comparison logic, see `compare-ontology/compare-hierarchy-to-transformed.py`.
  */
 
 const fs: typeof import("fs") = require("fs");
@@ -28,7 +28,7 @@ const path: typeof import("path") = require("path");
 const FILE_NAME = "0112_FINALHIERARCHY";
 
 /** Carries synonym line for `description`; stripped before traversing children. */
-const ONTOLOGY_SYNONYM_DESC_KEY = "__ontologySynonymDescription";
+const STAGING_SYNONYM_DESC_KEY = "__stagingSynonyms";
 
 /** Parsed synonym / sense fragment from a legacy ontology label. */
 interface SynonymEntry {
@@ -74,10 +74,23 @@ function parseOntologyTitle(rawTitle: string): ParsedOntologyTitle {
   }
   const matches = Array.from(title.matchAll(/\(([^)]+)\)/g));
   const synonymEntries: SynonymEntry[] = [];
-  const keptParentheses: string[] = [];
+  /** Parentheticals at the end of the title only; still normalized to a suffix. */
+  const suffixParentheses: string[] = [];
+
+  let out = "";
+  let lastIndex = 0;
 
   for (const match of matches) {
+    const start = match.index ?? 0;
+    const full = match[0];
     const content = match[1].trim();
+    const end = start + full.length;
+    const after = title.slice(end).trimStart();
+    const isMiddle =
+      after.length > 0 && !after.startsWith("(");
+
+    out += title.slice(lastIndex, start);
+
     const synonymMatch = content.match(/^Synonyms\s*:\s*(.+)$/i);
     if (synonymMatch) {
       const synonyms = synonymMatch[1]
@@ -85,31 +98,38 @@ function parseOntologyTitle(rawTitle: string): ParsedOntologyTitle {
         .map((s) => s.trim())
         .filter(Boolean);
       synonymEntries.push(...synonyms.map((name) => ({ name })));
-      continue;
-    }
-
-    const parts = content.split(",").map((s) => s.trim());
-    const keptParts: string[] = [];
-    for (const s of parts) {
-      const versionMatch = s.match(/\.v\.?(\d+)/i);
-      if (versionMatch) {
-        const cleanName = s.replace(/\.v\.?\d+/i, "").trim();
-        synonymEntries.push({
-          name: cleanName,
-          version: `v.${versionMatch[1]}`,
-        });
-      } else {
-        keptParts.push(s);
+    } else {
+      const parts = content.split(",").map((s) => s.trim());
+      const keptParts: string[] = [];
+      for (const s of parts) {
+        const versionMatch = s.match(/\.v\.?(\d+)/i);
+        if (versionMatch) {
+          const cleanName = s.replace(/\.v\.?\d+/i, "").trim();
+          synonymEntries.push({
+            name: cleanName,
+            version: `v.${versionMatch[1]}`,
+          });
+        } else {
+          keptParts.push(s);
+        }
+      }
+      if (keptParts.length > 0) {
+        const segment = `(${keptParts.join(", ")})`;
+        if (isMiddle) {
+          out += segment;
+        } else {
+          suffixParentheses.push(segment);
+        }
       }
     }
-    if (keptParts.length > 0) {
-      keptParentheses.push(`(${keptParts.join(", ")})`);
-    }
+
+    lastIndex = end;
   }
 
-  title = title.replace(/\(.*?\)/g, "").trim();
-  if (keptParentheses.length > 0) {
-    title = `${title} ${keptParentheses.join(" ")}`.trim();
+  out += title.slice(lastIndex);
+  title = out.replace(/\s+/g, " ").trim();
+  if (suffixParentheses.length > 0) {
+    title = `${title} ${suffixParentheses.join(" ")}`.trim();
   }
   title = title.replace(/\.v\.?\d+/gi, "").trim();
 
@@ -133,18 +153,18 @@ function attachSynonymDescription(
   synonymDescription: string,
 ): JsonObject {
   if (!synonymDescription) return body;
-  return { ...body, [ONTOLOGY_SYNONYM_DESC_KEY]: synonymDescription };
+  return { ...body, [STAGING_SYNONYM_DESC_KEY]: synonymDescription };
 }
 
 function peelSynonymDescription(obj: JsonObject): {
   description: string;
   rest: JsonObject;
 } {
-  const raw = obj[ONTOLOGY_SYNONYM_DESC_KEY];
+  const raw = obj[STAGING_SYNONYM_DESC_KEY];
   const description = typeof raw === "string" ? raw : "";
   if (!description) return { description: "", rest: obj };
   const rest = { ...obj };
-  delete rest[ONTOLOGY_SYNONYM_DESC_KEY];
+  delete rest[STAGING_SYNONYM_DESC_KEY];
   return { description, rest };
 }
 
@@ -158,7 +178,7 @@ function wrapDnSubtree(value: JsonValue, displayTitle: string): DnNode {
     value &&
     typeof value === "object" &&
     !Array.isArray(value) &&
-    ONTOLOGY_SYNONYM_DESC_KEY in (value as JsonObject)
+    STAGING_SYNONYM_DESC_KEY in (value as JsonObject)
   ) {
     const peeled = peelSynonymDescription(value as JsonObject);
     peeledDescription = peeled.description;
