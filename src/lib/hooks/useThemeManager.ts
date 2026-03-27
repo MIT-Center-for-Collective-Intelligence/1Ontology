@@ -47,8 +47,16 @@ export const useThemeManager = () => {
   const handleThemeSwitch = useCallback(async () => {
     const newTheme = !isDark;
     const themeString = newTheme ? 'Dark' : 'Light';
-    
+
     setIsDark(newTheme);
+    try {
+      localStorage.setItem(
+        'preferred-theme',
+        newTheme ? 'dark' : 'light'
+      );
+    } catch (e) {
+      /* ignore quota / private mode */
+    }
 
     if (authState.isAuthenticated && authState.user) {
       try {
@@ -80,9 +88,6 @@ export const useThemeManager = () => {
       } catch (error) {
         console.error('useThemeManager: Error saving theme to Firebase:', error);
       }
-    } else {
-      // User is not logged in, save to localStorage
-      localStorage.setItem('preferred-theme', newTheme ? 'dark' : 'light');
     }
   }, [isDark, authState.isAuthenticated, authState.user, db, dispatch]);
 

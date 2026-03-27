@@ -5,12 +5,14 @@ import {
   AppBar,
   Box,
   Button,
+  CircularProgress,
   Container,
   IconButton,
   Toolbar,
   Typography,
 } from "@mui/material";
 import {
+  ArrowForward as ArrowForwardIcon,
   LightMode as LightModeIcon,
   DarkMode as DarkModeIcon,
   Menu as MenuIcon,
@@ -23,7 +25,20 @@ interface NavigationProps {
   isAuthenticated: boolean;
   isAuthLoading: boolean;
   onMobileMenuOpen: () => void;
+  showNavBarButtons?: boolean;
 }
+
+const navTextButtonSx = {
+  color: "text.primary",
+  fontWeight: 500,
+  textTransform: "none" as const,
+  borderRadius: 1,
+  px: 1.5,
+  "&:hover": {
+    color: "primary.main",
+    bgcolor: "rgba(255,152,0,0.1)",
+  },
+};
 
 const Navigation: React.FC<NavigationProps> = ({
   isDark,
@@ -31,8 +46,19 @@ const Navigation: React.FC<NavigationProps> = ({
   isAuthenticated,
   isAuthLoading,
   onMobileMenuOpen,
+  showNavBarButtons = true,
 }) => {
   const router = useRouter();
+
+  const landingCtaBgSx = {
+    bgcolor: isDark ? "#5c6b7d" : "#556477",
+    color: "#fff",
+    boxShadow: "none",
+    "&:hover": {
+      bgcolor: isDark ? "#6a7a8e" : "#637592",
+      boxShadow: 2,
+    },
+  };
 
   return (
     <AppBar
@@ -80,74 +106,118 @@ const Navigation: React.FC<NavigationProps> = ({
           </Box>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Box
-              sx={{
-                display: { xs: "none", md: "flex" },
-                alignItems: "center",
-                gap: 3,
-              }}
-            >
-              {LANDING_ROUTES.map((link, index) => {
-                const isActive = router.pathname === link.href;
+            {showNavBarButtons && (
+              <Box
+                sx={{
+                  display: { xs: "none", md: "flex" },
+                  alignItems: "center",
+                  gap: 3,
+                }}
+              >
+                {LANDING_ROUTES.map((link, index) => {
+                  const isActive = router.pathname === link.href;
 
-                return (
-                  <Link key={index} href={link.href} passHref legacyBehavior>
-                    <Button
-                      component="a"
-                      sx={{
-                        color: isActive ? "primary.main" : "text.primary",
-                        bgcolor: isActive
-                          ? "rgba(255,152,0,0.1)"
-                          : "transparent",
-                        fontWeight: isActive ? 600 : 400,
-                        "&:hover": {
-                          color: "primary.main",
-                          bgcolor: "rgba(255,152,0,0.1)",
-                        },
-                        textTransform: "none",
-                        borderRadius: 1,
-                      }}
-                    >
-                      {link.title}
-                    </Button>
-                  </Link>
-                );
-              })}
-            </Box>
+                  return (
+                    <Link key={index} href={link.href} passHref legacyBehavior>
+                      <Button
+                        component="a"
+                        sx={{
+                          color: isActive ? "primary.main" : "text.primary",
+                          bgcolor: isActive
+                            ? "rgba(255,152,0,0.1)"
+                            : "transparent",
+                          fontWeight: isActive ? 600 : 400,
+                          "&:hover": {
+                            color: "primary.main",
+                            bgcolor: "rgba(255,152,0,0.1)",
+                          },
+                          textTransform: "none",
+                          borderRadius: 1,
+                        }}
+                      >
+                        {link.title}
+                      </Button>
+                    </Link>
+                  );
+                })}
+              </Box>
+            )}
 
             <IconButton onClick={handleThemeSwitch} size="small">
               {isDark ? <LightModeIcon /> : <DarkModeIcon />}
             </IconButton>
 
-            {isAuthLoading ? (
-              <Button variant="contained" color="primary" disabled>
-                Loading...
-              </Button>
-            ) : isAuthenticated ? (
-              <Link href="/" passHref legacyBehavior>
-                <Button variant="contained" color="primary" component="a">
-                  Go to Platform
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                flexShrink: 0,
+              }}
+            >
+              {isAuthLoading ? (
+                <Button
+                  variant="outlined"
+                  disabled
+                  startIcon={
+                    <CircularProgress size={14} thickness={5} color="inherit" />
+                  }
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 500,
+                    borderRadius: 2,
+                    px: 2,
+                    borderColor: "divider",
+                    color: "text.secondary",
+                    "&.Mui-disabled": {
+                      borderColor: "divider",
+                      color: "text.secondary",
+                    },
+                  }}
+                >
+                  Signing in…
                 </Button>
-              </Link>
-            ) : (
-              <>
-                <Link href="/signin" passHref legacyBehavior>
+              ) : isAuthenticated ? (
+                <Link href="/" passHref legacyBehavior>
                   <Button
-                    variant="text"
-                    color="primary"
+                    variant="contained"
+                    color="inherit"
                     component="a"
-                    // sx={{ display: { xs: "none", sm: "inline-flex" } }}
+                    endIcon={
+                      <ArrowForwardIcon sx={{ fontSize: 18, opacity: 0.9 }} />
+                    }
+                    sx={{
+                      ...landingCtaBgSx,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      borderRadius: "25px",
+                      px: 2.25,
+                      py: 0.875,
+                    }}
                   >
-                    Sign In
+                    Go to platform
                   </Button>
                 </Link>
-                {/* <Link href="/signup" passHref legacyBehavior>
-                  <Button variant="contained" color="primary" component="a">
-                    Register
+              ) : (
+                <Link href="/signin" passHref legacyBehavior>
+                  <Button
+                    variant="contained"
+                    color="inherit"
+                    component="a"
+                    sx={{
+                      ...landingCtaBgSx,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      borderRadius: "25px",
+                      px: 2.25,
+                      py: 0.875,
+                    }}
+                  >
+                    Sign in/Sign up
                   </Button>
-                </Link> */}
-              </>
-            )}
+                </Link>
+              )}
+            </Box>
 
             <IconButton
               sx={{ display: { xs: "flex", md: "none" } }}
