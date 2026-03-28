@@ -5,7 +5,7 @@ export const LANDING_ROUTES: { title: string; id: LandingSectionId }[] = [
   { title: "Home", id: "home" },
   { title: "Paper", id: "paper" },
   { title: "Platform", id: "platform" },
-  { title: "AI Uses", id: "aiUses" },
+  // { title: "AI Uses", id: "aiUses" },
   { title: "Team", id: "team" },
 ];
 

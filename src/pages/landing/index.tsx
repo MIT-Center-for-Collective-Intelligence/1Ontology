@@ -106,12 +106,12 @@ const LandingPage = () => {
               onGoToSection={commitSection}
             />
           )}
-          {section === "aiUses" && (
+  {/*         {section === "aiUses" && (
             <AiUsesLandingSection
               isDark={isDark}
               onGoToSection={commitSection}
             />
-          )}
+          )} */}
           {section === "team" && (
             <TeamLandingSection
               isDark={isDark}
