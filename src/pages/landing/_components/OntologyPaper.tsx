@@ -41,6 +41,7 @@ const ontologyPaperInstrumentSerif = Instrument_Serif({
   variable: "--ontology-paper-instrument-serif",
 });
 import Footer from "./Footer";
+import { useAuth } from "@components/components/context/AuthContext";
 
 const STAT_NUMBER_SX = {
   fontFamily: ontologyPaperInstrumentSerif.style.fontFamily,
@@ -228,6 +229,8 @@ export type OntologyPaperProps = {
 const OntologyPaper: React.FC<OntologyPaperProps> = ({
   isDark: isDarkProp,
 }) => {
+  const [authState] = useAuth();
+
   const controlled = isDarkProp !== undefined;
   const [uncontrolledDark, setUncontrolledDark] = useState(true);
 
@@ -262,6 +265,72 @@ const OntologyPaper: React.FC<OntologyPaperProps> = ({
       );
     };
   }, [controlled]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sessionId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    const started = Date.now();
+    let left = false;
+
+    const send = (payload: Record<string, unknown>) => {
+      const u = authState.user?.uname;
+      const body = u ? { ...payload, username: u } : payload;
+      void fetch("/api/log-visit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    const nav = performance.getEntriesByType("navigation")[0] as
+      | PerformanceNavigationTiming
+      | undefined;
+    const skipPvBecauseReload = nav?.type === "reload";
+
+    const lastPv = Number(
+      sessionStorage.getItem("ontology-paper-pv-ts") || "0",
+    );
+    if (!skipPvBecauseReload && Date.now() - lastPv > 400) {
+      sessionStorage.setItem("ontology-paper-pv-ts", String(Date.now()));
+      send({
+        event: "page_view",
+        path: window.location.pathname,
+        referrer: document.referrer || null,
+        sessionId,
+        locale: navigator.language,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+    }
+
+    const leave = () => {
+      if (left) return;
+      left = true;
+      send({
+        event: "page_leave",
+        path: window.location.pathname,
+        sessionId,
+        locale: navigator.language,
+        visibleMs: Date.now() - started,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+    };
+
+    const onPageHide = () => leave();
+
+    window.addEventListener("pagehide", onPageHide);
+
+    return () => {
+      window.removeEventListener("pagehide", onPageHide);
+      const ms = Date.now() - started;
+      if (ms < 400 && document.visibilityState === "visible") return;
+      leave();
+    };
+  }, [authState.user?.uname]);
 
   const mxAi = AI_BARS[0][1];
   const mxRb = ROBOT_BARS[0][1];
