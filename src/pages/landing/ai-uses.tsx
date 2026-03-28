@@ -1,20 +1,14 @@
 import React, { useEffect, useState } from "react";
-import Head from "next/head";
 import {
   Box,
   Button,
   Container,
   Grid,
   Typography,
-  ThemeProvider,
-  CssBaseline,
   Card,
   Chip,
 } from "@mui/material";
-import { useThemeManager } from "../../lib/hooks/useThemeManager";
-import { createLandingTheme } from "../../theme/landingTheme";
-import Navigation from "./_components/Navigation";
-import MobileDrawer from "./_components/MobileDrawer";
+import type { LandingSectionId } from "../../constants/landingTypes";
 import Footer from "./_components/Footer";
 import { OpenInNew } from "@mui/icons-material";
 import TreeVisualization, { TreeNode } from "./_components/TreeVisualization";
@@ -175,10 +169,13 @@ const simplifiedSampleData: TreeNode = {
   ],
 };
 
-const OntologyExplorer = () => {
-  const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } =
-    useThemeManager();
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+export const AiUsesLandingSection = ({
+  isDark,
+  onGoToSection,
+}: {
+  isDark: boolean;
+  onGoToSection?: (id: LandingSectionId) => void;
+}) => {
   const [viewType, setViewType] = useState<"tree" | "sunburst">("sunburst");
   const [data, setData] = useState<TreeNode | null>(null);
 
@@ -189,34 +186,15 @@ const OntologyExplorer = () => {
   }, []);
 
   if (!data) {
-    return <p>Loading ontology...</p>;
+    return (
+      <Box sx={{ py: 8, textAlign: "center" }}>
+        <Typography color="text.secondary">Loading ontology...</Typography>
+      </Box>
+    );
   }
 
-  const theme = createLandingTheme(isDark);
-
   return (
-    <>
-      <Head>
-        <title>Where AI Can Be Useful</title>
-      </Head>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-          {/* Navigation */}
-          <Navigation
-            isDark={isDark}
-            handleThemeSwitch={handleThemeSwitch}
-            isAuthenticated={isAuthenticated}
-            isAuthLoading={isAuthLoading}
-            onMobileMenuOpen={() => setMobileNavOpen(true)}
-          />
-
-          {/* Mobile Navigation Drawer */}
-          <MobileDrawer
-            open={mobileNavOpen}
-            onClose={() => setMobileNavOpen(false)}
-          />
-
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
           {/* Clean Sophisticated Hero Section */}
           <Box
             sx={{
@@ -978,10 +956,11 @@ const OntologyExplorer = () => {
           </Box>
 
           {/* Footer */}
-          <Footer isDark={isDark} />
+          <Footer
+            isDark={isDark}
+            onLandingSectionChange={onGoToSection}
+          />
         </Box>
-      </ThemeProvider>
-    </>
   );
 };
 
@@ -998,4 +977,11 @@ const countNodes = (node: TreeNode | null): number => {
   return count;
 };
 
-export default OntologyExplorer;
+const AiUsesLegacyRedirect = () => {
+  useEffect(() => {
+    window.location.replace(`${window.location.origin}/landing#ai-uses`);
+  }, []);
+  return null;
+};
+
+export default AiUsesLegacyRedirect;

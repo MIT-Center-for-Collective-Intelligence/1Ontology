@@ -10,14 +10,27 @@ import {
   Divider,
   Typography,
 } from "@mui/material";
-import { LANDING_ROUTES } from "../../../constants/landingRoutes";
+import {
+  LANDING_ROUTES,
+  landingHrefForSection,
+} from "../../../constants/landingRoutes";
+import type { LandingSectionId } from "../../../constants/landingTypes";
 
 interface MobileDrawerProps {
   open: boolean;
   onClose: () => void;
+  activeLandingSection?: LandingSectionId;
+  onSelectLandingSection?: (id: LandingSectionId) => void;
 }
 
-const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose }) => {
+const MobileDrawer: React.FC<MobileDrawerProps> = ({
+  open,
+  onClose,
+  activeLandingSection,
+  onSelectLandingSection,
+}) => {
+  const landingSpa =
+    activeLandingSection !== undefined && onSelectLandingSection !== undefined;
   return (
     <Drawer
       anchor="right"
@@ -41,11 +54,28 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose }) => {
         <List>
           {LANDING_ROUTES.map((link, index) => (
             <ListItem key={index} disablePadding>
-              <Link href={link.href} passHref legacyBehavior>
-                <ListItemButton component="a">
+              {landingSpa ? (
+                <ListItemButton
+                  selected={activeLandingSection === link.id}
+                  onClick={() => {
+                    onSelectLandingSection!(link.id);
+                    onClose();
+                  }}
+                >
                   <ListItemText primary={link.title} />
                 </ListItemButton>
-              </Link>
+              ) : (
+                <Link
+                  href={landingHrefForSection(link.id)}
+                  passHref
+                  legacyBehavior
+                  scroll={false}
+                >
+                  <ListItemButton component="a">
+                    <ListItemText primary={link.title} />
+                  </ListItemButton>
+                </Link>
+              )}
             </ListItem>
           ))}
         </List>

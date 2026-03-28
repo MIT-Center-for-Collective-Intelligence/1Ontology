@@ -4,13 +4,20 @@ import { Box, Container, Grid, Typography } from "@mui/material";
 import {
   LANDING_ROUTES,
   EXTERNAL_LINKS,
+  landingHrefForSection,
 } from "../../../constants/landingRoutes";
+import type { LandingSectionId } from "../../../constants/landingTypes";
 
 interface FooterProps {
   isDark: boolean;
+  /** When set, nav links switch sections without leaving `/landing`. */
+  onLandingSectionChange?: (id: LandingSectionId) => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ isDark }) => {
+const Footer: React.FC<FooterProps> = ({
+  isDark,
+  onLandingSectionChange,
+}) => {
   return (
     <Box
       component="footer"
@@ -83,21 +90,50 @@ const Footer: React.FC<FooterProps> = ({ isDark }) => {
                 height: "100%",
               }}
             >
-              {LANDING_ROUTES.map((link, idx) => (
-                <Link key={idx} href={link.href} passHref legacyBehavior>
+              {LANDING_ROUTES.map((link, idx) =>
+                onLandingSectionChange ? (
                   <Typography
-                    component="a"
+                    key={idx}
+                    component="button"
+                    type="button"
+                    onClick={() => onLandingSectionChange(link.id)}
                     sx={{
+                      border: "none",
+                      background: "none",
+                      cursor: "pointer",
+                      textAlign: "inherit",
+                      font: "inherit",
                       color: "text.secondary",
                       fontSize: "0.9rem",
                       textDecoration: "none",
+                      padding: 0,
                       "&:hover": { color: "primary.main" },
                     }}
                   >
                     {link.title}
                   </Typography>
-                </Link>
-              ))}
+                ) : (
+                  <Link
+                    key={idx}
+                    href={landingHrefForSection(link.id)}
+                    passHref
+                    legacyBehavior
+                    scroll={false}
+                  >
+                    <Typography
+                      component="a"
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: "0.9rem",
+                        textDecoration: "none",
+                        "&:hover": { color: "primary.main" },
+                      }}
+                    >
+                      {link.title}
+                    </Typography>
+                  </Link>
+                ),
+              )}
             </Box>
           </Grid>
 
