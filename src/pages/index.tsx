@@ -17,7 +17,7 @@ const SkillsFutureDefault = () => {
       router.replace(`/${DEFAULT_APP_ID}`);
     } else {
       // If user is not authenticated, redirect to landing page
-      router.replace("/home");
+      router.replace("/landing");
     }
   }, [router.isReady, isAuthenticated, isAuthInitialized]);
 

@@ -1830,3 +1830,4 @@ export const LandingHomeSection: React.FC<LandingHomeSectionProps> = ({
   );
 };
 
+export default LandingHomeSection;

@@ -606,3 +606,5 @@ export const TeamLandingSection = ({
   );
 };
 
+export default TeamLandingSection;
+

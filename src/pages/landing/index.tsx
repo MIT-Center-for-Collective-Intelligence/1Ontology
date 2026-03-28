@@ -5,7 +5,7 @@ import { useThemeManager } from "../../lib/hooks/useThemeManager";
 import Navigation from "./_components/Navigation";
 import MobileDrawer from "./_components/MobileDrawer";
 import { createLandingTheme } from "../../theme/landingTheme";
-import { LandingHomeSection } from "./_sections/LandingHomeSection";
+import { LandingHomeSection } from "./sections/LandingHomeSection";
 import { PaperLandingSection } from "./paper";
 import { PlatformLandingSection } from "./platform";
 import { AiUsesLandingSection } from "./ai-uses";

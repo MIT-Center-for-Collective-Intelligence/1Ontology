@@ -79,3 +79,5 @@ export const PaperLandingSection = (_props: {
     </>
   );
 };
+
+export default PaperLandingSection;

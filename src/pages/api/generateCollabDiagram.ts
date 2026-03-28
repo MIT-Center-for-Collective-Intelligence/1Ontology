@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { askGemini, openai } from "./helpers";
+import { askGemini } from "./helpers";
 
 import { dbCausal } from "@components/lib/firestoreServer/admin";
 import { GEMINI_MODEL } from "@components/lib/CONSTANTS";

@@ -1,7 +1,4 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { OpenAI } from "openai";
-import { askGemini, openai } from "./helpers";
-import { Content } from "@google/generative-ai";
 
 import {
   ALGORITHMS,
@@ -27,6 +24,7 @@ import {
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { ChatModel } from "openai/resources/chat/chat";
 import { PROPERTIES_TO_IMPROVE } from "@components/lib/CONSTANTS";
+import { openai } from "./openaiClient";
 
 const GEMINI_MODELS = [
   "gemini-2.0-flash-exp",
