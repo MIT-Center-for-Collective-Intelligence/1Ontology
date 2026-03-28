@@ -7,6 +7,7 @@ import {
   landingHrefForSection,
 } from "../../../constants/landingRoutes";
 import type { LandingSectionId } from "../../../constants/landingTypes";
+import Image from "next/image";
 
 interface FooterProps {
   isDark: boolean;
@@ -14,15 +15,12 @@ interface FooterProps {
   onLandingSectionChange?: (id: LandingSectionId) => void;
 }
 
-const Footer: React.FC<FooterProps> = ({
-  isDark,
-  onLandingSectionChange,
-}) => {
+const Footer: React.FC<FooterProps> = ({ isDark, onLandingSectionChange }) => {
   return (
     <Box
       component="footer"
       sx={{
-        py: 6,
+        py: 3,
         bgcolor: "background.paper",
         borderTop: (theme) =>
           theme.palette.mode === "dark"
@@ -57,14 +55,16 @@ const Footer: React.FC<FooterProps> = ({
                   justifyContent: { xs: "center", md: "flex-start" },
                 }}
               >
-                <img
+                <Image
                   src={
                     isDark
                       ? "/MIT-Logo-small-Dark.png"
                       : "/MIT-Logo-Small-Light.png"
                   }
-                  alt="MIT Logo"
-                  style={{ height: "28px", width: "auto" }}
+                  alt="MIT"
+                  width={isDark ? 235 : 200}
+                  height={isDark ? 176 : 130}
+                  style={{ height: 28, width: "auto" }}
                 />
                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
                   Ontology of Collective Intelligence
@@ -105,7 +105,8 @@ const Footer: React.FC<FooterProps> = ({
                       font: "inherit",
                       color: "text.secondary",
                       fontSize: "0.9rem",
-                      textDecoration: "none",
+                      textDecoration: "underline",
+                      textUnderlineOffset: "0.2em",
                       padding: 0,
                       "&:hover": { color: "primary.main" },
                     }}
@@ -125,7 +126,8 @@ const Footer: React.FC<FooterProps> = ({
                       sx={{
                         color: "text.secondary",
                         fontSize: "0.9rem",
-                        textDecoration: "none",
+                        textDecoration: "underline",
+                        textUnderlineOffset: "0.2em",
                         "&:hover": { color: "primary.main" },
                       }}
                     >
@@ -169,7 +171,8 @@ const Footer: React.FC<FooterProps> = ({
                 sx={{
                   color: "text.secondary",
                   fontSize: "0.9rem",
-                  textDecoration: "none",
+                  textDecoration: "underline",
+                  textUnderlineOffset: "0.2em",
                   "&:hover": { color: "primary.main" },
                 }}
               >
@@ -183,7 +186,8 @@ const Footer: React.FC<FooterProps> = ({
                 sx={{
                   color: "text.secondary",
                   fontSize: "0.9rem",
-                  textDecoration: "none",
+                  textDecoration: "underline",
+                  textUnderlineOffset: "0.2em",
                   "&:hover": { color: "primary.main" },
                 }}
               >
@@ -222,7 +226,8 @@ const Footer: React.FC<FooterProps> = ({
                 sx={{
                   color: "text.secondary",
                   fontSize: "0.9rem",
-                  textDecoration: "none",
+                  textDecoration: "underline",
+                  textUnderlineOffset: "0.2em",
                   "&:hover": { color: "primary.main" },
                 }}
               >

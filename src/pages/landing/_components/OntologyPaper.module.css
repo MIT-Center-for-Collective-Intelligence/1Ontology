@@ -1,0 +1,689 @@
+.paperRoot,
+.paperRoot * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.paperRoot {
+  --bg: #ffffff;
+  --card: #f8f9fa;
+  --accent: #e85d4a;
+  --accent2: #f4a261;
+  --accent3: #8b5cf6;
+  --text: #1a1a1a;
+  --muted: #6c757d;
+  --border: #e9ecef;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ontology-paper-dm-sans), sans-serif;
+  overflow-x: hidden;
+  transition: background 0.3s, color 0.3s;
+}
+
+.paperRoot::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.paperRootDark {
+  --bg: #0a0a0f;
+  --card: #111118;
+  --accent: #e85d4a;
+  --accent2: #f4a261;
+  --accent3: #8b5cf6;
+  --text: #e8e6e3;
+  --muted: #8a8894;
+  --border: rgba(255, 255, 255, 0.06);
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  z-index: 999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 80px 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 800px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle,
+      rgba(232, 93, 74, 0.08) 0%,
+      rgba(139, 92, 246, 0.04) 40%,
+      transparent 70%);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(232, 93, 74, 0.1);
+  border: 1px solid rgba(232, 93, 74, 0.25);
+  padding: 8px 20px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 40px;
+  animation: fadeUp 0.8s ease both;
+}
+
+.tag .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.hero h1 {
+  font-family: var(--ontology-paper-instrument-serif), serif;
+  font-size: clamp(48px, 7vw, 96px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  max-width: 900px;
+  margin-bottom: 28px;
+  animation: fadeUp 0.8s ease 0.1s both;
+}
+
+.hero h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.hero .subtitle {
+  font-size: clamp(16px, 2vw, 20px);
+  color: var(--muted);
+  max-width: 640px;
+  line-height: 1.6;
+  margin-bottom: 48px;
+  animation: fadeUp 0.8s ease 0.2s both;
+}
+
+.hero .authors {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 740px;
+  line-height: 1.8;
+  animation: fadeUp 0.8s ease 0.3s both;
+}
+
+.eq {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.af {
+  vertical-align: super;
+  font-size: 0.7em;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.affiliations {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 24px;
+  animation: fadeUp 0.8s ease 0.4s both;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.an {
+  color: var(--accent);
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.statsStrip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.statCell {
+  background: var(--bg);
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.statNumber {
+  font-family: var(--ontology-paper-instrument-serif), serif;
+  font-size: clamp(32px, 4vw, 56px);
+  font-weight: 400;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.statLabel {
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+}
+
+.section {
+  padding: 80px 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-family: var(--ontology-paper-instrument-serif), serif;
+  font-weight: 400;
+  line-height: 1.15;
+  margin-bottom: 48px;
+  max-width: 700px;
+}
+
+.figCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 32px;
+  overflow: hidden;
+  transition: background 0.3s, border 0.3s;
+}
+
+.figCard img {
+  width: 100%;
+  border-radius: 8px;
+  display: block;
+}
+
+.figCaption {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 12px;
+  line-height: 1.5;
+  padding: 13px 4px 4px 4px;
+
+}
+
+.figCaption strong {
+  color: var(--text);
+}
+
+.chartCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: clamp(20px, 4vw, 40px);
+  margin-bottom: 32px;
+  transition: background 0.3s, border 0.3s;
+}
+
+.chartCard h3 {
+  font-family: var(--ontology-paper-instrument-serif), serif;
+  font-size: clamp(18px, 2.5vw, 24px);
+  font-weight: 400;
+  margin-bottom: 4px;
+}
+
+.chartSub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+.chartsDuo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: minmax(100px, 200px) 1fr 46px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.barLabel {
+  font-size: clamp(10px, 1.2vw, 12.5px);
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.barTrack {
+  height: 20px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.barFillSoftware {
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+}
+
+.barFillRobot {
+  background: linear-gradient(90deg, var(--accent3), #60a5fa);
+}
+
+.barVal {
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.barValSoftware {
+  color: var(--accent);
+}
+
+.barValRobot {
+  color: var(--accent3);
+}
+
+.breakdownGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.breakdownGridItem {
+  display: flex;
+}
+
+.breakdownCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.3s, border 0.3s;
+  width: 100%;
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-height: 0;
+}
+
+.breakdownCard::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  border-radius: 0 16px 0 100px;
+  opacity: 0.07;
+}
+
+.breakdownThink::after {
+  background: var(--accent);
+}
+
+.breakdownDo::after {
+  background: var(--accent3);
+}
+
+.breakdownInteract::after {
+  background: var(--accent2);
+}
+
+.breakdownPct {
+  font-family: var(--ontology-paper-instrument-serif), serif;
+  font-weight: 400;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.breakdownThink .breakdownPct {
+  color: var(--accent);
+}
+
+.breakdownDo .breakdownPct {
+  color: var(--accent3);
+}
+
+.breakdownInteract .breakdownPct {
+  color: var(--accent2);
+}
+
+.breakdownName {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.breakdownDetail {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.growthSvg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.growthSvg text {
+  font-family: var(--ontology-paper-dm-sans), "DM Sans", sans-serif;
+}
+
+.concentration {
+  text-align: center;
+  padding: clamp(32px, 5vw, 56px) clamp(16px, 3vw, 40px);
+}
+
+.bigNum {
+  font-family: var(--ontology-paper-instrument-serif), serif;
+  font-size: clamp(48px, 8vw, 72px);
+  line-height: 1;
+}
+
+.bigLabel {
+  font-size: clamp(14px, 2vw, 18px);
+  margin-top: 8px;
+}
+
+.figDuo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.slideshowCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin-bottom: 32px;
+  transition: background 0.3s, border 0.3s;
+}
+
+.slideshowCardCentered {
+  max-width: min(100%, 900px);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.slideshowContainer {
+  position: relative;
+  text-align: center;
+}
+
+.slideshowContainer img {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 8px;
+  transition: opacity 0.4s;
+}
+
+.slideshowControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.slideshowControls button,
+.slideshowControls :global(.MuiIconButton-root) {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.slideshowControls button:hover,
+.slideshowControls :global(.MuiIconButton-root:hover) {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.slideshowControls :global(.MuiIconButton-root) {
+  padding: 0;
+}
+
+.slideshowYear {
+  font-family: var(--ontology-paper-instrument-serif), serif;
+  font-size: clamp(24px, 3.5vw, 34px);
+  min-width: 70px;
+  text-align: center;
+}
+
+.slideshowPlay {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: white !important;
+}
+
+.slideshowDuo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.slideshowTitle {
+  font-family: var(--ontology-paper-instrument-serif), serif;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.ctaSection {
+  padding: 80px 40px 120px;
+  text-align: center;
+}
+
+.arxivBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--accent);
+  color: white;
+  padding: 18px 40px;
+  border-radius: 100px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.3s;
+}
+
+.arxivBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(232, 93, 74, 0.3);
+}
+
+.arxivId {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 16px;
+}
+
+.heroNote {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  animation: fadeUp 0.8s ease 0.35s both;
+}
+
+/* Nested selector beats `.paperRoot * { margin: 0 }` so horizontal auto-center works */
+.concentration .concentrationNote {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 900px;
+  margin-top: 20px;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 23px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.interactSpanner {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+
+  .chartsDuo,
+  .figDuo,
+  .slideshowDuo {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .statsStrip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .breakdownGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding: 60px 20px;
+  }
+
+  .section {
+    padding: 60px 16px;
+  }
+
+  .barRow {
+    grid-template-columns: minmax(80px, 140px) 1fr 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .statCell {
+    padding: 28px 16px;
+  }
+
+  .barRow {
+    grid-template-columns: minmax(60px, 110px) 1fr 36px;
+  }
+
+  .barLabel {
+    font-size: 9px;
+  }
+}
+
+@media (min-width: 1800px) {
+  .section {
+    max-width: 1400px;
+  }
+
+  .chartsDuo,
+  .figDuo,
+  .slideshowDuo {
+    gap: 40px;
+  }
+
+  .barRow {
+    grid-template-columns: 240px 1fr 54px;
+  }
+}
+
+@media (min-width: 2400px) {
+  .section {
+    max-width: 1600px;
+  }
+
+  .paperRoot {
+    font-size: 18px;
+  }
+
+  .statNumber {
+    font-size: 64px;
+  }
+
+  .barLabel {
+    font-size: 14px;
+  }
+
+  .barVal {
+    font-size: 13px;
+  }
+
+  .barTrack {
+    height: 26px;
+  }
+}

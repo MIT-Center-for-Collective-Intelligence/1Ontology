@@ -6,7 +6,7 @@ import Navigation from "./_components/Navigation";
 import MobileDrawer from "./_components/MobileDrawer";
 import { createLandingTheme } from "../../theme/landingTheme";
 import { LandingHomeSection } from "./sections/LandingHomeSection";
-import { PaperLandingSection } from "./paper";
+
 import { PlatformLandingSection } from "./platform";
 import { AiUsesLandingSection } from "./ai-uses";
 import { TeamLandingSection } from "./team";
@@ -16,6 +16,7 @@ import {
   landingSectionToHash,
   LANDING_SECTION_TITLES,
 } from "../../constants/landingTypes";
+import OntologyPaper from "./_components/OntologyPaper";
 
 const HOME_DESCRIPTION =
   "A comprehensive framework to systematically understand where and how AI can be used, and what this means for people and organizations.";
@@ -43,7 +44,6 @@ const LandingPage = () => {
     setSection(id);
     const hash = landingSectionToHash(id);
     window.history.replaceState(null, "", `/landing${hash}`);
-    // After React paints the new section — avoids fighting layout (and pairs with stable scrollbar gutter).
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -52,7 +52,7 @@ const LandingPage = () => {
   }, []);
 
   return (
-    <>
+    <Box>
       <Head>
         <title>{LANDING_SECTION_TITLES[section]}</title>
         {section === "home" && (
@@ -63,8 +63,14 @@ const LandingPage = () => {
         <CssBaseline />
         <GlobalStyles
           styles={{
-            html: {
-              scrollbarGutter: "stable",
+            "html, body": {
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+            },
+            "html::-webkit-scrollbar, body::-webkit-scrollbar": {
+              display: "none",
+              width: 0,
+              height: 0,
             },
           }}
         />
@@ -96,9 +102,7 @@ const LandingPage = () => {
               onGoToSection={commitSection}
             />
           )}
-          {section === "paper" && (
-            <PaperLandingSection onGoToSection={commitSection} />
-          )}
+          {section === "paper" && <OntologyPaper isDark={isDark} />}
           {section === "platform" && (
             <PlatformLandingSection
               isDark={isDark}
@@ -106,21 +110,18 @@ const LandingPage = () => {
               onGoToSection={commitSection}
             />
           )}
-  {/*         {section === "aiUses" && (
+          {/*         {section === "aiUses" && (
             <AiUsesLandingSection
               isDark={isDark}
               onGoToSection={commitSection}
             />
           )} */}
           {section === "team" && (
-            <TeamLandingSection
-              isDark={isDark}
-              onGoToSection={commitSection}
-            />
+            <TeamLandingSection isDark={isDark} onGoToSection={commitSection} />
           )}
         </Box>
       </ThemeProvider>
-    </>
+    </Box>
   );
 };
 

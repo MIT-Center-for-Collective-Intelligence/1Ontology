@@ -2338,7 +2338,7 @@ export const PlatformLandingSection = ({
                     endIcon={<OpenInNew />}
                     component="a"
                     href="/"
-                    sx={{ px: 4 }}
+                    sx={{ px: 4, borderRadius: "25px" }}
                   >
                     {isAuthenticated
                       ? "Go to Platform"
