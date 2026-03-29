@@ -69,6 +69,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       locale: body.locale ?? null,
       timeZone: body.timeZone ?? null,
     };
+    console.log(entry.timeZone, "entry.timeZone");
     if (entry.timeZone) {
       console.log(entry);
       const logRef = db.collection(LOGS).doc();
@@ -80,7 +81,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
-    return res.status(204).end();
+    return res.status(200).end();
   } catch (error) {
     console.error(error);
     return res.status(500).end();
