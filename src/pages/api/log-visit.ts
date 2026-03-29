@@ -83,7 +83,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(204).end();
   } catch (error) {
     console.error(error);
-    return res.status(204).end();
+    return res.status(500).end();
   }
 }
 

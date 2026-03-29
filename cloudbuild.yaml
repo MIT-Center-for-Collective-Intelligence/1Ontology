@@ -3,6 +3,9 @@ options:
   machineType: "E2_HIGHCPU_32"
   diskSizeGb: 100
 
+substitutions:
+  _AR_IMAGE: us-central1-docker.pkg.dev/ontology-41607/ontology-repo/ontology
+
 steps:
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: bash
@@ -18,8 +21,8 @@ steps:
     args:
       - "-c"
       - |
-        docker build -t us-central1-docker.pkg.dev/ontology-41607/ontology-repo/ontology \
-        --cache-from us-central1-docker.pkg.dev/ontology-41607/ontology-repo/ontology \
+        docker build -t ${_AR_IMAGE} \
+        --cache-from ${_AR_IMAGE} \
         --build-arg=NEXT_PUBLIC_API_KEY="$${NEXT_PUBLIC_API_KEY}" \
         --build-arg=NEXT_PUBLIC_AUTH_DOMAIN="$${NEXT_PUBLIC_AUTH_DOMAIN}" \
         --build-arg=NEXT_PUBLIC_PROJECT_ID="$${NEXT_PUBLIC_PROJECT_ID}" \
@@ -59,14 +62,13 @@ steps:
       - "-c"
       - |
         # Create a temporary container from the new image to extract files
-        docker create --name temp-container us-central1-docker.pkg.dev/ontology-41607/ontology-repo/ontology
+        docker create --name temp-container ${_AR_IMAGE}
         # Copy the newly generated Next.js cache out to the Cloud Build workspace
         docker cp temp-container:/app/.next/cache ./.next-cache || echo "Cache extraction failed"
         docker rm temp-container
         # Compress the cache for faster uploading
         tar -zcf next-cache.tar.gz .next-cache
 
-  # Step 4: Upload the fresh cache back to GCS for the next build to use
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: bash
     args:
@@ -74,7 +76,12 @@ steps:
       - |
         gsutil cp next-cache.tar.gz gs://${_NEXT_PUBLIC_PROJECT_ID}_cloudbuild/next-cache.tar.gz
 
-  # Step 5: Deploy to Cloud Run (attaching secrets at runtime)
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "${_AR_IMAGE}"
+
+  # Deploy to Cloud Run (attaching secrets at runtime)
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: gcloud
     args:
@@ -82,23 +89,23 @@ steps:
       - "deploy"
       - "ontology"
       - "--image"
-      - "us-central1-docker.pkg.dev/ontology-41607/ontology-repo/ontology"
+      - "${_AR_IMAGE}"
       - "--region"
       - "us-central1"
       - "--project"
       - "ontology-41607"
       - "--allow-unauthenticated"
       - "--remove-env-vars=PROD_ONTOLOGY_CRED_TYPE,\
-         PROD_ONTOLOGY_CRED_PROJECT_ID,\
-         PROD_ONTOLOGY_CRED_PRIVATE_KEY_ID,\
-         PROD_ONTOLOGY_CRED_PRIVATE_KEY,\
-         PROD_ONTOLOGY_CRED_CLIENT_EMAIL,\
-         PROD_ONTOLOGY_CRED_CLIENT_ID,\
-         PROD_ONTOLOGY_CRED_AUTH_URI,\
-         PROD_ONTOLOGY_CRED_TOKEN_URI,\
-         PROD_ONTOLOGY_CRED_AUTH_PROVIDER_X509_CERT_URL,\
-         PROD_ONTOLOGY_CRED_CLIENT_X509_CERT_URL,\
-         PROD_ONTOLOGY_STORAGE_BUCKET"
+        PROD_ONTOLOGY_CRED_PROJECT_ID,\
+        PROD_ONTOLOGY_CRED_PRIVATE_KEY_ID,\
+        PROD_ONTOLOGY_CRED_PRIVATE_KEY,\
+        PROD_ONTOLOGY_CRED_CLIENT_EMAIL,\
+        PROD_ONTOLOGY_CRED_CLIENT_ID,\
+        PROD_ONTOLOGY_CRED_AUTH_URI,\
+        PROD_ONTOLOGY_CRED_TOKEN_URI,\
+        PROD_ONTOLOGY_CRED_AUTH_PROVIDER_X509_CERT_URL,\
+        PROD_ONTOLOGY_CRED_CLIENT_X509_CERT_URL,\
+        PROD_ONTOLOGY_STORAGE_BUCKET"
       - "--set-secrets=PROD_ONTOLOGY_CRED_TYPE=PROD_ONTOLOGY_CRED_TYPE:1,\
         PROD_ONTOLOGY_CRED_PROJECT_ID=PROD_ONTOLOGY_CRED_PROJECT_ID:1,\
         PROD_ONTOLOGY_CRED_PRIVATE_KEY_ID=PROD_ONTOLOGY_CRED_PRIVATE_KEY_ID:1,\
@@ -110,9 +117,5 @@ steps:
         PROD_ONTOLOGY_CRED_AUTH_PROVIDER_X509_CERT_URL=PROD_ONTOLOGY_CRED_AUTH_PROVIDER_X509_CERT_URL:1,\
         PROD_ONTOLOGY_CRED_CLIENT_X509_CERT_URL=PROD_ONTOLOGY_CRED_CLIENT_X509_CERT_URL:1,\
         PROD_ONTOLOGY_STORAGE_BUCKET=PROD_ONTOLOGY_STORAGE_BUCKET:1"
-
-
-images:
-  - us-central1-docker.pkg.dev/ontology-41607/ontology-repo/ontology
 
 timeout: 2000s
