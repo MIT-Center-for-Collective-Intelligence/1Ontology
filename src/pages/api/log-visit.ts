@@ -81,10 +81,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
-    return res.status(200).end();
+    return res.status(200).send({ ok: true });
   } catch (error) {
     console.error(error);
-    return res.status(500).end();
+    return res.status(500).send({ error: "Internal Server Error" });
   }
 }
 
