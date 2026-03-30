@@ -135,7 +135,6 @@ import NodeActivityFlow from "../NodBody/NodeActivityFlow";
 import { development } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
-import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
 import { addLinkToNode, removeLinkFromNode } from "@components/lib/utils/instantTreeUpdate";
 import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
 
@@ -1332,7 +1331,6 @@ const Node = ({
           }
         }
 
-        await queueTreeUpdate(nodeId, skillsFutureApp);
       } catch (error: any) {
         // Handle any errors that occur during the process
         console.error(error);

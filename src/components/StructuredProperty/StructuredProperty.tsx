@@ -52,7 +52,6 @@ import InheritedPartsViewer from "./InheritedPartsViewer";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import EditProperty from "../AddPropertyForm/EditProperty";
 import InheritedPartsViewerEdit from "./InheritedPartsViewerEdit";
-import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
 import StructuredPropertySelector from "./StructuredPropertySelector";
 
 const INITIAL_LOAD_COUNT = 20;
@@ -870,15 +869,12 @@ const StructuredProperty = ({
             node: nodeDoc.id,
           });
 
-          // Queue tree update after successful change
           if (currentVisibleNode?.id) {
             // Optimistic update: Property links don't affect tree structure
             // but trigger a refresh for consistency
             if (onInstantTreeUpdate) {
               onInstantTreeUpdate((tree) => [...tree]);
             }
-
-            await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
           }
         }
       }
@@ -976,7 +972,6 @@ const StructuredProperty = ({
         onInstantTreeUpdate((tree) => [...tree]);
       }
 
-      await queueTreeUpdate(currentNodeId, skillsFutureApp);
     } catch (error) {
       console.error(error);
     }
@@ -1027,13 +1022,10 @@ const StructuredProperty = ({
               "properties.parts": _propertyValue,
             });
 
-            // Queue tree update after successful change
             if (currentVisibleNode?.id) {
               if (onInstantTreeUpdate) {
                 onInstantTreeUpdate((tree) => [...tree]);
               }
-
-              await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
             }
           }
         }

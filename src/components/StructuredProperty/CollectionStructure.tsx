@@ -47,7 +47,6 @@ import {
   DropResult,
 } from "@hello-pangea/dnd";
 
-import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
 import StructuredPropertySelector from "./StructuredPropertySelector";
 import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
 import { reorderChildInTree, reorderCollectionInTree } from "@components/lib/utils/instantTreeUpdate";
@@ -733,7 +732,6 @@ const CollectionStructure = ({
               // });
             }
 
-            await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
           }
 
           // Record a log of the sorting action
@@ -904,7 +902,6 @@ const CollectionStructure = ({
             await savePendingNodeState(currentVisibleNode.id, nodeData as INode, skillsFutureApp, db);
           }
 
-          await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
         }
       } catch (error: any) {
         console.error({
@@ -1134,7 +1131,6 @@ const CollectionStructure = ({
             await savePendingNodeState(currentVisibleNode.id, nodeData as INode, skillsFutureApp, db);
           }
 
-          await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
         }
       } catch (error: any) {
         console.error(error);
@@ -1314,7 +1310,6 @@ const CollectionStructure = ({
                 await savePendingNodeState(currentVisibleNode.id, nodeData as INode, skillsFutureApp, db);
               }
 
-              await queueTreeUpdate(currentVisibleNode.id, skillsFutureApp);
             }
           }
         } catch (error: any) {

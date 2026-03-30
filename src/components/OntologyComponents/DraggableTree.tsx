@@ -29,7 +29,6 @@ import { ICollection, TreeData } from "@components/types/INode";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
 import { FillFlexParent } from "./fill-flex-parent";
-import { queueTreeUpdate } from "@components/lib/utils/queueTreeUpdate";
 import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
 
 const INDENT_STEP = 15;
@@ -700,7 +699,6 @@ function DraggableTree({
             await savePendingNodeState(parentId, updatedNode, skillsFutureApp, db);
           }
 
-          await queueTreeUpdate(parentId, skillsFutureApp);
         }
         return;
       }
@@ -976,8 +974,6 @@ function DraggableTree({
       const updatedGeneralization = { ...newGeneralizationData, specializations };
       await savePendingNodeState(toParent.nodeId, updatedGeneralization, skillsFutureApp, db)
 
-      await queueTreeUpdate(generalizationId, skillsFutureApp);
-      await queueTreeUpdate(toParent.nodeId, skillsFutureApp);
 
       // await updateLinks(
       //   newLinks,
