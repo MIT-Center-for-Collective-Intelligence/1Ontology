@@ -1,20 +1,14 @@
 import React, { useEffect, useState } from "react";
-import Head from "next/head";
 import {
   Avatar,
   Box,
   Container,
   Grid,
   Typography,
-  ThemeProvider,
-  CssBaseline,
   Fade,
   IconButton,
 } from "@mui/material";
-import { useThemeManager } from "../../lib/hooks/useThemeManager";
-import { createLandingTheme } from "../../theme/landingTheme";
-import Navigation from "./_components/Navigation";
-import MobileDrawer from "./_components/MobileDrawer";
+import type { LandingSectionId } from "../../constants/landingTypes";
 import Footer from "./_components/Footer";
 import { OpenInNew } from "@mui/icons-material";
 
@@ -284,10 +278,13 @@ const PublicationItem = ({
   );
 };
 
-const TeamPage = () => {
-  const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } =
-    useThemeManager();
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+export const TeamLandingSection = ({
+  isDark,
+  onGoToSection,
+}: {
+  isDark: boolean;
+  onGoToSection?: (id: LandingSectionId) => void;
+}) => {
   const [teamData, setTeamData] = useState<TeamData | null>(null);
   const [publicationsData, setPublicationsData] =
     useState<PublicationsData | null>(null);
@@ -340,13 +337,11 @@ const TeamPage = () => {
   );
   const orderedRoles = [...sortedRoles, ...otherRoles];
 
-  const theme = createLandingTheme(isDark);
-
   if (!teamData) {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
+          minHeight: "40vh",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -361,32 +356,7 @@ const TeamPage = () => {
   }
 
   return (
-    <>
-      <Head>
-        <title>Our Team - AI and the Future of Work</title>
-        <meta
-          name="description"
-          content="Meet the dedicated researchers, faculty, and students working on AI and the future of work ontology project at MIT."
-        />
-      </Head>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-          {/* Navigation */}
-          <Navigation
-            isDark={isDark}
-            handleThemeSwitch={handleThemeSwitch}
-            isAuthenticated={isAuthenticated}
-            isAuthLoading={isAuthLoading}
-            onMobileMenuOpen={() => setMobileNavOpen(true)}
-          />
-
-          {/* Mobile Navigation Drawer */}
-          <MobileDrawer
-            open={mobileNavOpen}
-            onClose={() => setMobileNavOpen(false)}
-          />
-
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
           {/* Hero Section */}
           <Box
             sx={{
@@ -628,11 +598,13 @@ const TeamPage = () => {
           </Box> */}
 
           {/* Footer */}
-          <Footer isDark={isDark} />
+          <Footer
+            isDark={isDark}
+            onLandingSectionChange={onGoToSection}
+          />
         </Box>
-      </ThemeProvider>
-    </>
   );
 };
 
-export default TeamPage;
+export default TeamLandingSection;
+

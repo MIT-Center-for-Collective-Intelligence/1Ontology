@@ -1,8 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { OpenAI } from "openai";
 import {
   askGemini,
-  openai,
   searchChromaCore,
   askGeminiWithFunctionCalling,
 } from "./helpers";
@@ -36,6 +34,7 @@ import {
   getMainPromptAIPeerReviewer,
   getSystemPrompt,
 } from "@components/lib/aiAssitantConstants";
+import { openai } from "./openaiClient";
 
 const GEMINI_MODELS = [
   "gemini-3.1-pro-preview",

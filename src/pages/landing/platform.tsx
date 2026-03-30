@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import Head from "next/head";
 import {
   Box,
   Button,
@@ -8,8 +7,6 @@ import {
   IconButton,
   Paper,
   Typography,
-  ThemeProvider,
-  CssBaseline,
   Card,
   CardContent,
   List,
@@ -20,12 +17,10 @@ import {
   TextField,
   InputAdornment,
   useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import { useThemeManager } from "../../lib/hooks/useThemeManager";
-import { createLandingTheme } from "../../theme/landingTheme";
-import Navigation from "./_components/Navigation";
-import MobileDrawer from "./_components/MobileDrawer";
 import Footer from "./_components/Footer";
+import type { LandingSectionId } from "../../constants/landingTypes";
 import {
   Search,
   KeyboardArrowDown,
@@ -338,9 +333,16 @@ const MessageBubble = ({
   );
 };
 
-const PlatformDetailsPage = () => {
-  const { isDark, handleThemeSwitch, isAuthenticated, isAuthLoading } =
-    useThemeManager();
+export const PlatformLandingSection = ({
+  isDark,
+  isAuthenticated,
+  onGoToSection,
+}: {
+  isDark: boolean;
+  isAuthenticated: boolean;
+  onGoToSection?: (id: LandingSectionId) => void;
+}) => {
+  const theme = useTheme();
   const [expandedItems, setExpandedItems] = React.useState({
     act: true,
     actHow: true,
@@ -355,7 +357,6 @@ const PlatformDetailsPage = () => {
   const isPartsBubbleBreakpoint = useMediaQuery("(max-width:1500px)");
   const isSemanticSearchBreakpoint = useMediaQuery("(max-width:1725px)");
   const [mobileTreeOpen, setMobileTreeOpen] = React.useState(false);
-  const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
 
   // Responsive scaling calculation
   const getResponsiveScale = () => {
@@ -393,8 +394,6 @@ const PlatformDetailsPage = () => {
     return () => window.removeEventListener("resize", updateScale);
   }, []);
 
-  const theme = createLandingTheme(isDark);
-
   const handleItemClick = (item: keyof typeof expandedItems) => {
     setExpandedItems((prev) => ({
       ...prev,
@@ -403,28 +402,7 @@ const PlatformDetailsPage = () => {
   };
 
   return (
-    <>
-      <Head>
-        <title>Software Platform for Editing the Ontology of Activities</title>
-      </Head>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-          {/* Navigation */}
-          <Navigation
-            isDark={isDark}
-            handleThemeSwitch={handleThemeSwitch}
-            isAuthenticated={isAuthenticated}
-            isAuthLoading={isAuthLoading}
-            onMobileMenuOpen={() => setMobileNavOpen(true)}
-          />
-
-          {/* Mobile Navigation Drawer */}
-          <MobileDrawer
-            open={mobileNavOpen}
-            onClose={() => setMobileNavOpen(false)}
-          />
-
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
           {/* Combined Hero and Overview Section */}
           <Box
             sx={{
@@ -2364,7 +2342,7 @@ const PlatformDetailsPage = () => {
                     endIcon={<OpenInNew />}
                     component="a"
                     href="/"
-                    sx={{ px: 4 }}
+                    sx={{ px: 4, borderRadius: "25px" }}
                   >
                     {isAuthenticated
                       ? "Go to Platform"
@@ -2376,11 +2354,19 @@ const PlatformDetailsPage = () => {
           </Box>
 
           {/* Footer */}
-          <Footer isDark={isDark} />
+          <Footer
+            isDark={isDark}
+            onLandingSectionChange={onGoToSection}
+          />
         </Box>
-      </ThemeProvider>
-    </>
   );
 };
 
-export default PlatformDetailsPage;
+const PlatformLegacyRedirect = () => {
+  useEffect(() => {
+    window.location.replace(`${window.location.origin}/landing#platform`);
+  }, []);
+  return null;
+};
+
+export default PlatformLegacyRedirect;

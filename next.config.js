@@ -30,6 +30,11 @@ module.exports = {
         destination: "/signin",
         permanent: true,
       },
+      {
+        source: "/home",
+        destination: "/landing#paper",
+        permanent: true,
+      },
       /* {
         source: "/landing/:path*",
         destination: "/",

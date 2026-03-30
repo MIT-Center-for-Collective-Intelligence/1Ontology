@@ -10,6 +10,14 @@ import {
 } from 'firebase/firestore';
 import { LOGS, USERS } from '../firestoreClient/collections';
 
+/** Fired on the window when `preferred-theme` is updated in this tab (storage events only fire cross-tab). */
+export const PREFERRED_THEME_CHANGE_EVENT = 'preferred-theme-change';
+
+function notifyPreferredThemeChanged() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(PREFERRED_THEME_CHANGE_EVENT));
+}
+
 export const useThemeManager = () => {
   const [authState, { dispatch }] = useAuth();
   // Initialize from localStorage immediately to avoid flash
@@ -34,6 +42,7 @@ export const useThemeManager = () => {
       setIsDark(newIsDark);
       // Sync to localStorage for consistency
       localStorage.setItem('preferred-theme', newIsDark ? 'dark' : 'light');
+      notifyPreferredThemeChanged();
     } else {
       // User is not logged in, check localStorage (already initialized in state)
       const savedTheme = localStorage.getItem('preferred-theme');
@@ -47,8 +56,17 @@ export const useThemeManager = () => {
   const handleThemeSwitch = useCallback(async () => {
     const newTheme = !isDark;
     const themeString = newTheme ? 'Dark' : 'Light';
-    
+
     setIsDark(newTheme);
+    try {
+      localStorage.setItem(
+        'preferred-theme',
+        newTheme ? 'dark' : 'light'
+      );
+      notifyPreferredThemeChanged();
+    } catch (e) {
+      /* ignore quota / private mode */
+    }
 
     if (authState.isAuthenticated && authState.user) {
       try {
@@ -80,9 +98,6 @@ export const useThemeManager = () => {
       } catch (error) {
         console.error('useThemeManager: Error saving theme to Firebase:', error);
       }
-    } else {
-      // User is not logged in, save to localStorage
-      localStorage.setItem('preferred-theme', newTheme ? 'dark' : 'light');
     }
   }, [isDark, authState.isAuthenticated, authState.user, db, dispatch]);
 

@@ -3,12 +3,20 @@ import { App, cert, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { development } from "../CONSTANTS";
 
+/** Service account JSON uses `\n` in strings; env / Secret Manager often keeps those as two chars. */
+function normalizePemFromEnv(key: string | undefined): string | undefined {
+  if (key == null) return undefined;
+  const trimmed = key.trim();
+  if (!trimmed) return undefined;
+  return trimmed.replace(/\\n/g, "\n");
+}
+
 const configs = development
   ? {
       type: process.env.DEV_ONTOLOGY_CRED_TYPE,
       project_id: process.env.DEV_ONTOLOGY_CRED_PROJECT_ID,
       private_key_id: process.env.DEV_ONTOLOGY_CRED_PRIVATE_KEY_ID,
-      private_key: process.env.DEV_ONTOLOGY_CRED_PRIVATE_KEY,
+      private_key: normalizePemFromEnv(process.env.DEV_ONTOLOGY_CRED_PRIVATE_KEY),
       client_email: process.env.DEV_ONTOLOGY_CRED_CLIENT_EMAIL,
       client_id: process.env.DEV_ONTOLOGY_CRED_CLIENT_ID,
       auth_uri: process.env.DEV_ONTOLOGY_CRED_AUTH_URI,
@@ -21,7 +29,7 @@ const configs = development
       type: process.env.PROD_ONTOLOGY_CRED_TYPE,
       project_id: process.env.PROD_ONTOLOGY_CRED_PROJECT_ID,
       private_key_id: process.env.PROD_ONTOLOGY_CRED_PRIVATE_KEY_ID,
-      private_key: process.env.PROD_ONTOLOGY_CRED_PRIVATE_KEY,
+      private_key: normalizePemFromEnv(process.env.PROD_ONTOLOGY_CRED_PRIVATE_KEY),
       client_email: process.env.PROD_ONTOLOGY_CRED_CLIENT_EMAIL,
       client_id: process.env.PROD_ONTOLOGY_CRED_CLIENT_ID,
       auth_uri: process.env.PROD_ONTOLOGY_CRED_AUTH_URI,
