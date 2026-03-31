@@ -139,7 +139,6 @@ const glowGreen = keyframes`
   }
 `;
 type ILinkNodeProps = {
-  provided: any;
   link: ILinkNode;
   currentVisibleNode: INode;
   sx?: { [key: string]: any };
@@ -177,7 +176,6 @@ type ILinkNodeProps = {
 };
 
 const LinkNode = ({
-  provided,
   link,
   sx,
   property,
@@ -666,9 +664,6 @@ const LinkNode = ({
       }}
     >
       <ListItem
-        ref={provided.innerRef}
-        {...provided.draggableProps}
-        {...provided.dragHandleProps}
         sx={{
           my: 1,
           p: 0.3,
