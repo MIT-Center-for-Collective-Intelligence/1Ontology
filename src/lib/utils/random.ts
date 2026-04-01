@@ -68,6 +68,7 @@ export const handleDownload = async ({
           parts,
           specializations: {},
           generalizations: {},
+          ...(node.synsets ? { synsets: node.synsets } : {}),
         };
 
         for (let collection of node.specializations) {

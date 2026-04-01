@@ -116,6 +116,7 @@ export type INode = {
     id: string;
     title: string;
   };
+  synsets?: string;
 };
 
 export type TreeVisual = {
