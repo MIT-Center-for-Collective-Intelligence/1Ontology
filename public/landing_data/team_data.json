@@ -122,6 +122,24 @@
         "affiliation": "Massachusetts Institute of Technology",
         "image": "/team/aiman-imran.jpg",
         "role": "Undergraduate Student"
+      },
+      {
+        "name": "Abigail Xu",
+        "affiliation": "Massachusetts Institute of Technology",
+        "image": "/team/abigail-xu.jpg",
+        "role": "Undergraduate Student"
+      },
+      {
+        "name": "Vivian Dinh",
+        "affiliation": "Massachusetts Institute of Technology",
+        "image": "/team/vivian-dinh.jpg",
+        "role": "Undergraduate Student"
+      },
+      {
+        "name": "Jonelle Dacres",
+        "affiliation": "Massachusetts Institute of Technology",
+        "image": "/team/jonelle-dacres.jpg",
+        "role": "Undergraduate Student"
       }
     ],
     "Alumni": [
