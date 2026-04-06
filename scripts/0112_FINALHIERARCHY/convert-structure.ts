@@ -29,6 +29,8 @@ const FILE_NAME = "0112_FINALHIERARCHY";
 
 /** Carries synonym line for `description`; stripped before traversing children. */
 const STAGING_SYNONYM_DESC_KEY = "__stagingSynonyms";
+/** Carries comma-separated sense ids (e.g. `Word.v.01`); stripped like synonyms. */
+const STAGING_SYNSETS_KEY = "__stagingSynsets";
 
 /** Parsed synonym / sense fragment from a legacy ontology label. */
 interface SynonymEntry {
@@ -39,11 +41,13 @@ interface SynonymEntry {
 interface ParsedOntologyTitle {
   title: string;
   synonyms: SynonymEntry[];
+  synsets: string;
 }
 
 interface BaseTitleParts {
   normalized: string;
   synonyms: string[];
+  synsets: string;
 }
 
 /** Any value allowed in legacy ontology JSON from disk. */
@@ -57,6 +61,7 @@ interface DnNode {
   description: string;
   parts: readonly [];
   specializations: Record<string, DnNode>;
+  synsets?: string;
 }
 
 interface SeenVariant {
@@ -70,10 +75,11 @@ const ONTOLOGY_OBJECT = require(`./${FILE_NAME}.json`) as JsonObject;
 function parseOntologyTitle(rawTitle: string): ParsedOntologyTitle {
   let title = rawTitle.trim();
   if (title.startsWith("(O*Net)")) {
-    return { title, synonyms: [] };
+    return { title, synonyms: [], synsets: "" };
   }
   const matches = Array.from(title.matchAll(/\(([^)]+)\)/g));
   const synonymEntries: SynonymEntry[] = [];
+  const synsetTokens: string[] = [];
   /** Parentheticals at the end of the title only; still normalized to a suffix. */
   const suffixParentheses: string[] = [];
 
@@ -104,6 +110,7 @@ function parseOntologyTitle(rawTitle: string): ParsedOntologyTitle {
       for (const s of parts) {
         const versionMatch = s.match(/\.v\.?(\d+)/i);
         if (versionMatch) {
+          synsetTokens.push(s.trim());
           const cleanName = s.replace(/\.v\.?\d+/i, "").trim();
           synonymEntries.push({
             name: cleanName,
@@ -133,7 +140,7 @@ function parseOntologyTitle(rawTitle: string): ParsedOntologyTitle {
   }
   title = title.replace(/\.v\.?\d+/gi, "").trim();
 
-  return { title, synonyms: synonymEntries };
+  return { title, synonyms: synonymEntries, synsets: synsetTokens.join(", ") };
 }
 
 /** Text for `description` when `(Synonyms: a, b, …)` was parsed from the label. */
@@ -148,24 +155,42 @@ function synonymLineFromNames(synonyms: string[]): string {
   return `Synonyms: ${synonyms.join(", ")}`;
 }
 
-function attachSynonymDescription(
+function attachStagingMeta(
   body: JsonObject,
   synonymDescription: string,
+  synsets: string,
 ): JsonObject {
-  if (!synonymDescription) return body;
-  return { ...body, [STAGING_SYNONYM_DESC_KEY]: synonymDescription };
+  const out: JsonObject = { ...body };
+  if (synonymDescription) out[STAGING_SYNONYM_DESC_KEY] = synonymDescription;
+  if (synsets) out[STAGING_SYNSETS_KEY] = synsets;
+  return out;
 }
 
-function peelSynonymDescription(obj: JsonObject): {
+function peelStagingMeta(obj: JsonObject): {
   description: string;
+  synsets: string;
   rest: JsonObject;
 } {
-  const raw = obj[STAGING_SYNONYM_DESC_KEY];
-  const description = typeof raw === "string" ? raw : "";
-  if (!description) return { description: "", rest: obj };
-  const rest = { ...obj };
+  const rawDesc = obj[STAGING_SYNONYM_DESC_KEY];
+  const description = typeof rawDesc === "string" ? rawDesc : "";
+  const rawSynsets = obj[STAGING_SYNSETS_KEY];
+  const synsets = typeof rawSynsets === "string" ? rawSynsets : "";
+  const rest: JsonObject = { ...obj };
   delete rest[STAGING_SYNONYM_DESC_KEY];
-  return { description, rest };
+  delete rest[STAGING_SYNSETS_KEY];
+  return { description, synsets, rest };
+}
+
+function dnNodeShell(
+  title: string,
+  description: string,
+  parts: readonly [],
+  specializations: Record<string, DnNode>,
+  synsets: string,
+): DnNode {
+  const node: DnNode = { title, description, parts, specializations };
+  if (synsets) node.synsets = synsets;
+  return node;
 }
 
 /** Flat transformOntology output → node-object shape; unwrap (Specializations); map (Atomic Tasks) → [parent -- miscellaneous]. */
@@ -173,42 +198,45 @@ function wrapDnSubtree(value: JsonValue, displayTitle: string): DnNode {
   const parts = [] as const;
 
   let peeledDescription = "";
+  let peeledSynsets = "";
   let nodeValue: JsonValue = value;
   if (
     value &&
     typeof value === "object" &&
     !Array.isArray(value) &&
-    STAGING_SYNONYM_DESC_KEY in (value as JsonObject)
+    (STAGING_SYNONYM_DESC_KEY in (value as JsonObject) ||
+      STAGING_SYNSETS_KEY in (value as JsonObject))
   ) {
-    const peeled = peelSynonymDescription(value as JsonObject);
+    const peeled = peelStagingMeta(value as JsonObject);
     peeledDescription = peeled.description;
+    peeledSynsets = peeled.synsets;
     nodeValue = peeled.rest;
   }
 
   const description =
     peeledDescription || descriptionFromSynonyms(displayTitle);
+  const titleSynsets = parseOntologyTitle(displayTitle).synsets;
+  const synsets = peeledSynsets || titleSynsets;
 
   if (Array.isArray(nodeValue)) {
     const specializations: Record<string, DnNode> = {};
     for (const item of nodeValue) {
       const s = String(item);
-      specializations[s] = {
+      const leafSynsets = parseOntologyTitle(s).synsets;
+      const leaf: DnNode = {
         title: s,
         description: descriptionFromSynonyms(s),
         parts: [],
         specializations: {},
       };
+      if (leafSynsets) leaf.synsets = leafSynsets;
+      specializations[s] = leaf;
     }
-    return { title: displayTitle, description, parts, specializations };
+    return dnNodeShell(displayTitle, description, parts, specializations, synsets);
   }
 
   if (nodeValue == null || typeof nodeValue !== "object") {
-    return {
-      title: displayTitle,
-      description,
-      parts,
-      specializations: {},
-    };
+    return dnNodeShell(displayTitle, description, parts, {}, synsets);
   }
 
   const specializations: Record<string, DnNode> = {};
@@ -241,19 +269,22 @@ function wrapDnSubtree(value: JsonValue, displayTitle: string): DnNode {
           children[childKey] = wrapDnSubtree(innerObj[childKey], childKey);
         }
       }
-      specializations[bracketName] = {
+      const bracketSynsets = parseOntologyTitle(bracketName).synsets;
+      const bracketNode: DnNode = {
         title: bracketName,
         description: descriptionFromSynonyms(bracketName),
         parts: [],
         specializations: children,
       };
+      if (bracketSynsets) bracketNode.synsets = bracketSynsets;
+      specializations[bracketName] = bracketNode;
       continue;
     }
 
     specializations[key] = wrapDnSubtree(obj[key], key);
   }
 
-  return { title: displayTitle, description, parts, specializations };
+  return dnNodeShell(displayTitle, description, parts, specializations, synsets);
 }
 
 function wrapDnRoot(input: JsonValue): Record<string, DnNode> {
@@ -269,11 +300,12 @@ function wrapDnRoot(input: JsonValue): Record<string, DnNode> {
 }
 
 function getBaseTitle(title: string): BaseTitleParts {
-  if (!title) return { normalized: "", synonyms: [] };
+  if (!title) return { normalized: "", synonyms: [], synsets: "" };
   const c = parseOntologyTitle(title);
   return {
     normalized: c.title,
     synonyms: c.synonyms.map((s) => s.name),
+    synsets: c.synsets,
   };
 }
 
@@ -460,7 +492,7 @@ function transformOntology(input: JsonValue, seen: SeenMap): JsonObject {
     }
 
     const value = inputByKey[key];
-    const { normalized: baseDisplay, synonyms } = getBaseTitle(key);
+    const { normalized: baseDisplay, synonyms, synsets } = getBaseTitle(key);
     const childrenSignatures = collectChildStructureSignatures(value);
     const title = designateTitle(baseDisplay, childrenSignatures, seen);
     const metaLine = synonymLineFromNames(synonyms);
@@ -471,7 +503,7 @@ function transformOntology(input: JsonValue, seen: SeenMap): JsonObject {
       putTransformedSibling(
         output,
         title,
-        attachSynonymDescription(converted, metaLine),
+        attachStagingMeta(converted, metaLine, synsets),
         key,
         firstSourceByTitle,
       );
@@ -479,7 +511,7 @@ function transformOntology(input: JsonValue, seen: SeenMap): JsonObject {
       putTransformedSibling(
         output,
         title,
-        attachSynonymDescription(transformOntology(value, seen), metaLine),
+        attachStagingMeta(transformOntology(value, seen), metaLine, synsets),
         key,
         firstSourceByTitle,
       );
@@ -487,7 +519,7 @@ function transformOntology(input: JsonValue, seen: SeenMap): JsonObject {
       putTransformedSibling(
         output,
         title,
-        attachSynonymDescription({}, metaLine),
+        attachStagingMeta({}, metaLine, synsets),
         key,
         firstSourceByTitle,
       );
