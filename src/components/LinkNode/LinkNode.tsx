@@ -166,7 +166,6 @@ type ILinkNodeProps = {
   skillsFuture: boolean;
   skillsFutureApp: string;
   currentImprovement: any;
-  partsInheritance: any;
   loadingIds: any;
   saveNewSpecialization: any;
   enableEdit: boolean;
@@ -202,7 +201,6 @@ const LinkNode = ({
   skillsFuture,
   skillsFutureApp,
   currentImprovement,
-  partsInheritance,
   loadingIds,
   saveNewSpecialization,
   enableEdit,
@@ -702,7 +700,6 @@ const LinkNode = ({
           <LinkNodeTitle
             title={title || regionalTitle}
             link={link}
-            partsInheritance={partsInheritance}
             relatedNodes={relatedNodes}
             property={property}
             selectedProperty={selectedProperty}

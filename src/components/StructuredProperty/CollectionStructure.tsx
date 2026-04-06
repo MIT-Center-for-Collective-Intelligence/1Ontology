@@ -213,7 +213,6 @@ const CollectionStructure = ({
   setRemovedElements,
   setAddedElements,
   skillsFuture,
-  partsInheritance,
   enableEdit,
   handleLoadMore,
   loadingStates = new Set(),
@@ -284,9 +283,6 @@ const CollectionStructure = ({
   setRemovedElements: any;
   setAddedElements: any;
   skillsFuture: boolean;
-  partsInheritance: {
-    [nodeId: string]: { inheritedFrom: string; partInheritance: string };
-  };
   enableEdit: boolean;
   handleLoadMore?: (loadMoreNodeId: string, collectionName: string) => void;
   loadingStates?: Set<string>;
@@ -2076,29 +2072,89 @@ const CollectionStructure = ({
                                           dropIndicator.position === "nest";
 
                                         return (
-                                          <React.Fragment key={nodeKey}>
-                                            {isDropAbove && (
-                                              <Box
-                                                sx={{
-                                                  height: "2px",
-                                                  backgroundColor:
-                                                    "primary.main",
-                                                  borderRadius: "1px",
-                                                  mx: 1,
-                                                  my: "3px",
-                                                  position: "relative",
-                                                  "&::before": {
-                                                    content: '""',
-                                                    position: "absolute",
-                                                    left: -5,
-                                                    top: -4,
-                                                    width: 10,
-                                                    height: 10,
-                                                    borderRadius: "50%",
-                                                    backgroundColor:
-                                                      "primary.main",
-                                                  },
-                                                }}
+                                          <Draggable
+                                            key={
+                                              link.randomId ||
+                                              `${link.id}-${index}`
+                                            }
+                                            draggableId={link.id}
+                                            index={index}
+                                            isDragDisabled={!enableEdit}
+                                          >
+                                            {(provided) => (
+                                              <LinkNode
+                                                provided={provided}
+                                                navigateToNode={navigateToNode}
+                                                setSnackbarMessage={
+                                                  setSnackbarMessage
+                                                }
+                                                currentVisibleNode={
+                                                  currentVisibleNode
+                                                }
+                                                setCurrentVisibleNode={
+                                                  setCurrentVisibleNode
+                                                }
+                                                sx={{ pl: 1 }}
+                                                link={enhancedLink}
+                                                property={property}
+                                                title={
+                                                  link.title ||
+                                                  getTitle(nodes, link.id)
+                                                }
+                                                relatedNodes={nodes}
+                                                fetchNode={fetchNode}
+                                                linkIndex={index}
+                                                /* unlinkVisible={unlinkVisible(
+                                                  link.id,
+                                                )} */
+                                                linkLocked={false}
+                                                locked={
+                                                  locked || !!currentImprovement
+                                                }
+                                                user={user}
+                                                collectionIndex={
+                                                  collectionIndex
+                                                }
+                                                collectionName={
+                                                  propertyValue[collectionIndex]
+                                                    .collectionName
+                                                }
+                                                selectedDiffNode={
+                                                  selectedDiffNode
+                                                }
+                                                replaceWith={replaceWith}
+                                                saveNewAndSwapIt={
+                                                  saveNewAndSwapIt
+                                                }
+                                                clonedNodesQueue={
+                                                  clonedNodesQueue
+                                                }
+                                                unlinkElement={unlinkElement}
+                                                selectedProperty={
+                                                  selectedProperty
+                                                }
+                                                glowIds={glowIds}
+                                                skillsFuture={skillsFuture}
+                                                currentImprovement={
+                                                  currentImprovement
+                                                }
+                                                loadingIds={loadingIds}
+                                                saveNewSpecialization={
+                                                  saveNewSpecialization
+                                                }
+                                                enableEdit={enableEdit}
+                                                setClonedNodesQueue={
+                                                  setClonedNodesQueue
+                                                }
+                                                skillsFutureApp={
+                                                  skillsFutureApp
+                                                }
+                                                setEditableProperty={
+                                                  setEditableProperty
+                                                }
+                                                unlinkNodeRelation={
+                                                  unlinkNodeRelation
+                                                }
                                               />
                                             )}
                                           <NodeDraggableWrapper

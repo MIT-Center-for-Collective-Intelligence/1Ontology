@@ -1119,7 +1119,6 @@ const StructuredPropertySelector = ({
                 flexGrow: 1,
 
                 pr: "3px",
-   
 
                 mt: "12px",
                 background: (theme: any) =>

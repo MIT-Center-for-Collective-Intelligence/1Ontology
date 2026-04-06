@@ -387,10 +387,6 @@ const Ontology = ({
   const [isExperimentalSearch, setIsExperimentalSearch] = useState(true);
   const treeRef = useRef<TreeApi<TreeData>>(null);
 
-  const { data: inheritedPartsDetails } = useInheritedPartsDetails(currentVisibleNode);
-  const [nodesWithComments, setNodesWithComments] = useState<Set<string>>(
-    new Set(),
-  );
 
   const firstLoad = useRef(true);
   const prevAppNameRef = useRef<string>(appName);
@@ -1111,20 +1107,6 @@ const Ontology = ({
 
     // Return the main specializations tree
     return newSpecializationsTree;
-  };
-  const getRootNode = async () => {
-    const rootQuery = query(
-      collection(db, NODES),
-      where("deleted", "==", false),
-      where("root", "==", true),
-      where("appName", "==", appName),
-      limit(1),
-    );
-    const nodesDocs = await getDocs(rootQuery);
-    if (nodesDocs.docs.length > 0) {
-      const root = nodesDocs.docs[0];
-      setRootNode(root.id);
-    }
   };
 
   // Main snapshot: Extract all directly related nodes from currentVisibleNode
@@ -2865,11 +2847,8 @@ const Ontology = ({
                   setSelectedCollection={setSelectedCollection}
                   selectedCollection={selectedCollection}
                   skillsFuture={skillsFuture}
-                  partsInheritance={partsInheritance}
                   enableEdit={enableEdit}
                   setEnableEdit={setEnableEdit}
-                  inheritanceDetails={partsInheritance}
-                  inheritedPartsDetails={inheritedPartsDetails}
                   skillsFutureApp={appName ?? null}
                   editableProperty={editableProperty}
                   setEditableProperty={setEditableProperty}

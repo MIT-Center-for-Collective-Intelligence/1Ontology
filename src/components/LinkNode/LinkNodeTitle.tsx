@@ -5,7 +5,6 @@ import { INode, ILinkNode } from "@components/types/INode";
 interface LinkNodeTitleProps {
   title: string;
   link: ILinkNode;
-  partsInheritance: any;
   relatedNodes: { [key: string]: INode };
   property: string;
   selectedProperty: string;
@@ -16,7 +15,6 @@ interface LinkNodeTitleProps {
 const LinkNodeTitle = ({
   title,
   link,
-  partsInheritance,
   relatedNodes,
   property,
   selectedProperty,
@@ -72,7 +70,7 @@ const LinkNodeTitle = ({
       title={
         <Box sx={{ p: "5px" }}>
           <Typography>{title}</Typography>
-          {partsInheritance[link.id] ? (
+          {/* {partsInheritance[link.id] ? (
             <>
               <span
                 style={{
@@ -109,7 +107,7 @@ const LinkNodeTitle = ({
             <span style={{ marginLeft: "2px" }}>{"(Optional)"}</span>
           ) : (
             ""
-          )}
+          )} */}
         </Box>
       }
       slotProps={{

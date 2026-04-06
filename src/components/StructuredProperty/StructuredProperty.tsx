@@ -25,7 +25,12 @@ import {
   getEffectiveGeneralizations,
   breakInheritanceAndCopyParts,
 } from "@components/lib/utils/partsHelper";
-import { ICollection, ILinkNode, InheritedPartsDetail, INode } from "@components/types/INode";
+import {
+  ICollection,
+  ILinkNode,
+  InheritedPartsDetail,
+  INode,
+} from "@components/types/INode";
 import { DISPLAY } from "@components/lib/CONSTANTS";
 import {
   collection,
@@ -48,11 +53,11 @@ import VisualizeTheProperty from "./VisualizeTheProperty";
 import CollectionStructure from "./CollectionStructure";
 import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
-import InheritedPartsViewer from "./InheritedPartsViewer";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import EditProperty from "../AddPropertyForm/EditProperty";
 import InheritedPartsViewerEdit from "./InheritedPartsViewerEdit";
 import StructuredPropertySelector from "./StructuredPropertySelector";
+import PartViewer from "./PartViewer";
 
 const INITIAL_LOAD_COUNT = 20;
 const LOAD_MORE_COUNT = 20;
@@ -190,14 +195,13 @@ const StructuredProperty = ({
   setGlowIds,
   selectedCollection,
   skillsFuture,
-  partsInheritance,
   enableEdit,
-  inheritanceDetails,
-  inheritedPartsDetails,
   skillsFutureApp,
   deleteProperty,
   modifyProperty,
   onInstantTreeUpdate,
+  inheritanceDetails,
+  inheritedPartsDetails,
 }: IStructuredPropertyProps) => {
   const theme = useTheme();
   const isMobile = useMediaQuery("(max-width:599px)");
@@ -205,7 +209,6 @@ const StructuredProperty = ({
   const [isSaving, setIsSaving] = useState(false);
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   const [modifiedOrder, setModifiedOrder] = useState(false);
-  const [displayDetails, setDisplayDetails] = useState(false);
   const [displayOptional, setDisplayOptional] = useState(false);
   const [editProperty, setEditProperty] = useState("");
   const [newPropertyValue, setNewPropertyValue] = useState("");
@@ -1418,7 +1421,6 @@ const StructuredProperty = ({
               setAddedElements={setAddedElements}
               addACloneNodeQueue={addACloneNodeQueue}
               skillsFuture={skillsFuture}
-              partsInheritance={partsInheritance ?? {}}
               enableEdit={enableEdit}
               handleLoadMore={handleLoadMore}
               loadingStates={loadingStates}
@@ -1427,7 +1429,7 @@ const StructuredProperty = ({
               linkNodeRelation={linkNodeRelation}
               onInstantTreeUpdate={onInstantTreeUpdate}
             />
-          )}{" "}
+          )}
         {property === "parts" && displayOptional && !enableEdit && (
           <InheritedPartsLegend
             legendItems={[{ symbol: "(o)", description: "Optional" }]}
@@ -1435,91 +1437,22 @@ const StructuredProperty = ({
         )}
         {property === "parts" && !selectedDiffNode && !currentImprovement && (
           <>
-            {enableEdit ? (
-              <InheritedPartsViewerEdit
-                selectedProperty={property}
-                getAllGeneralizations={() =>
-                  getAllGeneralizations(currentVisibleNode, relatedNodes)
-                }
-                getGeneralizationParts={getGeneralizationParts}
-                nodes={relatedNodes}
-                fetchNode={fetchNode}
-                addNodesToCache={addNodesToCache}
-                readOnly={true}
-                inheritanceDetails={inheritanceDetails}
-                currentVisibleNode={currentVisibleNode}
-                setDisplayDetails={setDisplayDetails}
-                enableEdit={enableEdit}
-                addPart={
-                  enableEdit
-                    ? (partId: string) => {
-                        linkNodeRelation({
-                          currentNodeId: currentVisibleNode.id,
-                          partId,
-                        });
-                      }
-                    : null
-                }
-                removePart={
-                  enableEdit
-                    ? (partId: any) => {
-                        unlinkNodeRelation(
-                          currentVisibleNode.id,
-                          partId,
-                          -1,
-                          0,
-                          true,
-                        );
-                      }
-                    : null
-                }
-                user={user}
-                navigateToNode={navigateToNode}
-                replaceWith={replaceWith}
-                skillsFutureApp={skillsFutureApp}
-                inheritedPartsDetails={inheritedPartsDetails}
-              />
-            ) : (
-              <InheritedPartsViewer
-                selectedProperty={property}
-                getAllGeneralizations={() =>
-                  getAllGeneralizations(currentVisibleNode, relatedNodes)
-                }
-                getGeneralizationParts={getGeneralizationParts}
-                nodes={relatedNodes}
-                fetchNode={fetchNode}
-                readOnly={true}
-                inheritanceDetails={inheritanceDetails}
-                currentVisibleNode={currentVisibleNode}
-                setDisplayDetails={setDisplayDetails}
-                addPart={
-                  enableEdit
-                    ? (partId: string) => {
-                        linkNodeRelation({
-                          currentNodeId: currentVisibleNode.id,
-                          partId,
-                        });
-                      }
-                    : null
-                }
-                removePart={
-                  enableEdit
-                    ? (partId: any) => {
-                        unlinkNodeRelation(
-                          currentVisibleNode.id,
-                          partId,
-                          -1,
-                          0,
-                          true,
-                        );
-                      }
-                    : null
-                }
-                navigateToNode={navigateToNode}
-                displayDetails={displayDetails}
-                inheritedPartsDetails={inheritedPartsDetails}
-              />
-            )}
+            <PartViewer
+              enableEdit={enableEdit}
+              property={property}
+              getAllGeneralizations={getAllGeneralizations}
+              currentVisibleNode={currentVisibleNode}
+              relatedNodes={relatedNodes}
+              fetchNode={fetchNode}
+              addNodesToCache={addNodesToCache}
+              linkNodeRelation={linkNodeRelation}
+              unlinkNodeRelation={unlinkNodeRelation}
+              user={user}
+              navigateToNode={navigateToNode}
+              replaceWith={replaceWith}
+              skillsFutureApp={skillsFutureApp}
+              getGeneralizationParts={getGeneralizationParts}
+            />
           </>
         )}
       </Box>

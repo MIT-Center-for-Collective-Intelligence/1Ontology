@@ -181,13 +181,8 @@ type INodeProps = {
   setSelectedCollection: any;
   selectedCollection: string;
   skillsFuture: boolean;
-  partsInheritance: {
-    [nodeId: string]: { inheritedFrom: string; partInheritance: string };
-  };
   enableEdit: any;
   setEnableEdit: any;
-  inheritanceDetails: any;
-  inheritedPartsDetails?: InheritedPartsDetail[] | null;
   skillsFutureApp: string;
   editableProperty: any;
   setEditableProperty: any;
@@ -343,7 +338,11 @@ const NodeLoadingSkeleton = ({ width }: { width: number }) => {
       </Stack>
 
       {/* IsPartOf & Parts Skeletons */}
-      <Stack direction={width < 1050 ? "column" : "row"} spacing={3} sx={{ mb: 2 }}>
+      <Stack
+        direction={width < 1050 ? "column" : "row"}
+        spacing={3}
+        sx={{ mb: 2 }}
+      >
         {/* IsPartOf Skeleton */}
         <Paper
           elevation={9}
@@ -447,7 +446,12 @@ const NodeLoadingSkeleton = ({ width }: { width: number }) => {
             <Skeleton variant="text" width="150px" height={30} />
           </Box>
           <Box sx={{ p: 3 }}>
-            <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: "8px" }} />
+            <Skeleton
+              variant="rectangular"
+              width="100%"
+              height={100}
+              sx={{ borderRadius: "8px" }}
+            />
           </Box>
         </Paper>
       ))}
@@ -495,11 +499,8 @@ const Node = ({
   setSelectedCollection,
   selectedCollection,
   skillsFuture,
-  partsInheritance,
   enableEdit,
   setEnableEdit,
-  inheritanceDetails,
-  inheritedPartsDetails,
   skillsFutureApp,
   editableProperty,
   setEditableProperty,
@@ -1994,10 +1995,7 @@ const Node = ({
                   setGlowIds={setGlowIds}
                   selectedCollection={selectedCollection}
                   skillsFuture={skillsFuture}
-                  partsInheritance={partsInheritance}
                   enableEdit={enableEdit}
-                  inheritanceDetails={inheritanceDetails}
-                  inheritedPartsDetails={inheritedPartsDetails}
                   skillsFutureApp={skillsFutureApp}
                   onInstantTreeUpdate={onInstantTreeUpdate}
                 />

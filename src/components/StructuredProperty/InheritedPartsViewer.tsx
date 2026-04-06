@@ -59,10 +59,6 @@ interface PartNode {
 interface InheritedPartsViewerProps {
   selectedProperty: string;
   getAllGeneralizations: () => GeneralizationNode[];
-  getGeneralizationParts: (
-    generalizationId: string,
-    nodes: { [nodeId: string]: INode },
-  ) => PartNode[];
   nodes: { [id: string]: any };
   fetchNode?: (nodeId: string) => Promise<INode | null>;
   readOnly?: boolean;
@@ -80,7 +76,6 @@ interface InheritedPartsViewerProps {
 const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   selectedProperty,
   getAllGeneralizations,
-  getGeneralizationParts,
   nodes,
   fetchNode,
   readOnly = false,
@@ -546,18 +541,40 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
-    const generalizationParts = getGeneralizationParts(
-      generalizationId,
-      nodes,
-    ).map((c) => c.id);
+    // Check if node has any parts at all
+    const hasParts =
+      currentVisibleNode.properties?.parts?.[0]?.nodes?.length > 0;
+    const hasInheritanceRef = !!currentVisibleNode.inheritance?.parts?.ref;
 
-    const inheritanceRef = currentVisibleNode.inheritance?.["parts"]?.ref;
-    const currentNodeParts =
-      inheritanceRef && nodes[inheritanceRef]
-        ? nodes[inheritanceRef].properties?.["parts"]
-        : currentVisibleNode.properties?.["parts"];
-    const currentParts = (currentNodeParts?.[0]?.nodes ?? []).map(
-      (c: { id: string }) => c.id,
+    if (!hasParts && !hasInheritanceRef) {
+      return (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            py: 2,
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              color: (theme) =>
+                theme.palette.mode === "light" ? "#95a5a6" : "#7f8c8d",
+              fontStyle: "italic",
+              fontSize: "0.75rem",
+            }}
+          >
+            No parts available
+          </Typography>
+        </Box>
+      );
+    }
+
+    // Check if there is cached data for this generalization
+    const cachedGeneralizationData = inheritedPartsDetails?.find(
+      (calc) => calc.generalizationId === generalizationId,
     );
 
     const { details, nonPickedOnes } = analyzeInheritance(
@@ -592,18 +609,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
         </Box>
       );
     }
-
-    // Use cached data
-    const details = cachedGeneralizationData.details;
-
-    // Convert nonPickedOnes from {[key]: [{id, title}]} to {[key]: [id]}
-    const nonPickedOnes = Object.entries(cachedGeneralizationData.nonPickedOnes).reduce(
-      (acc, [key, value]) => {
-        acc[key] = value.map(item => item.id);
-        return acc;
-      },
-      {} as { [key: string]: string[] }
-    );
 
     const handleSelect = (option: string) => {
       const _previous = { ...inheritanceForParts };
@@ -731,7 +736,10 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
                         fontSize: "0.9rem",
                       }}
                     >
-                      {formatPartTitle(entry.fromTitle, entry.fromOptional || false)}
+                      {formatPartTitle(
+                        entry.fromTitle,
+                        entry.fromOptional || false,
+                      )}
                     </Link>
                   ) : null
                 }
@@ -851,7 +859,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   if (generalizations.length <= 0) {
     return null; // No generalizations and no own parts (root without parts)
   }
-  
+
   return (
     <Box>
       {!displayDetails && (
