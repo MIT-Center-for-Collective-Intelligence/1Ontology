@@ -26,6 +26,8 @@ import ROUTES from "@components/lib/utils/routes";
 import { NextPageWithLayout } from "@components/types/IAuth";
 import { LoadingButton } from "@mui/lab";
 import {
+  Alert,
+  AlertTitle,
   Box,
   Button,
   GlobalStyles,
@@ -51,6 +53,7 @@ const SignInPage: NextPageWithLayout = () => {
   const [, { handleError }] = useAuth();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [isLoading, setIsLoading] = useState(false);
+  const [signInError, setSignInError] = useState<string | null>(null);
 
   const initialValues: SignInFormValues = {
     email: "",
@@ -64,9 +67,12 @@ const SignInPage: NextPageWithLayout = () => {
   const handleSignIn = async ({ email, password }: SignInFormValues) => {
     try {
       setIsLoading(true);
+      setSignInError(null);
       const returnR = await signIn(email, password);
       if (!returnR.emailVerified) {
-        enqueueSnackbar("Please verify your email first.", {
+        const msg = "Please verify your email first.";
+        setSignInError(msg);
+        enqueueSnackbar(msg, {
           variant: "error",
           autoHideDuration: 10000,
         });
@@ -78,6 +84,14 @@ const SignInPage: NextPageWithLayout = () => {
     } catch (error) {
       const errorMessage = getFirebaseFriendlyError(error as FirebaseError);
       setIsLoading(false);
+      console.log("errorMessage", errorMessage);
+      setSignInError(
+        errorMessage ===
+          "There is no user record corresponding to this identifier." ||
+          errorMessage === "The password is invalid."
+          ? "The login information you entered is incorrect."
+          : errorMessage,
+      );
       handleError({ error, errorMessage });
     }
   };
@@ -93,32 +107,52 @@ const SignInPage: NextPageWithLayout = () => {
       sx={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "flex-start",
+        justifyContent: "center",
+        width: "100%",
+        px: { xs: 2, sm: 3 },
+        py: { xs: 4, sm: 6 },
       }}
     >
       <Paper
         elevation={6}
         sx={{
           p: { xs: 3, sm: 5 },
-          borderRadius: "25px",
+          borderRadius: "28px",
           maxWidth: 420,
           width: "100%",
           mx: "auto",
           textAlign: "center",
+          border: "1px solid rgba(255,255,255,0.12)",
           background:
-            "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02)) !important",
+            "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)) !important",
+          boxShadow:
+            "0 22px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
         }}
       >
         <Typography
           variant="h4"
           sx={{
-            mb: 3,
-            fontWeight: 700,
-            color: "primary.main",
-            fontSize: { xs: "32px", sm: "50px" },
+            mb: 0.75,
+            fontWeight: 900,
+            letterSpacing: "-0.02em",
+            background:
+              "linear-gradient(90deg, rgba(255, 184, 77, 0.98) 0%, rgba(255,255,255,0.92) 38%, rgba(255, 140, 0, 0.98) 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            fontSize: { xs: "34px", sm: "52px" },
           }}
         >
           Sign In
+        </Typography>
+        <Typography
+          sx={{
+            mb: 3.25,
+            color: "rgba(255,255,255,0.70)",
+            fontSize: { xs: "0.98rem", sm: "1.05rem" },
+            lineHeight: 1.4,
+          }}
+        >
+          Welcome back. Sign in to continue.
         </Typography>
         <GlobalStyles
           styles={{
@@ -130,6 +164,47 @@ const SignInPage: NextPageWithLayout = () => {
           }}
         />
         <form data-testid="signin-form" onSubmit={formik.handleSubmit}>
+          {signInError ? (
+            <Alert
+              severity="error"
+              onClose={() => setSignInError(null)}
+              icon={false}
+              sx={{
+                mb: 3,
+                textAlign: "left",
+                borderRadius: "18px",
+                border: "1px solid rgba(255, 99, 99, 0.35)",
+                background:
+                  "linear-gradient(135deg, rgba(255, 78, 78, 0.18), rgba(255, 255, 255, 0.06))",
+                backdropFilter: "blur(10px)",
+                boxShadow:
+                  "0 18px 45px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)",
+                "& .MuiAlert-message": { width: "100%" },
+                "& .MuiAlert-action": { pt: 0.75 },
+              }}
+            >
+              <AlertTitle
+                sx={{
+                  mb: 0.5,
+                  fontWeight: 800,
+                  letterSpacing: "0.2px",
+                  color: "rgba(255,255,255,0.95)",
+                }}
+              >
+                Sign-in failed
+              </AlertTitle>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "rgba(255,255,255,0.85)",
+                  lineHeight: 1.5,
+                  fontSize: "0.95rem",
+                }}
+              >
+                {signInError}
+              </Typography>
+            </Alert>
+          ) : null}
           <TextField
             id="email"
             name="email"
@@ -142,13 +217,33 @@ const SignInPage: NextPageWithLayout = () => {
             error={Boolean(formik.errors.email && formik.touched.email)}
             helperText={formik.touched.email && formik.errors.email}
             fullWidth
-            sx={{ mb: 3 }}
+            sx={{
+              mb: 2.25,
+              "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.70)" },
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: "rgba(255,255,255,0.88)",
+              },
+              "& .MuiFormHelperText-root": {
+                color: "rgba(255, 160, 160, 0.95)",
+              },
+            }}
             InputProps={{
               sx: {
-                fontSize: "19px",
-                borderRadius: "20px",
+                fontSize: "17px",
+                borderRadius: "18px",
+                color: "rgba(255,255,255,0.92)",
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))",
                 "& .MuiOutlinedInput-notchedOutline": {
-                  borderRadius: "20px",
+                  borderRadius: "18px",
+                  borderColor: "rgba(255,255,255,0.18)",
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(255,255,255,0.28)",
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(255, 140, 0, 0.65)",
+                  boxShadow: "0 0 0 4px rgba(255, 140, 0, 0.18)",
                 },
               },
             }}
@@ -166,13 +261,33 @@ const SignInPage: NextPageWithLayout = () => {
             error={Boolean(formik.errors.password && formik.touched.password)}
             helperText={formik.touched.password && formik.errors.password}
             fullWidth
-            sx={{ mb: 4 }}
+            sx={{
+              mb: 3,
+              "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.70)" },
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: "rgba(255,255,255,0.88)",
+              },
+              "& .MuiFormHelperText-root": {
+                color: "rgba(255, 160, 160, 0.95)",
+              },
+            }}
             InputProps={{
               sx: {
-                fontSize: "19px",
-                borderRadius: "20px",
+                fontSize: "17px",
+                borderRadius: "18px",
+                color: "rgba(255,255,255,0.92)",
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))",
                 "& .MuiOutlinedInput-notchedOutline": {
-                  borderRadius: "20px",
+                  borderRadius: "18px",
+                  borderColor: "rgba(255,255,255,0.18)",
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(255,255,255,0.28)",
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(255, 140, 0, 0.65)",
+                  boxShadow: "0 0 0 4px rgba(255, 140, 0, 0.18)",
                 },
               },
             }}
@@ -186,11 +301,25 @@ const SignInPage: NextPageWithLayout = () => {
             variant="contained"
             fullWidth
             sx={{
-              borderRadius: "30px",
-              py: 1.5,
-              fontWeight: 600,
-              fontSize: "16px",
-              letterSpacing: "0.5px",
+              borderRadius: "999px",
+              py: 1.45,
+              fontWeight: 800,
+              fontSize: "15px",
+              letterSpacing: "0.6px",
+              textTransform: "none",
+              color: "rgba(20, 20, 20, 0.92)",
+              textShadow: "0 1px 0 rgba(255,255,255,0.35)",
+              background:
+                "linear-gradient(90deg, rgba(255, 140, 0, 1) 0%, rgba(255, 184, 77, 0.98) 55%, rgba(255, 99, 71, 0.95) 100%)",
+              boxShadow: "0 18px 40px rgba(255, 140, 0, 0.22)",
+              transition: "transform 120ms ease, box-shadow 120ms ease",
+              "&:hover": {
+                background:
+                  "linear-gradient(90deg, rgba(255, 155, 40, 1) 0%, rgba(255, 200, 120, 1) 55%, rgba(255, 120, 90, 1) 100%)",
+                boxShadow: "0 22px 55px rgba(255, 140, 0, 0.30)",
+                transform: "translateY(-1px)",
+              },
+              "&:active": { transform: "translateY(0px)" },
             }}
           >
             Sign In
@@ -199,12 +328,16 @@ const SignInPage: NextPageWithLayout = () => {
           <NextLink href={ROUTES.forgotPassword} passHref>
             <Button
               sx={{
-                mt: 4,
+                mt: 2.5,
                 textTransform: "none",
                 fontSize: "14px",
-                borderRadius: "25px",
-                ":hover": {
-                  border: "1px solid gray",
+                fontWeight: 650,
+                borderRadius: "999px",
+                color: "rgba(255,255,255,0.75)",
+                px: 1.25,
+                "&:hover": {
+                  color: "rgba(255,255,255,0.92)",
+                  backgroundColor: "rgba(255,255,255,0.06)",
                 },
               }}
             >

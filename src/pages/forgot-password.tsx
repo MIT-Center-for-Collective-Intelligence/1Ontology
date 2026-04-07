@@ -30,7 +30,16 @@ import { getFirebaseFriendlyError } from "@components/lib/utils/firebaseErrors";
 import ROUTES from "@components/lib/utils/routes";
 import { NextPageWithLayout } from "@components/types/IAuth";
 import { LoadingButton } from "@mui/lab";
-import { Box, Button, TextField, Typography } from "@mui/material";
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  Button,
+  GlobalStyles,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { FirebaseError } from "firebase/app";
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 import { useFormik } from "formik";
@@ -48,6 +57,7 @@ const ForgotPage: NextPageWithLayout = () => {
   const [, { handleError }] = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const [isLoading, setIsLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const initialValues: ForgotPasswordFormValues = {
     email: "",
@@ -59,15 +69,16 @@ const ForgotPage: NextPageWithLayout = () => {
   const handleSignIn = async ({ email }: ForgotPasswordFormValues) => {
     try {
       setIsLoading(true);
+      setStatusMessage(null);
 
       await sendPasswordResetEmail(auth, email);
-      enqueueSnackbar(
-        "We have sent an email for reset the password to your email address.",
-        {
-          variant: "success",
-          autoHideDuration: 10000,
-        }
-      );
+      const msg =
+        "We have sent an email for reset the password to your email address.";
+      setStatusMessage(msg);
+    /*   enqueueSnackbar(msg, {
+        variant: "success",
+        autoHideDuration: 10000,
+      }); */
     } catch (error) {
       const err = error as FirebaseError;
       const errorStrig = getFirebaseFriendlyError(err);
@@ -86,14 +97,107 @@ const ForgotPage: NextPageWithLayout = () => {
   });
 
   return (
-    <Box sx={{ p: { xs: "8px", md: "24px", width: "100%" }, my: "92px" }}>
-      <Typography variant="h1" sx={{ mb: "8px" }}>
-        Reset Password
-      </Typography>
-      <Typography variant="body1" sx={{ mb: "32px" }}>
-        You can reset password here!
-      </Typography>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100%",
+        px: { xs: 2, sm: 3 },
+        py: { xs: 4, sm: 6 },
+      }}
+    >
+      <Paper
+        elevation={6}
+        sx={{
+          p: { xs: 3, sm: 5 },
+          borderRadius: "28px",
+          maxWidth: 420,
+          width: "100%",
+          mx: "auto",
+          textAlign: "center",
+          border: "1px solid rgba(255,255,255,0.12)",
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)) !important",
+          boxShadow:
+            "0 22px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
+        }}
+      >
+        <Typography
+          sx={{
+            mb: 0.75,
+            fontWeight: 900,
+            letterSpacing: "-0.02em",
+            background:
+              "linear-gradient(90deg, rgba(255, 184, 77, 0.98) 0%, rgba(255,255,255,0.92) 38%, rgba(255, 140, 0, 0.98) 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            fontSize: { xs: "30px", sm: "44px" },
+          }}
+        >
+          Reset password
+        </Typography>
+        <Typography
+          sx={{
+            mb: 3.25,
+            color: "rgba(255,255,255,0.70)",
+            fontSize: { xs: "0.98rem", sm: "1.05rem" },
+            lineHeight: 1.4,
+          }}
+        >
+          Enter your email and we’ll send a reset link.
+        </Typography>
+        <GlobalStyles
+          styles={{
+            "& input:-webkit-autofill": {
+              boxShadow: `0px 0px 0px 100px #313131 inset !important`,
+              WebkitTextFillColor: `${"#fff"} !important`,
+              caretColor: "#fff !important",
+            },
+          }}
+        />
       <form data-testid="signin-form" onSubmit={formik.handleSubmit}>
+        {statusMessage ? (
+          <Alert
+            severity="success"
+            onClose={() => setStatusMessage(null)}
+            icon={false}
+            sx={{
+              mb: 3,
+              textAlign: "left",
+              borderRadius: "18px",
+              border: "1px solid rgba(255, 184, 77, 0.35)",
+              background:
+                "linear-gradient(135deg, rgba(255, 140, 0, 0.14), rgba(255, 255, 255, 0.05))",
+              backdropFilter: "blur(10px)",
+              boxShadow:
+                "0 18px 45px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)",
+              "& .MuiAlert-message": { width: "100%" },
+              "& .MuiAlert-action": { pt: 0.75 },
+            }}
+          >
+            <AlertTitle
+              sx={{
+                mb: 0.5,
+                fontWeight: 800,
+                letterSpacing: "0.2px",
+                color: "rgba(255,255,255,0.95)",
+              }}
+            >
+              Email sent
+            </AlertTitle>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "rgba(255,255,255,0.85)",
+                lineHeight: 1.5,
+                fontSize: "0.95rem",
+              }}
+            >
+              {statusMessage}
+            </Typography>
+          </Alert>
+        ) : null}
         <TextField
           id="email"
           name="email"
@@ -106,7 +210,36 @@ const ForgotPage: NextPageWithLayout = () => {
           error={Boolean(formik.errors.email) && Boolean(formik.touched.email)}
           helperText={formik.errors.email}
           fullWidth
-          sx={{ mb: "24px" }}
+          sx={{
+            mb: 3,
+            "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.70)" },
+            "& .MuiInputLabel-root.Mui-focused": {
+              color: "rgba(255,255,255,0.88)",
+            },
+            "& .MuiFormHelperText-root": {
+              color: "rgba(255, 160, 160, 0.95)",
+            },
+          }}
+          InputProps={{
+            sx: {
+              fontSize: "17px",
+              borderRadius: "18px",
+              color: "rgba(255,255,255,0.92)",
+              background:
+                "linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderRadius: "18px",
+                borderColor: "rgba(255,255,255,0.18)",
+              },
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(255,255,255,0.28)",
+              },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(255, 140, 0, 0.65)",
+                boxShadow: "0 0 0 4px rgba(255, 140, 0, 0.18)",
+              },
+            },
+          }}
         />
         <Box
           sx={{
@@ -114,7 +247,7 @@ const ForgotPage: NextPageWithLayout = () => {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            mt: "10px",
+            mt: 1,
           }}
         >
           <LoadingButton
@@ -124,15 +257,54 @@ const ForgotPage: NextPageWithLayout = () => {
             type="submit"
             variant="contained"
             fullWidth
-            sx={{ borderRadius: "26px", width: "150px" }}
+            sx={{
+              borderRadius: "999px",
+              py: 1.25,
+              fontWeight: 800,
+              fontSize: "14px",
+              letterSpacing: "0.6px",
+              textTransform: "none",
+              width: "100%",
+              maxWidth: 240,
+              color: "rgba(20, 20, 20, 0.92)",
+              textShadow: "0 1px 0 rgba(255,255,255,0.35)",
+              background:
+                "linear-gradient(90deg, rgba(255, 140, 0, 1) 0%, rgba(255, 184, 77, 0.98) 55%, rgba(255, 99, 71, 0.95) 100%)",
+              boxShadow: "0 18px 40px rgba(255, 140, 0, 0.22)",
+              transition: "transform 120ms ease, box-shadow 120ms ease",
+              "&:hover": {
+                background:
+                  "linear-gradient(90deg, rgba(255, 155, 40, 1) 0%, rgba(255, 200, 120, 1) 55%, rgba(255, 120, 90, 1) 100%)",
+                boxShadow: "0 22px 55px rgba(255, 140, 0, 0.30)",
+                transform: "translateY(-1px)",
+              },
+              "&:active": { transform: "translateY(0px)" },
+            }}
           >
             Send Email
           </LoadingButton>
           <NextLink href={ROUTES.signIn} passHref>
-            <Button sx={{ my: "20px" }}>Sign In</Button>
+            <Button
+              sx={{
+                mt: 2.5,
+                textTransform: "none",
+                fontSize: "14px",
+                fontWeight: 650,
+                borderRadius: "999px",
+                color: "rgba(255,255,255,0.75)",
+                px: 1.25,
+                "&:hover": {
+                  color: "rgba(255,255,255,0.92)",
+                  backgroundColor: "rgba(255,255,255,0.06)",
+                },
+              }}
+            >
+              Back to sign in
+            </Button>
           </NextLink>
         </Box>
       </form>
+      </Paper>
     </Box>
   );
 };
