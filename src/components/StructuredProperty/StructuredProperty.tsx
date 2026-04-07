@@ -421,7 +421,10 @@ const StructuredProperty = ({
 
   useEffect(() => {
     if (property === "parts") {
-      const someAreOptional = propertyValue[0].nodes.some((c) => !!c.optional);
+      console.log("propertyValue ==>>", propertyValue);
+      const someAreOptional = (propertyValue[0]?.nodes || [])?.some(
+        (c) => !!c.optional,
+      );
       setDisplayOptional(selectedProperty === "parts" || someAreOptional);
     }
   }, [propertyValue, selectedProperty]);

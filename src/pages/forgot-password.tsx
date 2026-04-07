@@ -52,6 +52,45 @@ interface ForgotPasswordFormValues {
   email: string;
 }
 
+const IosDotsLoader = ({
+  color = "rgba(255, 255, 255, 0.92)",
+}: {
+  color?: string;
+}) => {
+  return (
+    <Box
+      aria-label="loading"
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "5px",
+        height: 18,
+        "@keyframes iosDotPulse": {
+          "0%, 80%, 100%": { transform: "scale(0.55)", opacity: 0.35 },
+          "40%": { transform: "scale(1)", opacity: 1 },
+        },
+      }}
+    >
+      {[0, 1, 2].map((i) => (
+        <Box
+          // eslint-disable-next-line react/no-array-index-key
+          key={i}
+          sx={{
+            width: 5,
+            height: 5,
+            borderRadius: "999px",
+            backgroundColor: color,
+            boxShadow: "0 1px 1px rgba(0,0,0,0.28)",
+            animation: "iosDotPulse 1.05s infinite ease-in-out",
+            animationDelay: `${i * 0.16}s`,
+          }}
+        />
+      ))}
+    </Box>
+  );
+};
+
 const ForgotPage: NextPageWithLayout = () => {
   const auth = getAuth();
   const [, { handleError }] = useAuth();
@@ -116,11 +155,12 @@ const ForgotPage: NextPageWithLayout = () => {
           width: "100%",
           mx: "auto",
           textAlign: "center",
-          border: "1px solid rgba(255,255,255,0.12)",
-          background:
-            "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)) !important",
+          border: "1px solid rgba(255,255,255,0.10)",
+          backgroundColor: "rgba(20, 20, 22, 0.68)",
+          backdropFilter: "blur(22px)",
+          WebkitBackdropFilter: "blur(22px)",
           boxShadow:
-            "0 22px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
+            "0 24px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)",
         }}
       >
         <Typography
@@ -128,10 +168,7 @@ const ForgotPage: NextPageWithLayout = () => {
             mb: 0.75,
             fontWeight: 900,
             letterSpacing: "-0.02em",
-            background:
-              "linear-gradient(90deg, rgba(255, 184, 77, 0.98) 0%, rgba(255,255,255,0.92) 38%, rgba(255, 140, 0, 0.98) 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
+            color: "rgba(255,255,255,0.94)",
             fontSize: { xs: "30px", sm: "44px" },
           }}
         >
@@ -253,7 +290,9 @@ const ForgotPage: NextPageWithLayout = () => {
           <LoadingButton
             aria-label="submit"
             loading={isLoading}
-            disabled={formik.isSubmitting}
+            loadingIndicator={<IosDotsLoader />}
+            disabled={isLoading || formik.isSubmitting}
+            loadingPosition="center"
             type="submit"
             variant="contained"
             fullWidth
@@ -266,22 +305,32 @@ const ForgotPage: NextPageWithLayout = () => {
               textTransform: "none",
               width: "100%",
               maxWidth: 240,
-              color: "rgba(20, 20, 20, 0.92)",
-              textShadow: "0 1px 0 rgba(255,255,255,0.35)",
-              background:
-                "linear-gradient(90deg, rgba(255, 140, 0, 1) 0%, rgba(255, 184, 77, 0.98) 55%, rgba(255, 99, 71, 0.95) 100%)",
-              boxShadow: "0 18px 40px rgba(255, 140, 0, 0.22)",
-              transition: "transform 120ms ease, box-shadow 120ms ease",
+              color: "rgba(255,255,255,0.94)",
+              backgroundColor: "rgba(255,255,255,0.12)",
+              border: "1px solid rgba(255,255,255,0.16)",
+              boxShadow:
+                "0 16px 40px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.10)",
+              transition:
+                "transform 120ms ease, box-shadow 120ms ease, background 120ms ease, border-color 120ms ease",
+              "& .MuiLoadingButton-loadingIndicator": {
+                left: "50%",
+                transform: "translateX(-50%)",
+              },
               "&:hover": {
-                background:
-                  "linear-gradient(90deg, rgba(255, 155, 40, 1) 0%, rgba(255, 200, 120, 1) 55%, rgba(255, 120, 90, 1) 100%)",
-                boxShadow: "0 22px 55px rgba(255, 140, 0, 0.30)",
+                backgroundColor: "rgba(255,255,255,0.16)",
+                borderColor: "rgba(255,255,255,0.22)",
+                boxShadow:
+                  "0 20px 55px rgba(0,0,0,0.46), inset 0 1px 0 rgba(255,255,255,0.12)",
                 transform: "translateY(-1px)",
               },
               "&:active": { transform: "translateY(0px)" },
             }}
           >
-            Send Email
+            {isLoading ? (
+              <Box component="span" sx={{ display: "block", height: 18 }} />
+            ) : (
+              "Send Email"
+            )}
           </LoadingButton>
           <NextLink href={ROUTES.signIn} passHref>
             <Button
