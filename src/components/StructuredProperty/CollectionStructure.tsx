@@ -292,7 +292,7 @@ const CollectionStructure = ({
   fetchNode: (nodeId: string) => Promise<INode | null>;
   onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
 }) => {
-  console.log(editableProperty, "editableProperty -->");
+  // console.log(editableProperty, "editableProperty -->");
   const db = getFirestore();
   const [{ user }] = useAuth();
 
@@ -1586,6 +1586,152 @@ const CollectionStructure = ({
     setNewEditCollection(collectionName);
   };
 
+  const handleNodeDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const { active } = event;
+      setActiveId(active.id as string);
+      setDraggingNodeTitle(
+        getTitle(nodes, active.id as string) || (active.id as string),
+      );
+      document.body.style.cursor = "grabbing";
+      document.body.style.userSelect = "none";
+    },
+    [nodes],
+  );
+
+  const handleNodeDragMove = useCallback(
+    (event: DragMoveEvent) => {
+      if (event.active.data.current?.type !== "LINK") return;
+      const { over, activatorEvent, delta } = event;
+
+      if (
+        !over ||
+        over.id === event.active.id ||
+        String(over.id).startsWith("empty-coll-")
+      ) {
+        if (nestTimerRef.current) {
+          clearTimeout(nestTimerRef.current);
+          nestTimerRef.current = null;
+        }
+        setDropIndicator(null);
+        nestTargetId.current = null;
+        return;
+      }
+
+      const overId = over.id as string;
+      const el = nodeItemRefs.current.get(overId);
+      if (!el) return;
+
+      const rect = el.getBoundingClientRect();
+      const pointerY = (activatorEvent as PointerEvent).clientY + delta.y;
+      const relY = (pointerY - rect.top) / rect.height;
+      const rawPosition =
+        relY < 0.25 ? "above" : relY > 0.75 ? "below" : "nest";
+
+      if (rawPosition === "nest" && canNest) {
+        if (nestTimerRef.current) clearTimeout(nestTimerRef.current);
+        nestTimerRef.current = setTimeout(() => {
+          setDropIndicator({ nodeId: overId, position: "nest" });
+          nestTargetId.current = overId;
+        }, 80);
+      } else {
+        if (nestTimerRef.current) {
+          clearTimeout(nestTimerRef.current);
+          nestTimerRef.current = null;
+        }
+        setDropIndicator({
+          nodeId: overId,
+          position: rawPosition === "nest" ? "above" : rawPosition,
+        });
+        nestTargetId.current = null;
+      }
+    },
+    [canNest],
+  );
+
+  const handleNodeDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      const currentDropIndicator = dropIndicator;
+      if (nestTimerRef.current) {
+        clearTimeout(nestTimerRef.current);
+        nestTimerRef.current = null;
+      }
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      setActiveId(null);
+      setDraggingNodeTitle("");
+      setDropIndicator(null);
+      const nestTarget = nestTargetId.current;
+      nestTargetId.current = null;
+
+      if (locked || !!selectedDiffNode || !!currentImprovement) return;
+
+      const activeData = active.data.current;
+
+      if (activeData?.type === "LINK") {
+        if (nestTarget && property === "specializations" && enableEdit) {
+          handleSpecializationLink(
+            active.id as string,
+            nestTarget,
+            activeData.collectionIndex,
+          );
+        } else if (
+          currentDropIndicator &&
+          currentDropIndicator.position !== "nest"
+        ) {
+          let destCollIdx = -1;
+          let destItemIdx = -1;
+          (propertyValue || []).forEach((col: ICollection, cIdx: number) => {
+            const nIdx = col.nodes.findIndex(
+              (n: ILinkNode) => n.id === currentDropIndicator.nodeId,
+            );
+            if (nIdx !== -1) {
+              destCollIdx = cIdx;
+              destItemIdx =
+                currentDropIndicator.position === "above" ? nIdx : nIdx + 1;
+            }
+          });
+          if (destCollIdx !== -1) {
+            handleSorting(
+              active.id as string,
+              activeData.collectionIndex,
+              destCollIdx,
+              destItemIdx,
+              property,
+              propertyValue,
+            );
+          }
+        } else if (over && String(over.id).startsWith("empty-coll-")) {
+          const destCollIdx = parseInt(
+            (over.id as string).replace("empty-coll-", ""),
+          );
+          if (!isNaN(destCollIdx)) {
+            handleSorting(
+              active.id as string,
+              activeData.collectionIndex,
+              destCollIdx,
+              0,
+              property,
+              propertyValue,
+            );
+          }
+        }
+      }
+    },
+    [
+      dropIndicator,
+      locked,
+      selectedDiffNode,
+      currentImprovement,
+      property,
+      enableEdit,
+      handleSpecializationLink,
+      handleSorting,
+      propertyValue,
+    ],
+  );
+
   return (
     <Box
       sx={{
@@ -1610,121 +1756,17 @@ const CollectionStructure = ({
           }
         }}
       >
-        <Droppable droppableId="collections" type="COLLECTION">
-          {(droppableProvided) => (
-            <Box ref={droppableProvided.innerRef} {...droppableProvided.droppableProps}>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={collisionDetection}
-        onDragStart={(event: DragStartEvent) => {
-          const { active } = event;
-          setActiveId(active.id as string);
-          setDraggingNodeTitle(
-            getTitle(nodes, active.id as string) || (active.id as string),
-          );
-          document.body.style.cursor = "grabbing";
-          document.body.style.userSelect = "none";
-        }}
-        onDragMove={(event: DragMoveEvent) => {
-          if (event.active.data.current?.type !== "LINK") return;
-          const { over, activatorEvent, delta } = event;
-
-          if (!over || over.id === event.active.id || String(over.id).startsWith("empty-coll-")) {
-            if (nestTimerRef.current) { clearTimeout(nestTimerRef.current); nestTimerRef.current = null; }
-            setDropIndicator(null);
-            nestTargetId.current = null;
-            return;
-          }
-
-          const overId = over.id as string;
-          const el = nodeItemRefs.current.get(overId);
-          if (!el) return;
-
-          const rect = el.getBoundingClientRect();
-          const pointerY = (activatorEvent as PointerEvent).clientY + delta.y;
-          const relY = (pointerY - rect.top) / rect.height;
-          const rawPosition = relY < 0.25 ? "above" : relY > 0.75 ? "below" : "nest";
-
-          if (rawPosition === "nest" && canNest) {
-            if (nestTimerRef.current) clearTimeout(nestTimerRef.current);
-            nestTimerRef.current = setTimeout(() => {
-              setDropIndicator({ nodeId: overId, position: "nest" });
-              nestTargetId.current = overId;
-            }, 80);
-          } else {
-            if (nestTimerRef.current) { clearTimeout(nestTimerRef.current); nestTimerRef.current = null; }
-            setDropIndicator({ nodeId: overId, position: rawPosition === "nest" ? "above" : rawPosition });
-            nestTargetId.current = null;
-          }
-        }}
-        onDragEnd={(event: DragEndEvent) => {
-          const { active, over } = event;
-          const currentDropIndicator = dropIndicator;
-          if (nestTimerRef.current) {
-            clearTimeout(nestTimerRef.current);
-            nestTimerRef.current = null;
-          }
-          document.body.style.cursor = "";
-          document.body.style.userSelect = "";
-          setActiveId(null);
-          setDraggingNodeTitle("");
-          setDropIndicator(null);
-          const nestTarget = nestTargetId.current;
-          nestTargetId.current = null;
-
-          if (locked || !!selectedDiffNode || !!currentImprovement) return;
-
-          const activeData = active.data.current;
-
-          if (activeData?.type === "LINK") {
-            if (nestTarget && property === "specializations" && enableEdit) {
-              handleSpecializationLink(
-                active.id as string,
-                nestTarget,
-                activeData.collectionIndex,
-              );
-            } else if (currentDropIndicator && currentDropIndicator.position !== "nest") {
-              let destCollIdx = -1;
-              let destItemIdx = -1;
-              (propertyValue || []).forEach((col: ICollection, cIdx: number) => {
-                const nIdx = col.nodes.findIndex(
-                  (n: ILinkNode) => n.id === currentDropIndicator.nodeId,
-                );
-                if (nIdx !== -1) {
-                  destCollIdx = cIdx;
-                  destItemIdx =
-                    currentDropIndicator.position === "above" ? nIdx : nIdx + 1;
-                }
-              });
-              if (destCollIdx !== -1) {
-                handleSorting(
-                  active.id as string,
-                  activeData.collectionIndex,
-                  destCollIdx,
-                  destItemIdx,
-                  property,
-                  propertyValue,
-                );
-              }
-            } else if (over && String(over.id).startsWith("empty-coll-")) {
-              const destCollIdx = parseInt(
-                (over.id as string).replace("empty-coll-", ""),
-              );
-              if (!isNaN(destCollIdx)) {
-                handleSorting(
-                  active.id as string,
-                  activeData.collectionIndex,
-                  destCollIdx,
-                  0,
-                  property,
-                  propertyValue,
-                );
-              }
-            }
-          }
-        }}
-      >
-          {(propertyValue || []).map(
+        <DndContext
+          sensors={sensors}
+          collisionDetection={collisionDetection}
+          onDragStart={handleNodeDragStart}
+          onDragMove={handleNodeDragMove}
+          onDragEnd={handleNodeDragEnd}
+        >
+          <Droppable droppableId="collections" type="COLLECTION">
+            {(provided) => (
+              <Box ref={provided.innerRef} {...provided.droppableProps}>
+                {(propertyValue || []).map(
             (collection: ICollection, collectionIndex: number) => {
               return (
                 <Draggable
@@ -2072,89 +2114,29 @@ const CollectionStructure = ({
                                           dropIndicator.position === "nest";
 
                                         return (
-                                          <Draggable
-                                            key={
-                                              link.randomId ||
-                                              `${link.id}-${index}`
-                                            }
-                                            draggableId={link.id}
-                                            index={index}
-                                            isDragDisabled={!enableEdit}
-                                          >
-                                            {(provided) => (
-                                              <LinkNode
-                                                provided={provided}
-                                                navigateToNode={navigateToNode}
-                                                setSnackbarMessage={
-                                                  setSnackbarMessage
-                                                }
-                                                currentVisibleNode={
-                                                  currentVisibleNode
-                                                }
-                                                setCurrentVisibleNode={
-                                                  setCurrentVisibleNode
-                                                }
-                                                sx={{ pl: 1 }}
-                                                link={enhancedLink}
-                                                property={property}
-                                                title={
-                                                  link.title ||
-                                                  getTitle(nodes, link.id)
-                                                }
-                                                relatedNodes={nodes}
-                                                fetchNode={fetchNode}
-                                                linkIndex={index}
-                                                /* unlinkVisible={unlinkVisible(
-                                                  link.id,
-                                                )} */
-                                                linkLocked={false}
-                                                locked={
-                                                  locked || !!currentImprovement
-                                                }
-                                                user={user}
-                                                collectionIndex={
-                                                  collectionIndex
-                                                }
-                                                collectionName={
-                                                  propertyValue[collectionIndex]
-                                                    .collectionName
-                                                }
-                                                selectedDiffNode={
-                                                  selectedDiffNode
-                                                }
-                                                replaceWith={replaceWith}
-                                                saveNewAndSwapIt={
-                                                  saveNewAndSwapIt
-                                                }
-                                                clonedNodesQueue={
-                                                  clonedNodesQueue
-                                                }
-                                                unlinkElement={unlinkElement}
-                                                selectedProperty={
-                                                  selectedProperty
-                                                }
-                                                glowIds={glowIds}
-                                                skillsFuture={skillsFuture}
-                                                currentImprovement={
-                                                  currentImprovement
-                                                }
-                                                loadingIds={loadingIds}
-                                                saveNewSpecialization={
-                                                  saveNewSpecialization
-                                                }
-                                                enableEdit={enableEdit}
-                                                setClonedNodesQueue={
-                                                  setClonedNodesQueue
-                                                }
-                                                skillsFutureApp={
-                                                  skillsFutureApp
-                                                }
-                                                setEditableProperty={
-                                                  setEditableProperty
-                                                }
-                                                unlinkNodeRelation={
-                                                  unlinkNodeRelation
-                                                }
+                                          <React.Fragment key={nodeKey}>
+                                            {isDropAbove && (
+                                              <Box
+                                                sx={{
+                                                  height: "2px",
+                                                  backgroundColor:
+                                                    "primary.main",
+                                                  borderRadius: "1px",
+                                                  mx: 1,
+                                                  my: "3px",
+                                                  position: "relative",
+                                                  "&::before": {
+                                                    content: '""',
+                                                    position: "absolute",
+                                                    left: -5,
+                                                    top: -4,
+                                                    width: 10,
+                                                    height: 10,
+                                                    borderRadius: "50%",
+                                                    backgroundColor:
+                                                      "primary.main",
+                                                  },
+                                                }}
                                               />
                                             )}
                                           <NodeDraggableWrapper
@@ -2240,9 +2222,6 @@ const CollectionStructure = ({
                                                   skillsFuture={skillsFuture}
                                                   currentImprovement={
                                                     currentImprovement
-                                                  }
-                                                  partsInheritance={
-                                                    partsInheritance
                                                   }
                                                   loadingIds={loadingIds}
                                                   saveNewSpecialization={
@@ -2636,7 +2615,10 @@ const CollectionStructure = ({
               );
             },
           )}
-          {droppableProvided.placeholder}
+                {provided.placeholder}
+              </Box>
+            )}
+          </Droppable>
           {activeId && (
             <DragOverlay>
               <Paper sx={{ opacity: 0.9, borderRadius: "25px", p: 1.5, maxWidth: 280 }} elevation={4}>
@@ -2645,10 +2627,7 @@ const CollectionStructure = ({
             </DragOverlay>
           )}
         </DndContext>
-      </Box>
-    )}
-  </Droppable>
-</DragDropContext>
+      </DragDropContext>
     </Box>
   );
 };

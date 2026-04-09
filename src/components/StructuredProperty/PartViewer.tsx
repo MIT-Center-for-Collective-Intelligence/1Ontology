@@ -16,14 +16,12 @@ interface PartViewerProps {
     nodes: { [id: string]: INode },
     parentNodeId?: string,
   ) => void;
-  setDisplayDetails: any;
   linkNodeRelation: any;
   unlinkNodeRelation: any;
   user: any;
   navigateToNode: any;
   replaceWith: any;
   skillsFutureApp: any;
-  displayDetails: any;
   getGeneralizationParts: any;
 }
 
@@ -45,22 +43,20 @@ const PartViewer: React.FC<PartViewerProps> = ({
 }) => {
   const [displayDetails, setDisplayDetails] = useState(false);
 
-  const { data: inheritanceDetails } =
+  const { data: inheritedPartsDetails, mutateData, debouncedRefetch } =
     useInheritedPartsDetails(currentVisibleNode);
-  console.log(inheritanceDetails, "inheritanceDetails", enableEdit);
 
   return (
     <Box>
       {enableEdit ? (
         <InheritedPartsViewerEdit
           selectedProperty={property}
-          getAllGeneralizations={() => getAllGeneralizations()}
+          getAllGeneralizations={() => getAllGeneralizations(currentVisibleNode, relatedNodes)}
           getGeneralizationParts={getGeneralizationParts}
           nodes={relatedNodes}
           fetchNode={fetchNode}
           addNodesToCache={addNodesToCache}
           readOnly={true}
-          inheritanceDetails={inheritanceDetails}
           currentVisibleNode={currentVisibleNode}
           setDisplayDetails={setDisplayDetails}
           enableEdit={enableEdit}
@@ -91,16 +87,17 @@ const PartViewer: React.FC<PartViewerProps> = ({
           navigateToNode={navigateToNode}
           replaceWith={replaceWith}
           skillsFutureApp={skillsFutureApp}
-          inheritedPartsDetails={[]}
+          inheritedPartsDetails={inheritedPartsDetails}
+          mutateData={mutateData}
+          debouncedRefetch={debouncedRefetch}
         />
       ) : (
         <InheritedPartsViewer
           selectedProperty={property}
-          getAllGeneralizations={() => getAllGeneralizations()}
+          getAllGeneralizations={() => getAllGeneralizations(currentVisibleNode, relatedNodes)}
           nodes={relatedNodes}
           fetchNode={fetchNode}
           readOnly={true}
-          inheritanceDetails={inheritanceDetails}
           currentVisibleNode={currentVisibleNode}
           setDisplayDetails={setDisplayDetails}
           addPart={
@@ -128,7 +125,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
           }
           navigateToNode={navigateToNode}
           displayDetails={displayDetails}
-          inheritedPartsDetails={[]}
+          inheritedPartsDetails={inheritedPartsDetails}
         />
       )}
     </Box>

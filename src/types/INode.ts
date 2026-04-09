@@ -76,7 +76,7 @@ export type INode = {
       inheritedFromId: string;
     } | null;
   };
-  inheritedPartsDetails: InheritedPartsDetail;
+  inheritedPartsDetails: InheritedPartsDetail[];
   specializations: ICollection[];
   generalizations: ICollection[];
   root: string;
@@ -356,6 +356,7 @@ export type InheritedPartsDetail = {
     toOptional: boolean;
     optionalChange: "added" | "removed" | "none";
     hops: number;
+    userOverride?: boolean;
   }[];
   nonPickedOnes: {
     [fromId: string]: {

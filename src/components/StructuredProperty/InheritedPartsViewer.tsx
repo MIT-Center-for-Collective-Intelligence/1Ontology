@@ -64,7 +64,6 @@ interface InheritedPartsViewerProps {
   readOnly?: boolean;
   setDisplayDetails: any;
   displayDetails: boolean;
-  inheritanceDetails: any;
   inheritedPartsDetails?: InheritedPartsDetail[] | null;
   currentVisibleNode: any;
   navigateToNode?: any;
@@ -81,7 +80,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   readOnly = false,
   setDisplayDetails,
   displayDetails,
-  inheritanceDetails,
   inheritedPartsDetails,
   currentVisibleNode,
   triggerSearch,
@@ -203,299 +201,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     return false;
   };
 
-  const analyzeInheritance = (
-    inheritance: any,
-    generalizationParts: string[],
-    generalizationId: string,
-    currentParts: string[],
-  ) => {
-    const result: {
-      from: string;
-      to: string;
-      symbol: ">" | "x" | "=" | "+";
-      fromOptional?: boolean;
-      toOptional?: boolean;
-      optionalChange?: "added" | "removed" | "none";
-      hops?: number;
-    }[] = [];
-
-    const matchedParts = new Set();
-    const usedKeys = new Set();
-    const usedGeneralizationParts = new Set();
-
-    const findHierarchicalDistance = (
-      fromPartId: string,
-      toPartId: string,
-      visited = new Set<string>(),
-    ): number => {
-      if (visited.has(fromPartId)) return -1;
-      if (fromPartId === toPartId) return 0;
-
-      visited.add(fromPartId);
-
-      const fromNode = nodes[fromPartId];
-      if (!fromNode) return -1;
-
-      let minDistance = -1;
-
-      for (const collection of fromNode.properties.parts) {
-        for (const part of collection.nodes) {
-          if (part.id === toPartId) {
-            return 1;
-          }
-        }
-      }
-      for (let specializationNode of fromNode.specializations.flatMap(
-        (c: ICollection) => c.nodes,
-      )) {
-        const deeperDistance = findHierarchicalDistance(
-          specializationNode.id,
-          toPartId,
-          new Set(visited),
-        );
-
-        if (deeperDistance !== -1) {
-          const totalDistance = 1 + deeperDistance;
-          minDistance =
-            minDistance === -1
-              ? totalDistance
-              : Math.min(minDistance, totalDistance);
-        }
-      }
-
-      return minDistance;
-    };
-
-    for (const [key, entries] of Object.entries(inheritance)) {
-      if (entries === null) continue;
-
-      for (const entry of entries as any) {
-        if (entry.genId !== generalizationId) {
-          continue;
-        }
-        const part = entry.partOf;
-
-        if (generalizationParts.includes(part)) {
-          matchedParts.add(part);
-          usedKeys.add(key);
-
-          const fromOptional = getPartOptionalStatus(part, generalizationId);
-          const toOptional = getCurrentPartOptionalStatus(key);
-
-          let optionalChange: "added" | "removed" | "none" = "none";
-          if (fromOptional !== toOptional) {
-            optionalChange = toOptional ? "added" : "removed";
-          }
-
-          if (key === part) {
-            result.push({
-              from: part,
-              to: key,
-              symbol: "=",
-              fromOptional,
-              toOptional,
-              optionalChange,
-              hops: 0,
-            });
-            usedGeneralizationParts.add(part);
-          } else {
-            const hops = findHierarchicalDistance(part, key);
-            result.push({
-              from: part,
-              to: key,
-              symbol: ">",
-              fromOptional,
-              toOptional,
-              optionalChange,
-              hops,
-            });
-          }
-        }
-      }
-    }
-
-    for (const generalizationPart of generalizationParts) {
-      if (!matchedParts.has(generalizationPart)) {
-        for (const currentPart of currentParts) {
-          const hops = findHierarchicalDistance(
-            generalizationPart,
-            currentPart,
-          );
-          if (hops !== -1) {
-            const fromOptional = getPartOptionalStatus(
-              generalizationPart,
-              generalizationId,
-            );
-            const toOptional = getCurrentPartOptionalStatus(currentPart);
-
-            let optionalChange: "added" | "removed" | "none" = "none";
-            if (fromOptional !== toOptional) {
-              optionalChange = toOptional ? "added" : "removed";
-            }
-
-            result.push({
-              from: generalizationPart,
-              to: currentPart,
-              symbol: ">",
-              fromOptional,
-              toOptional,
-              optionalChange,
-              hops,
-            });
-            matchedParts.add(generalizationPart);
-            break;
-          }
-        }
-      }
-    }
-
-    const groupedByGeneralization = result.reduce(
-      (acc, entry) => {
-        if (entry.symbol === ">") {
-          if (!acc[entry.from]) acc[entry.from] = [];
-          acc[entry.from].push(entry);
-        }
-
-        return acc;
-      },
-      {} as Record<string, typeof result>,
-    );
-
-    const inheritanceRef = currentVisibleNode.inheritance?.["parts"]?.ref;
-    const currentNodeParts =
-      inheritanceRef && nodes[inheritanceRef]
-        ? nodes[inheritanceRef].properties["parts"]
-        : currentVisibleNode.properties["parts"];
-    const currentPartsOrder =
-      currentNodeParts?.[0]?.nodes?.map((c: any) => c.id) || [];
-
-    const hasSeenTo = new Set();
-    const filteredSpecializations: TransferInheritance[] = Object.entries(
-      groupedByGeneralization,
-    ).reduce((acc, [from, entries]) => {
-      const picked =
-        entries.length === 1
-          ? entries[0]
-          : entries.reduce((a, b) => {
-              const aHops = a.hops ?? -1;
-              const bHops = b.hops ?? -1;
-              if (
-                inheritanceForParts[from] &&
-                inheritanceForParts[from] === b.to
-              ) {
-                return b;
-              }
-              if (aHops === -1 && bHops === -1) {
-                return currentPartsOrder.indexOf(a.to) <=
-                  currentPartsOrder.indexOf(b.to)
-                  ? a
-                  : b;
-              }
-              if (aHops === -1) return b;
-              if (bHops === -1) return a;
-
-              if (aHops !== bHops) return aHops < bHops ? a : b;
-
-              return currentPartsOrder.indexOf(a.to) <=
-                currentPartsOrder.indexOf(b.to)
-                ? a
-                : b;
-            });
-
-      if (!hasSeenTo.has(picked.to)) {
-        hasSeenTo.add(picked.to);
-        acc.push(picked);
-      }
-
-      return acc;
-    }, [] as any);
-
-    const nonPickedOnes: any = {};
-
-    for (let key in groupedByGeneralization) {
-      const exist = filteredSpecializations.findIndex((c) => c.from === key);
-      if (exist === -1) {
-        filteredSpecializations.push({
-          from: key,
-          to: "",
-          symbol: "x",
-          fromOptional: false,
-          toOptional: false,
-          optionalChange: "none",
-          hops: 0,
-        });
-      }
-      nonPickedOnes[key] = new Array(
-        ...new Set(
-          groupedByGeneralization[key]
-            .filter((c) => {
-              const index = filteredSpecializations.findIndex(
-                (l) => l.to === c.to && l.from === c.from,
-              );
-              return index === -1;
-            })
-            .map((c) => c.to),
-        ),
-      );
-    }
-
-    const directMatches = result.filter((entry) => entry.symbol === "=");
-    const finalSpecializations = filteredSpecializations.filter(
-      (entry) => !usedGeneralizationParts.has(entry.from),
-    );
-
-    const finalResult = [...directMatches, ...finalSpecializations];
-
-    for (const part of generalizationParts) {
-      if (!matchedParts.has(part) && !usedGeneralizationParts.has(part)) {
-        finalResult.push({
-          from: part,
-          to: "",
-          symbol: "x",
-          fromOptional: getPartOptionalStatus(part, generalizationId),
-          toOptional: false,
-          optionalChange: "none",
-          hops: -1,
-        });
-      }
-    }
-
-    for (const [key, value] of Object.entries(inheritance)) {
-      const existIdx = finalResult.findIndex((c) => c.to === key);
-      if (existIdx === -1) {
-        finalResult.push({
-          from: "",
-          to: key,
-          symbol: "+",
-          fromOptional: false,
-          toOptional: getCurrentPartOptionalStatus(key),
-          optionalChange: "none",
-          hops: 0,
-        });
-      }
-    }
-
-    const seen = new Set();
-    const uniqueResult = finalResult.filter((entry) => {
-      const key = `${entry.from}|${entry.to}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-
-    uniqueResult.sort((a, b) => {
-      const indexA = currentPartsOrder.indexOf(a.to);
-      const indexB = currentPartsOrder.indexOf(b.to);
-
-      return (
-        (indexA === -1 ? Infinity : indexA) -
-        (indexB === -1 ? Infinity : indexB)
-      );
-    });
-
-    return { details: uniqueResult, nonPickedOnes };
-  };
-
   const formatPartTitle = (
     title: string,
     isOptional: boolean,
@@ -577,13 +282,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       (calc) => calc.generalizationId === generalizationId,
     );
 
-    const { details, nonPickedOnes } = analyzeInheritance(
-      inheritanceDetails,
-      generalizationParts,
-      generalizationId,
-      currentParts,
-    );
-    if (Object.keys(inheritanceDetails).length === 0 && details.length === 0) {
+    if (!inheritedPartsDetails || !cachedGeneralizationData) {
       return (
         <Box
           sx={{
@@ -609,6 +308,19 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
         </Box>
       );
     }
+
+    const details = cachedGeneralizationData.details || [];
+
+    // Convert nonPickedOnes from {[key]: [{id, title}]} to {[key]: [id]}
+    const nonPickedOnes = Object.entries(
+      cachedGeneralizationData.nonPickedOnes || {},
+    ).reduce(
+      (acc, [key, value]) => {
+        acc[key] = (value as { id: any }[]).map((item) => item.id);
+        return acc;
+      },
+      {} as { [key: string]: string[] },
+    );
 
     const handleSelect = (option: string) => {
       const _previous = { ...inheritanceForParts };

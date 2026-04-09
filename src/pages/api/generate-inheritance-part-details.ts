@@ -653,6 +653,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
     }
 
+    // Read existing inheritedPartsDetails to preserve userOverride entries
+    const existingDetails = currentNode.inheritedPartsDetails || [];
+
     const calculations: any[] = [];
 
     for (const gen of generalizations) {
@@ -685,6 +688,38 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         toTitle: detail.to ? relatedNodes[detail.to]?.title || "" : "",
       }));
 
+      // Preserve userOverride entries from existing data
+      const existingGen = existingDetails.find(
+        (d: any) => d.generalizationId === gen.id,
+      );
+      if (existingGen) {
+        const overriddenEntries = (existingGen.details || []).filter(
+          (d: any) => d.userOverride,
+        );
+        for (const override of overriddenEntries) {
+          // Check that both from and to still exist in the current parts/generalization parts
+          const fromStillExists = generalizationParts.includes(override.from);
+          const toStillExists = currentParts.includes(override.to);
+
+          if (fromStillExists && toStillExists) {
+            // Find the computed entry for the same "from" and replace it
+            const computedIdx = detailsWithTitles.findIndex(
+              (d: any) => d.from === override.from,
+            );
+            if (computedIdx !== -1) {
+              const computedTo = detailsWithTitles[computedIdx].to;
+              // Replace with user's override
+              detailsWithTitles[computedIdx] = {
+                ...detailsWithTitles[computedIdx],
+                to: override.to,
+                toTitle: relatedNodes[override.to]?.title || override.toTitle || "",
+                userOverride: true,
+              };
+            }
+          }
+        }
+      }
+
       const nonPickedWithTitles: any = {};
       for (const [fromId, toIds] of Object.entries(
         analysisResult.nonPickedOnes,
@@ -695,6 +730,42 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             title: relatedNodes[toId]?.title || "",
           }),
         );
+      }
+
+      // Update nonPickedOnes to reflect userOverride swaps
+      if (existingGen) {
+        const overriddenEntries = (existingGen.details || []).filter(
+          (d: any) => d.userOverride,
+        );
+        for (const override of overriddenEntries) {
+          const fromStillExists = generalizationParts.includes(override.from);
+          const toStillExists = currentParts.includes(override.to);
+          if (!fromStillExists || !toStillExists) continue;
+
+          // Find what the algorithm originally picked for this "from"
+          const originalEntry = analysisResult.details.find(
+            (d: any) => d.from === override.from,
+          );
+          if (originalEntry && originalEntry.to !== override.to) {
+            // The algorithm's pick should go back to nonPickedOnes
+            if (!nonPickedWithTitles[override.from]) {
+              nonPickedWithTitles[override.from] = [];
+            }
+            const alreadyInNonPicked = nonPickedWithTitles[override.from].some(
+              (item: any) => item.id === originalEntry.to,
+            );
+            if (!alreadyInNonPicked && originalEntry.to) {
+              nonPickedWithTitles[override.from].push({
+                id: originalEntry.to,
+                title: relatedNodes[originalEntry.to]?.title || "",
+              });
+            }
+            // Remove the user's pick from nonPickedOnes
+            nonPickedWithTitles[override.from] = nonPickedWithTitles[
+              override.from
+            ].filter((item: any) => item.id !== override.to);
+          }
+        }
       }
 
       calculations.push({

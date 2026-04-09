@@ -36,19 +36,12 @@ import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 
 import {
-  query,
   collection,
-  where,
-  onSnapshot,
   getFirestore,
   doc,
   updateDoc,
-  setDoc,
 } from "firebase/firestore";
-import {
-  INHERITANCE_FOR_PARTS_COLLECTION_NAME,
-  NODES,
-} from "@components/lib/firestoreClient/collections";
+import { NODES } from "@components/lib/firestoreClient/collections";
 import { recordLogs, saveNewChangeLog } from "@components/lib/utils/helpers";
 
 interface GeneralizationNode {
@@ -76,7 +69,6 @@ interface InheritedPartsViewerProps {
     parentNodeId?: string,
   ) => void;
   readOnly?: boolean;
-  inheritanceDetails: any;
   currentVisibleNode: any;
   setDisplayDetails: any;
   enableEdit: boolean;
@@ -88,6 +80,8 @@ interface InheritedPartsViewerProps {
   addPart?: any;
   removePart?: any;
   inheritedPartsDetails?: InheritedPartsDetail[] | null;
+  mutateData?: (newData: InheritedPartsDetail[] | null) => void;
+  debouncedRefetch?: () => void;
 }
 
 const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
@@ -98,7 +92,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   fetchNode,
   addNodesToCache,
   readOnly = false,
-  inheritanceDetails,
   enableEdit,
   replaceWith,
   currentVisibleNode,
@@ -110,6 +103,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   setDisplayDetails,
   skillsFutureApp,
   inheritedPartsDetails,
+  mutateData,
+  debouncedRefetch,
 }) => {
   const db = getFirestore();
   const [activeTab, setActiveTab] = React.useState<string | null>(null);
@@ -139,9 +134,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           ]
         : [];
 
-  const [inheritanceForParts, setInheritanceForParts] = useState<{
-    [pickingFor: string]: string;
-  }>({});
   const [pickingFor, setPickingFor] = useState<string>("");
   const [anchorEl, setAnchorEl] = useState(null);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
@@ -160,26 +152,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
   const open = Boolean(anchorEl);
   const id = open ? "switch-popover" : undefined;
-
-  useEffect(() => {
-    const nodesQuery = query(
-      collection(db, INHERITANCE_FOR_PARTS_COLLECTION_NAME),
-      where("nodeId", "==", currentVisibleNode.id),
-    );
-    const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
-      const docChanges = snapshot.docChanges();
-      if (docChanges.length > 0) {
-        if (docChanges[0].type === "removed") {
-          setInheritanceForParts({});
-          return;
-        }
-        const docChange = docChanges[0].doc;
-        const dataChange = docChange.data().inheritedFrom || {};
-        setInheritanceForParts(dataChange);
-      }
-    });
-    return () => unsubscribeNodes();
-  }, [currentVisibleNode.id]);
 
   React.useEffect(() => {
     // Set the first generalization as the active tab initially
@@ -255,8 +227,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     partId: string,
     isOptional: boolean,
     optionalChange?: "added" | "removed" | "none",
+    fallbackTitle?: string,
   ) => {
-    const title = allNodes[partId]?.title || "";
+    const title = allNodes[partId]?.title || fallbackTitle || "";
 
     if (optionalChange === "added") {
       return (
@@ -408,18 +381,104 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const handleSelect = (option: string) => {
-    const _previous = { ...inheritanceForParts };
-    _previous[pickingFor] = option;
-    setInheritanceForParts(_previous);
-    const inheritanceRef = doc(
-      collection(db, INHERITANCE_FOR_PARTS_COLLECTION_NAME),
-      currentVisibleNode.id,
-    );
-    setDoc(inheritanceRef, {
-      inheritedFrom: _previous,
-      nodeId: currentVisibleNode.id,
+    optimisticUpdate((data) => {
+      for (const gen of data) {
+        // Find the current entry that has this "from" part
+        const currentEntry = gen.details.find(
+          (d) => d.from === pickingFor && d.to,
+        );
+        if (!currentEntry) continue;
+
+        const oldTo = currentEntry.to;
+        const oldToTitle = currentEntry.toTitle;
+
+        currentEntry.to = option;
+        currentEntry.toTitle = allNodes[option]?.title || "";
+        currentEntry.userOverride = true;
+
+        if (!gen.nonPickedOnes[pickingFor]) {
+          gen.nonPickedOnes[pickingFor] = [];
+        }
+        // Add old value back to alternatives
+        if (oldTo) {
+          gen.nonPickedOnes[pickingFor].push({
+            id: oldTo,
+            title: oldToTitle,
+          });
+        }
+        // Remove the picked option from alternatives
+        gen.nonPickedOnes[pickingFor] = gen.nonPickedOnes[pickingFor].filter(
+          (item) => item.id !== option,
+        );
+      }
+      return data;
     });
     handleClose();
+  };
+
+  // Helper to clone and optimistically update inheritedPartsDetails
+  const optimisticUpdate = (
+    updater: (details: InheritedPartsDetail[]) => InheritedPartsDetail[],
+  ) => {
+    if (!inheritedPartsDetails || !mutateData) return;
+    const updated = updater(JSON.parse(JSON.stringify(inheritedPartsDetails)));
+    mutateData(updated);
+    debouncedRefetch?.();
+  };
+
+  const onAddPart = (partId: string) => {
+    addPart(partId);
+    optimisticUpdate((data) => {
+      for (const gen of data) {
+        const entry = gen.details.find(
+          (d) => d.from === partId && d.symbol === "x",
+        );
+        if (entry) {
+          entry.symbol = "=";
+          entry.to = partId;
+          entry.toTitle = entry.fromTitle;
+          entry.toOptional = entry.fromOptional;
+          entry.optionalChange = "none";
+        }
+      }
+      return data;
+    });
+  };
+
+  const onRemovePart = (partId: string) => {
+    removePart(partId);
+    optimisticUpdate((data) => {
+      for (const gen of data) {
+        const entry = gen.details.find((d) => d.to === partId);
+        if (entry) {
+          if (entry.from) {
+            entry.symbol = "x";
+            entry.to = "";
+            entry.toTitle = "";
+            entry.toOptional = false;
+            entry.optionalChange = "none";
+          } else {
+            // It was a "+" entry (added part with no generalization source)
+            gen.details = gen.details.filter((d) => d.to !== partId);
+          }
+        }
+      }
+      return data;
+    });
+  };
+
+  const onReplacePart = (oldPartId: string, newPartId: string) => {
+    replaceWith(oldPartId, newPartId);
+    optimisticUpdate((data) => {
+      for (const gen of data) {
+        const entry = gen.details.find((d) => d.to === oldPartId);
+        if (entry) {
+          entry.to = newPartId;
+          entry.toTitle = allNodes[newPartId]?.title || "";
+        }
+      }
+      return data;
+    });
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
@@ -458,17 +517,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     const cachedGeneralizationData = inheritedPartsDetails?.find(
       (calc) => calc.generalizationId === generalizationId,
     );
-    console.log(inheritedPartsDetails, "inheritedPartsDetails --->");
-    console.log(cachedGeneralizationData, "cachedGeneralizationData ===>");
 
-    const { details, nonPickedOnes } = analyzeInheritance(
-      inheritanceDetails,
-      generalizationParts,
-      generalizationId,
-      currentParts,
-    );
-
-    if (Object.keys(inheritanceDetails).length === 0 && details.length === 0) {
+    if (!inheritedPartsDetails || !cachedGeneralizationData) {
       return (
         <Box
           sx={{
@@ -495,9 +545,9 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       );
     }
 
-    const details = cachedGeneralizationData.details;
+    const details = cachedGeneralizationData.details || [];
     const nonPickedOnes = Object.entries(
-      cachedGeneralizationData.nonPickedOnes,
+      cachedGeneralizationData.nonPickedOnes || {},
     ).reduce(
       (acc, [key, value]) => {
         acc[key] = value.map((item) => item.id);
@@ -583,6 +633,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               {formatPartTitle(
                                 entry.from,
                                 entry.fromOptional || false,
+                                undefined,
+                                entry.fromTitle,
                               )}
                             </Typography>
                           ) : null
@@ -654,7 +706,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                           <IconButton
                             sx={{ p: 0.5 }}
                             onClick={() => {
-                              removePart(entry.to);
+                              onRemovePart(entry.to);
                             }}
                           >
                             <RemoveIcon
@@ -674,7 +726,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                           <IconButton
                             sx={{ p: 0.5 }}
                             onClick={() => {
-                              addPart(entry.from);
+                              onAddPart(entry.from);
                             }}
                           >
                             <AddIcon
@@ -705,7 +757,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                 value={entry.to}
                                 onChange={(e) => {
                                   const newPartId = e.target.value;
-                                  replaceWith(entry.to, newPartId);
+                                  onReplacePart(entry.to, newPartId);
                                 }}
                                 onOpen={() => {
                                   setIsSelectOpen(true);
@@ -722,7 +774,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                                       display: "block",
                                     }}
                                   >
-                                    {allNodes[entry.to]?.title}
+                                    {allNodes[entry.to]?.title || entry.toTitle}
                                   </Box>
                                 )}
                                 sx={{
@@ -957,7 +1009,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                     <IconButton
                       sx={{ p: 0.5 }}
                       onClick={() => {
-                        addPart(entryFrom);
+                        onAddPart(entryFrom);
                       }}
                     >
                       <AddIcon
@@ -1066,6 +1118,24 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           sourceCategory: "main",
           destinationCategory: "main",
           nodeId: currentVisibleNode?.id,
+        });
+
+        // Optimistic update: reorder details to match new parts order
+        optimisticUpdate((data) => {
+          const newPartsOrder = propertyValue[0]?.nodes?.map(
+            (n: any) => n.id,
+          ) || [];
+          for (const gen of data) {
+            gen.details.sort((a, b) => {
+              const aIdx = newPartsOrder.indexOf(a.to);
+              const bIdx = newPartsOrder.indexOf(b.to);
+              return (
+                (aIdx === -1 ? Infinity : aIdx) -
+                (bIdx === -1 ? Infinity : bIdx)
+              );
+            });
+          }
+          return data;
         });
       }
     } catch (error: any) {

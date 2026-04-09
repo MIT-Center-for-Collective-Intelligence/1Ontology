@@ -386,7 +386,9 @@ const Ontology = ({
   const [rootNode, setRootNode] = useState<string | null>(null);
   const [isExperimentalSearch, setIsExperimentalSearch] = useState(true);
   const treeRef = useRef<TreeApi<TreeData>>(null);
-
+  const [nodesWithComments, setNodesWithComments] = useState<Set<string>>(
+    new Set(),
+  );
 
   const firstLoad = useRef(true);
   const prevAppNameRef = useRef<string>(appName);
