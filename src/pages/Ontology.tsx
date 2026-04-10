@@ -116,7 +116,11 @@ import {
   SCROLL_BAR_STYLE,
   ONTOLOGY_APPS,
 } from "@components/lib/CONSTANTS";
-import { NODES, USERS, UNREAD_COMMENTS } from "@components/lib/firestoreClient/collections";
+import {
+  NODES,
+  USERS,
+  UNREAD_COMMENTS,
+} from "@components/lib/firestoreClient/collections";
 import { getDatabase, onValue, ref } from "firebase/database";
 
 import { recordLogs } from "@components/lib/utils/helpers";
@@ -278,8 +282,8 @@ const Ontology = ({
   }, [mobileSearchOpen, isMobile]);
 
   const signOut = async () => {
-    router.push(ROUTES.signIn);
     getAuth().signOut();
+    router.push(ROUTES.signIn);
   };
 
   const handleCloseAddLinksModel = () => {
@@ -740,21 +744,26 @@ const Ontology = ({
     return newSpecializationsTree;
   };
   const getRootNode = async () => {
-    const rootQuery = query(
-      collection(db, NODES),
-      where("deleted", "==", false),
-      where("root", "==", true),
-      where("appName", "==", appName),
-      limit(1),
-    );
-    const nodesDocs = await getDocs(rootQuery);
-    if (nodesDocs.docs.length > 0) {
-      const root = nodesDocs.docs[0];
-      setRootNode(root.id);
+    try {
+      const rootQuery = query(
+        collection(db, NODES),
+        where("deleted", "==", false),
+        where("root", "==", true),
+        where("appName", "==", appName),
+        limit(1),
+      );
+      const nodesDocs = await getDocs(rootQuery);
+      if (nodesDocs.docs.length > 0) {
+        const root = nodesDocs.docs[0];
+        setRootNode(root.id);
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
   useEffect(() => {
+    if (!user?.uname) return;
     // Create a query for the NODES collection where "deleted" is false
     let nodesQuery = null;
 
@@ -811,7 +820,7 @@ const Ontology = ({
     }, 4000);
     // Unsubscribe from the snapshot listener when the component is unmounted
     return () => unsubscribeNodes();
-  }, [db, appName]);
+  }, [db, appName, user?.uname]);
 
   useEffect(() => {
     if (!user?.uname) return;

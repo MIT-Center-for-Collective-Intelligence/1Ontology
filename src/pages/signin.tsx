@@ -38,6 +38,7 @@ import {
 import { FirebaseError } from "firebase/app";
 import { useFormik } from "formik";
 import NextLink from "next/link";
+import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
 import React, { ReactNode, useState } from "react";
 
@@ -89,6 +90,7 @@ const IosDotsLoader = ({
 };
 
 const SignInPage: NextPageWithLayout = () => {
+  const router = useRouter();
   const [, { handleError }] = useAuth();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [signInError, setSignInError] = useState<string | null>(null);
@@ -106,6 +108,7 @@ const SignInPage: NextPageWithLayout = () => {
     try {
       setSignInError(null);
       const returnR = await signIn(email, password);
+      console.log(returnR, "returnR");
       if (!returnR.emailVerified) {
         const msg = "Please verify your email first.";
         setSignInError(msg);
@@ -117,6 +120,7 @@ const SignInPage: NextPageWithLayout = () => {
         return;
       }
       closeSnackbar();
+      await router.push("/");
     } catch (error) {
       const errorMessage = getFirebaseFriendlyError(error as FirebaseError);
       console.log("errorMessage", errorMessage);
@@ -336,31 +340,34 @@ const SignInPage: NextPageWithLayout = () => {
             variant="contained"
             fullWidth
             sx={{
-              borderRadius: "999px",
-              py: 1.45,
-              fontWeight: 800,
+              borderRadius: "14px",
+              py: 1.75,
+              px: 3,
+              fontWeight: 600,
               fontSize: "15px",
-              letterSpacing: "0.6px",
+              letterSpacing: "0.02em",
               textTransform: "none",
-              color: "rgba(255,255,255,0.94)",
-              backgroundColor: "rgba(255,255,255,0.12)",
-              border: "1px solid rgba(255,255,255,0.16)",
-              boxShadow:
-                "0 16px 40px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.10)",
-              transition:
-                "transform 120ms ease, box-shadow 120ms ease, background 120ms ease, border-color 120ms ease",
+              color: "#ffffff",
+              backgroundColor: "#3b82f6",
+              border: "none",
+              boxShadow: "none",
+              transition: "background-color 120ms ease",
               "& .MuiLoadingButton-loadingIndicator": {
                 left: "50%",
                 transform: "translateX(-50%)",
+                color: "#ffffff",
               },
               "&:hover": {
-                backgroundColor: "rgba(255,255,255,0.16)",
-                borderColor: "rgba(255,255,255,0.22)",
-                boxShadow:
-                  "0 20px 55px rgba(0,0,0,0.46), inset 0 1px 0 rgba(255,255,255,0.12)",
-                transform: "translateY(-1px)",
+                backgroundColor: "#2563eb",
+                boxShadow: "none",
               },
-              "&:active": { transform: "translateY(0px)" },
+              "&:active": {
+                backgroundColor: "#1d4ed8",
+              },
+              "&.Mui-disabled": {
+                color: "rgba(255,255,255,0.85)",
+                backgroundColor: "rgba(59, 130, 246, 0.5)",
+              },
             }}
           >
             {formik.isSubmitting ? (
@@ -379,7 +386,7 @@ const SignInPage: NextPageWithLayout = () => {
                 fontWeight: 650,
                 borderRadius: "999px",
                 color: "rgba(255,255,255,0.75)",
-                px: 1.25,
+                px: 2.25,
                 "&:hover": {
                   color: "rgba(255,255,255,0.92)",
                   backgroundColor: "rgba(255,255,255,0.06)",

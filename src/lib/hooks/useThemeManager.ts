@@ -28,14 +28,11 @@ export const useThemeManager = () => {
     }
     return true;
   });
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const db = getFirestore();
+  const isAuthLoading = !authState.isAuthInitialized;
 
   // Initialize theme on mount and listen for changes
   useEffect(() => {
-    // Set loading to false once we have the initial auth state
-    setIsAuthLoading(false);
-
     if (authState.isAuthenticated && authState.settings?.theme) {
       // User is logged in, use their preferred theme from AuthContext
       const newIsDark = authState.settings.theme === 'Dark';
