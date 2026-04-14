@@ -131,7 +131,21 @@ const AuthLayout: FC<Props> = ({ children }) => {
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
           filter:
-            settings.theme === "Dark" ? "brightness(1.95)" : "brightness(1.2)",
+            settings.theme === "Dark"
+              ? "brightness(0.95) saturate(1.1)"
+              : "brightness(1.05) saturate(1.05)",
+        }}
+      />
+      {/* Background overlay for contrast + depth */}
+      <Box
+        aria-hidden
+        sx={{
+          position: "fixed",
+          inset: 0,
+          zIndex: -1,
+          background:
+            "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.70) 70%, rgba(0,0,0,0.78) 100%)",
+          pointerEvents: "none",
         }}
       />
 
@@ -143,21 +157,24 @@ const AuthLayout: FC<Props> = ({ children }) => {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
+          px: { xs: 2, md: 3 },
+          py: { xs: 2, md: 3 },
         }}
       >
         <Box
           sx={{
-            width: "1300px",
+            width: "min(1300px, 100%)",
             height: { xs: "100vh", md: "95vh" },
             display: "flex",
             flexDirection: { xs: "column", md: "row" },
             color: "white",
-            background: (theme) =>
-              theme.palette.mode === "dark"
-                ? theme.palette.common.darkGrayBackground
-                : theme.palette.common.white,
-            borderRadius: "25px",
-            border: "1px solid gray",
+            borderRadius: "28px",
+            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(18, 18, 22, 0.55)",
+            backdropFilter: "blur(14px)",
+            boxShadow:
+              "0 40px 120px rgba(0,0,0,0.60), inset 0 1px 0 rgba(255,255,255,0.06)",
+            overflow: "hidden",
           }}
         >
           {isEqualOrBiggerThanMedium && (
@@ -165,7 +182,7 @@ const AuthLayout: FC<Props> = ({ children }) => {
               sx={{
                 width: "100%",
                 height: "inherit",
-                px: "16px",
+                px: { xs: 2, md: 3 },
                 position: "relative",
                 display: "flex",
                 flexDirection: "column",
@@ -174,20 +191,44 @@ const AuthLayout: FC<Props> = ({ children }) => {
                 overflow: "hidden",
               }}
             >
-              {settings.theme === "Dark" && (
-                <Box
-                  sx={{
-                    position: "absolute",
-                    width: "100%",
-                    height: "100%",
-                    backgroundImage: `url(${darkModeLibraryImage.src})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    filter: "blur(4px)",
-                    zIndex: 0,
-                  }}
-                />
-              )}
+              <Box
+                aria-hidden
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundImage: `url(${
+                    settings.theme === "Dark"
+                      ? darkModeLibraryImage.src
+                      : lightModeLibraryImage.src
+                  })`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  filter: "blur(6px) saturate(1.1)",
+                  transform: "scale(1.06)",
+                  zIndex: 0,
+                }}
+              />
+              <Box
+                aria-hidden
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.70) 60%, rgba(0,0,0,0.78) 100%)",
+                  zIndex: 0,
+                }}
+              />
+              <Box
+                aria-hidden
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "radial-gradient(700px 520px at 50% 35%, rgba(255,255,255,0.06), transparent 60%)",
+                  zIndex: 0,
+                  pointerEvents: "none",
+                }}
+              />
 
               <Box sx={{ zIndex: 1, textAlign: "center" }}>
                 <a
@@ -201,10 +242,11 @@ const AuthLayout: FC<Props> = ({ children }) => {
                     alt="MIT logo"
                     sx={{
                       cursor: "pointer",
-                      width: "140px",
+                      width: "144px",
                       height: "auto",
                       borderRadius: 0,
                       mx: "auto",
+                      filter: "drop-shadow(0 18px 35px rgba(0,0,0,0.55))",
                     }}
                   />
                 </a>
@@ -213,9 +255,27 @@ const AuthLayout: FC<Props> = ({ children }) => {
                   textAlign="center"
                   variant="caption"
                   mt={1}
-                  sx={{ fontWeight: "bold", fontSize: "26px" }}
+                  sx={{
+                    fontWeight: 900,
+                    fontSize: "28px",
+                    letterSpacing: "-0.02em",
+                    color: "rgba(255,255,255,0.92)",
+                    textShadow: "0 18px 45px rgba(0,0,0,0.55)",
+                  }}
                 >
                   The Ontology of Collective Intelligence
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 1.25,
+                    maxWidth: 520,
+                    mx: "auto",
+                    color: "rgba(255,255,255,0.72)",
+                    fontSize: "1.05rem",
+                    lineHeight: 1.55,
+                  }}
+                >
+                  Build, explore, and connect ideas with a calm, focused workspace.
                 </Typography>
               </Box>
             </Box>
@@ -228,11 +288,21 @@ const AuthLayout: FC<Props> = ({ children }) => {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              position: "relative",
               background:
-                "linear-gradient(135deg, rgba(80, 80, 80, 0.9), rgba(40, 40, 40, 0.7))",
-              borderRadius: "25px",
+                "linear-gradient(135deg, rgba(40, 40, 44, 0.92), rgba(20, 20, 24, 0.82))",
             }}
           >
+            <Box
+              aria-hidden
+              sx={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "radial-gradient(700px 520px at 70% 20%, rgba(255, 255, 255, 0.05), transparent 60%), radial-gradient(700px 520px at 25% 85%, rgba(0, 0, 0, 0.12), transparent 62%)",
+                pointerEvents: "none",
+              }}
+            />
             {children}
           </Box>
         </Box>

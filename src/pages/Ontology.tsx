@@ -64,6 +64,7 @@ import {
   FormControl,
   IconButton,
   InputLabel,
+  ListSubheader,
   MenuItem,
   Select,
   Switch,
@@ -394,6 +395,14 @@ const Ontology = ({
   const [nodesWithComments, setNodesWithComments] = useState<Set<string>>(
     new Set(),
   );
+  const ontologyAppsTopGroup = useMemo(
+    () => ONTOLOGY_APPS.filter((app) => app.type !== "other"),
+    [],
+  );
+  const ontologyAppsOtherGroup = useMemo(
+    () => ONTOLOGY_APPS.filter((app) => app.type === "other"),
+    [],
+  );
 
   const firstLoad = useRef(true);
   const prevAppNameRef = useRef<string>(appName);
@@ -453,8 +462,8 @@ const Ontology = ({
   }, [mobileSearchOpen, isMobile]);
 
   const signOut = async () => {
-    router.push(ROUTES.signIn);
     getAuth().signOut();
+    router.push(ROUTES.signIn);
   };
 
   // Memoized fetchNode helper to fetch nodes not in cache and add to relatedNodes
@@ -1115,7 +1124,6 @@ const Ontology = ({
     // Return the main specializations tree
     return newSpecializationsTree;
   };
-
   // Main snapshot: Extract all directly related nodes from currentVisibleNode
   // This includes the node itself, generalizations, specializations, all properties, and inheritance reference nodes
   useEffect(() => {
@@ -1256,7 +1264,6 @@ const Ontology = ({
         }
       });
     });
-
     if (partIds.length === 0) return;
 
     console.log(
@@ -2429,7 +2436,17 @@ const Ontology = ({
                   label="Property Type"
                   sx={{ borderRadius: "20px" }}
                 >
-                  {ONTOLOGY_APPS.map(({ id, name }) => (
+                  {ontologyAppsTopGroup.map(({ id, name }) => (
+                    <MenuItem key={id} value={id}>
+                      {name}
+                    </MenuItem>
+                  ))}
+                  {ontologyAppsOtherGroup.length > 0 && (
+                    <ListSubheader disableSticky>
+                      Other Ontologies
+                    </ListSubheader>
+                  )}
+                  {ontologyAppsOtherGroup.map(({ id, name }) => (
                     <MenuItem key={id} value={id}>
                       {name}
                     </MenuItem>

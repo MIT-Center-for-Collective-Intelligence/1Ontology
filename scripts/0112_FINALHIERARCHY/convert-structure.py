@@ -4,7 +4,8 @@ Build a transformed ontology JSON (`.transformed.json`) from a legacy hierarchy 
 
 The script parses labels, disambiguates duplicate base titles when child structure
 differs, and emits each node as `{ title, description, parts, specializations }`
-(same overall shape as `compare-ontology/0112-dn.json`).
+with optional `synsets` when the label carried WordNet-style sense ids such as
+`Develop.v.01` (same overall shape as `compare-ontology/0112-dn.json`, plus synsets).
 
 ---
 When comparing ontology node presence and locations across two JSON formats, these
@@ -34,17 +35,22 @@ FILE_NAME = "0112_FINALHIERARCHY"
 
 # Carries synonym line for `description`; stripped before traversing children.
 STAGING_SYNONYM_DESC_KEY = "__stagingSynonyms"
+# Carries comma-separated sense ids (e.g. `Word.v.01`); stripped like synonyms.
+STAGING_SYNSETS_KEY = "__stagingSynsets"
 
 JsonValue = Any
 JsonObject = Dict[str, JsonValue]
 
 
-def parse_ontology_title(raw_title: str) -> Tuple[str, List[Dict[str, Optional[str]]]]:
+def parse_ontology_title(
+    raw_title: str,
+) -> Tuple[str, List[Dict[str, Optional[str]]], str]:
     title = raw_title.strip()
     if title.startswith("(O*Net)"):
-        return title, []
+        return title, [], ""
 
     synonym_entries: List[Dict[str, Optional[str]]] = []
+    synset_tokens: List[str] = []
     # Parentheticals at the end of the title only; still normalized to a suffix.
     suffix_parentheses: List[str] = []
 
@@ -73,6 +79,7 @@ def parse_ontology_title(raw_title: str) -> Tuple[str, List[Dict[str, Optional[s
             for s in parts:
                 version_match = re.search(r"\.v\.?(\d+)", s, re.I)
                 if version_match:
+                    synset_tokens.append(s.strip())
                     clean_name = re.sub(r"\.v\.?\d+", "", s, flags=re.I).strip()
                     synonym_entries.append(
                         {
@@ -98,11 +105,12 @@ def parse_ontology_title(raw_title: str) -> Tuple[str, List[Dict[str, Optional[s
         title = f"{title} {' '.join(suffix_parentheses)}".strip()
     title = re.sub(r"\.v\.?\d+", "", title, flags=re.I).strip()
 
-    return title, synonym_entries
+    synsets_str = ", ".join(synset_tokens)
+    return title, synonym_entries, synsets_str
 
 
 def description_from_synonyms(display_title: str) -> str:
-    _, synonyms = parse_ontology_title(display_title)
+    _, synonyms, _ = parse_ontology_title(display_title)
     if not synonyms:
         return ""
     return "Synonyms: " + ", ".join(s["name"] or "" for s in synonyms)
@@ -114,64 +122,86 @@ def synonym_line_from_names(synonyms: List[str]) -> str:
     return "Synonyms: " + ", ".join(synonyms)
 
 
-def attach_synonym_description(
+def attach_staging_meta(
     body: JsonObject,
     synonym_description: str,
+    synsets: str,
 ) -> JsonObject:
-    if not synonym_description:
-        return body
-    return {**body, STAGING_SYNONYM_DESC_KEY: synonym_description}
+    out = dict(body)
+    if synonym_description:
+        out[STAGING_SYNONYM_DESC_KEY] = synonym_description
+    if synsets:
+        out[STAGING_SYNSETS_KEY] = synsets
+    return out
 
 
-def peel_synonym_description(obj: JsonObject) -> Tuple[str, JsonObject]:
-    raw = obj.get(STAGING_SYNONYM_DESC_KEY)
-    description = raw if isinstance(raw, str) else ""
-    if not description:
-        return "", obj
+def peel_staging_meta(obj: JsonObject) -> Tuple[str, str, JsonObject]:
+    raw_desc = obj.get(STAGING_SYNONYM_DESC_KEY)
+    description = raw_desc if isinstance(raw_desc, str) else ""
+    raw_syn = obj.get(STAGING_SYNSETS_KEY)
+    synsets = raw_syn if isinstance(raw_syn, str) else ""
     rest = dict(obj)
-    del rest[STAGING_SYNONYM_DESC_KEY]
-    return description, rest
+    rest.pop(STAGING_SYNONYM_DESC_KEY, None)
+    rest.pop(STAGING_SYNSETS_KEY, None)
+    return description, synsets, rest
+
+
+def _dn_node_shell(
+    title: str,
+    description: str,
+    parts: List[Any],
+    specializations: JsonObject,
+    synsets: str,
+) -> JsonObject:
+    node: JsonObject = {
+        "title": title,
+        "description": description,
+        "parts": parts,
+        "specializations": specializations,
+    }
+    if synsets:
+        node["synsets"] = synsets
+    return node
 
 
 def wrap_dn_subtree(value: JsonValue, display_title: str) -> JsonObject:
     parts: List[Any] = []
     peeled_description = ""
+    peeled_synsets = ""
     node_value = value
 
-    if (
-        value is not None
-        and isinstance(value, dict)
-        and STAGING_SYNONYM_DESC_KEY in value
+    if value is not None and isinstance(value, dict) and (
+        STAGING_SYNONYM_DESC_KEY in value or STAGING_SYNSETS_KEY in value
     ):
-        peeled_description, rest = peel_synonym_description(value)
+        peeled_description, peeled_synsets, rest = peel_staging_meta(value)
         node_value = rest
 
     description = peeled_description or description_from_synonyms(display_title)
+    _, _, title_synsets = parse_ontology_title(display_title)
+    synsets = peeled_synsets or title_synsets
 
     if isinstance(node_value, list):
-        specializations: JsonObject = {}
+        specializations = {}
         for item in node_value:
             s = str(item)
-            specializations[s] = {
+            _, _, leaf_synsets = parse_ontology_title(s)
+            leaf: JsonObject = {
                 "title": s,
                 "description": description_from_synonyms(s),
                 "parts": [],
                 "specializations": {},
             }
-        return {
-            "title": display_title,
-            "description": description,
-            "parts": parts,
-            "specializations": specializations,
-        }
+            if leaf_synsets:
+                leaf["synsets"] = leaf_synsets
+            specializations[s] = leaf
+        return _dn_node_shell(
+            display_title, description, parts, specializations, synsets
+        )
 
     if node_value is None or not isinstance(node_value, dict):
-        return {
-            "title": display_title,
-            "description": description,
-            "parts": parts,
-            "specializations": {},
-        }
+        return _dn_node_shell(
+            display_title, description, parts, {}, synsets
+        )
 
     specializations = {}
     obj = node_value
@@ -205,22 +235,23 @@ def wrap_dn_subtree(value: JsonValue, display_title: str) -> JsonObject:
             ):
                 for child_key in inner:
                     children[child_key] = wrap_dn_subtree(inner[child_key], child_key)
-            specializations[bracket_name] = {
+            _, _, bracket_synsets = parse_ontology_title(bracket_name)
+            bracket_node: JsonObject = {
                 "title": bracket_name,
                 "description": description_from_synonyms(bracket_name),
                 "parts": [],
                 "specializations": children,
             }
+            if bracket_synsets:
+                bracket_node["synsets"] = bracket_synsets
+            specializations[bracket_name] = bracket_node
             continue
 
         specializations[key] = wrap_dn_subtree(obj[key], key)
 
-    return {
-        "title": display_title,
-        "description": description,
-        "parts": parts,
-        "specializations": specializations,
-    }
+    return _dn_node_shell(
+        display_title, description, parts, specializations, synsets
+    )
 
 
 def wrap_dn_root(input_val: JsonValue) -> JsonObject:
@@ -236,11 +267,11 @@ def wrap_dn_root(input_val: JsonValue) -> JsonObject:
     return out
 
 
-def get_base_title(title: str) -> Tuple[str, List[str]]:
+def get_base_title(title: str) -> Tuple[str, List[str], str]:
     if not title:
-        return "", []
-    nt, se = parse_ontology_title(title)
-    return nt, [s["name"] or "" for s in se]
+        return "", [], ""
+    nt, se, synsets = parse_ontology_title(title)
+    return nt, [s["name"] or "" for s in se], synsets
 
 
 def is_collection_key(key: str) -> bool:
@@ -423,7 +454,7 @@ def transform_ontology(
             continue
 
         value = input_val[key]
-        base_display, synonyms = get_base_title(key)
+        base_display, synonyms, synsets_line = get_base_title(key)
         children_signatures = collect_child_structure_signatures(value)
         title = designate_title(base_display, children_signatures, seen)
         meta_line = synonym_line_from_names(synonyms)
@@ -435,7 +466,7 @@ def transform_ontology(
             put_transformed_sibling(
                 output,
                 title,
-                attach_synonym_description(converted, meta_line),
+                attach_staging_meta(converted, meta_line, synsets_line),
                 key,
                 first_source_by_title,
             )
@@ -443,7 +474,9 @@ def transform_ontology(
             put_transformed_sibling(
                 output,
                 title,
-                attach_synonym_description(transform_ontology(value, seen), meta_line),
+                attach_staging_meta(
+                    transform_ontology(value, seen), meta_line, synsets_line
+                ),
                 key,
                 first_source_by_title,
             )
@@ -451,7 +484,7 @@ def transform_ontology(
             put_transformed_sibling(
                 output,
                 title,
-                attach_synonym_description({}, meta_line),
+                attach_staging_meta({}, meta_line, synsets_line),
                 key,
                 first_source_by_title,
             )
