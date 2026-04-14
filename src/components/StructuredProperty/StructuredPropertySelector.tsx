@@ -73,6 +73,8 @@ const StructuredPropertySelector = ({
   setCurrentVisibleNode,
   cloning,
   addACloneNodeQueue,
+  setClonedNodesQueue,
+  clonedNodesQueue,
   newOnes,
   setNewOnes,
   setLoadingIds,
@@ -121,7 +123,7 @@ const StructuredPropertySelector = ({
   setCurrentVisibleNode: any;
   checkDuplicateTitle: any;
   cloning: string | null;
-  addACloneNodeQueue: (nodeId: string, title?: string) => string;
+  addACloneNodeQueue: (nodeId: string, title?: string) => Promise<string | null>;
   setClonedNodesQueue: Function;
   clonedNodesQueue: { [nodeId: string]: { title: string; id: string } };
   newOnes: any;
@@ -812,8 +814,11 @@ const StructuredPropertySelector = ({
   //   selectedDiffNode,
   // ]) as ICollection[];
 
-  const _add = (nodeId: string, title?: string) => {
-    const id = addACloneNodeQueue(nodeId, title);
+  const _add = async (nodeId: string, title?: string) => {
+    const id = await addACloneNodeQueue(nodeId, title);
+    if (!id) {
+      return null;
+    }
 
     setEditableProperty((prev: ICollection[]) => {
       const _prev = [...prev];
@@ -824,6 +829,11 @@ const StructuredPropertySelector = ({
         if (collectionIdx !== -1) {
           _prev[collectionIdx].nodes.push({
             id,
+          });
+        } else {
+          _prev.push({
+            collectionName: selectedCollection,
+            nodes: [{ id }],
           });
         }
       } else {
@@ -849,10 +859,12 @@ const StructuredPropertySelector = ({
       return _prev;
     });
     setAddedElements((prev: Set<string>) => {
-      prev.add(id);
-      return prev;
+      const updated = new Set(prev);
+      updated.add(id);
+      return updated;
     });
     scrollToElement(id);
+    return id;
   };
 
   const cloneUnclassifiedNode = async () => {
@@ -874,20 +886,53 @@ const StructuredPropertySelector = ({
     );
     if (unclassifiedNodeDocs.docs.length > 0) {
       const unclassifiedId = unclassifiedNodeDocs.docs[0].id;
-      // handleCloning({ id: unclassifiedId }, searchValue);
-      const id = addACloneNodeQueue(unclassifiedId, searchValue);
-      setEditableProperty((prev: ICollection[]) => {
-        const _prev = [...prev];
-        _prev[0].nodes.push({
-          id,
-        });
-        return _prev;
-      });
-      setAddedElements((prev: Set<string>) => {
-        prev.add(id);
-        return prev;
-      });
+      // Reuse the same queue + UI pending flow used by search-result add.
+      await _add(unclassifiedId, searchValue);
     }
+  };
+
+  const approveQueuedCloneFromSource = (sourceNodeId: string) => {
+    const queuedCloneId = Object.keys(clonedNodesQueue || {}).find(
+      (queuedId) => clonedNodesQueue[queuedId]?.id === sourceNodeId,
+    );
+    if (!queuedCloneId) {
+      return;
+    }
+    saveNewSpecialization(queuedCloneId, selectedCollection || "main");
+  };
+
+  const cancelQueuedCloneFromSource = (sourceNodeId: string) => {
+    const queuedCloneId = Object.keys(clonedNodesQueue || {}).find(
+      (queuedId) => clonedNodesQueue[queuedId]?.id === sourceNodeId,
+    );
+    if (!queuedCloneId) {
+      return;
+    }
+
+    setEditableProperty((prev: ICollection[]) =>
+      prev.map((collection) => ({
+        ...collection,
+        nodes: collection.nodes.filter((node) => node.id !== queuedCloneId),
+      })),
+    );
+
+    setAddedElements((prev: Set<string>) => {
+      const updated = new Set(prev);
+      updated.delete(queuedCloneId);
+      return updated;
+    });
+
+    setNewOnes((prev: Set<string>) => {
+      const updated = new Set(prev);
+      updated.delete(queuedCloneId);
+      return updated;
+    });
+
+    setClonedNodesQueue((prev: { [nodeId: string]: { title: string; id: string } }) => {
+      const updated = { ...prev };
+      delete updated[queuedCloneId];
+      return updated;
+    });
   };
 
   const triggerSearch = (triggeredValue: { id: string; title: string }) => {
@@ -1051,32 +1096,7 @@ const StructuredPropertySelector = ({
                   onClick={async () => {
                     setDisabledButton(true);
                     if (selectedProperty === "specializations") {
-                      const id = addACloneNodeQueue(
-                        currentVisibleNode?.id,
-                        searchValue,
-                      );
-                      setEditableProperty((prev: ICollection[]) => {
-                        const _prev = [...prev];
-                        if (selectedCollection) {
-                          const collectionIdx = _prev.findIndex(
-                            (c) => c.collectionName === selectedCollection,
-                          );
-                          if (collectionIdx !== -1) {
-                            _prev[collectionIdx].nodes.push({
-                              id,
-                            });
-                          }
-                        } else {
-                          _prev[0].nodes.push({
-                            id,
-                          });
-                        }
-                        return _prev;
-                      });
-                      setAddedElements((prev: Set<string>) => {
-                        prev.add(id);
-                        return prev;
-                      });
+                      await _add(currentVisibleNode?.id, searchValue);
                     } else {
                       await cloneUnclassifiedNode();
                     }

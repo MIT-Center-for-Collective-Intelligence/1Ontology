@@ -69,7 +69,6 @@ import { NODES } from "@components/lib/firestoreClient/collections";
 import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import AddIcon from "@mui/icons-material/Add";
-import CheckIcon from "@mui/icons-material/Check";
 import {
   recordLogs,
   saveNewChangeLog,
@@ -120,7 +119,6 @@ import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import { UNCLASSIFIED } from "@components/lib/CONSTANTS";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import LinkEditor from "./LinkEditor";
 import LinkNodeTitle from "./LinkNodeTitle";
 import { Post } from "@components/lib/utils/Post";
 import { LoadingButton } from "@mui/lab";
@@ -646,6 +644,8 @@ const LinkNode = ({
       .filter((n) => !!relatedNodes[n.id]?.title);
   };
 
+  const isQueuedClone = clonedNodesQueue.hasOwnProperty(link.id);
+  const queuedTitle = clonedNodesQueue[link.id]?.title;
   return (
     <Box
       id={`${link.id}-${property}`}
@@ -689,24 +689,15 @@ const LinkNode = ({
             }}
           />
         </ListItemIcon>
-        {clonedNodesQueue.hasOwnProperty(link.id) ? (
-          <LinkEditor
-            reviewId={link.id}
-            title={clonedNodesQueue[link.id]?.title || ""}
-            checkDuplicateTitle={() => {}}
-            setClonedNodesQueue={setClonedNodesQueue}
-          />
-        ) : (
-          <LinkNodeTitle
-            title={title || regionalTitle}
-            link={link}
-            relatedNodes={relatedNodes}
-            property={property}
-            selectedProperty={selectedProperty}
-            onNavigate={handleNavigateToNode}
-            linkColor={getLinkColor(link.change)}
-          />
-        )}
+        <LinkNodeTitle
+          title={isQueuedClone ? queuedTitle || title || regionalTitle : title || regionalTitle}
+          link={link}
+          relatedNodes={relatedNodes}
+          property={property}
+          selectedProperty={selectedProperty}
+          onNavigate={handleNavigateToNode}
+          linkColor={getLinkColor(link.change)}
+        />
 
         <Box sx={{ display: "flex", alignItems: "center", ml: "auto" }}>
           {link.changeType === "sort" && (
@@ -714,7 +705,9 @@ const LinkNode = ({
               sx={{ color: getLinkColor(link.change), pl: "5px" }}
             />
           )}{" "}
-          {selectedProperty === property && selectedProperty === "parts" && (
+          {selectedProperty === property &&
+            selectedProperty === "parts" &&
+            !isQueuedClone && (
             <Tooltip
               title={
                 link.optional ? "Make part non-optional" : "Make part optional"
@@ -730,14 +723,13 @@ const LinkNode = ({
               </Button>
             </Tooltip>
           )}
-          {((!locked &&
+          {!isQueuedClone &&
+            ((!locked &&
             !linkLocked &&
             !selectedDiffNode &&
             (!currentVisibleNode.unclassified ||
               property !== "generalizations") &&
-            property !== "isPartOf") ||
-            (clonedNodesQueue.hasOwnProperty(link.id) &&
-              property !== "generalizations")) && (
+            property !== "isPartOf")) && (
             <>
               {loadingIds.has(link.id) ? (
                 <LoadingButton
@@ -753,30 +745,7 @@ const LinkNode = ({
                 />
               ) : (
                 <Box sx={{ display: "flex" }}>
-                  {clonedNodesQueue.hasOwnProperty(link.id) && (
-                    <Tooltip title="Save">
-                      <IconButton
-                        sx={{
-                          ml: "18px",
-                          borderRadius: "18px",
-                          fontSize: "12px",
-                          p: 0.2,
-                        }}
-                        onClick={() => {
-                          saveNewSpecialization(link.id, collectionName);
-                        }}
-                      >
-                        <CheckIcon sx={{ color: "green" }} />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                  <Tooltip
-                    title={
-                      clonedNodesQueue.hasOwnProperty(link.id)
-                        ? "Cancel"
-                        : "Unlink"
-                    }
-                  >
+                  <Tooltip title="Unlink">
                     <IconButton
                       sx={{
                         ml: "18px",
@@ -787,13 +756,7 @@ const LinkNode = ({
                       }}
                       onClick={handleUnlinkNode}
                     >
-                      {clonedNodesQueue.hasOwnProperty(link.id) ? (
-                        <CloseIcon sx={{ color: "red" }} />
-                      ) : (
-                        <LinkOffIcon
-                          sx={{ color: enableEdit ? "orange" : "gray" }}
-                        />
-                      )}
+                      <LinkOffIcon sx={{ color: enableEdit ? "orange" : "gray" }} />
                     </IconButton>
                   </Tooltip>
                 </Box>

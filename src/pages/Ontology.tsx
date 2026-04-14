@@ -121,7 +121,12 @@ import {
   SCROLL_BAR_STYLE,
   ONTOLOGY_APPS,
 } from "@components/lib/CONSTANTS";
-import { NODES, TREE_PENDING_CHANGES, USERS, UNREAD_COMMENTS } from "@components/lib/firestoreClient/collections";
+import {
+  NODES,
+  TREE_PENDING_CHANGES,
+  USERS,
+  UNREAD_COMMENTS,
+} from "@components/lib/firestoreClient/collections";
 import { getDatabase, onValue, ref } from "firebase/database";
 
 import { recordLogs } from "@components/lib/utils/helpers";
@@ -1350,7 +1355,7 @@ const Ontology = ({
 
     const changesQuery = query(
       collection(db, TREE_PENDING_CHANGES),
-      where('appName', '==', appName)
+      where("appName", "==", appName),
     );
 
     const unsubscribe = onSnapshot(
@@ -1358,7 +1363,7 @@ const Ontology = ({
       (snapshot) => {
         // Skip initial snapshot (tree already loaded with pending changes)
         const hasRelevantChanges = snapshot.docChanges().some((change) => {
-          return change.type === 'added' || change.type === 'modified';
+          return change.type === "added" || change.type === "modified";
         });
 
         if (hasRelevantChanges) {
@@ -1368,18 +1373,20 @@ const Ontology = ({
           }
 
           // Reload tree with pending changes
-          loadTreeFromSubCollection(currentVisibleNode.id, appName).then(hierarchicalTree => {
-            const filteredTree = filterTreeForTargetNode(
-              hierarchicalTree,
-              currentVisibleNode.id,
-            );
-            setCurrentNodeTreeData(filteredTree);
-          });
+          loadTreeFromSubCollection(currentVisibleNode.id, appName).then(
+            (hierarchicalTree) => {
+              const filteredTree = filterTreeForTargetNode(
+                hierarchicalTree,
+                currentVisibleNode.id,
+              );
+              setCurrentNodeTreeData(filteredTree);
+            },
+          );
         }
       },
       (error) => {
-        console.error('Error:', error);
-      }
+        console.error("Error:", error);
+      },
     );
 
     return () => unsubscribe();
@@ -1957,15 +1964,17 @@ const Ontology = ({
         navigateToNode(node.id);
 
         setTimeout(() => {
-          const elements : any = document.querySelector(`[node-id="${node?.id}"]`);
+          const elements: any = document.querySelector(
+            `[node-id="${node?.id}"]`,
+          );
           if (elements) {
             const firstElement = elements.length > 0 ? elements[0] : elements;
             if (firstElement) {
-            firstElement.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            });
-          }
+              firstElement.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              });
+            }
           }
         }, 500);
         // initializeExpanded(eachOntologyPath[node.id]);
@@ -2077,7 +2086,6 @@ const Ontology = ({
 
   // Load tree data from subCollection
   useEffect(() => {
-
     // Skip rebuilding if we have instant updates pending
     if (hasInstantUpdateRef.current) {
       return;
@@ -2093,7 +2101,7 @@ const Ontology = ({
       try {
         const hierarchicalTree = await loadTreeFromSubCollection(
           currentVisibleNode.id,
-          appName
+          appName,
         );
 
         // Apply filtering based on target node occurrences
@@ -2225,8 +2233,8 @@ const Ontology = ({
         minHeight: "100vh",
         background:
           theme.palette.mode === "dark"
-            ? "linear-gradient(135deg, #1b1a1a 0%, #242428 50%, #191c21 100%)"
-            : "linear-gradient(135deg, #f8f9fa 0%, #e8ecf0 50%, #f0f4f8 100%)",
+            ? "linear-gradient(150deg, #060608 0%, #14141c 30%, #3a3a48 60%, #101014 100%)"
+            : "linear-gradient(150deg, #ffffff 0%, #8fa0b8 40%, #c8d6e8 70%, #eef4fc 100%)",
       }}
     >
       <Head>
@@ -2534,278 +2542,379 @@ const Ontology = ({
         />
       )}
 
-      <Box>
-        <Container
-          style={{
-            height: "100vh",
-            display: "flex",
-            overflow: "hidden",
-            backgroundColor:
-              theme.palette.mode === "dark" ? "#1b1a1a" : "#f8f9fa",
-            paddingTop: isMobile
-              ? mobileTreeOpen
-                ? "calc(56px + 50vh)"
-                : "56px"
-              : "0",
-            transition: isMobile ? "padding-top 0.3s ease-in-out" : "none",
-          }}
-          columnResizerRef={columnResizerRef}
-        >
-          {!isMobile && (
-            <Section
-              minSize={0}
-              defaultSize={500}
-              style={{
-                height: "100vh",
-                overflow: "hidden",
-                position: "relative",
-                display: "flex",
-                flexDirection: "column",
-                backgroundColor:
-                  theme.palette.mode === "dark" ? "#303134" : "white",
-                borderTopRightRadius: "25px",
-                borderBottomRightRadius: "25px",
-                borderStyle: "none solid none none",
-              }}
-            >
-              <Box
-                sx={{
-                  height: "100vh",
-                  marginTop: "180px",
-                  flexGrow: 1,
-                  overflow: "auto",
-                  ...SCROLL_BAR_STYLE,
-                  "&::-webkit-scrollbar": {
-                    display: "none",
-                  },
-                }}
-              >
-                <TabPanel
-                  value={viewValue}
-                  index={0}
-                  sx={{
-                    height: "100%",
-                    overflowX: "auto",
-                    whiteSpace: "nowrap",
-                    "&::-webkit-scrollbar": {
-                      display: "none",
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "inline-block",
-                      minWidth: "100%",
-                    }}
-                  >
-                    <DraggableTree
-                      treeViewData={currentNodeTreeData}
-                      setSnackbarMessage={setSnackbarMessage}
-                      treeRef={treeRef}
-                      currentVisibleNode={currentVisibleNode}
-                      nodes={relatedNodes}
-                      onOpenNodesTree={onOpenNodesTree}
-                      skillsFuture={skillsFuture}
-                      specializationNumsUnder={specializationNumsUnder}
-                      skillsFutureApp={appName}
-                      onInstantTreeUpdate={handleInstantTreeUpdate}
-                      onExpandEllipsis={handleExpandEllipsis}
-                      nodesWithComments={nodesWithComments}
-                    />
-                  </Box>
-                </TabPanel>
-                <TabPanel value={viewValue} index={1}>
-                  <GraphView
-                    treeData={currentNodeTreeData}
-                    setExpandedNodes={setExpandedNodes}
-                    expandedNodes={expandedNodes}
-                    onOpenNodeDagre={onOpenNodeDagre}
-                    currentVisibleNode={currentVisibleNode}
-                  />
-                </TabPanel>
-              </Box>
-
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 0,
-                  width: "100%",
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "dark" ? "#191c21" : "#eaecf0",
-                }}
-              >
-                {" "}
-                {skillsFuture && (
-                  <Box sx={{ m: "10px", mb: "0px", p: 0 }}>
-                    <FormControl
-                      variant="outlined"
-                      sx={{ borderRadius: "20px" }}
-                      fullWidth
-                    >
-                      <InputLabel id="property-type-label">
-                        Which Ontology
-                      </InputLabel>
-                      <Select
-                        labelId="property-type-label"
-                        value={appName}
-                        onChange={(event) => {
-                          setRelatedNodes({});
-                          isSwitchingAppRef.current = true;
-                          const app = event.target.value.replaceAll(" ", "_");
-                          router.replace(`/${app}`);
-                        }}
-                        label="Ontology Type"
-                        sx={{
-                          borderRadius: "20px",
-                          "& .MuiSelect-select": {
-                            padding: "10px 14px",
-                          },
-                        }}
-                        MenuProps={{
-                          PaperProps: {
-                            sx: {
-                              backgroundColor: (theme) =>
-                                theme.palette.mode === "dark" ? "#1a1a1a" : "",
-                              borderLeftBottomRadius: "20px",
-                              borderRightBottomRadius: "20px",
-                              px: 1.5,
-                              border: "1.5px solid gray",
-                              borderRadius: "25px",
-                            },
-                          },
-                        }}
-                      >
-                        {ONTOLOGY_APPS.map(({ id, name }) => (
-                          <MenuItem
-                            key={id}
-                            value={id}
-                            sx={{
-                              borderRadius: "25px",
-                              mt: "3px",
-                              border: "1px solid gray",
-                              background:
-                                "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
-                              fontSize: "15px",
-                              fontWeight: appName === id ? "bold" : "400",
-                              color:
-                                appName === id
-                                  ? (theme) =>
-                                      theme.palette.mode === "light"
-                                        ? "#FF6600"
-                                        : "orange"
-                                  : "",
-                            }}
-                          >
-                            {name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Box>
-                )}
-                <SearchSideBar
-                  openSearchedNode={openSearchedNode}
-                  searchWithFuse={searchWithFuse}
-                  lastSearches={lastSearches}
-                  updateLastSearches={updateLastSearches}
-                  skillsFuture={skillsFuture}
-                  skillsFutureApp={appName}
-                  isExperimentalSearch={isExperimentalSearch}
-                />{" "}
-                <Divider sx={{ borderBottomWidth: 1.5, borderColor: "gray" }} />
-                <Tabs
-                  value={viewValue}
-                  onChange={handleViewChange}
-                  sx={{
-                    width: "100%",
-                    borderColor: "divider",
-                    backgroundColor: (theme) =>
-                      theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-                    ".MuiTab-root.Mui-selected": {
-                      color: "#ff6d00",
-                    },
-                  }}
-                >
-                  <Tab
-                    label="Outline"
-                    {...a11yProps(0)}
-                    sx={{ width: "50%", fontSize: "19px" }}
-                  />
-                  <Tab
-                    label="Graph View"
-                    {...a11yProps(1)}
-                    sx={{ width: "50%", fontSize: "19px" }}
-                  />
-                </Tabs>
-              </Box>
-            </Section>
-          )}
-
-          {!isMobile && (
-            <Bar
-              size={0.1}
-              style={{
-                background: "transparent",
-                cursor: "col-resize",
-                position: "relative",
-                borderRadius: "4px",
-              }}
-            >
-              <SettingsEthernetIcon
-                sx={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  color: (theme) =>
-                    theme.palette.mode === "dark"
-                      ? theme.palette.common.gray50
-                      : theme.palette.common.notebookMainBlack,
-                  borderRadius: "50%",
-                  ":hover": {
-                    backgroundColor: "orange",
-                  },
-                }}
-              />
-            </Bar>
-          )}
-
-          <Section minSize={0}>
+      <Container
+        style={{
+          height: "100vh",
+          display: "flex",
+          overflow: "hidden",
+          backgroundColor: "transparent",
+          paddingTop: isMobile
+            ? mobileTreeOpen
+              ? "calc(56px + 50vh)"
+              : "56px"
+            : "0",
+          transition: isMobile ? "padding-top 0.3s ease-in-out" : "none",
+        }}
+        columnResizerRef={columnResizerRef}
+      >
+        {!isMobile && (
+          <Section
+            minSize={0}
+            defaultSize={500}
+            style={{
+              height: "100vh",
+              overflow: "hidden",
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              backgroundColor:
+                theme.palette.mode === "dark" ? "#303134" : "white",
+              borderTopRightRadius: "25px",
+              borderBottomRightRadius: "25px",
+              borderStyle: "none solid none none",
+            }}
+          >
             <Box
-              id="node-section"
               sx={{
-                background:
-                  theme.palette.mode === "dark"
-                    ? "linear-gradient(150deg, #060608 0%, #14141c 30%, #3a3a48 60%, #101014 100%)"
-                    : "linear-gradient(150deg, #ffffff 0%, #8fa0b8 40%, #c8d6e8 70%, #eef4fc 100%)",
-                p: "20px",
-                pt: 0,
+                height: "100vh",
+                marginTop: "200px",
+                flexGrow: 1,
                 overflow: "auto",
-                height: isMobile
-                  ? mobileTreeOpen
-                    ? "calc(100vh - 56px - 50vh)" // Account for header + tree
-                    : "calc(100vh - 56px)" // Just header
-                  : "100vh",
-                transition: isMobile ? "height 0.3s ease-in-out" : "none",
+                ...SCROLL_BAR_STYLE,
                 "&::-webkit-scrollbar": {
                   display: "none",
                 },
               }}
             >
-              <Box ref={scrolling}></Box>
-              {displayGuidelines && (
-                <GuidLines setDisplayGuidelines={setDisplayGuidelines} />
+              <TabPanel
+                value={viewValue}
+                index={0}
+                sx={{
+                  height: "100%",
+                  overflowX: "auto",
+                  whiteSpace: "nowrap",
+                  "&::-webkit-scrollbar": {
+                    display: "none",
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "inline-block",
+                    minWidth: "100%",
+                  }}
+                >
+                  <DraggableTree
+                    treeViewData={currentNodeTreeData}
+                    setSnackbarMessage={setSnackbarMessage}
+                    treeRef={treeRef}
+                    currentVisibleNode={currentVisibleNode}
+                    nodes={relatedNodes}
+                    onOpenNodesTree={onOpenNodesTree}
+                    skillsFuture={skillsFuture}
+                    specializationNumsUnder={specializationNumsUnder}
+                    skillsFutureApp={appName}
+                    onInstantTreeUpdate={handleInstantTreeUpdate}
+                    onExpandEllipsis={handleExpandEllipsis}
+                    nodesWithComments={nodesWithComments}
+                  />
+                </Box>
+              </TabPanel>
+              <TabPanel value={viewValue} index={1}>
+                <GraphView
+                  treeData={currentNodeTreeData}
+                  setExpandedNodes={setExpandedNodes}
+                  expandedNodes={expandedNodes}
+                  onOpenNodeDagre={onOpenNodeDagre}
+                  currentVisibleNode={currentVisibleNode}
+                />
+              </TabPanel>
+            </Box>
+
+            <Box
+              sx={{
+                position: "absolute",
+                top: 0,
+                width: "100%",
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark" ? "#191c21" : "#eaecf0",
+              }}
+            >
+              {" "}
+              {skillsFuture && (
+                <Box sx={{ m: "10px", mb: "0px", p: 0 }}>
+                  <FormControl
+                    variant="outlined"
+                    sx={{ borderRadius: "20px" }}
+                    fullWidth
+                  >
+                    <InputLabel id="property-type-label">
+                      Which Ontology
+                    </InputLabel>
+                    <Select
+                      labelId="property-type-label"
+                      value={appName}
+                      onChange={(event) => {
+                        setRelatedNodes({});
+                        isSwitchingAppRef.current = true;
+                        const app = event.target.value.replaceAll(" ", "_");
+                        router.replace(`/${app}`);
+                      }}
+                      label="Ontology Type"
+                      sx={{
+                        borderRadius: "20px",
+                        "& .MuiSelect-select": {
+                          padding: "10px 14px",
+                        },
+                      }}
+                      MenuProps={{
+                        PaperProps: {
+                          sx: {
+                            backgroundColor: (theme) =>
+                              theme.palette.mode === "dark" ? "#1a1a1a" : "",
+                            borderLeftBottomRadius: "20px",
+                            borderRightBottomRadius: "20px",
+                            px: 1.5,
+                            border: "1.5px solid gray",
+                            borderRadius: "25px",
+                          },
+                        },
+                      }}
+                    >
+                      {ONTOLOGY_APPS.map(({ id, name }) => (
+                        <MenuItem
+                          key={id}
+                          value={id}
+                          sx={{
+                            borderRadius: "25px",
+                            mt: "3px",
+                            border: "1px solid gray",
+                            background:
+                              "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
+                            fontSize: "15px",
+                            fontWeight: appName === id ? "bold" : "400",
+                            color:
+                              appName === id
+                                ? (theme) =>
+                                    theme.palette.mode === "light"
+                                      ? "#FF6600"
+                                      : "orange"
+                                : "",
+                          }}
+                        >
+                          {name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
               )}
-              {navigationError && (
-                <NavigationError
-                  type={navigationError.type}
-                  onGoBack={() => {
-                    setNavigationError(null);
-                    window.history.back();
+              <SearchSideBar
+                openSearchedNode={openSearchedNode}
+                searchWithFuse={searchWithFuse}
+                lastSearches={lastSearches}
+                updateLastSearches={updateLastSearches}
+                skillsFuture={skillsFuture}
+                skillsFutureApp={appName}
+                isExperimentalSearch={isExperimentalSearch}
+              />{" "}
+              <Divider sx={{ borderBottomWidth: 1.5, borderColor: "gray" }} />
+              <Tabs
+                value={viewValue}
+                onChange={handleViewChange}
+                sx={{
+                  width: "100%",
+                  minHeight: "68px",
+                  height: "68px",
+                  p: 0.5,
+                  borderRadius: "999px",
+                  display: "flex",
+                  alignItems: "center",
+
+                  borderColor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(255, 255, 255, 0.16)"
+                      : "rgba(15, 23, 42, 0.12)",
+                  "& .MuiTabs-indicator": {
+                    display: "none",
+                  },
+                  "& .MuiTabs-scroller": {
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                  },
+                  "& .MuiTabs-flexContainer": {
+                    gap: "8px",
+                    alignItems: "center",
+                    width: "100%",
+                  },
+                  "& .MuiTab-root": {
+                    top: "1px",
+                  },
+                  px: "10px",
+                }}
+              >
+                <Tab
+                  label="Outline"
+                  {...a11yProps(0)}
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    maxWidth: "none",
+                    minHeight: "52px",
+                    height: "52px",
+                    p: 0,
+                    textTransform: "none",
+                    fontSize: "19px",
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: (theme) =>
+                      theme.palette.mode === "dark" ? "#9fb0c6" : "#475569",
+                    borderRadius: "999px",
+                    border: "2px solid",
+                    borderColor: "transparent",
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "rgba(148, 163, 184, 0.06)"
+                        : "rgba(255, 255, 255, 0.5)",
+                    transition: "all 150ms ease",
+                    "&:hover": {
+                      backgroundColor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(148, 163, 184, 0.14)"
+                          : "rgba(255, 255, 255, 0.8)",
+                    },
+                    "&.Mui-selected": {
+                      color: "#ffffff",
+                      borderColor: (theme) =>
+                        theme.palette.mode === "dark" ? "#ff9b3d" : "#f97316",
+                      background: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "linear-gradient(180deg, #ffb15c 0%, #ff8a1f 100%)"
+                          : "linear-gradient(180deg, #fb923c 0%, #ea580c 100%)",
+                      boxShadow:
+                        "0 4px 12px rgba(249, 115, 22, 0.38), inset 0 1px 0 rgba(255,255,255,0.28)",
+                    },
                   }}
                 />
-              )}
-              {currentVisibleNode && user && !displayGuidelines && !navigationError && (
+                <Tab
+                  label="Graph View"
+                  {...a11yProps(1)}
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    maxWidth: "none",
+                    minHeight: "52px",
+                    height: "52px",
+                    p: 0,
+                    textTransform: "none",
+                    fontSize: "19px",
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: (theme) =>
+                      theme.palette.mode === "dark" ? "#9fb0c6" : "#475569",
+                    borderRadius: "999px",
+                    border: "2px solid",
+                    borderColor: "transparent",
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "rgba(148, 163, 184, 0.06)"
+                        : "rgba(255, 255, 255, 0.5)",
+                    transition: "all 150ms ease",
+                    "&:hover": {
+                      backgroundColor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(148, 163, 184, 0.14)"
+                          : "rgba(255, 255, 255, 0.8)",
+                    },
+                    "&.Mui-selected": {
+                      color: "#ffffff",
+                      borderColor: (theme) =>
+                        theme.palette.mode === "dark" ? "#ff9b3d" : "#f97316",
+                      background: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "linear-gradient(180deg, #ffb15c 0%, #ff8a1f 100%)"
+                          : "linear-gradient(180deg, #fb923c 0%, #ea580c 100%)",
+                      boxShadow:
+                        "0 4px 12px rgba(249, 115, 22, 0.38), inset 0 1px 0 rgba(255,255,255,0.28)",
+                    },
+                  }}
+                />
+              </Tabs>
+            </Box>
+          </Section>
+        )}
+
+        {!isMobile && (
+          <Bar
+            size={0.1}
+            style={{
+              background: "transparent",
+              cursor: "col-resize",
+              position: "relative",
+              borderRadius: "4px",
+            }}
+          >
+            <SettingsEthernetIcon
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                color: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? theme.palette.common.gray50
+                    : theme.palette.common.notebookMainBlack,
+                borderRadius: "50%",
+                ":hover": {
+                  backgroundColor: "orange",
+                },
+              }}
+            />
+          </Bar>
+        )}
+
+        <Section minSize={0}>
+          <Box
+            id="node-section"
+            sx={{
+              p: "20px",
+              pt: 0,
+              overflow: "auto",
+              height: isMobile
+                ? mobileTreeOpen
+                  ? "calc(100vh - 56px - 50vh)" // Account for header + tree
+                  : "calc(100vh - 56px)" // Just header
+                : "100vh",
+              transition: isMobile ? "height 0.3s ease-in-out" : "none",
+              "&::-webkit-scrollbar": {
+                display: "none",
+              },
+            }}
+          >
+            <Box ref={scrolling}></Box>
+            {displayGuidelines && (
+              <GuidLines setDisplayGuidelines={setDisplayGuidelines} />
+            )}
+            {navigationError && (
+              <NavigationError
+                type={navigationError.type}
+                onGoBack={() => {
+                  setNavigationError(null);
+                  window.history.back();
+                }}
+              />
+            )}
+            {currentVisibleNode &&
+              user &&
+              !displayGuidelines &&
+              !navigationError && (
                 <Node
                   currentVisibleNode={
                     currentImprovement?.node || currentVisibleNode
@@ -2858,53 +2967,51 @@ const Ontology = ({
                   nodesWithComments={nodesWithComments}
                 />
               )}
-            </Box>
-          </Section>
-          <Box sx={{ display: { xs: "none", md: "block" } }}>
-            <MemoizedToolbarSidebar
-              // isHovered={toolbarIsHovered}
-              searchWithFuse={searchWithFuse}
-              toolbarRef={toolbarRef}
-              user={user}
-              openSearchedNode={openSearchedNode}
-              relatedNodes={relatedNodes}
-              fetchNode={fetchNode}
-              selectedDiffNode={selectedDiffNode}
-              setSelectedDiffNode={setSelectedDiffNode}
-              currentVisibleNode={currentVisibleNode}
-              setCurrentVisibleNode={setCurrentVisibleNode}
-              confirmIt={confirmIt}
-              activeSidebar={activeSidebar}
-              setActiveSidebar={setActiveSidebar}
-              handleExpandSidebar={handleExpandSidebar}
-              navigateToNode={navigateToNode}
-              treeVisualization={treeVisualization}
-              expandedNodes={expandedNodes}
-              setExpandedNodes={setExpandedNodes}
-              onOpenNodesTree={onOpenNodesTree}
-              setDisplayGuidelines={setDisplayGuidelines}
-              currentImprovement={currentImprovement}
-              setCurrentImprovement={setCurrentImprovement}
-              lastSearches={lastSearches}
-              updateLastSearches={updateLastSearches}
-              selectedChatTab={selectedChatTab}
-              setSelectedChatTab={setSelectedChatTab}
-              displayGuidelines={displayGuidelines}
-              signOut={signOut}
-              skillsFuture={skillsFuture}
-              skillsFutureApp={appName ?? null}
-              isExperimentalSearch={isExperimentalSearch}
-              setIsExperimentalSearch={setIsExperimentalSearch}
-              appName={appName}
-            />
           </Box>
-        </Container>
-        {ConfirmDialog}
-        <SneakMessage
-          newMessage={snackbarMessage}
-          setNewMessage={setSnackbarMessage}
+        </Section>
+
+        <MemoizedToolbarSidebar
+          // isHovered={toolbarIsHovered}
+          searchWithFuse={searchWithFuse}
+          toolbarRef={toolbarRef}
+          user={user}
+          openSearchedNode={openSearchedNode}
+          relatedNodes={relatedNodes}
+          fetchNode={fetchNode}
+          selectedDiffNode={selectedDiffNode}
+          setSelectedDiffNode={setSelectedDiffNode}
+          currentVisibleNode={currentVisibleNode}
+          setCurrentVisibleNode={setCurrentVisibleNode}
+          confirmIt={confirmIt}
+          activeSidebar={activeSidebar}
+          setActiveSidebar={setActiveSidebar}
+          handleExpandSidebar={handleExpandSidebar}
+          navigateToNode={navigateToNode}
+          treeVisualization={treeVisualization}
+          expandedNodes={expandedNodes}
+          setExpandedNodes={setExpandedNodes}
+          onOpenNodesTree={onOpenNodesTree}
+          setDisplayGuidelines={setDisplayGuidelines}
+          currentImprovement={currentImprovement}
+          setCurrentImprovement={setCurrentImprovement}
+          lastSearches={lastSearches}
+          updateLastSearches={updateLastSearches}
+          selectedChatTab={selectedChatTab}
+          setSelectedChatTab={setSelectedChatTab}
+          displayGuidelines={displayGuidelines}
+          signOut={signOut}
+          skillsFuture={skillsFuture}
+          skillsFutureApp={appName ?? null}
+          isExperimentalSearch={isExperimentalSearch}
+          setIsExperimentalSearch={setIsExperimentalSearch}
+          appName={appName}
         />
-      </Box>
+      </Container>
+      {ConfirmDialog}
+      <SneakMessage
+        newMessage={snackbarMessage}
+        setNewMessage={setSnackbarMessage}
+      />
     </Box>
   );
 };

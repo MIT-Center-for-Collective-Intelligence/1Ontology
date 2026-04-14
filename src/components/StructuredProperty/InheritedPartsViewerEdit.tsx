@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Box,
   Typography,
@@ -11,10 +11,9 @@ import {
   Select,
   MenuItem,
   ListSubheader,
-  Tabs,
-  Tab,
   Popover,
   CircularProgress,
+  TextField,
 } from "@mui/material";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import {
@@ -27,6 +26,7 @@ import {
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import RemoveIcon from "@mui/icons-material/Remove";
 import SearchIcon from "@mui/icons-material/Search";
+import CheckIcon from "@mui/icons-material/Check";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -34,13 +34,9 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
+import GeneralizationTabs from "./GeneralizationTabs";
 
-import {
-  collection,
-  getFirestore,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
+import { collection, getFirestore, doc, updateDoc } from "firebase/firestore";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { recordLogs, saveNewChangeLog } from "@components/lib/utils/helpers";
 
@@ -82,6 +78,10 @@ interface InheritedPartsViewerProps {
   inheritedPartsDetails?: InheritedPartsDetail[] | null;
   mutateData?: (newData: InheritedPartsDetail[] | null) => void;
   debouncedRefetch?: () => void;
+  clonedNodesQueue?: { [nodeId: string]: { title: string; id: string } };
+  approvePendingPart?: (queuedId: string) => Promise<void> | void;
+  cancelPendingPart?: (queuedId: string) => void;
+  updatePendingPartTitle?: (queuedId: string, title: string) => void;
 }
 
 const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
@@ -105,6 +105,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   inheritedPartsDetails,
   mutateData,
   debouncedRefetch,
+  clonedNodesQueue,
+  approvePendingPart,
+  cancelPendingPart,
+  updatePendingPartTitle,
 }) => {
   const db = getFirestore();
   const [activeTab, setActiveTab] = React.useState<string | null>(null);
@@ -137,13 +141,48 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const [pickingFor, setPickingFor] = useState<string>("");
   const [anchorEl, setAnchorEl] = useState(null);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const [approvingPendingIds, setApprovingPendingIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [loadingSpecializations, setLoadingSpecializations] = useState<
     Set<string>
   >(new Set());
   const [fetchedNodes, setFetchedNodes] = useState<{ [id: string]: INode }>({});
+  const seenQueuedPendingIdsRef = useRef<Set<string>>(new Set());
+  const [highlightedPendingIds, setHighlightedPendingIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   // Merge nodes from props with locally fetched nodes
   const allNodes = { ...nodes, ...fetchedNodes };
+
+  useEffect(() => {
+    const currentQueuedIds = Object.keys(clonedNodesQueue || {});
+    const previouslySeenIds = seenQueuedPendingIdsRef.current;
+    const newlyQueuedIds = currentQueuedIds.filter((id) => !previouslySeenIds.has(id));
+
+    seenQueuedPendingIdsRef.current = new Set(currentQueuedIds);
+
+    setHighlightedPendingIds((prev) => {
+      const next = new Set([...prev].filter((id) => currentQueuedIds.includes(id)));
+      newlyQueuedIds.forEach((id) => next.add(id));
+      return next;
+    });
+
+    if (newlyQueuedIds.length === 0) return;
+
+    const clearHighlightTimeout = setTimeout(() => {
+      setHighlightedPendingIds((prev) => {
+        const next = new Set(prev);
+        newlyQueuedIds.forEach((id) => next.delete(id));
+        return next;
+      });
+    }, 1000);
+
+    return () => {
+      clearTimeout(clearHighlightTimeout);
+    };
+  }, [clonedNodesQueue]);
 
   const handleClose = () => {
     setAnchorEl(null);
@@ -430,6 +469,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     addPart(partId);
     optimisticUpdate((data) => {
       for (const gen of data) {
+        let updatedExistingEntry = false;
         const entry = gen.details.find(
           (d) => d.from === partId && d.symbol === "x",
         );
@@ -439,6 +479,24 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           entry.toTitle = entry.fromTitle;
           entry.toOptional = entry.fromOptional;
           entry.optionalChange = "none";
+          updatedExistingEntry = true;
+        }
+
+        // If this part doesn't exist in inherited comparison rows,
+        // optimistically render it as a newly added part.
+        const alreadyPresent = gen.details.some((d) => d.to === partId);
+        if (!updatedExistingEntry && !alreadyPresent) {
+          gen.details.push({
+            from: "",
+            to: partId,
+            symbol: "+",
+            fromTitle: "",
+            toTitle: allNodes[partId]?.title || "",
+            fromOptional: false,
+            toOptional: getCurrentPartOptionalStatus(partId),
+            optionalChange: "none",
+            hops: 0,
+          });
         }
       }
       return data;
@@ -479,6 +537,44 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       }
       return data;
     });
+  };
+
+  const onApprovePendingPart = async (queuedId: string, title: string) => {
+    // Optimistically show the approved part immediately in the list.
+    optimisticUpdate((data) => {
+      for (const gen of data) {
+        const alreadyExists = gen.details.some((entry) => entry.to === queuedId);
+        if (!alreadyExists) {
+          gen.details.push({
+            from: "",
+            to: queuedId,
+            symbol: "+",
+            fromTitle: "",
+            toTitle: title,
+            fromOptional: false,
+            toOptional: false,
+            optionalChange: "none",
+            hops: 0,
+          });
+        }
+      }
+      return data;
+    });
+
+    setApprovingPendingIds((prev) => {
+      const updated = new Set(prev);
+      updated.add(queuedId);
+      return updated;
+    });
+    try {
+      await Promise.resolve(approvePendingPart?.(queuedId));
+    } finally {
+      setApprovingPendingIds((prev) => {
+        const updated = new Set(prev);
+        updated.delete(queuedId);
+        return updated;
+      });
+    }
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
@@ -560,6 +656,12 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       const index = details.findIndex((d) => d.from === id);
       return index === -1;
     });
+    const pendingQueuedParts = Object.entries(clonedNodesQueue || {}).map(
+      ([queuedId, queuedNode]) => ({
+        id: queuedId,
+        title: queuedNode?.title || "",
+      }),
+    );
 
     return (
       <Box
@@ -1029,6 +1131,110 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             ))}
           </List>
         )}
+        {pendingQueuedParts.length > 0 && (
+          <List sx={{ px: 1.8, py: 1, mt: -0.5 }}>
+            {pendingQueuedParts.map((pendingPart) => {
+              const isNewlyQueued = highlightedPendingIds.has(pendingPart.id);
+
+              return (
+                <ListItem
+                  key={`pending-${pendingPart.id}`}
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    px: 1,
+                    py: 0.2,
+                    borderRadius: "12px",
+                    border: "1px dashed",
+                    borderColor: (theme) =>
+                      theme.palette.mode === "dark" ? "#5a5a5a" : "#c8c8c8",
+                    mb: 0.5,
+                    "@keyframes pendingPartHighlight": {
+                      "0%": {
+                        backgroundColor: "rgba(255, 165, 0, 0.32)",
+                        boxShadow: "0 0 0 1px rgba(255, 165, 0, 0.45)",
+                      },
+                      "100%": {
+                        backgroundColor: "transparent",
+                        boxShadow: "0 0 0 0 rgba(255, 165, 0, 0)",
+                      },
+                    },
+                    animation: isNewlyQueued
+                      ? "pendingPartHighlight 1s ease-out"
+                      : "none",
+                  }}
+                >
+                  <ListItemText primary={null} sx={{ flex: 1, minWidth: 0.3 }} />
+                  <ListItemIcon sx={{ minWidth: "auto" }}>
+                    <AddIcon sx={{ fontSize: 20, color: "orange" }} />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={
+                      <TextField
+                        size="small"
+                        fullWidth
+                        value={pendingPart.title}
+                        onChange={(e) =>
+                          updatePendingPartTitle?.(pendingPart.id, e.target.value)
+                        }
+                        placeholder="New part title"
+                        sx={{
+                          "& .MuiInputBase-root": {
+                            borderRadius: "12px",
+                          },
+                        }}
+                      />
+                    }
+                    sx={{ flex: 1, minWidth: 0.3 }}
+                  />
+                  {!!approvePendingPart && (
+                    <Tooltip title={"Approve part"} placement="top">
+                      <IconButton
+                        sx={{ p: 0.5 }}
+                        disabled={approvingPendingIds.has(pendingPart.id)}
+                        onClick={() => {
+                          onApprovePendingPart(pendingPart.id, pendingPart.title);
+                        }}
+                      >
+                        {approvingPendingIds.has(pendingPart.id) ? (
+                          <CircularProgress size={20} />
+                        ) : (
+                          <CheckIcon
+                            sx={{
+                              fontSize: 20,
+                              color: "green",
+                              border: "1px solid green",
+                              borderRadius: "50%",
+                            }}
+                          />
+                        )}
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  {!!cancelPendingPart && (
+                    <Tooltip title={"Cancel part"} placement="top">
+                      <IconButton
+                        sx={{ p: 0.5 }}
+                        onClick={() => {
+                          cancelPendingPart(pendingPart.id);
+                        }}
+                      >
+                        <CloseIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "red",
+                            border: "1px solid red",
+                            borderRadius: "50%",
+                          }}
+                        />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </ListItem>
+              );
+            })}
+          </List>
+        )}
       </Box>
     );
   };
@@ -1122,9 +1328,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
         // Optimistic update: reorder details to match new parts order
         optimisticUpdate((data) => {
-          const newPartsOrder = propertyValue[0]?.nodes?.map(
-            (n: any) => n.id,
-          ) || [];
+          const newPartsOrder =
+            propertyValue[0]?.nodes?.map((n: any) => n.id) || [];
           for (const gen of data) {
             gen.details.sort((a, b) => {
               const aIdx = newPartsOrder.indexOf(a.to);
@@ -1196,34 +1401,11 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         </Box>
       </Box>
 
-      {generalizations.length > 1 && (
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          aria-label="Generalization selection tabs"
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{ mt: 2.5, border: "1px solid gray", borderRadius: "25px" }}
-        >
-          {generalizations.map((gen) => (
-            <Tab
-              key={gen.id}
-              label={gen.title}
-              value={gen.id}
-              sx={{
-                textTransform: "none",
-                fontWeight: activeTab === gen.id ? 900 : 500,
-                bgcolor:
-                  activeTab === gen.id
-                    ? (theme) =>
-                        theme.palette.mode === "light" ? "#bfbfbf" : "#4c4c4c"
-                    : "transparent",
-                borderRadius: "16px",
-              }}
-            />
-          ))}
-        </Tabs>
-      )}
+      <GeneralizationTabs
+        generalizations={generalizations}
+        activeTab={activeTab}
+        onChange={handleTabChange}
+      />
 
       {activeGeneralization && activeGenId && activeGenTitle && (
         <Box key={activeGenId}>
@@ -1308,10 +1490,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       <InheritedPartsLegend
         legendItems={[
           { symbol: "(o)", description: "Optional" },
-          { symbol: "=", description: "no change" },
-          { symbol: ">", description: "specialized part" },
-          { symbol: "x", description: "part not inherited" },
-          { symbol: "+", description: "part added" },
+          { symbol: "=", description: "No Change" },
+          { symbol: ">", description: "Specialized Part" },
+          { symbol: "x", description: "Part not Inherited" },
+          { symbol: "+", description: "Part Added" },
         ]}
       />
     </Box>

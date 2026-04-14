@@ -573,10 +573,10 @@ const Node = ({
     const newId = doc(collection(db, NODES)).id;
     const newTitle = title ? title : `New ${node.title}`;
     setClonedNodesQueue(
-      (prev: { [nodeId: string]: { title: string; id: string } }) => {
-        prev[newId] = { title: newTitle, id: nodeId };
-        return prev;
-      },
+      (prev: { [nodeId: string]: { title: string; id: string } }) => ({
+        ...prev,
+        [newId]: { title: newTitle, id: nodeId },
+      }),
     );
     setNewOnes((newOnes: any) => {
       let _oldChecked = new Set(newOnes);
@@ -1102,7 +1102,7 @@ const Node = ({
         ) {
           await confirmIt(
             "You cannot remove all the generalizations for this node. Make sure it links to at least one generalization.",
-            "Ok",
+            "OK",
             "",
           );
           return;

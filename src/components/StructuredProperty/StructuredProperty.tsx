@@ -55,7 +55,6 @@ import PropertyContributors from "./PropertyContributors";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
 import EditProperty from "../AddPropertyForm/EditProperty";
-import InheritedPartsViewerEdit from "./InheritedPartsViewerEdit";
 import StructuredPropertySelector from "./StructuredPropertySelector";
 import PartViewer from "./PartViewer";
 
@@ -210,6 +209,7 @@ const StructuredProperty = ({
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
   const [modifiedOrder, setModifiedOrder] = useState(false);
   const [displayOptional, setDisplayOptional] = useState(false);
+  const [showTopOptionalLegend, setShowTopOptionalLegend] = useState(true);
   const [editProperty, setEditProperty] = useState("");
   const [newPropertyValue, setNewPropertyValue] = useState("");
 
@@ -558,6 +558,44 @@ const StructuredProperty = ({
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const cancelPendingPart = (queuedId: string) => {
+    setEditableProperty((prev: ICollection[]) =>
+      prev.map((collection) => ({
+        ...collection,
+        nodes: collection.nodes.filter((node) => node.id !== queuedId),
+      })),
+    );
+    setAddedElements((prev: Set<string>) => {
+      const updated = new Set(prev);
+      updated.delete(queuedId);
+      return updated;
+    });
+    setNewOnes((prev: Set<string>) => {
+      const updated = new Set(prev);
+      updated.delete(queuedId);
+      return updated;
+    });
+    setClonedNodesQueue(
+      (prev: { [nodeId: string]: { title: string; id: string } }) => {
+        const updated = { ...prev };
+        delete updated[queuedId];
+        return updated;
+      },
+    );
+  };
+
+  const updatePendingPartTitle = (queuedId: string, title: string) => {
+    setClonedNodesQueue(
+      (prev: { [nodeId: string]: { title: string; id: string } }) => ({
+        ...prev,
+        [queuedId]: {
+          ...prev[queuedId],
+          title,
+        },
+      }),
+    );
   };
 
   const logChange = (
@@ -1430,11 +1468,15 @@ const StructuredProperty = ({
               onInstantTreeUpdate={onInstantTreeUpdate}
             />
           )}
-        {property === "parts" && displayOptional && !enableEdit && (
+        {property === "parts" &&
+          displayOptional &&
+          !enableEdit &&
+          showTopOptionalLegend && (
           <InheritedPartsLegend
+            sx={{ ml: 2 }}
             legendItems={[{ symbol: "(o)", description: "Optional" }]}
           />
-        )}
+          )}
         {property === "parts" && !selectedDiffNode && !currentImprovement && (
           <>
             <PartViewer
@@ -1452,6 +1494,13 @@ const StructuredProperty = ({
               replaceWith={replaceWith}
               skillsFutureApp={skillsFutureApp}
               getGeneralizationParts={getGeneralizationParts}
+              clonedNodesQueue={clonedNodesQueue}
+              saveNewSpecialization={saveNewSpecialization}
+              cancelPendingPart={cancelPendingPart}
+              updatePendingPartTitle={updatePendingPartTitle}
+              onDisplayDetailsChange={(isExpanded) =>
+                setShowTopOptionalLegend(!isExpanded)
+              }
             />
           </>
         )}

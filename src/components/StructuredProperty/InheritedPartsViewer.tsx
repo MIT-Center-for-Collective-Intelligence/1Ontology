@@ -12,8 +12,6 @@ import {
   List,
   Link,
   Popover,
-  Tabs,
-  Tab,
   Button,
   CircularProgress,
 } from "@mui/material";
@@ -27,6 +25,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import CloseIcon from "@mui/icons-material/Close";
 import InheritedPartsLegend from "../Common/InheritedPartsLegend";
+import GeneralizationTabs from "./GeneralizationTabs";
 import {
   ICollection,
   INode,
@@ -637,36 +636,11 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
             </Box>
           </Box>
 
-          {generalizations.length > 1 && (
-            <Tabs
-              value={activeTab}
-              onChange={handleTabChange}
-              aria-label="Generalization selection tabs"
-              variant="scrollable"
-              scrollButtons="auto"
-              sx={{ mt: 2.5, border: "1px solid gray", borderRadius: "25px" }}
-            >
-              {generalizations.map((gen) => (
-                <Tab
-                  key={gen.id}
-                  label={gen.title}
-                  value={gen.id}
-                  sx={{
-                    textTransform: "none",
-                    fontWeight: activeTab === gen.id ? 900 : 500,
-                    bgcolor:
-                      activeTab === gen.id
-                        ? (theme) =>
-                            theme.palette.mode === "light"
-                              ? "#bfbfbf"
-                              : "#4c4c4c"
-                        : "transparent",
-                    borderRadius: "16px",
-                  }}
-                />
-              ))}
-            </Tabs>
-          )}
+          <GeneralizationTabs
+            generalizations={generalizations}
+            activeTab={activeTab}
+            onChange={handleTabChange}
+          />
 
           {activeGenId && activeGenTitle && (
             <Box key={activeGenId}>
@@ -745,12 +719,13 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           )}
 
           <InheritedPartsLegend
+            sx={{ ml: 2 }}
             legendItems={[
               { symbol: "(o)", description: "Optional" },
-              { symbol: "=", description: "no change" },
-              { symbol: ">", description: "specialized part" },
-              { symbol: "x", description: "part not inherited" },
-              { symbol: "+", description: "part added" },
+              { symbol: "=", description: "No Change" },
+              { symbol: ">", description: "Specialized Part" },
+              { symbol: "x", description: "Part not Inherited" },
+              { symbol: "+", description: "Part Added" },
             ]}
           />
         </Box>

@@ -1,19 +1,15 @@
 import clsx from "clsx";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { NodeApi, NodeRendererProps, Tree, TreeApi } from "react-arborist";
-import SyncAltIcon from "@mui/icons-material/SyncAlt";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import styles from "./drag.tree.module.css";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import {
   Box,
-  Button,
-  Switch,
   ToggleButton,
-  ToggleButtonGroup,
   Tooltip,
   Typography,
+  useTheme,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import EditOffIcon from "@mui/icons-material/EditOff";
@@ -71,12 +67,15 @@ function DraggableTree({
   skillsFuture?: boolean;
   specializationNumsUnder: { [key: string]: number };
   skillsFutureApp: string;
-  onInstantTreeUpdate?: (updateFn: (treeData: TreeData[]) => TreeData[]) => void;
+  onInstantTreeUpdate?: (
+    updateFn: (treeData: TreeData[]) => TreeData[],
+  ) => void;
   onExpandEllipsis?: (ellipsisNodeId: string) => void;
   nodesWithComments?: Set<string>;
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
+  const theme = useTheme();
   const [focused, setFocused] = useState<PaginatedTreeData | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [count, setCount] = useState(0);
@@ -127,10 +126,7 @@ function DraggableTree({
           allChildren: node.children ? [...node.children] : undefined,
         };
 
-        if (
-          node.children &&
-          node.children.length > INITIAL_LOAD_COUNT
-        ) {
+        if (node.children && node.children.length > INITIAL_LOAD_COUNT) {
           const hasCurrentVisibleNode =
             currentVisibleNode?.id &&
             node.children.some(
@@ -251,9 +247,10 @@ function DraggableTree({
       if (!loadMoreNode) return;
 
       // Check if this is a filtered ellipsis node
-      const isFilteredEllipsis = loadMoreNode.isLoadMore &&
-                                 (loadMoreNode as any).hiddenNodesCount !== undefined &&
-                                 !loadMoreNode.parentId;
+      const isFilteredEllipsis =
+        loadMoreNode.isLoadMore &&
+        (loadMoreNode as any).hiddenNodesCount !== undefined &&
+        !loadMoreNode.parentId;
 
       if (isFilteredEllipsis && onExpandEllipsis) {
         onExpandEllipsis(loadMoreNodeId);
@@ -481,7 +478,8 @@ function DraggableTree({
     const retryExpansion = async () => {
       // If expansion hasn't succeeded yet, retry it
       if (!hasExpandedSuccessfully.current && currentVisibleNode?.id) {
-        const nodeToExpand = pendingExpansionNodeId.current || currentVisibleNode.id;
+        const nodeToExpand =
+          pendingExpansionNodeId.current || currentVisibleNode.id;
 
         // Small delay to ensure tree is rendered
         await new Promise((resolve) => setTimeout(resolve, 150));
@@ -608,7 +606,10 @@ function DraggableTree({
       let draggedNodeVisualIndex = -1;
       if (args.parentNode?.children && args.dragNodes[0]) {
         for (let i = 0; i < args.parentNode.children.length; i++) {
-          if (args.parentNode.children[i].data.nodeId === args.dragNodes[0].data.nodeId) {
+          if (
+            args.parentNode.children[i].data.nodeId ===
+            args.dragNodes[0].data.nodeId
+          ) {
             draggedNodeVisualIndex = i;
             break;
           }
@@ -623,12 +624,14 @@ function DraggableTree({
       // Calculate correct index for local update
       let localTargetIndex = args.index;
       if (args.parentNode?.children) {
-
         localTargetIndex = args.index;
 
         // When dragging down: removal shifts positions after the dragged node
         // When dragging up: removal doesn't affect positions before the dragged node
-        if (draggedNodeVisualIndex >= 0 && draggedNodeVisualIndex < args.index) {
+        if (
+          draggedNodeVisualIndex >= 0 &&
+          draggedNodeVisualIndex < args.index
+        ) {
           localTargetIndex--; // adjust shift
         }
       }
@@ -646,15 +649,19 @@ function DraggableTree({
       if (onInstantTreeUpdate) {
         // Clean the newData to remove pagination properties
         const cleanTreeData = (data: PaginatedTreeData[]): TreeData[] => {
-          return data.filter(node => !node.isLoadMore).map(node => ({
-            id: node.id,
-            nodeId: node.nodeId,
-            name: node.name,
-            nodeType: node.nodeType,
-            category: node.category,
-            unclassified: node.unclassified,
-            children: node.children ? cleanTreeData(node.children) : undefined,
-          }));
+          return data
+            .filter((node) => !node.isLoadMore)
+            .map((node) => ({
+              id: node.id,
+              nodeId: node.nodeId,
+              name: node.name,
+              nodeType: node.nodeType,
+              category: node.category,
+              unclassified: node.unclassified,
+              children: node.children
+                ? cleanTreeData(node.children)
+                : undefined,
+            }));
         };
 
         onInstantTreeUpdate(() => cleanTreeData(newData));
@@ -695,10 +702,17 @@ function DraggableTree({
 
           // Save pending node state for real-time sync
           if (skillsFutureApp) {
-            const updatedNode = { ...nodeData, specializations: newSpecializations };
-            await savePendingNodeState(parentId, updatedNode, skillsFutureApp, db);
+            const updatedNode = {
+              ...nodeData,
+              specializations: newSpecializations,
+            };
+            await savePendingNodeState(
+              parentId,
+              updatedNode,
+              skillsFutureApp,
+              db,
+            );
           }
-
         }
         return;
       }
@@ -710,11 +724,11 @@ function DraggableTree({
         // Determine source and target collection names
         let from = "main";
         if (fromParents[0].category) {
-          from = fromParents[0].name.replace(/^\[|\]$/g, '');
+          from = fromParents[0].name.replace(/^\[|\]$/g, "");
         }
         let to = "main";
         if (toParent.category) {
-          to = toParent.name.replace(/^\[|\]$/g, '');
+          to = toParent.name.replace(/^\[|\]$/g, "");
         }
 
         const specializations = nodeData.specializations;
@@ -734,22 +748,33 @@ function DraggableTree({
 
         if (from === to) {
           // SAME COLLECTION REORDERING
-          const currentIndex = specializations[fromCollectionIdx].nodes.findIndex(
-            (n: { id: string }) => n.id === draggedNodes[0].nodeId
+          const currentIndex = specializations[
+            fromCollectionIdx
+          ].nodes.findIndex(
+            (n: { id: string }) => n.id === draggedNodes[0].nodeId,
           );
 
           if (currentIndex === -1) {
-            console.error('[HANDLE MOVE] Node not found in collection:', draggedNodes[0].nodeId);
+            console.error(
+              "[HANDLE MOVE] Node not found in collection:",
+              draggedNodes[0].nodeId,
+            );
             return;
           }
 
-          const [movedNode] = specializations[fromCollectionIdx].nodes.splice(currentIndex, 1);
+          const [movedNode] = specializations[fromCollectionIdx].nodes.splice(
+            currentIndex,
+            1,
+          );
 
           // Find dragged node's position for adjustment
           let draggedNodeVisualIndex = -1;
           if (args.parentNode?.children) {
             for (let i = 0; i < args.parentNode.children.length; i++) {
-              if (args.parentNode.children[i].data.nodeId === draggedNodes[0].nodeId) {
+              if (
+                args.parentNode.children[i].data.nodeId ===
+                draggedNodes[0].nodeId
+              ) {
                 draggedNodeVisualIndex = i;
                 break;
               }
@@ -759,7 +784,11 @@ function DraggableTree({
           // Count category/load-more nodes before args.index
           let categoryCount = 0;
           if (args.parentNode?.children) {
-            for (let i = 0; i < args.index && i < args.parentNode.children.length; i++) {
+            for (
+              let i = 0;
+              i < args.index && i < args.parentNode.children.length;
+              i++
+            ) {
               const child = args.parentNode.children[i];
               if (child.data.category || child.data.isLoadMore) {
                 categoryCount++;
@@ -772,12 +801,19 @@ function DraggableTree({
 
           // Dragging down operation needs to be adjusted
           let firestoreSpliceIndex = firestoreTargetIndex;
-          if (draggedNodeVisualIndex >= 0 && draggedNodeVisualIndex < args.index) {
-            firestoreSpliceIndex--;  // Dragging down - adjust for shifted array
+          if (
+            draggedNodeVisualIndex >= 0 &&
+            draggedNodeVisualIndex < args.index
+          ) {
+            firestoreSpliceIndex--; // Dragging down - adjust for shifted array
           }
 
           // Insert at calculated position
-          specializations[fromCollectionIdx].nodes.splice(firestoreSpliceIndex, 0, movedNode);
+          specializations[fromCollectionIdx].nodes.splice(
+            firestoreSpliceIndex,
+            0,
+            movedNode,
+          );
 
           await updateDoc(nodeRef, { specializations });
 
@@ -797,7 +833,12 @@ function DraggableTree({
           // Save pending node state for real-time sync
           if (skillsFutureApp) {
             const updatedNode = { ...nodeData, specializations };
-            await savePendingNodeState(toParent.nodeId, updatedNode, skillsFutureApp, db);
+            await savePendingNodeState(
+              toParent.nodeId,
+              updatedNode,
+              skillsFutureApp,
+              db,
+            );
           }
           return;
         } else {
@@ -806,20 +847,28 @@ function DraggableTree({
           // Find current index in SOURCE collection
           let originalFromIndex = 0;
           if (fromCollectionIdx !== -1) {
-            originalFromIndex = specializations[fromCollectionIdx].nodes.findIndex(
-              (n: { id: string }) => n.id === draggedNodes[0].nodeId
+            originalFromIndex = specializations[
+              fromCollectionIdx
+            ].nodes.findIndex(
+              (n: { id: string }) => n.id === draggedNodes[0].nodeId,
             );
 
             // Remove from source collection
-            specializations[fromCollectionIdx].nodes = specializations[fromCollectionIdx].nodes.filter(
-              (n: { id: string }) => n.id !== draggedNodes[0].nodeId
+            specializations[fromCollectionIdx].nodes = specializations[
+              fromCollectionIdx
+            ].nodes.filter(
+              (n: { id: string }) => n.id !== draggedNodes[0].nodeId,
             );
           }
 
           // Count category/load-more nodes before args.index in target collection
           let categoryCount = 0;
           if (args.parentNode?.children) {
-            for (let i = 0; i < args.index && i < args.parentNode.children.length; i++) {
+            for (
+              let i = 0;
+              i < args.index && i < args.parentNode.children.length;
+              i++
+            ) {
               const child = args.parentNode.children[i];
               if (child.data.category || child.data.isLoadMore) {
                 categoryCount++;
@@ -853,7 +902,12 @@ function DraggableTree({
           // Save pending node state for real-time sync
           if (skillsFutureApp) {
             const updatedNode = { ...nodeData, specializations };
-            await savePendingNodeState(toParent.nodeId, updatedNode, skillsFutureApp, db);
+            await savePendingNodeState(
+              toParent.nodeId,
+              updatedNode,
+              skillsFutureApp,
+              db,
+            );
           }
           return;
         }
@@ -967,13 +1021,28 @@ function DraggableTree({
       });
 
       // Save state for the moved node (updated generalizations)
-      const updatedSpecialization = { ...specializationData, generalizations: newGeneralizations };
-      await savePendingNodeState(specializationId, updatedSpecialization, skillsFutureApp, db);
+      const updatedSpecialization = {
+        ...specializationData,
+        generalizations: newGeneralizations,
+      };
+      await savePendingNodeState(
+        specializationId,
+        updatedSpecialization,
+        skillsFutureApp,
+        db,
+      );
 
       // Save state for the new parent (updated specializations)
-      const updatedGeneralization = { ...newGeneralizationData, specializations };
-      await savePendingNodeState(toParent.nodeId, updatedGeneralization, skillsFutureApp, db)
-
+      const updatedGeneralization = {
+        ...newGeneralizationData,
+        specializations,
+      };
+      await savePendingNodeState(
+        toParent.nodeId,
+        updatedGeneralization,
+        skillsFutureApp,
+        db,
+      );
 
       // await updateLinks(
       //   newLinks,
@@ -1032,6 +1101,8 @@ function DraggableTree({
     const indentSize = Number.parseFloat(`${style.paddingLeft || 0}`);
     const inputRef = useRef<HTMLInputElement>(null);
     const isLoading = loadingStates.has(node.data.id);
+    const isActiveNode =
+      node.data.nodeId === currentVisibleNode?.id && !node.data.category;
 
     if (node.data.isLoadMore) {
       let displayText = "•••";
@@ -1067,18 +1138,20 @@ function DraggableTree({
             onClick={() => !isLoading && handleLoadMore(node.data.id)}
             sx={{
               cursor: isLoading ? "default" : "pointer",
-              transition: "background-color 0.2s ease-in-out",
-              borderRadius: "4px",
+              transition: "background-color 0.2s ease",
+              borderRadius: "8px",
+              minHeight: "30px",
+              px: 0.5,
               userSelect: "none",
               "&:hover": {
                 backgroundColor: isLoading
                   ? "transparent"
-                  : "rgba(255, 165, 0, 0.06)",
+                  : "rgba(255, 165, 0, 0.08)",
               },
               "&:active": {
                 backgroundColor: isLoading
                   ? "transparent"
-                  : "rgba(255, 165, 0, 0.1)",
+                  : "rgba(255, 165, 0, 0.12)",
               },
             }}
           >
@@ -1093,14 +1166,13 @@ function DraggableTree({
                 display: "flex",
                 alignItems: "center",
                 color: isLoading
-                  ? "rgba(255, 165, 0, 0.5)"
-                  : "rgba(255, 165, 0, 0.8)",
-                fontSize: "18px",
-                fontWeight: "bold",
+                  ? "rgba(255, 165, 0, 0.45)"
+                  : "rgba(255, 165, 0, 0.7)",
+                fontSize: "16px",
+                fontWeight: 700,
                 transition: "all 0.2s ease-in-out",
                 ".loadMoreNode:hover &": {
-                  color: isLoading ? "rgba(255, 165, 0, 0.5)" : "#ff8c00",
-                  transform: isLoading ? "none" : "scale(1.02)",
+                  color: isLoading ? "rgba(255, 165, 0, 0.45)" : "#ff9800",
                 },
               }}
             >
@@ -1136,11 +1208,29 @@ function DraggableTree({
         onClick={() => node.isInternal && node.toggle()}
         id={node.data.id}
         sx={{
-          backgroundColor:
-            node.data.nodeId === currentVisibleNode?.id && !node.data.category
+          minHeight: "34px",
+          borderRadius: "8px",
+          px: 0.75,
+          borderLeft: "2px solid",
+          borderLeftColor: isActiveNode ? "#4caf50" : "transparent",
+          backgroundColor: isActiveNode
+            ? (theme) =>
+                theme.palette.mode === "dark"
+                  ? "rgba(76, 175, 80, 0.16)"
+                  : "rgba(76, 175, 80, 0.12)"
+            : "transparent",
+          transition: "all 0.2s ease",
+          "&:hover": {
+            backgroundColor: isActiveNode
               ? (theme) =>
-                  theme.palette.mode === "dark" ? "#26631c" : "#4ccf37"
-              : "",
+                  theme.palette.mode === "dark"
+                    ? "rgba(76, 175, 80, 0.2)"
+                    : "rgba(76, 175, 80, 0.16)"
+              : (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(0,0,0,0.04)",
+          },
         }}
       >
         <Box className={styles.indentLines}>
@@ -1169,37 +1259,51 @@ function DraggableTree({
                 sx={{
                   color:
                     node.data.task || node.data.comments
-                      ? "gray"
+                      ? "text.secondary"
                       : node.data.category
-                        ? "orange"
-                        : "",
+                        ? "#f59e0b"
+                        : "text.primary",
                   display: "flex",
                   alignItems: "center",
-                  gap: "5px",
+                  gap: "6px",
+                  fontWeight: node.data.category ? 700 : 400,
+                  fontSize: "0.92rem",
+                  lineHeight: 1.2,
                 }}
               >
                 {node.data.name}
                 {!node.data.category &&
                   nodesWithComments.has(node.data.nodeId) && (
-                    <Tooltip title="You have unread comments">
+                    <Tooltip title="You have unread comments" arrow>
                       <ChatIcon
-                        sx={{ fontSize: "16px", color: "orange", flexShrink: 0 }}
+                        sx={{
+                          fontSize: "16px",
+                          color: "#f59e0b",
+                          flexShrink: 0,
+                        }}
                       />
                     </Tooltip>
                   )}
                 {specializationNumsUnder[node.data.id] > 0 && (
                   <Tooltip
                     title={`Total number of ${node.data.name.toLowerCase() === "act" ? "activities" : "entities"} under this sub-ontology`}
+                    arrow
                   >
-                    <span
-                      style={{
-                        color: "orange",
-                        marginLeft: "5px",
-                        fontWeight: "bold",
+                    <Box
+                      component="span"
+                      sx={{
+                        color: "#f59e0b",
+                        ml: 0.5,
+                        fontWeight: 700,
+                        fontSize: "0.72rem",
+                        px: 0.7,
+                        py: 0.15,
+                        borderRadius: "999px",
+                        backgroundColor: "rgba(245, 158, 11, 0.12)",
                       }}
                     >
                       {specializationNumsUnder[node.data.id]}
-                    </span>
+                    </Box>
                   </Tooltip>
                 )}
                 {specializationNumsUnder[`${node.data.id}-extra`] > 0 && (
@@ -1207,27 +1311,40 @@ function DraggableTree({
                     title={
                       "Total number of O*Net tasks under this sub-ontology"
                     }
+                    arrow
                   >
-                    <span
-                      style={{
-                        color: "orange",
-                        marginLeft: "5px",
-                        fontWeight: "bold",
+                    <Box
+                      component="span"
+                      sx={{
+                        color: "#f59e0b",
+                        ml: 0.5,
+                        fontWeight: 700,
+                        fontSize: "0.72rem",
+                        px: 0.7,
+                        py: 0.15,
+                        borderRadius: "999px",
+                        backgroundColor: "rgba(245, 158, 11, 0.12)",
                       }}
                     >
                       {specializationNumsUnder[`${node.data.id}-extra`]}
-                    </span>
+                    </Box>
                   </Tooltip>
                 )}
                 {(node.data.actionAlternatives || []).length > 0 && (
-                  <span style={{ color: "orange", marginLeft: "8px" }}>
+                  <Box
+                    component="span"
+                    sx={{ color: "#f59e0b", ml: 0.5, fontWeight: 700 }}
+                  >
                     Alternatives:
-                  </span>
+                  </Box>
                 )}
                 {(node.data.actionAlternatives || []).length >= 0 && (
-                  <span style={{ fontSize: "14px" }}>
+                  <Box
+                    component="span"
+                    sx={{ fontSize: "0.8rem", color: "text.secondary" }}
+                  >
                     {(node.data.actionAlternatives || []).join(", ")}
-                  </span>
+                  </Box>
                 )}
               </Typography>
             )}
@@ -1244,13 +1361,23 @@ function DraggableTree({
           position: "sticky",
           top: 0,
           display: "flex",
+          justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
           zIndex: 1,
           backgroundColor: (theme) =>
-            theme.palette.mode === "dark" ? "#303134" : "#ffffff",
-          pl: "5px",
-          py: "7px",
+            theme.palette.mode === "dark"
+              ? "rgba(48, 49, 52, 0.96)"
+              : "#eef2f7",
+          border: "1px solid",
+          borderColor: (theme) =>
+            theme.palette.mode === "dark"
+              ? "rgba(255,255,255,0.08)"
+              : "rgba(15, 23, 42, 0.08)",
+          borderRadius: "10px",
+          px: "8px",
+          py: "8px",
+          mb: "6px",
           gap: 1,
         }}
       >
@@ -1292,12 +1419,12 @@ function DraggableTree({
               border: "1.5px solid orange",
               transition: "all 0.2s ease-in-out",
               bgcolor: (theme) =>
-                theme.palette.mode === "dark" ? "#2b2b2b" : "#f5f5f5",
+                theme.palette.mode === "dark" ? "#2b2b2b" : "#f8fafc",
               color: (theme) =>
-                theme.palette.mode === "dark" ? "#f5f5f5" : "#222",
+                theme.palette.mode === "dark" ? "#f5f5f5" : "#1f2937",
               "&:hover": {
                 bgcolor: (theme) =>
-                  theme.palette.mode === "dark" ? "#3a3a3a" : "#f0e6e6",
+                  theme.palette.mode === "dark" ? "#3a3a3a" : "#eef2f7",
               },
               "&.Mui-selected": {
                 bgcolor: "orange",
@@ -1318,7 +1445,22 @@ function DraggableTree({
         )}
       </Box>
       <Box className={styles.split}>
-        <Box className={styles.treeContainer}>
+        <Box
+          className={styles.treeContainer}
+          sx={{
+            "--tree-surface":
+              theme.palette.mode === "dark" ? "#2f3136" : "#eef2f7",
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark" ? "#2f3136" : "#eef2f7",
+            border: "1px solid",
+            borderColor: (theme) =>
+              theme.palette.mode === "dark"
+                ? "rgba(255,255,255,0.08)"
+                : "rgba(15, 23, 42, 0.08)",
+            borderRadius: "10px",
+            overflow: "hidden",
+          }}
+        >
           <FillFlexParent>
             {(dimens) => (
               <Tree
@@ -1333,6 +1475,7 @@ function DraggableTree({
                 searchTerm={searchTerm}
                 className={styles.tree}
                 rowClassName={styles.row}
+                rowHeight={40}
                 paddingTop={5}
                 indent={INDENT_STEP}
                 overscanCount={50}
@@ -1408,12 +1551,12 @@ function FolderArrow({ node }: { node: NodeApi<TreeData> }) {
   const hasChildren = node.isInternal && (node.children || []).length > 0;
 
   return (
-    <span className={styles.arrow} style={{ minWidth: "20px" }}>
+    <span className={styles.arrow}>
       {node.isInternal && hasChildren ? (
         node.isOpen ? (
-          <KeyboardArrowDownIcon sx={{ pr: "5px" }} />
+          <KeyboardArrowDownIcon sx={{ fontSize: "1.1rem" }} />
         ) : (
-          <KeyboardArrowRightIcon sx={{ pr: "5px" }} />
+          <KeyboardArrowRightIcon sx={{ fontSize: "1.1rem" }} />
         )
       ) : null}
     </span>

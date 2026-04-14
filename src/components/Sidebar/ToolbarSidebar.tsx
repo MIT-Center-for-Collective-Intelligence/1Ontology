@@ -50,7 +50,6 @@ import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import useThemeChange from "@components/lib/hooks/useThemeChange";
-import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import ClearIcon from "@mui/icons-material/Clear";
 import { Notifications } from "@components/components/Chat/Notifications";
 import { chatChange } from "@components/client/firestore/messages.firestore";
@@ -117,6 +116,7 @@ import {
 import OntologyHistory from "../ActiveUsers/OntologyHistory";
 import { handleDownload } from "@components/lib/utils/random";
 import { getIdToken } from "@components/lib/firestoreClient/auth";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 
 type CustomSmallBadgeProps = { value: number };
 

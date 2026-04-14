@@ -2,14 +2,7 @@ import { MESSAGES, USERS } from "@components/lib/firestoreClient/collections";
 import CloseIcon from "@mui/icons-material/Close";
 import { TabPanel, a11yProps } from "@components/lib/utils/TabPanel";
 
-import {
-  Box,
-  Tabs,
-  Tab,
-  Modal,
-  Paper,
-  IconButton,
-} from "@mui/material";
+import { Box, Tabs, Tab, Modal, Paper, IconButton } from "@mui/material";
 import {
   query,
   collection,
@@ -137,22 +130,22 @@ const ChatSideBar = ({
       // Fetch all missing child nodes in parallel
       if (childIds.size > 0) {
         console.log(
-          `[CHAT SIDEBAR] Fetching ${childIds.size} child nodes for search results`
+          `[CHAT SIDEBAR] Fetching ${childIds.size} child nodes for search results`,
         );
         await Promise.all(Array.from(childIds).map((id) => fetchNode(id)));
         console.log(
-          `[CHAT SIDEBAR] Successfully fetched ${childIds.size} child nodes`
+          `[CHAT SIDEBAR] Successfully fetched ${childIds.size} child nodes`,
         );
       }
     },
-    [fetchNode, nodes]
+    [fetchNode, nodes],
   );
 
   // Handle Chroma search with child node fetching
   const handleChromaSearch = useCallback(async () => {
     console.log(
       "[CHAT SIDEBAR] handleChromaSearch called with searchValue:",
-      searchValue
+      searchValue,
     );
 
     if (!searchValue || searchValue.trim().length < 3) {
@@ -164,7 +157,7 @@ const ChatSideBar = ({
     console.log(
       "[CHAT SIDEBAR] Starting Chroma search with fuse fallback:",
       fuseSearch.length,
-      "results"
+      "results",
     );
 
     try {
@@ -199,7 +192,7 @@ const ChatSideBar = ({
       await fetchChildNodesForSearchResults(development ? fuseSearch : results);
 
       console.log(
-        `[CHAT SIDEBAR] Chroma search complete with ${results.length} results`
+        `[CHAT SIDEBAR] Chroma search complete with ${results.length} results`,
       );
     } catch (error) {
       console.error("[CHAT SIDEBAR] Error in chroma search:", error);
@@ -237,13 +230,19 @@ const ChatSideBar = ({
     if (searchValue && resultsToUse.length > 0) {
       // Filter out currentVisibleNode from search results to avoid duplicates
       const filteredResults = resultsToUse.filter(
-        (node: INode) => node.id !== currentVisibleNode.id
+        (node: INode) => node.id !== currentVisibleNode.id,
       );
       results.push(...filteredResults);
     }
 
     return results;
-  }, [currentVisibleNode, searchValue, searchResults, useChromaResults, chromaSearchResults]);
+  }, [
+    currentVisibleNode,
+    searchValue,
+    searchResults,
+    useChromaResults,
+    chromaSearchResults,
+  ]);
 
   useEffect(() => {
     (async () => {
@@ -299,7 +298,7 @@ const ChatSideBar = ({
       await addDoc(collection(db, MESSAGES), messageData);
       scrollToBottom();
     },
-    [selectedChatTab, currentVisibleNode?.id, user],
+    [chatTabs, currentVisibleNode?.id, db, selectedChatTab, user],
   );
 
   // useEffect(() => {
@@ -345,62 +344,188 @@ const ChatSideBar = ({
   //   };
   // }, [db, user]);
   return (
-    <Box>
+    <Box
+      sx={(theme) => ({
+        position: "relative",
+        borderRadius: 3,
+        p: { xs: 1, sm: 1.25 },
+        background:
+          theme.palette.mode === "dark"
+            ? "linear-gradient(180deg, rgba(28, 29, 33, 0.92) 0%, rgba(18, 19, 22, 0.92) 100%)"
+            : "linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(246, 248, 252, 0.96) 100%)",
+        border:
+          theme.palette.mode === "dark"
+            ? "1px solid rgba(255, 255, 255, 0.08)"
+            : "1px solid rgba(18, 30, 60, 0.08)",
+        boxShadow:
+          theme.palette.mode === "dark"
+            ? "0 12px 36px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.03)"
+            : "0 12px 28px rgba(17, 30, 59, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
+        overflow: "hidden",
+      })}
+    >
       {chatTabs.length > 1 && (
         <Tabs
           id="chat-tabs"
           value={selectedChatTab}
           onChange={handleChatTabsChange}
           aria-label="chat tabs"
+          slotProps={{
+            indicator: {
+              sx: { display: "none" },
+            },
+          }}
           sx={{
-            background: (theme) =>
-              theme.palette.mode === "dark" ? "#242425" : "#d0d5dd",
-            borderRadius: "10px",
-            boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
             width: "100%",
+            minHeight: 0,
+            borderRadius: 9999,
+            px: 0,
+            py: 0.625,
+            mb: 1.25,
+            background: (theme) =>
+              theme.palette.mode === "dark"
+                ? "linear-gradient(145deg, rgba(35, 36, 40, 0.95), rgba(24, 25, 28, 0.95))"
+                : "linear-gradient(145deg, rgba(248, 250, 255, 0.95), rgba(236, 241, 250, 0.95))",
+            border: (theme) =>
+              theme.palette.mode === "dark"
+                ? "1px solid rgba(255, 255, 255, 0.1)"
+                : "1px solid rgba(18, 30, 60, 0.1)",
+            boxShadow:
+              "0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 8px 20px rgba(0, 0, 0, 0.14)",
+            ".MuiTabs-scroller": {
+              mx: 0,
+            },
+            ".MuiTabs-flexContainer": {
+              width: "100%",
+              gap: 0,
+            },
             ".MuiTab-root": {
-              transition: "0.3s ease-in-out",
+              flex: 1,
+              flexShrink: 1,
+              flexBasis: 0,
+              maxWidth: "none",
+              minHeight: 48,
+              minWidth: 0,
+              borderRadius: 9999,
+              fontWeight: 700,
+              fontSize: "0.9rem",
+              letterSpacing: "0.01em",
+              textTransform: "none",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              justifyContent: "center",
+              alignItems: "center",
+              boxSizing: "border-box",
+              color: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "rgba(255, 255, 255, 0.95)"
+                  : "rgba(30, 30, 35, 0.9)",
+              backgroundColor: "transparent",
+              transition:
+                "color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease",
+              "&:not(.Mui-selected):hover": {
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgba(255, 255, 255, 0.07)"
+                    : "rgba(0, 0, 0, 0.045)",
+                transform: "translateY(-1px)",
+              },
             },
+            // Selected chrome is on the label chip (see Tab label) so padding is inside the pill, not the full flex segment.
             ".MuiTab-root.Mui-selected": {
-              color: "#ff6d00",
-              fontWeight: "bold",
-              backgroundColor: (theme) =>
-                theme.palette.mode === "dark" ? "#080707" : "#e0e0e0",
-              borderRadius: "10px 10px 0 0",
+              color: "inherit",
+              backgroundColor: "transparent",
+              border: "none",
+              boxShadow: "none",
             },
-            ".MuiTabs-indicator": {
-              backgroundColor: "#ff6d00",
-              height: "3px",
-              borderRadius: "50%",
-              transition: "transform 0.3s ease-in-out",
-            },
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
           }}
         >
-          {chatTabs.map((tab, idx) => (
-            <Tab
-              key={tab.id}
-              label={tab.title}
-              {...a11yProps(idx)}
-              sx={{
-                borderRadius: "10px",
-                /*                 margin: "0 10px", */
-                padding: "10px 20px",
-                minWidth: "auto",
-                transition: "all 0.3s ease-in-out",
-                "&:hover": {
-                  backgroundColor: "#ff6d00",
-                  color: "white",
-                  transform: "scale(1.05)",
-                },
-              }}
-            />
-          ))}
+          {chatTabs.map((tab, idx) => {
+            const isSelected = selectedChatTab === idx;
+            return (
+              <Tab
+                key={tab.id}
+                {...a11yProps(idx)}
+                label={
+                  isSelected ? (
+                    <Box
+                      component="span"
+                      sx={(theme) => ({
+                        display: "inline-block",
+                        maxWidth: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        px: 2.75,
+                        py: 0.75,
+                        borderRadius: 9999,
+                        boxSizing: "border-box",
+                        verticalAlign: "middle",
+                        color:
+                          theme.palette.mode === "dark" ? "#ffb370" : "#b44f10",
+                        bgcolor:
+                          theme.palette.mode === "dark"
+                            ? "linear-gradient(145deg, rgba(78, 49, 33, 0.96), rgba(58, 36, 24, 0.96))"
+                            : "linear-gradient(145deg, rgba(255, 208, 158, 0.65), rgba(255, 179, 107, 0.52))",
+                        border:
+                          theme.palette.mode === "dark"
+                            ? "1px solid rgba(255, 173, 111, 0.34)"
+                            : "1px solid rgba(180, 79, 16, 0.28)",
+                        boxShadow:
+                          theme.palette.mode === "dark"
+                            ? "0 4px 16px rgba(255, 132, 64, 0.22)"
+                            : "0 4px 14px rgba(180, 79, 16, 0.18)",
+                        transition:
+                          "background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease",
+                        "&:hover": {
+                          bgcolor:
+                            theme.palette.mode === "dark"
+                              ? "linear-gradient(145deg, rgba(88, 57, 38, 0.98), rgba(64, 41, 28, 0.98))"
+                              : "linear-gradient(145deg, rgba(255, 208, 158, 0.78), rgba(255, 179, 107, 0.63))",
+                          transform: "translateY(-1px)",
+                        },
+                      })}
+                    >
+                      {tab.title}
+                    </Box>
+                  ) : (
+                    tab.title
+                  )
+                }
+                sx={{
+                  minWidth: 0,
+                  maxWidth: "none",
+                  "&&": {
+                    py: 0.75,
+                    px: 0.5,
+                  },
+                }}
+              />
+            );
+          })}
         </Tabs>
       )}
-      <Box>
+      <Box
+        sx={(theme) => ({
+          borderRadius: 2.5,
+          border:
+            theme.palette.mode === "dark"
+              ? "1px solid rgba(255, 255, 255, 0.08)"
+              : "1px solid rgba(18, 30, 60, 0.08)",
+          background:
+            theme.palette.mode === "dark"
+              ? "rgba(16, 17, 20, 0.72)"
+              : "rgba(255, 255, 255, 0.72)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          boxShadow:
+            theme.palette.mode === "dark"
+              ? "inset 0 1px 0 rgba(255,255,255,0.03), 0 10px 24px rgba(0,0,0,0.25)"
+              : "inset 0 1px 0 rgba(255,255,255,0.82), 0 8px 22px rgba(17,30,59,0.08)",
+          overflow: "hidden",
+        })}
+      >
         {chatTabs.map((tab, idx: number) => (
           <TabPanel key={tab.id} value={selectedChatTab} index={idx}>
             <Chat
@@ -425,8 +550,10 @@ const ChatSideBar = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "transparent",
-          // backgroundColor: "rgba(0, 0, 0, 0.5)",
+          background:
+            "radial-gradient(circle at 50% 20%, rgba(35, 35, 40, 0.35), rgba(0, 0, 0, 0.45))",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
         }}
         open={openModel}
         onClose={handleClose}
@@ -436,15 +563,41 @@ const ChatSideBar = ({
             maxHeight: "80vh",
             minWidth: "900px",
             overflowY: "auto",
-            borderRadius: 2,
-            boxShadow: 24,
+            borderRadius: 3,
+            border: (theme) =>
+              theme.palette.mode === "dark"
+                ? "1px solid rgba(255, 255, 255, 0.12)"
+                : "1px solid rgba(18, 30, 60, 0.12)",
+            bgcolor: (theme) =>
+              theme.palette.mode === "dark"
+                ? "rgba(22, 23, 27, 0.9)"
+                : "rgba(255, 255, 255, 0.95)",
+            boxShadow: "0 28px 70px rgba(0, 0, 0, 0.38)",
             ...SCROLL_BAR_STYLE,
             "&::-webkit-scrollbar": {
               display: "none",
             },
           }}
         >
-          <Paper sx={{ position: "sticky", top: "0", px: "15px", zIndex: 1 }}>
+          <Paper
+            sx={(theme) => ({
+              position: "sticky",
+              top: "0",
+              px: "15px",
+              py: 0.5,
+              zIndex: 1,
+              borderBottom:
+                theme.palette.mode === "dark"
+                  ? "1px solid rgba(255, 255, 255, 0.08)"
+                  : "1px solid rgba(18, 30, 60, 0.08)",
+              bgcolor:
+                theme.palette.mode === "dark"
+                  ? "rgba(27, 28, 32, 0.92)"
+                  : "rgba(252, 253, 255, 0.92)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
+            })}
+          >
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <SearchBox
                 setSearch={setSearchValue}
@@ -457,12 +610,37 @@ const ChatSideBar = ({
                 onClick={() => {
                   setOpenModel(false);
                 }}
+                sx={(theme) => ({
+                  ml: 0.5,
+                  color:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.78)"
+                      : "rgba(20,24,31,0.7)",
+                  border:
+                    theme.palette.mode === "dark"
+                      ? "1px solid rgba(255,255,255,0.12)"
+                      : "1px solid rgba(18,30,60,0.14)",
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.03)"
+                      : "rgba(255,255,255,0.9)",
+                  "&:hover": {
+                    bgcolor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.09)"
+                        : "rgba(244,247,255,0.95)",
+                  },
+                })}
               >
                 <CloseIcon />
               </IconButton>
             </Box>
           </Paper>
-          <Paper>
+          <Paper
+            sx={{
+              background: "transparent",
+            }}
+          >
             <ExpandSearchResult
               searchResultsForSelection={displayResults}
               markItemAsChecked={(nodeId: string) => {

@@ -1,84 +1,35 @@
-/*
-# DAGGraph Component
 
-The `DAGGraph` component is a React component that is responsible for rendering a directed acyclic graph (DAG) visualization of an ontology tree. It uses the `dagre-d3` library to lay out the graph and `d3` for rendering and handling user interactions such as zooming and clicking on nodes.
-
-## Props
-
-The component accepts the following props:
-
-- `treeVisualisation`: An object representing the visual structure of the ontology tree.
-- `setExpandedOntologies`: A function to update the state of expanded ontologies.
-- `expandedOntologies`: A `Set` containing the IDs of ontologies that are currently expanded.
-- `setDagreZoomState`: A function to update the zoom state of the DAG.
-- `dagreZoomState`: The current zoom state of the DAG.
-- `onOpenOntologyTree`: A function that is called when a node is clicked, with the node ID and path as arguments.
-
-## Usage
-
-To use the `DAGGraph` component, you need to import it and pass the required props as shown below:
-
-```jsx
-import DAGGraph from '@components/ontology/DAGGraph';
-
-// ...
-
-<DAGGraph
-  treeVisualisation={treeVisualisationData}
-  expandedOntologies={expandedOntologiesSet}
-  setExpandedOntologies={updateExpandedOntologies}
-  setDagreZoomState={updateDagreZoomState}
-  dagreZoomState={currentDagreZoomState}
-  onOpenOntologyTree={handleOpenOntologyTree}
-/>
-```
-
-## Functionality
-
-The `DAGGraph` component performs the following functions:
-
-- It creates a new `dagreD3.graphlib.Graph` instance to represent the ontology graph.
-- It uses the `onDrawOntology` function to recursively add nodes and edges to the graph based on the `treeVisualisation` prop.
-- It sets up a `d3.zoom` behavior to allow users to zoom in and out of the graph.
-- It handles node clicks by calling the `onOpenOntologyTree` prop and updating the `expandedOntologies` state.
-- It automatically scales and centers the graph based on the size of the container and the dimensions of the graph.
-
-## Effects
-
-The component uses a `useEffect` hook to:
-
-- Render the graph whenever the `treeVisualisation` or `expandedOntologies` props change.
-- Clean up by removing all elements from the `#graphGroup` when the component is unmounted.
-
-## Styling
-
-The nodes and edges of the graph are styled using inline styles within the `onDrawOntology` function. You can customize the appearance by modifying the `style` and `labelStyle` properties of the nodes and the `style` and `arrowheadStyle` properties of the edges.
-
-## SVG Container
-
-The SVG container for the graph is created with a `ref` to the DOM element and is given a fixed height. You can adjust the size by changing the `width` and `height` attributes of the `svg` element.
-
-```jsx
-<svg id="graphGroup" ref={svgRef} width="100%" height="1000" />
-```
-
-## Conclusion
-
-The `DAGGraph` component is a powerful tool for visualizing hierarchical data structures such as ontologies. By leveraging the capabilities of `dagre-d3` and `d3`, it provides an interactive and scalable graph representation that can be easily integrated into React applications. 
- */
-
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import dagreD3 from "dagre-d3";
 import { TreeData } from "@components/types/INode";
 
-type IDagGraphProps = {
+type GraphZoomState = {
+  translateX: number;
+  translateY: number;
+  scale: number;
+};
+
+type GraphViewProps = {
   treeData: TreeData[];
   setExpandedNodes: (state: Set<string>) => void;
   expandedNodes: Set<string>;
   onOpenNodeDagre: (ontologyId: string, nodeTitle?: string) => void;
-  currentVisibleNode: any;
+  currentVisibleNode: { id?: string } | null;
 };
+
+const SVG_HEIGHT = 1000;
+const NODE_RADIUS = 25;
+const ACTIVE_NODE_FILL = "#87D37C";
+const CATEGORY_NODE_FILL = "#ffbe48";
+const DEFAULT_NODE_FILL = "white";
+const DEFAULT_STROKE = "black";
+const ACTIVE_STROKE = "white";
+const EDGE_COLOR = "orange";
+const INDICATOR_BG = "#1f2937";
+const INDICATOR_BORDER = "#e5e7eb";
+const INDICATOR_TEXT = "#f9fafb";
+const INDICATOR_RADIUS = 9;
 
 const GraphView = ({
   treeData,
@@ -86,93 +37,50 @@ const GraphView = ({
   setExpandedNodes,
   onOpenNodeDagre,
   currentVisibleNode,
-}: IDagGraphProps) => {
-  const svgRef = useRef(null);
+}: GraphViewProps) => {
+  const svgRef = useRef<SVGSVGElement | null>(null);
   const [graph, setGraph] = useState<any>(null);
-  const [zoomState, setZoomState] = useState<{
-    translateX: number;
-    translateY: number;
-    scale: number;
-  }>({
+  const [zoomState, setZoomState] = useState<GraphZoomState>({
     translateX: 0,
     translateY: 0,
     scale: 0,
   });
+  const zoomStateRef = useRef(zoomState);
 
   const hasInitializedRef = useRef(false);
   const lastVisibleNodeIdRef = useRef<string | null>(null);
   const lastTreeDataLengthRef = useRef<number>(0);
   const lastRootNodeIdsRef = useRef<string>("");
 
-  // Detect app switch by checking if root node IDs changed
-  const currentRootNodeIds = treeData.map(node => node.category ? node.id : (node.nodeId || node.id)).filter(Boolean).join(",");
-  if (currentRootNodeIds !== lastRootNodeIdsRef.current && lastRootNodeIdsRef.current !== "") {
-    hasInitializedRef.current = false;
-  }
-  lastRootNodeIdsRef.current = currentRootNodeIds;
+  const getNodeId = useCallback(
+    (node: TreeData): string => node.category ? node.id : node.nodeId || node.id || "",
+    [],
+  );
 
-  // Reset initialization when treeData becomes empty
-  if (treeData.length === 0 && lastTreeDataLengthRef.current > 0) {
-    hasInitializedRef.current = false;
-  }
-  lastTreeDataLengthRef.current = treeData.length;
+  const updateZoomState = useCallback((nextZoomState: GraphZoomState) => {
+    zoomStateRef.current = nextZoomState;
+    setZoomState(nextZoomState);
+  }, []);
 
-  // Helper to check if a nodeId belongs to a category node
-  const isCategoryNodeId = (nodeId: string, nodes: TreeData[]): boolean => {
-    for (const node of nodes) {
-      const currentNodeId = node.category ? node.id : (node.nodeId || node.id);
-      if (currentNodeId === nodeId) {
-        return node.category === true;
+  const getNodeFill = useCallback(
+    (node: TreeData, nodeId: string): string => {
+      if (currentVisibleNode?.id === nodeId) {
+        return ACTIVE_NODE_FILL;
       }
-      if (node.children && node.children.length > 0) {
-        if (isCategoryNodeId(nodeId, node.children)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  };
+      return node.category ? CATEGORY_NODE_FILL : DEFAULT_NODE_FILL;
+    },
+    [currentVisibleNode?.id],
+  );
 
-  // Helper to find node by ID in tree
-  const findNodeById = (nodes: TreeData[], targetId: string): TreeData | null => {
-    for (const node of nodes) {
-      const currentNodeId = node.category ? node.id : (node.nodeId || node.id);
-      if (currentNodeId === targetId) {
-        return node;
-      }
-      if (node.children && node.children.length > 0) {
-        const found = findNodeById(node.children, targetId);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
+  const getNodeStyle = useCallback(
+    (node: TreeData, nodeId: string): string => {
+      const strokeColor = currentVisibleNode?.id === nodeId ? ACTIVE_STROKE : DEFAULT_STROKE;
+      return `fill: ${getNodeFill(node, nodeId)}; stroke: ${strokeColor}; stroke-width: 0.1px; cursor: pointer;`;
+    },
+    [currentVisibleNode?.id, getNodeFill],
+  );
 
-  // Auto-expand when currentVisibleNode changes (but don't reset initialization)
-  if (currentVisibleNode?.id !== lastVisibleNodeIdRef.current) {
-    lastVisibleNodeIdRef.current = currentVisibleNode?.id || null;
-
-    // Auto-expand the newly selected node if it's not a category
-    if (currentVisibleNode?.id && !isCategoryNodeId(currentVisibleNode.id, treeData)) {
-      if (!expandedNodes.has(currentVisibleNode.id)) {
-        const newExpandedNodes = new Set(expandedNodes);
-        newExpandedNodes.add(currentVisibleNode.id);
-        setExpandedNodes(newExpandedNodes);
-      }
-    }
-  }
-
-  const handleNodeClick = (nodeId: string) => {
-    // Find the node to get its name
-    const clickedNode = findNodeById(treeData, nodeId);
-    const nodeName = clickedNode?.name || "";
-
-    // Category nodes should only expand/collapse
-    if (!isCategoryNodeId(nodeId, treeData)) {
-      onOpenNodeDagre(nodeId, nodeName);
-    }
-
-    // Toggle expansion state
+  const toggleExpandedNode = useCallback((nodeId: string) => {
     const newExpandedNodes = new Set(expandedNodes);
     if (newExpandedNodes.has(nodeId)) {
       newExpandedNodes.delete(nodeId);
@@ -180,130 +88,266 @@ const GraphView = ({
       newExpandedNodes.add(nodeId);
     }
     setExpandedNodes(newExpandedNodes);
-  };
+  }, [expandedNodes, setExpandedNodes]);
 
-  // This function is responsible for drawing nodes on a graph based on the provided node data.
-  // It takes an node object and a graph object as parameters.
-  const onDrawNode = (node: TreeData, graph: any) => {
-    // For category nodes, use the id with collection name
-    // For regular nodes, use nodeId which is documentId
-    const nodeId = node.category ? node.id : (node?.nodeId || node?.id || "");
+  const centerNodeTransform = useCallback((
+    svgWidth: number,
+    svgHeight: number,
+    nodePosition: { x: number; y: number },
+    scale: number,
+  ) => {
+    const translateX = svgWidth / 2 - nodePosition.x * scale;
+    const translateY = svgHeight / 2.5 - nodePosition.y * scale;
+    return { translateX, translateY };
+  }, []);
 
-    // Check if the graph already has a node with the current nodeId.
-    if (!graph.hasNode(nodeId)) {
-      // If the node doesn't exist, add it to the graph with specified properties.
-      graph.setNode(nodeId, {
-        label: node.name, // Use node name as the label for the node.
-        style: `fill: ${
-          currentVisibleNode?.id === nodeId
-            ? "#87D37C"
-            : node.category
-              ? "#ffbe48"
-              : "white"
-        }; stroke: ${
-          currentVisibleNode?.id === nodeId ? "white" : "black"
-        }; stroke-width: 0.1px; cursor: pointer;`, // Set node style based on node category.
-        labelStyle: `fill: ${"black"}; cursor: pointer;`, // Set style for the node label.
-        shape: "rect", // Set the shape to rectangle
-        rx: 25, // Horizontal radius for rounded corners
-        ry: 25, // Vertical radius for rounded corners
-        dataAttr: { "data-node-id": nodeId },
-      });
+  useEffect(() => {
+    const currentRootNodeIds = treeData
+      .map(getNodeId)
+      .filter(Boolean)
+      .join(",");
+
+    if (
+      currentRootNodeIds !== lastRootNodeIdsRef.current &&
+      lastRootNodeIdsRef.current !== ""
+    ) {
+      hasInitializedRef.current = false;
     }
+    lastRootNodeIdsRef.current = currentRootNodeIds;
 
-    // Check if the current node  is expanded (based on the global set of expandedNodes).
-    if (expandedNodes.has(nodeId)) {
-      // If expanded, iterate through children and draw edges connecting them to the current node.
-      const children = node.children || [];
-      for (let childNode of children) {
-        // Recursively call the onDrawNode function for each child-node.
-        onDrawNode(childNode, graph);
-
-        const childNodeId = childNode.category ? childNode.id : (childNode.nodeId || childNode.id);
-        // Add an edge between the current node and the child-node  with specified properties.
-        graph.setEdge(nodeId, childNodeId, {
-          curve: d3.curveBasis, // Use a B-spline curve for the edge.
-          style: "stroke: orange; stroke-opacity: 1; fill: none;", // Set style for the edge.
-          arrowheadStyle: "fill: orange", // Set style for the arrowhead.
-          minlen: 2, // Set minimum length for the edge.
-        });
-      }
+    if (treeData.length === 0 && lastTreeDataLengthRef.current > 0) {
+      hasInitializedRef.current = false;
     }
-  };
+    lastTreeDataLengthRef.current = treeData.length;
+  }, [getNodeId, treeData]);
 
-  // Helper function to find all ancestor node IDs for a target node
-  const findAncestorIds = (treeData: TreeData[], targetNodeId: string): string[] => {
-    const ancestors: string[] = [];
-
-    const searchTree = (nodes: TreeData[], path: string[]): boolean => {
+  // Helper to check if a nodeId belongs to a category node
+  const isCategoryNodeId = useCallback(
+    function checkCategoryNodeId(nodeId: string, nodes: TreeData[]): boolean {
       for (const node of nodes) {
-        const currentNodeId = node.category ? node.id : (node.nodeId || node.id);
-        const newPath = [...path, currentNodeId];
-        if (!node.category && (node.nodeId === targetNodeId || node.id === targetNodeId)) {
-          ancestors.push(...path);
-          return true;
+        const currentNodeId = getNodeId(node);
+        if (currentNodeId === nodeId) {
+          return node.category === true;
         }
-
         if (node.children && node.children.length > 0) {
-          if (searchTree(node.children, newPath)) {
+          if (checkCategoryNodeId(nodeId, node.children)) {
             return true;
           }
         }
       }
       return false;
-    };
+    },
+    [getNodeId],
+  );
 
-    searchTree(treeData, []);
-    return ancestors;
-  };
+  // Helper to find node by ID in tree
+  const findNodeById = useCallback(
+    function searchNodeById(nodes: TreeData[], targetId: string): TreeData | null {
+      for (const node of nodes) {
+        const currentNodeId = getNodeId(node);
+        if (currentNodeId === targetId) {
+          return node;
+        }
+        if (node.children && node.children.length > 0) {
+          const found = searchNodeById(node.children, targetId);
+          if (found) return found;
+        }
+      }
+      return null;
+    },
+    [getNodeId],
+  );
 
-  const indicateHiddenNodes = (node: TreeData, graph: any) => {
-    if (!currentVisibleNode) return;
-
-    const nodeId = node.category ? node.id : (node?.nodeId || node?.id || "");
-
-    const nodeSelection = d3.select(`g[data-node-id="${nodeId}"]`);
-
-    // Check if an indicator already exists
-    const existingPolygon = nodeSelection.select("polygon");
-
-    // If indicator exists, exit process
-    if (!existingPolygon.empty()) {
+  useEffect(() => {
+    const visibleNodeId = currentVisibleNode?.id || null;
+    if (visibleNodeId === lastVisibleNodeIdRef.current) {
       return;
     }
 
-    const bbox = nodeSelection.node()
-      ? (nodeSelection.node() as SVGGraphicsElement).getBBox()
-      : null;
-    const nodeXPosition = bbox ? bbox.width / 2 : 0;
-
-    const hasHiddenSpecializations =
-      !expandedNodes.has(nodeId) &&
-      node.children &&
-      node.children.length > 0;
-
-    if (hasHiddenSpecializations) {
-      nodeSelection
-        .append("polygon")
-        .attr("points", "10,0 0,-5 0,5")
-        .attr("fill", "orange")
-        .attr("transform", `translate(${nodeXPosition + 10}, 10)`);
+    lastVisibleNodeIdRef.current = visibleNodeId;
+    if (!visibleNodeId || isCategoryNodeId(visibleNodeId, treeData)) {
+      return;
     }
 
-    // Recursively check children
-    const children = node.children || [];
-    for (let childNode of children) {
-      indicateHiddenNodes(childNode, graph);
+    if (!expandedNodes.has(visibleNodeId)) {
+      const newExpandedNodes = new Set(expandedNodes);
+      newExpandedNodes.add(visibleNodeId);
+      setExpandedNodes(newExpandedNodes);
     }
-  };
+  }, [currentVisibleNode?.id, expandedNodes, isCategoryNodeId, setExpandedNodes, treeData]);
+
+  const handleNodeClick = useCallback(
+    (nodeId: string) => {
+      // Find the node to get its name
+      const clickedNode = findNodeById(treeData, nodeId);
+      const nodeName = clickedNode?.name || "";
+
+      // Category nodes should only expand/collapse
+      if (!isCategoryNodeId(nodeId, treeData)) {
+        onOpenNodeDagre(nodeId, nodeName);
+      }
+
+      toggleExpandedNode(nodeId);
+    },
+    [
+      findNodeById,
+      isCategoryNodeId,
+      onOpenNodeDagre,
+      treeData,
+      toggleExpandedNode,
+    ],
+  );
+
+  // This function is responsible for drawing nodes on a graph based on the provided node data.
+  // It takes an node object and a graph object as parameters.
+  const onDrawNode = useCallback(
+    function drawNode(node: TreeData, graphRef: any) {
+      // For category nodes, use the id with collection name
+      // For regular nodes, use nodeId which is documentId
+      const nodeId = getNodeId(node);
+
+      // Check if the graph already has a node with the current nodeId.
+      if (!graphRef.hasNode(nodeId)) {
+        // If the node doesn't exist, add it to the graph with specified properties.
+        graphRef.setNode(nodeId, {
+          label: node.name, // Use node name as the label for the node.
+          style: getNodeStyle(node, nodeId),
+          labelStyle: `fill: ${"black"}; cursor: pointer;`, // Set style for the node label.
+          shape: "rect", // Set the shape to rectangle
+          rx: NODE_RADIUS, // Horizontal radius for rounded corners
+          ry: NODE_RADIUS, // Vertical radius for rounded corners
+          dataAttr: { "data-node-id": nodeId },
+        });
+      }
+
+      // Check if the current node  is expanded (based on the global set of expandedNodes).
+      if (expandedNodes.has(nodeId)) {
+        // If expanded, iterate through children and draw edges connecting them to the current node.
+        const children = node.children || [];
+        for (let childNode of children) {
+          // Recursively call the onDrawNode function for each child-node.
+          drawNode(childNode, graphRef);
+
+          const childNodeId = getNodeId(childNode);
+          // Add an edge between the current node and the child-node  with specified properties.
+          graphRef.setEdge(nodeId, childNodeId, {
+            curve: d3.curveBasis, // Use a B-spline curve for the edge.
+            style: `stroke: ${EDGE_COLOR}; stroke-opacity: 1; fill: none;`, // Set style for the edge.
+            arrowheadStyle: `fill: ${EDGE_COLOR}`, // Set style for the arrowhead.
+            minlen: 2, // Set minimum length for the edge.
+          });
+        }
+      }
+    },
+    [expandedNodes, getNodeId, getNodeStyle],
+  );
+
+  // Helper function to find all ancestor node IDs for a target node
+  const findAncestorIds = useCallback(
+    (nodesTree: TreeData[], targetNodeId: string): string[] => {
+      const ancestors: string[] = [];
+
+      const searchTree = (nodes: TreeData[], path: string[]): boolean => {
+        for (const node of nodes) {
+          const currentNodeId = getNodeId(node);
+          const newPath = [...path, currentNodeId];
+          if (!node.category && (node.nodeId === targetNodeId || node.id === targetNodeId)) {
+            ancestors.push(...path);
+            return true;
+          }
+
+          if (node.children && node.children.length > 0) {
+            if (searchTree(node.children, newPath)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+
+      searchTree(nodesTree, []);
+      return ancestors;
+    },
+    [getNodeId],
+  );
+
+  const indicateHiddenNodes = useCallback(
+    function addHiddenNodeIndicators(node: TreeData, svgGroup: any) {
+      const nodeId = getNodeId(node);
+      const children = node.children || [];
+      const childCount = children.length;
+      const isExpanded = expandedNodes.has(nodeId);
+
+      if (childCount === 0) {
+        return;
+      }
+
+      const nodeSelection = svgGroup.select(`g[data-node-id="${nodeId}"]`);
+
+      if (!nodeSelection.empty()) {
+        // Clean any previous indicator on redraw
+        nodeSelection.selectAll("g.child-indicator").remove();
+
+        if (!isExpanded) {
+          const bbox = (nodeSelection.node() as SVGGraphicsElement).getBBox();
+          const nodeXPosition = bbox.width / 2;
+          const indicatorText = `${childCount}▸`;
+          const indicatorTooltip = `Collapsed: this node has ${childCount} child ${childCount === 1 ? "node" : "nodes"}. Click the node to expand.`;
+
+          const indicatorGroup = nodeSelection
+            .append("g")
+            .attr("class", "child-indicator")
+            .attr("transform", `translate(${nodeXPosition + 14}, 0)`)
+            .style("pointer-events", "auto");
+
+          const indicatorCircle = indicatorGroup
+            .append("circle")
+            .attr("r", INDICATOR_RADIUS)
+            .attr("fill", INDICATOR_BG)
+            .attr("stroke", INDICATOR_BORDER)
+            .attr("stroke-width", 1);
+
+          indicatorCircle.append("title").text(indicatorTooltip);
+
+          const indicatorLabel = indicatorGroup
+            .append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.35em")
+            .attr("fill", INDICATOR_TEXT)
+            .attr("font-size", "10px")
+            .attr("font-weight", "700")
+            .text(indicatorText);
+
+          indicatorLabel.append("title").text(indicatorTooltip);
+        }
+      }
+
+      if (!isExpanded) {
+        return;
+      }
+
+      // Recursively check children
+      for (let childNode of children) {
+        addHiddenNodeIndicators(childNode, svgGroup);
+      }
+    },
+    [expandedNodes, getNodeId],
+  );
 
   useEffect(() => {
+    const selectedNodeId = currentVisibleNode?.id;
+    const svgElement = svgRef.current;
+    if (!svgElement) {
+      return;
+    }
+    const svg = d3.select<SVGSVGElement, unknown>(svgElement);
+
     const graph: any = new dagreD3.graphlib.Graph().setGraph({
       rankdir: "LR",
     });
 
     // Clear previous graph content
-    d3.select("#graphGroup").selectAll("*").remove();
+    svg.selectAll("*").remove();
 
     // If treeData is empty, stop execution
     if (!treeData || treeData.length === 0) {
@@ -312,7 +356,7 @@ const GraphView = ({
 
     // Force expand on first mount
     if (!hasInitializedRef.current && treeData.length > 0) {
-      const rootNodeIds = treeData.map(node => node.category ? node.id : (node.nodeId || node.id)).filter(Boolean);
+      const rootNodeIds = treeData.map(getNodeId).filter(Boolean);
       const nodesToExpand = new Set(rootNodeIds);
 
       if (currentVisibleNode?.id) {
@@ -327,7 +371,6 @@ const GraphView = ({
 
     const render = new dagreD3.render();
 
-    const svg = d3.select("svg");
     const svgGroup: any = svg.append("g");
 
     // Draw the nodes
@@ -338,17 +381,17 @@ const GraphView = ({
     // Render the graph
     render(svgGroup, graph);
 
-    d3.select("svg")
+    svg
       .selectAll("g.node")
       .attr("data-node-id", (d) => graph.node(d).dataAttr["data-node-id"]);
 
     for (let node of treeData) {
-      indicateHiddenNodes(node, graph);
+      indicateHiddenNodes(node, svgGroup);
     }
 
-    const zoom: any = d3.zoom().on("zoom", function (event) {
+    const zoom: any = d3.zoom<SVGSVGElement, unknown>().on("zoom", function (event) {
       svgGroup.attr("transform", event.transform);
-      setZoomState({
+      updateZoomState({
         translateX: event.transform.x,
         translateY: event.transform.y,
         scale: event.transform.k,
@@ -363,29 +406,33 @@ const GraphView = ({
       handleNodeClick(ontologyId);
     });
 
-    const svgWidth = (window.innerWidth * 70) / 100;
-    const svgHeight = 290;
+    const svgWidth = svg.node()?.clientWidth || (window.innerWidth * 70) / 100;
+    const svgHeight = svg.node()?.clientHeight || SVG_HEIGHT;
     const graphWidth = graph.graph().width + 50;
     const graphHeight = graph.graph().height + 50;
 
     const zoomScale = Math.min(svgWidth / graphWidth, svgHeight / graphHeight);
-    const defaultTranslateX = (svgWidth - graphWidth * zoomScale) / 20;
-    const defaultTranslateY = 150;
+    const defaultTranslateX = (svgWidth - graphWidth * zoomScale) / 2;
+    const defaultTranslateY = (svgHeight - graphHeight * zoomScale) / 2;
 
-    if (zoomState.scale !== 0) {
+    if (zoomStateRef.current.scale !== 0) {
       // Always restore zoom state if it exists to prevent recentering
       svg.call(
         zoom.transform,
         d3.zoomIdentity
-          .translate(zoomState.translateX, zoomState.translateY)
-          .scale(zoomState.scale),
+          .translate(zoomStateRef.current.translateX, zoomStateRef.current.translateY)
+          .scale(zoomStateRef.current.scale),
       );
-    } else if (currentVisibleNode && graph.node(currentVisibleNode.id)) {
+    } else if (selectedNodeId && graph.node(selectedNodeId)) {
       // Center on currentVisibleNode on first load
-      const nodePosition = graph.node(currentVisibleNode.id);
+      const nodePosition = graph.node(selectedNodeId);
       const scale = 1;
-      const translateX = svgWidth / 2 - nodePosition.x * scale;
-      const translateY = svgHeight / 2.5 - nodePosition.y * scale;
+      const { translateX, translateY } = centerNodeTransform(
+        svgWidth,
+        svgHeight,
+        nodePosition,
+        scale,
+      );
 
       svg.call(
         zoom.transform,
@@ -393,7 +440,7 @@ const GraphView = ({
       );
 
       // Set initial zoom state
-      setZoomState({
+      updateZoomState({
         translateX: translateX,
         translateY: translateY,
         scale: scale,
@@ -410,13 +457,25 @@ const GraphView = ({
 
     // Cleanup function to remove graph on unmount
     return () => {
-      d3.select("#graphGroup").selectAll("*").remove();
+      svg.selectAll("*").remove();
     };
-  }, [treeData, expandedNodes]);
+  }, [
+    currentVisibleNode?.id,
+    centerNodeTransform,
+    expandedNodes,
+    findAncestorIds,
+    getNodeId,
+    handleNodeClick,
+    indicateHiddenNodes,
+    onDrawNode,
+    setExpandedNodes,
+    treeData,
+    updateZoomState,
+  ]);
 
   useEffect(() => {
-    if (graph && currentVisibleNode) {
-      const nodeId = currentVisibleNode?.id;
+    const nodeId = currentVisibleNode?.id;
+    if (graph && nodeId) {
 
       if (graph.node(nodeId)) {
         const nodePosition = graph.node(nodeId);
@@ -427,9 +486,13 @@ const GraphView = ({
         const svgHeight = svg.node()?.clientHeight || 0;
 
         // Use current zoom state scale if available, otherwise default to 1
-        const scale = zoomState.scale !== 0 ? zoomState.scale : 1;
-        const translateX = svgWidth / 2 - nodePosition.x * scale;
-        const translateY = svgHeight / 2.5 - nodePosition.y * scale;
+        const scale = zoomStateRef.current.scale !== 0 ? zoomStateRef.current.scale : 1;
+        const { translateX, translateY } = centerNodeTransform(
+          svgWidth,
+          svgHeight,
+          nodePosition,
+          scale,
+        );
 
         const zoomTranslate = d3.zoomIdentity
           .translate(translateX, translateY)
@@ -438,36 +501,35 @@ const GraphView = ({
         // Create zoom behavior
         const zoom = d3.zoom().on("zoom", function (event) {
           svgGroup.attr("transform", event.transform);
-          setZoomState({
+          updateZoomState({
             translateX: event.transform.x,
             translateY: event.transform.y,
             scale: event.transform.k,
           });
         });
 
-        svg
+        const transition = svg
           .transition()
           .duration(800)
           .call(zoom.transform as any, zoomTranslate);
 
-        // Update zoom state immediately after transition
-        setTimeout(() => {
-          setZoomState({
+        transition.on("end", () => {
+          updateZoomState({
             translateX: translateX,
             translateY: translateY,
             scale: scale,
           });
-        }, 850);
+        });
+
+        return () => {
+          svg.interrupt();
+        };
       }
     }
-  }, [currentVisibleNode?.id, graph]);
+    return;
+  }, [centerNodeTransform, currentVisibleNode?.id, graph, updateZoomState]);
 
-  return (
-    <>
-      {" "}
-      <svg id="graphGroup" ref={svgRef} width="100%" height="1000" />
-    </>
-  );
+  return <svg id="graphGroup" ref={svgRef} width="100%" height={SVG_HEIGHT} />;
 };
 
 export default GraphView;

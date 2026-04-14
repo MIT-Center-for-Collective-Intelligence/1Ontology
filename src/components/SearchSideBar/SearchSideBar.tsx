@@ -1,4 +1,3 @@
-import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import HistoryIcon from "@mui/icons-material/History";
 import {
   Alert,

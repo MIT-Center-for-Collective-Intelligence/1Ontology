@@ -23,6 +23,11 @@ interface PartViewerProps {
   replaceWith: any;
   skillsFutureApp: any;
   getGeneralizationParts: any;
+  onDisplayDetailsChange?: (isExpanded: boolean) => void;
+  clonedNodesQueue?: { [nodeId: string]: { title: string; id: string } };
+  saveNewSpecialization?: (queuedId: string, collectionName: string) => void;
+  cancelPendingPart?: (queuedId: string) => void;
+  updatePendingPartTitle?: (queuedId: string, title: string) => void;
 }
 
 const PartViewer: React.FC<PartViewerProps> = ({
@@ -40,18 +45,33 @@ const PartViewer: React.FC<PartViewerProps> = ({
   replaceWith,
   skillsFutureApp,
   getGeneralizationParts,
+  onDisplayDetailsChange,
+  clonedNodesQueue,
+  saveNewSpecialization,
+  cancelPendingPart,
+  updatePendingPartTitle,
 }) => {
   const [displayDetails, setDisplayDetails] = useState(false);
 
-  const { data: inheritedPartsDetails, mutateData, debouncedRefetch } =
-    useInheritedPartsDetails(currentVisibleNode);
+  const {
+    data: inheritedPartsDetails,
+    mutateData,
+    debouncedRefetch,
+  } = useInheritedPartsDetails(currentVisibleNode);
+  console.log(inheritedPartsDetails, "inheritedPartsDetails ==>");
+
+  useEffect(() => {
+    onDisplayDetailsChange?.(displayDetails);
+  }, [displayDetails, onDisplayDetailsChange]);
 
   return (
     <Box>
       {enableEdit ? (
         <InheritedPartsViewerEdit
           selectedProperty={property}
-          getAllGeneralizations={() => getAllGeneralizations(currentVisibleNode, relatedNodes)}
+          getAllGeneralizations={() =>
+            getAllGeneralizations(currentVisibleNode, relatedNodes)
+          }
           getGeneralizationParts={getGeneralizationParts}
           nodes={relatedNodes}
           fetchNode={fetchNode}
@@ -90,11 +110,19 @@ const PartViewer: React.FC<PartViewerProps> = ({
           inheritedPartsDetails={inheritedPartsDetails}
           mutateData={mutateData}
           debouncedRefetch={debouncedRefetch}
+          clonedNodesQueue={clonedNodesQueue}
+          approvePendingPart={(queuedId: string) =>
+            saveNewSpecialization?.(queuedId, "main")
+          }
+          cancelPendingPart={cancelPendingPart}
+          updatePendingPartTitle={updatePendingPartTitle}
         />
       ) : (
         <InheritedPartsViewer
           selectedProperty={property}
-          getAllGeneralizations={() => getAllGeneralizations(currentVisibleNode, relatedNodes)}
+          getAllGeneralizations={() =>
+            getAllGeneralizations(currentVisibleNode, relatedNodes)
+          }
           nodes={relatedNodes}
           fetchNode={fetchNode}
           readOnly={true}
