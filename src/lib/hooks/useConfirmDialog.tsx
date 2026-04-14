@@ -172,14 +172,20 @@ const useDialog = () => {
   );
 
   const promptIt = useCallback(
-    (message: string, confirmation = "Confirm", cancel = "Cancel") =>
-      showDialog(message, true, confirmation, cancel),
+    (
+      message: string | React.ReactNode,
+      confirmation?: string | null,
+      cancel?: string | null,
+    ) => showDialog(message, true, confirmation, cancel),
     [showDialog],
   );
 
   const confirmIt = useCallback(
-    (message: string | React.ReactNode, confirmation = null, cancel = null) =>
-      showDialog(message, false, confirmation, cancel),
+    (
+      message: string | React.ReactNode,
+      confirmation?: string | null,
+      cancel?: string | null,
+    ) => showDialog(message, false, confirmation, cancel),
     [showDialog],
   );
 
