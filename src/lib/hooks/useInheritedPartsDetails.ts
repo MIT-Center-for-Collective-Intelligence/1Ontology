@@ -10,6 +10,7 @@ interface UseInheritedPartsDetailsReturn {
   error: Error | null;
   mutateData: (newData: InheritedPartsDetail[] | null) => void;
   debouncedRefetch: () => void;
+  refetchNow: () => void;
 }
 
 export const useInheritedPartsDetails = (
@@ -39,6 +40,14 @@ export const useInheritedPartsDetails = (
     debounceTimerRef.current = setTimeout(() => {
       fetchFromApiRef.current?.();
     }, 3000);
+  }, []);
+
+  const refetchNow = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+    fetchFromApiRef.current?.();
   }, []);
 
   useEffect(() => {
@@ -169,5 +178,5 @@ export const useInheritedPartsDetails = (
     }
   }, [partsSignature, debouncedRefetch]);
 
-  return { data, loading, error, mutateData, debouncedRefetch };
+  return { data, loading, error, mutateData, debouncedRefetch, refetchNow };
 };

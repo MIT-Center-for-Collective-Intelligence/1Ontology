@@ -1021,69 +1021,184 @@ const StructuredProperty = ({
     }
   };
   const replaceWith = useCallback(
-    async (partId: string, newPartId: string) => {
+    async (
+      oldPartId: string,
+      newPartId: string,
+      updatedInheritedPartsDetails?: InheritedPartsDetail[] | null,
+    ) => {
       try {
-        scrollToElement(partId);
-        if (property === "parts" && currentVisibleNode?.id) {
-          const inheritanceRef = currentVisibleNode.inheritance?.parts?.ref;
-          let _propertyValue = currentVisibleNode.properties["parts"];
+        if (property !== "parts") return;
+        if (!currentVisibleNode?.id || !user?.uname) return;
+        if (!oldPartId || !newPartId || oldPartId === newPartId) return;
 
-          // If parts are inherited, break the inheritance first
-          // Prevents the code breaking for any node that inherits its parts from a parent node
-          if (inheritanceRef && relatedNodes[inheritanceRef]) {
-            const inheritedParts =
-              relatedNodes[inheritanceRef].properties["parts"];
-            _propertyValue = JSON.parse(JSON.stringify(inheritedParts));
-          }
+        // scrollToElement(oldPartId);
 
-          // Check if _propertyValue is valid
-          // Prevents failing when new node has not laded parts yet
-          if (
-            !_propertyValue ||
-            !Array.isArray(_propertyValue) ||
-            !_propertyValue[0]?.nodes
-          ) {
-            return;
-          }
+        // Following linkNodeRelation and unlinkNodeRelation but updated as a single Function for clarity
 
-          const elementIdx = _propertyValue[0].nodes.findIndex(
-            (n: { id: string }) => n.id === partId,
-          );
-          const existIdx = _propertyValue[0].nodes.findIndex(
-            (n: { id: string }) => n.id === newPartId,
-          );
+        // 1Resolve the effective parts (break inheritance if needed).
+        const inheritanceRef = currentVisibleNode.inheritance?.parts?.ref;
+        const sourceParts: ICollection[] | undefined =
+          inheritanceRef && relatedNodes[inheritanceRef]
+            ? relatedNodes[inheritanceRef].properties?.parts
+            : currentVisibleNode.properties?.parts;
 
-          // Check if element was found
-          // Prevents error when the part no longer exists due to another user's edits
-          if (elementIdx === -1) {
-            return;
-          }
+        if (
+          !sourceParts ||
+          !Array.isArray(sourceParts) ||
+          !sourceParts[0]?.nodes
+        ) {
+          return;
+        }
 
-          if (existIdx === -1) {
-            _propertyValue[0].nodes[elementIdx].id = newPartId;
-            const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-            await updateDoc(nodeRef, {
-              "properties.parts": _propertyValue,
-            });
+        const updatedParts: ICollection[] = JSON.parse(
+          JSON.stringify(sourceParts),
+        );
+        const previousParts = JSON.parse(
+          JSON.stringify(currentVisibleNode.properties?.parts || []),
+        );
 
-            if (currentVisibleNode?.id) {
-              if (onInstantTreeUpdate) {
-                onInstantTreeUpdate((tree) => [...tree]);
-              }
-            }
+        const elementIdx = updatedParts[0].nodes.findIndex(
+          (n: ILinkNode) => n.id === oldPartId,
+        );
+        const existIdx = updatedParts[0].nodes.findIndex(
+          (n: ILinkNode) => n.id === newPartId,
+        );
+
+        if (elementIdx === -1) return;
+        if (existIdx !== -1) return; // newPartId already in parts
+
+        // Replace .id at the same slot. preserves position and the slot's optional flag 
+        updatedParts[0].nodes[elementIdx].id = newPartId;
+
+        // Build isPartOf updates for old and new parts.
+        const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
+        const oldPartRef = doc(collection(db, NODES), oldPartId);
+        const newPartRef = doc(collection(db, NODES), newPartId);
+
+        let oldPartData: INode | null = relatedNodes[oldPartId] || null;
+        if (!oldPartData) oldPartData = await fetchNode(oldPartId);
+        let updatedOldIsPartOf: ICollection[] | null = null;
+        const oldIsPartOfRaw = oldPartData?.properties?.isPartOf;
+        if (Array.isArray(oldIsPartOfRaw)) {
+          updatedOldIsPartOf = JSON.parse(JSON.stringify(oldIsPartOfRaw));
+          for (const col of updatedOldIsPartOf!) {
+            col.nodes = col.nodes.filter(
+              (n: ILinkNode) => n.id !== currentVisibleNode.id,
+            );
           }
         }
-      } catch (error) {
+
+        let newPartData: INode | null = relatedNodes[newPartId] || null;
+        if (!newPartData) newPartData = await fetchNode(newPartId);
+        let updatedNewIsPartOf: ICollection[] | null = null;
+        const newIsPartOfRaw = newPartData?.properties?.isPartOf;
+        if (Array.isArray(newIsPartOfRaw)) {
+          updatedNewIsPartOf = JSON.parse(JSON.stringify(newIsPartOfRaw));
+          const alreadyHas = (updatedNewIsPartOf || []).some((col) =>
+            col.nodes.some((n: ILinkNode) => n.id === currentVisibleNode.id),
+          );
+          if (!alreadyHas) {
+            if (!updatedNewIsPartOf || updatedNewIsPartOf.length === 0) {
+              updatedNewIsPartOf = [{ collectionName: "main", nodes: [] }];
+            }
+            updatedNewIsPartOf[0].nodes.push({ id: currentVisibleNode.id });
+          }
+        } else if (newPartData) {
+          updatedNewIsPartOf = [
+            {
+              collectionName: "main",
+              nodes: [{ id: currentVisibleNode.id }],
+            },
+          ];
+        }
+
+        // Write to db for current node first  then the two cross-node isPartOf writes in parallel.
+        const currentNodeUpdates: any = {
+          "properties.parts": updatedParts,
+          "inheritance.parts.ref": null,
+        };
+        if (updatedInheritedPartsDetails) {
+          currentNodeUpdates.inheritedPartsDetails =
+            updatedInheritedPartsDetails;
+        }
+        await updateDoc(nodeRef, currentNodeUpdates);
+
+        const isPartOfWrites: Promise<any>[] = [];
+        if (updatedOldIsPartOf) {
+          isPartOfWrites.push(
+            updateDoc(oldPartRef, {
+              "properties.isPartOf": updatedOldIsPartOf,
+            }),
+          );
+        }
+        if (updatedNewIsPartOf) {
+          isPartOfWrites.push(
+            updateDoc(newPartRef, {
+              "properties.isPartOf": updatedNewIsPartOf,
+            }),
+          );
+        }
+        if (isPartOfWrites.length > 0) {
+          await Promise.all(isPartOfWrites);
+        }
+
+        await updateInheritance({
+          nodeId: currentVisibleNode.id,
+          updatedProperties: ["parts"],
+          db,
+        });
+
+        saveNewChangeLog(db, {
+          nodeId: currentVisibleNode.id,
+          modifiedBy: user.uname,
+          modifiedProperty: "parts",
+          previousValue: previousParts,
+          newValue: updatedParts,
+          modifiedAt: new Date(),
+          changeType: "modify elements",
+          changeDetails: {
+            action: "replace part",
+            oldPartId,
+            newPartId,
+          },
+          fullNode: currentVisibleNode,
+          skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        });
+
+        recordLogs({
+          action: "replace part",
+          field: "parts",
+          oldPartId,
+          newPartId,
+          nodeId: currentVisibleNode.id,
+        });
+
+        if (onInstantTreeUpdate) {
+          onInstantTreeUpdate((tree) => [...tree]);
+        }
+      } catch (error: any) {
         console.error(error);
+        recordLogs({
+          type: "error",
+          error: JSON.stringify({
+            name: error?.name,
+            message: error?.message,
+            stack: error?.stack,
+          }),
+        });
       }
     },
     [
-      currentVisibleNode?.id,
-      currentVisibleNode?.inheritance?.parts?.ref,
+      currentVisibleNode,
+      relatedNodes,
+      fetchNode,
       db,
       property,
-      relatedNodes,
+      user,
+      skillsFuture,
       skillsFutureApp,
+      onInstantTreeUpdate,
     ],
   );
 

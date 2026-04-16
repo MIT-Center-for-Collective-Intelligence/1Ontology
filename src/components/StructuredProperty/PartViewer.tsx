@@ -55,8 +55,10 @@ const PartViewer: React.FC<PartViewerProps> = ({
 
   const {
     data: inheritedPartsDetails,
+    loading: loadingInheritedPartsDetails,
     mutateData,
     debouncedRefetch,
+    refetchNow,
   } = useInheritedPartsDetails(currentVisibleNode);
   console.log(inheritedPartsDetails, "inheritedPartsDetails ==>");
 
@@ -108,8 +110,10 @@ const PartViewer: React.FC<PartViewerProps> = ({
           replaceWith={replaceWith}
           skillsFutureApp={skillsFutureApp}
           inheritedPartsDetails={inheritedPartsDetails}
+          loadingInheritedPartsDetails={loadingInheritedPartsDetails}
           mutateData={mutateData}
           debouncedRefetch={debouncedRefetch}
+          refetchNow={refetchNow}
           clonedNodesQueue={clonedNodesQueue}
           approvePendingPart={(queuedId: string) =>
             saveNewSpecialization?.(queuedId, "main")

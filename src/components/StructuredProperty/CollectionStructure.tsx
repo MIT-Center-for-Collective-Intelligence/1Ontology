@@ -1200,7 +1200,7 @@ const CollectionStructure = ({
   const replaceWith = useCallback(
     async (partId: string, id: string) => {
       try {
-        scrollToElement(partId);
+        // scrollToElement(partId);
         if (model) {
           setEditableProperty((prev: ICollection[]) => {
             const _prev = [...prev];
