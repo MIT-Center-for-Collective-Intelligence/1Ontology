@@ -247,10 +247,7 @@ const ActivityDetails = ({
             >
               <Typography sx={{ fontWeight: 600, mb: 1 }}>Comments</Typography>
               <MarkdownRender
-                text={activity.reasoning.replace(
-                  "This change was based on the O*Net",
-                  "This change was based on the O\\*NET Task",
-                )}
+                text={activity.reasoning}
                 sx={{
                   fontSize: "16px",
                   fontWeight: 400,
