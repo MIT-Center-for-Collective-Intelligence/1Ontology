@@ -87,7 +87,6 @@ const GuidLines = ({
     updateDoc(gRef, gData);
   };
 
-
   return (
     <Box sx={{ mb: "25px" }}>
       {setDisplayGuidelines && (
@@ -102,6 +101,9 @@ const GuidLines = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            p: 4,
+            borderBottomLeftRadius: "25px",
+            borderBottomRightRadius: "25px",
           }}
         >
           <Typography sx={{ fontSize: "45px" }}>Guidelines</Typography>
