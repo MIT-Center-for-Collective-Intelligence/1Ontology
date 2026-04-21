@@ -1,11 +1,10 @@
 /*
   FullPageLogoLoading component renders a full-page loading screen with a centered logo.
-  It utilizes Material-UI's Box and Next.js Image components for layout and image rendering.
-  Uncomment the CircularProgress component if you want to display a loading spinner.
+  Material-UI Box layout; plain img for the loader GIF (avoids Next/Image fetchPriority DOM warnings).
+  Uncomment CircularProgress to show a loading spinner.
 */
 import { Box } from "@mui/material";
 // import CircularProgress from "@mui/material/CircularProgress";
-import Image from "next/image";
 
 import LogoDarkMode from "../../../public/loader.gif";
 
@@ -29,13 +28,13 @@ const FullPageLogoLoading = () => {
           alignItems: "center",
         }}
       >
-        <Image
-          loading="lazy"
+        <img
           src={LogoDarkMode.src}
           alt="logo"
           width={250}
           height={250}
           style={{ borderRadius: "25px" }}
+          loading="lazy"
         />
         {/* <CircularProgress sx={{ mt: 5 }} /> */}
       </Box>

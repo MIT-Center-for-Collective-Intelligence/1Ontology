@@ -259,9 +259,9 @@ const Node = ({
   }, []);
 
   const searchResultsForSelection = useMemo(() => {
-    const propertyType = currentVisibleNode.propertyType[
+    const propertyType = currentVisibleNode.propertyType?.[
       selectedProperty
-    ] as INodeTypes;
+    ] as INodeTypes | undefined;
     if (propertyType) {
       return searchWithFuse(searchValue, propertyType);
     }
@@ -274,7 +274,7 @@ const Node = ({
       return searchWithFuse(searchValue, currentVisibleNode.nodeType);
     }
     return [];
-  }, [searchValue, selectedProperty]);
+  }, [searchValue, selectedProperty, currentVisibleNode, searchWithFuse]);
 
   const addACloneNodeQueue = (nodeId: string, title?: string) => {
     const newId = doc(collection(db, NODES)).id;
@@ -1339,7 +1339,7 @@ const Node = ({
         }}
       >
         {/* alternatives of title of the node */}
-        {currentVisibleNode?.properties.hasOwnProperty("alternatives") && (
+        {currentVisibleNode?.properties?.hasOwnProperty?.("alternatives") && (
           <ChipsProperty
             currentVisibleNode={currentVisibleNode}
             property={"alternatives"}
@@ -1372,7 +1372,7 @@ const Node = ({
         />
 
         {/* actors of the node if it's exist */}
-        {currentVisibleNode?.properties.hasOwnProperty("actor") && (
+        {currentVisibleNode?.properties?.hasOwnProperty?.("actor") && (
           <StructuredProperty
             selectedDiffNode={selectedDiffNode}
             confirmIt={confirmIt}

@@ -192,9 +192,22 @@ const Ontology = ({
   const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [viewValue, setViewValue] = useState<number>(0);
-  const fuse = new Fuse(AddContext(Object.values(nodes), nodes), {
-    keys: ["title", "context.title"],
-  });
+  const fuseSearchItems = useMemo(() => {
+    const values = Object.values(nodes) as INode[];
+    if (values.length === 0) {
+      return [];
+    }
+    const list = values.map((n) => ({ ...n }));
+    return AddContext(list, nodes);
+  }, [nodes]);
+
+  const fuse = useMemo(
+    () =>
+      new Fuse(fuseSearchItems, {
+        keys: ["title", "context.title"],
+      }),
+    [fuseSearchItems],
+  );
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [eachNodePath, setEachNodePath] = useState<{
     [key: string]: INodePath[];
