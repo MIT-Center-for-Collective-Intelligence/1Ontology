@@ -1,6 +1,7 @@
 export type LandingSectionId =
   | "home"
   | "paper"
+  | "navigate"
   | "platform"
   | "aiUses"
   | "team";
@@ -9,6 +10,7 @@ export type LandingSectionId =
 export const LANDING_SECTION_HASH: Record<LandingSectionId, string> = {
   home: "",
   paper: "paper",
+  navigate: "navigate",
   platform: "platform",
   aiUses: "ai-uses",
   team: "team",
@@ -21,6 +23,7 @@ export const landingHashToSection = (
   if (!key) return "home";
   const map: Record<string, LandingSectionId> = {
     paper: "paper",
+    navigate: "navigate",
     platform: "platform",
     "ai-uses": "aiUses",
     team: "team",
@@ -36,7 +39,8 @@ export const landingSectionToHash = (id: LandingSectionId): string => {
 export const LANDING_SECTION_TITLES: Record<LandingSectionId, string> = {
   home: "AI and the Future of Work - An Ontology Approach",
   paper: "Where Can AI Be Used? — Paper",
-  platform: "Software Platform for Editing the Ontology of Activities",
+  navigate: "Navigate the Ontology of Activities",
+  platform: "Contribute to the Ontology of Activities",
   aiUses: "Where AI Can Be Useful",
   team: "Our Team - AI and the Future of Work",
 };

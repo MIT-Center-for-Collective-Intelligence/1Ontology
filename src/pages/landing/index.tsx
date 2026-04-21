@@ -8,6 +8,7 @@ import { createLandingTheme } from "../../theme/landingTheme";
 import { LandingHomeSection } from "./sections/LandingHomeSection";
 
 import { PlatformLandingSection } from "./platform";
+import { NavigateLandingSection } from "./navigate";
 import { AiUsesLandingSection } from "./ai-uses";
 import { TeamLandingSection } from "./team";
 import type { LandingSectionId } from "../../constants/landingTypes";
@@ -26,6 +27,10 @@ const LandingPage = () => {
     useThemeManager();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [section, setSection] = useState<LandingSectionId>("home");
+  // Keep Navigate mounted once the user first visits it, so its state
+  // (ontology cache, active node, search query, AI chat turns, scroll
+  // positions) survives section switches.
+  const [hasMountedNavigate, setHasMountedNavigate] = useState(false);
 
   const theme = createLandingTheme(isDark);
 
@@ -39,6 +44,10 @@ const LandingPage = () => {
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
+
+  useEffect(() => {
+    if (section === "navigate") setHasMountedNavigate(true);
+  }, [section]);
 
   const commitSection = useCallback((id: LandingSectionId) => {
     setSection(id);
@@ -74,7 +83,13 @@ const LandingPage = () => {
             },
           }}
         />
-        <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+        <Box
+          sx={{
+            minHeight: "100vh",
+            bgcolor: "background.default",
+            display: "flow-root",
+          }}
+        >
           <Navigation
             isDark={isDark}
             handleThemeSwitch={handleThemeSwitch}
@@ -103,6 +118,19 @@ const LandingPage = () => {
             />
           )}
           {section === "paper" && <OntologyPaper isDark={isDark} />}
+          {hasMountedNavigate && (
+            <Box
+              sx={{
+                display: section === "navigate" ? "block" : "none",
+              }}
+            >
+              <NavigateLandingSection
+                isDark={isDark}
+                isAuthenticated={isAuthenticated}
+                onGoToSection={commitSection}
+              />
+            </Box>
+          )}
           {section === "platform" && (
             <PlatformLandingSection
               isDark={isDark}

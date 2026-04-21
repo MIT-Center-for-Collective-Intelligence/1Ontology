@@ -103,6 +103,7 @@ import {
 } from "@components/types/INode";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import NodeBody from "../NodBody/NodeBody";
+import NodeCompass from "../NodBody/NodeCompass";
 
 import {
   generateUniqueTitle,
@@ -1804,6 +1805,14 @@ const Node = ({
               skillsFuture={skillsFuture}
               enableEdit={enableEdit}
               onInstantTreeUpdate={onInstantTreeUpdate}
+            />
+
+            {/* compass: focused single-node radial graph */}
+            <NodeCompass
+              currentVisibleNode={currentVisibleNode}
+              relatedNodes={relatedNodes}
+              navigateToNode={navigateToNode}
+              requireModifierToZoom
             />
 
             {/* actors of the node if it's exist */}
