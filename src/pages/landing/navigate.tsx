@@ -34,7 +34,7 @@ import AiPanel from "./_components/AiPanel";
 import type { ICollection, INode } from "../../types/INode";
 import { NODES } from "../../lib/firestoreClient/collections";
 
-const APP_NAME = "ontology-development-version";
+const APP_NAME = "final-hierarchy-with-o*net";
 
 const INTER =
   '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
