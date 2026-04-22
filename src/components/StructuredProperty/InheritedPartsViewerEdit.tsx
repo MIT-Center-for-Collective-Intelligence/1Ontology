@@ -850,14 +850,13 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           for (const entry of gen.details) {
             if (entry.to !== partId) continue;
             entry.toOptional = newOptional;
-            // NEED TO DEBUG FURTHER
-            // entry.optionalChange = entry.from
-            //   ? entry.fromOptional === newOptional
-            //     ? "none"
-            //     : newOptional
-            //       ? "added"
-            //       : "removed"
-            //   : "none";
+            entry.optionalChange = entry.from
+              ? entry.fromOptional === newOptional
+                ? "none"
+                : newOptional
+                  ? "added"
+                  : "removed"
+              : "none";
           }
         });
         // Reflect the change in the React tree immediately.
@@ -1071,7 +1070,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
                               {formatPartTitle(
                                 entry.from,
                                 entry.fromOptional || false,
-                                undefined,
+                                entry.optionalChange,
                                 entry.fromTitle,
                               )}
                             </Typography>
