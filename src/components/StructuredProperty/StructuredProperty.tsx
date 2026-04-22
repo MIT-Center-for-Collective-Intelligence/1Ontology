@@ -1067,8 +1067,10 @@ const StructuredProperty = ({
         if (elementIdx === -1) return;
         if (existIdx !== -1) return; // newPartId already in parts
 
-        // Replace .id at the same slot. preserves position and the slot's optional flag 
+        // Replace .id and title at the same slot. preserves position and the slot's optional flag
         updatedParts[0].nodes[elementIdx].id = newPartId;
+        updatedParts[0].nodes[elementIdx].title =
+          relatedNodes[newPartId]?.title || "";
 
         // Build isPartOf updates for old and new parts.
         const nodeRef = doc(collection(db, NODES), currentVisibleNode.id);
