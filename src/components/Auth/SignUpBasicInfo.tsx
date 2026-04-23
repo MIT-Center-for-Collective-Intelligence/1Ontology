@@ -83,115 +83,129 @@ export const SignUpBasicInfo = ({
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
     formikProps;
 
+  const fieldSx = {
+    "& .MuiFormHelperText-root": { color: "rgba(255, 160, 160, 0.95)" },
+  } as const;
+
+  const inputSx = {
+    fontSize: "17px",
+    borderRadius: "18px",
+    color: "rgba(255,255,255,0.92)",
+    background:
+      "linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))",
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderRadius: "18px",
+      borderColor: "rgba(255,255,255,0.18)",
+    },
+    "&:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: "rgba(255,255,255,0.28)",
+    },
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: "rgba(255, 140, 0, 0.65)",
+      boxShadow: "0 0 0 4px rgba(255, 140, 0, 0.18)",
+    },
+  } as const;
+
+  const getFieldError = (fieldName: keyof SignUpFormValues) =>
+    touched[fieldName] && typeof errors[fieldName] === "string"
+      ? errors[fieldName]
+      : "";
+
+  const errorBadgeSx = {
+    position: "absolute",
+    top: -8,
+    right: 16,
+    zIndex: 2,
+    maxWidth: "68%",
+    px: 1,
+    py: "2px",
+    borderRadius: "999px",
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    lineHeight: 1,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    letterSpacing: "0.01em",
+    color: "rgba(255, 210, 210, 0.98)",
+    textShadow: "0 1px 1px rgba(0,0,0,0.55)",
+    backgroundColor: "rgba(10, 10, 12, 0.75)",
+    border: "1px solid rgba(255, 120, 120, 0.38)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.32)",
+    pointerEvents: "none",
+  } as const;
+
+  const Field = ({
+    name,
+    label,
+    type,
+    autoComplete,
+    mb,
+  }: {
+    name: keyof SignUpFormValues;
+    label: string;
+    type?: string;
+    autoComplete?: string;
+    mb?: number;
+  }) => {
+    const fieldError = getFieldError(name);
+    const isErrored = Boolean(fieldError);
+
+    return (
+      <Box sx={{ position: "relative", mb: mb ?? 2.25 }}>
+        <TextField
+          id={String(name)}
+          name={String(name)}
+          label={label}
+          type={type}
+          value={values[name] as any}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          variant="outlined"
+          error={isErrored}
+          fullWidth
+          autoComplete={autoComplete}
+          sx={fieldSx}
+          slotProps={{
+            input: {
+              sx: inputSx,
+            },
+          }}
+        />
+        <Box
+          component="div"
+          sx={{
+            ...errorBadgeSx,
+            visibility: isErrored ? "visible" : "hidden",
+          }}
+        >
+          {fieldError || "placeholder"}
+        </Box>
+      </Box>
+    );
+  };
+
   return (
     <Box data-testid="signup-form-step-1">
-      <TextField
-        id="firstName"
-        name="firstName"
-        label="First Name"
-        value={values.firstName}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        variant="outlined"
-        error={Boolean(errors.firstName) && Boolean(touched.firstName)}
-        helperText={touched.firstName && errors.firstName}
-        fullWidth
-        sx={{ mb: "16px" }}
-      />
-      <TextField
-        id="lastName"
-        name="lastName"
-        label="Last Name"
-        value={values.lastName}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        variant="outlined"
-        error={Boolean(errors.lastName) && Boolean(touched.lastName)}
-        helperText={touched.lastName && errors.lastName}
-        fullWidth
-        sx={{ mb: "16px" }}
-      />
-      <TextField
-        id="email"
-        name="email"
-        label="Email"
-        type="email"
-        value={values.email}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        variant="outlined"
-        error={Boolean(errors.email) && Boolean(touched.email)}
-        helperText={touched.email && errors.email}
-        fullWidth
-        sx={{ mb: "16px" }}
-      />
-      <TextField
-        id="username"
-        name="username"
-        label="Username"
-        value={values.username}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        variant="outlined"
-        error={Boolean(errors.username) && Boolean(touched.username)}
-        helperText={touched.username && errors.username}
-        fullWidth
-        sx={{ mb: "16px" }}
-      />
-      <TextField
-        id="password"
+      <Field name="firstName" label="First Name" autoComplete="given-name" />
+      <Field name="lastName" label="Last Name" autoComplete="family-name" />
+      <Field name="email" label="Email" type="email" autoComplete="email" />
+      <Field name="username" label="Username" autoComplete="username" />
+      <Field
         name="password"
         label="Password"
         type="password"
-        value={values.password}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        variant="outlined"
-        error={Boolean(errors.password) && Boolean(touched.password)}
-        helperText={touched.password && errors.password}
-        fullWidth
-        sx={{ mb: "16px" }}
+        autoComplete="new-password"
+        mb={3}
       />
-      <TextField
-        id="passwordConfirmation"
+      <Field
         name="passwordConfirmation"
         label="Re-enter Password"
         type="password"
-        value={values.passwordConfirmation}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        variant="outlined"
-        error={
-          Boolean(errors.passwordConfirmation) &&
-          Boolean(touched.passwordConfirmation)
-        }
-        helperText={touched.passwordConfirmation && errors.passwordConfirmation}
-        fullWidth
-        sx={{ mb: "16px" }}
+        autoComplete="new-password"
       />
-
-      <FormGroup>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={values.theme === "Dark"}
-              onChange={() => {
-                setFieldValue(
-                  "theme",
-                  values.theme === "Light" ? "Dark" : "Light"
-                );
-                dispatch({
-                  type: "setTheme",
-                  payload: values.theme === "Light" ? "Dark" : "Light",
-                });
-                // themeActions.setThemeMode(values.theme === "Light" ? "dark" : "light");
-              }}
-            />
-          }
-          label={`Theme: ${values.theme === "Dark" ? "🌜" : "🌞"}`}
-        />
-      </FormGroup>
-
       <Suspense
         fallback={
           <Backdrop

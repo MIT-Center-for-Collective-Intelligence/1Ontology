@@ -19,9 +19,10 @@
 9. The component is exported as the default export of the module. */
 
 import { LoadingButton } from "@mui/lab";
-import { Box, Typography } from "@mui/material";
+import { Box, Button, GlobalStyles, Paper, Typography } from "@mui/material";
 import { FirebaseError } from "firebase/app";
 import { useFormik } from "formik";
+import NextLink from "next/link";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
 import React, { ReactNode, useEffect } from "react";
@@ -48,6 +49,45 @@ const getDateBySubstractYears = (years: number, date = new Date()) => {
 };
 const defaultImageUrl =
   "https://storage.googleapis.com/onecademy-1.appspot.com/ProfilePictures/no-img.png";
+
+const IosDotsLoader = ({
+  color = "rgba(255, 255, 255, 0.92)",
+}: {
+  color?: string;
+}) => {
+  return (
+    <Box
+      aria-label="loading"
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "5px",
+        height: 18,
+        "@keyframes iosDotPulse": {
+          "0%, 80%, 100%": { transform: "scale(0.55)", opacity: 0.35 },
+          "40%": { transform: "scale(1)", opacity: 1 },
+        },
+      }}
+    >
+      {[0, 1, 2].map((i) => (
+        <Box
+          // eslint-disable-next-line react/no-array-index-key
+          key={i}
+          sx={{
+            width: 5,
+            height: 5,
+            borderRadius: "999px",
+            backgroundColor: color,
+            boxShadow: "0 1px 1px rgba(0,0,0,0.28)",
+            animation: "iosDotPulse 1.05s infinite ease-in-out",
+            animationDelay: `${i * 0.16}s`,
+          }}
+        />
+      ))}
+    </Box>
+  );
+};
 
 const signUp = (data: any) => {
   return new Promise(async (resolve, reject) => {
@@ -85,9 +125,6 @@ const SignUpPage: NextPageWithLayout = () => {
   const router = useRouter();
   const [, { handleError }] = useAuth();
   const { enqueueSnackbar } = useSnackbar();
-  useEffect(() => {
-    router.push(ROUTES.signIn);
-  }, [router]);
 
   const mutateSignUp = useMutation<any, unknown, SignUpData>(signUp, {
     onSuccess: async (data, variables) => {
@@ -169,33 +206,138 @@ const SignUpPage: NextPageWithLayout = () => {
   });
 
   return (
-    <Box sx={{ p: { xs: "8px", md: "24px", width: "100%" } }}>
-      <Typography variant="h1" sx={{ mb: "8px" }}>
-        Sign Up{" "}
-      </Typography>
-      <form data-testid="signup-form" onSubmit={formik.handleSubmit}>
-        <SignUpBasicInfo formikProps={formik} />
-        <Box
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100%",
+        px: { xs: 2, sm: 3 },
+        py: { xs: 4, sm: 6 },
+      }}
+    >
+      <Paper
+        elevation={6}
+        sx={{
+          p: { xs: 3, sm: 5 },
+          borderRadius: "28px",
+          maxWidth: 420,
+          width: "100%",
+          mx: "auto",
+          textAlign: "center",
+          border: "1px solid rgba(255,255,255,0.10)",
+          backgroundColor: "rgba(20, 20, 22, 0.68)",
+          backdropFilter: "blur(22px)",
+          WebkitBackdropFilter: "blur(22px)",
+          boxShadow:
+            "0 24px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)",
+        }}
+      >
+        <Typography
+          variant="h4"
           sx={{
-            textAlign: "center",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            my: "32px",
+            mb: 0.75,
+            fontWeight: 900,
+            letterSpacing: "-0.02em",
+            color: "rgba(255,255,255,0.94)",
+            fontSize: { xs: "34px", sm: "52px" },
+            textDecoration: "none",
+            textDecorationColor: "transparent",
           }}
         >
+          Sign Up
+        </Typography>
+        <Typography
+          sx={{
+            mb: 3.25,
+            color: "rgba(255,255,255,0.70)",
+            fontSize: { xs: "0.98rem", sm: "1.05rem" },
+            lineHeight: 1.4,
+          }}
+        >
+          Create an account to get started.
+        </Typography>
+        <GlobalStyles
+          styles={{
+            "& input:-webkit-autofill": {
+              boxShadow: `0px 0px 0px 100px #313131 inset !important`,
+              WebkitTextFillColor: `${"#fff"} !important`,
+              caretColor: "#fff !important",
+            },
+          }}
+        />
+        <form data-testid="signup-form" onSubmit={formik.handleSubmit}>
+          <SignUpBasicInfo formikProps={formik} />
+
           <LoadingButton
-            loading={mutateSignUp.isLoading}
-            type="submit"
+            aria-label="submit"
+            loading={mutateSignUp.isLoading || formik.isSubmitting}
+            loadingIndicator={<IosDotsLoader />}
             disabled={formik.isSubmitting}
+            loadingPosition="center"
+            type="submit"
             variant="contained"
             fullWidth
-            sx={{ mt: "5px", borderRadius: "26px", width: "90px" }}
+            sx={{
+              mt: 0.75,
+              borderRadius: "14px",
+              py: 1.75,
+              px: 3,
+              fontWeight: 600,
+              fontSize: "15px",
+              letterSpacing: "0.02em",
+              textTransform: "none",
+              color: "#ffffff",
+              backgroundColor: "#3b82f6",
+              border: "none",
+              boxShadow: "none",
+              transition: "background-color 120ms ease",
+              "& .MuiLoadingButton-loadingIndicator": {
+                left: "50%",
+                transform: "translateX(-50%)",
+                color: "#ffffff",
+              },
+              "&:hover": {
+                backgroundColor: "#2563eb",
+                boxShadow: "none",
+              },
+              "&:active": {
+                backgroundColor: "#1d4ed8",
+              },
+              "&.Mui-disabled": {
+                color: "rgba(255,255,255,0.85)",
+                backgroundColor: "rgba(59, 130, 246, 0.5)",
+              },
+            }}
           >
-            Sign up
+            {mutateSignUp.isLoading || formik.isSubmitting ? (
+              <Box component="span" sx={{ display: "block", height: 18 }} />
+            ) : (
+              "Sign Up"
+            )}
           </LoadingButton>
-        </Box>
-      </form>
+
+          <NextLink href={ROUTES.signIn} passHref>
+            <Button
+              sx={{
+                mt: 2.5,
+                textTransform: "none",
+                fontSize: "14px",
+                fontWeight: 650,
+                borderRadius: "999px",
+                color: "rgba(255,255,255,0.75)",
+                px: 2.25,
+                "&:hover": {
+                  color: "rgba(255,255,255,0.92)",
+                  backgroundColor: "rgba(255,255,255,0.06)",
+                },
+              }}
+            >
+              Already have an account? Sign in
+            </Button>
+          </NextLink>
+        </form>
+      </Paper>
     </Box>
   );
 };

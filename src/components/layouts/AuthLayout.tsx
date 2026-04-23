@@ -50,7 +50,7 @@ Exports the `AuthLayout` component as the default export.
 For more details and usage, refer to the source code.
  */
 
-import { Avatar, Button, Typography, useMediaQuery } from "@mui/material";
+import { Avatar, Typography, useMediaQuery } from "@mui/material";
 import { Box } from "@mui/system";
 import Image from "next/image";
 import Link from "next/link";
@@ -229,7 +229,6 @@ const AuthLayout: FC<Props> = ({ children }) => {
                   pointerEvents: "none",
                 }}
               />
-
               <Box sx={{ zIndex: 1, textAlign: "center" }}>
                 <a
                   rel="noreferrer"
@@ -275,9 +274,163 @@ const AuthLayout: FC<Props> = ({ children }) => {
                     lineHeight: 1.55,
                   }}
                 >
-                  Build, explore, and connect ideas with a calm, focused workspace.
+                  Build, explore, and connect ideas with a calm, focused
+                  workspace.
                 </Typography>
               </Box>
+              {/*      <Box
+                aria-label="sign in and sign up options"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  width: "70%",
+                  py: "4px",
+                  pl: "4px",
+                  pr: "10px",
+                  gap: "6px",
+                  mb: "16px",
+                  mt: "16px",
+                  borderRadius: "999px",
+                  position: "relative",
+                  overflow: "hidden",
+                  bgcolor: "transparent",
+                  background: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04))"
+                      : "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.74))",
+                  border: "1px solid",
+                  borderColor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.20)"
+                      : "rgba(17,17,17,0.10)",
+                  backdropFilter: "blur(18px) saturate(140%)",
+                  boxShadow: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(0,0,0,0.30), 0 14px 40px rgba(0,0,0,0.42)"
+                      : "inset 0 1px 0 rgba(255,255,255,0.65), 0 12px 28px rgba(15, 23, 42, 0.10)",
+                  "&::before": {
+                    content: '""',
+                    position: "absolute",
+                    inset: 0,
+                    background:
+                      "radial-gradient(180px 120px at 20% 0%, rgba(255,255,255,0.20), transparent 60%), radial-gradient(220px 140px at 85% 100%, rgba(255,255,255,0.10), transparent 58%)",
+                    pointerEvents: "none",
+                  },
+                }}
+              >
+                {(() => {
+                  const active =
+                    router.pathname === ROUTES.signUp ? "signup" : "login";
+
+                  const pillSx = {
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flex: 1,
+                    minWidth: 0,
+                    height: 60,
+                    borderRadius: "999px",
+                    textDecoration: "none",
+                    textDecorationColor: "transparent",
+                    WebkitTextDecorationColor: "transparent",
+                    fontWeight: 800,
+                    fontSize: "1.32rem",
+                    letterSpacing: "-0.01em",
+                    transition:
+                      "color 180ms ease, transform 180ms ease, background-color 180ms ease",
+                    "&:active": { transform: "translateY(0.5px)" },
+                    "&:hover": {
+                      textDecoration: "none",
+                      textDecorationColor: "transparent",
+                      WebkitTextDecorationColor: "transparent",
+                    },
+                  } as const;
+
+                  return (
+                    <Box
+                      sx={{
+                        position: "relative",
+                        display: "flex",
+                        width: "100%",
+                        gap: "6px",
+                      }}
+                    >
+                      <Box
+                        aria-hidden
+                        sx={{
+                          position: "absolute",
+                          top: 4,
+                          bottom: 4,
+                          left: 4,
+                          width: "calc(50% - 3px)",
+                          borderRadius: "999px",
+                          transform:
+                            active === "login"
+                              ? "translateX(0)"
+                              : "translateX(calc(100% + 6px))",
+                          transition: "transform 220ms ease",
+                          background: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.10))"
+                              : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.82))",
+                          border: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "1px solid rgba(255,255,255,0.20)"
+                              : "1px solid rgba(17,17,17,0.08)",
+                          boxShadow: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "inset 0 1px 0 rgba(255,255,255,0.26), inset 0 -1px 0 rgba(0,0,0,0.32), 0 10px 26px rgba(0,0,0,0.32)"
+                              : "0 12px 24px rgba(15, 23, 42, 0.10)",
+                          backdropFilter: "blur(16px) saturate(140%)",
+                          WebkitBackdropFilter: "blur(16px) saturate(140%)",
+                        }}
+                      />
+                      <Link href={ROUTES.signIn} legacyBehavior passHref>
+                        <Box
+                          component="a"
+                          sx={{
+                            ...pillSx,
+                            width: "100%",
+                            position: "relative",
+                            zIndex: 1,
+                            color: (theme) =>
+                              active === "login"
+                                ? theme.palette.mode === "dark"
+                                  ? "#ffffff"
+                                  : "#111827"
+                                : theme.palette.mode === "dark"
+                                  ? "rgba(255,255,255,0.78)"
+                                  : "rgba(17,24,39,0.75)",
+                          }}
+                        >
+                          Sign In
+                        </Box>
+                      </Link>
+                      <Link href={ROUTES.signUp} legacyBehavior passHref>
+                        <Box
+                          component="a"
+                          sx={{
+                            ...pillSx,
+                            width: "100%",
+                            position: "relative",
+                            zIndex: 1,
+                            color: (theme) =>
+                              active === "signup"
+                                ? theme.palette.mode === "dark"
+                                  ? "#ffffff"
+                                  : "#111827"
+                                : theme.palette.mode === "dark"
+                                  ? "rgba(255,255,255,0.78)"
+                                  : "rgba(17,24,39,0.75)",
+                          }}
+                        >
+                          Sign Up
+                        </Box>
+                      </Link>
+                    </Box>
+                  );
+                })()}
+              </Box> */}
             </Box>
           )}
 
@@ -327,54 +480,4 @@ export default AuthLayout;
   /* Login / Signup Buttons (mobile only) */
 }
 {
-  /*     {!isEqualOrBiggerThanMedium && (
-                  <Box
-                    aria-label="sign in and sign up options"
-                    sx={{
-                      border: "2px solid",
-                      borderColor: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "common.white"
-                          : "common.black",
-                      mb: "16px",
-                    }}
-                  >
-                    <Link href={ROUTES.signIn}>
-                      <Button
-                        color="secondary"
-                        variant={
-                          router.pathname === ROUTES.signIn
-                            ? "contained"
-                            : "outlined"
-                        }
-                        sx={{
-                          width: "50%",
-                          p: "12px 16px",
-                          borderRadius: 0,
-                          border: 0,
-                        }}
-                      >
-                        LOG IN
-                      </Button>
-                    </Link>
-                    <Link href={ROUTES.signUp}>
-                      <Button
-                        color="secondary"
-                        variant={
-                          router.pathname === ROUTES.signUp
-                            ? "contained"
-                            : "outlined"
-                        }
-                        sx={{
-                          width: "50%",
-                          p: "12px 16px",
-                          borderRadius: 0,
-                          border: 0,
-                        }}
-                      >
-                        SIGN UP
-                      </Button>
-                    </Link>
-                  </Box>
-                )} */
 }
