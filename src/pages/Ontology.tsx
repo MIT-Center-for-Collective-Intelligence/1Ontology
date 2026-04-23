@@ -1338,9 +1338,6 @@ const Ontology = ({
 
       if (elapsedMs > MAX_SESSION_MS) {
         const hoursOpen = Math.round(elapsedMs / (1000 * 60 * 60));
-        setSnackbarMessage(
-          `This page has been open for ${hoursOpen} hours. To prevent crashes or instability (common when left open), please refresh the page using Cmd/Ctrl + R or the browser reload button.`
-        );
         recordLogs({
           type: "warning",
           message: `Long session detected: ${hoursOpen} hours`,
