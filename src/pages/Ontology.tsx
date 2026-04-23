@@ -216,11 +216,6 @@ const Ontology = ({
   const columnResizerRef = useRef<any>();
   const [lastUpdate, setLastUpdate] = useState<number | null>(null);
 
-  //last interaction date from the user
-  const [lastInteractionDate, setLastInteractionDate] = useState<Date>(
-    new Date(Date.now()),
-  );
-
   const [selectedDiffNode, setSelectedDiffNode] = useState<NodeChange | null>(
     null,
   );
@@ -282,6 +277,7 @@ const Ontology = ({
   );
 
   const firstLoad = useRef(true);
+  const pageOpenTime = useRef(Date.now());
 
   // Mobile state
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -480,23 +476,6 @@ const Ontology = ({
       controller.applyResizer(resizer);
     }
   }, []); // Removed dependencies to fix column auto-resizing when node content changes (when editing nodes through yjsEditor)
-
-  useEffect(() => {
-    const checkIfDifferentDay = () => {
-      const today = new Date();
-      if (
-        today.getDate() !== lastInteractionDate.getDate() ||
-        today.getMonth() !== lastInteractionDate.getMonth() ||
-        today.getFullYear() !== lastInteractionDate.getFullYear()
-      ) {
-        window.location.reload();
-      }
-    };
-
-    const intervalId = setInterval(checkIfDifferentDay, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [lastInteractionDate]);
 
   /* ------- ------- ------- */
 
@@ -1316,7 +1295,6 @@ const Ontology = ({
     if (process.env.NODE_ENV === "development") return;
     const handleUserActivity = () => {
       const currentTime = Date.now();
-      setLastInteractionDate(new Date(currentTime));
 
       if (user && user?.uname !== "ouhrac") {
         const timeSinceLastUpdate =
@@ -1339,21 +1317,74 @@ const Ontology = ({
   }, [user, lastUpdate, db]);
 
   useEffect(() => {
-    const checkIfDifferentDay = () => {
-      const today = new Date();
+    const MAX_SESSION_HOURS = 8;
+    const MAX_SESSION_MS = MAX_SESSION_HOURS * 60 * 60 * 1000;
+    const CHECK_INTERVAL_MS = 60000; 
+
+    const checkSessionAndDay = () => {
+      const now = new Date();
+      const elapsedMs = Date.now() - pageOpenTime.current;
+
+      
+      const openDate = new Date(pageOpenTime.current);
       if (
-        today.getDate() !== lastInteractionDate.getDate() ||
-        today.getMonth() !== lastInteractionDate.getMonth() ||
-        today.getFullYear() !== lastInteractionDate.getFullYear()
+        now.getDate() !== openDate.getDate() ||
+        now.getMonth() !== openDate.getMonth() ||
+        now.getFullYear() !== openDate.getFullYear()
       ) {
         window.location.reload();
+        return;
+      }
+
+      if (elapsedMs > MAX_SESSION_MS) {
+        const hoursOpen = Math.round(elapsedMs / (1000 * 60 * 60));
+        setSnackbarMessage(
+          `This page has been open for ${hoursOpen} hours. To prevent crashes or instability (common when left open), please refresh the page using Cmd/Ctrl + R or the browser reload button.`
+        );
+        recordLogs({
+          type: "warning",
+          message: `Long session detected: ${hoursOpen} hours`,
+        });
       }
     };
 
-    const intervalId = setInterval(checkIfDifferentDay, 1000);
+    const intervalId = setInterval(checkSessionAndDay, CHECK_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
-  }, [lastInteractionDate]);
+  }, [setSnackbarMessage]);
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof performance === "undefined" ||
+      !("memory" in performance)
+    ) {
+      return;
+    }
+
+    const MEMORY_WARNING_THRESHOLD_MB = 700;
+
+    const memoryInterval = setInterval(() => {
+      const mem = (performance as any).memory;
+      if (!mem) return;
+
+      const usedMB = Math.round(mem.usedJSHeapSize / (1024 * 1024));
+      const limitMB = Math.round(mem.jsHeapSizeLimit / (1024 * 1024));
+
+      if (usedMB > MEMORY_WARNING_THRESHOLD_MB) {
+        const message = `High memory usage detected (${usedMB}MB/${limitMB}MB). This page has likely accumulated state from long use and may crash soon (Aw, Snap! error). Please refresh the page now (Cmd/Ctrl + R) to reset memory.`;
+        setSnackbarMessage(message);
+        recordLogs({
+          type: "warning",
+          message: `High memory usage: ${usedMB}MB`,
+          usedMB,
+          limitMB,
+        });
+      }
+    }, 30000); 
+
+    return () => clearInterval(memoryInterval);
+  }, [setSnackbarMessage]);
 
   // Handle escape key for mobile overlays
   // useEffect(() => {
