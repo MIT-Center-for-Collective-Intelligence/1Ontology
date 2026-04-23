@@ -543,10 +543,9 @@ const Node = ({
   }, []);
 
   const searchResultsForSelection = useMemo(() => {
-    console.log("selectedProperty", selectedProperty, currentVisibleNode);
-    const propertyType = currentVisibleNode.propertyType[
+    const propertyType = currentVisibleNode.propertyType?.[
       selectedProperty
-    ] as INodeTypes;
+    ] as INodeTypes | undefined;
     if (propertyType) {
       return searchWithFuse(searchValue, propertyType);
     }
@@ -559,7 +558,7 @@ const Node = ({
       return searchWithFuse(searchValue, currentVisibleNode.nodeType);
     }
     return [];
-  }, [searchValue, selectedProperty]);
+  }, [searchValue, selectedProperty, currentVisibleNode, searchWithFuse]);
 
   const addACloneNodeQueue = async (nodeId: string, title?: string) => {
     let node: INode | null = relatedNodes[nodeId] || null;
