@@ -1370,7 +1370,7 @@ const Ontology = ({
 
       if (usedMB > MEMORY_WARNING_THRESHOLD_MB) {
         const message = `High memory usage detected (${usedMB}MB/${limitMB}MB). This page has likely accumulated state from long use and may crash soon (Aw, Snap! error). Please refresh the page now (Cmd/Ctrl + R) to reset memory.`;
-        setSnackbarMessage(message);
+
         recordLogs({
           type: "warning",
           message: `High memory usage: ${usedMB}MB`,
