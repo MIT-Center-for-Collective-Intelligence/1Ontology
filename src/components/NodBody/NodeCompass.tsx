@@ -21,6 +21,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import {
   Controls,
   Handle,
@@ -57,6 +58,12 @@ type Props = {
    * and trackpad pinch. Recommended on embedded pages; off by default.
    */
   requireModifierToZoom?: boolean;
+  /**
+   * When provided, renders an "Open in Navigator" icon button in the panel
+   * header. The callback is invoked on click. Typically used by the platform
+   * to deep-link into the standalone /navigate route for the focused node.
+   */
+  onOpenInNavigator?: () => void;
 };
 
 const DEFAULT_HEIGHT = 540;
@@ -320,6 +327,7 @@ const NodeCompass: React.FC<Props> = ({
   height = DEFAULT_HEIGHT,
   borderless = false,
   requireModifierToZoom = false,
+  onOpenInNavigator,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
@@ -517,180 +525,51 @@ const NodeCompass: React.FC<Props> = ({
     tPad,
   ]);
 
-  // DEBUG: stable fingerprint of the rendered node set — changes iff the
-  // set of satellite ids (or their positions) actually changes.
-  const nodesSignature = useMemo(() => {
-    return nodes
-      .filter((n) => n.type === "satellite")
-      .map((n) => `${n.id}@${Math.round(n.position.x)},${Math.round(n.position.y)}`)
-      .join("|");
-  }, [nodes]);
-
-  // DEBUG: render counter so we can correlate with fitView runs
-  const renderCountRef = useRef(0);
-  renderCountRef.current += 1;
-
-  // DEBUG: fires every render — captures the state right when canvas goes blank
-  useEffect(() => {
-    const g = currentVisibleNode.generalizations;
-    const s = currentVisibleNode.specializations;
-    const ip = currentVisibleNode.properties?.isPartOf as
-      | ICollection[]
-      | undefined;
-    const p = currentVisibleNode.properties?.parts as
-      | ICollection[]
-      | undefined;
-    const count = (cols?: ICollection[] | null) =>
-      Array.isArray(cols)
-        ? cols.reduce((a, c) => a + (c?.nodes?.length ?? 0), 0)
-        : null;
-    // eslint-disable-next-line no-console
-    console.log("[NodeCompass]", {
-      render: renderCountRef.current,
-      nodeId: currentVisibleNode.id,
-      title: currentVisibleNode.title,
-      currentVisibleNodeRef: currentVisibleNode, // object identity — check (===) across logs
-      rawCollectionLen: {
-        generalizations: Array.isArray(g) ? g.length : null,
-        specializations: Array.isArray(s) ? s.length : null,
-        isPartOf: Array.isArray(ip) ? ip.length : null,
-        parts: Array.isArray(p) ? p.length : null,
-      },
-      rawNodeCount: {
-        generalizations: count(g),
-        specializations: count(s),
-        isPartOf: count(ip),
-        parts: count(p),
-      },
-      inheritanceRef,
-      inheritedFromLoaded: !!inheritedFromNode,
-      resolvedPartsLen: resolvedParts?.length ?? null,
-      idsLen: {
-        left: ids.left.length,
-        right: ids.right.length,
-        top: ids.top.length,
-        bottom: ids.bottom.length,
-      },
-      satellites: layout.satellites.length,
-      rfNodes: nodes.length,
-      rfEdges: edges.length,
-      nodesSignature, // stable fingerprint — if this changes between renders, identities drifted
-      firstSat: layout.satellites[0]
-        ? {
-            x: layout.satellites[0].x,
-            y: layout.satellites[0].y,
-            id: layout.satellites[0].id,
-          }
-        : null,
-      relatedNodesKeys: Object.keys(relatedNodes).length,
-    });
-  });
-
   const [overflowAxis, setOverflowAxis] = useState<CompassAxis | null>(null);
-  const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
 
   // Local navigation history for the back button (does not interfere with
   // the platform's URL hash navigation).
+  // Derived during render (no useEffect + setState) so a navigation triggers
+  // exactly one render, not a prop-change render followed by a state bump.
   const historyRef = useRef<string[]>([]);
   const skipNextPushRef = useRef(false);
   const lastIdRef = useRef<string | null>(null);
-  const [canGoBack, setCanGoBack] = useState(false);
 
-  useEffect(() => {
-    const newId = currentVisibleNode.id;
-    const lastId = lastIdRef.current;
-    if (lastId && lastId !== newId) {
-      if (skipNextPushRef.current) {
-        skipNextPushRef.current = false;
-      } else {
-        historyRef.current.push(lastId);
-        if (historyRef.current.length > 50) historyRef.current.shift();
-      }
+  if (
+    lastIdRef.current !== null &&
+    lastIdRef.current !== currentVisibleNode.id
+  ) {
+    if (skipNextPushRef.current) {
+      skipNextPushRef.current = false;
+    } else {
+      historyRef.current.push(lastIdRef.current);
+      if (historyRef.current.length > 50) historyRef.current.shift();
     }
-    lastIdRef.current = newId;
-    setCanGoBack(historyRef.current.length > 0);
-  }, [currentVisibleNode.id]);
+  }
+  lastIdRef.current = currentVisibleNode.id;
+  const canGoBack = historyRef.current.length > 0;
 
   const handleBack = useCallback(() => {
     const prev = historyRef.current.pop();
     if (prev) {
       skipNextPushRef.current = true;
       navigateToNode(prev);
-      setCanGoBack(historyRef.current.length > 0);
     }
   }, [navigateToNode]);
 
+  // ReactFlow instance is stashed in a ref (not state) so `onInit` doesn't
+  // trigger an extra render on mount. The effect below reads it after commit.
+  const rfInstanceRef = useRef<ReactFlowInstance | null>(null);
+
   // Re-fit when the focused node changes
   useEffect(() => {
-    if (!rfInstance) return;
+    const inst = rfInstanceRef.current;
+    if (!inst) return;
     const t = setTimeout(() => {
-      // Compare what ReactFlow's internal store holds vs what we passed as
-      // props. If internalCount < rfNodes, RF hasn't committed the new set;
-      // if the ids differ from nodesSignature, they've drifted apart.
-      const internalNodes = rfInstance.getNodes();
-      const internalSig = internalNodes
-        .filter((n) => n.type === "satellite")
-        .map(
-          (n) =>
-            `${n.id}@${Math.round(n.position.x)},${Math.round(n.position.y)}`,
-        )
-        .join("|");
-      // Ground-truth DOM state + viewport
-      const container = document.getElementById("property-compass");
-      const domNodeCount =
-        container?.querySelectorAll(".react-flow__node").length ?? null;
-      const rfViewportEl = document.querySelector(
-        "#property-compass .react-flow__viewport",
-      ) as HTMLElement | null;
-      const rfRendererEl = document.querySelector(
-        "#property-compass .react-flow__renderer",
-      ) as HTMLElement | null;
-      // eslint-disable-next-line no-console
-      console.log("[NodeCompass] fitView firing", {
-        nodeId: currentVisibleNode.id,
-        propNodes: nodes.length,
-        internalCount: internalNodes.length,
-        propSig: nodesSignature,
-        internalSig,
-        sigMatches: internalSig === nodesSignature,
-        firstInternal: internalNodes[0]
-          ? {
-              id: internalNodes[0].id,
-              x: internalNodes[0].position.x,
-              y: internalNodes[0].position.y,
-            }
-          : null,
-        viewportBefore: rfInstance.getViewport(),
-        domNodeCount,
-        viewportTransform: rfViewportEl?.style.transform ?? null,
-        rendererSize: rfRendererEl
-          ? { w: rfRendererEl.clientWidth, h: rfRendererEl.clientHeight }
-          : null,
-      });
-      rfInstance.fitView({ padding: 0.18, duration: 320 });
-      // Log state again once the fitView animation has settled.
-      setTimeout(() => {
-        const after = rfInstance.getViewport();
-        const domAfter =
-          document
-            .getElementById("property-compass")
-            ?.querySelectorAll(".react-flow__node").length ?? null;
-        const renderer = document.querySelector(
-          "#property-compass .react-flow__renderer",
-        ) as HTMLElement | null;
-        // eslint-disable-next-line no-console
-        console.log("[NodeCompass] fitView settled", {
-          nodeId: currentVisibleNode.id,
-          viewportAfter: after,
-          domNodeCount: domAfter,
-          rendererSize: renderer
-            ? { w: renderer.clientWidth, h: renderer.clientHeight }
-            : null,
-        });
-      }, 400);
+      inst.fitView({ padding: 0.18, duration: 320 });
     }, 60);
     return () => clearTimeout(t);
-  }, [rfInstance, currentVisibleNode.id, nodes.length, nodesSignature]);
+  }, [currentVisibleNode.id, nodes.length]);
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -789,10 +668,55 @@ const NodeCompass: React.FC<Props> = ({
               fontWeight: 500,
               fontFamily: "Roboto, sans-serif",
               padding: "4px",
+              flex: 1,
             }}
           >
             Compass Explorer
           </Typography>
+          {onOpenInNavigator && (
+            <IconButton
+              size="small"
+              onClick={onOpenInNavigator}
+              sx={{
+                height: 32,
+                px: 1.5,
+                gap: 0.6,
+                borderRadius: 999,
+                color: "text.secondary",
+                background: (t) =>
+                  t.palette.mode === "dark"
+                    ? alpha("#ffffff", 0.04)
+                    : alpha("#000000", 0.03),
+                border: (t) =>
+                  `1px solid ${
+                    t.palette.mode === "dark"
+                      ? alpha("#ffffff", 0.1)
+                      : alpha("#000000", 0.1)
+                  }`,
+                transition:
+                  "border-color 0.18s ease, background 0.18s ease",
+                "& svg": { fontSize: 16 },
+                "&:hover": {
+                  borderColor: (t) => t.palette.primary.main,
+                  background: (t) => alpha(t.palette.primary.main, 0.08),
+                },
+              }}
+            >
+              <OpenInNewRoundedIcon />
+              <Typography
+                component="span"
+                sx={{
+                  fontSize: "12px",
+                  fontWeight: 500,
+                  letterSpacing: 0.2,
+                  lineHeight: 1,
+                  color: "inherit",
+                }}
+              >
+                Open in Navigator
+              </Typography>
+            </IconButton>
+          )}
         </Box>
       )}
       <Box
@@ -812,7 +736,9 @@ const NodeCompass: React.FC<Props> = ({
             edges={edges}
             nodeTypes={nodeTypes}
             onNodeClick={onNodeClick}
-            onInit={setRfInstance}
+            onInit={(inst) => {
+              rfInstanceRef.current = inst;
+            }}
             fitView
             fitViewOptions={{ padding: 0.18 }}
             minZoom={0.25}
@@ -1133,4 +1059,15 @@ const NodeCompass: React.FC<Props> = ({
   );
 };
 
-export default React.memo(NodeCompass);
+// Custom comparator: rerender only when the focused node changes (by ref).
+// `relatedNodes`, `navigateToNode`, and `onOpenInNavigator` reference churn
+// is intentionally ignored — the compass captures the last refs at the time
+// of the last `currentVisibleNode` change and lives with them until the next.
+export default React.memo(NodeCompass, (prev, next) => {
+  return (
+    prev.currentVisibleNode === next.currentVisibleNode &&
+    prev.borderless === next.borderless &&
+    prev.requireModifierToZoom === next.requireModifierToZoom &&
+    prev.height === next.height
+  );
+});

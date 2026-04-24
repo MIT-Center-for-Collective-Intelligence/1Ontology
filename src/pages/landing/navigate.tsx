@@ -27,14 +27,11 @@ import {
   query as firestoreQuery,
   where,
 } from "firebase/firestore";
-import type { LandingSectionId } from "../../constants/landingTypes";
 import NodeCompass from "../../components/NodBody/NodeCompass";
 import NodeGraph from "../../components/NodBody/NodeGraph";
 import AiPanel from "./_components/AiPanel";
 import type { ICollection, INode } from "../../types/INode";
 import { NODES } from "../../lib/firestoreClient/collections";
-
-const APP_NAME = "final-hierarchy-with-o*net";
 
 const INTER =
   '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
@@ -172,12 +169,14 @@ const RelationGroup: React.FC<{
 
 export const NavigateLandingSection = ({
   isDark,
-  isAuthenticated,
-  onGoToSection,
+  appName,
+  initialNodeId,
+  onBackToPlatform,
 }: {
   isDark: boolean;
-  isAuthenticated: boolean;
-  onGoToSection?: (id: LandingSectionId) => void;
+  appName: string;
+  initialNodeId?: string | null;
+  onBackToPlatform: () => void;
 }) => {
   const theme = useTheme();
   const accent = theme.palette.primary.main;
@@ -196,7 +195,7 @@ export const NavigateLandingSection = ({
         const db = getFirestore();
         const q = firestoreQuery(
           collection(db, NODES),
-          where("appName", "==", APP_NAME),
+          where("appName", "==", appName),
           where("deleted", "==", false),
         );
         const snapshot = await getDocs(q);
@@ -212,7 +211,13 @@ export const NavigateLandingSection = ({
           }
         });
         setNodes(loaded);
-        setActiveId(root);
+        // Prefer the caller-supplied initial node id when it's a valid
+        // node for this app; otherwise fall back to the app's root.
+        if (initialNodeId && loaded[initialNodeId]) {
+          setActiveId(initialNodeId);
+        } else {
+          setActiveId(root);
+        }
       } catch (e) {
         if (!cancelled) {
           const msg =
@@ -226,7 +231,42 @@ export const NavigateLandingSection = ({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [appName, initialNodeId]);
+
+  // Mirror the focused node into the URL hash so the back-to-platform
+  // callback can read it, refreshes preserve focus, and the link is
+  // shareable. The `/navigate` suffix is the mode marker that [id].tsx
+  // uses to decide which component to render.
+  useEffect(() => {
+    if (!activeId) return;
+    if (typeof window === "undefined") return;
+    const target = `#${activeId}/navigate`;
+    if (window.location.hash !== target) {
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${target}`,
+      );
+    }
+  }, [activeId]);
+
+  // Re-seed activeId when the URL hash is updated externally — e.g. the
+  // platform firing "Open in Navigator" again while the navigator is still
+  // mounted. Internal clicks use `replaceState`, which doesn't fire
+  // hashchange, so we won't loop on our own updates.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onHashChange = () => {
+      const h = window.location.hash.replace(/^#/, "");
+      if (!h.endsWith("/navigate")) return;
+      const id = h.slice(0, -"/navigate".length);
+      if (id && nodes && nodes[id] && id !== activeId) {
+        setActiveId(id);
+      }
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, [nodes, activeId]);
 
   const navigateToNode = useCallback(
     (id: string) => {
@@ -324,8 +364,7 @@ export const NavigateLandingSection = ({
     return (
       <Box
         sx={{
-          height: { xs: "calc(100vh - 56px)", sm: "calc(100vh - 64px)" },
-          mt: { xs: "56px", sm: "64px" },
+          height: "100vh",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -360,8 +399,7 @@ export const NavigateLandingSection = ({
     return (
       <Box
         sx={{
-          height: { xs: "calc(100vh - 56px)", sm: "calc(100vh - 64px)" },
-          mt: { xs: "56px", sm: "64px" },
+          height: "100vh",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -430,8 +468,7 @@ export const NavigateLandingSection = ({
   return (
     <Box
       sx={{
-        height: { xs: "calc(100vh - 56px)", sm: "calc(100vh - 64px)" },
-        mt: { xs: "56px", sm: "64px" },
+        height: "100vh",
         bgcolor: "background.default",
         overflow: "hidden",
       }}
@@ -737,6 +774,72 @@ export const NavigateLandingSection = ({
             />
           )}
 
+          <Box
+            component="button"
+            type="button"
+            onClick={onBackToPlatform}
+            sx={{
+              position: "absolute",
+              top: 12,
+              left: 12,
+              zIndex: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 0.55,
+              height: 32,
+              px: 1.25,
+              borderRadius: 999,
+              border: "none",
+              cursor: "pointer",
+              fontFamily: INTER,
+              fontSize: "0.78rem",
+              fontWeight: 500,
+              letterSpacing: 0.2,
+              color: "text.primary",
+              background: (t) =>
+                t.palette.mode === "dark"
+                  ? "rgba(13,17,23,0.82)"
+                  : "rgba(255,255,255,0.92)",
+              backdropFilter: "blur(8px)",
+              boxShadow: (t) =>
+                t.palette.mode === "dark"
+                  ? "0 6px 20px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06)"
+                  : "0 6px 20px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.05)",
+              transition: "background 0.18s ease, color 0.18s ease",
+              "&:hover": {
+                background: (t) => alpha(t.palette.primary.main, 0.12),
+                color: (t) => t.palette.primary.main,
+              },
+              "& svg": { fontSize: 17 },
+            }}
+          >
+            <Box
+              component="span"
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {/* inline arrow-left glyph to avoid a new import */}
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M19 12H5" />
+                <path d="M12 19l-7-7 7-7" />
+              </svg>
+            </Box>
+            Back to Platform
+          </Box>
+
           {/* View toggle — top-center, glass surface */}
           <Box
             sx={{
@@ -805,7 +908,9 @@ export const NavigateLandingSection = ({
             </ToggleButtonGroup>
           </Box>
 
-          {/* Stats pill — top-right, glass surface matching the view toggle */}
+          {/* Stats pill — top-right, glass surface matching the view toggle.
+              Horizontal pill on wide (xl+) screens; stacks vertically from
+              md to lg so it doesn't crowd the compass/graph canvas. */}
           {stats && (
             <Box
               sx={{
@@ -814,8 +919,9 @@ export const NavigateLandingSection = ({
                 right: 12,
                 zIndex: 12,
                 display: { xs: "none", md: "flex" },
-                alignItems: "center",
-                borderRadius: 999,
+                flexDirection: { md: "column", xl: "row" },
+                alignItems: { md: "stretch", xl: "center" },
+                borderRadius: { md: "14px", xl: "999px" },
                 background: (t) =>
                   t.palette.mode === "dark"
                     ? "rgba(24,30,38,0.92)"
@@ -846,10 +952,12 @@ export const NavigateLandingSection = ({
                   {i > 0 && (
                     <Box
                       sx={{
-                        width: "1px",
                         alignSelf: "stretch",
-                        my: 0.9,
                         bgcolor: (t) => alpha(t.palette.text.primary, 0.08),
+                        width: { md: "auto", xl: "1px" },
+                        height: { md: "1px", xl: "auto" },
+                        my: { md: 0, xl: 0.9 },
+                        mx: { md: 1.2, xl: 0 },
                       }}
                     />
                   )}
