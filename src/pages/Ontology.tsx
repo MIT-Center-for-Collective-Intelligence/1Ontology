@@ -304,9 +304,11 @@ const fetchRootNode = async (
 const Ontology = ({
   skillsFuture = false,
   appName,
+  onOpenInNavigator,
 }: {
   skillsFuture: boolean;
   appName: string;
+  onOpenInNavigator?: (nodeId: string) => void;
 }) => {
   const db = getFirestore();
   const rtdb = getDatabase();
@@ -732,6 +734,13 @@ const Ontology = ({
       // Check if there is a hash in the URL
       if (window.location.hash) {
         const currentHash = window.location.hash;
+
+        // Hashes ending in "/navigate" belong to the navigator view
+        // Ignore them here so we don't try to fetch "<id>/navigate" as a node id 
+        if (currentHash.endsWith("/navigate")) {
+          return;
+        }
+
         const visibleNodeId = currentHash.split("#").reverse()[0];
 
         // Skip if this is the hash set by user through navigating
@@ -2982,6 +2991,7 @@ const Ontology = ({
                   setEditableProperty={setEditableProperty}
                   onInstantTreeUpdate={handleInstantTreeUpdate}
                   nodesWithComments={nodesWithComments}
+                  onOpenInNavigator={onOpenInNavigator}
                 />
               )}
           </Box>

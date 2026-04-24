@@ -189,6 +189,7 @@ type INodeProps = {
   setEditableProperty: any;
   nodesWithComments: Set<string>;
   onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
+  onOpenInNavigator?: (nodeId: string) => void;
   isLoadingNodeDetails?: boolean;
 };
 
@@ -508,6 +509,7 @@ const Node = ({
   onInstantTreeUpdate,
   isLoadingNodeDetails = false,
   nodesWithComments,
+  onOpenInNavigator,
 }: INodeProps) => {
   // const [newTitle, setNewTitle] = useState<string>("");
   // const [description, setDescription] = useState<string>("");
@@ -1813,6 +1815,11 @@ const Node = ({
               relatedNodes={relatedNodes}
               navigateToNode={navigateToNode}
               requireModifierToZoom
+              onOpenInNavigator={
+                onOpenInNavigator
+                  ? () => onOpenInNavigator(currentVisibleNode.id)
+                  : undefined
+              }
             />
 
             {/* actors of the node if it's exist */}

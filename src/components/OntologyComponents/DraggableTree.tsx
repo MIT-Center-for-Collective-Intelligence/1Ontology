@@ -465,12 +465,17 @@ function DraggableTree({
     };
 
     handleNavigation();
+    // `treeData` is included so this retries after the platform reloads its
+    // tree for a new focused node (e.g. returning from the navigator). The
+    // first attempt can fire before the new tree arrives, which would park
+    // the target id in pendingExpansionNodeId without ever retrying.
   }, [
     treeRef,
     currentVisibleNode?.id,
     firstLoad,
     expandNodeById,
     findNodesByNodeId,
+    treeData,
   ]);
 
   // Retry expansion when tab becomes visible or window gains focus

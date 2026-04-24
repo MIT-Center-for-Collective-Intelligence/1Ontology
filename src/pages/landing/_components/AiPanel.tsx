@@ -21,6 +21,7 @@ import type { Theme } from "@mui/material/styles";
 import {
   AutoAwesomeOutlined as SparkIcon,
   ArrowUpward as SendIcon,
+  SettingsOutlined as GearIcon,
 } from "@mui/icons-material";
 import {
   AI_PROVIDERS,
@@ -637,8 +638,38 @@ const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
         minHeight: 0,
         display: "flex",
         flexDirection: "column",
+        position: "relative",
       }}
     >
+      {/* Floating gear — opens the API settings form */}
+      {/* <IconButton
+        onClick={() => setEditingConf(true)}
+        aria-label="API settings"
+        disableRipple
+        sx={{
+          position: "absolute",
+          top: 6,
+          right: 10,
+          zIndex: 5,
+          width: 26,
+          height: 26,
+          color: "text.secondary",
+          bgcolor: (t) => alpha(t.palette.background.paper, 0.75),
+          backdropFilter: "blur(6px)",
+          boxShadow: (t) =>
+            `inset 0 0 0 1px ${alpha(t.palette.text.primary, 0.08)}`,
+          transition:
+            "color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease",
+          "&:hover": {
+            color: accent,
+            bgcolor: (t) => alpha(t.palette.primary.main, 0.14),
+            boxShadow: `inset 0 0 0 1px ${alpha(accent, 0.28)}`,
+          },
+        }}
+      >
+        <GearIcon sx={{ fontSize: 15 }} />
+      </IconButton> */}
+
       {/* Conversation stream */}
       <Box
         ref={streamRef}
