@@ -358,7 +358,6 @@ export const breakInheritanceAndCopyParts = async (
 
     await updateDoc(nodeDoc.ref, {
       inheritanceParts: nodeData.inheritanceParts,
-      "inheritance.parts.ref": null,
     });
 
     if (user) {
@@ -405,10 +404,6 @@ export const getGeneralizationParts = (
   }[] = [];
 
   let genParts = generalizationNode.properties?.parts;
-  const partInheritanceRef = generalizationNode.inheritance?.["parts"]?.ref;
-  if (partInheritanceRef) {
-    genParts = nodes[partInheritanceRef]?.properties["parts"] || [];
-  }
 
   // Add direct parts
   if (genParts) {
@@ -471,11 +466,7 @@ export const getEffectiveGeneralizations = (
   const generalizations = getAllGeneralizations(currentVisibleNode, nodes);
   if (generalizations.length > 0) return generalizations;
 
-  const inheritanceRef = currentVisibleNode.inheritance?.["parts"]?.ref;
-  const parts =
-    inheritanceRef && nodes[inheritanceRef]
-      ? nodes[inheritanceRef].properties?.parts
-      : currentVisibleNode.properties?.parts;
+  const parts = currentVisibleNode.properties?.parts;
   const hasParts = (parts?.[0]?.nodes?.length ?? 0) > 0;
   if (hasParts) {
     return [

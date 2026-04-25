@@ -35,14 +35,11 @@ import {
   collection,
   where,
   getFirestore,
-  getDoc,
   doc,
-  updateDoc,
 } from "firebase/firestore";
 import {
   saveAsInheritancePart,
   getGeneralizationParts,
-  breakInheritanceAndCopyParts,
 } from "@components/lib/utils/partsHelper";
 import { SearchBox } from "../SearchBox/SearchBox";
 
@@ -123,7 +120,10 @@ const StructuredPropertySelector = ({
   setCurrentVisibleNode: any;
   checkDuplicateTitle: any;
   cloning: string | null;
-  addACloneNodeQueue: (nodeId: string, title?: string) => Promise<string | null>;
+  addACloneNodeQueue: (
+    nodeId: string,
+    title?: string,
+  ) => Promise<string | null>;
   setClonedNodesQueue: Function;
   clonedNodesQueue: { [nodeId: string]: { title: string; id: string } };
   newOnes: any;
@@ -316,17 +316,18 @@ const StructuredPropertySelector = ({
         ] || [];
     } else {
       freshData =
-        onGetPropertyValue(
-          relatedNodes,
-          currentVisibleNode.inheritance[selectedProperty]?.ref,
-          selectedProperty,
-        ) ||
+        (onGetPropertyValue(selectedProperty) as ICollection[] | undefined) ||
         currentVisibleNode?.properties[selectedProperty] ||
         [];
     }
 
     setEditableProperty([...freshData]);
-  }, [selectedProperty, currentVisibleNode, relatedNodes, setEditableProperty]);
+  }, [
+    selectedProperty,
+    currentVisibleNode,
+    setEditableProperty,
+    onGetPropertyValue,
+  ]);
 
   // Initialize checkedItems with parts that are already inherited
   useEffect(() => {
@@ -337,27 +338,12 @@ const StructuredPropertySelector = ({
     ) {
       const partsToCheck = new Set<string>();
 
-      // Case 1: Broken inheritance - add parts from inheritanceParts
       if (currentVisibleNode.inheritanceParts) {
         Object.keys(currentVisibleNode.inheritanceParts).forEach((partId) => {
           partsToCheck.add(partId);
         });
       }
 
-      // Case 2: Intact inheritance - add all parts from referenced generalization
-      if (currentVisibleNode.inheritance?.parts?.ref) {
-        const referencedGeneralizationId =
-          currentVisibleNode.inheritance.parts.ref;
-        const allPartsFromRef = getGeneralizationParts(
-          referencedGeneralizationId,
-          relatedNodes,
-        );
-        allPartsFromRef.forEach((part) => {
-          partsToCheck.add(part.id);
-        });
-      }
-
-      // Add direct parts from the node itself
       if (currentVisibleNode.properties?.parts) {
         currentVisibleNode.properties.parts.forEach((collection: any) => {
           collection.nodes.forEach((part: any) => {
@@ -389,7 +375,6 @@ const StructuredPropertySelector = ({
     selectedProperty,
     currentVisibleNode?.id,
     currentVisibleNode?.inheritanceParts,
-    currentVisibleNode?.inheritance?.parts?.ref,
     currentVisibleNode?.properties?.parts,
     setCheckedItems,
     relatedNodes,
@@ -554,10 +539,7 @@ const StructuredPropertySelector = ({
       setIsUpdatingInheritance(true);
       try {
         const action = isRemoving ? "remove" : "add";
-        const hasIntactInheritance =
-          currentVisibleNode?.inheritance?.parts?.ref;
 
-        // Check if this part is inherited or direct from the generalization
         const generalizationNode =
           relatedNodes[fromGeneralizationDropdown.generalizationId];
         const partInGeneralization = getGeneralizationParts(
@@ -568,7 +550,6 @@ const StructuredPropertySelector = ({
         let inheritedFromId = fromGeneralizationDropdown.generalizationId;
         let inheritedFromTitle = fromGeneralizationDropdown.generalizationTitle;
 
-        // If the part is inherited in the generalization, preserve the original inheritance chain
         if (
           partInGeneralization?.isInherited &&
           generalizationNode?.inheritanceParts?.[checkedId]
@@ -579,79 +560,15 @@ const StructuredPropertySelector = ({
           inheritedFromTitle = originalInheritance.inheritedFromTitle;
         }
 
-        if (hasIntactInheritance) {
-          if (action === "remove") {
-            // Break inheritance and copy all parts except the one being removed
-            await breakInheritanceAndCopyParts(
-              currentVisibleNode?.id,
-              checkedId,
-              relatedNodes,
-              user,
-              skillsFutureApp,
-            );
-          } else {
-            const inheritanceRef = currentVisibleNode.inheritance.parts.ref;
-            const referencedNode = relatedNodes[inheritanceRef];
-
-            if (referencedNode) {
-              const allPartsFromRef = getGeneralizationParts(
-                inheritanceRef,
-                relatedNodes,
-              );
-
-              const nodeDoc = await getDoc(
-                doc(collection(getFirestore(), NODES), currentVisibleNode?.id),
-              );
-              if (nodeDoc.exists()) {
-                const currentInheritanceParts =
-                  currentVisibleNode?.inheritanceParts || {};
-                const newInheritanceParts = { ...currentInheritanceParts };
-
-                // Copy all parts from referenced generalization
-                allPartsFromRef.forEach((part) => {
-                  if (!newInheritanceParts[part.id]) {
-                    newInheritanceParts[part.id] = {
-                      inheritedFromTitle: part.isInherited
-                        ? referencedNode.inheritanceParts[part.id]
-                            .inheritedFromTitle
-                        : referencedNode.title,
-                      inheritedFromId: part.isInherited
-                        ? referencedNode.inheritanceParts[part.id]
-                            .inheritedFromId
-                        : inheritanceRef,
-                    };
-                  }
-                });
-
-                await updateDoc(nodeDoc.ref, {
-                  inheritanceParts: newInheritanceParts,
-                  "inheritance.parts.ref": null,
-                });
-              }
-            }
-
-            await saveAsInheritancePart(
-              currentVisibleNode?.id,
-              checkedId,
-              inheritedFromId,
-              inheritedFromTitle,
-              user,
-              "add",
-              skillsFutureApp,
-            );
-          }
-        } else {
-          // Node already has broken inheritance - directly add/remove
-          await saveAsInheritancePart(
-            currentVisibleNode?.id,
-            checkedId,
-            inheritedFromId,
-            inheritedFromTitle,
-            user,
-            action,
-            skillsFutureApp,
-          );
-        }
+        await saveAsInheritancePart(
+          currentVisibleNode?.id,
+          checkedId,
+          inheritedFromId,
+          inheritedFromTitle,
+          user,
+          action,
+          skillsFutureApp,
+        );
 
         // Refresh state after inheritance operations
         refreshEditableProperty();
@@ -928,11 +845,13 @@ const StructuredPropertySelector = ({
       return updated;
     });
 
-    setClonedNodesQueue((prev: { [nodeId: string]: { title: string; id: string } }) => {
-      const updated = { ...prev };
-      delete updated[queuedCloneId];
-      return updated;
-    });
+    setClonedNodesQueue(
+      (prev: { [nodeId: string]: { title: string; id: string } }) => {
+        const updated = { ...prev };
+        delete updated[queuedCloneId];
+        return updated;
+      },
+    );
   };
 
   const triggerSearch = (triggeredValue: { id: string; title: string }) => {
@@ -1027,22 +946,18 @@ const StructuredPropertySelector = ({
               >
                 Add new part
               </Typography>
-              <IconButton
-                onClick={handleCloseAddLinksModel}
+              <Button
                 sx={{
-                  backgroundColor: (theme: any) =>
-                    theme.palette.mode === "light" ? "#f5f5f5" : "#2d2d2d",
-                  transition: "all 0.2s",
-                  "&:hover": {
-                    backgroundColor: (theme: any) =>
-                      theme.palette.mode === "light" ? "#eeeeee" : "#3d3d3d",
-                    transform: "rotate(90deg)",
-                  },
+                  border: "1px solid gray",
+                  p: 0,
+                  backgroundColor: "",
+                  color: "gray",
+                  borderRadius: "25px",
                 }}
-                size="small"
+                onClick={handleCloseAddLinksModel}
               >
-                <CloseIcon sx={{ fontSize: "1.2rem" }} />
-              </IconButton>
+                Hide
+              </Button>
             </Box>
           )}
           <Box sx={{ px: "20px", mt: "14px", mx: "12px" }}>

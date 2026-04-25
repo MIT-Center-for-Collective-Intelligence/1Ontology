@@ -46,11 +46,7 @@ export const handleDownload = async ({
         visited.add(node.id);
         const nodeTitle = node.title.trim();
 
-        const inheritancePartRef = node.inheritance["parts"].ref;
         let parts = node.properties.parts;
-        if (inheritancePartRef && nodes[inheritancePartRef]) {
-          parts = nodes[inheritancePartRef].properties["parts"];
-        }
         parts = Array.isArray(parts)
           ? parts
               .flatMap((c) => c.nodes)

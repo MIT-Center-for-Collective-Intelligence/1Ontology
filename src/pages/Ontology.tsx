@@ -500,7 +500,7 @@ const Ontology = ({
   const dynamicUnsubscribeRef = useRef<Map<string, () => void>>(new Map()); // Stores unsubscribe functions for each dynamically added node
   const dynamicNodeMappingRef = useRef<Map<string, Set<string>>>(new Map()); // Used to clean up child node snapshots when navigating away from parent
 
-  // Add nodes to cache wit listeners (triggered by dropdown selections in @inheritedPartsViewerEdit)
+  // Add nodes to cache with listeners (triggered by dropdown selections in @inheritedPartsViewerEdit)
   const addNodesToCache = useCallback(
     (newNodes: { [id: string]: INode }, parentNodeId?: string) => {
       console.log(
@@ -1238,104 +1238,6 @@ const Ontology = ({
     };
   }, [currentVisibleNode?.id, db, appName]);
 
-  // Secondary extraction: When inheritance reference nodes are loaded, extract their parts
-  // This is necessary for pre-loading part node data because inherited part IDs are stored
-  // in the reference node, not the current node.
-  // After INode is redesigned to include inheritedParts directly on each node, this extraction will be removed.
-  useEffect(() => {
-    if (!currentVisibleNode) return;
-
-    // Check if this node has inherited parts
-    const inheritedPartsRef = currentVisibleNode.inheritance?.parts?.ref;
-    if (!inheritedPartsRef) return;
-
-    // Check if the inheritance reference node is now in the cache
-    const inheritanceRefNode = relatedNodes[inheritedPartsRef];
-    if (!inheritanceRefNode) return;
-
-    // Extract part node IDs from the inheritance reference's parts property
-    const partsProperty = inheritanceRefNode.properties?.parts;
-    if (!Array.isArray(partsProperty)) return;
-
-    const partIds: string[] = [];
-    partsProperty.forEach((collection) => {
-      collection.nodes?.forEach((n: any) => {
-        if (n.id && !relatedNodes[n.id]) {
-          partIds.push(n.id);
-        }
-      });
-    });
-    if (partIds.length === 0) return;
-
-    console.log(
-      `🟢 [SECONDARY EXTRACTION] Found ${partIds.length} inherited part node IDs to fetch`,
-    );
-
-    const batches = chunkArray(partIds, 30);
-    const unsubscribers: (() => void)[] = [];
-
-    batches.forEach((batch) => {
-      let nodesQuery;
-
-      if (skillsFuture && appName) {
-        nodesQuery = query(
-          collection(db, NODES),
-          where(documentId(), "in", batch),
-          where("deleted", "==", false),
-          where("appName", "==", appName),
-        );
-      } else {
-        nodesQuery = query(
-          collection(db, NODES),
-          where(documentId(), "in", batch),
-          where("deleted", "==", false),
-        );
-      }
-
-      const unsubscribe = onSnapshot(
-        nodesQuery,
-        (snapshot) => {
-          console.log(
-            `🟢 [SECONDARY EXTRACTION] Received ${snapshot.docChanges().length} part nodes from Firestore`,
-          );
-
-          setRelatedNodes((prev) => {
-            const updated = { ...prev };
-
-            snapshot.docChanges().forEach((change) => {
-              const nodeId = change.doc.id;
-
-              if (change.type === "removed") {
-                delete updated[nodeId];
-              } else {
-                updated[nodeId] = { id: nodeId, ...change.doc.data() } as INode;
-              }
-            });
-
-            return updated;
-          });
-        },
-        (error) => {
-          console.error("Error fetching inherited part nodes:", error);
-        },
-      );
-
-      unsubscribers.push(unsubscribe);
-    });
-
-    // Cleanup
-    return () => {
-      unsubscribers.forEach((unsub) => unsub());
-    };
-  }, [
-    currentVisibleNode?.id,
-    currentVisibleNode?.inheritance?.parts?.ref,
-    relatedNodes[currentVisibleNode?.inheritance?.parts?.ref || ""],
-    db,
-    appName,
-    skillsFuture,
-  ]);
-
   useEffect(() => {
     if (!user?.uname) return;
     const unreadRef = ref(rtdb, `/${UNREAD_COMMENTS}/${appName}/${user.uname}`);
@@ -2028,13 +1930,12 @@ const Ontology = ({
   useEffect(() => {
     const MAX_SESSION_HOURS = 8;
     const MAX_SESSION_MS = MAX_SESSION_HOURS * 60 * 60 * 1000;
-    const CHECK_INTERVAL_MS = 60000; 
+    const CHECK_INTERVAL_MS = 60000;
 
     const checkSessionAndDay = () => {
       const now = new Date();
       const elapsedMs = Date.now() - pageOpenTime.current;
 
-      
       const openDate = new Date(pageOpenTime.current);
       if (
         now.getDate() !== openDate.getDate() ||
@@ -2087,7 +1988,7 @@ const Ontology = ({
           limitMB,
         });
       }
-    }, 30000); 
+    }, 30000);
 
     return () => clearInterval(memoryInterval);
   }, [setSnackbarMessage]);
@@ -2161,6 +2062,8 @@ const Ontology = ({
           appName,
         );
 
+        console.log("hierarchicalTree -->", hierarchicalTree);
+
         // Apply filtering based on target node occurrences
         const filteredTree = filterTreeForTargetNode(
           hierarchicalTree,
@@ -2191,10 +2094,6 @@ const Ontology = ({
     const _currentVisibleNode = { ...currentVisibleNode };
 
     let parts = _currentVisibleNode?.properties?.parts || [];
-    const inheritanceRef = _currentVisibleNode?.inheritance?.["parts"]?.ref;
-    if (inheritanceRef && relatedNodes[inheritanceRef]?.properties?.parts) {
-      parts = relatedNodes[inheritanceRef].properties.parts;
-    }
 
     const generalizations = (
       _currentVisibleNode?.generalizations || []
@@ -2208,13 +2107,8 @@ const Ontology = ({
         if (!relatedNodes[generalization.id]) {
           continue;
         }
-        const refPartsId =
-          relatedNodes[generalization.id]?.inheritance?.["parts"]?.ref;
         let generalizationParts =
           relatedNodes[generalization.id]?.properties?.parts;
-        if (refPartsId && relatedNodes[refPartsId]?.properties?.parts) {
-          generalizationParts = relatedNodes[refPartsId].properties.parts;
-        }
 
         if (!generalizationParts || !generalizationParts[0]) {
           continue;

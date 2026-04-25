@@ -249,7 +249,7 @@
 .loadMoreNode {
   background-color: transparent;
   cursor: default;
-  padding: 2px 0;
+  padding: 0;
   border-radius: 8px;
   transition: background-color 0.15s ease;
 }

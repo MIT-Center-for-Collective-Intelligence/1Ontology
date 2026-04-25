@@ -33,6 +33,7 @@ const LinkNodeTitle = ({
 
   const linkContent = (
     <Box
+      id={`${link.id}-${property}`}
       sx={{
         display: "flex",
         alignItems: "center",

@@ -444,6 +444,7 @@ const Text = ({
         <Box
           sx={{
             display: "flex",
+            flexWrap: "wrap",
             alignItems: "center",
             textAlign: "center",
             background: backgroundColor,
@@ -578,16 +579,18 @@ const Text = ({
             <Box
               sx={{
                 display: "flex",
+                flexWrap: "wrap",
                 ml: "auto",
-                gap: "14px",
+                gap: "10px",
                 alignItems: "center",
+                minWidth: 0,
               }}
             >
               {selectedDiffNode &&
                 selectedDiffNode.changeType === "delete node" &&
                 property === "title" && (
                   <Typography
-                    sx={{ mx: "5px", ml: "145px", fontWeight: "bold" }}
+                    sx={{ mx: "5px", fontWeight: "bold" }}
                   >
                     DELETED NODE
                   </Typography>
@@ -597,7 +600,20 @@ const Text = ({
                 property={property}
               />
               {currentVisibleNode.inheritance[property]?.ref && (
-                <Typography sx={{ fontSize: "14px", ml: "9px" }}>
+                <Typography
+                  sx={{
+                    fontSize: "14px",
+                    ml: "9px",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    maxWidth: { xs: "140px", sm: "200px", md: "300px" },
+                    flexShrink: 1,
+                  }}
+                  title={`Inherited from "${getTitleNode(
+                    currentVisibleNode.inheritance[property].ref || "",
+                  )}"`}
+                >
                   {'(Inherited from "'}
                   {getTitleNode(
                     currentVisibleNode.inheritance[property].ref || "",

@@ -1228,13 +1228,6 @@ const CollectionStructure = ({
             updateDoc(nodeRef, {
               "properties.parts": propertyValue,
             });
-            if (currentVisibleNode.inheritance.parts.ref) {
-              updateInheritance({
-                nodeId: currentVisibleNode?.id,
-                updatedProperties: ["parts"],
-                db,
-              });
-            }
           }
         }
       } catch (error) {
@@ -1785,6 +1778,12 @@ const CollectionStructure = ({
                       {...provided.draggableProps}
                       id={`${collectionIndex}`}
                       sx={{
+                        display:
+                          !enableEdit &&
+                          collection.collectionName === "main" &&
+                          collection.nodes.length === 0
+                            ? "none"
+                            : "block",
                         mt: "15px",
                         borderRadius: "20px",
                         border:
@@ -2057,7 +2056,7 @@ const CollectionStructure = ({
                             </Box>
                           )}
 
-                          <List sx={{ p: 1, mx: "20px" }}>
+                          <List sx={{ p: 1, mx: "-5px" }}>
                             <Box
                               sx={{
                                 borderRadius: "18px",
@@ -2087,18 +2086,11 @@ const CollectionStructure = ({
                                           );
                                         }
 
-                                        // Add inheritance data if this is a parts property with intact inheritance
-                                        const inheritanceRef =
-                                          property === "parts" &&
-                                          currentVisibleNode.inheritance?.parts
-                                            ?.ref;
-                                        const enhancedLink = inheritanceRef
-                                          ? {
-                                              ...link,
-                                              inheritedFrom:
-                                                nodes[inheritanceRef]?.title,
-                                            }
-                                          : link;
+                                        // Parts list uses this node's
+                                        // `properties.parts` only (see StructuredProperty
+                                        // propertyValue); do not annotate rows from
+                                        // inheritance.parts.ref.
+                                        const enhancedLink = link;
 
                                         const nodeKey =
                                           link.randomId ||

@@ -23,7 +23,6 @@ import {
   getGeneralizationParts,
   getAllGeneralizations,
   getEffectiveGeneralizations,
-  breakInheritanceAndCopyParts,
 } from "@components/lib/utils/partsHelper";
 import {
   ICollection,
@@ -296,12 +295,19 @@ const StructuredProperty = ({
         result =
           currentVisibleNode[property as "specializations" | "generalizations"];
       } else {
-        result =
-          getPropertyValue(
-            relatedNodes,
-            currentVisibleNode.inheritance[property]?.ref,
-            property,
-          ) || currentVisibleNode?.properties[property];
+        // Parts always reflect this node's `properties.parts` only; do not
+        // substitute the collection from `inheritance.parts.ref` (the UI
+        // still explains inheritance via InheritedPartsViewer / details).
+        if (property === "parts") {
+          result = currentVisibleNode?.properties?.parts;
+        } else {
+          result =
+            getPropertyValue(
+              relatedNodes,
+              currentVisibleNode.inheritance[property]?.ref,
+              property,
+            ) || currentVisibleNode?.properties[property];
+        }
       }
 
       if (!selectedDiffNode) {
@@ -682,7 +688,6 @@ const StructuredProperty = ({
   const getInheritedPartsSet = (): Set<string> => {
     const inheritedParts = new Set<string>();
 
-    // Case 1: Broken inheritance - add parts from inheritanceParts
     if (currentVisibleNode.inheritanceParts) {
       Object.keys(currentVisibleNode.inheritanceParts).forEach(
         (partId: string) => {
@@ -691,20 +696,6 @@ const StructuredProperty = ({
       );
     }
 
-    // Case 2: Intact inheritance - add all parts from referenced generalization
-    if (currentVisibleNode.inheritance?.parts?.ref) {
-      const referencedGeneralizationId =
-        currentVisibleNode.inheritance.parts.ref;
-      const allPartsFromRef = getGeneralizationParts(
-        referencedGeneralizationId,
-        relatedNodes,
-      );
-      allPartsFromRef.forEach((part) => {
-        inheritedParts.add(part.id);
-      });
-    }
-
-    // Add direct parts from the node itself
     if (currentVisibleNode.properties?.parts) {
       currentVisibleNode.properties.parts.forEach((collection: any) => {
         collection.nodes.forEach((part: any) => {
@@ -735,28 +726,19 @@ const StructuredProperty = ({
         if (nodeDoc.exists()) {
           const nodeData = nodeDoc.data() as any;
 
-          // Handle for parts - break inheritance
-          const inheritedRef = nodeData.inheritance[property]?.ref;
-          if (property === "parts" && inheritedRef) {
-            await breakInheritanceAndCopyParts(
-              currentNodeId,
-              linkId,
-              relatedNodes,
-              user,
-              skillsFutureApp,
-            );
-            const inheritanceFrom = relatedNodes[inheritedRef];
-
-            nodeData.properties["parts"] = JSON.parse(
-              JSON.stringify(inheritanceFrom.properties["parts"]),
-            );
-          } else if (inheritedRef) {
-            // Existing logic for non-parts properties
-            const nodeId = nodeData.inheritance[property].ref;
-            const inheritedNode = relatedNodes[nodeId as string];
-            nodeData.properties[property] = JSON.parse(
-              JSON.stringify(inheritedNode.properties[property]),
-            );
+          const inheritedRef =
+            property !== "parts" ? nodeData.inheritance?.[property]?.ref : null;
+          if (inheritedRef) {
+            let inheritedNode: INode | null =
+              relatedNodes[inheritedRef] ?? null;
+            if (!inheritedNode) {
+              inheritedNode = await fetchNode(inheritedRef);
+            }
+            if (inheritedNode?.properties?.[property]) {
+              nodeData.properties[property] = JSON.parse(
+                JSON.stringify(inheritedNode.properties[property]),
+              );
+            }
           }
           const previousValue = JSON.parse(
             JSON.stringify(nodeData.properties[property]),
@@ -765,7 +747,11 @@ const StructuredProperty = ({
           let removedFromInheritanceParts = false;
 
           if (property === "parts") {
-            if (linkIndex === -1) {
+            if (
+              linkIndex === -1 &&
+              Array.isArray(nodeData.properties?.[property]) &&
+              nodeData.properties[property][collectionIndex]?.nodes
+            ) {
               linkIndex = nodeData.properties[property][
                 collectionIndex
               ].nodes.findIndex((c: { id: string }) => c.id === linkId);
@@ -805,15 +791,16 @@ const StructuredProperty = ({
           let shouldBeRemovedFromParent = false;
 
           if (property === "parts" && removedFromInheritanceParts) {
-            // For inheritanceParts removal, always remove from parent since it's not in direct properties
             shouldBeRemovedFromParent = true;
+          } else if (Array.isArray(nodeData.properties[property])) {
+            const stillExists = nodeData.properties[property].some(
+              (col: any) =>
+                Array.isArray(col.nodes) &&
+                col.nodes.some((n: { id: string }) => n.id === linkId),
+            );
+            shouldBeRemovedFromParent = !stillExists;
           } else {
-            // Existing logic for other properties
-            shouldBeRemovedFromParent = !(
-              Object.values(nodeData.properties[property]) as { id: string }[]
-            )
-              .flat()
-              .some((c: { id: string }) => c.id === linkId);
+            shouldBeRemovedFromParent = true;
           }
 
           // const childDoc = await getDoc(doc(collection(db, NODES), child.id));
@@ -836,19 +823,17 @@ const StructuredProperty = ({
 
           await updateDoc(nodeDoc.ref, propertyUpdateObject);
 
-          if (property !== "isPartOf" || nodeData.inheritance[property]) {
-            const reference = nodeData.inheritance[property].ref;
+          const inheritanceEntry = nodeData.inheritance?.[property];
+          if (property !== "isPartOf" || inheritanceEntry) {
+            const reference = inheritanceEntry?.ref ?? null;
             let updateObject: any = {
               [`inheritance.${property}.ref`]: null,
             };
-            // Fetch reference node if missing
             let referenceNode = null;
             if (reference) {
               referenceNode = relatedNodes[reference];
               if (!referenceNode) {
                 referenceNode = await fetchNode(reference);
-                if (!referenceNode) {
-                }
               }
             }
 
@@ -940,46 +925,54 @@ const StructuredProperty = ({
   }) => {
     try {
       const nodeData = relatedNodes[currentNodeId];
-
-      let parts = nodeData.properties["parts"];
-      const inheritanceRefId = nodeData.inheritance["parts"].ref;
-
-      // Fetch inheritance reference if missing
-      if (inheritanceRefId) {
-        let inheritanceRefNode: INode | null =
-          relatedNodes[inheritanceRefId] || null;
-        if (!inheritanceRefNode) {
-          const fetchedNode = await fetchNode(inheritanceRefId);
-          if (!fetchedNode) {
-            return;
-          }
-          inheritanceRefNode = fetchedNode;
-        }
-        parts = inheritanceRefNode.properties["parts"];
+      if (!nodeData) {
+        console.error(
+          "linkNodeRelation: node not found in cache",
+          currentNodeId,
+        );
+        return;
       }
+
+      let parts = nodeData.properties?.["parts"];
+
+      if (!parts || !Array.isArray(parts) || !parts[0]?.nodes) {
+        console.error("linkNodeRelation: parts structure is invalid");
+        return;
+      }
+
       const previousPartsValue = JSON.parse(JSON.stringify(parts));
-      parts[0].nodes.push({
-        id: partId,
-      });
+      parts[0].nodes.push({ id: partId });
 
       const nodeRef = doc(collection(db, NODES), currentNodeId);
-
       const linkRef = doc(collection(db, NODES), partId);
       const linkData = relatedNodes[partId];
-      const previousIsPartOfValue = JSON.parse(
-        JSON.stringify(linkData.properties["isPartOf"]),
-      );
-      linkData.properties["isPartOf"][0].nodes.push({
-        id: currentNodeId,
+
+      const previousIsPartOfValue = linkData?.properties?.["isPartOf"]
+        ? JSON.parse(JSON.stringify(linkData.properties["isPartOf"]))
+        : [{ collectionName: "main", nodes: [] }];
+
+      if (
+        linkData?.properties?.["isPartOf"] &&
+        Array.isArray(linkData.properties["isPartOf"]) &&
+        linkData.properties["isPartOf"][0]?.nodes
+      ) {
+        linkData.properties["isPartOf"][0].nodes.push({ id: currentNodeId });
+        await updateDoc(linkRef, {
+          "properties.isPartOf": linkData.properties["isPartOf"],
+        });
+      } else if (linkData) {
+        const newIsPartOf = [
+          { collectionName: "main", nodes: [{ id: currentNodeId }] },
+        ];
+        await updateDoc(linkRef, {
+          "properties.isPartOf": newIsPartOf,
+        });
+      }
+
+      await updateDoc(nodeRef, {
+        "properties.parts": parts,
       });
 
-      updateDoc(linkRef, {
-        "properties.isPartOf": linkData.properties["isPartOf"],
-      });
-      updateDoc(nodeRef, {
-        "properties.parts": parts,
-        "inheritance.parts.ref": null,
-      });
       saveNewChangeLog(db, {
         nodeId: currentNodeId,
         modifiedBy: user?.uname || "",
@@ -998,13 +991,14 @@ const StructuredProperty = ({
         modifiedBy: user?.uname || "",
         modifiedProperty: property,
         previousValue: previousIsPartOfValue,
-        newValue: linkData.properties["isPartOf"],
+        newValue: linkData?.properties?.["isPartOf"] || [],
         modifiedAt: new Date(),
         changeType: "add element",
         fullNode: currentVisibleNode,
         skillsFuture,
         ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
       });
+
       await updateInheritance({
         nodeId: currentNodeId,
         updatedProperties: ["parts"],
@@ -1014,7 +1008,6 @@ const StructuredProperty = ({
       if (onInstantTreeUpdate) {
         onInstantTreeUpdate((tree) => [...tree]);
       }
-
     } catch (error) {
       console.error(error);
     }
@@ -1034,12 +1027,8 @@ const StructuredProperty = ({
 
         // Following linkNodeRelation and unlinkNodeRelation but updated as a single Function for clarity
 
-        // 1Resolve the effective parts (break inheritance if needed).
-        const inheritanceRef = currentVisibleNode.inheritance?.parts?.ref;
         const sourceParts: ICollection[] | undefined =
-          inheritanceRef && relatedNodes[inheritanceRef]
-            ? relatedNodes[inheritanceRef].properties?.parts
-            : currentVisibleNode.properties?.parts;
+          currentVisibleNode.properties?.parts;
 
         if (
           !sourceParts ||
@@ -1116,7 +1105,6 @@ const StructuredProperty = ({
         // Write to db for current node first  then the two cross-node isPartOf writes in parallel.
         const currentNodeUpdates: any = {
           "properties.parts": updatedParts,
-          "inheritance.parts.ref": null,
         };
         if (updatedInheritedPartsDetails) {
           currentNodeUpdates.inheritedPartsDetails =
@@ -1258,7 +1246,7 @@ const StructuredProperty = ({
         borderBottomLeftRadius: "18px",
         minWidth: isMobile ? "100%" : "500px",
         width: "100%",
-        minHeight: "150px",
+        minHeight: "120px",
         maxHeight: "100%",
         overflow: "hidden",
         position: "relative",
@@ -1496,7 +1484,8 @@ const StructuredProperty = ({
                       enableEdit={enableEdit}
                     />
                   )}
-                {currentVisibleNode.inheritance[property]?.ref &&
+                {property !== "parts" &&
+                  currentVisibleNode.inheritance[property]?.ref &&
                   !enableEdit && (
                     <Typography
                       sx={{ fontSize: "14px", ml: "9px", color: "gray" }}
@@ -1591,37 +1580,35 @@ const StructuredProperty = ({
           displayOptional &&
           !enableEdit &&
           showTopOptionalLegend && (
-          <InheritedPartsLegend
-            sx={{ ml: 2 }}
-            legendItems={[{ symbol: "(o)", description: "Optional" }]}
-          />
+            <InheritedPartsLegend
+              sx={{ ml: 2 }}
+              legendItems={[{ symbol: "(o)", description: "Optional" }]}
+            />
           )}
         {property === "parts" && !selectedDiffNode && !currentImprovement && (
-          <>
-            <PartViewer
-              enableEdit={enableEdit}
-              property={property}
-              getAllGeneralizations={getAllGeneralizations}
-              currentVisibleNode={currentVisibleNode}
-              relatedNodes={relatedNodes}
-              fetchNode={fetchNode}
-              addNodesToCache={addNodesToCache}
-              linkNodeRelation={linkNodeRelation}
-              unlinkNodeRelation={unlinkNodeRelation}
-              user={user}
-              navigateToNode={navigateToNode}
-              replaceWith={replaceWith}
-              skillsFutureApp={skillsFutureApp}
-              getGeneralizationParts={getGeneralizationParts}
-              clonedNodesQueue={clonedNodesQueue}
-              saveNewSpecialization={saveNewSpecialization}
-              cancelPendingPart={cancelPendingPart}
-              updatePendingPartTitle={updatePendingPartTitle}
-              onDisplayDetailsChange={(isExpanded) =>
-                setShowTopOptionalLegend(!isExpanded)
-              }
-            />
-          </>
+          <PartViewer
+            enableEdit={enableEdit}
+            property={property}
+            getAllGeneralizations={getAllGeneralizations}
+            currentVisibleNode={currentVisibleNode}
+            relatedNodes={relatedNodes}
+            fetchNode={fetchNode}
+            addNodesToCache={addNodesToCache}
+            linkNodeRelation={linkNodeRelation}
+            unlinkNodeRelation={unlinkNodeRelation}
+            user={user}
+            navigateToNode={navigateToNode}
+            replaceWith={replaceWith}
+            skillsFutureApp={skillsFutureApp}
+            getGeneralizationParts={getGeneralizationParts}
+            clonedNodesQueue={clonedNodesQueue}
+            saveNewSpecialization={saveNewSpecialization}
+            cancelPendingPart={cancelPendingPart}
+            updatePendingPartTitle={updatePendingPartTitle}
+            onDisplayDetailsChange={(isExpanded) =>
+              setShowTopOptionalLegend(!isExpanded)
+            }
+          />
         )}
       </Box>
       {property === "parts" && enableEdit && selectedProperty !== property && (

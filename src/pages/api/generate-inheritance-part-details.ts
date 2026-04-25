@@ -15,11 +15,7 @@ const getPartOptionalStatus = (
 ): boolean => {
   const node = nodes[nodeId];
   if (!node) return false;
-  const inheritanceRef = node.inheritance?.["parts"]?.ref;
-  const nodeParts =
-    inheritanceRef && nodes[inheritanceRef]
-      ? nodes[inheritanceRef].properties["parts"]
-      : node.properties["parts"];
+  const nodeParts = node.properties?.["parts"];
 
   if (!nodeParts) return false;
 
@@ -35,11 +31,7 @@ const getCurrentPartOptionalStatus = (
   currentVisibleNode: INode,
   nodes: { [id: string]: INode },
 ): boolean => {
-  const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
-  const currentNodeParts =
-    inheritanceRef && nodes[inheritanceRef]
-      ? nodes[inheritanceRef].properties["parts"]
-      : currentVisibleNode.properties["parts"];
+  const currentNodeParts = currentVisibleNode.properties?.["parts"];
 
   if (!currentNodeParts) return false;
 
@@ -224,11 +216,7 @@ const analyzeInheritance = (
     {} as Record<string, typeof result>,
   );
 
-  const inheritanceRef = currentVisibleNode.inheritance["parts"]?.ref;
-  const currentNodeParts =
-    inheritanceRef && nodes[inheritanceRef]
-      ? nodes[inheritanceRef].properties["parts"]
-      : currentVisibleNode.properties["parts"];
+  const currentNodeParts = currentVisibleNode.properties?.["parts"];
   const currentPartsOrder =
     currentNodeParts?.[0]?.nodes?.map((c: any) => c.id) || [];
 
@@ -404,13 +392,8 @@ const checkGeneralizations = (
     if (!relatedNodes[generalization.id]) {
       continue;
     }
-    const refPartsId =
-      relatedNodes[generalization.id]?.inheritance?.["parts"]?.ref;
     let generalizationParts =
       relatedNodes[generalization.id]?.properties?.parts;
-    if (refPartsId && relatedNodes[refPartsId]?.properties?.parts) {
-      generalizationParts = relatedNodes[refPartsId].properties.parts;
-    }
 
     if (!generalizationParts || !generalizationParts[0]) {
       continue;
@@ -562,19 +545,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       currentNode.generalizations?.flatMap((c) => c.nodes) || [];
     generalizations.forEach((g) => nodeIdsToFetch.add(g.id));
 
-    const inheritanceRef = currentNode.inheritance?.["parts"]?.ref;
-    if (inheritanceRef) nodeIdsToFetch.add(inheritanceRef);
-
     let parts = currentNode.properties?.parts || [];
-    if (inheritanceRef) {
-      const refDoc = await db.collection(NODES).doc(inheritanceRef).get();
-      if (refDoc.exists) {
-        const refData = refDoc.data();
-        if (refData?.properties?.parts) {
-          parts = refData.properties.parts;
-        }
-      }
-    }
 
     const partIds = parts[0]?.nodes?.map((n: any) => n.id) || [];
     partIds.forEach((id: string) => nodeIdsToFetch.add(id));
@@ -587,31 +558,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const genNode = relatedNodes[gen.id];
       if (!genNode) continue;
 
-      const genRef = genNode.inheritance?.["parts"]?.ref;
-      if (genRef) {
-        nodeIdsToFetch.add(genRef);
-        const refDoc = await db.collection(NODES).doc(genRef).get();
-        if (refDoc.exists) {
-          const refData = refDoc.data();
-          // Add the ref node to relatedNodes so it can be accessed later
-          relatedNodes[genRef] = { id: refDoc.id, ...refData } as INode;
-
-          if (refData?.properties?.parts) {
-            refData.properties.parts.forEach((collection: ICollection) => {
-              collection.nodes?.forEach((n: any) =>
-                generalizationPartIds.add(n.id),
-              );
-            });
-          }
-        }
-      } else {
-        const genParts = genNode.properties?.parts || [];
-        genParts.forEach((collection: ICollection) => {
-          collection.nodes?.forEach((n: any) =>
-            generalizationPartIds.add(n.id),
-          );
-        });
-      }
+      const genParts = genNode.properties?.parts || [];
+      genParts.forEach((collection: ICollection) => {
+        collection.nodes?.forEach((n: any) =>
+          generalizationPartIds.add(n.id),
+        );
+      });
     }
 
     const genPartNodes = await fetchNodes([...generalizationPartIds]);
@@ -662,11 +614,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const genNode = relatedNodes[gen.id];
       if (!genNode) continue;
 
-      const genRef = genNode.inheritance?.["parts"]?.ref;
       let genParts = genNode.properties?.parts || [];
-      if (genRef && relatedNodes[genRef]?.properties?.parts) {
-        genParts = relatedNodes[genRef].properties.parts;
-      }
 
       const generalizationParts =
         genParts[0]?.nodes?.map((n: any) => n.id) || [];

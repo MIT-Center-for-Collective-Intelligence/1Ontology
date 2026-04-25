@@ -421,9 +421,7 @@ const recursivelyUpdateSpecializations = async ({
           return false;
         }
 
-        // Handling for parts property with broken inheritance
-        if (p === "parts" && inheritance.parts?.ref === null) {
-          // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
+        if (p === "parts") {
           return false;
         }
 
@@ -1062,12 +1060,7 @@ export const updateLinksForInheritance = async (
     for (let property in specializationData.inheritance) {
       const propertyRef = specializationData.inheritance[property]?.ref;
       if (!!propertyRef) {
-        // Handling for parts property with broken inheritance
-        if (
-          property === "parts" &&
-          specializationData.inheritance.parts?.ref === null
-        ) {
-          // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
+        if (property === "parts") {
           continue;
         }
 
@@ -1286,12 +1279,7 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
               nodes[unlinkedGeneralizationId].inheritance[property]?.ref ===
                 specializationData.inheritance[property].ref)
           ) {
-            // Handling for parts property with broken inheritance
-            if (
-              property === "parts" &&
-              specializationData.inheritance.parts?.ref === null
-            ) {
-              // Skip parts handling when inheritance is broken (inheritance.parts.ref is null)
+            if (property === "parts") {
               continue;
             }
 

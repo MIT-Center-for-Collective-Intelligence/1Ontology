@@ -17,9 +17,7 @@ const InheritedPartsLegend = ({
         maxWidth: 420,
         mt: 2,
         pt: 2,
-        px: 2.25,
         pb: 2,
-        mb: 2,
         ...(sx || {}),
         borderRadius: 3,
       })}

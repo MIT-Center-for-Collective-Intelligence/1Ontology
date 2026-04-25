@@ -418,8 +418,8 @@ export const Notifications = ({
               <Box
                 sx={{
                   mt: "2px",
-                  width: "42px",
-                  height: "42px",
+                  width: 44,
+                  height: 44,
                   flexShrink: 0,
                   borderRadius: "50%",
                   border: (theme) =>
@@ -427,13 +427,18 @@ export const Notifications = ({
                       ? "1px solid rgba(255,255,255,0.16)"
                       : "1px solid rgba(0,0,0,0.09)",
                   p: "2px",
+                  boxSizing: "border-box",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
                 }}
               >
                 <OptimizedAvatar
                   alt={notification.senderDetail?.fullname || ""}
                   imageUrl={notification.senderDetail?.imageUrl}
                   size={38}
-                  sx={{ border: "none" }}
+                  sx={{ border: "none", flexShrink: 0 }}
                 />
               </Box>
               <Box sx={{ width: "100%", minWidth: 0 }}>

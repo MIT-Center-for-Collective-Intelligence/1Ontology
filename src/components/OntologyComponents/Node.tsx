@@ -689,8 +689,6 @@ const Node = ({
             }
           }
 
-          // Update inheritance for parts
-          newNode.inheritance.parts.ref = null;
         }
 
         // Handle the addition of specializations or generalizations
@@ -979,7 +977,12 @@ const Node = ({
     } else {
       // Handle properties case
       let propertyCollection = currentVisibleNode.properties[property];
-      const reference = currentVisibleNode.inheritance[property]?.ref || null;
+      // Parts are edited from this node's `properties.parts` only (same as
+      // display); do not pull the collection from inheritance.parts.ref.
+      const reference =
+        property === "parts"
+          ? null
+          : currentVisibleNode.inheritance[property]?.ref || null;
       if (reference) {
         let referenceNode: INode | null = relatedNodes[reference] || null;
         if (!referenceNode) {
@@ -991,11 +994,13 @@ const Node = ({
         }
         propertyCollection = referenceNode.properties[property];
       }
-      previousCheckedItems = propertyCollection
-        .flatMap((l: ICollection) => l.nodes)
+      previousCheckedItems = (propertyCollection || [])
+        .flatMap((l: ICollection) => l.nodes || [])
         .map((n: { id: string }) => n.id);
 
-      setEditableProperty(JSON.parse(JSON.stringify(propertyCollection)));
+      setEditableProperty(
+        JSON.parse(JSON.stringify(propertyCollection || [])),
+      );
     }
     setCheckedItems(new Set(previousCheckedItems));
     setCheckedItemsCopy(new Set(previousCheckedItems));
@@ -1481,6 +1486,12 @@ const Node = ({
   );
   const onGetPropertyValue = useCallback(
     (property: string, structured: boolean = false) => {
+      if (property === "parts") {
+        if (structured) {
+          return currentVisibleNode?.textValue?.[property] || "";
+        }
+        return currentVisibleNode.properties?.parts;
+      }
       const inheritedProperty = getPropertyValue(
         relatedNodes,
         currentVisibleNode.inheritance[property]?.ref,
@@ -1490,17 +1501,16 @@ const Node = ({
 
       if (inheritedProperty !== null) {
         return inheritedProperty;
-      } else {
-        if (
-          structured ||
-          Array.isArray(currentVisibleNode.properties[property])
-        ) {
-          return currentVisibleNode?.textValue
-            ? currentVisibleNode?.textValue[property] || ""
-            : "";
-        }
-        return currentVisibleNode.properties[property];
       }
+      if (
+        structured ||
+        Array.isArray(currentVisibleNode.properties[property])
+      ) {
+        return currentVisibleNode?.textValue
+          ? currentVisibleNode?.textValue[property] || ""
+          : "";
+      }
+      return currentVisibleNode.properties[property];
     },
     [currentVisibleNode, relatedNodes],
   );

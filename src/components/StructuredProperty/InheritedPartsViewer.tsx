@@ -111,6 +111,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   const id = open ? "switch-popover" : undefined;
 
   useEffect(() => {
+    if (!currentVisibleNode?.id) return;
     const nodesQuery = query(
       collection(db, INHERITANCE_FOR_PARTS_COLLECTION_NAME),
       where("nodeId", "==", currentVisibleNode.id),
@@ -145,21 +146,6 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     }
   }, [currentVisibleNode.id]); // Use node ID to avoid infinite loop
 
-  // Fetch missing inheritance reference for parts
-  useEffect(() => {
-    const fetchMissingInheritanceRef = async () => {
-      if (!fetchNode || !currentVisibleNode.inheritance?.parts?.ref) return;
-      const inheritanceRef = currentVisibleNode.inheritance.parts.ref;
-
-      // Check if inheritance reference is missing from cache
-      if (!nodes[inheritanceRef]) {
-        await fetchNode(inheritanceRef);
-      }
-    };
-
-    fetchMissingInheritanceRef();
-  }, [currentVisibleNode.inheritance?.parts?.ref, fetchNode]);
-
   const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue);
   };
@@ -185,11 +171,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const getCurrentPartOptionalStatus = (partId: string): boolean => {
-    const inheritanceRef = currentVisibleNode.inheritance?.["parts"]?.ref;
-    const currentNodeParts =
-      inheritanceRef && nodes[inheritanceRef]
-        ? nodes[inheritanceRef].properties["parts"]
-        : currentVisibleNode.properties["parts"];
+    const currentNodeParts = currentVisibleNode.properties?.["parts"];
 
     if (!currentNodeParts) return false;
 
@@ -248,9 +230,8 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
     // Check if node has any parts at all
     const hasParts =
       currentVisibleNode.properties?.parts?.[0]?.nodes?.length > 0;
-    const hasInheritanceRef = !!currentVisibleNode.inheritance?.parts?.ref;
 
-    if (!hasParts && !hasInheritanceRef) {
+    if (!hasParts) {
       return (
         <Box
           sx={{
@@ -594,46 +575,46 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
       {displayDetails && (
         <Box
           sx={{
-            px: "10px",
-            py: "10px",
+            /*             px: "10px", */
             mt: "8px",
             backgroundColor: (theme) =>
               theme.palette.mode === "light" ? "#fafbfc" : "#1e1e1f",
           }}
         >
-          <Box>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                mb: 1,
-              }}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderBottom: (theme: any) =>
+                `1.5px solid ${theme.palette.mode === "light" ? "#f0f0f0" : "#333"}`,
+              mb: "10px",
+              py: "15px",
+              px: "10px",
+            }}
+          >
+            <Typography
+              sx={{ ml: "7px", fontSize: "19px", fontWeight: "bold" }}
             >
-              <Typography
-                sx={{ ml: "7px", fontSize: "19px", fontWeight: "bold" }}
-              >
-                {"Parts inherited from generalizations:"}
-              </Typography>
+              {"Parts inherited from generalizations:"}
+            </Typography>
 
-              {!triggerSearch && (
-                <Tooltip title={"Collapse"} placement="top" sx={{ ml: "auto" }}>
-                  <IconButton
-                    sx={{
-                      border: "1px solid gray",
-                      p: 0,
-                      backgroundColor: "",
-                      color: "gray",
-                    }}
-                    onClick={() => {
-                      setDisplayDetails(false);
-                    }}
-                  >
-                    <CloseIcon />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </Box>
+            {!triggerSearch && (
+              <Button
+                sx={{
+                  border: "1px solid gray",
+                  p: 0,
+                  backgroundColor: "",
+                  color: "gray",
+                  borderRadius: "25px",
+                }}
+                onClick={() => {
+                  setDisplayDetails(false);
+                }}
+              >
+                Hide
+              </Button>
+            )}
           </Box>
 
           <GeneralizationTabs
@@ -643,7 +624,7 @@ const InheritedPartsViewer: React.FC<InheritedPartsViewerProps> = ({
           />
 
           {activeGenId && activeGenTitle && (
-            <Box key={activeGenId}>
+            <Box key={activeGenId} sx={{ px: "10px" }}>
               <Box
                 sx={{
                   display: "flex",

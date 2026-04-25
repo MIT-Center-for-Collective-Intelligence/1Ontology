@@ -214,8 +214,6 @@ const LinkNode = ({
 
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
 
-  const [regionalTitle, setRegionalTitle] = useState(title);
-
   // useEffect to handle async call to getTitle
   /*   useEffect(() => {
     const fetchTitle = async () => {
@@ -269,23 +267,9 @@ const LinkNode = ({
 
   const makeLinkOptional = useCallback(async () => {
     const nodeCopy = { ...currentVisibleNode };
-    const partInheredRef = nodeCopy.inheritance["parts"].ref;
 
-    // Fetch inheritance reference if missing
-    let inheritedRefNode = null;
-    if (partInheredRef) {
-      inheritedRefNode = relatedNodes[partInheredRef];
-      if (!inheritedRefNode) {
-        inheritedRefNode = await fetchNode(partInheredRef);
-        if (!inheritedRefNode) {
-          return;
-        }
-      }
-    }
-
-    const partsNodes = inheritedRefNode
-      ? inheritedRefNode.properties["parts"][0].nodes
-      : nodeCopy.properties["parts"][0].nodes;
+    const partsNodes = nodeCopy.properties["parts"]?.[0]?.nodes;
+    if (!partsNodes) return;
     const currentPartIndx = partsNodes.findIndex((c) => c.id === link.id);
 
     if (currentPartIndx !== -1) {
@@ -311,7 +295,6 @@ const LinkNode = ({
             nodes: partsNodes,
           },
         ],
-        "inheritance.parts.ref": null,
       });
     }
   }, [currentVisibleNode, relatedNodes, fetchNode]);
@@ -555,12 +538,17 @@ const LinkNode = ({
                 currentVisibleNode?.id,
                 linkId,
                 property,
-                collectionIndex
+                collectionIndex,
               );
             });
           }
 
-          await savePendingNodeState(currentVisibleNode.id, nodeData, skillsFutureApp, db);
+          await savePendingNodeState(
+            currentVisibleNode.id,
+            nodeData,
+            skillsFutureApp,
+            db,
+          );
 
           if (shouldBeRemovedFromParent) {
             // If other node (parent or child) was updated, save its state too
@@ -677,7 +665,7 @@ const LinkNode = ({
           },
         }}
       >
-        <ListItemIcon sx={{ minWidth: 0 }}>
+        <ListItemIcon sx={{ minWidth: "auto", mr: 1 }}>
           <DragIndicatorIcon
             sx={{
               color:
@@ -690,7 +678,7 @@ const LinkNode = ({
           />
         </ListItemIcon>
         <LinkNodeTitle
-          title={isQueuedClone ? queuedTitle || title || regionalTitle : title || regionalTitle}
+          title={isQueuedClone ? queuedTitle : title}
           link={link}
           relatedNodes={relatedNodes}
           property={property}
@@ -708,61 +696,65 @@ const LinkNode = ({
           {selectedProperty === property &&
             selectedProperty === "parts" &&
             !isQueuedClone && (
-            <Tooltip
-              title={
-                link.optional ? "Make part non-optional" : "Make part optional"
-              }
-              placement="top"
-            >
-              <Button
-                sx={{ ml: "auto", borderRadius: "25px", p: 0, width: "10px" }}
-                variant={link.optional ? "contained" : "outlined"}
-                onClick={makeLinkOptional}
+              <Tooltip
+                title={
+                  link.optional
+                    ? "Make part non-optional"
+                    : "Make part optional"
+                }
+                placement="top"
               >
-                O
-              </Button>
-            </Tooltip>
-          )}
+                <Button
+                  sx={{ ml: "auto", borderRadius: "25px", p: 0, width: "10px" }}
+                  variant={link.optional ? "contained" : "outlined"}
+                  onClick={makeLinkOptional}
+                >
+                  O
+                </Button>
+              </Tooltip>
+            )}
           {!isQueuedClone &&
-            ((!locked &&
+            !locked &&
             !linkLocked &&
             !selectedDiffNode &&
             (!currentVisibleNode.unclassified ||
               property !== "generalizations") &&
-            property !== "isPartOf")) && (
-            <>
-              {loadingIds.has(link.id) ? (
-                <LoadingButton
-                  loading
-                  loadingIndicator={<CircularProgress size={20} />}
-                  sx={{
-                    borderRadius: "16px",
-                    padding: "3px",
-                    fontSize: "0.8rem",
-                    minWidth: "40px",
-                  }}
-                  disabled
-                />
-              ) : (
-                <Box sx={{ display: "flex" }}>
-                  <Tooltip title="Unlink">
-                    <IconButton
-                      sx={{
-                        ml: "18px",
-                        borderRadius: "18px",
-                        fontSize: "12px",
-                        p: 0.2,
-                        display: !enableEdit ? "none" : "block",
-                      }}
-                      onClick={handleUnlinkNode}
-                    >
-                      <LinkOffIcon sx={{ color: enableEdit ? "orange" : "gray" }} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              )}
-            </>
-          )}
+            property !== "isPartOf" && (
+              <>
+                {loadingIds.has(link.id) ? (
+                  <LoadingButton
+                    loading
+                    loadingIndicator={<CircularProgress size={20} />}
+                    sx={{
+                      borderRadius: "16px",
+                      padding: "3px",
+                      fontSize: "0.8rem",
+                      minWidth: "40px",
+                    }}
+                    disabled
+                  />
+                ) : (
+                  <Box sx={{ display: "flex" }}>
+                    <Tooltip title="Unlink">
+                      <IconButton
+                        sx={{
+                          ml: "18px",
+                          borderRadius: "18px",
+                          fontSize: "12px",
+                          p: 0.2,
+                          display: !enableEdit ? "none" : "block",
+                        }}
+                        onClick={handleUnlinkNode}
+                      >
+                        <LinkOffIcon
+                          sx={{ color: enableEdit ? "orange" : "gray" }}
+                        />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                )}
+              </>
+            )}
           {property === "parts" &&
             !currentImprovement &&
             !selectedDiffNode &&

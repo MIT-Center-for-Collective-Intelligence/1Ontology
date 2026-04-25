@@ -1145,7 +1145,7 @@ function DraggableTree({
               cursor: isLoading ? "default" : "pointer",
               transition: "background-color 0.2s ease",
               borderRadius: "8px",
-              minHeight: "30px",
+              minHeight: "24px",
               px: 0.5,
               userSelect: "none",
               "&:hover": {
@@ -1213,7 +1213,7 @@ function DraggableTree({
         onClick={() => node.isInternal && node.toggle()}
         id={node.data.id}
         sx={{
-          minHeight: "34px",
+          minHeight: "26px",
           borderRadius: "8px",
           px: 0.75,
           borderLeft: "2px solid",
@@ -1361,51 +1361,33 @@ function DraggableTree({
 
   return (
     <Box className={styles.container}>
-      <Box
-        sx={{
-          position: "sticky",
-          top: 0,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          zIndex: 1,
-          backgroundColor: (theme) =>
-            theme.palette.mode === "dark"
-              ? "rgba(48, 49, 52, 0.96)"
-              : "#eef2f7",
-          border: "1px solid",
-          borderColor: (theme) =>
-            theme.palette.mode === "dark"
-              ? "rgba(255,255,255,0.08)"
-              : "rgba(15, 23, 42, 0.08)",
-          borderRadius: "10px",
-          px: "8px",
-          py: "8px",
-          mb: "6px",
-          gap: 1,
-        }}
-      >
-        {/* Removed the Expand/Collapse button with the subcollection tree changes */}
-        {/* {!treeType && (
-          <Button
-            variant={expanded ? "contained" : "outlined"}
-            size="small"
-            onClick={expandOrCollapseAll}
-            sx={{
-              borderRadius: "20px",
-              textTransform: "none",
-            }}
-          >
-            {collapsingLoader.current
-              ? "Collapsing..."
-              : expanded
-                ? "Collapse All"
-                : "Expand All"}
-          </Button>
-        )} */}
-
-        {treeType !== "oNet" && user?.claims.editAccess && (
+      {treeType !== "oNet" && user?.claims.editAccess && (
+        <Box
+          sx={{
+            position: "sticky",
+            top: 0,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            zIndex: 1,
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark"
+                ? "rgba(48, 49, 52, 0.96)"
+                : "#eef2f7",
+            border: "1px solid",
+            borderColor: (theme) =>
+              theme.palette.mode === "dark"
+                ? "rgba(255,255,255,0.08)"
+                : "rgba(15, 23, 42, 0.08)",
+            borderRadius: "10px",
+            px: "8px",
+            py: "8px",
+            mb: "6px",
+            gap: 1,
+            mx: "5px",
+          }}
+        >
           <ToggleButton
             value="edit"
             selected={editEnabled}
@@ -1447,8 +1429,8 @@ function DraggableTree({
             )}
             Edit Outline: {editEnabled ? "On" : "Off"}
           </ToggleButton>
-        )}
-      </Box>
+        </Box>
+      )}
       <Box className={styles.split}>
         <Box
           className={styles.treeContainer}
@@ -1480,8 +1462,8 @@ function DraggableTree({
                 searchTerm={searchTerm}
                 className={styles.tree}
                 rowClassName={styles.row}
-                rowHeight={40}
-                paddingTop={5}
+                rowHeight={30}
+                paddingTop={2}
                 indent={INDENT_STEP}
                 overscanCount={50}
                 // onSelect={(selected) => setSelectedCount(selected.length)}

@@ -45,8 +45,8 @@ const SelectInheritance = ({
 
     _generalizations = _generalizations.filter((g: any) => {
       return (
-        !nodes[g.id]?.inheritance[property]?.ref ||
-        nodes[g.id]?.inheritance[property]?.ref !== inheritanceRef
+        !nodes[g.id]?.inheritance?.[property]?.ref ||
+        nodes[g.id]?.inheritance?.[property]?.ref !== inheritanceRef
       );
     });
     const index = _generalizations.findIndex(
@@ -201,6 +201,15 @@ const SelectInheritance = ({
           },
         }}
       >
+        <MenuItem
+          value="inheritance-overridden"
+          disabled
+          sx={{
+            display: "none",
+          }}
+        >
+          Inheritance Overridden
+        </MenuItem>
         <MenuItem
           value=""
           disabled

@@ -40,11 +40,7 @@ const buildOntologyTree = (nodes: { [nodeId: string]: INode }) => {
       visited.add(node.id);
       const nodeTitle = node.title.trim();
 
-      const inheritancePartRef = node.inheritance?.["parts"]?.ref;
       let partsCollections = node.properties?.parts;
-      if (inheritancePartRef && nodes[inheritancePartRef]?.properties?.["parts"]) {
-        partsCollections = nodes[inheritancePartRef].properties["parts"];
-      }
       const parts: string[] = Array.isArray(partsCollections)
         ? partsCollections
             .flatMap((c) => c.nodes || [])

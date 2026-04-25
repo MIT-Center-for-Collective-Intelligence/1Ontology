@@ -127,11 +127,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
 
   // Root node: no generalizations, but may have own parts. Treat current node as its own
   // "generalization" so parts can be displayed for comparison.
-  const inheritanceRef = currentVisibleNode.inheritance?.["parts"]?.ref;
-  const partsSource =
-    inheritanceRef && nodes[inheritanceRef]
-      ? nodes[inheritanceRef].properties?.parts
-      : currentVisibleNode.properties?.parts;
+  const partsSource = currentVisibleNode.properties?.parts;
   const hasOwnParts = (partsSource?.[0]?.nodes?.length ?? 0) > 0;
   const generalizations: GeneralizationNode[] =
     generalizationsFromParent.length > 0
@@ -236,18 +232,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     }
   }, [currentVisibleNode.id]);
 
-  // Fetch missing inheritance reference for parts
-  useEffect(() => {
-    const fetchMissingInheritanceRef = async () => {
-      if (!fetchNode || !currentVisibleNode.inheritance?.parts?.ref) return;
-      const inheritanceRef = currentVisibleNode.inheritance.parts.ref;
-      if (!allNodes[inheritanceRef]) {
-        await fetchNode(inheritanceRef);
-      }
-    };
-
-    fetchMissingInheritanceRef();
-  }, [currentVisibleNode.inheritance?.parts?.ref, allNodes, fetchNode]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue);
@@ -271,11 +255,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const getCurrentPartOptionalStatus = (partId: string): boolean => {
     const currentNodeInCache =
       allNodes[currentVisibleNode.id] || currentVisibleNode;
-    const inheritanceRef = currentNodeInCache.inheritance?.["parts"]?.ref;
-    const currentNodeParts =
-      inheritanceRef && allNodes[inheritanceRef]
-        ? allNodes[inheritanceRef].properties["parts"]
-        : currentNodeInCache.properties?.["parts"];
+    const currentNodeParts = currentNodeInCache.properties?.["parts"];
 
     if (!currentNodeParts) return false;
 
@@ -470,12 +450,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       const oldToTitle = xRow.toTitle || allNodes[oldTo]?.title || "";
       const newToTitle = allNodes[newTo]?.title || xRow.toTitle || "";
 
-      // Swap positions of oldTo and newTo in properties.parts
-      const inheritanceRef = currentVisibleNode.inheritance?.["parts"]?.ref;
       const sourceParts: ICollection[] | undefined =
-        inheritanceRef && nodes[inheritanceRef]
-          ? nodes[inheritanceRef].properties?.["parts"]
-          : currentVisibleNode.properties?.["parts"];
+        currentVisibleNode.properties?.["parts"];
       if (!sourceParts) return;
 
       const updatedParts: ICollection[] = JSON.parse(
@@ -564,7 +540,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
       const updates: any = {
         "properties.parts": updatedParts,
-        "inheritance.parts.ref": null,
       };
       if (updatedDetails) {
         updates.inheritedPartsDetails = updatedDetails;
@@ -795,11 +770,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   const toggleOptional = async (partId: string) => {
     try {
       if (!user?.uname || !partId) return;
-      const inheritanceRef = currentVisibleNode.inheritance?.["parts"]?.ref;
       const sourceParts: ICollection[] | undefined =
-        inheritanceRef && nodes[inheritanceRef]
-          ? nodes[inheritanceRef].properties?.["parts"]
-          : currentVisibleNode.properties?.["parts"];
+        currentVisibleNode.properties?.["parts"];
       if (!sourceParts) return;
 
       // Build the new properties.parts with optional flipped on the matching node
@@ -867,7 +839,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
       const updates: any = {
         "properties.parts": updatedParts,
-        "inheritance.parts.ref": null,
       };
       if (updatedDetails) {
         updates.inheritedPartsDetails = updatedDetails;
@@ -917,9 +888,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     // Check if node has any parts at all
     const hasParts =
       currentVisibleNode.properties?.parts?.[0]?.nodes?.length > 0;
-    const hasInheritanceRef = !!currentVisibleNode.inheritance?.parts?.ref;
 
-    if (!hasParts && !hasInheritanceRef) {
+    if (!hasParts) {
       return (
         <Box
           sx={{
@@ -1016,8 +986,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             >
               {draggableItems.map((entry: any, index: number) => (
                 <Draggable
-                  key={`${entry.from}-${entry.to}`}
-                  draggableId={`${entry.from}-${entry.to}`}
+                  key={`${entry.from}::${entry.to}`}
+                  draggableId={`${entry.from}::${entry.to}`}
                   index={index}
                 >
                   {(providedDraggable) => (
@@ -1667,7 +1637,10 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
     try {
       // Destructure properties from the result object
       let { source, destination, draggableId, type } = e;
-      draggableId = draggableId.split("-")[1];
+      const separatorIdx = draggableId.indexOf("::");
+      draggableId = separatorIdx !== -1
+        ? draggableId.substring(separatorIdx + 2)
+        : draggableId;
       // If there is no destination, no sorting needed
 
       if (!destination || !user?.uname) {
@@ -1678,12 +1651,8 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
       const sourceCollectionIndex = 0;
       const destinationCollectionIndex = 0;
 
-      const inheritanceRef = currentVisibleNode.inheritance?.["parts"]?.ref;
-
       const propertyValue: ICollection[] =
-        inheritanceRef && nodes[inheritanceRef]
-          ? nodes[inheritanceRef].properties?.["parts"]
-          : currentVisibleNode.properties?.["parts"];
+        currentVisibleNode.properties?.["parts"];
 
       // Ensure defined source and destination categories
       if (propertyValue) {
@@ -1717,7 +1686,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
         const property = "parts";
         updateDoc(nodeRef, {
           [`properties.${property}`]: propertyValue,
-          [`inheritance.${property}.ref`]: null,
         });
 
         saveNewChangeLog(db, {
