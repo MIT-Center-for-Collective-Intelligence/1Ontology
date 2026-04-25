@@ -88,17 +88,11 @@ export async function loadTreeFromSubCollection(
     currentNodeId: string,
     visited: Set<string>,
     parentPathId?: string,
-  ): TreeData => {
+  ): TreeData | null => {
     const node = nodesMap[currentNodeId];
     if (!node) {
       console.warn(`[LOAD-SUBCOL-TREE] Node ${currentNodeId} not found in map`);
-      return {
-        id: currentNodeId,
-        nodeId: currentNodeId,
-        name: "Unknown",
-        nodeType: "activity",
-        children: [],
-      };
+      return null;
     }
 
     // Optimization: Construct ID string directly without array joining
@@ -120,6 +114,7 @@ export async function loadTreeFromSubCollection(
     visited.add(currentNodeId);
 
     const childrenInOrder: TreeData[] = [];
+    let totalChildRefs = 0;
 
     // Process each collection in order
     if (node.specializations) {
@@ -129,12 +124,16 @@ export async function loadTreeFromSubCollection(
         collectionIndex++
       ) {
         const collection = node.specializations[collectionIndex];
+        const collectionRefs = (collection.nodes || []).length;
+        totalChildRefs += collectionRefs;
 
         if (collection.collectionName === "main") {
           // Main collection: add children directly with their path
           for (const child of collection.nodes || []) {
+            const built = buildTree(child.id, visited, pathBasedId);
+            if (!built) continue;
             childrenInOrder.push({
-              ...buildTree(child.id, visited, pathBasedId),
+              ...built,
               isMainItem: true,
               originalCollectionIndex: collectionIndex,
             } as any);
@@ -146,9 +145,9 @@ export async function loadTreeFromSubCollection(
           const collectionPathId = `${pathBasedId}-${collection.collectionName}`;
 
           for (const child of collection.nodes || []) {
-            collectionChildren.push(
-              buildTree(child.id, visited, collectionPathId),
-            );
+            const built = buildTree(child.id, visited, collectionPathId);
+            if (!built) continue;
+            collectionChildren.push(built);
           }
 
           childrenInOrder.push({
@@ -159,6 +158,10 @@ export async function loadTreeFromSubCollection(
             category: true,
             children: collectionChildren,
             ...(node.unclassified && { unclassified: true }),
+            ...(collectionRefs > 0 &&
+              collectionChildren.length === 0 && {
+                hasUnresolvedChildren: true,
+              }),
             originalCollectionIndex: collectionIndex,
           } as any);
         }
@@ -174,15 +177,17 @@ export async function loadTreeFromSubCollection(
       name: node.title,
       nodeType: node.nodeType,
       ...(node.unclassified && { unclassified: true }),
+      ...(totalChildRefs > 0 &&
+        childrenInOrder.length === 0 && { hasUnresolvedChildren: true } as any),
       category: false,
       children: childrenInOrder,
     };
   };
 
   // Build hierarchical tree from roots
-  const hierarchicalTree: TreeData[] = rootNodeIds.map((rootId) =>
-    buildTree(rootId, new Set<string>()),
-  );
+  const hierarchicalTree: TreeData[] = rootNodeIds
+    .map((rootId) => buildTree(rootId, new Set<string>()))
+    .filter((t): t is TreeData => t !== null);
 
   console.log(
     `[LOAD-SUBCOL-TREE] Built tree with ${hierarchicalTree.length} root node(s)`,

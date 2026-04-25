@@ -1536,11 +1536,12 @@ function sortData(data: TreeData[]) {
 
 function FolderArrow({ node }: { node: NodeApi<TreeData> }) {
   const hasChildren = node.isInternal && (node.children || []).length > 0;
+  const hasUnresolvedChildren = (node.data as any).hasUnresolvedChildren;
 
   return (
     <span className={styles.arrow}>
-      {node.isInternal && hasChildren ? (
-        node.isOpen ? (
+      {node.isInternal && (hasChildren || hasUnresolvedChildren) ? (
+        node.isOpen && hasChildren ? (
           <KeyboardArrowDownIcon sx={{ fontSize: "1.1rem" }} />
         ) : (
           <KeyboardArrowRightIcon sx={{ fontSize: "1.1rem" }} />
