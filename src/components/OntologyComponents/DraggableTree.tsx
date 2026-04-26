@@ -6,6 +6,7 @@ import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import {
   Box,
+  Skeleton,
   ToggleButton,
   Tooltip,
   Typography,
@@ -33,6 +34,7 @@ const LOAD_MORE_COUNT = 20;
 
 interface PaginatedTreeData extends TreeData {
   isLoadMore?: boolean;
+  isLoadingPlaceholder?: boolean;
   parentId?: string;
   totalChildren?: number;
   loadedChildren?: number;
@@ -55,7 +57,9 @@ function DraggableTree({
   skillsFutureApp,
   onInstantTreeUpdate,
   onExpandEllipsis,
+  onOutlineNodeOpen,
   nodesWithComments = new Set(),
+  searchTerm = "",
 }: {
   treeViewData: any;
   setSnackbarMessage: any;
@@ -71,13 +75,14 @@ function DraggableTree({
     updateFn: (treeData: TreeData[]) => TreeData[],
   ) => void;
   onExpandEllipsis?: (ellipsisNodeId: string) => void;
+  onOutlineNodeOpen?: (node: NodeApi<PaginatedTreeData>) => Promise<void>;
   nodesWithComments?: Set<string>;
+  searchTerm?: string;
 }) {
   const db = getFirestore();
   const [{ user }] = useAuth();
   const theme = useTheme();
   const [focused, setFocused] = useState<PaginatedTreeData | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [count, setCount] = useState(0);
   const [followsFocus, setFollowsFocus] = useState(false);
   const [disableMulti, setDisableMulti] = useState(true);
@@ -86,6 +91,83 @@ function DraggableTree({
   const [firstLoad, setFirstLoad] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set());
+  const setNodeChildrenOptimistic = useCallback(
+    (targetTreeId: string, children: TreeData[]) => {
+      if (!onInstantTreeUpdate) return;
+      const mapAtId = (nodes: TreeData[]): TreeData[] => {
+        return nodes.map((n) => {
+          if (n.id === targetTreeId) {
+            return { ...n, children };
+          }
+          if (n.children) {
+            return { ...n, children: mapAtId(n.children) };
+          }
+          return n;
+        });
+      };
+      onInstantTreeUpdate((prev) => mapAtId(prev));
+    },
+    [onInstantTreeUpdate],
+  );
+
+  const ensureExpandedWithLazyLoad = useCallback(
+    (node: NodeApi<PaginatedTreeData>) => {
+      if (!node.isInternal) return;
+
+      // Expand immediately (no waiting on network).
+      if (!node.isOpen) node.open();
+
+      const needOutline =
+        onOutlineNodeOpen &&
+        (node.data.outlineSpineOnly || node.data.outlineLoadChildren);
+
+      if (!needOutline) return;
+      if (loadingStates.has(node.data.id)) return;
+
+      // Show skeleton placeholder row instantly.
+      if ((node.data.children || []).length === 0) {
+        setNodeChildrenOptimistic(node.data.id, [
+          {
+            id: `${node.data.id}-loading-1`,
+            nodeId: `${node.data.nodeId}-loading-1`,
+            name: "",
+            nodeType: "loading",
+            category: false,
+            isLoadingPlaceholder: true,
+          } as any,
+          {
+            id: `${node.data.id}-loading-2`,
+            nodeId: `${node.data.nodeId}-loading-2`,
+            name: "",
+            nodeType: "loading",
+            category: false,
+            isLoadingPlaceholder: true,
+          } as any,
+          {
+            id: `${node.data.id}-loading-3`,
+            nodeId: `${node.data.nodeId}-loading-3`,
+            name: "",
+            nodeType: "loading",
+            category: false,
+            isLoadingPlaceholder: true,
+          } as any,
+        ]);
+      }
+
+      setLoadingStates((s) => new Set(s).add(node.data.id));
+      Promise.resolve(onOutlineNodeOpen!(node))
+        .catch((err) => console.error(err))
+        .finally(() => {
+          setLoadingStates((s) => {
+            const n = new Set(s);
+            n.delete(node.data.id);
+            return n;
+          });
+        });
+    },
+    [loadingStates, onOutlineNodeOpen, setNodeChildrenOptimistic],
+  );
+
   const [paginationState, setPaginationState] = useState<Map<string, number>>(
     new Map(),
   );
@@ -537,14 +619,7 @@ function DraggableTree({
   useEffect(() => {
     const tree = treeRef.current;
     setCount(tree?.visibleNodes.length ?? 0);
-
-    const handler = setTimeout(() => {
-      setTreeData(processTreeData(treeViewData));
-    }, 1000);
-
-    return () => {
-      clearTimeout(handler);
-    };
+    setTreeData(processTreeData(treeViewData));
   }, [treeRef, searchTerm, treeViewData, processTreeData]);
 
   const moveElement = (
@@ -1109,6 +1184,50 @@ function DraggableTree({
     const isActiveNode =
       node.data.nodeId === currentVisibleNode?.id && !node.data.category;
 
+    if (node.data.isLoadingPlaceholder) {
+      const width = node.data.id.endsWith("-1")
+        ? "74%"
+        : node.data.id.endsWith("-2")
+          ? "58%"
+          : "66%";
+      return (
+        <Box
+          style={style}
+          className={clsx(styles.node, styles.loadMoreNode)}
+          id={node.data.id}
+          sx={{
+            px: 0.75,
+            py: 0.35,
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            opacity: 0.95,
+          }}
+        >
+          <Box className={styles.indentLines}>
+            {new Array(indentSize / INDENT_STEP).fill(0).map((_, index) => {
+              return <div key={index}></div>;
+            })}
+          </Box>
+          <Box sx={{ flex: 1, pr: 1 }}>
+            <Skeleton
+              animation="wave"
+              variant="rounded"
+              height={16}
+              width={width}
+              sx={{
+                borderRadius: "8px",
+                bgcolor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgba(255,255,255,0.08)"
+                    : "rgba(0,0,0,0.08)",
+              }}
+            />
+          </Box>
+        </Box>
+      );
+    }
+
     if (node.data.isLoadMore) {
       let displayText = "•••";
 
@@ -1210,7 +1329,6 @@ function DraggableTree({
         ref={dragHandle}
         style={style}
         className={clsx(styles.node, node.state)}
-        onClick={() => node.isInternal && node.toggle()}
         id={node.data.id}
         sx={{
           minHeight: "26px",
@@ -1243,7 +1361,30 @@ function DraggableTree({
             return <div key={index}></div>;
           })}
         </Box>
-        <FolderArrow node={node} />
+        <Box
+          onClick={(e) => {
+            // Expand/collapse should not navigate/select the node.
+            e.stopPropagation();
+            if (!node.isInternal) return;
+
+            const opening = !node.isOpen;
+            node.toggle(); // immediate visual response
+
+            // Also select the node when expanding.
+            node.select();
+
+            if (opening) {
+              ensureExpandedWithLazyLoad(node);
+            }
+          }}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            cursor: node.isInternal ? "pointer" : "default",
+          }}
+        >
+          <FolderArrow node={node} />
+        </Box>
         <Box
           sx={{
             display: "flex",
@@ -1473,6 +1614,8 @@ function DraggableTree({
                   }
                   isTreeClickRef.current = true;
                   onOpenNodesTree(node.data.nodeId, node.data.name);
+                  // Selecting a node should also expand it (and lazy-load children if needed).
+                  ensureExpandedWithLazyLoad(node as any);
                 }}
                 onFocus={(node) => setFocused(node.data)}
                 onToggle={() => {

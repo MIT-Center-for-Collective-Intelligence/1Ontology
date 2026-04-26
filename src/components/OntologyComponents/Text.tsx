@@ -234,7 +234,6 @@ const Text = ({
         // Save pending node state for real-time sync
         const updatedNode = { ...currentVisibleNode, title: newValue };
         await savePendingNodeState(nodeId, updatedNode, skillsFutureApp, db);
-
       }
     },
     [db, property, user, skillsFutureApp, onInstantTreeUpdate],
@@ -576,91 +575,89 @@ const Text = ({
             </Tooltip>
           )}
 
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                ml: "auto",
-                gap: "10px",
-                alignItems: "center",
-                minWidth: 0,
-              }}
-            >
-              {selectedDiffNode &&
-                selectedDiffNode.changeType === "delete node" &&
-                property === "title" && (
-                  <Typography
-                    sx={{ mx: "5px", fontWeight: "bold" }}
-                  >
-                    DELETED NODE
-                  </Typography>
-                )}
-              <PropertyContributors
-                currentVisibleNode={currentVisibleNode}
-                property={property}
-              />
-              {currentVisibleNode.inheritance[property]?.ref && (
-                <Typography
-                  sx={{
-                    fontSize: "14px",
-                    ml: "9px",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    maxWidth: { xs: "140px", sm: "200px", md: "300px" },
-                    flexShrink: 1,
-                  }}
-                  title={`Inherited from "${getTitleNode(
-                    currentVisibleNode.inheritance[property].ref || "",
-                  )}"`}
-                >
-                  {'(Inherited from "'}
-                  {getTitleNode(
-                    currentVisibleNode.inheritance[property].ref || "",
-                  )}
-                  {'")'}
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              ml: "auto",
+              gap: "10px",
+              alignItems: "center",
+              minWidth: 0,
+            }}
+          >
+            {selectedDiffNode &&
+              selectedDiffNode.changeType === "delete node" &&
+              property === "title" && (
+                <Typography sx={{ mx: "5px", fontWeight: "bold" }}>
+                  DELETED NODE
                 </Typography>
               )}
-              {property === "title" &&
-                !selectedDiffNode &&
-                displaySidebar &&
-                !currentImprovement && (
-                  <ManageNodeButtons
-                    locked={locked}
-                    lockedInductor={!!currentVisibleNode.locked}
-                    root={root}
-                    manageLock={manageLock}
-                    deleteNode={deleteNode}
-                    getTitleNode={getTitleNode}
-                    handleLockNode={handleLockNode}
-                    navigateToNode={navigateToNode}
-                    displaySidebar={displaySidebar}
-                    activeSidebar={activeSidebar}
-                    unclassified={!!currentVisibleNode.unclassified}
-                    setEnableEdit={setEnableEdit}
-                    enableEdit={enableEdit}
-                    handleCloseAddLinksModel={handleCloseAddLinksModel}
-                    user={user}
-                    aiPeer={aiPeer}
-                    hasComments={hasComments}
-                  />
-                )}{" "}
-              {enableEdit &&
-                property !== "title" &&
-                property !== "description" &&
-                deleteProperty && (
-                  <Tooltip title={"Delete property"} placement="top">
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      sx={{ borderRadius: "25px" }}
-                      onClick={handleDeleteProperty}
-                    >
-                      Delete Property
-                    </Button>
-                  </Tooltip>
+            <PropertyContributors
+              currentVisibleNode={currentVisibleNode}
+              property={property}
+            />
+            {currentVisibleNode.inheritance[property]?.ref && (
+              <Typography
+                sx={{
+                  fontSize: "14px",
+                  ml: "9px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: { xs: "140px", sm: "200px", md: "300px" },
+                  flexShrink: 1,
+                }}
+                title={`Inherited from "${getTitleNode(
+                  currentVisibleNode.inheritance[property].ref || "",
+                )}"`}
+              >
+                {'(Inherited from "'}
+                {getTitleNode(
+                  currentVisibleNode.inheritance[property].ref || "",
                 )}
-              {/*{!locked && property !== "title" && property !== "ONetID" && (
+                {'")'}
+              </Typography>
+            )}
+            {property === "title" &&
+              !selectedDiffNode &&
+              displaySidebar &&
+              !currentImprovement && (
+                <ManageNodeButtons
+                  locked={locked}
+                  lockedInductor={!!currentVisibleNode.locked}
+                  root={root}
+                  manageLock={manageLock}
+                  deleteNode={deleteNode}
+                  getTitleNode={getTitleNode}
+                  handleLockNode={handleLockNode}
+                  navigateToNode={navigateToNode}
+                  displaySidebar={displaySidebar}
+                  activeSidebar={activeSidebar}
+                  unclassified={!!currentVisibleNode.unclassified}
+                  setEnableEdit={setEnableEdit}
+                  enableEdit={enableEdit}
+                  handleCloseAddLinksModel={handleCloseAddLinksModel}
+                  user={user}
+                  aiPeer={aiPeer}
+                  hasComments={hasComments}
+                />
+              )}{" "}
+            {enableEdit &&
+              property !== "title" &&
+              property !== "description" &&
+              deleteProperty && (
+                <Tooltip title={"Delete property"} placement="top">
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    sx={{ borderRadius: "25px" }}
+                    onClick={handleDeleteProperty}
+                  >
+                    Delete Property
+                  </Button>
+                </Tooltip>
+              )}
+            {/*{!locked && property !== "title" && property !== "ONetID" && (
               <Box
                 sx={{
                   display: "flex",

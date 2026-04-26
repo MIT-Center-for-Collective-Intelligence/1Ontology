@@ -118,6 +118,9 @@ export type INode = {
     title: string;
   };
   synsets?: string;
+  pathIds?: string[];
+  parentIds?: string[];
+  primaryParentId?: string | null;
 };
 
 export type TreeVisual = {
@@ -232,6 +235,9 @@ export type TreeData = {
   task?: boolean;
   comments?: boolean;
   unclassified?: boolean;
+  outlineSpineOnly?: boolean;
+  outlineLoadChildren?: boolean;
+  hasUnresolvedChildren?: boolean;
 };
 
 export interface TreeViewNode {

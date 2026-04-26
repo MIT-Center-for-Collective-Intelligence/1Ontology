@@ -149,7 +149,15 @@ import {
   filterTreeForTargetNode,
   expandEllipsisNode,
 } from "@components/lib/utils/treeFiltering";
-import { loadTreeFromSubCollection } from "@components/lib/utils/loadTreeFromSubcollection";
+import {
+  batchGetNodesByIds,
+  buildPathTreeWithSiblings,
+  collectSpecializationChildIds,
+  nodeHasNonEmptySpecializations,
+  replaceSpineWithOneLevel,
+  replaceWithOneLevel,
+  resolvePathIds,
+} from "@components/lib/utils/loadOutlineFromPathIds";
 
 const stem = require("wink-porter2-stemmer");
 const tokenizer = require("wink-tokenizer");
@@ -390,6 +398,10 @@ const Ontology = ({
   const [currentNodeTreeData, setCurrentNodeTreeData] = useState<TreeData[]>(
     [],
   );
+  const [pathOutlineMessage, setPathOutlineMessage] = useState<string | null>(
+    null,
+  );
+  const [sidebarSearchValue, setSidebarSearchValue] = useState("");
   const [isLoadingNodeDetails, setIsLoadingNodeDetails] = useState(false);
   const [navigationError, setNavigationError] = useState<{
     type: "not-found" | "wrong-app";
@@ -495,6 +507,111 @@ const Ontology = ({
       return node;
     },
     [db, relatedNodes],
+  );
+
+  const loadPathOutline = useCallback(async () => {
+    if (hasInstantUpdateRef.current) {
+      return;
+    }
+    if (!currentVisibleNode?.id) {
+      setCurrentNodeTreeData([]);
+      setPathOutlineMessage(null);
+      return;
+    }
+    const focused = currentVisibleNode;
+    if (!focused.pathIds?.length && !focused.primaryParentId) {
+      setPathOutlineMessage("No root path found");
+    } else {
+      setPathOutlineMessage(null);
+    }
+    try {
+      const { pathIds } = await resolvePathIds(focused, (id) =>
+        fetchSingleNode(db, id, appName),
+      );
+      if (pathIds.length === 0) {
+        setCurrentNodeTreeData([]);
+        return;
+      }
+      const byId = await batchGetNodesByIds(db, pathIds, appName);
+      if (!byId[focused.id]) {
+        byId[focused.id] = focused;
+      }
+
+      // Also show siblings for every node on the displayed path:
+      // fetch direct children for each path node (still no grandchildren).
+      const childIds = pathIds.flatMap((id) => {
+        const n = byId[id];
+        return n ? collectSpecializationChildIds(n) : [];
+      });
+      const childrenById = await batchGetNodesByIds(db, childIds, appName);
+      const pathTree = buildPathTreeWithSiblings(
+        pathIds,
+        byId,
+        childrenById,
+        focused.id,
+      );
+
+      // If the ontology has multiple roots, show them all at top level.
+      // Only the canonical path root is expanded; other roots are collapsed but expandable.
+      const rootsSnap = await getDocs(
+        query(
+          collection(db, NODES),
+          where("root", "==", true),
+          where("appName", "==", appName),
+          where("deleted", "==", false),
+        ),
+      );
+      const rootNodes: INode[] = rootsSnap.docs.map(
+        (d) => ({ id: d.id, ...d.data() }) as INode,
+      );
+      const pathRootId = pathIds[0];
+      const otherRoots = rootNodes
+        .filter((r) => r.id !== pathRootId)
+        .map((r) => {
+          const hasKids = nodeHasNonEmptySpecializations(r);
+          return {
+            id: r.id,
+            nodeId: r.id,
+            name: r.title,
+            nodeType: r.nodeType,
+            ...(r.unclassified && { unclassified: true }),
+            children: hasKids ? [] : undefined,
+            hasUnresolvedChildren: hasKids,
+            outlineLoadChildren: hasKids,
+          } as TreeData;
+        });
+
+      const tree = [...pathTree, ...otherRoots];
+      const filtered = filterTreeForTargetNode(tree, focused.id);
+      setCurrentNodeTreeData(filtered);
+    } catch {
+      setCurrentNodeTreeData([]);
+    }
+  }, [appName, currentVisibleNode, db]);
+
+  const handleOutlineNodeOpen = useCallback(
+    async (apiNode: { data: TreeData }) => {
+      const d = apiNode.data;
+      if (!d.outlineSpineOnly && !d.outlineLoadChildren) {
+        return;
+      }
+      const full = await fetchSingleNode(db, d.nodeId, appName);
+      if (!full) {
+        return;
+      }
+      const childIds = collectSpecializationChildIds(full);
+      const childDocs = await batchGetNodesByIds(db, childIds, appName);
+      const merged: Record<string, INode> = { ...childDocs, [full.id]: full };
+      setCurrentNodeTreeData((prev) => {
+        const next = d.outlineSpineOnly
+          ? replaceSpineWithOneLevel(prev, d.id, full, merged)
+          : replaceWithOneLevel(prev, d.id, full, merged);
+        return currentVisibleNode
+          ? filterTreeForTargetNode(next, currentVisibleNode.id)
+          : next;
+      });
+    },
+    [appName, currentVisibleNode, db],
   );
 
   const dynamicUnsubscribeRef = useRef<Map<string, () => void>>(new Map()); // Stores unsubscribe functions for each dynamically added node
@@ -1282,16 +1399,7 @@ const Ontology = ({
             return;
           }
 
-          // Reload tree with pending changes
-          loadTreeFromSubCollection(currentVisibleNode.id, appName).then(
-            (hierarchicalTree) => {
-              const filteredTree = filterTreeForTargetNode(
-                hierarchicalTree,
-                currentVisibleNode.id,
-              );
-              setCurrentNodeTreeData(filteredTree);
-            },
-          );
+          void loadPathOutline();
         }
       },
       (error) => {
@@ -1300,7 +1408,7 @@ const Ontology = ({
     );
 
     return () => unsubscribe();
-  }, [appName, user?.uname, db, currentVisibleNode?.id]);
+  }, [appName, user?.uname, db, currentVisibleNode?.id, loadPathOutline]);
 
   const getTreeView = ({ mainCategories, visited, path }: any): any => {
     const newNodes = [];
@@ -1654,6 +1762,12 @@ const Ontology = ({
       // Check if a user is logged in, if not, exit the function.
       if (!user) return;
 
+      // Keep outline (tree view) in sync with graph navigation.
+      setViewValue(0);
+      if (isMobile) {
+        setMobileTreeOpen(true);
+      }
+
       // Get the node from cache or fetch it
       let node: INode | null = relatedNodes[nodeId] || null;
       const needsFetch = !node;
@@ -1688,7 +1802,7 @@ const Ontology = ({
         }
       }
     },
-    [relatedNodes, db, user],
+    [relatedNodes, db, user, isMobile],
   );
 
   // Function to handle opening node tree
@@ -2042,41 +2156,18 @@ const Ontology = ({
     );
   };
 
-  // Load tree data from subCollection
+  // Load outline from node.pathIds (batched) or primaryParentId chain; expand loads specializations.
   useEffect(() => {
-    // Skip rebuilding if we have instant updates pending
     if (hasInstantUpdateRef.current) {
       return;
     }
-
-    if (!currentVisibleNode?.id) {
-      setCurrentNodeTreeData([]);
-      return;
-    }
-
-    // Load tree from subCollection
-    const loadTree = async () => {
-      try {
-        const hierarchicalTree = await loadTreeFromSubCollection(
-          currentVisibleNode.id,
-          appName,
-        );
-
-        console.log("hierarchicalTree -->", hierarchicalTree);
-
-        // Apply filtering based on target node occurrences
-        const filteredTree = filterTreeForTargetNode(
-          hierarchicalTree,
-          currentVisibleNode.id,
-        );
-        setCurrentNodeTreeData(filteredTree);
-      } catch (error) {
-        setCurrentNodeTreeData([]);
-      }
-    };
-
-    loadTree();
-  }, [currentVisibleNode?.id]);
+    void loadPathOutline();
+  }, [
+    currentVisibleNode?.id,
+    currentVisibleNode?.pathIds,
+    currentVisibleNode?.primaryParentId,
+    loadPathOutline,
+  ]);
 
   // Handler for expanding ellipsis nodes
   const handleExpandEllipsis = useCallback((ellipsisNodeId: string) => {
@@ -2322,6 +2413,7 @@ const Ontology = ({
               skillsFuture={skillsFuture}
               skillsFutureApp={appName}
               isExperimentalSearch={isExperimentalSearch}
+              onSearchChange={(value) => setSidebarSearchValue(value)}
             />
           </Box>
         </Box>
@@ -2409,6 +2501,15 @@ const Ontology = ({
               ...SCROLL_BAR_STYLE,
             }}
           >
+            {pathOutlineMessage && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", px: 1, py: 0.5 }}
+              >
+                {pathOutlineMessage}
+              </Typography>
+            )}
             <DraggableTree
               treeViewData={currentNodeTreeData}
               setSnackbarMessage={setSnackbarMessage}
@@ -2423,6 +2524,8 @@ const Ontology = ({
               specializationNumsUnder={specializationNumsUnder}
               skillsFutureApp={appName}
               nodesWithComments={nodesWithComments}
+              onOutlineNodeOpen={handleOutlineNodeOpen}
+              searchTerm={sidebarSearchValue}
             />
           </Box>
         </Box>
@@ -2565,6 +2668,15 @@ const Ontology = ({
                     minWidth: "100%",
                   }}
                 >
+                  {pathOutlineMessage && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: "block", px: 1, py: 0.5 }}
+                    >
+                      {pathOutlineMessage}
+                    </Typography>
+                  )}
                   <DraggableTree
                     treeViewData={currentNodeTreeData}
                     setSnackbarMessage={setSnackbarMessage}
@@ -2578,6 +2690,8 @@ const Ontology = ({
                     onInstantTreeUpdate={handleInstantTreeUpdate}
                     onExpandEllipsis={handleExpandEllipsis}
                     nodesWithComments={nodesWithComments}
+                    onOutlineNodeOpen={handleOutlineNodeOpen}
+                    searchTerm={sidebarSearchValue}
                   />
                 </Box>
               </TabPanel>
@@ -2678,6 +2792,7 @@ const Ontology = ({
                 skillsFuture={skillsFuture}
                 skillsFutureApp={appName}
                 isExperimentalSearch={isExperimentalSearch}
+                onSearchChange={(value) => setSidebarSearchValue(value)}
               />{" "}
               <Divider sx={{ borderBottomWidth: 1.5, borderColor: "gray" }} />
               <Tabs

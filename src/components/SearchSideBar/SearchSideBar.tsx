@@ -33,6 +33,7 @@ const SearchSideBar = ({
   skillsFuture,
   skillsFutureApp,
   isExperimentalSearch,
+  onSearchChange,
 }: {
   openSearchedNode: any;
   searchWithFuse: any;
@@ -41,6 +42,7 @@ const SearchSideBar = ({
   skillsFuture: boolean;
   skillsFutureApp: string;
   isExperimentalSearch: boolean;
+  onSearchChange?: (value: string) => void;
 }) => {
   const [searchValue, setSearchValue] = useState("");
   const [isListOpen, setIsListOpen] = useState(false);
@@ -80,11 +82,13 @@ const SearchSideBar = ({
     setSearchValue("");
     setIsListOpen(false);
     setIsFocused(false);
+    if (onSearchChange) onSearchChange("");
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchValue(value);
+    if (onSearchChange) onSearchChange(value);
     if (value.trim()) {
       setIsListOpen(true);
       setIsFocused(true);
@@ -225,15 +229,16 @@ const SearchSideBar = ({
       ref={sidebarRef}
       sx={{
         overflow: "auto",
-        height: isFocused ? "100vh" : "",
+        maxHeight: isFocused ? "80vh" : "fit-content",
         position: "relative",
         overflowY: "auto",
         ...SCROLL_BAR_STYLE,
         background: isFocused
           ? theme.palette.mode === "dark"
-            ? "black"
-            : "white"
-          : "",
+            ? "rgba(0, 0, 0, 0.9)"
+            : "rgba(255, 255, 255, 0.9)"
+          : "transparent",
+        backdropFilter: isFocused ? "blur(10px)" : "none",
         borderRadius: "50px",
         ...SCROLL_BAR_STYLE,
         /*         border: isFocused ? "1px solid gray" : "", */
