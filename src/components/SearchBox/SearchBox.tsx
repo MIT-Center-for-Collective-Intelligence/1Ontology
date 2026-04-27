@@ -40,16 +40,10 @@ export const SearchBox = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    console.log("[SEARCH BOX] Key pressed:", e.key, "search value:", search);
     if (e.key === "Enter") {
       if (onSearch && search.trim().length >= 3) {
-        console.log("[SEARCH BOX] Calling onSearch callback");
         onSearch();
       } else {
-        console.log("[SEARCH BOX] Enter pressed but conditions not met:", {
-          hasOnSearch: !!onSearch,
-          searchLength: search.trim().length,
-        });
       }
       handleSidebarClose();
     }
@@ -114,21 +108,10 @@ export const SearchBox = ({
                   <Tooltip title={loading ? "" : "Search in the Ontology"}>
                     <IconButton
                       onClick={() => {
-                        console.log(
-                          "[SEARCH BOX] Search button clicked, search value:",
-                          search,
-                        );
                         if (search.trim().length >= 3) {
-                          console.log(
-                            "[SEARCH BOX] Calling onSearch callback from button",
-                          );
                           onSearch();
                           handleSidebarClose();
                         } else {
-                          console.log(
-                            "[SEARCH BOX] Search value too short:",
-                            search.trim().length,
-                          );
                         }
                       }}
                       color="primary"

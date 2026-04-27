@@ -2033,7 +2033,7 @@ const ToolbarSidebar = ({
                   URL.revokeObjectURL(url);
                 } catch (error) {
                   console.error("Download error:", error);
-                  confirmIt("There was an error downloading the JSON!");
+                  confirmIt("There was an error downloading the JSON!", "Ok");
                 } finally {
                   setIsDownloading(false);
                 }

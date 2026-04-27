@@ -981,11 +981,6 @@ const Node = ({
     collectionName: string,
   ) => {
     setSelectedProperty(property);
-    console.log("property ==>", {
-      property,
-      collectionName,
-      currentVisibleNode,
-    });
 
     if (selectedProperty) {
       handleCloseAddLinksModel();

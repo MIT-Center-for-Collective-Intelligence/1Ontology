@@ -884,7 +884,6 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   };
 
   const getTabContent = (generalizationId: string): JSX.Element => {
-    console.log(generalizationId, "generalizationId ==>");
     // Check if node has any parts at all
     const hasParts =
       currentVisibleNode.properties?.parts?.[0]?.nodes?.length > 0;

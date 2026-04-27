@@ -108,7 +108,6 @@ const SignInPage: NextPageWithLayout = () => {
     try {
       setSignInError(null);
       const returnR = await signIn(email, password);
-      console.log(returnR, "returnR");
       if (!returnR.emailVerified) {
         const msg = "Please verify your email first.";
         setSignInError(msg);
@@ -123,7 +122,6 @@ const SignInPage: NextPageWithLayout = () => {
       await router.push("/");
     } catch (error) {
       const errorMessage = getFirebaseFriendlyError(error as FirebaseError);
-      console.log("errorMessage", errorMessage);
       setSignInError(
         errorMessage ===
           "There is no user record corresponding to this identifier." ||

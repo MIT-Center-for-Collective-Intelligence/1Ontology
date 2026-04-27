@@ -60,7 +60,6 @@ const PartViewer: React.FC<PartViewerProps> = ({
     debouncedRefetch,
     refetchNow,
   } = useInheritedPartsDetails(currentVisibleNode);
-  console.log(inheritedPartsDetails, "inheritedPartsDetails ==>");
 
   useEffect(() => {
     onDisplayDetailsChange?.(displayDetails);

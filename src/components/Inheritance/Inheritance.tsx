@@ -64,7 +64,6 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes, fetchNod
         // lookup specialization data
         let specializationData: INode | null = nodes[specialization.id] || null;
         if (!specializationData) {
-          console.log("[INHERITANCE] Fetching specialization not in cache:", specialization.id);
           specializationData = await fetchNode(specialization.id);
           if (!specializationData) {
             console.warn("[INHERITANCE] Could not fetch specialization:", specialization.id);
@@ -87,7 +86,6 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes, fetchNod
             // lookup reference value
             let referenceNode: INode | null = nodes[referenceId] || null;
             if (!referenceNode) {
-              console.log("[INHERITANCE] Fetching reference node not in cache:", referenceId);
               referenceNode = await fetchNode(referenceId);
             }
 
@@ -122,7 +120,6 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes, fetchNod
         // lookup for specializations
         let specializationNodeData: INode | null = nodes[specialization.id] || null;
         if (!specializationNodeData) {
-          console.log("[INHERITANCE] Fetching specialization (for recursive call) not in cache:", specialization.id);
           specializationNodeData = await fetchNode(specialization.id);
         }
 

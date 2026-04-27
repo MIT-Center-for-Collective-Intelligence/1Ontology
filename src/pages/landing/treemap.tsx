@@ -124,7 +124,6 @@ const TreemapPage = () => {
 
     // Debug: log filtered nodes count (only when nodes change)
     if (treemapNodes.length > 0) {
-      console.log(`Treemap rendered with ${treemapNodes.length} visible nodes`);
     }
 
     // Use the new rendering function

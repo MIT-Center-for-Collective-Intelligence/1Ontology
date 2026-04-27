@@ -261,9 +261,6 @@ const fetchSingleNode = async (
       const node = { id: docSnap.id, ...docSnap.data() } as INode;
 
       if (appName && node.appName !== appName) {
-        console.log(
-          `[FETCH] Node ${nodeId} belongs to different app (${node.appName}), not ${appName}`,
-        );
         return null;
       }
 
@@ -619,14 +616,12 @@ const Ontology = ({
         clearTimeout(instantUpdateTimeoutRef.current);
       }
       instantUpdateTimeoutRef.current = setTimeout(() => {
-        console.log("[INSTANT UPDATE] Timeout - clearing instant update flag");
         setHasInstantUpdate(false);
         hasInstantUpdateRef.current = false;
       }, 30000);
 
       setCurrentNodeTreeData((prevTree) => {
         const newTree = updateFn(prevTree);
-        console.log("[INSTANT UPDATE] Tree updated locally");
 
         return newTree;
       });
@@ -660,7 +655,6 @@ const Ontology = ({
       if (relatedNodes[nodeId]) {
         return relatedNodes[nodeId];
       }
-      console.log("[FETCH NODE] Fetching node not in cache:", nodeId);
       const node = await fetchSingleNode(db, nodeId);
       if (node) {
         setRelatedNodes((prev) => {
@@ -788,9 +782,6 @@ const Ontology = ({
   // Add nodes to cache with listeners (triggered by dropdown selections in @inheritedPartsViewerEdit)
   const addNodesToCache = useCallback(
     (newNodes: { [id: string]: INode }, parentNodeId?: string) => {
-      console.log(
-        `[ADD TO CACHE] Adding ${Object.keys(newNodes).length} nodes to cache with snapshots`,
-      );
 
       // Filter out nodes already being snapshotted
       const nodesToAdd: { [id: string]: INode } = {};
@@ -803,9 +794,6 @@ const Ontology = ({
       });
 
       if (Object.keys(nodesToAdd).length === 0) {
-        console.log(
-          `[ADD TO CACHE] No new nodes to add (all already being snapshotted)`,
-        );
         return;
       }
 
@@ -819,15 +807,9 @@ const Ontology = ({
         });
         return Object.keys(toAdd).length > 0 ? { ...prev, ...toAdd } : prev;
       });
-      console.log(
-        `[ADD TO CACHE] Added ${Object.keys(nodesToAdd).length} nodes to cache`,
-      );
 
       // Set up snapshot listeners for new nodes
       const batches = chunkArray(nodeIdsToSnapshot, 30);
-      console.log(
-        `[ADD TO CACHE] Setting up ${batches.length} snapshot batch(es) for new nodes`,
-      );
 
       batches.forEach((batch) => {
         let nodesQuery;
@@ -849,9 +831,6 @@ const Ontology = ({
         const unsubscribe = onSnapshot(
           nodesQuery,
           (snapshot) => {
-            console.log(
-              `[ADD TO CACHE] Received updates for ${snapshot.docChanges().length} cached nodes`,
-            );
             setRelatedNodes((prev) => {
               const updated = { ...prev };
 
@@ -893,9 +872,6 @@ const Ontology = ({
         }
         const childSet = dynamicNodeMappingRef.current.get(parentNodeId)!;
         nodeIdsToSnapshot.forEach((nodeId) => childSet.add(nodeId));
-        console.log(
-          `[ADD TO CACHE] Tracked ${nodeIdsToSnapshot.length} nodes under parent: ${parentNodeId}`,
-        );
       }
     },
     [db, appName, skillsFuture],
@@ -912,9 +888,6 @@ const Ontology = ({
       const childNodes = dynamicNodeMappingRef.current.get(prevNodeId);
 
       if (childNodes && childNodes.size > 0) {
-        console.log(
-          `[CLEANUP] Navigating away from ${prevNodeId}, cleaning up ${childNodes.size} dynamic snapshots`,
-        );
         childNodes.forEach((nodeId) => {
           const unsubscribe = dynamicUnsubscribeRef.current.get(nodeId);
           if (unsubscribe) {
@@ -925,9 +898,6 @@ const Ontology = ({
 
         // Remove the parent-child mapping
         dynamicNodeMappingRef.current.delete(prevNodeId);
-        console.log(
-          `[CLEANUP] Cleaned up dynamic snapshots for parent: ${prevNodeId}`,
-        );
       }
     }
 
@@ -938,9 +908,6 @@ const Ontology = ({
   // Cleanup ALL dynamic snapshots on unmount
   useEffect(() => {
     return () => {
-      console.log(
-        `[CLEANUP] Component unmounting, unsubscribing from ${dynamicUnsubscribeRef.current.size} dynamic snapshot listeners`,
-      );
       dynamicUnsubscribeRef.current.forEach((unsub) => unsub());
       dynamicUnsubscribeRef.current.clear();
       dynamicNodeMappingRef.current.clear();
@@ -1415,24 +1382,15 @@ const Ontology = ({
   useEffect(() => {
     // Only fetch nodes if we have a current visible node
     if (!currentVisibleNode) {
-      console.log("🔵 [MAIN SNAPSHOT] No current visible node, clearing nodes");
       setRelatedNodes({});
       setLoadingNodes(false);
       return;
     }
 
-    console.log(
-      "🟢 [MAIN SNAPSHOT] Fetching related nodes for:",
-      currentVisibleNode.title,
-      `(${currentVisibleNode.id})`,
-    );
     setLoadingNodes(true);
 
     // Extract all related node IDs from the current visible node
     const relatedIds = extractRelatedNodeIds(currentVisibleNode);
-    console.log(
-      `🟢 [MAIN SNAPSHOT] Found ${relatedIds.length} related node IDs`,
-    );
 
     if (relatedIds.length === 0) {
       setRelatedNodes({});
@@ -1442,9 +1400,6 @@ const Ontology = ({
 
     // Firestore query has a limit of 30 items, so batch if needed
     const batches = chunkArray(relatedIds, 30);
-    console.log(
-      `🟢 [MAIN SNAPSHOT] Creating ${batches.length} batch(es) for Firestore queries`,
-    );
     const unsubscribers: (() => void)[] = [];
 
     // Set up snapshot listeners for each batch
@@ -1470,9 +1425,6 @@ const Ontology = ({
       const unsubscribe = onSnapshot(
         nodesQuery,
         (snapshot) => {
-          console.log(
-            `🟢 [MAIN SNAPSHOT] Received ${snapshot.docChanges().length} changes from Firestore`,
-          );
 
           setRelatedNodes((prev) => {
             const updated = { ...prev };
@@ -1493,9 +1445,6 @@ const Ontology = ({
               }
             });
 
-            console.log(
-              `🟢 [MAIN SNAPSHOT] Updated nodes: +${addedCount} added, ~${modifiedCount} modified, -${removedCount} removed. Total in cache: ${Object.keys(updated).length}`,
-            );
             return updated;
           });
 
@@ -1911,7 +1860,6 @@ const Ontology = ({
       currentVisibleNode.category ||
       (typeof currentVisibleNode.root === "boolean" &&
         !!currentVisibleNode.root);
-    console.log(`${currentVisibleNode.title}, isRootNode - ${isRootNode}`);
     if (expandedNodes.size === 0 && !isRootNode) {
       initializeExpanded(eachNodePath[currentVisibleNode?.id]);
     }
@@ -2089,43 +2037,28 @@ const Ontology = ({
       }
 
       // Get the node from cache or fetch it
-      console.log("🟡 [NAVIGATE] Navigating to node:", nodeId);
       let node: INode | null = relatedNodes[nodeId] || null;
       let errorType: "not-found" | "wrong-app" | null = null;
 
       if (!node) {
-        console.log(
-          "🟡 [NAVIGATE] Node not in cache, fetching from Firestore...",
-        );
         node = await fetchSingleNode(db, nodeId, appName);
         errorType = "not-found"; // set error type
       } else {
         // Validate if cached node belongs to this app
         if (node.appName !== appName) {
-          console.log(
-            "🟡 [NAVIGATE] Cached node belongs to different app, ignoring",
-          );
           errorType = "wrong-app"; // set error type
           node = null;
         } else {
-          console.log("🟡 [NAVIGATE] Node found in cache:", node.title);
         }
       }
 
       if (node) {
-        console.log(
-          "🟡 [NAVIGATE] ✅ Setting current visible node to:",
-          node.title,
-        );
         setNavigationError(null);
         setCurrentVisibleNode(node);
         initializeExpanded(eachNodePath[nodeId]);
         setSelectedDiffNode(null);
         setScrollTrigger((prev) => !prev);
       } else {
-        console.log(
-          "🟡 [NAVIGATE] ❌ Node not found in this app, display error component",
-        );
         // Update lastHashSetRef to keep it in sync with current hash
         lastHashSetRef.current = window.location.hash;
         setNavigationError({

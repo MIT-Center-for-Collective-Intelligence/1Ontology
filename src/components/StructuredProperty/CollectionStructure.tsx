@@ -292,7 +292,6 @@ const CollectionStructure = ({
   fetchNode: (nodeId: string) => Promise<INode | null>;
   onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
 }) => {
-  // console.log(editableProperty, "editableProperty -->");
   const db = getFirestore();
   const [{ user }] = useAuth();
 
@@ -524,7 +523,6 @@ const CollectionStructure = ({
     },
     [property, currentVisibleNode],
   );
-  // console.log("editableProperty ==>", editableProperty);
 
   const handleSorting = useCallback(
     async (
@@ -814,7 +812,6 @@ const CollectionStructure = ({
               //     });
               //   };
               //   const updatedTree = updateTreeNode(tree);
-              //   console.log(
               //     "[INSTANT UPDATE] Reordered children in tree after collection sorting",
               //   );
               //   return updatedTree;
@@ -1154,7 +1151,6 @@ const CollectionStructure = ({
                 });
               };
               const updatedTree = updateTreeNode(tree);
-              console.log("[INSTANT UPDATE] Added new collection to tree");
               return updatedTree;
             });
           }
@@ -1376,7 +1372,6 @@ const CollectionStructure = ({
                 });
               };
               const updatedTree = updateTreeNode(tree);
-              console.log("[INSTANT UPDATE] Renamed collection in tree");
               return updatedTree;
             });
           }
@@ -1555,7 +1550,6 @@ const CollectionStructure = ({
                     });
                   };
                   const updatedTree = updateTreeNode(tree);
-                  console.log("[INSTANT UPDATE] Deleted collection from tree");
                   return updatedTree;
                 });
               }

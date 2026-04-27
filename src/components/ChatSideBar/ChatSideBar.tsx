@@ -129,13 +129,7 @@ const ChatSideBar = ({
 
       // Fetch all missing child nodes in parallel
       if (childIds.size > 0) {
-        console.log(
-          `[CHAT SIDEBAR] Fetching ${childIds.size} child nodes for search results`,
-        );
         await Promise.all(Array.from(childIds).map((id) => fetchNode(id)));
-        console.log(
-          `[CHAT SIDEBAR] Successfully fetched ${childIds.size} child nodes`,
-        );
       }
     },
     [fetchNode, nodes],
@@ -143,27 +137,16 @@ const ChatSideBar = ({
 
   // Handle Chroma search with child node fetching
   const handleChromaSearch = useCallback(async () => {
-    console.log(
-      "[CHAT SIDEBAR] handleChromaSearch called with searchValue:",
-      searchValue,
-    );
 
     if (!searchValue || searchValue.trim().length < 3) {
-      console.log("[CHAT SIDEBAR] Search value too short or empty, returning");
       return;
     }
 
     const fuseSearch = searchWithFuse(searchValue);
-    console.log(
-      "[CHAT SIDEBAR] Starting Chroma search with fuse fallback:",
-      fuseSearch.length,
-      "results",
-    );
 
     try {
       setLoadingChromaSearch(true);
       setUseChromaResults(true);
-      console.log("[CHAT SIDEBAR] Set loading state and useChromaResults flag");
 
       const response: any = await Post("/searchChroma", {
         query: searchValue,
@@ -191,9 +174,6 @@ const ChatSideBar = ({
       // Fetch child nodes for all search results
       await fetchChildNodesForSearchResults(development ? fuseSearch : results);
 
-      console.log(
-        `[CHAT SIDEBAR] Chroma search complete with ${results.length} results`,
-      );
     } catch (error) {
       console.error("[CHAT SIDEBAR] Error in chroma search:", error);
       setChromaSearchResults(fuseSearch);
