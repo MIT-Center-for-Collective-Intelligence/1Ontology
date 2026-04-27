@@ -565,6 +565,7 @@ const Ontology = ({
   );
   const [isLoadingOutline, setIsLoadingOutline] = useState<boolean>(true);
   const [sidebarSearchValue, setSidebarSearchValue] = useState("");
+  const [isSidebarSearchFocused, setIsSidebarSearchFocused] = useState(false);
   const [isLoadingNodeDetails, setIsLoadingNodeDetails] = useState(false);
   const [navigationError, setNavigationError] = useState<{
     type: "not-found" | "wrong-app";
@@ -2584,6 +2585,7 @@ const Ontology = ({
               skillsFutureApp={appName}
               isExperimentalSearch={isExperimentalSearch}
               onSearchChange={(value) => setSidebarSearchValue(value)}
+              onFocusChange={setIsSidebarSearchFocused}
             />
           </Box>
         </Box>
@@ -2698,7 +2700,7 @@ const Ontology = ({
                 skillsFutureApp={appName}
                 nodesWithComments={nodesWithComments}
                 onOutlineNodeOpen={handleOutlineNodeOpen}
-                searchTerm={sidebarSearchValue}
+                searchTerm={isSidebarSearchFocused ? "" : sidebarSearchValue}
               />
             )}
           </Box>
@@ -2931,6 +2933,7 @@ const Ontology = ({
                 skillsFutureApp={appName}
                 isExperimentalSearch={isExperimentalSearch}
                 onSearchChange={(value) => setSidebarSearchValue(value)}
+                onFocusChange={setIsSidebarSearchFocused}
               />{" "}
               <Divider sx={{ borderBottomWidth: 1.5, borderColor: "gray" }} />
               <Tabs
@@ -3117,7 +3120,7 @@ const Ontology = ({
                       onExpandEllipsis={handleExpandEllipsis}
                       nodesWithComments={nodesWithComments}
                       onOutlineNodeOpen={handleOutlineNodeOpen}
-                      searchTerm={sidebarSearchValue}
+                      searchTerm={isSidebarSearchFocused ? "" : sidebarSearchValue}
                     />
                   )}
                 </Box>

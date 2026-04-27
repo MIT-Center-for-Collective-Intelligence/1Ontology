@@ -16,7 +16,12 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { development, SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
 
@@ -29,6 +34,7 @@ const SearchSideBar = ({
   skillsFutureApp,
   isExperimentalSearch,
   onSearchChange,
+  onFocusChange,
 }: {
   openSearchedNode: any;
   searchWithFuse: any;
@@ -38,6 +44,7 @@ const SearchSideBar = ({
   skillsFutureApp: string;
   isExperimentalSearch: boolean;
   onSearchChange?: (value: string) => void;
+  onFocusChange?: (focused: boolean) => void;
 }) => {
   const [searchValue, setSearchValue] = useState("");
   const [isListOpen, setIsListOpen] = useState(false);
@@ -45,6 +52,7 @@ const SearchSideBar = ({
   const [searchResults, setSearchResults] = useState<any>([]);
   const [loadingSearchResult, setLoadingSearchResult] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [searchRefreshKey, setSearchRefreshKey] = useState(0);
   const [errorSearch, setErrorSearch] = useState(false);
 
@@ -56,6 +64,7 @@ const SearchSideBar = ({
 
   const handleFocus = () => {
     setIsFocused(true);
+    if (onFocusChange) onFocusChange(true);
 
     if (searchValue.trim() !== "") {
       const freshResults = getSearchResults(searchValue.trim());
@@ -77,6 +86,7 @@ const SearchSideBar = ({
     setSearchValue("");
     setIsListOpen(false);
     setIsFocused(false);
+    if (onFocusChange) onFocusChange(false);
     if (onSearchChange) onSearchChange("");
   };
 
@@ -88,10 +98,12 @@ const SearchSideBar = ({
       setSearchResults(getSearchResults(value.trim()));
       setIsListOpen(true);
       setIsFocused(true);
+      if (onFocusChange) onFocusChange(true);
     } else {
       setSearchResults([]);
       setIsListOpen(!!lastSearches.length);
       setIsFocused(false);
+      if (onFocusChange) onFocusChange(false);
     }
   };
 
@@ -104,6 +116,7 @@ const SearchSideBar = ({
     updateLastSearches(node);
     setIsListOpen(false);
     setIsFocused(false);
+    if (onFocusChange) onFocusChange(false);
   };
 
   useEffect(() => {
@@ -114,6 +127,7 @@ const SearchSideBar = ({
       ) {
         setIsFocused(false);
         setIsListOpen(false);
+        if (onFocusChange) onFocusChange(false);
       }
     };
 
@@ -121,7 +135,17 @@ const SearchSideBar = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [onFocusChange]);
+
+  useEffect(() => {
+    if (!isFocused || !inputRef.current) {
+      return;
+    }
+
+    if (document.activeElement !== inputRef.current) {
+      inputRef.current.focus({ preventScroll: true });
+    }
+  }, [isFocused, searchValue, isListOpen, loadingSearchResult]);
 
   const searchQuery = useCallback(async () => {
     const fuseSearch = searchWithFuse(searchValue).slice(0, 30);
@@ -307,6 +331,7 @@ const SearchSideBar = ({
       />
 
       <TextField
+        inputRef={inputRef}
         placeholder="Search..."
         value={searchValue}
         onChange={handleInputChange}
