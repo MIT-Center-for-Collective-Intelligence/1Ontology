@@ -5,6 +5,9 @@ import { TreeData } from "@components/types/INode";
 
 // Also filters ancestors in paths to target node
 export const filterTreeForTargetNode = (tree: TreeData[], targetNodeId: string): TreeData[] => {
+  void targetNodeId;
+  return tree;
+
   const SIBLING_THRESHOLD = 10; // Number of siblings
   const WINDOW_SIZE = 5; // Show 5 nodes on each side of target
 

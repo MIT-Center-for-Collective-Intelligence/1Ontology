@@ -15,6 +15,7 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import EditOffIcon from "@mui/icons-material/EditOff";
 import ChatIcon from "@mui/icons-material/Chat";
+import { buildOneLevelFromSpecializations } from "@components/lib/utils/loadOutlineFromPathIds";
 
 import {
   saveNewChangeLog,
@@ -125,34 +126,89 @@ function DraggableTree({
       if (!needOutline) return;
       if (loadingStates.has(node.data.id)) return;
 
-      // Show skeleton placeholder row instantly.
+      // Prefer rendering known specialization titles immediately (if present)
+      // instead of flashing skeleton rows. We still run the outline fetch in
+      // the background to upgrade node types + lazy flags accurately.
       if ((node.data.children || []).length === 0) {
-        setNodeChildrenOptimistic(node.data.id, [
-          {
-            id: `${node.data.id}-loading-1`,
-            nodeId: `${node.data.nodeId}-loading-1`,
-            name: "",
-            nodeType: "loading",
-            category: false,
-            isLoadingPlaceholder: true,
-          } as any,
-          {
-            id: `${node.data.id}-loading-2`,
-            nodeId: `${node.data.nodeId}-loading-2`,
-            name: "",
-            nodeType: "loading",
-            category: false,
-            isLoadingPlaceholder: true,
-          } as any,
-          {
-            id: `${node.data.id}-loading-3`,
-            nodeId: `${node.data.nodeId}-loading-3`,
-            name: "",
-            nodeType: "loading",
-            category: false,
-            isLoadingPlaceholder: true,
-          } as any,
-        ]);
+        const parent = (nodes as any)?.[node.data.nodeId];
+        if (parent?.specializations?.length) {
+          const childById: Record<string, any> = { ...(nodes as any) };
+          for (const c of parent.specializations || []) {
+            for (const link of c.nodes || []) {
+              if (!childById[link.id]) {
+                childById[link.id] = {
+                  id: link.id,
+                  title: link.title ?? link.id,
+                  // Best-effort; the outline fetch will replace with real nodeType.
+                  nodeType: "group",
+                };
+              }
+            }
+          }
+          const optimisticChildren = buildOneLevelFromSpecializations(
+            parent,
+            node.data.id,
+            childById,
+          );
+          if (optimisticChildren.length > 0) {
+            setNodeChildrenOptimistic(node.data.id, optimisticChildren);
+          } else {
+            setNodeChildrenOptimistic(node.data.id, [
+              {
+                id: `${node.data.id}-loading-1`,
+                nodeId: `${node.data.nodeId}-loading-1`,
+                name: "",
+                nodeType: "loading",
+                category: false,
+                isLoadingPlaceholder: true,
+              } as any,
+              {
+                id: `${node.data.id}-loading-2`,
+                nodeId: `${node.data.nodeId}-loading-2`,
+                name: "",
+                nodeType: "loading",
+                category: false,
+                isLoadingPlaceholder: true,
+              } as any,
+              {
+                id: `${node.data.id}-loading-3`,
+                nodeId: `${node.data.nodeId}-loading-3`,
+                name: "",
+                nodeType: "loading",
+                category: false,
+                isLoadingPlaceholder: true,
+              } as any,
+            ]);
+          }
+        } else {
+          // Fallback: show skeleton placeholder rows instantly.
+          setNodeChildrenOptimistic(node.data.id, [
+            {
+              id: `${node.data.id}-loading-1`,
+              nodeId: `${node.data.nodeId}-loading-1`,
+              name: "",
+              nodeType: "loading",
+              category: false,
+              isLoadingPlaceholder: true,
+            } as any,
+            {
+              id: `${node.data.id}-loading-2`,
+              nodeId: `${node.data.nodeId}-loading-2`,
+              name: "",
+              nodeType: "loading",
+              category: false,
+              isLoadingPlaceholder: true,
+            } as any,
+            {
+              id: `${node.data.id}-loading-3`,
+              nodeId: `${node.data.nodeId}-loading-3`,
+              name: "",
+              nodeType: "loading",
+              category: false,
+              isLoadingPlaceholder: true,
+            } as any,
+          ]);
+        }
       }
 
       setLoadingStates((s) => new Set(s).add(node.data.id));
@@ -166,7 +222,7 @@ function DraggableTree({
           });
         });
     },
-    [loadingStates, onOutlineNodeOpen, setNodeChildrenOptimistic],
+    [loadingStates, onOutlineNodeOpen, setNodeChildrenOptimistic, nodes],
   );
 
   const [paginationState, setPaginationState] = useState<Map<string, number>>(
@@ -177,6 +233,7 @@ function DraggableTree({
   >(new Map());
   const collapsingLoader = useRef<boolean>(false);
   const isTreeClickRef = useRef(false);
+  const treeActivatedNodeIdRef = useRef<string | null>(null);
   const hasExpandedSuccessfully = useRef<boolean>(false);
   const pendingExpansionNodeId = useRef<string | null>(null);
 
@@ -209,102 +266,8 @@ function DraggableTree({
           allChildren: node.children ? [...node.children] : undefined,
         };
 
-        if (node.children && node.children.length > INITIAL_LOAD_COUNT) {
-          const hasCurrentVisibleNode =
-            currentVisibleNode?.id &&
-            node.children.some(
-              (child) => child.nodeId === currentVisibleNode.id,
-            );
-          const focusedWindow = focusedWindowState.get(node.id);
-
-          if (hasCurrentVisibleNode) {
-            let actualStartIndex, actualEndIndex;
-
-            if (focusedWindow) {
-              actualStartIndex = focusedWindow.startIndex;
-              actualEndIndex = focusedWindow.endIndex;
-            } else {
-              const focusedIndex = node.children.findIndex(
-                (child) => child.nodeId === currentVisibleNode.id,
-              );
-              actualStartIndex = Math.max(
-                0,
-                focusedIndex - Math.floor(INITIAL_LOAD_COUNT / 2),
-              );
-              actualEndIndex = Math.min(
-                node.children.length,
-                actualStartIndex + INITIAL_LOAD_COUNT,
-              );
-            }
-
-            const visibleChildren = node.children.slice(
-              actualStartIndex,
-              actualEndIndex,
-            );
-            processedNode.children = [...visibleChildren];
-
-            if (actualStartIndex > 0) {
-              const topLoadMoreNode: PaginatedTreeData = {
-                id: `${node.id}-load-more-top`,
-                name: `Show ${Math.min(actualStartIndex, LOAD_MORE_COUNT)} more specializations`,
-                isLoadMore: true,
-                isTopLoader: true,
-                parentId: node.id,
-                totalChildren: node.children.length,
-                loadedChildren: INITIAL_LOAD_COUNT,
-                loadDirection: "top",
-                nodeType: "load-more",
-                nodeId: `${node.id}-load-more-top`,
-              };
-              processedNode.children.unshift(topLoadMoreNode);
-            }
-
-            if (actualEndIndex < node.children.length) {
-              const remainingCount = node.children.length - actualEndIndex;
-              const bottomLoadMoreNode: PaginatedTreeData = {
-                id: `${node.id}-load-more-bottom`,
-                name: `Show ${Math.min(remainingCount, LOAD_MORE_COUNT)} more specializations`,
-                isLoadMore: true,
-                isBottomLoader: true,
-                parentId: node.id,
-                totalChildren: node.children.length,
-                loadedChildren: INITIAL_LOAD_COUNT,
-                loadDirection: "bottom",
-                nodeType: "load-more",
-                nodeId: `${node.id}-load-more-bottom`,
-              };
-              processedNode.children.push(bottomLoadMoreNode);
-            }
-          } else {
-            const loadedCount =
-              paginationState.get(node.id) || INITIAL_LOAD_COUNT;
-
-            if (loadedCount === -1) {
-              processedNode.children = [...node.children];
-            } else {
-              const visibleChildren = node.children.slice(0, loadedCount);
-              const remainingCount = node.children.length - loadedCount;
-
-              processedNode.children = [...visibleChildren];
-
-              if (remainingCount > 0) {
-                const loadMoreNode: PaginatedTreeData = {
-                  id: `${node.id}-load-more`,
-                  name: `Show ${Math.min(remainingCount, LOAD_MORE_COUNT)} more specializations`,
-                  isLoadMore: true,
-                  parentId: node.id,
-                  totalChildren: node.children.length,
-                  loadedChildren: loadedCount,
-                  nodeType: "load-more",
-                  nodeId: `${node.id}-load-more`,
-                };
-                processedNode.children.push(loadMoreNode);
-              }
-            }
-          }
-        } else if (node.children) {
-          processedNode.children = [...node.children];
-        }
+        // Always render all children directly (no pagination "Show … more" nodes).
+        if (node.children) processedNode.children = [...node.children];
 
         if (processedNode.children) {
           processedNode.children = processTreeData(processedNode.children);
@@ -313,12 +276,7 @@ function DraggableTree({
         return processedNode;
       });
     },
-    [
-      paginationState,
-      currentVisibleNode,
-      getFocusedNodeWindow,
-      focusedWindowState,
-    ],
+    [],
   );
 
   const handleLoadMore = useCallback(
@@ -412,7 +370,7 @@ function DraggableTree({
         });
       }, 300);
     },
-    [treeData, onExpandEllipsis],
+    [treeData, onExpandEllipsis, currentVisibleNode?.id, focusedWindowState],
   );
 
   useEffect(() => {
@@ -530,6 +488,24 @@ function DraggableTree({
     const handleNavigation = async () => {
       const targetNodeId = currentVisibleNode.id;
 
+      if (
+        treeActivatedNodeIdRef.current &&
+        treeActivatedNodeIdRef.current !== targetNodeId
+      ) {
+        treeActivatedNodeIdRef.current = null;
+      }
+
+      if (
+        isTreeClickRef.current ||
+        treeActivatedNodeIdRef.current === targetNodeId
+      ) {
+        hasExpandedSuccessfully.current = true;
+        pendingExpansionNodeId.current = null;
+        isTreeClickRef.current = false;
+        setFirstLoad(false);
+        return;
+      }
+
       // Reset expansion tracking for this new navigation
       hasExpandedSuccessfully.current = false;
       pendingExpansionNodeId.current = null;
@@ -602,7 +578,7 @@ function DraggableTree({
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [expandNodeById, findNodesByNodeId, currentVisibleNode?.id]);
+  }, [treeRef, expandNodeById, findNodesByNodeId, currentVisibleNode?.id]);
 
   useEffect(() => {
     const tree = treeRef.current;
@@ -1627,6 +1603,7 @@ function DraggableTree({
                     return;
                   }
                   isTreeClickRef.current = true;
+                  treeActivatedNodeIdRef.current = node.data.nodeId;
                   onOpenNodesTree(node.data.nodeId, node.data.name);
                   // Selecting a node should also expand it (and lazy-load children if needed).
                   ensureExpandedWithLazyLoad(node as any);
