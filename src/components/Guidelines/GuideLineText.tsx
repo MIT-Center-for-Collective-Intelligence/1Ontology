@@ -6,11 +6,13 @@ const GuideLineText = ({
   index,
   onSaveGuideline,
   catId,
+  disabled,
 }: {
   guideline: string;
   index: number;
   onSaveGuideline: (text: string, catId: string, index: number) => void;
   catId: string;
+  disabled?: boolean;
 }) => {
   const [text, setText] = useState<string>(guideline);
 
@@ -35,6 +37,7 @@ const GuideLineText = ({
   return (
     <TextField
       fullWidth
+      disabled={disabled}
       label={`Guideline ${index + 1}`}
       value={text}
       variant="outlined"

@@ -45,6 +45,7 @@ import { useAuth } from "../context/AuthContext";
 import { generateUniqueTitle } from "@components/lib/utils/string.utils";
 import { development } from "@components/lib/CONSTANTS";
 import { newId } from "@components/lib/utils/newFirestoreId";
+import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
 import FullPageLogoLoading from "../layouts/FullPageLogoLoading";
 type ImprovementsProps = {
   currentImprovement: any;
@@ -126,9 +127,12 @@ const Improvements = ({
         // Update links for specializations/generalizations
         if (property === "specializations" || property === "generalizations") {
           const _newLinks = newLinks.map((c) => c.id);
-          updateLinks(
+          await updateLinks(
             _newLinks,
-            { id: currentVisibleNode?.id },
+            {
+              id: currentVisibleNode?.id,
+              title: nodeData.title ?? "",
+            },
             property === "specializations"
               ? "generalizations"
               : "specializations",
@@ -141,7 +145,10 @@ const Improvements = ({
         if (property === "parts" || property === "isPartOf") {
           updatePartsAndPartsOf(
             newLinks,
-            { id: currentVisibleNode?.id },
+            {
+              id: currentVisibleNode?.id,
+              title: nodeData.title ?? "",
+            },
             property === "parts" ? "isPartOf" : "parts",
             db,
             relatedNodes,
@@ -179,6 +186,7 @@ const Improvements = ({
               }
             }
             nodeData.inheritance[property].ref = null;
+            nodeData.inheritance[property].title = "";
           }
         }
 
@@ -253,6 +261,15 @@ const Improvements = ({
             relatedNodes,
           );
         }
+        if (property === "specializations" || property === "generalizations") {
+          const seeds = [currentVisibleNode?.id, ...addedLinks, ...removedLinks].filter(
+            (x): x is string => Boolean(x),
+          );
+          const seen = new Set<string>();
+          await triggerUpdateDerivedPaths(
+            seeds.filter((id) => (seen.has(id) ? false : (seen.add(id), true))),
+          );
+        }
         // Update inheritance for non-specialization/generalization properties
         if (
           !["specializations", "generalizations", "isPartOf"].includes(property)
@@ -296,6 +313,7 @@ const Improvements = ({
         await updateDoc(nodeRef, {
           [`properties.${property}`]: newValue,
           [`inheritance.${property}.ref`]: null,
+          [`inheritance.${property}.title`]: "",
         });
       }
       try {
@@ -433,7 +451,12 @@ const Improvements = ({
         }
 
         // Update the parent node's specializations
-        updateSpecializations(nodeParentData, newNodeRef.id, collectionName);
+        updateSpecializations(
+          nodeParentData,
+          newNodeRef.id,
+          collectionName,
+          newNode.title ?? "",
+        );
 
         if (newNode.properties["parts"][0].nodes.length > 0) {
           for (let part of newNode.properties["parts"][0].nodes) {
@@ -543,6 +566,7 @@ const Improvements = ({
       await updateDoc(nodeRef, {
         [`properties.${property}`]: newValue,
         [`inheritance.${property}.ref`]: null,
+        [`inheritance.${property}.title`]: "",
       });
       if (!!currentVisibleNode.inheritance[property]?.ref) {
         await updateInheritance({
@@ -689,6 +713,7 @@ const Improvements = ({
             const inheritance = generateInheritance(
               unclassifiedNodeData.inheritance,
               unclassifiedNodeDoc.id,
+              unclassifiedNodeData.title ?? "",
             );
             const newNode = createNewNode(
               unclassifiedNodeData,
@@ -707,6 +732,7 @@ const Improvements = ({
 
             specializations[mainCollectionIdx].nodes.push({
               id: newRef.id,
+              title,
             });
             updateDoc(unclassifiedNodeDoc.ref, {
               specializations,
@@ -734,11 +760,13 @@ const Improvements = ({
         const nodeData = nodeDoc.data();
         const addToUnclassified = [];
         if (nodeData && nodeData.generalizations[0].nodes.length === 0) {
+          const unclassifiedTitle =
+            (unclassifiedDoc.data() as INode)?.title ?? "";
           await updateDoc(nodeDoc.ref, {
             generalizations: [
               {
                 collectionName: "main",
-                nodes: [{ id: unclassifiedDoc.id }],
+                nodes: [{ id: unclassifiedDoc.id, title: unclassifiedTitle }],
               },
             ],
           });
@@ -804,6 +832,7 @@ const Improvements = ({
             const inheritance = generateInheritance(
               unclassifiedData.inheritance,
               unclassifiedDoc.id,
+              unclassifiedData.title ?? "",
             );
             const newNode = createNewNode(
               unclassifiedData,
@@ -823,6 +852,7 @@ const Improvements = ({
 
             specializations[mainCollectionIdx].nodes.push({
               id: newRef.id,
+              title: nodeTitle,
             });
             updateDoc(unclassifiedDoc.ref, {
               specializations,

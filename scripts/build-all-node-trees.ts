@@ -1,9 +1,15 @@
 import { db } from "../src/lib/firestoreServer/admin";
 import { NODES } from "../src/lib/firestoreClient/collections";
-import { INode, TreeViewNode, NodeTreeData } from "../src/types/INode";
+import { INode, TreeViewNode } from "../src/types/INode";
 
-async function loadAllNodes(ontologyVersion: string): Promise<{ [id: string]: INode }> {
-  console.log(`[LOAD] Loading all nodes for ontology version: ${ontologyVersion}...`);
+type NodeTreeData = any;
+
+async function loadAllNodes(
+  ontologyVersion: string,
+): Promise<{ [id: string]: INode }> {
+  console.log(
+    `[LOAD] Loading all nodes for ontology version: ${ontologyVersion}...`,
+  );
   const BATCH_SIZE = 500;
   const allNodes: { [id: string]: INode } = {};
   let lastDoc: any = null;
@@ -31,7 +37,7 @@ async function loadAllNodes(ontologyVersion: string): Promise<{ [id: string]: IN
     console.log(`[LOAD] Loaded ${totalLoaded} nodes...`);
 
     lastDoc = batchSnapshot.docs[batchSnapshot.docs.length - 1];
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     if (batchSnapshot.size < BATCH_SIZE) break;
   }
@@ -40,7 +46,9 @@ async function loadAllNodes(ontologyVersion: string): Promise<{ [id: string]: IN
   return allNodes;
 }
 
-function buildPathsMap(allNodes: { [id: string]: INode }): Map<string, string[][]> {
+function buildPathsMap(allNodes: {
+  [id: string]: INode;
+}): Map<string, string[][]> {
   console.log("[PATHS] Building paths map...");
   const pathsMap = new Map<string, string[][]>();
   const visited = new Set<string>();
@@ -70,7 +78,7 @@ function buildPathsMap(allNodes: { [id: string]: INode }): Map<string, string[][
 
   // Start from all roots
   const rootNodes = Object.values(allNodes).filter(
-    node => node.category || (typeof node.root === "boolean" && !!node.root)
+    (node) => node.category || (typeof node.root === "boolean" && !!node.root),
   );
 
   console.log(`[PATHS] Found ${rootNodes.length} root nodes`);
@@ -87,7 +95,7 @@ function buildPathsMap(allNodes: { [id: string]: INode }): Map<string, string[][
 function buildTreeForNode(
   nodeId: string,
   paths: string[][],
-  allNodes: { [id: string]: INode }
+  allNodes: { [id: string]: INode },
 ): NodeTreeData {
   const flatNodes: { [id: string]: TreeViewNode } = {};
   const rootIds: string[] = [];
@@ -97,7 +105,7 @@ function buildTreeForNode(
     nodeId: string,
     parentPath: string[],
     visited: Set<string>,
-    recurseIntoChildren: boolean = false
+    recurseIntoChildren: boolean = false,
   ) => {
     const node = allNodes[nodeId];
     if (!node) return;
@@ -121,7 +129,7 @@ function buildTreeForNode(
           category: !!node.category,
           nodeType: node.nodeType,
           unclassified: true,
-          childIds: []
+          childIds: [],
         };
       }
       return;
@@ -136,7 +144,9 @@ function buildTreeForNode(
         const childPathBasedId = childPath.join("-");
 
         if (collection.collectionName !== "main") {
-          const collectionId = [...currentPath, collection.collectionName].join("-");
+          const collectionId = [...currentPath, collection.collectionName].join(
+            "-",
+          );
 
           if (!flatNodes[collectionId]) {
             flatNodes[collectionId] = {
@@ -146,7 +156,7 @@ function buildTreeForNode(
               category: true,
               nodeType: node.nodeType,
               unclassified: !!node.unclassified,
-              childIds: []
+              childIds: [],
             };
           }
 
@@ -165,7 +175,12 @@ function buildTreeForNode(
 
         if (!flatNodes[childPathBasedId]) {
           if (recurseIntoChildren) {
-            addNodeWithChildren(childLink.id, childPath.slice(0, -1), visited, false);
+            addNodeWithChildren(
+              childLink.id,
+              childPath.slice(0, -1),
+              visited,
+              false,
+            );
           }
 
           if (!flatNodes[childPathBasedId]) {
@@ -180,7 +195,10 @@ function buildTreeForNode(
                 const grandchildPathBasedId = grandchildPath.join("-");
 
                 if (childCollection.collectionName !== "main") {
-                  const childCollectionId = [...childPath, childCollection.collectionName].join("-");
+                  const childCollectionId = [
+                    ...childPath,
+                    childCollection.collectionName,
+                  ].join("-");
 
                   // Create collection wrapper for grandchildren
                   if (!flatNodes[childCollectionId]) {
@@ -191,13 +209,19 @@ function buildTreeForNode(
                       category: true,
                       nodeType: childNode.nodeType,
                       unclassified: !!childNode.unclassified,
-                      childIds: []
+                      childIds: [],
                     };
                   }
 
                   // Add grandchild to collection wrapper
-                  if (!flatNodes[childCollectionId].childIds.includes(grandchildPathBasedId)) {
-                    flatNodes[childCollectionId].childIds.push(grandchildPathBasedId);
+                  if (
+                    !flatNodes[childCollectionId].childIds.includes(
+                      grandchildPathBasedId,
+                    )
+                  ) {
+                    flatNodes[childCollectionId].childIds.push(
+                      grandchildPathBasedId,
+                    );
                   }
 
                   if (!directChildIds.includes(childCollectionId)) {
@@ -218,7 +242,7 @@ function buildTreeForNode(
                     category: !!grandchildNode.category,
                     nodeType: grandchildNode.nodeType,
                     unclassified: !!grandchildNode.unclassified,
-                    childIds: [] // Don't populate children of grandchildren
+                    childIds: [], // Don't populate children of grandchildren
                   };
                 }
               }
@@ -231,7 +255,7 @@ function buildTreeForNode(
               category: !!childNode.category,
               nodeType: childNode.nodeType,
               unclassified: !!childNode.unclassified,
-              childIds: directChildIds
+              childIds: directChildIds,
             };
           }
         }
@@ -246,11 +270,11 @@ function buildTreeForNode(
         category: !!node.category,
         nodeType: node.nodeType,
         unclassified: !!node.unclassified,
-        childIds
+        childIds,
       };
     } else {
       const existingChildIds = new Set(flatNodes[pathBasedId].childIds);
-      childIds.forEach(id => existingChildIds.add(id));
+      childIds.forEach((id) => existingChildIds.add(id));
       flatNodes[pathBasedId].childIds = Array.from(existingChildIds);
     }
   };
@@ -281,7 +305,12 @@ function buildTreeForNode(
           for (const collection of parentNode.specializations || []) {
             for (const siblingLink of collection.nodes || []) {
               const isNextOnPath = siblingLink.id === nextNodeOnPath;
-              addNodeWithChildren(siblingLink.id, parentPath, pathVisited, isNextOnPath);
+              addNodeWithChildren(
+                siblingLink.id,
+                parentPath,
+                pathVisited,
+                isNextOnPath,
+              );
             }
           }
         }
@@ -290,7 +319,7 @@ function buildTreeForNode(
         addNodeWithChildren(nodeId, [], pathVisited, shouldRecurse);
 
         const rootNodes = Object.values(allNodes).filter(
-          n => n.category || (typeof n.root === "boolean" && !!n.root)
+          (n) => n.category || (typeof n.root === "boolean" && !!n.root),
         );
         for (const rootNode of rootNodes) {
           if (rootNode.id !== nodeId) {
@@ -305,7 +334,7 @@ function buildTreeForNode(
     version: "nodeTree",
     lastUpdated: Date.now(),
     rootIds,
-    nodes: flatNodes
+    nodes: flatNodes,
   };
 }
 
@@ -350,13 +379,15 @@ async function buildAllNodeTrees(ontologyVersion: string) {
     updates.push({
       nodeId,
       title: node.title,
-      treeData
+      treeData,
     });
 
     processed++;
 
     if (processed % 100 === 0) {
-      console.log(`[PROCESS] Processed ${processed}/${pathsMap.size - skipped} nodes...`);
+      console.log(
+        `[PROCESS] Processed ${processed}/${pathsMap.size - skipped} nodes...`,
+      );
     }
   }
 
@@ -381,7 +412,7 @@ async function buildAllNodeTrees(ontologyVersion: string) {
     console.log(`[WRITE] Written ${written}/${updates.length} nodes...`);
 
     // Rate limiting
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   console.log(`Total nodes in ontology: ${totalNodes}`);
@@ -390,9 +421,7 @@ async function buildAllNodeTrees(ontologyVersion: string) {
   console.log(`Nodes updated: ${written}`);
 }
 
-const ONTOLOGY_VERSIONS = [
-  'ontology-development-version',
-];
+const ONTOLOGY_VERSIONS = ["ontology-development-version"];
 
 // Main function to process all ontology versions
 async function main() {
@@ -406,14 +435,16 @@ async function main() {
       await buildAllNodeTrees(ontologyVersion);
       completedOntologies++;
     } catch (error: any) {
-      console.error(`\nFailed to process "${ontologyVersion}": ${error.message}\n`);
+      console.error(
+        `\nFailed to process "${ontologyVersion}": ${error.message}\n`,
+      );
       failedOntologies++;
     }
 
     // Add delay between ontologies to avoid overwhelming Firestore
     if (completedOntologies + failedOntologies < ONTOLOGY_VERSIONS.length) {
       console.log(`\nWaiting 5 seconds before next ontology...\n`);
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await new Promise((resolve) => setTimeout(resolve, 5000));
     }
   }
 

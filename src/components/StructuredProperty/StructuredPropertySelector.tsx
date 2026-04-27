@@ -621,7 +621,10 @@ const StructuredPropertySelector = ({
             updated.push(targetCollection);
           }
 
-          targetCollection.nodes.push({ id: checkedId });
+          targetCollection.nodes.push({
+            id: checkedId,
+            title: relatedNodes[checkedId]?.title ?? "",
+          });
         }
         return updated;
       });

@@ -356,3 +356,7 @@ export const callLLM = async (
 export const verifyAiConf = async (conf: AiConf): Promise<void> => {
   await callLLM(conf, [{ role: "user", content: "ping" }]);
 };
+
+export default function AiProvidersPage() {
+  return null;
+}

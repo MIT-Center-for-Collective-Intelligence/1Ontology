@@ -97,8 +97,10 @@ const SelectInheritance = ({
             modifiedInheritanceFor ===
               nodes[link.id].inheritance[property]?.ref)
         ) {
+          const refTitle = getTitle(nodes, ref);
           let objectUpdate = {
             [`inheritance.${property}.ref`]: ref,
+            [`inheritance.${property}.title`]: refTitle,
           };
           if (newBatch._committed) {
             newBatch = writeBatch(db);
@@ -142,6 +144,10 @@ const SelectInheritance = ({
 
         updateDoc(nodeRef, {
           [`inheritance.${property}.ref`]: newGeneralizationId,
+          [`inheritance.${property}.title`]: getTitle(
+            nodes,
+            newGeneralizationId,
+          ),
         })
           .then(async () => {
             let batch = writeBatch(db);

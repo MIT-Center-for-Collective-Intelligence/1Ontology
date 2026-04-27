@@ -256,7 +256,7 @@ const AssistantText: React.FC<{
 // Main panel
 // ──────────────────────────────────────────────────────────────
 
-const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
+export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
   const theme = useTheme();
   const accent = theme.palette.primary.main;
 
@@ -1093,4 +1093,6 @@ const buildMenuProps = (theme: Theme) => ({
   },
 });
 
-export default AiPanel;
+export default function AiPanelPage() {
+  return null;
+}

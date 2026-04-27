@@ -73,14 +73,14 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
         >
           <Box sx={{ display: "flex" }}>
             <Typography
-              sx={{ fontSize: "1.02rem", fontWeight: 700, lineHeight: 1.2 }}
+              sx={{ fontSize: "0.95rem", fontWeight: 700, lineHeight: 1.2 }}
             >
               {reply.senderDetail.fullname}
             </Typography>
           </Box>
           <Typography
             sx={(theme) => ({
-              fontSize: "0.8rem",
+              fontSize: "0.74rem",
               color:
                 theme.palette.mode === "dark"
                   ? "rgba(255,255,255,0.62)"
@@ -110,23 +110,20 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
             className="reply-box"
             sx={{
               position: "relative",
-              fontSize: "16px",
+              fontSize: "14px",
               fontWeight: "400",
-              lineHeight: "24px",
-              p: "12px 14px",
+              lineHeight: "20px",
+              p: "10px 12px",
               borderRadius: "14px",
-              border: (theme) =>
-                theme.palette.mode === "dark"
-                  ? "1px solid rgba(255,255,255,0.06)"
-                  : "1px solid rgba(18,30,60,0.08)",
+              border: "none",
               background: (theme) =>
                 theme.palette.mode === "dark"
                   ? "linear-gradient(145deg, rgba(30, 32, 36, 0.95), rgba(22, 23, 27, 0.95))"
                   : "linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 252, 0.98))",
               boxShadow: (theme) =>
                 theme.palette.mode === "dark"
-                  ? "0 8px 18px rgba(0,0,0,0.2)"
-                  : "0 8px 18px rgba(15,28,59,0.07)",
+                  ? "0 8px 16px rgba(0,0,0,0.18)"
+                  : "0 7px 16px rgba(15,28,59,0.06)",
               ":hover": {
                 "& .message-buttons": {
                   display: "block",
@@ -140,7 +137,7 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
               <MarkdownRender
                 text={reply.text}
                 sx={{
-                  fontSize: "16px",
+                  fontSize: "13px",
                   fontWeight: 400,
                   letterSpacing: "inherit",
                 }}

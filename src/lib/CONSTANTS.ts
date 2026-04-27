@@ -169,12 +169,19 @@ export const GEMINI_MODEL = "gemini-2.5-pro";
 export const ONTOLOGY_APPS = development
   ? [
       {
-        id: "ontology-development-version",
-        name: "Ontology - Development Version",
-      },
-      {
         id: "final-hierarchy-with-o*net",
         name: "Final Hierarchy with O*Net",
+      },
+      {
+        id: "ontology-development-version",
+        name: "Ontology - Development Version",
+        type: "other",
+      },
+
+      {
+        id: "final-hierarchy-with-o*net-parts",
+        name: "Final Hierarchy with Parts",
+        type: "other",
       },
     ]
   : [
@@ -199,6 +206,15 @@ export const ONTOLOGY_APPS = development
       },
       { id: "noun-ontology", name: "Noun Ontology", type: "other" },
     ];
+
+/** Max nodes visited when walking the specialization graph (cycle check, BFS). */
+export const MAX_DERIVED_PATH_OP_VISITS = 100_000;
+
+/** Max nodes collected in the affected specialization subtree for one derived-path run. */
+export const MAX_DERIVED_PATH_BFS_NODES = 20_000;
+
+/** Max Firestore writes in a single derived-path maintenance run. */
+export const MAX_DERIVED_PATH_WRITES = 10_000;
 
 export const performerColors: Record<string, string> = {
   "A single human": "#1976d2",

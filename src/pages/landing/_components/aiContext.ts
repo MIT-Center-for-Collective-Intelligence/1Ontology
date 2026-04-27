@@ -228,3 +228,7 @@ export const buildSystemPrompt = (
     `- Be concise but thorough.`
   );
 };
+
+export default function AiContextPage() {
+  return null;
+}

@@ -1016,6 +1016,7 @@ const ToolbarSidebar = ({
         const inheritance = generateInheritance(
           generalization.inheritance,
           generalization.id,
+          generalization.title ?? "",
         );
 
         const newNode = createNewNode(
@@ -1037,6 +1038,7 @@ const ToolbarSidebar = ({
           ) {
             inheritance[p] = {
               ref: null,
+              title: "",
               inheritanceType: "inheritUnlessAlreadyOverRidden",
             };
           }
@@ -1080,6 +1082,7 @@ const ToolbarSidebar = ({
           if (newNode.properties.hasOwnProperty(property)) {
             if (inheritance[property]) {
               inheritance[property].ref = null;
+              inheritance[property].title = "";
             }
             if (
               Array.isArray(newNode.properties[property]) &&
@@ -1129,10 +1132,12 @@ const ToolbarSidebar = ({
           if (!inheritance["description"]) {
             inheritance["description"] = {
               ref: null,
+              title: "",
               inheritanceType: "inheritUnlessAlreadyOverRidden",
             };
           }
           inheritance.description.ref = null;
+          inheritance.description.title = "";
           newNode.properties.description = node.description;
         }
         _NODES.push({
@@ -1930,6 +1935,7 @@ const ToolbarSidebar = ({
             />
 
             {!!user?.admin &&
+              user?.claims.editAccess &&
               (window.location.origin.startsWith("http://localhost") ||
                 window.location.origin ===
                   "https://ontology-163479774214.us-central1.run.app") && (

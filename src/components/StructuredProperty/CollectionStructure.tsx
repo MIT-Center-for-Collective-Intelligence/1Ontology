@@ -494,10 +494,12 @@ const CollectionStructure = ({
           } else {
             if (nodeData.inheritance) {
               nodeData.inheritance[property].ref = null;
+              nodeData.inheritance[property].title = "";
             }
             updateDoc(nodeRef, {
               [`properties.${property}`]: newArray,
               [`inheritance.${property}.ref`]: null,
+              [`inheritance.${property}.title`]: "",
             });
 
             updateInheritance({
@@ -594,6 +596,7 @@ const CollectionStructure = ({
             updateDoc(nodeRef, {
               [`properties.${property}`]: propertyValue,
               [`inheritance.${property}.ref`]: null,
+              [`inheritance.${property}.title`]: "",
             });
             updateInheritance({
               nodeId: currentVisibleNode?.id,
@@ -889,7 +892,10 @@ const CollectionStructure = ({
             (n: { id: string }) => n.id !== currentNodeId,
           );
         }
-        nodeBGeneralizations[0].nodes.push({ id: nodeAId });
+        nodeBGeneralizations[0].nodes.push({
+          id: nodeAId,
+          title: getTitle(nodes, nodeAId) ?? "",
+        });
         await updateDoc(doc(collection(db, NODES), nodeBId), {
           generalizations: nodeBGeneralizations,
         });
@@ -901,7 +907,10 @@ const CollectionStructure = ({
         const mainIdx = nodeASpecs.findIndex(
           (c) => c.collectionName === "main",
         );
-        nodeASpecs[mainIdx !== -1 ? mainIdx : 0].nodes.push({ id: nodeBId });
+        nodeASpecs[mainIdx !== -1 ? mainIdx : 0].nodes.push({
+          id: nodeBId,
+          title: getTitle(nodes, nodeBId) ?? "",
+        });
         await updateDoc(doc(collection(db, NODES), nodeAId), {
           specializations: nodeASpecs,
         });

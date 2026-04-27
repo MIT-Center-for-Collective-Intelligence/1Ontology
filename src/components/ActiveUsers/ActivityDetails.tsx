@@ -108,17 +108,20 @@ const ActivityDetails = ({
           borderRadius: 3,
           border: "1px solid",
           borderColor: isHighlighted
-            ? alpha(theme.palette.info.main, 0.55)
+            ? alpha(theme.palette.warning.main, 0.55)
             : theme.palette.mode === "dark"
               ? alpha(theme.palette.common.white, 0.22)
               : alpha(theme.palette.grey[700], 0.35),
           bgcolor: isHighlighted
-            ? alpha(theme.palette.info.main, theme.palette.mode === "dark" ? 0.1 : 0.06)
+            ? alpha(
+                theme.palette.warning.main,
+                theme.palette.mode === "dark" ? 0.1 : 0.06,
+              )
             : theme.palette.mode === "dark"
               ? alpha(theme.palette.common.black, 0.2)
               : theme.palette.background.paper,
           boxShadow: isHighlighted
-            ? `0 0 0 1px ${alpha(theme.palette.info.main, 0.35)}, ${theme.shadows[2]}`
+            ? `0 0 0 1px ${alpha(theme.palette.warning.main, 0.35)}, ${theme.shadows[2]}`
             : theme.palette.mode === "dark"
               ? `0 1px 0 ${alpha(theme.palette.common.white, 0.06)} inset`
               : theme.shadows[1],
@@ -172,7 +175,7 @@ const ActivityDetails = ({
                         alignItems: "center",
                         justifyContent: "center",
                         lineHeight: 0,
-                        background: `linear-gradient(135deg, ${theme.palette.info.light} 0%, ${theme.palette.info.dark} 100%)`,
+                        background: `linear-gradient(135deg, ${theme.palette.warning.light} 0%, ${theme.palette.warning.dark} 100%)`,
                         "& > *": {
                           flexShrink: 0,
                         },
@@ -236,7 +239,7 @@ const ActivityDetails = ({
                   }
                 }}
                 variant="contained"
-                color="info"
+                color="warning"
                 disableElevation
                 size="small"
                 sx={(theme) => ({
@@ -250,10 +253,10 @@ const ActivityDetails = ({
                   boxShadow: "none",
                   ...(isHighlighted
                     ? {
-                        bgcolor: "info.main",
-                        color: "info.contrastText",
+                        bgcolor: "warning.main",
+                        color: "warning.contrastText",
                         "&:hover": {
-                          bgcolor: "info.dark",
+                          bgcolor: "warning.dark",
                           boxShadow: "none",
                         },
                       }
@@ -374,9 +377,9 @@ const ActivityDetails = ({
               px: 1.5,
               borderRadius: 1.25,
               border: "1px solid",
-              borderColor: alpha(theme.palette.info.main, 0.45),
+              borderColor: alpha(theme.palette.warning.main, 0.45),
               bgcolor: alpha(
-                theme.palette.info.main,
+                theme.palette.warning.main,
                 theme.palette.mode === "dark" ? 0.14 : 0.08,
               ),
               boxShadow:
@@ -392,7 +395,7 @@ const ActivityDetails = ({
                 fontSize: "0.65rem",
                 fontWeight: 700,
                 letterSpacing: "0.12em",
-                color: "info.main",
+                color: "warning.main",
                 lineHeight: 1.2,
                 mb: 0.5,
               }}
@@ -455,9 +458,9 @@ const ActivityDetails = ({
                   bgcolor:
                     theme.palette.mode === "dark"
                       ? alpha(theme.palette.common.white, 0.04)
-                      : alpha(theme.palette.info.main, 0.05),
+                      : alpha(theme.palette.warning.main, 0.06),
                   borderLeft: "2px solid",
-                  borderLeftColor: "info.main",
+                  borderLeftColor: "warning.main",
                 })}
               >
                 <Typography

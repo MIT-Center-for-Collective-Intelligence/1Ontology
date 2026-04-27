@@ -248,43 +248,16 @@ const Text = ({
 
       if (reference) {
         setSwitchToWebSocket(false);
-        const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
-        if (structured) {
-          const referencedNode: any = relatedNodes[reference];
-          await updateDoc(nodeRef, {
-            [`textValue.${property}`]: copyValue,
-            [`properties.${property}`]: referencedNode.properties[property],
-            [`inheritance.${property}.ref`]: null,
-          });
-
-          if (Array.isArray(referencedNode.properties[property])) {
-            const links = referencedNode.properties[property].flatMap(
-              (c) => c.nodes,
-            );
-            if (property === "parts" || property === "isPartOf") {
-              updatePartsAndPartsOf(
-                links,
-                { id: currentVisibleNode?.id },
-                property === "parts" ? "isPartOf" : "parts",
-                db,
-                relatedNodes,
-              );
-            } else {
-              updatePropertyOf(
-                links,
-                { id: currentVisibleNode?.id },
-                property,
-                relatedNodes,
-                db,
-              );
-            }
-          }
-        } else {
-          await updateDoc(nodeRef, {
-            [`properties.${property}`]: copyValue,
-            [`inheritance.${property}.ref`]: null,
-          });
-        }
+        await Post("/nodes/update-property", {
+          nodeId: currentVisibleNode?.id,
+          property,
+          value: copyValue,
+          structured,
+          reference,
+          fullNode: currentVisibleNode,
+          skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        });
         setAutoFocus(true);
         const ydoc = new Y.Doc();
         const websocketProvider = new WebsocketProvider(
@@ -304,12 +277,6 @@ const Text = ({
           websocketProvider.disconnect();
           websocketProvider.destroy();
         }, 5000);
-
-        updateInheritance({
-          nodeId: currentVisibleNode?.id,
-          updatedProperties: [property],
-          db,
-        });
       }
     },
     [

@@ -124,6 +124,7 @@ import { Post } from "@components/lib/utils/Post";
 import { LoadingButton } from "@mui/lab";
 import { removeLinkFromNode } from "@components/lib/utils/instantTreeUpdate";
 import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
+import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
 
 const glowGreen = keyframes`
   0% {
@@ -465,6 +466,7 @@ const LinkNode = ({
                   if (generalizationsLength === 1) {
                     generalizations[0].nodes.push({
                       id: unclassifiedNodeDoc.id,
+                      title: unclassifiedNode?.title ?? "",
                     });
                   }
 
@@ -481,6 +483,8 @@ const LinkNode = ({
                   if (mainCollectionIdx !== -1) {
                     specializations[mainCollectionIdx].nodes.push({
                       id: linkId,
+                      title:
+                        relatedNodes[linkId]?.title ?? linkNode?.title ?? "",
                     });
                     updateDoc(unclassifiedNodeDoc.ref, {
                       specializations,
@@ -496,7 +500,10 @@ const LinkNode = ({
 
                 const generalizations = nodeData.generalizations;
                 if (nodesLength === 1) {
-                  generalizations[0].nodes.push({ id: unclassifiedNodeDoc.id });
+                  generalizations[0].nodes.push({
+                    id: unclassifiedNodeDoc.id,
+                    title: unclassifiedNode?.title ?? "",
+                  });
 
                   const specializations = unclassifiedNode.specializations;
 
@@ -506,6 +513,7 @@ const LinkNode = ({
 
                   specializations[mainCollectionIdx].nodes.push({
                     id: nodeDoc.id,
+                    title: nodeData.title ?? "",
                   });
 
                   updateDoc(unclassifiedNodeDoc.ref, {
@@ -575,6 +583,9 @@ const LinkNode = ({
               nodeData,
               relatedNodes,
             );
+          }
+          if (property === "specializations" || property === "generalizations") {
+            await triggerUpdateDerivedPaths([currentVisibleNode.id, linkId]);
           }
         }
       }

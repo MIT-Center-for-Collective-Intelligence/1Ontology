@@ -200,6 +200,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
               "inheritUnlessAlreadyOverRidden",
             [`properties.${property}`]: propertyValue,
             [`inheritance.${property}.ref`]: ref,
+            [`inheritance.${property}.title`]: currentVisibleNode?.title ?? "",
             [`propertyType.${property}`]: propertyType,
           };
 
@@ -272,6 +273,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
       }
       inheritance[newProperty] = {
         ref: null,
+        title: "",
         inheritanceType: "inheritUnlessAlreadyOverRidden",
       };
       setCurrentVisibleNode((prev: any) => {

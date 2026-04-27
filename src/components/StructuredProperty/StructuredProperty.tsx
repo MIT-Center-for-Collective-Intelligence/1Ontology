@@ -828,6 +828,7 @@ const StructuredProperty = ({
             const reference = inheritanceEntry?.ref ?? null;
             let updateObject: any = {
               [`inheritance.${property}.ref`]: null,
+              [`inheritance.${property}.title`]: "",
             };
             let referenceNode = null;
             if (reference) {
@@ -851,7 +852,10 @@ const StructuredProperty = ({
               if (property === "isPartOf") {
                 updatePartsAndPartsOf(
                   links,
-                  { id: currentVisibleNode?.id },
+                  {
+                    id: currentVisibleNode?.id,
+                    title: currentVisibleNode?.title ?? "",
+                  },
                   "isPartOf",
                   db,
                   relatedNodes,
@@ -941,7 +945,10 @@ const StructuredProperty = ({
       }
 
       const previousPartsValue = JSON.parse(JSON.stringify(parts));
-      parts[0].nodes.push({ id: partId });
+      parts[0].nodes.push({
+        id: partId,
+        title: relatedNodes[partId]?.title ?? "",
+      });
 
       const nodeRef = doc(collection(db, NODES), currentNodeId);
       const linkRef = doc(collection(db, NODES), partId);
@@ -956,13 +963,19 @@ const StructuredProperty = ({
         Array.isArray(linkData.properties["isPartOf"]) &&
         linkData.properties["isPartOf"][0]?.nodes
       ) {
-        linkData.properties["isPartOf"][0].nodes.push({ id: currentNodeId });
+        linkData.properties["isPartOf"][0].nodes.push({
+          id: currentNodeId,
+          title: nodeData.title ?? "",
+        });
         await updateDoc(linkRef, {
           "properties.isPartOf": linkData.properties["isPartOf"],
         });
       } else if (linkData) {
         const newIsPartOf = [
-          { collectionName: "main", nodes: [{ id: currentNodeId }] },
+          {
+            collectionName: "main",
+            nodes: [{ id: currentNodeId, title: nodeData.title ?? "" }],
+          },
         ];
         await updateDoc(linkRef, {
           "properties.isPartOf": newIsPartOf,
@@ -1091,13 +1104,21 @@ const StructuredProperty = ({
             if (!updatedNewIsPartOf || updatedNewIsPartOf.length === 0) {
               updatedNewIsPartOf = [{ collectionName: "main", nodes: [] }];
             }
-            updatedNewIsPartOf[0].nodes.push({ id: currentVisibleNode.id });
+            updatedNewIsPartOf[0].nodes.push({
+              id: currentVisibleNode.id,
+              title: currentVisibleNode.title ?? "",
+            });
           }
         } else if (newPartData) {
           updatedNewIsPartOf = [
             {
               collectionName: "main",
-              nodes: [{ id: currentVisibleNode.id }],
+              nodes: [
+                {
+                  id: currentVisibleNode.id,
+                  title: currentVisibleNode.title ?? "",
+                },
+              ],
             },
           ];
         }

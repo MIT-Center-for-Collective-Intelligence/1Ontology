@@ -8,42 +8,30 @@ export const filterTreeForTargetNode = (tree: TreeData[], targetNodeId: string):
   const SIBLING_THRESHOLD = 10; // Number of siblings
   const WINDOW_SIZE = 5; // Show 5 nodes on each side of target
 
-  // First, find all paths to the target node
-  const pathsToTarget: string[][] = [];
-
-  const findPaths = (node: TreeData, currentPath: string[]): void => {
-    const newPath = [...currentPath, node.nodeId];
-
-    if (node.nodeId === targetNodeId) {
-      pathsToTarget.push(newPath);
-      return;
-    }
-
-    if (node.children) {
-      for (const child of node.children) {
-        findPaths(child, newPath);
+  /**
+   * Outline category folders reuse the parent's Firestore id as `nodeId` (see
+   * `buildOneLevelFromSpecializations`). Those rows must not be treated as "on the path"
+   * just because the ancestor id appears in the path — otherwise every category under the
+   * same parent matches and sibling windowing hides real peers (e.g. next to `unclassified`).
+   */
+  const subtreeContainsTarget = (node: TreeData, target: string): boolean => {
+    if ((node as any).isLoadMore) {
+      const allChildren = (node as any).allChildren as TreeData[] | undefined;
+      if (allChildren?.length) {
+        return allChildren.some((c) => subtreeContainsTarget(c, target));
       }
+      return false;
     }
+    if (!node.category && node.nodeId === target) return true;
+    if (!node.children?.length) return false;
+    return node.children.some((c) => subtreeContainsTarget(c, target));
   };
-
-  // Find all paths from roots
-  for (const rootNode of tree) {
-    findPaths(rootNode, []);
-  }
-
-  // Create a set of all node IDs that are in any path to target
-  const nodesInPathToTarget = new Set<string>();
-  for (const path of pathsToTarget) {
-    for (const nodeId of path) {
-      nodesInPathToTarget.add(nodeId);
-    }
-  }
 
   const filterChildren = (children: TreeData[], parentPath: string): TreeData[] => {
     // Find ALL children that are in the path to target
     const childrenInPathIndices: number[] = [];
     children.forEach((child, index) => {
-      if (nodesInPathToTarget.has(child.nodeId)) {
+      if (subtreeContainsTarget(child, targetNodeId)) {
         childrenInPathIndices.push(index);
       }
     });

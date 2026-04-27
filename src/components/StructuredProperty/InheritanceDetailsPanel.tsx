@@ -134,7 +134,9 @@ const InheritanceDetailsPanel: React.FC<InheritanceDetailsPanelProps> = ({
         let inheritedFromTitle = undefined;
 
         if (node.inheritance[property]?.ref) {
-          inheritedFromTitle = relatedNodes[node.inheritance[property].ref]?.title;
+          inheritedFromTitle =
+            relatedNodes[node.inheritance[property].ref]?.title ??
+            node.inheritance[property]?.title;
           actualValue = resolvePropertyValue(
             node.inheritance[property].ref,
             property,

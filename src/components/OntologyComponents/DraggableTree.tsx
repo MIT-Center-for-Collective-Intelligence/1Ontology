@@ -27,6 +27,7 @@ import { NODES } from "@components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
 import { FillFlexParent } from "./fill-flex-parent";
 import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
+import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
 
 const INDENT_STEP = 15;
 const INITIAL_LOAD_COUNT = 20;
@@ -962,6 +963,7 @@ function DraggableTree({
           // Insert into target collection
           specializations[toCollectionIdx].nodes.splice(toFirestoreIndex, 0, {
             id: draggedNodes[0].nodeId,
+            title: nodes[draggedNodes[0].nodeId]?.title ?? "",
           });
 
           await updateDoc(nodeRef, { specializations });
@@ -1024,6 +1026,7 @@ function DraggableTree({
 
       newGeneralizations[0].nodes.push({
         id: toParent.nodeId,
+        title: nodes[toParent.nodeId]?.title ?? "",
       });
 
       const docRef = doc(collection(db, NODES), specializationId);
@@ -1067,6 +1070,7 @@ function DraggableTree({
 
         specializations[targetCollectionIndex].nodes.splice(args.index, 0, {
           id: specializationId,
+          title: nodes[specializationId]?.title ?? "",
         });
 
         await updateDoc(doc(collection(db, NODES), toParent.nodeId), {
@@ -1142,6 +1146,11 @@ function DraggableTree({
         specializationData,
         nodes,
       );
+      await triggerUpdateDerivedPaths([
+        specializationId,
+        toParent.nodeId,
+        generalizationId,
+      ]);
     } catch (error) {
       console.error(error);
     }
@@ -1196,12 +1205,14 @@ function DraggableTree({
           className={clsx(styles.node, styles.loadMoreNode)}
           id={node.data.id}
           sx={{
+            // Keep the same left footprint as normal nodes so indent guides align.
             px: 0.75,
             py: 0.35,
             display: "flex",
             alignItems: "center",
             gap: 1,
             opacity: 0.95,
+            borderLeft: "2px solid transparent",
           }}
         >
           <Box className={styles.indentLines}>
@@ -1265,8 +1276,10 @@ function DraggableTree({
               transition: "background-color 0.2s ease",
               borderRadius: "8px",
               minHeight: "24px",
-              px: 0.5,
+              // Match normal node padding/border so indent guides align with content.
+              px: 0.75,
               userSelect: "none",
+              borderLeft: "2px solid transparent",
               "&:hover": {
                 backgroundColor: isLoading
                   ? "transparent"
@@ -1512,6 +1525,7 @@ function DraggableTree({
             alignItems: "center",
             flexWrap: "wrap",
             zIndex: 1,
+            width: "95%",
             backgroundColor: (theme) =>
               theme.palette.mode === "dark"
                 ? "rgba(48, 49, 52, 0.96)"

@@ -174,7 +174,12 @@ const NumericProperty = ({
 
         const updateData = {
           [`properties.${property}`]: newPropertyValue,
-          ...(reference ? { [`inheritance.${property}.ref`]: null } : {}),
+          ...(reference
+            ? {
+                [`inheritance.${property}.ref`]: null,
+                [`inheritance.${property}.title`]: "",
+              }
+            : {}),
         };
 
         await updateDoc(nodeRef, updateData);

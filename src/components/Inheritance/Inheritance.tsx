@@ -81,6 +81,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes, fetchNod
           objectUpdate = {
             ...objectUpdate,
             [`inheritance.${property}.ref`]: null,
+            [`inheritance.${property}.title`]: "",
           };
           if (referenceId && referenceId !== null) {
             // lookup reference value
@@ -96,6 +97,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes, fetchNod
                 ...objectUpdate,
                 [`properties.${property}`]: referenceValue,
                 [`inheritance.${property}.ref`]: null,
+                [`inheritance.${property}.title`]: "",
               };
             }
           }
@@ -103,6 +105,7 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes, fetchNod
           objectUpdate = {
             ...objectUpdate,
             [`inheritance.${property}.ref`]: ref,
+            [`inheritance.${property}.title`]: selectedNode.title ?? "",
           };
         }
 
@@ -211,7 +214,10 @@ const Inheritance: React.FC<InheritanceProps> = ({ selectedNode, nodes, fetchNod
               </Typography>
             </Box>
             <Box sx={{ padding: 2 }}>
-              <FormControl component="fieldset" disabled={!user?.manageLock}>
+              <FormControl
+                component="fieldset"
+                disabled={!user?.manageLock || user?.claims?.editAccess === false}
+              >
                 <RadioGroup
                   value={inheritanceState[key]}
                   onChange={(e) => handleInheritanceChange(key, e)}

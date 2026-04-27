@@ -179,6 +179,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
           await updateDoc(nodeRef, {
             "properties.images": previousImages,
             "inheritance.images.ref": null,
+            "inheritance.images.title": "",
           });
           updateInheritance({
             nodeId,
@@ -335,6 +336,7 @@ export const NodeImageManager: React.FC<NodeImageManagerProps> = ({
           await updateDoc(nodeRef, {
             "properties.images": previousImages,
             "inheritance.images.ref": null,
+            "inheritance.images.title": "",
           });
           updateInheritance({
             nodeId,

@@ -53,6 +53,8 @@ export type ICollection = {
 export type IInheritance = {
   [key: string]: {
     ref: string | null;
+    /** Display title of the node in `ref` (empty when `ref` is null). */
+    title: string;
     inheritanceType:
       | "neverInherit"
       | "alwaysInherit"

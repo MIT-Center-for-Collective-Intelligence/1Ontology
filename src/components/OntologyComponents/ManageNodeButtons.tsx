@@ -219,7 +219,7 @@ const ManageNodeButtons = ({
             />
           </IconButton>
         </Tooltip>
-        {!locked && !unclassified && (
+        {!locked && !unclassified && user?.claims.editAccess && (
           <Tooltip title="Delete Node">
             <IconButton onClick={() => deleteNode()}>
               <DeleteIcon />
@@ -346,7 +346,7 @@ const ManageNodeButtons = ({
             Edit Node {enableEdit ? "On" : "Off"}
           </ToggleButton>
         )}
-        {(locked || manageLock) && (
+        {(locked || manageLock) && user?.claims.editAccess && (
           <Tooltip
             title={
               !manageLock

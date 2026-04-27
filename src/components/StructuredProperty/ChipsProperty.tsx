@@ -127,6 +127,7 @@ const ChipsProperty = ({
       await updateDoc(nodeRef, {
         [`properties.${property}`]: newValue.map((c) => c.title),
         [`inheritance.${property}.ref`]: null,
+        [`inheritance.${property}.title`]: "",
       });
       if (!!currentVisibleNode.inheritance[property]?.ref) {
         await updateInheritance({

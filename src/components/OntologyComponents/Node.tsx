@@ -138,6 +138,7 @@ import { Post } from "@components/lib/utils/Post";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
 import { addLinkToNode, removeLinkFromNode } from "@components/lib/utils/instantTreeUpdate";
 import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
+import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
 
 type INodeProps = {
   currentVisibleNode: INode;
@@ -635,6 +636,7 @@ const Node = ({
         const inheritance = generateInheritance(
           parentNodeData.inheritance,
           nodeId,
+          parentNodeData.title ?? "",
         );
 
         // Create the new node object
@@ -660,11 +662,17 @@ const Node = ({
             if (mainIdx === -1) {
               newNode.properties.isPartOf.push({
                 collectionName: "main",
-                nodes: [{ id: currentVisibleNode?.id }],
+                nodes: [
+                  {
+                    id: currentVisibleNode?.id,
+                    title: currentVisibleNode?.title ?? "",
+                  },
+                ],
               });
             } else {
               newNode.properties.isPartOf[mainIdx].nodes.push({
                 id: currentVisibleNode?.id,
+                title: currentVisibleNode?.title ?? "",
               });
             }
           }
@@ -680,11 +688,17 @@ const Node = ({
             if (mainIdx === -1) {
               newNode.properties.parts.push({
                 collectionName: "main",
-                nodes: [{ id: currentVisibleNode?.id }],
+                nodes: [
+                  {
+                    id: currentVisibleNode?.id,
+                    title: currentVisibleNode?.title ?? "",
+                  },
+                ],
               });
             } else {
               newNode.properties.parts[mainIdx].nodes.push({
                 id: currentVisibleNode?.id,
+                title: currentVisibleNode?.title ?? "",
               });
             }
           }
@@ -704,6 +718,7 @@ const Node = ({
             if (alreadyExistIndex === -1) {
               newNode.generalizations[0].nodes.push({
                 id: currentVisibleNode?.id,
+                title: currentVisibleNode?.title ?? "",
               });
             }
           }
@@ -716,6 +731,7 @@ const Node = ({
             if (alreadyExistIndex === -1) {
               newNode.specializations[0].nodes.push({
                 id: currentVisibleNode?.id,
+                title: currentVisibleNode?.title ?? "",
               });
             }
           }
@@ -758,7 +774,10 @@ const Node = ({
             const propertyCollectionToUpdate = newNode.properties[
               mProperty
             ].find((collection) => collection.collectionName === "main");
-            propertyCollectionToUpdate?.nodes.push({ id: newNode.id });
+            propertyCollectionToUpdate?.nodes.push({
+              id: newNode.id,
+              title: newNode.title ?? "",
+            });
             if (!newNode.propertyOf) {
               newNode.propertyOf = {
                 [mProperty]: [{ collectionName: "main", nodes: [] }],
@@ -771,6 +790,7 @@ const Node = ({
             }
             newNode.propertyOf[mProperty][0].nodes.push({
               id: newNode.id,
+              title: newNode.title ?? "",
             });
 
             if (newNode.inheritance[mProperty]?.ref) {
@@ -794,7 +814,10 @@ const Node = ({
                 if (mProperty === "parts" || mProperty === "isPartOf") {
                   updatePartsAndPartsOf(
                     links,
-                    { id: currentVisibleNode?.id },
+                    {
+                      id: currentVisibleNode?.id,
+                      title: currentVisibleNode?.title ?? "",
+                    },
                     mProperty === "parts" ? "isPartOf" : "parts",
                     db,
                     relatedNodes,
@@ -815,6 +838,7 @@ const Node = ({
               let updateObject: any = {
                 [`properties.${mProperty}`]: newNode.properties[mProperty],
                 [`inheritance.${mProperty}.ref`]: null,
+                [`inheritance.${mProperty}.title`]: "",
               };
               const reference = newNode.inheritance[mProperty]?.ref;
               if (reference) {
@@ -873,7 +897,12 @@ const Node = ({
 
         setCloning(null);
         // Update the parent node's specializations
-        await updateSpecializations(parentNodeData, newNodeRef.id, collectionName);
+        await updateSpecializations(
+          parentNodeData,
+          newNodeRef.id,
+          collectionName,
+          newNode.title ?? "",
+        );
 
         // Update the original parent node
         await updateDoc(parentNodeRef, {
@@ -1038,9 +1067,19 @@ const Node = ({
           return;
         }
 
-        const addedLinks = new Array(...addedElements).map((l) => ({
-          id: l,
-        }));
+        const getTitleFromCacheOrDb = async (id: string) => {
+          const cached = relatedNodes[id]?.title;
+          if (cached) return cached;
+          const fetched = await fetchNode(id);
+          return fetched?.title || "";
+        };
+
+        const addedLinks = await Promise.all(
+          new Array(...addedElements).map(async (l) => ({
+            id: l,
+            title: await getTitleFromCacheOrDb(l),
+          })),
+        );
         const removedLinks = new Array(...removedElements).map((l) => ({
           id: l,
         }));
@@ -1096,7 +1135,12 @@ const Node = ({
         addedElements = addedElements.filter((id) => !allExistingIds.has(id));
 
         newValue[collectionIdx].nodes.push(
-          ...addedElements.map((id) => ({ id })),
+          ...(await Promise.all(
+            addedElements.map(async (id) => ({
+              id,
+              title: await getTitleFromCacheOrDb(id),
+            })),
+          )),
         );
         const nodesLength = previousValue
           ?.flatMap((c) => c.nodes)
@@ -1124,9 +1168,9 @@ const Node = ({
           selectedProperty === "specializations" ||
           selectedProperty === "generalizations"
         ) {
-          updateLinks(
+          await updateLinks(
             new Array(...addedElements),
-            { id: nodeId },
+            { id: nodeId, title: nodeData.title ?? "" },
             selectedProperty === "specializations"
               ? "generalizations"
               : "specializations",
@@ -1140,14 +1184,15 @@ const Node = ({
 
         // Update parts/isPartOf links
         if (selectedProperty === "parts" || selectedProperty === "isPartOf") {
-          const addedLinks = new Array(...addedElements).map((lId) => {
-            return {
+          const addedPartLinks = await Promise.all(
+            new Array(...addedElements).map(async (lId) => ({
               id: lId,
-            };
-          });
+              title: await getTitleFromCacheOrDb(lId),
+            })),
+          );
           updatePartsAndPartsOf(
-            addedLinks,
-            { id: nodeId },
+            addedPartLinks,
+            { id: nodeId, title: nodeData.title ?? "" },
             selectedProperty === "parts" ? "isPartOf" : "parts",
             db,
             relatedNodes,
@@ -1217,6 +1262,7 @@ const Node = ({
               }
             }
             nodeData.inheritance[selectedProperty].ref = null;
+            nodeData.inheritance[selectedProperty].title = "";
           }
         }
 
@@ -1246,6 +1292,18 @@ const Node = ({
 
         // Update the node document in the database
         await updateDoc(nodeDoc.ref, nodeData);
+        if (
+          selectedProperty === "specializations" ||
+          selectedProperty === "generalizations"
+        ) {
+          const seeds = [nodeId, ...addedElements, ...removedElements].filter(
+            (x): x is string => Boolean(x),
+          );
+          const seen = new Set<string>();
+          await triggerUpdateDerivedPaths(
+            seeds.filter((id) => (seen.has(id) ? false : (seen.add(id), true))),
+          );
+        }
         //the user modified generalizations
         if (selectedProperty === "generalizations") {
           const currentNewLinks = newValue[0].nodes;
@@ -1317,8 +1375,9 @@ const Node = ({
                 nodeId,
                 addedId,
                 selectedProperty,
-                selectedCollection || 'main',
-                relatedNodes
+                selectedCollection || "main",
+                relatedNodes,
+                relatedNodes[addedId]?.title,
               );
             }
 

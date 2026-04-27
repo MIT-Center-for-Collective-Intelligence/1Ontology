@@ -85,9 +85,9 @@ const ChatInput = ({
       maxHeight: "300px",
     },
     control: {
-      fontSize: 16,
-      padding: "10px",
-      boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.1)",
+      fontSize: 14,
+      padding: "8px",
+      boxShadow: "none",
       border: "none",
       overflow: "hidden",
       minHeight: "5px",
@@ -97,12 +97,12 @@ const ChatInput = ({
     },
     input: {
       overflow: "auto",
-      fontSize: 16,
+      fontSize: 14,
       border: "none",
       outline: "none",
       width: "100%",
       color: theme.palette.mode === "dark" ? "white" : "black",
-      padding: "15px",
+      padding: "12px",
       paddingBottom: "0px",
       fontFamily: "system-ui",
       minHeight: "40px",
@@ -242,15 +242,14 @@ const ChatInput = ({
   return (
     <Box
       sx={{
-        border: (theme) =>
-          `solid 1px ${
-            theme.palette.mode === "light"
-              ? DESIGN_SYSTEM_COLORS.gray300
-              : "gray"
-          }`,
+        border: "none",
         borderRadius: "10px",
         backgroundColor: (theme) =>
-          theme.palette.mode === "dark" ? "#363636" : "#d4d6d7",
+          theme.palette.mode === "dark" ? "rgba(54,54,54,0.9)" : "#d4d6d7",
+        boxShadow: (theme) =>
+          theme.palette.mode === "dark"
+            ? "0 6px 14px rgba(0,0,0,0.2)"
+            : "0 6px 14px rgba(15, 28, 59, 0.07)",
         ...SCROLL_BAR_STYLE,
         pb: 0,
       }}
@@ -268,8 +267,8 @@ const ChatInput = ({
             input: {
               disableUnderline: true,
               style: {
-                fontSize: 16,
-                padding: "15px",
+                fontSize: 14,
+                padding: "12px",
                 paddingBottom: "0px",
                 fontFamily: "system-ui",
                 color: theme.palette.mode === "dark" ? "white" : "black",

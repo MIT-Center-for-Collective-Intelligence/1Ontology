@@ -67,6 +67,7 @@ import {
   ListSubheader,
   MenuItem,
   Select,
+  Skeleton,
   Switch,
   Tab,
   Tabs,
@@ -309,6 +310,167 @@ const fetchRootNode = async (
   }
 };
 
+const TreeOutlineSkeleton = () => {
+  const indentPx = 18;
+  const rowH = 30;
+
+  const lineColor = (theme: any) =>
+    theme.palette.mode === "dark"
+      ? "rgba(255,255,255,0.10)"
+      : "rgba(0,0,0,0.10)";
+
+  // Hand-tuned outline that reads like a real expanded tree.
+  // `lines` indicates which ancestor columns should keep a vertical line.
+  const rows: Array<{
+    depth: number;
+    lines: boolean[];
+    width: string;
+    hasToggle?: boolean;
+  }> = [
+    { depth: 0, lines: [], width: "62%", hasToggle: true },
+    { depth: 1, lines: [true], width: "54%", hasToggle: true },
+    { depth: 2, lines: [true, true], width: "68%", hasToggle: true },
+    { depth: 3, lines: [true, true, true], width: "56%", hasToggle: true },
+    { depth: 4, lines: [true, true, true, true], width: "48%" },
+    { depth: 4, lines: [true, true, true, true], width: "70%" },
+    { depth: 3, lines: [true, true, true], width: "52%" },
+    { depth: 2, lines: [true, true], width: "64%", hasToggle: true },
+    { depth: 3, lines: [true, true, true], width: "46%" },
+    { depth: 3, lines: [true, true, true], width: "58%" },
+    { depth: 1, lines: [true], width: "60%", hasToggle: true },
+    { depth: 2, lines: [true, true], width: "50%" },
+    { depth: 2, lines: [true, true], width: "72%" },
+    { depth: 0, lines: [], width: "55%", hasToggle: true },
+    // Extra rows to better fill the panel while loading
+    { depth: 1, lines: [true], width: "63%" },
+    { depth: 2, lines: [true, true], width: "47%", hasToggle: true },
+    { depth: 3, lines: [true, true, true], width: "69%" },
+    { depth: 4, lines: [true, true, true, true], width: "52%" },
+    { depth: 3, lines: [true, true, true], width: "60%" },
+    { depth: 2, lines: [true, true], width: "57%" },
+    { depth: 1, lines: [true], width: "49%", hasToggle: true },
+    { depth: 2, lines: [true, true], width: "66%" },
+    { depth: 0, lines: [], width: "58%" },
+  ];
+
+  return (
+    <Box sx={{ px: 1, pt: 1, minHeight: "70vh" }}>
+      {rows.map((r, i) => (
+        <Box
+          key={i}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            height: `${rowH}px`,
+          }}
+        >
+          {/* Connector columns */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "stretch",
+              width: `${r.depth * indentPx}px`,
+              height: "100%",
+              flex: "0 0 auto",
+            }}
+          >
+            {new Array(r.depth).fill(0).map((_, colIdx) => {
+              const showVertical = r.lines[colIdx];
+              const isLastCol = colIdx === r.depth - 1;
+              return (
+                <Box
+                  key={colIdx}
+                  sx={{
+                    position: "relative",
+                    width: `${indentPx}px`,
+                    height: "100%",
+                    flex: "0 0 auto",
+                    "&::before": showVertical
+                      ? {
+                          content: '""',
+                          position: "absolute",
+                          left: "50%",
+                          top: 0,
+                          bottom: 0,
+                          width: "1px",
+                          transform: "translateX(-0.5px)",
+                          backgroundColor: lineColor,
+                        }
+                      : undefined,
+                    "&::after": isLastCol
+                      ? {
+                          content: '""',
+                          position: "absolute",
+                          left: "50%",
+                          top: "50%",
+                          width: "10px",
+                          height: "1px",
+                          transform: "translateY(-0.5px)",
+                          backgroundColor: lineColor,
+                        }
+                      : undefined,
+                  }}
+                />
+              );
+            })}
+          </Box>
+
+          {/* Toggle placeholder (like expand/collapse chevron) */}
+          <Box sx={{ width: 18, mr: 0.75, flex: "0 0 auto" }}>
+            {r.hasToggle ? (
+              <Skeleton
+                variant="rounded"
+                width={14}
+                height={14}
+                animation="wave"
+                sx={{
+                  borderRadius: "4px",
+                  bgcolor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.06)"
+                      : "rgba(0,0,0,0.06)",
+                }}
+              />
+            ) : (
+              <Box sx={{ width: 14, height: 14 }} />
+            )}
+          </Box>
+
+          {/* Node bullet */}
+          <Skeleton
+            variant="circular"
+            width={12}
+            height={12}
+            animation="wave"
+            sx={{
+              mr: 1,
+              bgcolor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "rgba(255,255,255,0.08)"
+                  : "rgba(0,0,0,0.08)",
+            }}
+          />
+
+          {/* Label */}
+          <Skeleton
+            variant="rounded"
+            height={16}
+            width={r.width}
+            animation="wave"
+            sx={{
+              borderRadius: "10px",
+              bgcolor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "rgba(255,255,255,0.08)"
+                  : "rgba(0,0,0,0.08)",
+            }}
+          />
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
 const Ontology = ({
   skillsFuture = false,
   appName,
@@ -401,6 +563,7 @@ const Ontology = ({
   const [pathOutlineMessage, setPathOutlineMessage] = useState<string | null>(
     null,
   );
+  const [isLoadingOutline, setIsLoadingOutline] = useState<boolean>(true);
   const [sidebarSearchValue, setSidebarSearchValue] = useState("");
   const [isLoadingNodeDetails, setIsLoadingNodeDetails] = useState(false);
   const [navigationError, setNavigationError] = useState<{
@@ -516,14 +679,16 @@ const Ontology = ({
     if (!currentVisibleNode?.id) {
       setCurrentNodeTreeData([]);
       setPathOutlineMessage(null);
+      setIsLoadingOutline(false);
       return;
     }
+    setIsLoadingOutline(true);
     const focused = currentVisibleNode;
-    if (!focused.pathIds?.length && !focused.primaryParentId) {
+    /*     if (!focused.pathIds?.length && !focused.primaryParentId) {
       setPathOutlineMessage("No root path found");
     } else {
       setPathOutlineMessage(null);
-    }
+    } */
     try {
       const { pathIds } = await resolvePathIds(focused, (id) =>
         fetchSingleNode(db, id, appName),
@@ -586,6 +751,8 @@ const Ontology = ({
       setCurrentNodeTreeData(filtered);
     } catch {
       setCurrentNodeTreeData([]);
+    } finally {
+      setIsLoadingOutline(false);
     }
   }, [appName, currentVisibleNode, db]);
 
@@ -862,7 +1029,7 @@ const Ontology = ({
         const currentHash = window.location.hash;
 
         // Hashes ending in "/navigate" belong to the navigator view
-        // Ignore them here so we don't try to fetch "<id>/navigate" as a node id 
+        // Ignore them here so we don't try to fetch "<id>/navigate" as a node id
         if (currentHash.endsWith("/navigate")) {
           return;
         }
@@ -1982,6 +2149,9 @@ const Ontology = ({
   const openSearchedNode = useCallback(
     (node: INode, searched = true) => {
       try {
+        // Clear outline tree filter (react-arborist `searchTerm`); leftover query
+        // from the search box would otherwise hide every outline row.
+        setSidebarSearchValue("");
         // Set the clicked node as the open currentVisibleNode
         // setCurrentVisibleNode(node);
 
@@ -2510,23 +2680,27 @@ const Ontology = ({
                 {pathOutlineMessage}
               </Typography>
             )}
-            <DraggableTree
-              treeViewData={currentNodeTreeData}
-              setSnackbarMessage={setSnackbarMessage}
-              treeRef={treeRef}
-              currentVisibleNode={currentVisibleNode}
-              nodes={relatedNodes}
-              onOpenNodesTree={(nodeId: string) => {
-                onOpenNodesTree(nodeId);
-                // Don't close tree on node selection to allow parallel browsing
-              }}
-              skillsFuture={skillsFuture}
-              specializationNumsUnder={specializationNumsUnder}
-              skillsFutureApp={appName}
-              nodesWithComments={nodesWithComments}
-              onOutlineNodeOpen={handleOutlineNodeOpen}
-              searchTerm={sidebarSearchValue}
-            />
+            {isLoadingOutline && currentNodeTreeData.length === 0 ? (
+              <TreeOutlineSkeleton />
+            ) : (
+              <DraggableTree
+                treeViewData={currentNodeTreeData}
+                setSnackbarMessage={setSnackbarMessage}
+                treeRef={treeRef}
+                currentVisibleNode={currentVisibleNode}
+                nodes={relatedNodes}
+                onOpenNodesTree={(nodeId: string) => {
+                  onOpenNodesTree(nodeId);
+                  // Don't close tree on node selection to allow parallel browsing
+                }}
+                skillsFuture={skillsFuture}
+                specializationNumsUnder={specializationNumsUnder}
+                skillsFutureApp={appName}
+                nodesWithComments={nodesWithComments}
+                onOutlineNodeOpen={handleOutlineNodeOpen}
+                searchTerm={sidebarSearchValue}
+              />
+            )}
           </Box>
         </Box>
       )}
@@ -2640,83 +2814,13 @@ const Ontology = ({
           >
             <Box
               sx={{
-                height: "100vh",
-                marginTop: "200px",
-                flexGrow: 1,
-                overflow: "auto",
-                ...SCROLL_BAR_STYLE,
-                "&::-webkit-scrollbar": {
-                  display: "none",
-                },
-              }}
-            >
-              <TabPanel
-                value={viewValue}
-                index={0}
-                sx={{
-                  height: "100%",
-                  overflowX: "auto",
-                  whiteSpace: "nowrap",
-                  "&::-webkit-scrollbar": {
-                    display: "none",
-                  },
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "inline-block",
-                    minWidth: "100%",
-                  }}
-                >
-                  {pathOutlineMessage && (
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block", px: 1, py: 0.5 }}
-                    >
-                      {pathOutlineMessage}
-                    </Typography>
-                  )}
-                  <DraggableTree
-                    treeViewData={currentNodeTreeData}
-                    setSnackbarMessage={setSnackbarMessage}
-                    treeRef={treeRef}
-                    currentVisibleNode={currentVisibleNode}
-                    nodes={relatedNodes}
-                    onOpenNodesTree={onOpenNodesTree}
-                    skillsFuture={skillsFuture}
-                    specializationNumsUnder={specializationNumsUnder}
-                    skillsFutureApp={appName}
-                    onInstantTreeUpdate={handleInstantTreeUpdate}
-                    onExpandEllipsis={handleExpandEllipsis}
-                    nodesWithComments={nodesWithComments}
-                    onOutlineNodeOpen={handleOutlineNodeOpen}
-                    searchTerm={sidebarSearchValue}
-                  />
-                </Box>
-              </TabPanel>
-              <TabPanel value={viewValue} index={1}>
-                <GraphView
-                  treeData={currentNodeTreeData}
-                  setExpandedNodes={setExpandedNodes}
-                  expandedNodes={expandedNodes}
-                  onOpenNodeDagre={onOpenNodeDagre}
-                  currentVisibleNode={currentVisibleNode}
-                />
-              </TabPanel>
-            </Box>
-
-            <Box
-              sx={{
-                position: "absolute",
-                top: 0,
                 width: "100%",
                 backgroundColor: (theme) =>
                   theme.palette.mode === "dark" ? "#191c21" : "#eaecf0",
               }}
             >
               {" "}
-              {skillsFuture && (
+              {skillsFuture && user?.claims.editAccess && (
                 <Box sx={{ m: "10px", mb: "0px", p: 0 }}>
                   <FormControl
                     variant="outlined"
@@ -2752,17 +2856,51 @@ const Ontology = ({
                             px: 1.5,
                             border: "1.5px solid gray",
                             borderRadius: "25px",
+                            pb: "15px",
                           },
                         },
                       }}
                     >
-                      {ONTOLOGY_APPS.map(({ id, name }) => (
+                      {ontologyAppsTopGroup.map(({ id, name }) => (
                         <MenuItem
                           key={id}
                           value={id}
                           sx={{
                             borderRadius: "25px",
                             mt: "3px",
+                            border: "1px solid gray",
+                            background:
+                              "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
+                            fontSize: "15px",
+                            fontWeight: appName === id ? "bold" : "400",
+                            color:
+                              appName === id
+                                ? (theme) =>
+                                    theme.palette.mode === "light"
+                                      ? "#FF6600"
+                                      : "orange"
+                                : "",
+                          }}
+                        >
+                          {name}
+                        </MenuItem>
+                      ))}
+                      {ontologyAppsOtherGroup.length > 0 && (
+                        <ListSubheader
+                          disableSticky
+                          sx={{ fontSize: "16px", mt: "12px" }}
+                        >
+                          Other Ontologies:
+                        </ListSubheader>
+                      )}
+                      {ontologyAppsOtherGroup.map(({ id, name }) => (
+                        <MenuItem
+                          key={id}
+                          value={id}
+                          sx={{
+                            borderRadius: "25px",
+                            mt: "3px",
+                            mx: "13px",
                             border: "1px solid gray",
                             background:
                               "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
@@ -2800,9 +2938,9 @@ const Ontology = ({
                 onChange={handleViewChange}
                 sx={{
                   width: "100%",
-                  minHeight: "68px",
-                  height: "68px",
-                  p: 0.5,
+                  minHeight: "50px",
+                  height: "50px",
+                  p: 0.25,
                   borderRadius: "999px",
                   display: "flex",
                   alignItems: "center",
@@ -2820,14 +2958,14 @@ const Ontology = ({
                     width: "100%",
                   },
                   "& .MuiTabs-flexContainer": {
-                    gap: "8px",
+                    gap: "6px",
                     alignItems: "center",
                     width: "100%",
                   },
                   "& .MuiTab-root": {
                     top: "1px",
                   },
-                  px: "10px",
+                  px: "8px",
                 }}
               >
                 <Tab
@@ -2837,11 +2975,11 @@ const Ontology = ({
                     flex: 1,
                     minWidth: 0,
                     maxWidth: "none",
-                    minHeight: "52px",
-                    height: "52px",
+                    minHeight: "38px",
+                    height: "38px",
                     p: 0,
                     textTransform: "none",
-                    fontSize: "19px",
+                    fontSize: "15px",
                     fontWeight: 700,
                     lineHeight: 1,
                     display: "flex",
@@ -2883,11 +3021,11 @@ const Ontology = ({
                     flex: 1,
                     minWidth: 0,
                     maxWidth: "none",
-                    minHeight: "52px",
-                    height: "52px",
+                    minHeight: "38px",
+                    height: "38px",
                     p: 0,
                     textTransform: "none",
-                    fontSize: "19px",
+                    fontSize: "15px",
                     fontWeight: 700,
                     lineHeight: 1,
                     display: "flex",
@@ -2923,6 +3061,76 @@ const Ontology = ({
                   }}
                 />
               </Tabs>
+            </Box>
+
+            <Box
+              sx={{
+                flexGrow: 1,
+                overflow: "auto",
+                ...SCROLL_BAR_STYLE,
+                "&::-webkit-scrollbar": {
+                  display: "none",
+                },
+              }}
+            >
+              <TabPanel
+                value={viewValue}
+                index={0}
+                sx={{
+                  height: "100%",
+                  overflowX: "auto",
+                  whiteSpace: "nowrap",
+                  "&::-webkit-scrollbar": {
+                    display: "none",
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "inline-block",
+                    minWidth: "100%",
+                  }}
+                >
+                  {pathOutlineMessage && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: "block", px: 1, py: 0.5 }}
+                    >
+                      {pathOutlineMessage}
+                    </Typography>
+                  )}
+                  {isLoadingOutline && currentNodeTreeData.length === 0 ? (
+                    <TreeOutlineSkeleton />
+                  ) : (
+                    <DraggableTree
+                      treeViewData={currentNodeTreeData}
+                      setSnackbarMessage={setSnackbarMessage}
+                      treeRef={treeRef}
+                      currentVisibleNode={currentVisibleNode}
+                      nodes={relatedNodes}
+                      onOpenNodesTree={onOpenNodesTree}
+                      skillsFuture={skillsFuture}
+                      specializationNumsUnder={specializationNumsUnder}
+                      skillsFutureApp={appName}
+                      onInstantTreeUpdate={handleInstantTreeUpdate}
+                      onExpandEllipsis={handleExpandEllipsis}
+                      nodesWithComments={nodesWithComments}
+                      onOutlineNodeOpen={handleOutlineNodeOpen}
+                      searchTerm={sidebarSearchValue}
+                    />
+                  )}
+                </Box>
+              </TabPanel>
+              <TabPanel value={viewValue} index={1}>
+                <GraphView
+                  treeData={currentNodeTreeData}
+                  setExpandedNodes={setExpandedNodes}
+                  expandedNodes={expandedNodes}
+                  onOpenNodeDagre={onOpenNodeDagre}
+                  currentVisibleNode={currentVisibleNode}
+                />
+              </TabPanel>
             </Box>
           </Section>
         )}

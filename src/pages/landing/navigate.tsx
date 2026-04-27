@@ -29,7 +29,7 @@ import {
 } from "firebase/firestore";
 import NodeCompass from "../../components/NodBody/NodeCompass";
 import NodeGraph from "../../components/NodBody/NodeGraph";
-import AiPanel from "./_components/AiPanel";
+import { AiPanel } from "./_components/AiPanel";
 import type { ICollection, INode } from "../../types/INode";
 import { NODES } from "../../lib/firestoreClient/collections";
 
@@ -1114,3 +1114,5 @@ export const NavigateLandingSection = ({
     </Box>
   );
 };
+
+export default NavigateLandingSection;

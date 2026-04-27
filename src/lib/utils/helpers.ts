@@ -319,6 +319,7 @@ export const updateInheritance = async ({
       ObjectUpdates = {
         ...ObjectUpdates,
         [`inheritance.${property}.ref`]: null,
+        [`inheritance.${property}.title`]: "",
       };
     }
     for (let property of deletedProperties) {
@@ -336,6 +337,7 @@ export const updateInheritance = async ({
 
     // Recursively update specializations
     if (nodeData) {
+      const inheritanceRefTitle = (nodeData as INode).title ?? "";
       batch = await recursivelyUpdateSpecializations({
         nodeId: nodeId,
         updatedProperties,
@@ -345,6 +347,7 @@ export const updateInheritance = async ({
         batch,
         inheritanceType: nodeData.inheritance,
         generalizationId: nodeId,
+        inheritanceRefTitle,
         db,
       });
     }
@@ -382,6 +385,7 @@ const recursivelyUpdateSpecializations = async ({
   batch,
   inheritanceType,
   generalizationId,
+  inheritanceRefTitle = "",
   db,
   nestedCall = false,
 }: {
@@ -397,6 +401,8 @@ const recursivelyUpdateSpecializations = async ({
   batch: WriteBatch;
   inheritanceType: IInheritance;
   generalizationId: string | null;
+  /** Title of the node identified by `generalizationId`; empty when ref is null. */
+  inheritanceRefTitle?: string;
   db: any;
   nestedCall?: boolean;
 }): Promise<any> => {
@@ -414,6 +420,7 @@ const recursivelyUpdateSpecializations = async ({
         if (!inheritanceType[p]) {
           inheritanceType[p] = {
             ref: null,
+            title: "",
             inheritanceType: "inheritUnlessAlreadyOverRidden",
           };
         }
@@ -442,6 +449,7 @@ const recursivelyUpdateSpecializations = async ({
         editedProperties,
         addedProperties,
         generalizationId,
+        inheritanceRefTitle,
         nodeData,
         db,
       );
@@ -460,6 +468,7 @@ const recursivelyUpdateSpecializations = async ({
         nestedCall: true,
         inheritanceType: inheritance,
         generalizationId,
+        inheritanceRefTitle,
         db,
       });
     }
@@ -482,6 +491,7 @@ const updateProperty = async (
     propertyValue: any;
   }[],
   inheritanceRef: string | null,
+  inheritanceRefTitle: string,
   nodeData: INode,
   db: any,
 ) => {
@@ -490,6 +500,9 @@ const updateProperty = async (
     ObjectUpdates = {
       ...ObjectUpdates,
       [`inheritance.${property}.ref`]: inheritanceRef,
+      [`inheritance.${property}.title`]: inheritanceRef
+        ? inheritanceRefTitle
+        : "",
     };
   }
   for (let property of deletedProperties) {
@@ -507,6 +520,7 @@ const updateProperty = async (
       [`inheritance.${property.propertyName}`]: {
         inheritanceType: "inheritUnlessAlreadyOverRidden",
         ref: inheritanceRef,
+        title: inheritanceRef ? inheritanceRefTitle : "",
       },
       [`properties.${property.propertyName}`]: property.propertyValue,
     };
@@ -525,7 +539,11 @@ const updateProperty = async (
     updatedEditedProperty = true;
     const propertyValue = nodeData.properties[previousValue];
     const propertyType = nodeData.propertyType[previousValue];
-    const inheritanceValue = nodeData.inheritance[previousValue];
+    const rawInheritance = nodeData.inheritance[previousValue];
+    const inheritanceValue = {
+      ...rawInheritance,
+      title: rawInheritance?.title ?? "",
+    };
 
     ObjectUpdates = {
       ...ObjectUpdates,
@@ -746,11 +764,16 @@ export const checkIfCanDeleteANode = (
 export const generateInheritance = (
   inheritance: IInheritance,
   currentNodeId: string,
+  currentNodeTitle: string = "",
 ) => {
   const newInheritance = JSON.parse(JSON.stringify({ ...inheritance }));
   for (let property in newInheritance) {
+    if (newInheritance[property].title === undefined) {
+      newInheritance[property].title = "";
+    }
     if (!newInheritance[property].ref && property !== "isPartOf") {
       newInheritance[property].ref = currentNodeId;
+      newInheritance[property].title = currentNodeTitle;
     }
   }
   return newInheritance;
@@ -769,6 +792,12 @@ export const createNewNode = (
 ): INode => {
   const updatedProperties: { [key: string]: any } = {};
   const updatedInheritance: IInheritance = { ...inheritance };
+  for (const key of Object.keys(updatedInheritance)) {
+    const entry = updatedInheritance[key];
+    if (entry && entry.title === undefined) {
+      entry.title = "";
+    }
+  }
 
   // Process each property from parent
   for (const propertyName in parentNodeData.properties) {
@@ -780,6 +809,7 @@ export const createNewNode = (
       // Ensure inheritance ref is null for neverInherit properties
       if (updatedInheritance[propertyName]) {
         updatedInheritance[propertyName].ref = null;
+        updatedInheritance[propertyName].title = "";
       }
     } else {
       // Normal inheritance - copy the actual value
@@ -809,6 +839,10 @@ export const createNewNode = (
         nodes: [
           {
             id: generalizationId,
+            title:
+              generalizationId === parentNodeData.id
+                ? parentNodeData.title ?? ""
+                : "",
           },
         ],
       },
@@ -846,6 +880,7 @@ export const updateSpecializations = (
   parentNode: INode,
   newNodeRefId: string,
   collectionName: string = "main",
+  newNodeTitle: string = "",
 ) => {
   const collectionIdx = parentNode.specializations.findIndex(
     (spec) => spec.collectionName === collectionName,
@@ -860,20 +895,21 @@ export const updateSpecializations = (
       // Create the collection if it doesn't exist
       parentNode.specializations.push({
         collectionName,
-        nodes: [{ id: newNodeRefId }],
+        nodes: [{ id: newNodeRefId, title: newNodeTitle }],
       });
     } else {
       // Add the new node to the collection if it exists
       parentNode.specializations[collectionIdx].nodes.push({
         id: newNodeRefId,
+        title: newNodeTitle,
       });
     }
   }
 };
 
 export const updatePartsAndPartsOf = async (
-  links: { id: string }[],
-  newLink: { id: string },
+  links: { id: string; title?: string }[],
+  newLink: { id: string; title: string },
   property: "isPartOf" | "parts",
   db: Firestore,
   nodes: { [nodeId: string]: INode },
@@ -1044,6 +1080,12 @@ export const updateLinksForInheritance = async (
   nodes: { [nodeId: string]: INode } | any,
 ) => {
   try {
+    const getTitleFromCacheOrDb = async (nodeId: string) => {
+      if (nodes?.[nodeId]?.title) return nodes[nodeId].title as string;
+      const snap = await getDoc(doc(collection(db, NODES), nodeId));
+      return (snap.data() as any)?.title || "";
+    };
+
     const deletedProperties = [];
     const updatedProperties: {
       [ref: string]: string[];
@@ -1114,6 +1156,7 @@ export const updateLinksForInheritance = async (
         batch,
         inheritanceType: specializationData.inheritance,
         generalizationId: inheritedFromId,
+        inheritanceRefTitle: await getTitleFromCacheOrDb(inheritedFromId),
         db,
       });
     }
@@ -1126,6 +1169,7 @@ export const updateLinksForInheritance = async (
       batch,
       inheritanceType: specializationData.inheritance,
       generalizationId: null,
+      inheritanceRefTitle: "",
       db,
     });
     for (let inheritedFromId in updatedProperties) {
@@ -1139,6 +1183,7 @@ export const updateLinksForInheritance = async (
         batch,
         inheritanceType: inheritsFromData.inheritance,
         generalizationId: inheritedFromId,
+        inheritanceRefTitle: await getTitleFromCacheOrDb(inheritedFromId),
         db,
       });
     }
@@ -1167,6 +1212,13 @@ export const updateLinksForInheritanceSpecializations = async (
 ) => {
   try {
     const batch = writeBatch(db);
+
+    const getTitleFromCacheOrDb = async (nodeId: string) => {
+      if (nodes?.[nodeId]?.title) return nodes[nodeId].title as string;
+      const snap = await getDoc(doc(collection(db, NODES), nodeId));
+      return (snap.data() as any)?.title || "";
+    };
+
     for (let addedLink of addedLinks) {
       const addedProperties: {
         propertyName: string;
@@ -1201,6 +1253,7 @@ export const updateLinksForInheritanceSpecializations = async (
         batch,
         inheritanceType: specializationData.inheritance,
         generalizationId: generalizationId,
+        inheritanceRefTitle: await getTitleFromCacheOrDb(generalizationId),
         db,
       });
     }
@@ -1224,6 +1277,7 @@ export const updateLinksForInheritanceSpecializations = async (
         batch,
         inheritanceType: specializationData.inheritance,
         generalizationId: generalizationId,
+        inheritanceRefTitle: await getTitleFromCacheOrDb(generalizationId),
         db,
       });
     }
@@ -1251,6 +1305,12 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
 ) => {
   try {
     if (specializationData) {
+      const getTitleFromCacheOrDb = async (nodeId: string) => {
+        if (nodes?.[nodeId]?.title) return nodes[nodeId].title as string;
+        const snap = await getDoc(doc(collection(db, NODES), nodeId));
+        return (snap.data() as any)?.title || "";
+      };
+
       const addedProperties: {
         propertyName: string;
         propertyType: string;
@@ -1343,6 +1403,7 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
         batch,
         inheritanceType: unlinkedGeneralization.inheritance,
         generalizationId: nextGeneralization.id,
+        inheritanceRefTitle: await getTitleFromCacheOrDb(nextGeneralization.id),
         db,
       });
 
@@ -1357,6 +1418,7 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
           batch,
           inheritanceType: inheritsFromData.inheritance,
           generalizationId: inheritFrom,
+          inheritanceRefTitle: await getTitleFromCacheOrDb(inheritFrom),
           db,
         });
       }
@@ -1377,7 +1439,7 @@ export const updateInheritanceWhenUnlinkAGeneralization = async (
 /*  updateLinks takes links and push the new link to its specializations or generalizations */
 export const updateLinks = async (
   links: string[],
-  newLink: { id: string },
+  newLink: { id: string; title: string },
   linkType: "specializations" | "generalizations",
   nodes: { [nodeId: string]: INode },
   db: any,
@@ -1397,7 +1459,7 @@ export const updateLinks = async (
       if (mainCollection) {
         mainCollection.nodes.push(newLink);
         const childRef = doc(collection(db, NODES), childId);
-        updateDoc(childRef, {
+        await updateDoc(childRef, {
           [linkType]: childLinks,
         });
       } else {

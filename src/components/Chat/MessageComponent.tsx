@@ -118,7 +118,7 @@ const MessageComponent = ({
         sx={{
           display: "flex",
           gap: 1.25,
-          pt: 2.25,
+          pt: 1.75,
         }}
       >
         {message.senderDetail && (
@@ -153,7 +153,7 @@ const MessageComponent = ({
               <Box sx={{ display: "flex" }}>
                 <Typography
                   sx={{
-                    fontSize: "1.2rem",
+                    fontSize: "0.98rem",
                     fontWeight: 700,
                     lineHeight: 1.2,
                   }}
@@ -165,7 +165,7 @@ const MessageComponent = ({
             {message.createdAt && (
               <Typography
                 sx={(theme) => ({
-                  fontSize: "0.9rem",
+                  fontSize: "0.72rem",
                   fontWeight: 500,
                   color:
                     theme.palette.mode === "dark"
@@ -197,30 +197,27 @@ const MessageComponent = ({
               className="reply-box"
               sx={{
                 position: "relative",
-                fontSize: "16px",
+                fontSize: "14px",
                 fontWeight: "400",
-                lineHeight: "24px",
-                p: "16px 18px 14px",
+                lineHeight: "20px",
+                p: "13px 14px 12px",
                 borderRadius: "16px",
-                border: (theme) =>
-                  theme.palette.mode === "dark"
-                    ? "1px solid rgba(255,255,255,0.07)"
-                    : "1px solid rgba(18,30,60,0.1)",
+                border: "none",
                 background: (theme) =>
                   theme.palette.mode === "dark"
                     ? "linear-gradient(140deg, rgba(31, 33, 38, 0.98), rgba(22, 23, 27, 0.98))"
                     : "linear-gradient(140deg, rgba(255,255,255,0.98), rgba(246,248,252,0.98))",
                 boxShadow: (theme) =>
                   theme.palette.mode === "dark"
-                    ? "0 14px 26px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.03)"
-                    : "0 10px 22px rgba(15, 28, 59, 0.08), inset 0 1px 0 rgba(255,255,255,0.8)",
+                    ? "0 8px 16px rgba(0,0,0,0.18)"
+                    : "0 7px 16px rgba(15, 28, 59, 0.06)",
                 transition: "transform 0.2s ease, box-shadow 0.2s ease",
                 ":hover": {
                   transform: "translateY(-1px)",
                   boxShadow: (theme) =>
                     theme.palette.mode === "dark"
-                      ? "0 16px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.035)"
-                      : "0 14px 26px rgba(15, 28, 59, 0.11), inset 0 1px 0 rgba(255,255,255,0.86)",
+                      ? "0 10px 20px rgba(0,0,0,0.24)"
+                      : "0 9px 20px rgba(15, 28, 59, 0.09)",
                   "& .message-buttons": {
                     display: "block",
                   },
@@ -292,7 +289,7 @@ const MessageComponent = ({
                 <MarkdownRender
                   text={message.text}
                   sx={{
-                    fontSize: "16px",
+                    fontSize: "13px",
                     fontWeight: 400,
                     letterSpacing: "inherit",
                   }}
@@ -341,7 +338,7 @@ const MessageComponent = ({
                   flexWrap: "wrap",
                   alignItems: "center",
                   gap: "6px",
-                  mt: 0.75,
+                  mt: 0.5,
                 }}
               >
                 <Emoticons
@@ -357,18 +354,15 @@ const MessageComponent = ({
                   size="small"
                   sx={(theme) => ({
                     borderRadius: 999,
-                    border:
-                      theme.palette.mode === "dark"
-                        ? "1px solid rgba(255,255,255,0.14)"
-                        : "1px solid rgba(18,30,60,0.18)",
+                    border: "none",
                     color:
                       theme.palette.mode === "dark"
                         ? "rgba(255,255,255,0.82)"
                         : "rgba(24,37,64,0.72)",
                     bgcolor:
                       theme.palette.mode === "dark"
-                        ? "rgba(255,255,255,0.03)"
-                        : "rgba(248,250,255,0.9)",
+                        ? "rgba(255,255,255,0.04)"
+                        : "rgba(248,250,255,0.75)",
                     "&:hover": {
                       bgcolor:
                         theme.palette.mode === "dark"
@@ -389,17 +383,14 @@ const MessageComponent = ({
                   }
                   sx={(theme) => ({
                     marginLeft: "auto",
-                    fontSize: "0.98rem",
+                    fontSize: "0.86rem",
                     fontWeight: 700,
                     lineHeight: 1,
                     textTransform: "none",
                     borderRadius: 999,
                     minHeight: 34,
-                    px: 1.5,
-                    border:
-                      showReplies === message.id
-                        ? "1px solid rgba(255, 146, 78, 0.45)"
-                        : "1px solid rgba(255, 146, 78, 0.55)",
+                    px: 1.25,
+                    border: "none",
                     color:
                       theme.palette.mode === "dark"
                         ? "#ffaf70"
@@ -415,7 +406,6 @@ const MessageComponent = ({
                         theme.palette.mode === "dark"
                           ? "rgba(255, 146, 78, 0.16)"
                           : "rgba(255, 168, 98, 0.18)",
-                      borderColor: "rgba(255, 146, 78, 0.72)",
                     },
                   })}
                   variant="outlined"
@@ -438,7 +428,11 @@ const MessageComponent = ({
 
           {showReplies === message.id && (
             <Box sx={{ mt: "10px" }}>
-              {renderReplies(message.id, replies, boxRef)}
+              {replies.length > 0 && (
+                <Box sx={{ mb: 1.75 }}>
+                  {renderReplies(message.id, replies, boxRef)}
+                </Box>
+              )}
               <ChatInput
                 user={user}
                 type="reply"

@@ -164,9 +164,12 @@
 
 .indentLines>div {
     height: 100%;
-    padding-left: 10px;
+    /* Center the dashed guide within each indent column */
+    padding-left: calc((var(--indent-size) - 1px) / 2);
     border-right: 1px dashed rgba(145, 158, 171, 0.3);
-    margin-right: calc(var(--indent-size) - 10px - 1px);
+    margin-right: calc(
+        var(--indent-size) - ((var(--indent-size) - 1px) / 2) - 1px
+    );
 }
 
 .row:focus {
