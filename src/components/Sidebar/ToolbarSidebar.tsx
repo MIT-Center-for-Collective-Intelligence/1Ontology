@@ -50,7 +50,6 @@ import OptimizedAvatar from "../Chat/OptimizedAvatar";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import useThemeChange from "@components/lib/hooks/useThemeChange";
-import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import ClearIcon from "@mui/icons-material/Clear";
 import { Notifications } from "@components/components/Chat/Notifications";
 import { chatChange } from "@components/client/firestore/messages.firestore";
@@ -116,6 +115,8 @@ import {
 } from "@components/lib/utils/copilotPrompts";
 import OntologyHistory from "../ActiveUsers/OntologyHistory";
 import { handleDownload } from "@components/lib/utils/random";
+import { getIdToken } from "@components/lib/firestoreClient/auth";
+import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 
 type CustomSmallBadgeProps = { value: number };
 
@@ -124,7 +125,8 @@ type MainSidebarProps = {
   user: User | null;
   openSearchedNode: Function;
   searchWithFuse: Function;
-  nodes: { [nodeId: string]: any };
+  relatedNodes: { [nodeId: string]: any };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   selectedDiffNode: any;
   setSelectedDiffNode: any;
   currentVisibleNode: any;
@@ -159,7 +161,8 @@ const ToolbarSidebar = ({
   user,
   openSearchedNode,
   searchWithFuse,
-  nodes,
+  relatedNodes,
+  fetchNode,
   selectedDiffNode,
   setSelectedDiffNode,
   currentVisibleNode,
@@ -210,6 +213,7 @@ const ToolbarSidebar = ({
   const [previousNodeId, setPreviousNodeId] = useState("");
 
   const [isLoadingCopilot, setIsLoadingCopilot] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [nodesByTitle, setNodesByTitle] = useState<{
     [nodeTitle: string]: INode;
   }>({});
@@ -830,13 +834,19 @@ const ToolbarSidebar = ({
           const doc = change.doc;
           const userId = doc.id;
           const data = doc.data();
-          const currentNode = data.currentNode;
+          const currentNodeInfo = data.currentNode?.[skillsFutureApp];
+          const currentNodeId = currentNodeInfo?.id;
 
           if (change.type === "added" || change.type === "modified") {
             updatedUsersData[userId] = {
+              // Preserve existing data to prevent data mismatch
+              ...updatedUsersData[userId],
               node: {
-                title: nodes[currentNode]?.title || "",
-                id: currentNode,
+                title:
+                  currentNodeInfo?.title ||
+                  relatedNodes[currentNodeId]?.title ||
+                  "",
+                id: currentNodeId,
               },
               imageUrl: data.imageUrl,
               fName: data.fName,
@@ -856,7 +866,7 @@ const ToolbarSidebar = ({
     });
 
     return () => unsubscribe();
-  }, [nodes]);
+  }, [relatedNodes]);
 
   const displayUserLogs = useCallback(
     (user: {
@@ -880,7 +890,7 @@ const ToolbarSidebar = ({
     if (data === null) {
       setCurrentImprovement(null);
       setSelectedDiffNode(null);
-      if (!nodes[currentVisibleNode?.id]) {
+      if (!relatedNodes[currentVisibleNode?.id]) {
         navigateToNode(previousNodeId);
       } else {
         navigateToNode(currentVisibleNode?.id);
@@ -891,7 +901,7 @@ const ToolbarSidebar = ({
 
     if (currentVisibleNode?.id !== data.nodeId) {
       setCurrentVisibleNode(
-        nodes[data.nodeId] ? nodes[data.nodeId] : data.fullNode,
+        relatedNodes[data.nodeId] ? relatedNodes[data.nodeId] : data.fullNode,
       );
     }
     const modified_property_type = data.modifiedProperty
@@ -979,13 +989,13 @@ const ToolbarSidebar = ({
   useEffect(() => {
     if (!!user?.admin) {
       const nodesByT: { [nodeTitle: string]: INode } = {};
-      for (let nodeId in nodes) {
-        const nodeTitle = nodes[nodeId].title;
-        nodesByT[nodeTitle] = nodes[nodeId];
+      for (let nodeId in relatedNodes) {
+        const nodeTitle = relatedNodes[nodeId].title;
+        nodesByT[nodeTitle] = relatedNodes[nodeId];
       }
       setNodesByTitle(nodesByT);
     }
-  }, [nodes, user]);
+  }, [relatedNodes, user]);
   const getNewNodes = (newNodes: copilotNewNode[]): any => {
     try {
       if (!user?.uname) return;
@@ -1006,6 +1016,7 @@ const ToolbarSidebar = ({
         const inheritance = generateInheritance(
           generalization.inheritance,
           generalization.id,
+          generalization.title ?? "",
         );
 
         const newNode = createNewNode(
@@ -1027,6 +1038,7 @@ const ToolbarSidebar = ({
           ) {
             inheritance[p] = {
               ref: null,
+              title: "",
               inheritanceType: "inheritUnlessAlreadyOverRidden",
             };
           }
@@ -1070,6 +1082,7 @@ const ToolbarSidebar = ({
           if (newNode.properties.hasOwnProperty(property)) {
             if (inheritance[property]) {
               inheritance[property].ref = null;
+              inheritance[property].title = "";
             }
             if (
               Array.isArray(newNode.properties[property]) &&
@@ -1119,10 +1132,12 @@ const ToolbarSidebar = ({
           if (!inheritance["description"]) {
             inheritance["description"] = {
               ref: null,
+              title: "",
               inheritanceType: "inheritUnlessAlreadyOverRidden",
             };
           }
           inheritance.description.ref = null;
+          inheritance.description.title = "";
           newNode.properties.description = node.description;
         }
         _NODES.push({
@@ -1177,13 +1192,13 @@ const ToolbarSidebar = ({
       return;
     }
     const nodeId = nodesByTitle[improvement.title]?.id;
-    if (!nodes[nodeId]) {
+    if (!relatedNodes[nodeId]) {
       return;
     }
-    if (nodes[nodeId]) {
-      setCurrentVisibleNode(nodes[nodeId]);
+    if (relatedNodes[nodeId]) {
+      setCurrentVisibleNode(relatedNodes[nodeId]);
     }
-    const result = compareImprovement(improvement, nodesByTitle, nodes);
+    const result = compareImprovement(improvement, nodesByTitle, relatedNodes);
 
     setCurrentImprovement(result);
     setTimeout(() => {
@@ -1204,7 +1219,7 @@ const ToolbarSidebar = ({
     const options = (await selectIt(
       currentVisibleNode.title,
       currentVisibleNode.nodeType,
-      nodes,
+      relatedNodes,
       currentVisibleNode?.id,
     )) as {
       model: string;
@@ -1406,7 +1421,8 @@ const ToolbarSidebar = ({
       }
 
       const improvements: Improvement[] =
-        filterProposals(newImprovements || [], nodesByTitle, nodes) || [];
+        filterProposals(newImprovements || [], nodesByTitle, relatedNodes) ||
+        [];
 
       const newNodes: {
         title: string;
@@ -1482,7 +1498,7 @@ const ToolbarSidebar = ({
             openLogsFor={openLogsFor}
             displayDiff={displayDiff}
             selectedDiffNode={selectedDiffNode}
-            nodes={nodes}
+            nodes={relatedNodes}
             appName={skillsFutureApp}
           />
         );
@@ -1493,10 +1509,6 @@ const ToolbarSidebar = ({
             user={user}
             confirmIt={confirmIt}
             searchWithFuse={searchWithFuse}
-            treeVisualization={treeVisualization}
-            expandedNodes={expandedNodes}
-            setExpandedNodes={setExpandedNodes}
-            onOpenNodesTree={onOpenNodesTree}
             navigateToNode={navigateToNode}
             chatTabs={[
               {
@@ -1507,7 +1519,8 @@ const ToolbarSidebar = ({
             ]}
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
-            nodes={nodes}
+            nodes={relatedNodes}
+            fetchNode={fetchNode}
             appName={appName}
           />
         );
@@ -1518,20 +1531,23 @@ const ToolbarSidebar = ({
             user={user}
             confirmIt={confirmIt}
             searchWithFuse={searchWithFuse}
-            treeVisualization={treeVisualization}
-            expandedNodes={expandedNodes}
-            setExpandedNodes={setExpandedNodes}
-            onOpenNodesTree={onOpenNodesTree}
             navigateToNode={navigateToNode}
             chatTabs={CHAT_DISCUSSION_TABS}
             selectedChatTab={selectedChatTab}
             setSelectedChatTab={setSelectedChatTab}
-            nodes={nodes}
+            nodes={relatedNodes}
+            fetchNode={fetchNode}
             appName={appName}
           />
         );
       case "inheritanceSettings":
-        return <Inheritance selectedNode={currentVisibleNode} nodes={nodes} />;
+        return (
+          <Inheritance
+            selectedNode={currentVisibleNode}
+            nodes={relatedNodes}
+            fetchNode={fetchNode}
+          />
+        );
       case "nodeHistory":
         return (
           <NodeActivity
@@ -1539,7 +1555,7 @@ const ToolbarSidebar = ({
             selectedDiffNode={selectedDiffNode}
             displayDiff={displayDiff}
             activeUsers={activeUsers}
-            nodes={nodes}
+            nodes={relatedNodes}
           />
         );
       case "improvements":
@@ -1548,7 +1564,8 @@ const ToolbarSidebar = ({
             currentImprovement={currentImprovement}
             setCurrentImprovement={setCurrentImprovement}
             currentVisibleNode={currentVisibleNode}
-            nodes={nodes}
+            relatedNodes={relatedNodes}
+            fetchNode={fetchNode}
             setCurrentVisibleNode={setCurrentVisibleNode}
             onNavigateToNode={onNavigateToNode}
             isLoadingCopilot={isLoadingCopilot}
@@ -1576,7 +1593,7 @@ const ToolbarSidebar = ({
             selectedUser={selectedUser}
             skillsFuture={skillsFuture}
             skillsFutureApp={skillsFutureApp}
-            nodes={nodes}
+            nodes={relatedNodes}
           />
         );
       default:
@@ -1753,14 +1770,16 @@ const ToolbarSidebar = ({
                     select
                     label="Select User"
                     sx={{ ml: "15px", minWidth: "100px" }}
-                    InputProps={{
-                      sx: {
-                        height: "40px",
-                        borderRadius: "18px",
+                    slotProps={{
+                      input: {
+                        sx: {
+                          height: "40px",
+                          borderRadius: "18px",
+                        },
                       },
-                    }}
-                    InputLabelProps={{
-                      style: { color: "grey" },
+                      inputLabel: {
+                        style: { color: "grey" },
+                      },
                     }}
                   >
                     <MenuItem
@@ -1799,7 +1818,7 @@ const ToolbarSidebar = ({
                     setSelectedDiffNode(null);
                     if (previousNodeId) {
                       // Checks if the node is deleted (null or undefined)
-                      if (nodes[currentVisibleNode?.id] == null) {
+                      if (relatedNodes[currentVisibleNode?.id] == null) {
                         navigateToNode(previousNodeId);
                       } else {
                         navigateToNode(currentVisibleNode?.id);
@@ -1916,6 +1935,7 @@ const ToolbarSidebar = ({
             />
 
             {!!user?.admin &&
+              user?.claims.editAccess &&
               (window.location.origin.startsWith("http://localhost") ||
                 window.location.origin ===
                   "https://ontology-163479774214.us-central1.run.app") && (
@@ -1974,16 +1994,53 @@ const ToolbarSidebar = ({
             />
             <SidebarButton
               id="toolbar-theme-button"
-              icon={<DownloadIcon />}
-              onClick={() => {
+              icon={
+                isDownloading ? (
+                  <CircularProgress size={20} sx={{ color: "inherit" }} />
+                ) : (
+                  <DownloadIcon />
+                )
+              }
+              onClick={async () => {
+                if (isDownloading) return;
+                setIsDownloading(true);
                 try {
-                  handleDownload({ nodes, appName });
+                  const token = await getIdToken();
+                  const response = await fetch(
+                    `/api/download-ontology?appName=${encodeURIComponent(skillsFutureApp)}`,
+                    {
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                      },
+                    },
+                  );
+
+                  if (!response.ok) {
+                    throw new Error("Failed to download ontology");
+                  }
+
+                  const { tree } = await response.json();
+                  const blob = new Blob([JSON.stringify(tree, null, 2)], {
+                    type: "application/json",
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement("a");
+                  link.href = url;
+                  link.download = "nodes-data.json";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  URL.revokeObjectURL(url);
                 } catch (error) {
+                  console.error("Download error:", error);
                   confirmIt("There was an error downloading the JSON!");
+                } finally {
+                  setIsDownloading(false);
                 }
               }}
               text={"Download JSON"}
               toolbarIsOpen={hovered}
+              disabled={isDownloading}
             />
 
             <SidebarButton
@@ -2006,7 +2063,7 @@ const ToolbarSidebar = ({
           </Box>
 
           <ActiveUsers
-            nodes={nodes}
+            nodes={relatedNodes}
             navigateToNode={navigateToNode}
             displayUserLogs={displayUserLogs}
             handleExpand={handleExpandSidebar}

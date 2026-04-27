@@ -42,6 +42,9 @@ const OptimizedAvatar: FC<Props> = ({
         }),
         position: "relative",
         borderRadius: "50%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         cursor: "pointer",
         border: (theme) => (online ? `solid 3px #14c815` : ""),
         ":hover": {
@@ -62,6 +65,9 @@ const OptimizedAvatar: FC<Props> = ({
             color: common.white,
             width: `${size}px`,
             height: `${size}px`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           {alt
@@ -79,6 +85,9 @@ const OptimizedAvatar: FC<Props> = ({
             height: `${size}px`,
             quality: quality,
             objectFit: "cover",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           style={{ borderRadius: "50%" }}
           onError={() => setHasError(true)}

@@ -1056,7 +1056,9 @@ const CopilotPrompt: React.FC<EditableSchemaProps> = ({
                     }
                     value={numberValue || ""}
                     onChange={handleNumberChange}
-                    inputProps={{ min: 0, step: 1 }}
+                    slotProps={{
+                      htmlInput: { min: 0, step: 1 },
+                    }}
                     fullWidth
                     size="small"
                   /> */}

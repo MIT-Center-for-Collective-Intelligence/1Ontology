@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { Box, IconButton, Typography } from "@mui/material";
-import moment from "moment";
+import dayjs from "dayjs";
 import OptimizedAvatar from "./OptimizedAvatar";
 import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import MarkdownRender from "../Markdown/MarkdownRender";
@@ -45,39 +45,49 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
 }) => {
   const boxRef = useRef(null);
   return (
-    <Box ref={boxRef} key={index} sx={{ display: "flex" }}>
+    <Box ref={boxRef} key={index} sx={{ display: "flex", pt: 1.5, gap: 1 }}>
       <Box
         sx={{
-          width: "40px",
-          height: "40px",
+          width: "34px",
+          height: "34px",
           cursor: "pointer",
           borderRadius: "50%",
+          flexShrink: 0,
         }}
       >
         <OptimizedAvatar
           alt={reply.senderDetail?.fullname || ""}
           imageUrl={reply.senderDetail?.imageUrl || ""}
-          size={30}
+          size={32}
           sx={{ border: "none" }}
         />
       </Box>
-      <Box sx={{ width: "90%" }}>
+      <Box sx={{ width: "100%" }}>
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            gap: 1,
+            mb: 0.4,
           }}
         >
           <Box sx={{ display: "flex" }}>
             <Typography
-              sx={{ fontSize: "16px", fontWeight: "500", lineHeight: "24px" }}
+              sx={{ fontSize: "0.95rem", fontWeight: 700, lineHeight: 1.2 }}
             >
               {reply.senderDetail.fullname}
             </Typography>
           </Box>
-          <Typography sx={{ fontSize: "12px" }}>
-            {moment(reply.createdAt.toDate().getTime()).format("h:mm a")}
+          <Typography
+            sx={(theme) => ({
+              fontSize: "0.74rem",
+              color:
+                theme.palette.mode === "dark"
+                  ? "rgba(255,255,255,0.62)"
+                  : "rgba(21,31,46,0.52)",
+            })}
+          >
+            {dayjs(new Date(reply.createdAt.toDate())).fromNow()}
           </Typography>
         </Box>
         {editing?.parentMessage === messageId && editing?.id === reply.id ? (
@@ -100,15 +110,20 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
             className="reply-box"
             sx={{
               position: "relative",
-              fontSize: "16px",
+              fontSize: "14px",
               fontWeight: "400",
-              lineHeight: "24px",
-              p: "10px 14px",
-              borderRadius: "9px",
+              lineHeight: "20px",
+              p: "10px 12px",
+              borderRadius: "14px",
+              border: "none",
               background: (theme) =>
                 theme.palette.mode === "dark"
-                  ? DESIGN_SYSTEM_COLORS.notebookG700
-                  : DESIGN_SYSTEM_COLORS.gray300,
+                  ? "linear-gradient(145deg, rgba(30, 32, 36, 0.95), rgba(22, 23, 27, 0.95))"
+                  : "linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 252, 0.98))",
+              boxShadow: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "0 8px 16px rgba(0,0,0,0.18)"
+                  : "0 7px 16px rgba(15,28,59,0.06)",
               ":hover": {
                 "& .message-buttons": {
                   display: "block",
@@ -122,7 +137,7 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
               <MarkdownRender
                 text={reply.text}
                 sx={{
-                  fontSize: "16px",
+                  fontSize: "13px",
                   fontWeight: 400,
                   letterSpacing: "inherit",
                 }}
@@ -140,9 +155,10 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
                   <img
                     width={"100%"}
                     style={{
-                      borderRadius: "8px",
-                      objectFit: "contain",
+                      borderRadius: "10px",
+                      objectFit: "cover",
                       cursor: "pointer",
+                      border: "1px solid rgba(255,255,255,0.08)",
                     }}
                     src={imageUrl}
                     alt="reply image"
@@ -167,8 +183,8 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
                 display: "flex",
                 flexWrap: "wrap",
                 alignItems: "center",
-                gap: "5px",
-                paddingTop: "5px",
+                gap: "6px",
+                paddingTop: "7px",
               }}
             >
               <Emoticons
@@ -179,9 +195,18 @@ const ReplyMessage: React.FC<ReplyMessageProps> = ({
                 user={user}
                 boxRef={boxRef}
               />
-              <IconButton onClick={(e) => toggleEmojiPicker(e, boxRef, reply)}>
+              <IconButton
+                size="small"
+                onClick={(e) => toggleEmojiPicker(e, boxRef, reply)}
+                sx={(theme) => ({
+                  borderRadius: 999,
+                  border:
+                    theme.palette.mode === "dark"
+                      ? "1px solid rgba(255,255,255,0.14)"
+                      : "1px solid rgba(18,30,60,0.16)",
+                })}
+              >
                 <AddReactionOutlined
-                  color="secondary"
                   sx={{ fontSize: "19px" }}
                 />
               </IconButton>

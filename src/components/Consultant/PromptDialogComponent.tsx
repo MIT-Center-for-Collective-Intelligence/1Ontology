@@ -304,9 +304,11 @@ const PromptDialogComponent = ({
             onChange={handleConsultingTopic}
             fullWidth
             variant="outlined"
-            InputLabelProps={{
-              sx: {
-                color: "gray",
+            slotProps={{
+              inputLabel: {
+                sx: {
+                  color: "gray",
+                },
               },
             }}
             sx={{
@@ -360,7 +362,6 @@ const PromptDialogComponent = ({
               minRows={14}
               maxRows={ideaEvaluator ? 14 : 500}
               variant="outlined"
-              inputProps={{ maxRows: 14 }}
               sx={{
                 // flexGrow: 3,
                 overflow: "auto",
@@ -369,14 +370,16 @@ const PromptDialogComponent = ({
                   borderRadius: "12px",
                 },
               }}
-              InputLabelProps={{
-                shrink: true,
-                sx: {
-                  fontWeight: 600,
-                  color: "text.primary",
-                  fontSize: "1rem",
-                  transform: "none",
-                  position: "relative",
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                  sx: {
+                    fontWeight: 600,
+                    color: "text.primary",
+                    fontSize: "1rem",
+                    transform: "none",
+                    position: "relative",
+                  },
                 },
               }}
             />
@@ -400,14 +403,16 @@ const PromptDialogComponent = ({
                   borderRadius: "12px",
                 },
               }}
-              InputLabelProps={{
-                shrink: true,
-                sx: {
-                  fontWeight: 600,
-                  color: "text.primary",
-                  fontSize: "1rem",
-                  transform: "none",
-                  position: "relative",
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                  sx: {
+                    fontWeight: 600,
+                    color: "text.primary",
+                    fontSize: "1rem",
+                    transform: "none",
+                    position: "relative",
+                  },
                 },
               }}
             />

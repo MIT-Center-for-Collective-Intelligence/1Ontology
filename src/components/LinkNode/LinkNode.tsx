@@ -69,7 +69,6 @@ import { NODES } from "@components/lib/firestoreClient/collections";
 import useConfirmDialog from "@components/lib/hooks/useConfirmDialog";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import AddIcon from "@mui/icons-material/Add";
-import CheckIcon from "@mui/icons-material/Check";
 import {
   recordLogs,
   saveNewChangeLog,
@@ -120,9 +119,12 @@ import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import { UNCLASSIFIED } from "@components/lib/CONSTANTS";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import LinkEditor from "./LinkEditor";
+import LinkNodeTitle from "./LinkNodeTitle";
 import { Post } from "@components/lib/utils/Post";
 import { LoadingButton } from "@mui/lab";
+import { removeLinkFromNode } from "@components/lib/utils/instantTreeUpdate";
+import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
+import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
 
 const glowGreen = keyframes`
   0% {
@@ -136,7 +138,6 @@ const glowGreen = keyframes`
   }
 `;
 type ILinkNodeProps = {
-  provided: any;
   link: ILinkNode;
   currentVisibleNode: INode;
   sx?: { [key: string]: any };
@@ -145,7 +146,8 @@ type ILinkNodeProps = {
   setSnackbarMessage: (message: any) => void;
   navigateToNode: (nodeID: string) => void;
   title: string;
-  nodes: { [nodeId: string]: INode };
+  relatedNodes: { [nodeId: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   linkLocked: any;
   locked: boolean;
   user: any;
@@ -163,16 +165,15 @@ type ILinkNodeProps = {
   skillsFuture: boolean;
   skillsFutureApp: string;
   currentImprovement: any;
-  partsInheritance: any;
   loadingIds: any;
   saveNewSpecialization: any;
   enableEdit: boolean;
   setEditableProperty: any;
   unlinkNodeRelation: any;
+  onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
 };
 
 const LinkNode = ({
-  provided,
   link,
   sx,
   property,
@@ -180,7 +181,8 @@ const LinkNode = ({
   setCurrentVisibleNode,
   navigateToNode,
   title,
-  nodes,
+  relatedNodes,
+  fetchNode,
   linkIndex: linkIndex,
   linkLocked,
   locked,
@@ -198,12 +200,12 @@ const LinkNode = ({
   skillsFuture,
   skillsFutureApp,
   currentImprovement,
-  partsInheritance,
   loadingIds,
   saveNewSpecialization,
   enableEdit,
   setEditableProperty,
   unlinkNodeRelation,
+  onInstantTreeUpdate,
 }: ILinkNodeProps) => {
   const db = getFirestore();
   const theme = useTheme();
@@ -212,8 +214,6 @@ const LinkNode = ({
   const [newPart, setNewPart] = useState("");
 
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
-
-  const [regionalTitle, setRegionalTitle] = useState(title);
 
   // useEffect to handle async call to getTitle
   /*   useEffect(() => {
@@ -266,12 +266,11 @@ const LinkNode = ({
     }
   };
 
-  const makeLinkOptional = useCallback(() => {
+  const makeLinkOptional = useCallback(async () => {
     const nodeCopy = { ...currentVisibleNode };
-    const partInheredRef = nodeCopy.inheritance["parts"].ref;
-    const partsNodes = partInheredRef
-      ? nodes[partInheredRef].properties["parts"][0].nodes
-      : nodeCopy.properties["parts"][0].nodes;
+
+    const partsNodes = nodeCopy.properties["parts"]?.[0]?.nodes;
+    if (!partsNodes) return;
     const currentPartIndx = partsNodes.findIndex((c) => c.id === link.id);
 
     if (currentPartIndx !== -1) {
@@ -297,10 +296,9 @@ const LinkNode = ({
             nodes: partsNodes,
           },
         ],
-        "inheritance.parts.ref": null,
       });
     }
-  }, [currentVisibleNode]);
+  }, [currentVisibleNode, relatedNodes, fetchNode]);
 
   const unlinkSpecializationOrGeneralization = async (
     currentNodeId: string,
@@ -308,17 +306,26 @@ const LinkNode = ({
     fromModel: boolean = false,
   ) => {
     try {
+      // Fetch linkId if missing
+      let linkNode: INode | null | undefined = relatedNodes[linkId];
+      if (!linkNode) {
+        linkNode = await fetchNode(linkId);
+        if (!linkNode) {
+          return;
+        }
+      }
+
       const nodeD =
-        property === "generalizations" ? nodes[currentNodeId] : nodes[linkId];
+        property === "generalizations" ? relatedNodes[currentNodeId] : linkNode;
       const linksLength = nodeD.generalizations.flatMap((c) => c.nodes).length;
       const firstGen = nodeD.generalizations[0]?.nodes[0]?.id || "";
       if (
         linksLength <= 1 &&
         ((property === "specializations" &&
-          nodes[currentNodeId]?.title.trim().toLowerCase() ===
+          relatedNodes[currentNodeId]?.title.trim().toLowerCase() ===
             "unclassified") ||
           (property === "generalizations" &&
-            nodes[firstGen]?.title === "unclassified"))
+            relatedNodes[firstGen]?.title === "unclassified"))
       ) {
         await confirmIt(
           <Box>
@@ -337,8 +344,8 @@ const LinkNode = ({
             </Typography>
             {linksLength <= 1 ? (
               <Typography sx={{ mt: "15px" }}>
-                {`There's no other generalization linked to this node. Other than 
-              ${UNCLASSIFIED[nodes[linkId].nodeType]}`}
+                {`There's no other generalization linked to this node. Other than
+              ${UNCLASSIFIED[linkNode.nodeType]}`}
                 .
               </Typography>
             ) : (
@@ -371,7 +378,7 @@ const LinkNode = ({
               <Typography sx={{ mt: "15px" }}>
                 {`There's no other generalization linked to this node. Are you
                 sure you want to unlink it and move it as a specialization under
-              ${UNCLASSIFIED[nodes[linkId].nodeType]}`}
+              ${UNCLASSIFIED[linkNode.nodeType]}`}
                 ?
               </Typography>
             ) : (
@@ -413,12 +420,8 @@ const LinkNode = ({
               linkId,
             );
           }
-          if (
-            shouldBeRemovedFromParent &&
-            nodes[linkId] &&
-            !nodes[linkId].nodeType
-          ) {
-            const nodeType = nodes[linkId].nodeType;
+          if (shouldBeRemovedFromParent && linkNode && !linkNode.nodeType) {
+            const nodeType = linkNode.nodeType;
             const unclassifiedNodeDocs = await getDocs(
               query(
                 collection(db, NODES),
@@ -429,9 +432,19 @@ const LinkNode = ({
 
             if (unclassifiedNodeDocs.docs.length > 0 && previousValue) {
               const unclassifiedNodeDoc = unclassifiedNodeDocs.docs[0];
+              let unclassifiedNode: INode | null =
+                relatedNodes[unclassifiedNodeDoc.id] || null;
+              if (!unclassifiedNode) {
+                const fetchedNode = await fetchNode(unclassifiedNodeDoc.id);
+                if (!fetchedNode) {
+                  return;
+                }
+                unclassifiedNode = fetchedNode;
+              }
+
               if (property === "specializations") {
                 const nodeRef = doc(collection(db, NODES), linkId);
-                const generalizations = nodes[linkId].generalizations;
+                const generalizations = linkNode.generalizations;
                 const generalizationsLength = generalizations.flatMap(
                   (c) => c.nodes,
                 ).length;
@@ -453,6 +466,7 @@ const LinkNode = ({
                   if (generalizationsLength === 1) {
                     generalizations[0].nodes.push({
                       id: unclassifiedNodeDoc.id,
+                      title: unclassifiedNode?.title ?? "",
                     });
                   }
 
@@ -461,8 +475,7 @@ const LinkNode = ({
                   });
                 }
                 if (generalizationsLength === 1) {
-                  const specializations =
-                    nodes[unclassifiedNodeDoc.id].specializations;
+                  const specializations = unclassifiedNode.specializations;
 
                   const mainCollectionIdx = specializations.findIndex(
                     (c) => c.collectionName === "main",
@@ -470,6 +483,8 @@ const LinkNode = ({
                   if (mainCollectionIdx !== -1) {
                     specializations[mainCollectionIdx].nodes.push({
                       id: linkId,
+                      title:
+                        relatedNodes[linkId]?.title ?? linkNode?.title ?? "",
                     });
                     updateDoc(unclassifiedNodeDoc.ref, {
                       specializations,
@@ -485,10 +500,12 @@ const LinkNode = ({
 
                 const generalizations = nodeData.generalizations;
                 if (nodesLength === 1) {
-                  generalizations[0].nodes.push({ id: unclassifiedNodeDoc.id });
+                  generalizations[0].nodes.push({
+                    id: unclassifiedNodeDoc.id,
+                    title: unclassifiedNode?.title ?? "",
+                  });
 
-                  const specializations =
-                    nodes[unclassifiedNodeDoc.id].specializations;
+                  const specializations = unclassifiedNode.specializations;
 
                   const mainCollectionIdx = specializations.findIndex(
                     (c) => c.collectionName === "main",
@@ -496,6 +513,7 @@ const LinkNode = ({
 
                   specializations[mainCollectionIdx].nodes.push({
                     id: nodeDoc.id,
+                    title: nodeData.title ?? "",
                   });
 
                   updateDoc(unclassifiedNodeDoc.ref, {
@@ -519,6 +537,32 @@ const LinkNode = ({
             skillsFuture,
             ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
+
+          // Instant tree update for local user
+          if (onInstantTreeUpdate) {
+            onInstantTreeUpdate((tree) => {
+              return removeLinkFromNode(
+                tree,
+                currentVisibleNode?.id,
+                linkId,
+                property,
+                collectionIndex,
+              );
+            });
+          }
+
+          await savePendingNodeState(
+            currentVisibleNode.id,
+            nodeData,
+            skillsFutureApp,
+            db,
+          );
+
+          if (shouldBeRemovedFromParent) {
+            // If other node (parent or child) was updated, save its state too
+            await savePendingNodeState(linkId, null, skillsFutureApp, db);
+          }
+
           if (property === "generalizations") {
             const currentNewLinks = nodeData["generalizations"][0].nodes;
             updateLinksForInheritance(
@@ -527,7 +571,7 @@ const LinkNode = ({
               [],
               currentNewLinks,
               nodeData,
-              nodes,
+              relatedNodes,
             );
           }
           if (property === "specializations") {
@@ -537,8 +581,11 @@ const LinkNode = ({
               [],
               [{ id: linkId }],
               nodeData,
-              nodes,
+              relatedNodes,
             );
+          }
+          if (property === "specializations" || property === "generalizations") {
+            await triggerUpdateDerivedPaths([currentVisibleNode.id, linkId]);
           }
         }
       }
@@ -588,11 +635,16 @@ const LinkNode = ({
   };
 
   const getSpecializations = (nodeId: string) => {
-    return nodes[nodeId].specializations
+    if (!relatedNodes[nodeId]) {
+      return [];
+    }
+    return relatedNodes[nodeId].specializations
       .flatMap((s) => s.nodes)
-      .filter((n) => !!nodes[n.id]?.title);
+      .filter((n) => !!relatedNodes[n.id]?.title);
   };
 
+  const isQueuedClone = clonedNodesQueue.hasOwnProperty(link.id);
+  const queuedTitle = clonedNodesQueue[link.id]?.title;
   return (
     <Box
       id={`${link.id}-${property}`}
@@ -609,9 +661,6 @@ const LinkNode = ({
       }}
     >
       <ListItem
-        ref={provided.innerRef}
-        {...provided.draggableProps}
-        {...provided.dragHandleProps}
         sx={{
           my: 1,
           p: 0.3,
@@ -627,7 +676,7 @@ const LinkNode = ({
           },
         }}
       >
-        <ListItemIcon sx={{ minWidth: 0 }}>
+        <ListItemIcon sx={{ minWidth: "auto", mr: 1 }}>
           <DragIndicatorIcon
             sx={{
               color:
@@ -639,119 +688,15 @@ const LinkNode = ({
             }}
           />
         </ListItemIcon>
-        {clonedNodesQueue.hasOwnProperty(link.id) ? (
-          <LinkEditor
-            reviewId={link.id}
-            title={clonedNodesQueue[link.id]?.title || ""}
-            checkDuplicateTitle={() => {}}
-            setClonedNodesQueue={setClonedNodesQueue}
-          />
-        ) : (
-          <Tooltip
-            title={
-              partsInheritance[link.id] ? (
-                <>
-                  <span
-                    style={{
-                      display: "flex",
-                      gap: "4px",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {partsInheritance[link.id][0].genId &&
-                      nodes[partsInheritance[link.id][0].genId] && (
-                        <>
-                          Inherited from{" "}
-                          <strong style={{ fontSize: "12px" }}>
-                            {'"'}
-                            {nodes[partsInheritance[link.id][0].genId].title}
-                            {'"'},
-                          </strong>
-                        </>
-                      )}
-                    {partsInheritance[link.id][0]?.partOf && (
-                      <>
-                        Part{" "}
-                        <strong style={{ fontSize: "12px", color: "orange" }}>
-                          {nodes[partsInheritance[link.id][0].partOf]?.title}
-                        </strong>
-                      </>
-                    )}
-                  </span>
-                  {link.optional && (
-                    <span style={{ marginLeft: "2px" }}>{"(Optional)"}</span>
-                  )}
-                </>
-              ) : link.optional ? (
-                <span style={{ marginLeft: "2px" }}>{"(Optional)"}</span>
-              ) : (
-                ""
-              )
-            }
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 8],
-                  },
-                },
-              ],
-              sx: {
-                maxWidth: "none",
-              },
-            }}
-            componentsProps={{
-              tooltip: {
-                sx: {
-                  maxWidth: "none",
-                  whiteSpace: "nowrap",
-                  padding: 1,
-                },
-              },
-            }}
-            placement="top"
-          >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Link
-                underline="hover"
-                onClick={handleNavigateToNode}
-                sx={{
-                  cursor: "pointer",
-                  color: getLinkColor(link.change),
-                  textDecoration:
-                    link.change === "removed" ? "line-through" : "none",
-                }}
-              >
-                {/* link.title || */ title || regionalTitle}{" "}
-                {link.optional && selectedProperty !== property && (
-                  <span
-                    style={{ color: "orange", marginLeft: "2px" }}
-                  >{`(O)`}</span>
-                )}
-              </Link>
-
-              {/* {partsInheritance[link.id] && (
-                <Box
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    borderRadius: "50%",
-                    background: `${
-                      partsInheritance[link.id]
-                        ? partsInheritance[link.id].partInheritance
-                          ? "orange"
-                          : "green"
-                        : ""
-                    }`,
-                    marginLeft: "8px",
-                    boxShadow: "0 0 3px rgba(0, 0, 0, 0.3) inset",
-                  }}
-                ></Box>
-              )} */}
-            </Box>
-          </Tooltip>
-        )}
+        <LinkNodeTitle
+          title={isQueuedClone ? queuedTitle : title}
+          link={link}
+          relatedNodes={relatedNodes}
+          property={property}
+          selectedProperty={selectedProperty}
+          onNavigate={handleNavigateToNode}
+          linkColor={getLinkColor(link.change)}
+        />
 
         <Box sx={{ display: "flex", alignItems: "center", ml: "auto" }}>
           {link.changeType === "sort" && (
@@ -759,92 +704,68 @@ const LinkNode = ({
               sx={{ color: getLinkColor(link.change), pl: "5px" }}
             />
           )}{" "}
-          {selectedProperty === property && selectedProperty === "parts" && (
-            <Tooltip
-              title={
-                link.optional ? "Make part non-optional" : "Make part optional"
-              }
-              placement="top"
-            >
-              <Button
-                sx={{ ml: "auto", borderRadius: "25px", p: 0, width: "10px" }}
-                variant={link.optional ? "contained" : "outlined"}
-                onClick={makeLinkOptional}
+          {selectedProperty === property &&
+            selectedProperty === "parts" &&
+            !isQueuedClone && (
+              <Tooltip
+                title={
+                  link.optional
+                    ? "Make part non-optional"
+                    : "Make part optional"
+                }
+                placement="top"
               >
-                O
-              </Button>
-            </Tooltip>
-          )}
-          {((!locked &&
+                <Button
+                  sx={{ ml: "auto", borderRadius: "25px", p: 0, width: "10px" }}
+                  variant={link.optional ? "contained" : "outlined"}
+                  onClick={makeLinkOptional}
+                >
+                  O
+                </Button>
+              </Tooltip>
+            )}
+          {!isQueuedClone &&
+            !locked &&
             !linkLocked &&
             !selectedDiffNode &&
             (!currentVisibleNode.unclassified ||
               property !== "generalizations") &&
-            property !== "isPartOf") ||
-            (clonedNodesQueue.hasOwnProperty(link.id) &&
-              property !== "generalizations")) && (
-            <>
-              {loadingIds.has(link.id) ? (
-                <LoadingButton
-                  loading
-                  loadingIndicator={<CircularProgress size={20} />}
-                  sx={{
-                    borderRadius: "16px",
-                    padding: "3px",
-                    fontSize: "0.8rem",
-                    minWidth: "40px",
-                  }}
-                  disabled
-                />
-              ) : (
-                <Box sx={{ display: "flex" }}>
-                  {clonedNodesQueue.hasOwnProperty(link.id) && (
-                    <Tooltip title="Save">
+            property !== "isPartOf" && (
+              <>
+                {loadingIds.has(link.id) ? (
+                  <LoadingButton
+                    loading
+                    loadingIndicator={<CircularProgress size={20} />}
+                    sx={{
+                      borderRadius: "16px",
+                      padding: "3px",
+                      fontSize: "0.8rem",
+                      minWidth: "40px",
+                    }}
+                    disabled
+                  />
+                ) : (
+                  <Box sx={{ display: "flex" }}>
+                    <Tooltip title="Unlink">
                       <IconButton
                         sx={{
                           ml: "18px",
                           borderRadius: "18px",
                           fontSize: "12px",
                           p: 0.2,
+                          display: !enableEdit ? "none" : "block",
                         }}
-                        onClick={() => {
-                          saveNewSpecialization(link.id, collectionName);
-                        }}
+                        onClick={handleUnlinkNode}
                       >
-                        <CheckIcon sx={{ color: "green" }} />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                  <Tooltip
-                    title={
-                      clonedNodesQueue.hasOwnProperty(link.id)
-                        ? "Cancel"
-                        : "Unlink"
-                    }
-                  >
-                    <IconButton
-                      sx={{
-                        ml: "18px",
-                        borderRadius: "18px",
-                        fontSize: "12px",
-                        p: 0.2,
-                        display: !enableEdit ? "none" : "block",
-                      }}
-                      onClick={handleUnlinkNode}
-                    >
-                      {clonedNodesQueue.hasOwnProperty(link.id) ? (
-                        <CloseIcon sx={{ color: "red" }} />
-                      ) : (
                         <LinkOffIcon
                           sx={{ color: enableEdit ? "orange" : "gray" }}
                         />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              )}
-            </>
-          )}
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                )}
+              </>
+            )}
           {property === "parts" &&
             !currentImprovement &&
             !selectedDiffNode &&
@@ -895,7 +816,7 @@ const LinkNode = ({
                   <SwapHorizIcon />
                 </IconButton>
 
-                <Typography>{nodes[n.id]?.title}</Typography>
+                <Typography>{relatedNodes[n.id]?.title}</Typography>
               </Box>
             </Tooltip>
           ))}{" "}
@@ -958,10 +879,10 @@ const LinkNode = ({
               }}
               placeholder="Node title..."
               fullWidth
-              InputProps={{
-                inputProps: {
-                  style: {
-                    padding: 10,
+              slotProps={{
+                input: {
+                  sx: {
+                    p: 10,
                     borderRadius: "25px",
                   },
                 },

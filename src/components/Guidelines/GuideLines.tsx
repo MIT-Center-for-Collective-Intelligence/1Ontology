@@ -35,6 +35,7 @@ const GuidLines = ({
   const [newGuidelines, setNewGuidelines] = useState<{ [id: string]: string }>(
     {},
   );
+  const isEditDisabled = user?.claims?.editAccess === false;
 
   useEffect(() => {
     const guidelinesQuery = query(collection(db, GUIDELINES));
@@ -155,6 +156,7 @@ const GuidLines = ({
                     index={index}
                     onSaveGuideline={modifyGuidelines}
                     catId={catId}
+                    disabled={isEditDisabled}
                   />
                 ),
               )
@@ -170,6 +172,7 @@ const GuidLines = ({
             {!!user?.copilot && (
               <TextField
                 fullWidth
+                disabled={isEditDisabled}
                 label="Add new guideline"
                 value={newGuidelines[catId] || ""}
                 onChange={(e) =>

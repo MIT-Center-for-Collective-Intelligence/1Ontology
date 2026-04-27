@@ -74,7 +74,13 @@ const LandingPage = () => {
             },
           }}
         />
-        <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+        <Box
+          sx={{
+            minHeight: "100vh",
+            bgcolor: "background.default",
+            display: "flow-root",
+          }}
+        >
           <Navigation
             isDark={isDark}
             handleThemeSwitch={handleThemeSwitch}

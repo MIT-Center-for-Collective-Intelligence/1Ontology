@@ -112,6 +112,7 @@ const SelectProperty = ({
       await updateDoc(nodeRef, {
         [`properties.${property}`]: newValue,
         [`inheritance.${property}.ref`]: null,
+        [`inheritance.${property}.title`]: "",
       });
     } catch (error) {
       console.error(error);
@@ -284,7 +285,6 @@ const SelectProperty = ({
         borderRadius: "30px",
         borderBottomRightRadius: "18px",
         borderBottomLeftRadius: "18px",
-        minWidth: "500px",
         width: "100%",
         maxHeight: "100%",
         overflow: "auto",

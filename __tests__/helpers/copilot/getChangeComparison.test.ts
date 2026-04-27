@@ -1,8 +1,8 @@
 import { getChangeComparison } from "@components/lib/utils/copilotHelpers";
 import { IChange } from "@components/lib/utils/copilotPrompts";
-import { INode } from "@components/types/INode";
 
-const nodeData: INode = {
+// Test fixtures are intentionally partial; keep them loosely typed.
+const nodeData: any = {
   deleted: false,
   specializations: [
     {
@@ -165,6 +165,7 @@ describe("get improvement change values", () => {
         change,
         nodeData,
         nodesByTitle,
+        ontologyNodes: {},
       }) as { addedCollections: string[]; result: any };
 
       expect(response.addedCollections).toEqual(["collection2"]);
@@ -214,6 +215,7 @@ describe("get improvement change values", () => {
       change,
       nodeData,
       nodesByTitle,
+      ontologyNodes: {},
     }) as { result: any };
 
     expect(response.result).toEqual([
@@ -257,6 +259,7 @@ describe("get improvement change values", () => {
       change,
       nodeData,
       nodesByTitle,
+      ontologyNodes: {},
     }) as { result: any };
 
     expect(response).toEqual({
@@ -278,6 +281,7 @@ describe("get improvement change values", () => {
         change,
         nodeData,
         nodesByTitle: {},
+        ontologyNodes: {},
       });
       expect(response.changeDetails.newValue).toEqual("new description");
       expect(response.changeDetails.previousValue).toEqual("description");
@@ -293,6 +297,7 @@ describe("get improvement change values", () => {
         change,
         nodeData,
         nodesByTitle: {},
+        ontologyNodes: {},
       });
       expect(response).toBeNull();
     });

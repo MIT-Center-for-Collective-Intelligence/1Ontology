@@ -33,7 +33,8 @@ interface NodeBodyProps {
   navigateToNode: Function;
   setSnackbarMessage: Function;
   setSelectedProperty: Function;
-  nodes: { [id: string]: INode };
+  relatedNodes: { [id: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   locked: boolean;
   selectedDiffNode: any;
   getTitleNode: any;
@@ -89,7 +90,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   navigateToNode,
   setSnackbarMessage,
   setSelectedProperty,
-  nodes,
+  relatedNodes,
+  fetchNode,
   locked,
   selectedDiffNode,
   getTitleNode,
@@ -198,6 +200,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
               "inheritUnlessAlreadyOverRidden",
             [`properties.${property}`]: propertyValue,
             [`inheritance.${property}.ref`]: ref,
+            [`inheritance.${property}.title`]: currentVisibleNode?.title ?? "",
             [`propertyType.${property}`]: propertyType,
           };
 
@@ -211,14 +214,21 @@ const NodeBody: React.FC<NodeBodyProps> = ({
             newBatch = writeBatch(db);
           }
 
-          newBatch = await updateSpecializationsInheritance(
-            nodes[link.id].specializations,
-            newBatch,
-            property,
-            propertyValue,
-            ref,
-            propertyType,
-          );
+          let linkNodeData: INode | null = relatedNodes[link.id] || null;
+          if (!linkNodeData) {
+            linkNodeData = await fetchNode(link.id);
+          }
+
+          if (linkNodeData) {
+            newBatch = await updateSpecializationsInheritance(
+              linkNodeData.specializations,
+              newBatch,
+              property,
+              propertyValue,
+              ref,
+              propertyType,
+            );
+          }
         }
       }
 
@@ -263,6 +273,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
       }
       inheritance[newProperty] = {
         ref: null,
+        title: "",
         inheritanceType: "inheritUnlessAlreadyOverRidden",
       };
       setCurrentVisibleNode((prev: any) => {
@@ -480,7 +491,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     confirmIt={confirmIt}
                     saveNewChangeLog={saveNewChangeLog}
                     selectedDiffNode={selectedDiffNode}
-                    nodes={nodes}
+                    nodes={relatedNodes}
                     getTitleNode={getTitleNode}
                     enableEdit={enableEdit}
                   />
@@ -510,7 +521,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                   <ChipsProperty
                     currentVisibleNode={currentVisibleNode}
                     property={property}
-                    nodes={nodes}
+                    relatedNodes={relatedNodes}
+                    fetchNode={fetchNode}
                     locked={locked}
                     currentImprovement={currentImprovement}
                     selectedDiffNode={selectedDiffNode}
@@ -524,7 +536,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     currentVisibleNode={currentNode}
                     property={property}
                     value={onGetPropertyValue(property)}
-                    nodes={nodes}
+                    relatedNodes={relatedNodes}
+                    fetchNode={fetchNode}
                     locked={locked}
                     selectedDiffNode={selectedDiffNode}
                     currentImprovement={currentImprovement}
@@ -546,7 +559,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     setSnackbarMessage={setSnackbarMessage}
                     setCurrentVisibleNode={setCurrentVisibleNode}
                     property={property}
-                    nodes={nodes}
+                    relatedNodes={relatedNodes}
+                    fetchNode={fetchNode}
                     locked={locked}
                     onGetPropertyValue={onGetPropertyValue}
                     currentImprovement={currentImprovement}
@@ -599,7 +613,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       currentVisibleNode={currentNode}
                       property={property}
                       setCurrentVisibleNode={setCurrentVisibleNode}
-                      nodes={nodes}
+                      relatedNodes={relatedNodes}
+                      fetchNode={fetchNode}
                       locked={locked}
                       selectedDiffNode={selectedDiffNode}
                       getTitleNode={getTitleNode}
@@ -635,7 +650,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 confirmIt={confirmIt}
                 saveNewChangeLog={saveNewChangeLog}
                 selectedDiffNode={selectedDiffNode}
-                nodes={nodes}
+                nodes={relatedNodes}
                 getTitleNode={getTitleNode}
                 enableEdit={enableEdit}
               />
@@ -650,7 +665,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                 borderRadius: "30px",
                 borderBottomRightRadius: "18px",
                 borderBottomLeftRadius: "18px",
-                minWidth: "500px",
                 width: "100%",
                 maxHeight: "100%",
                 overflow: "auto",

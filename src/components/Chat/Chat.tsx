@@ -65,7 +65,8 @@ type ChatProps = {
   setOpenSelectModel: React.Dispatch<React.SetStateAction<boolean>>;
   users: any;
   navigateToNode: any;
-  nodes: { [nodeId: string]: INode };
+  relatedNodes: { [nodeId: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   scrollingRef: any;
   placeholder: string;
   appName: string;
@@ -79,7 +80,8 @@ const Chat = ({
   setOpenSelectModel,
   users,
   navigateToNode,
-  nodes,
+  relatedNodes,
+  fetchNode,
   scrollingRef,
   placeholder,
   appName,
@@ -676,7 +678,8 @@ const Chat = ({
             navigateToNode={navigateToNode}
             replies={replies}
             chatType={chatType}
-            nodes={nodes}
+            relatedNodes={relatedNodes}
+            fetchNode={fetchNode}
             setOpenMedia={setOpenMedia}
           />
         ))}

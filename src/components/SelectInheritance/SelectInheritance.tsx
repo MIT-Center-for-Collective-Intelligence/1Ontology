@@ -45,8 +45,8 @@ const SelectInheritance = ({
 
     _generalizations = _generalizations.filter((g: any) => {
       return (
-        !nodes[g.id]?.inheritance[property]?.ref ||
-        nodes[g.id]?.inheritance[property]?.ref !== inheritanceRef
+        !nodes[g.id]?.inheritance?.[property]?.ref ||
+        nodes[g.id]?.inheritance?.[property]?.ref !== inheritanceRef
       );
     });
     const index = _generalizations.findIndex(
@@ -97,8 +97,10 @@ const SelectInheritance = ({
             modifiedInheritanceFor ===
               nodes[link.id].inheritance[property]?.ref)
         ) {
+          const refTitle = getTitle(nodes, ref);
           let objectUpdate = {
             [`inheritance.${property}.ref`]: ref,
+            [`inheritance.${property}.title`]: refTitle,
           };
           if (newBatch._committed) {
             newBatch = writeBatch(db);
@@ -142,6 +144,10 @@ const SelectInheritance = ({
 
         updateDoc(nodeRef, {
           [`inheritance.${property}.ref`]: newGeneralizationId,
+          [`inheritance.${property}.title`]: getTitle(
+            nodes,
+            newGeneralizationId,
+          ),
         })
           .then(async () => {
             let batch = writeBatch(db);
@@ -201,6 +207,15 @@ const SelectInheritance = ({
           },
         }}
       >
+        <MenuItem
+          value="inheritance-overridden"
+          disabled
+          sx={{
+            display: "none",
+          }}
+        >
+          Inheritance Overridden
+        </MenuItem>
         <MenuItem
           value=""
           disabled

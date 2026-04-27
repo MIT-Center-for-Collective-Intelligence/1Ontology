@@ -100,7 +100,8 @@
 
 
 .tree {
-    border-radius: 16px;
+    border-radius: 10px;
+    background: var(--tree-surface, transparent);
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
 }
@@ -112,6 +113,9 @@
 .row {
     white-space: nowrap;
     cursor: pointer;
+    margin: 0 4px;
+    display: flex;
+    align-items: stretch;
 }
 
 .node {
@@ -119,13 +123,15 @@
     border-radius: 8px;
     display: flex;
     align-items: center;
-    margin: 0 10px;
+    margin: 0 6px;
     height: 100%;
+    width: calc(100% - 12px);
 }
 
 .node:global(.willReceiveDrop) {
-    background: #bbb;
-    color: black;
+    background: rgba(76, 175, 80, 0.2);
+    color: inherit;
+    box-shadow: inset 0 0 0 1px rgba(76, 175, 80, 0.55);
 }
 
 
@@ -158,9 +164,12 @@
 
 .indentLines>div {
     height: 100%;
-    padding-left: 10px;
-    border-right: 1px solid #ccc;
-    margin-right: calc(var(--indent-size) - 10px - 1px);
+    /* Center the dashed guide within each indent column */
+    padding-left: calc((var(--indent-size) - 1px) / 2);
+    border-right: 1px dashed rgba(145, 158, 171, 0.3);
+    margin-right: calc(
+        var(--indent-size) - ((var(--indent-size) - 1px) / 2) - 1px
+    );
 }
 
 .row:focus {
@@ -182,6 +191,7 @@
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .categoryText {
@@ -197,8 +207,13 @@
 
 .arrow {
     width: 20px;
+    height: 20px;
     display: flex;
-    font-size: 20px;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #8896a8;
+    flex-shrink: 0;
 }
 
 .buttonRow {
@@ -237,11 +252,11 @@
 .loadMoreNode {
   background-color: transparent;
   cursor: default;
-  padding: 2px 0;
-  border-radius: 4px;
+  padding: 0;
+  border-radius: 8px;
   transition: background-color 0.15s ease;
 }
 
 .loadMoreNode:hover {
-  background-color: rgba(255, 165, 0, 0.02);
+  background-color: rgba(255, 165, 0, 0.04);
 }

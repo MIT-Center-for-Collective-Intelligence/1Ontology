@@ -32,7 +32,7 @@ import { DISPLAY } from "@components/lib/CONSTANTS";
 import { useAuth } from "../context/AuthContext";
 import PropertyContributors from "../StructuredProperty/PropertyContributors";
 import EditIcon from "@mui/icons-material/Edit";
-import EditProperty from "../AddPropertyForm/EditProprety";
+import EditProperty from "../AddPropertyForm/EditProperty";
 import InheritanceDetailsPanel from "./InheritanceDetailsPanel";
 import SelectInheritance from "../SelectInheritance/SelectInheritance";
 
@@ -45,7 +45,8 @@ type INumericPropertyProps = {
   currentVisibleNode: INode;
   property: string;
   value: NumericPropertyValue | number | string;
-  nodes: any;
+  relatedNodes: { [id: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   locked: boolean;
   selectedDiffNode: any;
   currentImprovement: any;
@@ -61,7 +62,8 @@ const NumericProperty = ({
   currentVisibleNode,
   property,
   value,
-  nodes,
+  relatedNodes,
+  fetchNode,
   locked,
   selectedDiffNode,
   currentImprovement,
@@ -172,7 +174,12 @@ const NumericProperty = ({
 
         const updateData = {
           [`properties.${property}`]: newPropertyValue,
-          ...(reference ? { [`inheritance.${property}.ref`]: null } : {}),
+          ...(reference
+            ? {
+                [`inheritance.${property}.ref`]: null,
+                [`inheritance.${property}.title`]: "",
+              }
+            : {}),
         };
 
         await updateDoc(nodeRef, updateData);
@@ -477,7 +484,10 @@ const NumericProperty = ({
             {currentVisibleNode.inheritance[property]?.ref && (
               <Typography sx={{ fontSize: "14px", ml: "9px" }}>
                 {'(Inherited from "'}
-                {nodes[currentVisibleNode.inheritance[property].ref]?.title}
+                {
+                  relatedNodes[currentVisibleNode.inheritance[property].ref]
+                    ?.title
+                }
                 {'")'}
               </Typography>
             )}
@@ -487,7 +497,7 @@ const NumericProperty = ({
                 <SelectInheritance
                   currentVisibleNode={currentVisibleNode}
                   property={property}
-                  nodes={nodes}
+                  nodes={relatedNodes}
                   enableEdit={enableEdit}
                 />
               )}
@@ -548,10 +558,12 @@ const NumericProperty = ({
                         borderRadius: "12px",
                       },
                     }}
-                    InputProps={{
-                      sx: {
-                        fontSize: "16px",
-                        borderRadius: "12px",
+                    slotProps={{
+                      input: {
+                        sx: {
+                          fontSize: "16px",
+                          borderRadius: "12px",
+                        },
                       },
                     }}
                   />
@@ -571,10 +583,12 @@ const NumericProperty = ({
                         borderRadius: "12px",
                       },
                     }}
-                    InputProps={{
-                      sx: {
-                        fontSize: "16px",
-                        borderRadius: "12px",
+                    slotProps={{
+                      input: {
+                        sx: {
+                          fontSize: "16px",
+                          borderRadius: "12px",
+                        },
                       },
                     }}
                   />
@@ -588,7 +602,8 @@ const NumericProperty = ({
         <InheritanceDetailsPanel
           property={property}
           currentVisibleNode={currentVisibleNode}
-          nodes={nodes}
+          relatedNodes={relatedNodes}
+          fetchNode={fetchNode}
         />
       </Paper>
     </Slide>

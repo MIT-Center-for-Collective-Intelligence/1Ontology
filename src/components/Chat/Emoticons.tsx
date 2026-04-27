@@ -93,19 +93,30 @@ export const Emoticons = ({
                 sx={{
                   color: (theme) =>
                     theme.palette.mode === "dark"
-                      ? DESIGN_SYSTEM_COLORS.gray100
-                      : "#51657a",
-                  fontSize: "15px",
+                      ? "rgba(255,255,255,0.9)"
+                      : "#334966",
+                  fontSize: "14px",
+                  fontWeight: 600,
                   minWidth: "0",
-                  padding: "0px 10px",
-                  borderRadius: "12px",
-                  border: reactedByCurrentUser ? "1px solid orange" : "",
+                  padding: "1px 10px",
+                  borderRadius: "999px",
+                  border: reactedByCurrentUser
+                    ? "1px solid rgba(255, 153, 84, 0.75)"
+                    : "1px solid transparent",
                   background: (theme) =>
                     theme.palette.mode === "dark"
-                      ? DESIGN_SYSTEM_COLORS.notebookG500
+                      ? reactedByCurrentUser
+                        ? "rgba(255, 145, 66, 0.2)"
+                        : "rgba(255,255,255,0.08)"
                       : reactedByCurrentUser
-                        ? "#9cc9ed"
-                        : DESIGN_SYSTEM_COLORS.gray300,
+                        ? "rgba(255, 170, 106, 0.2)"
+                        : "rgba(18, 30, 60, 0.06)",
+                  "&:hover": {
+                    background: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.14)"
+                        : "rgba(18, 30, 60, 0.1)",
+                  },
                 }}
                 onClick={() => toggleReaction(message, emoji)}
               >

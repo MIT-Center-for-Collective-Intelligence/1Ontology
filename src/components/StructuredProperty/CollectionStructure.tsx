@@ -7,6 +7,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
 import { ICollection, ILinkNode, INode } from "@components/types/INode";
 import DoneIcon from "@mui/icons-material/Done";
 import {
@@ -21,7 +22,7 @@ import {
   useTheme,
 } from "@mui/material";
 import theme from "quill/core/theme";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 
 import NewCollection from "../Collection/NewCollection";
@@ -31,6 +32,8 @@ import {
   recordLogs,
   saveNewChangeLog,
   updateInheritance,
+  unlinkPropertyOf,
+  updateLinksForInheritance,
 } from "@components/lib/utils/helpers";
 import {
   collection,
@@ -41,13 +44,28 @@ import {
 } from "firebase/firestore";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  pointerWithin,
+  type CollisionDetection,
+  type DragStartEvent,
+  type DragMoveEvent,
+  type DragEndEvent,
+  useDraggable,
+  useDroppable,
+} from "@dnd-kit/core";
+import {
   DragDropContext,
   Draggable,
   Droppable,
-  DropResult,
+  type DropResult,
 } from "@hello-pangea/dnd";
-import { LoadingButton } from "@mui/lab";
-import SelectModel from "../Models/SelectModel";
+import StructuredPropertySelector from "./StructuredPropertySelector";
+import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
+import { reorderChildInTree, reorderCollectionInTree, moveNodeInTree } from "@components/lib/utils/instantTreeUpdate";
 
 interface LoadMoreNode extends ILinkNode {
   id: string;
@@ -55,6 +73,84 @@ interface LoadMoreNode extends ILinkNode {
   displayText: string;
   parentCollection: string;
 }
+
+
+const NodeDraggableWrapper = ({
+  id,
+  collectionIndex,
+  index,
+  disabled,
+  nodeItemRefs,
+  children,
+}: {
+  id: string;
+  collectionIndex: number;
+  index: number;
+  disabled: boolean;
+  nodeItemRefs: React.MutableRefObject<Map<string, HTMLElement>>;
+  children: (props: { isDragging: boolean }) => React.ReactNode;
+}) => {
+  const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
+    id,
+    data: { type: "LINK", collectionIndex, index },
+    disabled,
+  });
+
+  const { setNodeRef: setDropRef } = useDroppable({
+    id,
+    data: { type: "LINK_TARGET", collectionIndex, index },
+  });
+
+  const combinedRef = (el: HTMLElement | null) => {
+    setDragRef(el);
+    setDropRef(el);
+    if (el) nodeItemRefs.current.set(id, el);
+    else nodeItemRefs.current.delete(id);
+  };
+
+  return (
+    <Box
+      ref={combinedRef}
+      {...attributes}
+      {...listeners}
+      sx={{
+        touchAction: "none",
+        cursor: disabled ? "default" : isDragging ? "grabbing" : "grab",
+      }}
+    >
+      {children({ isDragging }) as React.ReactNode}
+    </Box>
+  );
+};
+
+const EmptyCollectionDropZone = ({
+  id,
+  collectionName,
+}: {
+  id: string;
+  collectionName: string;
+}) => {
+  const { setNodeRef } = useDroppable({ id });
+  return (
+    <Typography
+      ref={setNodeRef as any}
+      variant="body2"
+      sx={{ p: 2, color: "text.secondary", textAlign: "center" }}
+    >
+      {collectionName === "main" ? "" : "No items"}
+    </Typography>
+  );
+};
+
+// Use pointer position to find which node is being hovered over.
+const collisionDetection: CollisionDetection = (args) => {
+  const hits = pointerWithin(args);
+  const nodeHit = hits.find(
+    ({ data }) => data?.droppableContainer?.data?.current?.type === "LINK_TARGET",
+  );
+  if (nodeHit) return [nodeHit];
+  return hits;
+};
 
 const CollectionStructure = ({
   model,
@@ -117,13 +213,14 @@ const CollectionStructure = ({
   setRemovedElements,
   setAddedElements,
   skillsFuture,
-  partsInheritance,
   enableEdit,
   handleLoadMore,
   loadingStates = new Set(),
   skillsFutureApp,
   unlinkNodeRelation,
   linkNodeRelation,
+  fetchNode,
+  onInstantTreeUpdate,
 }: {
   model?: boolean;
   locked: boolean;
@@ -186,21 +283,36 @@ const CollectionStructure = ({
   setRemovedElements: any;
   setAddedElements: any;
   skillsFuture: boolean;
-  partsInheritance: {
-    [nodeId: string]: { inheritedFrom: string; partInheritance: string };
-  };
   enableEdit: boolean;
   handleLoadMore?: (loadMoreNodeId: string, collectionName: string) => void;
   loadingStates?: Set<string>;
   skillsFutureApp: string;
   unlinkNodeRelation: any;
   linkNodeRelation: any;
+  fetchNode: (nodeId: string) => Promise<INode | null>;
+  onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
 }) => {
+  // console.log(editableProperty, "editableProperty -->");
   const db = getFirestore();
   const [{ user }] = useAuth();
 
   const [editCollection, setEditCollection] = useState<string | null>(null);
   const [newEditCollection, setNewEditCollection] = useState("");
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [draggingNodeTitle, setDraggingNodeTitle] = useState<string>("");
+  const nestTargetId = useRef<string | null>(null);
+  const nodeItemRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const nestTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [dropIndicator, setDropIndicator] = useState<{
+    nodeId: string;
+    position: "above" | "nest" | "below";
+  } | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
+
+  const canNest = property === "specializations" && enableEdit;
 
   const theme = useTheme();
   const BUTTON_COLOR = theme.palette.mode === "dark" ? "#373739" : "#dde2ea";
@@ -305,14 +417,9 @@ const CollectionStructure = ({
   };
 
   const handleCollectionSorting = useCallback(
-    (e: any) => {
+    async (sourceIndex: number, destinationIndex: number) => {
       try {
-        const sourceIndex = e.source.index;
-        const destinationIndex = e.destination.index;
-
-        if (sourceIndex === undefined || destinationIndex === undefined) {
-          throw new Error("Invalid source or destination index");
-        }
+        if (sourceIndex === destinationIndex) return;
 
         if (model) {
           setEditableProperty((prev: ICollection[]) => {
@@ -357,16 +464,42 @@ const CollectionStructure = ({
             property === "specializations" ||
             property === "generalizations"
           ) {
+            if (property === "specializations" && onInstantTreeUpdate) {
+              const fromCollectionName = propertyValue[sourceIndex]?.collectionName;
+              const toCollectionName = propertyValue[destinationIndex]?.collectionName;
+
+              onInstantTreeUpdate((tree) => {
+                const updatedTree = reorderCollectionInTree(
+                  tree,
+                  currentVisibleNode.id,
+                  sourceIndex,
+                  destinationIndex,
+                  fromCollectionName,
+                  toCollectionName,
+                  newArray
+                );
+                return updatedTree;
+              });
+            }
+
             updateDoc(nodeRef, {
               [property]: newArray,
             });
+
+            // Save pending node state for real-time sync to other users
+            if (property === "specializations") {
+              const updatedNodeData = { ...nodeData, specializations: newArray };
+              await savePendingNodeState(currentVisibleNode.id, updatedNodeData, skillsFutureApp, db);
+            }
           } else {
             if (nodeData.inheritance) {
               nodeData.inheritance[property].ref = null;
+              nodeData.inheritance[property].title = "";
             }
             updateDoc(nodeRef, {
               [`properties.${property}`]: newArray,
               [`inheritance.${property}.ref`]: null,
+              [`inheritance.${property}.title`]: "",
             });
 
             updateInheritance({
@@ -391,80 +524,66 @@ const CollectionStructure = ({
     },
     [property, currentVisibleNode],
   );
+  // console.log("editableProperty ==>", editableProperty);
 
   const handleSorting = useCallback(
     async (
-      result: DropResult,
+      draggableId: string,
+      sourceCollectionIndex: number,
+      destinationCollectionIndex: number,
+      destinationIndex: number,
       property: string,
       propertyValue: ICollection[],
     ) => {
       try {
-        // Destructure properties from the result object
-        const { source, destination, draggableId, type } = result;
-
-        // If there is no destination, no sorting needed
-
-        if (!destination || !user?.uname) {
-          return;
-        }
-
-        // Extract the source and destination collection IDs
-        const { droppableId: sourceCollection } = source; // The source collection
-        const { droppableId: destinationCollection } = destination; // The destination collection
-        const sourceCollectionIndex = Number(sourceCollection);
-        const destinationCollectionIndex = Number(destinationCollection);
+        if (!user?.uname) return;
 
         setEditableProperty((prev: ICollection[]) => {
           if (prev.length > 0) {
             const nodeIdx = prev[sourceCollectionIndex].nodes.findIndex(
               (link: ILinkNode) => link.id === draggableId,
             );
+            if (nodeIdx === -1) return prev;
             const moveValue = prev[sourceCollectionIndex].nodes[nodeIdx];
-
-            // Remove the item from the source category
             prev[sourceCollectionIndex].nodes.splice(nodeIdx, 1);
-
-            // Move the item to the destination category
+            const adjustedDest =
+              sourceCollectionIndex === destinationCollectionIndex &&
+              nodeIdx < destinationIndex
+                ? destinationIndex - 1
+                : destinationIndex;
             prev[destinationCollectionIndex].nodes.splice(
-              destination.index,
+              adjustedDest,
               0,
               moveValue,
             );
           }
-
           return prev;
         });
         setModifiedOrder(true);
 
-        // Ensure defined source and destination categories
-        if (sourceCollection && destinationCollection && propertyValue) {
-          // Ensure nodeData exists
-
+        if (propertyValue) {
           const previousValue = JSON.parse(JSON.stringify(propertyValue));
-
-          if (!propertyValue) return;
-          // Find the index of the draggable item in the source category
 
           const nodeIdx = propertyValue[sourceCollectionIndex].nodes.findIndex(
             (link: ILinkNode) => link.id === draggableId,
           );
 
-          // If the draggable item is found in the source category
           if (nodeIdx !== -1) {
             const moveValue =
               propertyValue[sourceCollectionIndex].nodes[nodeIdx];
-
-            // Remove the item from the source category
             propertyValue[sourceCollectionIndex].nodes.splice(nodeIdx, 1);
-
-            // Move the item to the destination category
+            const adjustedDest =
+              sourceCollectionIndex === destinationCollectionIndex &&
+              nodeIdx < destinationIndex
+                ? destinationIndex - 1
+                : destinationIndex;
             propertyValue[destinationCollectionIndex].nodes.splice(
-              destination.index,
+              adjustedDest,
               0,
               moveValue,
             );
           }
-          // Update the nodeData with the new property values
+
           const nodeRef = doc(collection(db, NODES), currentVisibleNode?.id);
           if (
             property === "specializations" ||
@@ -477,6 +596,7 @@ const CollectionStructure = ({
             updateDoc(nodeRef, {
               [`properties.${property}`]: propertyValue,
               [`inheritance.${property}.ref`]: null,
+              [`inheritance.${property}.title`]: "",
             });
             updateInheritance({
               nodeId: currentVisibleNode?.id,
@@ -487,7 +607,7 @@ const CollectionStructure = ({
 
           saveNewChangeLog(db, {
             nodeId: currentVisibleNode?.id,
-            modifiedBy: user?.uname,
+            modifiedBy: user?.uname || "",
             modifiedProperty: property,
             previousValue,
             newValue: propertyValue,
@@ -495,20 +615,220 @@ const CollectionStructure = ({
             changeType: "sort elements",
             changeDetails: {
               draggableNodeId: draggableId,
-              source,
-              destination,
+              sourceCollectionIndex,
+              destinationCollectionIndex,
+              destinationIndex,
             },
             fullNode: currentVisibleNode,
             skillsFuture,
             ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
 
+          if (property === "specializations" && onInstantTreeUpdate) {
+
+            // Get collection names from propertyValue array
+            const fromCollectionName = propertyValue[sourceCollectionIndex]?.collectionName;
+            const toCollectionName = propertyValue[destinationCollectionIndex]?.collectionName;
+
+            onInstantTreeUpdate((tree) => {
+              return reorderChildInTree(
+                tree,
+                currentVisibleNode.id,
+                draggableId,
+                sourceCollectionIndex,
+                destinationCollectionIndex,
+                nodeIdx,
+                destinationIndex,
+                fromCollectionName,
+                toCollectionName
+              );
+            });
+          }
+
+          // Save pending node state for real-time sync to other users
+          if (property === "specializations") {
+            const updatedNode = { ...currentVisibleNode, specializations: propertyValue };
+            await savePendingNodeState(currentVisibleNode.id, updatedNode, skillsFutureApp, db);
+          }
+
+          // Queue tree update after sorting elements
+          if (currentVisibleNode?.id) {
+            // Instant update: Reorder children in tree to reflect collection changes
+            if (onInstantTreeUpdate) {
+              // onInstantTreeUpdate((tree) => {
+              //   // Helper to find and update the current node's children in the tree
+              //   const updateTreeNode = (nodes: any[]): any[] => {
+              //     return nodes.map((node) => {
+              //       // Find the current visible node in the tree
+              //       if (node.nodeId === currentVisibleNode.id) {
+              //         if (!node.children) return node;
+              //         // Get source and destination collection names
+              //         const sourceCollName =
+              //           propertyValue[sourceCollectionIndex]?.collectionName;
+              //         const destCollName =
+              //           propertyValue[destinationCollectionIndex]
+              //             ?.collectionName;
+              //         if (!sourceCollName || !destCollName) return node;
+              //         // Case 1: Same collection - just reorder
+              //         if (
+              //           sourceCollectionIndex === destinationCollectionIndex
+              //         ) {
+              //           // Find the collection in the tree
+              //           if (sourceCollName === "main") {
+              //             // Main collection children are direct children
+              //             const childIndex = node.children.findIndex(
+              //               (c: any) => c.nodeId === draggableId,
+              //             );
+              //             if (childIndex !== -1) {
+              //               const newChildren = [...node.children];
+              //               const [movedChild] = newChildren.splice(
+              //                 childIndex,
+              //                 1,
+              //               );
+              //               newChildren.splice(
+              //                 destination.index,
+              //                 0,
+              //                 movedChild,
+              //               );
+              //               return { ...node, children: newChildren };
+              //             }
+              //           } else {
+              //             // Find collection node like "[collectionName]"
+              //             const collectionNode = node.children.find(
+              //               (c: any) => c.name === `[${sourceCollName}]`,
+              //             );
+              //             if (collectionNode && collectionNode.children) {
+              //               const childIndex =
+              //                 collectionNode.children.findIndex(
+              //                   (c: any) => c.nodeId === draggableId,
+              //                 );
+              //               if (childIndex !== -1) {
+              //                 const newCollChildren = [
+              //                   ...collectionNode.children,
+              //                 ];
+              //                 const [movedChild] = newCollChildren.splice(
+              //                   childIndex,
+              //                   1,
+              //                 );
+              //                 newCollChildren.splice(
+              //                   destination.index,
+              //                   0,
+              //                   movedChild,
+              //                 );
+              //                 const updatedCollNode = {
+              //                   ...collectionNode,
+              //                   children: newCollChildren,
+              //                 };
+              //                 const newChildren = node.children.map((c: any) =>
+              //                   c.name === `[${sourceCollName}]`
+              //                     ? updatedCollNode
+              //                     : c,
+              //                 );
+              //                 return { ...node, children: newChildren };
+              //               }
+              //             }
+              //           }
+              //         } else {
+              //           // Case 2: Different collections - move between them
+              //           let movedChild: any = null;
+              //           let newChildren = [...node.children];
+              //           // Remove from source
+              //           if (sourceCollName === "main") {
+              //             const childIndex = newChildren.findIndex(
+              //               (c: any) => c.nodeId === draggableId,
+              //             );
+              //             if (childIndex !== -1) {
+              //               [movedChild] = newChildren.splice(childIndex, 1);
+              //             }
+              //           } else {
+              //             const sourceCollNode = newChildren.find(
+              //               (c: any) => c.name === `[${sourceCollName}]`,
+              //             );
+              //             if (sourceCollNode && sourceCollNode.children) {
+              //               const childIndex =
+              //                 sourceCollNode.children.findIndex(
+              //                   (c: any) => c.nodeId === draggableId,
+              //                 );
+              //               if (childIndex !== -1) {
+              //                 [movedChild] = sourceCollNode.children.splice(
+              //                   childIndex,
+              //                   1,
+              //                 );
+              //                 newChildren = newChildren.map((c: any) =>
+              //                   c.name === `[${sourceCollName}]`
+              //                     ? { ...sourceCollNode }
+              //                     : c,
+              //                 );
+              //               }
+              //             }
+              //           }
+              //           // Add to destination
+              //           if (movedChild) {
+              //             if (destCollName === "main") {
+              //               newChildren.splice(
+              //                 destination.index,
+              //                 0,
+              //                 movedChild,
+              //               );
+              //             } else {
+              //               let destCollNode = newChildren.find(
+              //                 (c: any) => c.name === `[${destCollName}]`,
+              //               );
+              //               if (!destCollNode) {
+              //                 // Create collection node if it doesn't exist
+              //                 destCollNode = {
+              //                   id: `${node.id}-${destCollName}`,
+              //                   nodeId: node.nodeId,
+              //                   name: `[${destCollName}]`,
+              //                   category: true,
+              //                   children: [],
+              //                 };
+              //                 newChildren.push(destCollNode);
+              //               }
+              //               const destChildren = [
+              //                 ...(destCollNode.children || []),
+              //               ];
+              //               destChildren.splice(
+              //                 destination.index,
+              //                 0,
+              //                 movedChild,
+              //               );
+              //               newChildren = newChildren.map((c: any) =>
+              //                 c.name === `[${destCollName}]`
+              //                   ? { ...c, children: destChildren }
+              //                   : c,
+              //               );
+              //             }
+              //           }
+              //           return { ...node, children: newChildren };
+              //         }
+              //       }
+              //       // Recursively process children
+              //       if (node.children) {
+              //         return {
+              //           ...node,
+              //           children: updateTreeNode(node.children),
+              //         };
+              //       }
+              //       return node;
+              //     });
+              //   };
+              //   const updatedTree = updateTreeNode(tree);
+              //   console.log(
+              //     "[INSTANT UPDATE] Reordered children in tree after collection sorting",
+              //   );
+              //   return updatedTree;
+              // });
+            }
+
+          }
+
           // Record a log of the sorting action
           recordLogs({
             action: "sort elements",
             field: property,
-            sourceCategory: sourceCollection,
-            destinationCategory: destinationCollection,
+            sourceCategory: sourceCollectionIndex,
+            destinationCategory: destinationCollectionIndex,
             nodeId: currentVisibleNode?.id,
           });
         }
@@ -528,17 +848,192 @@ const CollectionStructure = ({
     [currentVisibleNode, db, nodes, recordLogs, property],
   );
 
+  const handleSpecializationLink = useCallback(
+    async (
+      nodeBId: string,
+      nodeAId: string,
+      sourceCollectionIndex: number,
+    ) => {
+      try {
+        if (!user?.uname) return;
+
+        if (nodeBId === nodeAId) return;
+
+        const nodeAData = nodes[nodeAId];
+        const nodeBData = nodes[nodeBId];
+        if (!nodeAData || !nodeBData) return;
+
+        // Check if is already a specialization
+        const alreadyLinked = nodeAData.specializations
+          .flatMap((c: ICollection) => c.nodes)
+          .some((n: { id: string }) => n.id === nodeBId);
+        if (alreadyLinked) {
+          setSnackbarMessage(
+            `"${getTitle(nodes, nodeBId)}" is already a specialization of "${getTitle(nodes, nodeAId)}"`,
+          );
+          return;
+        }
+
+        const currentNodeId = currentVisibleNode.id;
+
+        // Remove nodeBId from currentVisibleNode's specializations
+        await unlinkPropertyOf(db, "generalizations", nodeBId, currentNodeId);
+
+        setSnackbarMessage(
+          `"${getTitle(nodes, nodeBId)}" has been moved under "${getTitle(nodes, nodeAId)}"`,
+        );
+
+        // Update nodeB's generalizations: remove currentNodeId, add nodeAId
+        const nodeBGeneralizations: ICollection[] = JSON.parse(
+          JSON.stringify(nodeBData.generalizations),
+        );
+        for (const col of nodeBGeneralizations) {
+          col.nodes = col.nodes.filter(
+            (n: { id: string }) => n.id !== currentNodeId,
+          );
+        }
+        nodeBGeneralizations[0].nodes.push({
+          id: nodeAId,
+          title: getTitle(nodes, nodeAId) ?? "",
+        });
+        await updateDoc(doc(collection(db, NODES), nodeBId), {
+          generalizations: nodeBGeneralizations,
+        });
+
+        // Add nodeBId to nodeA's specializations in main collection
+        const nodeASpecs: ICollection[] = JSON.parse(
+          JSON.stringify(nodeAData.specializations),
+        );
+        const mainIdx = nodeASpecs.findIndex(
+          (c) => c.collectionName === "main",
+        );
+        nodeASpecs[mainIdx !== -1 ? mainIdx : 0].nodes.push({
+          id: nodeBId,
+          title: getTitle(nodes, nodeBId) ?? "",
+        });
+        await updateDoc(doc(collection(db, NODES), nodeAId), {
+          specializations: nodeASpecs,
+        });
+
+        // Remove nodeBId from the visible list
+        setEditableProperty((prev: ICollection[]) => {
+          const next: ICollection[] = JSON.parse(JSON.stringify(prev));
+          if (next[sourceCollectionIndex]) {
+            next[sourceCollectionIndex].nodes = next[
+              sourceCollectionIndex
+            ].nodes.filter((n: ILinkNode) => n.id !== nodeBId);
+          }
+          return next;
+        });
+
+        saveNewChangeLog(db, {
+          nodeId: currentNodeId,
+          modifiedBy: user.uname,
+          modifiedProperty: "specializations",
+          previousValue: propertyValue,
+          newValue: null,
+          modifiedAt: new Date(),
+          changeType: "modify elements",
+          changeDetails: {
+            action: "nest-specialization",
+            movedNode: nodeBId,
+            newParent: nodeAId,
+          },
+          fullNode: currentVisibleNode,
+          skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        });
+        saveNewChangeLog(db, {
+          nodeId: nodeBId,
+          modifiedBy: user.uname,
+          modifiedProperty: "generalizations",
+          previousValue: nodeBData.generalizations,
+          newValue: nodeBGeneralizations,
+          modifiedAt: new Date(),
+          changeType: "modify elements",
+          changeDetails: {
+            action: "nest-specialization",
+            removedParent: currentNodeId,
+            newParent: nodeAId,
+          },
+          fullNode: nodeBData,
+          skillsFuture,
+          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        });
+
+        // Instant tree update: move nodeBId from currentNode's subtree to nodeA's subtree
+        if (onInstantTreeUpdate) {
+          onInstantTreeUpdate((tree) =>
+            moveNodeInTree(tree, nodeBId, currentNodeId, nodeAId, 0),
+          );
+        }
+
+        await savePendingNodeState(
+          currentNodeId,
+          { ...currentVisibleNode },
+          skillsFutureApp,
+          db,
+        );
+        await savePendingNodeState(
+          nodeBId,
+          { ...nodeBData, generalizations: nodeBGeneralizations },
+          skillsFutureApp,
+          db,
+        );
+        await savePendingNodeState(
+          nodeAId,
+          { ...nodeAData, specializations: nodeASpecs },
+          skillsFutureApp,
+          db,
+        );
+
+        // Inheritance update
+        await updateLinksForInheritance(
+          db,
+          nodeBId,
+          [{ id: nodeAId }],
+          nodeBGeneralizations[0].nodes,
+          nodeBData,
+          nodes,
+        );
+      } catch (error: any) {
+        console.error(error);
+        recordLogs({
+          type: "error",
+          error: JSON.stringify({
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          }),
+        });
+      }
+    },
+    [
+      currentVisibleNode,
+      db,
+      nodes,
+      user,
+      propertyValue,
+      skillsFuture,
+      skillsFutureApp,
+      setEditableProperty,
+      onInstantTreeUpdate,
+    ],
+  );
+
   const addCollection = useCallback(
     async (newCollection: string) => {
       try {
         if (
           newCollection.toLowerCase() === "main" ||
-          newCollection.toLowerCase() === "default"
+          newCollection.toLowerCase() === "default" ||
+          !newCollection ||
+          !user?.uname
         ) {
           return;
         }
+
         setOpenAddCollection(false);
-        if (!newCollection || !user?.uname) return;
 
         const nodeDoc = await getDoc(
           doc(collection(db, NODES), currentVisibleNode?.id),
@@ -558,11 +1053,7 @@ const CollectionStructure = ({
         );
         // Check if the collection already exists
         if (existIndex !== -1) {
-          confirmIt(
-            `This category already exists under the property ${property}`,
-            "Ok",
-            "",
-          );
+          confirmIt(`This collection already exists!`, "Ok", "");
           return;
         }
 
@@ -587,7 +1078,7 @@ const CollectionStructure = ({
             nodes: [],
           });
         }
-
+        debugger;
         // Log the new collection addition
         logChange("add collection", null, newCollection, nodeDoc, property);
 
@@ -624,9 +1115,58 @@ const CollectionStructure = ({
           skillsFuture,
           ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
+
+        // Queue tree update after adding collection
+        if (currentVisibleNode?.id && newCollection) {
+          // Instant update: Add new collection node to tree
+          if (onInstantTreeUpdate) {
+            onInstantTreeUpdate((tree) => {
+              const updateTreeNode = (nodes: any[]): any[] => {
+                return nodes.map((node) => {
+                  if (node.nodeId === currentVisibleNode.id) {
+                    // Check if collection already exists
+                    const collectionExists = node.children?.some(
+                      (child: any) => child.name === `[${newCollection}]` && child.category
+                    );
+
+                    if (collectionExists) {
+                      return node;
+                    }
+
+                    // Add new collection node (empty) to children
+                    const newCollectionNode = {
+                      id: `${node.id}-${newCollection}`,
+                      nodeId: node.nodeId,
+                      name: `[${newCollection}]`,
+                      category: true,
+                      children: [],
+                    };
+                    const newChildren = [
+                      newCollectionNode,
+                      ...(node.children || []),
+                    ];
+                    return { ...node, children: newChildren };
+                  }
+                  if (node.children) {
+                    return { ...node, children: updateTreeNode(node.children) };
+                  }
+                  return node;
+                });
+              };
+              const updatedTree = updateTreeNode(tree);
+              console.log("[INSTANT UPDATE] Added new collection to tree");
+              return updatedTree;
+            });
+          }
+
+          // Save pending node state for real-time sync to other users
+          if (property === 'specializations') {
+            await savePendingNodeState(currentVisibleNode.id, nodeData as INode, skillsFutureApp, db);
+          }
+
+        }
       } catch (error: any) {
-        console.error(error);
-        recordLogs({
+        console.error({
           type: "error",
           error: JSON.stringify({
             name: error.name,
@@ -635,6 +1175,15 @@ const CollectionStructure = ({
           }),
           at: "addCollection",
         });
+        // recordLogs({
+        //   type: "error",
+        //   error: JSON.stringify({
+        //     name: error.name,
+        //     message: error.message,
+        //     stack: error.stack,
+        //   }),
+        //   at: "addCollection",
+        // });
       }
     },
     [user?.uname, db, currentVisibleNode?.id, property],
@@ -660,7 +1209,7 @@ const CollectionStructure = ({
   const replaceWith = useCallback(
     async (partId: string, id: string) => {
       try {
-        scrollToElement(partId);
+        // scrollToElement(partId);
         if (model) {
           setEditableProperty((prev: ICollection[]) => {
             const _prev = [...prev];
@@ -688,13 +1237,6 @@ const CollectionStructure = ({
             updateDoc(nodeRef, {
               "properties.parts": propertyValue,
             });
-            if (currentVisibleNode.inheritance.parts.ref) {
-              updateInheritance({
-                nodeId: currentVisibleNode?.id,
-                updatedProperties: ["parts"],
-                db,
-              });
-            }
           }
         }
       } catch (error) {
@@ -802,6 +1344,49 @@ const CollectionStructure = ({
           skillsFuture,
           ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
         });
+
+        // Queue tree update after editing collection name
+        if (currentVisibleNode?.id) {
+          // Instant update: Rename collection node in tree
+          if (onInstantTreeUpdate && editCollection && newCollection) {
+            onInstantTreeUpdate((tree) => {
+              const updateTreeNode = (nodes: any[]): any[] => {
+                return nodes.map((node) => {
+                  if (node.nodeId === currentVisibleNode.id && node.children) {
+                    // Find and rename the collection node
+                    const newChildren = node.children.map((child: any) => {
+                      if (child.name === `[${editCollection}]`) {
+                        return {
+                          ...child,
+                          name: `[${newCollection}]`,
+                          id: child.id.replace(
+                            `-${editCollection}`,
+                            `-${newCollection}`,
+                          ),
+                        };
+                      }
+                      return child;
+                    });
+                    return { ...node, children: newChildren };
+                  }
+                  if (node.children) {
+                    return { ...node, children: updateTreeNode(node.children) };
+                  }
+                  return node;
+                });
+              };
+              const updatedTree = updateTreeNode(tree);
+              console.log("[INSTANT UPDATE] Renamed collection in tree");
+              return updatedTree;
+            });
+          }
+
+          // Save pending node state for real-time sync
+          if (property === 'specializations' && editCollection) {
+            await savePendingNodeState(currentVisibleNode.id, nodeData as INode, skillsFutureApp, db);
+          }
+
+        }
       } catch (error: any) {
         console.error(error);
         recordLogs({
@@ -823,7 +1408,17 @@ const CollectionStructure = ({
       if (
         user?.uname &&
         (await confirmIt(
-          `Are you sure you want to delete the collection ${collectionName}?`,
+          <Box sx={{ display: "flex" }}>
+            <Typography>
+              Are you sure you want to delete the collection:
+            </Typography>
+            <Typography sx={{ color: "orange", fontWeight: "bold", mx: "3px" }}>
+              {`"`}
+              {collectionName}
+              {`"`}
+            </Typography>
+            ?
+          </Box>,
           "Delete Collection",
           "Keep Collection",
         ))
@@ -923,6 +1518,54 @@ const CollectionStructure = ({
               skillsFuture,
               ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
             });
+
+            // Queue tree update after deleting collection
+            if (currentVisibleNode?.id) {
+              // Instant update: Remove collection node and merge children to main
+              if (onInstantTreeUpdate && collectionName) {
+                onInstantTreeUpdate((tree) => {
+                  const updateTreeNode = (nodes: any[]): any[] => {
+                    return nodes.map((node) => {
+                      if (
+                        node.nodeId === currentVisibleNode.id &&
+                        node.children
+                      ) {
+                        // Find the collection node being deleted
+                        const deletedCollNode = node.children.find(
+                          (c: any) => c.name === `[${collectionName}]`,
+                        );
+                        if (deletedCollNode) {
+                          // Remove the collection node and move its children to main (direct children)
+                          const childrenToMove = deletedCollNode.children || [];
+                          const newChildren = node.children
+                            .filter(
+                              (c: any) => c.name !== `[${collectionName}]`,
+                            )
+                            .concat(childrenToMove);
+                          return { ...node, children: newChildren };
+                        }
+                      }
+                      if (node.children) {
+                        return {
+                          ...node,
+                          children: updateTreeNode(node.children),
+                        };
+                      }
+                      return node;
+                    });
+                  };
+                  const updatedTree = updateTreeNode(tree);
+                  console.log("[INSTANT UPDATE] Deleted collection from tree");
+                  return updatedTree;
+                });
+              }
+
+              // Save pending node state for real-time sync to other users
+              if (property === 'specializations') {
+                await savePendingNodeState(currentVisibleNode.id, nodeData as INode, skillsFutureApp, db);
+              }
+
+            }
           }
         } catch (error: any) {
           console.error("error", error);
@@ -945,10 +1588,156 @@ const CollectionStructure = ({
     setNewEditCollection(collectionName);
   };
 
+  const handleNodeDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const { active } = event;
+      setActiveId(active.id as string);
+      setDraggingNodeTitle(
+        getTitle(nodes, active.id as string) || (active.id as string),
+      );
+      document.body.style.cursor = "grabbing";
+      document.body.style.userSelect = "none";
+    },
+    [nodes],
+  );
+
+  const handleNodeDragMove = useCallback(
+    (event: DragMoveEvent) => {
+      if (event.active.data.current?.type !== "LINK") return;
+      const { over, activatorEvent, delta } = event;
+
+      if (
+        !over ||
+        over.id === event.active.id ||
+        String(over.id).startsWith("empty-coll-")
+      ) {
+        if (nestTimerRef.current) {
+          clearTimeout(nestTimerRef.current);
+          nestTimerRef.current = null;
+        }
+        setDropIndicator(null);
+        nestTargetId.current = null;
+        return;
+      }
+
+      const overId = over.id as string;
+      const el = nodeItemRefs.current.get(overId);
+      if (!el) return;
+
+      const rect = el.getBoundingClientRect();
+      const pointerY = (activatorEvent as PointerEvent).clientY + delta.y;
+      const relY = (pointerY - rect.top) / rect.height;
+      const rawPosition =
+        relY < 0.25 ? "above" : relY > 0.75 ? "below" : "nest";
+
+      if (rawPosition === "nest" && canNest) {
+        if (nestTimerRef.current) clearTimeout(nestTimerRef.current);
+        nestTimerRef.current = setTimeout(() => {
+          setDropIndicator({ nodeId: overId, position: "nest" });
+          nestTargetId.current = overId;
+        }, 80);
+      } else {
+        if (nestTimerRef.current) {
+          clearTimeout(nestTimerRef.current);
+          nestTimerRef.current = null;
+        }
+        setDropIndicator({
+          nodeId: overId,
+          position: rawPosition === "nest" ? "above" : rawPosition,
+        });
+        nestTargetId.current = null;
+      }
+    },
+    [canNest],
+  );
+
+  const handleNodeDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      const currentDropIndicator = dropIndicator;
+      if (nestTimerRef.current) {
+        clearTimeout(nestTimerRef.current);
+        nestTimerRef.current = null;
+      }
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      setActiveId(null);
+      setDraggingNodeTitle("");
+      setDropIndicator(null);
+      const nestTarget = nestTargetId.current;
+      nestTargetId.current = null;
+
+      if (locked || !!selectedDiffNode || !!currentImprovement) return;
+
+      const activeData = active.data.current;
+
+      if (activeData?.type === "LINK") {
+        if (nestTarget && property === "specializations" && enableEdit) {
+          handleSpecializationLink(
+            active.id as string,
+            nestTarget,
+            activeData.collectionIndex,
+          );
+        } else if (
+          currentDropIndicator &&
+          currentDropIndicator.position !== "nest"
+        ) {
+          let destCollIdx = -1;
+          let destItemIdx = -1;
+          (propertyValue || []).forEach((col: ICollection, cIdx: number) => {
+            const nIdx = col.nodes.findIndex(
+              (n: ILinkNode) => n.id === currentDropIndicator.nodeId,
+            );
+            if (nIdx !== -1) {
+              destCollIdx = cIdx;
+              destItemIdx =
+                currentDropIndicator.position === "above" ? nIdx : nIdx + 1;
+            }
+          });
+          if (destCollIdx !== -1) {
+            handleSorting(
+              active.id as string,
+              activeData.collectionIndex,
+              destCollIdx,
+              destItemIdx,
+              property,
+              propertyValue,
+            );
+          }
+        } else if (over && String(over.id).startsWith("empty-coll-")) {
+          const destCollIdx = parseInt(
+            (over.id as string).replace("empty-coll-", ""),
+          );
+          if (!isNaN(destCollIdx)) {
+            handleSorting(
+              active.id as string,
+              activeData.collectionIndex,
+              destCollIdx,
+              0,
+              property,
+              propertyValue,
+            );
+          }
+        }
+      }
+    },
+    [
+      dropIndicator,
+      locked,
+      selectedDiffNode,
+      currentImprovement,
+      property,
+      enableEdit,
+      handleSpecializationLink,
+      handleSorting,
+      propertyValue,
+    ],
+  );
+
   return (
     <Box
       sx={{
-        p: "15px",
+        p: "12px",
         pt: 0,
       }}
     >
@@ -962,53 +1751,65 @@ const CollectionStructure = ({
       )}
 
       <DragDropContext
-        onDragEnd={(e) => {
-          if (locked || !!selectedDiffNode || !!currentImprovement) return;
-          if (e.type === "CATEGORY") {
-            handleCollectionSorting(e);
-          } else {
-            handleSorting(e, property, propertyValue);
+        onDragEnd={(result: DropResult) => {
+          if (!result.destination || result.source.index === result.destination.index) return;
+          if (result.type === "COLLECTION") {
+            handleCollectionSorting(result.source.index, result.destination.index);
           }
         }}
       >
-        {/* Droppable for categories */}
-        <Droppable droppableId="categories" type="CATEGORY">
-          {(provided) => (
-            <Box ref={provided.innerRef} {...provided.droppableProps}>
-              {(propertyValue || []).map(
-                (collection: ICollection, collectionIndex: number) => {
-                  return (
-                    <Draggable
-                      key={collection.collectionName + collectionIndex}
-                      draggableId={`${collectionIndex}`}
-                      index={collectionIndex}
-                      isDragDisabled={
-                        property !== "specializations" || !enableEdit
-                      }
+        <DndContext
+          sensors={sensors}
+          collisionDetection={collisionDetection}
+          onDragStart={handleNodeDragStart}
+          onDragMove={handleNodeDragMove}
+          onDragEnd={handleNodeDragEnd}
+        >
+          <Droppable droppableId="collections" type="COLLECTION">
+            {(provided) => (
+              <Box ref={provided.innerRef} {...provided.droppableProps}>
+                {(propertyValue || []).map(
+            (collection: ICollection, collectionIndex: number) => {
+              return (
+                <Draggable
+                  key={collection.collectionName + collectionIndex}
+                  draggableId={String(collectionIndex)}
+                  index={collectionIndex}
+                  isDragDisabled={
+                    property !== "specializations" ||
+                    !enableEdit ||
+                    propertyValue.length <= 1
+                  }
+                >
+                  {(provided) => (
+                    <Paper
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      id={`${collectionIndex}`}
+                      sx={{
+                        display:
+                          !enableEdit &&
+                          collection.collectionName === "main" &&
+                          collection.nodes.length === 0
+                            ? "none"
+                            : "block",
+                        mt: "15px",
+                        borderRadius: "20px",
+                        border:
+                          selectedCollection ===
+                            collection.collectionName &&
+                          selectedProperty === property
+                            ? "2px solid green"
+                            : "",
+                      }}
+                      elevation={property !== "specializations" ? 0 : 3}
                     >
-                      {(provided) => (
-                        <Paper
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          id={`${collectionIndex}`}
-                          sx={{
-                            mt: "15px",
-                            borderRadius: "20px",
-                            border:
-                              selectedCollection ===
-                                collection.collectionName &&
-                              selectedProperty === property
-                                ? "2px solid green"
-                                : "",
-                          }}
-                          elevation={property !== "specializations" ? 0 : 3}
-                        >
                           {property === "specializations" && (
                             <Box>
                               {editCollection === null ||
                               editCollection !== collection.collectionName ? (
                                 <Box
+                                  {...provided.dragHandleProps}
                                   sx={{
                                     display: "flex",
                                     alignItems: "center",
@@ -1024,6 +1825,10 @@ const CollectionStructure = ({
                                     backgroundColor: getCategoryStyle(
                                       collection.collectionName,
                                     ),
+                                    cursor:
+                                      propertyValue.length > 1 && enableEdit
+                                        ? "grab"
+                                        : "default",
                                   }}
                                 >
                                   {selectedDiffNode &&
@@ -1178,7 +1983,12 @@ const CollectionStructure = ({
                                   }}
                                 >
                                   <TextField
-                                    sx={{ p: 0 }}
+                                    sx={{
+                                      p: 0,
+                                      "& .MuiOutlinedInput-root": {
+                                        borderRadius: "25px",
+                                      },
+                                    }}
                                     fullWidth
                                     placeholder="Edit collection..."
                                     onChange={(e) =>
@@ -1212,7 +2022,15 @@ const CollectionStructure = ({
                                         collection.collectionName ===
                                           newEditCollection
                                       }
-                                      sx={{ ml: "5px" }}
+                                      sx={{
+                                        ml: "5px",
+                                        border:
+                                          !newEditCollection ||
+                                          collection.collectionName ===
+                                            newEditCollection
+                                            ? "1px solid gray"
+                                            : "1px solid green",
+                                      }}
                                     >
                                       <DoneIcon
                                         sx={{
@@ -1232,7 +2050,10 @@ const CollectionStructure = ({
                                         setEditCollection(null);
                                         setNewEditCollection("");
                                       }}
-                                      sx={{ ml: "5px" }}
+                                      sx={{
+                                        ml: "5px",
+                                        border: "1px solid red",
+                                      }}
                                     >
                                       <CloseIcon sx={{ color: "red" }} />
                                     </IconButton>
@@ -1244,27 +2065,14 @@ const CollectionStructure = ({
                             </Box>
                           )}
 
-                          <List sx={{ p: 1 }}>
-                            <Droppable
-                              droppableId={`${collectionIndex}`}
-                              type="LINK"
+                          <List sx={{ p: 1, mx: "-5px" }}>
+                            <Box
+                              sx={{
+                                borderRadius: "18px",
+                                userSelect: "none",
+                              }}
                             >
-                              {(provided, snapshot) => (
-                                <Box
-                                  {...provided.droppableProps}
-                                  ref={provided.innerRef}
-                                  sx={{
-                                    backgroundColor: snapshot.isDraggingOver
-                                      ? (theme) =>
-                                          theme.palette.mode === "light"
-                                            ? DESIGN_SYSTEM_COLORS.gray250
-                                            : DESIGN_SYSTEM_COLORS.notebookG400
-                                      : "",
-                                    borderRadius: "18px",
-                                    userSelect: "none",
-                                  }}
-                                >
-                                  {propertyValue[collectionIndex].nodes.length >
+                              {propertyValue[collectionIndex].nodes.length >
                                   0 ? (
                                     propertyValue[collectionIndex].nodes.map(
                                       (link: ILinkNode, index: number) => {
@@ -1287,108 +2095,230 @@ const CollectionStructure = ({
                                           );
                                         }
 
-                                        // Add inheritance data if this is a parts property with intact inheritance
-                                        const inheritanceRef =
-                                          property === "parts" &&
-                                          currentVisibleNode.inheritance?.parts
-                                            ?.ref;
-                                        const enhancedLink = inheritanceRef
-                                          ? {
-                                              ...link,
-                                              inheritedFrom:
-                                                nodes[inheritanceRef]?.title,
-                                            }
-                                          : link;
+                                        // Parts list uses this node's
+                                        // `properties.parts` only (see StructuredProperty
+                                        // propertyValue); do not annotate rows from
+                                        // inheritance.parts.ref.
+                                        const enhancedLink = link;
+
+                                        const nodeKey =
+                                          link.randomId ||
+                                          `${link.id}-${index}`;
+                                        const isDropAbove =
+                                          dropIndicator?.nodeId === link.id &&
+                                          dropIndicator.position === "above";
+                                        const isDropBelow =
+                                          dropIndicator?.nodeId === link.id &&
+                                          dropIndicator.position === "below";
+                                        const isDropNest =
+                                          dropIndicator?.nodeId === link.id &&
+                                          dropIndicator.position === "nest";
 
                                         return (
-                                          <Draggable
-                                            key={
-                                              link.randomId ||
-                                              `${link.id}-${index}`
-                                            }
-                                            draggableId={link.id}
-                                            index={index}
-                                            isDragDisabled={!enableEdit}
-                                          >
-                                            {(provided) => (
-                                              <LinkNode
-                                                provided={provided}
-                                                navigateToNode={navigateToNode}
-                                                setSnackbarMessage={
-                                                  setSnackbarMessage
-                                                }
-                                                currentVisibleNode={
-                                                  currentVisibleNode
-                                                }
-                                                setCurrentVisibleNode={
-                                                  setCurrentVisibleNode
-                                                }
-                                                sx={{ pl: 1 }}
-                                                link={enhancedLink}
-                                                property={property}
-                                                title={getTitle(nodes, link.id)}
-                                                nodes={nodes}
-                                                linkIndex={index}
-                                                /* unlinkVisible={unlinkVisible(
-                                                  link.id,
-                                                )} */
-                                                linkLocked={false}
-                                                locked={
-                                                  locked || !!currentImprovement
-                                                }
-                                                user={user}
-                                                collectionIndex={
-                                                  collectionIndex
-                                                }
-                                                collectionName={
-                                                  propertyValue[collectionIndex]
-                                                    .collectionName
-                                                }
-                                                selectedDiffNode={
-                                                  selectedDiffNode
-                                                }
-                                                replaceWith={replaceWith}
-                                                saveNewAndSwapIt={
-                                                  saveNewAndSwapIt
-                                                }
-                                                clonedNodesQueue={
-                                                  clonedNodesQueue
-                                                }
-                                                unlinkElement={unlinkElement}
-                                                selectedProperty={
-                                                  selectedProperty
-                                                }
-                                                glowIds={glowIds}
-                                                skillsFuture={skillsFuture}
-                                                currentImprovement={
-                                                  currentImprovement
-                                                }
-                                                partsInheritance={
-                                                  partsInheritance
-                                                }
-                                                loadingIds={loadingIds}
-                                                saveNewSpecialization={
-                                                  saveNewSpecialization
-                                                }
-                                                enableEdit={enableEdit}
-                                                setClonedNodesQueue={
-                                                  setClonedNodesQueue
-                                                }
-                                                skillsFutureApp={
-                                                  skillsFutureApp
-                                                }
-                                                setEditableProperty={
-                                                  setEditableProperty
-                                                }
-                                                unlinkNodeRelation={
-                                                  unlinkNodeRelation
-                                                }
+                                          <React.Fragment key={nodeKey}>
+                                            {isDropAbove && (
+                                              <Box
+                                                sx={{
+                                                  height: "2px",
+                                                  backgroundColor:
+                                                    "primary.main",
+                                                  borderRadius: "1px",
+                                                  mx: 1,
+                                                  my: "3px",
+                                                  position: "relative",
+                                                  "&::before": {
+                                                    content: '""',
+                                                    position: "absolute",
+                                                    left: -5,
+                                                    top: -4,
+                                                    width: 10,
+                                                    height: 10,
+                                                    borderRadius: "50%",
+                                                    backgroundColor:
+                                                      "primary.main",
+                                                  },
+                                                }}
                                               />
                                             )}
-                                          </Draggable>
+                                          <NodeDraggableWrapper
+                                            id={link.id}
+                                            collectionIndex={collectionIndex}
+                                            index={index}
+                                            disabled={!enableEdit}
+                                            nodeItemRefs={nodeItemRefs}
+                                          >
+                                            {({ isDragging: isNodeDragging }) => (
+                                              <Box
+                                                sx={{
+                                                  borderRadius: "25px",
+                                                  opacity: isNodeDragging ? 0.3 : 1,
+                                                  transition: "background-color 0.15s",
+                                                  ...(enableEdit &&
+                                                    !isNodeDragging &&
+                                                    !isDropNest && {
+                                                      "&:hover": {
+                                                        backgroundColor:
+                                                          "action.hover",
+                                                      },
+                                                    }),
+                                                  ...(isDropNest && {
+                                                      outline:
+                                                        "2px solid #ed6c02",
+                                                      backgroundColor:
+                                                        "rgba(237,108,2,0.06)",
+                                                    }),
+                                                }}
+                                              >
+                                                <LinkNode
+                                                  navigateToNode={navigateToNode}
+                                                  setSnackbarMessage={
+                                                    setSnackbarMessage
+                                                  }
+                                                  currentVisibleNode={
+                                                    currentVisibleNode
+                                                  }
+                                                  setCurrentVisibleNode={
+                                                    setCurrentVisibleNode
+                                                  }
+                                                  sx={{ pl: 1 }}
+                                                  link={enhancedLink}
+                                                  property={property}
+                                                  title={
+                                                    link.title ||
+                                                    getTitle(nodes, link.id)
+                                                  }
+                                                  relatedNodes={nodes}
+                                                  fetchNode={fetchNode}
+                                                  linkIndex={index}
+                                                  /* unlinkVisible={unlinkVisible(
+                                                    link.id,
+                                                  )} */
+                                                  linkLocked={false}
+                                                  locked={
+                                                    locked || !!currentImprovement
+                                                  }
+                                                  user={user}
+                                                  collectionIndex={
+                                                    collectionIndex
+                                                  }
+                                                  collectionName={
+                                                    propertyValue[collectionIndex]
+                                                      .collectionName
+                                                  }
+                                                  selectedDiffNode={
+                                                    selectedDiffNode
+                                                  }
+                                                  replaceWith={replaceWith}
+                                                  saveNewAndSwapIt={
+                                                    saveNewAndSwapIt
+                                                  }
+                                                  clonedNodesQueue={
+                                                    clonedNodesQueue
+                                                  }
+                                                  unlinkElement={unlinkElement}
+                                                  selectedProperty={
+                                                    selectedProperty
+                                                  }
+                                                  glowIds={glowIds}
+                                                  skillsFuture={skillsFuture}
+                                                  currentImprovement={
+                                                    currentImprovement
+                                                  }
+                                                  loadingIds={loadingIds}
+                                                  saveNewSpecialization={
+                                                    saveNewSpecialization
+                                                  }
+                                                  enableEdit={enableEdit}
+                                                  setClonedNodesQueue={
+                                                    setClonedNodesQueue
+                                                  }
+                                                  skillsFutureApp={
+                                                    skillsFutureApp
+                                                  }
+                                                  setEditableProperty={
+                                                    setEditableProperty
+                                                  }
+                                                  unlinkNodeRelation={
+                                                    unlinkNodeRelation
+                                                  }
+                                                  onInstantTreeUpdate={
+                                                    onInstantTreeUpdate
+                                                  }
+                                                />
+                                                {dropIndicator?.nodeId ===
+                                                  link.id &&
+                                                  dropIndicator.position ===
+                                                    "nest" && (
+                                                    <Box
+                                                      sx={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        ml: 4,
+                                                        mb: 1,
+                                                        px: 1.5,
+                                                        py: 0.5,
+                                                        borderRadius: "20px",
+                                                        border:
+                                                          "1px dashed #ed6c02",
+                                                        backgroundColor:
+                                                          "rgba(237,108,2,0.04)",
+                                                        width: "fit-content",
+                                                      }}
+                                                    >
+                                                      <SubdirectoryArrowRightIcon
+                                                      sx={{
+                                                          fontSize: 16,
+                                                          mr: 0.75,
+                                                          color: "#ed6c02",
+                                                        }}
+                                                      />
+                                                      <Typography
+                                                        variant="caption"
+                                                        sx={{
+                                                          color: "#ed6c02",
+                                                          fontWeight: 500,
+                                                        }}
+                                                      >
+                                                        {draggingNodeTitle}
+                                                      </Typography>
+                                                    </Box>
+                                                  )}
+                                              </Box>
+                                            )}
+                                          </NodeDraggableWrapper>
+                                            {isDropBelow && (
+                                              <Box
+                                                sx={{
+                                                  height: "2px",
+                                                  backgroundColor:
+                                                    "primary.main",
+                                                  borderRadius: "1px",
+                                                  mx: 1,
+                                                  my: "3px",
+                                                  position: "relative",
+                                                  "&::before": {
+                                                    content: '""',
+                                                    position: "absolute",
+                                                    left: -5,
+                                                    top: -4,
+                                                    width: 10,
+                                                    height: 10,
+                                                    borderRadius: "50%",
+                                                    backgroundColor:
+                                                      "primary.main",
+                                                  },
+                                                }}
+                                              />
+                                            )}
+                                          </React.Fragment>
                                         );
                                       },
                                     )
+                                  ) : enableEdit && !locked ? (
+                                    <EmptyCollectionDropZone
+                                      id={`empty-coll-${collectionIndex}`}
+                                      collectionName={collection.collectionName}
+                                    />
                                   ) : (
                                     <Typography
                                       variant="body2"
@@ -1485,6 +2415,9 @@ const CollectionStructure = ({
                                             unlinkNodeRelation={
                                               unlinkNodeRelation
                                             }
+                                            onInstantTreeUpdate={
+                                              onInstantTreeUpdate
+                                            }
                                           />
                                         );
                                       },
@@ -1569,14 +2502,15 @@ const CollectionStructure = ({
                                             unlinkNodeRelation={
                                               unlinkNodeRelation
                                             }
+                                            onInstantTreeUpdate={
+                                              onInstantTreeUpdate
+                                            }
                                           />
                                         );
                                       },
                                     )} */}
-                                  {provided.placeholder}
+
                                 </Box>
-                              )}
-                            </Droppable>
                           </List>
 
                           {handleCloseAddLinksModel &&
@@ -1584,10 +2518,11 @@ const CollectionStructure = ({
                             !!selectedProperty &&
                             selectedCollection ===
                               collection.collectionName && (
-                              <SelectModel
+                              <StructuredPropertySelector
                                 onSave={onSave}
                                 currentVisibleNode={currentVisibleNode}
-                                nodes={nodes}
+                                relatedNodes={nodes}
+                                fetchNode={fetchNode}
                                 handleCloseAddLinksModel={
                                   handleCloseAddLinksModel
                                 }
@@ -1666,8 +2601,6 @@ const CollectionStructure = ({
                               >
                                 <AddIcon
                                   sx={{
-                                    borderRadius: "50%",
-                                    border: "1px solid orange",
                                     mr: "5px",
                                   }}
                                 />
@@ -1677,16 +2610,24 @@ const CollectionStructure = ({
                                 )}`}
                               </Button>
                             )}
-                        </Paper>
-                      )}
-                    </Draggable>
-                  );
-                },
-              )}
-              {provided.placeholder}
-            </Box>
+                    </Paper>
+                  )}
+                </Draggable>
+              );
+            },
           )}
-        </Droppable>
+                {provided.placeholder}
+              </Box>
+            )}
+          </Droppable>
+          {activeId && (
+            <DragOverlay>
+              <Paper sx={{ opacity: 0.9, borderRadius: "25px", p: 1.5, maxWidth: 280 }} elevation={4}>
+                <Typography variant="body2">{draggingNodeTitle || activeId}</Typography>
+              </Paper>
+            </DragOverlay>
+          )}
+        </DndContext>
       </DragDropContext>
     </Box>
   );

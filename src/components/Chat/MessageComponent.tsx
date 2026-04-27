@@ -1,11 +1,10 @@
-import React, { useState, useRef } from "react";
-import { Box, Typography, Button, IconButton } from "@mui/material";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { Box, Typography, Button, IconButton, CircularProgress } from "@mui/material";
 import { CSSTransition } from "react-transition-group";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 import LinkIcon from "@mui/icons-material/Link";
-import moment from "moment";
 import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import MarkdownRender from "../Markdown/MarkdownRender";
 import { Emoticons } from "./Emoticons";
@@ -35,7 +34,8 @@ const MessageComponent = ({
   navigateToNode,
   replies,
   chatType,
-  nodes,
+  relatedNodes,
+  fetchNode,
   setOpenMedia,
 }: {
   message: any;
@@ -55,11 +55,37 @@ const MessageComponent = ({
   navigateToNode: any;
   replies: any;
   chatType: string;
-  nodes: { [nodeId: string]: INode };
+  relatedNodes: { [nodeId: string]: INode };
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   setOpenMedia: any;
 }) => {
   const boxRef = useRef<HTMLDivElement>(null);
   const scrolling = useRef<HTMLDivElement>(null);
+  const [sharedNode, setSharedNode] = useState<INode | null>(null);
+  const [loadingSharedNode, setLoadingSharedNode] = useState(false);
+  const createdAtLabel = useMemo(() => {
+    if (!message.createdAt) return "";
+    const fromNow = dayjs(new Date(message.createdAt.toDate())).fromNow();
+    return fromNow.includes("NaN") ? "a few minutes ago" : fromNow;
+  }, [message.createdAt]);
+
+  // Fetch shared node if not in cache
+  useEffect(() => {
+    if (message.messageType === "node" && message.sharedNodeId) {
+      const cachedNode = relatedNodes[message.sharedNodeId];
+      if (cachedNode) {
+        setSharedNode(cachedNode);
+        setLoadingSharedNode(false);
+      } else {
+        setLoadingSharedNode(true);
+        fetchNode(message.sharedNodeId).then((fetchedNode) => {
+          setSharedNode(fetchedNode);
+          setLoadingSharedNode(false);
+        });
+      }
+    }
+  }, [message.messageType, message.sharedNodeId, relatedNodes, fetchNode]);
+
   const handleDeleteMessage = async () => {
     if (
       await confirmIt(
@@ -91,17 +117,18 @@ const MessageComponent = ({
         id={`message-${message.id}`}
         sx={{
           display: "flex",
-          gap: "10px",
-          pt: 5,
+          gap: 1.25,
+          pt: 1.75,
         }}
       >
         {message.senderDetail && (
           <Box
             sx={{
-              width: "40px",
-              height: "40px",
+              width: "42px",
+              height: "42px",
               cursor: "pointer",
               borderRadius: "50%",
+              flexShrink: 0,
             }}
           >
             <OptimizedAvatar
@@ -113,21 +140,22 @@ const MessageComponent = ({
           </Box>
         )}
 
-        <Box sx={{ width: "90%" }}>
+        <Box sx={{ width: "100%" }}>
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 2,
+              gap: 1.25,
+              mb: 0.5,
             }}
           >
             {message.senderDetail && (
               <Box sx={{ display: "flex" }}>
                 <Typography
                   sx={{
-                    fontSize: "16px",
-                    fontWeight: "500",
-                    lineHeight: "24px",
+                    fontSize: "0.98rem",
+                    fontWeight: 700,
+                    lineHeight: 1.2,
                   }}
                 >
                   {message.senderDetail.fullname}
@@ -135,12 +163,17 @@ const MessageComponent = ({
               </Box>
             )}
             {message.createdAt && (
-              <Typography sx={{ fontSize: "12px" }}>
-                {dayjs(new Date(message.createdAt.toDate()))
-                  .fromNow()
-                  .includes("NaN")
-                  ? "a few minutes ago"
-                  : `${dayjs(new Date(message.createdAt.toDate())).fromNow()}`}
+              <Typography
+                sx={(theme) => ({
+                  fontSize: "0.72rem",
+                  fontWeight: 500,
+                  color:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.72)"
+                      : "rgba(21,31,46,0.58)",
+                })}
+              >
+                {createdAtLabel}
               </Typography>
             )}
           </Box>
@@ -164,41 +197,56 @@ const MessageComponent = ({
               className="reply-box"
               sx={{
                 position: "relative",
-                fontSize: "16px",
+                fontSize: "14px",
                 fontWeight: "400",
-                lineHeight: "24px",
-                p: "10px 14px",
-                borderRadius: "9px",
+                lineHeight: "20px",
+                p: "13px 14px 12px",
+                borderRadius: "16px",
+                border: "none",
                 background: (theme) =>
                   theme.palette.mode === "dark"
-                    ? DESIGN_SYSTEM_COLORS.notebookG700
-                    : DESIGN_SYSTEM_COLORS.gray300,
+                    ? "linear-gradient(140deg, rgba(31, 33, 38, 0.98), rgba(22, 23, 27, 0.98))"
+                    : "linear-gradient(140deg, rgba(255,255,255,0.98), rgba(246,248,252,0.98))",
+                boxShadow: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "0 8px 16px rgba(0,0,0,0.18)"
+                    : "0 7px 16px rgba(15, 28, 59, 0.06)",
+                transition: "transform 0.2s ease, box-shadow 0.2s ease",
                 ":hover": {
+                  transform: "translateY(-1px)",
+                  boxShadow: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "0 10px 20px rgba(0,0,0,0.24)"
+                      : "0 9px 20px rgba(15, 28, 59, 0.09)",
                   "& .message-buttons": {
                     display: "block",
                   },
                 },
               }}
             >
-              {message.messageType === "node" && nodes[message.sharedNodeId] ? (
+              {message.messageType === "node" && sharedNode ? (
                 <Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
                     gap: "10px",
-                    p: "10px",
-                    borderRadius: "8px",
+                    p: "11px 12px",
+                    borderRadius: "12px",
                     background: (theme) =>
                       theme.palette.mode === "dark"
                         ? message.sender === "You"
-                          ? DESIGN_SYSTEM_COLORS.notebookG600
-                          : DESIGN_SYSTEM_COLORS.notebookO800
+                          ? "rgba(80, 94, 118, 0.3)"
+                          : "rgba(130, 84, 52, 0.35)"
                         : message.sender === "You"
-                          ? DESIGN_SYSTEM_COLORS.gray100
-                          : DESIGN_SYSTEM_COLORS.orange50,
+                          ? "rgba(84, 118, 168, 0.13)"
+                          : "rgba(255, 170, 104, 0.23)",
+                    border: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "1px solid rgba(255,255,255,0.08)"
+                        : "1px solid rgba(20,35,68,0.1)",
                     mb: "10px",
                     ":hover": {
-                      backgroundColor: "orange",
+                      backgroundColor: "rgba(255, 138, 61, 0.22)",
                       cursor: "pointer",
                     },
                   }}
@@ -220,14 +268,28 @@ const MessageComponent = ({
                     <LinkIcon sx={{ color: DESIGN_SYSTEM_COLORS.gray25 }} />
                   </Box>
                   <Typography sx={{ fontWeight: "500" }}>
-                    {getTitle(nodes, message.sharedNodeId)?.substr(0, 40)}
+                    {sharedNode.title?.substr(0, 40)}
+                  </Typography>
+                </Box>
+              ) : message.messageType === "node" && loadingSharedNode ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    p: "10px",
+                  }}
+                >
+                  <CircularProgress size={20} />
+                  <Typography sx={{ fontWeight: "400", fontStyle: "italic" }}>
+                    Loading shared node...
                   </Typography>
                 </Box>
               ) : (
                 <MarkdownRender
                   text={message.text}
                   sx={{
-                    fontSize: "16px",
+                    fontSize: "13px",
                     fontWeight: 400,
                     letterSpacing: "inherit",
                   }}
@@ -247,9 +309,10 @@ const MessageComponent = ({
                   <img
                     width={"100%"}
                     style={{
-                      borderRadius: "8px",
-                      objectFit: "contain",
+                      borderRadius: "12px",
+                      objectFit: "cover",
                       cursor: "pointer",
+                      border: "1px solid rgba(255,255,255,0.08)",
                     }}
                     src={imageUrl}
                     alt="comment image"
@@ -274,7 +337,8 @@ const MessageComponent = ({
                   display: "flex",
                   flexWrap: "wrap",
                   alignItems: "center",
-                  gap: "5px",
+                  gap: "6px",
+                  mt: 0.5,
                 }}
               >
                 <Emoticons
@@ -287,9 +351,27 @@ const MessageComponent = ({
                 />
                 <IconButton
                   onClick={(e) => toggleEmojiPicker(e, boxRef, message)}
+                  size="small"
+                  sx={(theme) => ({
+                    borderRadius: 999,
+                    border: "none",
+                    color:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.82)"
+                        : "rgba(24,37,64,0.72)",
+                    bgcolor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.04)"
+                        : "rgba(248,250,255,0.75)",
+                    "&:hover": {
+                      bgcolor:
+                        theme.palette.mode === "dark"
+                          ? "rgba(255,255,255,0.09)"
+                          : "rgba(240,245,255,0.95)",
+                    },
+                  })}
                 >
                   <AddReactionOutlined
-                    color="secondary"
                     sx={{ fontSize: "19px" }}
                   />
                 </IconButton>
@@ -299,16 +381,34 @@ const MessageComponent = ({
                       showReplies !== message.id ? message.id : null,
                     )
                   }
-                  style={{
-                    fontSize: "14px",
+                  sx={(theme) => ({
                     marginLeft: "auto",
-                    borderRadius: "25px",
-                    padding: 1,
-                    paddingRight: "10px",
-                  }}
-                  variant={
-                    showReplies === message.id ? "contained" : "outlined"
-                  }
+                    fontSize: "0.86rem",
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    textTransform: "none",
+                    borderRadius: 999,
+                    minHeight: 34,
+                    px: 1.25,
+                    border: "none",
+                    color:
+                      theme.palette.mode === "dark"
+                        ? "#ffaf70"
+                        : "#b85313",
+                    background:
+                      showReplies === message.id
+                        ? theme.palette.mode === "dark"
+                          ? "linear-gradient(140deg, rgba(93, 59, 38, 0.94), rgba(58, 38, 26, 0.94))"
+                          : "linear-gradient(140deg, rgba(255, 204, 161, 0.88), rgba(255, 185, 122, 0.84))"
+                        : "transparent",
+                    "&:hover": {
+                      background:
+                        theme.palette.mode === "dark"
+                          ? "rgba(255, 146, 78, 0.16)"
+                          : "rgba(255, 168, 98, 0.18)",
+                    },
+                  })}
+                  variant="outlined"
                 >
                   {showReplies === message.id ? (
                     <KeyboardArrowUpIcon />
@@ -328,7 +428,11 @@ const MessageComponent = ({
 
           {showReplies === message.id && (
             <Box sx={{ mt: "10px" }}>
-              {renderReplies(message.id, replies, boxRef)}
+              {replies.length > 0 && (
+                <Box sx={{ mb: 1.75 }}>
+                  {renderReplies(message.id, replies, boxRef)}
+                </Box>
+              )}
               <ChatInput
                 user={user}
                 type="reply"

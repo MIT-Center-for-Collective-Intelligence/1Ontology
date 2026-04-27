@@ -11,6 +11,8 @@ export const PROMPT_LOGS = "promptLogs";
 export const COPILOT_PROMPTS = "copilotPrompts";
 export const NODES_ONET = "oNetNodes";
 export const ALGORITHMS = "algorithms";
+export const TREE_QUEUES = "treeUpdateQueue"
+export const TREE_PENDING_CHANGES = "treePendingChanges"
 
 /* realtime database */
 export const UNREAD_COMMENTS = "unreadComments";

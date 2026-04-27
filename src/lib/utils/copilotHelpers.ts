@@ -49,6 +49,8 @@ export const getChangeComparison = ({
           (c) => c.collectionName === collection.collectionName,
         );
 
+        const changes = collection.changes || collection.collection_changes || {};
+
         const previousState =
           collectionIdx === -1
             ? []
@@ -57,7 +59,7 @@ export const getChangeComparison = ({
         const nodes = [];
         const final_nodes = [];
 
-        for (let title of collection.changes.final_array) {
+        for (let title of changes.final_array || []) {
           const nodeId = nodesByTitle[title]?.id;
           if (!nodeId) {
             addedNonExistentElements.push(title);
@@ -72,11 +74,11 @@ export const getChangeComparison = ({
           final_nodes.push({ id: nodeId });
         }
 
-        const final_array_ids = collection.changes.final_array
-          .map((c: string) => nodesByTitle[c].id)
+        const final_array_ids = (changes.final_array || [])
+          .map((c: string) => nodesByTitle[c]?.id)
           .filter(Boolean);
         for (let linkId of previousState) {
-          if (!final_array_ids.includes(linkId) && !!ontologyNodes[linkId]) {
+          if (!final_array_ids.includes(linkId)) {
             nodes.push({ id: linkId, change: "removed" });
             nodesToRemove.add(linkId);
             modified = true;
@@ -154,7 +156,10 @@ export const getChangeComparison = ({
           nodes.push({
             id: nodeId,
             change: "added",
-            optional: (change.optionalParts || []).includes(title),
+            ...(((change.optionalParts || []).includes(title) && {
+              optional: true,
+            }) ||
+              {}),
           });
         } else {
           nodes.push({
@@ -163,14 +168,17 @@ export const getChangeComparison = ({
         }
         final_nodes.push({
           id: nodeId,
-          optional: (change.optionalParts || []).includes(title),
+          ...(((change.optionalParts || []).includes(title) && {
+            optional: true,
+          }) ||
+            {}),
         });
       }
       const final_array_ids = final_nodes
         .map((c: { id: string }) => c.id)
         .filter(Boolean);
       for (let linkId of previousState) {
-        if (!final_array_ids.includes(linkId) && !!ontologyNodes[linkId]) {
+        if (!final_array_ids.includes(linkId)) {
           modified = true;
           nodes.push({ id: linkId, change: "removed" });
           nodesToRemove.add(linkId);
@@ -258,15 +266,17 @@ export const getChangeComparison = ({
     return null;
   } catch (error: any) {
     console.error(error);
-    recordLogs({
-      type: "error",
-      error: JSON.stringify({
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      }),
-      at: "getChangeComparison",
-    });
+    if (process.env.NODE_ENV !== "test") {
+      recordLogs({
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+        at: "getChangeComparison",
+      });
+    }
   }
 };
 
@@ -325,15 +335,17 @@ export const compareImprovement = (
     return _improvement;
   } catch (error: any) {
     console.error(error);
-    recordLogs({
-      type: "error",
-      error: JSON.stringify({
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      }),
-      at: "getChangeComparison",
-    });
+    if (process.env.NODE_ENV !== "test") {
+      recordLogs({
+        type: "error",
+        error: JSON.stringify({
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }),
+        at: "getChangeComparison",
+      });
+    }
   }
 };
 

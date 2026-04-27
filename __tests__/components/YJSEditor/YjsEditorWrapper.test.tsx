@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -6,6 +9,7 @@ import '@testing-library/jest-dom';
 // Mock Quill
 const mockQuillInstance = {
   focus: jest.fn(),
+  setText: jest.fn(),
   setSelection: jest.fn(),
   on: jest.fn(),
   off: jest.fn(),
@@ -13,10 +17,9 @@ const mockQuillInstance = {
 };
 
 jest.mock('quill', () => {
-  return {
-    register: jest.fn(),
-    default: jest.fn(() => mockQuillInstance),
-  };
+  const Quill = jest.fn(() => mockQuillInstance);
+  (Quill as any).register = jest.fn();
+  return Quill;
 });
 
 jest.mock('quill-cursors', () => ({}));
@@ -112,6 +115,8 @@ describe('YjsEditorWrapper Component', () => {
     checkDuplicateTitle: jest.fn(() => false),
     autoFocus: false,
     cursorPosition: 0,
+    setEditorContent: jest.fn(),
+    fallbackContent: 'Initial fallback',
   };
 
   beforeEach(() => {
@@ -150,6 +155,10 @@ describe('YjsEditorWrapper Component', () => {
       if (event === 'sync') {
         setTimeout(() => callback(true), 50);
       }
+      if (event === 'status') {
+        // Simulate successful websocket connect so QuillBinding is created.
+        setTimeout(() => callback({ status: 'connected' }), 10);
+      }
       return mockProvider;
     });
   });
@@ -176,7 +185,7 @@ describe('YjsEditorWrapper Component', () => {
           },
         })
       );
-      expect(require('quill').default).toHaveBeenCalled();
+      expect(require('quill')).toHaveBeenCalled();
       expect(require('y-quill').QuillBinding).toHaveBeenCalled();
     });
   });
@@ -289,6 +298,7 @@ describe('YjsEditorWrapper Component', () => {
   });
 
   test('properly cleans up resources on unmount', async () => {
+    jest.useFakeTimers();
     // Spy on window.removeEventListener
     const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
     
@@ -297,6 +307,16 @@ describe('YjsEditorWrapper Component', () => {
     // Wait for initialization to complete
     await waitFor(() => {
       expect(mockQuillInstance.on).toHaveBeenCalled();
+    });
+
+    // Run the queued provider "status" callback (connect -> binding).
+    act(() => {
+      jest.advanceTimersByTime(25);
+    });
+
+    // Ensure the websocket "connected" status has been processed and binding created.
+    await waitFor(() => {
+      expect(require('y-quill').QuillBinding).toHaveBeenCalled();
     });
     
     // Unmount the component
@@ -307,5 +327,7 @@ describe('YjsEditorWrapper Component', () => {
     expect(mockProvider.disconnect).toHaveBeenCalled();
     expect(mockProvider.destroy).toHaveBeenCalled();
     expect(mockBinding.destroy).toHaveBeenCalled();
+
+    jest.useRealTimers();
   });
 });

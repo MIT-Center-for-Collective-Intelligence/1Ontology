@@ -45,13 +45,15 @@ import { useAuth } from "../context/AuthContext";
 import { generateUniqueTitle } from "@components/lib/utils/string.utils";
 import { development } from "@components/lib/CONSTANTS";
 import { newId } from "@components/lib/utils/newFirestoreId";
+import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
 import FullPageLogoLoading from "../layouts/FullPageLogoLoading";
 type ImprovementsProps = {
   currentImprovement: any;
   setCurrentImprovement: any;
   currentVisibleNode: any;
   setCurrentVisibleNode: any;
-  nodes: Record<string, INode>;
+  relatedNodes: Record<string, INode>;
+  fetchNode: (nodeId: string) => Promise<INode | null>;
   onNavigateToNode: any;
   isLoadingCopilot: boolean;
   improvements: any;
@@ -72,7 +74,8 @@ const Improvements = ({
   setCurrentImprovement,
   currentVisibleNode,
   setCurrentVisibleNode,
-  nodes,
+  relatedNodes,
+  fetchNode,
   onNavigateToNode,
   isLoadingCopilot,
   improvements,
@@ -124,13 +127,16 @@ const Improvements = ({
         // Update links for specializations/generalizations
         if (property === "specializations" || property === "generalizations") {
           const _newLinks = newLinks.map((c) => c.id);
-          updateLinks(
+          await updateLinks(
             _newLinks,
-            { id: currentVisibleNode?.id },
+            {
+              id: currentVisibleNode?.id,
+              title: nodeData.title ?? "",
+            },
             property === "specializations"
               ? "generalizations"
               : "specializations",
-            nodes,
+            relatedNodes,
             db,
           );
         }
@@ -139,10 +145,13 @@ const Improvements = ({
         if (property === "parts" || property === "isPartOf") {
           updatePartsAndPartsOf(
             newLinks,
-            { id: currentVisibleNode?.id },
+            {
+              id: currentVisibleNode?.id,
+              title: nodeData.title ?? "",
+            },
             property === "parts" ? "isPartOf" : "parts",
             db,
-            nodes,
+            relatedNodes,
           );
         }
 
@@ -155,21 +164,29 @@ const Improvements = ({
         ) {
           if (nodeData.inheritance[property]) {
             const reference = nodeData.inheritance[property].ref;
-            if (
-              reference &&
-              nodes[reference].textValue &&
-              nodes[reference].textValue.hasOwnProperty(property)
-            ) {
-              if (!nodeData.textValue) {
-                nodeData.textValue = {
-                  [property]: nodes[reference].textValue[property],
-                };
-              } else {
-                nodeData.textValue[property] =
-                  nodes[reference].textValue[property];
+            if (reference) {
+              let referenceNode: INode | null = relatedNodes[reference];
+              if (!referenceNode) {
+                referenceNode = await fetchNode(reference);
+              }
+
+              if (
+                referenceNode &&
+                referenceNode.textValue &&
+                referenceNode.textValue.hasOwnProperty(property)
+              ) {
+                if (!nodeData.textValue) {
+                  nodeData.textValue = {
+                    [property]: referenceNode.textValue[property],
+                  };
+                } else {
+                  nodeData.textValue[property] =
+                    referenceNode.textValue[property];
+                }
               }
             }
             nodeData.inheritance[property].ref = null;
+            nodeData.inheritance[property].title = "";
           }
         }
 
@@ -183,7 +200,7 @@ const Improvements = ({
             newLinks,
             { id: currentVisibleNode?.id },
             property,
-            nodes,
+            relatedNodes,
             db,
           );
         }
@@ -231,7 +248,7 @@ const Improvements = ({
             _addedLinks,
             current,
             currentVisibleNode,
-            nodes,
+            relatedNodes,
           );
         }
         if (property === "specializations") {
@@ -241,7 +258,16 @@ const Improvements = ({
             _addedLinks,
             _removedLinks,
             currentVisibleNode,
-            nodes,
+            relatedNodes,
+          );
+        }
+        if (property === "specializations" || property === "generalizations") {
+          const seeds = [currentVisibleNode?.id, ...addedLinks, ...removedLinks].filter(
+            (x): x is string => Boolean(x),
+          );
+          const seen = new Set<string>();
+          await triggerUpdateDerivedPaths(
+            seeds.filter((id) => (seen.has(id) ? false : (seen.add(id), true))),
           );
         }
         // Update inheritance for non-specialization/generalization properties
@@ -268,7 +294,7 @@ const Improvements = ({
         });
       }
     },
-    [currentVisibleNode?.id, currentVisibleNode.title, db, nodes, user],
+    [currentVisibleNode?.id, currentVisibleNode.title, db, relatedNodes, user],
   );
 
   const updateStringProperty = async (
@@ -278,7 +304,7 @@ const Improvements = ({
   ) => {
     try {
       const nodeRef = doc(collection(db, NODES), nodeId);
-      const nodeData = nodes[nodeId];
+      const nodeData = relatedNodes[nodeId];
       if (property === "title") {
         await updateDoc(nodeRef, {
           [`${property}`]: newValue,
@@ -287,6 +313,7 @@ const Improvements = ({
         await updateDoc(nodeRef, {
           [`properties.${property}`]: newValue,
           [`inheritance.${property}.ref`]: null,
+          [`inheritance.${property}.title`]: "",
         });
       }
       try {
@@ -386,7 +413,7 @@ const Improvements = ({
         console.error(error);
       }
     },
-    [nodes, user?.uname],
+    [relatedNodes, user?.uname],
   );
 
   // Function to add a new specialization to a node
@@ -410,7 +437,7 @@ const Improvements = ({
         const nodeParentRef = doc(collection(db, NODES), parentId);
 
         // Retrieve the parent node data
-        const nodeParentData = nodes[parentId];
+        const nodeParentData = relatedNodes[parentId];
         const previousParentValue = JSON.parse(
           JSON.stringify(nodeParentData.specializations),
         );
@@ -424,7 +451,12 @@ const Improvements = ({
         }
 
         // Update the parent node's specializations
-        updateSpecializations(nodeParentData, newNodeRef.id, collectionName);
+        updateSpecializations(
+          nodeParentData,
+          newNodeRef.id,
+          collectionName,
+          newNode.title ?? "",
+        );
 
         if (newNode.properties["parts"][0].nodes.length > 0) {
           for (let part of newNode.properties["parts"][0].nodes) {
@@ -534,6 +566,7 @@ const Improvements = ({
       await updateDoc(nodeRef, {
         [`properties.${property}`]: newValue,
         [`inheritance.${property}.ref`]: null,
+        [`inheritance.${property}.title`]: "",
       });
       if (!!currentVisibleNode.inheritance[property]?.ref) {
         await updateInheritance({
@@ -569,7 +602,7 @@ const Improvements = ({
   const deleteNode = useCallback(
     async (nodeId: string) => {
       try {
-        const nodeValue = nodes[nodeId];
+        const nodeValue = relatedNodes[nodeId];
         // Confirm deletion with the user using a custom confirmation dialog
 
         if (!user?.uname) return;
@@ -579,7 +612,7 @@ const Improvements = ({
         );
 
         if (specializations.length > 0) {
-          if (checkIfCanDeleteANode(nodes, specializations)) {
+          if (checkIfCanDeleteANode(relatedNodes, specializations)) {
             await confirmIt(
               <Box>
                 <DeleteForeverIcon sx={{ color: "orange" }} />
@@ -610,7 +643,7 @@ const Improvements = ({
           // Retrieve the document reference of the node to be deleted
           for (let collection of nodeValue.generalizations) {
             if (collection.nodes.length > 0) {
-              setCurrentVisibleNode(nodes[collection.nodes[0].id]);
+              setCurrentVisibleNode(relatedNodes[collection.nodes[0].id]);
               break;
             }
           }
@@ -653,7 +686,7 @@ const Improvements = ({
         });
       }
     },
-    [user?.uname, nodes],
+    [user?.uname, relatedNodes],
   );
   const createNewNodes = async (
     addedNonExistentElements: {
@@ -680,6 +713,7 @@ const Improvements = ({
             const inheritance = generateInheritance(
               unclassifiedNodeData.inheritance,
               unclassifiedNodeDoc.id,
+              unclassifiedNodeData.title ?? "",
             );
             const newNode = createNewNode(
               unclassifiedNodeData,
@@ -698,6 +732,7 @@ const Improvements = ({
 
             specializations[mainCollectionIdx].nodes.push({
               id: newRef.id,
+              title,
             });
             updateDoc(unclassifiedNodeDoc.ref, {
               specializations,
@@ -725,11 +760,13 @@ const Improvements = ({
         const nodeData = nodeDoc.data();
         const addToUnclassified = [];
         if (nodeData && nodeData.generalizations[0].nodes.length === 0) {
+          const unclassifiedTitle =
+            (unclassifiedDoc.data() as INode)?.title ?? "";
           await updateDoc(nodeDoc.ref, {
             generalizations: [
               {
                 collectionName: "main",
-                nodes: [{ id: unclassifiedDoc.id }],
+                nodes: [{ id: unclassifiedDoc.id, title: unclassifiedTitle }],
               },
             ],
           });
@@ -795,6 +832,7 @@ const Improvements = ({
             const inheritance = generateInheritance(
               unclassifiedData.inheritance,
               unclassifiedDoc.id,
+              unclassifiedData.title ?? "",
             );
             const newNode = createNewNode(
               unclassifiedData,
@@ -814,6 +852,7 @@ const Improvements = ({
 
             specializations[mainCollectionIdx].nodes.push({
               id: newRef.id,
+              title: nodeTitle,
             });
             updateDoc(unclassifiedDoc.ref, {
               specializations,
@@ -833,7 +872,7 @@ const Improvements = ({
       }
       let changeType: any = null;
       let detailsChange = null;
-      const nodeData = nodes[change.nodeId];
+      const nodeData = relatedNodes[change.nodeId];
       const propertyType = nodeData.propertyType[change.modifiedProperty];
       if (
         change.modifiedProperty === "specializations" ||
@@ -847,7 +886,7 @@ const Improvements = ({
           for (let node of collection.nodes) {
             if (node.change === "added") {
               addedLinks.push(node.id);
-              if (optionalPartsTitles.includes(nodes[node.id]?.title || "")) {
+              if (optionalPartsTitles.includes(relatedNodes[node.id]?.title || "")) {
                 optionalPartsIds.push(node.id);
               }
             }
@@ -868,7 +907,7 @@ const Improvements = ({
 
           if (inheritanceRef) {
             newValue =
-              nodes[inheritanceRef].properties[change.modifiedProperty];
+              relatedNodes[inheritanceRef].properties[change.modifiedProperty];
           } else {
             newValue = nodeData.properties[change.modifiedProperty];
           }

@@ -1,10 +1,10 @@
-import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
 import HistoryIcon from "@mui/icons-material/History";
 import {
   Alert,
   Box,
   GlobalStyles,
   IconButton,
+  InputAdornment,
   List,
   ListItem,
   Skeleton,
@@ -16,13 +16,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { development, SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
 
@@ -34,6 +28,7 @@ const SearchSideBar = ({
   skillsFuture,
   skillsFutureApp,
   isExperimentalSearch,
+  onSearchChange,
 }: {
   openSearchedNode: any;
   searchWithFuse: any;
@@ -42,6 +37,7 @@ const SearchSideBar = ({
   skillsFuture: boolean;
   skillsFutureApp: string;
   isExperimentalSearch: boolean;
+  onSearchChange?: (value: string) => void;
 }) => {
   const [searchValue, setSearchValue] = useState("");
   const [isListOpen, setIsListOpen] = useState(false);
@@ -81,15 +77,19 @@ const SearchSideBar = ({
     setSearchValue("");
     setIsListOpen(false);
     setIsFocused(false);
+    if (onSearchChange) onSearchChange("");
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchValue(value);
+    if (onSearchChange) onSearchChange(value);
     if (value.trim()) {
+      setSearchResults(getSearchResults(value.trim()));
       setIsListOpen(true);
       setIsFocused(true);
     } else {
+      setSearchResults([]);
       setIsListOpen(!!lastSearches.length);
       setIsFocused(false);
     }
@@ -98,6 +98,9 @@ const SearchSideBar = ({
   const handleNodeClick = (node: any) => {
     openSearchedNode(node);
     setSearchValue(node.title);
+    // Outline tree uses this value as react-arborist `searchTerm`; if we don't clear
+    // the parent, the typed query keeps filtering and can hide the whole outline.
+    if (onSearchChange) onSearchChange("");
     updateLastSearches(node);
     setIsListOpen(false);
     setIsFocused(false);
@@ -181,11 +184,21 @@ const SearchSideBar = ({
     } finally {
       setLoadingSearchResult(false);
     }
-  }, [searchValue, skillsFuture, skillsFutureApp, isExperimentalSearch]);
+  }, [
+    searchValue,
+    searchWithFuse,
+    skillsFuture,
+    skillsFutureApp,
+    isExperimentalSearch,
+  ]);
 
   const onKeyDown = (event: any) => {
     if (event.key === "Enter") {
       searchQuery();
+    }
+    if (event.key === "Escape") {
+      setSearchValue("");
+      if (onSearchChange) onSearchChange("");
     }
   };
 
@@ -196,47 +209,86 @@ const SearchSideBar = ({
       sx={{
         display: "flex",
         alignItems: "center",
-        color: "white",
+        color: (theme) => theme.palette.text.primary,
         cursor: "pointer",
-        borderRadius: "4px",
-        padding: "8px",
-        transition: "background-color 0.3s",
-        mt: "5px",
+        borderRadius: "12px",
+        px: 1.25,
+        py: 1,
+        my: 0.25,
+        gap: 1,
+        whiteSpace: "normal",
+        transition: "background-color 0.15s ease",
         "&:hover": {
           backgroundColor: (theme) =>
             theme.palette.mode === "dark"
-              ? "rgba(255, 255, 255, 0.1)"
-              : "rgba(0, 0, 0, 0.1)",
+              ? "rgba(255, 255, 255, 0.08)"
+              : "rgba(15, 23, 42, 0.06)",
         },
       }}
     >
-      {lastSearch && <HistoryIcon sx={{ fontSize: "20px", mr: "7px" }} />}
-      <Typography>
+      {lastSearch ? (
+        <HistoryIcon
+          sx={{
+            fontSize: 18,
+            color: (theme) => theme.palette.text.secondary,
+          }}
+        />
+      ) : (
+        <SearchIcon
+          sx={{
+            fontSize: 18,
+            color: (theme) => theme.palette.text.secondary,
+          }}
+        />
+      )}
+      <Typography sx={{ fontSize: "0.95rem", lineHeight: 1.35 }}>
         {node.title}
         {!!node.context?.title && ` at ${node.context.title}`}
       </Typography>
     </ListItem>
   );
 
+  const resultsPanelSx = {
+    position: "absolute",
+    top: "calc(100% + 6px)",
+    left: "12px",
+    right: "12px",
+    zIndex: (theme: any) => theme.zIndex.modal + 1,
+    // Tall panel: use most of the viewport so many results are visible (inner list scrolls)
+    height: "calc(100vh - 88px)",
+    maxHeight: "calc(100vh - 88px)",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
+    py: "8px",
+    borderRadius: "18px",
+    border: "1px solid",
+    borderColor: (theme: any) =>
+      theme.palette.mode === "dark"
+        ? "rgba(255, 255, 255, 0.12)"
+        : "rgba(15, 23, 42, 0.10)",
+    backgroundColor: (theme: any) =>
+      theme.palette.mode === "dark"
+        ? "rgba(20, 20, 20, 0.98)"
+        : "rgba(255, 255, 255, 1)",
+    boxShadow: (theme: any) =>
+      theme.palette.mode === "dark"
+        ? "0 18px 44px rgba(0, 0, 0, 0.55)"
+        : "0 18px 44px rgba(15, 23, 42, 0.16)",
+    backdropFilter: "blur(10px)",
+  };
+
   return (
     <Box
       ref={sidebarRef}
       sx={{
-        overflow: "auto",
-        height: isFocused ? "100vh" : "",
         position: "relative",
-        overflowY: "auto",
-        ...SCROLL_BAR_STYLE,
-        background: isFocused
-          ? theme.palette.mode === "dark"
-            ? "black"
-            : "white"
-          : "",
-        borderRadius: "25px",
-        ...SCROLL_BAR_STYLE,
+        overflow: "visible",
+        maxHeight: "fit-content",
+        borderRadius: "32px",
         /*         border: isFocused ? "1px solid gray" : "", */
         mt: "5px",
-        zIndex: 2,
+        zIndex: isListOpen || loadingSearchResult ? 1400 : 2,
       }}
     >
       <GlobalStyles
@@ -261,81 +313,216 @@ const SearchSideBar = ({
         onFocus={handleFocus}
         onKeyDown={onKeyDown}
         fullWidth
-        InputProps={{
-          sx: {
-            fontSize: "19px",
-            borderRadius: "45px",
-            padding: "2px 2px",
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderRadius: "45px",
+        slotProps={{
+          input: {
+            sx: {
+              border: "1px solid",
+              borderColor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "rgba(255, 255, 255, 0.22)"
+                  : "rgba(15, 23, 42, 0.16)",
+              fontSize: "16px",
+              borderRadius: "999px",
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "rgba(5, 5, 5, 0.86)"
+                  : "rgba(255, 255, 255, 0.92)",
+              padding: "10px 14px",
+              minHeight: "56px",
+              transition:
+                "background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
+              backdropFilter: "blur(12px)",
+              "&:hover": {
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgba(12, 12, 12, 0.95)"
+                    : "rgba(255, 255, 255, 1)",
+                borderColor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgba(255, 255, 255, 0.34)"
+                    : "rgba(15, 23, 42, 0.24)",
+              },
+              "&.Mui-focused": {
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgba(5, 5, 5, 0.98)"
+                    : "rgba(255, 255, 255, 1)",
+                boxShadow: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? `0 0 0 2px ${theme.palette.primary.dark}, 0 10px 30px rgba(0,0,0,0.45)`
+                    : `0 0 0 2px ${theme.palette.primary.light}, 0 10px 30px rgba(15,23,42,0.12)`,
+                borderColor: (theme) => theme.palette.primary.main,
+              },
+              "& .MuiOutlinedInput-notchedOutline": {
+                border: "none",
+              },
+              "& input": {
+                padding: "0",
+                color: (theme) => theme.palette.text.primary,
+                fontWeight: 500,
+                "&::placeholder": {
+                  color: (theme) => theme.palette.text.disabled,
+                  opacity: 0.8,
+                },
+              },
             },
-            "& input": {
-              padding: "0px 0",
-            },
+            startAdornment: (
+              <InputAdornment position="start" sx={{ mr: 0, ml: 0 }}>
+                <IconButton
+                  sx={{
+                    mr: 1.5,
+                    p: 0,
+                    cursor: "default",
+                    color: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.4)"
+                        : "rgba(0,0,0,0.4)",
+                  }}
+                  disableRipple
+                  tabIndex={-1}
+                >
+                  <SearchIcon />
+                </IconButton>
+              </InputAdornment>
+            ),
+            /* Always mount end adornment so MUI doesn't tear down the <input> when focus
+             * or `searchValue` toggles visibility of these controls (that remount drops focus). */
+            endAdornment: (
+              <InputAdornment position="end" sx={{ marginRight: 0, maxHeight: "none" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    width: searchValue.trim() ? "auto" : 0,
+                    minWidth: 0,
+                    overflow: "hidden",
+                  }}
+                >
+                  <Tooltip title="Search">
+                    <span>
+                      <IconButton
+                        size="small"
+                        onClick={searchQuery}
+                        disabled={!searchValue.trim()}
+                        sx={{
+                          backgroundColor: (theme) => theme.palette.primary.main,
+                          color: "white",
+                          width: 28,
+                          height: 28,
+                          flexShrink: 0,
+                          "&:hover": {
+                            backgroundColor: (theme) =>
+                              theme.palette.primary.dark,
+                          },
+                        }}
+                      >
+                        <SearchIcon sx={{ fontSize: 18 }} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Tooltip title="Clear">
+                    <span>
+                      <IconButton
+                        size="small"
+                        onClick={clearSearch}
+                        disabled={!searchValue.trim()}
+                        sx={{
+                          color: (theme) => theme.palette.text.secondary,
+                          width: 28,
+                          height: 28,
+                          flexShrink: 0,
+                          "&:hover": {
+                            color: (theme) => theme.palette.error.main,
+                            backgroundColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                ? "rgba(255,0,0,0.15)"
+                                : "rgba(255,0,0,0.08)",
+                          },
+                        }}
+                      >
+                        <CloseIcon sx={{ fontSize: 18 }} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </Box>
+              </InputAdornment>
+            ),
           },
-          startAdornment: (
-            <IconButton
-              sx={{ mr: "5px", cursor: "auto" }}
-              color="primary"
-              edge="end"
-            >
-              <SearchIcon />
-            </IconButton>
-          ),
-          endAdornment: (searchValue || isFocused) && (
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              {searchValue && (
-                <Tooltip title={"Search in the Ontology"}>
-                  <IconButton
-                    sx={{ mr: "5px" }}
-                    onClick={searchQuery}
-                    color="primary"
-                    edge="end"
-                  >
-                    <SearchIcon />
-                  </IconButton>
-                </Tooltip>
-              )}
-              <IconButton
-                sx={{ mr: "5px" }}
-                onClick={clearSearch}
-                color="primary"
-                edge="end"
-              >
-                <CloseIcon />
-              </IconButton>
-            </Box>
-          ),
         }}
         sx={{
-          p: "8px",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-          backgroundColor: (theme) =>
-            theme.palette.mode === "dark" ? "#000" : "#fff",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
+          px: 1.5,
+          py: 1.25,
+          position: "relative",
+          zIndex: (theme) => theme.zIndex.modal + 2,
+          borderBottom: "none",
+          transition: "background-color 0.3s ease, border-bottom 0.3s ease",
         }}
       />
 
       {loadingSearchResult && isFocused && (
-        <List sx={{ zIndex: 0 }}>
-          {[...Array(15)].map((_, index) => (
-            <Box key={index} sx={{ px: 4, mt: "0px" }}>
-              <Skeleton variant="text" height={55} width="100%" sx={{ p: 0 }} />
-            </Box>
-          ))}
-        </List>
+        <Box sx={resultsPanelSx}>
+          <List
+            sx={{
+              py: 0,
+              px: 1,
+              flex: 1,
+              minHeight: 0,
+              overflowY: "auto",
+              ...SCROLL_BAR_STYLE,
+            }}
+          >
+            {[...Array(24)].map((_, index) => (
+              <ListItem
+                key={index}
+                sx={{ display: "flex", alignItems: "center" }}
+              >
+                <Skeleton
+                  variant="rounded"
+                  height={25}
+                  width={`${40 + ((index * 13) % 50)}%`}
+                  sx={{ borderRadius: "14px" }}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
       )}
 
       {isListOpen && !loadingSearchResult && !errorSearch && (
-        <List sx={{ zIndex: 0 }}>
-          {searchResults.length > 0
-            ? searchResults.map((node: any) => renderListItem(node))
-            : searchValue === "" &&
-              lastSearches.length > 0 &&
-              lastSearches.map((node) => renderListItem(node, true))}
-        </List>
+        <Box sx={resultsPanelSx}>
+          {searchValue === "" && lastSearches.length > 0 && (
+            <Typography
+              sx={{
+                px: 2,
+                pb: 0.75,
+                flexShrink: 0,
+                color: (theme) => theme.palette.text.secondary,
+                fontSize: "0.8rem",
+                fontWeight: 600,
+              }}
+            >
+              Recent searches
+            </Typography>
+          )}
+
+          <List
+            sx={{
+              py: 0,
+              px: 1,
+              flex: 1,
+              minHeight: 0,
+              overflowY: "auto",
+              ...SCROLL_BAR_STYLE,
+            }}
+          >
+            {searchResults.length > 0
+              ? searchResults.map((node: any) => renderListItem(node))
+              : searchValue === "" &&
+                lastSearches.length > 0 &&
+                lastSearches.map((node) => renderListItem(node, true))}
+          </List>
+        </Box>
       )}
 
       {errorSearch && isListOpen && (

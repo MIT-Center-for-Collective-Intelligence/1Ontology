@@ -36,7 +36,7 @@ export const landingSectionToHash = (id: LandingSectionId): string => {
 export const LANDING_SECTION_TITLES: Record<LandingSectionId, string> = {
   home: "AI and the Future of Work - An Ontology Approach",
   paper: "Where Can AI Be Used? — Paper",
-  platform: "Software Platform for Editing the Ontology of Activities",
+  platform: "Contribute to the Ontology of Activities",
   aiUses: "Where AI Can Be Useful",
   team: "Our Team - AI and the Future of Work",
 };

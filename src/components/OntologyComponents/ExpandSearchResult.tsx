@@ -13,7 +13,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import { INode } from "@components/types/INode";
 import InsertLinkIcon from "@mui/icons-material/InsertLink";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const ExpandSearchResult = ({
   searchResultsForSelection,
@@ -45,6 +45,23 @@ const ExpandSearchResult = ({
   currentVisibleNode: any;
 }) => {
   const [expanded, setExpanded] = useState<string[]>([]);
+  const [optimisticLinkedIds, setOptimisticLinkedIds] = useState<Set<string>>(
+    new Set(),
+  );
+
+  useEffect(() => {
+    setOptimisticLinkedIds((prev) => {
+      const updated = new Set(prev);
+      let changed = false;
+      checkedItems.forEach((id: string) => updated.delete(id));
+      prev.forEach((id: string) => {
+        if (!updated.has(id)) {
+          changed = true;
+        }
+      });
+      return changed ? updated : prev;
+    });
+  }, [checkedItems]);
 
   const handleNodeToggle = (
     event: React.SyntheticEvent | null,
@@ -71,10 +88,20 @@ const ExpandSearchResult = ({
           selectedProperty={selectedProperty}
           addACloneNodeQueue={addACloneNodeQueue}
           currentVisibleNode={currentVisibleNode}
+          optimisticLinkedIds={optimisticLinkedIds}
+          setOptimisticLinkedIds={setOptimisticLinkedIds}
         />
       }
     />
   );
+
+  if (!searchResultsForSelection || searchResultsForSelection.length === 0) {
+    return (
+      <Typography sx={{ p: 2, textAlign: "center", color: "white" }}>
+        No results found
+      </Typography>
+    );
+  }
 
   return (
     <SimpleTreeView
@@ -101,6 +128,8 @@ const ExpandSearchResult = ({
               selectedProperty={selectedProperty}
               addACloneNodeQueue={addACloneNodeQueue}
               currentVisibleNode={currentVisibleNode}
+              optimisticLinkedIds={optimisticLinkedIds}
+              setOptimisticLinkedIds={setOptimisticLinkedIds}
             />
           }
           sx={{
@@ -122,6 +151,10 @@ const ExpandSearchResult = ({
                 left: 0,
                 borderLeft: `2px solid #797575`,
               },
+            },
+            [`& .MuiTreeItem-groupTransition`]: {
+              marginLeft: "10px",
+              paddingLeft: "10px",
             },
             "& .MuiTreeItem-content.Mui-focused": {
               backgroundColor: "transparent !important",
@@ -154,6 +187,8 @@ const NodeLabel = ({
   selectedProperty,
   addACloneNodeQueue,
   currentVisibleNode,
+  optimisticLinkedIds,
+  setOptimisticLinkedIds,
 }: {
   node: any;
   markItemAsChecked: any;
@@ -167,8 +202,11 @@ const NodeLabel = ({
   selectedProperty: any;
   addACloneNodeQueue: any;
   currentVisibleNode: any;
+  optimisticLinkedIds: Set<string>;
+  setOptimisticLinkedIds: React.Dispatch<React.SetStateAction<Set<string>>>;
 }) => {
-  const isChecked = checkedItems.has(node.id);
+  const isChecked =
+    checkedItems.has(node.id) || optimisticLinkedIds.has(node.id);
   const isLocked = !user?.manageLock && node.locked;
 
   return (
@@ -196,7 +234,24 @@ const NodeLabel = ({
         <IconButton
           onClick={(e) => {
             e.stopPropagation();
-            markItemAsChecked(node.id);
+            if (isChecked) {
+              setOptimisticLinkedIds((prev) => {
+                const updated = new Set(prev);
+                updated.delete(node.id);
+                return updated;
+              });
+              markItemAsChecked(node.id);
+              return;
+            }
+
+            setOptimisticLinkedIds((prev) => new Set(prev).add(node.id));
+            Promise.resolve(markItemAsChecked(node.id)).catch(() => {
+              setOptimisticLinkedIds((prev) => {
+                const updated = new Set(prev);
+                updated.delete(node.id);
+                return updated;
+              });
+            });
           }}
           /*           variant={isChecked ? "contained" : "outlined"} */
           sx={{ borderRadius: "25px", ml: "auto", fontSize: "0.8rem" }}
@@ -228,13 +283,13 @@ const NodeLabel = ({
               textTransform: "none",
               fontSize: "0.8rem",
               padding: "0px",
-              color: currentVisibleNode?.id === node.id ? "#251306" : "#388E3C",
-              backgroundColor:
-                currentVisibleNode?.id === node.id ? "#E8F5E9" : "",
+              color: "#388E3C",
+              border: "1px solid #388E3C",
+              /*               backgroundColor:
+                currentVisibleNode?.id === node.id ? "#E8F5E9" : "", */
               "&:hover": {
                 borderColor: "#2E7D32",
-                backgroundColor:
-                  currentVisibleNode?.id === node.id ? "#388E3C" : "#E8F5E9",
+                backgroundColor: "#E8F5E9",
               },
             }}
             onClick={(e) => {
