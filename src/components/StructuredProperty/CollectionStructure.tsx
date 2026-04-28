@@ -64,7 +64,6 @@ import {
   type DropResult,
 } from "@hello-pangea/dnd";
 import StructuredPropertySelector from "./StructuredPropertySelector";
-import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
 import { reorderChildInTree, reorderCollectionInTree, moveNodeInTree } from "@components/lib/utils/instantTreeUpdate";
 
 interface LoadMoreNode extends ILinkNode {
@@ -484,12 +483,6 @@ const CollectionStructure = ({
             updateDoc(nodeRef, {
               [property]: newArray,
             });
-
-            // Save pending node state for real-time sync to other users
-            if (property === "specializations") {
-              const updatedNodeData = { ...nodeData, specializations: newArray };
-              await savePendingNodeState(currentVisibleNode.id, updatedNodeData, skillsFutureApp, db);
-            }
           } else {
             if (nodeData.inheritance) {
               nodeData.inheritance[property].ref = null;
@@ -641,12 +634,6 @@ const CollectionStructure = ({
                 toCollectionName
               );
             });
-          }
-
-          // Save pending node state for real-time sync to other users
-          if (property === "specializations") {
-            const updatedNode = { ...currentVisibleNode, specializations: propertyValue };
-            await savePendingNodeState(currentVisibleNode.id, updatedNode, skillsFutureApp, db);
           }
 
           // Queue tree update after sorting elements
@@ -965,25 +952,6 @@ const CollectionStructure = ({
           );
         }
 
-        await savePendingNodeState(
-          currentNodeId,
-          { ...currentVisibleNode },
-          skillsFutureApp,
-          db,
-        );
-        await savePendingNodeState(
-          nodeBId,
-          { ...nodeBData, generalizations: nodeBGeneralizations },
-          skillsFutureApp,
-          db,
-        );
-        await savePendingNodeState(
-          nodeAId,
-          { ...nodeAData, specializations: nodeASpecs },
-          skillsFutureApp,
-          db,
-        );
-
         // Inheritance update
         await updateLinksForInheritance(
           db,
@@ -1153,11 +1121,6 @@ const CollectionStructure = ({
               const updatedTree = updateTreeNode(tree);
               return updatedTree;
             });
-          }
-
-          // Save pending node state for real-time sync to other users
-          if (property === 'specializations') {
-            await savePendingNodeState(currentVisibleNode.id, nodeData as INode, skillsFutureApp, db);
           }
 
         }
@@ -1376,11 +1339,6 @@ const CollectionStructure = ({
             });
           }
 
-          // Save pending node state for real-time sync
-          if (property === 'specializations' && editCollection) {
-            await savePendingNodeState(currentVisibleNode.id, nodeData as INode, skillsFutureApp, db);
-          }
-
         }
       } catch (error: any) {
         console.error(error);
@@ -1552,11 +1510,6 @@ const CollectionStructure = ({
                   const updatedTree = updateTreeNode(tree);
                   return updatedTree;
                 });
-              }
-
-              // Save pending node state for real-time sync to other users
-              if (property === 'specializations') {
-                await savePendingNodeState(currentVisibleNode.id, nodeData as INode, skillsFutureApp, db);
               }
 
             }

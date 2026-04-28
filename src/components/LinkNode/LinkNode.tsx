@@ -123,7 +123,6 @@ import LinkNodeTitle from "./LinkNodeTitle";
 import { Post } from "@components/lib/utils/Post";
 import { LoadingButton } from "@mui/lab";
 import { removeLinkFromNode } from "@components/lib/utils/instantTreeUpdate";
-import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
 import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
 
 const glowGreen = keyframes`
@@ -549,18 +548,6 @@ const LinkNode = ({
                 collectionIndex,
               );
             });
-          }
-
-          await savePendingNodeState(
-            currentVisibleNode.id,
-            nodeData,
-            skillsFutureApp,
-            db,
-          );
-
-          if (shouldBeRemovedFromParent) {
-            // If other node (parent or child) was updated, save its state too
-            await savePendingNodeState(linkId, null, skillsFutureApp, db);
           }
 
           if (property === "generalizations") {

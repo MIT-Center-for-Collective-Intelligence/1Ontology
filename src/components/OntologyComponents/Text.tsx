@@ -61,7 +61,6 @@ import EditProperty from "../AddPropertyForm/EditProperty";
 import { Post } from "@components/lib/utils/Post";
 import InheritanceDetailsPanel from "../StructuredProperty/InheritanceDetailsPanel";
 import { updateNodeInTree } from "@components/lib/utils/instantTreeUpdate";
-import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
 // import YjsEditor from "../YJSEditor/YjsEditor";
 
 type ITextProps = {
@@ -230,10 +229,6 @@ const Text = ({
             updateNodeInTree(tree, nodeId, { name: newValue }),
           );
         }
-
-        // Save pending node state for real-time sync
-        const updatedNode = { ...currentVisibleNode, title: newValue };
-        await savePendingNodeState(nodeId, updatedNode, skillsFutureApp, db);
       }
     },
     [db, property, user, skillsFutureApp, onInstantTreeUpdate],

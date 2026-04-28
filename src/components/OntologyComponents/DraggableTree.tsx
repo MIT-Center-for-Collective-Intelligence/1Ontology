@@ -27,7 +27,6 @@ import { ICollection, TreeData } from "@components/types/INode";
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
 import { FillFlexParent } from "./fill-flex-parent";
-import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
 import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
 
 const INDENT_STEP = 15;
@@ -537,7 +536,11 @@ function DraggableTree({
     treeData,
   ]);
 
-  // Retry expansion when tab becomes visible or window gains focus
+  // Retry expansion when tab becomes visible, window gains focus, or the URL
+  // hash changes. The hashchange case covers the navigator round-trip when the
+  // focused node didn't change (currentVisibleNode.id stable, treeData stable
+  // — the main nav effect would otherwise never re-fire). Same shape as the
+  // tab-visibility/focus handlers, just one more trigger.
   useEffect(() => {
     const retryExpansion = async () => {
       // If expansion hasn't succeeded yet, retry it
@@ -571,12 +574,20 @@ function DraggableTree({
       retryExpansion();
     };
 
+    const handleHashChange = () => {
+      // Mark expansion as not succeededd so retryExpansion will run
+      hasExpandedSuccessfully.current = false;
+      retryExpansion();
+    };
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("focus", handleWindowFocus);
+    window.addEventListener("hashchange", handleHashChange);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", handleWindowFocus);
+      window.removeEventListener("hashchange", handleHashChange);
     };
   }, [treeRef, expandNodeById, findNodesByNodeId, currentVisibleNode?.id]);
 
@@ -757,19 +768,6 @@ function DraggableTree({
             ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
 
-          // Save pending node state for real-time sync
-          if (skillsFutureApp) {
-            const updatedNode = {
-              ...nodeData,
-              specializations: newSpecializations,
-            };
-            await savePendingNodeState(
-              parentId,
-              updatedNode,
-              skillsFutureApp,
-              db,
-            );
-          }
         }
         return;
       }
@@ -886,17 +884,6 @@ function DraggableTree({
             skillsFuture,
             ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
-
-          // Save pending node state for real-time sync
-          if (skillsFutureApp) {
-            const updatedNode = { ...nodeData, specializations };
-            await savePendingNodeState(
-              toParent.nodeId,
-              updatedNode,
-              skillsFutureApp,
-              db,
-            );
-          }
           return;
         } else {
           // CROSS COLLECTION MOVE
@@ -956,17 +943,6 @@ function DraggableTree({
             skillsFuture,
             ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
-
-          // Save pending node state for real-time sync
-          if (skillsFutureApp) {
-            const updatedNode = { ...nodeData, specializations };
-            await savePendingNodeState(
-              toParent.nodeId,
-              updatedNode,
-              skillsFutureApp,
-              db,
-            );
-          }
           return;
         }
       }
@@ -1079,30 +1055,6 @@ function DraggableTree({
         skillsFuture,
         ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
       });
-
-      // Save state for the moved node (updated generalizations)
-      const updatedSpecialization = {
-        ...specializationData,
-        generalizations: newGeneralizations,
-      };
-      await savePendingNodeState(
-        specializationId,
-        updatedSpecialization,
-        skillsFutureApp,
-        db,
-      );
-
-      // Save state for the new parent (updated specializations)
-      const updatedGeneralization = {
-        ...newGeneralizationData,
-        specializations,
-      };
-      await savePendingNodeState(
-        toParent.nodeId,
-        updatedGeneralization,
-        skillsFutureApp,
-        db,
-      );
 
       // await updateLinks(
       //   newLinks,
