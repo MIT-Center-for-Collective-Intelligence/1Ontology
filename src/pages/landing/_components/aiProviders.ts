@@ -268,9 +268,11 @@ export const clearAiConf = (): void => {
 
 export class AiCallError extends Error {
   status?: number;
-  constructor(message: string, status?: number) {
+  details?: unknown;
+  constructor(message: string, status?: number, details?: unknown) {
     super(message);
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -294,21 +296,34 @@ export const callLLM = async (
       e instanceof Error
         ? `Network error: ${e.message}`
         : "Network error while contacting the provider.",
+      undefined,
+      {
+        reason: "network",
+        url: req.url,
+        provider: conf.prov,
+        model: conf.model,
+        cause:
+          e instanceof Error
+            ? { name: e.name, message: e.message }
+            : String(e),
+      },
     );
   }
 
   if (!resp.ok) {
     const txt = await resp.text().catch(() => "");
+    let parsed: unknown = null;
     let msg = "";
     try {
-      const j = JSON.parse(txt);
+      parsed = JSON.parse(txt);
+      const j = parsed as { error?: { message?: string }; message?: string };
       msg = j?.error?.message || j?.message || "";
     } catch {
       /* ignore */
     }
     if (resp.status === 401 || resp.status === 403) {
       msg =
-        "Invalid or expired API key. Check the key in the AI settings below.";
+        "Invalid or expired API key.";
     } else if (resp.status === 429) {
       msg = "Rate limit exceeded. Wait a moment and try again.";
     } else if (
@@ -319,14 +334,32 @@ export const callLLM = async (
     } else if (!msg) {
       msg = txt.slice(0, 200) || `HTTP ${resp.status}`;
     }
-    throw new AiCallError(msg, resp.status);
+    throw new AiCallError(msg, resp.status, {
+      reason: "http",
+      url: req.url,
+      provider: conf.prov,
+      model: conf.model,
+      status: resp.status,
+      statusText: resp.statusText,
+      body: parsed ?? txt,
+    });
   }
 
   let data: unknown;
   try {
     data = await resp.json();
   } catch {
-    throw new AiCallError("Malformed response from the provider.");
+    throw new AiCallError(
+      "Malformed response from the provider.",
+      undefined,
+      {
+        reason: "parse",
+        url: req.url,
+        provider: conf.prov,
+        model: conf.model,
+        status: resp.status,
+      },
+    );
   }
   const err = (data as { error?: { message?: string; code?: number } }).error;
   if (err) {
@@ -336,7 +369,14 @@ export const callLLM = async (
     } else if (err.code === 401 || err.code === 403) {
       msg = "Invalid or expired API key.";
     }
-    throw new AiCallError(msg);
+    throw new AiCallError(msg, undefined, {
+      reason: "provider-error",
+      url: req.url,
+      provider: conf.prov,
+      model: conf.model,
+      status: resp.status,
+      body: data,
+    });
   }
 
   if (p.parse) return p.parse(data);
