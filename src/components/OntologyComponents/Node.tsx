@@ -137,7 +137,6 @@ import { development } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
 import ChipsProperty from "../StructuredProperty/ChipsProperty";
 import { addLinkToNode, removeLinkFromNode } from "@components/lib/utils/instantTreeUpdate";
-import { savePendingNodeState } from "@components/lib/utils/pendingNodeState";
 import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
 
 type INodeProps = {
@@ -926,13 +925,6 @@ const Node = ({
           });
         }
 
-        // Save pending node states for real-time tree sync
-        // Save state for new node
-        await savePendingNodeState(newNodeRef.id, newNode, skillsFutureApp, db);
-
-        // Save state for parent node (updated specializations/generalizations)
-        await savePendingNodeState(nodeId, null, skillsFutureApp, db);
-
         // Return the newly created node
         return newNode;
       } catch (error: any) {
@@ -1378,19 +1370,6 @@ const Node = ({
 
             return updatedTree;
           });
-        }
-        
-        await savePendingNodeState(nodeId, nodeData, skillsFutureApp, db);
-        // Save the state of linked/unlinked nodes
-        if (selectedProperty === "specializations" || selectedProperty === "generalizations") {
-          // Save state for all added nodes
-          for (const addedId of addedElements) {
-            await savePendingNodeState(addedId, null, skillsFutureApp, db);
-          }
-          // Save state for all removed nodes
-          for (const removedId of removedElements) {
-            await savePendingNodeState(removedId, null, skillsFutureApp, db);
-          }
         }
 
       } catch (error: any) {

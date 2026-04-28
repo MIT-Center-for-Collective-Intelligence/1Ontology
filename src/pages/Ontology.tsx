@@ -125,7 +125,6 @@ import {
 } from "@components/lib/CONSTANTS";
 import {
   NODES,
-  TREE_PENDING_CHANGES,
   USERS,
   UNREAD_COMMENTS,
 } from "@components/lib/firestoreClient/collections";
@@ -1493,31 +1492,28 @@ const Ontology = ({
     }
   }, [relatedNodes, appName]);
 
-  // Subscribe to pending node states and trigger tree reload
+  // Subscribe to node changes in the current app and derive the path outline again
   useEffect(() => {
     if (!appName || !user || !currentVisibleNode?.id) return;
 
     const changesQuery = query(
-      collection(db, TREE_PENDING_CHANGES),
+      collection(db, NODES),
       where("appName", "==", appName),
+      where("deleted", "==", false),
     );
+
+    let initialSnapshotSeen = false;
 
     const unsubscribe = onSnapshot(
       changesQuery,
       (snapshot) => {
-        // Skip initial snapshot (tree already loaded with pending changes)
-        const hasRelevantChanges = snapshot.docChanges().some((change) => {
-          return change.type === "added" || change.type === "modified";
-        });
-
-        if (hasRelevantChanges) {
-          // Skip reload if instant update is in progress
-          if (hasInstantUpdateRef.current) {
-            return;
-          }
-
-          void loadPathOutline();
+        if (!initialSnapshotSeen) {
+          initialSnapshotSeen = true;
+          return;
         }
+        if (snapshot.docChanges().length === 0) return;
+        if (hasInstantUpdateRef.current) return;
+        void loadPathOutline();
       },
       (error) => {
         console.error("Error:", error);
