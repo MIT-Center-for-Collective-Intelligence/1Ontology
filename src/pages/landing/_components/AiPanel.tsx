@@ -70,7 +70,7 @@ const TypingDots: React.FC<{ color: string }> = ({ color }) => (
 type Turn =
   | { kind: "user"; text: string }
   | { kind: "assistant"; text: string; modelLabel: string }
-  | { kind: "error"; text: string };
+  | { kind: "error"; text: string; details?: unknown; status?: number };
 
 type Props = {
   nodes: { [id: string]: INode };
@@ -266,6 +266,16 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [editingConf, setEditingConf] = useState(false);
+  const [expandedErrors, setExpandedErrors] = useState<Set<number>>(new Set());
+
+  const toggleErrorDetails = useCallback((idx: number) => {
+    setExpandedErrors((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  }, []);
 
   // Form state for provider/model/key (used by empty-state + "change key")
   const [formProv, setFormProv] = useState<AiProviderId>("openrouter");
@@ -333,7 +343,12 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
           : e instanceof Error
             ? e.message
             : "Something went wrong.";
-      setTurns((prev) => [...prev, { kind: "error", text: msg }]);
+      const details = e instanceof AiCallError ? e.details : undefined;
+      const status = e instanceof AiCallError ? e.status : undefined;
+      setTurns((prev) => [
+        ...prev,
+        { kind: "error", text: msg, details, status },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -798,6 +813,24 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
               );
             }
             // error
+            const isExpanded = expandedErrors.has(idx);
+            const hasDetails = t.details !== undefined;
+            let detailsText = "";
+            if (hasDetails) {
+              try {
+                detailsText = JSON.stringify(
+                  t.status !== undefined &&
+                    t.details &&
+                    typeof t.details === "object"
+                    ? { status: t.status, ...(t.details as object) }
+                    : t.details,
+                  null,
+                  2,
+                );
+              } catch {
+                detailsText = String(t.details);
+              }
+            }
             return (
               <Box
                 key={idx}
@@ -814,11 +847,58 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
                   fontFamily: INTER,
                   fontSize: "0.82rem",
                   lineHeight: 1.5,
-                  whiteSpace: "pre-wrap",
                   overflowWrap: "anywhere",
                 }}
               >
-                {t.text}
+                <Box sx={{ whiteSpace: "pre-wrap" }}>{t.text}</Box>
+                {hasDetails && (
+                  <Box
+                    component="button"
+                    type="button"
+                    onClick={() => toggleErrorDetails(idx)}
+                    sx={{
+                      mt: 0.6,
+                      background: "none",
+                      border: "none",
+                      p: 0,
+                      cursor: "pointer",
+                      fontFamily: INTER,
+                      fontSize: "0.7rem",
+                      fontWeight: 500,
+                      color: "error.main",
+                      opacity: 0.75,
+                      textDecoration: "underline",
+                      textDecorationStyle: "dotted",
+                      textUnderlineOffset: "2px",
+                      "&:hover": { opacity: 1 },
+                    }}
+                  >
+                    {isExpanded ? "Hide details" : "Show details"}
+                  </Box>
+                )}
+                {hasDetails && isExpanded && (
+                  <Box
+                    component="pre"
+                    sx={{
+                      mt: 0.8,
+                      p: 1,
+                      borderRadius: 1,
+                      bgcolor: (tt) =>
+                        alpha(tt.palette.text.primary, 0.06),
+                      color: "text.primary",
+                      fontFamily:
+                        '"SF Mono", ui-monospace, Menlo, Monaco, "Cascadia Code", monospace',
+                      fontSize: "0.7rem",
+                      lineHeight: 1.5,
+                      maxHeight: 280,
+                      overflow: "auto",
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {detailsText}
+                  </Box>
+                )}
               </Box>
             );
           })}
