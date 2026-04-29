@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { NodeApi, NodeRendererProps, Tree, TreeApi } from "react-arborist";
 import styles from "./drag.tree.module.css";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
@@ -9,7 +9,6 @@ import {
   Skeleton,
   ToggleButton,
   Tooltip,
-  Typography,
   useTheme,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
@@ -32,6 +31,7 @@ import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDe
 const INDENT_STEP = 15;
 const INITIAL_LOAD_COUNT = 20;
 const LOAD_MORE_COUNT = 20;
+const EMPTY_SET = new Set<string>();
 
 interface PaginatedTreeData extends TreeData {
   isLoadMore?: boolean;
@@ -59,7 +59,7 @@ function DraggableTree({
   onInstantTreeUpdate,
   onExpandEllipsis,
   onOutlineNodeOpen,
-  nodesWithComments = new Set(),
+  nodesWithComments = EMPTY_SET,
   searchTerm = "",
 }: {
   treeViewData: any;
@@ -83,15 +83,37 @@ function DraggableTree({
   const db = getFirestore();
   const [{ user }] = useAuth();
   const theme = useTheme();
-  const [focused, setFocused] = useState<PaginatedTreeData | null>(null);
-  const [count, setCount] = useState(0);
-  const [followsFocus, setFollowsFocus] = useState(false);
-  const [disableMulti, setDisableMulti] = useState(true);
   const [treeData, setTreeData] = useState<PaginatedTreeData[]>([]);
   const [editEnabled, setEditEnabled] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
-  const [expanded, setExpanded] = useState(false);
   const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set());
+  const loadingStatesRef = useRef(loadingStates);
+  const isDarkMode = theme.palette.mode === "dark";
+
+  useEffect(() => {
+    loadingStatesRef.current = loadingStates;
+  }, [loadingStates]);
+
+  const treeThemeVars = useMemo(
+    () => ({
+      "--tree-surface": isDarkMode ? "#2f3136" : "#eef2f7",
+      "--tree-active-bg": isDarkMode
+        ? "rgba(76, 175, 80, 0.16)"
+        : "rgba(76, 175, 80, 0.12)",
+      "--tree-active-hover-bg": isDarkMode
+        ? "rgba(76, 175, 80, 0.2)"
+        : "rgba(76, 175, 80, 0.16)",
+      "--tree-hover-bg": isDarkMode
+        ? "rgba(255,255,255,0.05)"
+        : "rgba(0,0,0,0.04)",
+      "--tree-primary-text": theme.palette.text.primary,
+      "--tree-secondary-text": theme.palette.text.secondary,
+      "--tree-skeleton-bg": isDarkMode
+        ? "rgba(255,255,255,0.08)"
+        : "rgba(0,0,0,0.08)",
+    }),
+    [isDarkMode, theme.palette.text.primary, theme.palette.text.secondary],
+  );
   const setNodeChildrenOptimistic = useCallback(
     (targetTreeId: string, children: TreeData[]) => {
       if (!onInstantTreeUpdate) return;
@@ -123,7 +145,7 @@ function DraggableTree({
         (node.data.outlineSpineOnly || node.data.outlineLoadChildren);
 
       if (!needOutline) return;
-      if (loadingStates.has(node.data.id)) return;
+      if (loadingStatesRef.current.has(node.data.id)) return;
 
       // Prefer rendering known specialization titles immediately (if present)
       // instead of flashing skeleton rows. We still run the outline fetch in
@@ -221,7 +243,7 @@ function DraggableTree({
           });
         });
     },
-    [loadingStates, onOutlineNodeOpen, setNodeChildrenOptimistic, nodes],
+    [onOutlineNodeOpen, setNodeChildrenOptimistic, nodes],
   );
 
   const [paginationState, setPaginationState] = useState<Map<string, number>>(
@@ -230,32 +252,10 @@ function DraggableTree({
   const [focusedWindowState, setFocusedWindowState] = useState<
     Map<string, { startIndex: number; endIndex: number }>
   >(new Map());
-  const collapsingLoader = useRef<boolean>(false);
   const isTreeClickRef = useRef(false);
   const treeActivatedNodeIdRef = useRef<string | null>(null);
   const hasExpandedSuccessfully = useRef<boolean>(false);
   const pendingExpansionNodeId = useRef<string | null>(null);
-
-  const getFocusedNodeWindow = useCallback(
-    (children: TreeData[], focusedNodeId: string): TreeData[] => {
-      const focusedIndex = children.findIndex(
-        (child) => child.nodeId === focusedNodeId || child.id === focusedNodeId,
-      );
-      if (focusedIndex === -1) return children;
-
-      const startIndex = Math.max(
-        0,
-        focusedIndex - Math.floor(INITIAL_LOAD_COUNT / 2),
-      );
-      const endIndex = Math.min(
-        children.length,
-        startIndex + INITIAL_LOAD_COUNT,
-      );
-
-      return children.slice(startIndex, endIndex);
-    },
-    [],
-  );
 
   const processTreeData = useCallback(
     (data: TreeData[]): PaginatedTreeData[] => {
@@ -377,42 +377,53 @@ function DraggableTree({
     setTreeData(processTreeData(treeViewData));
   }, [treeViewData, processTreeData]);
 
-  const isNodeVisible = (nodeId: string): boolean => {
-    const element = document.getElementById(nodeId);
-    if (!element) return false;
+  const nodePathIndex = useMemo(() => {
+    const index = new Map<string, string[][]>();
 
-    const rect = element.getBoundingClientRect();
-    const viewportHeight =
-      window.innerHeight || document.documentElement.clientHeight;
+    const visit = (items: PaginatedTreeData[], path: string[]) => {
+      for (const item of items) {
+        const currentPath = [...path, item.id];
+        const paths = index.get(item.nodeId);
+        if (paths) {
+          paths.push(currentPath);
+        } else {
+          index.set(item.nodeId, [currentPath]);
+        }
 
-    return rect.top >= 0 && rect.bottom <= viewportHeight;
-  };
+        if (item.children?.length) {
+          visit(item.children as PaginatedTreeData[], currentPath);
+        }
+      }
+    };
+
+    visit(treeData, []);
+    return index;
+  }, [treeData]);
 
   // Helper function to find all occurrences of a node by its nodeId
   const findNodesByNodeId = useCallback(
-    (tree: TreeApi<TreeData>, targetNodeId: string): NodeApi<TreeData>[] => {
-      const matches: NodeApi<TreeData>[] = [];
+    (
+      tree: TreeApi<PaginatedTreeData>,
+      targetNodeId: string,
+    ): NodeApi<PaginatedTreeData>[] => {
+      const paths = nodePathIndex.get(targetNodeId);
+      if (!paths) return [];
 
-      const traverse = (node: NodeApi<TreeData>) => {
-        if (node.data.nodeId === targetNodeId) {
-          matches.push(node);
+      const matches: NodeApi<PaginatedTreeData>[] = [];
+      for (const path of paths) {
+        const treeNode = tree.get(path[path.length - 1]);
+        if (treeNode) {
+          matches.push(treeNode);
         }
-        if (node.children) {
-          node.children.forEach((child) => traverse(child));
-        }
-      };
-
-      if (tree.root.children) {
-        tree.root.children.forEach((child) => traverse(child));
       }
 
       return matches;
     },
-    [],
+    [nodePathIndex],
   );
 
   const expandNodeById = useCallback(
-    async (targetNodeId: string) => {
+    (targetNodeId: string) => {
       if (!targetNodeId) return;
 
       const tree = treeRef.current;
@@ -430,13 +441,12 @@ function DraggableTree({
         return;
       }
 
-      // Expand ALL occurrences of the node
+      // Expand ALL occurrences 
       for (let i = 0; i < targetNodes.length; i++) {
         const targetNode = targetNodes[i];
 
-        // Expand all ancestors by walking up the parent chain
         let current = targetNode.parent;
-        const ancestorsToExpand: NodeApi<TreeData>[] = [];
+        const ancestorsToExpand: NodeApi<PaginatedTreeData>[] = [];
 
         while (current && current.id !== "__REACT_ARBORIST_INTERNAL_ROOT__") {
           if (!current.isOpen) {
@@ -447,30 +457,18 @@ function DraggableTree({
 
         ancestorsToExpand.reverse();
 
-        // Expand ancestors progressively
         for (const ancestor of ancestorsToExpand) {
           ancestor.open();
-          await new Promise((resolve) => setTimeout(resolve, 20));
           if (ancestor.children) {
             for (const child of ancestor.children) {
               if (child.data.category && !child.isOpen) {
                 child.open();
-                await new Promise((resolve) => setTimeout(resolve, 10));
               }
             }
           }
         }
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      // scroll to first node
-      const firstTargetNode = targetNodes[0];
-      if (!isNodeVisible(firstTargetNode.id)) {
-        await tree.scrollTo(firstTargetNode.id);
-      }
-
-      // Mark expansion as completed
       hasExpandedSuccessfully.current = true;
       pendingExpansionNodeId.current = null;
     },
@@ -510,12 +508,13 @@ function DraggableTree({
       pendingExpansionNodeId.current = null;
 
       // Always expand all occurrences, regardless of how navigation happened
-      await expandNodeById(targetNodeId);
+      expandNodeById(targetNodeId);
 
-      // Find the node in tree and select it
+      // Single scroll via TreeApi — "auto" moves the list only as much as needed
+      // (avoids double scrollTo from expand + select, and harsh centering jumps).
       const targetNodes = findNodesByNodeId(tree, targetNodeId);
       if (targetNodes.length > 0) {
-        targetNodes[0].select();
+        tree.select(targetNodes[0].id, { align: "auto" });
       }
 
       isTreeClickRef.current = false;
@@ -548,17 +547,15 @@ function DraggableTree({
         const nodeToExpand =
           pendingExpansionNodeId.current || currentVisibleNode.id;
 
-        // Small delay to ensure tree is rendered
         await new Promise((resolve) => setTimeout(resolve, 150));
 
-        await expandNodeById(nodeToExpand);
+        expandNodeById(nodeToExpand);
 
-        // Try to select the node
         const tree = treeRef.current;
         if (tree && currentVisibleNode?.id) {
           const targetNodes = findNodesByNodeId(tree, currentVisibleNode.id);
           if (targetNodes.length > 0) {
-            targetNodes[0].select();
+            tree.select(targetNodes[0].id, { align: "auto" });
           }
         }
       }
@@ -603,12 +600,6 @@ function DraggableTree({
       setFirstLoad(false);
     }
   }, [treeRef, treeData, firstLoad]);
-
-  useEffect(() => {
-    const tree = treeRef.current;
-    setCount(tree?.visibleNodes.length ?? 0);
-    setTreeData(processTreeData(treeViewData));
-  }, [treeRef, searchTerm, treeViewData, processTreeData]);
 
   const moveElement = (
     arr: ICollection[],
@@ -1083,25 +1074,6 @@ function DraggableTree({
       console.error(error);
     }
   };
-  const handleExpandAll = () => {
-    treeRef.current?.openAll();
-  };
-
-  const handleCollapseAll = () => {
-    treeRef.current?.closeAll();
-  };
-
-  const expandOrCollapseAll = () => {
-    collapsingLoader.current = true;
-    if (expanded) {
-      handleCollapseAll();
-    } else {
-      handleExpandAll();
-    }
-    setExpanded((prev) => !prev);
-    collapsingLoader.current = false;
-  };
-
   // const generateDomElementId = (node: NodeApi<PaginatedTreeData>): string => {
   //   const { id } = node.data;
   //   const isRootNode = node.level === 0;
@@ -1269,33 +1241,10 @@ function DraggableTree({
       <Box
         ref={dragHandle}
         style={style}
-        className={clsx(styles.node, node.state)}
+        className={clsx(styles.node, styles.treeNode, node.state, {
+          [styles.activeNode]: isActiveNode,
+        })}
         id={node.data.id}
-        sx={{
-          minHeight: "26px",
-          borderRadius: "8px",
-          px: 0.75,
-          borderLeft: "2px solid",
-          borderLeftColor: isActiveNode ? "#4caf50" : "transparent",
-          backgroundColor: isActiveNode
-            ? (theme) =>
-                theme.palette.mode === "dark"
-                  ? "rgba(76, 175, 80, 0.16)"
-                  : "rgba(76, 175, 80, 0.12)"
-            : "transparent",
-          transition: "all 0.2s ease",
-          "&:hover": {
-            backgroundColor: isActiveNode
-              ? (theme) =>
-                  theme.palette.mode === "dark"
-                    ? "rgba(76, 175, 80, 0.2)"
-                    : "rgba(76, 175, 80, 0.16)"
-              : (theme) =>
-                  theme.palette.mode === "dark"
-                    ? "rgba(255,255,255,0.05)"
-                    : "rgba(0,0,0,0.04)",
-          },
-        }}
       >
         <Box className={styles.indentLines}>
           {new Array(indentSize / INDENT_STEP).fill(0).map((_, index) => {
@@ -1318,22 +1267,13 @@ function DraggableTree({
               ensureExpandedWithLazyLoad(node);
             }
           }}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            cursor: node.isInternal ? "pointer" : "default",
-          }}
+          className={clsx(styles.arrowHitbox, {
+            [styles.clickableArrow]: node.isInternal,
+          })}
         >
           <FolderArrow node={node} />
         </Box>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            width: "calc(100% - 20px)",
-          }}
-        >
+        <Box className={styles.labelContainer}>
           <span
             className={clsx(styles.text, {
               [styles.categoryText]: node.data.category,
@@ -1342,33 +1282,17 @@ function DraggableTree({
             {node.isEditing ? (
               <Input node={node} inputRef={inputRef} />
             ) : (
-              <Typography
-                sx={{
-                  color:
-                    node.data.task || node.data.comments
-                      ? "text.secondary"
-                      : node.data.category
-                        ? "#f59e0b"
-                        : "text.primary",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  fontWeight: node.data.category ? 700 : 400,
-                  fontSize: "0.92rem",
-                  lineHeight: 1.2,
-                }}
+              <span
+                className={clsx(styles.nodeLabel, {
+                  [styles.mutedLabel]: node.data.task || node.data.comments,
+                  [styles.categoryLabel]: node.data.category,
+                })}
               >
-                {node.data.name}
+                <span className={styles.nodeTitle}>{node.data.name}</span>
                 {!node.data.category &&
                   nodesWithComments.has(node.data.nodeId) && (
                     <Tooltip title="You have unread comments" arrow>
-                      <ChatIcon
-                        sx={{
-                          fontSize: "16px",
-                          color: "#f59e0b",
-                          flexShrink: 0,
-                        }}
-                      />
+                      <ChatIcon className={styles.commentIcon} />
                     </Tooltip>
                   )}
                 {specializationNumsUnder[node.data.id] > 0 && (
@@ -1378,16 +1302,7 @@ function DraggableTree({
                   >
                     <Box
                       component="span"
-                      sx={{
-                        color: "#f59e0b",
-                        ml: 0.5,
-                        fontWeight: 700,
-                        fontSize: "0.72rem",
-                        px: 0.7,
-                        py: 0.15,
-                        borderRadius: "999px",
-                        backgroundColor: "rgba(245, 158, 11, 0.12)",
-                      }}
+                      className={styles.countBadge}
                     >
                       {specializationNumsUnder[node.data.id]}
                     </Box>
@@ -1402,16 +1317,7 @@ function DraggableTree({
                   >
                     <Box
                       component="span"
-                      sx={{
-                        color: "#f59e0b",
-                        ml: 0.5,
-                        fontWeight: 700,
-                        fontSize: "0.72rem",
-                        px: 0.7,
-                        py: 0.15,
-                        borderRadius: "999px",
-                        backgroundColor: "rgba(245, 158, 11, 0.12)",
-                      }}
+                      className={styles.countBadge}
                     >
                       {specializationNumsUnder[`${node.data.id}-extra`]}
                     </Box>
@@ -1420,20 +1326,20 @@ function DraggableTree({
                 {(node.data.actionAlternatives || []).length > 0 && (
                   <Box
                     component="span"
-                    sx={{ color: "#f59e0b", ml: 0.5, fontWeight: 700 }}
+                    className={styles.alternativesLabel}
                   >
                     Alternatives:
                   </Box>
                 )}
-                {(node.data.actionAlternatives || []).length >= 0 && (
+                {(node.data.actionAlternatives || []).length > 0 && (
                   <Box
                     component="span"
-                    sx={{ fontSize: "0.8rem", color: "text.secondary" }}
+                    className={styles.alternativesText}
                   >
                     {(node.data.actionAlternatives || []).join(", ")}
                   </Box>
                 )}
-              </Typography>
+              </span>
             )}
           </span>
         </Box>
@@ -1518,8 +1424,7 @@ function DraggableTree({
         <Box
           className={styles.treeContainer}
           sx={{
-            "--tree-surface":
-              theme.palette.mode === "dark" ? "#2f3136" : "#eef2f7",
+            ...treeThemeVars,
             backgroundColor: (theme) =>
               theme.palette.mode === "dark" ? "#2f3136" : "#eef2f7",
             border: "1px solid",
@@ -1538,8 +1443,8 @@ function DraggableTree({
                 ref={treeRef}
                 data={treeData}
                 onMove={handleMove}
-                selectionFollowsFocus={followsFocus}
-                disableMultiSelection={disableMulti}
+                selectionFollowsFocus={false}
+                disableMultiSelection
                 // ref={(t) => setTree(t)}   ref={treeRef}
                 openByDefault={false}
                 searchTerm={searchTerm}
@@ -1559,12 +1464,6 @@ function DraggableTree({
                   onOpenNodesTree(node.data.nodeId, node.data.name);
                   // Selecting a node should also expand it (and lazy-load children if needed).
                   ensureExpandedWithLazyLoad(node as any);
-                }}
-                onFocus={(node) => setFocused(node.data)}
-                onToggle={() => {
-                  setTimeout(() => {
-                    setCount(treeRef.current?.visibleNodes.length ?? 0);
-                  });
                 }}
                 disableDrag={!editEnabled}
                 disableDrop={!editEnabled}

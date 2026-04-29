@@ -126,6 +126,29 @@
     margin: 0 6px;
     height: 100%;
     width: calc(100% - 12px);
+    overflow: hidden;
+}
+
+.treeNode {
+    min-height: 26px;
+    padding: 0 6px;
+    border-left: 2px solid transparent;
+    background-color: transparent;
+    transition: background-color 0.14s ease, border-color 0.14s ease;
+    contain: layout paint;
+}
+
+.treeNode:hover {
+    background-color: var(--tree-hover-bg, rgba(0, 0, 0, 0.04));
+}
+
+.activeNode {
+    border-left-color: #4caf50;
+    background-color: var(--tree-active-bg, rgba(76, 175, 80, 0.12));
+}
+
+.activeNode:hover {
+    background-color: var(--tree-active-hover-bg, rgba(76, 175, 80, 0.16));
 }
 
 .node:global(.willReceiveDrop) {
@@ -199,6 +222,83 @@
     /* Category text color */
     font-weight: bold;
     /* Optional: Make it bold */
+}
+
+.arrowHitbox {
+    display: flex;
+    align-items: center;
+    cursor: default;
+}
+
+.clickableArrow {
+    cursor: pointer;
+}
+
+.labelContainer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: calc(100% - 20px);
+    min-width: 0;
+}
+
+.nodeLabel {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--tree-primary-text, inherit);
+    font-size: 0.92rem;
+    font-weight: 400;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nodeTitle {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mutedLabel {
+    color: var(--tree-secondary-text, #637381);
+}
+
+.categoryLabel {
+    color: #f59e0b;
+    font-weight: 700;
+}
+
+.commentIcon {
+    color: #f59e0b;
+    flex-shrink: 0;
+    font-size: 16px !important;
+}
+
+.countBadge {
+    margin-left: 4px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background-color: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.alternativesLabel {
+    margin-left: 4px;
+    color: #f59e0b;
+    font-weight: 700;
+}
+
+.alternativesText {
+    color: var(--tree-secondary-text, #637381);
+    font-size: 0.8rem;
 }
 
 .node:global(.isInternal) {
