@@ -44,6 +44,7 @@ import React, { ReactNode, useState } from "react";
 
 import * as yup from "yup";
 import { getAuth, signOut } from "firebase/auth";
+import { delay } from "@components/lib/utils/utils";
 
 interface SignInFormValues {
   email: string;
@@ -119,6 +120,7 @@ const SignInPage: NextPageWithLayout = () => {
         return;
       }
       closeSnackbar();
+      await delay(5000);
       await router.push("/");
     } catch (error) {
       const errorMessage = getFirebaseFriendlyError(error as FirebaseError);

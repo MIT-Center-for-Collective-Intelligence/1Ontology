@@ -117,6 +117,7 @@ import OntologyHistory from "../ActiveUsers/OntologyHistory";
 import { handleDownload } from "@components/lib/utils/random";
 import { getIdToken } from "@components/lib/firestoreClient/auth";
 import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
+import { Post } from "@components/lib/utils/Post";
 
 type CustomSmallBadgeProps = { value: number };
 
@@ -2004,37 +2005,43 @@ const ToolbarSidebar = ({
               onClick={async () => {
                 if (isDownloading) return;
                 setIsDownloading(true);
+                let url: string | undefined;
+                let link: HTMLAnchorElement | undefined;
                 try {
-                  const token = await getIdToken();
-                  const response = await fetch(
-                    `/api/download-ontology?appName=${encodeURIComponent(skillsFutureApp)}`,
+                  if (!skillsFutureApp) {
+                    throw new Error("Missing ontology app name");
+                  }
+
+                  const { tree } = await Post<{ tree?: unknown }>(
+                    `/download-ontology`,
                     {
-                      headers: {
-                        Authorization: `Bearer ${token}`,
-                      },
+                      appName: skillsFutureApp,
                     },
                   );
 
-                  if (!response.ok) {
-                    throw new Error("Failed to download ontology");
+                  if (!tree) {
+                    throw new Error("Download response did not include a tree");
                   }
 
-                  const { tree } = await response.json();
                   const blob = new Blob([JSON.stringify(tree, null, 2)], {
                     type: "application/json",
                   });
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement("a");
+                  url = URL.createObjectURL(blob);
+                  link = document.createElement("a");
                   link.href = url;
                   link.download = "nodes-data.json";
                   document.body.appendChild(link);
                   link.click();
-                  document.body.removeChild(link);
-                  URL.revokeObjectURL(url);
                 } catch (error) {
                   console.error("Download error:", error);
                   confirmIt("There was an error downloading the JSON!", "Ok");
                 } finally {
+                  if (link?.parentNode) {
+                    link.parentNode.removeChild(link);
+                  }
+                  if (url) {
+                    URL.revokeObjectURL(url);
+                  }
                   setIsDownloading(false);
                 }
               }}

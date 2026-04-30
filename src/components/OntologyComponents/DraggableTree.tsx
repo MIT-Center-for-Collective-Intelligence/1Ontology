@@ -4,13 +4,7 @@ import { NodeApi, NodeRendererProps, Tree, TreeApi } from "react-arborist";
 import styles from "./drag.tree.module.css";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import {
-  Box,
-  Skeleton,
-  ToggleButton,
-  Tooltip,
-  useTheme,
-} from "@mui/material";
+import { Box, Skeleton, ToggleButton, Tooltip, useTheme } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import EditOffIcon from "@mui/icons-material/EditOff";
 import ChatIcon from "@mui/icons-material/Chat";
@@ -427,40 +421,31 @@ function DraggableTree({
       if (!targetNodeId) return;
 
       const tree = treeRef.current;
-
       if (!tree) {
         pendingExpansionNodeId.current = targetNodeId;
         return;
       }
 
-      // Find all instances of this node in the tree
-      const targetNodes = findNodesByNodeId(tree, targetNodeId);
+      // Find all paths to this nodeId in the tree
+      const paths = nodePathIndex.get(targetNodeId);
 
-      if (targetNodes.length === 0) {
+      if (!paths || paths.length === 0) {
         pendingExpansionNodeId.current = targetNodeId;
         return;
       }
 
-      // Expand ALL occurrences 
-      for (let i = 0; i < targetNodes.length; i++) {
-        const targetNode = targetNodes[i];
+      // Expand ALL occurrences by opening all ancestors in their respective paths
+      for (const path of paths) {
+        // path is an array of tree-specific IDs: [rootId, ..., parentId, targetId]
+        // We open every node except the target itself (which is the last element)
+        for (let i = 0; i < path.length - 1; i++) {
+          const ancestorId = path[i];
+          tree.open(ancestorId);
 
-        let current = targetNode.parent;
-        const ancestorsToExpand: NodeApi<PaginatedTreeData>[] = [];
-
-        while (current && current.id !== "__REACT_ARBORIST_INTERNAL_ROOT__") {
-          if (!current.isOpen) {
-            ancestorsToExpand.push(current);
-          }
-          current = current.parent;
-        }
-
-        ancestorsToExpand.reverse();
-
-        for (const ancestor of ancestorsToExpand) {
-          ancestor.open();
-          if (ancestor.children) {
-            for (const child of ancestor.children) {
+          // Best-effort: also expand categories for this ancestor if we can get the node API
+          const ancestorNode = tree.get(ancestorId);
+          if (ancestorNode?.children) {
+            for (const child of ancestorNode.children) {
               if (child.data.category && !child.isOpen) {
                 child.open();
               }
@@ -472,8 +457,11 @@ function DraggableTree({
       hasExpandedSuccessfully.current = true;
       pendingExpansionNodeId.current = null;
     },
-    [treeRef, findNodesByNodeId],
+    [treeRef, nodePathIndex],
   );
+
+  // Track whether the last navigation attempt needs to wait for new treeData.
+  const expansionPendingForTreeData = useRef(false);
 
   useEffect(() => {
     const tree = treeRef.current;
@@ -482,46 +470,56 @@ function DraggableTree({
       return;
     }
 
-    const handleNavigation = async () => {
-      const targetNodeId = currentVisibleNode.id;
+    const targetNodeId = currentVisibleNode.id;
 
-      if (
-        treeActivatedNodeIdRef.current &&
-        treeActivatedNodeIdRef.current !== targetNodeId
-      ) {
-        treeActivatedNodeIdRef.current = null;
-      }
+    if (
+      treeActivatedNodeIdRef.current &&
+      treeActivatedNodeIdRef.current !== targetNodeId
+    ) {
+      treeActivatedNodeIdRef.current = null;
+    }
 
-      if (
-        isTreeClickRef.current ||
-        treeActivatedNodeIdRef.current === targetNodeId
-      ) {
-        hasExpandedSuccessfully.current = true;
-        pendingExpansionNodeId.current = null;
-        isTreeClickRef.current = false;
-        setFirstLoad(false);
-        return;
-      }
-
-      // Reset expansion tracking for this new navigation
-      hasExpandedSuccessfully.current = false;
+    if (
+      isTreeClickRef.current ||
+      treeActivatedNodeIdRef.current === targetNodeId
+    ) {
+      hasExpandedSuccessfully.current = true;
       pendingExpansionNodeId.current = null;
-
-      // Always expand all occurrences, regardless of how navigation happened
-      expandNodeById(targetNodeId);
-
-      // Single scroll via TreeApi — "auto" moves the list only as much as needed
-      // (avoids double scrollTo from expand + select, and harsh centering jumps).
-      const targetNodes = findNodesByNodeId(tree, targetNodeId);
-      if (targetNodes.length > 0) {
-        tree.select(targetNodes[0].id, { align: "auto" });
-      }
-
+      expansionPendingForTreeData.current = false;
       isTreeClickRef.current = false;
       setFirstLoad(false);
-    };
+      return;
+    }
 
-    handleNavigation();
+    // Reset expansion tracking for this new navigation
+    hasExpandedSuccessfully.current = false;
+    pendingExpansionNodeId.current = null;
+
+    // Defer by one animation frame so react-arborist has had time to commit
+    // the latest treeData into its internal node map before we call tree.get().
+    // Without this, treeData can have updated in React state while the tree
+    // API still reflects the previous render — causing findNodesByNodeId to
+    // return nothing and leaving the target stuck in pendingExpansionNodeId.
+    const rafId = requestAnimationFrame(() => {
+      expandNodeById(targetNodeId);
+
+      // Select and scroll to the target node
+      const paths = nodePathIndex.get(targetNodeId);
+      if (paths && paths.length > 0) {
+        // Select the first occurrence found
+        const treeId = paths[0][paths[0].length - 1];
+        tree.select(treeId, { align: "auto" });
+        expansionPendingForTreeData.current = false;
+      } else {
+        // Node still not in tree; mark pending so the retry effect can pick it up.
+        expansionPendingForTreeData.current = true;
+      }
+    });
+
+    isTreeClickRef.current = false;
+    setFirstLoad(false);
+
+    return () => cancelAnimationFrame(rafId);
     // `treeData` is included so this retries after the platform reloads its
     // tree for a new focused node (e.g. returning from the navigator). The
     // first attempt can fire before the new tree arrives, which would park
@@ -529,7 +527,6 @@ function DraggableTree({
   }, [
     treeRef,
     currentVisibleNode?.id,
-    firstLoad,
     expandNodeById,
     findNodesByNodeId,
     treeData,
@@ -758,7 +755,6 @@ function DraggableTree({
             appName: skillsFutureApp,
             ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
           });
-
         }
         return;
       }
@@ -1105,7 +1101,6 @@ function DraggableTree({
           className={clsx(styles.node, styles.loadMoreNode)}
           id={node.data.id}
           sx={{
-            // Keep the same left footprint as normal nodes so indent guides align.
             px: 0.75,
             py: 0.35,
             display: "flex",
@@ -1147,21 +1142,23 @@ function DraggableTree({
           title={node.data.name}
           arrow
           placement="top"
-          PopperProps={{
-            sx: {
-              "& .MuiTooltip-tooltip": {
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "dark" ? "#424242" : "#616161",
-                color: "#fff",
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                borderRadius: "8px",
-                padding: "8px 12px",
-                boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
-              },
-              "& .MuiTooltip-arrow": {
-                color: (theme) =>
-                  theme.palette.mode === "dark" ? "#424242" : "#616161",
+          slotProps={{
+            popper: {
+              sx: {
+                "& .MuiTooltip-tooltip": {
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "dark" ? "#424242" : "#616161",
+                  color: "#fff",
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                  borderRadius: "8px",
+                  padding: "8px 12px",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
+                },
+                "& .MuiTooltip-arrow": {
+                  color: (theme) =>
+                    theme.palette.mode === "dark" ? "#424242" : "#616161",
+                },
               },
             },
           }}
@@ -1176,7 +1173,6 @@ function DraggableTree({
               transition: "background-color 0.2s ease",
               borderRadius: "8px",
               minHeight: "24px",
-              // Match normal node padding/border so indent guides align with content.
               px: 0.75,
               userSelect: "none",
               borderLeft: "2px solid transparent",
@@ -1253,16 +1249,11 @@ function DraggableTree({
         </Box>
         <Box
           onClick={(e) => {
-            // Expand/collapse should not navigate/select the node.
             e.stopPropagation();
             if (!node.isInternal) return;
-
             const opening = !node.isOpen;
-            node.toggle(); // immediate visual response
-
-            // Also select the node when expanding.
+            node.toggle();
             node.select();
-
             if (opening) {
               ensureExpandedWithLazyLoad(node);
             }
@@ -1300,10 +1291,7 @@ function DraggableTree({
                     title={`Total number of ${node.data.name.toLowerCase() === "act" ? "activities" : "entities"} under this sub-ontology`}
                     arrow
                   >
-                    <Box
-                      component="span"
-                      className={styles.countBadge}
-                    >
+                    <Box component="span" className={styles.countBadge}>
                       {specializationNumsUnder[node.data.id]}
                     </Box>
                   </Tooltip>
@@ -1315,27 +1303,18 @@ function DraggableTree({
                     }
                     arrow
                   >
-                    <Box
-                      component="span"
-                      className={styles.countBadge}
-                    >
+                    <Box component="span" className={styles.countBadge}>
                       {specializationNumsUnder[`${node.data.id}-extra`]}
                     </Box>
                   </Tooltip>
                 )}
                 {(node.data.actionAlternatives || []).length > 0 && (
-                  <Box
-                    component="span"
-                    className={styles.alternativesLabel}
-                  >
+                  <Box component="span" className={styles.alternativesLabel}>
                     Alternatives:
                   </Box>
                 )}
                 {(node.data.actionAlternatives || []).length > 0 && (
-                  <Box
-                    component="span"
-                    className={styles.alternativesText}
-                  >
+                  <Box component="span" className={styles.alternativesText}>
                     {(node.data.actionAlternatives || []).join(", ")}
                   </Box>
                 )}
@@ -1372,7 +1351,7 @@ function DraggableTree({
             borderRadius: "10px",
             px: "8px",
             py: "8px",
-            mb: "6px",
+            my: "6px",
             gap: 1,
             mx: "5px",
           }}
@@ -1456,7 +1435,15 @@ function DraggableTree({
                 overscanCount={50}
                 // onSelect={(selected) => setSelectedCount(selected.length)}
                 onActivate={(node) => {
-                  if (!!node.data.category || node.data.isLoadMore) {
+                  if (node.data.category) {
+                    const opening = !node.isOpen;
+                    node.toggle();
+                    if (opening) {
+                      ensureExpandedWithLazyLoad(node as any);
+                    }
+                    return;
+                  }
+                  if (node.data.isLoadMore) {
                     return;
                   }
                   isTreeClickRef.current = true;
@@ -1506,17 +1493,6 @@ function Input({
       }}
     />
   );
-}
-
-function sortData(data: TreeData[]) {
-  function sortIt(data: TreeData[]) {
-    data.sort((a, b) => (a.name < b.name ? -1 : 1));
-    data.forEach((d) => {
-      if (d.children) sortIt(d.children);
-    });
-    return data;
-  }
-  return sortIt(data);
 }
 
 function FolderArrow({ node }: { node: NodeApi<TreeData> }) {

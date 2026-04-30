@@ -38,8 +38,15 @@ export async function batchGetNodesByIds(
 }
 
 export function nodeHasNonEmptySpecializations(n: INode): boolean {
-  for (const c of n.specializations || []) {
-    if ((c.nodes || []).length > 0) return true;
+  if (n.specializations) {
+    for (const c of n.specializations) {
+      if ((c.nodes || []).length > 0) return true;
+    }
+  }
+  if (n.properties?.parts) {
+    for (const c of n.properties.parts) {
+      if ((c.nodes || []).length > 0) return true;
+    }
   }
   return false;
 }
@@ -114,9 +121,13 @@ export function buildOneLevelFromSpecializations(
 ): TreeData[] {
   const childrenInOrder: TreeData[] = [];
 
-  if (node.specializations) {
-    for (let i = 0; i < node.specializations.length; i++) {
-      const collection = node.specializations[i];
+  const specializationCollections = node.specializations || [];
+  const partsCollections = node.properties?.parts || [];
+  const allCollections = [...specializationCollections, ...partsCollections];
+
+  if (allCollections.length > 0) {
+    for (let i = 0; i < allCollections.length; i++) {
+      const collection = allCollections[i];
       const collectionRefs = (collection.nodes || []).length;
 
       if (collection.collectionName === "main") {
@@ -166,14 +177,20 @@ export function buildOneLevelFromSpecializations(
   return childrenInOrder;
 }
 
-/**
- * Ids of all specialization targets (all collections) for batch fetch.
- */
 export function collectSpecializationChildIds(n: INode): string[] {
   const ids: string[] = [];
-  for (const c of n.specializations || []) {
-    for (const link of c.nodes || []) {
-      ids.push(link.id);
+  if (n.specializations) {
+    for (const c of n.specializations) {
+      for (const link of c.nodes || []) {
+        ids.push(link.id);
+      }
+    }
+  }
+  if (n.properties?.parts) {
+    for (const c of n.properties.parts) {
+      for (const link of c.nodes || []) {
+        ids.push(link.id);
+      }
     }
   }
   return ids;
@@ -219,9 +236,7 @@ function buildSpineSegment(
       nodeId: id,
       name: "…",
       nodeType: "group",
-      children: [
-        buildSpineSegment(pathIds, startIndex + 1, nodesById),
-      ],
+      children: [buildSpineSegment(pathIds, startIndex + 1, nodesById)],
       hasUnresolvedChildren: true,
       outlineSpineOnly: true,
     };
@@ -267,7 +282,12 @@ function attachChildAlongPath(
     if (c.children) {
       return {
         ...c,
-        children: attachChildAlongPath(c.children, nextTreeId, nextNodeId, nextNode),
+        children: attachChildAlongPath(
+          c.children,
+          nextTreeId,
+          nextNodeId,
+          nextNode,
+        ),
       };
     }
     return c;
@@ -339,7 +359,12 @@ export function buildPathTreeWithSiblings(
       name: node.title,
       nodeType: node.nodeType,
       ...(node.unclassified && { unclassified: true }),
-      children: attachChildAlongPath(oneLevel, nextTreeId, nextNodeId, nextTree),
+      children: attachChildAlongPath(
+        oneLevel,
+        nextTreeId,
+        nextNodeId,
+        nextTree,
+      ),
       hasUnresolvedChildren: true,
       outlineSpineOnly: false,
     };
@@ -387,7 +412,8 @@ export function mergePreservedSubtrees(
         children: prev.children,
         outlineSpineOnly: prev.outlineSpineOnly,
         outlineLoadChildren: prev.outlineLoadChildren,
-        hasUnresolvedChildren: prev.hasUnresolvedChildren ?? nc.hasUnresolvedChildren,
+        hasUnresolvedChildren:
+          prev.hasUnresolvedChildren ?? nc.hasUnresolvedChildren,
       } as TreeData;
     }
     return nc;
@@ -428,10 +454,7 @@ export function replaceSpineWithOneLevel(
     );
     return {
       ...node,
-      children: mergePreservedSubtrees(
-        next,
-        node.children,
-      ) as any,
+      children: mergePreservedSubtrees(next, node.children) as any,
       outlineSpineOnly: false,
       hasUnresolvedChildren: next.length > 0,
     };

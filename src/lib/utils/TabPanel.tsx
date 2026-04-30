@@ -19,7 +19,11 @@ export const TabPanel = (props: any) => {
       {...other}
     >
       {/* Render children only if the current tab is active */}
-      {value === index && <Box>{children}</Box>}
+      {value === index && (
+        <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, height: "100%" }}>
+          {children}
+        </Box>
+      )}
     </Box>
   );
 };

@@ -490,22 +490,12 @@ const Ontology = ({
   const [treeVisualization, setTreeVisualization] = useState<TreeVisual>({});
   const { confirmIt, ConfirmDialog } = useConfirmDialog();
   const [viewValue, setViewValue] = useState<number>(0);
-  const fuseSearchItems = useMemo(() => {
-    const values = Object.values(relatedNodes) as INode[];
-    if (values.length === 0) {
-      return [];
-    }
-    const list = values.map((n) => ({ ...n }));
-    return AddContext(list, relatedNodes);
-  }, [relatedNodes]);
-
-  const fuse = useMemo(
-    () =>
-      new Fuse(fuseSearchItems, {
-        keys: ["title", "context.title"],
-      }),
-    [fuseSearchItems],
+  const fuseRef = useRef<Fuse<INode>>(
+    new Fuse([], {
+      keys: ["title", "context.title"],
+    }),
   );
+  const fuseRebuildTimerRef = useRef<number | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [eachNodePath, setEachNodePath] = useState<{
     [key: string]: INodePath[];
@@ -781,7 +771,6 @@ const Ontology = ({
   // Add nodes to cache with listeners (triggered by dropdown selections in @inheritedPartsViewerEdit)
   const addNodesToCache = useCallback(
     (newNodes: { [id: string]: INode }, parentNodeId?: string) => {
-
       // Filter out nodes already being snapshotted
       const nodesToAdd: { [id: string]: INode } = {};
       const nodeIdsToSnapshot: string[] = [];
@@ -984,53 +973,31 @@ const Ontology = ({
   }, [user, emailVerified]);
 
   useEffect(() => {
-    // Function to handle changes in the URL hash
-    const handleHashChange = async () => {
-      // Skip hash change handling during app switch
-      if (isSwitchingAppRef.current) {
+    if (fuseRebuildTimerRef.current) {
+      window.clearTimeout(fuseRebuildTimerRef.current);
+    }
+    fuseRebuildTimerRef.current = window.setTimeout(() => {
+      const values = Object.values(relatedNodes) as INode[];
+      if (values.length === 0) {
+        fuseRef.current = new Fuse([], {
+          keys: ["title", "context.title"],
+        });
         return;
       }
+      const list = values.map((n) => ({ ...n })) as INode[];
+      AddContext(list, relatedNodes);
+      fuseRef.current = new Fuse(list, {
+        keys: ["title", "context.title"],
+      });
+    }, 200);
 
-      // Check if there is a hash in the URL
-      if (window.location.hash) {
-        const currentHash = window.location.hash;
-
-        // Hashes ending in "/navigate" belong to the navigator view
-        // Ignore them here so we don't try to fetch "<id>/navigate" as a node id
-        if (currentHash.endsWith("/navigate")) {
-          return;
-        }
-
-        const visibleNodeId = currentHash.split("#").reverse()[0];
-
-        // Skip if this is the hash set by user through navigating
-        if (currentHash === lastHashSetRef.current) {
-          return;
-        }
-
-        // Skip if already processed
-        if (visibleNodeId === prevHash.current) {
-          return;
-        }
-
-        prevHash.current = visibleNodeId;
-        navigateToNode(visibleNodeId);
+    return () => {
+      if (fuseRebuildTimerRef.current) {
+        window.clearTimeout(fuseRebuildTimerRef.current);
+        fuseRebuildTimerRef.current = null;
       }
     };
-
-    if (typeof window !== "undefined") {
-      // Call handleHashChange immediately to handle any initial hash
-      handleHashChange();
-
-      // Add an event listener to the window for hash changes
-      window.addEventListener("hashchange", handleHashChange);
-    }
-
-    // Clean up the event listener when the component is unmounted
-    return () => {
-      window.removeEventListener("hashchange", handleHashChange);
-    };
-  }, [eachNodePath]);
+  }, [relatedNodes, loadingNodes]);
 
   // Function to update last searches
   const updateLastSearches = (searchedNode: any) => {
@@ -1079,7 +1046,7 @@ const Ontology = ({
     }
 
     // Perform search using Fuse.js, filter out deleted items
-    return fuse
+    return fuseRef.current
       .search(query)
       .map((result) => result.item)
       .filter(
@@ -1278,12 +1245,17 @@ const Ontology = ({
   );
 
   useEffect(() => {
-    const mainNodes = Object.values(relatedNodes).filter(
-      (node: any) =>
-        node.category || (typeof node.root === "boolean" && !!node.root),
-    );
-    if (mainNodes.length > 0) {
-      let eachOntologyPath = findOntologyPath({
+    // These traversals can be expensive for large graphs; debounce to avoid
+    // repeated recomputation while snapshots stream in.
+    if (loadingNodes) return;
+    const timer = window.setTimeout(() => {
+      const mainNodes = Object.values(relatedNodes).filter(
+        (node: any) =>
+          node.category || (typeof node.root === "boolean" && !!node.root),
+      );
+      if (mainNodes.length === 0) return;
+
+      const eachOntologyPath = findOntologyPath({
         mainNodes,
         path: [],
         eachOntologyPath: {},
@@ -1292,7 +1264,7 @@ const Ontology = ({
         setEachNodePath(eachOntologyPath);
       }
 
-      let multipleOntologyPaths = findMultipleOntologyPaths({
+      const multipleOntologyPaths = findMultipleOntologyPaths({
         mainNodes,
         path: [],
         multipleOntologyPaths: {},
@@ -1300,7 +1272,9 @@ const Ontology = ({
       if (multipleOntologyPaths) {
         setMultipleOntologyPaths(multipleOntologyPaths);
       }
-    }
+    }, 150);
+
+    return () => window.clearTimeout(timer);
   }, [relatedNodes]);
 
   // Function to generate a tree structure of specializations based on main nodes
@@ -1424,7 +1398,6 @@ const Ontology = ({
       const unsubscribe = onSnapshot(
         nodesQuery,
         (snapshot) => {
-
           setRelatedNodes((prev) => {
             const updated = { ...prev };
             let addedCount = 0;
@@ -1492,36 +1465,8 @@ const Ontology = ({
     }
   }, [relatedNodes, appName]);
 
-  // Subscribe to node changes in the current app and derive the path outline again
-  useEffect(() => {
-    if (!appName || !user || !currentVisibleNode?.id) return;
-
-    const changesQuery = query(
-      collection(db, NODES),
-      where("appName", "==", appName),
-      where("deleted", "==", false),
-    );
-
-    let initialSnapshotSeen = false;
-
-    const unsubscribe = onSnapshot(
-      changesQuery,
-      (snapshot) => {
-        if (!initialSnapshotSeen) {
-          initialSnapshotSeen = true;
-          return;
-        }
-        if (snapshot.docChanges().length === 0) return;
-        if (hasInstantUpdateRef.current) return;
-        void loadPathOutline();
-      },
-      (error) => {
-        console.error("Error:", error);
-      },
-    );
-
-    return () => unsubscribe();
-  }, [appName, user?.uname, db, currentVisibleNode?.id, loadPathOutline]);
+  // NOTE: Avoid subscribing to *all nodes* in the app here (very expensive initial snapshot).
+  // Outline already loads on navigation and can be refreshed via more targeted listeners when needed.
 
   const getTreeView = ({ mainCategories, visited, path }: any): any => {
     const newNodes = [];
@@ -2003,21 +1948,7 @@ const Ontology = ({
       if (currentImprovement) {
         return;
       }
-      /* if (
-        selectedProperty &&
-        (addedElements.size > 0 || removedElements.size > 0) &&
-        (await confirmIt(
-          `Unsaved changes detected in ${capitalizeFirstLetter(
-            DISPLAY[selectedProperty]
-              ? DISPLAY[selectedProperty]
-              : selectedProperty,
-          )}. Do you want to discard them?`,
-          "Keep Changes",
-          "Discard Changes",
-        ))
-      ) {
-        return;
-      } */
+
       handleCloseAddLinksModel();
       if (currentVisibleNode && nodeId === currentVisibleNode.id) {
         const element = document.getElementById(`property-title`);
@@ -2074,6 +2005,31 @@ const Ontology = ({
       currentVisibleNode,
     ],
   );
+
+  useEffect(() => {
+    const handleHashChange = async () => {
+      if (isSwitchingAppRef.current) return;
+      if (!appName) return;
+
+      const currentHash = window.location.hash;
+      if (!currentHash) return;
+
+      if (currentHash.endsWith("/navigate")) return;
+
+      const visibleNodeId = currentHash.split("#").reverse()[0];
+
+      if (currentHash === lastHashSetRef.current) return;
+
+      if (visibleNodeId === prevHash.current) return;
+
+      prevHash.current = visibleNodeId;
+      navigateToNode(visibleNodeId);
+    };
+
+    handleHashChange();
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, [appName, navigateToNode]);
 
   // This function is called when a search result node is clicked.
   const openSearchedNode = useCallback(
@@ -2998,7 +2954,10 @@ const Ontology = ({
             <Box
               sx={{
                 flexGrow: 1,
-                overflow: "auto",
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+                minHeight: 0,
                 ...SCROLL_BAR_STYLE,
                 "&::-webkit-scrollbar": {
                   display: "none",
@@ -3009,6 +2968,10 @@ const Ontology = ({
                 value={viewValue}
                 index={0}
                 sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: 1,
+                  minHeight: 0,
                   height: "100%",
                   overflowX: "auto",
                   whiteSpace: "nowrap",
@@ -3019,7 +2982,10 @@ const Ontology = ({
               >
                 <Box
                   sx={{
-                    display: "inline-block",
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%",
+                    minHeight: 0,
                     minWidth: "100%",
                   }}
                 >
@@ -3049,7 +3015,9 @@ const Ontology = ({
                       onExpandEllipsis={handleExpandEllipsis}
                       nodesWithComments={nodesWithComments}
                       onOutlineNodeOpen={handleOutlineNodeOpen}
-                      searchTerm={isSidebarSearchFocused ? "" : sidebarSearchValue}
+                      searchTerm={
+                        isSidebarSearchFocused ? "" : sidebarSearchValue
+                      }
                     />
                   )}
                 </Box>
