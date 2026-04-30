@@ -110,7 +110,13 @@ const GuidLines = ({
           <Typography sx={{ fontSize: "45px" }}>Guidelines</Typography>
           <Button
             variant="contained"
-            sx={{ mb: "3px", mr: 2, ml: "auto" }}
+            sx={{
+              mb: "3px",
+              mr: 2,
+              ml: "auto",
+              borderRadius: "25px",
+              fontSize: "18px",
+            }}
             onClick={() => {
               setDisplayGuidelines(false);
             }}

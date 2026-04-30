@@ -151,9 +151,7 @@ const ActivityDetails = ({
                 alignItems: "center",
               }}
             >
-              {!modifiedByDetails && (
-                <Box sx={{ py: 0.25 }}>{TimeLabel}</Box>
-              )}
+              {!modifiedByDetails && <Box sx={{ py: 0.25 }}>{TimeLabel}</Box>}
               {modifiedByDetails && (
                 <Stack
                   direction="row"
@@ -305,7 +303,8 @@ const ActivityDetails = ({
                           ["Node ID", activity.nodeId],
                           [
                             "Log LLM ID",
-                            activity.logLLMId != null && activity.logLLMId !== ""
+                            activity.logLLMId != null &&
+                            activity.logLLMId !== ""
                               ? String(activity.logLLMId)
                               : "—",
                           ],

@@ -96,6 +96,7 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
           <InputLabel id="property-type-label">Type</InputLabel>
           <Select
             labelId="property-type-label"
+            id="add-property-type"
             value={propertyType}
             onChange={(event) => setPropertyType(event.target.value)}
             label="Property Type"

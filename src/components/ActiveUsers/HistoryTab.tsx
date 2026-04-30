@@ -241,14 +241,14 @@ const NodeActivity = ({
 
     const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
       const docChanges = snapshot.docChanges();
-      
-      setLogs(prevLogs => {
+
+      setLogs((prevLogs) => {
         let updatedLogs = [...prevLogs];
         const newAdditions: (NodeChange & { id: string })[] = [];
-        
+
         docChanges.forEach((change) => {
           const changeData = change.doc.data();
-          
+
           if (
             ((skillsFuture &&
               changeData.skillsFuture &&
@@ -256,48 +256,64 @@ const NodeActivity = ({
               (!skillsFuture && !changeData.skillsFuture)) &&
             !changeData.deleted
           ) {
-            const logWithId = { ...changeData, id: change.doc.id } as NodeChange & { id: string };
-            
-            if (change.type === 'added') {
-              const exists = updatedLogs.some(log => log.id === change.doc.id);
+            const logWithId = {
+              ...changeData,
+              id: change.doc.id,
+            } as NodeChange & { id: string };
+
+            if (change.type === "added") {
+              const exists = updatedLogs.some(
+                (log) => log.id === change.doc.id,
+              );
               if (!exists) {
                 newAdditions.push(logWithId);
               }
-            } else if (change.type === 'modified') {
-              const index = updatedLogs.findIndex(log => log.id === change.doc.id);
+            } else if (change.type === "modified") {
+              const index = updatedLogs.findIndex(
+                (log) => log.id === change.doc.id,
+              );
               if (index !== -1) {
                 updatedLogs[index] = logWithId;
               }
-            } else if (change.type === 'removed') {
-              updatedLogs = updatedLogs.filter(log => log.id !== change.doc.id);
+            } else if (change.type === "removed") {
+              updatedLogs = updatedLogs.filter(
+                (log) => log.id !== change.doc.id,
+              );
             }
           } else {
-            if (change.type === 'modified') {
-              updatedLogs = updatedLogs.filter(log => log.id !== change.doc.id);
+            if (change.type === "modified") {
+              updatedLogs = updatedLogs.filter(
+                (log) => log.id !== change.doc.id,
+              );
             }
           }
         });
-        
+
         // Add all new additions to the top
         if (newAdditions.length > 0) {
           updatedLogs = [...newAdditions, ...updatedLogs];
         }
-        
+
         return updatedLogs;
       });
-      
+
       if (!snapshot.empty) {
         setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-        const validDocsCount = snapshot.docs.filter(doc => {
+        const validDocsCount = snapshot.docs.filter((doc) => {
           const data = doc.data();
-          return ((skillsFuture && data.skillsFuture && data.appName === skillsFutureApp) ||
-                  (!skillsFuture && !data.skillsFuture)) && !data.deleted;
+          return (
+            ((skillsFuture &&
+              data.skillsFuture &&
+              data.appName === skillsFutureApp) ||
+              (!skillsFuture && !data.skillsFuture)) &&
+            !data.deleted
+          );
         }).length;
         setHasMore(validDocsCount === 100);
       } else {
         setHasMore(false);
       }
-      
+
       setLoading(false);
     });
 
@@ -372,7 +388,9 @@ const NodeActivity = ({
             (!skillsFuture && !changeData.skillsFuture)) &&
           !changeData.deleted
         ) {
-          moreLogs.push({ ...changeData, id: doc.id } as NodeChange & { id: string });
+          moreLogs.push({ ...changeData, id: doc.id } as NodeChange & {
+            id: string;
+          });
         }
       });
 
@@ -463,7 +481,7 @@ const NodeActivity = ({
               </Box>
             </Slide>
           ))}
-        
+
         {logs.length > 0 && hasMore && (
           <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
             <Button

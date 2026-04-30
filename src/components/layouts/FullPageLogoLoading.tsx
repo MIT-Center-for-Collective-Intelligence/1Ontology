@@ -1,5 +1,4 @@
 import { Box, Typography, keyframes } from "@mui/material";
-import Image from "next/image";
 import LogoDarkMode from "../../../public/loader.gif";
 
 const breathe = keyframes`
@@ -34,6 +33,10 @@ const meshGradient = keyframes`
 `;
 
 const FullPageLogoLoading = () => {
+  const logoSrc =
+    typeof LogoDarkMode === "string"
+      ? LogoDarkMode
+      : (LogoDarkMode as any)?.src;
   return (
     <Box
       sx={{
@@ -43,7 +46,8 @@ const FullPageLogoLoading = () => {
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        background: "linear-gradient(-45deg, #050505, #121212, #0a0a0a, #18181b)",
+        background:
+          "linear-gradient(-45deg, #050505, #121212, #0a0a0a, #18181b)",
         backgroundSize: "400% 400%",
         animation: `${meshGradient} 15s ease infinite`,
         position: "fixed",
@@ -75,7 +79,8 @@ const FullPageLogoLoading = () => {
           left: "-10%",
           width: "70%",
           height: "70%",
-          background: "radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%)",
+          background:
+            "radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%)",
           filter: "blur(100px)",
           zIndex: 0,
         }}
@@ -87,7 +92,8 @@ const FullPageLogoLoading = () => {
           right: "-10%",
           width: "70%",
           height: "70%",
-          background: "radial-gradient(circle, rgba(168, 85, 247, 0.05) 0%, transparent 70%)",
+          background:
+            "radial-gradient(circle, rgba(168, 85, 247, 0.05) 0%, transparent 70%)",
           filter: "blur(100px)",
           zIndex: 0,
         }}
@@ -97,7 +103,8 @@ const FullPageLogoLoading = () => {
           position: "absolute",
           width: "500px",
           height: "500px",
-          background: "radial-gradient(circle, rgba(156, 39, 176, 0.05) 0%, transparent 70%)",
+          background:
+            "radial-gradient(circle, rgba(156, 39, 176, 0.05) 0%, transparent 70%)",
           filter: "blur(80px)",
           borderRadius: "50%",
           bottom: "-5%",
@@ -111,7 +118,8 @@ const FullPageLogoLoading = () => {
           position: "absolute",
           width: "400px",
           height: "400px",
-          background: "radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 70%)",
+          background:
+            "radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 70%)",
           filter: "blur(100px)",
           borderRadius: "50%",
           top: "30%",
@@ -143,13 +151,13 @@ const FullPageLogoLoading = () => {
             boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
           }}
         >
-          <Image
-            src={LogoDarkMode}
+          <Box
+            component="img"
+            src={logoSrc}
             alt="Ontology Logo"
             width={220}
             height={220}
-            style={{ borderRadius: "24px" }}
-            priority
+            sx={{ borderRadius: "24px", display: "block" }}
           />
         </Box>
 

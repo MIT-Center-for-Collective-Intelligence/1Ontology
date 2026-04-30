@@ -21,6 +21,7 @@ import { NODES } from "@components/lib/firestoreClient/collections";
 import { useAuth } from "../context/AuthContext";
 import { FillFlexParent } from "./fill-flex-parent";
 import { triggerUpdateDerivedPaths } from "@components/lib/utils/triggerUpdateDerivedPaths";
+import { findNode, removeNode } from "./treeUtils";
 
 const INDENT_STEP = 15;
 const INITIAL_LOAD_COUNT = 20;
@@ -1495,7 +1496,7 @@ function Input({
   );
 }
 
-function FolderArrow({ node }: { node: NodeApi<TreeData> }) {
+function FolderArrow({ node }: { node: NodeApi<PaginatedTreeData> }) {
   const hasChildren = node.isInternal && (node.children || []).length > 0;
   const hasUnresolvedChildren = (node.data as any).hasUnresolvedChildren;
 
@@ -1510,31 +1511,4 @@ function FolderArrow({ node }: { node: NodeApi<TreeData> }) {
       ) : null}
     </span>
   );
-}
-
-function findNode(
-  data: PaginatedTreeData[],
-  id: string,
-): PaginatedTreeData | null {
-  for (const node of data) {
-    if (node.id === id) return node;
-    if (node.children) {
-      const found = findNode(node.children, id);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
-function removeNode(data: PaginatedTreeData[], id: string): boolean {
-  for (let i = 0; i < data.length; i++) {
-    if (data[i].id === id) {
-      data.splice(i, 1);
-      return true;
-    }
-    if (data[i].children && removeNode(data[i].children!, id)) {
-      return true;
-    }
-  }
-  return false;
 }

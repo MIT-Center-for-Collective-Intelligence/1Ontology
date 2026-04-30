@@ -480,7 +480,7 @@ const Ontology = ({
   const rtdb = getDatabase();
   const [{ emailVerified, user, isAuthInitialized }] = useAuth();
   const router = useRouter();
-  const isMobile = useMediaQuery("(max-width:599px)");
+  const isMobile = useMediaQuery("(max-width:599px)", { noSsr: true });
   const [relatedNodes, setRelatedNodes] = useState<{ [id: string]: INode }>({});
   const [currentVisibleNode, setCurrentVisibleNode] = useState<INode | null>(
     null,
@@ -2519,6 +2519,7 @@ const Ontology = ({
                 </InputLabel>
                 <Select
                   labelId="mobile-property-type-label"
+                  id="mobile-property-type"
                   value={appName}
                   onChange={(event) => {
                     setRelatedNodes({});
@@ -2558,35 +2559,41 @@ const Ontology = ({
               ...SCROLL_BAR_STYLE,
             }}
           >
-            {pathOutlineMessage && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", px: 1, py: 0.5 }}
-              >
-                {pathOutlineMessage}
-              </Typography>
-            )}
-            {isLoadingOutline && currentNodeTreeData.length === 0 ? (
-              <TreeOutlineSkeleton />
-            ) : (
-              <DraggableTree
-                treeViewData={currentNodeTreeData}
-                setSnackbarMessage={setSnackbarMessage}
-                treeRef={treeRef}
-                currentVisibleNode={currentVisibleNode}
-                nodes={relatedNodes}
-                onOpenNodesTree={(nodeId: string) => {
-                  onOpenNodesTree(nodeId);
-                  // Don't close tree on node selection to allow parallel browsing
-                }}
-                skillsFuture={skillsFuture}
-                specializationNumsUnder={specializationNumsUnder}
-                skillsFutureApp={appName}
-                nodesWithComments={nodesWithComments}
-                onOutlineNodeOpen={handleOutlineNodeOpen}
-                searchTerm={isSidebarSearchFocused ? "" : sidebarSearchValue}
-              />
+            {mobileTreeOpen && (
+              <>
+                {pathOutlineMessage && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: "block", px: 1, py: 0.5 }}
+                  >
+                    {pathOutlineMessage}
+                  </Typography>
+                )}
+                {isLoadingOutline && currentNodeTreeData.length === 0 ? (
+                  <TreeOutlineSkeleton />
+                ) : (
+                  <DraggableTree
+                    treeViewData={currentNodeTreeData}
+                    setSnackbarMessage={setSnackbarMessage}
+                    treeRef={treeRef}
+                    currentVisibleNode={currentVisibleNode}
+                    nodes={relatedNodes}
+                    onOpenNodesTree={(nodeId: string) => {
+                      onOpenNodesTree(nodeId);
+                      // Don't close tree on node selection to allow parallel browsing
+                    }}
+                    skillsFuture={skillsFuture}
+                    specializationNumsUnder={specializationNumsUnder}
+                    skillsFutureApp={appName}
+                    nodesWithComments={nodesWithComments}
+                    onOutlineNodeOpen={handleOutlineNodeOpen}
+                    searchTerm={
+                      isSidebarSearchFocused ? "" : sidebarSearchValue
+                    }
+                  />
+                )}
+              </>
             )}
           </Box>
         </Box>
@@ -2719,6 +2726,7 @@ const Ontology = ({
                     </InputLabel>
                     <Select
                       labelId="property-type-label"
+                      id="property-type"
                       value={appName}
                       onChange={(event) => {
                         setRelatedNodes({});

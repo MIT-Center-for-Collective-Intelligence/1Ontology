@@ -104,8 +104,11 @@ const NodeEditor = ({
         />
         <Box sx={{ display: "flex" }}>
           <FormControl sx={{ m: 0.5, width: "25ch" }}>
-            <InputLabel>Type</InputLabel>
+            <InputLabel id="node-editor-type-label">Type</InputLabel>
             <Select
+              labelId="node-editor-type-label"
+              id="node-editor-type"
+              label="Type"
               value={newNode.nodeType.toLowerCase()}
               onChange={(e) =>
                 setNewNode((prev: any) => ({
@@ -122,8 +125,11 @@ const NodeEditor = ({
             </Select>
           </FormControl>
           <FormControl sx={{ m: 0.5, width: "25ch" }}>
-            <InputLabel>Children</InputLabel>
+            <InputLabel id="node-editor-children-label">Children</InputLabel>
             <Select
+              labelId="node-editor-children-label"
+              id="node-editor-children"
+              label="Children"
               multiple
               value={newNode.children}
               onChange={(e) =>
@@ -141,8 +147,11 @@ const NodeEditor = ({
             </Select>
           </FormControl>
           <FormControl sx={{ m: 0.5, width: "25ch" }}>
-            <InputLabel>Groups</InputLabel>
+            <InputLabel id="node-editor-groups-label">Groups</InputLabel>
             <Select
+              labelId="node-editor-groups-label"
+              id="node-editor-groups"
+              label="Groups"
               multiple
               value={newNode.groups.map((g: any) => g.id)}
               onChange={(e) =>
