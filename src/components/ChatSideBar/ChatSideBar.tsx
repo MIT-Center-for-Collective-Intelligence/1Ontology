@@ -35,8 +35,6 @@ const ChatSideBar = ({
   setSelectedChatTab,
   nodes,
   fetchNode,
-  skillsFuture = false,
-  skillsFutureApp = "",
   appName,
 }: {
   currentVisibleNode: any;
@@ -49,8 +47,6 @@ const ChatSideBar = ({
   setSelectedChatTab: Function;
   nodes: { [nodeId: string]: INode };
   fetchNode: (nodeId: string) => Promise<INode | null>;
-  skillsFuture?: boolean;
-  skillsFutureApp?: string;
   appName: string;
 }) => {
   const db = getFirestore();
@@ -150,8 +146,7 @@ const ChatSideBar = ({
 
       const response: any = await Post("/searchChroma", {
         query: searchValue,
-        skillsFuture,
-        appName: skillsFuture ? skillsFutureApp : null,
+        appName: appName || null,
       });
 
       const results: any = [...(response.results || [])];
@@ -182,8 +177,7 @@ const ChatSideBar = ({
     }
   }, [
     searchValue,
-    skillsFuture,
-    skillsFutureApp,
+    appName,
     searchWithFuse,
     fetchChildNodesForSearchResults,
   ]);

@@ -29,8 +29,7 @@ const NodeActivity = ({
   activeUsers,
   changeType,
   selectedUser,
-  skillsFuture,
-  skillsFutureApp,
+  appName,
   nodes,
 }: {
   selectedDiffNode: any;
@@ -38,8 +37,7 @@ const NodeActivity = ({
   activeUsers: any;
   changeType: "add-node" | null;
   selectedUser: string;
-  skillsFuture: boolean;
-  skillsFutureApp: string;
+  appName: string;
   nodes: { [nodeId: string]: any };
 }) => {
   const db = getFirestore();
@@ -200,8 +198,7 @@ const NodeActivity = ({
         nodesQuery = query(
           collection(db, NODES_LOGS),
           where("changeType", "==", "add node"),
-          where("skillsFuture", "==", !!skillsFuture),
-          where("appName", "==", skillsFutureApp),
+          where("appName", "==", appName),
           orderBy("modifiedAt", "desc"),
           limit(100),
         );
@@ -210,8 +207,7 @@ const NodeActivity = ({
           collection(db, NODES_LOGS),
           where("changeType", "==", "add node"),
           where("modifiedBy", "==", selectedUser),
-          where("skillsFuture", "==", !!skillsFuture),
-          where("appName", "==", skillsFutureApp),
+          where("appName", "==", appName),
           orderBy("modifiedAt", "desc"),
           limit(100),
         );
@@ -221,8 +217,7 @@ const NodeActivity = ({
         nodesQuery = query(
           collection(db, NODES_LOGS),
           where("changeType", "!=", "add node"),
-          where("skillsFuture", "==", !!skillsFuture),
-          where("appName", "==", skillsFutureApp),
+          where("appName", "==", appName),
           orderBy("modifiedAt", "desc"),
           limit(100),
         );
@@ -230,9 +225,8 @@ const NodeActivity = ({
         nodesQuery = query(
           collection(db, NODES_LOGS),
           where("changeType", "!=", "add node"),
-          where("skillsFuture", "==", !!skillsFuture),
           where("modifiedBy", "==", selectedUser),
-          where("appName", "==", skillsFutureApp),
+          where("appName", "==", appName),
           orderBy("modifiedAt", "desc"),
           limit(100),
         );
@@ -249,13 +243,7 @@ const NodeActivity = ({
         docChanges.forEach((change) => {
           const changeData = change.doc.data();
 
-          if (
-            ((skillsFuture &&
-              changeData.skillsFuture &&
-              changeData.appName === skillsFutureApp) ||
-              (!skillsFuture && !changeData.skillsFuture)) &&
-            !changeData.deleted
-          ) {
+          if (changeData.appName === appName && !changeData.deleted) {
             const logWithId = {
               ...changeData,
               id: change.doc.id,
@@ -301,13 +289,7 @@ const NodeActivity = ({
         setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
         const validDocsCount = snapshot.docs.filter((doc) => {
           const data = doc.data();
-          return (
-            ((skillsFuture &&
-              data.skillsFuture &&
-              data.appName === skillsFutureApp) ||
-              (!skillsFuture && !data.skillsFuture)) &&
-            !data.deleted
-          );
+          return data.appName === appName && !data.deleted;
         }).length;
         setHasMore(validDocsCount === 100);
       } else {
@@ -318,7 +300,7 @@ const NodeActivity = ({
     });
 
     return () => unsubscribeNodes();
-  }, [db, changeType, selectedUser, skillsFuture, skillsFutureApp]);
+  }, [db, changeType, selectedUser, appName]);
 
   const loadMore = async () => {
     if (!lastDoc || loadingMore || !hasMore) return;
@@ -333,8 +315,7 @@ const NodeActivity = ({
           moreQuery = query(
             collection(db, NODES_LOGS),
             where("changeType", "==", "add node"),
-            where("skillsFuture", "==", !!skillsFuture),
-            where("appName", "==", skillsFutureApp),
+            where("appName", "==", appName),
             orderBy("modifiedAt", "desc"),
             startAfter(lastDoc),
             limit(50),
@@ -344,8 +325,7 @@ const NodeActivity = ({
             collection(db, NODES_LOGS),
             where("changeType", "==", "add node"),
             where("modifiedBy", "==", selectedUser),
-            where("skillsFuture", "==", !!skillsFuture),
-            where("appName", "==", skillsFutureApp),
+            where("appName", "==", appName),
             orderBy("modifiedAt", "desc"),
             startAfter(lastDoc),
             limit(50),
@@ -356,8 +336,7 @@ const NodeActivity = ({
           moreQuery = query(
             collection(db, NODES_LOGS),
             where("changeType", "!=", "add node"),
-            where("skillsFuture", "==", !!skillsFuture),
-            where("appName", "==", skillsFutureApp),
+            where("appName", "==", appName),
             orderBy("modifiedAt", "desc"),
             startAfter(lastDoc),
             limit(50),
@@ -366,9 +345,8 @@ const NodeActivity = ({
           moreQuery = query(
             collection(db, NODES_LOGS),
             where("changeType", "!=", "add node"),
-            where("skillsFuture", "==", !!skillsFuture),
             where("modifiedBy", "==", selectedUser),
-            where("appName", "==", skillsFutureApp),
+            where("appName", "==", appName),
             orderBy("modifiedAt", "desc"),
             startAfter(lastDoc),
             limit(50),
@@ -381,13 +359,7 @@ const NodeActivity = ({
 
       snapshot.forEach((doc) => {
         const changeData = doc.data();
-        if (
-          ((skillsFuture &&
-            changeData.skillsFuture &&
-            changeData.appName === skillsFutureApp) ||
-            (!skillsFuture && !changeData.skillsFuture)) &&
-          !changeData.deleted
-        ) {
+        if (changeData.appName === appName && !changeData.deleted) {
           moreLogs.push({ ...changeData, id: doc.id } as NodeChange & {
             id: string;
           });

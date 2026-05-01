@@ -154,7 +154,6 @@ const cosineSimilarity = (vecA: any[], vecB: any[]) => {
 
 interface SearchChromaParams {
   query: string;
-  skillsFuture?: boolean;
   appName?: string;
   nodeType?: string;
   resultsNum?: number;
@@ -165,7 +164,6 @@ const chromaClient = new ChromaClient({ path: chromaUrl });
 
 export const searchChromaCore = async ({
   query,
-  skillsFuture,
   appName,
   nodeType,
   resultsNum,
@@ -174,8 +172,6 @@ export const searchChromaCore = async ({
   let collectionName = "ontology";
   if (appName) {
     collectionName = `ontology-${sanitizeCollectionName(appName)}`;
-  } else if (skillsFuture) {
-    collectionName = "ontology-skills";
   }
 
   const embeddingResponse = await openai.embeddings.create({

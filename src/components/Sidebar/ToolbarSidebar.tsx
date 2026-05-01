@@ -117,7 +117,6 @@ import OntologyHistory from "../ActiveUsers/OntologyHistory";
 import { handleDownload } from "@components/lib/utils/random";
 import { getIdToken } from "@components/lib/firestoreClient/auth";
 import { DESIGN_SYSTEM_COLORS } from "@components/lib/theme/colors";
-import { Post } from "@components/lib/utils/Post";
 
 type CustomSmallBadgeProps = { value: number };
 
@@ -150,8 +149,6 @@ type MainSidebarProps = {
   selectedChatTab: any;
   setSelectedChatTab: any;
   signOut: any;
-  skillsFuture: boolean;
-  skillsFutureApp: string;
   isExperimentalSearch: any;
   setIsExperimentalSearch: any;
   appName: string;
@@ -186,8 +183,6 @@ const ToolbarSidebar = ({
   selectedChatTab,
   setSelectedChatTab,
   signOut,
-  skillsFuture,
-  skillsFutureApp,
   isExperimentalSearch,
   setIsExperimentalSearch,
   appName,
@@ -272,6 +267,61 @@ const ToolbarSidebar = ({
       return nextValue;
     });
   }, [db, user?.uname]);
+
+  const handleDownloadOntologyJson = useCallback(async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    let url: string | undefined;
+    let link: HTMLAnchorElement | undefined;
+    try {
+      if (!appName) {
+        throw new Error("Missing ontology app name");
+      }
+
+      const token = await getIdToken();
+      const downloadRes = await fetch("/api/download-ontology", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ appName: appName }),
+      });
+
+      if (!downloadRes.ok) {
+        let message = `Download failed (${downloadRes.status})`;
+        try {
+          const errJson = await downloadRes.json();
+          message =
+            (typeof errJson?.message === "string" && errJson.message) ||
+            (typeof errJson?.error === "string" && errJson.error) ||
+            message;
+        } catch {
+          /* ignore message */
+        }
+        throw new Error(message);
+      }
+
+      const blob = await downloadRes.blob();
+      url = URL.createObjectURL(blob);
+      link = document.createElement("a");
+      link.href = url;
+      link.download = "nodes-data.json";
+      document.body.appendChild(link);
+      link.click();
+    } catch (error) {
+      console.error("Download error:", error);
+      confirmIt("There was an error downloading the JSON!", "Ok");
+    } finally {
+      if (link?.parentNode) {
+        link.parentNode.removeChild(link);
+      }
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+      setIsDownloading(false);
+    }
+  }, [confirmIt, isDownloading, appName]);
 
   // useEffect(() => {
   //   if (!user) return;
@@ -835,7 +885,7 @@ const ToolbarSidebar = ({
           const doc = change.doc;
           const userId = doc.id;
           const data = doc.data();
-          const currentNodeInfo = data.currentNode?.[skillsFutureApp];
+          const currentNodeInfo = data.currentNode?.[appName];
           const currentNodeId = currentNodeInfo?.id;
 
           if (change.type === "added" || change.type === "modified") {
@@ -1027,7 +1077,7 @@ const ToolbarSidebar = ({
           inheritance,
           generalization.id,
           user?.uname,
-          skillsFuture,
+          appName,
         );
 
         for (let p in node) {
@@ -1488,8 +1538,7 @@ const ToolbarSidebar = ({
             searchWithFuse={searchWithFuse}
             lastSearches={lastSearches}
             updateLastSearches={updateLastSearches}
-            skillsFuture={skillsFuture}
-            skillsFutureApp={skillsFutureApp}
+            appName={appName}
             isExperimentalSearch={isExperimentalSearch}
           />
         );
@@ -1500,7 +1549,7 @@ const ToolbarSidebar = ({
             displayDiff={displayDiff}
             selectedDiffNode={selectedDiffNode}
             nodes={relatedNodes}
-            appName={skillsFutureApp}
+            appName={appName}
           />
         );
       case "chat":
@@ -1579,8 +1628,7 @@ const ToolbarSidebar = ({
             currentIndex={currentIndex}
             setCurrentIndex={setCurrentIndex}
             displayDiff={displayDiff}
-            skillsFutureApp={skillsFutureApp}
-            skillsFuture={skillsFuture}
+            appName={appName}
             nodesByTitle={nodesByTitle}
           />
         );
@@ -1592,8 +1640,7 @@ const ToolbarSidebar = ({
             displayDiff={displayDiff}
             activeUsers={activeUsers}
             selectedUser={selectedUser}
-            skillsFuture={skillsFuture}
-            skillsFutureApp={skillsFutureApp}
+            appName={appName}
             nodes={relatedNodes}
           />
         );
@@ -2002,49 +2049,7 @@ const ToolbarSidebar = ({
                   <DownloadIcon />
                 )
               }
-              onClick={async () => {
-                if (isDownloading) return;
-                setIsDownloading(true);
-                let url: string | undefined;
-                let link: HTMLAnchorElement | undefined;
-                try {
-                  if (!skillsFutureApp) {
-                    throw new Error("Missing ontology app name");
-                  }
-
-                  const { tree } = await Post<{ tree?: unknown }>(
-                    `/download-ontology`,
-                    {
-                      appName: skillsFutureApp,
-                    },
-                  );
-
-                  if (!tree) {
-                    throw new Error("Download response did not include a tree");
-                  }
-
-                  const blob = new Blob([JSON.stringify(tree, null, 2)], {
-                    type: "application/json",
-                  });
-                  url = URL.createObjectURL(blob);
-                  link = document.createElement("a");
-                  link.href = url;
-                  link.download = "nodes-data.json";
-                  document.body.appendChild(link);
-                  link.click();
-                } catch (error) {
-                  console.error("Download error:", error);
-                  confirmIt("There was an error downloading the JSON!", "Ok");
-                } finally {
-                  if (link?.parentNode) {
-                    link.parentNode.removeChild(link);
-                  }
-                  if (url) {
-                    URL.revokeObjectURL(url);
-                  }
-                  setIsDownloading(false);
-                }
-              }}
+              onClick={handleDownloadOntologyJson}
               text={"Download JSON"}
               toolbarIsOpen={hovered}
               disabled={isDownloading}

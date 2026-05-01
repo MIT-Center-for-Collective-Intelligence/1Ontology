@@ -87,7 +87,6 @@ const SkillsFuture = () => {
     <>
       <Box sx={{ display: mode === "platform" ? "block" : "none" }}>
         <Ontology
-          skillsFuture={true}
           appName={appName}
           onOpenInNavigator={openInNavigator}
         />

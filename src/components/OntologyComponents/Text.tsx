@@ -87,10 +87,9 @@ type ITextProps = {
   currentImprovement: any;
   checkDuplicateTitle?: any;
   sx?: any;
-  skillsFuture: boolean;
   setEnableEdit?: any;
   enableEdit: any;
-  skillsFutureApp: string;
+  appName?: string;
   modifyProperty?: Function;
   deleteProperty?: Function;
   handleCloseAddLinksModel?: any;
@@ -122,10 +121,9 @@ const Text = ({
   currentImprovement,
   checkDuplicateTitle,
   sx,
-  skillsFuture,
   setEnableEdit,
   enableEdit,
-  skillsFutureApp,
+  appName,
   modifyProperty,
   deleteProperty,
   handleCloseAddLinksModel,
@@ -211,8 +209,7 @@ const Text = ({
         modifiedAt: new Date(),
         changeType: "change text",
         fullNode: currentVisibleNode,
-        skillsFuture,
-        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        ...(appName ? { appName } : {}),
       });
       if (property === "title" || property === "description") {
         await Post("/triggerChroma", {
@@ -231,7 +228,7 @@ const Text = ({
         }
       }
     },
-    [db, property, user, skillsFutureApp, onInstantTreeUpdate],
+    [db, property, user, appName, onInstantTreeUpdate, currentVisibleNode],
   );
 
   const onSaveTextChange = useCallback(
@@ -250,8 +247,7 @@ const Text = ({
           structured,
           reference,
           fullNode: currentVisibleNode,
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
         setAutoFocus(true);
         const ydoc = new Y.Doc();

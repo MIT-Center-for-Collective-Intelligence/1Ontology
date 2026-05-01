@@ -181,10 +181,9 @@ type INodeProps = {
   handleCloseAddLinksModel: any;
   setSelectedCollection: any;
   selectedCollection: string;
-  skillsFuture: boolean;
+  appName?: string;
   enableEdit: any;
   setEnableEdit: any;
-  skillsFutureApp: string;
   editableProperty: any;
   setEditableProperty: any;
   nodesWithComments: Set<string>;
@@ -500,10 +499,9 @@ const Node = ({
   handleCloseAddLinksModel,
   setSelectedCollection,
   selectedCollection,
-  skillsFuture,
+  appName,
   enableEdit,
   setEnableEdit,
-  skillsFutureApp,
   editableProperty,
   setEditableProperty,
   onInstantTreeUpdate,
@@ -646,7 +644,7 @@ const Node = ({
           inheritance,
           nodeId,
           user.uname,
-          skillsFuture,
+          appName,
         );
 
         // Handle specific property updates for `parts` and `isPartOf`
@@ -890,8 +888,7 @@ const Node = ({
           modifiedAt: new Date(),
           changeType: "add node",
           fullNode: newNode,
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
 
         setCloning(null);
@@ -1335,8 +1332,7 @@ const Node = ({
           modifiedAt: new Date(),
           changeType: "modify elements",
           fullNode: nodeData,
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
 
         // Instant tree update for local user
@@ -1386,7 +1382,7 @@ const Node = ({
         });
       }
     },
-    [checkedItems, db, relatedNodes, skillsFutureApp, onInstantTreeUpdate, user?.uname],
+    [checkedItems, db, relatedNodes, appName, onInstantTreeUpdate, user?.uname],
   );
 
   //  function to handle the deletion of a Node
@@ -1461,8 +1457,7 @@ const Node = ({
           modifiedAt: new Date(),
           changeType: "delete node",
           fullNode: currentNode,
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
         // Record a log entry for the deletion action
         clearNodeNotifications(nodeRef.id);
@@ -1652,8 +1647,7 @@ const Node = ({
           modifiedAt: new Date(),
           changeType: "remove property",
           fullNode: currentNode,
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
       }
     } catch (error) {
@@ -1691,7 +1685,7 @@ const Node = ({
             }}
           >
             <Text
-              skillsFutureApp={skillsFutureApp}
+              appName={appName}
               currentVisibleNode={currentVisibleNode}
               setCurrentVisibleNode={setCurrentVisibleNode}
               relatedNodes={relatedNodes}
@@ -1713,7 +1707,6 @@ const Node = ({
               activeSidebar={activeSidebar}
               currentImprovement={currentImprovement}
               checkDuplicateTitle={checkDuplicateTitle}
-              skillsFuture={skillsFuture}
               enableEdit={enableEdit}
               setEnableEdit={setEnableEdit}
               handleCloseAddLinksModel={handleCloseAddLinksModel}
@@ -1739,7 +1732,7 @@ const Node = ({
             currentImprovement={currentImprovement}
             reviewId={reviewId}
             setReviewId={setReviewId}
-            skillsFutureApp={skillsFutureApp}
+            appName={appName}
           />
         )} */}
           </Box>
@@ -1826,15 +1819,14 @@ const Node = ({
                 currentImprovement={currentImprovement}
                 selectedDiffNode={selectedDiffNode}
                 user={user}
-                skillsFuture={skillsFuture}
                 enableEdit={enableEdit}
-                skillsFutureApp={skillsFutureApp}
+                appName={appName}
               />
             )}
             {/* description of the node */}
 
             <Text
-              skillsFutureApp={skillsFutureApp}
+              appName={appName}
               relatedNodes={relatedNodes}
               fetchNode={fetchNode}
               text={onGetPropertyValue("description") as string}
@@ -1846,7 +1838,6 @@ const Node = ({
               getTitleNode={getTitleNode}
               confirmIt={confirmIt}
               currentImprovement={currentImprovement}
-              skillsFuture={skillsFuture}
               enableEdit={enableEdit}
               onInstantTreeUpdate={onInstantTreeUpdate}
             />
@@ -1917,9 +1908,8 @@ const Node = ({
                 glowIds={glowIds}
                 setGlowIds={setGlowIds}
                 selectedCollection={selectedCollection}
-                skillsFuture={skillsFuture}
                 enableEdit={enableEdit}
-                skillsFutureApp={skillsFutureApp}
+                appName={appName}
                 onInstantTreeUpdate={onInstantTreeUpdate}
               />
             )}
@@ -1983,9 +1973,8 @@ const Node = ({
                   glowIds={glowIds}
                   setGlowIds={setGlowIds}
                   selectedCollection={selectedCollection}
-                  skillsFuture={skillsFuture}
                   enableEdit={enableEdit}
-                  skillsFutureApp={skillsFutureApp}
+                  appName={appName}
                   onInstantTreeUpdate={onInstantTreeUpdate}
                 />
               ))}
@@ -2052,9 +2041,8 @@ const Node = ({
                   glowIds={glowIds}
                   setGlowIds={setGlowIds}
                   selectedCollection={selectedCollection}
-                  skillsFuture={skillsFuture}
                   enableEdit={enableEdit}
-                  skillsFutureApp={skillsFutureApp}
+                  appName={appName}
                   onInstantTreeUpdate={onInstantTreeUpdate}
                 />
               ))}
@@ -2062,7 +2050,7 @@ const Node = ({
 
             {(user.claims.flowChart || development) &&
               currentVisibleNode.nodeType === "activity" &&
-              !skillsFuture && (
+              !appName && (
                 <NodeActivityFlow
                   node={currentVisibleNode}
                   relatedNodes={relatedNodes}
@@ -2122,9 +2110,8 @@ const Node = ({
               setGlowIds={setGlowIds}
               selectedCollection={selectedCollection}
               storage={storage}
-              skillsFuture={skillsFuture}
               enableEdit={enableEdit}
-              skillsFutureApp={skillsFutureApp}
+              appName={appName}
               deleteProperty={deleteProperty}
             />
           </Box>{" "}

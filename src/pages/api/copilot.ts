@@ -274,13 +274,13 @@ ${userMessage}
 };
 
 export const getNodes = async (
-  skillsFutureApp: string,
+  appName: string,
 ): Promise<Record<string, INode>> => {
-  const noneDeletedNodes = await (skillsFutureApp
+  const noneDeletedNodes = await (appName
     ? db
         .collection(NODES)
         .where("deleted", "==", false)
-        .where("appName", "==", skillsFutureApp)
+        .where("appName", "==", appName)
         .get()
     : db.collection(NODES).where("deleted", "==", false).get());
   const nodes: Record<string, INode> = {};
@@ -299,12 +299,12 @@ export const generateProposals = async (
   uname: string,
   SYSTEM_PROMPT: string,
   inputProperties: Set<string>,
-  skillsFutureApp: string,
+  appName: string,
   proposalsJSON: any = {},
   evaluation: string = "",
 ): Promise<any> => {
   const nodesArray: any = [];
-  const nodes = await getNodes(skillsFutureApp);
+  const nodes = await getNodes(appName);
   if (!nodes[nodeId]) {
     throw new Error("Node doesn't exist");
   }
@@ -634,7 +634,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     improveProperties,
     proposeDeleteNode,
     inputProperties,
-    skillsFutureApp,
+    appName,
   } = req.body.data;
 
   const { uname } = user?.userData;
@@ -652,7 +652,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
     }
     const task = nodeData?.title;
     const subOntology = await getSubOntology({
-      appName: skillsFutureApp,
+      appName,
       task,
       hops: deepNumber || 4,
       inputProperties: inputProperties || [],
@@ -669,7 +669,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       actors,
       mainPrompt: SYSTEM_PROMPT,
       uname,
-      appName: skillsFutureApp,
+      appName,
       inputProperties,
     });
 

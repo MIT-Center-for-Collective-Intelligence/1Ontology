@@ -211,11 +211,10 @@ const CollectionStructure = ({
   onGetPropertyValue,
   setRemovedElements,
   setAddedElements,
-  skillsFuture,
+  appName,
   enableEdit,
   handleLoadMore,
   loadingStates = new Set(),
-  skillsFutureApp,
   unlinkNodeRelation,
   linkNodeRelation,
   fetchNode,
@@ -281,11 +280,10 @@ const CollectionStructure = ({
   onGetPropertyValue: any;
   setRemovedElements: any;
   setAddedElements: any;
-  skillsFuture: boolean;
+  appName?: string;
   enableEdit: boolean;
   handleLoadMore?: (loadMoreNodeId: string, collectionName: string) => void;
   loadingStates?: Set<string>;
-  skillsFutureApp: string;
   unlinkNodeRelation: any;
   linkNodeRelation: any;
   fetchNode: (nodeId: string) => Promise<INode | null>;
@@ -611,8 +609,7 @@ const CollectionStructure = ({
               destinationIndex,
             },
             fullNode: currentVisibleNode,
-            skillsFuture,
-            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+            ...(appName ? { appName } : {}),
           });
 
           if (property === "specializations" && onInstantTreeUpdate) {
@@ -924,8 +921,7 @@ const CollectionStructure = ({
             newParent: nodeAId,
           },
           fullNode: currentVisibleNode,
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
         saveNewChangeLog(db, {
           nodeId: nodeBId,
@@ -941,8 +937,7 @@ const CollectionStructure = ({
             newParent: nodeAId,
           },
           fullNode: nodeBData,
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
 
         // Instant tree update: move nodeBId from currentNode's subtree to nodeA's subtree
@@ -979,8 +974,7 @@ const CollectionStructure = ({
       nodes,
       user,
       propertyValue,
-      skillsFuture,
-      skillsFutureApp,
+      appName,
       setEditableProperty,
       onInstantTreeUpdate,
     ],
@@ -1077,8 +1071,7 @@ const CollectionStructure = ({
           changeDetails: {
             addedCollection: newCollection || "",
           },
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
 
         // Queue tree update after adding collection
@@ -1300,8 +1293,7 @@ const CollectionStructure = ({
             modifiedCollection: editCollection || "",
             newValue: newCollection,
           },
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
 
         // Queue tree update after editing collection name
@@ -1468,8 +1460,7 @@ const CollectionStructure = ({
               changeDetails: {
                 deletedCollection: collectionName || "",
               },
-              skillsFuture,
-              ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+              ...(appName ? { appName } : {}),
             });
 
             // Queue tree update after deleting collection
@@ -2167,7 +2158,7 @@ const CollectionStructure = ({
                                                     selectedProperty
                                                   }
                                                   glowIds={glowIds}
-                                                  skillsFuture={skillsFuture}
+                                                  appName={appName}
                                                   currentImprovement={
                                                     currentImprovement
                                                   }
@@ -2178,9 +2169,6 @@ const CollectionStructure = ({
                                                   enableEdit={enableEdit}
                                                   setClonedNodesQueue={
                                                     setClonedNodesQueue
-                                                  }
-                                                  skillsFutureApp={
-                                                    skillsFutureApp
                                                   }
                                                   setEditableProperty={
                                                     setEditableProperty
@@ -2342,7 +2330,7 @@ const CollectionStructure = ({
                                             unlinkElement={unlinkElement}
                                             selectedProperty={selectedProperty}
                                             glowIds={glowIds}
-                                            skillsFuture={skillsFuture}
+                                            appName={appName}
                                             currentImprovement={
                                               currentImprovement
                                             }
@@ -2355,7 +2343,6 @@ const CollectionStructure = ({
                                               setClonedNodesQueue
                                             }
                                             partsInheritance={partsInheritance}
-                                            skillsFutureApp={skillsFutureApp}
                                             setEditableProperty={
                                               setEditableProperty
                                             }
@@ -2429,7 +2416,7 @@ const CollectionStructure = ({
                                             unlinkElement={unlinkElement}
                                             selectedProperty={selectedProperty}
                                             glowIds={glowIds}
-                                            skillsFuture={skillsFuture}
+                                            appName={appName}
                                             currentImprovement={
                                               currentImprovement
                                             }
@@ -2442,7 +2429,6 @@ const CollectionStructure = ({
                                               setClonedNodesQueue
                                             }
                                             partsInheritance={partsInheritance}
-                                            skillsFutureApp={skillsFutureApp}
                                             setEditableProperty={
                                               setEditableProperty
                                             }
@@ -2515,9 +2501,8 @@ const CollectionStructure = ({
                                 confirmIt={confirmIt}
                                 currentImprovement={currentImprovement}
                                 selectedCollection={selectedCollection}
-                                skillsFuture={skillsFuture}
+                                appName={appName}
                                 saveNewSpecialization={saveNewSpecialization}
-                                skillsFutureApp={skillsFutureApp}
                                 linkNodeRelation={linkNodeRelation}
                                 unlinkNodeRelation={unlinkNodeRelation}
                               />

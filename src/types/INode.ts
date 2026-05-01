@@ -113,7 +113,6 @@ export type INode = {
   oNet?: boolean;
   actionAlternatives?: string[];
   appName?: string;
-  skillsFuture?: boolean;
   rootId?: string;
   oNetTask?: {
     id: string;
@@ -188,7 +187,6 @@ export type NodeChange = {
   fullNode: INode | null;
   changeDetails?: { [key: string]: any };
   reasoning?: string;
-  skillsFuture?: boolean;
   appName?: string;
   detailsOfChange?: any;
   logLLMId?: string;

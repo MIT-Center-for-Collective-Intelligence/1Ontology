@@ -10,7 +10,7 @@ export const sendLLMRequest = async (
   improveProperties: Set<string>,
   proposeDeleteNode: boolean,
   inputProperties: Set<string>,
-  skillsFutureApp: string,
+  appName: string,
 ) => {
   try {
 
@@ -23,7 +23,7 @@ export const sendLLMRequest = async (
       proposeDeleteNode,
       improveProperties: new Array(...improveProperties),
       inputProperties: new Array(...inputProperties),
-      skillsFutureApp,
+      appName,
     });
     recordLogs({
       reason: "sendLLMRequest",

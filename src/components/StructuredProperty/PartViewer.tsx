@@ -21,7 +21,7 @@ interface PartViewerProps {
   user: any;
   navigateToNode: any;
   replaceWith: any;
-  skillsFutureApp: any;
+  appName?: string;
   getGeneralizationParts: any;
   onDisplayDetailsChange?: (isExpanded: boolean) => void;
   clonedNodesQueue?: { [nodeId: string]: { title: string; id: string } };
@@ -43,7 +43,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
   user,
   navigateToNode,
   replaceWith,
-  skillsFutureApp,
+  appName,
   getGeneralizationParts,
   onDisplayDetailsChange,
   clonedNodesQueue,
@@ -107,7 +107,7 @@ const PartViewer: React.FC<PartViewerProps> = ({
           user={user}
           navigateToNode={navigateToNode}
           replaceWith={replaceWith}
-          skillsFutureApp={skillsFutureApp}
+          appName={appName}
           inheritedPartsDetails={inheritedPartsDetails}
           loadingInheritedPartsDetails={loadingInheritedPartsDetails}
           mutateData={mutateData}

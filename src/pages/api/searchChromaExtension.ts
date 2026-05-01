@@ -56,7 +56,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     await runMiddleware(req, res, cors);
     let {
       query,
-      skillsFuture,
       appName,
       user,
       nodeType,
@@ -69,8 +68,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     let collectionName = "";
     if (appName) {
       collectionName = `ontology-${sanitizeCollectionName(appName)}`;
-    } else if (skillsFuture) {
-      collectionName = "ontology-skills";
     } else {
       collectionName = "ontology";
     }

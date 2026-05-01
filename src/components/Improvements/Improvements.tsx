@@ -65,8 +65,7 @@ type ImprovementsProps = {
   currentIndex: number;
   setCurrentIndex: any;
   displayDiff: any;
-  skillsFutureApp: string;
-  skillsFuture: boolean;
+  appName: string;
   nodesByTitle: any;
 };
 const Improvements = ({
@@ -87,8 +86,7 @@ const Improvements = ({
   currentIndex,
   setCurrentIndex,
   displayDiff,
-  skillsFutureApp,
-  skillsFuture,
+  appName,
   nodesByTitle,
 }: ImprovementsProps) => {
   const db = getFirestore();
@@ -399,8 +397,7 @@ const Improvements = ({
           changeType: "add node",
           fullNode: newNode,
           reasoning,
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
         // Record logs for the created node
         recordLogs({
@@ -505,8 +502,8 @@ const Improvements = ({
             }
           }
         }
-        if (skillsFutureApp) {
-          newNode.appName = skillsFutureApp;
+        if (appName) {
+          newNode.appName = appName;
         }
         // Add the new node to the database
         await addNewNode({ id: newNodeRef.id, newNode, reasoning });
@@ -527,8 +524,7 @@ const Improvements = ({
           modifiedAt: new Date(),
           changeType: "add element",
           fullNode: nodeParentData,
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
       } catch (error) {
         confirmIt("Sorry there was an Error please try again!", "Ok", "");
@@ -663,8 +659,7 @@ const Improvements = ({
             modifiedAt: new Date(),
             changeType: "delete node",
             fullNode: currentNode,
-            skillsFuture,
-            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+            ...(appName ? { appName } : {}),
           });
           // Record a log entry for the deletion action
           clearNodeNotifications(nodeRef.id);
@@ -722,7 +717,7 @@ const Improvements = ({
               inheritance,
               unclassifiedNodeData.id,
               user?.uname,
-              skillsFuture,
+              appName,
             );
             const specializations = unclassifiedNodeData.specializations;
 
@@ -841,8 +836,7 @@ const Improvements = ({
               inheritance,
               unclassifiedData.id,
               user?.uname,
-              skillsFuture,
-              skillsFutureApp,
+              appName,
             );
             const specializations = unclassifiedData.specializations;
 
@@ -997,8 +991,7 @@ const Improvements = ({
           changeType,
           fullNode: currentNode,
           reasoning: reasoning || "",
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         };
         if (detailsChange) {
           changeLog.detailsChange = detailsChange;

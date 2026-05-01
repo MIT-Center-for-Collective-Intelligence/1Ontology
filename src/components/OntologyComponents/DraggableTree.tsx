@@ -48,9 +48,8 @@ function DraggableTree({
   onOpenNodesTree,
   treeRef,
   treeType,
-  skillsFuture = false,
   specializationNumsUnder,
-  skillsFutureApp,
+  appName,
   onInstantTreeUpdate,
   onExpandEllipsis,
   onOutlineNodeOpen,
@@ -64,9 +63,8 @@ function DraggableTree({
   onOpenNodesTree: any;
   treeRef: any;
   treeType?: string;
-  skillsFuture?: boolean;
   specializationNumsUnder: { [key: string]: number };
-  skillsFutureApp: string;
+  appName: string;
   onInstantTreeUpdate?: (
     updateFn: (treeData: TreeData[]) => TreeData[],
   ) => void;
@@ -752,9 +750,7 @@ function DraggableTree({
             modifiedAt: new Date(),
             changeType: "sort collections",
             fullNode: nodes[parentId],
-            skillsFuture,
-            appName: skillsFutureApp,
-            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+            ...(appName ? { appName } : {}),
           });
         }
         return;
@@ -869,8 +865,7 @@ function DraggableTree({
             modifiedAt: new Date(),
             changeType: "sort elements",
             fullNode: nodes[toParent.nodeId],
-            skillsFuture,
-            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+            ...(appName ? { appName } : {}),
           });
           return;
         } else {
@@ -928,8 +923,7 @@ function DraggableTree({
             modifiedAt: new Date(),
             changeType: "sort elements",
             fullNode: nodes[toParent.nodeId],
-            skillsFuture,
-            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+            ...(appName ? { appName } : {}),
           });
           return;
         }
@@ -1027,8 +1021,7 @@ function DraggableTree({
         modifiedAt: new Date(),
         changeType: "modify elements",
         fullNode: nodes[specializationId],
-        skillsFuture,
-        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        ...(appName ? { appName } : {}),
       });
 
       saveNewChangeLog(db, {
@@ -1040,8 +1033,7 @@ function DraggableTree({
         modifiedAt: new Date(),
         changeType: "modify elements",
         fullNode: nodes[toParent.nodeId],
-        skillsFuture,
-        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        ...(appName ? { appName } : {}),
       });
 
       // await updateLinks(

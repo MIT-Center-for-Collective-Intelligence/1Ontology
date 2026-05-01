@@ -161,8 +161,7 @@ type ILinkNodeProps = {
   unlinkElement?: any;
   selectedProperty: string;
   glowIds: Set<string>;
-  skillsFuture: boolean;
-  skillsFutureApp: string;
+  appName?: string;
   currentImprovement: any;
   loadingIds: any;
   saveNewSpecialization: any;
@@ -196,8 +195,7 @@ const LinkNode = ({
   unlinkElement,
   selectedProperty,
   glowIds,
-  skillsFuture,
-  skillsFutureApp,
+  appName,
   currentImprovement,
   loadingIds,
   saveNewSpecialization,
@@ -533,8 +531,7 @@ const LinkNode = ({
             modifiedAt: new Date(),
             changeType: "remove element",
             fullNode: currentVisibleNode,
-            skillsFuture,
-            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+            ...(appName ? { appName } : {}),
           });
 
           // Instant tree update for local user

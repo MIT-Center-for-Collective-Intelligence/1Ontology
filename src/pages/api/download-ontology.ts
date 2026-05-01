@@ -4,6 +4,12 @@ import { NODES } from "@components/lib/firestoreClient/collections";
 import fbAuth from "@components/middlewares/fbAuth";
 import { INode } from "@components/types/INode";
 
+export const config = {
+  api: {
+    responseLimit: false,
+  },
+};
+
 /** Only fields needed to build the download tree — smaller reads from Firestore. */
 const NODE_PROJECTION = [
   "title",
@@ -122,6 +128,7 @@ const buildOntologyTree = (
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { appName } = req.body.data;
+    console.log("appName -->", appName);
 
     if (!appName || typeof appName !== "string") {
       return res.status(400).json({ error: "appName parameter is required" });
@@ -146,8 +153,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     const tree = buildOntologyTree(nodes, titleById);
+    const payload = JSON.stringify(tree, null, 2);
 
-    return res.status(200).json({ tree });
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="nodes-data.json"',
+    );
+
+    return res.status(200).send(payload);
   } catch (error: any) {
     console.error("Error in download-ontology API:", error?.message);
     return res.status(500).json({

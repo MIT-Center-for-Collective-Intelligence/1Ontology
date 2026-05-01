@@ -76,7 +76,7 @@ interface InheritedPartsViewerProps {
   enableEdit: boolean;
   replaceWith: any;
   user: any;
-  skillsFutureApp: string;
+  appName?: string;
   navigateToNode?: any;
   triggerSearch?: any;
   addPart?: any;
@@ -109,7 +109,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
   user,
   navigateToNode,
   setDisplayDetails,
-  skillsFutureApp,
+  appName,
   inheritedPartsDetails,
   loadingInheritedPartsDetails,
   mutateData,
@@ -561,8 +561,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           newTo,
         },
         fullNode: currentVisibleNode,
-        skillsFuture: !!skillsFutureApp,
-        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        ...(appName ? { appName } : {}),
       });
 
       recordLogs({
@@ -859,8 +858,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
           optional: newOptional,
         },
         fullNode: currentVisibleNode,
-        skillsFuture: !!skillsFutureApp,
-        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        ...(appName ? { appName } : {}),
       });
 
       recordLogs({
@@ -1701,8 +1699,7 @@ const InheritedPartsViewerEdit: React.FC<InheritedPartsViewerProps> = ({
             destination,
           },
           fullNode: currentVisibleNode,
-          skillsFuture: !!skillsFutureApp,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
 
         // Record a log of the sorting action

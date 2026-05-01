@@ -128,14 +128,13 @@ type IStructuredPropertyProps = {
   glowIds: Set<string>;
   setGlowIds: any;
   selectedCollection: any;
-  skillsFuture: boolean;
+  appName?: string;
   partsInheritance?: {
     [nodeId: string]: { inheritedFrom: string; partInheritance: string };
   };
   enableEdit: boolean;
   inheritanceDetails?: any;
   inheritedPartsDetails?: InheritedPartsDetail[] | null;
-  skillsFutureApp: string;
   deleteProperty?: Function;
   modifyProperty?: Function;
   onInstantTreeUpdate?: (updateFn: (treeData: any[]) => any[]) => void;
@@ -192,9 +191,8 @@ const StructuredProperty = ({
   glowIds,
   setGlowIds,
   selectedCollection,
-  skillsFuture,
+  appName,
   enableEdit,
-  skillsFutureApp,
   deleteProperty,
   modifyProperty,
   onInstantTreeUpdate,
@@ -891,8 +889,7 @@ const StructuredProperty = ({
             modifiedAt: new Date(),
             changeType: "remove element",
             fullNode: currentVisibleNode,
-            skillsFuture,
-            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+            ...(appName ? { appName } : {}),
           });
           recordLogs({
             action: "unlinked a node",
@@ -995,8 +992,7 @@ const StructuredProperty = ({
         modifiedAt: new Date(),
         changeType: "add element",
         fullNode: currentVisibleNode,
-        skillsFuture,
-        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        ...(appName ? { appName } : {}),
       });
 
       saveNewChangeLog(db, {
@@ -1008,8 +1004,7 @@ const StructuredProperty = ({
         modifiedAt: new Date(),
         changeType: "add element",
         fullNode: currentVisibleNode,
-        skillsFuture,
-        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        ...(appName ? { appName } : {}),
       });
 
       await updateInheritance({
@@ -1172,8 +1167,7 @@ const StructuredProperty = ({
             newPartId,
           },
           fullNode: currentVisibleNode,
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
 
         recordLogs({
@@ -1206,8 +1200,7 @@ const StructuredProperty = ({
       db,
       property,
       user,
-      skillsFuture,
-      skillsFutureApp,
+      appName,
       onInstantTreeUpdate,
     ],
   );
@@ -1587,11 +1580,10 @@ const StructuredProperty = ({
               setRemovedElements={setRemovedElements}
               setAddedElements={setAddedElements}
               addACloneNodeQueue={addACloneNodeQueue}
-              skillsFuture={skillsFuture}
+              appName={appName}
               enableEdit={enableEdit}
               handleLoadMore={handleLoadMore}
               loadingStates={loadingStates}
-              skillsFutureApp={skillsFutureApp}
               unlinkNodeRelation={unlinkNodeRelation}
               linkNodeRelation={linkNodeRelation}
               onInstantTreeUpdate={onInstantTreeUpdate}
@@ -1620,7 +1612,7 @@ const StructuredProperty = ({
             user={user}
             navigateToNode={navigateToNode}
             replaceWith={replaceWith}
-            skillsFutureApp={skillsFutureApp}
+            appName={appName}
             getGeneralizationParts={getGeneralizationParts}
             clonedNodesQueue={clonedNodesQueue}
             saveNewSpecialization={saveNewSpecialization}
@@ -1705,9 +1697,8 @@ const StructuredProperty = ({
             isSaving={isSaving}
             scrollToElement={scrollToElement}
             selectedCollection={selectedCollection}
-            skillsFuture={skillsFuture}
+            appName={appName}
             inheritanceDetails={inheritanceDetails}
-            skillsFutureApp={skillsFutureApp}
             linkNodeRelation={linkNodeRelation}
             unlinkNodeRelation={unlinkNodeRelation}
           />

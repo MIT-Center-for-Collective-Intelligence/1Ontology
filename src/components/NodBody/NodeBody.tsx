@@ -77,9 +77,8 @@ interface NodeBodyProps {
   setGlowIds: any;
   selectedCollection: string;
   storage: any;
-  skillsFuture: boolean;
+  appName?: string;
   enableEdit: boolean;
-  skillsFutureApp: string;
   deleteProperty: Function;
 }
 
@@ -134,9 +133,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
   setGlowIds,
   selectedCollection,
   storage,
-  skillsFuture,
+  appName,
   enableEdit,
-  skillsFutureApp,
   deleteProperty,
 }) => {
   const theme = useTheme();
@@ -463,8 +461,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           modifiedAt: new Date(),
           changeType: "edit property",
           fullNode: currentNode,
-          skillsFuture,
-          ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+          ...(appName ? { appName } : {}),
         });
       } catch (error) {
         console.error(error);
@@ -480,7 +477,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           const shouldRenderImageManager = property === "References";
           return (
             <React.Fragment key={property}>
-              {shouldRenderImageManager && user && !skillsFuture && (
+              {shouldRenderImageManager && user && !appName && (
                 <Box sx={{ mt: "15px" }}>
                   <NodeImageManager
                     nodeId={currentVisibleNode?.id}
@@ -513,9 +510,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       "collaboration of humans and ai",
                       "ai",
                     ]}
-                    skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
-                    skillsFutureApp={skillsFutureApp}
+                    appName={appName}
                   /> */
                 currentNode.propertyType[property] === "string-array" ? (
                   <ChipsProperty
@@ -527,9 +523,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     currentImprovement={currentImprovement}
                     selectedDiffNode={selectedDiffNode}
                     user={user}
-                    skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
-                    skillsFutureApp={skillsFutureApp}
+                    appName={appName}
                   />
                 ) : currentNode.propertyType[property] === "numeric" ? (
                   <NumericProperty
@@ -541,9 +536,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     locked={locked}
                     selectedDiffNode={selectedDiffNode}
                     currentImprovement={currentImprovement}
-                    skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
-                    skillsFutureApp={skillsFutureApp}
+                    appName={appName}
                     deleteProperty={deleteProperty}
                     modifyProperty={modifyProperty}
                   />
@@ -599,9 +593,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                     glowIds={glowIds}
                     setGlowIds={setGlowIds}
                     selectedCollection={selectedCollection}
-                    skillsFuture={skillsFuture}
                     enableEdit={enableEdit}
-                    skillsFutureApp={skillsFutureApp}
+                    appName={appName}
                     deleteProperty={deleteProperty}
                     modifyProperty={modifyProperty}
                   />
@@ -620,9 +613,8 @@ const NodeBody: React.FC<NodeBodyProps> = ({
                       getTitleNode={getTitleNode}
                       confirmIt={confirmIt}
                       currentImprovement={currentImprovement}
-                      skillsFuture={skillsFuture}
                       enableEdit={enableEdit}
-                      skillsFutureApp={skillsFutureApp}
+                      appName={appName}
                       deleteProperty={deleteProperty}
                       modifyProperty={modifyProperty}
                     />
@@ -638,7 +630,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           )}
         {!hasReferences &&
           user &&
-          (!skillsFuture ||
+          (!appName ||
             currentVisibleNode.appName === "Top-Down Gemini 2.5 Pro") && (
             <Box sx={{ mt: "15px" }}>
               <NodeImageManager
@@ -720,7 +712,7 @@ const NodeBody: React.FC<NodeBodyProps> = ({
           setOpenAddProperty={setOpenAddProperty}
           locked={locked}
           exitingProperties={Object.keys(currentVisibleNode.properties || {})}
-          skillsFuture={skillsFuture}
+          appName={appName}
         />
       )}
       {!locked && !openAddProperty && !currentImprovement && (

@@ -84,10 +84,9 @@ const StructuredPropertySelector = ({
   isSaving,
   scrollToElement,
   selectedCollection,
-  skillsFuture,
+  appName,
   saveNewSpecialization,
   inheritanceDetails,
-  skillsFutureApp,
   linkNodeRelation,
   unlinkNodeRelation,
   relatedNodes,
@@ -139,10 +138,9 @@ const StructuredPropertySelector = ({
   isSaving: boolean;
   scrollToElement: (nodeId: string) => void;
   selectedCollection: string;
-  skillsFuture: boolean;
+  appName?: string;
   saveNewSpecialization: any;
   inheritanceDetails?: any;
-  skillsFutureApp: string;
   linkNodeRelation: any;
   unlinkNodeRelation: any;
   relatedNodes: { [id: string]: any };
@@ -256,8 +254,7 @@ const StructuredPropertySelector = ({
 
       const response: any = await Post("/searchChroma", {
         query: query,
-        skillsFuture,
-        appName: skillsFuture ? skillsFutureApp : null,
+        appName: appName || null,
       });
 
       let results: any[] = [...(response?.results || [])];
@@ -297,8 +294,7 @@ const StructuredPropertySelector = ({
   }, [
     searchValue,
     development,
-    skillsFuture,
-    skillsFutureApp,
+    appName,
     searchResultsForSelection,
     fetchChildNodesForSearchResults,
   ]);
@@ -567,7 +563,7 @@ const StructuredPropertySelector = ({
           inheritedFromTitle,
           user,
           action,
-          skillsFutureApp,
+          appName ?? "",
         );
 
         // Refresh state after inheritance operations
@@ -1148,9 +1144,8 @@ const StructuredPropertySelector = ({
                     borderRadius: "0px",
                   }}
                   getTitleNode={() => {}}
-                  skillsFuture={skillsFuture}
                   enableEdit={true}
-                  skillsFutureApp={skillsFutureApp}
+                  appName={appName}
                   placeholder={`Describe the ${selectedProperty}`}
                 />
               </Box>

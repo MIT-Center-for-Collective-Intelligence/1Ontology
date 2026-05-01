@@ -51,9 +51,8 @@ type INumericPropertyProps = {
   selectedDiffNode: any;
   currentImprovement: any;
   sx?: any;
-  skillsFuture: boolean;
   enableEdit: boolean;
-  skillsFutureApp: string;
+  appName?: string;
   modifyProperty?: Function;
   deleteProperty?: Function;
 };
@@ -68,9 +67,8 @@ const NumericProperty = ({
   selectedDiffNode,
   currentImprovement,
   sx,
-  skillsFuture,
   enableEdit,
-  skillsFutureApp,
+  appName,
   modifyProperty,
   deleteProperty,
 }: INumericPropertyProps) => {
@@ -144,11 +142,10 @@ const NumericProperty = ({
         modifiedAt: new Date(),
         changeType: "change text",
         fullNode: currentVisibleNode,
-        skillsFuture,
-        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        ...(appName ? { appName } : {}),
       });
     },
-    [db, property, user, currentVisibleNode, skillsFuture, skillsFutureApp],
+    [db, property, user, currentVisibleNode, appName],
   );
 
   const onSaveNumericChange = useCallback(

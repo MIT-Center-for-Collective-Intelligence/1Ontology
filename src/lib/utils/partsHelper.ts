@@ -90,7 +90,7 @@ export const propagatePartsChangeToSpecializations = async (
   nodeId: string,
   nodes: { [nodeId: string]: INode },
   user: any,
-  skillsFutureApp: string,
+  appName: string,
   updateLocalNodeCallback?: (
     nodeId: string,
     updatedNodeData: Partial<INode>,
@@ -177,8 +177,7 @@ export const propagatePartsChangeToSpecializations = async (
             changeDetails: {
               reason: `Parts inheritance updated due to changes in parent node ${nodeId}`,
             },
-            skillsFuture: !!skillsFutureApp,
-            ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+            ...(appName ? { appName } : {}),
           });
         }
 
@@ -187,7 +186,7 @@ export const propagatePartsChangeToSpecializations = async (
           spec.id,
           updatedNodes,
           user,
-          skillsFutureApp,
+          appName,
           updateLocalNodeCallback,
         );
       } catch (error) {
@@ -213,7 +212,7 @@ export const saveAsInheritancePart = async (
   inheritedFromTitle: string,
   user: any,
   action: "add" | "remove" = "add",
-  skillsFutureApp: string,
+  appName: string,
 ): Promise<boolean> => {
   try {
     const db = getFirestore();
@@ -287,8 +286,7 @@ export const saveAsInheritancePart = async (
           inheritedFromTitle,
           inheritedFromId,
         },
-        skillsFuture: !!skillsFutureApp,
-        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        ...(appName ? { appName } : {}),
       });
     }
 
@@ -308,7 +306,7 @@ export const breakInheritanceAndCopyParts = async (
   partIdToRemove: string,
   nodes: { [nodeId: string]: INode },
   user: any,
-  skillsFutureApp: string,
+  appName: string,
 ): Promise<boolean> => {
   try {
     const db = getFirestore();
@@ -374,8 +372,7 @@ export const breakInheritanceAndCopyParts = async (
           reason:
             "Broke inheritance and copied inherited parts to inheritanceParts",
         },
-        skillsFuture: !!skillsFutureApp,
-        ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+        ...(appName ? { appName } : {}),
       });
     }
 

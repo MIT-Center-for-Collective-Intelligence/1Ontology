@@ -787,8 +787,7 @@ export const createNewNode = (
   inheritance: IInheritance,
   generalizationId: string,
   uname: string,
-  skillsFuture: boolean,
-  skillsFutureApp?: string,
+  ontologyAppName?: string,
 ): INode => {
   const updatedProperties: { [key: string]: any } = {};
   const updatedInheritance: IInheritance = { ...inheritance };
@@ -857,8 +856,7 @@ export const createNewNode = (
     },
     propertyType: { ...parentNodeData.propertyType },
     nodeType: parentNodeData.nodeType,
-    skillsFuture: !!skillsFuture,
-    ...(skillsFutureApp ? { appName: skillsFutureApp } : {}),
+    ...(ontologyAppName ? { appName: ontologyAppName } : {}),
     createdAt: new Date(),
   };
   delete newNode.root;

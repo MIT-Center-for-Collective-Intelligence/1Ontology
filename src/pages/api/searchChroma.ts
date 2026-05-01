@@ -18,15 +18,13 @@ const runMiddleware = (req: any, res: any, fn: any) => {
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { query, skillsFuture, appName, user, nodeType, resultsNum } =
-      req.body.data;
+    const { query, appName, user, nodeType, resultsNum } = req.body.data;
     const { uname } = user?.userData;
 
     /*     await runMiddleware(req, res, cors); */
 
     const topResults = await searchChromaCore({
       query,
-      skillsFuture,
       appName,
       nodeType,
       resultsNum,

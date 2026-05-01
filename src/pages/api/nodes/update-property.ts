@@ -108,7 +108,6 @@ async function handler(req: CustomNextApiRequest, res: NextApiResponse) {
     structured = false,
     reference = null,
     fullNode = null,
-    skillsFuture = false,
     appName = undefined,
   } = (req.body?.data || req.body || {}) as any;
 
@@ -178,7 +177,6 @@ async function handler(req: CustomNextApiRequest, res: NextApiResponse) {
       modifiedAt: now,
       changeType: "change text",
       fullNode: fullNode || null,
-      skillsFuture,
       ...(appName ? { appName } : {}),
     });
 

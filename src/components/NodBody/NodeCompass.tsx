@@ -93,9 +93,7 @@ const AXIS_META: Record<
 
 const formatAxisPrimary = (axis: CompassAxis, count: number): string => {
   const m = AXIS_META[axis];
-  return [m.prefix, m.label, `(${count})`, m.suffix]
-    .filter(Boolean)
-    .join(" ");
+  return [m.prefix, m.label, `(${count})`, m.suffix].filter(Boolean).join(" ");
 };
 
 const targetSide: Record<CompassAxis, Position> = {
@@ -349,7 +347,9 @@ const NodeCompass: React.FC<Props> = ({
 
   // Inheritance-resolved parts
   const inheritanceRef = currentVisibleNode.inheritance?.parts?.ref ?? null;
-  const inheritedFromNode = inheritanceRef ? relatedNodes[inheritanceRef] : null;
+  const inheritedFromNode = inheritanceRef
+    ? relatedNodes[inheritanceRef]
+    : null;
   const resolvedParts = useMemo<ICollection[] | null>(() => {
     if (inheritanceRef) {
       const inh = inheritedFromNode?.properties?.parts;
@@ -357,11 +357,7 @@ const NodeCompass: React.FC<Props> = ({
     }
     const direct = currentVisibleNode.properties?.parts;
     return Array.isArray(direct) ? (direct as ICollection[]) : null;
-  }, [
-    inheritanceRef,
-    inheritedFromNode,
-    currentVisibleNode.properties?.parts,
-  ]);
+  }, [inheritanceRef, inheritedFromNode, currentVisibleNode.properties?.parts]);
 
   const ids = useMemo(
     () => ({
@@ -438,8 +434,7 @@ const NodeCompass: React.FC<Props> = ({
         type: "satellite",
         position: { x: s.x - s.w / 2, y: s.y - s.h / 2 },
         data: {
-          title:
-            linkTitles[s.id] || relatedNodes[s.id]?.title || "…",
+          title: linkTitles[s.id] || relatedNodes[s.id]?.title || "…",
           color: axisColors[s.axis],
           axis: s.axis,
           nodeId: s.id,
@@ -585,8 +580,7 @@ const NodeCompass: React.FC<Props> = ({
   );
 
   const titleOf = useCallback(
-    (id: string): string =>
-      linkTitles[id] || relatedNodes[id]?.title || "…",
+    (id: string): string => linkTitles[id] || relatedNodes[id]?.title || "…",
     [linkTitles, relatedNodes],
   );
 
@@ -693,8 +687,7 @@ const NodeCompass: React.FC<Props> = ({
                       ? alpha("#ffffff", 0.1)
                       : alpha("#000000", 0.1)
                   }`,
-                transition:
-                  "border-color 0.18s ease, background 0.18s ease",
+                transition: "border-color 0.18s ease, background 0.18s ease",
                 "& svg": { fontSize: 16 },
                 "&:hover": {
                   borderColor: (t) => t.palette.primary.main,
@@ -785,9 +778,7 @@ const NodeCompass: React.FC<Props> = ({
                 borderRadius: "10px",
                 color: "text.primary",
                 background: (t) =>
-                  t.palette.mode === "dark"
-                    ? WIDGET_BG_DARK
-                    : WIDGET_BG_LIGHT,
+                  t.palette.mode === "dark" ? WIDGET_BG_DARK : WIDGET_BG_LIGHT,
                 backdropFilter: "blur(8px)",
                 boxShadow: (t) =>
                   t.palette.mode === "dark"
@@ -866,7 +857,9 @@ const NodeCompass: React.FC<Props> = ({
         >
           <InfoOutlinedIcon sx={{ fontSize: 13, opacity: 0.7 }} />
           Click a node to navigate · Drag to pan ·{" "}
-          {requireModifierToZoom ? "⌘-scroll or pinch to zoom" : "Scroll to zoom"}
+          {requireModifierToZoom
+            ? "⌘-scroll or pinch to zoom"
+            : "Scroll to zoom"}
         </Box>
       </Box>
 

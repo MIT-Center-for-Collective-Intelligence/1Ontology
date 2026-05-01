@@ -123,8 +123,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     let collectionName = "";
     if (nodeData.appName) {
       collectionName = `ontology-${sanitizeCollectionName(nodeData.appName)}`;
-    } else if (nodeData.skillsFuture) {
-      collectionName = "ontology-skills";
     } else {
       collectionName = "ontology";
     }
