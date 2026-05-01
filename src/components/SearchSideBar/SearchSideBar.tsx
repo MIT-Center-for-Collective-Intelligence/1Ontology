@@ -16,12 +16,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { development, SCROLL_BAR_STYLE } from "@components/lib/CONSTANTS";
 import { Post } from "@components/lib/utils/Post";
 
@@ -30,8 +25,7 @@ const SearchSideBar = ({
   searchWithFuse,
   lastSearches,
   updateLastSearches,
-  skillsFuture,
-  skillsFutureApp,
+  appName,
   isExperimentalSearch,
   onSearchChange,
   onFocusChange,
@@ -40,13 +34,12 @@ const SearchSideBar = ({
   searchWithFuse: any;
   lastSearches: any[];
   updateLastSearches: Function;
-  skillsFuture: boolean;
-  skillsFutureApp: string;
+  appName: string;
   isExperimentalSearch: boolean;
   onSearchChange?: (value: string) => void;
   onFocusChange?: (focused: boolean) => void;
 }) => {
-  const [searchValue, setSearchValue] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isListOpen, setIsListOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [searchResults, setSearchResults] = useState<any>([]);
@@ -66,10 +59,10 @@ const SearchSideBar = ({
     setIsFocused(true);
     if (onFocusChange) onFocusChange(true);
 
-    if (searchValue.trim() !== "") {
-      const freshResults = getSearchResults(searchValue.trim());
+    if (searchQuery.trim() !== "") {
+      const freshResults = getSearchResults(searchQuery.trim());
       if (freshResults.length === 0) {
-        setSearchValue("");
+        setSearchQuery("");
         setIsListOpen(!!lastSearches.length);
       } else {
         setSearchRefreshKey((prevKey) => prevKey + 1);
@@ -83,7 +76,7 @@ const SearchSideBar = ({
   };
 
   const clearSearch = () => {
-    setSearchValue("");
+    setSearchQuery("");
     setIsListOpen(false);
     setIsFocused(false);
     if (onFocusChange) onFocusChange(false);
@@ -92,7 +85,7 @@ const SearchSideBar = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setSearchValue(value);
+    setSearchQuery(value);
     if (onSearchChange) onSearchChange(value);
     if (value.trim()) {
       setSearchResults(getSearchResults(value.trim()));
@@ -109,7 +102,7 @@ const SearchSideBar = ({
 
   const handleNodeClick = (node: any) => {
     openSearchedNode(node);
-    setSearchValue(node.title);
+    setSearchQuery(node.title);
     // Outline tree uses this value as react-arborist `searchTerm`; if we don't clear
     // the parent, the typed query keeps filtering and can hide the whole outline.
     if (onSearchChange) onSearchChange("");
@@ -145,83 +138,36 @@ const SearchSideBar = ({
     if (document.activeElement !== inputRef.current) {
       inputRef.current.focus({ preventScroll: true });
     }
-  }, [isFocused, searchValue, isListOpen, loadingSearchResult]);
+  }, [isFocused, searchQuery, isListOpen, loadingSearchResult]);
 
-  const searchQuery = useCallback(async () => {
-    const fuseSearch = searchWithFuse(searchValue).slice(0, 30);
+  const searchQueryHandler = useCallback(async () => {
+    console.log(searchQuery, "searchQuery -->");
+
     try {
       setErrorSearch(false);
       setLoadingSearchResult(true);
       const response: any = !development
         ? await Post("/searchChroma", {
-            query: searchValue,
-            skillsFuture,
-            appName: skillsFuture ? skillsFutureApp : null,
+            query: searchQuery,
+            appName: appName || null,
+            resultsNum: 100,
           })
         : { results: [] };
-
       const chromaResults: any[] = [...(response.results || [])];
-      let combinedResults: any[] = [];
-
-      // if no API results but Fuse has matches, fallback
-      if (chromaResults.length <= 0 && fuseSearch.length > 0) {
-        chromaResults.push(...fuseSearch);
-      }
-
-      // Handle exact match
-      const exactResult = fuseSearch[0];
-      if (
-        exactResult &&
-        exactResult.title.trim() === searchValue.toLowerCase().trim() &&
-        !chromaResults.some((r: any) => r.id === exactResult.id)
-      ) {
-        chromaResults.unshift({ id: exactResult.id, title: exactResult.title });
-      }
-
-      if (isExperimentalSearch) {
-        // Alternate between fuseSearch and chromaResults, avoiding duplicates
-        const seen = new Set<string>();
-        const maxLength = Math.max(fuseSearch.length, chromaResults.length);
-
-        for (let i = 0; i < maxLength; i++) {
-          const fuseItem = fuseSearch[i];
-          const chromaItem = chromaResults[i];
-
-          if (fuseItem && !seen.has(fuseItem.id)) {
-            combinedResults.push(fuseItem);
-            seen.add(fuseItem.id);
-          }
-
-          if (chromaItem && !seen.has(chromaItem.id)) {
-            combinedResults.push(chromaItem);
-            seen.add(chromaItem.id);
-          }
-        }
-      } else {
-        combinedResults = development ? fuseSearch : chromaResults;
-      }
-
-      setSearchResults(combinedResults);
+      setSearchResults(chromaResults);
     } catch (error) {
-      setSearchResults(fuseSearch);
       console.error(error);
     } finally {
       setLoadingSearchResult(false);
     }
-  }, [
-    searchValue,
-    searchWithFuse,
-    skillsFuture,
-    skillsFutureApp,
-    isExperimentalSearch,
-  ]);
+  }, [searchQuery, searchWithFuse, appName, isExperimentalSearch]);
 
   const onKeyDown = (event: any) => {
     if (event.key === "Enter") {
-      searchQuery();
+      searchQueryHandler();
     }
     if (event.key === "Escape") {
-      setSearchValue("");
+      setSearchQuery("");
       if (onSearchChange) onSearchChange("");
     }
   };
@@ -333,7 +279,7 @@ const SearchSideBar = ({
       <TextField
         inputRef={inputRef}
         placeholder="Search..."
-        value={searchValue}
+        value={searchQuery}
         onChange={handleInputChange}
         onFocus={handleFocus}
         onKeyDown={onKeyDown}
@@ -413,13 +359,16 @@ const SearchSideBar = ({
             /* Always mount end adornment so MUI doesn't tear down the <input> when focus
              * or `searchValue` toggles visibility of these controls (that remount drops focus). */
             endAdornment: (
-              <InputAdornment position="end" sx={{ marginRight: 0, maxHeight: "none" }}>
+              <InputAdornment
+                position="end"
+                sx={{ marginRight: 0, maxHeight: "none" }}
+              >
                 <Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
-                    width: searchValue.trim() ? "auto" : 0,
+                    width: searchQuery.trim() ? "auto" : 0,
                     minWidth: 0,
                     overflow: "hidden",
                   }}
@@ -428,10 +377,11 @@ const SearchSideBar = ({
                     <span>
                       <IconButton
                         size="small"
-                        onClick={searchQuery}
-                        disabled={!searchValue.trim()}
+                        onClick={searchQueryHandler}
+                        disabled={!searchQuery.trim()}
                         sx={{
-                          backgroundColor: (theme) => theme.palette.primary.main,
+                          backgroundColor: (theme) =>
+                            theme.palette.primary.main,
                           color: "white",
                           width: 28,
                           height: 28,
@@ -451,7 +401,7 @@ const SearchSideBar = ({
                       <IconButton
                         size="small"
                         onClick={clearSearch}
-                        disabled={!searchValue.trim()}
+                        disabled={!searchQuery.trim()}
                         sx={{
                           color: (theme) => theme.palette.text.secondary,
                           width: 28,
@@ -516,7 +466,7 @@ const SearchSideBar = ({
 
       {isListOpen && !loadingSearchResult && !errorSearch && (
         <Box sx={resultsPanelSx}>
-          {searchValue === "" && lastSearches.length > 0 && (
+          {searchQuery === "" && lastSearches.length > 0 && (
             <Typography
               sx={{
                 px: 2,
@@ -543,7 +493,7 @@ const SearchSideBar = ({
           >
             {searchResults.length > 0
               ? searchResults.map((node: any) => renderListItem(node))
-              : searchValue === "" &&
+              : searchQuery === "" &&
                 lastSearches.length > 0 &&
                 lastSearches.map((node) => renderListItem(node, true))}
           </List>

@@ -43,11 +43,6 @@ export function nodeHasNonEmptySpecializations(n: INode): boolean {
       if ((c.nodes || []).length > 0) return true;
     }
   }
-  if (n.properties?.parts) {
-    for (const c of n.properties.parts) {
-      if ((c.nodes || []).length > 0) return true;
-    }
-  }
   return false;
 }
 
@@ -121,9 +116,7 @@ export function buildOneLevelFromSpecializations(
 ): TreeData[] {
   const childrenInOrder: TreeData[] = [];
 
-  const specializationCollections = node.specializations || [];
-  const partsCollections = node.properties?.parts || [];
-  const allCollections = [...specializationCollections, ...partsCollections];
+  const allCollections = node.specializations || [];
 
   if (allCollections.length > 0) {
     for (let i = 0; i < allCollections.length; i++) {
@@ -181,13 +174,6 @@ export function collectSpecializationChildIds(n: INode): string[] {
   const ids: string[] = [];
   if (n.specializations) {
     for (const c of n.specializations) {
-      for (const link of c.nodes || []) {
-        ids.push(link.id);
-      }
-    }
-  }
-  if (n.properties?.parts) {
-    for (const c of n.properties.parts) {
       for (const link of c.nodes || []) {
         ids.push(link.id);
       }
