@@ -1753,7 +1753,14 @@ const ToolbarSidebar = ({
       // onMouseLeave={() => setHovered(false)}
     >
       {!!activeSidebar ? (
-        <Box>
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <Box
             sx={{
               display: "flex",
@@ -1762,6 +1769,7 @@ const ToolbarSidebar = ({
               textAlign: "center",
               mb: 2,
               px: "11px",
+              flexShrink: 0,
             }}
           >
             {openLogsFor && activeSidebar === "userActivity" && (

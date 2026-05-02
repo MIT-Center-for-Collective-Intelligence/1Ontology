@@ -2685,12 +2685,10 @@ const Ontology = ({
                 value={viewValue}
                 index={0}
                 sx={{
-                  display: "flex",
-                  flexDirection: "column",
                   flex: 1,
                   minHeight: 0,
-                  height: "100%",
                   overflowX: "auto",
+                  overflowY: "hidden",
                   whiteSpace: "nowrap",
                   "&::-webkit-scrollbar": {
                     display: "none",
@@ -2701,7 +2699,7 @@ const Ontology = ({
                   sx={{
                     display: "flex",
                     flexDirection: "column",
-                    height: "100%",
+                    flex: 1,
                     minHeight: 0,
                     minWidth: "100%",
                   }}
@@ -2789,8 +2787,8 @@ const Ontology = ({
               overflow: "auto",
               height: isMobile
                 ? mobileTreeOpen
-                  ? "calc(100vh - 56px - 50vh)" // Account for header + tree
-                  : "calc(100vh - 56px)" // Just header
+                  ? "calc(100vh - 56px - 50vh)"
+                  : "calc(100vh - 56px)"
                 : "100vh",
               transition: isMobile ? "height 0.3s ease-in-out" : "none",
               "&::-webkit-scrollbar": {

@@ -5,22 +5,39 @@ import Box from "@mui/material/Box";
 // A functional component representing a tab panel for a tab-based UI
 export const TabPanel = (props: any) => {
   // Destructure props to extract relevant values
-  const { children, value, index, ...other } = props;
+  const { children, value, index, sx: sxProp, ...other } = props;
+  const isActive = value === index;
 
   return (
     // Box component serving as the container for the tab panel
     <Box
       role="tabpanel"
       // Hide the panel if its index does not match the active tab index
-      hidden={value !== index}
+      hidden={!isActive}
       // Unique ID and ARIA attributes for accessibility
       id={`simple-tabpanel-${index}`}
       aria-labelledby={`simple-tab-${index}`}
       {...other}
+      sx={[
+        {
+          minHeight: 0,
+          display: isActive ? "flex" : "none",
+          flexDirection: "column",
+          ...(isActive ? { flex: 1 } : {}),
+        },
+        ...(sxProp ? (Array.isArray(sxProp) ? sxProp : [sxProp]) : []),
+      ]}
     >
       {/* Render children only if the current tab is active */}
-      {value === index && (
-        <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, height: "100%" }}>
+      {isActive && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
           {children}
         </Box>
       )}
