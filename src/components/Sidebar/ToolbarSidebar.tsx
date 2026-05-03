@@ -14,6 +14,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DownloadIcon from "@mui/icons-material/Download";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 
 import {
   Avatar,
@@ -230,6 +231,33 @@ const ToolbarSidebar = ({
     setProfileMenuOpen(event.currentTarget);
   };
   const [selectedUser, setSelectedUser] = useState("All");
+  const historyUserOptions = useMemo(
+    () => [
+      "All",
+      ...Object.keys(activeUsers)
+        .filter((u) => activeUsers[u]?.reputations > 0)
+        .sort((a, b) => {
+          const firstName = `${activeUsers[a]?.fName || ""} ${
+            activeUsers[a]?.lName || ""
+          }`;
+          const secondName = `${activeUsers[b]?.fName || ""} ${
+            activeUsers[b]?.lName || ""
+          }`;
+          return firstName.localeCompare(secondName);
+        }),
+    ],
+    [activeUsers],
+  );
+
+  const getHistoryUserName = useCallback(
+    (uname: string) =>
+      uname === "All"
+        ? "All Users"
+        : `${activeUsers[uname]?.fName || ""} ${
+            activeUsers[uname]?.lName || ""
+          }`.trim() || uname,
+    [activeUsers],
+  );
 
   const StyledDialogPaper = styled(Paper)(({ theme }) => ({
     borderRadius: "20px",
@@ -1729,7 +1757,6 @@ const ToolbarSidebar = ({
           : hovered
             ? "190px"
             : "70px",
-        // transition: "width 0.1s ease",
         height: "100vh",
         background:
           theme.palette.mode === "dark"
@@ -1824,40 +1851,263 @@ const ToolbarSidebar = ({
                       setSelectedUser(e.target.value);
                     }}
                     select
-                    label="Select User"
-                    sx={{ ml: "15px", minWidth: "100px" }}
+                    label="Edited by"
                     slotProps={{
-                      input: {
-                        sx: {
-                          height: "40px",
-                          borderRadius: "18px",
+                      inputLabel: {
+                        shrink: true,
+                      },
+                      select: {
+                        displayEmpty: true,
+                        IconComponent: KeyboardArrowDownRoundedIcon,
+                        renderValue: (value: any) => {
+                          const uname = value as string;
+                          const isAllUsers = uname === "All";
+
+                          return (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                minWidth: 0,
+                              }}
+                            >
+                              {isAllUsers ? (
+                                <Box
+                                  sx={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: "50%",
+                                    display: "grid",
+                                    placeItems: "center",
+                                    background:
+                                      "linear-gradient(135deg, rgba(255, 186, 116, 0.95), rgba(255, 116, 66, 0.75))",
+                                    boxShadow:
+                                      "0 0 18px rgba(255, 139, 76, 0.42)",
+                                  }}
+                                >
+                                  <HistoryIcon
+                                    sx={{ color: "white", fontSize: 16 }}
+                                  />
+                                </Box>
+                              ) : (
+                                <OptimizedAvatar
+                                  alt={getHistoryUserName(uname)}
+                                  imageUrl={activeUsers[uname]?.imageUrl || ""}
+                                  size={28}
+                                  sx={{
+                                    borderRadius: "50%",
+                                    border:
+                                      "1px solid rgba(255, 190, 140, 0.55)",
+                                    boxShadow:
+                                      "0 0 16px rgba(255, 139, 76, 0.28)",
+                                  }}
+                                />
+                              )}
+                              <Typography
+                                component="span"
+                                noWrap
+                                sx={{
+                                  maxWidth: 132,
+                                  fontWeight: 800,
+                                  letterSpacing: "-0.02em",
+                                  lineHeight: 1,
+                                }}
+                              >
+                                {getHistoryUserName(uname)}
+                              </Typography>
+                            </Box>
+                          );
+                        },
+                        MenuProps: {
+                          PaperProps: {
+                            sx: {
+                              mt: 1.25,
+                              minWidth: 240,
+                              borderRadius: "22px",
+                              overflow: "hidden",
+                              background: (theme) =>
+                                theme.palette.mode === "dark"
+                                  ? "linear-gradient(145deg, rgba(20, 18, 22, 0.96), rgba(11, 11, 14, 0.92))"
+                                  : "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(255, 242, 228, 0.94))",
+                              border: (theme) =>
+                                theme.palette.mode === "dark"
+                                  ? "1px solid rgba(255, 185, 125, 0.28)"
+                                  : "1px solid rgba(235, 132, 58, 0.2)",
+                              backdropFilter: "blur(24px) saturate(185%)",
+                              WebkitBackdropFilter: "blur(24px) saturate(185%)",
+                              boxShadow: (theme) =>
+                                theme.palette.mode === "dark"
+                                  ? "0 22px 60px rgba(0,0,0,0.58), 0 0 34px rgba(255, 127, 70, 0.16), inset 0 1px 0 rgba(255,255,255,0.1)"
+                                  : "0 22px 50px rgba(131, 78, 33, 0.18), 0 0 28px rgba(255, 140, 80, 0.15), inset 0 1px 0 rgba(255,255,255,0.85)",
+                            },
+                          },
+                          MenuListProps: {
+                            sx: {
+                              py: 0.75,
+                              "& .MuiMenuItem-root": {
+                                mx: 0.75,
+                                my: 0.35,
+                                minHeight: 46,
+                                borderRadius: "16px",
+                                gap: 1.25,
+                                fontWeight: 700,
+                                color: (theme) =>
+                                  theme.palette.mode === "dark"
+                                    ? "rgba(255,255,255,0.9)"
+                                    : "rgba(49, 31, 20, 0.9)",
+                                transition:
+                                  "background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease",
+                                "&:hover": {
+                                  transform: "translateX(2px)",
+                                  background: (theme) =>
+                                    theme.palette.mode === "dark"
+                                      ? "rgba(255, 145, 82, 0.16)"
+                                      : "rgba(255, 166, 92, 0.16)",
+                                },
+                                "&.Mui-selected": {
+                                  background:
+                                    "linear-gradient(135deg, rgba(255, 183, 112, 0.32), rgba(255, 118, 65, 0.2))",
+                                  boxShadow:
+                                    "inset 0 0 0 1px rgba(255, 185, 125, 0.35)",
+                                },
+                                "&.Mui-selected:hover": {
+                                  background:
+                                    "linear-gradient(135deg, rgba(255, 183, 112, 0.42), rgba(255, 118, 65, 0.28))",
+                                },
+                              },
+                            },
+                          },
                         },
                       },
-                      inputLabel: {
-                        style: { color: "grey" },
+                    }}
+                    sx={{
+                      mt: "10px",
+                      ml: "15px",
+                      minWidth: 184,
+                      "& .MuiOutlinedInput-root": {
+                        height: 48,
+                        borderRadius: "999px",
+                        color: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255,255,255,0.96)"
+                            : "rgba(28, 20, 16, 0.92)",
+                        background: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 150, 83, 0.09) 52%, rgba(255, 255, 255, 0.07))"
+                            : "linear-gradient(145deg, rgba(255,255,255,0.92), rgba(255, 229, 202, 0.78))",
+                        backdropFilter: "blur(18px) saturate(180%)",
+                        WebkitBackdropFilter: "blur(18px) saturate(180%)",
+                        boxShadow: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "0 0 0 1px rgba(255, 172, 106, 0.42), 0 0 24px rgba(255, 128, 70, 0.22), inset 0 1px 0 rgba(255,255,255,0.12)"
+                            : "0 0 0 1px rgba(222, 117, 48, 0.32), 0 12px 28px rgba(180, 90, 38, 0.12), inset 0 1px 0 rgba(255,255,255,0.9)",
+                        transition:
+                          "transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease",
+                        "&:hover": {
+                          transform: "translateY(-1px)",
+                          boxShadow: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "0 0 0 1px rgba(255, 190, 132, 0.58), 0 0 30px rgba(255, 128, 70, 0.3), inset 0 1px 0 rgba(255,255,255,0.16)"
+                              : "0 0 0 1px rgba(222, 117, 48, 0.45), 0 16px 34px rgba(180, 90, 38, 0.16), inset 0 1px 0 rgba(255,255,255,0.95)",
+                        },
+                        "&.Mui-focused": {
+                          boxShadow:
+                            "0 0 0 2px rgba(255, 176, 109, 0.45), 0 0 34px rgba(255, 128, 70, 0.32)",
+                        },
+                      },
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        border: "none",
+                      },
+                      "& .MuiSelect-select": {
+                        display: "flex",
+                        alignItems: "center",
+                        py: 0,
+                        pr: "40px !important",
+                        pl: 1.2,
+                      },
+                      "& .MuiSelect-icon": {
+                        right: 12,
+                        color: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255, 195, 142, 0.95)"
+                            : "rgba(180, 83, 9, 0.85)",
+                        filter: "drop-shadow(0 0 8px rgba(255, 139, 76, 0.45))",
+                        transition: "transform 0.2s ease",
+                      },
+                      "& .Mui-focused .MuiSelect-icon": {
+                        transform: "rotate(180deg)",
+                      },
+                      "& .MuiInputLabel-root": {
+                        color: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255, 207, 168, 0.75)"
+                            : "rgba(142, 72, 21, 0.78)",
+                        fontWeight: 800,
+                        letterSpacing: "0.02em",
+                      },
+                      "& .MuiInputLabel-root.Mui-focused": {
+                        color: "#ffb36f",
                       },
                     }}
                   >
-                    <MenuItem
-                      value=""
-                      disabled
-                      sx={{
-                        backgroundColor: (theme) =>
-                          theme.palette.mode === "dark" ? "" : "white",
-                      }}
-                    >
-                      Select User
-                    </MenuItem>
-                    {[
-                      "All",
-                      ...Object.keys(activeUsers).filter(
-                        (u) => activeUsers[u]?.reputations > 0,
-                      ),
-                    ].map((uname) => (
+                    {historyUserOptions.map((uname) => (
                       <MenuItem key={uname} value={uname}>
-                        {uname === "All"
-                          ? "All"
-                          : `${activeUsers[uname].fName} ${activeUsers[uname].lName}`}
+                        {uname === "All" ? (
+                          <Box
+                            sx={{
+                              width: 30,
+                              height: 30,
+                              borderRadius: "50%",
+                              display: "grid",
+                              placeItems: "center",
+                              background:
+                                "linear-gradient(135deg, rgba(255, 186, 116, 0.96), rgba(255, 116, 66, 0.78))",
+                            }}
+                          >
+                            <HistoryIcon
+                              sx={{ color: "white", fontSize: 17 }}
+                            />
+                          </Box>
+                        ) : (
+                          <OptimizedAvatar
+                            alt={getHistoryUserName(uname)}
+                            imageUrl={activeUsers[uname]?.imageUrl || ""}
+                            size={30}
+                            sx={{
+                              borderRadius: "50%",
+                              border: "1px solid rgba(255, 190, 140, 0.5)",
+                            }}
+                          />
+                        )}
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography
+                            noWrap
+                            sx={{
+                              maxWidth: 150,
+                              fontSize: "0.92rem",
+                              fontWeight: 800,
+                              lineHeight: 1.05,
+                            }}
+                          >
+                            {getHistoryUserName(uname)}
+                          </Typography>
+                          <Typography
+                            noWrap
+                            sx={{
+                              mt: 0.25,
+                              maxWidth: 150,
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              color: (theme) =>
+                                theme.palette.mode === "dark"
+                                  ? "rgba(255, 207, 168, 0.62)"
+                                  : "rgba(142, 72, 21, 0.58)",
+                            }}
+                          >
+                            {uname === "All" ? "Complete history" : `@${uname}`}
+                          </Typography>
+                        </Box>
                       </MenuItem>
                     ))}
                   </TextField>
