@@ -8,7 +8,7 @@ import {
 import { NODES } from "@components/lib/firestoreClient/collections";
 import { INode, TreeData } from "@components/types/INode";
 
-const DOC_ID_IN_LIMIT = 10;
+const DOC_ID_IN_LIMIT = 30;
 
 /**
  * Batched node fetch by id (Firestore `in` limit per query).

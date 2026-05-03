@@ -103,8 +103,6 @@ const SearchSideBar = ({
   const handleNodeClick = (node: any) => {
     openSearchedNode(node);
     setSearchQuery(node.title);
-    // Outline tree uses this value as react-arborist `searchTerm`; if we don't clear
-    // the parent, the typed query keeps filtering and can hide the whole outline.
     if (onSearchChange) onSearchChange("");
     updateLastSearches(node);
     setIsListOpen(false);
@@ -141,8 +139,6 @@ const SearchSideBar = ({
   }, [isFocused, searchQuery, isListOpen, loadingSearchResult]);
 
   const searchQueryHandler = useCallback(async () => {
-    console.log(searchQuery, "searchQuery -->");
-
     try {
       setErrorSearch(false);
       setLoadingSearchResult(true);

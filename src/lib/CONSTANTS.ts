@@ -205,6 +205,11 @@ export const ONTOLOGY_APPS = development
         type: "other",
       },
       { id: "noun-ontology", name: "Noun Ontology", type: "other" },
+      {
+        id: "onet-ontology",
+        name: "O*Net Ontology",
+        type: "other",
+      },
     ];
 
 /** Max nodes visited when walking the specialization graph (cycle check, BFS). */

@@ -74,6 +74,21 @@ type ChatProps = {
   appName: string;
 };
 
+const CHAT_EMPTY_STATE_BY_TYPE: Record<string, string> = {
+  node: "No messages yet for this node. Add the first one below.",
+  discussion: "No discussion yet. Start the discussion below.",
+  bug_report: "No bug reports yet. Describe the issue below.",
+  feature_request: "No feature requests yet. Suggest one below.",
+  help: "No help requests yet. Ask a question below.",
+};
+
+function emptyStateMessageForChatType(chatType: string): string {
+  return (
+    CHAT_EMPTY_STATE_BY_TYPE[chatType] ??
+    "No messages yet. Add the first message below."
+  );
+}
+
 const Chat = ({
   user,
   confirmIt,
@@ -992,7 +1007,7 @@ const Chat = ({
                   color="text.secondary"
                   sx={{ textAlign: "center", maxWidth: 280 }}
                 >
-                  No messages yet. Start the conversation below.
+                  {emptyStateMessageForChatType(chatType)}
                 </Typography>
               </Box>
             </Box>
@@ -1102,7 +1117,8 @@ const areEqual = (prevProps: any, nextProps: any) => {
     prevProps.isLoading === nextProps.isLoading &&
     prevProps.type === nextProps.type &&
     prevProps.onlineUsers === nextProps.onlineUsers &&
-    prevProps.nodeId === nextProps.nodeId
+    prevProps.nodeId === nextProps.nodeId &&
+    prevProps.chatType === nextProps.chatType
   );
 };
 

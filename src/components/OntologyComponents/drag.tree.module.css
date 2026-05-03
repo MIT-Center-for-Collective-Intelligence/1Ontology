@@ -12,10 +12,12 @@
 }
 
 .treeContainer {
+    position: relative;
     display: flex;
-    height: 100%;
     flex: 1;
     min-width: 0;
+    min-height: 0;
+    align-self: stretch;
 }
 
 .contentContainer {
@@ -337,7 +339,10 @@
 
 @media screen and (max-width: 720px) {
     .split {
-        display: block;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
     }
 
     .tree {
