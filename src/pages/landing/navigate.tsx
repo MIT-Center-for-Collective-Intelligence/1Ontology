@@ -456,6 +456,7 @@ export const NavigateLandingSection = ({
           query: q,
           skillsFuture: true,
           appName,
+          resultsNum: 100,
         },
       );
       setSearchResults(response?.results ?? []);

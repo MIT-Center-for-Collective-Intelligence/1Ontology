@@ -97,16 +97,6 @@ type Props = {
   navigateToNode: (id: string, title?: string) => void;
 };
 
-// Verbose tool-loop logging gated on window.__AI_DEBUG (default on).
-// Silence with: window.__AI_DEBUG = false in the browser console.
-const aiDebug = (...args: unknown[]) => {
-  if (typeof window === "undefined") return;
-  const w = window as unknown as { __AI_DEBUG?: boolean };
-  if (w.__AI_DEBUG === false) return;
-  // eslint-disable-next-line no-console
-  console.log("AI Process", ...args);
-};
-
 type SearchChromaResult = {
   id: string;
   title?: string;
@@ -118,42 +108,29 @@ const runSearchActivities = async (
   appName: string,
 ): Promise<string> => {
   const trimmed = (query ?? "").trim();
-  aiDebug("search_activities → input", { query, trimmed, appName });
   if (!trimmed) {
-    aiDebug("search_activities → empty query, returning no-match");
     return formatSearchResults(query ?? "", []);
   }
   try {
-    const reqBody = {
-      query: trimmed,
-      appName,
-      nodeType: "activity",
-      resultsNum: MAX_SEARCH_RESULTS,
-      skillsFuture: false,
-    };
-    aiDebug("search_activities → POST /api/searchChroma body:", reqBody);
-    const t0 = performance.now();
     const resp = await Post<{ results?: SearchChromaResult[] }>(
       "/searchChroma",
-      reqBody,
-    );
-    const ms = Math.round(performance.now() - t0);
-    aiDebug(
-      `search_activities → response in ${ms}ms; ${resp?.results?.length ?? 0} result(s)`,
-      resp,
+      {
+        query: trimmed,
+        appName,
+        nodeType: "activity",
+        resultsNum: MAX_SEARCH_RESULTS,
+        skillsFuture: false,
+      },
     );
     const hits: SearchHit[] = (resp?.results ?? []).map((r) => ({
       id: r.id,
       title: r.title ?? r.id,
       description: r.description,
     }));
-    const formatted = formatSearchResults(trimmed, hits);
-    aiDebug("search_activities → formatted result fed to LLM:", formatted);
-    return formatted;
+    return formatSearchResults(trimmed, hits);
   } catch (e) {
     const msg =
       e instanceof Error ? e.message : "Search failed for an unknown reason.";
-    aiDebug("search_activities → ERROR", { message: msg, error: e });
     return `Search error: ${msg}. Try a different query or proceed without search.`;
   }
 };
@@ -172,11 +149,6 @@ const fetchNodesByIds = async (
   for (let i = 0; i < ids.length; i += FIRESTORE_IN_LIMIT) {
     chunks.push(ids.slice(i, i + FIRESTORE_IN_LIMIT));
   }
-  aiDebug(
-    `fetchNodesByIds → ${ids.length} id(s) in ${chunks.length} chunk(s)`,
-    ids,
-  );
-  const t0 = performance.now();
   const snapshots = await Promise.all(
     chunks.map((chunk) =>
       getDocs(
@@ -193,14 +165,6 @@ const fetchNodesByIds = async (
       out.set(doc.id, data);
     });
   }
-  const ms = Math.round(performance.now() - t0);
-  aiDebug(
-    `fetchNodesByIds → got ${out.size}/${ids.length} doc(s) in ${ms}ms`,
-  );
-  if (out.size < ids.length) {
-    const missing = ids.filter((id) => !out.has(id));
-    aiDebug("fetchNodesByIds → missing ids:", missing);
-  }
   return out;
 };
 
@@ -212,7 +176,6 @@ const runGetActivities = async (
   cache: Map<string, string>,
   currentLog: ChatMsg[],
 ): Promise<string> => {
-  aiDebug("get_activities → input", { ids, appName });
   const cleaned = Array.from(
     new Set(
       (Array.isArray(ids) ? ids : [])
@@ -221,46 +184,27 @@ const runGetActivities = async (
     ),
   ).slice(0, MAX_GET_ACTIVITIES_BATCH);
 
-  if (cleaned.length === 0) {
-    aiDebug("get_activities → no valid ids after cleanup");
-    return "No ids provided.";
-  }
-  if (cleaned.length !== (ids?.length ?? 0)) {
-    aiDebug(
-      `get_activities → cleaned ids: ${ids?.length ?? 0} → ${cleaned.length}`,
-      cleaned,
-    );
-  }
+  if (cleaned.length === 0) return "No ids provided.";
 
   const missing = cleaned.filter((id) => !cache.has(id));
   if (missing.length > 0) {
     try {
       const fetched = await fetchNodesByIds(missing);
-      let scopeFiltered = 0;
       for (const id of missing) {
         const node = fetched.get(id) ?? null;
         // Scope guard: hide nodes from other apps so cross-app data
         // can't leak through tool calls.
         if (node && (node as { appName?: string }).appName !== appName) {
-          scopeFiltered++;
           cache.set(id, notFoundProfile(id));
           continue;
         }
         cache.set(id, node ? formatActivityProfile(id, node) : notFoundProfile(id));
       }
-      if (scopeFiltered > 0) {
-        aiDebug(
-          `get_activities → ${scopeFiltered} node(s) hidden by appName scope guard`,
-        );
-      }
     } catch (e) {
       const msg =
         e instanceof Error ? e.message : "Fetch failed for an unknown reason.";
-      aiDebug("get_activities → ERROR", { message: msg, error: e });
       return `get_activities error: ${msg}.`;
     }
-  } else {
-    aiDebug("get_activities → all ids served from cache, no Firestore read");
   }
 
   // Detect ids whose full profile still sits in the current message log;
@@ -269,23 +213,14 @@ const runGetActivities = async (
     const tag = `=== #${id} `;
     return currentLog.some((m) => m.role === "tool" && m.content.includes(tag));
   };
-  let pointerCount = 0;
   const parts = cleaned.map((id) => {
     if (stillInLog(id)) {
-      pointerCount++;
       return `=== #${id} ===\n(Already provided in an earlier tool result above; reuse that profile.)\n`;
     }
     return cache.get(id) ?? notFoundProfile(id);
   });
-  if (pointerCount > 0) {
-    aiDebug(
-      `get_activities → ${pointerCount} id(s) deduplicated against existing log`,
-    );
-  }
 
-  const formatted = parts.join("\n");
-  aiDebug("get_activities → formatted result fed to LLM:", formatted);
-  return formatted;
+  return parts.join("\n");
 };
 
 const executeToolCall = async (
@@ -294,7 +229,6 @@ const executeToolCall = async (
   cache: Map<string, string>,
   currentLog: ChatMsg[],
 ): Promise<string> => {
-  aiDebug(`tool call → ${call.name}`, { id: call.id, input: call.input });
   if (call.name === "search_activities") {
     const q = (call.input?.query ?? "") as string;
     return runSearchActivities(q, appName);
@@ -303,7 +237,6 @@ const executeToolCall = async (
     const ids = (call.input?.ids ?? []) as string[];
     return runGetActivities(ids, appName, cache, currentLog);
   }
-  aiDebug(`tool call → UNKNOWN tool: ${call.name}`);
   return `Unknown tool: ${call.name}. Available tools: search_activities, get_activities.`;
 };
 
@@ -565,14 +498,6 @@ export const AiPanel: React.FC<Props> = ({ appName, navigateToNode }) => {
       { role: "user", content: q },
     ];
 
-    aiDebug("send → start", {
-      query: q,
-      provider: conf.prov,
-      model: conf.model,
-      historyMsgs: trimmed.length,
-      appName,
-    });
-
     let working: ChatMsg[] = initialMessages;
     let finalText = "";
 
@@ -580,18 +505,9 @@ export const AiPanel: React.FC<Props> = ({ appName, navigateToNode }) => {
       for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
         // Last iteration: drop tools so the model must produce a final answer.
         const toolsForCall = i === MAX_TOOL_ITERATIONS - 1 ? undefined : TOOLS;
-        aiDebug(
-          `iter ${i} → calling LLM (${working.length} msgs, tools: ${toolsForCall ? "yes" : "no"})`,
-        );
-        const t0 = performance.now();
         const resp = await callLLM(conf, working, toolsForCall);
-        const ms = Math.round(performance.now() - t0);
 
         if (resp.kind === "text") {
-          aiDebug(
-            `iter ${i} → LLM returned TEXT in ${ms}ms (${resp.text.length} chars)`,
-            resp.text.slice(0, 200),
-          );
           finalText = resp.text;
           working = [
             ...working,
@@ -599,14 +515,6 @@ export const AiPanel: React.FC<Props> = ({ appName, navigateToNode }) => {
           ];
           break;
         }
-
-        aiDebug(
-          `iter ${i} → LLM returned ${resp.calls.length} tool call(s) in ${ms}ms`,
-          {
-            preamble: resp.text?.slice(0, 200) ?? "",
-            calls: resp.calls.map((c) => ({ name: c.name, input: c.input })),
-          },
-        );
 
         const calls = resp.calls;
         setStatus(
@@ -659,10 +567,6 @@ export const AiPanel: React.FC<Props> = ({ appName, navigateToNode }) => {
         ...prev,
         { kind: "assistant", text: finalText, modelLabel: modelLabel(conf) },
       ]);
-      aiDebug("send → done", {
-        finalChars: finalText.length,
-        totalMsgs: working.length,
-      });
     } catch (e) {
       const msg =
         e instanceof AiCallError
@@ -672,7 +576,6 @@ export const AiPanel: React.FC<Props> = ({ appName, navigateToNode }) => {
             : "Something went wrong.";
       const details = e instanceof AiCallError ? e.details : undefined;
       const errStatus = e instanceof AiCallError ? e.status : undefined;
-      aiDebug("send → ERROR", { message: msg, status: errStatus, details });
       setTurns((prev) => [
         ...prev,
         { kind: "error", text: msg, details, status: errStatus },
