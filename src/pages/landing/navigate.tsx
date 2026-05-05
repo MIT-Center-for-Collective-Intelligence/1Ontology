@@ -741,7 +741,7 @@ export const NavigateLandingSection = ({
               minHeight: 0,
             }}
           >
-            <AiPanel nodes={nodes} navigateToNode={navigateToNode} />
+            <AiPanel appName={appName} navigateToNode={navigateToNode} />
           </Box>
         </Grid>
 
