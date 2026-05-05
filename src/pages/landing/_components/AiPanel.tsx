@@ -1258,12 +1258,12 @@ export const AiPanel: React.FC<Props> = ({ appName, navigateToNode }) => {
         <Box
           sx={{
             display: "flex",
-            alignItems: "center",
+            alignItems: "flex-end",
             gap: 0.75,
             p: 0.5,
             pl: 2,
-            pr: 1,
-            borderRadius: 999,
+            pr: 0.5,
+            borderRadius: "22px",
             bgcolor: (t) =>
               t.palette.mode === "dark"
                 ? alpha(t.palette.background.paper, 0.85)
@@ -1285,7 +1285,7 @@ export const AiPanel: React.FC<Props> = ({ appName, navigateToNode }) => {
             variant="standard"
             fullWidth
             multiline
-            maxRows={4}
+            maxRows={5}
             placeholder="Ask about the ontology…"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -1300,11 +1300,29 @@ export const AiPanel: React.FC<Props> = ({ appName, navigateToNode }) => {
               input: { disableUnderline: true },
             }}
             sx={{
+              alignSelf: "stretch",
+              "& .MuiInputBase-root": {
+                py: 0.7,
+                pr: 0.5,
+              },
               "& .MuiInputBase-input": {
                 fontFamily: INTER,
                 fontSize: "0.88rem",
                 lineHeight: 1.45,
-                py: 0.7,
+                py: 0,
+                // Thin, subtle scrollbar that matches the message stream above.
+                scrollbarWidth: "thin",
+                scrollbarColor: (t) =>
+                  `${alpha(t.palette.text.primary, 0.18)} transparent`,
+                "&::-webkit-scrollbar": { width: 6 },
+                "&::-webkit-scrollbar-track": { background: "transparent" },
+                "&::-webkit-scrollbar-thumb": {
+                  background: (t) => alpha(t.palette.text.primary, 0.16),
+                  borderRadius: 3,
+                },
+                "&::-webkit-scrollbar-thumb:hover": {
+                  background: (t) => alpha(t.palette.text.primary, 0.28),
+                },
               },
               "& .MuiInputBase-input::placeholder": { opacity: 0.55 },
             }}
@@ -1315,6 +1333,8 @@ export const AiPanel: React.FC<Props> = ({ appName, navigateToNode }) => {
             disableRipple
             sx={{
               flexShrink: 0,
+              alignSelf: "flex-end",
+              mb: 0.25,
               width: 30,
               height: 30,
               color: accent,
