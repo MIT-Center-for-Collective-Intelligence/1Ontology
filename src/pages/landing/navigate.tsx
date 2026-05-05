@@ -35,10 +35,19 @@ import {
 import NodeCompass from "../../components/NodBody/NodeCompass";
 import NodeGraph from "../../components/NodBody/NodeGraph";
 import { AiPanel } from "./_components/AiPanel";
-import type { ICollection, INode } from "../../types/INode";
+import type { ICollection, INode, TreeData } from "../../types/INode";
 import { NODES } from "../../lib/firestoreClient/collections";
 import { Post } from "../../lib/utils/Post";
 import FullPageLogoLoading from "../../components/layouts/FullPageLogoLoading";
+import {
+  batchGetNodesByIds,
+  buildPathTreeWithSiblings,
+  collectSpecializationChildIds,
+  mapTreeAtId,
+  replaceWithOneLevel,
+  resolvePathIds,
+} from "../../lib/utils/loadOutlineFromPathIds";
+import { fetchSingleNode } from "../../lib/utils/ontology.helpers";
 
 type ChromaResult = { id: string; title: string };
 
@@ -352,19 +361,76 @@ export const NavigateLandingSection = ({
     [nodes],
   );
 
-  // Graph view's expansion state lives here so it survives toggling between
-  // compass ↔ graph (either view unmounts when the toggle switches away).
-  // Reset whenever the active node changes — a fresh focus is a fresh tree.
-  const [graphExpanded, setGraphExpanded] = useState<Set<string>>(new Set());
+  // Graph view: hierarchy from root → focused, with all siblings at each level.
+  const [hierarchyTree, setHierarchyTree] = useState<TreeData[] | null>(null);
+
   useEffect(() => {
-    setGraphExpanded(new Set());
-  }, [activeId]);
-  const toggleGraphExpand = useCallback((id: string) => {
-    setGraphExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+    if (!activeId) return;
+    const focused = nodes[activeId];
+    if (!focused) return;
+    let cancelled = false;
+    setHierarchyTree(null);
+    (async () => {
+      try {
+        const db = getFirestore();
+        const { pathIds } = await resolvePathIds(focused, (id) =>
+          fetchSingleNode(db, id, appName),
+        );
+        if (cancelled) return;
+        const byId = await batchGetNodesByIds(db, pathIds, appName);
+        if (cancelled) return;
+        if (!byId[focused.id]) byId[focused.id] = focused;
+        const childIds = pathIds.flatMap((id) =>
+          byId[id] ? collectSpecializationChildIds(byId[id]) : [],
+        );
+        const childrenById = await batchGetNodesByIds(db, childIds, appName);
+        if (cancelled) return;
+        const tree = buildPathTreeWithSiblings(
+          pathIds,
+          byId,
+          childrenById,
+          focused.id,
+        );
+        setHierarchyTree(tree);
+      } catch (e) {
+        console.error("navigator hierarchy-build failed:", e);
+        // Fall back to an empty tree so the graph view doesn't hang on
+        // the spinner forever.
+        if (!cancelled) setHierarchyTree([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeId, nodes, appName]);
+
+  const expandGraphNode = useCallback(
+    async (treeId: string, nodeId: string) => {
+      const db = getFirestore();
+      const full = await fetchSingleNode(db, nodeId, appName);
+      if (!full) return;
+      const childIds = collectSpecializationChildIds(full);
+      const childDocs = await batchGetNodesByIds(db, childIds, appName);
+      const merged: Record<string, INode> = {
+        ...childDocs,
+        [full.id]: full,
+      };
+      setHierarchyTree((prev) =>
+        prev ? replaceWithOneLevel(prev, treeId, full, merged) : prev,
+      );
+    },
+    [appName],
+  );
+
+  const collapseGraphNode = useCallback((treeId: string) => {
+    setHierarchyTree((prev) => {
+      if (!prev) return prev;
+      return mapTreeAtId(prev, treeId, (n) => ({
+        ...n,
+        children: [],
+        outlineLoadChildren: true,
+        hasUnresolvedChildren: true,
+      }));
     });
   }, []);
 
@@ -939,12 +1005,11 @@ export const NavigateLandingSection = ({
             />
           ) : (
             <NodeGraph
-              currentVisibleNode={activeNode}
-              relatedNodes={nodes}
-              navigateToNode={navigateToNode}
+              hierarchyTree={hierarchyTree}
+              focusedId={activeId}
+              onExpandNode={expandGraphNode}
+              onCollapseNode={collapseGraphNode}
               borderless
-              expanded={graphExpanded}
-              onToggleExpand={toggleGraphExpand}
             />
           )}
 
