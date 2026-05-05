@@ -24,11 +24,20 @@ import {
   SettingsOutlined as GearIcon,
 } from "@mui/icons-material";
 import {
+  collection,
+  documentId,
+  getDocs,
+  getFirestore,
+  query as firestoreQuery,
+  where,
+} from "firebase/firestore";
+import {
   AI_PROVIDERS,
   AiCallError,
   type AiConf,
   type AiProviderId,
   type ChatMsg,
+  type ToolCall,
   callLLM,
   clearAiConf,
   defaultModel,
@@ -37,13 +46,23 @@ import {
   saveAiConf,
   verifyAiConf,
 } from "./aiProviders";
-import { buildDirectory, buildSystemPrompt } from "./aiContext";
+import {
+  MAX_GET_ACTIVITIES_BATCH,
+  MAX_SEARCH_RESULTS,
+  MAX_TOOL_ITERATIONS,
+  SYSTEM_PROMPT,
+  TOOLS,
+  formatActivityProfiles,
+  formatSearchResults,
+  type SearchHit,
+} from "./aiContext";
+import { Post } from "../../../lib/utils/Post";
+import { NODES } from "../../../lib/firestoreClient/collections";
 import type { INode } from "../../../types/INode";
 
 const INTER =
   '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
 
-// Three-dot typing indicator — each dot bounces on a staggered delay.
 const dotBounce = keyframes`
   0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
   40% { transform: translateY(-4px); opacity: 1; }
@@ -73,19 +92,208 @@ type Turn =
   | { kind: "error"; text: string; details?: unknown; status?: number };
 
 type Props = {
-  nodes: { [id: string]: INode };
-  navigateToNode: (id: string) => void;
+  appName: string;
+  // optional title forwarded from chip clicks for an immediate label
+  navigateToNode: (id: string, title?: string) => void;
 };
 
-// ──────────────────────────────────────────────────────────────
-// Inline markdown-lite renderer for assistant replies.
-// Handles fenced code blocks, **#ID Title** chips (clickable), **bold**,
-// `inline code`, ## headings, --- rules, and newlines.
-// ──────────────────────────────────────────────────────────────
+// Verbose tool-loop logging gated on window.__AI_DEBUG (default on).
+// Silence with: window.__AI_DEBUG = false in the browser console.
+const aiDebug = (...args: unknown[]) => {
+  if (typeof window === "undefined") return;
+  const w = window as unknown as { __AI_DEBUG?: boolean };
+  if (w.__AI_DEBUG === false) return;
+  // eslint-disable-next-line no-console
+  console.log("AI Process", ...args);
+};
 
+type SearchChromaResult = {
+  id: string;
+  title?: string;
+  description?: string;
+};
+
+const runSearchActivities = async (
+  query: string,
+  appName: string,
+): Promise<string> => {
+  const trimmed = (query ?? "").trim();
+  aiDebug("search_activities → input", { query, trimmed, appName });
+  if (!trimmed) {
+    aiDebug("search_activities → empty query, returning no-match");
+    return formatSearchResults(query ?? "", []);
+  }
+  try {
+    const reqBody = {
+      query: trimmed,
+      appName,
+      nodeType: "activity",
+      resultsNum: MAX_SEARCH_RESULTS,
+      skillsFuture: false,
+    };
+    aiDebug("search_activities → POST /api/searchChroma body:", reqBody);
+    const t0 = performance.now();
+    const resp = await Post<{ results?: SearchChromaResult[] }>(
+      "/searchChroma",
+      reqBody,
+    );
+    const ms = Math.round(performance.now() - t0);
+    aiDebug(
+      `search_activities → response in ${ms}ms; ${resp?.results?.length ?? 0} result(s)`,
+      resp,
+    );
+    const hits: SearchHit[] = (resp?.results ?? []).map((r) => ({
+      id: r.id,
+      title: r.title ?? r.id,
+      description: r.description,
+    }));
+    const formatted = formatSearchResults(trimmed, hits);
+    aiDebug("search_activities → formatted result fed to LLM:", formatted);
+    return formatted;
+  } catch (e) {
+    const msg =
+      e instanceof Error ? e.message : "Search failed for an unknown reason.";
+    aiDebug("search_activities → ERROR", { message: msg, error: e });
+    return `Search error: ${msg}. Try a different query or proceed without search.`;
+  }
+};
+
+// Firestore `in` queries cap at 30 ids per call. We cap inputs at
+// MAX_GET_ACTIVITIES_BATCH (20) but still chunk to be safe.
+const FIRESTORE_IN_LIMIT = 30;
+
+const fetchNodesByIds = async (
+  ids: string[],
+): Promise<Map<string, INode>> => {
+  const out = new Map<string, INode>();
+  if (ids.length === 0) return out;
+  const db = getFirestore();
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += FIRESTORE_IN_LIMIT) {
+    chunks.push(ids.slice(i, i + FIRESTORE_IN_LIMIT));
+  }
+  aiDebug(
+    `fetchNodesByIds → ${ids.length} id(s) in ${chunks.length} chunk(s)`,
+    ids,
+  );
+  const t0 = performance.now();
+  const snapshots = await Promise.all(
+    chunks.map((chunk) =>
+      getDocs(
+        firestoreQuery(
+          collection(db, NODES),
+          where(documentId(), "in", chunk),
+        ),
+      ),
+    ),
+  );
+  for (const snapshot of snapshots) {
+    snapshot.forEach((doc) => {
+      const data = { id: doc.id, ...(doc.data() as object) } as INode;
+      out.set(doc.id, data);
+    });
+  }
+  const ms = Math.round(performance.now() - t0);
+  aiDebug(
+    `fetchNodesByIds → got ${out.size}/${ids.length} doc(s) in ${ms}ms`,
+  );
+  if (out.size < ids.length) {
+    const missing = ids.filter((id) => !out.has(id));
+    aiDebug("fetchNodesByIds → missing ids:", missing);
+  }
+  return out;
+};
+
+const runGetActivities = async (
+  ids: string[],
+  appName: string,
+): Promise<string> => {
+  aiDebug("get_activities → input", { ids, appName });
+  const cleaned = Array.from(
+    new Set(
+      (Array.isArray(ids) ? ids : [])
+        .filter((x): x is string => typeof x === "string" && !!x.trim())
+        .map((x) => x.trim()),
+    ),
+  ).slice(0, MAX_GET_ACTIVITIES_BATCH);
+
+  if (cleaned.length === 0) {
+    aiDebug("get_activities → no valid ids after cleanup");
+    return "No ids provided.";
+  }
+  if (cleaned.length !== (ids?.length ?? 0)) {
+    aiDebug(
+      `get_activities → cleaned ids: ${ids?.length ?? 0} → ${cleaned.length}`,
+      cleaned,
+    );
+  }
+
+  try {
+    const fetched = await fetchNodesByIds(cleaned);
+    let scopeFiltered = 0;
+    const profiles = cleaned.map((id) => {
+      const node = fetched.get(id) ?? null;
+      // Scope guard: if the node belongs to a different appName, hide it
+      // from the model so cross-app data can't leak through tool calls.
+      if (node && (node as { appName?: string }).appName !== appName) {
+        scopeFiltered++;
+        return { id, node: null };
+      }
+      return { id, node };
+    });
+    if (scopeFiltered > 0) {
+      aiDebug(
+        `get_activities → ${scopeFiltered} node(s) hidden by appName scope guard`,
+      );
+    }
+    const formatted = formatActivityProfiles(profiles);
+    aiDebug("get_activities → formatted result fed to LLM:", formatted);
+    return formatted;
+  } catch (e) {
+    const msg =
+      e instanceof Error ? e.message : "Fetch failed for an unknown reason.";
+    aiDebug("get_activities → ERROR", { message: msg, error: e });
+    return `get_activities error: ${msg}.`;
+  }
+};
+
+const executeToolCall = async (
+  call: ToolCall,
+  appName: string,
+): Promise<string> => {
+  aiDebug(`tool call → ${call.name}`, { id: call.id, input: call.input });
+  if (call.name === "search_activities") {
+    const q = (call.input?.query ?? "") as string;
+    return runSearchActivities(q, appName);
+  }
+  if (call.name === "get_activities") {
+    const ids = (call.input?.ids ?? []) as string[];
+    return runGetActivities(ids, appName);
+  }
+  aiDebug(`tool call → UNKNOWN tool: ${call.name}`);
+  return `Unknown tool: ${call.name}. Available tools: search_activities, get_activities.`;
+};
+
+const statusForCall = (call: ToolCall): string => {
+  if (call.name === "search_activities") {
+    const q = (call.input?.query ?? "") as string;
+    return q ? `Searching for "${q.slice(0, 40)}"…` : "Searching ontology…";
+  }
+  if (call.name === "get_activities") {
+    const ids = (call.input?.ids ?? []) as string[];
+    const n = Array.isArray(ids) ? ids.length : 0;
+    return n === 1
+      ? "Reading 1 activity…"
+      : `Reading ${n} activities…`;
+  }
+  return `Calling ${call.name}…`;
+};
+
+// Markdown-lite: fenced code, **#ID Title** chips, **bold**, `code`,
+// ## headings, --- rules, newlines.
 const renderInline = (
   text: string,
-  onNav: (id: string) => void,
+  onNav: (id: string, title?: string) => void,
   accent: string,
   keyPrefix: string,
 ): React.ReactNode[] => {
@@ -111,7 +319,7 @@ const renderInline = (
       <Box
         key={`${keyPrefix}-chip${i}`}
         component="span"
-        onClick={() => onNav(id)}
+        onClick={() => onNav(id, title)}
         sx={{
           display: "inline-flex",
           alignItems: "center",
@@ -148,7 +356,6 @@ const renderPlain = (
   accent: string,
   keyPrefix: string,
 ): React.ReactNode[] => {
-  // Handle **bold**, `code`, newlines.
   const out: React.ReactNode[] = [];
   const tokenRe = /\*\*([^*]+)\*\*|`([^`]+)`|\n/g;
   let last = 0;
@@ -196,12 +403,11 @@ const renderPlain = (
 
 const AssistantText: React.FC<{
   text: string;
-  onNav: (id: string) => void;
+  onNav: (id: string, title?: string) => void;
 }> = ({ text, onNav }) => {
   const theme = useTheme();
   const accent = theme.palette.primary.main;
 
-  // Split out fenced code blocks (```...```) and render them as preformatted.
   const segments = useMemo(() => {
     const re = /```(\w*)\n?([\s\S]*?)```/g;
     const parts: Array<
@@ -252,11 +458,7 @@ const AssistantText: React.FC<{
   );
 };
 
-// ──────────────────────────────────────────────────────────────
-// Main panel
-// ──────────────────────────────────────────────────────────────
-
-export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
+export const AiPanel: React.FC<Props> = ({ appName, navigateToNode }) => {
   const theme = useTheme();
   const accent = theme.palette.primary.main;
 
@@ -265,8 +467,13 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<string>("");
   const [editingConf, setEditingConf] = useState(false);
   const [expandedErrors, setExpandedErrors] = useState<Set<number>>(new Set());
+
+  // Full log fed to the model (incl. tool calls/results); `turns` is
+  // the visible history (user/assistant text + errors only).
+  const [msgLog, setMsgLog] = useState<ChatMsg[]>([]);
 
   const toggleErrorDetails = useCallback((idx: number) => {
     setExpandedErrors((prev) => {
@@ -286,7 +493,6 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
 
   const streamRef = useRef<HTMLDivElement | null>(null);
 
-  // Hydrate from localStorage once.
   useEffect(() => {
     const existing = loadAiConf();
     if (existing) {
@@ -297,26 +503,11 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
     setHydrated(true);
   }, []);
 
-  // Scroll to bottom on new turns or loading flip.
   useEffect(() => {
     const el = streamRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
   }, [turns, loading]);
-
-  // Directory is expensive to build for large ontologies; memoize on `nodes`.
-  const directory = useMemo(() => buildDirectory(nodes), [nodes]);
-
-  // Keep only the last 20 display turns of conversation context.
-  const historyForPrompt: ChatMsg[] = useMemo(() => {
-    const msgs: ChatMsg[] = [];
-    for (const t of turns) {
-      if (t.kind === "user") msgs.push({ role: "user", content: t.text });
-      else if (t.kind === "assistant")
-        msgs.push({ role: "assistant", content: t.text });
-    }
-    return msgs.slice(-20);
-  }, [turns]);
 
   const send = useCallback(async () => {
     const q = input.trim();
@@ -324,18 +515,110 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
     setInput("");
     setTurns((prev) => [...prev, { kind: "user", text: q }]);
     setLoading(true);
+    setStatus("Thinking…");
+
+    // Snapshot so we can revert on error (avoids a half-tool-called log).
+    const baseLog = msgLog;
+    // Rough budget: ~24 mixed user/assistant/tool messages.
+    const trimmed = baseLog.length > 24 ? baseLog.slice(-24) : baseLog;
+    const initialMessages: ChatMsg[] = [
+      { role: "system", content: SYSTEM_PROMPT },
+      ...trimmed,
+      { role: "user", content: q },
+    ];
+
+    aiDebug("send → start", {
+      query: q,
+      provider: conf.prov,
+      model: conf.model,
+      historyMsgs: trimmed.length,
+      appName,
+    });
+
+    let working: ChatMsg[] = initialMessages;
+    let finalText = "";
+
     try {
-      const sys = buildSystemPrompt(q, nodes, directory);
-      const msgs: ChatMsg[] = [
-        { role: "system", content: sys },
-        ...historyForPrompt,
-        { role: "user", content: q },
-      ];
-      const text = await callLLM(conf, msgs);
+      for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
+        // Last iteration: drop tools so the model must produce a final answer.
+        const toolsForCall = i === MAX_TOOL_ITERATIONS - 1 ? undefined : TOOLS;
+        aiDebug(
+          `iter ${i} → calling LLM (${working.length} msgs, tools: ${toolsForCall ? "yes" : "no"})`,
+        );
+        const t0 = performance.now();
+        const resp = await callLLM(conf, working, toolsForCall);
+        const ms = Math.round(performance.now() - t0);
+
+        if (resp.kind === "text") {
+          aiDebug(
+            `iter ${i} → LLM returned TEXT in ${ms}ms (${resp.text.length} chars)`,
+            resp.text.slice(0, 200),
+          );
+          finalText = resp.text;
+          working = [
+            ...working,
+            { role: "assistant", content: resp.text },
+          ];
+          break;
+        }
+
+        aiDebug(
+          `iter ${i} → LLM returned ${resp.calls.length} tool call(s) in ${ms}ms`,
+          {
+            preamble: resp.text?.slice(0, 200) ?? "",
+            calls: resp.calls.map((c) => ({ name: c.name, input: c.input })),
+          },
+        );
+
+        const calls = resp.calls;
+        setStatus(
+          calls.length === 1
+            ? statusForCall(calls[0])
+            : `Running ${calls.length} tools…`,
+        );
+        working = [
+          ...working,
+          {
+            role: "assistant",
+            content: resp.text ?? "",
+            toolCalls: calls,
+          },
+        ];
+
+        const results = await Promise.all(
+          calls.map(async (c) => ({
+            id: c.id,
+            name: c.name,
+            content: await executeToolCall(c, appName),
+          })),
+        );
+        for (const r of results) {
+          working.push({
+            role: "tool",
+            content: r.content,
+            toolCallId: r.id,
+            toolName: r.name,
+          });
+        }
+        setStatus("Thinking…");
+      }
+
+      if (!finalText) {
+        throw new AiCallError(
+          "The assistant kept calling tools without answering. Try rephrasing your question.",
+        );
+      }
+
+      // System header is re-prepended on every send, so strip it here.
+      setMsgLog(working.filter((m) => m.role !== "system"));
       setTurns((prev) => [
         ...prev,
-        { kind: "assistant", text, modelLabel: modelLabel(conf) },
+        { kind: "assistant", text: finalText, modelLabel: modelLabel(conf) },
       ]);
+      aiDebug("send → done", {
+        finalChars: finalText.length,
+        totalMsgs: working.length,
+      });
     } catch (e) {
       const msg =
         e instanceof AiCallError
@@ -344,15 +627,18 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
             ? e.message
             : "Something went wrong.";
       const details = e instanceof AiCallError ? e.details : undefined;
-      const status = e instanceof AiCallError ? e.status : undefined;
+      const errStatus = e instanceof AiCallError ? e.status : undefined;
+      aiDebug("send → ERROR", { message: msg, status: errStatus, details });
       setTurns((prev) => [
         ...prev,
-        { kind: "error", text: msg, details, status },
+        { kind: "error", text: msg, details, status: errStatus },
       ]);
+      // Don't poison the log with a half-finished tool-call cycle.
     } finally {
       setLoading(false);
+      setStatus("");
     }
-  }, [input, conf, loading, nodes, directory, historyForPrompt]);
+  }, [input, conf, loading, msgLog, appName]);
 
   const handleProvChange = (prov: AiProviderId) => {
     setFormProv(prov);
@@ -394,11 +680,11 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
     setConf(null);
     setFormKey("");
     setTurns([]);
+    setMsgLog([]);
     setEditingConf(false);
   };
 
-  // Until we've loaded from localStorage, show a spinner to avoid flashing
-  // the empty state for users who already have a key configured.
+  // Spinner until hydrated, to avoid flashing the empty state.
   if (!hydrated) {
     return (
       <Box
@@ -416,10 +702,6 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
 
   const showForm = !conf || editingConf;
 
-  // ──────────────────────────────────────────────────────────
-  // Empty / configure state
-  // ──────────────────────────────────────────────────────────
-
   if (showForm) {
     return (
       <Box
@@ -436,7 +718,6 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
           },
         }}
       >
-        {/* Hero — minimal text block, matches the search empty-state voice */}
         <Box
           sx={{
             display: "flex",
@@ -478,7 +759,6 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
           </Typography>
         </Box>
 
-        {/* Form — stacked fields, no card chrome */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 0.55 }}>
             <Typography sx={fieldLabelSx}>Provider</Typography>
@@ -642,10 +922,6 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
     );
   }
 
-  // ──────────────────────────────────────────────────────────
-  // Chat state
-  // ──────────────────────────────────────────────────────────
-
   return (
     <Box
       sx={{
@@ -656,7 +932,6 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
         position: "relative",
       }}
     >
-      {/* Floating gear — opens the API settings form */}
       {/* <IconButton
         onClick={() => setEditingConf(true)}
         aria-label="API settings"
@@ -685,7 +960,6 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
         <GearIcon sx={{ fontSize: 15 }} />
       </IconButton> */}
 
-      {/* Conversation stream */}
       <Box
         ref={streamRef}
         sx={{
@@ -695,8 +969,7 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
           px: 1.5,
           pt: 1.5,
           pb: 2,
-          // Soft fade at the bottom so scrolled messages dissolve into the
-          // composer area instead of getting hard-cut at the edge.
+          // Soft fade so scrolled messages dissolve into the composer.
           maskImage:
             "linear-gradient(to bottom, #000 calc(100% - 24px), transparent)",
           WebkitMaskImage:
@@ -913,15 +1186,29 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
                 bgcolor: (tt) => alpha(tt.palette.text.primary, 0.04),
                 border: (tt) =>
                   `1px solid ${alpha(tt.palette.text.primary, 0.05)}`,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 1,
               }}
             >
               <TypingDots color={alpha(theme.palette.text.primary, 0.45)} />
+              {status && (
+                <Typography
+                  sx={{
+                    fontSize: "0.75rem",
+                    fontFamily: INTER,
+                    color: "text.secondary",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {status}
+                </Typography>
+              )}
             </Box>
           )}
         </Box>
       </Box>
 
-      {/* Composer — pinned to the bottom, sits just above the footer */}
       <Box sx={{ px: 1.5, pt: 1, pb: 1 }}>
         <Box
           sx={{
@@ -1018,7 +1305,6 @@ export const AiPanel: React.FC<Props> = ({ nodes, navigateToNode }) => {
         </Box>
       </Box>
 
-      {/* Persistent footer: model info + change-key link */}
       <Box
         sx={{
           borderTop: (t) => `1px solid ${alpha(t.palette.text.primary, 0.06)}`,
