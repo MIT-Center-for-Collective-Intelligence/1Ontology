@@ -4,7 +4,9 @@ import {
   Chip,
   CircularProgress,
   Grid,
+  IconButton,
   InputAdornment,
+  Skeleton,
   Stack,
   TextField,
   ToggleButton,
@@ -15,6 +17,7 @@ import {
 } from "@mui/material";
 import {
   Search as SearchIcon,
+  Close as CloseIcon,
   ErrorOutline as ErrorOutlineIcon,
   ExploreOutlined as CompassIcon,
   AccountTreeOutlined as GraphIcon,
@@ -22,6 +25,8 @@ import {
 } from "@mui/icons-material";
 import {
   collection,
+  doc,
+  getDoc,
   getDocs,
   getFirestore,
   query as firestoreQuery,
@@ -30,8 +35,21 @@ import {
 import NodeCompass from "../../components/NodBody/NodeCompass";
 import NodeGraph from "../../components/NodBody/NodeGraph";
 import { AiPanel } from "./_components/AiPanel";
-import type { ICollection, INode } from "../../types/INode";
+import type { ICollection, INode, TreeData } from "../../types/INode";
 import { NODES } from "../../lib/firestoreClient/collections";
+import { Post } from "../../lib/utils/Post";
+import FullPageLogoLoading from "../../components/layouts/FullPageLogoLoading";
+import {
+  batchGetNodesByIds,
+  buildPathTreeWithSiblings,
+  collectSpecializationChildIds,
+  mapTreeAtId,
+  replaceWithOneLevel,
+  resolvePathIds,
+} from "../../lib/utils/loadOutlineFromPathIds";
+import { fetchSingleNode } from "../../lib/utils/ontology.helpers";
+
+type ChromaResult = { id: string; title: string };
 
 const INTER =
   '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
@@ -166,6 +184,28 @@ const RelationGroup: React.FC<{
 // ──────────────────────────────────────────────────────────────
 // Main Navigate section
 // ──────────────────────────────────────────────────────────────
+//
+// TODO(navigator-optimization): The navigator currently fetches each
+// focused node on demand and caches them locally — this avoids the
+// previous 50K-node eager load, but two things still want fixing:
+//
+//   1. Cache duplication. The platform (Ontology.tsx) maintains its own
+//      `relatedNodes` map. This component re-fetches nodes the platform
+//      may already have. The clean fix is to lift the cache up to
+//      `[id].tsx` and share `relatedNodes` + a single `fetchNode`
+//      between the two modes.
+//
+//   2. Stats pill + search-result descriptions. Both used to read from
+//      the full in-memory ontology. Stats are now disabled (see below).
+//      Search descriptions silently fall back to the chroma title when
+//      the result isn't in the local cache. The proper fix is to have
+//      `/searchChroma` return a description excerpt inline (it already
+//      touches the document during retrieval), and to surface stats
+//      from a server-side aggregate (a Cloud Function maintaining a
+//      per-app stats doc, or an `/api/ontology-stats` endpoint).
+//
+// Both of these are pure optimizations; the navigator's correctness
+// does not depend on them.
 
 export const NavigateLandingSection = ({
   isDark,
@@ -181,49 +221,62 @@ export const NavigateLandingSection = ({
   const theme = useTheme();
   const accent = theme.palette.primary.main;
 
-  const [nodes, setNodes] = useState<{ [id: string]: INode } | null>(null);
+  // Sparse, demand-populated cache. Starts empty; entries arrive as the
+  // user navigates. The compass and detail panel render the focused
+  // node's chips from inline link titles, so satellite nodes don't need
+  // to be in this cache for their labels to show — only the focused
+  // node itself does.
+  const [nodes, setNodes] = useState<{ [id: string]: INode }>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"compass" | "graph">("compass");
   const [sidebarTab, setSidebarTab] = useState<"search" | "ai">("search");
 
+  // Resolve the initial focused node with one targeted fetch — no full
+  // ontology load. Order: caller-supplied `initialNodeId`, else the
+  // app's root node.
   useEffect(() => {
+    if (activeId) return;
     let cancelled = false;
     (async () => {
       try {
         const db = getFirestore();
-        const q = firestoreQuery(
-          collection(db, NODES),
-          where("appName", "==", appName),
-          where("deleted", "==", false),
-        );
-        const snapshot = await getDocs(q);
-        if (cancelled) return;
-        const loaded: { [id: string]: INode } = {};
-        let root: string | null = null;
-        snapshot.forEach((doc) => {
-          const raw = doc.data() as Record<string, unknown>;
-          const data = { id: doc.id, ...raw } as INode;
-          loaded[doc.id] = data;
-          if (!root && (raw.root === true || raw.root === "true")) {
-            root = doc.id;
+        let resolved: INode | null = null;
+        if (initialNodeId) {
+          const snap = await getDoc(doc(collection(db, NODES), initialNodeId));
+          if (cancelled) return;
+          if (snap.exists()) {
+            resolved = { id: snap.id, ...snap.data() } as INode;
           }
-        });
-        setNodes(loaded);
-        // Prefer the caller-supplied initial node id when it's a valid
-        // node for this app; otherwise fall back to the app's root.
-        if (initialNodeId && loaded[initialNodeId]) {
-          setActiveId(initialNodeId);
-        } else {
-          setActiveId(root);
         }
+        if (!resolved && !cancelled) {
+          const rootSnap = await getDocs(
+            firestoreQuery(
+              collection(db, NODES),
+              where("appName", "==", appName),
+              where("deleted", "==", false),
+              where("root", "==", true),
+            ),
+          );
+          if (cancelled) return;
+          const rootDoc = rootSnap.docs[0];
+          if (rootDoc) {
+            resolved = { id: rootDoc.id, ...rootDoc.data() } as INode;
+          }
+        }
+        if (cancelled || !resolved) return;
+        const node = resolved;
+        setNodes((prev) =>
+          prev[node.id] ? prev : { ...prev, [node.id]: node },
+        );
+        setActiveId(node.id);
       } catch (e) {
         if (!cancelled) {
           const msg =
             e instanceof Error
               ? e.message
-              : "Failed to load ontology from Firestore.";
+              : "Failed to load the focused node from Firestore.";
           setLoadError(msg);
         }
       }
@@ -231,7 +284,7 @@ export const NavigateLandingSection = ({
     return () => {
       cancelled = true;
     };
-  }, [appName, initialNodeId]);
+  }, [appName, initialNodeId, activeId]);
 
   // Mirror the focused node into the URL hash so the back-to-platform
   // callback can read it, refreshes preserve focus, and the link is
@@ -256,108 +309,193 @@ export const NavigateLandingSection = ({
   // hashchange, so we won't loop on our own updates.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const onHashChange = () => {
+    let cancelled = false;
+    const onHashChange = async () => {
       const h = window.location.hash.replace(/^#/, "");
       if (!h.endsWith("/navigate")) return;
       const id = h.slice(0, -"/navigate".length);
-      if (id && nodes && nodes[id] && id !== activeId) {
+      if (!id || id === activeId) return;
+      if (nodes[id]) {
         setActiveId(id);
+        return;
+      }
+      try {
+        const db = getFirestore();
+        const snap = await getDoc(doc(collection(db, NODES), id));
+        if (cancelled || !snap.exists()) return;
+        const node = { id: snap.id, ...snap.data() } as INode;
+        setNodes((prev) => (prev[id] ? prev : { ...prev, [id]: node }));
+        setActiveId(id);
+      } catch (e) {
+        console.error("navigator hashchange fetch failed:", e);
       }
     };
     window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("hashchange", onHashChange);
+    };
   }, [nodes, activeId]);
 
+  // Navigate to a node. If it isn't cached locally, fetch it first and
+  // only then swap the focused id — the previous view stays put during
+  // the fetch (no jarring full-page loader between navigations).
   const navigateToNode = useCallback(
-    (id: string) => {
-      if (!nodes || !nodes[id]) return;
-      setActiveId(id);
+    async (id: string) => {
+      if (!id) return;
+      if (nodes[id]) {
+        setActiveId(id);
+        return;
+      }
+      try {
+        const db = getFirestore();
+        const snap = await getDoc(doc(collection(db, NODES), id));
+        if (!snap.exists()) return;
+        const node = { id: snap.id, ...snap.data() } as INode;
+        setNodes((prev) => (prev[id] ? prev : { ...prev, [id]: node }));
+        setActiveId(id);
+      } catch (e) {
+        console.error("navigator navigateToNode fetch failed:", e);
+      }
     },
     [nodes],
   );
 
-  // Graph view's expansion state lives here so it survives toggling between
-  // compass ↔ graph (either view unmounts when the toggle switches away).
-  // Reset whenever the active node changes — a fresh focus is a fresh tree.
-  const [graphExpanded, setGraphExpanded] = useState<Set<string>>(new Set());
+  // Graph view: hierarchy from root → focused, with all siblings at each level.
+  const [hierarchyTree, setHierarchyTree] = useState<TreeData[] | null>(null);
+
   useEffect(() => {
-    setGraphExpanded(new Set());
-  }, [activeId]);
-  const toggleGraphExpand = useCallback((id: string) => {
-    setGraphExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+    if (!activeId) return;
+    const focused = nodes[activeId];
+    if (!focused) return;
+    let cancelled = false;
+    setHierarchyTree(null);
+    (async () => {
+      try {
+        const db = getFirestore();
+        const { pathIds } = await resolvePathIds(focused, (id) =>
+          fetchSingleNode(db, id, appName),
+        );
+        if (cancelled) return;
+        const byId = await batchGetNodesByIds(db, pathIds, appName);
+        if (cancelled) return;
+        if (!byId[focused.id]) byId[focused.id] = focused;
+        const childIds = pathIds.flatMap((id) =>
+          byId[id] ? collectSpecializationChildIds(byId[id]) : [],
+        );
+        const childrenById = await batchGetNodesByIds(db, childIds, appName);
+        if (cancelled) return;
+        const tree = buildPathTreeWithSiblings(
+          pathIds,
+          byId,
+          childrenById,
+          focused.id,
+        );
+        setHierarchyTree(tree);
+      } catch (e) {
+        console.error("navigator hierarchy-build failed:", e);
+        // Fall back to an empty tree so the graph view doesn't hang on
+        // the spinner forever.
+        if (!cancelled) setHierarchyTree([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeId, nodes, appName]);
+
+  const expandGraphNode = useCallback(
+    async (treeId: string, nodeId: string) => {
+      const db = getFirestore();
+      const full = await fetchSingleNode(db, nodeId, appName);
+      if (!full) return;
+      const childIds = collectSpecializationChildIds(full);
+      const childDocs = await batchGetNodesByIds(db, childIds, appName);
+      const merged: Record<string, INode> = {
+        ...childDocs,
+        [full.id]: full,
+      };
+      setHierarchyTree((prev) =>
+        prev ? replaceWithOneLevel(prev, treeId, full, merged) : prev,
+      );
+    },
+    [appName],
+  );
+
+  const collapseGraphNode = useCallback((treeId: string) => {
+    setHierarchyTree((prev) => {
+      if (!prev) return prev;
+      return mapTreeAtId(prev, treeId, (n) => ({
+        ...n,
+        children: [],
+        outlineLoadChildren: true,
+        hasUnresolvedChildren: true,
+      }));
     });
   }, []);
 
-  // Search results: ranked flat list of nodes whose title matches the query.
-  // Empty query → empty list (left panel shows an empty-state prompt).
-  const searchResults = useMemo(() => {
-    if (!nodes) return [];
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    const scored: Array<{ node: INode; score: number }> = [];
-    for (const node of Object.values(nodes)) {
-      const s = scoreMatch(node.title ?? "", q);
-      if (s > 0) scored.push({ node, score: s });
-    }
-    scored.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return (a.node.title ?? "").localeCompare(b.node.title ?? "");
-    });
-    return scored.slice(0, 200).map((s) => s.node);
-  }, [query, nodes]);
+  // Chroma-backed search — fires only on Enter or Search-icon click. The
+  // ranked id+title list returned by /searchChroma is paired with the
+  // already-loaded `nodes` map to render description previews where
+  // available.
+  const [submittedQuery, setSubmittedQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<ChromaResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
-  // Header stats: process count, undirected relationship count (gen/spec +
-  // parts/isPartOf are inverse pairs, so we count directed links and halve),
-  // and max specialization depth via BFS from any root-flagged node.
-  const stats = useMemo(() => {
-    if (!nodes) return null;
-    const values = Object.values(nodes);
-    const processes = values.length;
-
-    let directed = 0;
-    for (const n of values) {
-      directed += countLinks(n.generalizations);
-      directed += countLinks(n.specializations);
-      directed += countLinks(n.properties?.parts as ICollection[] | undefined);
-      directed += countLinks(
-        n.properties?.isPartOf as ICollection[] | undefined,
+  const runSearch = useCallback(async () => {
+    const q = query.trim();
+    if (!q || searchLoading) return;
+    setSubmittedQuery(q);
+    setSearchLoading(true);
+    setSearchError(null);
+    try {
+      const response = await Post<{ results?: ChromaResult[] }>(
+        "/searchChroma",
+        {
+          query: q,
+          skillsFuture: true,
+          appName,
+          resultsNum: 100,
+        },
       );
+      setSearchResults(response?.results ?? []);
+    } catch (e) {
+      console.error("searchChroma error:", e);
+      setSearchResults([]);
+      setSearchError("Search failed. Please try again.");
+    } finally {
+      setSearchLoading(false);
     }
-    const relationships = Math.round(directed / 2);
+  }, [query, searchLoading, appName]);
 
-    const roots = values.filter((n) => {
-      const r = (n as unknown as { root?: unknown }).root;
-      return r === true || r === "true";
-    });
-    let depth = 0;
-    const visited = new Set<string>();
-    let frontier: string[] = roots.map((r) => r.id);
-    frontier.forEach((id) => visited.add(id));
-    while (frontier.length && depth < 64) {
-      const next: string[] = [];
-      for (const id of frontier) {
-        const node = nodes[id];
-        if (!node) continue;
-        for (const col of node.specializations ?? []) {
-          for (const child of col?.nodes ?? []) {
-            if (child?.id && !visited.has(child.id) && nodes[child.id]) {
-              visited.add(child.id);
-              next.push(child.id);
-            }
-          }
-        }
-      }
-      if (next.length === 0) break;
-      depth += 1;
-      frontier = next;
+  const clearSearch = useCallback(() => {
+    setQuery("");
+    setSubmittedQuery("");
+    setSearchResults([]);
+    setSearchError(null);
+  }, []);
+
+  // Reset to the empty state when the input is cleared by hand so a stale
+  // result list doesn't linger after the user erases their query.
+  useEffect(() => {
+    if (query.trim() === "") {
+      setSubmittedQuery("");
+      setSearchResults([]);
+      setSearchError(null);
     }
+  }, [query]);
 
-    return { processes, relationships, depth };
-  }, [nodes]);
+  // Header stats — disabled while the navigator is in the on-demand
+  // fetching mode (see top-of-file TODO). Computing processes /
+  // relationships / depth requires the whole ontology in memory, which
+  // is exactly what we removed. The pill renders only when this is
+  // non-null, so leaving it null hides the pill cleanly.
+  // (The `as` cast preserves the wider type so the existing
+  // `{stats && (...)}` JSX block still typechecks.)
+  const stats = null as
+    | { processes: number; relationships: number; depth: number }
+    | null;
 
   // Loading / error states
   if (loadError) {
@@ -395,31 +533,12 @@ export const NavigateLandingSection = ({
     );
   }
 
-  if (!nodes || !activeId) {
-    return (
-      <Box
-        sx={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "column",
-          gap: 2,
-          bgcolor: "background.default",
-        }}
-      >
-        <CircularProgress size={28} thickness={4} />
-        <Typography
-          sx={{
-            fontFamily: INTER,
-            fontSize: "0.85rem",
-            color: "text.secondary",
-          }}
-        >
-          Loading the ontology of activities…
-        </Typography>
-      </Box>
-    );
+  // Loader appears only when we genuinely have nothing to render — i.e.
+  // the focused node hasn't been resolved yet, or its full doc isn't in
+  // the local cache. Mid-navigation re-fetches don't trigger this; the
+  // previous focused view stays visible until the next one is ready.
+  if (!activeId || !nodes[activeId]) {
+    return <FullPageLogoLoading />;
   }
 
   const activeNode = nodes[activeId];
@@ -573,7 +692,18 @@ export const NavigateLandingSection = ({
               size="small"
               placeholder="Search activities…"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                if (searchError) setSearchError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void runSearch();
+                } else if (e.key === "Escape") {
+                  clearSearch();
+                }
+              }}
               autoComplete="off"
               slotProps={{
                 input: {
@@ -582,6 +712,73 @@ export const NavigateLandingSection = ({
                       <SearchIcon
                         sx={{ color: "text.secondary", fontSize: 18 }}
                       />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end" sx={{ ml: 0 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.25,
+                          width: query.trim() ? "auto" : 0,
+                          minWidth: 0,
+                          overflow: "hidden",
+                          transition: "width 0.15s ease",
+                        }}
+                      >
+                        <IconButton
+                          size="small"
+                          onClick={() => void runSearch()}
+                          disabled={!query.trim() || searchLoading}
+                          aria-label="Search"
+                          sx={{
+                            width: 26,
+                            height: 26,
+                            color: accent,
+                            bgcolor: alpha(accent, 0.12),
+                            transition: "background-color 0.15s ease",
+                            "&:hover": {
+                              bgcolor: alpha(accent, 0.2),
+                            },
+                            "&.Mui-disabled": {
+                              color: "text.disabled",
+                              bgcolor: (t) =>
+                                alpha(t.palette.text.primary, 0.05),
+                            },
+                          }}
+                        >
+                          {searchLoading ? (
+                            <CircularProgress
+                              size={12}
+                              thickness={5}
+                              sx={{ color: "inherit" }}
+                            />
+                          ) : (
+                            <SearchIcon sx={{ fontSize: 14 }} />
+                          )}
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={clearSearch}
+                          disabled={!query.trim()}
+                          aria-label="Clear search"
+                          sx={{
+                            width: 26,
+                            height: 26,
+                            color: "text.secondary",
+                            "&:hover": {
+                              color: "error.main",
+                              bgcolor: (t) =>
+                                t.palette.mode === "dark"
+                                  ? alpha(t.palette.error.main, 0.14)
+                                  : alpha(t.palette.error.main, 0.08),
+                            },
+                          }}
+                        >
+                          <CloseIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Box>
                     </InputAdornment>
                   ),
                 },
@@ -651,10 +848,49 @@ export const NavigateLandingSection = ({
                     lineHeight: 1.5,
                   }}
                 >
-                  Type a keyword to find matching activities across the
-                  ontology.
+                  Type a keyword and press Enter to search the ontology.
                 </Typography>
               </Box>
+            ) : searchLoading ? (
+              <Stack spacing={0.75} sx={{ mt: 1 }}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton
+                    key={i}
+                    variant="rounded"
+                    height={48}
+                    sx={{
+                      borderRadius: 1.5,
+                      bgcolor: (t) => alpha(t.palette.text.primary, 0.06),
+                    }}
+                  />
+                ))}
+              </Stack>
+            ) : searchError ? (
+              <Typography
+                sx={{
+                  mt: 3,
+                  textAlign: "center",
+                  fontSize: "0.8rem",
+                  fontFamily: INTER,
+                  color: "error.main",
+                }}
+              >
+                {searchError}
+              </Typography>
+            ) : query.trim() !== submittedQuery ? (
+              <Typography
+                sx={{
+                  mt: 3,
+                  textAlign: "center",
+                  fontSize: "0.78rem",
+                  fontFamily: INTER,
+                  color: "text.disabled",
+                  lineHeight: 1.5,
+                }}
+              >
+                Press <strong>Enter</strong> or click the search button to
+                find &ldquo;{query.trim()}&rdquo;.
+              </Typography>
             ) : searchResults.length === 0 ? (
               <Typography
                 sx={{
@@ -665,19 +901,24 @@ export const NavigateLandingSection = ({
                   color: "text.disabled",
                 }}
               >
-                No activities match &ldquo;{query.trim()}&rdquo;.
+                No activities match &ldquo;{submittedQuery}&rdquo;.
               </Typography>
             ) : (
               <Stack spacing={0.5}>
-                {searchResults.map((n) => {
-                  const isActive = n.id === activeId;
-                  const desc = getDescription(n);
+                {searchResults.map((r) => {
+                  const isActive = r.id === activeId;
+                  // Chroma payload is {id, title}; pair with the locally
+                  // loaded node map to surface a description preview when
+                  // available, else fall back to the chroma title only.
+                  const fullNode = nodes[r.id];
+                  const title = fullNode?.title ?? r.title;
+                  const desc = fullNode ? getDescription(fullNode) : "";
                   return (
                     <Box
-                      key={n.id}
+                      key={r.id}
                       role="button"
                       tabIndex={0}
-                      onClick={() => navigateToNode(n.id)}
+                      onClick={() => navigateToNode(r.id)}
                       sx={{
                         p: 1.1,
                         borderRadius: 1.5,
@@ -706,7 +947,7 @@ export const NavigateLandingSection = ({
                           lineHeight: 1.3,
                         }}
                       >
-                        {n.title}
+                        {title}
                       </Typography>
                       {desc && (
                         <Typography
@@ -741,7 +982,7 @@ export const NavigateLandingSection = ({
               minHeight: 0,
             }}
           >
-            <AiPanel nodes={nodes} navigateToNode={navigateToNode} />
+            <AiPanel appName={appName} navigateToNode={navigateToNode} />
           </Box>
         </Grid>
 
@@ -765,12 +1006,11 @@ export const NavigateLandingSection = ({
             />
           ) : (
             <NodeGraph
-              currentVisibleNode={activeNode}
-              relatedNodes={nodes}
-              navigateToNode={navigateToNode}
+              hierarchyTree={hierarchyTree}
+              focusedId={activeId}
+              onExpandNode={expandGraphNode}
+              onCollapseNode={collapseGraphNode}
               borderless
-              expanded={graphExpanded}
-              onToggleExpand={toggleGraphExpand}
             />
           )}
 
