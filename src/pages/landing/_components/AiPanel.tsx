@@ -52,7 +52,7 @@ import {
   MAX_TOOL_ITERATIONS,
   SYSTEM_PROMPT,
   TOOLS,
-  formatActivityProfiles,
+  formatActivityProfile,
   formatSearchResults,
   type SearchHit,
 } from "./aiContext";
@@ -204,9 +204,13 @@ const fetchNodesByIds = async (
   return out;
 };
 
+const notFoundProfile = (id: string) => `=== #${id} ===\n(Not found.)\n`;
+
 const runGetActivities = async (
   ids: string[],
   appName: string,
+  cache: Map<string, string>,
+  currentLog: ChatMsg[],
 ): Promise<string> => {
   aiDebug("get_activities → input", { ids, appName });
   const cleaned = Array.from(
@@ -228,38 +232,67 @@ const runGetActivities = async (
     );
   }
 
-  try {
-    const fetched = await fetchNodesByIds(cleaned);
-    let scopeFiltered = 0;
-    const profiles = cleaned.map((id) => {
-      const node = fetched.get(id) ?? null;
-      // Scope guard: if the node belongs to a different appName, hide it
-      // from the model so cross-app data can't leak through tool calls.
-      if (node && (node as { appName?: string }).appName !== appName) {
-        scopeFiltered++;
-        return { id, node: null };
+  const missing = cleaned.filter((id) => !cache.has(id));
+  if (missing.length > 0) {
+    try {
+      const fetched = await fetchNodesByIds(missing);
+      let scopeFiltered = 0;
+      for (const id of missing) {
+        const node = fetched.get(id) ?? null;
+        // Scope guard: hide nodes from other apps so cross-app data
+        // can't leak through tool calls.
+        if (node && (node as { appName?: string }).appName !== appName) {
+          scopeFiltered++;
+          cache.set(id, notFoundProfile(id));
+          continue;
+        }
+        cache.set(id, node ? formatActivityProfile(id, node) : notFoundProfile(id));
       }
-      return { id, node };
-    });
-    if (scopeFiltered > 0) {
-      aiDebug(
-        `get_activities → ${scopeFiltered} node(s) hidden by appName scope guard`,
-      );
+      if (scopeFiltered > 0) {
+        aiDebug(
+          `get_activities → ${scopeFiltered} node(s) hidden by appName scope guard`,
+        );
+      }
+    } catch (e) {
+      const msg =
+        e instanceof Error ? e.message : "Fetch failed for an unknown reason.";
+      aiDebug("get_activities → ERROR", { message: msg, error: e });
+      return `get_activities error: ${msg}.`;
     }
-    const formatted = formatActivityProfiles(profiles);
-    aiDebug("get_activities → formatted result fed to LLM:", formatted);
-    return formatted;
-  } catch (e) {
-    const msg =
-      e instanceof Error ? e.message : "Fetch failed for an unknown reason.";
-    aiDebug("get_activities → ERROR", { message: msg, error: e });
-    return `get_activities error: ${msg}.`;
+  } else {
+    aiDebug("get_activities → all ids served from cache, no Firestore read");
   }
+
+  // Detect ids whose full profile still sits in the current message log;
+  // emit a pointer instead of duplicating the blob in the prompt.
+  const stillInLog = (id: string) => {
+    const tag = `=== #${id} `;
+    return currentLog.some((m) => m.role === "tool" && m.content.includes(tag));
+  };
+  let pointerCount = 0;
+  const parts = cleaned.map((id) => {
+    if (stillInLog(id)) {
+      pointerCount++;
+      return `=== #${id} ===\n(Already provided in an earlier tool result above; reuse that profile.)\n`;
+    }
+    return cache.get(id) ?? notFoundProfile(id);
+  });
+  if (pointerCount > 0) {
+    aiDebug(
+      `get_activities → ${pointerCount} id(s) deduplicated against existing log`,
+    );
+  }
+
+  const formatted = parts.join("\n");
+  aiDebug("get_activities → formatted result fed to LLM:", formatted);
+  return formatted;
 };
 
 const executeToolCall = async (
   call: ToolCall,
   appName: string,
+  cache: Map<string, string>,
+  currentLog: ChatMsg[],
 ): Promise<string> => {
   aiDebug(`tool call → ${call.name}`, { id: call.id, input: call.input });
   if (call.name === "search_activities") {
@@ -268,7 +301,7 @@ const executeToolCall = async (
   }
   if (call.name === "get_activities") {
     const ids = (call.input?.ids ?? []) as string[];
-    return runGetActivities(ids, appName);
+    return runGetActivities(ids, appName, cache, currentLog);
   }
   aiDebug(`tool call → UNKNOWN tool: ${call.name}`);
   return `Unknown tool: ${call.name}. Available tools: search_activities, get_activities.`;
@@ -493,6 +526,11 @@ export const AiPanel: React.FC<Props> = ({ appName, navigateToNode }) => {
 
   const streamRef = useRef<HTMLDivElement | null>(null);
 
+  // Session cache of formatted profile strings keyed by activity id.
+  // Survives turn-to-turn so a re-fetch of the same id skips Firestore;
+  // when paired with stillInLog(), also skips re-emitting the blob.
+  const profileCacheRef = useRef<Map<string, string>>(new Map());
+
   useEffect(() => {
     const existing = loadAiConf();
     if (existing) {
@@ -585,11 +623,17 @@ export const AiPanel: React.FC<Props> = ({ appName, navigateToNode }) => {
           },
         ];
 
+        const logForDedup = working;
         const results = await Promise.all(
           calls.map(async (c) => ({
             id: c.id,
             name: c.name,
-            content: await executeToolCall(c, appName),
+            content: await executeToolCall(
+              c,
+              appName,
+              profileCacheRef.current,
+              logForDedup,
+            ),
           })),
         );
         for (const r of results) {
@@ -681,6 +725,7 @@ export const AiPanel: React.FC<Props> = ({ appName, navigateToNode }) => {
     setFormKey("");
     setTurns([]);
     setMsgLog([]);
+    profileCacheRef.current.clear();
     setEditingConf(false);
   };
 
