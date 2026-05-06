@@ -1351,7 +1351,12 @@ const Ontology = ({
     }
 
     const loadNode = async () => {
-      const hashId = window.location.hash.split("#").reverse()[0];
+      // Strip the `/navigate` mode marker so the rest treats `raw` as a node id.
+      const raw = window.location.hash.split("#").reverse()[0] ?? "";
+      const isNavigateMode = raw.endsWith("/navigate");
+      const hashId = isNavigateMode
+        ? raw.slice(0, -"/navigate".length)
+        : raw;
       const userCurrentNodeId = user?.currentNode?.[appName]?.id;
       let node: INode | null = null;
 
@@ -1370,7 +1375,9 @@ const Ontology = ({
       }
 
       if (node) {
-        window.location.hash = node.id;
+        window.location.hash = isNavigateMode
+          ? `${node.id}/navigate`
+          : node.id;
         setCurrentVisibleNode(node);
       }
 
@@ -1427,6 +1434,13 @@ const Ontology = ({
     }
     let newHash = "";
     path.forEach((p: any) => (newHash = newHash + `#${p.id.trim()}`));
+
+    // Preserve the `/navigate` mode marker if it's currently in the URL.
+    // Without this, any platform-side write strips the suffix and flips
+    // the mode back to platform on every render.
+    if (window.location.hash.endsWith("/navigate")) {
+      newHash = `${newHash}/navigate`;
+    }
 
     // Don't update if hash is already correct to prevent duplicate history entries
     if (window.location.hash === newHash) {
