@@ -91,12 +91,17 @@ const asCollections = (value: any): ICollection[] | null => {
 const buildDiffNode = (
   id: string,
   source: { title?: string; optional?: boolean },
-  marker?: { change?: "added" | "removed"; sort?: boolean },
+  marker?: {
+    change?: "added" | "removed";
+    sort?: boolean;
+    optionalChange?: "added" | "removed";
+  },
 ): DiffLinkNode => {
   const node: DiffLinkNode = { id, title: source.title || "" };
   if (source.optional) node.optional = true;
   if (marker?.change) node.change = marker.change;
   if (marker?.sort) node.changeType = "sort";
+  if (marker?.optionalChange) node.optionalChange = marker.optionalChange;
   return node;
 };
 
@@ -135,6 +140,21 @@ const diffCollectionContents = (
     const newNodes = new Map((newCollection?.nodes || []).map((n) => [n.id, n]));
     const ids = new Set<string>([...oldNodes.keys(), ...newNodes.keys()]);
 
+    // Detect within-collection reorders: of the IDs present in BOTH sides of
+    // this collection, anything not in their LCS is one of the items that
+    // actually moved relative to the others. Skipped when the collection only
+    // exists on one side — there's no order to compare.
+    let stableIds: Set<string> = new Set();
+    if (oldCollection && newCollection) {
+      const sharedOldOrder = oldCollection.nodes
+        .map((n) => n.id)
+        .filter((id) => newNodes.has(id));
+      const sharedNewOrder = newCollection.nodes
+        .map((n) => n.id)
+        .filter((id) => oldNodes.has(id));
+      stableIds = longestCommonSubsequence(sharedOldOrder, sharedNewOrder);
+    }
+
     const merged: DiffLinkNode[] = [];
     for (const id of ids) {
       const inOld = oldNodes.has(id);
@@ -158,7 +178,34 @@ const diffCollectionContents = (
           }),
         );
       } else {
-        merged.push(buildDiffNode(id, source));
+        // Node is in both old and new of the same collection. Two annotations
+        // can fire here, independently and orthogonally:
+        //   * `sort` — moved relative to the other shared nodes (LCS-minimal).
+        //   * `optionalChange` — the `optional` boolean flipped, e.g. the
+        //     toggle-optional path in InheritedPartsViewerEdit.tsx that logs
+        //     a `modify elements` change differing only on this boolean.
+        const oldOptional = !!oldNodes.get(id)?.optional;
+        const newOptional = !!newNodes.get(id)?.optional;
+        const optionalChange =
+          oldOptional === newOptional
+            ? undefined
+            : newOptional
+              ? ("added" as const)
+              : ("removed" as const);
+        const moved = !stableIds.has(id);
+        const marker: {
+          sort?: boolean;
+          optionalChange?: "added" | "removed";
+        } = {};
+        if (moved) marker.sort = true;
+        if (optionalChange) marker.optionalChange = optionalChange;
+        merged.push(
+          buildDiffNode(
+            id,
+            source,
+            Object.keys(marker).length ? marker : undefined,
+          ),
+        );
       }
     }
 
@@ -238,31 +285,44 @@ const diffSortedCollections = (
 const lcsCollectionNames = (
   oldValue: ICollection[],
   newValue: ICollection[],
-): Set<string> => {
-  const oldNames = oldValue.map((c) => c.collectionName);
-  const newNames = newValue.map((c) => c.collectionName);
-  const m = oldNames.length;
-  const n = newNames.length;
+): Set<string> =>
+  longestCommonSubsequence(
+    oldValue.map((c) => c.collectionName),
+    newValue.map((c) => c.collectionName),
+  );
+
+/**
+ * Generic LCS: returns the set of values that appear in the longest common
+ * subsequence of `a` and `b`. Used for two purposes:
+ *   1. Finding stable collections during `sort collections` diffs.
+ *   2. Finding stable nodes inside a collection during within-collection
+ *      reorder detection.
+ *
+ * Tiebreaker (when `dp[i-1][j] === dp[i][j-1]` we move `i--`) matches
+ * `findLcsNames` in helpers.ts:1599-1637 so emitted diffs stay byte-identical
+ * to the legacy renderer's behaviour for the existing `sort collections` case.
+ */
+const longestCommonSubsequence = <T>(a: T[], b: T[]): Set<T> => {
+  const m = a.length;
+  const n = b.length;
   const dp = Array.from({ length: m + 1 }, () => new Array<number>(n + 1).fill(0));
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
       dp[i][j] =
-        oldNames[i - 1] === newNames[j - 1]
+        a[i - 1] === b[j - 1]
           ? dp[i - 1][j - 1] + 1
           : Math.max(dp[i - 1][j], dp[i][j - 1]);
     }
   }
-  const result = new Set<string>();
+  const result = new Set<T>();
   let i = m;
   let j = n;
   while (i > 0 && j > 0) {
-    if (oldNames[i - 1] === newNames[j - 1]) {
-      result.add(oldNames[i - 1]);
+    if (a[i - 1] === b[j - 1]) {
+      result.add(a[i - 1]);
       i--;
       j--;
     } else if (dp[i - 1][j] > dp[i][j - 1]) {
-      // Tiebreaker matches `findLcsNames` in helpers.ts:1599-1637 so the
-      // emitted diff is byte-identical to the legacy renderer's behaviour.
       i--;
     } else {
       j--;

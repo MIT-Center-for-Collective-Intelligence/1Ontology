@@ -240,6 +240,7 @@ export type DiffLinkNode = {
   change?: "added" | "removed";
   changeType?: "sort"; // node moved between collections
   optional?: boolean;
+  optionalChange?: "added" | "removed";
 };
 
 export type DiffCollection = {

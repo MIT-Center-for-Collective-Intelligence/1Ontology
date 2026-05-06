@@ -42,7 +42,10 @@ import {
   getFirestore,
   updateDoc,
 } from "firebase/firestore";
-import { NODES } from "@components/lib/firestoreClient/collections";
+import {
+  NODES,
+  NODES_LOGS,
+} from "@components/lib/firestoreClient/collections";
 import {
   DndContext,
   DragOverlay,
@@ -907,22 +910,56 @@ const CollectionStructure = ({
           return next;
         });
 
-        saveNewChangeLog(db, {
+        // Snapshot currentNode's specializations before / after the nodeBId
+        // removal so the parent log carries an actual element-level diff.
+        // `unlinkPropertyOf` above only mutates Firestore — the local
+        // `currentVisibleNode` object is untouched — so deriving here matches
+        // the on-write state. We deliberately do NOT use the `propertyValue`
+        // prop because that has been run through `processCollectionData` in
+        // StructuredProperty.tsx (pagination, `allNodes` / `loadedCount`
+        // annotations) and isn't a clean ICollection[] shape for
+        // `computeDiffValue`.
+        //
+        // Shallow rebuild: `.map` creates new collection wrappers and
+        // `.filter` returns a new nodes array, so nothing in
+        // `currentVisibleNode` is mutated. ILinkNode objects are shared but
+        // never mutated downstream (codebase invariant — every spec/gen
+        // write site assigns a new array or pushes onto one, never touches
+        // existing link objects).
+        const previousSpecializations: ICollection[] =
+          currentVisibleNode.specializations || [];
+        const newSpecializations: ICollection[] = previousSpecializations.map(
+          (col) => ({
+            ...col,
+            nodes: col.nodes.filter((n: ILinkNode) => n.id !== nodeBId),
+          }),
+        );
+
+        // Reserve a parent-log id up-front so the child log on nodeB can
+        // stamp `triggeredBy.logId` referencing the same doc that the parent
+        // log below will write to. Mirrors the pattern used in
+        // `handleSaveLinkChanges` (Node.tsx) and
+        // `unlinkSpecializationOrGeneralization` (LinkNode.tsx).
+        //
+        // Note: we deliberately do NOT thread `parentLog` into the
+        // `unlinkPropertyOf` call above. That call's effect *is* the parent
+        // mutation (currentNode losing nodeB from specializations), so its
+        // child-log emission would duplicate the explicit parent log here.
+        const parentLogId = doc(collection(db, NODES_LOGS)).id;
+        const parentLog = {
+          logId: parentLogId,
           nodeId: currentNodeId,
-          modifiedBy: user.uname,
-          modifiedProperty: "specializations",
-          previousValue: propertyValue,
-          newValue: null,
-          modifiedAt: new Date(),
-          changeType: "modify elements",
-          changeDetails: {
-            action: "nest-specialization",
-            movedNode: nodeBId,
-            newParent: nodeAId,
-          },
-          fullNode: currentVisibleNode,
-          ...(appName ? { appName } : {}),
-        });
+          nodeTitle: currentVisibleNode.title ?? "",
+          changeType: "modify elements" as const,
+        };
+
+        // Child log first, parent second — matches the codebase convention
+        // (helpers `unlinkPropertyOf` / `updateLinks` / `removeNodeLink` all
+        // write children before the orchestrator writes the parent). With
+        // `modifiedAt: new Date()` captured per call, this ensures the
+        // parent ends up with the later timestamp, so DESC-by-modifiedAt
+        // queries (UserActivity, NodeActivity, HistoryTab) place the parent
+        // above its children.
         saveNewChangeLog(db, {
           nodeId: nodeBId,
           modifiedBy: user.uname,
@@ -938,7 +975,28 @@ const CollectionStructure = ({
           },
           fullNode: nodeBData,
           ...(appName ? { appName } : {}),
+          triggeredBy: parentLog,
         });
+        saveNewChangeLog(
+          db,
+          {
+            nodeId: currentNodeId,
+            modifiedBy: user.uname,
+            modifiedProperty: "specializations",
+            previousValue: previousSpecializations,
+            newValue: newSpecializations,
+            modifiedAt: new Date(),
+            changeType: "modify elements",
+            changeDetails: {
+              action: "nest-specialization",
+              movedNode: nodeBId,
+              newParent: nodeAId,
+            },
+            fullNode: currentVisibleNode,
+            ...(appName ? { appName } : {}),
+          },
+          parentLogId,
+        );
 
         // Instant tree update: move nodeBId from currentNode's subtree to nodeA's subtree
         if (onInstantTreeUpdate) {
