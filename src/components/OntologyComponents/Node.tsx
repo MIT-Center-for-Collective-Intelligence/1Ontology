@@ -101,7 +101,10 @@ import {
   INodeTypes,
   MainSpecializations,
 } from "@components/types/INode";
-import { NODES } from "@components/lib/firestoreClient/collections";
+import {
+  NODES,
+  NODES_LOGS,
+} from "@components/lib/firestoreClient/collections";
 import NodeBody from "../NodBody/NodeBody";
 import NodeCompass from "../NodBody/NodeCompass";
 
@@ -1143,8 +1146,24 @@ const Node = ({
           return;
         }
 
+        const parentLogId = doc(collection(db, NODES_LOGS)).id;
+        const parentLog = {
+          logId: parentLogId,
+          nodeId,
+          nodeTitle: nodeData.title ?? "",
+          changeType: "modify elements" as const,
+        };
+
         for (let linkId of removedElements) {
-          await unlinkPropertyOf(db, selectedProperty, nodeId, linkId);
+          await unlinkPropertyOf(
+            db,
+            selectedProperty,
+            nodeId,
+            linkId,
+            parentLog,
+            user?.uname,
+            appName,
+          );
         }
 
         // Update links for specializations/generalizations
@@ -1160,6 +1179,9 @@ const Node = ({
               : "specializations",
             relatedNodes,
             db,
+            parentLog,
+            user?.uname,
+            appName,
           );
           nodeData[selectedProperty] = newValue;
         } else {
@@ -1323,17 +1345,21 @@ const Node = ({
           });
         }
 
-        saveNewChangeLog(db, {
-          nodeId: nodeId,
-          modifiedBy: user?.uname,
-          modifiedProperty: selectedProperty,
-          previousValue,
-          newValue: newValue,
-          modifiedAt: new Date(),
-          changeType: "modify elements",
-          fullNode: nodeData,
-          ...(appName ? { appName } : {}),
-        });
+        saveNewChangeLog(
+          db,
+          {
+            nodeId: nodeId,
+            modifiedBy: user?.uname,
+            modifiedProperty: selectedProperty,
+            previousValue,
+            newValue: newValue,
+            modifiedAt: new Date(),
+            changeType: "modify elements",
+            fullNode: nodeData,
+            ...(appName ? { appName } : {}),
+          },
+          parentLogId,
+        );
 
         // Instant tree update for local user
         if (onInstantTreeUpdate) {

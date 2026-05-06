@@ -208,6 +208,27 @@ export type NodeChange = {
    * case.
    */
   diffValue?: DiffCollection[];
+  /**
+   * Present on "child" logs — system-generated entries written as a
+   * side-effect of a user's direct edit (the "parent log"). The parent log is
+   * always a direct user action; child logs are reciprocal mutations on
+   * related nodes. `modifiedBy` on child logs attributes to the same user as
+   * the parent.
+   *
+   * Currently emitted for `generalizations` ↔ `specializations` edits via
+   * `unlinkPropertyOf` (removed reciprocals) and `updateLinks` (added
+   * reciprocals). `parts` ↔ `isPartOf`, `propertyOf` side-effects, and
+   * node-deletion cleanup are out of scope and remain orphaned.
+   *
+   * `nodeTitle` is snapshotted at write time so the activity-feed badge can
+   * render without a Firestore lookup or relying on the in-memory cache.
+   */
+  triggeredBy?: {
+    logId: string;
+    nodeId: string;
+    nodeTitle: string;
+    changeType: NodeChange["changeType"];
+  };
 };
 
 export type DiffLinkNode = {
