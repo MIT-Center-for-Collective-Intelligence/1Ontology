@@ -190,6 +190,44 @@ export type NodeChange = {
   appName?: string;
   detailsOfChange?: any;
   logLLMId?: string;
+  /**
+   * Pre-computed, ready-to-render diff for collection-typed changes
+   * (`add element`, `remove element`, `add elements`, `remove elements`,
+   * `modify elements`, `sort elements`, `add collection`, `delete collection`,
+   * `sort collections`).
+   *
+   * Populated at write time by `saveNewChangeLog` via `computeDiffValue`, so
+   * the UI can render history without re-diffing or resolving titles. Titles
+   * are snapshotted into each `DiffLinkNode.title`, which means historical
+   * entries display the title that existed at the time of the edit even after
+   * a node is later renamed or removed from the local cache.
+   *
+   * Absent for non-collection changeTypes (`change text`, `add images`, etc.)
+   * and for legacy records written before the field was introduced — callers
+   * must fall back to recomputing from `previousValue` / `newValue` in that
+   * case.
+   */
+  diffValue?: DiffCollection[];
+};
+
+export type DiffLinkNode = {
+  id: string;
+  title: string;
+  // "added": node present only in the new state
+  // "removed": node present only in the old state
+  // node is unchanged if both values are empty
+  change?: "added" | "removed";
+  changeType?: "sort"; // node moved between collections
+  optional?: boolean;
+};
+
+export type DiffCollection = {
+  collectionName: string;
+  // "added": collection appeared in the new state
+  // "removed": collection disappeared from the new state
+  change?: "added" | "removed"; 
+  changeType?: "sort"; //collection itself moved
+  nodes: DiffLinkNode[];
 };
 
 export type PromptChange = {

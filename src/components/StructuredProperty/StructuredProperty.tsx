@@ -1239,6 +1239,14 @@ const StructuredProperty = ({
               : "2px solid orange",
         }}
       >
+        {/*
+         * Single rendering path. `displayDiff` ensures
+         * `detailsOfChange.comparison` is populated for both pipelines —
+         * the pre-computed `diffValue` (new) or the in-place
+         * `diffCollections` recompute (legacy). The `fromDiffValue` flag on
+         * `detailsOfChange` lets `VisualizeTheProperty` indicate visually
+         * which pipeline the data came from.
+         */}
         <VisualizeTheProperty
           currentImprovement={selectedDiffNode || currentImprovement}
           property={property}

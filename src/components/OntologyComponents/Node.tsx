@@ -1842,18 +1842,20 @@ const Node = ({
               onInstantTreeUpdate={onInstantTreeUpdate}
             />
 
-            {/* compass: focused single-node radial graph */}
-            <NodeCompass
-              currentVisibleNode={currentVisibleNode}
-              relatedNodes={relatedNodes}
-              navigateToNode={navigateToNode}
-              requireModifierToZoom
-              onOpenInNavigator={
-                onOpenInNavigator
-                  ? () => onOpenInNavigator(currentVisibleNode.id)
-                  : undefined
-              }
-            />
+            {/* hidden in diff view */}
+            {!selectedDiffNode && (
+              <NodeCompass
+                currentVisibleNode={currentVisibleNode}
+                relatedNodes={relatedNodes}
+                navigateToNode={navigateToNode}
+                requireModifierToZoom
+                onOpenInNavigator={
+                  onOpenInNavigator
+                    ? () => onOpenInNavigator(currentVisibleNode.id)
+                    : undefined
+                }
+              />
+            )}
 
             {/* actors of the node if it's exist */}
             {currentVisibleNode?.properties.hasOwnProperty("actor") && (

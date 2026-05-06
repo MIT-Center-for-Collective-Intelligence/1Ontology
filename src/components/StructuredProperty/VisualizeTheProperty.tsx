@@ -240,6 +240,18 @@ const VisualizeTheProperty: React.FC<CollectionListProps> = ({
             )}
           </Typography>
         </Tooltip>
+        {currentImprovement?.detailsOfChange?.fromDiffValue && (
+          <Typography
+            sx={{
+              ml: 2,
+              fontSize: "14px",
+              fontStyle: "italic",
+              color: "lightblue",
+            }}
+          >
+            (coming from diff)
+          </Typography>
+        )}
       </Box>
       {renderValue(currentImprovement.detailsOfChange?.comparison || [])}
     </Box>

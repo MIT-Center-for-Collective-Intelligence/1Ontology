@@ -33,6 +33,7 @@ import {
 import { NodeChange } from "@components/types/INode";
 import moment from "moment";
 import { capitalizeFirstLetter } from "./string.utils";
+import { computeDiffValue } from "./diffValue";
 import { User } from "@components/types/IAuth";
 import {
   getBrowser,
@@ -592,6 +593,14 @@ const updateProperty = async (
 
 export const saveNewChangeLog = (db: any, data: NodeChange) => {
   if (!data.modifiedBy) return;
+  // Pre-compute the renderable diff so the UI never has to re-derive it.
+  // `computeDiffValue` returns null for non-collection changeTypes; in that
+  // case `diffValue` is left absent and consumers fall back to
+  // `previousValue` / `newValue` directly. Titles are read straight off the
+  // link nodes inside `previousValue` / `newValue` — callers are responsible
+  // for populating `ILinkNode.title` on every live write.
+  const diffValue = computeDiffValue(data);
+  if (diffValue) data.diffValue = diffValue;
   const changeUseRef = doc(collection(db, NODES_LOGS));
   setDoc(changeUseRef, data);
   const userRef = doc(collection(db, USERS), data.modifiedBy);
