@@ -230,6 +230,7 @@ export const NavigateLandingSection = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [searchReadOnly, setSearchReadOnly] = useState(true);
   const [view, setView] = useState<"compass" | "graph">("compass");
   const [sidebarTab, setSidebarTab] = useState<"search" | "ai">("search");
 
@@ -493,9 +494,11 @@ export const NavigateLandingSection = ({
   // non-null, so leaving it null hides the pill cleanly.
   // (The `as` cast preserves the wider type so the existing
   // `{stats && (...)}` JSX block still typechecks.)
-  const stats = null as
-    | { processes: number; relationships: number; depth: number }
-    | null;
+  const stats = null as {
+    processes: number;
+    relationships: number;
+    depth: number;
+  } | null;
 
   // Loading / error states
   if (loadError) {
@@ -516,7 +519,7 @@ export const NavigateLandingSection = ({
         <Typography
           sx={{ fontFamily: INTER, fontWeight: 600, fontSize: "1.05rem" }}
         >
-          Couldn't load the ontology
+          {"Couldn't load the ontology"}
         </Typography>
         <Typography
           sx={{
@@ -686,292 +689,303 @@ export const NavigateLandingSection = ({
               minHeight: 0,
             }}
           >
-          <Box sx={{ p: 2.5, pb: 1.5 }}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Search activities…"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                if (searchError) setSearchError(null);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  void runSearch();
-                } else if (e.key === "Escape") {
-                  clearSearch();
-                }
-              }}
-              autoComplete="off"
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon
-                        sx={{ color: "text.secondary", fontSize: 18 }}
-                      />
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end" sx={{ ml: 0 }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.25,
-                          width: query.trim() ? "auto" : 0,
-                          minWidth: 0,
-                          overflow: "hidden",
-                          transition: "width 0.15s ease",
-                        }}
-                      >
-                        <IconButton
-                          size="small"
-                          onClick={() => void runSearch()}
-                          disabled={!query.trim() || searchLoading}
-                          aria-label="Search"
-                          sx={{
-                            width: 26,
-                            height: 26,
-                            color: accent,
-                            bgcolor: alpha(accent, 0.12),
-                            transition: "background-color 0.15s ease",
-                            "&:hover": {
-                              bgcolor: alpha(accent, 0.2),
-                            },
-                            "&.Mui-disabled": {
-                              color: "text.disabled",
-                              bgcolor: (t) =>
-                                alpha(t.palette.text.primary, 0.05),
-                            },
-                          }}
-                        >
-                          {searchLoading ? (
-                            <CircularProgress
-                              size={12}
-                              thickness={5}
-                              sx={{ color: "inherit" }}
-                            />
-                          ) : (
-                            <SearchIcon sx={{ fontSize: 14 }} />
-                          )}
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={clearSearch}
-                          disabled={!query.trim()}
-                          aria-label="Clear search"
-                          sx={{
-                            width: 26,
-                            height: 26,
-                            color: "text.secondary",
-                            "&:hover": {
-                              color: "error.main",
-                              bgcolor: (t) =>
-                                t.palette.mode === "dark"
-                                  ? alpha(t.palette.error.main, 0.14)
-                                  : alpha(t.palette.error.main, 0.08),
-                            },
-                          }}
-                        >
-                          <CloseIcon sx={{ fontSize: 14 }} />
-                        </IconButton>
-                      </Box>
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 999,
-                  bgcolor: (t) => alpha(t.palette.text.primary, 0.04),
-                  fontFamily: INTER,
-                  "& fieldset": {
-                    borderColor: (t) => alpha(t.palette.text.primary, 0.08),
-                  },
-                  "&:hover fieldset": {
-                    borderColor: (t) => alpha(t.palette.text.primary, 0.16),
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: (t) => alpha(t.palette.primary.main, 0.6),
-                  },
-                },
-              }}
-            />
-          </Box>
-          <Box
-            sx={{
-              flex: 1,
-              minHeight: 0,
-              maxHeight: { xs: 320, md: "none" },
-              overflowY: "auto",
-              px: 1.5,
-              pb: 2,
-              "&::-webkit-scrollbar": { width: 6 },
-              "&::-webkit-scrollbar-thumb": {
-                background: alpha(theme.palette.text.primary, 0.14),
-                borderRadius: 3,
-              },
-            }}
-          >
-            {query.trim() === "" ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  textAlign: "center",
-                  gap: 0.75,
-                  mt: 4,
-                  px: 2,
-                  color: "text.secondary",
+            <Box sx={{ p: 2.5, pb: 1.5 }}>
+              <TextField
+                fullWidth
+                size="small"
+                type="search"
+                name="activity-search"
+                placeholder="Search activities…"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  if (searchError) setSearchError(null);
                 }}
-              >
-                <SearchIcon sx={{ fontSize: 22, opacity: 0.5 }} />
-                <Typography
-                  sx={{
-                    fontSize: "0.8rem",
+                onFocus={() => {
+                  if (searchReadOnly) setSearchReadOnly(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void runSearch();
+                  } else if (e.key === "Escape") {
+                    clearSearch();
+                  }
+                }}
+                autoComplete="off"
+                slotProps={{
+                  htmlInput: {
+                    name: "activity-search",
+                    autoComplete: "new-password",
+                    readOnly: searchReadOnly,
+                    inputMode: "search",
+                  },
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon
+                          sx={{ color: "text.secondary", fontSize: 18 }}
+                        />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end" sx={{ ml: 0 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.25,
+                            width: query.trim() ? "auto" : 0,
+                            minWidth: 0,
+                            overflow: "hidden",
+                            transition: "width 0.15s ease",
+                          }}
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={() => void runSearch()}
+                            disabled={!query.trim() || searchLoading}
+                            aria-label="Search"
+                            sx={{
+                              width: 26,
+                              height: 26,
+                              color: accent,
+                              bgcolor: alpha(accent, 0.12),
+                              transition: "background-color 0.15s ease",
+                              "&:hover": {
+                                bgcolor: alpha(accent, 0.2),
+                              },
+                              "&.Mui-disabled": {
+                                color: "text.disabled",
+                                bgcolor: (t) =>
+                                  alpha(t.palette.text.primary, 0.05),
+                              },
+                            }}
+                          >
+                            {searchLoading ? (
+                              <CircularProgress
+                                size={12}
+                                thickness={5}
+                                sx={{ color: "inherit" }}
+                              />
+                            ) : (
+                              <SearchIcon sx={{ fontSize: 14 }} />
+                            )}
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={clearSearch}
+                            disabled={!query.trim()}
+                            aria-label="Clear search"
+                            sx={{
+                              width: 26,
+                              height: 26,
+                              color: "text.secondary",
+                              "&:hover": {
+                                color: "error.main",
+                                bgcolor: (t) =>
+                                  t.palette.mode === "dark"
+                                    ? alpha(t.palette.error.main, 0.14)
+                                    : alpha(t.palette.error.main, 0.08),
+                              },
+                            }}
+                          >
+                            <CloseIcon sx={{ fontSize: 14 }} />
+                          </IconButton>
+                        </Box>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 999,
+                    bgcolor: (t) => alpha(t.palette.text.primary, 0.04),
                     fontFamily: INTER,
-                    fontWeight: 500,
+                    "& fieldset": {
+                      borderColor: (t) => alpha(t.palette.text.primary, 0.08),
+                    },
+                    "&:hover fieldset": {
+                      borderColor: (t) => alpha(t.palette.text.primary, 0.16),
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: (t) => alpha(t.palette.primary.main, 0.6),
+                    },
+                  },
+                }}
+              />
+            </Box>
+            <Box
+              sx={{
+                flex: 1,
+                minHeight: 0,
+                maxHeight: { xs: 320, md: "none" },
+                overflowY: "auto",
+                px: 1.5,
+                pb: 2,
+                "&::-webkit-scrollbar": { width: 6 },
+                "&::-webkit-scrollbar-thumb": {
+                  background: alpha(theme.palette.text.primary, 0.14),
+                  borderRadius: 3,
+                },
+              }}
+            >
+              {query.trim() === "" ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                    gap: 0.75,
+                    mt: 4,
+                    px: 2,
                     color: "text.secondary",
                   }}
                 >
-                  Search any activity
-                </Typography>
+                  <SearchIcon sx={{ fontSize: 22, opacity: 0.5 }} />
+                  <Typography
+                    sx={{
+                      fontSize: "0.8rem",
+                      fontFamily: INTER,
+                      fontWeight: 500,
+                      color: "text.secondary",
+                    }}
+                  >
+                    Search any activity
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "0.72rem",
+                      fontFamily: INTER,
+                      color: "text.disabled",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Type a keyword and press Enter to search the ontology.
+                  </Typography>
+                </Box>
+              ) : searchLoading ? (
+                <Stack spacing={0.75} sx={{ mt: 1 }}>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton
+                      key={i}
+                      variant="rounded"
+                      height={48}
+                      sx={{
+                        borderRadius: 1.5,
+                        bgcolor: (t) => alpha(t.palette.text.primary, 0.06),
+                      }}
+                    />
+                  ))}
+                </Stack>
+              ) : searchError ? (
                 <Typography
                   sx={{
-                    fontSize: "0.72rem",
+                    mt: 3,
+                    textAlign: "center",
+                    fontSize: "0.8rem",
+                    fontFamily: INTER,
+                    color: "error.main",
+                  }}
+                >
+                  {searchError}
+                </Typography>
+              ) : query.trim() !== submittedQuery ? (
+                <Typography
+                  sx={{
+                    mt: 3,
+                    textAlign: "center",
+                    fontSize: "0.78rem",
                     fontFamily: INTER,
                     color: "text.disabled",
                     lineHeight: 1.5,
                   }}
                 >
-                  Type a keyword and press Enter to search the ontology.
+                  Press <strong>Enter</strong> or click the search button to
+                  find &ldquo;{query.trim()}&rdquo;.
                 </Typography>
-              </Box>
-            ) : searchLoading ? (
-              <Stack spacing={0.75} sx={{ mt: 1 }}>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <Skeleton
-                    key={i}
-                    variant="rounded"
-                    height={48}
-                    sx={{
-                      borderRadius: 1.5,
-                      bgcolor: (t) => alpha(t.palette.text.primary, 0.06),
-                    }}
-                  />
-                ))}
-              </Stack>
-            ) : searchError ? (
-              <Typography
-                sx={{
-                  mt: 3,
-                  textAlign: "center",
-                  fontSize: "0.8rem",
-                  fontFamily: INTER,
-                  color: "error.main",
-                }}
-              >
-                {searchError}
-              </Typography>
-            ) : query.trim() !== submittedQuery ? (
-              <Typography
-                sx={{
-                  mt: 3,
-                  textAlign: "center",
-                  fontSize: "0.78rem",
-                  fontFamily: INTER,
-                  color: "text.disabled",
-                  lineHeight: 1.5,
-                }}
-              >
-                Press <strong>Enter</strong> or click the search button to
-                find &ldquo;{query.trim()}&rdquo;.
-              </Typography>
-            ) : searchResults.length === 0 ? (
-              <Typography
-                sx={{
-                  mt: 3,
-                  textAlign: "center",
-                  fontSize: "0.8rem",
-                  fontFamily: INTER,
-                  color: "text.disabled",
-                }}
-              >
-                No activities match &ldquo;{submittedQuery}&rdquo;.
-              </Typography>
-            ) : (
-              <Stack spacing={0.5}>
-                {searchResults.map((r) => {
-                  const isActive = r.id === activeId;
-                  // Chroma payload is {id, title}; pair with the locally
-                  // loaded node map to surface a description preview when
-                  // available, else fall back to the chroma title only.
-                  const fullNode = nodes[r.id];
-                  const title = fullNode?.title ?? r.title;
-                  const desc = fullNode ? getDescription(fullNode) : "";
-                  return (
-                    <Box
-                      key={r.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => navigateToNode(r.id)}
-                      sx={{
-                        p: 1.1,
-                        borderRadius: 1.5,
-                        cursor: "pointer",
-                        background: isActive
-                          ? alpha(accent, 0.12)
-                          : "transparent",
-                        border: `1px solid ${
-                          isActive ? alpha(accent, 0.35) : "transparent"
-                        }`,
-                        transition:
-                          "background 0.15s ease, border-color 0.15s ease",
-                        "&:hover": {
-                          background: isActive
-                            ? alpha(accent, 0.16)
-                            : alpha(theme.palette.text.primary, 0.04),
-                        },
-                      }}
-                    >
-                      <Typography
+              ) : searchResults.length === 0 ? (
+                <Typography
+                  sx={{
+                    mt: 3,
+                    textAlign: "center",
+                    fontSize: "0.8rem",
+                    fontFamily: INTER,
+                    color: "text.disabled",
+                  }}
+                >
+                  No activities match &ldquo;{submittedQuery}&rdquo;.
+                </Typography>
+              ) : (
+                <Stack spacing={0.5}>
+                  {searchResults.map((r) => {
+                    const isActive = r.id === activeId;
+                    // Chroma payload is {id, title}; pair with the locally
+                    // loaded node map to surface a description preview when
+                    // available, else fall back to the chroma title only.
+                    const fullNode = nodes[r.id];
+                    const title = fullNode?.title ?? r.title;
+                    const desc = fullNode ? getDescription(fullNode) : "";
+                    return (
+                      <Box
+                        key={r.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => navigateToNode(r.id)}
                         sx={{
-                          fontSize: "0.82rem",
-                          fontWeight: isActive ? 600 : 500,
-                          color: isActive ? accent : "text.primary",
-                          fontFamily: INTER,
-                          lineHeight: 1.3,
+                          p: 1.1,
+                          borderRadius: 1.5,
+                          cursor: "pointer",
+                          background: isActive
+                            ? alpha(accent, 0.12)
+                            : "transparent",
+                          border: `1px solid ${
+                            isActive ? alpha(accent, 0.35) : "transparent"
+                          }`,
+                          transition:
+                            "background 0.15s ease, border-color 0.15s ease",
+                          "&:hover": {
+                            background: isActive
+                              ? alpha(accent, 0.16)
+                              : alpha(theme.palette.text.primary, 0.04),
+                          },
                         }}
                       >
-                        {title}
-                      </Typography>
-                      {desc && (
                         <Typography
                           sx={{
-                            mt: 0.4,
-                            fontSize: "0.72rem",
-                            color: "text.secondary",
+                            fontSize: "0.82rem",
+                            fontWeight: isActive ? 600 : 500,
+                            color: isActive ? accent : "text.primary",
                             fontFamily: INTER,
-                            lineHeight: 1.45,
-                            display: "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
+                            lineHeight: 1.3,
                           }}
                         >
-                          {desc}
+                          {title}
                         </Typography>
-                      )}
-                    </Box>
-                  );
-                })}
-              </Stack>
-            )}
-          </Box>
+                        {desc && (
+                          <Typography
+                            sx={{
+                              mt: 0.4,
+                              fontSize: "0.72rem",
+                              color: "text.secondary",
+                              fontFamily: INTER,
+                              lineHeight: 1.45,
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }}
+                          >
+                            {desc}
+                          </Typography>
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              )}
+            </Box>
           </Box>
 
           <Box
@@ -993,8 +1007,7 @@ export const NavigateLandingSection = ({
             height: { xs: 520, md: "100%" },
             minHeight: 0,
             position: "relative",
-            bgcolor: (t) =>
-              t.palette.mode === "dark" ? "#0d1117" : "#fafbfc",
+            bgcolor: (t) => (t.palette.mode === "dark" ? "#0d1117" : "#fafbfc"),
           }}
         >
           {view === "compass" ? (
