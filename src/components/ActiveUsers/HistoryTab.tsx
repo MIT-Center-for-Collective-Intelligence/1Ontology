@@ -6,7 +6,7 @@ import {
   Button,
   Slide,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   collection,
   getFirestore,
@@ -20,6 +20,7 @@ import {
 } from "firebase/firestore";
 import { NodeChange } from "@components/types/INode";
 import { NODES_LOGS } from "@components/lib/firestoreClient/collections";
+import { groupActivityLogs } from "@components/lib/utils/groupActivityLogs";
 import { RiveComponentMemoized } from "../Common/RiveComponentExtended";
 import ActivityDetails from "./ActivityDetails";
 
@@ -380,6 +381,9 @@ const NodeActivity = ({
     }
   };
 
+  // Pull child logs out of the top-level feed and hand them to their parent
+  const grouped = useMemo(() => groupActivityLogs(logs), [logs]);
+
   if (loading) {
     return <LoadingState />;
   }
@@ -439,7 +443,7 @@ const NodeActivity = ({
 
       <>
         {logs.length > 0 &&
-          logs.map((log) => (
+          grouped.items.map((log) => (
             <Slide key={log.id} direction="down" in={true} timeout={900}>
               <Box>
                 <ActivityDetails
@@ -449,6 +453,7 @@ const NodeActivity = ({
                   modifiedByDetails={activeUsers[log.modifiedBy]}
                   selectedDiffNode={selectedDiffNode}
                   nodes={nodes}
+                  childActivities={grouped.childrenByParent.get(log.id)}
                 />
               </Box>
             </Slide>

@@ -953,30 +953,6 @@ const CollectionStructure = ({
           changeType: "modify elements" as const,
         };
 
-        // Child log first, parent second — matches the codebase convention
-        // (helpers `unlinkPropertyOf` / `updateLinks` / `removeNodeLink` all
-        // write children before the orchestrator writes the parent). With
-        // `modifiedAt: new Date()` captured per call, this ensures the
-        // parent ends up with the later timestamp, so DESC-by-modifiedAt
-        // queries (UserActivity, NodeActivity, HistoryTab) place the parent
-        // above its children.
-        saveNewChangeLog(db, {
-          nodeId: nodeBId,
-          modifiedBy: user.uname,
-          modifiedProperty: "generalizations",
-          previousValue: nodeBData.generalizations,
-          newValue: nodeBGeneralizations,
-          modifiedAt: new Date(),
-          changeType: "modify elements",
-          changeDetails: {
-            action: "nest-specialization",
-            removedParent: currentNodeId,
-            newParent: nodeAId,
-          },
-          fullNode: nodeBData,
-          ...(appName ? { appName } : {}),
-          triggeredBy: parentLog,
-        });
         saveNewChangeLog(
           db,
           {
@@ -997,6 +973,23 @@ const CollectionStructure = ({
           },
           parentLogId,
         );
+        saveNewChangeLog(db, {
+          nodeId: nodeBId,
+          modifiedBy: user.uname,
+          modifiedProperty: "generalizations",
+          previousValue: nodeBData.generalizations,
+          newValue: nodeBGeneralizations,
+          modifiedAt: new Date(),
+          changeType: "modify elements",
+          changeDetails: {
+            action: "nest-specialization",
+            removedParent: currentNodeId,
+            newParent: nodeAId,
+          },
+          fullNode: nodeBData,
+          ...(appName ? { appName } : {}),
+          triggeredBy: parentLog,
+        });
 
         // Instant tree update: move nodeBId from currentNode's subtree to nodeA's subtree
         if (onInstantTreeUpdate) {
